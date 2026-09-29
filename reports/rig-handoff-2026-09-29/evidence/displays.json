@@ -1,0 +1,2471 @@
+{
+  "captured_at": "2026-09-29T14:56:07.721321+09:00",
+  "windows": [
+    {
+      "device": "\\\\.\\DISPLAY5",
+      "adapter": "AMD Radeon(TM) Graphics",
+      "flags": 524293,
+      "monitors": [
+        {
+          "name": "Generic PnP Monitor",
+          "id": "MONITOR\\DEL41FA\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0002",
+          "flags": 3
+        }
+      ],
+      "mode": {
+        "width": 1920,
+        "height": 1080,
+        "hz": 60,
+        "position": [
+          0,
+          0
+        ],
+        "orientation": 0,
+        "bits_per_pixel": 32
+      }
+    },
+    {
+      "device": "\\\\.\\DISPLAY6",
+      "adapter": "AMD Radeon(TM) Graphics",
+      "flags": 524288,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    },
+    {
+      "device": "\\\\.\\DISPLAY7",
+      "adapter": "AMD Radeon(TM) Graphics",
+      "flags": 524288,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    },
+    {
+      "device": "\\\\.\\DISPLAY8",
+      "adapter": "AMD Radeon(TM) Graphics",
+      "flags": 524288,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    },
+    {
+      "device": "\\\\.\\DISPLAY9",
+      "adapter": "AMD Radeon(TM) Graphics",
+      "flags": 524288,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    },
+    {
+      "device": "\\\\.\\DISPLAY10",
+      "adapter": "Microsoft Basic Display Driver",
+      "flags": 1,
+      "monitors": [
+        {
+          "name": "Generic PnP Monitor",
+          "id": "MONITOR\\DLP5050\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0001",
+          "flags": 3
+        }
+      ],
+      "mode": {
+        "width": 1280,
+        "height": 720,
+        "hz": 64,
+        "position": [
+          1920,
+          0
+        ],
+        "orientation": 0,
+        "bits_per_pixel": 32
+      }
+    },
+    {
+      "device": "\\\\.\\DISPLAY19",
+      "adapter": "NVIDIA GeForce RTX 5060 Ti",
+      "flags": 1,
+      "monitors": [
+        {
+          "name": "Generic PnP Monitor",
+          "id": "MONITOR\\DLP5050\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0005",
+          "flags": 3
+        }
+      ],
+      "mode": {
+        "width": 1280,
+        "height": 720,
+        "hz": 60,
+        "position": [
+          -2560,
+          1
+        ],
+        "orientation": 0,
+        "bits_per_pixel": 32
+      }
+    },
+    {
+      "device": "\\\\.\\DISPLAY20",
+      "adapter": "NVIDIA GeForce RTX 5060 Ti",
+      "flags": 1,
+      "monitors": [
+        {
+          "name": "Generic PnP Monitor",
+          "id": "MONITOR\\DLP5050\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0006",
+          "flags": 3
+        }
+      ],
+      "mode": {
+        "width": 1280,
+        "height": 720,
+        "hz": 60,
+        "position": [
+          -1280,
+          0
+        ],
+        "orientation": 2,
+        "bits_per_pixel": 32
+      }
+    },
+    {
+      "device": "\\\\.\\DISPLAY21",
+      "adapter": "NVIDIA GeForce RTX 5060 Ti",
+      "flags": 1,
+      "monitors": [
+        {
+          "name": "Generic PnP Monitor",
+          "id": "MONITOR\\DLP5050\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004",
+          "flags": 3
+        }
+      ],
+      "mode": {
+        "width": 720,
+        "height": 1280,
+        "hz": 60,
+        "position": [
+          -2286,
+          721
+        ],
+        "orientation": 1,
+        "bits_per_pixel": 32
+      }
+    },
+    {
+      "device": "\\\\.\\DISPLAY22",
+      "adapter": "NVIDIA GeForce RTX 5060 Ti",
+      "flags": 1,
+      "monitors": [
+        {
+          "name": "Generic PnP Monitor",
+          "id": "MONITOR\\DLP5050\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0003",
+          "flags": 3
+        }
+      ],
+      "mode": {
+        "width": 1280,
+        "height": 720,
+        "hz": 60,
+        "position": [
+          -3840,
+          0
+        ],
+        "orientation": 0,
+        "bits_per_pixel": 32
+      }
+    },
+    {
+      "device": "\\\\.\\DISPLAY23",
+      "adapter": "NVIDIA GeForce RTX 2080 Ti",
+      "flags": 0,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    },
+    {
+      "device": "\\\\.\\DISPLAY24",
+      "adapter": "NVIDIA GeForce RTX 2080 Ti",
+      "flags": 0,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    },
+    {
+      "device": "\\\\.\\DISPLAY25",
+      "adapter": "NVIDIA GeForce RTX 2080 Ti",
+      "flags": 0,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    },
+    {
+      "device": "\\\\.\\DISPLAY26",
+      "adapter": "NVIDIA GeForce RTX 2080 Ti",
+      "flags": 0,
+      "monitors": [],
+      "mode_error": "(0, 'EnumDisplaySettings', 'No error message is available')"
+    }
+  ],
+  "glfw": [
+    {
+      "win32_adapter": "\\\\.\\DISPLAY5",
+      "win32_monitor": "\\\\.\\DISPLAY5\\Monitor0",
+      "position": [
+        0,
+        0
+      ],
+      "current": {
+        "width": 1920,
+        "height": 1080,
+        "hz": 60,
+        "rgb_bits": [
+          8,
+          8,
+          8
+        ]
+      },
+      "modes": [
+        {
+          "width": 720,
+          "height": 400,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 400,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 400,
+          "hz": 70,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 400,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1128,
+          "height": 634,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1128,
+          "height": 634,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1128,
+          "height": 634,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1024,
+          "height": 768,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1024,
+          "height": 768,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1152,
+          "height": 864,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1152,
+          "height": 864,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1152,
+          "height": 864,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1366,
+          "height": 768,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1366,
+          "height": 768,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 1024,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 1024,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1600,
+          "height": 900,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1600,
+          "height": 900,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1760,
+          "height": 990,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1760,
+          "height": 990,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1760,
+          "height": 990,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1760,
+          "height": 990,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1680,
+          "height": 1050,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1680,
+          "height": 1050,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1680,
+          "height": 1050,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1680,
+          "height": 1050,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "hz": 75,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "win32_adapter": "\\\\.\\DISPLAY10",
+      "win32_monitor": "\\\\.\\DISPLAY10\\Monitor0",
+      "position": [
+        1920,
+        0
+      ],
+      "current": {
+        "width": 1280,
+        "height": 720,
+        "hz": 64,
+        "rgb_bits": [
+          8,
+          8,
+          8
+        ]
+      },
+      "modes": [
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 64,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "win32_adapter": "\\\\.\\DISPLAY19",
+      "win32_monitor": "\\\\.\\DISPLAY19\\Monitor0",
+      "position": [
+        -2560,
+        1
+      ],
+      "current": {
+        "width": 1280,
+        "height": 720,
+        "hz": 60,
+        "rgb_bits": [
+          8,
+          8,
+          8
+        ]
+      },
+      "modes": [
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1024,
+          "height": 768,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "win32_adapter": "\\\\.\\DISPLAY20",
+      "win32_monitor": "\\\\.\\DISPLAY20\\Monitor0",
+      "position": [
+        -1280,
+        0
+      ],
+      "current": {
+        "width": 1280,
+        "height": 720,
+        "hz": 60,
+        "rgb_bits": [
+          8,
+          8,
+          8
+        ]
+      },
+      "modes": [
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1024,
+          "height": 768,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "win32_adapter": "\\\\.\\DISPLAY21",
+      "win32_monitor": "\\\\.\\DISPLAY21\\Monitor0",
+      "position": [
+        -2286,
+        721
+      ],
+      "current": {
+        "width": 720,
+        "height": 1280,
+        "hz": 60,
+        "rgb_bits": [
+          8,
+          8,
+          8
+        ]
+      },
+      "modes": [
+        {
+          "width": 480,
+          "height": 640,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 640,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 640,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 640,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 640,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 720,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 864,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 864,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 480,
+          "height": 864,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 576,
+          "height": 720,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 576,
+          "height": 720,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 576,
+          "height": 720,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 576,
+          "height": 720,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 600,
+          "height": 800,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 600,
+          "height": 800,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 600,
+          "height": 800,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 664,
+          "height": 1176,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 768,
+          "height": 1024,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 1280,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 1280,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "win32_adapter": "\\\\.\\DISPLAY22",
+      "win32_monitor": "\\\\.\\DISPLAY22\\Monitor0",
+      "position": [
+        -3840,
+        0
+      ],
+      "current": {
+        "width": 1280,
+        "height": 720,
+        "hz": 60,
+        "rgb_bits": [
+          8,
+          8,
+          8
+        ]
+      },
+      "modes": [
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 640,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 100,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 720,
+          "height": 576,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 864,
+          "height": 480,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 800,
+          "height": 600,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1176,
+          "height": 664,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1024,
+          "height": 768,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 23,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 24,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 25,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 29,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 30,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 50,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 59,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 119,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 720,
+          "hz": 120,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "hz": 60,
+          "rgb_bits": [
+            8,
+            8,
+            8
+          ]
+        }
+      ]
+    }
+  ]
+}

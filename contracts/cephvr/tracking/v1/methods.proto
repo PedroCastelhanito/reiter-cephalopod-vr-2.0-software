@@ -1,0 +1,32 @@
+syntax = "proto3";
+package cephvr.tracking.v1;
+
+import "cephvr/tracking/v1/recording.proto";
+
+// Canonical strict typed JSON models in contracts/tracking/method_models.py.
+// Like VR program/profile bindings: schema-backed documents, not arbitrary maps.
+// T27: each payload must validate against the registered concrete settings model.
+// An unknown implementation/schema is an error, never an untyped extension.
+message StageConfiguration {
+  string stage_id = 1;
+  string implementation_id = 2;
+  string settings_schema_id = 3;
+  string settings_json = 4;
+}
+message TrackingFilePolicies {
+  string limits_json = 1; // FileLimits, controller resolved; no session/trial overrides.
+  optional uint64 maximum_input_frame_age_ns = 2; // A04, frames.max_frame_age_ms, exact positive int64 ns.
+  optional uint32 result_capacity = 3; // A06, results.capacity_results, positive.
+  TrackingRecordingSettings recording = 4; // T19 file-only; required when saving.
+}
+message TrackingPreparationEvidence {
+  string methods_json = 1; // PreparedMethods; compatibility evidence, not Ready alone.
+}
+
+// Shared Started evidence, not a per-frame scientific RPC.
+message TrackingFirstEvaluation {
+  optional uint64 source_frame_id = 1; // A09 ID; zero is present/valid.
+  int64 source_host_receipt_ns = 2;
+  string reset_generation = 3; // A06 FeedbackResult.reset_generation of this evaluation.
+  string disposition = 4; // Exactly baseline_only, invalid or valid; validate explicitly.
+}

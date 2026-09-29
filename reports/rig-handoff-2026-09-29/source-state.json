@@ -1,0 +1,6 @@
+{
+  "captured_at": "2026-09-29T14:59:08.382021+09:00",
+  "source_commit": "7295c8e462b29673ba294c3076de7a518a2ba1c8",
+  "branch": "main",
+  "note": "Archive is a complete CephVR2.0 working-directory snapshot with uncommitted changes, not just this commit. External legacy projects, environments, drivers, user datasets and .git are excluded."
+}

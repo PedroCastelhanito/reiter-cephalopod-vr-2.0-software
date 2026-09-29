@@ -1,0 +1,4451 @@
+{
+  "$defs": {
+    "AngularSpace": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "visual_angle",
+          "title": "Kind",
+          "type": "string"
+        },
+        "frame_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Frame Id",
+          "type": "string"
+        },
+        "frame_to_rig_xyzw": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Frame To Rig Xyzw",
+          "type": "array"
+        },
+        "surfaces": {
+          "items": {
+            "enum": [
+              "front",
+              "left",
+              "right",
+              "bottom"
+            ],
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Surfaces",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "frame_id",
+        "frame_to_rig_xyzw",
+        "surfaces"
+      ],
+      "title": "AngularSpace",
+      "type": "object"
+    },
+    "ArenaBoundary": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "world_frame_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "World Frame Id",
+          "type": "string"
+        },
+        "region": {
+          "discriminator": {
+            "mapping": {
+              "convex_polygon_xy": "#/$defs/ConvexPolygon",
+              "unrestricted": "#/$defs/UnrestrictedRegion"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/UnrestrictedRegion"
+            },
+            {
+              "$ref": "#/$defs/ConvexPolygon"
+            }
+          ],
+          "title": "Region"
+        }
+      },
+      "required": [
+        "instance_id",
+        "world_frame_id",
+        "region"
+      ],
+      "title": "ArenaBoundary",
+      "type": "object"
+    },
+    "ArenaMotion": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "X"
+        },
+        "y": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "Y"
+        },
+        "yaw": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "Yaw"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "yaw"
+      ],
+      "title": "ArenaMotion",
+      "type": "object"
+    },
+    "ArenaSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "arena",
+          "title": "Kind",
+          "type": "string"
+        },
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "asset_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Asset Id"
+        },
+        "world_frame_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "World Frame Id",
+          "type": "string"
+        },
+        "asset_to_world": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            }
+          ],
+          "title": "Asset To World",
+          "type": "array"
+        },
+        "initial": {
+          "$ref": "#/$defs/Pose"
+        },
+        "fixed_height_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Fixed Height Mm"
+        },
+        "fixed_pitch_deg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Fixed Pitch Deg"
+        },
+        "fixed_roll_deg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Fixed Roll Deg"
+        },
+        "motion": {
+          "$ref": "#/$defs/ArenaMotion"
+        },
+        "reset": {
+          "title": "Reset",
+          "type": "boolean"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "title": "Assignments",
+          "type": "array"
+        },
+        "feedback": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "direct_value": "#/$defs/Feedback",
+                "heading_relative_planar_integration": "#/$defs/PlanarFeedback",
+                "movement_integration": "#/$defs/Feedback"
+              },
+              "propertyName": "operation"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Feedback"
+              },
+              {
+                "$ref": "#/$defs/PlanarFeedback"
+              }
+            ]
+          },
+          "title": "Feedback",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "instance_id",
+        "asset_id",
+        "world_frame_id",
+        "asset_to_world",
+        "initial",
+        "fixed_height_mm",
+        "fixed_pitch_deg",
+        "fixed_roll_deg",
+        "motion",
+        "reset",
+        "assignments",
+        "feedback"
+      ],
+      "title": "ArenaSettings",
+      "type": "object"
+    },
+    "Asset": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "logical_path": {
+          "title": "Logical Path",
+          "type": "string"
+        },
+        "color_override": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorOverride"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profile": {
+          "enum": [
+            "png_uint_v1",
+            "tiff_uint_v1",
+            "jpeg8_v1",
+            "mp4_h264_sdr8_v1",
+            "matroska_ffv1_v3_uint_v1",
+            "glb2_static_unlit_v1"
+          ],
+          "title": "Profile",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_id",
+        "logical_path",
+        "color_override",
+        "profile"
+      ],
+      "title": "Asset",
+      "type": "object"
+    },
+    "AssetRef": {
+      "additionalProperties": false,
+      "properties": {
+        "logical_path": {
+          "minLength": 1,
+          "title": "Logical Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "logical_path"
+      ],
+      "title": "AssetRef",
+      "type": "object"
+    },
+    "Assignment": {
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "enum": [
+            "x",
+            "y",
+            "rotation",
+            "phase_x",
+            "phase_y",
+            "yaw",
+            "playback"
+          ],
+          "title": "Target",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            },
+            {
+              "$ref": "#/$defs/Time"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "target",
+        "value"
+      ],
+      "title": "Assignment",
+      "type": "object"
+    },
+    "Boundary": {
+      "additionalProperties": false,
+      "properties": {
+        "time_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Time Ns",
+          "type": "integer"
+        },
+        "before": {
+          "anyOf": [
+            {
+              "maximum": 4294967295,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Before"
+        },
+        "after": {
+          "anyOf": [
+            {
+              "maximum": 4294967295,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "After"
+        },
+        "operations": {
+          "items": {
+            "$ref": "#/$defs/Transition"
+          },
+          "title": "Operations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "time_ns",
+        "before",
+        "after",
+        "operations"
+      ],
+      "title": "Boundary",
+      "type": "object"
+    },
+    "Cell": {
+      "additionalProperties": false,
+      "properties": {
+        "column_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Column Id",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "column_id",
+        "value"
+      ],
+      "title": "Cell",
+      "type": "object"
+    },
+    "Checkerboard": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "checkerboard",
+          "title": "Kind",
+          "type": "string"
+        },
+        "frequency_x": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Frequency X"
+        },
+        "frequency_y": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Frequency Y"
+        }
+      },
+      "required": [
+        "kind",
+        "frequency_x",
+        "frequency_y"
+      ],
+      "title": "Checkerboard",
+      "type": "object"
+    },
+    "ColorOverride": {
+      "additionalProperties": false,
+      "properties": {
+        "transfer": {
+          "enum": [
+            "linear",
+            "srgb",
+            "bt709"
+          ],
+          "title": "Transfer",
+          "type": "string"
+        },
+        "primaries": {
+          "const": "rec709_d65",
+          "title": "Primaries",
+          "type": "string"
+        },
+        "range": {
+          "enum": [
+            "full",
+            "limited"
+          ],
+          "title": "Range",
+          "type": "string"
+        },
+        "matrix": {
+          "enum": [
+            "rgb",
+            "bt601",
+            "bt709"
+          ],
+          "title": "Matrix",
+          "type": "string"
+        },
+        "chroma_location": {
+          "enum": [
+            "none",
+            "left",
+            "center",
+            "topleft"
+          ],
+          "title": "Chroma Location",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "transfer",
+        "primaries",
+        "range",
+        "matrix",
+        "chroma_location",
+        "reason"
+      ],
+      "title": "ColorOverride",
+      "type": "object"
+    },
+    "Column": {
+      "additionalProperties": false,
+      "properties": {
+        "column_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Column Id",
+          "type": "string"
+        },
+        "value_type": {
+          "enum": [
+            "number",
+            "asset_id"
+          ],
+          "title": "Value Type",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "enum": [
+                "1",
+                "mm",
+                "deg",
+                "cycle",
+                "px",
+                "s",
+                "1/s",
+                "mm/s",
+                "deg/s",
+                "cycle/s",
+                "px/s",
+                "1/s^2",
+                "mm/s^2",
+                "deg/s^2",
+                "cycle/s^2",
+                "px/s^2",
+                "cycle/mm",
+                "cycle/deg",
+                "cycle/(mm*s)",
+                "cycle/(deg*s)"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/GainUnit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "column_id",
+        "value_type",
+        "unit"
+      ],
+      "title": "Column",
+      "type": "object"
+    },
+    "CompiledEpoch": {
+      "additionalProperties": false,
+      "properties": {
+        "occurrence_index": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Occurrence Index",
+          "type": "integer"
+        },
+        "source_epoch_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Source Epoch Id",
+          "type": "string"
+        },
+        "duration_origin": {
+          "enum": [
+            "fixed",
+            "sampled",
+            "uniquely_constrained"
+          ],
+          "title": "Duration Origin",
+          "type": "string"
+        },
+        "lineage": {
+          "items": {
+            "$ref": "#/$defs/GroupVisit"
+          },
+          "title": "Lineage",
+          "type": "array"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "start_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Start Ns",
+          "type": "integer"
+        },
+        "end_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "End Ns",
+          "type": "integer"
+        },
+        "truncated_curves": {
+          "items": {
+            "$ref": "#/$defs/CurveTruncation"
+          },
+          "title": "Truncated Curves",
+          "type": "array"
+        },
+        "settings": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "arena": "#/$defs/ArenaSettings",
+                "image": "#/$defs/ImageSettings",
+                "texture": "#/$defs/TextureSettings",
+                "video": "#/$defs/VideoSettings"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ImageSettings"
+              },
+              {
+                "$ref": "#/$defs/VideoSettings"
+              },
+              {
+                "$ref": "#/$defs/TextureSettings"
+              },
+              {
+                "$ref": "#/$defs/ArenaSettings"
+              }
+            ]
+          },
+          "title": "Settings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "occurrence_index",
+        "source_epoch_id",
+        "duration_origin",
+        "lineage",
+        "scene_id",
+        "start_ns",
+        "end_ns",
+        "truncated_curves",
+        "settings"
+      ],
+      "title": "CompiledEpoch",
+      "type": "object"
+    },
+    "ComponentProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "renderer",
+            "shader",
+            "image_decoder",
+            "video_decoder",
+            "arena_importer",
+            "color_transform",
+            "graphics_driver",
+            "gpu",
+            "os"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "implementation": {
+          "title": "Implementation",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "content_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Content Sha256"
+        }
+      },
+      "required": [
+        "role",
+        "implementation",
+        "version",
+        "content_sha256"
+      ],
+      "title": "ComponentProvenance",
+      "type": "object"
+    },
+    "CompositeTile": {
+      "additionalProperties": false,
+      "properties": {
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "rect": {
+          "$ref": "#/$defs/PixelRect"
+        },
+        "source_code_bits": {
+          "enum": [
+            8,
+            10
+          ],
+          "title": "Source Code Bits",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "output_id",
+        "rect",
+        "source_code_bits"
+      ],
+      "title": "CompositeTile",
+      "type": "object"
+    },
+    "Conditions": {
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "minItems": 1,
+          "title": "Columns",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/Row"
+          },
+          "minItems": 1,
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "title": "Conditions",
+      "type": "object"
+    },
+    "Constant": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "constant",
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "title": "Constant",
+      "type": "object"
+    },
+    "ConvexPolygon": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "convex_polygon_xy",
+          "title": "Kind",
+          "type": "string"
+        },
+        "vertices_mm": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 3,
+          "title": "Vertices Mm",
+          "type": "array"
+        },
+        "margin_mm": {
+          "minimum": 0,
+          "title": "Margin Mm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "kind",
+        "vertices_mm",
+        "margin_mm"
+      ],
+      "title": "ConvexPolygon",
+      "type": "object"
+    },
+    "CurveTruncation": {
+      "additionalProperties": false,
+      "properties": {
+        "settings_path": {
+          "title": "Settings Path",
+          "type": "string"
+        },
+        "final_keyframe_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Final Keyframe Ns",
+          "type": "integer"
+        },
+        "epoch_end_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Epoch End Ns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "settings_path",
+        "final_keyframe_ns",
+        "epoch_end_ns"
+      ],
+      "title": "CurveTruncation",
+      "type": "object"
+    },
+    "DisplayProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "geometry": {
+          "$ref": "#/$defs/Geometry"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/Output"
+          },
+          "minItems": 1,
+          "title": "Outputs",
+          "type": "array"
+        },
+        "mappings": {
+          "items": {
+            "$ref": "#/$defs/Mapping"
+          },
+          "minItems": 4,
+          "title": "Mappings",
+          "type": "array"
+        },
+        "presentation_mode": {
+          "default": "photodiode_only_vsync",
+          "enum": [
+            "all_outputs_vsync",
+            "photodiode_only_vsync"
+          ],
+          "title": "Presentation Mode",
+          "type": "string"
+        },
+        "photometric_mode": {
+          "enum": [
+            "calibrated",
+            "uncalibrated"
+          ],
+          "title": "Photometric Mode",
+          "type": "string"
+        },
+        "idle_linear_rgb": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Idle Linear Rgb",
+          "type": "array"
+        },
+        "photodiode_output_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Photodiode Output Id"
+        },
+        "photodiode_patch": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PhotodiodePatch"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "format_version",
+        "geometry",
+        "outputs",
+        "mappings",
+        "photometric_mode",
+        "idle_linear_rgb"
+      ],
+      "title": "DisplayProfile",
+      "type": "object"
+    },
+    "Epoch": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "epoch",
+          "title": "Kind",
+          "type": "string"
+        },
+        "epoch_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Epoch Id",
+          "type": "string"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "duration": {
+          "discriminator": {
+            "mapping": {
+              "fixed": "#/$defs/Fixed",
+              "random": "#/$defs/Random"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Fixed"
+            },
+            {
+              "$ref": "#/$defs/Random"
+            }
+          ],
+          "title": "Duration"
+        },
+        "settings": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "arena": "#/$defs/ArenaSettings",
+                "image": "#/$defs/ImageSettings",
+                "texture": "#/$defs/TextureSettings",
+                "video": "#/$defs/VideoSettings"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ImageSettings"
+              },
+              {
+                "$ref": "#/$defs/VideoSettings"
+              },
+              {
+                "$ref": "#/$defs/TextureSettings"
+              },
+              {
+                "$ref": "#/$defs/ArenaSettings"
+              }
+            ]
+          },
+          "title": "Settings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "epoch_id",
+        "scene_id",
+        "duration",
+        "settings"
+      ],
+      "title": "Epoch",
+      "type": "object"
+    },
+    "Explicit": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "explicit_epochs",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "Explicit",
+      "type": "object"
+    },
+    "Feedback": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Binding Id",
+          "type": "string"
+        },
+        "source_channel": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Source Channel",
+          "type": "string"
+        },
+        "target": {
+          "enum": [
+            "x",
+            "y",
+            "rotation",
+            "phase_x",
+            "phase_y",
+            "yaw",
+            "width",
+            "height",
+            "opacity",
+            "contrast",
+            "frequency",
+            "frequency_x",
+            "frequency_y",
+            "period_x",
+            "period_y"
+          ],
+          "title": "Target",
+          "type": "string"
+        },
+        "operation": {
+          "enum": [
+            "direct_value",
+            "movement_integration"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "gain": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Gain"
+        },
+        "offset": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Offset"
+        }
+      },
+      "required": [
+        "binding_id",
+        "source_channel",
+        "target",
+        "operation",
+        "gain",
+        "offset"
+      ],
+      "title": "Feedback",
+      "type": "object"
+    },
+    "Fingerprint": {
+      "additionalProperties": false,
+      "properties": {
+        "resource_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "logical_path": {
+          "title": "Logical Path",
+          "type": "string"
+        },
+        "subresource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Subresource"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "bytes": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "resource_id",
+        "logical_path",
+        "subresource",
+        "sha256",
+        "bytes"
+      ],
+      "title": "Fingerprint",
+      "type": "object"
+    },
+    "Fixed": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "fixed",
+          "title": "Kind",
+          "type": "string"
+        },
+        "duration": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "kind",
+        "duration"
+      ],
+      "title": "Fixed",
+      "type": "object"
+    },
+    "GainUnit": {
+      "additionalProperties": false,
+      "description": "A finite source\u2192target scaling descriptor for condition-table gain columns.\n\nA gain coefficient is not an independently editable unit on every function.\nThe tagged descriptor avoids arbitrary expression strings such as mm/(px*s).",
+      "properties": {
+        "kind": {
+          "const": "feedback_gain",
+          "title": "Kind",
+          "type": "string"
+        },
+        "input_unit": {
+          "enum": [
+            "1",
+            "mm",
+            "deg",
+            "cycle",
+            "px",
+            "s",
+            "1/s",
+            "mm/s",
+            "deg/s",
+            "cycle/s",
+            "px/s"
+          ],
+          "title": "Input Unit",
+          "type": "string"
+        },
+        "output_unit": {
+          "enum": [
+            "1",
+            "mm",
+            "deg",
+            "cycle",
+            "px",
+            "s",
+            "1/s",
+            "mm/s",
+            "deg/s",
+            "cycle/s",
+            "px/s",
+            "1/s^2",
+            "mm/s^2",
+            "deg/s^2",
+            "cycle/s^2",
+            "px/s^2",
+            "cycle/mm",
+            "cycle/deg",
+            "cycle/(mm*s)",
+            "cycle/(deg*s)"
+          ],
+          "title": "Output Unit",
+          "type": "string"
+        },
+        "coefficient": {
+          "enum": [
+            "value",
+            "slope_per_s"
+          ],
+          "title": "Coefficient",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "input_unit",
+        "output_unit",
+        "coefficient"
+      ],
+      "title": "GainUnit",
+      "type": "object"
+    },
+    "Geometry": {
+      "additionalProperties": false,
+      "properties": {
+        "frame_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Frame Id",
+          "type": "string"
+        },
+        "observer_mm": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Observer Mm",
+          "type": "array"
+        },
+        "near_mm": {
+          "exclusiveMinimum": 0,
+          "title": "Near Mm",
+          "type": "number"
+        },
+        "far_mm": {
+          "exclusiveMinimum": 0,
+          "title": "Far Mm",
+          "type": "number"
+        },
+        "positional_tolerance_mm": {
+          "exclusiveMinimum": 0,
+          "title": "Positional Tolerance Mm",
+          "type": "number"
+        },
+        "orthogonality_tolerance": {
+          "exclusiveMaximum": 1,
+          "exclusiveMinimum": 0,
+          "title": "Orthogonality Tolerance",
+          "type": "number"
+        },
+        "surfaces": {
+          "items": {
+            "$ref": "#/$defs/Surface"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Surfaces",
+          "type": "array"
+        }
+      },
+      "required": [
+        "frame_id",
+        "observer_mm",
+        "near_mm",
+        "far_mm",
+        "positional_tolerance_mm",
+        "orthogonality_tolerance",
+        "surfaces"
+      ],
+      "title": "Geometry",
+      "type": "object"
+    },
+    "Grating": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "sine_grating",
+            "square_grating"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "frequency": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Frequency"
+        }
+      },
+      "required": [
+        "kind",
+        "frequency"
+      ],
+      "title": "Grating",
+      "type": "object"
+    },
+    "Group": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "group",
+          "title": "Kind",
+          "type": "string"
+        },
+        "group_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Group Id",
+          "type": "string"
+        },
+        "repetitions": {
+          "exclusiveMinimum": 0,
+          "title": "Repetitions",
+          "type": "integer"
+        },
+        "order": {
+          "enum": [
+            "as_listed",
+            "shuffle_each_repetition"
+          ],
+          "title": "Order",
+          "type": "string"
+        },
+        "order_unit": {
+          "enum": [
+            "child_blocks",
+            "condition_rows"
+          ],
+          "title": "Order Unit",
+          "type": "string"
+        },
+        "conditions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Conditions"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "body": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "epoch": "#/$defs/Epoch",
+                "group": "#/$defs/Group"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Epoch"
+              },
+              {
+                "$ref": "#/$defs/Group"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Body",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "group_id",
+        "repetitions",
+        "order",
+        "order_unit",
+        "conditions",
+        "body"
+      ],
+      "title": "Group",
+      "type": "object"
+    },
+    "GroupVisit": {
+      "additionalProperties": false,
+      "properties": {
+        "group_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Group Id",
+          "type": "string"
+        },
+        "repetition_index": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Repetition Index",
+          "type": "integer"
+        },
+        "unit_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Unit Id",
+          "type": "string"
+        },
+        "visit_index": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Visit Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "group_id",
+        "repetition_index",
+        "unit_id",
+        "visit_index"
+      ],
+      "title": "GroupVisit",
+      "type": "object"
+    },
+    "Hold": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "hold",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "Hold",
+      "type": "object"
+    },
+    "Identity": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Session Id",
+          "type": "string"
+        },
+        "trial_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Trial Id",
+          "type": "string"
+        },
+        "configuration_revision": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Configuration Revision",
+          "type": "integer"
+        },
+        "prepared_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Prepared Generation",
+          "type": "string"
+        },
+        "renderer_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Renderer Generation",
+          "type": "string"
+        },
+        "resource_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Resource Generation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id",
+        "trial_id",
+        "configuration_revision",
+        "prepared_generation",
+        "renderer_generation",
+        "resource_generation"
+      ],
+      "title": "Identity",
+      "type": "object"
+    },
+    "ImageSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "space": {
+          "discriminator": {
+            "mapping": {
+              "physical_surface": "#/$defs/PhysicalSpace",
+              "visual_angle": "#/$defs/AngularSpace"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PhysicalSpace"
+            },
+            {
+              "$ref": "#/$defs/AngularSpace"
+            }
+          ],
+          "title": "Space"
+        },
+        "initial": {
+          "$ref": "#/$defs/Initial2D"
+        },
+        "width": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Width"
+        },
+        "height": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Height"
+        },
+        "opacity": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Opacity"
+        },
+        "motion": {
+          "$ref": "#/$defs/Motion2D"
+        },
+        "reset": {
+          "title": "Reset",
+          "type": "boolean"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "title": "Assignments",
+          "type": "array"
+        },
+        "feedback": {
+          "items": {
+            "$ref": "#/$defs/Feedback"
+          },
+          "title": "Feedback",
+          "type": "array"
+        },
+        "kind": {
+          "const": "image",
+          "title": "Kind",
+          "type": "string"
+        },
+        "asset_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Asset Id"
+        },
+        "sampling": {
+          "enum": [
+            "nearest",
+            "linear"
+          ],
+          "title": "Sampling",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instance_id",
+        "space",
+        "initial",
+        "width",
+        "height",
+        "opacity",
+        "motion",
+        "reset",
+        "assignments",
+        "feedback",
+        "kind",
+        "asset_id",
+        "sampling"
+      ],
+      "title": "ImageSettings",
+      "type": "object"
+    },
+    "ImageTile": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "image_tile",
+          "title": "Kind",
+          "type": "string"
+        },
+        "asset_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Asset Id"
+        },
+        "period_x": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Period X"
+        },
+        "period_y": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Period Y"
+        },
+        "sampling": {
+          "enum": [
+            "nearest",
+            "linear"
+          ],
+          "title": "Sampling",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "asset_id",
+        "period_x",
+        "period_y",
+        "sampling"
+      ],
+      "title": "ImageTile",
+      "type": "object"
+    },
+    "Initial2D": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Y"
+        },
+        "rotation_deg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Rotation Deg"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "rotation_deg"
+      ],
+      "title": "Initial2D",
+      "type": "object"
+    },
+    "InputChannel": {
+      "additionalProperties": false,
+      "properties": {
+        "channel_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Channel Id",
+          "type": "string"
+        },
+        "stream_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Stream Id",
+          "type": "string"
+        },
+        "value_kind": {
+          "enum": [
+            "absolute",
+            "displacement",
+            "interval_average_rate"
+          ],
+          "title": "Value Kind",
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "1",
+            "mm",
+            "deg",
+            "cycle",
+            "px",
+            "s",
+            "1/s",
+            "mm/s",
+            "deg/s",
+            "cycle/s",
+            "px/s"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "frame_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Frame Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "channel_id",
+        "stream_id",
+        "value_kind",
+        "unit",
+        "frame_id"
+      ],
+      "title": "InputChannel",
+      "type": "object"
+    },
+    "Instance": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "family": {
+          "enum": [
+            "image",
+            "video",
+            "texture",
+            "arena"
+          ],
+          "title": "Family",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instance_id",
+        "family"
+      ],
+      "title": "Instance",
+      "type": "object"
+    },
+    "Interpretation": {
+      "additionalProperties": false,
+      "properties": {
+        "interpretation_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Interpretation Id",
+          "type": "string"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
+        },
+        "source_component_bits": {
+          "items": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "title": "Source Component Bits",
+          "type": "array"
+        },
+        "pixel_format": {
+          "title": "Pixel Format",
+          "type": "string"
+        },
+        "channel_order": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Channel Order",
+          "type": "array"
+        },
+        "row_origin": {
+          "enum": [
+            "top_left",
+            "bottom_left"
+          ],
+          "title": "Row Origin",
+          "type": "string"
+        },
+        "source_alpha": {
+          "enum": [
+            "none",
+            "straight",
+            "associated"
+          ],
+          "title": "Source Alpha",
+          "type": "string"
+        },
+        "transfer": {
+          "enum": [
+            "linear",
+            "srgb",
+            "bt709"
+          ],
+          "title": "Transfer",
+          "type": "string"
+        },
+        "primaries": {
+          "const": "rec709_d65",
+          "title": "Primaries",
+          "type": "string"
+        },
+        "range": {
+          "enum": [
+            "full",
+            "limited"
+          ],
+          "title": "Range",
+          "type": "string"
+        },
+        "matrix": {
+          "enum": [
+            "rgb",
+            "bt601",
+            "bt709"
+          ],
+          "title": "Matrix",
+          "type": "string"
+        },
+        "chroma_location": {
+          "enum": [
+            "none",
+            "left",
+            "center",
+            "topleft"
+          ],
+          "title": "Chroma Location",
+          "type": "string"
+        },
+        "orientation_degrees": {
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Orientation Degrees",
+          "type": "integer"
+        },
+        "mirror_x": {
+          "title": "Mirror X",
+          "type": "boolean"
+        },
+        "sample_aspect_numerator": {
+          "exclusiveMinimum": 0,
+          "title": "Sample Aspect Numerator",
+          "type": "integer"
+        },
+        "sample_aspect_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Sample Aspect Denominator",
+          "type": "integer"
+        },
+        "resolution_origin": {
+          "enum": [
+            "source_metadata",
+            "explicit_override",
+            "gltf_base_color"
+          ],
+          "title": "Resolution Origin",
+          "type": "string"
+        },
+        "effective_override_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Effective Override Reason"
+        }
+      },
+      "required": [
+        "interpretation_id",
+        "width",
+        "height",
+        "source_component_bits",
+        "pixel_format",
+        "channel_order",
+        "row_origin",
+        "source_alpha",
+        "transfer",
+        "primaries",
+        "range",
+        "matrix",
+        "chroma_location",
+        "orientation_degrees",
+        "mirror_x",
+        "sample_aspect_numerator",
+        "sample_aspect_denominator",
+        "resolution_origin",
+        "effective_override_reason"
+      ],
+      "title": "Interpretation",
+      "type": "object"
+    },
+    "Keyframes": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "keyframes",
+          "title": "Kind",
+          "type": "string"
+        },
+        "interpolation": {
+          "enum": [
+            "linear",
+            "step"
+          ],
+          "title": "Interpolation",
+          "type": "string"
+        },
+        "knots": {
+          "items": {
+            "$ref": "#/$defs/Knot"
+          },
+          "minItems": 1,
+          "title": "Knots",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "interpolation",
+        "knots"
+      ],
+      "title": "Keyframes",
+      "type": "object"
+    },
+    "Knot": {
+      "additionalProperties": false,
+      "properties": {
+        "time": {
+          "$ref": "#/$defs/Time"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "time",
+        "value"
+      ],
+      "title": "Knot",
+      "type": "object"
+    },
+    "Mapping": {
+      "additionalProperties": false,
+      "properties": {
+        "mapping_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Mapping Id",
+          "type": "string"
+        },
+        "surface_id": {
+          "enum": [
+            "front",
+            "left",
+            "right",
+            "bottom"
+          ],
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "viewport": {
+          "$ref": "#/$defs/PixelRect"
+        },
+        "geometric_profile": {
+          "$ref": "#/$defs/AssetRef"
+        }
+      },
+      "required": [
+        "mapping_id",
+        "surface_id",
+        "output_id",
+        "viewport",
+        "geometric_profile"
+      ],
+      "title": "Mapping",
+      "type": "object"
+    },
+    "Motion2D": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "X"
+        },
+        "y": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "Y"
+        },
+        "rotation": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "Rotation"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "rotation"
+      ],
+      "title": "Motion2D",
+      "type": "object"
+    },
+    "Output": {
+      "additionalProperties": false,
+      "properties": {
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "device_identity": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Device Identity",
+          "type": "string"
+        },
+        "width_px": {
+          "exclusiveMinimum": 0,
+          "title": "Width Px",
+          "type": "integer"
+        },
+        "height_px": {
+          "exclusiveMinimum": 0,
+          "title": "Height Px",
+          "type": "integer"
+        },
+        "refresh_numerator": {
+          "exclusiveMinimum": 0,
+          "title": "Refresh Numerator",
+          "type": "integer"
+        },
+        "refresh_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Refresh Denominator",
+          "type": "integer"
+        },
+        "rgb_bits_per_channel": {
+          "enum": [
+            8,
+            10
+          ],
+          "title": "Rgb Bits Per Channel",
+          "type": "integer"
+        },
+        "photometric_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AssetRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "output_id",
+        "device_identity",
+        "width_px",
+        "height_px",
+        "refresh_numerator",
+        "refresh_denominator",
+        "rgb_bits_per_channel"
+      ],
+      "title": "Output",
+      "type": "object"
+    },
+    "PhotodiodePatch": {
+      "additionalProperties": false,
+      "properties": {
+        "rect": {
+          "$ref": "#/$defs/PixelRect"
+        },
+        "high_linear_rgb": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "High Linear Rgb",
+          "type": "array"
+        },
+        "low_linear_rgb": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Low Linear Rgb",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rect",
+        "high_linear_rgb",
+        "low_linear_rgb"
+      ],
+      "title": "PhotodiodePatch",
+      "type": "object"
+    },
+    "PhysicalSpace": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "physical_surface",
+          "title": "Kind",
+          "type": "string"
+        },
+        "frame_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Frame Id",
+          "type": "string"
+        },
+        "mappings": {
+          "items": {
+            "$ref": "#/$defs/SurfaceMap"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Mappings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "frame_id",
+        "mappings"
+      ],
+      "title": "PhysicalSpace",
+      "type": "object"
+    },
+    "PixelRect": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "minimum": 0,
+          "title": "X",
+          "type": "integer"
+        },
+        "y": {
+          "minimum": 0,
+          "title": "Y",
+          "type": "integer"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "title": "PixelRect",
+      "type": "object"
+    },
+    "PlanarFeedback": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Binding Id",
+          "type": "string"
+        },
+        "operation": {
+          "const": "heading_relative_planar_integration",
+          "title": "Operation",
+          "type": "string"
+        },
+        "forward_channel": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Forward Channel",
+          "type": "string"
+        },
+        "sideways_channel": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Sideways Channel",
+          "type": "string"
+        },
+        "gain": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Gain"
+        }
+      },
+      "required": [
+        "binding_id",
+        "operation",
+        "forward_channel",
+        "sideways_channel",
+        "gain"
+      ],
+      "title": "PlanarFeedback",
+      "type": "object"
+    },
+    "Pose": {
+      "additionalProperties": false,
+      "properties": {
+        "position_mm": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            }
+          ],
+          "title": "Position Mm",
+          "type": "array"
+        },
+        "yaw_deg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Yaw Deg"
+        }
+      },
+      "required": [
+        "position_mm",
+        "yaw_deg"
+      ],
+      "title": "Pose",
+      "type": "object"
+    },
+    "Program": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 2,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "assets": {
+          "items": {
+            "$ref": "#/$defs/Asset"
+          },
+          "title": "Assets",
+          "type": "array"
+        },
+        "instances": {
+          "items": {
+            "$ref": "#/$defs/Instance"
+          },
+          "title": "Instances",
+          "type": "array"
+        },
+        "scenes": {
+          "items": {
+            "$ref": "#/$defs/Scene"
+          },
+          "minItems": 1,
+          "title": "Scenes",
+          "type": "array"
+        },
+        "input_channels": {
+          "items": {
+            "$ref": "#/$defs/InputChannel"
+          },
+          "title": "Input Channels",
+          "type": "array"
+        },
+        "duration": {
+          "discriminator": {
+            "mapping": {
+              "explicit_epochs": "#/$defs/Explicit",
+              "target_total_random_epochs": "#/$defs/TargetTotal"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Explicit"
+            },
+            {
+              "$ref": "#/$defs/TargetTotal"
+            }
+          ],
+          "title": "Duration"
+        },
+        "sequence": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "epoch": "#/$defs/Epoch",
+                "group": "#/$defs/Group"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Epoch"
+              },
+              {
+                "$ref": "#/$defs/Group"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Sequence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "format_version",
+        "assets",
+        "instances",
+        "scenes",
+        "input_channels",
+        "duration",
+        "sequence"
+      ],
+      "title": "Program",
+      "type": "object"
+    },
+    "Ramp": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "ramp",
+          "title": "Kind",
+          "type": "string"
+        },
+        "initial": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Initial"
+        },
+        "slope_per_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Slope Per S"
+        }
+      },
+      "required": [
+        "kind",
+        "initial",
+        "slope_per_s"
+      ],
+      "title": "Ramp",
+      "type": "object"
+    },
+    "Random": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "random",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "Random",
+      "type": "object"
+    },
+    "Rate": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "rate",
+          "title": "Kind",
+          "type": "string"
+        },
+        "function": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Function"
+        }
+      },
+      "required": [
+        "kind",
+        "function"
+      ],
+      "title": "Rate",
+      "type": "object"
+    },
+    "Ref": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "condition",
+          "title": "Kind",
+          "type": "string"
+        },
+        "group_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Group Id",
+          "type": "string"
+        },
+        "column_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Column Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "group_id",
+        "column_id"
+      ],
+      "title": "Ref",
+      "type": "object"
+    },
+    "Resource": {
+      "additionalProperties": false,
+      "properties": {
+        "fingerprint": {
+          "$ref": "#/$defs/Fingerprint"
+        },
+        "kind": {
+          "enum": [
+            "image",
+            "video",
+            "arena",
+            "geometry",
+            "photometric",
+            "shader"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "profile_id": {
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "maxLength": 128,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "interpretation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interpretation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cpu_bytes": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Cpu Bytes",
+          "type": "integer"
+        },
+        "gpu_bytes": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Gpu Bytes",
+          "type": "integer"
+        },
+        "provider_compatibility": {
+          "title": "Provider Compatibility",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fingerprint",
+        "kind",
+        "profile_id",
+        "dependencies",
+        "interpretation",
+        "cpu_bytes",
+        "gpu_bytes",
+        "provider_compatibility"
+      ],
+      "title": "Resource",
+      "type": "object"
+    },
+    "ResourceManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "resources": {
+          "items": {
+            "$ref": "#/$defs/Resource"
+          },
+          "title": "Resources",
+          "type": "array"
+        },
+        "provenance": {
+          "items": {
+            "$ref": "#/$defs/ComponentProvenance"
+          },
+          "title": "Provenance",
+          "type": "array"
+        }
+      },
+      "required": [
+        "format_version",
+        "resources",
+        "provenance"
+      ],
+      "title": "ResourceManifest",
+      "type": "object"
+    },
+    "ReviewEncoding": {
+      "additionalProperties": false,
+      "properties": {
+        "composite_width": {
+          "exclusiveMinimum": 0,
+          "title": "Composite Width",
+          "type": "integer"
+        },
+        "composite_height": {
+          "exclusiveMinimum": 0,
+          "title": "Composite Height",
+          "type": "integer"
+        },
+        "scale_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Scale Denominator",
+          "type": "integer"
+        },
+        "tiles": {
+          "items": {
+            "$ref": "#/$defs/CompositeTile"
+          },
+          "minItems": 1,
+          "title": "Tiles",
+          "type": "array"
+        },
+        "native_pixel_format": {
+          "enum": [
+            "rgba8_bottom_up",
+            "r10g10b10a2_le_bottom_up"
+          ],
+          "title": "Native Pixel Format",
+          "type": "string"
+        },
+        "encoder_pixel_format": {
+          "title": "Encoder Pixel Format",
+          "type": "string"
+        },
+        "effective_ffmpeg_args": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Effective Ffmpeg Args",
+          "type": "array"
+        },
+        "timing": {
+          "$ref": "#/$defs/ReviewTiming"
+        }
+      },
+      "required": [
+        "composite_width",
+        "composite_height",
+        "scale_denominator",
+        "tiles",
+        "native_pixel_format",
+        "encoder_pixel_format",
+        "effective_ffmpeg_args",
+        "timing"
+      ],
+      "title": "ReviewEncoding",
+      "type": "object"
+    },
+    "ReviewTiming": {
+      "additionalProperties": false,
+      "properties": {
+        "pacing_output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Pacing Output Id",
+          "type": "string"
+        },
+        "rate_numerator": {
+          "exclusiveMinimum": 0,
+          "title": "Rate Numerator",
+          "type": "integer"
+        },
+        "rate_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Rate Denominator",
+          "type": "integer"
+        },
+        "implementation": {
+          "title": "Implementation",
+          "type": "string"
+        },
+        "capability_evidence_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Capability Evidence Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pacing_output_id",
+        "rate_numerator",
+        "rate_denominator",
+        "implementation",
+        "capability_evidence_id"
+      ],
+      "title": "ReviewTiming",
+      "type": "object"
+    },
+    "Row": {
+      "additionalProperties": false,
+      "properties": {
+        "row_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Row Id",
+          "type": "string"
+        },
+        "cells": {
+          "items": {
+            "$ref": "#/$defs/Cell"
+          },
+          "title": "Cells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "row_id",
+        "cells"
+      ],
+      "title": "Row",
+      "type": "object"
+    },
+    "Scene": {
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "background_linear_rgb": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Background Linear Rgb",
+          "type": "array"
+        },
+        "arena_instance_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Arena Instance Id"
+        },
+        "layer_instance_ids": {
+          "items": {
+            "maxLength": 128,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "type": "string"
+          },
+          "title": "Layer Instance Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scene_id",
+        "background_linear_rgb",
+        "arena_instance_id",
+        "layer_instance_ids"
+      ],
+      "title": "Scene",
+      "type": "object"
+    },
+    "Sine": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "sine",
+          "title": "Kind",
+          "type": "string"
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Mean"
+        },
+        "amplitude": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Amplitude"
+        },
+        "frequency_hz": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Frequency Hz"
+        },
+        "phase_cycles": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Phase Cycles"
+        }
+      },
+      "required": [
+        "kind",
+        "mean",
+        "amplitude",
+        "frequency_hz",
+        "phase_cycles"
+      ],
+      "title": "Sine",
+      "type": "object"
+    },
+    "Surface": {
+      "additionalProperties": false,
+      "properties": {
+        "surface_id": {
+          "enum": [
+            "front",
+            "left",
+            "right",
+            "bottom"
+          ],
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "bottom_left_mm": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bottom Left Mm",
+          "type": "array"
+        },
+        "bottom_right_mm": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bottom Right Mm",
+          "type": "array"
+        },
+        "top_right_mm": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Top Right Mm",
+          "type": "array"
+        },
+        "top_left_mm": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Top Left Mm",
+          "type": "array"
+        }
+      },
+      "required": [
+        "surface_id",
+        "bottom_left_mm",
+        "bottom_right_mm",
+        "top_right_mm",
+        "top_left_mm"
+      ],
+      "title": "Surface",
+      "type": "object"
+    },
+    "SurfaceMap": {
+      "additionalProperties": false,
+      "properties": {
+        "surface_id": {
+          "enum": [
+            "front",
+            "left",
+            "right",
+            "bottom"
+          ],
+          "title": "Surface Id",
+          "type": "string"
+        },
+        "matrix": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            }
+          ],
+          "title": "Matrix",
+          "type": "array"
+        }
+      },
+      "required": [
+        "surface_id",
+        "matrix"
+      ],
+      "title": "SurfaceMap",
+      "type": "object"
+    },
+    "TargetTotal": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "target_total_random_epochs",
+          "title": "Kind",
+          "type": "string"
+        },
+        "total": {
+          "$ref": "#/$defs/Time"
+        },
+        "minimum": {
+          "$ref": "#/$defs/Time"
+        },
+        "maximum": {
+          "$ref": "#/$defs/Time"
+        }
+      },
+      "required": [
+        "kind",
+        "total",
+        "minimum",
+        "maximum"
+      ],
+      "title": "TargetTotal",
+      "type": "object"
+    },
+    "TextureSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "space": {
+          "discriminator": {
+            "mapping": {
+              "physical_surface": "#/$defs/PhysicalSpace",
+              "visual_angle": "#/$defs/AngularSpace"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PhysicalSpace"
+            },
+            {
+              "$ref": "#/$defs/AngularSpace"
+            }
+          ],
+          "title": "Space"
+        },
+        "initial": {
+          "$ref": "#/$defs/Initial2D"
+        },
+        "width": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Width"
+        },
+        "height": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Height"
+        },
+        "opacity": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Opacity"
+        },
+        "motion": {
+          "$ref": "#/$defs/Motion2D"
+        },
+        "reset": {
+          "title": "Reset",
+          "type": "boolean"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "title": "Assignments",
+          "type": "array"
+        },
+        "feedback": {
+          "items": {
+            "$ref": "#/$defs/Feedback"
+          },
+          "title": "Feedback",
+          "type": "array"
+        },
+        "kind": {
+          "const": "texture",
+          "title": "Kind",
+          "type": "string"
+        },
+        "pattern": {
+          "discriminator": {
+            "mapping": {
+              "checkerboard": "#/$defs/Checkerboard",
+              "image_tile": "#/$defs/ImageTile",
+              "sine_grating": "#/$defs/Grating",
+              "square_grating": "#/$defs/Grating"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Grating"
+            },
+            {
+              "$ref": "#/$defs/Checkerboard"
+            },
+            {
+              "$ref": "#/$defs/ImageTile"
+            }
+          ],
+          "title": "Pattern"
+        },
+        "initial_phase_x_cycles": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Initial Phase X Cycles"
+        },
+        "initial_phase_y_cycles": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Initial Phase Y Cycles"
+        },
+        "phase_x": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "Phase X"
+        },
+        "phase_y": {
+          "discriminator": {
+            "mapping": {
+              "hold": "#/$defs/Hold",
+              "rate": "#/$defs/Rate",
+              "trajectory": "#/$defs/Trajectory"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "$ref": "#/$defs/Rate"
+            },
+            {
+              "$ref": "#/$defs/Trajectory"
+            }
+          ],
+          "title": "Phase Y"
+        },
+        "mean_linear_rgb": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            }
+          ],
+          "title": "Mean Linear Rgb",
+          "type": "array"
+        },
+        "modulation_linear_rgb": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "$ref": "#/$defs/Ref"
+                }
+              ]
+            }
+          ],
+          "title": "Modulation Linear Rgb",
+          "type": "array"
+        },
+        "contrast": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Contrast"
+        }
+      },
+      "required": [
+        "instance_id",
+        "space",
+        "initial",
+        "width",
+        "height",
+        "opacity",
+        "motion",
+        "reset",
+        "assignments",
+        "feedback",
+        "kind",
+        "pattern",
+        "initial_phase_x_cycles",
+        "initial_phase_y_cycles",
+        "phase_x",
+        "phase_y",
+        "mean_linear_rgb",
+        "modulation_linear_rgb",
+        "contrast"
+      ],
+      "title": "TextureSettings",
+      "type": "object"
+    },
+    "Time": {
+      "additionalProperties": false,
+      "properties": {
+        "seconds": {
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "title": "Seconds",
+          "type": "string"
+        }
+      },
+      "required": [
+        "seconds"
+      ],
+      "title": "Time",
+      "type": "object"
+    },
+    "Trajectory": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "trajectory",
+          "title": "Kind",
+          "type": "string"
+        },
+        "function": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Function"
+        }
+      },
+      "required": [
+        "kind",
+        "function"
+      ],
+      "title": "Trajectory",
+      "type": "object"
+    },
+    "Transition": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "initialize",
+            "continue",
+            "pause",
+            "resume",
+            "reset",
+            "restart_incompatible",
+            "deactivate"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "next_settings_index": {
+          "anyOf": [
+            {
+              "maximum": 4294967295,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Next Settings Index"
+        },
+        "assignment_indices": {
+          "items": {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Assignment Indices",
+          "type": "array"
+        }
+      },
+      "required": [
+        "instance_id",
+        "action",
+        "reason",
+        "next_settings_index",
+        "assignment_indices"
+      ],
+      "title": "Transition",
+      "type": "object"
+    },
+    "TrialArenaBoundaries": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "bindings": {
+          "items": {
+            "$ref": "#/$defs/ArenaBoundary"
+          },
+          "title": "Bindings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "format_version",
+        "bindings"
+      ],
+      "title": "TrialArenaBoundaries",
+      "type": "object"
+    },
+    "UniformLayout": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Binding Id",
+          "type": "string"
+        },
+        "instance_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Instance Id"
+        },
+        "output_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Output Id"
+        },
+        "shader_resource_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Shader Resource Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "scalar_type": {
+          "enum": [
+            "float32",
+            "float64",
+            "int32",
+            "uint32"
+          ],
+          "title": "Scalar Type",
+          "type": "string"
+        },
+        "shape": {
+          "items": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "title": "Shape",
+          "type": "array"
+        }
+      },
+      "required": [
+        "binding_id",
+        "instance_id",
+        "output_id",
+        "shader_resource_id",
+        "name",
+        "scalar_type",
+        "shape"
+      ],
+      "title": "UniformLayout",
+      "type": "object"
+    },
+    "UnrestrictedRegion": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "unrestricted",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "UnrestrictedRegion",
+      "type": "object"
+    },
+    "VideoSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "space": {
+          "discriminator": {
+            "mapping": {
+              "physical_surface": "#/$defs/PhysicalSpace",
+              "visual_angle": "#/$defs/AngularSpace"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PhysicalSpace"
+            },
+            {
+              "$ref": "#/$defs/AngularSpace"
+            }
+          ],
+          "title": "Space"
+        },
+        "initial": {
+          "$ref": "#/$defs/Initial2D"
+        },
+        "width": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Width"
+        },
+        "height": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Height"
+        },
+        "opacity": {
+          "discriminator": {
+            "mapping": {
+              "constant": "#/$defs/Constant",
+              "keyframes": "#/$defs/Keyframes",
+              "ramp": "#/$defs/Ramp",
+              "sine": "#/$defs/Sine"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Constant"
+            },
+            {
+              "$ref": "#/$defs/Ramp"
+            },
+            {
+              "$ref": "#/$defs/Sine"
+            },
+            {
+              "$ref": "#/$defs/Keyframes"
+            }
+          ],
+          "title": "Opacity"
+        },
+        "motion": {
+          "$ref": "#/$defs/Motion2D"
+        },
+        "reset": {
+          "title": "Reset",
+          "type": "boolean"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "title": "Assignments",
+          "type": "array"
+        },
+        "feedback": {
+          "items": {
+            "$ref": "#/$defs/Feedback"
+          },
+          "title": "Feedback",
+          "type": "array"
+        },
+        "kind": {
+          "const": "video",
+          "title": "Kind",
+          "type": "string"
+        },
+        "asset_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Ref"
+            }
+          ],
+          "title": "Asset Id"
+        },
+        "sampling": {
+          "enum": [
+            "nearest",
+            "linear"
+          ],
+          "title": "Sampling",
+          "type": "string"
+        },
+        "initial_playback": {
+          "$ref": "#/$defs/Time"
+        },
+        "end_behavior": {
+          "enum": [
+            "hold_final_frame",
+            "loop"
+          ],
+          "title": "End Behavior",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instance_id",
+        "space",
+        "initial",
+        "width",
+        "height",
+        "opacity",
+        "motion",
+        "reset",
+        "assignments",
+        "feedback",
+        "kind",
+        "asset_id",
+        "sampling",
+        "initial_playback",
+        "end_behavior"
+      ],
+      "title": "VideoSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "format_version": {
+      "const": 2,
+      "title": "Format Version",
+      "type": "integer"
+    },
+    "identity": {
+      "$ref": "#/$defs/Identity"
+    },
+    "source": {
+      "$ref": "#/$defs/Program"
+    },
+    "source_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Sha256",
+      "type": "string"
+    },
+    "display": {
+      "$ref": "#/$defs/DisplayProfile"
+    },
+    "seed_decimal": {
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "title": "Seed Decimal",
+      "type": "string"
+    },
+    "order_implementation": {
+      "title": "Order Implementation",
+      "type": "string"
+    },
+    "duration_implementation": {
+      "title": "Duration Implementation",
+      "type": "string"
+    },
+    "duration_sampler_id": {
+      "title": "Duration Sampler Id",
+      "type": "string"
+    },
+    "epochs": {
+      "items": {
+        "$ref": "#/$defs/CompiledEpoch"
+      },
+      "minItems": 1,
+      "title": "Epochs",
+      "type": "array"
+    },
+    "boundaries": {
+      "items": {
+        "$ref": "#/$defs/Boundary"
+      },
+      "title": "Boundaries",
+      "type": "array"
+    },
+    "arena_boundaries": {
+      "$ref": "#/$defs/TrialArenaBoundaries"
+    },
+    "manifest": {
+      "$ref": "#/$defs/ResourceManifest"
+    },
+    "uniform_layouts": {
+      "items": {
+        "$ref": "#/$defs/UniformLayout"
+      },
+      "title": "Uniform Layouts",
+      "type": "array"
+    },
+    "model_compatibility": {
+      "title": "Model Compatibility",
+      "type": "string"
+    },
+    "renderer_compatibility": {
+      "title": "Renderer Compatibility",
+      "type": "string"
+    },
+    "compiler_compatibility": {
+      "title": "Compiler Compatibility",
+      "type": "string"
+    },
+    "review_encoding": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewEncoding"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "format_version",
+    "identity",
+    "source",
+    "source_sha256",
+    "display",
+    "seed_decimal",
+    "order_implementation",
+    "duration_implementation",
+    "duration_sampler_id",
+    "epochs",
+    "boundaries",
+    "arena_boundaries",
+    "manifest",
+    "uniform_layouts",
+    "model_compatibility",
+    "renderer_compatibility",
+    "compiler_compatibility",
+    "review_encoding"
+  ],
+  "title": "PreparedTrial",
+  "type": "object"
+}

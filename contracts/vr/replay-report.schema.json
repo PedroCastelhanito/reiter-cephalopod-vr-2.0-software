@@ -1,0 +1,202 @@
+{
+  "$defs": {
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "reconstructable": {
+          "items": {
+            "$ref": "#/$defs/GroupRange"
+          },
+          "title": "Reconstructable",
+          "type": "array"
+        },
+        "failed_submission": {
+          "items": {
+            "$ref": "#/$defs/GroupRange"
+          },
+          "title": "Failed Submission",
+          "type": "array"
+        },
+        "unknown_submission": {
+          "items": {
+            "$ref": "#/$defs/GroupRange"
+          },
+          "title": "Unknown Submission",
+          "type": "array"
+        }
+      },
+      "required": [
+        "output_id",
+        "reconstructable",
+        "failed_submission",
+        "unknown_submission"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "GroupRange": {
+      "additionalProperties": false,
+      "properties": {
+        "first": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "First",
+          "type": "integer"
+        },
+        "end_exclusive": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "End Exclusive",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "first",
+        "end_exclusive"
+      ],
+      "title": "GroupRange",
+      "type": "object"
+    },
+    "Identity": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Session Id",
+          "type": "string"
+        },
+        "trial_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Trial Id",
+          "type": "string"
+        },
+        "configuration_revision": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Configuration Revision",
+          "type": "integer"
+        },
+        "prepared_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Prepared Generation",
+          "type": "string"
+        },
+        "renderer_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Renderer Generation",
+          "type": "string"
+        },
+        "resource_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Resource Generation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id",
+        "trial_id",
+        "configuration_revision",
+        "prepared_generation",
+        "renderer_generation",
+        "resource_generation"
+      ],
+      "title": "Identity",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "identity": {
+      "$ref": "#/$defs/Identity"
+    },
+    "mode": {
+      "enum": [
+        "full",
+        "partial"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "evidence_complete": {
+      "title": "Evidence Complete",
+      "type": "boolean"
+    },
+    "last_group_id": {
+      "anyOf": [
+        {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Group Id"
+    },
+    "input_state_validation": {
+      "enum": [
+        "passed",
+        "failed"
+      ],
+      "title": "Input State Validation",
+      "type": "string"
+    },
+    "original_pixel_equality": {
+      "const": "unverified",
+      "title": "Original Pixel Equality",
+      "type": "string"
+    },
+    "optical_presentation": {
+      "const": "unverified",
+      "title": "Optical Presentation",
+      "type": "string"
+    },
+    "compatibility_differences": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Compatibility Differences",
+      "type": "array"
+    },
+    "coverage": {
+      "items": {
+        "$ref": "#/$defs/Coverage"
+      },
+      "title": "Coverage",
+      "type": "array"
+    },
+    "created_files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Created Files",
+      "type": "array"
+    }
+  },
+  "required": [
+    "identity",
+    "mode",
+    "evidence_complete",
+    "last_group_id",
+    "input_state_validation",
+    "original_pixel_equality",
+    "optical_presentation",
+    "compatibility_differences",
+    "coverage",
+    "created_files"
+  ],
+  "title": "ReplayReport",
+  "type": "object"
+}

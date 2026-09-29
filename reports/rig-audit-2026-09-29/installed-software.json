@@ -1,0 +1,1252 @@
+[
+  {
+    "DisplayName": "${{arpDisplayName}}",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "AMD Chipset Software",
+    "DisplayVersion": "8.08.12.551",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "AMD DVR64",
+    "DisplayVersion": "1.0.2",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "AMD GPIO2 Driver",
+    "DisplayVersion": "2.2.0.136",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "AMD Install Manager",
+    "DisplayVersion": "26.10.26174.0747",
+    "InstallLocation": "C:\\Program Files\\AMD\\AMDInstallManager\\"
+  },
+  {
+    "DisplayName": "AMD Interface Driver",
+    "DisplayVersion": "2.0.0.29",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "AMD PPM Provisioning File Driver",
+    "DisplayVersion": "8.0.0.59",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "AMD PSP Driver",
+    "DisplayVersion": "5.40.0.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "AMD Settings",
+    "DisplayVersion": "2026.0808.1636.2068",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "AMD Software",
+    "DisplayVersion": "26.8.1",
+    "InstallLocation": "C:\\Program Files\\AMD\\CIM\\BIN64"
+  },
+  {
+    "DisplayName": "AMD WVR64",
+    "DisplayVersion": "1.0.2",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "AMD_Chipset_Drivers",
+    "DisplayVersion": "8.08.12.551",
+    "InstallLocation": "C:\\Chipset_Software\\"
+  },
+  {
+    "DisplayName": "Application Verifier x64 External Package (DesktopEditions)",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Application Verifier x64 External Package (OnecoreUAP)",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Arduino IDE 2.3.10",
+    "DisplayVersion": "2.3.10",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Bonsai",
+    "DisplayVersion": "2.9.0.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Bonsai",
+    "DisplayVersion": "2.9.0.0",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Branding64",
+    "DisplayVersion": "1.00.0009",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "CamEmu Camera Emulator Transport Layer x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Camera Users Manuals x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "CodeMeter Runtime Kit v8.20a",
+    "DisplayVersion": "8.20.6558.501",
+    "InstallLocation": "C:\\Program Files\\CodeMeter\\"
+  },
+  {
+    "DisplayName": "Compute Sanitizer",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "Copilot",
+    "DisplayVersion": "154.0.4258.37",
+    "InstallLocation": "C:\\Program Files (x86)\\Microsoft\\Copilot\\Application"
+  },
+  {
+    "DisplayName": "CPUID CPU-Z 3.01",
+    "DisplayVersion": "3.01",
+    "InstallLocation": "C:\\Program Files\\CPUID\\CPU-Z\\"
+  },
+  {
+    "DisplayName": "CUBLAS Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUBLAS Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUDA CCCL",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUDA Documentation",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUDA Profiler API",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUDA Profiler Tools",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUDART Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUDNN Development",
+    "DisplayVersion": "9.20",
+    "InstallLocation": "C:\\Program Files\\NVIDIA\\CUDNN\\v9.20"
+  },
+  {
+    "DisplayName": "CUDNN Development",
+    "DisplayVersion": "9.20",
+    "InstallLocation": "C:\\Program Files\\NVIDIA\\CUDNN\\v9.20"
+  },
+  {
+    "DisplayName": "CUDNN Runtime",
+    "DisplayVersion": "9.20",
+    "InstallLocation": "C:\\Program Files\\NVIDIA\\CUDNN\\v9.20"
+  },
+  {
+    "DisplayName": "CUDNN Runtime",
+    "DisplayVersion": "9.20",
+    "InstallLocation": "C:\\Program Files\\NVIDIA\\CUDNN\\v9.20"
+  },
+  {
+    "DisplayName": "CUDNN Samples",
+    "DisplayVersion": "9.20",
+    "InstallLocation": "C:\\Program Files\\NVIDIA\\CUDNN\\v9.20"
+  },
+  {
+    "DisplayName": "CUFFT Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "cuobjdump",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUPTI",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CURAND Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CURAND Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUSOLVER Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUSOLVER Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUSPARSE Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "CUSPARSE Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "cuxxfilt",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "Cypress USB-Serial Driver Installer (remove only)",
+    "DisplayVersion": "1.0.1.67",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Demo Suite",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "DiagnosticsHub_CollectionService",
+    "DisplayVersion": "17.14.36412",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Disassembler",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "Display Driver Uninstaller",
+    "DisplayVersion": "18.1.5.1",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "DLP EVM GUI 3.2.0.6",
+    "DisplayVersion": "3.2.0.6",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Firmware Updater x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "GenTL Consumer x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "GenTL Producer USB x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Git",
+    "DisplayVersion": "2.49.0",
+    "InstallLocation": "C:\\Program Files\\Git\\"
+  },
+  {
+    "DisplayName": "Google Chrome",
+    "DisplayVersion": "153.0.8010.53",
+    "InstallLocation": "C:\\Program Files\\Google\\Chrome\\Application"
+  },
+  {
+    "DisplayName": "KeyShot Studio",
+    "DisplayVersion": "2024",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Kits Configuration Installer",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Master8 (Version 1.9.2.0) ",
+    "DisplayVersion": null,
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Microsoft .NET Host - 6.0.36 (x64)",
+    "DisplayVersion": "48.144.23141",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft .NET Host - 8.0.31 (x64)",
+    "DisplayVersion": "64.124.58447",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft .NET Host FX Resolver - 6.0.36 (x64)",
+    "DisplayVersion": "48.144.23141",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft .NET Host FX Resolver - 8.0.31 (x64)",
+    "DisplayVersion": "64.124.58447",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft .NET Runtime - 6.0.36 (x64)",
+    "DisplayVersion": "48.144.23141",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft .NET Runtime - 8.0.31 (x64)",
+    "DisplayVersion": "64.124.58447",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft ASP.NET Core 6.0.36 - Shared Framework (x64)",
+    "DisplayVersion": "6.0.36.24516",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Microsoft ASP.NET Core 6.0.36 Shared Framework (x64)",
+    "DisplayVersion": "6.0.36.24516",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Edge",
+    "DisplayVersion": "154.0.4258.37",
+    "InstallLocation": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application"
+  },
+  {
+    "DisplayName": "Microsoft Edge WebView2 Runtime",
+    "DisplayVersion": "153.0.4234.48",
+    "InstallLocation": "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application"
+  },
+  {
+    "DisplayName": "Microsoft OneDrive",
+    "DisplayVersion": "26.163.0823.0004",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Microsoft Update Health Tools",
+    "DisplayVersion": "5.72.0.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2015-2022 Redistributable (x64) - 14.44.35211",
+    "DisplayVersion": "14.44.35211.0",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2015-2022 Redistributable (x86) - 14.44.35211",
+    "DisplayVersion": "14.44.35211.0",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2022 X64 Additional Runtime - 14.44.35211",
+    "DisplayVersion": "14.44.35211",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2022 X64 Debug Runtime - 14.44.35211",
+    "DisplayVersion": "14.44.35211",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2022 X64 Minimum Runtime - 14.44.35211",
+    "DisplayVersion": "14.44.35211",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2022 X86 Additional Runtime - 14.44.35211",
+    "DisplayVersion": "14.44.35211",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2022 X86 Debug Runtime - 14.44.35211",
+    "DisplayVersion": "14.44.35211",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual C++ 2022 X86 Minimum Runtime - 14.44.35211",
+    "DisplayVersion": "14.44.35211",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual Studio Code (User)",
+    "DisplayVersion": "1.121.0",
+    "InstallLocation": "C:\\Users\\ReiterU_PC\\AppData\\Local\\Programs\\Microsoft VS Code\\"
+  },
+  {
+    "DisplayName": "Microsoft Visual Studio Installer",
+    "DisplayVersion": "4.4.38.63497",
+    "InstallLocation": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\""
+  },
+  {
+    "DisplayName": "Microsoft Visual Studio Setup Configuration",
+    "DisplayVersion": "3.12.2140.44225",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Visual Studio Setup WMI Provider",
+    "DisplayVersion": "3.12.2140.44225",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Windows Application Compatibility Fix Database",
+    "DisplayVersion": null,
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Microsoft Windows Desktop Runtime - 6.0.36 (x64)",
+    "DisplayVersion": "6.0.36.34217",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Microsoft Windows Desktop Runtime - 6.0.36 (x64)",
+    "DisplayVersion": "48.144.23186",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Windows Desktop Runtime - 8.0.31 (x64)",
+    "DisplayVersion": "64.124.58455",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Microsoft Windows Desktop Runtime - 8.0.31 (x64)",
+    "DisplayVersion": "8.0.31.36421",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Miniforge3 25.3.0-1 (Python 3.12.9 64-bit)",
+    "DisplayVersion": "25.3.0-1",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "MSI Development Tools",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Notepad++ (64-bit x64)",
+    "DisplayVersion": "8.8.1",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Notion 7.22.0",
+    "DisplayVersion": "7.22.0",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "NPP Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NPP Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "nvcc",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NvCpl",
+    "DisplayVersion": "1.0",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\Display.NvApp.NvCPL.{92028AA2-CBB6-415B-863A-23EC9370D87B}"
+  },
+  {
+    "DisplayName": "NVFATBIN Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVIDIA AIUser Container",
+    "DisplayVersion": "1.48",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\NvContainer.AIUser.{32936CE2-1DA0-4D59-9E99-7B2409DB6188}"
+  },
+  {
+    "DisplayName": "NVIDIA App 11.0.7.247",
+    "DisplayVersion": "11.0.7.247",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\Display.NvApp.{EFDCE75E-AB52-4C52-B9C6-DB9D31F9217C}"
+  },
+  {
+    "DisplayName": "NVIDIA Backend",
+    "DisplayVersion": "11.0.7.247",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\Display.NvApp.NvBackend.{0D583FA4-246C-4CCC-BF14-CAE7C09C217E}"
+  },
+  {
+    "DisplayName": "NVIDIA Container",
+    "DisplayVersion": "1.48",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\NvContainer"
+  },
+  {
+    "DisplayName": "NVIDIA CUDA Development 12.8",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVIDIA CUDA Documentation 12.8",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVIDIA CUDA Runtime 12.8",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\CUDARuntimes_12.8.{4C437B73-1420-4A58-A0BA-455FC662778F}"
+  },
+  {
+    "DisplayName": "NVIDIA CUDA Toolkit 12.8",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVIDIA CUDA Visual Studio Integration 12.8",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVIDIA FrameView SDK 1.7.12227.37421622",
+    "DisplayVersion": "1.7.12227.37421622",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\FrameViewSDK"
+  },
+  {
+    "DisplayName": "NVIDIA Graphics Driver 610.88",
+    "DisplayVersion": "610.88",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\Display.Driver.{A5263281-C4B3-45F1-8F87-230266E0CB2D}"
+  },
+  {
+    "DisplayName": "NVIDIA Install Application",
+    "DisplayVersion": "2.1002.461.0",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\InstallerCore"
+  },
+  {
+    "DisplayName": "NVIDIA LocalSystem Container",
+    "DisplayVersion": "1.48",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\NvContainer.LocalSystem.{E9ED6127-0BBA-4F93-99E2-CD8AC332D9F0}"
+  },
+  {
+    "DisplayName": "NVIDIA MessageBus 3 for NvApp",
+    "DisplayVersion": "3.21",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\Display.NvApp.MessageBus.{DB15DBEF-12CB-428B-B5AA-736890F85D1C}"
+  },
+  {
+    "DisplayName": "NVIDIA Nsight Compute 2025.1.0",
+    "DisplayVersion": "25.1.0.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "NVIDIA Nsight Systems 2024.6.2",
+    "DisplayVersion": "24.6.2.225",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "NVIDIA Nsight Visual Studio Edition 2025.1.0.25002",
+    "DisplayVersion": "25.1.0.25002",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "NVIDIA NvDLISR",
+    "DisplayVersion": "1.0",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\NvDLISR.{B2B49300-20E3-42B6-AB97-10FB2DBFF403}"
+  },
+  {
+    "DisplayName": "NVIDIA PhysX System Software 9.23.1019",
+    "DisplayVersion": "9.23.1019",
+    "InstallLocation": "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX"
+  },
+  {
+    "DisplayName": "NVIDIA Session Container",
+    "DisplayVersion": "1.48",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\NvContainer.Session.{37456365-791C-4215-B9B9-7C72997D777F}"
+  },
+  {
+    "DisplayName": "NVIDIA ShadowPlay 11.0.7.0",
+    "DisplayVersion": "11.0.7.0",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\ShadowPlay"
+  },
+  {
+    "DisplayName": "NVIDIA Telemetry Client",
+    "DisplayVersion": "19.5.13.0",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\NvTelemetry"
+  },
+  {
+    "DisplayName": "NVIDIA User Container",
+    "DisplayVersion": "1.48",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\NvContainer.User.{18456966-AB1E-4997-8605-BB4756CABD62}"
+  },
+  {
+    "DisplayName": "NVIDIA Virtual Audio 4.65.0.12",
+    "DisplayVersion": "4.65.0.12",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\VirtualAudio.Driver.{339BF417-0385-4A52-A932-884B54017BA0}"
+  },
+  {
+    "DisplayName": "NVIDIA Watchdog Plugin for NvContainer",
+    "DisplayVersion": "1.48",
+    "InstallLocation": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\NvPlugin.Watchdog.{F125C5CD-9415-4C11-A1F2-1BDB120E2B76}"
+  },
+  {
+    "DisplayName": "NVJITLINK Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVJPEG Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVJPEG Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVML Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "nvprune",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVRTC Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVRTC Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "NVTX Development",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "Occupancy Calculator",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "OPENCL Runtime",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "PL-2303 USB-to-Serial",
+    "DisplayVersion": "1.2.10",
+    "InstallLocation": "C:\\Program Files (x86)\\Prolific Technology INC\\PL-2303 USB-to-Serial"
+  },
+  {
+    "DisplayName": "Product Documentation x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Promontory_GPIO Driver",
+    "DisplayVersion": "3.0.5.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon .NET Runtime Environment x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon .NET Runtime Environment x86",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon .NET8 Runtime Environment x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "pylon AI x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon C Runtime Environment x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "pylon Data Processing Runtime x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "pylon Data Processing vTools x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "pylon pylon Software Suite product info",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon Qt 6.5.3 Runtime x64",
+    "DisplayVersion": "6.5.3",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon Qt Prerequisites x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "pylon Software Suite 26.02.1.17903",
+    "DisplayVersion": "26.2.1.17903",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Pylon Viewer Workbench Plug-In x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon Viewer x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "pylon vTools Creator Adapter x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Pylon.Core.RuntimeEnvironment x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Realtek Ethernet Controller Driver",
+    "DisplayVersion": "10.74.1128.2024",
+    "InstallLocation": "C:\\Program Files (x86)\\Realtek\\NICDRV_8169"
+  },
+  {
+    "DisplayName": "Realtek USB Audio",
+    "DisplayVersion": "6.4.0.2413",
+    "InstallLocation": "C:\\Program Files (x86)\\Realtek\\Audio"
+  },
+  {
+    "DisplayName": "Redist Drivers x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "RemoveLegacyModules",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "RyzenMasterSDK",
+    "DisplayVersion": "1.2.3.5",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "SDK ARM64 Additions",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "SDK ARM64 Redistributables",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "SDKs Data Processing x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "SDKs x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Siemens Connector",
+    "DisplayVersion": "24.06.500.0",
+    "InstallLocation": "C:\\Program Files\\Siemens\\"
+  },
+  {
+    "DisplayName": "Siemens Connector",
+    "DisplayVersion": "24.06.500.0",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Siemens Solid Edge 2025",
+    "DisplayVersion": "225.00.01004",
+    "InstallLocation": "C:\\Program Files\\Siemens\\Solid Edge 2025\\"
+  },
+  {
+    "DisplayName": "TeraCopy",
+    "DisplayVersion": "4.0.3.2",
+    "InstallLocation": "C:\\Program Files\\TeraCopy\\"
+  },
+  {
+    "DisplayName": "U3V x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Universal CRT Extension SDK",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Universal CRT Headers Libraries and Sources",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Universal CRT Redistributable",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Universal CRT Redistributable",
+    "DisplayVersion": "10.0.26624",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Universal CRT Tools x64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Universal CRT Tools x86",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Universal General MIDI DLS Extension SDK",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "USB Camera Driver",
+    "DisplayVersion": "4.4.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "USB Configurator x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "USB Transport Layer x64",
+    "DisplayVersion": "26.02.1.17903",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vcpp_crt.redist.clickonce",
+    "DisplayVersion": "14.44.35211",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Visual Profiler",
+    "DisplayVersion": "12.8",
+    "InstallLocation": "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+  },
+  {
+    "DisplayName": "Visual Studio Build Tools 2022",
+    "DisplayVersion": "17.14.28",
+    "InstallLocation": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools"
+  },
+  {
+    "DisplayName": "VLC media player",
+    "DisplayVersion": "3.0.23",
+    "InstallLocation": "C:\\Program Files\\VideoLAN\\VLC"
+  },
+  {
+    "DisplayName": "VS Script Debugging Common",
+    "DisplayVersion": "17.0.157.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_communitymsires",
+    "DisplayVersion": "17.14.36015",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_communitysharedmsi",
+    "DisplayVersion": "17.14.36025",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_communityx64msi",
+    "DisplayVersion": "17.14.36025",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_CoreEditorFonts",
+    "DisplayVersion": "17.7.40001",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_filehandler_amd64",
+    "DisplayVersion": "17.14.36024",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_filehandler_x86",
+    "DisplayVersion": "17.14.36024",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_FileTracker_Singleton",
+    "DisplayVersion": "17.14.36015",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_githubprotocolhandlermsi",
+    "DisplayVersion": "17.14.36015",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_minshellinteropmsi",
+    "DisplayVersion": "17.14.36015",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_minshellinteropsharedmsi",
+    "DisplayVersion": "17.14.36015",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_minshellmsi",
+    "DisplayVersion": "17.14.36301",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_minshellmsires",
+    "DisplayVersion": "17.14.36015",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_minshellsharedmsi",
+    "DisplayVersion": "17.14.36024",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "vs_vswebprotocolselectormsi",
+    "DisplayVersion": "17.14.36323",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinAppDeploy",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows App Certification Kit Native Components",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows App Certification Kit SupportedApiList x86",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows App Certification Kit x64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows App Certification Kit x64 (OnecoreUAP)",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows Desktop Extension SDK",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows Desktop Extension SDK Contracts",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows Driver Package - Basler (plnu3v) PylonUSB  (07/19/2019 11.3.0)",
+    "DisplayVersion": "07/19/2019 11.3.0",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Windows IoT Extension SDK",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows IoT Extension SDK Contracts",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows Mobile Extension SDK",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows Mobile Extension SDK Contracts",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK AddOn",
+    "DisplayVersion": "10.1.0.0",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK ARM64 Desktop Tools",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Headers arm64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Headers x64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Headers x86",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Libs arm64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Libs x64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Libs x86",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Tools arm64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Tools x64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Desktop Tools x86",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK DirectX x64 Remote",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK DirectX x86 Remote",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK EULA",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Facade Windows WinMD Versioned",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps Contracts",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps DirectX x86 Remote",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps Headers",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps Headers OnecoreUap",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps Libs",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps Metadata",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Apps Tools",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK for Windows Store Managed Apps Libs",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Modern Non-Versioned Developer Tools",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Modern Versioned Developer Tools",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK OnecoreUap Headers arm64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK OnecoreUap Headers x64",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK OnecoreUap Headers x86",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Redistributables",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows SDK Signing Tools",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows Software Development Kit - Windows 10.0.26100.7705",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": null
+  },
+  {
+    "DisplayName": "Windows Team Extension SDK",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "Windows Team Extension SDK Contracts",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense Desktop - en-us",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense Desktop - Other Languages",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense IoT - en-us",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense IoT - Other Languages",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense Mobile - en-us",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense PPI - en-us",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense PPI - Other Languages",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense UAP - en-us",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  },
+  {
+    "DisplayName": "WinRT Intellisense UAP - Other Languages",
+    "DisplayVersion": "10.1.26100.7705",
+    "InstallLocation": ""
+  }
+]

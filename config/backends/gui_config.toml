@@ -1,0 +1,14 @@
+# GUI client defaults. See architecture.md: E03, E08, E14, A03, A10.
+# Durations ending in _s are seconds.
+format_version = 1
+# E14: fixed policy lives in contracts/policy/gui_policy.toml; versions must match.
+policy_version = 4
+
+[controller_reconnect]
+# Retry immediately, then after 1, 2, and 5 seconds. Continue at the last delay
+# until connected or the GUI is intentionally closed. Reset after success.
+retry_delays_s = [0, 1, 2, 5]
+
+# Every reconnect starts as observer; Take control is explicit after synchronization.
+# E03 defines warning contents. There is no automatic GUI relaunch.
+

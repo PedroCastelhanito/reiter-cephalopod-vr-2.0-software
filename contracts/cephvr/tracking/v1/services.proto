@@ -1,0 +1,22 @@
+syntax = "proto3";
+package cephvr.tracking.v1;
+import "cephvr/control/v1/types.proto";
+import "cephvr/control/v1/services.proto";
+import "cephvr/acquisition/v1/messages.proto";
+import "cephvr/tracking/v1/preparation.proto";
+
+// Hosted on the existing tracking endpoint alongside BackendService.
+// Data attachment is control metadata, never image data.
+service TrackingPreparationService {
+  rpc BindData(TrackingDataBinding) returns (cephvr.control.v1.CommandAdmission);
+  rpc GetPreparation(TrackingPreparationQuery) returns (TrackingPreparationState);
+}
+message TrackingDataBinding {
+  cephvr.control.v1.BackendCommand command = 1;
+  uint64 configuration_revision = 2;
+  string preparation_generation = 3;
+  cephvr.acquisition.v1.FrameBufferAttachment frames = 4;
+}
+message TrackingPreparationQuery {
+  cephvr.control.v1.BackendCommand command = 1;
+}

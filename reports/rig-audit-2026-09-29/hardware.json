@@ -1,0 +1,1774 @@
+{
+  "captured_at": "2026-09-29T14:31:22.5954002+09:00",
+  "os": {
+    "Caption": "Microsoft Windows 11 Pro",
+    "Version": "10.0.26200",
+    "BuildNumber": "26200",
+    "OSArchitecture": "64-bit"
+  },
+  "cpu": {
+    "Name": "AMD Ryzen 9 9950X 16-Core Processor            ",
+    "NumberOfCores": 16,
+    "NumberOfLogicalProcessors": 32
+  },
+  "system": {
+    "Manufacturer": "Micro-Star International Co., Ltd.",
+    "Model": "MS-7E49",
+    "TotalPhysicalMemory": 66094223360
+  },
+  "physical_memory": [
+    {
+      "Capacity": 34359738368,
+      "Speed": 5600,
+      "ConfiguredClockSpeed": 5600,
+      "Manufacturer": "Micron Technology",
+      "PartNumber": "CP32G56C46U5.M16D1            "
+    },
+    {
+      "Capacity": 34359738368,
+      "Speed": 5600,
+      "ConfiguredClockSpeed": 5600,
+      "Manufacturer": "Micron Technology",
+      "PartNumber": "CP32G56C46U5.M16D1            "
+    }
+  ],
+  "disks": {
+    "FriendlyName": "CT2000P3PSSD8",
+    "MediaType": "SSD",
+    "BusType": "NVMe",
+    "Size": 2000398934016,
+    "HealthStatus": "Healthy"
+  },
+  "volumes": [
+    {
+      "DriveLetter": "C",
+      "FileSystem": "NTFS",
+      "Size": 1999337680896,
+      "SizeRemaining": 1483799453696
+    },
+    {
+      "DriveLetter": null,
+      "FileSystem": "NTFS",
+      "Size": 937422848,
+      "SizeRemaining": 108064768
+    }
+  ],
+  "network": [
+    {
+      "Name": "Ethernet 2",
+      "InterfaceDescription": "Realtek PCIe 5GbE Family Controller",
+      "Status": "Up",
+      "LinkSpeed": "100 Mbps"
+    },
+    {
+      "Name": "Wi-Fi 3",
+      "InterfaceDescription": "Qualcomm FastConnect 7800 Wi-Fi 7 High Band Simultaneous (HBS) Network Adapter",
+      "Status": "Not Present",
+      "LinkSpeed": "0 bps"
+    },
+    {
+      "Name": "Ethernet",
+      "InterfaceDescription": "Realtek Gaming 2.5GbE Family Controller",
+      "Status": "Up",
+      "LinkSpeed": "2.5 Gbps"
+    },
+    {
+      "Name": "Wi-Fi 2",
+      "InterfaceDescription": "Qualcomm FastConnect 7800 Wi-Fi 7 High Band Simultaneous (HBS) Network Adapter",
+      "Status": "Disconnected",
+      "LinkSpeed": "0 bps"
+    },
+    {
+      "Name": "Wi-Fi",
+      "InterfaceDescription": "Qualcomm FastConnect 7800 Wi-Fi 7 High Band Simultaneous (HBS) Network Adapter",
+      "Status": "Up",
+      "LinkSpeed": "286.8 Mbps"
+    }
+  ],
+  "devices": [
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_05E3&PID_0610\\A&E180CC8&0&1"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "AMD USB 2.0 eXtensible Host Controller - 1.20 (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_15B8&SUBSYS_7E491462&REV_00\\4&35EC6657&0&0043"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Motherboard resources",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C02\\0"
+    },
+    {
+      "Class": "PrintQueue",
+      "FriendlyName": "Microsoft Print to PDF",
+      "Status": "OK",
+      "InstanceId": "SWD\\PRINTENUM\\{5DA12D9A-03FD-40DC-808D-9F558FA08EB8}"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Programmable interrupt controller",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0000\\4&83F3165&0"
+    },
+    {
+      "Class": "AudioEndpoint",
+      "FriendlyName": "ITE6801 (NVIDIA High Definition Audio)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{4974D70E-AC7D-413F-AB03-54BE1E790E50}"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E4&SUBSYS_00000000&REV_00\\3&11583659&0&C4"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Root Hub (USB 3.0)",
+      "Status": "OK",
+      "InstanceId": "USB\\ROOT_HUB30\\9&263A9949&0&0"
+    },
+    {
+      "Class": "AudioProcessingObject",
+      "FriendlyName": "Voice Clarity",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\{96BEDF2C-18CB-4A15-B821-5E95ED0FEA61}#VOCAEFFECTPACK&1&15BF0416&0"
+    },
+    {
+      "Class": "MEDIA",
+      "FriendlyName": "NVIDIA High Definition Audio",
+      "Status": "OK",
+      "InstanceId": "HDAUDIO\\FUNC_01&VEN_10DE&DEV_00AD&SUBSYS_10DE0000&REV_1001\\5&2479B8AE&0&0001"
+    },
+    {
+      "Class": "PrintQueue",
+      "FriendlyName": "Root Print Queue",
+      "Status": "OK",
+      "InstanceId": "SWD\\PRINTENUM\\PRINTQUEUES"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "AMD GPIO Controller",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AMDIF031\\0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "AMD GPIO Controller",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AMDIF031\\2"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\0"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\1"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\2"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\3"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\4"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\5"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\6"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\7"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\8"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\9"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\A"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\B"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\C"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\D"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\E"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\F"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "AMD USB 3.10 eXtensible Host Controller - 1.20 (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_15B6&SUBSYS_7E491462&REV_00\\4&1079050D&0&0341"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Volume Manager",
+      "Status": "OK",
+      "InstanceId": "ROOT\\VOLMGR\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "High precision event timer",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0103\\2&DABA3FF&0"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "USB Input Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_062A&PID_4101&MI_01\\B&2238F7EE&0&0001"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\7&214E04BA&0&2000400011"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 2",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_01\\B&190AB8AE&0&0001"
+    },
+    {
+      "Class": "Volume",
+      "FriendlyName": "Volume",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUME\\{EBEAAF97-2EA8-11F0-8EF5-806E6F6E6963}#0000000007500000"
+    },
+    {
+      "Class": "SoftwareDevice",
+      "FriendlyName": "Wi-Fi",
+      "Status": "OK",
+      "InstanceId": "SWD\\RADIO\\{1862079E-103C-40A1-AD8B-028854A18E2C}"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (PPPOE)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_PPPOEMINIPORT"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2676&PID_BA05\\40747103"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "NVIDIA USB Type-C Port Policy Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10DE&DEV_1AD7&SUBSYS_12A410DE&REV_A1\\4&1EBADFA3&0&030B"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DD&SUBSYS_14627E49&REV_00\\3&11583659&0&41"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DD&SUBSYS_14627E49&REV_00\\3&11583659&0&43"
+    },
+    {
+      "Class": "Mouse",
+      "FriendlyName": "HID-compliant mouse",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_062A&PID_4101&MI_01&COL01\\C&1DE3FAD1&0&0000"
+    },
+    {
+      "Class": "SoftwareComponent",
+      "FriendlyName": "Realtek Audio Universal Service",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\{C3A63EDD-2D27-4B66-B155-5E94B43D926A}#REALTEKSRV&A&16C6EB70&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Basic Display Driver",
+      "Status": "OK",
+      "InstanceId": "ROOT\\BASICDISPLAY\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&000011"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E1&SUBSYS_00000000&REV_00\\3&11583659&0&C1"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "AMD Controller Emulation",
+      "Status": "OK",
+      "InstanceId": "ROOT\\AMDXE\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Hypervisor Service",
+      "Status": "OK",
+      "InstanceId": "ROOT\\HVSERVICE\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "AMD GPIO Controller",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AMDI0030\\0"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB4 Root Router (1.0)",
+      "Status": "OK",
+      "InstanceId": "USB4\\ROOT_DEVICE_ROUTER&VID_1B21&PID_2425\\7&2434227F&0&0"
+    },
+    {
+      "Class": "Keyboard",
+      "FriendlyName": "HID Keyboard Device",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_062A&PID_4101&MI_00\\C&6206E8C&0&0000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic SuperSpeed USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_05E3&PID_0626\\A&33FCA8D6&0&1"
+    },
+    {
+      "Class": "SoftwareDevice",
+      "FriendlyName": "Microsoft RRAS Root Enumerator",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\{5E259276-BC7E-40E3-B93B-8F89B5F3ABC0}"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "ACPI Processor Container Device",
+      "Status": "OK",
+      "InstanceId": "ACPI\\ACPI0010\\1"
+    },
+    {
+      "Class": "MEDIA",
+      "FriendlyName": "NVIDIA High Definition Audio",
+      "Status": "OK",
+      "InstanceId": "HDAUDIO\\FUNC_01&VEN_10DE&DEV_0091&SUBSYS_10DE12A4&REV_1001\\5&366C8780&0&0001"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (PPTP)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_PPTPMINIPORT"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Root Hub (USB 3.0)",
+      "Status": "OK",
+      "InstanceId": "USB\\ROOT_HUB30\\5&2EA60154&0&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Upstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F4&SUBSYS_33281B21&REV_01\\4&2F288972&0&0011"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Hyper-V Virtualization Infrastructure Driver",
+      "Status": "OK",
+      "InstanceId": "ROOT\\VID\\0000"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (IKEv2)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_AGILEVPNMINIPORT"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Composite Bus Enumerator",
+      "Status": "OK",
+      "InstanceId": "ROOT\\COMPOSITEBUS\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Virtual Drive Enumerator",
+      "Status": "OK",
+      "InstanceId": "ROOT\\VDRVROOT\\0000"
+    },
+    {
+      "Class": "PylonUSB",
+      "FriendlyName": "Basler ace USB3 Vision Camera",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2676&PID_BA02&MI_00\\9&3B27F301&0&0000"
+    },
+    {
+      "Class": "SCSIAdapter",
+      "FriendlyName": "Microsoft Storage Spaces Controller",
+      "Status": "OK",
+      "InstanceId": "ROOT\\SPACEPORT\\0000"
+    },
+    {
+      "Class": "Volume",
+      "FriendlyName": "Volume",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUME\\{EBEAAF97-2EA8-11F0-8EF5-806E6F6E6963}#0000000006500000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Root Hub (USB 3.0)",
+      "Status": "OK",
+      "InstanceId": "USB\\ROOT_HUB30\\5&36E2663B&0&0"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 1",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_00\\B&2BC46953&0&0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E6&SUBSYS_00000000&REV_00\\3&11583659&0&C6"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "Microsoft Kernel Debug Network Adapter",
+      "Status": "OK",
+      "InstanceId": "ROOT\\KDNIC\\0000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor MFG",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_02\\B&190AB8AE&0&0002"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT1"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT2"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT5"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT6"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT7"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT8"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT9"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&200011"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor MFG",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_02\\B&C68A89C&0&0002"
+    },
+    {
+      "Class": "MEDIA",
+      "FriendlyName": "AMD Streaming Audio Device",
+      "Status": "OK",
+      "InstanceId": "ROOT\\AMDSAFD&FUN_01&REV_01\\0000"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "USB Input Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0DB0&PID_0076\\7E4924092003"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "HID-compliant consumer control device",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_062A&PID_4101&MI_01&COL02\\C&1DE3FAD1&0&0001"
+    },
+    {
+      "Class": "MEDIA",
+      "FriendlyName": "Realtek USB Audio",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0DB0&PID_0B58&MI_00\\9&2E26AA1E&0&0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "System timer",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0100\\4&83F3165&0"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 2",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_01\\B&C68A89C&0&0001"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "AMD USB 3.20 eXtensible Host Controller - 1.10 (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43FD&SUBSYS_11421B21&REV_01\\8&801A6BC&0&006000400011"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "Qualcomm FastConnect 7800 Wi-Fi 7 High Band Simultaneous (HBS) Network Adapter",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_17CB&DEV_1107&SUBSYS_E0F7105B&REV_01\\8&2095BC61&0&003000400011"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB4(TM) Host Router (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1B21&DEV_2425&SUBSYS_24251B21&REV_01&USB4_MS_CM\\451ECAFFFF5177A000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 1",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_00\\B&C68A89C&0&0000"
+    },
+    {
+      "Class": "Computer",
+      "FriendlyName": "Micro-Star International Co., Ltd. MS-7E49",
+      "Status": "OK",
+      "InstanceId": "SWD\\COMPUTER\\MFG_MICRO-STAR_INTERNATIONAL_CO.__LTD.&FAM_TO_BE_FILLED_BY_O.E.M.&PROD_MS-7E49&SKU_TO_BE_FILLED_BY_O.E.M."
+    },
+    {
+      "Class": "Display",
+      "FriendlyName": "NVIDIA GeForce RTX 2080 Ti",
+      "Status": "Error",
+      "InstanceId": "PCI\\VEN_10DE&DEV_1E07&SUBSYS_12A410DE&REV_A1\\4&1EBADFA3&0&000B"
+    },
+    {
+      "Class": "SoftwareComponent",
+      "FriendlyName": "AMD-OpenCL User Mode Driver",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\AMDOCL&5&1209FBCF&1"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "AMD USB 3.10 eXtensible Host Controller - 1.10 (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43FD&SUBSYS_11421B21&REV_01\\6&2405D126&0&00600011"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Root Hub (USB 3.0)",
+      "Status": "OK",
+      "InstanceId": "USB\\ROOT_HUB30\\7&2F44DE9B&0&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&300011"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E3&SUBSYS_00000000&REV_00\\3&11583659&0&C3"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "NVIDIA USB 3.10 eXtensible Host Controller - 1.10 (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10DE&DEV_1AD6&SUBSYS_12A410DE&REV_A1\\4&1EBADFA3&0&020B"
+    },
+    {
+      "Class": "SoftwareComponent",
+      "FriendlyName": "Realtek Asio Component",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\{C3A63EDD-2D27-4B66-B155-5E94B43D926A}#REALTEKASIO&A&16C6EB70&0"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "ASMedia USB 3.20 eXtensible Host Controller - 1.20 (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1B21&DEV_2426&SUBSYS_24261B21&REV_01\\451ECAFFFF5177A000"
+    },
+    {
+      "Class": "AudioEndpoint",
+      "FriendlyName": "ITE6801 (NVIDIA High Definition Audio)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{5BD00F37-6E9C-4FDD-B027-0CD73B2862E8}"
+    },
+    {
+      "Class": "AudioProcessingObject",
+      "FriendlyName": "Realtek Audio Effects Component (USB)",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\{C3A63EDD-2D27-4B66-B155-5E94B43D926A}#REALTEKAPO&A&16C6EB70&0"
+    },
+    {
+      "Class": "HDC",
+      "FriendlyName": "Standard SATA AHCI Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F6&SUBSYS_10621B21&REV_01\\8&12CE12F2&0&006800400011"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "HID-compliant vendor-defined device",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_0DB0&PID_0B58&MI_07\\A&1BE43B22&0&0000"
+    },
+    {
+      "Class": "SoftwareComponent",
+      "FriendlyName": "AMD-Dynamic Audio Noise Supression",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\AMDFDANS&5&1209FBCF&1"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "UMBus Root Bus Enumerator",
+      "Status": "OK",
+      "InstanceId": "ROOT\\UMBUS\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&280011"
+    },
+    {
+      "Class": "SoftwareDevice",
+      "FriendlyName": "Microsoft Radio Device Enumeration Bus",
+      "Status": "OK",
+      "InstanceId": "SWD\\RADIO\\{3DB5895D-CC28-44B3-AD3D-6F01A782B8D2}"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT10"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT11"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT12"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT13"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT14"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT15"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT16"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT17"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT18"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT19"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT20"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT21"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT22"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT23"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT24"
+    },
+    {
+      "Class": "VolumeSnapshot",
+      "FriendlyName": "Generic volume shadow copy",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUMESNAPSHOT\\HARDDISKVOLUMESNAPSHOT25"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "System board",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C01\\C8"
+    },
+    {
+      "Class": "SoftwareDevice",
+      "FriendlyName": "Microsoft Device Association Root Enumerator",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSDAS\\{CE958E9A-424F-4C88-86F4-11314821E75A}"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\7&214E04BA&0&6800400011"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_05E3&PID_0610\\9&284F11C1&0&2"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_05E3&PID_0610\\9&284F11C1&0&4"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "High Definition Audio Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10DE&DEV_10F7&SUBSYS_12A410DE&REV_A1\\4&1EBADFA3&0&010B"
+    },
+    {
+      "Class": "Computer",
+      "FriendlyName": "ACPI x64-based PC",
+      "Status": "OK",
+      "InstanceId": "ROOT\\ACPI_HAL\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Windows Management Interface for ACPI",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C14\\WMIC"
+    },
+    {
+      "Class": "AudioEndpoint",
+      "FriendlyName": "ITE6801 (NVIDIA High Definition Audio)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{03453103-60C9-4A63-B6EA-05642FD55F33}"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (Network Monitor)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_NDISWANBH"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (IP)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_NDISWANIP"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 2",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_01\\B&2BC46953&0&0001"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\7&214E04BA&0&4000400011"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Windows Management Interface for ACPI",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C14\\AOD"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&400011"
+    },
+    {
+      "Class": "AudioEndpoint",
+      "FriendlyName": "Realtek Digital Output (Realtek USB Audio)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{354470B2-9C49-4221-A2CF-98BAD8E93EB2}"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Root Hub (USB 3.0)",
+      "Status": "OK",
+      "InstanceId": "USB\\ROOT_HUB30\\5&32BFABEE&0&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Complex",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0A08\\0"
+    },
+    {
+      "Class": "Mouse",
+      "FriendlyName": "HID-compliant mouse",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_09EB&PID_0131&MI_01&COL01\\A&13791257&0&0000"
+    },
+    {
+      "Class": "SoftwareDevice",
+      "FriendlyName": "Bluetooth",
+      "Status": "OK",
+      "InstanceId": "SWD\\RADIO\\BLUETOOTH_4C23380B0F64"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E0&SUBSYS_00000000&REV_00\\3&11583659&0&C0"
+    },
+    {
+      "Class": "Ports",
+      "FriendlyName": "Arduino Uno (COM8)",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2341&PID_0043\\1344A474130351F057D6"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&380011"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "HID-compliant system controller",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_062A&PID_4101&MI_01&COL03\\C&1DE3FAD1&0&0002"
+    },
+    {
+      "Class": "Ports",
+      "FriendlyName": "PL2303HXA PHASED OUT SINCE 2012. PLEASE CONTACT YOUR SUPPLIER.",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_067B&PID_2303\\9&284F11C1&0&3"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "System speaker",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0800\\4&83F3165&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft ACPI-Compliant System",
+      "Status": "OK",
+      "InstanceId": "ACPI_HAL\\PNP0C08\\0"
+    },
+    {
+      "Class": null,
+      "FriendlyName": null,
+      "Status": "OK",
+      "InstanceId": "HTREE\\ROOT\\0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Basic Render Driver",
+      "Status": "OK",
+      "InstanceId": "ROOT\\BASICRENDER\\0000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_062A&PID_4101\\A&243F7585&0&2"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (DELL S2721HS)",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DEL41FA\\5&1209FBCF&1&UID524"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (SSTP)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_SSTPMINIPORT"
+    },
+    {
+      "Class": "Display",
+      "FriendlyName": "AMD Radeon(TM) Graphics",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1002&DEV_13C0&SUBSYS_7E491462&REV_C1\\4&1079050D&0&0041"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1B21&DEV_2423&SUBSYS_24231B21&REV_01\\451ECAFFFF5177A000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1B21&DEV_2423&SUBSYS_24231B21&REV_01\\451ECAFFFF5177A008"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1B21&DEV_2423&SUBSYS_24231B21&REV_01\\451ECAFFFF5177A010"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1B21&DEV_2423&SUBSYS_24231B21&REV_01\\451ECAFFFF5177A018"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "USB Input Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_09EB&PID_0131&MI_00\\9&1367C0BD&0&0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft UEFI-Compliant System",
+      "Status": "OK",
+      "InstanceId": "ACPI_HAL\\UEFI\\0"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "HID-compliant vendor-defined device",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_0DB0&PID_0076\\B&397FE0DE&0&0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard ISA bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_790E&SUBSYS_7E491462&REV_51\\3&11583659&0&A3"
+    },
+    {
+      "Class": "SoftwareComponent",
+      "FriendlyName": "AMD-Windows Support Components",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\AMDWIN&5&1209FBCF&1"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2676&PID_BA02\\40065509"
+    },
+    {
+      "Class": "SecurityDevices",
+      "FriendlyName": "Trusted Platform Module 2.0",
+      "Status": "OK",
+      "InstanceId": "ACPI\\MSFT0101\\1"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "ACPI Fixed Feature Button",
+      "Status": "OK",
+      "InstanceId": "ACPI\\FIXEDBUTTON\\2&DABA3FF&0"
+    },
+    {
+      "Class": "DiskDrive",
+      "FriendlyName": "CT2000P3PSSD8",
+      "Status": "OK",
+      "InstanceId": "SCSI\\DISK&VEN_NVME&PROD_CT2000P3PSSD8\\5&1BB6FEA5&0&000000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic SuperSpeed USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_05E3&PID_0626\\9&EC06213&0&2"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft Windows Management Interface for ACPI",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C14\\MFBI"
+    },
+    {
+      "Class": "AudioEndpoint",
+      "FriendlyName": "ITE6801 (NVIDIA High Definition Audio)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{01A2F762-0DE3-4392-A51F-2B713A2715B2}"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Motherboard resources",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C02\\14"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Motherboard resources",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C02\\15"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14D8&SUBSYS_7E491462&REV_00\\3&11583659&0&00"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Motherboard resources",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C02\\8B"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Motherboard resources",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C02\\8C"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Direct memory access controller",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0200\\4&83F3165&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "High Definition Audio Bus",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1002&DEV_1640&SUBSYS_7E491462&REV_00\\4&1079050D&0&0141"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&600011"
+    },
+    {
+      "Class": "Keyboard",
+      "FriendlyName": "HID Keyboard Device",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_09EB&PID_0131&MI_00\\A&37505019&0&0000"
+    },
+    {
+      "Class": "SecurityDevices",
+      "FriendlyName": "AMD PSP 11.0 Device",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_1649&SUBSYS_7E491462&REV_00\\4&1079050D&0&0241"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E5&SUBSYS_00000000&REV_00\\3&11583659&0&C5"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_09EA&PID_0130\\MSFT2000000001"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "AMD SMBUS",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_790B&SUBSYS_7E491462&REV_71\\3&11583659&0&A0"
+    },
+    {
+      "Class": null,
+      "FriendlyName": "USB4 Virtual power coordination device",
+      "Status": "OK",
+      "InstanceId": "USB4\\VIRTUAL_POWER_PDO\\7&2434227F&0&0"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor MFG",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_02\\B&2BC46953&0&0002"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_09EB&PID_0131\\00000001"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "System CMOS/real time clock",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0B00\\4&83F3165&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "High Definition Audio Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10DE&DEV_22EB&SUBSYS_000010DE&REV_A1\\4&3A98DFCF&0&0109"
+    },
+    {
+      "Class": "Volume",
+      "FriendlyName": "Volume",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUME\\{EBEAAF97-2EA8-11F0-8EF5-806E6F6E6963}#000001D189200000"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "HID-compliant system controller",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_09EB&PID_0131&MI_01&COL02\\A&13791257&0&0001"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\7&214E04BA&0&0000400011"
+    },
+    {
+      "Class": "MEDIA",
+      "FriendlyName": "NVIDIA Virtual Audio Device (Wave Extensible) (WDM)",
+      "Status": "OK",
+      "InstanceId": "ROOT\\UNNAMED_DEVICE\\0000"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "HID-compliant device",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_062A&PID_4101&MI_01&COL04\\C&1DE3FAD1&0&0003"
+    },
+    {
+      "Class": "SoftwareDevice",
+      "FriendlyName": "Microsoft GS Wavetable Synth",
+      "Status": "OK",
+      "InstanceId": "SWD\\MMDEVAPI\\MICROSOFTGSWAVETABLESYNTH"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "ACPI Power Button",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C0C\\AA"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "USB Input Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0DB0&PID_0B58&MI_07\\9&2E26AA1E&0&0007"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor MFG",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_02\\B&6510809&0&0002"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0BDA&PID_5420\\8&5D1DE9F&0&9"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic SuperSpeed USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0BDA&PID_0411\\9&EC06213&0&1"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4352"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4353"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4355"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4357"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 2",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_01\\B&6510809&0&0001"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "MSI Software Component Interface",
+      "Status": "OK",
+      "InstanceId": "ACPI\\MBAD0002\\1"
+    },
+    {
+      "Class": "HDC",
+      "FriendlyName": "Standard SATA AHCI Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F6&SUBSYS_10621B21&REV_01\\6&2754A2B&0&00680011"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "Realtek Gaming 2.5GbE Family Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10EC&DEV_8125&SUBSYS_7E491462&REV_05\\01000000684CE00000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E2&SUBSYS_00000000&REV_00\\3&11583659&0&C2"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "USB Input Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_09EB&PID_0131&MI_01\\9&1367C0BD&0&0001"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 1",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_00\\B&6510809&0&0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160E7113&0&680011"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "AMD Crash Defender",
+      "Status": "OK",
+      "InstanceId": "ROOT\\AMDLOG\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "NDIS Virtual Network Adapter Enumerator",
+      "Status": "OK",
+      "InstanceId": "ROOT\\NDISVIRTUALBUS\\0000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "AMD USB 3.10 eXtensible Host Controller - 1.20 (Microsoft)",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_15B7&SUBSYS_7E491462&REV_00\\4&1079050D&0&0441"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\7&214E04BA&0&3000400011"
+    },
+    {
+      "Class": "PrintQueue",
+      "FriendlyName": "Solid Edge PS Printer 3.0",
+      "Status": "OK",
+      "InstanceId": "SWD\\PRINTENUM\\{273CF8BA-C121-4AEB-B822-CAC6D2F5FD17}"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DA&SUBSYS_00000000&REV_00\\3&11583659&0&08"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DA&SUBSYS_00000000&REV_00\\3&11583659&0&10"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DA&SUBSYS_00000000&REV_00\\3&11583659&0&18"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DA&SUBSYS_00000000&REV_00\\3&11583659&0&20"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DA&SUBSYS_00000000&REV_00\\3&11583659&0&40"
+    },
+    {
+      "Class": "Firmware",
+      "FriendlyName": "System Firmware",
+      "Status": "OK",
+      "InstanceId": "UEFI\\RES_{6A36AB4A-D43D-4747-8C25-A5194448C8DE}\\0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Upstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1B21&DEV_2421&SUBSYS_24211B21&REV_01\\U451ECAFFFF5177A000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic SuperSpeed USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0BDA&PID_0420\\8&5D1DE9F&0&3"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Upstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F4&SUBSYS_33281B21&REV_01\\6&2F505A94&0&00400011"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Motherboard resources",
+      "Status": "OK",
+      "InstanceId": "ACPI\\PNP0C02\\700"
+    },
+    {
+      "Class": "Bluetooth",
+      "FriendlyName": "Qualcomm FastConnect 7800 Dual Bluetooth Adapter",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0489&PID_E10A\\8&5D1DE9F&0&15"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Downstream Switch Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\7&214E04BA&0&6000400011"
+    },
+    {
+      "Class": "Display",
+      "FriendlyName": "NVIDIA GeForce RTX 5060 Ti",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10DE&DEV_2D04&SUBSYS_53511462&REV_A1\\A91A4213F72DB04800"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Root Hub (USB 3.0)",
+      "Status": "OK",
+      "InstanceId": "USB\\ROOT_HUB30\\7&4607005&0&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Microsoft System Management BIOS Driver",
+      "Status": "OK",
+      "InstanceId": "ROOT\\MSSMBIOS\\0000"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "USB Input Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_062A&PID_4101&MI_00\\B&2238F7EE&0&0000"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB-Serial (Dual Channel) Vendor 1",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A&MI_00\\B&190AB8AE&0&0000"
+    },
+    {
+      "Class": "HIDClass",
+      "FriendlyName": "HID-compliant consumer control device",
+      "Status": "OK",
+      "InstanceId": "HID\\VID_09EB&PID_0131&MI_01&COL03\\A&13791257&0&0002"
+    },
+    {
+      "Class": "SCSIAdapter",
+      "FriendlyName": "Standard NVM Express Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_C0A9&DEV_5421&SUBSYS_5021C0A9&REV_01\\4&C012EFE&0&000A"
+    },
+    {
+      "Class": "Volume",
+      "FriendlyName": "Volume",
+      "Status": "OK",
+      "InstanceId": "STORAGE\\VOLUME\\{EBEAAF97-2EA8-11F0-8EF5-806E6F6E6963}#0000000000100000"
+    },
+    {
+      "Class": "MEDIA",
+      "FriendlyName": "AMD High Definition Audio Device",
+      "Status": "OK",
+      "InstanceId": "HDAUDIO\\FUNC_01&VEN_1002&DEV_AA01&SUBSYS_00AA0100&REV_1008\\5&1156CDAE&0&0001"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0DB0&PID_0B58\\8&5D1DE9F&0&16"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "Realtek PCIe 5GbE Family Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10EC&DEV_8126&SUBSYS_7E491462&REV_01\\2B010000684CE00000"
+    },
+    {
+      "Class": "AudioEndpoint",
+      "FriendlyName": "1 - DELL S2721HS (AMD High Definition Audio Device)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{D894B21C-AE3F-4D9F-AA26-EE867B887A89}"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI standard host CPU bridge",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14E7&SUBSYS_00000000&REV_00\\3&11583659&0&C7"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Root Hub (USB 3.0)",
+      "Status": "OK",
+      "InstanceId": "USB\\ROOT_HUB30\\5&1723FB54&0&0"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Plug and Play Software Device Enumerator",
+      "Status": "OK",
+      "InstanceId": "ROOT\\SYSTEM\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DB&SUBSYS_7E491462&REV_00\\3&11583659&0&09"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DB&SUBSYS_7E491462&REV_00\\3&11583659&0&0A"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DB&SUBSYS_7E491462&REV_00\\3&11583659&0&0B"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DB&SUBSYS_7E491462&REV_00\\3&11583659&0&11"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "PCI Express Root Port",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_14DB&SUBSYS_7E491462&REV_00\\3&11583659&0&12"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "Remote Desktop Device Redirector Bus",
+      "Status": "OK",
+      "InstanceId": "ROOT\\RDPBUS\\0000"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "High Definition Audio Controller",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1022&DEV_15E3&SUBSYS_EE491462&REV_00\\4&1079050D&0&0641"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (IPv6)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_NDISWANIPV6"
+    },
+    {
+      "Class": "PylonUSB",
+      "FriendlyName": "Basler ace 2 USB3 Vision Camera",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2676&PID_BA05&MI_00\\A&11F23BEF&0&0000"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\10"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\11"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\12"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\13"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\14"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\15"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\16"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\17"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\18"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\19"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\1A"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\1B"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\1C"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\1D"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\1E"
+    },
+    {
+      "Class": "Processor",
+      "FriendlyName": "AMD Ryzen 9 9950X 16-Core Processor            ",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AUTHENTICAMD_-_AMD64_FAMILY_26_MODEL_68_-_AMD_RYZEN_9_9950X_16-CORE_PROCESSOR____________\\1F"
+    },
+    {
+      "Class": "SoftwareComponent",
+      "FriendlyName": "Realtek Hardware Support Application",
+      "Status": "OK",
+      "InstanceId": "SWD\\DRIVERENUM\\{C3A63EDD-2D27-4B66-B155-5E94B43D926A}#REALTEKHSA&A&16C6EB70&0"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "Generic USB Hub",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_0BDA&PID_5411\\9&284F11C1&0&1"
+    },
+    {
+      "Class": "System",
+      "FriendlyName": "AMD Provisioning Packages",
+      "Status": "OK",
+      "InstanceId": "ACPI\\AMDI0052\\2&DABA3FF&0"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A\\A&7719120&0&1"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A\\A&7719120&0&2"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A\\A&7719120&0&3"
+    },
+    {
+      "Class": "USB",
+      "FriendlyName": "USB Composite Device",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_04B4&PID_000A\\A&7719120&0&4"
+    },
+    {
+      "Class": "Net",
+      "FriendlyName": "WAN Miniport (L2TP)",
+      "Status": "OK",
+      "InstanceId": "SWD\\MSRRAS\\MS_L2TPMINIPORT"
+    }
+  ],
+  "gpu_errors": [
+    {
+      "Name": "NVIDIA GeForce RTX 2080 Ti",
+      "ConfigManagerErrorCode": 31
+    },
+    {
+      "Name": "NVIDIA GeForce RTX 5060 Ti",
+      "ConfigManagerErrorCode": 0
+    }
+  ]
+}

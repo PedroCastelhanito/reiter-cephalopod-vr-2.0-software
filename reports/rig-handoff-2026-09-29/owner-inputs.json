@@ -1,0 +1,19 @@
+{
+  "confirmed_date": "2026-09-29",
+  "cameras": {
+    "behavioral": {
+      "serial": "40065509",
+      "requested_hz": 30.0
+    },
+    "tracking": {
+      "serial": "40747103",
+      "requested_hz": 60.0
+    }
+  },
+  "resolution": null,
+  "source_bit_depth": null,
+  "recording_bit_depth": null,
+  "projector_surface_mapping": null,
+  "spikeglx_address": null,
+  "note": "Null fields deliberately deferred by owner; not inferred from observed camera settings."
+}

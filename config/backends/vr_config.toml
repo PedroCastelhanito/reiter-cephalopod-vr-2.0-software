@@ -1,0 +1,102 @@
+# VR/stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
+# VR is required in the accepted modes; this file offers no switch to disable it.
+format_version = 1
+# E14: fixed policy lives in contracts/policy/vr_policy.toml; versions must match.
+policy_version = 6
+
+[rpc]
+# E08: fixed VR coordinator service port; loopback only; restart required after edits.
+port = 50054
+
+[resources]
+# E14 engineering starting limits, not measured hardware capacity or a preallocation
+# of every byte. Preparation accounts for live allocations and rejects workloads that
+# exceed any bound; tune explicitly before Setup, never grow during a session.
+max_document_bytes = 16_777_216
+max_expanded_epochs = 100_000
+max_prepared_plan_bytes = 8_388_608
+max_asset_cpu_bytes = 1_073_741_824
+max_asset_gpu_bytes = 536_870_912
+decoder_threads = 2
+codec_threads_per_context = 2
+codec_threads_total = 4
+decoder_contexts = 4
+decoded_frames_per_instance = 3
+decoded_bytes_total = 268_435_456
+decoder_working_bytes_total = 268_435_456
+# V12: GPU readback slots between the GL thread and the recording thread (in-process).
+capture_slots = 3
+recording_bytes_total = 268_435_456
+# V12/V28: evidence lines waiting for the recording thread; exhaustion is a
+# required-logging failure.
+evidence_pending_bytes = 16_777_216
+
+[recording_runtime]
+# Required only when saving; positive seconds, exactly representable as int64 ns.
+# record_sync_interval_s: _stimulus_frames.jsonl OS sync cadence (V28).
+record_sync_interval_s = 1
+video_sync_interval_s = 1
+fragment_target_s = 1
+encoder_stall_timeout_s = 10
+record_stall_timeout_s = 10
+# Shared lifecycle and health timing retains its existing owner.
+
+[projection]
+# Corner/observer measurements, output assignments and clipping distances are unset.
+# Profiles, mesh resolution and measured calibration values are unset; no auto solver.
+# The actual position remains unset; virtual-arena motion is separate.
+
+[programs]
+# V04 requires images/videos, static/drifting textures and true 3D arenas.
+# Parameters/functions are declared in contracts/vr/stimulus-schema.md.
+# No epoch count, duration range or target total default is selected.
+
+[assets]
+# V13 originals remain external. Prepared storage uses the explicit resource bounds above.
+
+[idle]
+# Startup Idle does not imply session Ready; explicit Setup and Start are required.
+# Color/brightness values remain unset; no image or separate Idle program.
+
+[video]
+# V11 decoder budgets are the [resources] limits above; Setup requires positive values.
+
+[presentation]
+# V20 pacing mode is owned by the display profile (DisplayProfile.presentation_mode).
+# New profiles default to photodiode_only_vsync; all_outputs_vsync is selectable for
+# rig testing. No second default here.
+# Renderer dithering and implicit sRGB conversion are disabled on final code writes.
+# External driver/projector processing remains a rig-verification obligation.
+# The mixed mode requires a configured photodiode output ID; no face/device is guessed.
+# Validate startup Idle pacing; resolve again at Setup and keep fixed through the session.
+# Rig throughput is pending.
+
+[photodiode]
+# Physical patch assignment and high/low levels remain unset.
+
+[color]
+# Presentation precision follows [presentation]; physical output capability remains unverified.
+
+[photometric_calibration]
+# External measured profiles use contracts/vr/photometric-profile.schema.json.
+# No gamma default, identity table or measured values are supplied.
+# Calibrated requires compatible measured profiles for all required outputs.
+# Actual mode, profile paths and calibration measurements remain unset.
+
+[recording]
+# One switch for the tiled VR review video and detailed VR/stimulus outputs together.
+# ffmpeg_args = [...]: one complete lossy list for the composite (one NVENC session);
+# required when saving, no accepted default (encoding-options.md).
+# Disabling saving leaves VR rendering/projection and administrative logging active.
+save_vr_data = true
+# Recording engineering defaults are above; they do not guarantee zero crash loss.
+
+[feedback]
+# V26: maximum feedback age at application; engineering default (current CephVR),
+# positive, locked at Start. Tune on the rig.
+max_result_age_ms = 350
+
+# Idle color/brightness, measured calibration/output bindings, assets, gains and seeds
+# remain unset. Black is supported, not an accepted numeric default. Seeds are resolved
+# per trial during Setup and retained/reused under E07, not invented in this file.
+# Common lifecycle/health policies come from experiment_config.toml and supervisor_config.toml.

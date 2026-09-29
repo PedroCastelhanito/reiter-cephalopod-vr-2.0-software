@@ -1,0 +1,1135 @@
+{
+  "$defs": {
+    "ArtifactRef": {
+      "additionalProperties": false,
+      "properties": {
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "byte_length": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Byte Length",
+          "type": "integer"
+        },
+        "schema_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Schema Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "relative_path",
+        "sha256",
+        "byte_length",
+        "schema_id"
+      ],
+      "title": "ArtifactRef",
+      "type": "object"
+    },
+    "Capture": {
+      "additionalProperties": false,
+      "properties": {
+        "disposition": {
+          "enum": [
+            "admitted",
+            "capacity_drop",
+            "cutoff_excluded",
+            "transfer_complete",
+            "transfer_failed",
+            "input_submitted",
+            "unknown"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "video_frame_index": {
+          "anyOf": [
+            {
+              "maximum": 18446744073709551615,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Video Frame Index"
+        },
+        "source_pixel_format": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Source Pixel Format",
+          "type": "string"
+        },
+        "encoder_pixel_format": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Encoder Pixel Format"
+        },
+        "failure_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Failure Code"
+        }
+      },
+      "required": [
+        "disposition",
+        "video_frame_index",
+        "source_pixel_format",
+        "encoder_pixel_format",
+        "failure_code"
+      ],
+      "title": "Capture",
+      "type": "object"
+    },
+    "Completion": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "completion",
+          "title": "Kind",
+          "type": "string"
+        },
+        "cutoff_host_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Cutoff Host Ns",
+          "type": "integer"
+        },
+        "last_group_id": {
+          "anyOf": [
+            {
+              "maximum": 18446744073709551615,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Group Id"
+        },
+        "state_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "State Count",
+          "type": "integer"
+        },
+        "submission_attempt_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Submission Attempt Count",
+          "type": "integer"
+        },
+        "capture_admission_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Capture Admission Count",
+          "type": "integer"
+        },
+        "capture_drop_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Capture Drop Count",
+          "type": "integer"
+        },
+        "unresolved_attempt_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Unresolved Attempt Count",
+          "type": "integer"
+        },
+        "outcome": {
+          "enum": [
+            "completed",
+            "interrupted"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "cutoff_host_ns",
+        "last_group_id",
+        "state_count",
+        "submission_attempt_count",
+        "capture_admission_count",
+        "capture_drop_count",
+        "unresolved_attempt_count",
+        "outcome"
+      ],
+      "title": "Completion",
+      "type": "object"
+    },
+    "EncoderOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "encoder_outcome",
+          "title": "Kind",
+          "type": "string"
+        },
+        "admitted_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Admitted Count",
+          "type": "integer"
+        },
+        "input_submitted_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Input Submitted Count",
+          "type": "integer"
+        },
+        "capacity_drop_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Capacity Drop Count",
+          "type": "integer"
+        },
+        "final_input_group_id": {
+          "anyOf": [
+            {
+              "maximum": 18446744073709551615,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Final Input Group Id"
+        },
+        "cutoff_host_ns": {
+          "anyOf": [
+            {
+              "maximum": 9223372036854775807,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cutoff Host Ns"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Exit Code"
+        },
+        "eof_sent": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Eof Sent"
+        },
+        "drain_confirmed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Drain Confirmed"
+        }
+      },
+      "required": [
+        "kind",
+        "admitted_count",
+        "input_submitted_count",
+        "capacity_drop_count",
+        "final_input_group_id",
+        "cutoff_host_ns",
+        "exit_code",
+        "eof_sent",
+        "drain_confirmed"
+      ],
+      "title": "EncoderOutcome",
+      "type": "object"
+    },
+    "FeedbackEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "feedback",
+          "title": "Kind",
+          "type": "string"
+        },
+        "stream_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Stream Id",
+          "type": "string"
+        },
+        "result_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Result Id",
+          "type": "string"
+        },
+        "reset_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Reset Generation",
+          "type": "string"
+        },
+        "binding_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Binding Id"
+        },
+        "group_id": {
+          "anyOf": [
+            {
+              "maximum": 18446744073709551615,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Group Id"
+        },
+        "source_frame_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Source Frame Ids",
+          "type": "array"
+        },
+        "source_receipt_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Source Receipt Ns",
+          "type": "integer"
+        },
+        "application_check_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Application Check Ns",
+          "type": "integer"
+        },
+        "age_limit_ns": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 9223372036854775807,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Age Limit Ns"
+        },
+        "disposition": {
+          "enum": [
+            "applied",
+            "invalid",
+            "stale",
+            "old_generation",
+            "absent",
+            "wrong_trial",
+            "baseline_only"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "requested_increment": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Requested Increment",
+          "type": "array"
+        },
+        "applied_increment": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Applied Increment",
+          "type": "array"
+        },
+        "target_units": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Target Units",
+          "type": "array"
+        },
+        "target_frame_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Frame Id"
+        }
+      },
+      "required": [
+        "kind",
+        "stream_id",
+        "result_id",
+        "reset_generation",
+        "binding_id",
+        "group_id",
+        "source_frame_ids",
+        "source_receipt_ns",
+        "application_check_ns",
+        "age_limit_ns",
+        "disposition",
+        "requested_increment",
+        "applied_increment",
+        "target_units",
+        "target_frame_id"
+      ],
+      "title": "FeedbackEvidence",
+      "type": "object"
+    },
+    "GroupUpdate": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "group_update",
+          "title": "Kind",
+          "type": "string"
+        },
+        "group_id": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Group Id",
+          "type": "integer"
+        },
+        "submissions": {
+          "items": {
+            "$ref": "#/$defs/Submission"
+          },
+          "title": "Submissions",
+          "type": "array"
+        },
+        "captures": {
+          "items": {
+            "$ref": "#/$defs/Capture"
+          },
+          "title": "Captures",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "group_id",
+        "submissions",
+        "captures"
+      ],
+      "title": "GroupUpdate",
+      "type": "object"
+    },
+    "Header": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "header",
+          "title": "Kind",
+          "type": "string"
+        },
+        "format_version": {
+          "const": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "identity": {
+          "$ref": "#/$defs/Identity"
+        },
+        "writer_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Writer Generation",
+          "type": "string"
+        },
+        "recipe": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "trial_start_host_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Trial Start Host Ns",
+          "type": "integer"
+        },
+        "required_output_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Required Output Ids",
+          "type": "array"
+        },
+        "renderer_compatibility": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Renderer Compatibility",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "format_version",
+        "identity",
+        "writer_generation",
+        "recipe",
+        "trial_start_host_ns",
+        "required_output_ids",
+        "renderer_compatibility"
+      ],
+      "title": "Header",
+      "type": "object"
+    },
+    "Identity": {
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Session Id",
+          "type": "string"
+        },
+        "trial_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Trial Id",
+          "type": "string"
+        },
+        "configuration_revision": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Configuration Revision",
+          "type": "integer"
+        },
+        "prepared_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Prepared Generation",
+          "type": "string"
+        },
+        "renderer_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Renderer Generation",
+          "type": "string"
+        },
+        "resource_generation": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Resource Generation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id",
+        "trial_id",
+        "configuration_revision",
+        "prepared_generation",
+        "renderer_generation",
+        "resource_generation"
+      ],
+      "title": "Identity",
+      "type": "object"
+    },
+    "Interval": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "interval",
+          "title": "Kind",
+          "type": "string"
+        },
+        "interval_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Interval Id",
+          "type": "string"
+        },
+        "phase": {
+          "enum": [
+            "begin",
+            "end"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "epoch_without_submission",
+            "starvation",
+            "feedback_hold",
+            "clipping",
+            "arena_constraint"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "instance_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Instance Id"
+        },
+        "output_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Output Id"
+        },
+        "occurrence_index": {
+          "anyOf": [
+            {
+              "maximum": 4294967295,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Occurrence Index"
+        },
+        "observation_host_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Observation Host Ns",
+          "type": "integer"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "interval_id",
+        "phase",
+        "category",
+        "instance_id",
+        "output_id",
+        "occurrence_index",
+        "observation_host_ns",
+        "reason"
+      ],
+      "title": "Interval",
+      "type": "object"
+    },
+    "MediaSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "stream_index": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Stream Index",
+          "type": "integer"
+        },
+        "source_frame_index": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Source Frame Index",
+          "type": "integer"
+        },
+        "source_pts": {
+          "title": "Source Pts",
+          "type": "integer"
+        },
+        "time_base_numerator": {
+          "exclusiveMinimum": 0,
+          "title": "Time Base Numerator",
+          "type": "integer"
+        },
+        "time_base_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Time Base Denominator",
+          "type": "integer"
+        },
+        "playback_generation": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Playback Generation",
+          "type": "integer"
+        },
+        "loop_index": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Loop Index",
+          "type": "integer"
+        },
+        "target_media_numerator": {
+          "title": "Target Media Numerator",
+          "type": "integer"
+        },
+        "target_media_denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Target Media Denominator",
+          "type": "integer"
+        },
+        "disposition": {
+          "enum": [
+            "current",
+            "starvation_hold",
+            "clip_end_hold"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instance_id",
+        "asset_id",
+        "stream_index",
+        "source_frame_index",
+        "source_pts",
+        "time_base_numerator",
+        "time_base_denominator",
+        "playback_generation",
+        "loop_index",
+        "target_media_numerator",
+        "target_media_denominator",
+        "disposition"
+      ],
+      "title": "MediaSelection",
+      "type": "object"
+    },
+    "Pose": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "frame_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Frame Id",
+          "type": "string"
+        },
+        "position_mm": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Position Mm",
+          "type": "array"
+        },
+        "orientation_xyzw": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Orientation Xyzw",
+          "type": "array"
+        }
+      },
+      "required": [
+        "instance_id",
+        "frame_id",
+        "position_mm",
+        "orientation_xyzw"
+      ],
+      "title": "Pose",
+      "type": "object"
+    },
+    "RenderGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "render_group",
+          "title": "Kind",
+          "type": "string"
+        },
+        "group_id": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Group Id",
+          "type": "integer"
+        },
+        "state": {
+          "$ref": "#/$defs/State"
+        },
+        "submissions": {
+          "items": {
+            "$ref": "#/$defs/Submission"
+          },
+          "title": "Submissions",
+          "type": "array"
+        },
+        "captures": {
+          "items": {
+            "$ref": "#/$defs/Capture"
+          },
+          "title": "Captures",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "group_id",
+        "state",
+        "submissions",
+        "captures"
+      ],
+      "title": "RenderGroup",
+      "type": "object"
+    },
+    "State": {
+      "additionalProperties": false,
+      "properties": {
+        "epoch_occurrence": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Epoch Occurrence",
+          "type": "integer"
+        },
+        "scene_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Scene Id",
+          "type": "string"
+        },
+        "evaluation_host_ns": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "title": "Evaluation Host Ns",
+          "type": "integer"
+        },
+        "active_instance_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Active Instance Ids",
+          "type": "array"
+        },
+        "uniforms": {
+          "items": {
+            "$ref": "#/$defs/UniformValue"
+          },
+          "title": "Uniforms",
+          "type": "array"
+        },
+        "media": {
+          "items": {
+            "$ref": "#/$defs/MediaSelection"
+          },
+          "title": "Media",
+          "type": "array"
+        },
+        "effective_poses": {
+          "items": {
+            "$ref": "#/$defs/Pose"
+          },
+          "title": "Effective Poses",
+          "type": "array"
+        }
+      },
+      "required": [
+        "epoch_occurrence",
+        "scene_id",
+        "evaluation_host_ns",
+        "active_instance_ids",
+        "uniforms",
+        "media",
+        "effective_poses"
+      ],
+      "title": "State",
+      "type": "object"
+    },
+    "Submission": {
+      "additionalProperties": false,
+      "properties": {
+        "output_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Id",
+          "type": "string"
+        },
+        "attempt_index": {
+          "anyOf": [
+            {
+              "maximum": 18446744073709551615,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Attempt Index"
+        },
+        "phase": {
+          "enum": [
+            "attempt",
+            "returned",
+            "failed",
+            "unknown",
+            "cutoff_excluded"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "entry_host_ns": {
+          "anyOf": [
+            {
+              "maximum": 9223372036854775807,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entry Host Ns"
+        },
+        "return_host_ns": {
+          "anyOf": [
+            {
+              "maximum": 9223372036854775807,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Return Host Ns"
+        },
+        "swap_interval": {
+          "enum": [
+            0,
+            1
+          ],
+          "title": "Swap Interval",
+          "type": "integer"
+        },
+        "marker_index": {
+          "anyOf": [
+            {
+              "maximum": 18446744073709551615,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marker Index"
+        },
+        "marker_high": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marker High"
+        },
+        "failure_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Failure Code"
+        }
+      },
+      "required": [
+        "output_id",
+        "attempt_index",
+        "phase",
+        "entry_host_ns",
+        "return_host_ns",
+        "swap_interval",
+        "marker_index",
+        "marker_high",
+        "failure_code"
+      ],
+      "title": "Submission",
+      "type": "object"
+    },
+    "UniformValue": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Binding Id",
+          "type": "string"
+        },
+        "words": {
+          "items": {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": "Words",
+          "type": "array"
+        }
+      },
+      "required": [
+        "binding_id",
+        "words"
+      ],
+      "title": "UniformValue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "payload": {
+      "discriminator": {
+        "mapping": {
+          "completion": "#/$defs/Completion",
+          "encoder_outcome": "#/$defs/EncoderOutcome",
+          "feedback": "#/$defs/FeedbackEvidence",
+          "group_update": "#/$defs/GroupUpdate",
+          "header": "#/$defs/Header",
+          "interval": "#/$defs/Interval",
+          "render_group": "#/$defs/RenderGroup"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Header"
+        },
+        {
+          "$ref": "#/$defs/RenderGroup"
+        },
+        {
+          "$ref": "#/$defs/GroupUpdate"
+        },
+        {
+          "$ref": "#/$defs/FeedbackEvidence"
+        },
+        {
+          "$ref": "#/$defs/Interval"
+        },
+        {
+          "$ref": "#/$defs/EncoderOutcome"
+        },
+        {
+          "$ref": "#/$defs/Completion"
+        }
+      ],
+      "title": "Payload"
+    }
+  },
+  "required": [
+    "payload"
+  ],
+  "title": "EvidenceRecord",
+  "type": "object"
+}

@@ -1,0 +1,28 @@
+syntax = "proto3";
+package cephvr.vr.v1;
+import "cephvr/control/v1/types.proto";
+import "cephvr/vr/v1/messages.proto";
+
+// Private registered loopback services. E08 admission/auth/retention/deadlines;
+// the renderer is the only worker (V01/V12). No pixels or per-frame evidence RPC.
+service VRWorkerService {
+  rpc InitializeDisplay(cephvr.vr.v1.InitializeDisplay) returns (cephvr.control.v1.CommandAdmission);
+  rpc SetupSession(WorkerSetup) returns (cephvr.control.v1.CommandAdmission);
+  rpc CancelSetup(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc PrepareTrial(WorkerPrepareTrial) returns (cephvr.control.v1.CommandAdmission);
+  rpc ScheduleTrial(WorkerSchedule) returns (cephvr.control.v1.CommandAdmission);
+  rpc ReleaseTrial(WorkerRelease) returns (cephvr.control.v1.CommandAdmission);
+  rpc StopTrial(WorkerStop) returns (cephvr.control.v1.CommandAdmission);
+  rpc InterruptSession(WorkerStop) returns (cephvr.control.v1.CommandAdmission);
+  rpc GetState(WorkerQuery) returns (WorkerState);
+  rpc Cleanup(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc Shutdown(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);
+}
+// Hosted alongside public BackendService in the existing coordinator.
+service VRCoordinatorService {
+  rpc ReportWorkerOperation(WorkerOperation) returns (cephvr.control.v1.ReportReceipt);
+  rpc ReportWorkerLifecycle(WorkerLifecycle) returns (cephvr.control.v1.ReportReceipt);
+  rpc ReportDisplay(cephvr.control.v1.VRDisplayView) returns (cephvr.control.v1.ReportReceipt);
+  // E08: worker health goes to its coordinator, aggregated into the coordinator heartbeat.
+  rpc ReportWorkerHeartbeat(cephvr.control.v1.HeartbeatReport) returns (cephvr.control.v1.ReportReceipt);
+}

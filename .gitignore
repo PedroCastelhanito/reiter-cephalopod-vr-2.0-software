@@ -1,0 +1,26 @@
+# Local development environments and Python tooling.
+/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+/htmlcov/
+
+# Reproducible packaging outputs.
+/build/
+/dist/
+*.egg-info/
+
+# Generated bindings; source schemas remain in contracts/.
+/src/cephvr/**/*_pb2.py
+/src/cephvr/**/*_pb2.pyi
+/src/cephvr/**/*_pb2_grpc.py
+
+# Mutable local history and recordings, not operator defaults or evidence reports.
+/config/last_configuration.json
+/cephvr-data/
+
+.DS_Store

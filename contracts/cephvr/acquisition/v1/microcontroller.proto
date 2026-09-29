@@ -1,0 +1,83 @@
+syntax = "proto3";
+package cephvr.acquisition.v1;
+import "cephvr/acquisition/v1/camera.proto";
+
+// Typed host evidence, not the MCU serial encoding. See microcontroller.md.
+enum PulseBoundaryCommand {
+  PULSE_BOUNDARY_COMMAND_UNSPECIFIED = 0;
+  PULSE_BOUNDARY_COMMAND_ON = 1;
+  PULSE_BOUNDARY_COMMAND_OFF = 2;
+}
+enum PulseCommandOutcome {
+  PULSE_COMMAND_OUTCOME_UNSPECIFIED = 0;
+  PULSE_COMMAND_OUTCOME_APPLIED = 1;
+  PULSE_COMMAND_OUTCOME_REJECTED = 2;
+  PULSE_COMMAND_OUTCOME_TIMED_OUT = 3;
+  PULSE_COMMAND_OUTCOME_TRANSPORT_FAILED = 4;
+  PULSE_COMMAND_OUTCOME_NOT_DISPATCHED = 5;
+}
+message PulseCommandEvidence {
+  string connection_id = 1;
+  string request_id = 2;
+  PulseBoundaryCommand command = 3;
+  optional bool behavioral_selected = 4;
+  optional bool tracking_selected = 5;
+  optional int64 scheduled_boundary_monotonic_ns = 6; // Normal T/end; absent for Abort.
+  optional int64 dispatched_monotonic_ns = 7; // Immediately before serial write attempt.
+  optional int64 acknowledged_monotonic_ns = 8; // Valid matched complete reply receipt.
+  optional bool applied = 9; // True only for matched OK/state; false=matched ERR.
+  MicrocontrollerState resulting_state = 10;
+  optional string error_code = 11;
+  optional int64 stop_issued_monotonic_ns = 12; // Original interruption issuance for OFF.
+  PulseCommandOutcome outcome = 13; // Required terminal outcome; UNSPECIFIED never satisfies closure.
+  // NOT_DISPATCHED has no dispatch/ACK/application evidence; request_id may be empty.
+  // A failed outcome never implies outputs off. Missing ACK/application stays unknown.
+  // No physical pulse or camera cutoff claim.
+}
+message PulseOutputState {
+  optional bool enabled = 1;
+  optional bool running = 2;
+  optional string pin = 3;
+  reserved 4;
+  reserved "timing";
+  optional double applied_frequency_hz = 5; // Positive finite nominal rate, not measured edges.
+  // Disabled: running=false, pin/frequency absent. Unknown is not readiness.
+}
+message MicrocontrollerCapabilities {
+  optional uint32 protocol_version = 1;
+  string firmware = 2;
+  repeated string pins = 3;
+  optional double minimum_requested_hz = 4;
+  optional double maximum_requested_hz = 5;
+  optional uint32 minimum_watchdog_ms = 6;
+  optional uint32 maximum_watchdog_ms = 7;
+  // Broad request limits, not proof of every pin/rate combination; CONFIGURE
+  // validates the full combination. No host timer solving or board profiles.
+}
+message MicrocontrollerState {
+  optional bool configuration_valid = 1;
+  optional bool watchdog_stopped = 2;
+  optional uint32 watchdog_ms = 3;
+  PulseOutputState behavioral = 4;
+  PulseOutputState tracking = 5;
+}
+message MicrocontrollerObservation {
+  string port = 1;
+  string connection_id = 2;
+  string request_id = 3;
+  optional int64 observed_monotonic_ns = 4;
+  MicrocontrollerState state = 5;
+  MicrocontrollerCapabilities capabilities = 6;
+  optional int64 capabilities_observed_monotonic_ns = 7;
+  // A full matched STATUS/CONFIGURE observation; PING cannot refresh this full
+  // configuration evidence or capability timestamp. No physical-edge proof.
+}
+message PulseConfigurationResolution {
+  optional uint64 requested_configuration_revision = 1;
+  CameraPulseConfiguration requested = 2;
+  optional bool behavioral_active = 3;
+  optional bool tracking_active = 4;
+  MicrocontrollerObservation applied = 5;
+  // Active mask derives from enabled external session cameras or requested previews,
+  // never from retained disabled-role values. Requested frequency stays unchanged.
+}

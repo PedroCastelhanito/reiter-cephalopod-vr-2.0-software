@@ -1,0 +1,5 @@
+include tools/build_backend.py
+include tools/generate_contracts.py
+recursive-include contracts *.proto *.toml
+recursive-include config/backends *.toml
+global-exclude *_pb2.py *_pb2.pyi *_pb2_grpc.py

@@ -1,0 +1,3767 @@
+{
+  "captured_at": "2026-09-29T14:53:43.939623+09:00",
+  "loaded_pylon_version": "11.4.0.1134",
+  "read_only": true,
+  "cameras": [
+    {
+      "model": "acA4112-30uc",
+      "serial": "40065509",
+      "device_class": "BaslerUsb",
+      "nodes": {
+        "AcquisitionFrameRate": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "30.00030",
+          "min": 0.0062864274108552845,
+          "max": 1000000.0,
+          "unit": "Hz",
+          "description": "Acquisition frame rate of the camera in frames per second."
+        },
+        "AcquisitionFrameRateEnable": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Enables setting the camera's acquisition frame rate to a specified value."
+        },
+        "AcquisitionMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Continuous",
+          "description": "Sets the image acquisition mode.",
+          "enum_entries": [
+            {
+              "symbol": "SingleFrame",
+              "available": true
+            },
+            {
+              "symbol": "Continuous",
+              "available": true
+            }
+          ]
+        },
+        "ChunkCounterSelector": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkCounterValue": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkData": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Chunk Data",
+          "description": "Contains parameters for configuring chunk data. Data chunks can be appended to the image data to supply additional information about the image."
+        },
+        "ChunkDataControl": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Chunk Data Control",
+          "description": "Contains parameters for configuring chunk data. Data chunks can be appended to the image data to supply additional information about the image."
+        },
+        "ChunkEnable": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Includes the currently selected chunk in the payload data."
+        },
+        "ChunkExposureTime": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkGain": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkGainSelector": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkLineStatusAll": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkModeActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Enables the chunk mode."
+        },
+        "ChunkPayloadCRC16": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Timestamp",
+          "description": "Sets which chunk can be enabled. The chunk can be enabled using the Chunk Enable parameter.",
+          "enum_entries": [
+            {
+              "symbol": "Gain",
+              "available": true
+            },
+            {
+              "symbol": "ExposureTime",
+              "available": true
+            },
+            {
+              "symbol": "Timestamp",
+              "available": true
+            },
+            {
+              "symbol": "LineStatusAll",
+              "available": true
+            },
+            {
+              "symbol": "CounterValue",
+              "available": true
+            },
+            {
+              "symbol": "SequencerSetActive",
+              "available": true
+            },
+            {
+              "symbol": "PayloadCRC16",
+              "available": true
+            }
+          ]
+        },
+        "ChunkSequencerSetActive": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "CounterAndTimerControl": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Counter and Timer Control",
+          "description": "Contains parameters for configuring counters and timers."
+        },
+        "CounterDuration": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "CounterEventSource": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "FrameStart",
+          "description": "Sets which event that increases the currently selected counter.",
+          "enum_entries": [
+            {
+              "symbol": "FrameTrigger",
+              "available": false
+            },
+            {
+              "symbol": "FrameStart",
+              "available": true
+            }
+          ]
+        },
+        "CounterReset": {
+          "implemented": true,
+          "available": true,
+          "readable": false,
+          "writable": true
+        },
+        "CounterResetActivation": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "RisingEdge",
+          "description": "Sets which type of signal transition will reset the counter.",
+          "enum_entries": [
+            {
+              "symbol": "RisingEdge",
+              "available": true
+            }
+          ]
+        },
+        "CounterResetSource": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets which source signal will reset the currently selected counter.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Software",
+              "available": true
+            },
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": false
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            },
+            {
+              "symbol": "Line4",
+              "available": true
+            },
+            {
+              "symbol": "Counter1End",
+              "available": false
+            },
+            {
+              "symbol": "Counter2End",
+              "available": false
+            }
+          ]
+        },
+        "CounterSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Counter1",
+          "description": "Sets which counter can be configured. All changes to the counter settings will be applied to the selected counter.",
+          "enum_entries": [
+            {
+              "symbol": "Counter1",
+              "available": true
+            },
+            {
+              "symbol": "Counter2",
+              "available": true
+            }
+          ]
+        },
+        "CounterValuePort": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "DeviceFirmwareVersion": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "107417-11;U;acA4112_30uc;V1.4-4;1",
+          "description": "Version of the camera's firmware."
+        },
+        "DeviceLinkCurrentThroughput": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "359995430",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "Bps",
+          "description": "Actual bandwidth (in bytes per second) that the camera will use to transmit image data and chunk data with the current camera settings."
+        },
+        "DeviceLinkThroughputLimit": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "360000000",
+          "min": 524288,
+          "max": 419430400,
+          "increment": 1,
+          "unit": "Bps",
+          "description": "Bandwidth limit for data transmission (in bytes per second)."
+        },
+        "DeviceLinkThroughputLimitMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "On",
+          "description": "Enables/disables the device link throughput limit. If disabled, the bandwidth used is determined by the settings of various other parameters, e.g., exposure time or frame rate.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "On",
+              "available": true
+            }
+          ]
+        },
+        "DeviceModelName": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "acA4112-30uc",
+          "description": "Model name of the camera."
+        },
+        "DeviceSFNCVersionMajor": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "min": -9223372036854775808,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "",
+          "description": "Major version number of the Standard Features Naming Convention (SFNC) specification that the camera is compatible with."
+        },
+        "DeviceSFNCVersionMinor": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "min": -9223372036854775808,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "",
+          "description": "Minor version number of the Standard Features Naming Convention (SFNC) specification that the camera is compatible with."
+        },
+        "DeviceSFNCVersionSubMinor": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "min": -9223372036854775808,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "",
+          "description": "Subminor version number of the Standard Features Naming Convention (SFNC) specification that the camera is compatible with."
+        },
+        "DeviceSerialNumber": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "40065509",
+          "description": "Serial number of the camera."
+        },
+        "DeviceVersion": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "107417-11",
+          "description": "Version of the camera."
+        },
+        "EnumEntry_ChunkCounterSelector_Counter1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Chunk data can be retrieved from counter 1."
+        },
+        "EnumEntry_ChunkGainSelector_All": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Chunk data can be retrieved from all gain channels."
+        },
+        "EnumEntry_ChunkSelector_CounterValue": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4",
+          "description": "The Counter Value chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_ExposureTime": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The Exposure Time chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_Gain": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The Gain chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_LineStatusAll": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3",
+          "description": "The Line Status All chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_PayloadCRC16": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "6",
+          "description": "The CRC Checksum chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_SequencerSetActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5",
+          "description": "The Sequencer Set Active chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_Timestamp": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The Timestamp chunk can be enabled."
+        },
+        "EnumEntry_CounterEventSource_FrameStart": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5",
+          "description": "The selected counter counts the number of Frame Start events."
+        },
+        "EnumEntry_CounterEventSource_FrameTrigger": {
+          "implemented": false,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EnumEntry_CounterResetActivation_RisingEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The counter is reset on the rising edge of the signal."
+        },
+        "EnumEntry_CounterResetSource_Counter1End": {
+          "implemented": false,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EnumEntry_CounterResetSource_Counter2End": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EnumEntry_CounterResetSource_Line1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The selected counter can be reset by a signal applied to Line 1."
+        },
+        "EnumEntry_CounterResetSource_Line2": {
+          "implemented": false,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EnumEntry_CounterResetSource_Line3": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4",
+          "description": "The selected counter can be reset by a signal applied to Line 3."
+        },
+        "EnumEntry_CounterResetSource_Line4": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5",
+          "description": "The selected counter can be reset by a signal applied to Line 4."
+        },
+        "EnumEntry_CounterResetSource_Off": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The counter reset is disabled."
+        },
+        "EnumEntry_CounterResetSource_Software": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3",
+          "description": "The selected counter can be reset by a software command."
+        },
+        "EnumEntry_CounterSelector_Counter1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Counter 1 can be configured."
+        },
+        "EnumEntry_CounterSelector_Counter2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "Counter 2 can be configured."
+        },
+        "EnumEntry_DeviceLinkThroughputLimitMode_Off": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The Device Link Throughput Limit parameter is disabled."
+        },
+        "EnumEntry_DeviceLinkThroughputLimitMode_On": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The Device Link Throughput Limit parameter is enabled."
+        },
+        "EnumEntry_SequencerTriggerSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "33",
+          "description": "Sequencer set advance is controlled using Counter 2 End."
+        },
+        "EventCriticalTemperatureTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventExposureEndTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameBurstStartOvertriggerTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameBurstStartTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameBurstStartWaitTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameStartOvertriggerTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameStartTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameStartWaitTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventOverTemperatureTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventTestTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ExposureAuto": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets the operation mode of the Exposure Auto auto function. The Exposure Auto auto function automatically adjusts the exposure time within set limits until a target brightness value has been reached.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Once",
+              "available": true
+            },
+            {
+              "symbol": "Continuous",
+              "available": true
+            }
+          ]
+        },
+        "ExposureMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Timed",
+          "description": "Sets the exposure mode.",
+          "enum_entries": [
+            {
+              "symbol": "Timed",
+              "available": true
+            },
+            {
+              "symbol": "TriggerWidth",
+              "available": false
+            }
+          ]
+        },
+        "ExposureTime": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "3000.0",
+          "min": 26.0,
+          "max": 10000000.0,
+          "increment": 1.0,
+          "unit": "us",
+          "description": "Exposure time of the camera in microseconds."
+        },
+        "Gain": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0.00000",
+          "min": 0.0,
+          "max": 36.0,
+          "unit": "dB",
+          "description": "Value of the currently selected gain in dB."
+        },
+        "GainAuto": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets the operation mode of the Gain Auto auto function. The Gain Auto auto function automatically adjusts the gain within set limits until a target brightness value has been reached.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Once",
+              "available": true
+            },
+            {
+              "symbol": "Continuous",
+              "available": true
+            }
+          ]
+        },
+        "Height": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "3000",
+          "min": 2,
+          "max": 3004,
+          "increment": 2,
+          "unit": "",
+          "description": "Height of the camera's region of interest (area of interest) in pixels. Depending on the camera model, the parameter can be set in different increments."
+        },
+        "HeightMax": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3008",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Maximum height of the region of interest (area of interest) in pixels. The value takes into account any features that may limit the maximum height, e.g., binning."
+        },
+        "LineInverter": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Enables the signal inverter function for the currently selected input or output line."
+        },
+        "LineMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Input",
+          "description": "Sets the mode for the selected line. This controls whether the physical line is used to input or output a signal.",
+          "enum_entries": [
+            {
+              "symbol": "Input",
+              "available": true
+            },
+            {
+              "symbol": "Output",
+              "available": false
+            }
+          ]
+        },
+        "LineSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Line1",
+          "description": "Sets the I/O line to be configured. All changes to the line settings will be applied to the selected line.",
+          "enum_entries": [
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": true
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            },
+            {
+              "symbol": "Line4",
+              "available": true
+            }
+          ]
+        },
+        "LineSource": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "LineStatus": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Indicates the current logical state of the selected line."
+        },
+        "LineStatusAll": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0x6",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Single bit field indicating the current logical state of all available line signals at time of polling."
+        },
+        "OffsetX": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "8",
+          "min": 0,
+          "max": 16,
+          "increment": 4,
+          "unit": "",
+          "description": "Horizontal offset from the left side of the sensor to the region of interest (area of interest) (in pixels)."
+        },
+        "OffsetY": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "4",
+          "min": 0,
+          "max": 8,
+          "increment": 2,
+          "unit": "",
+          "description": "Vertical offset from the top of the sensor to the region of interest (area of interest) (in pixels)."
+        },
+        "PayloadSize": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "12288000",
+          "min": 0,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "",
+          "description": "Size of the payload in bytes. This is the total number of bytes sent in the payload."
+        },
+        "PixelFormat": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "BayerRG8",
+          "description": "Sets the format of the pixel data transmitted by the camera. The available pixel formats depend on the camera model and whether the camera is monochrome or color.",
+          "enum_entries": [
+            {
+              "symbol": "Mono8",
+              "available": true
+            },
+            {
+              "symbol": "Mono10",
+              "available": false
+            },
+            {
+              "symbol": "Mono10p",
+              "available": false
+            },
+            {
+              "symbol": "Mono12",
+              "available": false
+            },
+            {
+              "symbol": "Mono12p",
+              "available": false
+            },
+            {
+              "symbol": "BayerGR8",
+              "available": false
+            },
+            {
+              "symbol": "BayerRG8",
+              "available": true
+            },
+            {
+              "symbol": "BayerGB8",
+              "available": false
+            },
+            {
+              "symbol": "BayerBG8",
+              "available": false
+            },
+            {
+              "symbol": "BayerGR10",
+              "available": false
+            },
+            {
+              "symbol": "BayerGR10p",
+              "available": false
+            },
+            {
+              "symbol": "BayerRG10",
+              "available": false
+            },
+            {
+              "symbol": "BayerRG10p",
+              "available": false
+            },
+            {
+              "symbol": "BayerGB10",
+              "available": false
+            },
+            {
+              "symbol": "BayerGB10p",
+              "available": false
+            },
+            {
+              "symbol": "BayerBG10",
+              "available": false
+            },
+            {
+              "symbol": "BayerBG10p",
+              "available": false
+            },
+            {
+              "symbol": "BayerGR12",
+              "available": false
+            },
+            {
+              "symbol": "BayerGR12p",
+              "available": false
+            },
+            {
+              "symbol": "BayerRG12",
+              "available": true
+            },
+            {
+              "symbol": "BayerRG12p",
+              "available": true
+            },
+            {
+              "symbol": "BayerGB12",
+              "available": false
+            },
+            {
+              "symbol": "BayerGB12p",
+              "available": false
+            },
+            {
+              "symbol": "BayerBG12",
+              "available": false
+            },
+            {
+              "symbol": "BayerBG12p",
+              "available": false
+            },
+            {
+              "symbol": "RGB8",
+              "available": true
+            },
+            {
+              "symbol": "BGR8",
+              "available": true
+            },
+            {
+              "symbol": "YCbCr422_8",
+              "available": true
+            }
+          ]
+        },
+        "PixelSize": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Bpp8",
+          "description": "Indicates the depth of the pixel values in the image (in bits per pixel). The potential values depend on the pixel format setting.",
+          "enum_entries": [
+            {
+              "symbol": "Bpp8",
+              "available": true
+            },
+            {
+              "symbol": "Bpp10",
+              "available": true
+            },
+            {
+              "symbol": "Bpp12",
+              "available": true
+            },
+            {
+              "symbol": "Bpp16",
+              "available": true
+            },
+            {
+              "symbol": "Bpp24",
+              "available": true
+            }
+          ]
+        },
+        "ResultingFrameRate": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "29.29630",
+          "min": -1.7976931348623157e+308,
+          "max": 1.7976931348623157e+308,
+          "unit": "Hz",
+          "description": "Maximum frame acquisition rate with current camera settings (in frames per second)."
+        },
+        "TimestampLatch": {
+          "implemented": true,
+          "available": true,
+          "readable": false,
+          "writable": true
+        },
+        "TimestampLatchValue": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "min": 0,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "ns",
+          "description": "Latched value of the timestamp counter."
+        },
+        "TimestampPort": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "TriggerActivation": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "RisingEdge",
+          "description": "Sets the type of signal transition that will activate the selected trigger.",
+          "enum_entries": [
+            {
+              "symbol": "RisingEdge",
+              "available": true
+            },
+            {
+              "symbol": "FallingEdge",
+              "available": true
+            },
+            {
+              "symbol": "AnyEdge",
+              "available": false
+            },
+            {
+              "symbol": "LevelHigh",
+              "available": false
+            },
+            {
+              "symbol": "LevelLow",
+              "available": false
+            }
+          ]
+        },
+        "TriggerDelay": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "min": 0.0,
+          "max": 1000000.0,
+          "increment": 0.01,
+          "unit": "us",
+          "description": "Trigger delay time in microseconds. The delay is applied after the trigger has been received and before effectively activating the trigger."
+        },
+        "TriggerMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets the mode for the currently selected trigger.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "On",
+              "available": true
+            }
+          ]
+        },
+        "TriggerSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "FrameStart",
+          "description": "Sets the trigger type to be configured. All changes to the trigger settings will be applied to the selected trigger.",
+          "enum_entries": [
+            {
+              "symbol": "FrameBurstStart",
+              "available": true
+            },
+            {
+              "symbol": "FrameStart",
+              "available": true
+            }
+          ]
+        },
+        "TriggerSource": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Line1",
+          "description": "Sets the source signal for the selected trigger.",
+          "enum_entries": [
+            {
+              "symbol": "Software",
+              "available": true
+            },
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": false
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            },
+            {
+              "symbol": "Line4",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal1",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal2",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal3",
+              "available": true
+            }
+          ]
+        },
+        "Width": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "4096",
+          "min": 4,
+          "max": 4104,
+          "increment": 4,
+          "unit": "",
+          "description": "Width of the camera's region of interest (area of interest) in pixels. Depending on the camera model, the parameter can be set in different increments."
+        },
+        "WidthMax": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4112",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Maximum width of the region of interest (area of interest) in pixels. The value takes into account any function that may limit the maximum width."
+        }
+      },
+      "stream_grabber": {
+        "MaxTransferSize": "1048576",
+        "NumMaxQueuedUrbs": "64",
+        "MaxBufferSize": "131072",
+        "MaxNumBuffer": "16",
+        "Statistic_Total_Buffer_Count": "0",
+        "Statistic_Failed_Buffer_Count": "0",
+        "Statistic_Last_Failed_Buffer_Status": "0x0",
+        "TransferLoopThreadPriority": "15"
+      }
+    },
+    {
+      "model": "a2A2464-77umPRO",
+      "serial": "40747103",
+      "device_class": "BaslerUsb",
+      "nodes": {
+        "AcquisitionFrameRate": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "100.0",
+          "min": 0.1,
+          "max": 1000000.0,
+          "unit": "Hz",
+          "description": "Acquisition frame rate of the camera in frames per second."
+        },
+        "AcquisitionFrameRateEnable": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Enables setting the camera's acquisition frame rate to a specified value."
+        },
+        "AcquisitionMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Continuous",
+          "description": "Sets the image acquisition mode.",
+          "enum_entries": [
+            {
+              "symbol": "Continuous",
+              "available": true
+            },
+            {
+              "symbol": "SingleFrame",
+              "available": true
+            }
+          ]
+        },
+        "BslChunkAutoBrightnessStatus": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "BslChunkTimestampSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "FrameStart",
+          "description": "Sets which information should be included in the Chunk Timestamp Value chunk.",
+          "enum_entries": [
+            {
+              "symbol": "FrameStart",
+              "available": true
+            },
+            {
+              "symbol": "ExposureStart",
+              "available": true
+            },
+            {
+              "symbol": "ExposureEnd",
+              "available": true
+            }
+          ]
+        },
+        "BslChunkTimestampValue": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "BslDeviceLinkCurrentThroughput": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "359984491",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Actual bandwidth (in bytes per second) that the camera will use to transmit image data and chunk data with the current camera settings."
+        },
+        "BslImageCompressionBCBExtraChunkDataSize": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Size of all additional chunks which do not belong to the Compression Beyond chunk."
+        },
+        "BsliUsbErrorCounters": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "BsliUsbErrorCounters",
+          "description": ""
+        },
+        "ChunkCounterSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Counter1",
+          "description": "Sets which counter to retrieve chunk data from.",
+          "enum_entries": [
+            {
+              "symbol": "Counter1",
+              "available": true
+            },
+            {
+              "symbol": "Counter2",
+              "available": true
+            }
+          ]
+        },
+        "ChunkCounterValue": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkData": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Chunk Data",
+          "description": "Contains parameters for configuring chunk data. Data chunks can be appended to the image data to supply additional information about the image."
+        },
+        "ChunkDataControl": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Chunk Data Control",
+          "description": "Contains parameters for configuring chunk data. Data chunks can be appended to the image data to supply additional information about the image."
+        },
+        "ChunkEnable": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Includes the currently selected chunk in the payload data."
+        },
+        "ChunkExposureTime": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkExposureTimeSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Common",
+          "description": "Sets which exposure time to retrieve chunk data from.",
+          "enum_entries": [
+            {
+              "symbol": "Common",
+              "available": true
+            }
+          ]
+        },
+        "ChunkFrameID": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkGain": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkGainSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "All",
+          "description": "Sets which gain channel to retrieve chunk data from.",
+          "enum_entries": [
+            {
+              "symbol": "All",
+              "available": true
+            }
+          ]
+        },
+        "ChunkLineStatusAll": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkModeActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Enables the chunk mode."
+        },
+        "ChunkPayloadCRC16": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "AutoBrightnessStatus",
+          "description": "Sets which chunk can be enabled. The chunk can be enabled using the Chunk Enable parameter.",
+          "enum_entries": [
+            {
+              "symbol": "AutoBrightnessStatus",
+              "available": true
+            },
+            {
+              "symbol": "CounterValue",
+              "available": true
+            },
+            {
+              "symbol": "ExposureTime",
+              "available": true
+            },
+            {
+              "symbol": "FrameID",
+              "available": true
+            },
+            {
+              "symbol": "Gain",
+              "available": true
+            },
+            {
+              "symbol": "LineStatusAll",
+              "available": true
+            },
+            {
+              "symbol": "PayloadCRC16",
+              "available": true
+            },
+            {
+              "symbol": "SequencerSetActive",
+              "available": true
+            },
+            {
+              "symbol": "Timestamp",
+              "available": true
+            }
+          ]
+        },
+        "ChunkSequencerSetActive": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ChunkTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "CounterAndTimerControl": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Counter and Timer Control",
+          "description": "Contains parameters for configuring counters and timers."
+        },
+        "CounterControl": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Counter Control",
+          "description": "Contains parameters related to the Counter feature."
+        },
+        "CounterDuration": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "4294967295",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Number of times a sequencer set is used before the Counter End event is generated."
+        },
+        "CounterEventActivation": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "CounterEventSource": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets which event increases the currently selected counter.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": true
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            },
+            {
+              "symbol": "AcquisitionActive",
+              "available": true
+            },
+            {
+              "symbol": "ExposureActive",
+              "available": true
+            },
+            {
+              "symbol": "ExposureStart",
+              "available": true
+            },
+            {
+              "symbol": "ExposureTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "FlashWindow",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstActive",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "FrameTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal1",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal2",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal3",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter1End",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Start",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter2End",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Start",
+              "available": true
+            },
+            {
+              "symbol": "Timer1Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer1End",
+              "available": true
+            },
+            {
+              "symbol": "Timer2Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer2End",
+              "available": true
+            }
+          ]
+        },
+        "CounterReset": {
+          "implemented": true,
+          "available": true,
+          "readable": false,
+          "writable": true
+        },
+        "CounterResetActivation": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "CounterResetSource": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets which source signal will reset the currently selected counter.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": true
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            },
+            {
+              "symbol": "AcquisitionActive",
+              "available": true
+            },
+            {
+              "symbol": "ExposureActive",
+              "available": true
+            },
+            {
+              "symbol": "ExposureStart",
+              "available": true
+            },
+            {
+              "symbol": "ExposureTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "FlashWindow",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstActive",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "FrameTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal1",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal2",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal3",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter1End",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Start",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter2End",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Start",
+              "available": true
+            },
+            {
+              "symbol": "Timer1Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer1End",
+              "available": true
+            },
+            {
+              "symbol": "Timer2Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer2End",
+              "available": true
+            }
+          ]
+        },
+        "CounterSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Counter1",
+          "description": "Sets which counter can be configured. All changes to the counter settings will be applied to the selected counter.",
+          "enum_entries": [
+            {
+              "symbol": "Counter1",
+              "available": true
+            },
+            {
+              "symbol": "Counter2",
+              "available": true
+            }
+          ]
+        },
+        "CounterStatus": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "CounterActive",
+          "description": "Returns the current status of the counter.",
+          "enum_entries": [
+            {
+              "symbol": "CounterTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "CounterActive",
+              "available": true
+            },
+            {
+              "symbol": "CounterCompleted",
+              "available": true
+            }
+          ]
+        },
+        "CounterTriggerActivation": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "CounterTriggerSource": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets the signal used to start the selected counter. If you start a counter, it will not necessarily start counting. If and when the counter counts, depends on the Counter Event Source parameter value.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": true
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            },
+            {
+              "symbol": "AcquisitionActive",
+              "available": true
+            },
+            {
+              "symbol": "ExposureActive",
+              "available": true
+            },
+            {
+              "symbol": "ExposureStart",
+              "available": true
+            },
+            {
+              "symbol": "ExposureTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "FlashWindow",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstActive",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "FrameTriggerWait",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal1",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal2",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal3",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter1End",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Start",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter2End",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Start",
+              "available": true
+            },
+            {
+              "symbol": "Timer1Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer1End",
+              "available": true
+            },
+            {
+              "symbol": "Timer2Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer2End",
+              "available": true
+            }
+          ]
+        },
+        "CounterValue": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Current value of the counter."
+        },
+        "DeviceFirmwareVersion": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "p=vu3pc_og05c1m_pro/s=r/v=1.0.0/i=11311.8/h=e50a632bf",
+          "description": "Version of the camera's firmware."
+        },
+        "DeviceLinkThroughputLimit": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "360000000",
+          "min": 524288,
+          "max": 419430400,
+          "increment": 1,
+          "unit": "",
+          "description": "Bandwidth limit for data transmission (in bytes per second)."
+        },
+        "DeviceLinkThroughputLimitMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "On",
+          "description": "Enables/disables the device link throughput limit. If disabled, the bandwidth used is determined by the settings of various other parameters, e.g., exposure time or frame rate.",
+          "enum_entries": [
+            {
+              "symbol": "On",
+              "available": true
+            },
+            {
+              "symbol": "Off",
+              "available": true
+            }
+          ]
+        },
+        "DeviceModelName": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "a2A2464-77umPRO",
+          "description": "Name of the camera model."
+        },
+        "DeviceSFNCVersionMajor": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "min": -9223372036854775808,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "",
+          "description": "Major version number of the Standard Features Naming Convention (SFNC) specification that the camera is compatible with."
+        },
+        "DeviceSFNCVersionMinor": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "7",
+          "min": -9223372036854775808,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "",
+          "description": "Minor version number of the Standard Features Naming Convention (SFNC) specification that the camera is compatible with."
+        },
+        "DeviceSFNCVersionSubMinor": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "min": -9223372036854775808,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "",
+          "description": "Subminor version number of the Standard Features Naming Convention (SFNC) specification that the camera is compatible with."
+        },
+        "DeviceSerialNumber": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "40747103",
+          "description": "Serial number of the camera."
+        },
+        "DeviceVersion": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "109778-07",
+          "description": "Version of the camera."
+        },
+        "EnumEntry_BslChunkAutoBrightnessStatus_Disabled": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Target brightness adjustments are disabled, i.e., Gain Auto and Exposure Auto are set to Off."
+        },
+        "EnumEntry_BslChunkAutoBrightnessStatus_TargetNotReached": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "Target brightness adjustments are enabled, but the target brightness value has not been reached."
+        },
+        "EnumEntry_BslChunkAutoBrightnessStatus_TargetReached": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "Target brightness adjustments are enabled, and the target brightness value has been reached."
+        },
+        "EnumEntry_BslChunkTimestampSelector_ExposureEnd": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The Chunk Timestamp Value parameter indicates when exposure of the current image ended."
+        },
+        "EnumEntry_BslChunkTimestampSelector_ExposureStart": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The Chunk Timestamp Value parameter indicates when exposure of the current image started."
+        },
+        "EnumEntry_BslChunkTimestampSelector_FrameStart": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The Chunk Timestamp Value parameter indicates when acquisition of the current image started."
+        },
+        "EnumEntry_BslLightControlTriggerSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "14",
+          "description": "The light device can be triggered by a Counter 1 Active signal."
+        },
+        "EnumEntry_BslLightControlTriggerSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "15",
+          "description": "The light device can be triggered by a Counter 1 End signal."
+        },
+        "EnumEntry_BslLightControlTriggerSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "16",
+          "description": "The light device can be triggered by a Counter 1 Start signal."
+        },
+        "EnumEntry_BslLightControlTriggerSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "17",
+          "description": "The light device can be triggered by a Counter 2 Active signal."
+        },
+        "EnumEntry_BslLightControlTriggerSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "18",
+          "description": "The light device can be triggered by a Counter 2 End signal."
+        },
+        "EnumEntry_BslLightControlTriggerSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "19",
+          "description": "The light device can be triggered by a Counter 2 Start signal."
+        },
+        "EnumEntry_BslPeripheralTriggerSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "14",
+          "description": "The SLP device can be triggered by a Counter 1 Active signal."
+        },
+        "EnumEntry_BslPeripheralTriggerSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "15",
+          "description": "The SLP device can be triggered by a Counter 1 End signal."
+        },
+        "EnumEntry_BslPeripheralTriggerSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "16",
+          "description": "The SLP device can be triggered by a Counter 1 Start signal."
+        },
+        "EnumEntry_BslPeripheralTriggerSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "17",
+          "description": "The SLP device can be triggered by a Counter 2 Active signal."
+        },
+        "EnumEntry_BslPeripheralTriggerSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "18",
+          "description": "The SLP device can be triggered by a Counter 2 End signal."
+        },
+        "EnumEntry_BslPeripheralTriggerSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "19",
+          "description": "The SLP device can be triggered by a Counter 2 Start signal."
+        },
+        "EnumEntry_ChunkCounterSelector_Counter1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Chunk data can be retrieved from counter 1."
+        },
+        "EnumEntry_ChunkCounterSelector_Counter2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "Chunk data can be retrieved from counter 2."
+        },
+        "EnumEntry_ChunkExposureTimeSelector_Common": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Chunk data can be retrieved from the common exposure time."
+        },
+        "EnumEntry_ChunkGainSelector_All": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Chunk data can be retrieved from all gain channels."
+        },
+        "EnumEntry_ChunkSelector_AutoBrightnessStatus": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The Auto Brightness Status chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_CounterValue": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The Counter Value chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_ExposureTime": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The Exposure Time chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_FrameID": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3",
+          "description": "The Frame ID chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_Gain": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4",
+          "description": "The Gain chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_LineStatusAll": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5",
+          "description": "The Line Status All chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_PayloadCRC16": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "6",
+          "description": "The CRC Checksum chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_SequencerSetActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "7",
+          "description": "The Sequencer Set Active chunk can be enabled."
+        },
+        "EnumEntry_ChunkSelector_Timestamp": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "8",
+          "description": "The Timestamp chunk can be enabled."
+        },
+        "EnumEntry_CounterEventActivation_AnyEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "Increases the counter on any edge (rising or falling) of the source selected."
+        },
+        "EnumEntry_CounterEventActivation_FallingEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "Increases the counter on the falling edge of the source selected."
+        },
+        "EnumEntry_CounterEventActivation_RisingEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Increases the counter on the rising edge of the source selected."
+        },
+        "EnumEntry_CounterEventSource_AcquisitionActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4",
+          "description": "The selected counter counts the number of Acquisition Active signals."
+        },
+        "EnumEntry_CounterEventSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "15",
+          "description": "The selected counter counts the number of Counter 1 Active signals. By default, a Counter 1 Active signal is generated whenever counter 1 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "16",
+          "description": "The selected counter counts the number of Counter 1 End signals. A Counter 1 End signal is generated whenever counter 1 is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_CounterEventSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "17",
+          "description": "The selected counter counts the number of Counter 1 Start signals. A Counter 1 Start signal is generated whenever counter 1 is started."
+        },
+        "EnumEntry_CounterEventSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "18",
+          "description": "The selected counter counts the number of Counter 2 Active signals. By default, a Counter 2 Active signal is generated whenever counter 2  is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "19",
+          "description": "The selected counter counts the number of Counter 2 End signals. A Counter 2 End signal is generated whenever counter 2 is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_CounterEventSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "20",
+          "description": "The selected counter counts the number of Counter 2 Start signals. A Counter 2 Start signal is generated whenever counter 2 is started."
+        },
+        "EnumEntry_CounterEventSource_ExposureActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5",
+          "description": "The selected counter counts the number of Exposure Active signals. By default, an Exposure Active signal is generated whenever exposure is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_ExposureStart": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "6",
+          "description": "The selected counter counts the number of Exposure Start signals."
+        },
+        "EnumEntry_CounterEventSource_ExposureTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "7",
+          "description": "The selected counter counts the number of Exposure Trigger Wait signals."
+        },
+        "EnumEntry_CounterEventSource_FlashWindow": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "8",
+          "description": "The selected counter counts the number of Flash Window signals."
+        },
+        "EnumEntry_CounterEventSource_FrameBurstActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "9",
+          "description": "The selected counter counts the number of Frame Burst Active signals."
+        },
+        "EnumEntry_CounterEventSource_FrameBurstTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "10",
+          "description": "The selected counter counts the number of Frame Burst Trigger Wait signals."
+        },
+        "EnumEntry_CounterEventSource_FrameTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "11",
+          "description": "The selected counter counts the number of Frame Trigger Wait signals."
+        },
+        "EnumEntry_CounterEventSource_Line1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The selected counter counts the number of Line 1 signals. A Line 1 signal is generated whenever the input or output signal on Line 1 changes as specified by the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_Line2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The selected counter counts the number of Line 2 signals. A Line 2 signal is generated whenever the input or output signal on Line 2 changes as specified by the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_Line3": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3",
+          "description": "The selected counter counts the number of Line 3 signals. A Line 3 signal is generated whenever the input or output signal on Line 3 changes as specified by the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_Off": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The selected counter is disabled."
+        },
+        "EnumEntry_CounterEventSource_SoftwareSignal1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "12",
+          "description": "The selected counter counts the number of Software Signal 1 signals."
+        },
+        "EnumEntry_CounterEventSource_SoftwareSignal2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "13",
+          "description": "The selected counter counts the number of Software Signal 2 signals."
+        },
+        "EnumEntry_CounterEventSource_SoftwareSignal3": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "14",
+          "description": "The selected counter counts the number of Software Signal 3 signals."
+        },
+        "EnumEntry_CounterEventSource_Timer1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "21",
+          "description": "The selected counter counts the number of Timer 1 Active signals. By default, a Timer 1 Active signal is generated whenever timer 1 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_Timer1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "22",
+          "description": "The selected counter counts the number of Timer 1 End signals. A Timer 1 End signal is generated whenever timer 1 has elapsed."
+        },
+        "EnumEntry_CounterEventSource_Timer2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "23",
+          "description": "The selected counter counts the number of Timer 2 Active signals. By default, a Timer 2 Active signal is generated whenever timer 2 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterEventSource_Timer2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "24",
+          "description": "The selected counter counts the number of Timer 2 End signals. A Timer 2 End signal is generated whenever timer 2 has elapsed."
+        },
+        "EnumEntry_CounterResetActivation_AnyEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The counter is reset on any edge of the signal."
+        },
+        "EnumEntry_CounterResetActivation_FallingEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The counter is reset on the falling edge of the signal."
+        },
+        "EnumEntry_CounterResetActivation_RisingEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The counter is reset on the rising edge of the signal."
+        },
+        "EnumEntry_CounterResetSource_AcquisitionActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4",
+          "description": "The selected counter can be reset by an Acquisition Active signal."
+        },
+        "EnumEntry_CounterResetSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "15",
+          "description": "The selected counter can be reset by a Counter 1 Active signal. By default, a Counter 1 Active signal is generated whenever counter 1 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterResetSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "16",
+          "description": "The selected counter can be reset by a Counter 1 End signal."
+        },
+        "EnumEntry_CounterResetSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "17",
+          "description": "The selected counter can be reset by a Counter 1 Start signal. A Counter 1 Start signal is generated whenever counter 1 is started."
+        },
+        "EnumEntry_CounterResetSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "18",
+          "description": "The selected counter can be reset by a Counter 2 Active signal. By default, a Counter 2 Active signal is generated whenever counter 2 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterResetSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "19",
+          "description": "The selected counter can be reset by a Counter 2 End signal."
+        },
+        "EnumEntry_CounterResetSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "20",
+          "description": "The selected counter can be reset by a Counter 2 Start signal. A Counter 2 Start signal is generated whenever counter 2 is started."
+        },
+        "EnumEntry_CounterResetSource_ExposureActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5",
+          "description": "The selected counter can be reset by an Exposure Active signal. By default, an Exposure Active signal is generated whenever exposure is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterResetSource_ExposureStart": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "6",
+          "description": "The selected counter can be reset by an Exposure Start signal."
+        },
+        "EnumEntry_CounterResetSource_ExposureTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "7",
+          "description": "The selected counter can be reset by an Exposure Trigger Wait signal."
+        },
+        "EnumEntry_CounterResetSource_FlashWindow": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "8",
+          "description": "The selected counter can be reset by a Flash Window signal."
+        },
+        "EnumEntry_CounterResetSource_FrameBurstActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "9",
+          "description": "The selected counter can be reset by a Frame Burst Active signal."
+        },
+        "EnumEntry_CounterResetSource_FrameBurstTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "10",
+          "description": "The selected counter can be reset by a Frame Burst Trigger Wait signal."
+        },
+        "EnumEntry_CounterResetSource_FrameTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "11",
+          "description": "The selected counter can be reset by a Frame Trigger Wait signal."
+        },
+        "EnumEntry_CounterResetSource_Line1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The selected counter can be reset by a signal applied to Line 1."
+        },
+        "EnumEntry_CounterResetSource_Line2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The selected counter can be reset by a signal applied to Line 2."
+        },
+        "EnumEntry_CounterResetSource_Line3": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3",
+          "description": "The selected counter can be reset by a signal applied to Line 3."
+        },
+        "EnumEntry_CounterResetSource_Off": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The counter reset is disabled."
+        },
+        "EnumEntry_CounterResetSource_SoftwareSignal1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "12",
+          "description": "The selected counter can be reset by a Software Signal 1 signal."
+        },
+        "EnumEntry_CounterResetSource_SoftwareSignal2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "13",
+          "description": "The selected counter can be reset by a Software Signal 2 signal."
+        },
+        "EnumEntry_CounterResetSource_SoftwareSignal3": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "14",
+          "description": "The selected counter can be reset by a Software Signal 3 signal."
+        },
+        "EnumEntry_CounterResetSource_Timer1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "21",
+          "description": "The selected counter can be reset by a Timer 1 Active signal. By default, a Timer 1 Active signal is generated whenever timer 1 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterResetSource_Timer1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "22",
+          "description": "The selected counter can be reset by a Timer 1 End signal. A Timer 1 End signal is generated whenever timer 1 has elapsed."
+        },
+        "EnumEntry_CounterResetSource_Timer2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "23",
+          "description": "The selected counter can be reset by a Timer 2 Active signal. By default, a Timer 2 Active signal is generated whenever timer 2 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterResetSource_Timer2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "24",
+          "description": "The selected counter can be reset by a Timer 2 End signal. A Timer 2 End signal is generated whenever timer 2 has elapsed."
+        },
+        "EnumEntry_CounterSelector_Counter1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Counter 1 can be configured."
+        },
+        "EnumEntry_CounterSelector_Counter2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "Counter 2 can be configured."
+        },
+        "EnumEntry_CounterStatus_CounterActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The counter is waiting to be increased by the selected event source or is currently counting."
+        },
+        "EnumEntry_CounterStatus_CounterCompleted": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The counter has reached its maximum value defined by the Counter Duration parameter."
+        },
+        "EnumEntry_CounterStatus_CounterTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The counter is waiting to be started."
+        },
+        "EnumEntry_CounterTriggerActivation_AnyEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The counter is started on any edge (rising or falling) of the selected source."
+        },
+        "EnumEntry_CounterTriggerActivation_FallingEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The counter is started on the falling edge of the source selected."
+        },
+        "EnumEntry_CounterTriggerActivation_LevelHigh": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3",
+          "description": "The counter is active as long as the logic level of the source selected is high."
+        },
+        "EnumEntry_CounterTriggerActivation_LevelLow": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4",
+          "description": "The counter is active as long as the logic level of the source selected is low."
+        },
+        "EnumEntry_CounterTriggerActivation_RisingEdge": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The counter is started on the risiging edge of the source selected."
+        },
+        "EnumEntry_CounterTriggerSource_AcquisitionActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "4",
+          "description": "The selected counter can be started by an Acquisition Active signal."
+        },
+        "EnumEntry_CounterTriggerSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "15",
+          "description": "The selected counter can be started by a Counter 1 Active signal. By default, a Counter 1 Active signal is generated whenever counter 1 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterTriggerSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "16",
+          "description": "The selected counter can be started by a Counter 1 End signal. A Counter 1 End signal is generated whenever counter 1 is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_CounterTriggerSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "17",
+          "description": "The selected counter can be started by a Counter 1 Start signal. A Counter 1 Start signal is generated whenever counter 1 is started."
+        },
+        "EnumEntry_CounterTriggerSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "18",
+          "description": "The selected counter can be started by a Counter 2 Active signal. By default, a Counter 2 Active signal is generated whenever counter 2 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterTriggerSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "19",
+          "description": "The selected counter can be started by a Counter 2 End signal. A Counter 2 End signal is generated whenever counter 2 is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_CounterTriggerSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "20",
+          "description": "The selected counter can be started by a Counter 2 Start signal. A Counter 2 Start signal is generated whenever counter 2 is started."
+        },
+        "EnumEntry_CounterTriggerSource_ExposureActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5",
+          "description": "The selected counter can be started by an Exposure Active signal. By default, an Exposure Active signal is generated whenever exposure is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterTriggerSource_ExposureStart": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "6",
+          "description": "The selected counter can be started by an Exposure Start signal."
+        },
+        "EnumEntry_CounterTriggerSource_ExposureTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "7",
+          "description": "The selected counter can be started by an Exposure Trigger Wait signal."
+        },
+        "EnumEntry_CounterTriggerSource_FlashWindow": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "8",
+          "description": "The selected counter can be started by a Flash Window signal."
+        },
+        "EnumEntry_CounterTriggerSource_FrameBurstActive": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "9",
+          "description": "The selected counter can be started by a Frame Burst Active signal."
+        },
+        "EnumEntry_CounterTriggerSource_FrameBurstTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "10",
+          "description": "The selected counter can be started by a Frame Burst Trigger Wait signal."
+        },
+        "EnumEntry_CounterTriggerSource_FrameTriggerWait": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "11",
+          "description": "The selected counter can be started by a Frame Trigger Wait signal."
+        },
+        "EnumEntry_CounterTriggerSource_Line1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The selected counter can be started by a Line 1 signal."
+        },
+        "EnumEntry_CounterTriggerSource_Line2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2",
+          "description": "The selected counter can be started by a Line 2 signal."
+        },
+        "EnumEntry_CounterTriggerSource_Line3": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "3",
+          "description": "The selected counter can be started by a Line 3 signal."
+        },
+        "EnumEntry_CounterTriggerSource_Off": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The selected counter is disabled and can't be started."
+        },
+        "EnumEntry_CounterTriggerSource_SoftwareSignal1": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "12",
+          "description": "The selected counter can be started by a Software Signal 1 signal."
+        },
+        "EnumEntry_CounterTriggerSource_SoftwareSignal2": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "13",
+          "description": "The selected counter can be started by a Software Signal 2 signal."
+        },
+        "EnumEntry_CounterTriggerSource_SoftwareSignal3": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "14",
+          "description": "The selected counter can be started by a Software Signal 3 signal."
+        },
+        "EnumEntry_CounterTriggerSource_Timer1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "21",
+          "description": "The selected counter can be started by a Timer 1 Active signal. By default, a Timer 1 Active signal is generated whenever timer 1 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterTriggerSource_Timer1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "22",
+          "description": "The selected counter can be started by a Timer 1 End signal. A Timer 1 End signal is generated whenever timer 1 has elapsed."
+        },
+        "EnumEntry_CounterTriggerSource_Timer2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "23",
+          "description": "The selected counter can be started by a Timer 2 Active signal. By default, a Timer 2 Active signal is generated whenever timer 2 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_CounterTriggerSource_Timer2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "24",
+          "description": "The selected counter can be started by a Timer 2 End signal. A Timer 2 End signal is generated whenever timer 2 has elapsed."
+        },
+        "EnumEntry_DeviceLinkThroughputLimitMode_Off": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "description": "The Device Link Throughput Limit parameter is disabled."
+        },
+        "EnumEntry_DeviceLinkThroughputLimitMode_On": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "The Device Link Throughput Limit parameter is enabled."
+        },
+        "EnumEntry_LineSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "11",
+          "description": "The source signal for the currently selected line is set to Counter 1 Active. The signal goes high when the counter is started. The signal goes low when the counter is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_LineSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "12",
+          "description": "The source signal for the currently selected line is set to Counter 2 Active. The signal goes high when the counter is started. The signal goes low when the counter is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_SequencerTriggerSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "15",
+          "description": "Counter 1 Active signals can be used to advance to the next sequence set."
+        },
+        "EnumEntry_SequencerTriggerSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "16",
+          "description": "Counter 1 End signals can be used to advance to the next sequence set."
+        },
+        "EnumEntry_SequencerTriggerSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "17",
+          "description": "Counter 1 Start signals can be used to advance to the next sequence set."
+        },
+        "EnumEntry_SequencerTriggerSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "18",
+          "description": "Counter 2 Active signals can be used to advance to the next sequence set."
+        },
+        "EnumEntry_SequencerTriggerSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "19",
+          "description": "Counter 2 End signals can be used to advance to the next sequence set."
+        },
+        "EnumEntry_SequencerTriggerSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "20",
+          "description": "Counter 2 Start signals can be used to advance to the next sequence set."
+        },
+        "EnumEntry_TimerTriggerSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "15",
+          "description": "The selected timer can be started by a Counter 1 Active signal. By default, a Counter 1 Active signal is generated whenever counter 1 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_TimerTriggerSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "16",
+          "description": "The selected timer can be started by a Counter 1 End signal. A Counter 1 End signal is generated whenever counter 1 is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_TimerTriggerSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "17",
+          "description": "The selected timer can be started by a Counter 1 Start signal. A Counter 1 Start signal is generated whenever counter 1 is started."
+        },
+        "EnumEntry_TimerTriggerSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "18",
+          "description": "The selected timer can be started by a Counter 2 Active signal. By default, a Counter 2 Active signal is generated whenever counter 2 is started. You can change this behavior using the Counter Event Activation parameter."
+        },
+        "EnumEntry_TimerTriggerSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "19",
+          "description": "The selected timer can be started by a Counter 2 End signal. A Counter 2 End signal is generated whenever counter 2 is stopped, reset, or when it has reached its maximum value."
+        },
+        "EnumEntry_TimerTriggerSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "20",
+          "description": "The selected timer can be started by a Counter 2 Start signal. A Counter 2 Start signal is generated whenever counter 2 is started."
+        },
+        "EnumEntry_TriggerSource_Counter1Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "7",
+          "description": "The source signal for the selected trigger is set to Counter 1 Active."
+        },
+        "EnumEntry_TriggerSource_Counter1End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "8",
+          "description": "The source signal for the selected trigger is set to Counter 1 End."
+        },
+        "EnumEntry_TriggerSource_Counter1Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "9",
+          "description": "The source signal for the selected trigger is set to Counter 1 Start."
+        },
+        "EnumEntry_TriggerSource_Counter2Active": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "10",
+          "description": "The source signal for the selected trigger is set to Counter 2 Active."
+        },
+        "EnumEntry_TriggerSource_Counter2End": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "11",
+          "description": "The source signal for the selected trigger is set to Counter 2 End."
+        },
+        "EnumEntry_TriggerSource_Counter2Start": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "12",
+          "description": "The source signal for the selected trigger is set to Counter 2 Start."
+        },
+        "EventExposureEndTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameBufferOverrunTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameStartTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventFrameTriggerMissedTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventOverrunTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventTemperatureStatusChangedTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "EventTestTimestamp": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "ExposureAuto": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets the operation mode of the Exposure Auto auto function. The Exposure Auto auto function automatically adjusts the exposure time within set limits until a target brightness value has been reached.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Once",
+              "available": true
+            },
+            {
+              "symbol": "Continuous",
+              "available": true
+            }
+          ]
+        },
+        "ExposureMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Timed",
+          "description": "Sets the exposure mode.",
+          "enum_entries": [
+            {
+              "symbol": "Timed",
+              "available": true
+            },
+            {
+              "symbol": "TriggerWidth",
+              "available": true
+            },
+            {
+              "symbol": "TriggerControlled",
+              "available": true
+            }
+          ]
+        },
+        "ExposureTime": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "5000.0",
+          "min": 5.0,
+          "max": 10000000.0,
+          "increment": 1.0,
+          "unit": "us",
+          "description": "Exposure time of the camera in microseconds."
+        },
+        "Gain": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0.000",
+          "min": 0.0,
+          "max": 48.164799306236986,
+          "unit": "dB",
+          "description": "Value of the currently selected gain in dB."
+        },
+        "GainAuto": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets the operation mode of the Gain Auto auto function. The Gain Auto auto function automatically adjusts the gain within set limits until a target brightness value has been reached.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "Once",
+              "available": true
+            },
+            {
+              "symbol": "Continuous",
+              "available": true
+            }
+          ]
+        },
+        "Height": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "2048",
+          "min": 1,
+          "max": 2048,
+          "increment": 1,
+          "unit": "",
+          "description": "Height of the camera's region of interest (area of interest) in pixels. Depending on the camera model, the parameter can be set in different increments."
+        },
+        "HeightMax": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2048",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Maximum height of the region of interest (area of interest) in pixels. The value takes into account any features that may limit the maximum height, e.g., binning."
+        },
+        "LineInverter": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "description": "Enables the signal inverter function for the currently selected input or output line."
+        },
+        "LineMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Input",
+          "description": "Sets the mode for the selected line. This controls whether the physical line is used to input or output a signal.",
+          "enum_entries": [
+            {
+              "symbol": "Input",
+              "available": true
+            },
+            {
+              "symbol": "Output",
+              "available": false
+            },
+            {
+              "symbol": "InOut",
+              "available": false
+            }
+          ]
+        },
+        "LineSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Line1",
+          "description": "Sets the I/O line to be configured. All changes to the line settings will be applied to the selected line.",
+          "enum_entries": [
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": true
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            }
+          ]
+        },
+        "LineSource": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "LineStatus": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "description": "Indicates the current logical state of the selected line."
+        },
+        "LineStatusAll": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0x4",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Single bit field indicating the current logical state of all available line signals at time of polling."
+        },
+        "OffsetX": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "min": 0,
+          "max": 0,
+          "increment": 4,
+          "unit": "",
+          "description": "Horizontal offset from the left side of the sensor to the region of interest (area of interest) (in pixels)."
+        },
+        "OffsetY": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0",
+          "min": 0,
+          "max": 0,
+          "increment": 1,
+          "unit": "",
+          "description": "Vertical offset from the top of the sensor to the region of interest (area of interest) (in pixels)."
+        },
+        "PayloadSize": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "5013504",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "B",
+          "description": "Size of the payload in bytes. This is the total number of bytes sent in the payload."
+        },
+        "PixelFormat": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Mono8",
+          "description": "Sets the format of the pixel data transmitted by the camera. The available pixel formats depend on the camera model and whether the camera is monochrome or color.",
+          "enum_entries": [
+            {
+              "symbol": "Mono8",
+              "available": true
+            },
+            {
+              "symbol": "Mono10",
+              "available": true
+            },
+            {
+              "symbol": "Mono10p",
+              "available": true
+            },
+            {
+              "symbol": "Mono12",
+              "available": true
+            },
+            {
+              "symbol": "Mono12p",
+              "available": true
+            }
+          ]
+        },
+        "PixelSize": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "Bpp8",
+          "description": "Indicates the depth of the pixel values in the image (in bits per pixel). The potential values depend on the pixel format setting.",
+          "enum_entries": [
+            {
+              "symbol": "Bpp8",
+              "available": true
+            },
+            {
+              "symbol": "Bpp10",
+              "available": true
+            },
+            {
+              "symbol": "Bpp12",
+              "available": true
+            },
+            {
+              "symbol": "Bpp16",
+              "available": true
+            },
+            {
+              "symbol": "Bpp24",
+              "available": true
+            },
+            {
+              "symbol": "Bpp30",
+              "available": true
+            },
+            {
+              "symbol": "Bpp32",
+              "available": true
+            },
+            {
+              "symbol": "Bpp36",
+              "available": true
+            }
+          ]
+        },
+        "ResultingFrameRate": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "71.803",
+          "min": -1.7976931348623157e+308,
+          "max": 1.7976931348623157e+308,
+          "unit": "Hz",
+          "description": "Maximum frame acquisition rate with current camera settings (in frames per second)."
+        },
+        "TimestampLatch": {
+          "implemented": true,
+          "available": true,
+          "readable": false,
+          "writable": true
+        },
+        "TimestampLatchValue": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "0",
+          "min": -9223372036854775808,
+          "max": 9223372036854775807,
+          "increment": 1,
+          "unit": "ns",
+          "description": "Latched value of the timestamp counter."
+        },
+        "TriggerActivation": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        },
+        "TriggerDelay": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "0.0",
+          "min": 0.0,
+          "max": 10000.0,
+          "increment": 1.0,
+          "unit": "us",
+          "description": "Trigger delay time in microseconds. The delay is applied after the trigger has been received and before effectively activating the trigger."
+        },
+        "TriggerMode": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Off",
+          "description": "Sets the mode for the currently selected trigger.",
+          "enum_entries": [
+            {
+              "symbol": "Off",
+              "available": true
+            },
+            {
+              "symbol": "On",
+              "available": true
+            }
+          ]
+        },
+        "TriggerSelector": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "FrameStart",
+          "description": "Sets the trigger type to be configured. All changes to the trigger settings will be applied to the selected trigger.",
+          "enum_entries": [
+            {
+              "symbol": "FrameBurstStart",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstEnd",
+              "available": true
+            },
+            {
+              "symbol": "FrameBurstActive",
+              "available": true
+            },
+            {
+              "symbol": "FrameStart",
+              "available": true
+            },
+            {
+              "symbol": "FrameEnd",
+              "available": true
+            },
+            {
+              "symbol": "FrameActive",
+              "available": true
+            },
+            {
+              "symbol": "ExposureStart",
+              "available": true
+            },
+            {
+              "symbol": "ExposureEnd",
+              "available": true
+            },
+            {
+              "symbol": "ExposureActive",
+              "available": true
+            }
+          ]
+        },
+        "TriggerSource": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "Software",
+          "description": "Sets the source signal for the selected trigger.",
+          "enum_entries": [
+            {
+              "symbol": "Software",
+              "available": true
+            },
+            {
+              "symbol": "Line1",
+              "available": true
+            },
+            {
+              "symbol": "Line2",
+              "available": true
+            },
+            {
+              "symbol": "Line3",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal1",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal2",
+              "available": true
+            },
+            {
+              "symbol": "SoftwareSignal3",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter1End",
+              "available": true
+            },
+            {
+              "symbol": "Counter1Start",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Active",
+              "available": true
+            },
+            {
+              "symbol": "Counter2End",
+              "available": true
+            },
+            {
+              "symbol": "Counter2Start",
+              "available": true
+            },
+            {
+              "symbol": "Timer1Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer1End",
+              "available": true
+            },
+            {
+              "symbol": "Timer2Active",
+              "available": true
+            },
+            {
+              "symbol": "Timer2End",
+              "available": true
+            }
+          ]
+        },
+        "Width": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": true,
+          "value": "2448",
+          "min": 4,
+          "max": 2448,
+          "increment": 4,
+          "unit": "",
+          "description": "Width of the camera's region of interest (area of interest) in pixels. Depending on the camera model, the parameter can be set in different increments."
+        },
+        "WidthMax": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "2448",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": "Maximum width of the region of interest (area of interest) in pixels. The value takes into account any function that may limit the maximum width."
+        },
+        "genicamCounterStatus_0": {
+          "implemented": true,
+          "available": true,
+          "readable": true,
+          "writable": false,
+          "value": "1",
+          "min": 0,
+          "max": 4294967295,
+          "increment": 1,
+          "unit": "",
+          "description": ""
+        },
+        "genicamTimestampValue_0": {
+          "implemented": true,
+          "available": false,
+          "readable": false,
+          "writable": false
+        }
+      },
+      "stream_grabber": {
+        "MaxTransferSize": "1048576",
+        "NumMaxQueuedUrbs": "64",
+        "MaxBufferSize": "131072",
+        "MaxNumBuffer": "16",
+        "Statistic_Total_Buffer_Count": "0",
+        "Statistic_Failed_Buffer_Count": "0",
+        "Statistic_Last_Failed_Buffer_Status": "0x0",
+        "TransferLoopThreadPriority": "15"
+      }
+    }
+  ]
+}

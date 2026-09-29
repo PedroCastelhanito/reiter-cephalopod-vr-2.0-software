@@ -1,0 +1,855 @@
+syntax = "proto3";
+
+package cephvr.control.v1;
+
+import "cephvr/acquisition/v1/runtime.proto";
+import "cephvr/synchronization/v1/spikeglx.proto";
+import "cephvr/vr/v1/runtime.proto";
+import "cephvr/vr/v1/plan.proto";
+import "cephvr/tracking/v1/pose.proto";
+import "cephvr/tracking/v1/methods.proto";
+
+import "cephvr/acquisition/v1/camera.proto";
+import "cephvr/acquisition/v1/microcontroller.proto";
+
+// Shared control types derived from architecture.md E03–E08, E10–E14.
+// Design contracts only: not a working server or a published compatibility release.
+// IDs are canonical lowercase UUIDv4 strings. Host timestamps use host_time_ns(),
+// backed by unshifted time.perf_counter_ns(); see contracts/host-clock.md.
+// Wall timestamps are RFC 3339 strings with an explicit offset; device clocks differ.
+// Scalar presence is explicit where absence differs from zero/false. Required
+// contexts, oneofs, ranges and enum values must be validated by the receiver.
+
+// Internal process compatibility evidence, not a per-frame field or session inventory.
+message HostClockDescriptor {
+  string clock_id = 1; // Exactly cephvr.host.perf_counter_ns.v1.
+  string implementation = 2; // get_clock_info("perf_counter").implementation.
+  optional bool monotonic = 3; // Required true.
+  optional bool adjustable = 4; // Required false.
+  optional double resolution_s = 5; // Finite positive; diagnostic, not accuracy proof.
+}
+
+enum SessionPhase {
+  SESSION_PHASE_UNSPECIFIED = 0;
+  SESSION_PHASE_CONFIGURATION = 1;
+  SESSION_PHASE_SETTING_UP = 2;
+  SESSION_PHASE_READY = 3;
+  SESSION_PHASE_STARTING = 4;
+  SESSION_PHASE_RUNNING = 5;
+  SESSION_PHASE_FINALIZING = 6;
+  SESSION_PHASE_ENDED = 7;
+}
+enum TrialPhase {
+  TRIAL_PHASE_UNSPECIFIED = 0;
+  TRIAL_PHASE_PENDING = 1;
+  TRIAL_PHASE_PREPARING = 2;
+  TRIAL_PHASE_READY = 3;
+  TRIAL_PHASE_STARTING = 4;
+  TRIAL_PHASE_RUNNING = 5;
+  TRIAL_PHASE_FINALIZING = 6;
+  TRIAL_PHASE_ENDED = 7;
+}
+enum OutputClosure {
+  OUTPUT_CLOSURE_UNSPECIFIED = 0;
+  OUTPUT_CLOSURE_NOT_STARTED = 1;
+  OUTPUT_CLOSURE_OPEN = 2;
+  OUTPUT_CLOSURE_CLOSING = 3;
+  OUTPUT_CLOSURE_CLOSED = 4;
+  OUTPUT_CLOSURE_FAILED = 5;
+  OUTPUT_CLOSURE_UNCONFIRMED = 6;
+}
+enum MetadataPersistence {
+  METADATA_PERSISTENCE_UNSPECIFIED = 0;
+  METADATA_PERSISTENCE_NOT_REQUIRED = 1;
+  METADATA_PERSISTENCE_NOT_STARTED = 2;
+  METADATA_PERSISTENCE_PENDING = 3;
+  METADATA_PERSISTENCE_SYNCED = 4;
+  METADATA_PERSISTENCE_FAILED = 5;
+  METADATA_PERSISTENCE_UNCONFIRMED = 6;
+}
+enum CommandResult {
+  COMMAND_RESULT_UNSPECIFIED = 0;
+  COMMAND_RESULT_ACCEPTED = 1;
+  COMMAND_RESULT_REJECTED = 2;
+}
+enum SessionMode {
+  SESSION_MODE_UNSPECIFIED = 0;
+  SESSION_MODE_OPEN_LOOP = 1;
+  SESSION_MODE_CLOSED_LOOP = 2;
+}
+enum SessionOutcome {
+  SESSION_OUTCOME_UNSPECIFIED = 0;
+  SESSION_OUTCOME_COMPLETED = 1;
+  SESSION_OUTCOME_STOPPED = 2;
+  SESSION_OUTCOME_INTERRUPTED = 3;
+}
+enum TrialOutcome {
+  TRIAL_OUTCOME_UNSPECIFIED = 0;
+  TRIAL_OUTCOME_COMPLETED = 1;
+  TRIAL_OUTCOME_INTERRUPTED = 2;
+}
+enum RecoveryOutcome {
+  RECOVERY_OUTCOME_UNSPECIFIED = 0;
+  RECOVERY_OUTCOME_COMPLETED = 1;
+  RECOVERY_OUTCOME_FAILED = 2;
+}
+
+message OperatorContext {
+  string client_id = 1;
+  string control_generation = 2;
+  string command_id = 3;
+}
+message SessionContext {
+  string controller_generation = 1;
+  string session_id = 2;
+}
+message TrialContext {
+  SessionContext session = 1;
+  string trial_id = 2;
+  uint32 trial_number = 3; // One based, fixed session order.
+}
+message BackendContext {
+  string backend_name = 1;
+  string backend_generation = 2;
+}
+message OperationContext {
+  // Work is tracked by its initiating command ID; no second operation identifier.
+  string command_id = 1;
+  reserved 2;
+  reserved "operation_id";
+}
+message ProcessIdentity {
+  string role = 1;
+  string generation = 2;
+}
+message WorkContext {
+  oneof work {
+    SessionContext session = 1;
+    TrialContext trial = 2;
+  }
+}
+message Failure {
+  string code = 1;
+  string message = 2;
+}
+message FieldIssue {
+  string component = 1;
+  string field_path = 2;
+  Failure failure = 3;
+  optional string file_path = 4;
+  optional string device = 5;
+  optional uint32 trial_number = 6;
+  optional string rejected_value = 7;
+}
+
+// Acquisition operator values are typed; file-only runtime policies still travel
+// through owning preparation contracts. Other backends remain extension points.
+message AcquisitionSettings {
+  cephvr.acquisition.v1.CameraSessionSettings behavioral = 1;
+  cephvr.acquisition.v1.CameraSessionSettings tracking = 2;
+  reserved 3;
+  reserved "ring_capacity_frames"; // Split into tracking/recording capacities (A03).
+  cephvr.acquisition.v1.CameraPulseConfiguration pulses = 4;
+  // No timeout/transport overrides, runtime device capabilities or raw handles.
+  cephvr.acquisition.v1.AcquisitionRecordingOptions recording_options = 5;
+  optional uint32 preview_output_bit_depth = 6;
+  optional uint32 recording_startup_allowance_ms = 7; // A03 recording-queue sizing; unset = capacity only.
+  optional uint32 tracking_ring_frames = 8; // A03 shared tracking ring.
+  optional uint32 recording_queue_frames = 9; // A03 in-process recording queue minimum.
+  optional double session_preview_max_hz = 10; // A03/A10 session preview cap; 0 = off.
+  // File-policy bindings: acquisition/configuration-bindings.md. Applied MCU
+  // timing is separate evidence, never an operator override.
+}
+message VRSettings {
+  cephvr.vr.v1.DisplayConfiguration display = 1;
+  optional bool save_vr_data = 2;
+  reserved 3;
+  reserved "encoding";
+  repeated string review_ffmpeg_args = 4; // E13: one complete list for the tiled composite.
+  // Full display snapshot, no profile-path-only substitution. E07 preserves false.
+  // Arguments are required only when saving is enabled.
+  // Further stimulus/feedback settings remain explicitly in the VR worklist.
+}
+message VRDisplayView {
+  ProcessIdentity source = 1;
+  BackendContext backend = 2;
+  ProcessIdentity controller = 3;
+  string command_id = 4;
+  uint64 requested_revision = 5;
+  optional uint64 applied_revision = 6;
+  repeated cephvr.vr.v1.OutputInitialization outputs = 7;
+  repeated FieldIssue issues = 8;
+  repeated ResourceRelease resources = 9;
+  int64 observed_monotonic_ns = 10;
+  optional bool complete = 11;
+  optional uint64 last_successful_applied_revision = 12;
+  // Previous success is historical, not proof its resources remain valid.
+}
+enum TrackingPoseMode {
+  TRACKING_POSE_MODE_UNSPECIFIED = 0;
+  TRACKING_POSE_MODE_MANUAL = 1;
+  TRACKING_POSE_MODE_AUTOMATIC = 2;
+}
+// T27: installed stage schemas own method, locomotion and region settings.
+message TrackingSettings {
+  optional string pipeline_id = 1; // water_flow or fin_flow; no fallback name.
+  optional cephvr.acquisition.v1.CameraRole input_camera_role = 2;
+  optional TrackingPoseMode pose_mode = 3;
+  optional double pose_max_age_ms = 5; // Automatic mode: positive finite, exact whole ns.
+  optional uint32 pose_history_capacity = 6; // Automatic mode: positive bounded history.
+  cephvr.tracking.v1.ManualPoseSettings manual_pose = 7; // Required in manual mode.
+  optional bool save_tracking_data = 8; // T14: resolved bool; explicit false preserved.
+  cephvr.tracking.v1.PoseSearchRegion pose_search_region = 9; // Automatic mode required.
+  reserved 11;
+  reserved "recording"; // T19 file-only settings now live in TrackingFilePolicies.
+  cephvr.tracking.v1.SubjectReferenceSettings subject_reference = 12;
+  // T27 replaces unpublished provider-specific slots. Never reuse their numbers/names.
+  reserved 4, 10, 13, 14, 15;
+  reserved "automatic_pose_method", "threshold_segmentation", "model_pose", "contour_pose", "image_flow";
+  repeated cephvr.tracking.v1.StageConfiguration stages = 16;
+  // Exact required stages/implementations come from the installed pipeline catalogue.
+  // Manual mode executes no automatic pose stage. Unknown/incompatible selections fail.
+  // Selections alone are not a complete prepared tracking configuration or Ready.
+  // Camera settings and SDK ownership remain acquisition-owned; no device copy here.
+}
+// E12: participation uses BackendSettings.enabled. Connection/native installation
+// fields are host-file-only; no extra operator acquisition settings are exposed.
+message SynchronizationSettings {}
+message VRTrialSettings {
+  cephvr.vr.v1.ProgramSource program = 1;
+  optional string stimulus_seed_decimal = 2;
+  // Canonical nonnegative integer text; absence invokes E07 seed resolution.
+  cephvr.vr.v1.ArenaBoundaries arena_boundaries = 3;
+}
+message ResolvedStimulusPlan {
+  reserved 1, 2;
+  reserved "schedule", "artifact";
+  // E08/D1: the full PreparedTrial stays with VR; control carries its identity only.
+  cephvr.vr.v1.PreparedHandle prepared = 3; // plan_sha256/plan_bytes/compiler identity.
+  repeated PlannedOccurrence occurrences = 4; // Compact E07 planned-epoch summary.
+  string seed_decimal = 5; // Canonical nonnegative decimal, copied from PreparedTrial.
+}
+message PlannedOccurrence {
+  uint32 index = 1; // Resolved occurrence order within the trial.
+  string epoch_id = 2;
+  int64 start_offset_ns = 3; // From trial start T.
+  int64 duration_ns = 4;
+  string scene_id = 5;
+  repeated PlannedGroupVisit lineage = 6; // Outer-to-inner; empty outside groups.
+  // Derived from the prepared plan; never an editable or second schedule.
+}
+message PlannedGroupVisit {
+  string group_id = 1;
+  uint32 repetition_index = 2;
+  string unit_id = 3;
+  uint32 visit_index = 4;
+  // Exact PreparedTrial GroupVisit values; indices are zero based.
+}
+message DeviceProgressEvidence {
+  cephvr.vr.v1.OutputActivity vr_output = 1;
+  // Used only for the first required output activity, not per-frame updates.
+  cephvr.tracking.v1.TrackingFirstEvaluation tracking_evaluation = 2;
+  optional cephvr.acquisition.v1.CameraRole camera = 3; // Camera callback's exact enabled role; UNSPECIFIED is invalid.
+  ProcessIdentity producer = 4; // Exact registered camera worker generation that observed the callback.
+  // Receiver requires only the kind's applicable evidence arm; camera callback requires both camera and producer.
+}
+
+message BackendSettings {
+  string backend_name = 1;
+  bool enabled = 2;
+  oneof settings {
+    AcquisitionSettings acquisition = 3;
+    VRSettings vr = 4;
+    TrackingSettings tracking = 5;
+    SynchronizationSettings synchronization = 6;
+  }
+}
+message TrialDefinition {
+  uint32 trial_number = 1;
+  reserved 2;
+  reserved "duration_ns"; // V06: no independently editable trial duration.
+  VRTrialSettings stimulus = 3;
+}
+message IntertrialGap {
+  uint32 after_trial_number = 1;
+  int64 minimum_duration_ns = 2;
+}
+message ExperimentConfiguration {
+  string subject = 1;
+  string experiment = 2;
+  string recording_root = 3;
+  optional string asset_root = 4;
+  optional SessionMode mode = 5; // No fallback mode.
+  repeated TrialDefinition trials = 6;
+  repeated IntertrialGap gaps = 7;
+  repeated BackendSettings backends = 8;
+  // No operator-set timeout/port/control-policy overrides (E14).
+}
+message WaitPolicy {
+  int64 initial_ns = 1;
+  reserved 2;
+  reserved "recovery_ns"; // One shared ControlPolicies.recovery_ns (E06).
+}
+message ControlPolicies {
+  // Resolved by controller from owning TOMLs; no wire defaults or GUI overrides.
+  WaitPolicy setup = 1;
+  WaitPolicy setup_cancel = 2;
+  WaitPolicy trial_ready = 3;
+  WaitPolicy trial_finished = 4;
+  WaitPolicy supervisor_registration = 5;
+  int64 start_lead_ns = 6;
+  int64 controller_release_offset_ns = 7;
+  int64 backend_release_offset_ns = 8;
+  int64 start_evidence_allowance_ns = 9;
+  int64 stop_evidence_allowance_ns = 10;
+  uint32 trial_command_transport_retries = 11; // Fixed policy value 1, validated; no operator override.
+  reserved 12, 13, 14;
+  reserved "heartbeat_interval_ns", "health_silence_ns", "health_recovery_ns";
+  // E08 health is startup-only, read from the shared supervisor config by each process.
+  int64 metadata_timeout_ns = 15; // experiment_config.toml [metadata].completion_timeout_s.
+  int64 command_retention_after_finalization_ns = 16;
+  int64 recovery_ns = 17; // experiment_config.toml [timeouts].recovery_s; shared by every WaitPolicy.
+}
+message TrialPlan {
+  TrialContext context = 1;
+  TrialDefinition definition = 2;
+  ResolvedStimulusPlan resolved_stimulus = 3;
+  optional int64 resolved_duration_ns = 4;
+  // VR-derived epoch sum for this exact trial/configuration, >= 60 s (E05/V06).
+  // Absent only before VR plan resolution; required in VR resolved-plan evidence
+  // and every prepared trial distributed by the controller, never an operator field.
+  repeated RuntimeIncident continuation_incidents = 5;
+  // Runtime E06 scopes; not authored stimulus data or a modification of its digest.
+}
+message OutputPlan {
+  BackendContext backend = 1;
+  string output_key = 2;
+  optional string path = 3; // Filled when scheduled T determines the trial prefix.
+  TrialContext trial = 4;
+  string output_tag = 5;
+  string extension = 6;
+}
+message PreparedSession {
+  SessionContext context = 1;
+  uint64 configuration_revision = 2;
+  ExperimentConfiguration configuration = 3;
+  ControlPolicies policies = 4;
+  repeated TrialPlan trials = 5;
+  string session_directory = 6; // E04 session root; local outputs are under protocol-data/.
+  string local_timezone = 7;
+  int64 anchor_monotonic_ns = 8;
+  string anchor_wall_time = 9;
+  repeated OutputPlan outputs = 10;
+  optional cephvr.synchronization.v1.SpikeGLXPreparation spikeglx = 11; // Paired sessions only.
+}
+message ValidationResult {
+  uint64 configuration_revision = 1;
+  reserved 2;
+  reserved "backend";
+  bool completed = 3; // false: matching local module unavailable/timed out.
+  // An incomplete/invalid proposed-edit result cannot replace accepted configuration
+  // validation state; return it through that command's failure/warning path.
+  // Startup/Setup may expose unavailable checks without storing an unvalidated edit.
+  bool valid = 4; // Meaningful only when completed.
+  repeated FieldIssue issues = 5;
+  Failure unavailable_reason = 6;
+  repeated DependencyRequirement dependencies = 7;
+  string component = 8;
+  string configuration_module_version = 9; // Bind results to the pure validator used.
+}
+message DependencyRequirement {
+  string backend_name = 1;
+  optional string device = 2;
+  optional string capability = 3;
+  string reason = 4;
+}
+// Compact validation/lock state travels in every current-state view.
+message ConfigurationState {
+  reserved 1;
+  reserved "current";
+  uint64 revision = 2;
+  bool locked = 3;
+  repeated ValidationResult edit_validation = 4;
+  repeated FieldIssue setup_issues = 5;
+  repeated string outstanding_validators = 6; // Startup/Setup checks, not deferred-edit auto-apply.
+}
+message ConfigurationValues {
+  ExperimentConfiguration current = 1;
+  uint64 revision = 2;
+}
+message CommandAdmission {
+  CommandResult result = 1;
+  reserved 2;
+  reserved "operation_id";
+  Failure failure = 3; // REJECTED only. Admission never proves completion.
+  string command_id = 4; // Echo the initiating ID for admission and later tracking.
+}
+message ReportReceipt {
+  CommandResult result = 1; // Validated report receipt, not a new operation.
+  Failure failure = 2;
+}
+message ReportContext {
+  BackendContext backend = 1;
+  WorkContext work = 2;
+  OperationContext operation = 3;
+}
+// CLOSED confirms writer finalization/accounting, durable sync and closure under
+// the owning contract; it does not certify persisted content by reread/decoding.
+// File integrity validation is external post hoc work, not a runtime status/gate.
+enum CameraVideoContent {
+  CAMERA_VIDEO_CONTENT_UNSPECIFIED = 0;
+  CAMERA_VIDEO_CONTENT_UNKNOWN = 1;
+  CAMERA_VIDEO_CONTENT_NO_FRAMES = 2;
+  CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED = 3;
+  // Online input/accounting evidence only; no claim of persisted encoded samples.
+}
+// VR-specific completion evidence; existing camera names/tags remain stable.
+enum VrReviewVideoContent {
+  VR_REVIEW_VIDEO_CONTENT_UNSPECIFIED = 0;
+  VR_REVIEW_VIDEO_CONTENT_UNKNOWN = 1;
+  VR_REVIEW_VIDEO_CONTENT_NO_FRAMES = 2;
+  VR_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED = 3;
+  // Online input/accounting evidence, not persisted encoded-sample validation.
+}
+message OutputResult {
+  string output_key = 1;
+  string path = 2; // Reserved path even when artifact_present=false; not an existence claim.
+  OutputClosure closure = 3;
+  Failure failure = 4;
+  optional bool artifact_present = 5; // Absent means unknown, never false.
+  CameraVideoContent camera_video_content = 6; // Camera MP4 only; otherwise UNSPECIFIED.
+  VrReviewVideoContent vr_review_video_content = 7; // VR review MP4 only.
+  // Populate only the applicable video content field; the other is UNSPECIFIED.
+  // NO_FRAMES never waives errors. Owning predicates: acquisition/empty-video.md
+  // and vr/video-completion.md. Unknown/unspecified is not confirmed empty success.
+}
+message MetadataResult {
+  OperationContext operation = 1;
+  MetadataPersistence state = 2;
+  optional string path = 3;
+  Failure failure = 4;
+}
+message ReadyReport {
+  ReportContext context = 1;
+  uint64 configuration_revision = 2;
+  bool required_checks_passed = 3;
+  BackendSettings resolved_settings = 4;
+  repeated TrialPlan resolved_trials = 5;
+  // VR owns resolved stimulus/duration values. The controller validates current
+  // configuration/trial identity and duration before sharing the common trial plan;
+  // another backend cannot replace the VR-owned duration.
+  repeated string asset_filenames = 6; // Filename with extension only, E04.
+  repeated PreparedFunctionScope prepared_functions = 7; // E06 exact owned loss closure; retained for this generation/session.
+  repeated ResourceObligation cleanup_resources = 8; // Exact native resource/path release obligations; separate from output closure.
+}
+message ResourceObligation {
+  ProcessIdentity owner = 1; // Exact process generation that must prove release.
+  string resource = 2; // Owning backend's stable cleanup resource key.
+  optional string path = 3; // Exact native path if this obligation has one.
+}
+message PreparedFunctionScope {
+  string resource_id = 1; // Session-unique prepared function/output key.
+  ProcessIdentity owner = 2; // Exact owning generation, including controller-owned ephys control.
+  repeated string affected_closure_resource_ids = 3; // Transitive loss closure, including self.
+  optional bool essential_to_stimulus_control = 4; // Explicit required presentation/schedule/clock/control classification.
+  optional bool feedback_hold_required_on_loss = 5; // Explicit V25 hold classification.
+  repeated ProcessIdentity authorized_reporters = 6; // Exact registered child generations permitted to report this fault.
+  optional bool bounded_uncertainty_supported = 7; // Existing E06/J1 uncertain function can remain unfenced only to original deadline.
+  repeated string lifecycle_sources = 8; // Backend-scoped E11 producer IDs whose activity/cutoff gates this function owns; empty for output-only functions.
+}
+message ActivityEvidence {
+  string kind = 1; // "camera_callback", "vr_presentation_call" or "tracking_frame_evaluation".
+  int64 observed_monotonic_ns = 2;
+  optional uint64 native_counter = 3;
+  DeviceProgressEvidence device_evidence = 4;
+}
+message StartedReport {
+  ReportContext context = 1;
+  int64 actual_start_monotonic_ns = 2;
+  repeated ActivityEvidence first_required_activity = 3;
+  cephvr.acquisition.v1.PulseCommandEvidence acquisition_pulse_on = 4;
+  // Required for acquisition with external cameras; ACK alone is not camera Started.
+}
+message ProducerRecordingEnd {
+  ProcessIdentity producer = 1;
+  string source_id = 2; // Backend-scoped source, e.g. "behavioral" or "tracking".
+  int64 end_monotonic_ns = 3; // Confirmed E11 cutoff, not stop-request issuance.
+}
+message StoppedReport {
+  ReportContext context = 1;
+  int64 actual_stop_monotonic_ns = 2;
+  bool trial_activity_stopped = 3;
+  optional bool vr_idle = 4;
+  optional bool recording_interval_sealed = 5;
+  repeated ProducerRecordingEnd producer_ends = 6;
+  // Exact expected source set; unknown cutoffs are absent, never guessed.
+  cephvr.acquisition.v1.PulseCommandEvidence acquisition_pulse_off = 7;
+  // Grouped OFF host observations, separate from per-camera admission cutoff.
+}
+// A07: compact completed acquisition diagnostics, not a live/scientific stream.
+message CameraTransportSummary {
+  reserved 1;
+  reserved "camera_role";
+  cephvr.acquisition.v1.CameraRole camera = 9;
+  optional int64 observed_monotonic_ns = 2;
+  optional uint64 buffer_underruns = 3;
+  optional uint64 failed_buffers = 4;
+  optional uint64 missed_frames = 5;
+  optional uint64 resend_requests = 6;
+  optional uint64 resend_packets = 7;
+  optional uint64 resynchronizations = 8;
+  // Optional counters are deltas from comparable observations; absence is unknown.
+  // Numeric zero is valid. Trial/process identity comes from the enclosing report.
+  // Reuse collected frame-log completion values; no SDK polling or file-durability claim.
+}
+message FinishedReport {
+  ReportContext context = 1;
+  bool trial_activity_stopped = 2;
+  repeated OutputResult outputs = 3; // Owning completion predicate; A07/V12 empty exceptions.
+  repeated CameraTransportSummary acquisition_transport_summaries = 4;
+  // Acquisition only; at most one per camera role, matching this completed trial.
+  // Optional evidence; unavailable summaries never block normal closure.
+  repeated cephvr.vr.v1.TrialTimingSummary vr_timing_summaries = 5;
+  cephvr.vr.v1.ReviewRecordingSummary vr_review_summary = 6;
+  // VR compact administrative counts; never a detailed frame history.
+}
+message ResourceRelease {
+  string resource = 1; // A registered trial/session resource, not the resident runtime.
+  bool released = 2;
+  optional string path = 3;
+  Failure failure = 4;
+}
+message CleanupReport {
+  ProcessIdentity source = 1;
+  WorkContext work = 2;
+  OperationContext operation = 3;
+  int64 verified_monotonic_ns = 4;
+  bool trial_activity_stopped = 5;
+  repeated ResourceRelease resources = 6;
+  repeated OutputResult outputs = 7;
+  reserved 8;
+  reserved "metadata"; // Controller keeps metadata results local (Snapshot.metadata).
+  optional uint64 cleanup_resources_revision = 9; // Exact last accepted heartbeat catalogue revision; absent is unknown.
+  // Top-level backend evidence only. Compare against the authority's required obligations. An empty list or a
+  // stopped process never proves release/closure. Repeated evidence is idempotent.
+}
+// Same typed endpoint, distinct evidence. Controller accepts every kind;
+// supervisor accepts top-level backend Cleanup only (E08). Contexts stay in
+// each payload and delivery/deadlines remain unchanged. Never use for interrupts.
+message LifecycleReport {
+  oneof report {
+    ReadyReport ready = 1;
+    StartedReport started = 2;
+    StoppedReport stopped = 3;
+    FinishedReport finished = 4;
+    CleanupReport cleanup = 5;
+    BackendOperationReport operation = 6; // Child command completion (including ApplyIncidentScope), not a lifecycle gate.
+  }
+}
+message BackendOperationReport {
+  BackendContext source = 1;
+  OperationState operation = 2; // Exact child command ID/work and immutable terminal result.
+}
+message CleanupBlocker {
+  ProcessIdentity responsible = 1;
+  WorkContext work = 2;
+  string resource = 3;
+  optional string path = 4;
+  Failure reason = 5;
+  string recovery_action = 6;
+}
+message ErrorReport {
+  string error_id = 1;
+  ProcessIdentity source = 2;
+  WorkContext work = 3;
+  OperationContext operation = 4;
+  int64 occurred_monotonic_ns = 5;
+  Failure failure = 6;
+  optional string device = 7;
+  optional string output_path = 8;
+  FaultIsolationEvidence isolation = 9; // Source-attested local facts, never authorization by itself.
+  optional string incident_episode_id = 10; // Stable UUIDv4 across related E06 observations; absent uses error_id as single-error episode.
+}
+message FaultIsolationEvidence {
+  repeated string affected_resource_ids = 1; // Exact prepared keys; empty means unknown.
+  repeated string fenced_resource_ids = 2; // Admissions actually stopped, not requested.
+  optional bool leases_released_or_quarantined = 3; // No unsafe reuse or healthy-path pressure; false is confirmed unsafe.
+  optional bool feedback_hold_active = 4; // V25 hold proof when declared by prepared closure.
+  int64 verified_monotonic_ns = 5; // Same host clock, after the fault observation.
+  optional bool bounded_uncertainty = 6; // Existing recovery only; never extends its deadline.
+  repeated string feedback_hold_resource_ids = 7; // Exact V25-dependent closure keys held instead of fenced.
+}
+message ContinuingFunctionEvidence {
+  string resource_id = 1; // Exact prepared essential function key.
+  optional bool functioning = 2; // Current observed function, not process heartbeat alone.
+  optional bool schedule_valid = 3;
+  optional bool host_clock_valid = 4;
+  optional bool control_path_valid = 5;
+  int64 observed_monotonic_ns = 6; // Must be current and after the fault.
+}
+message WorkerProgress {
+  string worker = 1;
+  bool progress_required = 2;
+  optional int64 last_progress_monotonic_ns = 3;
+  DeviceProgressEvidence evidence = 4;
+}
+message HeartbeatReport {
+  ProcessIdentity source = 1;
+  WorkContext work = 2;
+  int64 sent_monotonic_ns = 3; // Receiver ingress drives silence deadline.
+  oneof lifecycle {
+    SessionPhase session_phase = 4;
+    TrialPhase trial_phase = 5;
+  }
+  string health_summary = 6;
+  ErrorReport active_error = 7;
+  repeated WorkerProgress workers = 8;
+  // Coordinator -> supervisor aggregates its workers' private heartbeats/progress (E08).
+  repeated ContinuingFunctionEvidence continuing_functions = 9; // Source-owned prepared keys only; supervisor forwards exact report.
+  optional uint64 cleanup_resources_revision = 10; // Revision 0 declares an explicitly empty catalogue; absent is unknown.
+  repeated ResourceObligation cleanup_resources = 11; // Complete append-only planned native obligations, acknowledged before creation.
+}
+message RecoveryState {
+  string attempt_id = 1;
+  ProcessIdentity affected = 2;
+  WorkContext work = 3;
+  Failure trigger = 4;
+  string action = 5;
+  int64 start_monotonic_ns = 6;
+  int64 deadline_monotonic_ns = 7;
+  optional int64 completion_monotonic_ns = 8;
+  string progress = 9;
+  optional RecoveryOutcome outcome = 10;
+  string evidence = 11;
+  Failure failure = 12;
+}
+message OperationState {
+  OperationContext context = 1;
+  string command = 2;
+  WorkContext work = 3;
+  bool complete = 4;
+  optional bool succeeded = 5;
+  string progress = 6;
+  Failure failure = 7;
+}
+message SessionState {
+  SessionPhase phase = 1;
+  SessionContext context = 2; // Absent in Configuration before allocated Setup IDs.
+  optional SessionOutcome outcome = 3;
+  optional string directory = 4;
+  uint32 trial_count = 5;
+  bool activated = 6;
+  bool stop_after_trial = 7;
+  Failure interruption_reason = 8;
+  bool shutdown_requested = 9;
+  bool cleanup_confirmed = 10;
+  repeated CleanupBlocker cleanup_blockers = 11;
+  // Ended can have cleanup_confirmed=false. An unactivated attempt may likewise
+  // return to Configuration with blockers. Neither phase proves resources released.
+}
+message TrialState {
+  TrialContext context = 1;
+  TrialPhase phase = 2;
+  optional TrialOutcome outcome = 3;
+  optional int64 start_monotonic_ns = 4;
+  optional int64 scheduled_end_monotonic_ns = 5;
+  optional int64 actual_end_monotonic_ns = 6;
+  // E11: interrupted summary = latest required producer cutoff only when all known.
+  // Normal end stays scheduled; this field never changes individual source bounds.
+  optional int64 gap_earliest_end_monotonic_ns = 7;
+  optional int64 interruption_issued_monotonic_ns = 8; // Deadline anchor, not data cutoff.
+}
+message ParticipantState {
+  ProcessIdentity process = 1;
+  bool enabled = 2;
+  bool required = 3;
+  bool process_running = 4;
+  bool connected = 5;
+  string health = 6;
+  optional int64 last_evidence_monotonic_ns = 7;
+  repeated ErrorReport errors = 8;
+  ReadinessState ready = 9;
+  StartedReport started = 10;
+  StoppedReport stopped = 11;
+  FinishedReport finished = 12;
+  // Latest completed evidence retains its original context during later trial work.
+  // Acquisition summaries here are never current-trial/live or fresh Ready evidence.
+  repeated OutputResult outputs = 13;
+  string preparation_progress = 14;
+  repeated string outstanding_obligations = 15;
+  string software_version = 16;
+  repeated string capabilities = 17;
+  string protocol_package = 18;
+  oneof lifecycle {
+    SessionPhase session_phase = 19;
+    TrialPhase trial_phase = 20;
+  }
+  CleanupReport cleanup = 21;
+  string configuration_module_version = 22; // Required backend compatibility at Setup.
+  repeated AcquisitionWarningView acquisition_warnings = 23;
+  // Current scope + latest completed trial per producer/camera; bounded catalogue.
+}
+message ReadinessState {
+  ReportContext context = 1;
+  uint64 configuration_revision = 2;
+  bool required_checks_passed = 3;
+  // Snapshot summary excludes ReadyReport's potentially large resolved plans.
+}
+message ControlState {
+  optional string holder_client_id = 1;
+  optional string control_generation = 2;
+  reserved 3;
+  reserved "reconnect_grace_deadline_monotonic_ns";
+  repeated CommandAvailability commands = 4;
+}
+message CommandAvailability {
+  string command = 1;
+  bool available = 2;
+  string blocking_reason = 3;
+}
+enum RuntimeIncidentDisposition {
+  RUNTIME_INCIDENT_DISPOSITION_UNSPECIFIED = 0;
+  RUNTIME_INCIDENT_DISPOSITION_AWAITING_OPERATOR = 1;
+  RUNTIME_INCIDENT_DISPOSITION_CONTINUE_SELECTED = 2;
+  RUNTIME_INCIDENT_DISPOSITION_ABORT_SELECTED = 3;
+  RUNTIME_INCIDENT_DISPOSITION_AUTOMATIC_STOP = 4;
+  RUNTIME_INCIDENT_DISPOSITION_RESOLVED = 5;
+  RUNTIME_INCIDENT_DISPOSITION_SESSION_ENDED_UNANSWERED = 6;
+}
+message RuntimeIncident {
+  string incident_id = 1;
+  uint64 revision = 2;
+  WorkContext work = 3;
+  repeated string error_ids = 4;
+  repeated string affected_resources = 5; // Exact prepared backend/function/output keys.
+  string consequence = 6; // Includes known/unknown data loss and current behavior.
+  RuntimeIncidentDisposition disposition = 7;
+  int64 first_observed_monotonic_ns = 8;
+  int64 last_observed_monotonic_ns = 9;
+  uint64 occurrence_count = 10;
+  bool continuation_available = 11; // Authoritative E06 classifier; never GUI supplied.
+  bool acknowledged = 12; // Blocking-stop information was seen; not resolution or Continue.
+}
+message Prompt {
+  string prompt_id = 1;
+  SessionContext setup = 2; // Legacy name: also binds the runtime-incident session.
+  OperationContext operation = 3;
+  string explanation = 4;
+  repeated string permitted_choices = 5;
+  RuntimeIncident runtime_incident = 6; // Absent for existing Setup prompts.
+  // Runtime choices: continue_session / abort_session; automatic stop: acknowledge.
+}
+message Warning {
+  string warning_id = 1;
+  string component = 2;
+  string message = 3;
+  repeated FieldIssue issues = 4;
+  repeated string reverted_fields = 5;
+  AcquisitionWarningOccurrence acquisition_occurrence = 6;
+}
+// A07 diagnostic status, not a scientific event stream. See acquisition/diagnostics.md.
+message AcquisitionWarningOccurrence {
+  ProcessIdentity source = 1; // Original registered camera worker producer.
+  WorkContext work = 2;
+  reserved 3;
+  reserved "camera_role";
+  cephvr.acquisition.v1.CameraRole camera = 12;
+  optional uint64 configuration_revision = 4;
+  optional string preview_run_id = 5;
+  string code = 6;
+  optional uint64 count = 7; // Absolute positive count; never add retries.
+  optional int64 first_observed_monotonic_ns = 8;
+  optional int64 last_observed_monotonic_ns = 9;
+  optional string latest_sdk_code = 10;
+  string latest_details = 11;
+}
+message AcquisitionWarningView {
+  ProcessIdentity producer = 1;
+  WorkContext work = 2;
+  reserved 3;
+  reserved "camera_role";
+  cephvr.acquisition.v1.CameraRole camera = 8;
+  optional uint64 configuration_revision = 4;
+  optional string preview_run_id = 5;
+  optional uint64 warning_revision = 6;
+  repeated Warning warnings = 7; // Complete view; <=10, exact matching scope/source.
+}
+message CameraDeviceView {
+  optional bool device_open = 1;
+  optional bool preview_running = 2;
+  optional bool cleanup_pending = 3;
+  optional string preview_run_id = 4;
+  optional uint64 applied_configuration_revision = 5;
+  cephvr.acquisition.v1.CameraCapabilities capabilities = 6;
+  Failure last_failure = 7;
+  cephvr.acquisition.v1.CameraSettings applied_settings = 8;
+  cephvr.acquisition.v1.CameraDeviceIdentity device = 9;
+  optional bool preview_prepared = 10; // Manual-preview camera/slot prepared; never session display permission.
+  // Descriptive evidence, not controller configuration or execution authority.
+  // No frames, native handles, PFS text or scientific histories.
+}
+message AcquisitionDeviceViews {
+  BackendContext source = 1;
+  optional uint64 state_revision = 2;
+  optional int64 observed_monotonic_ns = 3;
+  CameraDeviceView behavioral = 4;
+  CameraDeviceView tracking = 5;
+  cephvr.acquisition.v1.MicrocontrollerObservation pulses = 6;
+  TrialPulseEvidence trial_pulses = 7;
+}
+message TrialPulseEvidence {
+  WorkContext work = 1; // Exact original trial; never relabel historical observations.
+  cephvr.acquisition.v1.PulseCommandEvidence on = 2;
+  cephvr.acquisition.v1.PulseCommandEvidence off = 3;
+}
+message Snapshot {
+  string controller_generation = 1;
+  int64 captured_monotonic_ns = 2;
+  uint64 state_revision = 3; // Complete views may skip revisions; no replay cursor.
+  ConfigurationState configuration = 4;
+  SessionState session = 5;
+  TrialState trial = 6;
+  repeated ParticipantState participants = 7;
+  ControlState control = 8;
+  repeated OperationState operations = 9; // Active and retained accepted-command results.
+  repeated ErrorReport errors = 10;
+  repeated Warning warnings = 11;
+  repeated RecoveryState recoveries = 12;
+  repeated Prompt prompts = 13;
+  repeated MetadataResult metadata = 14; // Controller-local writer completion states, bounded current work.
+  // Required in every GetSnapshot response, in the first WatchState item of each
+  // stream and in every item whose configuration revision differs from the previous
+  // item on that stream. Otherwise omitted; the client keeps the values installed from
+  // the same stream at that revision. Never reused across streams; mismatch invalidates.
+  ConfigurationValues configuration_values = 15;
+  AcquisitionDeviceViews acquisition_devices = 16;
+  reserved 17;
+  reserved "recording_recovery"; // Standalone offline CLI; no runtime projection.
+  reserved 18;
+  reserved "remote_recording";
+  VRDisplayView vr_display = 19;
+  cephvr.synchronization.v1.SpikeGLXRecordingView spikeglx_recording = 20;
+  // E12 controller-client state; stopped evidence, not native file closure.
+  repeated RuntimeIncident runtime_incidents = 21; // Current retained incidents, including acknowledged active loss.
+  OutputReservationState reservation = 22; // Controller-owned E04 session reservation; absent before Setup.
+  // Reconnect warnings use errors/recoveries/runtime_incidents above (E03); there is
+  // no separate history RPC. Bounded by [control].max_retained_incidents.
+  optional int64 retained_since_monotonic_ns = 23; // Oldest retained entry for the current Setup/session.
+  bool retained_truncated = 24; // Older resolved entries were evicted at the bound.
+}
+
+message OutputReservationState {
+  SessionContext session = 1;
+  reserved 2;
+  reserved "supervisor"; // Reservation is controller-local (E04).
+  OperationContext operation = 3;
+  string session_directory = 4; // E04 session root; local outputs are under protocol-data/.
+  bool lock_held = 5;
+  bool ready_for_outputs = 6; // Lock + namespace checks + required marker work done.
+  bool released = 7;
+  repeated string conflicting_paths = 8;
+  bool recovery_required = 9;
+  Failure failure = 10;
+  // lock_held alone does not imply Ready: conflicting/stale-marker state may hold it.
+  // released requires verified release; no transient failure can set it true.
+}

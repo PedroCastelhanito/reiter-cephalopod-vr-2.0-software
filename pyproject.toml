@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "grpcio-tools==1.84.0"]
+build-backend = "build_backend"
+backend-path = ["tools"]
+
+[project]
+name = "cephvr"
+version = "2.0.0.dev0"
+description = "CephVR2.0 experiment control and backend application."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "grpcio>=1.84.0,<1.85",
+    "protobuf>=7.36.2,<8",
+    "tzdata>=2026.4",
+    "tzlocal>=5.4.4,<6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build==1.6.1",
+    "grpcio-tools==1.84.0",
+    "mypy==2.3.1",
+    "pydantic>=2.10,<3",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.16.9",
+    "setuptools>=77.0.3",
+    "types-protobuf==7.35.1.20260906",
+]
+
+[project.scripts]
+cephvr = "cephvr.launcher.main:main"
+cephvr-supervisor = "cephvr.supervisor.main:main"
+cephvr-controller = "cephvr.controller.main:main"
+cephvr-control = "cephvr.client.main:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["cephvr", "cephvr.*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+"*" = ["*.pyi"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+indent-width = 4
+src = ["src"]
+force-exclude = true
+extend-exclude = [
+    "contracts",
+    "reports",
+    "*_pb2.py",
+    "*_pb2.pyi",
+    "*_pb2_grpc.py",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src/cephvr"]
+strict = true
+exclude = ['(^|/)[^/]*_pb2(_grpc)?\.pyi?$']
+
+[[tool.mypy.overrides]]
+module = ["grpc", "grpc.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib", "--strict-config", "--strict-markers"]
+markers = [
+    "windows: requires the Windows process or native-resource implementation",
+    "rig: requires the real rig and its explicitly prepared devices and settings",
+]

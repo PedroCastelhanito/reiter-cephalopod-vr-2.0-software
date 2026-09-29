@@ -1,0 +1,264 @@
+"""E05/E06/E07 evidence and lifecycle regression tests against real state logic."""
+
+from __future__ import annotations
+
+import asyncio
+import uuid
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any, cast
+
+import pytest
+
+from cephvr.control.v1 import services_pb2 as svc
+from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.runtime import (
+    Attempt,
+    BackendPort,
+    ControllerLimits,
+    ControllerRuntime,
+)
+from cephvr.controller.storage import OutputReservation
+
+
+def _id() -> str:
+    return str(uuid.uuid4())
+
+
+def _runtime(tmp_path: Path, *, now: int = 1_000) -> ControllerRuntime:
+    limits = ControllerLimits(
+        setup_ns=1_000,
+        setup_cancel_ns=1_000,
+        ready_ns=1_000,
+        finished_ns=1_000,
+        registration_ns=1_000_000_000,
+        recovery_ns=1_000,
+        metadata_ns=1_000,
+        validation_ns=1_000_000_000,
+        lead_ns=500,
+        controller_release_ns=100,
+        backend_release_ns=50,
+        start_evidence_ns=250,
+        stop_evidence_ns=250,
+        max_metadata_operations=8,
+        max_metadata_bytes=4096,
+        history_ns=1_000,
+        space_query_ns=1_000,
+        low_space_bytes=1,
+    )
+    return ControllerRuntime(
+        generation=_id(),
+        configuration=pb.ExperimentConfiguration(),
+        recording_root=tmp_path,
+        limits=limits,
+        validators={},
+        backends={},
+        clock=lambda: now,
+    )
+
+
+def _attempt(
+    runtime: ControllerRuntime, tmp_path: Path
+) -> tuple[Attempt, pb.BackendContext]:
+    session = pb.SessionContext(
+        controller_generation=runtime.generation, session_id=_id()
+    )
+    trial = pb.TrialContext(session=session, trial_id=_id(), trial_number=1)
+    prepared = pb.PreparedSession(context=session, configuration_revision=1)
+    prepared.trials.add(context=trial, resolved_duration_ns=60_000_000_000)
+    reservation = OutputReservation(
+        tmp_path,
+        "experiment",
+        "subject",
+        session.session_id,
+        runtime.generation,
+        datetime(2026, 9, 29, tzinfo=UTC),
+    )
+    backend = pb.BackendContext(backend_name="vr", backend_generation=_id())
+    # Report validation only needs the registered peer's exact context.
+    peer = cast(BackendPort, type("Peer", (), {"context": backend})())
+    attempt = Attempt(session, prepared, reservation, {"vr": peer}, {"vr": _id()})
+    runtime.attempt = attempt
+    return attempt, backend
+
+
+def _context(
+    attempt: Attempt, backend: pb.BackendContext, *, trial: bool
+) -> pb.ReportContext:
+    work = (
+        pb.WorkContext(trial=attempt.prepared.trials[0].context)
+        if trial
+        else pb.WorkContext(session=attempt.context)
+    )
+    command_id = attempt.trial_operation if trial else attempt.setup_operations["vr"]
+    return pb.ReportContext(
+        backend=backend,
+        work=work,
+        operation=pb.OperationContext(command_id=command_id),
+    )
+
+
+@pytest.mark.asyncio
+async def test_ready_arriving_after_original_setup_deadline_cannot_revive_attempt(
+    tmp_path: Path,
+) -> None:
+    runtime = _runtime(tmp_path)
+    attempt, backend = _attempt(runtime, tmp_path)
+    runtime.session.phase = pb.SESSION_PHASE_SETTING_UP
+    attempt.setup_deadline_ns = 999
+    report = pb.LifecycleReport(
+        ready=pb.ReadyReport(
+            context=_context(attempt, backend, trial=False),
+            configuration_revision=runtime.configuration_revision,
+            required_checks_passed=True,
+        )
+    )
+    receipt = await runtime.report_lifecycle(report, ingress_ns=1_000)
+    assert receipt.result == pb.COMMAND_RESULT_REJECTED
+    assert not attempt.ready
+
+
+@pytest.mark.asyncio
+async def test_finished_before_end_or_with_failed_output_cannot_complete_trial(
+    tmp_path: Path,
+) -> None:
+    runtime = _runtime(tmp_path)
+    attempt, backend = _attempt(runtime, tmp_path)
+    runtime.trial.phase = pb.TRIAL_PHASE_RUNNING
+    attempt.trial_index = 0
+    attempt.trial_operation = _id()
+    attempt.end_ns = 1_000
+    attempt.finished_deadline_ns = 2_000
+    output = attempt.prepared.outputs.add(
+        backend=backend,
+        output_key="reserved",
+        path=str(tmp_path / "stimulus_LOG.json"),
+        trial=attempt.prepared.trials[0].context,
+        output_tag="stimulus_LOG",
+        extension="json",
+    )
+    result = pb.OutputResult(
+        output_key=output.output_key,
+        path=output.path,
+        closure=pb.OUTPUT_CLOSURE_CLOSED,
+        artifact_present=True,
+    )
+    report = pb.LifecycleReport(
+        finished=pb.FinishedReport(
+            context=_context(attempt, backend, trial=True),
+            trial_activity_stopped=True,
+            outputs=[result],
+        )
+    )
+    early = await runtime.report_lifecycle(report, ingress_ns=999)
+    assert early.result == pb.COMMAND_RESULT_REJECTED
+    assert not attempt.finished
+    report.finished.outputs[0].failure.CopyFrom(
+        pb.Failure(code="WRITER_FAILED", message="flush failed")
+    )
+    failed = await runtime.report_lifecycle(report, ingress_ns=1_000)
+    assert failed.result == pb.COMMAND_RESULT_REJECTED
+    assert not attempt.finished
+
+
+@pytest.mark.asyncio
+async def test_ready_edit_cancels_preparation_without_committing_unvalidated_resources(
+    tmp_path: Path,
+) -> None:
+    runtime = _runtime(tmp_path)
+    attempt, _ = _attempt(runtime, tmp_path)
+    runtime.session.phase = pb.SESSION_PHASE_READY
+    runtime.validators = {
+        "experiment": lambda _: pb.ValidationResult(
+            completed=True,
+            valid=True,
+            component="experiment",
+            configuration_module_version="test-v1",
+        )
+    }
+    client_id = _id()
+    watch_id = _id()
+    watch = await runtime.open_watch(client_id, watch_id)
+    await runtime.delivered_watch_view(watch, runtime.revision)
+    claim = await runtime.claim(
+        svc.ControlClaim(
+            client_id=client_id,
+            watch_id=watch_id,
+            command_id=_id(),
+            controller_generation=runtime.generation,
+            synchronized_state_revision=runtime.revision,
+        )
+    )
+    assert claim.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime._owner is not None
+    proposed = pb.ExperimentConfiguration(subject="new-subject")
+    request = svc.UpdateConfigurationRequest(
+        command=svc.OperatorCommand(
+            controller_generation=runtime.generation,
+            operator=pb.OperatorContext(
+                client_id=client_id,
+                command_id=_id(),
+                control_generation=runtime._owner[2],
+            ),
+        ),
+        expected_revision=runtime.configuration_revision,
+        proposed=proposed,
+    )
+    result = await runtime.update_configuration(request)
+    assert result.result == pb.COMMAND_RESULT_ACCEPTED
+    assert attempt.cancel_requested
+    assert runtime.configuration.subject == "new-subject"
+    await runtime.close_watch(watch)
+
+
+@pytest.mark.asyncio
+async def test_interruption_during_start_cannot_restore_running(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = _runtime(tmp_path)
+    attempt, _ = _attempt(runtime, tmp_path)
+    attempt.required.clear()
+    assert attempt.reservation.acquire() == []
+    runtime.session.phase = pb.SESSION_PHASE_STARTING
+    runtime.schema_factory = lambda _: {"schema_version": 1}
+
+    class Supervisor:
+        async def register_context(
+            self, request: svc.RegisterContextRequest
+        ) -> svc.RegistrationReceipt:
+            return svc.RegistrationReceipt(
+                admission=pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED),
+                registered=request.context,
+            )
+
+    runtime.supervisor = cast(Any, Supervisor())
+
+    async def persisted(*_args: object, **_kwargs: object) -> object:
+        return object()
+
+    started_log_seen = False
+
+    async def logged(_attempt: Attempt, event_type: str, **_kwargs: object) -> None:
+        nonlocal started_log_seen
+        if event_type == "session_started" and not started_log_seen:
+            started_log_seen = True
+            await runtime._interrupt(attempt, "concurrent authority loss")
+
+    monkeypatch.setattr(runtime, "_persist", persisted)
+    monkeypatch.setattr(runtime, "_log_event", logged)
+    command_id = _id()
+    runtime._operations[command_id] = pb.OperationState(
+        context=pb.OperationContext(command_id=command_id), command="StartSession"
+    )
+    try:
+        await runtime._run_start(attempt, command_id)
+        assert started_log_seen
+        assert attempt.interrupted
+        assert runtime.session.phase != pb.SESSION_PHASE_RUNNING
+    finally:
+        for task in tuple(runtime._tasks):
+            task.cancel()
+        if runtime._tasks:
+            await asyncio.gather(*runtime._tasks, return_exceptions=True)
+        if attempt.reservation._lock_fd is not None:
+            attempt.reservation.release()

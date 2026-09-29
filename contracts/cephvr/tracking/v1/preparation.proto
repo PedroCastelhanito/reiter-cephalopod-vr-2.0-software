@@ -1,0 +1,18 @@
+syntax = "proto3";
+package cephvr.tracking.v1;
+import "cephvr/control/v1/types.proto";
+import "cephvr/acquisition/v1/messages.proto";
+import "cephvr/vr/v1/runtime.proto";
+import "cephvr/tracking/v1/methods.proto";
+
+// Protected retained Setup state, available before final Ready. Declaration only.
+message TrackingPreparationState {
+  string preparation_generation = 1;
+  uint64 configuration_revision = 2;
+  bool data_attached = 3;
+  TrackingPreparationEvidence methods = 4;
+  repeated cephvr.control.v1.FieldIssue issues = 5;
+  cephvr.vr.v1.FeedbackAttachment feedback = 6; // Protected closed-loop descriptor, never logged.
+  cephvr.acquisition.v1.AttachedResource attached_input = 7; // Required iff data_attached.
+  // No secrets/native names in public snapshots or scientific/central logs.
+}

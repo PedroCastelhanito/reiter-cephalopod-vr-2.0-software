@@ -1,0 +1,317 @@
+{
+  "captured_at": "2026-09-29T14:54:28.5047334+09:00",
+  "os": {
+    "Caption": "Microsoft Windows 11 Pro",
+    "Version": "10.0.26200",
+    "BuildNumber": "26200",
+    "OSArchitecture": "64-bit"
+  },
+  "cpu": {
+    "Name": "AMD Ryzen 9 9950X 16-Core Processor            ",
+    "NumberOfCores": 16,
+    "NumberOfLogicalProcessors": 32
+  },
+  "board": {
+    "Manufacturer": "Micro-Star International Co., Ltd.",
+    "Product": "MPG X870E CARBON WIFI (MS-7E49)",
+    "Version": "1.0"
+  },
+  "memory": [
+    {
+      "Capacity": 34359738368,
+      "Speed": 5600,
+      "ConfiguredClockSpeed": 5600,
+      "Manufacturer": "Micron Technology",
+      "PartNumber": "CP32G56C46U5.M16D1            "
+    },
+    {
+      "Capacity": 34359738368,
+      "Speed": 5600,
+      "ConfiguredClockSpeed": 5600,
+      "Manufacturer": "Micron Technology",
+      "PartNumber": "CP32G56C46U5.M16D1            "
+    }
+  ],
+  "disks": {
+    "FriendlyName": "CT2000P3PSSD8",
+    "MediaType": "SSD",
+    "BusType": "NVMe",
+    "Size": 2000398934016,
+    "HealthStatus": "Healthy"
+  },
+  "volumes": [
+    {
+      "DriveLetter": "C",
+      "FileSystem": "NTFS",
+      "Size": 1999337680896,
+      "SizeRemaining": 1468953882624
+    },
+    {
+      "DriveLetter": null,
+      "FileSystem": "NTFS",
+      "Size": 937422848,
+      "SizeRemaining": 108064768
+    }
+  ],
+  "gpu": [
+    {
+      "Name": "NVIDIA GeForce RTX 2080 Ti",
+      "PNPDeviceID": "PCI\\VEN_10DE&DEV_1E07&SUBSYS_12A410DE&REV_A1\\4&1EBADFA3&0&000B",
+      "ConfigManagerErrorCode": 0,
+      "Status": "OK"
+    },
+    {
+      "Name": "AMD Radeon(TM) Graphics",
+      "PNPDeviceID": "PCI\\VEN_1002&DEV_13C0&SUBSYS_7E491462&REV_C1\\4&1079050D&0&0041",
+      "ConfigManagerErrorCode": 0,
+      "Status": "OK"
+    },
+    {
+      "Name": "NVIDIA GeForce RTX 5060 Ti",
+      "PNPDeviceID": "PCI\\VEN_10DE&DEV_2D04&SUBSYS_53511462&REV_A1\\A91A4213F72DB04800",
+      "ConfigManagerErrorCode": 0,
+      "Status": "OK"
+    }
+  ],
+  "devices": [
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\1&8713BCA&0&UID0"
+    },
+    {
+      "Class": "PylonUSB",
+      "FriendlyName": "Basler ace USB3 Vision Camera",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2676&PID_BA02&MI_00\\9&3B27F301&0&0000"
+    },
+    {
+      "Class": "Display",
+      "FriendlyName": "NVIDIA GeForce RTX 2080 Ti",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10DE&DEV_1E07&SUBSYS_12A410DE&REV_A1\\4&1EBADFA3&0&000B"
+    },
+    {
+      "Class": "Ports",
+      "FriendlyName": "Arduino Uno (COM8)",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2341&PID_0043\\1344A474130351F057D6"
+    },
+    {
+      "Class": "Ports",
+      "FriendlyName": "PL2303HXA PHASED OUT SINCE 2012. PLEASE CONTACT YOUR SUPPLIER.",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_067B&PID_2303\\9&284F11C1&0&3"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (DELL S2721HS)",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DEL41FA\\5&1209FBCF&1&UID524"
+    },
+    {
+      "Class": "Display",
+      "FriendlyName": "AMD Radeon(TM) Graphics",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_1002&DEV_13C0&SUBSYS_7E491462&REV_C1\\4&1079050D&0&0041"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4352"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4353"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4355"
+    },
+    {
+      "Class": "Monitor",
+      "FriendlyName": "Generic Monitor (ITE6801 )",
+      "Status": "OK",
+      "InstanceId": "DISPLAY\\DLP5050\\5&2F6FD671&0&UID4357"
+    },
+    {
+      "Class": "Display",
+      "FriendlyName": "NVIDIA GeForce RTX 5060 Ti",
+      "Status": "OK",
+      "InstanceId": "PCI\\VEN_10DE&DEV_2D04&SUBSYS_53511462&REV_A1\\A91A4213F72DB04800"
+    },
+    {
+      "Class": "PylonUSB",
+      "FriendlyName": "Basler ace 2 USB3 Vision Camera",
+      "Status": "OK",
+      "InstanceId": "USB\\VID_2676&PID_BA05&MI_00\\A&11F23BEF&0&0000"
+    }
+  ],
+  "camera_usb_chains": [
+    {
+      "camera": "Basler ace USB3 Vision Camera",
+      "chain": [
+        {
+          "id": "USB\\VID_2676&PID_BA02&MI_00\\9&3B27F301&0&0000",
+          "name": "Basler ace USB3 Vision Camera",
+          "class": "PylonUSB"
+        },
+        {
+          "id": "USB\\VID_2676&PID_BA02\\40065509",
+          "name": "USB Composite Device",
+          "class": "USB"
+        },
+        {
+          "id": "USB\\ROOT_HUB30\\7&4607005&0&0",
+          "name": "USB Root Hub (USB 3.0)",
+          "class": "USB"
+        },
+        {
+          "id": "PCI\\VEN_1022&DEV_43FD&SUBSYS_11421B21&REV_01\\6&2405d126&0&00600011",
+          "name": "AMD USB 3.10 eXtensible Host Controller - 1.10 (Microsoft)",
+          "class": "USB"
+        },
+        {
+          "id": "PCI\\VEN_1022&DEV_43F5&SUBSYS_33281B21&REV_01\\5&160e7113&0&600011",
+          "name": "PCI Express Downstream Switch Port",
+          "class": "System"
+        },
+        {
+          "id": "PCI\\VEN_1022&DEV_43F4&SUBSYS_33281B21&REV_01\\4&2f288972&0&0011",
+          "name": "PCI Express Upstream Switch Port",
+          "class": "System"
+        },
+        {
+          "id": "PCI\\VEN_1022&DEV_14DB&SUBSYS_7E491462&REV_00\\3&11583659&0&11",
+          "name": "PCI Express Root Port",
+          "class": "System"
+        },
+        {
+          "id": "ACPI\\PNP0A08\\0",
+          "name": "PCI Express Root Complex",
+          "class": "System"
+        },
+        {
+          "id": "ACPI_HAL\\PNP0C08\\0",
+          "name": "Microsoft ACPI-Compliant System",
+          "class": "System"
+        },
+        {
+          "id": "ROOT\\ACPI_HAL\\0000",
+          "name": "ACPI x64-based PC",
+          "class": "Computer"
+        }
+      ]
+    },
+    {
+      "camera": "Basler ace 2 USB3 Vision Camera",
+      "chain": [
+        {
+          "id": "USB\\VID_2676&PID_BA05&MI_00\\A&11F23BEF&0&0000",
+          "name": "Basler ace 2 USB3 Vision Camera",
+          "class": "PylonUSB"
+        },
+        {
+          "id": "USB\\VID_2676&PID_BA05\\40747103",
+          "name": "USB Composite Device",
+          "class": "USB"
+        },
+        {
+          "id": "USB\\ROOT_HUB30\\5&36e2663b&0&0",
+          "name": "USB Root Hub (USB 3.0)",
+          "class": "USB"
+        },
+        {
+          "id": "PCI\\VEN_1022&DEV_15B7&SUBSYS_7E491462&REV_00\\4&1079050d&0&0441",
+          "name": "AMD USB 3.10 eXtensible Host Controller - 1.20 (Microsoft)",
+          "class": "USB"
+        },
+        {
+          "id": "PCI\\VEN_1022&DEV_14DD&SUBSYS_14627E49&REV_00\\3&11583659&0&41",
+          "name": "PCI Express Root Port",
+          "class": "System"
+        },
+        {
+          "id": "ACPI\\PNP0A08\\0",
+          "name": "PCI Express Root Complex",
+          "class": "System"
+        },
+        {
+          "id": "ACPI_HAL\\PNP0C08\\0",
+          "name": "Microsoft ACPI-Compliant System",
+          "class": "System"
+        },
+        {
+          "id": "ROOT\\ACPI_HAL\\0000",
+          "name": "ACPI x64-based PC",
+          "class": "Computer"
+        },
+        {
+          "id": "HTREE\\ROOT\\0",
+          "name": null,
+          "class": null
+        }
+      ]
+    }
+  ],
+  "network": [
+    {
+      "Name": "Ethernet 2",
+      "InterfaceDescription": "Realtek PCIe 5GbE Family Controller",
+      "Status": "Up",
+      "LinkSpeed": "100 Mbps",
+      "InterfaceGuid": "{FF11B6E9-2AEF-4807-83C9-9C989E8109F9}",
+      "ifIndex": 20
+    },
+    {
+      "Name": "Wi-Fi 3",
+      "InterfaceDescription": "Qualcomm FastConnect 7800 Wi-Fi 7 High Band Simultaneous (HBS) Network Adapter",
+      "Status": "Not Present",
+      "LinkSpeed": "0 bps",
+      "InterfaceGuid": "{F169EA80-1413-4287-A53A-347DC6099546}",
+      "ifIndex": 19
+    },
+    {
+      "Name": "Ethernet",
+      "InterfaceDescription": "Realtek Gaming 2.5GbE Family Controller",
+      "Status": "Up",
+      "LinkSpeed": "2.5 Gbps",
+      "InterfaceGuid": "{ADF1C18D-0E95-4386-B0DF-0AEB077033BC}",
+      "ifIndex": 14
+    },
+    {
+      "Name": "Wi-Fi 2",
+      "InterfaceDescription": "Qualcomm FastConnect 7800 Wi-Fi 7 High Band Simultaneous (HBS) Network Adapter",
+      "Status": "Disconnected",
+      "LinkSpeed": "0 bps",
+      "InterfaceGuid": "{7523C5CC-1C79-4B69-BD12-A4A748FE3928}",
+      "ifIndex": 9
+    },
+    {
+      "Name": "Wi-Fi",
+      "InterfaceDescription": "Qualcomm FastConnect 7800 Wi-Fi 7 High Band Simultaneous (HBS) Network Adapter",
+      "Status": "Up",
+      "LinkSpeed": "286.8 Mbps",
+      "InterfaceGuid": "{1862079E-103C-40A1-AD8B-028854A18E2C}",
+      "ifIndex": 5
+    }
+  ],
+  "ethernet_ipv4": [
+    {
+      "InterfaceAlias": "Ethernet 2",
+      "IPAddress": "169.254.29.114",
+      "PrefixLength": 16
+    },
+    {
+      "InterfaceAlias": "Ethernet",
+      "IPAddress": "169.254.91.196",
+      "PrefixLength": 16
+    }
+  ]
+}

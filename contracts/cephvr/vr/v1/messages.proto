@@ -1,0 +1,89 @@
+syntax = "proto3";
+package cephvr.vr.v1;
+import "cephvr/control/v1/types.proto";
+import "cephvr/vr/v1/runtime.proto";
+
+message WorkerContext {
+  cephvr.control.v1.ProcessIdentity worker = 1;
+  cephvr.control.v1.ProcessIdentity owner = 2;
+  cephvr.control.v1.WorkContext work = 3; // Absent only for startup Idle/shutdown.
+  uint64 configuration_revision = 4;
+}
+message WorkerCommand {
+  string command_id = 1;
+  cephvr.control.v1.ProcessIdentity issuer = 2;
+  WorkerContext target = 3;
+  cephvr.control.v1.OperationContext parent_operation = 4;
+  int64 deadline_monotonic_ns = 5; // Same host; earliest existing deadline wins.
+}
+message InitializeDisplay {
+  WorkerCommand command = 1;
+  DisplayConfiguration display = 2;
+  ResourceLimits limits = 3;
+  cephvr.control.v1.ControlPolicies policies = 4;
+  // Renderer-only, no session context, recording, trial files or trial assets.
+}
+message WorkerSetup {
+  WorkerCommand command = 1;
+  cephvr.control.v1.PreparedSession session = 2;
+  cephvr.control.v1.VRSettings settings = 3;
+  VRFilePolicies policies = 4;
+  FeedbackAttachment feedback_attachment = 5; // Required for adopted closed-loop input.
+  // Full canonical PreparedTrial payload is carried by resolved TrialPlans.
+}
+message WorkerPrepareTrial {
+  WorkerCommand command = 1;
+  cephvr.control.v1.TrialPlan trial = 2;
+  PreparedHandle prepared = 3;
+  repeated cephvr.control.v1.OutputPlan outputs = 4;
+  reserved 5;
+  reserved "recording_attachments"; // V12: recording is in-process; no data path.
+}
+message WorkerSchedule {
+  WorkerCommand command = 1;
+  PreparedHandle prepared = 2;
+  int64 start_monotonic_ns = 3;
+  int64 normal_end_monotonic_ns = 4;
+  string trial_file_prefix = 5;
+  repeated cephvr.control.v1.OutputPlan outputs = 6;
+}
+message WorkerRelease {
+  WorkerCommand command = 1;
+  cephvr.control.v1.OperationContext schedule_operation = 2;
+  int64 start_monotonic_ns = 3;
+  int64 normal_end_monotonic_ns = 4;
+}
+message WorkerStop {
+  WorkerCommand command = 1;
+  int64 issued_monotonic_ns = 2;
+  cephvr.control.v1.Failure cause = 3;
+}
+message WorkerQuery {
+  WorkerContext target = 1;
+  optional string command_id = 2;
+}
+message WorkerLifecycle {
+  cephvr.control.v1.ProcessIdentity source = 1;
+  cephvr.control.v1.LifecycleReport report = 2;
+  PreparedHandle prepared = 3;
+  // Source cannot be inferred from aggregate backend identity.
+}
+message WorkerOperation {
+  WorkerContext source = 1;
+  cephvr.control.v1.OperationState operation = 2;
+  repeated cephvr.control.v1.FieldIssue issues = 3;
+  reserved 4;
+  reserved "recording_attachments";
+}
+message WorkerState {
+  WorkerContext context = 1;
+  optional bool interrupted = 2;
+  optional bool command_known = 3;
+  cephvr.control.v1.CommandAdmission admission = 4;
+  cephvr.control.v1.OperationState operation = 5;
+  repeated WorkerLifecycle retained_lifecycle = 6;
+  cephvr.control.v1.VRDisplayView display = 7;
+  reserved 8;
+  reserved "recording_attachments";
+  // Retained observations retain original times; query arrival is not fresh proof.
+}

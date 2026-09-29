@@ -1,0 +1,15 @@
+syntax = "proto3";
+package cephvr.vr.v1;
+
+// Canonical authoring source: program_model.Program. No independent wire grammar.
+message ProgramSource {
+  string program_json = 1;
+  optional string logical_source_reference = 2; // Descriptive; never execution input.
+}
+message ArenaBoundaries {
+  string boundaries_json = 1; // Canonical TrialArenaBoundaries schema.
+}
+message PreparedArtifact {
+  string prepared_trial_json = 1; // Sole canonical artifact_models.PreparedTrial.
+  string sha256 = 2; // Exact UTF-8 bytes; PreparedHandle references this identity.
+}

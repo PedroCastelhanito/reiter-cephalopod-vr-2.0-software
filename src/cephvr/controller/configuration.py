@@ -1,0 +1,598 @@
+"""E07/E14 file-owned controller limits and pure proposal validation."""
+
+from __future__ import annotations
+
+import json
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from google.protobuf.json_format import ParseDict, ParseError
+
+from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.clock import HOST_CLOCK_ID
+from cephvr.shared.config import ConfigurationError, load_pair
+from cephvr.shared.deadlines import duration_ns
+
+BackendValidator = Callable[[pb.ExperimentConfiguration], pb.ValidationResult]
+_BACKENDS = frozenset({"acquisition", "vr", "tracking", "synchronization"})
+
+_EXPERIMENT_CONFIG_KEYS = frozenset(
+    {
+        "assets.asset_root",
+        "rpc.port",
+        "rpc.max_message_bytes",
+        "control.max_retained_incidents",
+        "control.command_record_retention_after_finalization_s",
+        "event_queue.max_pending_events",
+        "event_queue.max_pending_payload_bytes",
+        "timeouts.recovery_s",
+        "timeouts.setup.initial_s",
+        "timeouts.setup_cancel.initial_s",
+        "timeouts.trial_ready.initial_s",
+        "timeouts.trial_finished.initial_s",
+        "timeouts.supervisor_registration.initial_s",
+        "configuration_validation.timeout_s",
+        "configuration_history.save_timeout_s",
+        "storage.space_query_timeout_s",
+        "storage.low_space_warning_bytes",
+        "protocol.default_intertrial_gap_s",
+        "timing.start_lead_time_ms",
+        "timing.controller_release_cutoff_before_start_ms",
+        "timing.backend_release_cutoff_before_start_ms",
+        "timing.start_lateness_tolerance_ms",
+        "timing.stop_report_timeout_ms",
+        "metadata.max_pending_operations",
+        "metadata.max_pending_bytes",
+        "metadata.completion_timeout_s",
+    }
+)
+_EXPERIMENT_POLICY_KEYS = frozenset(
+    {
+        "gpu_placement.render_projection_tracking",
+        "gpu_placement.video_encoding",
+        "gpu_placement.operator_display_gui",
+        "gpu_placement.automatic_adapter_fallback",
+        "state_delivery.configuration_values",
+        "protocol.minimum_trial_duration_s",
+        "recording_interval.interruption_cutoff",
+        "recording_interval.file_integrity_validation",
+        "host_clock.clock_id",
+        "host_clock.python_api",
+        "host_clock.origin",
+        "host_clock.unit",
+        "runtime_incidents.continuable_failure",
+        "runtime_incidents.while_pending",
+        "runtime_incidents.blocking_failure",
+        "runtime_incidents.continuation_scope",
+        "control_lease.liveness",
+        "control_lease.disconnection",
+        "control_lease.reconnection",
+        "control_lease.cli",
+        "metadata.writer_owner",
+        "metadata.output_reservation_owner",
+        "metadata.completion",
+        "metadata.uncertain_write",
+        "configuration_validation.commit",
+        "configuration_validation.unavailable_or_timeout",
+        "configuration_validation.invalid_values",
+        "configuration_validation.late_result",
+        "configuration_validation.history",
+        "recovery.missed_deadline",
+        "incident_history.reconnect_warnings",
+        "trial_command_delivery.max_transport_retries",
+        "defaults.engineering_limits",
+        "defaults.scientific_and_rig_inputs",
+    }
+)
+_SUPERVISOR_CONFIG_KEYS = frozenset(
+    {
+        "rpc.port",
+        "health.heartbeat_interval_s",
+        "health.silence_timeout_s",
+        "emergency_report.completion_timeout_s",
+        "shutdown.graceful_process_exit_s",
+        "shutdown.terminate_process_exit_s",
+        "shutdown.application_shutdown_backstop_s",
+    }
+)
+_SUPERVISOR_POLICY_KEYS = frozenset(
+    {
+        "processes.launch_policy",
+        "processes.registration",
+        "processes.windows.contained_backends",
+        "processes.windows.containment",
+        "processes.windows.kill_on_job_close",
+        "processes.windows.application_job_owner",
+        "processes.windows.application_job_kill_on_close",
+        "processes.windows.application_job_handle",
+        "processes.windows.authority_loss_shutdown",
+        "health.controller_monitor",
+        "health.supervisor_monitor",
+        "health.coordinator_authority_watch",
+        "health.worker_health",
+        "health.silence_recovery",
+        "health.controller_loss_action",
+        "storage.normal_metadata_writer",
+        "storage.output_reservation",
+        "storage.controller_loss",
+        "status_delivery.mode",
+        "status_delivery.pending",
+        "status_delivery.revision_gaps",
+        "gui_process.automatic_relaunch",
+        "recovery.backend_reuse",
+        "recovery.actions",
+        "recovery.authority",
+        "recovery.stuck_process",
+        "shutdown.application_backstop",
+    }
+)
+
+
+@dataclass(frozen=True)
+class SupervisorStartup:
+    port: int
+    heartbeat_interval_ns: int
+    silence_timeout_ns: int
+    emergency_timeout_ns: int
+    graceful_exit_ns: int
+    terminate_exit_ns: int
+    application_backstop_ns: int
+
+
+@dataclass(frozen=True)
+class ControllerConfiguration:
+    configuration: pb.ExperimentConfiguration
+    policies: pb.ControlPolicies
+    limits_kwargs: dict[str, int]
+    supervisor_startup: SupervisorStartup
+    controller_port: int
+    max_message_bytes: int
+    max_pending_events: int
+    max_pending_payload_bytes: int
+    max_retained_incidents: int
+    history_save_timeout_ns: int
+    space_query_timeout_ns: int
+    low_space_warning_bytes: int
+    default_intertrial_gap_ns: int
+    history_warning: str | None
+
+
+def _section(data: Mapping[str, Any], *keys: str) -> Any:
+    value: Any = data
+    for key in keys:
+        try:
+            value = value[key]
+        except (KeyError, TypeError) as exc:
+            raise ConfigurationError(
+                f"required setting {'.'.join(keys)} is missing"
+            ) from exc
+    return value
+
+
+def _positive_int(value: Any, name: str) -> int:
+    if type(value) is not int or value <= 0:
+        raise ConfigurationError(f"{name} must be a positive integer")
+    return value
+
+
+def _port(value: Any, name: str) -> int:
+    port = _positive_int(value, name)
+    if port > 65_535:
+        raise ConfigurationError(f"{name} is outside the TCP port range")
+    return port
+
+
+def _ns(data: Mapping[str, Any], *keys: str, unit: str = "s") -> int:
+    value = _section(data, *keys)
+    try:
+        converted = duration_ns(value, unit)  # type: ignore[arg-type]
+    except ValueError as exc:
+        raise ConfigurationError(f"{'.'.join(keys)}: {exc}") from exc
+    if converted <= 0:
+        raise ConfigurationError(f"{'.'.join(keys)} must be positive")
+    return converted
+
+
+def _unique_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON member {key}")
+        result[key] = value
+    return result
+
+
+def _load_saved_configuration(
+    path: Path, *, max_message_bytes: int
+) -> pb.ExperimentConfiguration:
+    """Do not guess an unpublished history envelope or silently discard its values."""
+    if not path.exists():
+        return pb.ExperimentConfiguration()
+    try:
+        with path.open("rb") as stream:
+            raw = stream.read(max_message_bytes + 1)
+    except OSError as exc:
+        raise ConfigurationError("cannot read saved configuration") from exc
+    if len(raw) > max_message_bytes:
+        raise ConfigurationError("saved configuration exceeds control message limit")
+    try:
+        document = json.loads(raw, object_pairs_hook=_unique_json_members)
+    except (UnicodeError, ValueError) as exc:
+        raise ConfigurationError(f"saved configuration is invalid JSON: {exc}") from exc
+    if not isinstance(document, dict) or set(document) != {
+        "format_version",
+        "configuration",
+    }:
+        raise ConfigurationError("saved configuration envelope is unsupported")
+    if type(document["format_version"]) is not int or document["format_version"] != 1:
+        raise ConfigurationError("saved configuration format version is unsupported")
+    if not isinstance(document["configuration"], dict):
+        raise ConfigurationError("saved configuration value must be an object")
+    try:
+        return ParseDict(
+            document["configuration"],
+            pb.ExperimentConfiguration(),
+            ignore_unknown_fields=False,
+        )
+    except ParseError as exc:
+        raise ConfigurationError(
+            "saved configuration does not match the wire schema"
+        ) from exc
+
+
+def load_controller_configuration(software_root: Path) -> ControllerConfiguration:
+    """Resolve only accepted file-owned values; missing scientific inputs stay unset."""
+    root = Path(software_root)
+    experiment = load_pair(
+        root / "config/backends/experiment_config.toml",
+        root / "contracts/policy/experiment_policy.toml",
+        allowed_config_keys=_EXPERIMENT_CONFIG_KEYS,
+        allowed_policy_keys=_EXPERIMENT_POLICY_KEYS,
+        expected_policy={
+            "gpu_placement.render_projection_tracking": "nvidia_geforce_rtx_5060_ti",
+            "gpu_placement.video_encoding": "nvidia_geforce_rtx_2080_ti",
+            "gpu_placement.operator_display_gui": "amd_radeon_ryzen_9_9950x_integrated",
+            "gpu_placement.automatic_adapter_fallback": False,
+            "state_delivery.configuration_values": (
+                "snapshot_and_stream_revision_change"
+            ),
+            "protocol.minimum_trial_duration_s": 60,
+            "recording_interval.interruption_cutoff": "producer_local_admission_stop",
+            "recording_interval.file_integrity_validation": "external_post_hoc",
+            "host_clock.clock_id": HOST_CLOCK_ID,
+            "host_clock.python_api": "time.perf_counter_ns",
+            "host_clock.origin": "system_wide_unshifted",
+            "host_clock.unit": "ns",
+            "runtime_incidents.continuable_failure": "operator_continue_or_abort",
+            "runtime_incidents.while_pending": "continue_original_timeline",
+            "runtime_incidents.blocking_failure": "automatic_stop_and_inform",
+            "runtime_incidents.continuation_scope": "isolated_function_loss_no_restart_or_protocol_change",
+            "control_lease.liveness": "exact_live_watch_subscription",
+            "control_lease.disconnection": "release_invalidate_generation",
+            "control_lease.reconnection": "observer_explicit_take_control",
+            "control_lease.cli": "acquire_execute_release",
+            "trial_command_delivery.max_transport_retries": 1,
+            "metadata.writer_owner": "controller_serialized_background_thread",
+            "metadata.output_reservation_owner": "controller_local_lock_and_marker",
+            "metadata.completion": "local_event_after_sync",
+            "metadata.uncertain_write": "no_retry_or_takeover",
+            "configuration_validation.commit": "only_after_successful_current_validation",
+            "configuration_validation.unavailable_or_timeout": "reject_warn_preserve_current",
+            "configuration_validation.invalid_values": "reject_with_field_issues_preserve_current",
+            "configuration_validation.late_result": "never_commit_after_expiry_or_state_change",
+            "configuration_validation.history": "single_current_configuration_no_rollback",
+            "recovery.missed_deadline": (
+                "single_state_query_within_shared_recovery_budget"
+            ),
+            "incident_history.reconnect_warnings": "snapshot_retained_bounded_no_history_rpc",
+            "defaults.engineering_limits": "configurable_workload_checked_starting_values",
+            "defaults.scientific_and_rig_inputs": "explicit_no_fabricated_values",
+        },
+    )
+    supervisor = load_pair(
+        root / "config/backends/supervisor_config.toml",
+        root / "contracts/policy/supervisor_policy.toml",
+        allowed_config_keys=_SUPERVISOR_CONFIG_KEYS,
+        allowed_policy_keys=_SUPERVISOR_POLICY_KEYS,
+        expected_policy={
+            "processes.launch_policy": "backend_owned_children",
+            "processes.registration": "planned_then_confirmed",
+            "processes.windows.contained_backends": ["acquisition", "vr", "tracking"],
+            "processes.windows.containment": "job_objects",
+            "processes.windows.kill_on_job_close": False,
+            "processes.windows.application_job_owner": "persistent_launcher",
+            "processes.windows.application_job_kill_on_close": True,
+            "processes.windows.application_job_handle": "sole_noninherited_launcher_handle",
+            "processes.windows.authority_loss_shutdown": "automatic_bounded_graceful_then_application_job_termination",
+            "health.controller_monitor": "supervisor_process_handle_and_heartbeat_silence",
+            "health.supervisor_monitor": "controller_heartbeat_silence",
+            "health.coordinator_authority_watch": "os_process_handles_controller_and_supervisor",
+            "health.worker_health": "worker_to_coordinator_aggregated_in_coordinator_heartbeat",
+            "health.silence_recovery": "none_silence_is_loss",
+            "health.controller_loss_action": (
+                "independent_idempotent_cleanup_then_application_shutdown"
+            ),
+            "storage.normal_metadata_writer": "controller",
+            "storage.output_reservation": "controller",
+            "storage.controller_loss": "emergency_report_no_normal_writer_takeover",
+            "status_delivery.mode": "complete_view_on_change_and_reconnect",
+            "status_delivery.pending": "coalesce_latest_bounded",
+            "status_delivery.revision_gaps": "accept_newer_full_view",
+            "gui_process.automatic_relaunch": "none_operator_relaunches_from_launcher",
+            "recovery.backend_reuse": "full_application_restart_after_cleanup",
+            "recovery.actions": ["retry_graceful_cleanup"],
+            "recovery.authority": "controller_verified_control_lease_only",
+            "recovery.stuck_process": "shutdown_application",
+            "shutdown.application_backstop": "startup_only_setting_checked_at_setup",
+        },
+    )
+    ec, sc = experiment.config, supervisor.config
+    controller_port = _port(_section(ec, "rpc", "port"), "experiment rpc.port")
+    supervisor_port = _port(_section(sc, "rpc", "port"), "supervisor rpc.port")
+    if controller_port == supervisor_port:
+        raise ConfigurationError("controller and supervisor service ports collide")
+    max_message = _positive_int(
+        _section(ec, "rpc", "max_message_bytes"), "rpc.max_message_bytes"
+    )
+    queue_bytes = _positive_int(
+        _section(ec, "event_queue", "max_pending_payload_bytes"),
+        "event_queue.max_pending_payload_bytes",
+    )
+    metadata_bytes = _positive_int(
+        _section(ec, "metadata", "max_pending_bytes"), "metadata.max_pending_bytes"
+    )
+    if min(queue_bytes, metadata_bytes) < 4 * max_message:
+        raise ConfigurationError("event and metadata budgets require four RPC messages")
+    max_events = _positive_int(
+        _section(ec, "event_queue", "max_pending_events"),
+        "event_queue.max_pending_events",
+    )
+    if max_events < 2:
+        raise ConfigurationError("event queue must reserve an interruption event")
+    metadata_operations = _positive_int(
+        _section(ec, "metadata", "max_pending_operations"),
+        "metadata.max_pending_operations",
+    )
+    max_incidents = _positive_int(
+        _section(ec, "control", "max_retained_incidents"),
+        "control.max_retained_incidents",
+    )
+    history_save_timeout = _ns(ec, "configuration_history", "save_timeout_s")
+    space_query_timeout = _ns(ec, "storage", "space_query_timeout_s")
+    low_space_warning = _section(ec, "storage", "low_space_warning_bytes")
+    if type(low_space_warning) is not int or low_space_warning < 0:
+        raise ConfigurationError("storage.low_space_warning_bytes must be nonnegative")
+    default_gap_value = _section(ec, "protocol", "default_intertrial_gap_s")
+    try:
+        default_gap = duration_ns(default_gap_value, "s")
+    except ValueError as exc:
+        raise ConfigurationError(
+            "protocol.default_intertrial_gap_s is invalid"
+        ) from exc
+    lead = _ns(ec, "timing", "start_lead_time_ms", unit="ms")
+    controller_cutoff = _ns(
+        ec, "timing", "controller_release_cutoff_before_start_ms", unit="ms"
+    )
+    backend_cutoff = _ns(
+        ec, "timing", "backend_release_cutoff_before_start_ms", unit="ms"
+    )
+    if not lead > controller_cutoff > backend_cutoff:
+        raise ConfigurationError("start lead/release cutoff order is invalid")
+    setup_cancel = _ns(ec, "timeouts", "setup_cancel", "initial_s")
+    trial_finished = _ns(ec, "timeouts", "trial_finished", "initial_s")
+    recovery = _ns(ec, "timeouts", "recovery_s")
+    startup = SupervisorStartup(
+        port=supervisor_port,
+        heartbeat_interval_ns=_ns(sc, "health", "heartbeat_interval_s"),
+        silence_timeout_ns=_ns(sc, "health", "silence_timeout_s"),
+        emergency_timeout_ns=_ns(sc, "emergency_report", "completion_timeout_s"),
+        graceful_exit_ns=_ns(sc, "shutdown", "graceful_process_exit_s"),
+        terminate_exit_ns=_ns(sc, "shutdown", "terminate_process_exit_s"),
+        application_backstop_ns=_ns(sc, "shutdown", "application_shutdown_backstop_s"),
+    )
+    if startup.silence_timeout_ns <= startup.heartbeat_interval_ns:
+        raise ConfigurationError("health silence must exceed heartbeat interval")
+    minimum_backstop = (
+        startup.silence_timeout_ns
+        + max(setup_cancel, trial_finished)
+        + recovery
+        + 3 * (startup.graceful_exit_ns + startup.terminate_exit_ns)
+    )
+    if startup.application_backstop_ns < minimum_backstop:
+        raise ConfigurationError("application shutdown backstop is below derived sum")
+    retention = _ns(ec, "control", "command_record_retention_after_finalization_s")
+    policies = pb.ControlPolicies(
+        setup=pb.WaitPolicy(initial_ns=_ns(ec, "timeouts", "setup", "initial_s")),
+        setup_cancel=pb.WaitPolicy(initial_ns=setup_cancel),
+        trial_ready=pb.WaitPolicy(
+            initial_ns=_ns(ec, "timeouts", "trial_ready", "initial_s")
+        ),
+        trial_finished=pb.WaitPolicy(initial_ns=trial_finished),
+        supervisor_registration=pb.WaitPolicy(
+            initial_ns=_ns(ec, "timeouts", "supervisor_registration", "initial_s")
+        ),
+        start_lead_ns=lead,
+        controller_release_offset_ns=controller_cutoff,
+        backend_release_offset_ns=backend_cutoff,
+        start_evidence_allowance_ns=_ns(
+            ec, "timing", "start_lateness_tolerance_ms", unit="ms"
+        ),
+        stop_evidence_allowance_ns=_ns(
+            ec, "timing", "stop_report_timeout_ms", unit="ms"
+        ),
+        trial_command_transport_retries=1,
+        metadata_timeout_ns=_ns(ec, "metadata", "completion_timeout_s"),
+        command_retention_after_finalization_ns=retention,
+        recovery_ns=recovery,
+    )
+    limits_kwargs = {
+        "setup_ns": policies.setup.initial_ns,
+        "setup_cancel_ns": setup_cancel,
+        "ready_ns": policies.trial_ready.initial_ns,
+        "finished_ns": trial_finished,
+        "registration_ns": policies.supervisor_registration.initial_ns,
+        "recovery_ns": recovery,
+        "metadata_ns": policies.metadata_timeout_ns,
+        "validation_ns": _ns(ec, "configuration_validation", "timeout_s"),
+        "history_ns": history_save_timeout,
+        "space_query_ns": space_query_timeout,
+        "low_space_bytes": low_space_warning,
+        "max_retained_incidents": max_incidents,
+        "lead_ns": lead,
+        "controller_release_ns": controller_cutoff,
+        "backend_release_ns": backend_cutoff,
+        "start_evidence_ns": policies.start_evidence_allowance_ns,
+        "stop_evidence_ns": policies.stop_evidence_allowance_ns,
+        "max_metadata_operations": metadata_operations,
+        "max_metadata_bytes": metadata_bytes,
+    }
+    history_warning: str | None = None
+    try:
+        reusable = _load_saved_configuration(
+            root / "config/last_configuration.json", max_message_bytes=max_message
+        )
+    except ConfigurationError as exc:
+        # E07 keeps the original file for diagnosis and starts with editable
+        # defaults; this never grants Setup or replaces a valid default TOML.
+        reusable = pb.ExperimentConfiguration()
+        history_warning = str(exc)
+    assets = ec.get("assets", {})
+    if isinstance(assets, dict) and "asset_root" in assets:
+        asset_root = assets["asset_root"]
+        if not isinstance(asset_root, str) or not asset_root:
+            raise ConfigurationError("assets.asset_root must be a nonempty path")
+        if not reusable.HasField("asset_root"):
+            reusable.asset_root = asset_root
+    return ControllerConfiguration(
+        configuration=reusable,
+        policies=policies,
+        limits_kwargs=limits_kwargs,
+        supervisor_startup=startup,
+        controller_port=controller_port,
+        max_message_bytes=max_message,
+        max_pending_events=max_events,
+        max_pending_payload_bytes=queue_bytes,
+        max_retained_incidents=max_incidents,
+        history_save_timeout_ns=history_save_timeout,
+        space_query_timeout_ns=space_query_timeout,
+        low_space_warning_bytes=low_space_warning,
+        default_intertrial_gap_ns=default_gap,
+        history_warning=history_warning,
+    )
+
+
+def validate_experiment_candidate(
+    candidate: pb.ExperimentConfiguration,
+) -> pb.ValidationResult:
+    """Pure structural checks; device, assets and backend methods stay backend-owned."""
+    issues: list[pb.FieldIssue] = []
+
+    def issue(field: str, reason: str) -> None:
+        issues.append(
+            pb.FieldIssue(
+                component="experiment",
+                field_path=field,
+                failure=pb.Failure(code="INVALID_CONFIGURATION", message=reason),
+            )
+        )
+
+    if candidate.HasField("mode") and candidate.mode == pb.SESSION_MODE_UNSPECIFIED:
+        issue("mode", "UNSPECIFIED is not a session mode")
+    for field in ("subject", "experiment"):
+        value = getattr(candidate, field)
+        if value and not any(
+            character.isalnum() and character.isascii() for character in value
+        ):
+            issue(field, "name must contain an ASCII letter or digit")
+    if candidate.asset_root and not candidate.asset_root.strip():
+        issue("asset_root", "asset root cannot be whitespace")
+    seen_backends: set[str] = set()
+    for index, backend in enumerate(candidate.backends):
+        if backend.backend_name not in _BACKENDS:
+            issue(f"backends[{index}].backend_name", "unknown backend")
+        if backend.backend_name in seen_backends:
+            issue(f"backends[{index}].backend_name", "duplicate backend")
+        seen_backends.add(backend.backend_name)
+        if backend.WhichOneof("settings") not in (None, backend.backend_name):
+            issue(f"backends[{index}].settings", "backend settings kind mismatch")
+    enabled = {item.backend_name for item in candidate.backends if item.enabled}
+    if candidate.HasField("mode") and candidate.mode in (
+        pb.SESSION_MODE_OPEN_LOOP,
+        pb.SESSION_MODE_CLOSED_LOOP,
+    ):
+        if "vr" not in enabled:
+            issue("backends", "VR is required for both session modes")
+        if candidate.mode == pb.SESSION_MODE_CLOSED_LOOP and "tracking" not in enabled:
+            issue("backends", "closed-loop mode requires tracking")
+    for index, trial in enumerate(candidate.trials, 1):
+        if trial.trial_number != index:
+            issue(
+                f"trials[{index - 1}].trial_number",
+                "trials must be one-based and ordered",
+            )
+    seen_gaps: set[int] = set()
+    for index, gap in enumerate(candidate.gaps):
+        if (
+            gap.after_trial_number == 0
+            or gap.after_trial_number in seen_gaps
+            or gap.after_trial_number >= len(candidate.trials)
+        ):
+            issue(f"gaps[{index}].after_trial_number", "invalid or duplicate gap")
+        if gap.minimum_duration_ns < 0:
+            issue(f"gaps[{index}].minimum_duration_ns", "gap cannot be negative")
+        seen_gaps.add(gap.after_trial_number)
+    result = pb.ValidationResult(
+        completed=True,
+        valid=not issues,
+        component="experiment",
+        configuration_module_version="experiment-v1",
+    )
+    result.issues.extend(issues)
+    return result
+
+
+def controller_validators(
+    available_backend_validators: Mapping[str, BackendValidator] | None = None,
+) -> dict[str, BackendValidator]:
+    """Do not imply that missing backend modules can validate enabled settings."""
+    available = dict(available_backend_validators or {})
+    unknown = set(available) - _BACKENDS
+    if unknown:
+        raise ValueError(f"unknown backend validator names: {sorted(unknown)}")
+
+    def for_backend(name: str) -> BackendValidator:
+        def validate(candidate: pb.ExperimentConfiguration) -> pb.ValidationResult:
+            enabled = any(
+                item.backend_name == name and item.enabled
+                for item in candidate.backends
+            )
+            if not enabled:
+                return pb.ValidationResult(
+                    completed=True,
+                    valid=True,
+                    component=name,
+                    configuration_module_version="inactive",
+                )
+            provider = available.get(name)
+            if provider is None:
+                return pb.ValidationResult(
+                    completed=False,
+                    valid=False,
+                    component=name,
+                    unavailable_reason=pb.Failure(
+                        code="VALIDATOR_UNAVAILABLE",
+                        message=f"{name} configuration validator is not installed",
+                    ),
+                )
+            result = provider(candidate)
+            if result.component != name or not result.configuration_module_version:
+                raise ConfigurationError(f"{name} validator identity/version mismatch")
+            return result
+
+        return validate
+
+    return {"experiment": validate_experiment_candidate} | {
+        name: for_backend(name) for name in sorted(_BACKENDS)
+    }

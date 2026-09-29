@@ -1,0 +1,48 @@
+# Fixed architecture policy for supervisor (E14/GOV-001). Not an operator file.
+# Source rules: Supervisor-owned defaults. See architecture.md: E04, E06, E08, E14.
+# Change only with the governing architecture decision, then bump policy_version
+# here and in config/backends/supervisor_config.toml. The loader rejects a version mismatch.
+policy_version = 6
+
+[processes]
+launch_policy = "backend_owned_children"
+registration = "planned_then_confirmed"
+
+[processes.windows]
+contained_backends = ["acquisition", "vr", "tracking"]
+containment = "job_objects"
+kill_on_job_close = false # Inner per-launch jobs only.
+application_job_owner = "persistent_launcher"
+application_job_kill_on_close = true
+application_job_handle = "sole_noninherited_launcher_handle"
+authority_loss_shutdown = "automatic_bounded_graceful_then_application_job_termination"
+
+[health]
+controller_monitor = "supervisor_process_handle_and_heartbeat_silence"
+supervisor_monitor = "controller_heartbeat_silence"
+coordinator_authority_watch = "os_process_handles_controller_and_supervisor"
+worker_health = "worker_to_coordinator_aggregated_in_coordinator_heartbeat"
+silence_recovery = "none_silence_is_loss"
+controller_loss_action = "independent_idempotent_cleanup_then_application_shutdown"
+
+[storage]
+normal_metadata_writer = "controller"
+output_reservation = "controller"
+controller_loss = "emergency_report_no_normal_writer_takeover"
+
+[status_delivery]
+mode = "complete_view_on_change_and_reconnect"
+pending = "coalesce_latest_bounded"
+revision_gaps = "accept_newer_full_view"
+
+[gui_process]
+automatic_relaunch = "none_operator_relaunches_from_launcher"
+
+[recovery]
+backend_reuse = "full_application_restart_after_cleanup"
+actions = ["retry_graceful_cleanup"]
+authority = "controller_verified_control_lease_only"
+stuck_process = "shutdown_application"
+
+[shutdown]
+application_backstop = "startup_only_setting_checked_at_setup"

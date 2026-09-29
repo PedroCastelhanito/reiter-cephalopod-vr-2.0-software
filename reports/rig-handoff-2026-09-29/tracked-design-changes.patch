@@ -1,0 +1,319 @@
+diff --git a/CephVR2.0/AGENTS.md b/CephVR2.0/AGENTS.md
+index df35c7f..b95a744 100644
+--- a/CephVR2.0/AGENTS.md
++++ b/CephVR2.0/AGENTS.md
+@@ -102,8 +102,9 @@ This file applies to this directory and its descendants.
+ 
+ - Inspect existing files and version-control status before editing; preserve work
+   made by the user or another agent.
+-- The initial hardware target is one existing discrete GPU. SpikeGLX remains on
+-  the separate computer; consult SYS-001/SYS-002 for the exact accepted scope.
++- GPU workload placement follows SYS-002: RTX 5060 Ti rendering/projection/tracking
++  GPU work, RTX 2080 Ti video encoding, and AMD integrated graphics for the operator
++  display/GUI. SpikeGLX remains on the separate computer under SYS-001.
+ - Consult [SYS-003](architecture.md#sys-003) for the Python backend-language policy
+   and its treatment of compiled dependencies and justified exceptions.
+ - Follow E15's rig-first behavioral verification plan: the owner will test after
+diff --git a/CephVR2.0/README.md b/CephVR2.0/README.md
+index 050b139..5a9ff03 100644
+--- a/CephVR2.0/README.md
++++ b/CephVR2.0/README.md
+@@ -7,6 +7,11 @@ authorization before coding begins.
+ 
+ ## Start here
+ 
++For development away from the rig, read the
++[2026-09-29 hardware handoff](reports/rig-handoff-2026-09-29/README.md): current
++identities, owner camera/rate assignments, driver-repair results, encoder limits,
++dependency inventory and explicitly deferred installation inputs.
++
+ 1. [Architecture overview and register](architecture.md): links to the authoritative
+    [system contracts](docs/architecture/system-contracts.md) and backend records in
+    `docs/architecture/`. Read these before changing a backend.
+diff --git a/CephVR2.0/architecture.md b/CephVR2.0/architecture.md
+index 935c409..cc2c16d 100644
+--- a/CephVR2.0/architecture.md
++++ b/CephVR2.0/architecture.md
+@@ -1,6 +1,6 @@
+ # CephVR2.0 architecture
+ 
+-Last updated: 2026-09-28
++Last updated: 2026-09-29
+ 
+ This overview and the linked records in `docs/architecture/` form the authoritative
+ architecture. Each decision has one home; this register locates it by permanent ID.
+@@ -50,8 +50,8 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | ID | Subject | Status | Revision |
+ | --- | --- | --- | ---: |
+ | [SYS-001](#sys-001) | Computer responsibilities | Accepted | 3 |
+-| [SYS-002](#sys-002) | Initial GPU target | Accepted | 1 |
+-| [SYS-003](#sys-003) | Backend language | Accepted | 1 |
++| [SYS-002](#sys-002) | GPU workload placement | Accepted | 2 |
++| [SYS-003](#sys-003) | Backend language and environment | Accepted | 2 |
+ | [SYS-004](#sys-004) | Scientific synchronization authority | Accepted | 3 |
+ | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 22 |
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 9 |
+@@ -175,22 +175,37 @@ Accepted design does not imply implemented or rig-validated behavior.
+ - Camera frames do not pass through the SpikeGLX computer.
+ 
+ <a id="sys-002"></a>
+-### SYS-002 — Initial GPU target
++### SYS-002 — GPU workload placement
+ 
+-**Status:** Accepted · **Revision:** 1
++**Status:** Accepted · **Revision:** 2
+ 
+-- Build the initial system for the main computer's current single discrete GPU.
+-- Do not require a second GPU or assume that process separation provides GPU
+-  resource isolation.
+-- Validate the complete workload on the rig before making performance claims.
++- Use the RTX 5060 Ti for visual-stimulus rendering, all projector outputs and
++  tracking GPU work (NVIDIA Optical Flow and ONNX CUDA inference). T08's CPU
++  preparation/geometry/estimation and normal CPU control work retain their owners.
++- Use the RTX 2080 Ti NVENC engines for all recorded video: both cameras and the
++  VR review composite. Keep rendering/readback on the RTX 5060 Ti and the existing
++  host-buffer/raw-stdin recording paths; no GPU-to-GPU sharing is assumed.
++- Use the Ryzen 9 9950X's integrated AMD Radeon graphics for the main operator
++  display and GUI graphics. GUI application logic continues on the CPU.
++- Resolve physical adapters explicitly across Windows/OpenGL, CUDA and FFmpeg;
++  never assume their ordinal numbers match or silently move a workload to another
++  adapter. Missing/incompatible required placement blocks the affected preparation;
++  runtime failures retain E06's scope and outcomes.
++- The shared fixed declaration lives in `contracts/policy/experiment_policy.toml`.
++  Validate actual context/provider/encoder placement, cross-adapter transfer cost
++  and the complete simultaneous workload before making performance claims. The
++  rig verification report owns current device health and measured encoding results.
+ 
+ <a id="sys-003"></a>
+-### SYS-003 — Backend language
++### SYS-003 — Backend language and environment
+ 
+-**Status:** Accepted · **Revision:** 1
++**Status:** Accepted · **Revision:** 2
+ 
+ - Implement the controller and supervisor in Python.
+ - Prefer Python for every CephVR backend.
++- CephVR2.0 uses its own fresh Python 3.11 environment, separate from the existing
++  CephVR environment. Resolve and verify dependencies independently; do not clone
++  the old environment or inherit its package/PATH choices as a validated baseline.
+ - Python backends may call compiled libraries, device SDKs, codecs, shaders,
+   firmware, and GPU code.
+ - A non-Python component requires a documented SDK limitation or measured failure
+diff --git a/CephVR2.0/config/backends/acquisition_config.toml b/CephVR2.0/config/backends/acquisition_config.toml
+index 5234f1c..73dda72 100644
+--- a/CephVR2.0/config/backends/acquisition_config.toml
++++ b/CephVR2.0/config/backends/acquisition_config.toml
+@@ -1,5 +1,5 @@
+ # Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
+-# These are logical camera roles; hardware bindings remain unset. A02 owns process layout.
++# Camera serials/rates are owner-assigned below; other rig bindings remain incomplete. A02 owns process layout.
+ format_version = 1
+ # E14: fixed policy lives in contracts/policy/acquisition_policy.toml; versions must match.
+ policy_version = 11
+@@ -14,6 +14,10 @@ port = 50053
+ # Adapter maps SDK names; actual exposure/gain/ROI values remain unset.
+ 
+ [cameras.behavioral]
++device_id = "40065509"
++pulse_frequency_hz = 30.0
++# Owner-assigned 2026-09-29. Current camera readback limits this ROI to 29.29630 Hz;
++# meet the requested 30 Hz through explicit later settings, never silently reduce it.
+ # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
+ # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
+ # Rig-specific value intentionally unset; unknown does not mean zero.
+@@ -24,7 +28,7 @@ sdk_buffer_count = 10
+ # Set microcontroller_pin (a firmware-reported string) and pulse_frequency_hz
+ # explicitly for this camera when triggered.
+ # Use a distinct output pin per camera on the shared microcontroller connection.
+-# Actual pin/frequency remain unset; preview reuses this camera's frequency.
++# Physical pin remains unset; preview reuses the owner-assigned frequency above.
+ # Configurable per camera before the session: external_trigger or free_running.
+ # External input source/line must be explicitly configured for the rig.
+ frame_timing = "external_trigger"
+@@ -40,8 +44,8 @@ exposure_duration_mode = "timed"
+ frame_silence_timeout_s = 1
+ enabled = true
+ save_video = true
+-# Set device_id to this role's stable hardware ID (for example, serial number).
+-# No rig-specific ID is assumed. Assignment changes require fresh Setup.
++# device_id above is the owner-confirmed camera serial.
++# Assignment changes require fresh Setup.
+ 
+ # Independent complete encoding list for this camera; no shared-list inheritance.
+ # Initial accepted baseline; edit this list without changing the other camera.
+@@ -69,6 +73,9 @@ ffmpeg_args = [
+ ]
+ 
+ [cameras.tracking]
++device_id = "40747103"
++pulse_frequency_hz = 60.0
++# Owner-assigned 2026-09-29. Resolution and source/recording depth remain unset.
+ # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
+ # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
+ # Rig-specific value intentionally unset; unknown does not mean zero.
+@@ -79,7 +86,7 @@ sdk_buffer_count = 10
+ # Set microcontroller_pin (a firmware-reported string) and pulse_frequency_hz
+ # explicitly for this camera when triggered.
+ # Use a distinct output pin per camera on the shared microcontroller connection.
+-# Actual pin/frequency remain unset; preview reuses this camera's frequency.
++# Physical pin remains unset; preview reuses the owner-assigned frequency above.
+ # Configurable per camera before the session: external_trigger or free_running.
+ # External input source/line must be explicitly configured for the rig.
+ frame_timing = "external_trigger"
+@@ -97,7 +104,7 @@ enabled = false
+ # Configurable before the session; preserve explicit saved false values.
+ # This default has no recording effect while the tracking camera is disabled.
+ save_video = true
+-# Set device_id to this role's stable hardware ID before enabling the camera.
++# device_id above is confirmed; complete other required settings before enabling.
+ 
+ # Independent complete encoding list for this camera; no shared-list inheritance.
+ # Initial accepted baseline; edit this list without changing the other camera.
+@@ -133,7 +140,7 @@ ffmpeg_args = [
+ # Independent optional transport overrides; no inheritance from behavioral.
+ 
+ [microcontroller]
+-# Implement the actual rig board first; primarily Arduino boards, exact model unset.
++# Inventory detects an Arduino Uno; firmware/protocol and pin mapping remain unverified.
+ # Configurable before Setup; baud must match the firmware connection.
+ baud_rate = 115200
+ # Earlier applicable trial deadlines always win; this cannot extend reporting cutoffs.
+@@ -208,5 +215,6 @@ session_preview_max_hz = 10
+ # Explicit saved choices take precedence over these defaults. All cameras may be
+ # disabled when no enabled consumer needs their input. Closed-loop tracking still
+ # requires a valid input source. A file's presence does not enable a camera.
+-# Models/serials, resolution, FPS, physical trigger source and exposure values remain unset.
++# Camera serials and requested pulse rates are assigned above. Resolution, bit depth,
++# physical trigger source/pins and exposure choices remain unset.
+ # Common lifecycle/health policies come from experiment_config.toml and supervisor_config.toml.
+diff --git a/CephVR2.0/config/backends/experiment_config.toml b/CephVR2.0/config/backends/experiment_config.toml
+index 3fac6f9..0008c86 100644
+--- a/CephVR2.0/config/backends/experiment_config.toml
++++ b/CephVR2.0/config/backends/experiment_config.toml
+@@ -6,7 +6,7 @@
+ # Shared health lives in supervisor_config.toml; this file owns central metadata bounds.
+ format_version = 1
+ # E14: fixed policy lives in contracts/policy/experiment_policy.toml; versions must match.
+-policy_version = 6
++policy_version = 7
+ 
+ [assets]
+ # E07: asset_root is the configurable base directory for relative media references.
+diff --git a/CephVR2.0/contracts/acquisition/encoding-options.md b/CephVR2.0/contracts/acquisition/encoding-options.md
+index 97f2449..92108d6 100644
+--- a/CephVR2.0/contracts/acquisition/encoding-options.md
++++ b/CephVR2.0/contracts/acquisition/encoding-options.md
+@@ -48,6 +48,13 @@ free-running rate), stream mapping, output paths, overwrite behavior, MP4
+ mode/fragment flags, progress/diagnostic pipes, keyframe forcing and frame
+ synchronization. Inject fixed `-bf 0` from acquisition policy exactly once; validate
+ installed support. Injected arguments are included in effective logged arguments.
++Under [SYS-002](../../architecture.md#sys-002), the backend also injects `-gpu`
++exactly once using the encoder ordinal resolved to the adopted physical RTX 2080 Ti.
++Validate encoder capabilities against that device, not the rendering GPU or the
++first enumerated NVIDIA adapter. Retain resolved physical identity and effective
++ordinal with encoding provenance. Reject operator `-gpu` overrides and aliases;
++missing/unavailable hardware is a preparation failure, with no automatic adapter
++fallback. This is a command-builder requirement, not a working device resolver.
+ Reject them and all applicable aliases/selectors in operator lists, even with equal
+ values. Reject user alternatives, including `-framerate`, `-s`, `-r`, `-fpsmax`, `-vsync`, `-fps_mode`, `-t`, `-to`, `-ss`, `-frames`, `-shortest`,
+ `-copyts`, `-itsoffset`, `-enc_time_base`, `-force_key_frames`, `-g`, `-movflags`,
+diff --git a/CephVR2.0/contracts/policy/experiment_policy.toml b/CephVR2.0/contracts/policy/experiment_policy.toml
+index a7cd553..4a156b1 100644
+--- a/CephVR2.0/contracts/policy/experiment_policy.toml
++++ b/CephVR2.0/contracts/policy/experiment_policy.toml
+@@ -2,7 +2,14 @@
+ # Source rules: Experiment controller defaults. See architecture.md: E05, E06, E07, E08, E14.
+ # Change only with the governing architecture decision, then bump policy_version
+ # here and in config/backends/experiment_config.toml. The loader rejects a version mismatch.
+-policy_version = 6
++policy_version = 7
++
++# Shared physical GPU placement, owned by SYS-002; no ordinal is a stable identity.
++[gpu_placement]
++render_projection_tracking = "nvidia_geforce_rtx_5060_ti"
++video_encoding = "nvidia_geforce_rtx_2080_ti"
++operator_display_gui = "amd_radeon_ryzen_9_9950x_integrated"
++automatic_adapter_fallback = false
+ 
+ [state_delivery]
+ configuration_values = "snapshot_and_stream_revision_change"
+diff --git a/CephVR2.0/contracts/vr/encoding-options.md b/CephVR2.0/contracts/vr/encoding-options.md
+index d29f88a..621cf38 100644
+--- a/CephVR2.0/contracts/vr/encoding-options.md
++++ b/CephVR2.0/contracts/vr/encoding-options.md
+@@ -23,7 +23,11 @@ support does not make an unknown option valid. The current supported codec inven
+ is the existing NVENC set, subject to device/build/MP4 compatibility; this choice
+ does not implicitly add libx264 or a CPU fallback. Adding a supported encoder later
+ requires explicit registry/validation support, not merely putting its name in a list.
+-No codec, quality value or hardware model is guessed by this binding.
++Codec and quality are explicit; physical GPU placement follows
++[SYS-002](../../architecture.md#sys-002). Reuse acquisition's backend-owned `-gpu`
++resolution for the RTX 2080 Ti. Composite rendering/PBO readback stays on the RTX
++5060 Ti; feed the resulting host buffer through the existing raw-stdin path to
++the encoder. Do not assume cross-adapter GPU buffer sharing or ordinal equality.
+ 
+ Execute an argv list without a shell. Report validation errors with token position
+ and canonical option. Validate during Setup using advertised
+diff --git a/CephVR2.0/docs/architecture/system-contracts.md b/CephVR2.0/docs/architecture/system-contracts.md
+index 3d03d49..4bc5ae6 100644
+--- a/CephVR2.0/docs/architecture/system-contracts.md
++++ b/CephVR2.0/docs/architecture/system-contracts.md
+@@ -484,7 +484,7 @@ and rig validation remain later work under E15.
+ 
+ | Operator file / policy file | Governing decisions |
+ | --- | --- |
+-| `experiment_config.toml` / `experiment_policy.toml` | E01/E03/E05–E08/E11 |
++| `experiment_config.toml` / `experiment_policy.toml` | SYS-002/E01/E03/E05–E08/E11 |
+ | `supervisor_config.toml` / `supervisor_policy.toml` | E03–E06/E08 |
+ | `acquisition_config.toml` / `acquisition_policy.toml` | A01–A11 |
+ | `gui_config.toml` / `gui_policy.toml` | E03/A10 |
+diff --git a/CephVR2.0/reports/rig-verification.md b/CephVR2.0/reports/rig-verification.md
+index d93ca99..dd80b8a 100644
+--- a/CephVR2.0/reports/rig-verification.md
++++ b/CephVR2.0/reports/rig-verification.md
+@@ -1,12 +1,25 @@
+ # Rig verification — outstanding checks
+ 
+-Status: deferred until the owner has access to the rig; no execution or rig results recorded.
++Latest development handoff:
++[hardware evidence and implementation constraints](rig-handoff-2026-09-29/README.md).
++Camera roles/rates are now owner-confirmed (behavioral 40065509 at 30 Hz; tracking
++40747103 at 60 Hz). Final ROI/depth, surface mapping and SpikeGLX address remain
++explicitly deferred. The 2080 Ti format checks and current camera rate limits in
++that handoff do not close the full-workload checks below.
++
++Status: rig access established on 2026-09-29. The
++[rig inventory and capability audit](rig-audit-2026-09-29.md) records installed
++hardware/software, camera readback and bounded dependency/encoder probes. The
++projector connection follow-up detects all four outputs on the RTX 5060 Ti at
++60 Hz; physical surface mapping and optical/presentation verification remain open. The
++full-workload, optical, electrical and CephVR2.0 lifecycle checks below remain open;
++no CephVR2.0 backend runtime is implemented or validated.
+ Continue rig-independent decisions under [GOV-001](../architecture.md#gov-001).
+ 
+ This is a verification worklist, not another decision log. Governing rules are
+ [A08](../docs/architecture/acquisition.md#a08) and
+ [E15](../docs/architecture/system-contracts.md#e15). These checks are explicitly
+-deferred while rig-independent backend design proceeds.
++tracked separately from installation discovery and dependency smoke checks.
+ 
+ | Check | Evidence required |
+ | --- | --- |
+@@ -17,7 +30,7 @@ deferred while rig-independent backend design proceeds.
+ | VR media decode and profiles | Under V04/V11, verify PNG/TIFF source-depth preservation, JPEG/H.264 interpretation, FFV1 and static GLB supported/rejected profiles, exact media endpoints/VFR selection and independent instances. Exercise aggregate decoder/codec thread and memory limits, callbacks/logging, stale generation rejection, leases, cancellation/hung native work and all four outputs with tracking/recording. No measured throughput or decoder fault isolation is claimed. |
+ | VR protected assets | Under V04/V13, verify protected streaming sources on the actual storage/decoder combination, independent instance cursors, dependency coverage, external write/replacement attempts and release after cancellation/owner loss. Prepared-memory reuse and relocated replay must use the identified content; no periodic trial-time hashing or archive is introduced. |
+ | VR linear color and measured tables | Under V04/V21/V23, verify source transfer/range/channels and 8/16-bit preservation, float32 composition/premultiplied alpha/filtering, named clipping flags, curve interpolation and one-time correction. Measure each output's response and actual code precision; check manual/driver/projector conditions, no double gamma, Idle/marker consistency and distinct marker light levels. Independent channel tables alone do not prove cross-projector color matching or spatial uniformity. |
+-| VR output precision and custom encoding | Under V20/E13, verify requested versus actual RGB8/RGB10 buffers, final code preservation, calibration matching and the real driver/cable/projector path. Exercise the single composite lossy argument validation, actual encoder compatibility at the composite resolution, explicit review conversion and encoder load/failure while preserving live rendering and required state evidence. Confirm the GPU sustains three concurrent NVENC sessions (two cameras plus one VR composite) at planned rates. Normal runtime still performs no file-content validation. |
++| VR output precision and custom encoding | Under V20/E13, verify requested versus actual RGB8/RGB10 buffers, final code preservation, calibration matching and the real driver/cable/projector path. Exercise the single composite lossy argument validation, actual encoder compatibility at the composite resolution, explicit review conversion and encoder load/failure while preserving live rendering and required state evidence. Under SYS-002, confirm the now-operational RTX 2080 Ti sustains three concurrent NVENC sessions (two cameras plus one VR composite) at planned rates while the RTX 5060 Ti renders/tracks and AMD integrated graphics serves the operator display/GUI. Verify actual adapter identities, explicit FFmpeg device selection and host-transfer costs; the earlier RTX 5060 Ti encoder probes do not validate this placement. Normal runtime still performs no file-content validation. |
+ | SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; startRun-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; stopRun completion; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge; controller-loss emergency warning naming the run for manual stopping. Acknowledgements are not pulse timing. |
+ | VR scene composition and geometric correction | Under V02/V15, exercise one arena plus ordered alpha overlays, overlay independence from arena depth, covered-instance continuity and invalid composition rejection. Verify imported mesh coverage/orientation/fold rejection, masks and weighted overlaps, immutable session mappings, photodiode stage order and final-output recording/replay. Establish calibration accuracy through the actual optical path and resource cost on all outputs; no automatic calibration or optical-model guarantee is selected. |
+ | VR review video and fragmented MP4 | Under E13, verify the constant-rate raw stdin input at the pacing output's nominal refresh sustains the composite resolution, video frame n maps to the n-th admitted render group in the evidence, tile placement/scale matches the recorded layout and admission drops shorten playback without duplicated frames. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
+@@ -58,7 +71,7 @@ and partial helper launch; sole non-inherited outer handle; controller, supervis
+ both-authority and launcher failure; graceful cleanup followed by bounded escalation;
+ no unrelated process termination; unresolved output/SpikeGLX evidence retained at
+ next startup. Verify actual process absence and machine-guard release separately
+-from file closure. These checks remain pending rig access.
++from file closure. These checks remain pending runtime implementation and execution.
+ 
+ E06 operator-incident verification remains pending: confirm popup/reconnect/headless
+ behavior without shifting stimulus clocks; isolate camera/recording/tracking/ephys
