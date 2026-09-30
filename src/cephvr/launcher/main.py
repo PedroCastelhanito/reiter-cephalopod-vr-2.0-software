@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import importlib.util
-import json
 import os
 import queue
 import secrets
@@ -16,6 +16,12 @@ from pathlib import Path
 from uuid import uuid4
 
 from cephvr.controller.configuration import load_controller_configuration
+from cephvr.launcher.decisions import (
+    LOST_KEY,
+    MAX_LINE_BYTES,
+    LauncherDecisions,
+    parse_notification_line,
+)
 from cephvr.platform.windows.bootstrap import (
     close_handle,
     create_bootstrap_pipe,
@@ -32,35 +38,35 @@ from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
 def _read_notifications(
     handle: int, output: queue.Queue[dict[str, object]], channel: str
 ) -> None:
+    """Forward notifications; any EOF or protocol violation retires the channel."""
     import msvcrt
 
-    def emit(notification: dict[str, object]) -> None:
+    def emit(notification: dict[str, object]) -> bool:
         notification["_channel"] = channel
         try:
             output.put_nowait(notification)
         except queue.Full:
-            output.get_nowait()
-            output.put_nowait({"kind": "control_overflow", "_channel": channel})
+            return False
+        return True
+
+    def lost(reason: str) -> None:
+        marker: dict[str, object] = {"kind": "channel_lost", LOST_KEY: reason}
+        while not emit(marker):
+            try:
+                output.get_nowait()  # The loss marker outranks any queued note.
+            except queue.Empty:
+                pass
 
     fd = msvcrt.open_osfhandle(handle, os.O_RDONLY)
     with os.fdopen(fd, "rb", buffering=0) as stream:
         while True:
-            line = stream.readline(8193)
-            if not line:
-                emit({"kind": "control_eof"})
+            parsed = parse_notification_line(stream.readline(MAX_LINE_BYTES + 1))
+            if isinstance(parsed, str):
+                lost(parsed)
                 return
-            if len(line) > 8192 or not line.endswith(b"\n"):
-                emit({"kind": "control_overflow"})
+            if not emit(parsed):
+                lost("notification queue overflow")
                 return
-            try:
-                notification = json.loads(line)
-            except (UnicodeError, json.JSONDecodeError):
-                emit({"kind": "control_overflow"})
-                continue
-            if isinstance(notification, dict):
-                emit(notification)
-            else:
-                emit({"kind": "control_overflow"})
 
 
 def _retain_until_empty(
@@ -156,13 +162,12 @@ def run_launcher(
     native = WindowsJobs()
     with SingleInstanceGuard("application"):
         application_job = native.create_application_job()
-        shutdown_deadline: int | None = None
+        decisions: LauncherDecisions | None = None
         try:
             bootstrap_read, bootstrap_write = create_bootstrap_pipe()
             control_read, control_write = create_control_pipe()
             controller_control_read, controller_control_write = create_control_pipe()
             ack_read, ack_write = create_bootstrap_pipe()
-            startup_deadline_ns = host_time_ns() + startup.silence_timeout_ns
             child = native.launch_suspended(
                 str(interpreter),
                 [
@@ -204,7 +209,13 @@ def run_launcher(
                 "max_message_bytes": resolved.max_message_bytes,
                 "max_retained_incidents": resolved.max_retained_incidents,
                 "command_retention_ns": resolved.policies.command_retention_after_finalization_ns,
+                # Reuse the controller's single resolved policy instance for
+                # acquisition sessionless configuration-worker startup.
+                "control_policies": base64.b64encode(
+                    resolved.policies.SerializeToString(deterministic=True)
+                ).decode("ascii"),
                 "silence_timeout_ns": startup.silence_timeout_ns,
+                "heartbeat_interval_ns": startup.heartbeat_interval_ns,
                 "emergency_timeout_ns": startup.emergency_timeout_ns,
                 "graceful_exit_ns": startup.graceful_exit_ns,
                 "terminate_exit_ns": startup.terminate_exit_ns,
@@ -214,7 +225,15 @@ def run_launcher(
                 "supervisor_pid": child.pid,
                 "supervisor_creation_time_100ns": child.creation_time_100ns,
             }
+            decisions = LauncherDecisions(
+                supervisor_generation=supervisor_generation,
+                controller_generation=controller_generation,
+                backstop_ns=backstop_ns,
+                registration_window_ns=startup.silence_timeout_ns,
+                launched_ns=host_time_ns(),
+            )
             bootstrap_done = threading.Event()
+            bootstrap_seen = False
             bootstrap_error: list[BaseException] = []
 
             def send_bootstrap() -> None:
@@ -239,102 +258,51 @@ def run_launcher(
                 args=(controller_control_read, notifications, "controller"),
                 daemon=True,
             ).start()
-            controller_pid: int | None = None
-            controller_created: int | None = None
             while True:
                 now = host_time_ns()
-                if controller_pid is None and (
-                    now >= startup_deadline_ns
-                    or bootstrap_done.is_set()
-                    and bootstrap_error
-                ):
-                    shutdown_deadline = (
-                        min(shutdown_deadline, now + backstop_ns)
-                        if shutdown_deadline
-                        else now + backstop_ns
-                    )
+                if not bootstrap_seen and bootstrap_done.is_set():
+                    bootstrap_seen = True
+                    decisions.bootstrap_finished(now, ok=not bootstrap_error)
+                decisions.tick(now)
                 for _ in range(64):
                     try:
                         note = notifications.get_nowait()
                     except queue.Empty:
                         break
-                    if (
-                        note.get("kind") == "register_controller"
-                        and note.get("_channel") == "supervisor"
-                    ):
-                        if (
-                            note.get("supervisor_generation") != supervisor_generation
-                            or note.get("controller_generation")
-                            != controller_generation
-                        ):
-                            continue
-                        pid, created = note.get("pid"), note.get("creation_time_100ns")
-                        if isinstance(pid, int) and isinstance(created, int):
-                            if controller_pid is not None and (pid, created) != (
-                                controller_pid,
-                                controller_created,
-                            ):
-                                shutdown_deadline = (
-                                    min(shutdown_deadline, now + backstop_ns)
-                                    if shutdown_deadline
-                                    else now + backstop_ns
-                                )
-                                continue
-                            if controller_pid is not None:
-                                continue
+                    kind = note.get("kind")
+                    if kind == "register_controller":
+                        accepted = decisions.on_register_controller(now, note)
+                        if accepted is not None:
+                            pid, created = accepted
                             native.retain_exact(pid, created, str(interpreter))
-                            controller_pid, controller_created = pid, created
+                            decisions.controller_acknowledged(pid, created)
                             import msvcrt
 
                             ack_fd = msvcrt.open_osfhandle(ack_write, os.O_WRONLY)
                             os.write(ack_fd, b"A")
                             os.close(ack_fd)
                             ack_write = 0
-                    elif note.get("kind") in {"control_overflow", "control_eof"}:
-                        shutdown_deadline = (
-                            min(shutdown_deadline, now + backstop_ns)
-                            if shutdown_deadline
-                            else now + backstop_ns
+                    elif kind == "channel_lost":
+                        channel = str(note.get("_channel"))
+                        reason = str(note.get(LOST_KEY))
+                        decisions.on_channel_lost(now, channel, reason)
+                        # The controller reason also goes into the exit receipt.
+                        sys.stderr.write(
+                            f"CephVR launcher {channel} channel lost: {reason}\n"
                         )
-                    elif note.get("kind") == "shutdown" and (
-                        note.get("_channel") == "supervisor"
-                        and note.get("supervisor_generation") == supervisor_generation
-                        or note.get("_channel") == "controller"
-                        and note.get("supervisor_generation") == supervisor_generation
-                        and note.get("controller_generation") == controller_generation
-                    ):
-                        claimed = note.get("deadline_monotonic_ns")
-                        deadline = (
-                            min(now + backstop_ns, claimed)
-                            if isinstance(claimed, int) and claimed > 0
-                            else now + backstop_ns
-                        )
-                        shutdown_deadline = (
-                            min(shutdown_deadline, deadline)
-                            if shutdown_deadline
-                            else deadline
-                        )
+                    elif kind == "shutdown":
+                        decisions.on_shutdown(now, note)
                 if not native.process_running(child.pid, child.creation_time_100ns):
-                    shutdown_deadline = (
-                        min(shutdown_deadline, now + backstop_ns)
-                        if shutdown_deadline
-                        else now + backstop_ns
-                    )
-                if (
-                    controller_pid is not None
-                    and controller_created is not None
-                    and not native.process_running(controller_pid, controller_created)
+                    decisions.arm(now)
+                if decisions.controller is not None and not native.process_running(
+                    *decisions.controller
                 ):
-                    shutdown_deadline = (
-                        min(shutdown_deadline, now + backstop_ns)
-                        if shutdown_deadline
-                        else now + backstop_ns
-                    )
-                if shutdown_deadline is not None:
+                    decisions.arm(now)
+                if decisions.shutdown_deadline_ns is not None:
                     members = native.inspect_launch_job(application_job)
                     if not members:
                         return
-                    if now >= shutdown_deadline:
+                    if now >= decisions.shutdown_deadline_ns:
                         native.terminate_job(application_job)
                         absence_deadline = host_time_ns() + 2_000_000_000
                         while (
@@ -352,7 +320,8 @@ def run_launcher(
             _retain_until_empty(
                 native,
                 application_job,
-                shutdown_deadline or host_time_ns() + backstop_ns,
+                (decisions and decisions.shutdown_deadline_ns)
+                or host_time_ns() + backstop_ns,
                 startup.terminate_exit_ns,
             )
             try:
@@ -364,6 +333,11 @@ def run_launcher(
                         supervisor_generation=supervisor_generation,
                         observed_monotonic_ns=host_time_ns(),
                         all_owned_processes_absent=True,
+                        controller_channel_loss=(
+                            decisions.lost_channels.get("controller", "")[:256]
+                            if decisions
+                            else ""
+                        ),
                     )
                 )
             finally:

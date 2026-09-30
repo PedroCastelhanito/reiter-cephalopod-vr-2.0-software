@@ -24,6 +24,8 @@ def _copy_pairs(root: Path) -> None:
         "contracts/policy/experiment_policy.toml",
         "config/backends/supervisor_config.toml",
         "contracts/policy/supervisor_policy.toml",
+        "config/backends/acquisition_config.toml",
+        "contracts/policy/acquisition_policy.toml",
     ):
         destination = root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -65,6 +67,48 @@ def test_loader_preserves_explicit_saved_false(tmp_path: Path) -> None:
     loaded = load_controller_configuration(tmp_path)
     assert loaded.configuration.backends[0].vr.HasField("save_vr_data")
     assert loaded.configuration.backends[0].vr.save_vr_data is False
+
+
+def test_loader_preserves_explicit_acquisition_false_and_empty_arguments(
+    tmp_path: Path,
+) -> None:
+    _copy_pairs(tmp_path)
+    history = tmp_path / "config/last_configuration.json"
+    history.write_text(
+        json.dumps(
+            {
+                "format_version": 1,
+                "configuration": {
+                    "backends": [
+                        {
+                            "backendName": "acquisition",
+                            "enabled": False,
+                            "acquisition": {
+                                "behavioral": {
+                                    "enabled": False,
+                                    "saveVideo": False,
+                                    "ffmpegArgs": {"values": []},
+                                }
+                            },
+                        }
+                    ]
+                },
+            }
+        )
+    )
+    loaded = load_controller_configuration(tmp_path)
+    acquisition = next(
+        item.acquisition
+        for item in loaded.configuration.backends
+        if item.backend_name == "acquisition"
+    )
+    assert acquisition.behavioral.HasField("enabled")
+    assert acquisition.behavioral.enabled is False
+    assert acquisition.behavioral.HasField("save_video")
+    assert acquisition.behavioral.save_video is False
+    assert acquisition.behavioral.HasField("ffmpeg_args")
+    assert not acquisition.behavioral.ffmpeg_args.values
+    assert acquisition.tracking.ffmpeg_args.values
 
 
 def test_loader_rejects_removed_key_and_policy_mismatch(tmp_path: Path) -> None:

@@ -12,6 +12,7 @@ from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.auth import Principal
 from cephvr.shared.identity import require_uuid4
+from cephvr.shared.transport_deadlines import deadline_metadata, remaining_seconds
 from cephvr.tracking.v1 import services_pb2 as tracking_svc
 from cephvr.tracking.v1 import services_pb2_grpc as tracking_rpc
 
@@ -75,85 +76,99 @@ class GrpcBackendPort:
             else None
         )
 
+    async def _call(self, method: object, request: object, deadline_ns: int) -> object:
+        timeout = remaining_seconds(deadline_ns)
+        if timeout <= 0:
+            raise TimeoutError("original backend operation deadline expired")
+        return await method(  # type: ignore[operator]
+            request,
+            metadata=(*self.principal.metadata(), deadline_metadata(deadline_ns)),
+            timeout=timeout,
+        )
+
     async def setup_session(
-        self, request: svc.SetupSessionRequest
+        self, request: svc.SetupSessionRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.SetupSession(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.SetupSession, request, deadline_ns),
         )
 
-    async def cancel_setup(self, request: svc.BackendCommand) -> pb.CommandAdmission:
+    async def cancel_setup(
+        self, request: svc.BackendCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.CancelSetup(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.CancelSetup, request, deadline_ns),
         )
 
     async def prepare_trial(
-        self, request: svc.PrepareTrialRequest
+        self, request: svc.PrepareTrialRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.PrepareTrial(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.PrepareTrial, request, deadline_ns),
         )
 
     async def schedule_trial(
-        self, request: svc.ScheduleTrialRequest
+        self, request: svc.ScheduleTrialRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.ScheduleTrial(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.ScheduleTrial, request, deadline_ns),
         )
 
     async def release_trial(
-        self, request: svc.ReleaseTrialRequest
+        self, request: svc.ReleaseTrialRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.ReleaseTrial(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.ReleaseTrial, request, deadline_ns),
         )
 
     async def interrupt_session(
-        self, request: svc.InterruptSessionRequest
+        self, request: svc.InterruptSessionRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.InterruptSession(
-                request, metadata=self.principal.metadata()
-            ),
+            await self._call(self.stub.InterruptSession, request, deadline_ns),
         )
 
-    async def cleanup(self, request: svc.BackendCommand) -> pb.CommandAdmission:
+    async def cleanup(
+        self, request: svc.BackendCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.Cleanup(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.Cleanup, request, deadline_ns),
         )
 
-    async def get_state(self, request: svc.BackendQuery) -> pb.ParticipantState:
+    async def get_state(
+        self, request: svc.BackendQuery, *, deadline_ns: int
+    ) -> pb.ParticipantState:
         return cast(
             pb.ParticipantState,
-            await self.stub.GetState(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.GetState, request, deadline_ns),
         )
 
     async def bind_tracking_data(
-        self, request: tracking_svc.TrackingDataBinding
+        self, request: tracking_svc.TrackingDataBinding, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.tracking is None:
             raise RuntimeError("tracking preparation endpoint unavailable")
         return cast(
             pb.CommandAdmission,
-            await self.tracking.BindData(request, metadata=self.principal.metadata()),
+            await self._call(self.tracking.BindData, request, deadline_ns),
         )
 
     async def confirm_tracking_input(
-        self, request: svc.TrackingInputConfirmation
+        self, request: svc.TrackingInputConfirmation, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
         return cast(
             pb.CommandAdmission,
-            await self.acquisition.ConfirmTrackingInput(
-                request, metadata=self.principal.metadata()
+            await self._call(
+                self.acquisition.ConfirmTrackingInput, request, deadline_ns
             ),
         )
 
@@ -170,90 +185,122 @@ class GrpcBackendPort:
         )
 
     async def apply_incident_scope(
-        self, request: svc.IncidentScopeRequest
+        self, request: svc.IncidentScopeRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.ApplyIncidentScope(
-                request, metadata=self.principal.metadata()
-            ),
+            await self._call(self.stub.ApplyIncidentScope, request, deadline_ns),
         )
 
     async def get_retained_result(
-        self, request: svc.RetainedResultQuery
+        self, request: svc.RetainedResultQuery, *, deadline_ns: int
     ) -> svc.RetainedResult:
         return cast(
             svc.RetainedResult,
-            await self.stub.GetRetainedResult(
-                request, metadata=self.principal.metadata()
-            ),
+            await self._call(self.stub.GetRetainedResult, request, deadline_ns),
         )
 
     async def confirm_configuration(
-        self, request: svc.AcquisitionConfigurationConfirmation
+        self, request: svc.AcquisitionConfigurationConfirmation, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
         return cast(
             pb.CommandAdmission,
-            await self.acquisition.ConfirmConfiguration(
-                request, metadata=self.principal.metadata()
+            await self._call(
+                self.acquisition.ConfirmConfiguration, request, deadline_ns
             ),
         )
 
     async def execute_camera_command(
-        self, request: svc.AcquisitionCameraCommand
+        self, request: svc.AcquisitionCameraCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
         return cast(
             pb.CommandAdmission,
-            await self.acquisition.ExecuteCameraCommand(
-                request, metadata=self.principal.metadata()
+            await self._call(
+                self.acquisition.ExecuteCameraCommand, request, deadline_ns
             ),
         )
 
     async def apply_camera_settings(
-        self, request: svc.AcquisitionCameraSettingsCommand
+        self, request: svc.AcquisitionCameraSettingsCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
         return cast(
             pb.CommandAdmission,
-            await self.acquisition.ApplyCameraSettings(
-                request, metadata=self.principal.metadata()
+            await self._call(
+                self.acquisition.ApplyCameraSettings, request, deadline_ns
             ),
         )
 
     async def apply_pulse_configuration(
-        self, request: svc.AcquisitionPulseCommand
+        self, request: svc.AcquisitionPulseCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
         return cast(
             pb.CommandAdmission,
-            await self.acquisition.ApplyPulseConfiguration(
-                request, metadata=self.principal.metadata()
+            await self._call(
+                self.acquisition.ApplyPulseConfiguration, request, deadline_ns
             ),
         )
 
     async def initialize_display(
-        self, request: svc.VRDisplayInitializationRequest
+        self, request: svc.VRDisplayInitializationRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.vr is None:
             raise RuntimeError("VR configuration endpoint unavailable")
         return cast(
             pb.CommandAdmission,
-            await self.vr.InitializeDisplay(
-                request, metadata=self.principal.metadata()
-            ),
+            await self._call(self.vr.InitializeDisplay, request, deadline_ns),
         )
 
-    async def shutdown(self, request: svc.BackendCommand) -> pb.CommandAdmission:
+    async def shutdown(
+        self, request: svc.BackendCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission:
         return cast(
             pb.CommandAdmission,
-            await self.stub.Shutdown(request, metadata=self.principal.metadata()),
+            await self._call(self.stub.Shutdown, request, deadline_ns),
         )
 
     async def close(self) -> None:
         await self.channel.close()
+
+
+class GrpcSupervisorPort:
+    def __init__(self, stub: rpc.SupervisorServiceStub, principal: Principal) -> None:
+        self.stub = stub
+        self.principal = principal
+
+    async def register_context(
+        self, request: svc.RegisterContextRequest
+    ) -> svc.RegistrationReceipt:
+        return cast(
+            svc.RegistrationReceipt,
+            await self.stub.RegisterContext(
+                request, metadata=self.principal.metadata()
+            ),
+        )
+
+    async def request_shutdown(
+        self, request: svc.ApplicationShutdownRequest
+    ) -> pb.CommandAdmission:
+        return cast(
+            pb.CommandAdmission,
+            await self.stub.RequestApplicationShutdown(
+                request, metadata=self.principal.metadata()
+            ),
+        )
+
+    async def report_preview_consumer_state(
+        self, request: svc.PreviewConsumerReport
+    ) -> pb.ReportReceipt:
+        return cast(
+            pb.ReportReceipt,
+            await self.stub.ReportPreviewConsumerState(
+                request, metadata=self.principal.metadata()
+            ),
+        )

@@ -1,10 +1,11 @@
 # CephVR2.0
 
 CephVR2.0 experiment-control software. Architecture and implementation contracts
-have been reviewed. The owner has authorized controller/supervisor runtime development
-under [ARCH-001](architecture.md#arch-001). This first implementation is prepared for
-Windows verification; see the [review record](reports/runtime-implementation-review.md)
-and [rig test handoff](reports/runtime-rig-test-handoff.md).
+have been reviewed. [ARCH-001](architecture.md#arch-001) now selects acquisition host
+implementation following controller/supervisor development. Acquisition host implementation
+and source review are complete; rig behavioral verification remains pending. See its [review record](reports/acquisition-implementation-review.md).
+The [controller/supervisor review](reports/runtime-implementation-review.md)
+and [rig test handoff](reports/runtime-rig-test-handoff.md) retain their validation limits.
 See the [development guide](docs/development.md) for package layout, environment setup,
 code checks and the distinction between local checks and Windows/rig verification.
 
@@ -25,8 +26,8 @@ dependency inventory and explicitly deferred installation inputs.
 4. [Experiment discussion guide](docs/experiment-backend-decisions.md): navigation
    for the first backend's decisions.
 5. [Backend defaults](config/backends/README.md): commented TOML files containing
-   the defaults selected so far, with one owner for shared policies. Controller and
-   supervisor startup validate their owning settings/policies; other backend loaders
+   the defaults selected so far, with one owner for shared policies. Controller, supervisor and
+   acquisition startup validate their owning settings/policies; other backend loaders
    belong to their implementation stages.
 6. [Shared control contracts](contracts/README.md) and
    [lifecycle tables](docs/experiment-control-transitions.md): the first contract

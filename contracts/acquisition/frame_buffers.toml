@@ -1,5 +1,6 @@
 # A03/A04 internal shared-memory layout declaration, not a new user configuration file.
-# Seqlock slots; no lock. No implementation or rig verification. Shared rings only:
+# Seqlock slots; no lock. Host status: reports/acquisition-implementation-review.md.
+# Native behavior remains subject to rig verification. Shared rings only:
 # tracking and preview latest-frame. Recording uses an in-process queue (no layout).
 layout_version = 2
 byte_order = "little"

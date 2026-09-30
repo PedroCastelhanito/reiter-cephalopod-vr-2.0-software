@@ -17,6 +17,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+acquisition = [
+    "pypylon==26.3.1",
+    "numpy==2.4.4",
+    "pyserial==3.5",
+]
 dev = [
     "build==1.6.1",
     "grpcio-tools==1.84.0",
@@ -33,6 +38,8 @@ dev = [
 cephvr = "cephvr.launcher.main:main"
 cephvr-supervisor = "cephvr.supervisor.main:main"
 cephvr-controller = "cephvr.controller.main:main"
+cephvr-acquisition = "cephvr.acquisition.main:main"
+cephvr-acquisition-worker = "cephvr.acquisition.worker.main:main"
 cephvr-control = "cephvr.client.main:main"
 
 [tool.setuptools]
@@ -81,6 +88,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 addopts = ["--import-mode=importlib", "--strict-config", "--strict-markers"]
 markers = [
     "windows: requires the Windows process or native-resource implementation",

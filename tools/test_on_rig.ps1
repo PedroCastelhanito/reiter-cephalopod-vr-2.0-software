@@ -49,7 +49,7 @@ if ($Install) {
     $before = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $python -m pip install --editable '.[dev]' 2>&1 |
+        & $python -m pip install --editable '.[dev,acquisition]' 2>&1 |
             Tee-Object -FilePath (Join-Path $output 'install.log') | Out-Host
         $installExit = $LASTEXITCODE
     } finally {
@@ -64,14 +64,14 @@ Assert-Python311 $python @()
 $before = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
 try {
-    & $python -c 'import grpc, google.protobuf, pytest, pytest_asyncio, pydantic, setuptools; import cephvr.control.v1.services_pb2' 2>&1 |
+    & $python -c 'import grpc, google.protobuf, pytest, pytest_asyncio, pydantic, setuptools, numpy, serial, pypylon; import cephvr.control.v1.services_pb2' 2>&1 |
         Tee-Object -FilePath (Join-Path $output 'prerequisites.log') | Out-Host
     $prerequisiteExit = $LASTEXITCODE
 } finally {
     $ErrorActionPreference = $before
 }
 if ($prerequisiteExit -ne 0) {
-    throw "Virtual environment lacks CephVR/test dependencies; use -Install. See $output\prerequisites.log"
+    throw "Virtual environment lacks CephVR, acquisition SDK, or test dependencies; use -Install. See $output\prerequisites.log"
 }
 
 $results = @()
@@ -91,6 +91,45 @@ function Invoke-Logged([string]$Name, [string[]]$Arguments) {
     return $code
 }
 
+# DIAGNOSTIC ONLY (rig-verification.md, "Windows venv interpreter process tree"):
+# a venv's Scripts\python.exe may be a redirector that starts the base
+# interpreter as a child. Print the spawned process tree so the owner can see
+# whether such a pair exists. Never fails the run.
+function Show-InterpreterProcessTree {
+    $log = Join-Path $output 'interpreter-process-tree.log'
+    try {
+        $probe = 'import sys,time; print(sys.executable, sys._base_executable); time.sleep(3)'
+        $process = Start-Process -FilePath $python -ArgumentList @('-c', ('"' + $probe + '"')) -PassThru -WindowStyle Hidden
+        Start-Sleep -Milliseconds 1500
+        $all = @(Get-CimInstance Win32_Process)
+        $known = @($process.Id)
+        $tree = @()
+        $grew = $true
+        while ($grew) {
+            $grew = $false
+            foreach ($candidate in $all) {
+                if (($known -contains $candidate.ParentProcessId) -or ($known -contains $candidate.ProcessId)) {
+                    if ($known -notcontains $candidate.ProcessId) {
+                        $known += $candidate.ProcessId
+                        $grew = $true
+                    }
+                }
+            }
+        }
+        $tree = @($all | Where-Object { $known -contains $_.ProcessId } |
+            Select-Object ProcessId, ParentProcessId, ExecutablePath)
+        $lines = @("configured python: $python", "processes in the spawned tree: $($tree.Count)")
+        foreach ($entry in $tree) {
+            $lines += ("pid={0} parent={1} image={2}" -f $entry.ProcessId, $entry.ParentProcessId, $entry.ExecutablePath)
+        }
+        $lines | Tee-Object -FilePath $log | Out-Host
+        [void]$process.WaitForExit(10000)
+    } catch {
+        Write-Host "Interpreter process-tree diagnostic failed: $($_.Exception.Message)"
+    }
+}
+Show-InterpreterProcessTree
+
 if ($Rig) {
     $collected = Invoke-Logged 'rig-collection' @('-m', 'pytest', '--collect-only', '-q', '-m', 'rig', 'tests')
     if ($collected -ne 0) {
@@ -102,6 +141,7 @@ if ($Rig) {
 [void](Invoke-Logged 'syntax' @('-m', 'compileall', '-q', 'src', 'tests'))
 [void](Invoke-Logged 'ruff' @('-m', 'ruff', 'check', 'src', 'tests', 'tools'))
 [void](Invoke-Logged 'format' @('-m', 'ruff', 'format', '--check', 'src', 'tests', 'tools'))
+[void](Invoke-Logged 'module-boundaries' @('tools/check_backend_boundaries.py'))
 [void](Invoke-Logged 'mypy-win32' @('-m', 'mypy', '--platform', 'win32', 'src/cephvr'))
 [void](Invoke-Logged 'contracts-tracking' @('-m', 'unittest', 'discover', '-s', 'contracts/tracking', '-p', 'test_*.py'))
 [void](Invoke-Logged 'contracts-vr' @('-m', 'unittest', 'discover', '-s', 'contracts/vr/tests', '-p', 'test_*.py'))
@@ -110,7 +150,9 @@ $pytestArgs = @('-m', 'pytest', '-q', '--junitxml', $junit)
 if (-not $Rig) { $pytestArgs += @('-m', 'not rig') }
 $pytestArgs += 'tests'
 [void](Invoke-Logged 'pytest' $pytestArgs)
-[void](Invoke-Logged 'package' @('-m', 'build', '--no-isolation', '--outdir', (Join-Path $output 'packages')))
+$packageDirectory = Join-Path $output 'packages'
+New-Item -ItemType Directory -Path $packageDirectory -Force | Out-Null
+[void](Invoke-Logged 'package' @('-m', 'build', '--no-isolation', '--outdir', $packageDirectory))
 
 $results | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $output 'summary.json')
 Write-Host "Logs and JUnit: $output"

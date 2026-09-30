@@ -1,4 +1,4 @@
-"""Failure invariants for E08/E14's process-local shared mechanisms."""
+"""Host identity, deadlines, authentication, configuration and ingress bounds."""
 
 from __future__ import annotations
 
@@ -17,12 +17,17 @@ from cephvr.shared.clock import (
     descriptor_from_wire,
     validate_host_clock,
 )
-from cephvr.shared.commands import CommandCapacityError, CommandConflict, CommandLedger
 from cephvr.shared.config import ConfigurationError, load_pair
 from cephvr.shared.credentials import CredentialError, CredentialStore
 from cephvr.shared.deadlines import Deadline, duration_ns
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.ingress import BoundedEventIngress, IngressOverload
+from cephvr.shared.transport_deadlines import (
+    DeadlineMetadataError,
+    deadline_metadata,
+    parse_deadline_metadata,
+    remaining_ns,
+)
 
 
 def _id() -> str:
@@ -68,53 +73,16 @@ def test_deadline_does_not_renew_or_round() -> None:
         duration_ns(0.0000000001, "s")
 
 
-def test_ledger_deduplicates_and_never_evicts_active() -> None:
-    generation, command, other, work = _id(), _id(), _id(), _id()
-    ledger = CommandLedger(
-        generation, 300, max_records=1, max_bytes=100, result_reservation_bytes=20
-    )
-    assert not ledger.admit(command, b"exact request", 1, work_key=work).replayed
-    assert ledger.admit(command, b"exact request", 2, work_key=work).replayed
-    with pytest.raises(CommandConflict):
-        ledger.admit(command, b"changed", 2, work_key=work)
-    assert ledger.prune(10_000) == 0
-    with pytest.raises(CommandCapacityError):
-        ledger.admit(other, b"new", 10_000, work_key=work)
-    ledger.complete(command, b"accepted completion", 20)
-    ledger.finalize_work(work, 30)
-    assert ledger.prune(330) == 0
-    assert ledger.prune(331) == 1
-    assert not ledger.admit(other, b"new", 332, work_key=_id()).replayed
-
-
-def test_ledger_reserves_result_capacity_at_admission() -> None:
-    ledger = CommandLedger(
-        _id(), 1, max_records=2, max_bytes=10, result_reservation_bytes=8
-    )
-    ledger.admit(_id(), b"x", 0, work_key=_id())
-    with pytest.raises(CommandCapacityError):
-        ledger.admit(_id(), b"x", 0, work_key=_id())
-
-
-def test_finalization_is_scoped_and_pending_result_is_preserved() -> None:
-    first_work, second_work = _id(), _id()
-    completed, pending, other = _id(), _id(), _id()
-    ledger = CommandLedger(
-        _id(), 10, max_records=3, max_bytes=60, result_reservation_bytes=10
-    )
-    ledger.admit(completed, b"a", 0, work_key=first_work)
-    ledger.complete(completed, b"done", 1)
-    ledger.admit(pending, b"b", 0, work_key=first_work)
-    ledger.admit(other, b"c", 0, work_key=second_work)
-    ledger.finalize_work(first_work, 2)
-    assert ledger.prune(13) == 1
-    assert ledger.get(pending) is not None
-    assert ledger.get(other) is not None
-    with pytest.raises(CommandConflict, match="finalized work"):
-        ledger.admit(_id(), b"new", 14, work_key=first_work)
-    ledger.complete(pending, b"late", 20)
-    assert ledger.prune(30) == 0
-    assert ledger.prune(31) == 1
+def test_deadline_metadata_requires_one_positive_int64_decimal_value() -> None:
+    encoded = deadline_metadata(1_000_000_000)
+    assert parse_deadline_metadata((encoded,)) == 1_000_000_000
+    assert remaining_ns(15, clock=lambda: 10) == 5
+    with pytest.raises(DeadlineMetadataError):
+        parse_deadline_metadata((encoded, encoded))
+    with pytest.raises(DeadlineMetadataError):
+        parse_deadline_metadata((("x-cephvr-deadline-ns", "+10"),))
+    with pytest.raises(DeadlineMetadataError):
+        parse_deadline_metadata((("x-cephvr-deadline-ns", str(1 << 63)),))
 
 
 def test_interruption_remains_available_on_ordinary_overload() -> None:

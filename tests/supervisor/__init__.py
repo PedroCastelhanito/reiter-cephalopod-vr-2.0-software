@@ -1,0 +1,1 @@
+"""Supervisor contract tests."""

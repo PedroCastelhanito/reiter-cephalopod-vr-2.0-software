@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -12,13 +11,10 @@ import pytest
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.controller.runtime import (
-    Attempt,
-    BackendPort,
-    ControllerLimits,
-    ControllerRuntime,
-)
-from cephvr.controller.storage import OutputReservation
+from cephvr.controller.metadata.reservation import OutputReservation
+from cephvr.controller.ports import BackendPort
+from cephvr.controller.runtime import ControllerRuntime
+from cephvr.controller.state import Attempt, ControllerLimits
 
 
 def _id() -> str:
@@ -48,8 +44,7 @@ def _runtime(tmp_path: Path, *, now: int = 1_000) -> ControllerRuntime:
     )
     return ControllerRuntime(
         generation=_id(),
-        configuration=pb.ExperimentConfiguration(),
-        recording_root=tmp_path,
+        configuration=pb.ExperimentConfiguration(recording_root=str(tmp_path)),
         limits=limits,
         validators={},
         backends={},
@@ -78,7 +73,7 @@ def _attempt(
     # Report validation only needs the registered peer's exact context.
     peer = cast(BackendPort, type("Peer", (), {"context": backend})())
     attempt = Attempt(session, prepared, reservation, {"vr": peer}, {"vr": _id()})
-    runtime.attempt = attempt
+    runtime.lifecycle.attempt = attempt
     return attempt, backend
 
 
@@ -98,18 +93,17 @@ def _context(
     )
 
 
-@pytest.mark.asyncio
 async def test_ready_arriving_after_original_setup_deadline_cannot_revive_attempt(
     tmp_path: Path,
 ) -> None:
     runtime = _runtime(tmp_path)
     attempt, backend = _attempt(runtime, tmp_path)
-    runtime.session.phase = pb.SESSION_PHASE_SETTING_UP
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
     attempt.setup_deadline_ns = 999
     report = pb.LifecycleReport(
         ready=pb.ReadyReport(
             context=_context(attempt, backend, trial=False),
-            configuration_revision=runtime.configuration_revision,
+            configuration_revision=runtime.configuration_state.revision,
             required_checks_passed=True,
         )
     )
@@ -118,13 +112,12 @@ async def test_ready_arriving_after_original_setup_deadline_cannot_revive_attemp
     assert not attempt.ready
 
 
-@pytest.mark.asyncio
 async def test_finished_before_end_or_with_failed_output_cannot_complete_trial(
     tmp_path: Path,
 ) -> None:
     runtime = _runtime(tmp_path)
     attempt, backend = _attempt(runtime, tmp_path)
-    runtime.trial.phase = pb.TRIAL_PHASE_RUNNING
+    runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_RUNNING
     attempt.trial_index = 0
     attempt.trial_operation = _id()
     attempt.end_ns = 1_000
@@ -161,14 +154,13 @@ async def test_finished_before_end_or_with_failed_output_cannot_complete_trial(
     assert not attempt.finished
 
 
-@pytest.mark.asyncio
 async def test_ready_edit_cancels_preparation_without_committing_unvalidated_resources(
     tmp_path: Path,
 ) -> None:
     runtime = _runtime(tmp_path)
     attempt, _ = _attempt(runtime, tmp_path)
-    runtime.session.phase = pb.SESSION_PHASE_READY
-    runtime.validators = {
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_READY
+    runtime.configuration_commands.validators = {
         "experiment": lambda _: pb.ValidationResult(
             completed=True,
             valid=True,
@@ -179,18 +171,18 @@ async def test_ready_edit_cancels_preparation_without_committing_unvalidated_res
     client_id = _id()
     watch_id = _id()
     watch = await runtime.open_watch(client_id, watch_id)
-    await runtime.delivered_watch_view(watch, runtime.revision)
+    await runtime.delivered_watch_view(watch, runtime.control.revision)
     claim = await runtime.claim(
         svc.ControlClaim(
             client_id=client_id,
             watch_id=watch_id,
             command_id=_id(),
             controller_generation=runtime.generation,
-            synchronized_state_revision=runtime.revision,
+            synchronized_state_revision=runtime.control.revision,
         )
     )
     assert claim.result == pb.COMMAND_RESULT_ACCEPTED
-    assert runtime._owner is not None
+    assert runtime.control.owner is not None
     proposed = pb.ExperimentConfiguration(subject="new-subject")
     request = svc.UpdateConfigurationRequest(
         command=svc.OperatorCommand(
@@ -198,20 +190,19 @@ async def test_ready_edit_cancels_preparation_without_committing_unvalidated_res
             operator=pb.OperatorContext(
                 client_id=client_id,
                 command_id=_id(),
-                control_generation=runtime._owner[2],
+                control_generation=runtime.control.owner[2],
             ),
         ),
-        expected_revision=runtime.configuration_revision,
+        expected_revision=runtime.configuration_state.revision,
         proposed=proposed,
     )
     result = await runtime.update_configuration(request)
     assert result.result == pb.COMMAND_RESULT_ACCEPTED
     assert attempt.cancel_requested
-    assert runtime.configuration.subject == "new-subject"
+    assert runtime.configuration_state.current.subject == "new-subject"
     await runtime.close_watch(watch)
 
 
-@pytest.mark.asyncio
 async def test_interruption_during_start_cannot_restore_running(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -219,8 +210,8 @@ async def test_interruption_during_start_cannot_restore_running(
     attempt, _ = _attempt(runtime, tmp_path)
     attempt.required.clear()
     assert attempt.reservation.acquire() == []
-    runtime.session.phase = pb.SESSION_PHASE_STARTING
-    runtime.schema_factory = lambda _: {"schema_version": 1}
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_STARTING
+    runtime.start.schema_factory = lambda _: {"schema_version": 1}
 
     class Supervisor:
         async def register_context(
@@ -231,7 +222,7 @@ async def test_interruption_during_start_cannot_restore_running(
                 registered=request.context,
             )
 
-    runtime.supervisor = cast(Any, Supervisor())
+    runtime.start.supervisor = cast(Any, Supervisor())
 
     async def persisted(*_args: object, **_kwargs: object) -> object:
         return object()
@@ -242,23 +233,20 @@ async def test_interruption_during_start_cannot_restore_running(
         nonlocal started_log_seen
         if event_type == "session_started" and not started_log_seen:
             started_log_seen = True
-            await runtime._interrupt(attempt, "concurrent authority loss")
+            await runtime.interruption.interrupt(attempt, "concurrent authority loss")
 
-    monkeypatch.setattr(runtime, "_persist", persisted)
-    monkeypatch.setattr(runtime, "_log_event", logged)
+    monkeypatch.setattr(runtime.metadata, "persist", persisted)
+    monkeypatch.setattr(runtime.metadata, "log_event", logged)
     command_id = _id()
-    runtime._operations[command_id] = pb.OperationState(
+    runtime.control.operations[command_id] = pb.OperationState(
         context=pb.OperationContext(command_id=command_id), command="StartSession"
     )
     try:
-        await runtime._run_start(attempt, command_id)
+        await runtime.start.run_start(attempt, command_id)
         assert started_log_seen
         assert attempt.interrupted
-        assert runtime.session.phase != pb.SESSION_PHASE_RUNNING
+        assert runtime.lifecycle.session.phase != pb.SESSION_PHASE_RUNNING
     finally:
-        for task in tuple(runtime._tasks):
-            task.cancel()
-        if runtime._tasks:
-            await asyncio.gather(*runtime._tasks, return_exceptions=True)
-        if attempt.reservation._lock_fd is not None:
+        await runtime.cancel_background_tasks()
+        if attempt.reservation.held:
             attempt.reservation.release()

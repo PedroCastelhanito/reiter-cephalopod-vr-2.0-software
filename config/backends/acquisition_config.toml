@@ -164,9 +164,6 @@ communication_timeout_s = 3
 # Per-camera microcontroller_pin and pulse_frequency_hz belong to [cameras.<role>].
 # Configure before the session and lock for capture; preview uses the same frequency.
 
-[basler]
-# Actual feature values and preset paths remain unset; common units follow A10.
-
 [buffers]
 # A03: seqlock tracking ring (shared memory) and in-process recording queue.
 # The capture thread never waits; a lapped tracking read skips, a full recording
@@ -188,10 +185,8 @@ pending_records_capacity = 10000
 # set the video sync cadence.
 sync_interval_s = 1
 
-[recording.tools]
-# Exact baseline version pins remain unset until selected/verified.
-
 [recording.encoding]
+# Exact tool baseline version pins remain unset until selected/verified.
 # Shared configurable fragment/keyframe target in elapsed recording time.
 # Actual boundaries depend on available frames; this is not a hard loss bound.
 fragment_target_s = 1

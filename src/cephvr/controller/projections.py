@@ -122,7 +122,8 @@ class ProjectionStore:
         if used + delta > self.max_payload_bytes:
             raise ProjectionError("retained projection byte budget exhausted")
 
-    def accept_devices(self, report: rpc.AcquisitionDeviceStatusReport) -> bool:
+    def validate_devices(self, report: rpc.AcquisitionDeviceStatusReport) -> None:
+        """Validate source, scope, revision/time, and device-view consistency."""
         view = report.views
         self._source(view.source, "acquisition")
         if (
@@ -133,6 +134,15 @@ class ProjectionStore:
             or report.work != self.work
         ):
             raise ProjectionError("device status revision/time/work differs")
+        for device in (view.behavioral, view.tracking):
+            if device.HasField("preview_run_id"):
+                require_uuid4(device.preview_run_id)
+            if device.preview_running and not device.device_open:
+                raise ProjectionError("running preview has no open device")
+
+    def accept_devices(self, report: rpc.AcquisitionDeviceStatusReport) -> bool:
+        self.validate_devices(report)
+        view = report.views
         if self.devices:
             if view.state_revision < self.devices.state_revision:
                 return False
@@ -140,14 +150,16 @@ class ProjectionStore:
                 if view != self.devices:
                     raise ProjectionError("device status revision changed payload")
                 return False
-        for device in (view.behavioral, view.tracking):
-            if device.HasField("preview_run_id"):
-                require_uuid4(device.preview_run_id)
-            if device.preview_running and not device.device_open:
-                raise ProjectionError("running preview has no open device")
         self._budget(view.ByteSize() - (self.devices.ByteSize() if self.devices else 0))
         self.devices = pb.AcquisitionDeviceViews.FromString(view.SerializeToString())
         return True
+
+    def accept_newer_devices(self, report: rpc.AcquisitionDeviceStatusReport) -> bool:
+        """Adopt late terminal evidence only over an older current view."""
+        self.validate_devices(report)
+        if self.devices and report.views.state_revision <= self.devices.state_revision:
+            return False
+        return self.accept_devices(report)
 
     def expect_display(self, command_id: str, revision: int) -> None:
         require_uuid4(command_id)
@@ -304,6 +316,16 @@ class ProjectionStore:
         for transfer in self.transfers.values():
             if transfer.run_id == run_id:
                 transfer.retired = True
+
+    def cancel_preview_expectation(self, operation: str) -> None:
+        """Forget a transfer that failed admission before any report was sent."""
+        transfer = self.transfers.get(operation)
+        if (
+            transfer is not None
+            and transfer.attachment is None
+            and transfer.result is None
+        ):
+            self.transfers.pop(operation, None)
 
     def accept_preview(self, report: rpc.PreviewAttachmentReport) -> bool:
         self._source(report.source, "acquisition")

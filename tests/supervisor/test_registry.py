@@ -1,16 +1,113 @@
+"""Exact launch identity, containment, capacity and idempotent release."""
+
 from __future__ import annotations
 
 from uuid import uuid4
 
 import pytest
 
+from cephvr.acquisition.identity import FFMPEG_ROLE
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
-from cephvr.shared.clock import HostClockCompatibilityError, describe_host_clock
+from cephvr.shared.clock import (
+    HostClockCompatibilityError,
+    describe_host_clock,
+)
 from cephvr.supervisor.registry import LaunchError, LaunchRegistry
+from tests.supervisor.support import Native
+
+from .support import EXE, WORKER_ROLE, _identity, _launch
+
+# Idempotent release and retained launch capacity.
 
 
-class Native:
+def test_release_is_idempotent_and_never_resurrects() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    seen: list[wire.LaunchState] = []
+    registry.on_release(seen.append)
+    state = _launch(
+        registry,
+        native,
+        _identity("acquisition"),
+        _identity(WORKER_ROLE),
+        1,
+        python=True,
+    )
+    native.jobs[state.containment_job_name] = []
+    first = registry.release(state.plan.command_id, obligations_met=True)
+    again = registry.release(state.plan.command_id, obligations_met=True)
+    assert first.phase == again.phase == wire.LAUNCH_PHASE_RELEASED
+    assert registry.refresh(state.plan.command_id).phase == wire.LAUNCH_PHASE_RELEASED
+    assert len(seen) == 1
+
+
+def test_capacity_counts_only_live_launches_and_replay_survives_until_pruned() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000, max_launches=3)
+    owner = _identity("acquisition")
+    released = []
+    for pid in range(1, 8):
+        state = _launch(
+            registry, native, owner, _identity(WORKER_ROLE), pid, python=True
+        )
+        native.jobs[state.containment_job_name] = []
+        registry.release(state.plan.command_id, obligations_met=True)
+        released.append(state)
+    assert len(registry._entries) <= 3
+    live = [
+        _launch(registry, native, owner, _identity(WORKER_ROLE), 20 + i, python=True)
+        for i in range(3)
+    ]
+    # Only live launches fill capacity: a fourth live launch is refused.
+    with pytest.raises(LaunchError, match="capacity"):
+        registry.plan(
+            wire.PlanLaunchRequest(
+                command_id=str(uuid4()),
+                owner=owner,
+                child=_identity(WORKER_ROLE),
+                executable=EXE,
+                python_worker=True,
+                stop_method="grpc_shutdown",
+            )
+        )
+    assert all(item.plan.command_id in registry._entries for item in live)
+    # A retained released entry still replays its exact plan idempotently.
+    registry2 = LaunchRegistry(native, 15_000_000_000, max_launches=4)
+    state = _launch(registry2, native, owner, _identity(WORKER_ROLE), 90, python=True)
+    native.jobs[state.containment_job_name] = []
+    registry2.release(state.plan.command_id, obligations_met=True)
+    assert registry2.plan(state.plan).phase == wire.LAUNCH_PHASE_RELEASED
+
+
+def test_tolerant_states_keep_other_entries_when_one_job_is_unreadable() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    good = _launch(
+        registry,
+        native,
+        _identity("acquisition"),
+        _identity(WORKER_ROLE),
+        1,
+        python=True,
+    )
+    bad = _launch(
+        registry,
+        native,
+        _identity("acquisition"),
+        _identity(FFMPEG_ROLE),
+        2,
+        python=False,
+    )
+    del native.jobs[bad.containment_job_name]  # inspection now fails for this job
+    with pytest.raises(LaunchError):
+        registry.states()
+    states = {s.plan.command_id: s for s in registry.states(tolerant=True)}
+    assert states[good.plan.command_id].phase == good.phase
+    assert states[bad.plan.command_id].phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+
+
+class RegistryNative:
     def __init__(self) -> None:
         self.jobs: dict[str, list[tuple[int, int, str]]] = {}
         self.closed: set[str] = set()
@@ -71,7 +168,7 @@ def confirmation(
 
 
 def test_exact_membership_and_retain_until_cleanup() -> None:
-    native = Native()
+    native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
     request = plan()
     state = registry.plan(request)
@@ -92,7 +189,7 @@ def test_exact_membership_and_retain_until_cleanup() -> None:
 
 
 def test_wrong_creation_time_blocks_instead_of_guessing_pid() -> None:
-    native = Native()
+    native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
     request = plan()
     state = registry.plan(request)
@@ -105,7 +202,7 @@ def test_wrong_creation_time_blocks_instead_of_guessing_pid() -> None:
 
 
 def test_creation_failure_cannot_hide_partial_child() -> None:
-    native = Native()
+    native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
     request = plan()
     state = registry.plan(request)
@@ -118,7 +215,7 @@ def test_creation_failure_cannot_hide_partial_child() -> None:
 
 
 def test_python_endpoint_requires_present_clock_fields() -> None:
-    native = Native()
+    native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
     request = plan(python_worker=True)
     state = registry.plan(request)
@@ -136,7 +233,7 @@ def test_python_endpoint_requires_present_clock_fields() -> None:
 
 
 def test_exact_confirmation_replay_is_stable_after_operational() -> None:
-    native = Native()
+    native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
     request = plan()
     state = registry.plan(request)
@@ -153,13 +250,13 @@ def test_exact_confirmation_replay_is_stable_after_operational() -> None:
 
 
 def test_uninspectable_job_is_not_treated_as_empty() -> None:
-    native = Native()
+    native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
     request = plan()
     state = registry.plan(request)
     native.jobs[state.containment_job_name] = []
 
-    def inaccessible(_name: str) -> list[tuple[int, int, str]]:
+    def inaccessible(name: str) -> list[tuple[int, int, str]]:
         raise PermissionError("job query denied")
 
     native.inspect_launch_job = inaccessible  # type: ignore[method-assign]
@@ -169,7 +266,7 @@ def test_uninspectable_job_is_not_treated_as_empty() -> None:
 
 
 def test_registered_child_remains_valid_with_nested_descendant() -> None:
-    native = Native()
+    native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
     request = plan()
     state = registry.plan(request)

@@ -48,10 +48,14 @@ format interpretation/range, not guessed sensor precision.
 Wrap each consumer's private native memory in a pylon image carrying the exact pixel
 type, dimensions, padding and top-down orientation, using the supported pypylon
 `PylonImage` buffer attachment binding. Retain its Python buffer owner through conversion;
-release the wrapper before reusing that memory. Convert into a reusable private
-`PylonImage` via `ImageFormatConverter.Convert(destination, source)`. No grab result,
-camera object or mutable converter is passed across processes. Verify binding/ABI
-support when choosing the runtime; absence is an explicit compatibility failure.
+release the wrapper before reusing that memory. In the pinned pypylon 26.3.1 Python
+binding, `ImageFormatConverter.Convert(source)` returns an SDK-owned result image.
+Validate its layout, copy into the consumer's preallocated output, and release that
+result before the next conversion. The C++ caller-supplied destination overload is
+not exposed by this Python binding. SDK-internal allocation retains A03's existing
+exception; CephVR-owned images and conversion scratch remain preallocated and
+consumer-owned. No grab result, camera object or mutable converter is passed across
+processes. Verify binding/ABI support; absence is an explicit compatibility failure.
 
 For source-depth preparation set output to Mono8/RGB8packed or Mono16/RGB16packed,
 with explicit MSB alignment for wider containers, zero extra output padding and

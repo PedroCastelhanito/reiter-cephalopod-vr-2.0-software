@@ -8,14 +8,16 @@ import pytest
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.incident.registry import (
+    IncidentCapacityError,
+    IncidentRegistry,
+    StaleIncidentChoice,
+)
 from cephvr.shared.incidents import (
     Classification,
-    IncidentCapacityError,
     IncidentEvidenceError,
-    IncidentRegistry,
     IncidentTopology,
     IsolationProof,
-    StaleIncidentChoice,
     classify_incident,
     validate_registered_cleanup,
 )

@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 85
+**Status:** Accepted · **Revision:** 86
 
 **Identity and files**
 
@@ -193,6 +193,9 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
   application processes absent and the controller acquires available locks. The
   controller keeps one atomic owner-private unfinished-session pointer at reservation
   acquisition and removes it only after verified completion or cancelled-Setup cleanup.
+  A Start cancelled before activation keeps written metadata and completes the marker
+  as `not_activated`. After verified old-process absence, a pointer whose namespace is
+  gone (or only a marker-less cleanup quarantine remains) is cleared with a warning.
   The new supervisor returns the prior launcher receipt bound to the pointer's old
   controller/supervisor generations; missing proof remains a blocker. The
   controller owns any repair writes through the same serialized writer under the

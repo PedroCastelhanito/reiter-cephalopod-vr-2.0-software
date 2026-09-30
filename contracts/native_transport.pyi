@@ -1,6 +1,7 @@
-"""E08 shared native mechanism interfaces; no Windows runtime implementation.
+"""E08 shared native mechanism interfaces; Windows runtime implementation exists.
 
-See native-transport.md. Backend messages, byte layouts, credits, overflow and
+See native-transport.md and reports/acquisition-implementation-review.md.
+Backend messages, byte layouts, credits, overflow and
 scheduling remain backend-owned. No universal queue/lifecycle framework.
 """
 from dataclasses import dataclass
@@ -28,7 +29,8 @@ class ResourceLedger(Protocol):
                           transfer_id: str) -> None: ...
     def confirm_attachment(self, key: ResourceKey, *, peer_instance_id: str,
                            transfer_id: str) -> None: ...
-    def confirm_release(self, key: ResourceKey, *, peer_instance_id: str) -> None: ...
+    def confirm_release(self, key: ResourceKey, *, peer_instance_id: str,
+                        transfer_id: str) -> None: ...
     def unresolved(self) -> tuple[ResourceKey, ...]: ...
 class NativeTransport(Protocol):
     def create_mapping(self, key: ResourceKey, *, name: str, byte_length: int) -> OwnedMapping: ...

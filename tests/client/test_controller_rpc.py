@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
 import grpc
@@ -15,8 +16,9 @@ from cephvr.client.session import ClientError, HeadlessClient, loopback_channel
 from cephvr.control.v1 import services_pb2_grpc as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.configuration import load_controller_configuration
-from cephvr.controller.runtime import ControllerLimits, ControllerRuntime
+from cephvr.controller.runtime import ControllerRuntime
 from cephvr.controller.service import ExperimentControllerService
+from cephvr.controller.state import ControllerLimits
 from cephvr.shared.auth import (
     AuthenticationError,
     Principal,
@@ -40,13 +42,14 @@ async def controller(tmp_path: Path) -> AsyncIterator[tuple[int, CredentialStore
             trials=[pb.TrialDefinition(trial_number=1)],
             backends=[pb.BackendSettings(backend_name="vr", enabled=True)],
         ),
-        recording_root=tmp_path,
         limits=ControllerLimits(**settings.limits_kwargs),
         validators={},
         backends={},
     )
 
-    async def authenticate(client_id, controller_generation, peer, metadata):
+    async def authenticate(
+        client_id: str, controller_generation: str, peer: str, metadata: object
+    ) -> None:
         if controller_generation != generation:
             raise AuthenticationError("wrong controller generation")
         principal = await asyncio.to_thread(store.lookup, client_id)
@@ -54,7 +57,7 @@ async def controller(tmp_path: Path) -> AsyncIterator[tuple[int, CredentialStore
             raise AuthenticationError("client not provisioned")
         require_authenticated_peer(
             peer,
-            metadata,
+            cast(list[tuple[str, str]], metadata),
             expected_role=principal.role,
             expected_generation=principal.generation,
             expected_token=principal.token,
@@ -64,7 +67,7 @@ async def controller(tmp_path: Path) -> AsyncIterator[tuple[int, CredentialStore
     service = ExperimentControllerService(
         runtime, client_authentication=authenticate, peer_tokens={}
     )
-    wire.add_ExperimentControllerServiceServicer_to_server(service, server)
+    wire.add_ExperimentControllerServiceServicer_to_server(service, server)  # type: ignore[no-untyped-call]
     port = server.add_insecure_port("127.0.0.1:0")
     assert port > 0
     await server.start()
@@ -72,10 +75,12 @@ async def controller(tmp_path: Path) -> AsyncIterator[tuple[int, CredentialStore
         yield port, store
     finally:
         await server.stop(0)
+        await service.aclose()
 
 
-@pytest.mark.asyncio
-async def test_forged_credentials_are_rejected(controller) -> None:
+async def test_forged_credentials_are_rejected(
+    controller: tuple[int, CredentialStore],
+) -> None:
     port, store = controller
     principal = store.provision_client("cli")
     forged = Principal("cli", principal.generation, "incorrect-token")
@@ -87,8 +92,9 @@ async def test_forged_credentials_are_rejected(controller) -> None:
     store.remove_client(principal)
 
 
-@pytest.mark.asyncio
-async def test_control_takeover_and_real_missing_backend_rejection(controller) -> None:
+async def test_control_takeover_and_real_missing_backend_rejection(
+    controller: tuple[int, CredentialStore],
+) -> None:
     port, store = controller
     first = store.provision_client("cli")
     second = store.provision_client("cli")

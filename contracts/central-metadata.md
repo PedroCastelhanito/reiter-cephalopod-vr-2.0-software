@@ -65,6 +65,11 @@ complete marker. No extra per-write metadata RPC or polling gate. Missing writer
 preserves a blocker and unfinished marker. Failure never justifies another writer
 taking over its files or extending shutdown deadlines.
 
+A Setup that failed or was cancelled before activation keeps every written file: after
+writer seal, `close_unactivated` writes the marker complete with `outcome` `not_activated`
+(no session log is expected) and releases the lock; the caller then clears the pointer.
+Startup treats a pointer with such a marker as finished and clears it without a report.
+
 On controller loss, supervisor uses its independent emergency report and bounded E08
 shutdown. Preserve unknown central metadata state and unfinished marker; do not append
 or repair normal files in the lost controller's place. Startup reconciliation requires

@@ -5,7 +5,8 @@ Derived from [A02/A03/A07–A10](../../docs/architecture/acquisition.md),
 [E06/E08](../../docs/architecture/system-contracts.md).
 Definitions: [messages.proto](../cephvr/acquisition/v1/messages.proto),
 [camera settings](camera-settings.md), [frame buffers](frame-buffers.md).
-These declare payloads and validation; no runtime Setup is implemented.
+These declare payloads and validation. Runtime implementation and verification
+status belong in the [implementation review](../../reports/acquisition-implementation-review.md).
 
 ## Final Setup payload
 
@@ -15,7 +16,8 @@ Each enabled camera has one camera worker (A02). Its CameraWorkerSetupPayload ca
 | --- | --- |
 | Capture | Confirmed device/settings/PFS baseline, file-resolved transport, actual native layout, metadata availability and clock descriptor; SDK buffer count, frame-silence budget and resolved `session_preview_max_hz`. |
 | Outputs | Tracking-ring attachment only when a tracking consumer needs this camera; one session PREVIEW slot only when `session_preview_max_hz > 0`. |
-| Recording | Present only when saving: resolved FFmpeg/ffprobe executables, that camera's argument list and recording depth, frame-log/video sync, fragment and stall intervals, recording-queue and pending-record capacities, bounded diagnostic-tail sizes and session-config reference. |
+| Failure scope | `owned_functions` reuses `PreparedFunctionScope`: this camera's capture, optional recording and exact reserved session output keys. Logical owner is the acquisition coordinator; authorized reporter is this registered worker. Closures are unique, self-inclusive and transitive. Recording includes every affected future output key; capture includes recording and those outputs. These are the same declarations emitted in backend Ready. |
+| Recording | Present only when saving: resolved FFmpeg/ffprobe executables, that camera's argument list and recording depth, frame-log/video sync, fragment and stall intervals, recording-queue and pending-record capacities, bounded diagnostic-tail sizes and session-config reference. External-trigger saving also requires `pulse_configuration`, the controller-confirmed existing `MicrocontrollerObservation`; use this role's applied rate, never the requested rate or camera free-running control. |
 
 Use positive integer capacities and nanosecond intervals; preserve scalar presence
 (including explicit false for native availability). Reject missing required fields,
@@ -72,7 +74,7 @@ cancelled preparation. Stage changes and concurrent paths never restart the budg
 [Configuration control](configuration-control.md) defines the public camera readback/
 confirmation binding; intermediate readback is not Ready. [MCU protocol](microcontroller.md)
 binds applied pulse evidence; [configuration bindings](configuration-bindings.md)
-owns complete file-policy routing. Runtime preparation remains unimplemented.
+owns complete file-policy routing. Implementation status is tracked in the review.
 
 ## Per-trial preparation
 

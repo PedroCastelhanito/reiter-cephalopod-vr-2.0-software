@@ -2,8 +2,10 @@
 
 Derived from [E06/E08](../../docs/architecture/system-contracts.md) and
 [A02/A03/A07/A08](../../docs/architecture/acquisition.md). This defines the native
-adapter contract; no Windows implementation, compatible runtime baseline or rig
-validation exists. Reuse the shared helper; it is not a new launcher service.
+adapter contract. Implementation status and static evidence are recorded in the
+[implementation review](../../reports/acquisition-implementation-review.md);
+Windows behavior and deployment compatibility require rig verification.
+Reuse the shared helper; it is not a new launcher service.
 
 ## Launch registration and partial children
 

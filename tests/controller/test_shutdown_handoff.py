@@ -9,11 +9,12 @@ from uuid import uuid4
 
 import pytest
 
+import cephvr.controller.startup.monitor as monitor
 from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.controller import main
+from cephvr.controller.authority import AuthorityControl
 from cephvr.controller.configuration import SupervisorStartup
-from cephvr.controller.runtime import ControllerRuntime
+from cephvr.controller.state import AuthorityStatus, ControllerLimits, LimitsState
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.shared.auth import Principal
 
@@ -45,8 +46,23 @@ class _Runtime:
         self._lock = asyncio.Lock()
         self._warnings: list[pb.Warning] = []
 
-    def _publish(self) -> None:
-        pass
+    def status(self) -> AuthorityStatus:
+        return AuthorityStatus(
+            shutdown_intent_ns=self._shutdown_intent_ns,
+            supervisor_last_seen_ns=self._supervisor_last_seen_ns,
+            session_phase=self.session.phase,
+            cleanup_confirmed=self.session.cleanup_confirmed,
+            handoff_complete=all(op.complete for op in self._operations.values()),
+            work=pb.WorkContext(),
+            activated=False,
+            spikeglx_stop_unconfirmed=False,
+        )
+
+    async def warn(self, warning: pb.Warning) -> None:
+        self._warnings.append(warning)
+
+    async def lose(self, cause: str, issued_ns: int) -> None:
+        raise AssertionError("these tests retain a live supervisor")
 
 
 class _Native:
@@ -73,8 +89,37 @@ def _startup() -> SupervisorStartup:
 
 
 async def _run(runtime: _Runtime, native: _Native, path: Path) -> None:
-    await main._authority_loop(
-        cast(ControllerRuntime, runtime),
+    await monitor.authority_loop(
+        AuthorityControl(
+            generation=runtime.generation,
+            supervisor_generation=runtime.supervisor_generation,
+            status=runtime.status,
+            lose=runtime.lose,
+            warn=runtime.warn,
+            clock=runtime.clock,
+            limits=LimitsState(
+                ControllerLimits(
+                    setup_ns=100,
+                    setup_cancel_ns=100,
+                    ready_ns=100,
+                    finished_ns=100,
+                    registration_ns=100,
+                    recovery_ns=100,
+                    metadata_ns=100,
+                    validation_ns=100,
+                    lead_ns=50,
+                    controller_release_ns=20,
+                    backend_release_ns=10,
+                    start_evidence_ns=100,
+                    stop_evidence_ns=100,
+                    max_metadata_operations=4,
+                    max_metadata_bytes=1024,
+                    history_ns=100,
+                    space_query_ns=100,
+                    low_space_bytes=1,
+                )
+            ),
+        ),
         cast(rpc.SupervisorServiceStub, object()),
         Principal("controller", runtime.generation, "test-token"),
         supervisor_pid=41,
@@ -88,7 +133,6 @@ async def _run(runtime: _Runtime, native: _Native, path: Path) -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_shutdown_notifies_launcher_with_original_deadline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -100,13 +144,12 @@ async def test_shutdown_notifies_launcher_with_original_deadline(
     async def notify(_descriptor: int, **kwargs: object) -> None:
         notices.append((cast(int, kwargs["deadline_ns"]), cast(str, kwargs["cause"])))
 
-    monkeypatch.setattr(main, "notify_launcher", notify)
+    monkeypatch.setattr(monitor, "notify_launcher", notify)
     await asyncio.wait_for(_run(runtime, native, tmp_path), timeout=1)
     assert notices == [(1_500, "OPERATOR_SHUTDOWN")]
     assert native.terminated == []
 
 
-@pytest.mark.asyncio
 async def test_clean_controller_waits_for_shutdown_handoff_completion(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -118,7 +161,7 @@ async def test_clean_controller_waits_for_shutdown_handoff_completion(
     async def notify(_descriptor: int, **_kwargs: object) -> None:
         notified.set()
 
-    monkeypatch.setattr(main, "notify_launcher", notify)
+    monkeypatch.setattr(monitor, "notify_launcher", notify)
     task = asyncio.create_task(_run(runtime, native, tmp_path))
     try:
         await asyncio.wait_for(notified.wait(), timeout=1)
@@ -133,7 +176,6 @@ async def test_clean_controller_waits_for_shutdown_handoff_completion(
     assert native.terminated == []
 
 
-@pytest.mark.asyncio
 async def test_failed_launcher_delivery_uses_first_deadline_for_exact_fallback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -154,8 +196,8 @@ async def test_failed_launcher_delivery_uses_first_deadline_for_exact_fallback(
         deadlines.append(cast(int, kwargs["absolute_deadline_ns"]))
         return ()
 
-    monkeypatch.setattr(main, "notify_launcher", fail_notify)
-    monkeypatch.setattr(main, "shutdown_owned_jobs", shutdown_jobs)
+    monkeypatch.setattr(monitor, "notify_launcher", fail_notify)
+    monkeypatch.setattr(monitor, "shutdown_owned_jobs", shutdown_jobs)
     task = asyncio.create_task(_run(runtime, native, tmp_path))
     try:
         await asyncio.wait_for(attempted.wait(), timeout=1)

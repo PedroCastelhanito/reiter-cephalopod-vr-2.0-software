@@ -6,6 +6,7 @@ import ctypes
 import os
 import sys
 from ctypes import wintypes
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +88,9 @@ class _SECURITY_ATTRIBUTES(ctypes.Structure):
     ]
 
 
+SecurityAttributes = _SECURITY_ATTRIBUTES
+
+
 class _FILE_ATTRIBUTE_TAG_INFO(ctypes.Structure):
     _fields_ = [
         ("FileAttributes", wintypes.DWORD),
@@ -94,6 +98,7 @@ class _FILE_ATTRIBUTE_TAG_INFO(ctypes.Structure):
     ]
 
 
+@lru_cache(maxsize=1)
 def _apis() -> tuple[Any, Any]:
     if sys.platform != "win32":
         raise WindowsSecurityError("Windows ACL verification requires Windows")
@@ -275,7 +280,7 @@ def _user_sid(kernel: Any, advapi: Any) -> tuple[int, object, int]:
 
 
 def _creation_security(
-    kernel: Any, advapi: Any
+    kernel: Any, advapi: Any, access_mask: int = FILE_ALL_ACCESS
 ) -> tuple[_SECURITY_ATTRIBUTES, tuple[object, ...]]:
     """Build an owner-only protected DACL before the object becomes visible."""
     sid, token_buffer, sid_length = _user_sid(kernel, advapi)
@@ -284,7 +289,9 @@ def _creation_security(
     acl = ctypes.cast(acl_buffer, ctypes.c_void_p)
     if not advapi.InitializeAcl(acl, acl_size, ACL_REVISION):
         raise WindowsSecurityError(f"InitializeAcl failed: {ctypes.get_last_error()}")
-    if not advapi.AddAccessAllowedAceEx(acl, ACL_REVISION, 0, FILE_ALL_ACCESS, sid):
+    if access_mask <= 0:
+        raise WindowsSecurityError("native object access mask must be positive")
+    if not advapi.AddAccessAllowedAceEx(acl, ACL_REVISION, 0, access_mask, sid):
         raise WindowsSecurityError(
             f"AddAccessAllowedAceEx failed: {ctypes.get_last_error()}"
         )
@@ -314,6 +321,23 @@ def _creation_security(
         ctypes.sizeof(_SECURITY_ATTRIBUTES), descriptor_ptr, False
     )
     return attrs, (token_buffer, acl_buffer, descriptor)
+
+
+def owner_only_security_attributes(
+    access_mask: int, *, inheritable: bool = False
+) -> tuple[SecurityAttributes, tuple[object, ...]]:
+    """Create typed, protected owner-only attributes for an exact native access mask."""
+    kernel, advapi = _apis()
+    attributes, backing = _creation_security(kernel, advapi, access_mask)
+    attributes.bInheritHandle = inheritable
+    return attributes, backing
+
+
+def owner_only_inheritable_security_attributes() -> tuple[
+    SecurityAttributes, tuple[object, ...]
+]:
+    """Owner-only creation security for a deliberately inherited pipe handle."""
+    return owner_only_security_attributes(FILE_ALL_ACCESS, inheritable=True)
 
 
 def create_owner_only_directory(path: Path) -> None:

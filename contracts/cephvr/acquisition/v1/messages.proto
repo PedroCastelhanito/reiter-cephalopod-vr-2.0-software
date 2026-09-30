@@ -4,8 +4,8 @@ import "cephvr/control/v1/types.proto";
 import "cephvr/acquisition/v1/camera.proto";
 import "cephvr/acquisition/v1/microcontroller.proto";
 
-// A01-A10 contract draft. Field tags/types are initial contract assignments.
-// No implemented transport or RPC dispatch. Configuration bindings are declared.
+// A01-A10 acquisition worker wire contract. Field tags/types are authoritative
+// assignments; transport implementation remains covered by its owning review.
 // Frame accounting stays inside each camera worker (A07); no accounting messages.
 // Validate required message/scalar presence, generations, work and authority.
 
@@ -131,6 +131,8 @@ message CameraWorkerSetupPayload {
   optional bool native_counter_available = 8;
   CameraClockDescriptor camera_clock = 9;
   RecordingSettings recording = 10; // Session Setup only; present iff save_video.
+  MicrocontrollerObservation pulse_configuration = 11; // Required for externally triggered saving.
+  repeated cephvr.control.v1.PreparedFunctionScope owned_functions = 12; // Exact session fault catalogue, emitted unchanged in backend Ready.
 }
 // Camera worker recording thread (A07/A08); fixed frame-log schema in frame_log_schema.toml.
 message RecordingSettings {

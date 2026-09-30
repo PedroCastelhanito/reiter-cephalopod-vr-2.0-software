@@ -2,8 +2,10 @@
 
 The [acquisition architecture](../../docs/architecture/acquisition.md) and
 [system contracts](../../docs/architecture/system-contracts.md) remain authoritative. These are declared
-implementation contracts under E15, derived from A01–A11; no backend, camera driver,
-encoder integration or file writer is implemented.
+implementation contracts under E15, derived from A01–A11. Host implementation is the
+authorized stage under [ARCH-001](../../architecture.md#arch-001); its
+[implementation review](../../reports/acquisition-implementation-review.md) records
+progress, acceptance and verification separately from these declarations.
 
 | Artifact | Defined scope |
 | --- | --- |
@@ -36,7 +38,7 @@ stub or compiled schema is not an implemented backend.
 
 ## Outputs and interpretation
 
-[E04](../../docs/architecture/supervisor.md#e04) owns naming and supervisor-owned
+[E04](../../docs/architecture/supervisor.md#e04) owns naming and controller-owned
 namespace reservation. [A07/A09](../../docs/architecture/acquisition.md) own frame
 identity, membership, accounting and crash behavior; the
 [frame-log schema](frame_log_schema.toml) owns physical fields. For an enabled,
@@ -123,7 +125,7 @@ bindings are declared; SDK implementation and rig verification remain outstandin
 
 [Preview control](preview-control.md) defines viewer-independent capture, attachment,
 stop and cleanup. [A10](../../docs/architecture/acquisition.md#a10) owns Configuration-
-only display, temporary camera participation, control-loss grace and pulse behavior.
+only display, temporary camera participation, immediate control-loss cleanup and pulse behavior.
 Each explicit manual preview has a latest-frame slot; closing its viewer does not
 restart or stop capture. Sessions optionally publish in-trial frames to one slot per
 camera at most `session_preview_max_hz` (0 = off); it gates nothing (A03).
@@ -187,8 +189,9 @@ validated for interruption, recovery cleanup and shutdown under existing rules.
 [Worker control](worker-control.md) defines unary state/result queries and report
 bindings: worker lifecycle reports go to the coordinator; the supervisor queries
 retained worker evidence after coordinator loss under E08. Setup/preparation payloads are defined. Native resources, launch registration
-and cleanup follow [Windows resources](windows-resources.md); runtime integration
-remains unimplemented. Do not infer that context registration launches a process.
+and cleanup follow [Windows resources](windows-resources.md); host implementation
+status belongs in the [review](../../reports/acquisition-implementation-review.md).
+Do not infer that context registration launches a process.
 
 ## Private image working storage
 
@@ -216,7 +219,7 @@ Finished; native counter gaps never create invented received-frame lines.
 Queue and pending-record limits remain in acquisition_config.toml. Pending-record
 exhaustion is a logging failure; image drops remain A04's separate policy.
 [Windows resources](windows-resources.md) specifies I/O cancellation and wrapper
-lifetime; implementation and rig validation remain outstanding.
+lifetime; actual native behavior remains subject to rig validation.
 
 ## Frame log and validation boundaries
 
@@ -234,15 +237,17 @@ incomplete. Checking them is external post hoc work.
 [Microcontroller protocol](microcontroller.md) is the concrete wire/error/readback
 specification derived from A11. It includes complete CONFIGURE updates, requested
 versus applied timing, CAPS freshness and controller confirmation. Board-specific
-firmware/resolution, serial scheduling/reconnect code and rig verification remain
-unfinished. Manual firmware installation and deferred flashing retain A11's scope.
+firmware/resolution and rig verification remain unfinished. Host serial implementation
+status is recorded in the review. Manual firmware installation and deferred flashing
+retain A11's scope.
 
 ## Remaining decisions and implementation work
 
 This is the single acquisition completion worklist. The audited rig-independent
 acquisition declaration gaps are now bound by the contracts below. Their syntax and
-cross-contract consistency have been checked; this is not a runnable or rig-validated
-backend. Runtime implementation, actual hardware inputs and explicit rig verification
+cross-contract consistency have been checked. Host implementation is now authorized
+and in progress under ARCH-001; the [implementation review](../../reports/acquisition-implementation-review.md)
+tracks code acceptance and static results. Actual hardware inputs and rig verification
 remain outstanding. Newly discovered concrete conflicts still follow GOV-001.
 Resolve any newly discovered contract gap under GOV-001, asking only for a concrete
 behavior/guarantee tradeoff. The [rig handoff](../../reports/rig-handoff-2026-09-29/README.md)
@@ -251,23 +256,24 @@ supplies inventory and bounded probes; remaining workload/behavior checks stay i
 
 | Work | Status / required next step | Authority |
 | --- | --- | --- |
-| Shared host clock | Declared in [host-clock.md](../host-clock.md): perf_counter_ns helper, launch/Setup compatibility and fixed frame-log header host-clock label. Camera-native clock provenance is separate. Runtime remains absent. | E05/E08, A05/A07 |
-| Preview scope | Declared: manual Configuration preview (including headless) and optional rate-capped session preview slot that gates nothing. Runtime remains absent. | A03/A10 |
+| Shared host clock | Declared in [host-clock.md](../host-clock.md): perf_counter_ns helper, launch/Setup compatibility and fixed frame-log header host-clock label. Camera-native clock provenance is separate. | E05/E08, A05/A07 |
+| Preview scope | Declared: manual Configuration preview (including headless) and optional rate-capped session preview slot that gates nothing. | A03/A10 |
 | Recording completion/empty video | Declared in empty-video.md, OutputResult and recording lifecycle: final accounting, content/presence/closure and narrow never-created artifact predicate. File validation remains external post hoc. Runtime/rig verification remains outstanding. | A07/E04/E05/E11 |
 | SDK/wire completeness | Camera-clock descriptor/transfer/storage declared in camera-clock.md; retained PFS LoadFromString adapter binding declared in camera-settings.md. SDK/runtime/rig verification remains outstanding. | A07/A09/A10 |
 | Camera wait and diagnostics | Declared in capture-wait.md and diagnostics.md: event-driven waits, stable codes, aggregation fields and report/reconciliation bindings. Runtime/SDK/rig checks remain outstanding. | A02/A07 |
-| Pixel alignment | Declared in [pixel processing](pixel-processing.md#prepared-alignment-and-preview-scaling) and SDK mappings: unchanged native layout, explicit prepared MSB/range, alignment-aware preview and exact-match conversion bypass. Runtime remains absent. | A01/A08/A10 |
-| Controller-loss fallback | Declared in the shared [controller-health contract](../controller-health.md); acquisition coordinator and supervisor monitor independently and converge on existing cleanup. Runtime remains absent. | E06/E08/E11 |
+| Pixel alignment | Declared in [pixel processing](pixel-processing.md#prepared-alignment-and-preview-scaling) and SDK mappings: unchanged native layout, explicit prepared MSB/range, alignment-aware preview and exact-match conversion bypass. | A01/A08/A10 |
+| Controller-loss fallback | Declared in the shared [controller-health contract](../controller-health.md); acquisition coordinator and supervisor monitor independently and converge on existing cleanup. | E06/E08/E11 |
 | Recording pair identity | Declared in recording-identity.md: matching existing IDs in MP4 tags and frame-log header identity, and argument ownership. Missing identity cannot establish a verified pair. Runtime/rig verification remains outstanding. | A07/A08 |
 | MCU schedule boundary | Declared in microcontroller.md and PulseCommandEvidence: B_on=T, B_off=T+duration, independent camera cutoff, bounded serial dispatch/ACK and existing lifecycle deadlines. Physical pulse/exposure matching remains rig/synchronization work. | A11/E05/E11 |
-| Camera settings, configuration/PFS/preview control, worker preparation/reporting, buffer slots/attachment, MCU grammar/readback, frame-log line fields | Declared in the artifact table; do not ask these choices again. Runtime remains absent. | A01–A11, E07/E08 |
+| Camera settings, configuration/PFS/preview control, worker preparation/reporting, buffer slots/attachment, MCU grammar/readback, frame-log line fields | Declared in the artifact table; do not ask these choices again. | A01–A11, E07/E08 |
 | Encoder launch and interruption cutoffs | Declared in recording lifecycle and matching wire/schema fields. | A08, E11 |
 | Acquisition file-policy binding | Declared in configuration-bindings.md and runtime.proto; controller resolves, workers receive typed values. | E07/E14, A02 |
 | Native formats/provider, transport, SDK errors/counters | Declared in sdk-mappings.md; exact connected-device availability/clock/counter semantics remain hardware evidence, not guessed defaults. | A01/A09/A10 |
 | Launch/Windows cleanup mechanisms | Declared in windows-resources.md and PlanLaunch/ConfirmLaunch/GetLaunchState, with the existing attachment ledger. | E06/E08, A02/A03/A07 |
 | Encoding validation and keyframe scheduling | Declared in encoding-options.md; input-format/throughput feasibility retains its separate rig deferral. | A08 |
 | Rig board, trigger pins/lines and device/interface identities | Camera serials/roles and 30/60 Hz owner rates are supplied; Arduino Uno/COM8 is inventory only. Trigger pins/lines, firmware, electrical behavior and final image/transport settings remain unresolved; do not infer them from snapshots. | A01/A10/A11 |
-| Python services/helpers, device adapters, firmware, native Windows wrappers, writer code | Later implementation of the contracts; unimplemented is not an unanswered architecture choice or an approved feature deferral. | SYS-003, E15 |
+| Host services, device adapters, native Windows wrappers and writers | Current authorized implementation stage; acceptance is tracked in the implementation review. | ARCH-001, SYS-003, E15 |
+| MCU firmware implementation and installation | Outside the current host implementation stage; the host enforces the accepted protocol and fails explicitly when firmware is incompatible. | A11, E15 |
 | Encoder raw-input format and throughput | Bounded generated-frame probes are recorded in the handoff; production native conversion, simultaneous full workload and failure behavior remain unverified. | A08/E15, rig verification list |
 | Timing/performance, startup-buffer behavior, hardware/electrical checks, crash/durability tests | Rig validation after the main architecture is established; retain evidence and failure limits. | E15 |
 | Projector-locked camera pulses and assisted firmware flashing | Explicitly deferred features; no current implementation authority. | A10/A11 |

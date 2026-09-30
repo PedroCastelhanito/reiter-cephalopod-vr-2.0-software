@@ -5,8 +5,10 @@ This file applies to this directory and its descendants.
 ## Architecture is the starting point
 
 - The owner has explicitly authorized runtime implementation and tests for the
-  experiment controller and supervisor, including their required shared helpers,
-  launcher, native mechanisms and headless client. Follow GOV-001 and ARCH-001;
+  experiment controller, supervisor and acquisition host backend, including their
+  required shared helpers, launcher, native mechanisms and headless client.
+  Acquisition firmware, flashing and other backend runtimes remain outside this
+  stage. Follow GOV-001 and ARCH-001;
   other backend implementation stages still need owner selection. Existing
   declarative schemas, interfaces and contract checks remain authoritative inputs,
   not proof of implemented or rig-validated behavior.
@@ -101,6 +103,25 @@ This file applies to this directory and its descendants.
 
 ## Work discipline
 
+- Use Luna models for delegated code writing. The supervising model establishes
+  interfaces, reviews each increment and resolves integration issues before acceptance.
+
+- Before every coding increment, apply [ARCH-002](architecture.md#arch-002)'s
+  simplification and dependency review to the affected code, including agent-written
+  code. Address concrete bloat before adding behavior; report validation limits.
+- Keep the repository modular and easy to maintain, test and change under ARCH-002.
+  Avoid large files when cohesive modules are possible; extract separable
+  responsibilities before extending oversized files, with explicit interfaces and
+  preserved state ownership.
+- Apply ARCH-002's dependency boundaries: feature modules use focused records and
+  explicit operations, never whole-runtime back-references. Run
+  `python tools/check_backend_boundaries.py` alongside static checks; review its
+  size warnings and document cohesive exceptions in the implementation report.
+- Apply [ARCH-002](architecture.md#arch-002)'s test organization rule before adding
+  tests: extend the owning behavior module by default and justify any new module
+  by responsibility or fixture/platform needs. Do not add per-fix test files.
+  When consolidating, compare collection and preserve scenarios, markers and
+  fixture isolation; keep E15's execution boundary unchanged.
 - Inspect existing files and version-control status before editing; preserve work
   made by the user or another agent.
 - GPU workload placement follows SYS-002: RTX 5060 Ti rendering/projection/tracking

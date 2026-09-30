@@ -1,6 +1,6 @@
 # CephVR2.0 architecture
 
-Last updated: 2026-09-29
+Last updated: 2026-09-30
 
 This overview and the linked records in `docs/architecture/` form the authoritative
 architecture. Each decision has one home; this register locates it by permanent ID.
@@ -19,10 +19,10 @@ Accepted design does not imply implemented or rig-validated behavior.
 ## Current position
 
 - Architecture and implementation-contract review is complete for every backend.
-  The owner has authorized the initial runtime stage under [ARCH-001](#arch-001);
-  its code review is complete and the first stage is ready for Windows verification.
-  Runtime acceptance remains pending the E15 results recorded in the
-  [implementation review](reports/runtime-implementation-review.md).
+  [ARCH-001](#arch-001) selects acquisition host implementation following the
+  controller/supervisor stage. The [acquisition review](reports/acquisition-implementation-review.md)
+  records source review and pending rig verification; the [controller/supervisor review](reports/runtime-implementation-review.md)
+  retains its separate static-check results and pending E15 behavioral verification.
 - Repository packaging and code ownership are accepted under [ARCH-002](#arch-002).
   Package scaffolding and development-tool configuration do not implement a backend.
 - Contract indexes: [acquisition](contracts/acquisition/README.md),
@@ -58,16 +58,16 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [SYS-003](#sys-003) | Backend language and environment | Accepted | 2 |
 | [SYS-004](#sys-004) | Scientific synchronization authority | Accepted | 3 |
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 24 |
-| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 12 |
-| [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 1 |
+| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 13 |
+| [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 28 |
-| <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 85 |
+| <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 86 |
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
-| <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 75 |
+| <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 76 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 57 |
-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 157 |
+| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 159 |
 | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 20 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
@@ -75,14 +75,14 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e13"></a>[E13](docs/architecture/vr.md#e13) | Save VR data | Accepted | 17 |
 | <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 205 |
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 8 |
-| <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 15 |
-| <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 26 |
-| <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 30 |
+| <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 16 |
+| <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 29 |
+| <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 31 |
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
 | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-VR delay measurement | Accepted | 6 |
 | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to VR | Accepted | 14 |
 | <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 57 |
-| <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 47 |
+| <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 48 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 12 |
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 49 |
 | <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 34 |
@@ -306,12 +306,14 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="arch-001"></a>
 ### ARCH-001 — Backend process boundaries and build order
 
-**Status:** Undecided · **Revision:** 12
+**Status:** Undecided · **Revision:** 13
 
-- The owner has authorized runtime implementation and tests for the supervisor and
-  experiment controller, including required shared helpers, launcher/native
-  mechanisms and headless client. Code organization follows [ARCH-002](#arch-002).
-  Remaining backend implementation order is undecided; unavailable backend
+- The owner has authorized runtime implementation and tests for the supervisor,
+  experiment controller and acquisition host backend, including required shared
+  helpers, launcher/native mechanisms and headless client. Acquisition is the next
+  selected stage; firmware/flashing and other backend runtimes remain outside it.
+  Code organization follows [ARCH-002](#arch-002). Remaining implementation order
+  is undecided; unavailable backend
   implementations cannot be replaced by fabricated readiness or rig validation.
 - The complete process split remains undecided. Selected process structure so far:
   - E08: separate controller, supervisor and GUI processes.
@@ -332,7 +334,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="arch-002"></a>
 ### ARCH-002 — Repository packaging and code ownership
 
-**Status:** Accepted · **Revision:** 1
+**Status:** Accepted · **Revision:** 5
 
 - Maintain one installable Python project, `cephvr`, with importable code under
   `src/cephvr/` and packaging/dependency/tool settings in root `pyproject.toml`.
@@ -341,7 +343,27 @@ Accepted design does not imply implemented or rig-validated behavior.
 - Group runtime code by owner: `controller/`, `supervisor/`, `launcher/`, `client/`
   and later backend packages. Keep behavior and RPC handlers with their owner;
   E07's backend configuration modules remain lightweight and safe to import.
-  Subdivide packages by concrete responsibility as they grow.
+  Avoid large handwritten source files whenever their responsibilities can be
+  separated into cohesive modules. Keep modules focused, with explicit interfaces
+  and dependencies, so code is easy to maintain, test independently and change.
+  Before extending an oversized file, extract separable responsibilities into
+  owning modules while preserving state ownership and accepted behavior. Apply
+  these rules to existing code and new contributions, including agent-written code.
+- Runtime coordinators assemble components and supervise their tasks. Feature
+  modules receive focused typed state records, peer interfaces and explicit
+  operations; they must not depend on the whole runtime or import entry points or
+  RPC adapters. Keep one authoritative copy of state and preserve lock scopes,
+  deadlines and durable-write order during extraction. RPC adapters own transport
+  authentication/admission and call explicit application operations. Review rejects
+  whole-runtime back-references and separable responsibilities left in large files.
+- Before each coding increment, review the affected code for oversized mixed
+  responsibilities, duplication, unused behavior and unnecessary abstractions;
+  simplify concrete problems before extending them. Prefer the standard library,
+  existing dependencies, or a maintained package when it removes meaningful custom
+  complexity while preserving accepted behavior, bounds and failure guarantees.
+  Assess dependency/platform costs; do not add packages or split files merely to
+  reduce line counts. Keep required safety mechanisms and distinguish refactoring
+  checks from pending runtime/rig verification.
 - Put E08's reusable in-process mechanisms in `shared/` and Windows mechanisms in
   `platform/windows/`. Shared code retains no cross-process authoritative state;
   backend policy and orchestration remain with their owners. Imports must not
@@ -353,9 +375,18 @@ Accepted design does not imply implemented or rig-validated behavior.
 - Keep operator settings and fixed policies in their E14 homes. Existing docs and
   reports retain their roles; source packages do not introduce another decision
   register or change E04's data/report locations.
-- Use `tests/` for future runtime tests, mirroring package ownership, and `tools/`
-  for developer commands. Preserve existing contract checks separately. E15 still
-  governs behavioral and rig verification; scaffolding proves neither.
+- Keep runtime tests in `tests/<owner>/`, grouped by stable behavior or contract.
+  Extend the relevant existing module by default; create a module only for a
+  distinct responsibility or materially different fixture/platform requirements.
+  Do not create files per fix, review round or implementation file, or merge
+  unrelated tests to meet a file-count target. Keep helpers local; share genuinely
+  reused setup in the owner's support module or narrowly scoped `conftest.py`,
+  never by importing another test module. Parameterize cases that differ only in
+  inputs and expected results; retain readable scenario tests for distinct flows.
+  Consolidation must preserve scenarios, assertions, markers and fixture isolation;
+  review rejects redundant cases and unjustified file proliferation. Keep developer
+  commands in `tools/` and existing contract checks separate. E15 still governs
+  behavioral and rig verification; collection and static checks prove neither.
 - Enforce UTF-8, LF, four-space Python indentation, an 88-character formatting
   target, Ruff formatting/linting and static type checking through the repository
   tool configuration. Use type annotations and concise behavioral docstrings;

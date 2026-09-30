@@ -401,6 +401,7 @@ message RegisteredContext {
   repeated ResourceObligation cleanup_resources = 12; // Exact Ready native release obligations; output closure remains separate.
   repeated CleanupCommandFence cleanup_commands = 13; // Append-only exact controller-issued cleanup admissions, registered before dispatch.
   optional bool paired_spikeglx = 14; // Frozen Setup fact: external SpikeGLX run is expected; absent is unknown.
+  reserved 15;
 }
 message CleanupCommandFence {
   ProcessIdentity target = 1; // Top-level backend generation that will report Cleanup.
@@ -591,5 +592,8 @@ message DataPreparationReport {
 message TrackingInputConfirmation {
   BackendCommand command = 1; // Controller -> acquisition, current Setup parent.
   uint64 configuration_revision = 2;
-  DataPreparationReport tracking_evidence = 3; // Exact validated tracking report; no reconstructed acknowledgment.
+  oneof evidence {
+    DataPreparationReport tracking_evidence = 3; // Exact validated tracking report; no reconstructed acknowledgment.
+    CleanupReport tracking_cleanup = 4; // Exact accepted tracking cleanup proof for release of the bound input transfer.
+  }
 }

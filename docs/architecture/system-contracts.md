@@ -52,7 +52,7 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 <a id="e06"></a>
 ### E06 — Stop, interruption, timeout, and recovery
 
-**Status:** Accepted · **Revision:** 75
+**Status:** Accepted · **Revision:** 76
 
 **Operator commands**
 
@@ -146,8 +146,12 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 - Cleanup evidence covers stopped work, output/metadata results and release of
   trial/session resources, not exit of normal resident processes or the VR runtime.
   Resource release is distinct from successful recording; cleanup never relabels a
-  failed output Closed. E12 delegates SpikeGLX file finalization to the external
-  recorder: require confirmed stopping (isRunning false), but do not block reuse
+  failed output Closed. A reserved output that never started retains NotStarted with
+  confirmed absence only after exact writer/command ownership proves it was never
+  created and all possible writers are fenced or released; this discharges cleanup,
+  not normal Finished or recording-success requirements. E12 delegates SpikeGLX file
+  finalization to the external recorder: require confirmed stopping (isRunning false),
+  but do not block reuse
   solely on absent CephVR-verified native-file closure/durability. The
   [SpikeGLX control contract](../../contracts/spikeglx-control.md) owns that
   exception; confirmed errors and unresolved stopping remain failures.
@@ -213,7 +217,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 157
+**Status:** Accepted · **Revision:** 159
 
 **Processes and startup**
 
@@ -258,8 +262,10 @@ design; runtime monitoring remains unimplemented.
 - The [data-preparation handoff](../../contracts/data-preparation.md) binds early
   acquisition/tracking descriptors and confirmations through existing control
   endpoints, transferring metadata before final Ready; it is neither scientific data
-  nor execution authority. Handoffs retire with their Setup attempt, preserving
-  cleanup obligations.
+  nor execution authority. Preparation handoffs retire with their Setup attempt;
+  the same protected endpoint forwards validated tracking Cleanup evidence from
+  controller or supervisor to acquisition for exact consumer release. Release
+  evidence remains admissible during cleanup without renewing its original budget.
 - One controller event loop owns lifecycle state. Device/file work returns results
   asynchronously and cannot mutate lifecycle or block the loop. Ingress timestamps
   are kept for deadline decisions (E05).
@@ -363,16 +369,20 @@ design; runtime monitoring remains unimplemented.
 - A state-changing command uses one issuer-allocated command ID for admission,
   operation and completion. The same ID/request executes once and returns the
   retained result; a changed payload under that ID is rejected. Child commands have
-  their own IDs and optional parent reference, not a second execution ID.
+  their own IDs and optional parent reference, not a second execution ID. A command
+  targeting allocated work carries its expected work identity, matched exactly;
+  Abort now and ShutdownApplication match the session only, so a trial transition
+  never blocks them.
 - Accepted/Rejected returns promptly; Accepted is ownership, not completion.
   Rejections carry code/message; completion is asynchronous state. Read-only queries
   return typed data directly. Secrets use protected gRPC metadata, never
   payload/config/log fields.
 - Canonical request/admission/result records are retained for active Setup/session
   work and **300 s** after confirmed finalization/cleanup; active work is never
-  evicted. The cache is in-memory, generation-scoped, excluded from logs/reports and
-  cannot resume a session. Accepted completions stay in current views while their
-  records remain.
+  evicted. A rejected or failed command starts retention for its own record only and
+  never finalizes the shared work scope. The cache is in-memory, generation-scoped,
+  excluded from logs/reports and cannot resume a session. Accepted completions stay
+  in current views while their records remain.
 - The controller registers exact process/work/operation context with the supervisor,
   and gets its acknowledgement, before Setup Ready, again at Start (recovery
   context) and on session-level changes (E06 incident scopes); there is no per-trial
@@ -426,7 +436,8 @@ design; runtime monitoring remains unimplemented.
   coordinator, which aggregates them (HeartbeatReport.workers) and reports a
   worker's silence or stall as its own error; the supervisor holds OS handles for
   every descendant and sees any exit directly. Workers still send errors directly to
-  the supervisor. Validate context and measure silence at recipient ingress:
+  the supervisor, but only the controller or a top-level coordinator may report
+  controller or supervisor loss. Validate context and measure silence at recipient ingress:
   **5 s** interval, **15 s** silence, no recovery window.
 - Required active work reports meaningful progress; idle workers have no progress
   obligation. FFmpeg has no gRPC/heartbeat: its feeding worker monitors
@@ -438,9 +449,13 @@ design; runtime monitoring remains unimplemented.
   experiment continues.
 - GUI closure leaves CephVR running. ShutdownApplication immediately hands
   authorized shutdown intent to the supervisor, binding command/generations/work,
-  before any cleanup. The controller coordinates while alive; the supervisor
-  continues if it fails, keeping deadlines. A failed handoff is reported, not
-  assumed received.
+  before any cleanup, then interrupts active work at once without awaiting the
+  reply. The controller coordinates while alive; the supervisor continues if it
+  fails, keeping deadlines. The command succeeds only with an accepted handoff and
+  confirmed cleanup; a failed handoff is reported, not assumed received. After
+  accepted intent, controller silence or exit is not controller loss: the supervisor
+  interrupts a still-active session's participants before Shutdown, with no
+  emergency report.
 - After bounded finalization, release the reservation only when eligible
   (authority-loss markers remain for startup recovery), then shut down backends
   concurrently, then controller/GUI, supervisor last; the launcher exits after

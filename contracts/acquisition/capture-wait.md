@@ -16,8 +16,11 @@ not camera access. No extra thread, process, callback producer or image queue.
 The adapter wraps the camera's GetGrabResultWaitObject and the local wake event in
 pylon's WaitObjects container and uses WaitForAny. Use a signalable SDK/native event
 compatible with that binding. Validate the chosen pypylon/Windows binding supports
-both events, result indices and releasing the Python GIL while waiting so the control
-thread can run. Missing compatibility fails preparation explicitly; no silent
+both events, an unambiguous frame/control outcome and releasing the Python GIL while
+waiting so the control thread can run. The pinned Python binding uses
+`WaitForAny(timeout)` without an output pointer, then checks the existing manual-reset
+control event; control wins if both are signaled. No undocumented SWIG pointer
+conversion is required. Missing compatibility fails preparation explicitly; no silent
 fallback to 1 ms polling or a different capture topology.
 
 The common adapter interface exposes wait_for_frame_or_control(timeout_ns) plus a
@@ -43,7 +46,7 @@ after the owner and all signaling users have stopped accessing them.
    not a 1 ms recurring cap. Recheck the unchanged absolute deadline on return.
    OS/SDK scheduling can add latency; this is not an exact wake-time guarantee.
 4. On every wake, inspect commands/deadlines before frame retrieval, regardless of
-   which index WaitForAny returned. If work remains permitted and a result is ready,
+   which event satisfied WaitForAny. If work remains permitted and a result is ready,
    call RetrieveResult(0, TimeoutHandling_Return). A ready signal is not a reserved
    image; None means return to predicate checking, not a camera failure by itself.
 5. Stamp host receipt immediately after a returned result, then enforce the actual

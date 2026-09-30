@@ -85,3 +85,15 @@ def test_duplicate_recovery_fields_cannot_select_an_identity(tmp_path: Path) -> 
     store.pointer_path.chmod(0o600)
     with pytest.raises(RecoveryStoreError, match="repeats a field"):
         store.read_pointer()
+
+
+def test_receipt_carries_bounded_controller_channel_loss(tmp_path: Path) -> None:
+    store = RecoveryStore(tmp_path / "runtime")
+    receipt = ApplicationExitReceipt(
+        _id(), _id(), 101, True, controller_channel_loss="control line overflow"
+    )
+    store.write_exit_receipt(receipt)
+    assert store.read_exit_receipt(receipt.controller_generation) == receipt
+    assert ApplicationExitReceipt(_id(), _id(), 1, True).controller_channel_loss == ""
+    with pytest.raises(ValueError, match="channel-loss"):
+        ApplicationExitReceipt(_id(), _id(), 1, True, controller_channel_loss="x" * 257)

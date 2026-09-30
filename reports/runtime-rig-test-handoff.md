@@ -51,6 +51,7 @@ This command does not change the machine's persistent execution policy.
 | --- | --- |
 | Python/package prerequisites | Python 3.11 and generated control bindings import successfully |
 | Syntax, Ruff, Windows-target mypy | Handwritten code parses and meets configured static checks |
+| Module boundaries | Feature modules avoid runtime/entry imports and private runtime access; size warnings require review |
 | Existing contract checks | Pure tracking and VR declarations remain consistent; these are separate from runtime behavior |
 | Shared/controller/supervisor unit tests | Identity, bounds, deadlines, leases, evidence, reservations, and isolated failure-path logic |
 | Loopback gRPC integration | Actual local controller/client transport, authentication and state-stream behavior |
@@ -67,6 +68,23 @@ Any skipped test remains unverified. Collect the actual result before accepting
 platform behavior. The PowerShell runner and native assertions have not been executed
 on the macOS development host.
 
+## Refactor regression focus
+
+The suite follows public component operations and shared typed records after the
+[modular refactor](runtime-implementation-review.md). Inspect these cases in the rig
+results; source and type checks alone do not verify their behavior.
+
+| Guarantee | Prepared coverage |
+| --- | --- |
+| Setup cancellation and Start interruption | `tests/controller/test_safety_regressions.py`, `test_setup.py` |
+| Exact/stale/conflicting reports, deadline edges, late Finished | `tests/controller/test_lifecycle_reports.py`, `test_runtime_retention.py` |
+| Uncertain metadata completion and reservation ownership | `tests/controller/test_metadata.py`, `test_storage.py`, `test_startup_recovery.py` |
+| Control lease loss and takeover | `tests/controller/test_control_leases.py`, `tests/client/test_controller_rpc.py` |
+| Partial launches and exact process identity | `tests/supervisor/test_registry.py` |
+| Cleanup proof and retained shutdown deadline/escalation | `tests/supervisor/test_registration.py`, `test_recovery.py`, `test_shutdown.py`, `tests/controller/test_shutdown_handoff.py` |
+| Replay ownership and bounded report ordering | `tests/controller/test_command_admission.py` |
+| Module launch enters the existing CLI | `tests/controller/test_entrypoint.py` |
+
 ## Results to retain
 
 The runner prints its result directory, by default:
@@ -77,6 +95,7 @@ The runner prints its result directory, by default:
   syntax.log
   ruff.log
   format.log
+  module-boundaries.log
   mypy-win32.log
   contracts-tracking.log
   contracts-vr.log
@@ -92,6 +111,10 @@ review; `summary.json` shows step exit codes and `pytest.xml` records individual
 tests and skips. A custom destination can be supplied with `-OutputDirectory`.
 
 ## Remaining experiment verification
+
+The subsequent acquisition host stage extends the shared rig runner; use the
+[acquisition handoff](acquisition-rig-test-handoff.md) for the current bundle and
+additional prerequisites. This report preserves the controller/supervisor scope.
 
 Passing this suite is acceptance evidence for the implemented controller/supervisor
 and platform paths. It is not a successful experiment. Acquisition, VR, tracking,

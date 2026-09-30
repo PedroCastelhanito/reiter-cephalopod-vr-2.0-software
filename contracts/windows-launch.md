@@ -24,7 +24,12 @@ operator lease. The launcher reads `[shutdown].application_shutdown_backstop_s` 
 supervisor_config.toml once at startup and retains it with the process handles before
 acknowledging launch readiness; nothing is forwarded at Setup. OS process-handle exit
 observations still work when both authorities fail. Reject wrong generations;
-duplicate notifications cannot extend the first deadline.
+duplicate notifications cannot extend the first deadline. A malformed, oversized or
+overflowing line retires that channel like EOF. Supervisor-channel loss starts the
+deadline; controller-channel loss is only recorded in the exit receipt, since the
+supervisor owns controller loss. Controller registration must arrive within the
+health silence timeout after supervisor bootstrap completes; a late registration is
+not acknowledged.
 
 The backstop must cover the health silence timeout, the larger of Cancel Setup or
 trial-finalization initial budget plus the shared recovery budget, and three

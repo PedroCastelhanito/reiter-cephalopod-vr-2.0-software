@@ -10,14 +10,10 @@ from typing import Literal
 import pytest
 
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.controller.storage import (
-    MetadataWrite as _MetadataWrite,
-)
-from cephvr.controller.storage import (
-    MetadataWriter,
-    OutputReservation,
-    StorageError,
-)
+from cephvr.controller.metadata.reservation import OutputReservation
+from cephvr.controller.metadata.types import MetadataWrite as _MetadataWrite
+from cephvr.controller.metadata.types import StorageError
+from cephvr.controller.metadata.writer import MetadataWriter
 
 
 def _write(
@@ -79,7 +75,7 @@ def test_unexpected_file_blocks_cancel_without_deletion(tmp_path: Path) -> None:
     with pytest.raises(StorageError, match="unexpected files"):
         reservation.cancel()
     assert unexpected.read_bytes() == b"preserve"
-    assert reservation._lock_fd is not None
+    assert reservation.held
     reservation.release()
 
 
@@ -141,22 +137,22 @@ def test_existing_lock_symlink_is_never_followed(tmp_path: Path) -> None:
 def test_failed_session_quarantine_preserves_unfinished_marker(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import cephvr.controller.storage as storage
+    import os
 
     reservation = _reservation(tmp_path)
     reservation.acquire()
-    original = storage.os.replace
+    original = os.replace
 
     def fail_session_rename(source: Path, destination: Path) -> None:
         if source == reservation.session_directory:
             raise OSError("busy directory")
         original(source, destination)
 
-    monkeypatch.setattr(storage.os, "replace", fail_session_rename)
+    monkeypatch.setattr(os, "replace", fail_session_rename)
     with pytest.raises(StorageError, match="unfinished marker retained"):
         reservation.cancel()
     assert reservation.inspect_marker().complete is False
-    assert reservation._lock_fd is not None
+    assert reservation.held
     reservation.release()
 
 
@@ -230,19 +226,21 @@ def test_writer_rejects_unreserved_path_and_invalid_document(tmp_path: Path) -> 
 def test_writer_preserves_late_sync_evidence_and_seal_capacity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import cephvr.controller.storage as storage
+    import cephvr.controller.metadata.writer as storage
 
     now = [1]
     entered = threading.Event()
     release = threading.Event()
-    original = storage._atomic_json
+    from cephvr.controller.metadata.files import atomic_json
+
+    original = atomic_json
 
     def delayed(path: Path, payload: bytes, *, replace: bool) -> None:
         entered.set()
         assert release.wait(3)
         original(path, payload, replace=replace)
 
-    monkeypatch.setattr(storage, "_atomic_json", delayed)
+    monkeypatch.setattr(storage, "atomic_json", delayed)
     writer = MetadataWriter(
         tmp_path, max_operations=1, max_bytes=1024, clock=lambda: now[0], session_id="s"
     )

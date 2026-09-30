@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ntpath
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Protocol
 from uuid import uuid4
@@ -52,6 +53,7 @@ class _Entry:
     deadline_ns: int
     os_confirm_command_id: str | None = None
     confirmations: dict[str, bytes] = field(default_factory=dict)
+    released_seq: int = 0
 
 
 def _identity_key(process: types.ProcessIdentity) -> tuple[str, str]:
@@ -70,6 +72,26 @@ class LaunchRegistry:
         self.silence_timeout_ns = silence_timeout_ns
         self.max_launches = max_launches
         self._entries: dict[str, _Entry] = {}
+        self._release_seq = 0
+        self._release_listeners: list[Callable[[wire.LaunchState], None]] = []
+
+    def on_release(self, listener: Callable[[wire.LaunchState], None]) -> None:
+        """Notify once per launch when it transitions to RELEASED."""
+        self._release_listeners.append(listener)
+
+    def _prune_released(self) -> None:
+        """Drop the oldest RELEASED entries (replay window ends at capacity)."""
+        released = sorted(
+            (
+                (entry.released_seq, command_id)
+                for command_id, entry in self._entries.items()
+                if entry.state.phase == wire.LAUNCH_PHASE_RELEASED
+            )
+        )
+        for _, command_id in released:
+            if len(self._entries) < self.max_launches:
+                break
+            del self._entries[command_id]
 
     def plan(self, request: wire.PlanLaunchRequest) -> wire.LaunchState:
         require_uuid4(request.command_id)
@@ -120,6 +142,8 @@ class LaunchRegistry:
                 )
             return self.refresh(request.command_id)
         if len(self._entries) >= self.max_launches:
+            self._prune_released()
+        if len(self._entries) >= self.max_launches:
             raise LaunchError("LAUNCH_CAPACITY", "retained launch capacity exhausted")
         if any(
             _identity_key(entry.plan.child) == _identity_key(request.child)
@@ -162,6 +186,18 @@ class LaunchRegistry:
             wire.LAUNCH_PHASE_OPERATIONAL,
         ):
             if not members or not self._running(entry):
+                if (
+                    entry.plan.stop_method == "owner_stdin_eof"
+                    and entry.plan.owner.role
+                    in {
+                        "acquisition_behavioral_worker",
+                        "acquisition_tracking_worker",
+                    }
+                ):
+                    # A camera-owned encoder normally exits at EOF. Its exact
+                    # worker must retain output closure before this launch can
+                    # be released; process exit alone is not a helper failure.
+                    return wire.LaunchState.FromString(entry.state.SerializeToString())
                 self._block(
                     entry,
                     "CHILD_EXITED",
@@ -178,6 +214,7 @@ class LaunchRegistry:
     def confirm(
         self, request: wire.ConfirmLaunchRequest, expected_clock: HostClockDescriptor
     ) -> wire.LaunchState:
+        """Adopt exact planned process ownership before accepting operational evidence."""
         require_uuid4(request.command_id)
         entry = self._get(request.launch_command_id)
         canonical = request.SerializeToString(deterministic=True)
@@ -335,6 +372,9 @@ class LaunchRegistry:
 
     def release(self, command_id: str, obligations_met: bool) -> wire.LaunchState:
         entry = self._get(command_id)
+        if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:
+            # Idempotent: the job is already closed, never re-inspect it.
+            return wire.LaunchState.FromString(entry.state.SerializeToString())
         if self._members(entry):
             raise LaunchError("PROCESS_STILL_RUNNING", "job still contains a child")
         if not obligations_met:
@@ -347,10 +387,25 @@ class LaunchRegistry:
                 entry.state.pid, entry.state.creation_time_100ns
             )
         entry.state.phase = wire.LAUNCH_PHASE_RELEASED
-        return wire.LaunchState.FromString(entry.state.SerializeToString())
+        self._release_seq += 1
+        entry.released_seq = self._release_seq
+        released = wire.LaunchState.FromString(entry.state.SerializeToString())
+        for listener in self._release_listeners:
+            listener(released)
+        return released
 
-    def states(self) -> list[wire.LaunchState]:
-        return [self.refresh(command_id) for command_id in list(self._entries)]
+    def states(self, *, tolerant: bool = False) -> list[wire.LaunchState]:
+        """Refresh every launch; tolerant callers get a failed entry's blocked state."""
+        if not tolerant:
+            return [self.refresh(command_id) for command_id in list(self._entries)]
+        result = []
+        for command_id in list(self._entries):
+            try:
+                result.append(self.refresh(command_id))
+            except LaunchError:
+                state = self._entries[command_id].state
+                result.append(wire.LaunchState.FromString(state.SerializeToString()))
+        return result
 
     def _get(self, command_id: str) -> _Entry:
         try:

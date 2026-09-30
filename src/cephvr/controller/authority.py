@@ -10,18 +10,31 @@ import asyncio
 import json
 import os
 import uuid
-from collections.abc import Awaitable, Callable, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.backend import GrpcBackendPort
 from cephvr.controller.configuration import SupervisorStartup
-from cephvr.controller.runtime import ControllerRuntime
+from cephvr.controller.state import AuthorityStatus, LimitsState
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.identity import require_uuid4
+
+
+@dataclass(frozen=True)
+class AuthorityControl:
+    """Only the controller operations needed for its independent authority watch."""
+
+    generation: str
+    supervisor_generation: str
+    status: Callable[[], AuthorityStatus]
+    lose: Callable[[str, int], Coroutine[Any, Any, None]]
+    warn: Callable[[pb.Warning], Awaitable[None]]
+    clock: Callable[[], int]
+    limits: LimitsState
 
 
 @dataclass(frozen=True)
@@ -159,7 +172,7 @@ async def shutdown_owned_jobs(
 
 
 async def handle_authority_loss(
-    runtime: ControllerRuntime,
+    control: AuthorityControl,
     *,
     cause: str,
     issued_ns: int,
@@ -176,27 +189,28 @@ async def handle_authority_loss(
 
     from cephvr.shared.emergency import write_emergency_report
 
+    initial = control.status()
     first_intent_ns = (
-        min(issued_ns, runtime._shutdown_intent_ns)
-        if runtime._shutdown_intent_ns
+        min(issued_ns, initial.shutdown_intent_ns)
+        if initial.shutdown_intent_ns
         else issued_ns
     )
     outer_deadline = first_intent_ns + startup.application_backstop_ns
     cleanup_budget = (
-        runtime.limits.finished_ns
-        if runtime.attempt is not None and runtime.attempt.activated
-        else runtime.limits.setup_cancel_ns
-    ) + runtime.limits.recovery_ns
+        control.limits.current.finished_ns
+        if initial.activated
+        else control.limits.current.setup_cancel_ns
+    ) + control.limits.current.recovery_ns
     cleanup_deadline = min(outer_deadline, issued_ns + cleanup_budget)
     failures: list[str] = []
     # Start fencing immediately; pipe delivery cannot delay the safety handler.
-    cleanup = asyncio.create_task(runtime.authority_loss(cause, issued_ns))
+    cleanup = asyncio.create_task(control.lose(cause, issued_ns))
     try:
         if notify_backstop:
             await notify_launcher(
                 launcher_descriptor,
-                supervisor_generation=runtime.supervisor_generation,
-                controller_generation=runtime.generation,
+                supervisor_generation=control.supervisor_generation,
+                controller_generation=control.generation,
                 deadline_ns=outer_deadline,
                 cause=cause,
                 timeout_s=max(
@@ -213,17 +227,17 @@ async def handle_authority_loss(
         )
     except Exception as exc:
         failures.append(f"authority cleanup unconfirmed: {exc}")
-    attempt = runtime.attempt
-    work = pb.WorkContext(session=attempt.context) if attempt else pb.WorkContext()
+    observed = control.status()
+    work = observed.work
     try:
         await write_emergency_report(
             Path(software_root),
             cause=cause,
             supervisor=pb.ProcessIdentity(
-                role="supervisor", generation=runtime.supervisor_generation
+                role="supervisor", generation=control.supervisor_generation
             ),
             controller=pb.ProcessIdentity(
-                role="controller", generation=runtime.generation
+                role="controller", generation=control.generation
             ),
             work=work,
             errors=[
@@ -233,9 +247,7 @@ async def handle_authority_loss(
             timeout_ns=min(
                 startup.emergency_timeout_ns, max(1, outer_deadline - host_time_ns())
             ),
-            spikeglx_stop_unconfirmed=bool(
-                attempt and attempt.paired and not attempt.spikeglx_stopped
-            ),
+            spikeglx_stop_unconfirmed=observed.spikeglx_stop_unconfirmed,
         )
     except Exception:
         # File I/O cannot block safety exit. The unfinished reservation is retained.
@@ -245,13 +257,13 @@ async def handle_authority_loss(
     async def request_exit(backend: GrpcBackendPort) -> None:
         request = svc.BackendCommand(
             command_id=str(uuid.uuid4()),
-            issuer=pb.ProcessIdentity(role="controller", generation=runtime.generation),
+            issuer=pb.ProcessIdentity(role="controller", generation=control.generation),
             target=backend.context,
             work=work,
         )
         try:
             await asyncio.wait_for(
-                backend.shutdown(request),
+                backend.shutdown(request, deadline_ns=graceful_deadline),
                 max(0, (graceful_deadline - host_time_ns()) / 1e9),
             )
         except Exception:

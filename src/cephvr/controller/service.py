@@ -3,51 +3,18 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
-from typing import cast
+from collections.abc import AsyncIterator, Mapping
 
 import grpc
-from google.protobuf.message import Message
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.runtime import ControllerRuntime
+from cephvr.controller.transport.admission import CommandAdmissionGate
+from cephvr.controller.transport.auth import ClientAuthentication
+from cephvr.controller.transport.ingress import BoundedReportIngress
 from cephvr.shared.auth import AuthenticationError, require_authenticated_peer
-from cephvr.shared.commands import CommandCapacityError, CommandConflict, CommandLedger
-from cephvr.shared.credentials import CredentialError, CredentialStore
-from cephvr.shared.ingress import BoundedEventIngress, IngressOverload
-
-ClientAuthentication = Callable[[str, str, str, object], Awaitable[None]]
-
-
-def credential_store_authentication(
-    store: CredentialStore, *, timeout_s: float = 2.0
-) -> ClientAuthentication:
-    """Resolve a bounded local credential outside the lifecycle state loop."""
-
-    async def authenticate(
-        client_id: str, controller_generation: str, peer: str, metadata: object
-    ) -> None:
-        if controller_generation != store.controller_generation:
-            raise AuthenticationError("controller generation mismatch")
-        try:
-            principal = await asyncio.wait_for(
-                asyncio.to_thread(store.lookup, client_id), timeout_s
-            )
-        except (TimeoutError, CredentialError, ValueError) as exc:
-            raise AuthenticationError("operator credential unavailable") from exc
-        if principal is None:
-            raise AuthenticationError("operator credential missing")
-        require_authenticated_peer(
-            peer,
-            cast(list[tuple[str, str]], metadata),
-            expected_role=principal.role,
-            expected_generation=principal.generation,
-            expected_token=principal.token,
-        )
-
-    return authenticate
 
 
 class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
@@ -67,354 +34,24 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self.runtime = runtime
         self.client_authentication = client_authentication
         self.peer_tokens = dict(peer_tokens)
-        self._ledger = CommandLedger(
-            runtime.generation,
-            command_retention_ns,
-            max_records=max_pending_events,
-            max_bytes=max_pending_payload_bytes,
-            result_reservation_bytes=4096,
+        self._commands = CommandAdmissionGate(
+            runtime,
+            max_pending_events=max_pending_events,
+            max_pending_payload_bytes=max_pending_payload_bytes,
+            command_retention_ns=command_retention_ns,
         )
-        self._abort_ledger = CommandLedger(
-            runtime.generation,
-            command_retention_ns,
-            max_records=8,
-            max_bytes=65_536,
-            result_reservation_bytes=4096,
+        runtime.bind_camera_status_retention(self._commands.retention_ledger)
+        self._reports = BoundedReportIngress(
+            runtime,
+            max_pending_events=max_pending_events,
+            max_pending_payload_bytes=max_pending_payload_bytes,
+            max_message_bytes=max_message_bytes,
         )
-        self._shutdown_ledger = CommandLedger(
-            runtime.generation,
-            command_retention_ns,
-            max_records=8,
-            max_bytes=65_536,
-            result_reservation_bytes=4096,
-        )
-        self._pending_commands: dict[str, asyncio.Future[pb.CommandAdmission]] = {}
-        self._command_tasks: set[asyncio.Task[None]] = set()
-        self._closed = False
-        self._setup_work_key: str | None = None
-        self._session_work_key: str | None = None
-        self._camera_work_keys: set[str] = set()
-        self._ingress: BoundedEventIngress[
-            tuple[str, object, int, asyncio.Future[pb.ReportReceipt]]
-        ] = BoundedEventIngress(
-            max_pending_events,
-            max_pending_payload_bytes,
-            max_interruption_payload_bytes=max_message_bytes,
-        )
-        self._ingress_event = asyncio.Event()
-        self._active_report_future: asyncio.Future[pb.ReportReceipt] | None = None
-        self._event_task = asyncio.create_task(self._drain_ingress())
-        self._ledger_task = asyncio.create_task(self._ledger_housekeeping())
-
-    async def _ledger_housekeeping(self) -> None:
-        while True:
-            await asyncio.sleep(1)
-            self._retire_clean_work()
-            for key in tuple(self._camera_work_keys):
-                operation = self.runtime._operations.get(key)
-                if operation is not None and operation.complete:
-                    self._ledger.finalize_work(key, self.runtime.clock())
-                    self._camera_work_keys.discard(key)
-            self._ledger.prune(self.runtime.clock())
-            self._abort_ledger.prune(self.runtime.clock())
-            self._shutdown_ledger.prune(self.runtime.clock())
-
-    def _retire_clean_work(self) -> None:
-        if (
-            not self.runtime.session.cleanup_confirmed
-            or self.runtime.session.phase
-            not in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_ENDED)
-        ):
-            return
-        for key in (self._setup_work_key, self._session_work_key):
-            if key is not None:
-                try:
-                    self._ledger.finalize_work(key, self.runtime.clock())
-                except ValueError:
-                    pass
-                for ledger in (self._abort_ledger, self._shutdown_ledger):
-                    try:
-                        ledger.finalize_work(key, self.runtime.clock())
-                    except ValueError:
-                        pass
-        self._setup_work_key = None
-        self._session_work_key = None
-
-    async def _command(
-        self,
-        name: str,
-        command_id: str,
-        request: Message,
-        action: Callable[[], Awaitable[pb.CommandAdmission]],
-    ) -> pb.CommandAdmission:
-        if self._closed:
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(
-                    code="SHUTDOWN", message="controller service is closing"
-                ),
-            )
-        canonical = (
-            name.encode() + b"\0" + request.SerializeToString(deterministic=True)
-        )
-        ledger = (
-            self._abort_ledger
-            if name == "AbortNow"
-            else self._shutdown_ledger
-            if name == "ShutdownApplication"
-            else self._ledger
-        )
-        other_ledgers = tuple(
-            other
-            for other in (self._ledger, self._abort_ledger, self._shutdown_ledger)
-            if other is not ledger
-        )
-        synchronous = name in {
-            "AcquireControl",
-            "TakeOverControl",
-            "ReleaseControl",
-            "UpdateConfiguration",
-            "RespondToPrompt",
-            "SaveConfigurationHistory",
-            "NewSession",
-        }
-        work_key = (
-            command_id
-            if synchronous
-            or name in {"Setup", "ExecuteCameraCommand"}
-            or self.runtime.attempt is None
-            else self.runtime.attempt.context.session_id
-        )
-        try:
-            if any(other.get(command_id) is not None for other in other_ledgers):
-                raise CommandConflict(
-                    "command ID already belongs to another admission lane"
-                )
-            admission = ledger.admit(
-                command_id, canonical, self.runtime.clock(), work_key=work_key
-            )
-        except (ValueError, CommandConflict, CommandCapacityError) as exc:
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(code="ADMISSION", message=str(exc)),
-            )
-        if admission.replayed:
-            if admission.record.result is not None:
-                return pb.CommandAdmission.FromString(admission.record.result)
-            pending = self._pending_commands.get(command_id)
-            if pending is not None:
-                return await asyncio.shield(pending)
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(
-                    code="PENDING", message="matching command admission is pending"
-                ),
-            )
-        future: asyncio.Future[pb.CommandAdmission] = (
-            asyncio.get_running_loop().create_future()
-        )
-        self._pending_commands[command_id] = future
-        task = asyncio.create_task(
-            self._execute_command(
-                ledger, name, command_id, work_key, synchronous, action, future
-            )
-        )
-        self._command_tasks.add(task)
-        task.add_done_callback(self._command_tasks.discard)
-        return await asyncio.shield(future)
-
-    async def _execute_command(
-        self,
-        ledger: CommandLedger,
-        name: str,
-        command_id: str,
-        work_key: str,
-        synchronous: bool,
-        action: Callable[[], Awaitable[pb.CommandAdmission]],
-        future: asyncio.Future[pb.CommandAdmission],
-    ) -> None:
-        try:
-            result = await action()
-            ledger.complete(
-                command_id,
-                result.SerializeToString(deterministic=True),
-                self.runtime.clock(),
-            )
-            if synchronous or result.result == pb.COMMAND_RESULT_REJECTED:
-                ledger.finalize_work(work_key, self.runtime.clock())
-            elif name == "Setup":
-                self._setup_work_key = work_key
-                if self.runtime.attempt is not None:
-                    self._session_work_key = self.runtime.attempt.context.session_id
-            elif name == "ExecuteCameraCommand":
-                self._camera_work_keys.add(work_key)
-            elif self.runtime.attempt is not None:
-                self._session_work_key = self.runtime.attempt.context.session_id
-            if name == "NewSession" and result.result == pb.COMMAND_RESULT_ACCEPTED:
-                self._retire_clean_work()
-            if not future.done():
-                future.set_result(result)
-        except asyncio.CancelledError:
-            result = pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(
-                    code="SHUTDOWN",
-                    message="controller service closed before admission completed",
-                ),
-            )
-            ledger.complete(
-                command_id,
-                result.SerializeToString(deterministic=True),
-                self.runtime.clock(),
-            )
-            ledger.finalize_work(work_key, self.runtime.clock())
-            if not future.done():
-                future.set_result(result)
-            raise
-        except Exception as exc:
-            result = pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(code="INTERNAL", message=str(exc)),
-            )
-            ledger.complete(
-                command_id,
-                result.SerializeToString(deterministic=True),
-                self.runtime.clock(),
-            )
-            ledger.finalize_work(work_key, self.runtime.clock())
-            if not future.done():
-                future.set_result(result)
-        finally:
-            self._pending_commands.pop(command_id, None)
-
-    async def _drain_ingress(self) -> None:
-        while True:
-            await self._ingress_event.wait()
-            while (item := self._ingress.take()) is not None:
-                kind, request, ingress_ns, future = item.event
-                self._active_report_future = future
-                try:
-                    if kind == "lifecycle":
-                        result = await self.runtime.report_lifecycle(
-                            cast(pb.LifecycleReport, request), ingress_ns
-                        )
-                    elif kind == "preparation":
-                        result = await self.runtime.report_data_preparation(
-                            cast(svc.DataPreparationReport, request), ingress_ns
-                        )
-                    elif kind == "resolution":
-                        result = await self.runtime.report_acquisition_resolution(
-                            cast(svc.AcquisitionResolutionReport, request), ingress_ns
-                        )
-                    elif kind.startswith("projection:"):
-                        result = await self.runtime.report_projection(
-                            kind.removeprefix("projection:"),
-                            cast(Message, request),
-                            ingress_ns,
-                        )
-                    else:
-                        result = await self.runtime.report_interruption(
-                            cast(svc.InterruptionReport, request)
-                        )
-                except Exception as exc:
-                    result = pb.ReportReceipt(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(code="INTERNAL", message=str(exc)),
-                    )
-                if not future.done():
-                    future.set_result(result)
-                self._active_report_future = None
-            self._ingress_event.clear()
-
-    async def _enqueue_report(
-        self, kind: str, request: Message, ingress_ns: int
-    ) -> pb.ReportReceipt:
-        if self._closed:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="SHUTDOWN", message="controller service is closing"
-                ),
-            )
-        future: asyncio.Future[pb.ReportReceipt] = (
-            asyncio.get_running_loop().create_future()
-        )
-        serialized = request.SerializeToString(deterministic=True)
-        try:
-            if kind == "interruption":
-                fresh = self._ingress.put_interruption(
-                    serialized, (kind, request, ingress_ns, future)
-                )
-                if not fresh:
-                    return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
-            else:
-                accepted = self._ingress.put(
-                    serialized,
-                    (kind, request, ingress_ns, future),
-                    essential=kind in {"lifecycle", "preparation", "resolution"},
-                    ingress_ns=ingress_ns,
-                )
-                if not accepted:
-                    return pb.ReportReceipt(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(
-                            code="OVERLOAD", message="controller report ingress full"
-                        ),
-                    )
-        except IngressOverload as exc:
-            if self.runtime.attempt is not None:
-                self.runtime._spawn(
-                    self.runtime._interrupt(
-                        self.runtime.attempt,
-                        f"essential controller ingress exhausted: {exc}",
-                    )
-                )
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(code="OVERLOAD", message=str(exc)),
-            )
-        self._ingress_event.set()
-        return await future
 
     async def aclose(self) -> None:
-        if self._closed:
-            return
-        self._closed = True
-        closing = pb.ReportReceipt(
-            result=pb.COMMAND_RESULT_REJECTED,
-            failure=pb.Failure(
-                code="SHUTDOWN",
-                message="controller service closed before report processing",
-            ),
-        )
-        while (item := self._ingress.take()) is not None:
-            future = item.event[3]
-            if not future.done():
-                future.set_result(closing)
-        if (
-            self._active_report_future is not None
-            and not self._active_report_future.done()
-        ):
-            self._active_report_future.set_result(closing)
-        tasks = (self._event_task, self._ledger_task, *tuple(self._command_tasks))
-        for task in tasks:
-            task.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
-        for pending_command in self._pending_commands.values():
-            if not pending_command.done():
-                pending_command.set_result(
-                    pb.CommandAdmission(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(
-                            code="SHUTDOWN", message="controller service closed"
-                        ),
-                    )
-                )
+        self._commands.stop_accepting()
+        self._reports.stop_accepting()
+        await asyncio.gather(self._reports.aclose(), self._commands.aclose())
 
     async def _client(self, context: grpc.aio.ServicerContext, client_id: str) -> None:
         if not client_id:
@@ -477,7 +114,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.ControlClaim, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "AcquireControl",
             request.command_id,
             request,
@@ -488,7 +125,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.ControlClaim, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "TakeOverControl",
             request.command_id,
             request,
@@ -499,7 +136,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "ReleaseControl",
             request.operator.command_id,
             request,
@@ -510,7 +147,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.UpdateConfigurationRequest, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.command.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "UpdateConfiguration",
             request.command.operator.command_id,
             request,
@@ -521,7 +158,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "Setup",
             request.operator.command_id,
             request,
@@ -532,7 +169,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "CancelSetup",
             request.operator.command_id,
             request,
@@ -543,7 +180,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "StartSession",
             request.operator.command_id,
             request,
@@ -554,7 +191,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "StopAfterTrial",
             request.operator.command_id,
             request,
@@ -565,7 +202,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "CancelStopAfterTrial",
             request.operator.command_id,
             request,
@@ -577,7 +214,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
         try:
-            fresh = self._abort_ledger.get(request.operator.command_id) is None
+            fresh = self._commands.fresh("AbortNow", request.operator.command_id)
         except ValueError as exc:
             return pb.CommandAdmission(
                 result=pb.COMMAND_RESULT_REJECTED,
@@ -585,22 +222,14 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
                 failure=pb.Failure(code="ADMISSION", message=str(exc)),
             )
         if fresh:
-            async with self.runtime._lock:
-                error = self.runtime._authorized(request, safety="abort")
-                if (
-                    error
-                    or self.runtime.attempt is None
-                    or self.runtime.session.phase
-                    not in (pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING)
-                ):
-                    return pb.CommandAdmission(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        command_id=request.operator.command_id,
-                        failure=pb.Failure(
-                            code="PRECONDITION", message=error or "Abort unavailable"
-                        ),
-                    )
-        return await self._command(
+            error = await self.runtime.safety_command_precondition(request, "abort")
+            if error:
+                return pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_REJECTED,
+                    command_id=request.operator.command_id,
+                    failure=pb.Failure(code="PRECONDITION", message=error),
+                )
+        return await self._commands.admit(
             "AbortNow",
             request.operator.command_id,
             request,
@@ -611,7 +240,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "NewSession",
             request.operator.command_id,
             request,
@@ -642,14 +271,14 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
                 payload.context.backend.backend_generation,
             )
         await self._peer(context, role, generation)
-        return await self._enqueue_report("lifecycle", request, ingress_ns)
+        return await self._reports.enqueue("lifecycle", request, ingress_ns)
 
     async def ReportInterruption(
         self, request: svc.InterruptionReport, context: grpc.aio.ServicerContext
     ) -> pb.ReportReceipt:
         ingress_ns = self.runtime.clock()
         await self._peer(context, "supervisor", request.supervisor.generation)
-        return await self._enqueue_report("interruption", request, ingress_ns)
+        return await self._reports.enqueue("interruption", request, ingress_ns)
 
     async def ReportHeartbeat(
         self, request: pb.HeartbeatReport, context: grpc.aio.ServicerContext
@@ -669,7 +298,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.PromptResponse, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.command.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "RespondToPrompt",
             request.command.operator.command_id,
             request,
@@ -680,7 +309,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "SaveConfigurationHistory",
             request.operator.command_id,
             request,
@@ -692,7 +321,9 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
         try:
-            fresh = self._shutdown_ledger.get(request.operator.command_id) is None
+            fresh = self._commands.fresh(
+                "ShutdownApplication", request.operator.command_id
+            )
         except ValueError as exc:
             return pb.CommandAdmission(
                 result=pb.COMMAND_RESULT_REJECTED,
@@ -700,18 +331,14 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
                 failure=pb.Failure(code="ADMISSION", message=str(exc)),
             )
         if fresh:
-            async with self.runtime._lock:
-                error = self.runtime._authorized(request, safety="shutdown")
-                if error or self.runtime.session.shutdown_requested:
-                    return pb.CommandAdmission(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        command_id=request.operator.command_id,
-                        failure=pb.Failure(
-                            code="PRECONDITION",
-                            message=error or "shutdown already requested",
-                        ),
-                    )
-        return await self._command(
+            error = await self.runtime.safety_command_precondition(request, "shutdown")
+            if error:
+                return pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_REJECTED,
+                    command_id=request.operator.command_id,
+                    failure=pb.Failure(code="PRECONDITION", message=error),
+                )
+        return await self._commands.admit(
             "ShutdownApplication",
             request.operator.command_id,
             request,
@@ -727,7 +354,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             request.source.backend.backend_name,
             request.source.backend.backend_generation,
         )
-        return await self._enqueue_report("preparation", request, ingress_ns)
+        return await self._reports.enqueue("preparation", request, ingress_ns)
 
     async def ReportVRDisplay(
         self, request: pb.VRDisplayView, context: grpc.aio.ServicerContext
@@ -735,7 +362,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         await self._peer(
             context, request.backend.backend_name, request.backend.backend_generation
         )
-        return await self._enqueue_report(
+        return await self._reports.enqueue(
             "projection:display", request, self.runtime.clock()
         )
 
@@ -743,7 +370,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.CameraCommandRequest, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.command.operator.client_id)
-        return await self._command(
+        return await self._commands.admit(
             "ExecuteCameraCommand",
             request.command.operator.command_id,
             request,
@@ -762,7 +389,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         await self._peer(
             context, request.source.backend_name, request.source.backend_generation
         )
-        return await self._enqueue_report(
+        return await self._reports.enqueue(
             "projection:preview", request, self.runtime.clock()
         )
 
@@ -780,7 +407,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         await self._peer(
             context, request.source.backend_name, request.source.backend_generation
         )
-        return await self._enqueue_report("resolution", request, self.runtime.clock())
+        return await self._reports.enqueue("resolution", request, self.runtime.clock())
 
     async def ReportAcquisitionDeviceStatus(
         self,
@@ -792,7 +419,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             request.views.source.backend_name,
             request.views.source.backend_generation,
         )
-        return await self._enqueue_report(
+        return await self._reports.enqueue(
             "projection:devices", request, self.runtime.clock()
         )
 
@@ -802,7 +429,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         await self._peer(
             context, request.source.backend_name, request.source.backend_generation
         )
-        return await self._enqueue_report(
+        return await self._reports.enqueue(
             "projection:warnings", request, self.runtime.clock()
         )
 

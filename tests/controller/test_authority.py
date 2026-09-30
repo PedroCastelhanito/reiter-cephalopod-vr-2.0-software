@@ -47,7 +47,6 @@ class NativeEvidence:
             ]
 
 
-@pytest.mark.asyncio
 async def test_descendants_are_retained_and_exited_before_gui_group() -> None:
     now = 1_000
     sleeps = []
@@ -76,7 +75,6 @@ async def test_descendants_are_retained_and_exited_before_gui_group() -> None:
     assert now == 10_000_001_000
 
 
-@pytest.mark.asyncio
 async def test_unknown_membership_never_becomes_verified_absence_or_unbounded_wait() -> (
     None
 ):

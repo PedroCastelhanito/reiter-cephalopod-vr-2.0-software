@@ -74,5 +74,21 @@ preparation, and invokes existing cancellation/cleanup on participants already i
 A late successful attachment is evidence of an existing cleanup obligation, not permission
 to restore Ready. Acquisition keeps allocation ownership until matching consumer release
 or confirmed process exit under the native-resource contract; it never frees a mapping
-merely because Setup was cancelled. Controller/supervisor resource obligations and E06
-blocked-cleanup behavior remain authoritative. No lifecycle budget is renewed by a handoff.
+merely because Setup was cancelled.
+
+`TrackingInputConfirmation` carries exactly one of its original `tracking_evidence`
+attachment report or its optional `tracking_cleanup` report. Only the controller may
+confirm attachment. Controller or supervisor may forward a tracking Cleanup report
+unchanged after its existing E08 identity, operation, resource-catalogue and release
+validation succeeds. The release branch binds the exact session, registered tracking
+generation and input resource to acquisition’s retained original configuration revision
+and attachment. The supervisor leaves the envelope configuration revision unset; it
+does not own a second copy of acquisition configuration. Acquisition accepts
+release only when that resource is explicitly released; missing, conflicting or unrelated
+evidence cannot discharge the registered transfer. It retains the release idempotently
+and wakes pending cleanup, even after preparation is retired. No new allocation, camera
+operation or execution authority follows from this confirmation.
+
+Controller/supervisor resource obligations and E06 blocked-cleanup behavior remain
+authoritative. Pending cancellation/cleanup keeps its original deadline; forwarding or
+receiving late release evidence never turns missed timely completion into success.

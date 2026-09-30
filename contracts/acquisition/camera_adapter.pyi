@@ -7,6 +7,7 @@ SDK operations and source metadata extraction/conversion. See README for gaps.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Callable
 from typing import Literal, Protocol
 
 CameraRole = Literal["behavioral", "tracking"]
@@ -169,15 +170,25 @@ class PixelLayout:
     image_payload_bytes: int
 
 class SettingAdjustment(Protocol):
-    field: str
-    requested_display: str
-    actual_display: str
+    @property
+    def field(self) -> str: ...
+
+    @property
+    def requested_display(self) -> str: ...
+
+    @property
+    def actual_display(self) -> str: ...
     # Display text explains a warning; actual settings stay typed in CameraSettings.
 
 class SettingsReadback(Protocol):
-    actual: CameraSettings
-    adjustments: tuple[SettingAdjustment, ...]
-    effective_exposure_us: float | None  # Read-only diagnostic, not writable setpoint.
+    @property
+    def actual(self) -> CameraSettings: ...
+
+    @property
+    def adjustments(self) -> tuple[SettingAdjustment, ...]: ...
+
+    @property
+    def effective_exposure_us(self) -> float | None: ...
     # Warn/accept actual before locking; revalidate dependent consumers before Ready.
 
 @dataclass(frozen=True)
@@ -249,6 +260,7 @@ class CameraAdapter(Protocol):
     # Failure (including partial application) raises; no automatic hardware rollback.
     # Owner keeps capture/pulses stopped and reports diagnostic readback if available.
     def read_settings(self) -> CameraSettings: ...
+    def read_frame_timing(self) -> FrameTiming: ...
     # Readback can resolve missing features; controller adopts/publishes/logs values.
     # Readback after failure is actual-state evidence, not application success.
     # Before each trial, read back pixel format, dimensions, trigger mode, exposure
@@ -269,9 +281,20 @@ class CameraAdapter(Protocol):
     # Resolve after applying settings, before buffer preparation/Ready. A changed
     # layout requires re-preparation; never resize/reinterpret active session rings.
     def configure_capture(self, timing: FrameTiming, sdk_buffer_count: int) -> None: ...
+    # Stop device generation while keeping ordered result retrieval active. False
+    # means this model exposes no accepted terminal-generation command.
+    def begin_terminal_drain(self) -> bool: ...
+    # Call only after generation is terminal and the exact prepared delivery margin
+    # elapsed while the worker retrieved all signaled results.
+    def confirm_drain_margin(self) -> None: ...
     # Ordered delivery with Basler GrabLoop_ProvidedByUser (A02).
     # Worker owns retrieval; do not enable the SDK's callback/grab-loop thread.
-    def purge_stale_frames(self, deadline_monotonic_ns: int) -> PurgeEvidence: ...
+    def purge_stale_frames(
+        self,
+        deadline_monotonic_ns: int,
+        *,
+        should_continue_drain: Callable[[], bool],
+    ) -> PurgeEvidence: ...
     def arm_external_trigger(self) -> None: ...
     def start_free_running(self) -> None: ...
     def wait_for_frame_or_control(self, timeout_ns: int) -> Literal["frame", "control", "timeout"]: ...
@@ -288,7 +311,12 @@ class CameraAdapter(Protocol):
     # Unshifted time.perf_counter_ns domain; see ../host-clock.md.
     # Report implicit SDK discards as well; do not silently flush trial evidence.
     # Stop/drain separation and bounded completion are SDK/rig verification obligations.
-    def stop_capture(self, deadline_monotonic_ns: int) -> PurgeEvidence: ...
+    def stop_capture(
+        self,
+        deadline_monotonic_ns: int,
+        *,
+        should_continue_drain: Callable[[], bool],
+    ) -> PurgeEvidence: ...
     def close(self) -> None: ...
 
 @dataclass(frozen=True)

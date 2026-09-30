@@ -5,7 +5,9 @@ Governing decisions: [A02/A03/A10](../../docs/architecture/acquisition.md),
 [E06/E08](../../docs/architecture/system-contracts.md).
 [Messages](../cephvr/acquisition/v1/messages.proto) and
 [services](../cephvr/acquisition/v1/services.proto) define the wire types.
-These are contracts, not implemented servers or verified deadline guarantees.
+These contracts define server behavior, not verified deadline guarantees. See the
+[implementation review](../../reports/acquisition-implementation-review.md) for
+implementation and validation status.
 
 ## Endpoints and direction
 
@@ -47,6 +49,13 @@ supervisor safety commands remain independently reachable. Workers never command
 report to each other; capture-to-recording handoff is in-process. Session-independent
 shutdown and Configuration device operations may omit work, never process identity.
 Read-only queries may address retained ended work; they never reactivate it.
+
+The registered process roles are `acquisition_behavioral_worker` and
+`acquisition_tracking_worker`, mapped explicitly to their respective CameraRole
+values. Require agreement with WorkerContext.camera. The supervisor uses the
+registered launch's child/owner identities and confirmed endpoint, with the
+applicable registered work belonging to that launch session, for direct worker
+access; it never discovers a worker by process name or substitutes a peer.
 
 A child command has one ID and an optional parent command reference. Acceptance
 means ownership of a canonical request, not completed device work. Return the same

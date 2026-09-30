@@ -1,4 +1,4 @@
-"""E04 independent emergency evidence never guesses external stop state."""
+"""Bounded emergency reports preserve failure evidence and ownership."""
 
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ from uuid import uuid4
 import pytest
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.emergency import write_emergency_report
 
 
-@pytest.mark.asyncio
 async def test_explicit_stop_uncertainty_and_byte_bound(tmp_path: Path) -> None:
     supervisor = pb.ProcessIdentity(role="supervisor", generation=str(uuid4()))
     controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
@@ -43,7 +43,6 @@ async def test_explicit_stop_uncertainty_and_byte_bound(tmp_path: Path) -> None:
         )
 
 
-@pytest.mark.asyncio
 async def test_slow_disk_does_not_hold_event_loop_or_default_executor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -77,3 +76,34 @@ async def test_slow_disk_does_not_hold_event_loop_or_default_executor(
         await asyncio.wait_for(asyncio.sleep(0), timeout=0.1)
     finally:
         release.set()
+
+
+async def test_huge_failure_message_is_truncated_not_dropped(tmp_path: Path) -> None:
+    supervisor = types.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+    controller = types.ProcessIdentity(role="controller", generation=str(uuid4()))
+    errors = [
+        types.ErrorReport(
+            error_id=str(uuid4()),
+            source=types.ProcessIdentity(role="vr", generation=str(uuid4())),
+            failure=types.Failure(code=f"CODE_{index}", message="x" * 2_000_000),
+        )
+        for index in range(3)
+    ]
+    path = await write_emergency_report(
+        tmp_path,
+        cause="CONTROLLER_LOST",
+        supervisor=supervisor,
+        controller=controller,
+        work=types.WorkContext(session=types.SessionContext(session_id=str(uuid4()))),
+        errors=errors,
+        spikeglx_stop_unconfirmed=False,
+    )
+    assert path.stat().st_size <= 1_048_576
+    document = json.loads(path.read_text())
+    assert [item["code"] for item in document["errors"]] == [
+        "CODE_0",
+        "CODE_1",
+        "CODE_2",
+    ]
+    assert all("[truncated " in item["message"] for item in document["errors"])
+    assert document["work"]

@@ -56,7 +56,6 @@ def test_views_do_not_alias_transport_messages() -> None:
     assert views.current.configuration_values.current.subject == "subject"
 
 
-@pytest.mark.asyncio
 async def test_confirmed_command_survives_subsequent_stream_failure() -> None:
     # A terminal view can arrive immediately before process shutdown. Its exact
     # retained result remains evidence even when the subsequent read fails.

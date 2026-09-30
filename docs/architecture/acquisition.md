@@ -15,10 +15,10 @@ Configuration: [acquisition_config.toml](../../config/backends/acquisition_confi
 ## Implementation scope
 
 The [acquisition contract index and worklist](../../contracts/acquisition/README.md)
-is the single status list for declared contracts, hardware inputs, later implementation
-and explicit rig deferrals. The audited local declaration gaps are bound; runtime
-implementation is not delivered. Manual preview is Configuration-only; session
-preview is rate-capped (A03).
+is the single worklist for declared contracts, hardware inputs and explicit rig
+deferrals. Host code acceptance and static results belong in the
+[implementation review](../../reports/acquisition-implementation-review.md).
+Manual preview is Configuration-only; session preview is rate-capped (A03).
 Hardware inputs and explicitly deferred rig checks remain pending; accepted design
 is not runtime or rig validation (E15).
 
@@ -27,7 +27,7 @@ is not runtime or rig validation (E15).
 <a id="a01"></a>
 ### A01 — Camera acquisition and recording ownership
 
-**Status:** Accepted · **Revision:** 15
+**Status:** Accepted · **Revision:** 16
 
 - The acquisition backend owns camera capture, video encoding and camera video files,
   including trial-bound recording and verified file closure under E05/E11. The
@@ -58,7 +58,10 @@ is not runtime or rig validation (E15).
   exclusively in the capture adapter. Use the Basler SDK converter through it for
   supported native recording and preview conversions and reuse that binding for
   identical tracking preparation. No second unpacking/demosaicing provider or silent
-  fallback.
+  fallback. The pinned Python binding's SDK-owned conversion result is checked,
+  copied into consumer-owned preallocated storage and released under the
+  [SDK mapping](../../contracts/acquisition/sdk-mappings.md); A03's SDK-internal
+  allocation exception remains unchanged.
 - Prepared original-depth images use MSB alignment in wider containers, retaining
   declared source depth; unchanged native pixels keep their own alignment. Preview
   scales the interpreted source range. Skip conversion only when the complete
@@ -84,7 +87,7 @@ Remaining format mappings and integration are classified in the contract worklis
 <a id="a02"></a>
 ### A02 — Acquisition service and camera workers
 
-**Status:** Accepted · **Revision:** 26
+**Status:** Accepted · **Revision:** 29
 
 - One acquisition coordinator serves both camera roles through one external control
   endpoint; it aggregates readiness/closure and never relays pixels.
@@ -106,7 +109,9 @@ Remaining format mappings and integration are classified in the contract worklis
   Register the worker endpoint before importing/initializing SDKs.
 - Each Python worker has a private OS-assigned loopback gRPC endpoint, registered with
   its owner and supervisor before work. Both reach it independently under shared
-  authority/context/idempotency checks; never infer a replacement's endpoint.
+  authority/context/idempotency checks. The
+  [worker-control binding](../../contracts/acquisition/worker-control.md) maps its
+  registered process role to the exact camera; never infer a replacement's endpoint.
 - Camera worker endpoints expose a small dedicated worker service for preparation,
   scheduling/release, stop/interruption and cleanup/shutdown, reusing shared
   identities, command admission and lifecycle semantics. Only the coordinator exposes
@@ -116,9 +121,13 @@ Remaining format mappings and integration are classified in the contract worklis
   requires every required participant. Concurrency adds no timeout/retry allowance;
   shared devices keep one serialized owner; E06 governs failure/cancellation cleanup.
 - The coordinator pushes each worker's complete resolved Setup settings and required
-  resource descriptors, tied to the controller-approved configuration revision.
-  Workers validate payload/resources before Ready; no configuration-reference fetch,
-  independent TOML reload or settings from unrelated worker roles.
+  resource descriptors, tied to the controller-approved configuration revision,
+  together with that worker's exact E06 function declarations from the session plan.
+  The coordinator is the logical function owner; the registered camera worker is its
+  authorized reporter. Capture/recording dependency closures include all affected
+  reserved session output keys, including future trials. Workers validate and retain
+  these declarations before Ready; no inferred output keys, configuration-reference
+  fetch, independent TOML reload or settings from unrelated worker roles.
 - Per-trial preparation sends only that worker's new trial plan and the required
   confirmed configuration revision. Session settings are reused, but device/resource
   readiness and prior closure are rechecked before fresh Ready. Missing or mismatched
@@ -131,7 +140,8 @@ Remaining format mappings and integration are classified in the contract worklis
   receipt before copying; recording (own thread) and tracking (own process) never run
   in the capture thread. The
   [capture-wait binding](../../contracts/acquisition/capture-wait.md) owns wakeup,
-  deadline and compatibility mechanics; timeout alone is not frame-health failure.
+  deadline and compatibility mechanics, including control priority after the joint
+  wait; timeout alone is not frame-health failure.
 - Workers send heartbeats to their coordinator (aggregated into its supervisor
   heartbeat) and errors directly to the supervisor, under E08. Control/health threads
   stay separate from blocking data work; one data/lifecycle owner applies commands.
@@ -147,7 +157,7 @@ and verification remain in the
 <a id="a03"></a>
 ### A03 — Frame transfer between processes
 
-**Status:** Accepted · **Revision:** 30
+**Status:** Accepted · **Revision:** 31
 
 - Pixels reach other processes (tracking, preview viewers) through coordinator-owned
   host shared memory, never control gRPC. Inside a camera worker, capture hands frames
@@ -185,6 +195,9 @@ and verification remain in the
   memory and event by the unique per-allocation names in its prepared descriptor, for
   its exact registered process generation. Names alone do not authorize attachment;
   validate/confirm attachment before Ready and close partial attachments on failure.
+  Controller or supervisor forwards its validated tracking Cleanup report through
+  the existing protected handoff; acquisition matches the registered consumer, work
+  and input resource before accepting release. Cancellation alone is not release.
 - Preserve SDK-native pixel packing, row padding and bit depth. One immutable prepared
   descriptor defines dimensions, format, stride and payload size; verify every result
   before copying. Layout changes require re-preparation. Readers copy into private
@@ -378,7 +391,7 @@ tracking-reset/VR response contracts; these do not reopen acquisition drop polic
 <a id="a08"></a>
 ### A08 — Video encoding and container
 
-**Status:** Accepted · **Revision:** 47
+**Status:** Accepted · **Revision:** 48
 
 **Encoder lifecycle and input**
 
@@ -509,7 +522,10 @@ tracking-reset/VR response contracts; these do not reopen acquisition drop polic
 
 - Video is constant-rate at the nominal rate recorded in the frame-log header: the
   applied MCU rate for externally triggered cameras, or the resolved `frame_rate_hz`
-  for free-running ones. Video frame n is the nth non-dropped frame line, shown at
+  for free-running ones. The coordinator supplies its controller-confirmed typed MCU
+  observation in the private worker Setup payload for external-trigger saving;
+  missing or invalid applied-rate evidence blocks recording preparation.
+  Video frame n is the nth non-dropped frame line, shown at
   n / nominal rate. The video timeline is not a clock; real timing comes from the
   frame log (host receipt ns, native timestamp). Each drop shortens playback by one
   frame period. No duplicated or padded frames, retiming or invented origin.
@@ -629,8 +645,8 @@ stamping/filtering and the mappings still need runtime implementation.
 - Basler preview uses its SDK image converter through the common conversion module,
   with a converter owned by the preview consumer. The
   [SDK mapping contract](../../contracts/acquisition/sdk-mappings.md) defines binding
-  and format/edge handling; full-range scaling follows the pixel contract. Both
-  still require implementation and rig verification.
+  and format/edge handling; full-range scaling follows the pixel contract. Actual
+  device conversion and preview behavior require rig verification.
 - Preview converts color/Bayer to ordinary RGB and keeps monochrome grayscale, on
   private copies in the preview consumer; native pixels and recording/tracking
   conversion are unaffected. Output bit depth is configurable, default
@@ -939,5 +955,6 @@ hardware information and later implementation; no new deferral is implied.
 
 **Contract status:** the
 [MCU wire/error/readback and boundary scheduling](../../contracts/acquisition/microcontroller.md)
-contract is specified. Actual board/pin mapping awaits rig information; firmware and
-serial runtime remain unimplemented. See the acquisition worklist.
+contract is specified. Actual board/pin mapping awaits rig information; firmware
+implementation remains outside this host stage. Host implementation status belongs
+in the implementation review; serial and firmware behavior require rig verification.

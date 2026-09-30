@@ -15,8 +15,13 @@ class WindowsLaunchError(RuntimeError):
     pass
 
 
+class ProcessGoneError(WindowsLaunchError):
+    """The PID no longer names a process (ERROR_INVALID_PARAMETER on open)."""
+
+
 CREATE_SUSPENDED = 0x00000004
 EXTENDED_STARTUPINFO_PRESENT = 0x00080000
+STARTF_USESTDHANDLES = 0x00000100
 PROC_THREAD_ATTRIBUTE_HANDLE_LIST = 0x00020002
 PROC_THREAD_ATTRIBUTE_JOB_LIST = 0x0002000D
 JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
@@ -31,6 +36,8 @@ STILL_ACTIVE = 259
 WAIT_OBJECT_0 = 0
 WAIT_TIMEOUT = 0x102
 WAIT_FAILED = 0xFFFFFFFF
+ERROR_INVALID_PARAMETER = 87
+_INSPECTION_PASSES = 3
 
 
 class _STARTUPINFO(ctypes.Structure):
@@ -217,11 +224,12 @@ class WindowsJobs:
         api.CloseHandle.argtypes = [wintypes.HANDLE]
         api.CloseHandle.restype = wintypes.BOOL
 
+    def _last_error(self) -> int:
+        return ctypes.get_last_error()
+
     def _check(self, ok: object, label: str) -> None:
         if not ok:
-            raise WindowsLaunchError(
-                f"{label} failed: WinError {ctypes.get_last_error()}"
-            )
+            raise WindowsLaunchError(f"{label} failed: WinError {self._last_error()}")
 
     def create_launch_job(self, name: str) -> None:
         if name in self.jobs:
@@ -273,11 +281,24 @@ class WindowsJobs:
         arguments: list[str],
         job_names: list[str],
         inherited_handles: tuple[int, ...] = (),
+        *,
+        stdin_handle: int | None = None,
+        stdout_handle: int | None = None,
+        stderr_handle: int | None = None,
     ) -> SuspendedProcess:
         if not Path(executable).is_absolute() or not Path(executable).is_file():
             raise WindowsLaunchError("explicit installed executable path is required")
         if not job_names or any(name not in self.jobs for name in job_names):
             raise WindowsLaunchError("creation-time containment job is required")
+        standard_handles = (stdin_handle, stdout_handle, stderr_handle)
+        if any(handle is not None for handle in standard_handles):
+            if any(handle is None for handle in standard_handles):
+                raise WindowsLaunchError("all three standard handles must be supplied")
+            declared = set(inherited_handles)
+            if not set(standard_handles).issubset(declared):
+                raise WindowsLaunchError(
+                    "standard handles must be in the exact inherit list"
+                )
         count = 1 + bool(inherited_handles)
         size = ctypes.c_size_t()
         self.api.InitializeProcThreadAttributeList(None, count, 0, ctypes.byref(size))
@@ -324,6 +345,11 @@ class WindowsJobs:
             startup = _STARTUPINFOEX()
             startup.StartupInfo.cb = ctypes.sizeof(startup)
             startup.lpAttributeList = attr
+            if all(handle is not None for handle in standard_handles):
+                startup.StartupInfo.dwFlags |= STARTF_USESTDHANDLES
+                startup.StartupInfo.hStdInput = stdin_handle
+                startup.StartupInfo.hStdOutput = stdout_handle
+                startup.StartupInfo.hStdError = stderr_handle
             info = _PROCESS_INFORMATION()
             command = ctypes.create_unicode_buffer(
                 subprocess.list2cmdline([executable, *arguments])
@@ -386,6 +412,8 @@ class WindowsJobs:
             pid,
         )
         if not handle:
+            if self._last_error() == ERROR_INVALID_PARAMETER:
+                raise ProcessGoneError(f"PID {pid} has exited")
             raise WindowsLaunchError(f"cannot open PID {pid} for verification")
         try:
             actual_creation = self._creation_time(handle)
@@ -398,8 +426,22 @@ class WindowsJobs:
         return handle, True
 
     def inspect_launch_job(self, name: str) -> list[tuple[int, int, str]]:
+        """Members whose exact identity two consecutive enumerations agree on.
+
+        A member can exit between PID enumeration and OpenProcess; that is absence,
+        not an inspection failure. Any other error is persistent and raises.
+        """
         if name not in self.jobs:
             raise WindowsLaunchError("unknown retained job")
+        previous = self._enumerate_job(name)
+        for _ in range(_INSPECTION_PASSES - 1):
+            current = self._enumerate_job(name)
+            if current == previous:
+                break
+            previous = current
+        return previous
+
+    def _enumerate_job(self, name: str) -> list[tuple[int, int, str]]:
         capacity = 8
         while True:
             size = 8 + ctypes.sizeof(ctypes.c_size_t) * capacity
@@ -408,9 +450,9 @@ class WindowsJobs:
                 self.jobs[name], JOB_OBJECT_BASIC_PROCESS_ID_LIST, buf, size, None
             ):
                 break
-            if ctypes.get_last_error() != 234 or capacity >= 4096:
+            if self._last_error() != 234 or capacity >= 4096:
                 raise WindowsLaunchError(
-                    f"job enumeration failed: {ctypes.get_last_error()}"
+                    f"job enumeration failed: {self._last_error()}"
                 )
             capacity *= 2
         count = int.from_bytes(buf.raw[4:8], "little")
@@ -424,29 +466,69 @@ class WindowsJobs:
             handle = self.api.OpenProcess(
                 PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, False, pid
             )
-            self._check(handle, "OpenProcess")
+            if not handle:
+                if self._last_error() == ERROR_INVALID_PARAMETER:
+                    continue  # exited since enumeration
+                self._check(handle, "OpenProcess")
             try:
-                created = self._creation_time(handle)
-                path_buf = ctypes.create_unicode_buffer(32768)
-                path_size = wintypes.DWORD(len(path_buf))
-                self._check(
-                    self.api.QueryFullProcessImageNameW(
-                        handle, 0, path_buf, ctypes.byref(path_size)
-                    ),
-                    "QueryFullProcessImageNameW",
-                )
-                result.append((pid, created, str(Path(path_buf.value).resolve())))
+                member = self._member(handle, pid)
             finally:
                 self.api.CloseHandle(handle)
+            if member is not None:
+                result.append(member)
         return result
 
+    def _member(self, handle: int, pid: int) -> tuple[int, int, str] | None:
+        """Identity of an open process, or None when it has exited meanwhile."""
+        try:
+            created = self._creation_time(handle)
+            path_buf = ctypes.create_unicode_buffer(32768)
+            path_size = wintypes.DWORD(len(path_buf))
+            self._check(
+                self.api.QueryFullProcessImageNameW(
+                    handle, 0, path_buf, ctypes.byref(path_size)
+                ),
+                "QueryFullProcessImageNameW",
+            )
+        except WindowsLaunchError:
+            if self._exited(handle):
+                return None
+            raise
+        return pid, created, str(Path(path_buf.value).resolve())
+
+    def _exited(self, handle: int) -> bool:
+        return bool(self.api.WaitForSingleObject(handle, 0) == WAIT_OBJECT_0)
+
     def process_running(self, pid: int, creation_time_100ns: int) -> bool:
-        handle, temporary = self._open_exact(pid, creation_time_100ns)
+        try:
+            handle, temporary = self._open_exact(pid, creation_time_100ns)
+        except ProcessGoneError:
+            return False
         try:
             observation = self.api.WaitForSingleObject(handle, 0)
             if observation == WAIT_TIMEOUT:
                 return True
             if observation == WAIT_OBJECT_0:
+                return False
+            raise WindowsLaunchError(
+                f"WaitForSingleObject failed: {ctypes.get_last_error()}"
+            )
+        finally:
+            if temporary:
+                self.api.CloseHandle(handle)
+
+    def wait_process_exit(
+        self, pid: int, creation_time_100ns: int, timeout_ms: int
+    ) -> bool:
+        """Wait once on the exact process object; never poll or trust PID reuse."""
+        if timeout_ms < 0 or timeout_ms > 0xFFFFFFFE:
+            raise WindowsLaunchError("process wait timeout exceeds Win32 bounds")
+        handle, temporary = self._open_exact(pid, creation_time_100ns)
+        try:
+            observation = self.api.WaitForSingleObject(handle, timeout_ms)
+            if observation == WAIT_OBJECT_0:
+                return True
+            if observation == WAIT_TIMEOUT:
                 return False
             raise WindowsLaunchError(
                 f"WaitForSingleObject failed: {ctypes.get_last_error()}"
@@ -490,9 +572,14 @@ class WindowsJobs:
         child.thread_handle = 0
 
     def terminate_exact(self, pid: int, creation_time_100ns: int) -> None:
-        handle, temporary = self._open_exact(pid, creation_time_100ns)
+        """Terminate the exact process; one that already exited counts as absent."""
         try:
-            self._check(self.api.TerminateProcess(handle, 1), "TerminateProcess")
+            handle, temporary = self._open_exact(pid, creation_time_100ns)
+        except ProcessGoneError:
+            return
+        try:
+            if not self.api.TerminateProcess(handle, 1) and not self._exited(handle):
+                self._check(False, "TerminateProcess")
         finally:
             if temporary:
                 self.api.CloseHandle(handle)
@@ -503,11 +590,23 @@ class WindowsJobs:
         )
 
     def close_launch_job(self, name: str) -> None:
-        self.api.CloseHandle(self.jobs.pop(name))
+        handle = self.jobs.get(name)
+        if handle is None:
+            return
+        self._check(self.api.CloseHandle(handle), "CloseHandle(launch job)")
+        self.jobs.pop(name, None)
 
     def release_process(self, pid: int, creation_time_100ns: int) -> None:
-        process = self.processes.pop((pid, creation_time_100ns), None)
+        key = (pid, creation_time_100ns)
+        process = self.processes.get(key)
         if process is not None:
             if process.thread_handle:
-                self.api.CloseHandle(process.thread_handle)
-            self.api.CloseHandle(process.process_handle)
+                self._check(
+                    self.api.CloseHandle(process.thread_handle),
+                    "CloseHandle(process thread)",
+                )
+                process.thread_handle = 0
+            self._check(
+                self.api.CloseHandle(process.process_handle), "CloseHandle(process)"
+            )
+            self.processes.pop(key, None)

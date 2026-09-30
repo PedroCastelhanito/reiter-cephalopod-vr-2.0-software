@@ -3,7 +3,8 @@
 Governing decisions: [A04/A07/A09/A10](../../docs/architecture/acquisition.md),
 [E04](../../docs/architecture/supervisor.md#e04) and
 [E06/E08](../../docs/architecture/system-contracts.md). These are declaration bindings;
-no diagnostics producer, aggregation runtime or logging implementation is supplied.
+implementation and verification status belong in the
+[implementation review](../../reports/acquisition-implementation-review.md).
 
 ## Stable catalogue
 

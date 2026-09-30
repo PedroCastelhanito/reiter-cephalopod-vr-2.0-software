@@ -47,9 +47,16 @@ class ApplicationExitReceipt:
     observed_monotonic_ns: int
     all_owned_processes_absent: bool
     format_version: Literal[1] = 1
+    # Diagnostic only: why the launcher retired the controller channel, if it did.
+    controller_channel_loss: str = ""
 
     def __post_init__(self) -> None:
         require_uuid4(self.controller_generation)
+        if (
+            not isinstance(self.controller_channel_loss, str)
+            or len(self.controller_channel_loss) > 256
+        ):
+            raise ValueError("exit receipt channel-loss reason is invalid")
         require_uuid4(self.supervisor_generation)
         require_int64_ns(self.observed_monotonic_ns)
         if type(self.format_version) is not int or self.format_version != 1:
