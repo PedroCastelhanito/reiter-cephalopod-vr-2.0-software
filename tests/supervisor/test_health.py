@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Callable
 from pathlib import Path
 from uuid import uuid4
 
@@ -16,6 +17,13 @@ from .support import (
     _worker_and_helper,
     launch,
 )
+
+
+async def _eventually(predicate: Callable[[], bool], *, timeout_s: float = 2.0) -> None:
+    deadline = asyncio.get_running_loop().time() + timeout_s
+    while not predicate() and asyncio.get_running_loop().time() < deadline:
+        await asyncio.sleep(0.005)
+    assert predicate(), "expected supervisor state did not arrive"
 
 
 def heartbeat(source: types.ProcessIdentity) -> types.HeartbeatReport:
@@ -108,16 +116,22 @@ async def test_monitor_triggers_one_background_reconcile(tmp_path: Path) -> None
 
     runtime.health.reconcile_helpers = blocked
     monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
-    await asyncio.sleep(0.05)  # ticks keep running while the reconcile is pending
-    assert calls == 1
-    assert not monitor.done()
-    release.set()
-    await asyncio.sleep(0.05)
-    monitor.cancel()
-    assert any(
-        "ffmpeg:x" in warning.message
-        for warning in runtime.status_state.warnings.values()
-    )
+    try:
+        await _eventually(lambda: calls == 1)
+        assert not monitor.done()
+        await asyncio.sleep(0.05)
+        assert calls == 1
+        release.set()
+        await _eventually(
+            lambda: any(
+                "ffmpeg:x" in warning.message
+                for warning in runtime.status_state.warnings.values()
+            )
+        )
+    finally:
+        release.set()
+        monitor.cancel()
+        await asyncio.gather(monitor, return_exceptions=True)
 
 
 async def test_pre_session_error_without_isolation_proof_fences_safety(
@@ -166,9 +180,11 @@ async def test_unclassified_error_fences_safety(tmp_path: Path) -> None:
     assert receipt.result == types.COMMAND_RESULT_ACCEPTED
     assert runtime.shutdown_state.interruption is None
     monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
-    await asyncio.sleep(0.03)
-    monitor.cancel()
-    assert runtime.shutdown_state.interruption is not None
+    try:
+        await _eventually(lambda: runtime.shutdown_state.interruption is not None)
+    finally:
+        monitor.cancel()
+        await asyncio.gather(monitor, return_exceptions=True)
     await runtime.shutdown_state.safety_task
     assert len(outbound.interruptions) == 1
     assert (tmp_path / "reports").is_dir()
@@ -251,9 +267,11 @@ async def test_confirmed_controller_without_first_heartbeat_times_out(
         ("controller", runtime.controller.generation)
     ] = host_time_ns() - 16_000_000_000
     monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
-    await asyncio.sleep(0.03)
-    monitor.cancel()
-    assert runtime.shutdown_state.interruption is not None
+    try:
+        await _eventually(lambda: runtime.shutdown_state.interruption is not None)
+    finally:
+        monitor.cancel()
+        await asyncio.gather(monitor, return_exceptions=True)
     assert runtime.shutdown_state.interruption.reason.code == "CONTROLLER_LOST"
     assert runtime.shutdown_state.safety_task is not None
     await runtime.shutdown_state.safety_task

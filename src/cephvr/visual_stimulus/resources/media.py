@@ -89,7 +89,7 @@ def decode_image(
     alpha: Alpha
     if profile == "tiff_uint_v1":
         try:
-            import tifffile  # type: ignore[import-not-found]
+            import tifffile
         except ImportError as exc:
             raise MediaPreparationError(
                 "tifffile and NumPy are required for TIFF assets"
@@ -100,15 +100,26 @@ def decode_image(
                     "TIFF profile requires exactly one image and page"
                 )
             page = source.pages[0]
-            if page.dtype.kind != "u" or page.dtype.itemsize not in (1, 2):
+            if not isinstance(page, tifffile.TiffPage):
+                raise MediaPreparationError("TIFF page is not a decoded image page")
+            dtype = page.dtype
+            if dtype is None or dtype.kind != "u" or dtype.itemsize not in (1, 2):
                 raise MediaPreparationError(
                     "TIFF requires unsigned 8-bit or 16-bit samples"
                 )
-            if page.photometric.name not in ("MINISBLACK", "RGB"):
+            if page.photometric not in (
+                tifffile.PHOTOMETRIC.MINISBLACK,
+                tifffile.PHOTOMETRIC.RGB,
+            ):
                 raise MediaPreparationError(
                     "TIFF photometric interpretation is unsupported"
                 )
-            if page.compression.name not in ("NONE", "LZW", "DEFLATE", "ADOBE_DEFLATE"):
+            if page.compression not in (
+                tifffile.COMPRESSION.NONE,
+                tifffile.COMPRESSION.LZW,
+                tifffile.COMPRESSION.DEFLATE,
+                tifffile.COMPRESSION.ADOBE_DEFLATE,
+            ):
                 raise MediaPreparationError("TIFF compression is outside its profile")
             if (
                 page.tags.get("Orientation") is not None
@@ -120,7 +131,7 @@ def decode_image(
                     int(page.imagewidth),
                     int(page.imagelength),
                     int(page.samplesperpixel),
-                    int(page.dtype.itemsize) * 8,
+                    int(dtype.itemsize) * 8,
                 )
             pixels = page.asarray()
             if pixels.ndim == 2:
@@ -131,7 +142,11 @@ def decode_image(
                 raise MediaPreparationError("TIFF sample layout is unsupported")
             if channels in (2, 4) and (
                 len(page.extrasamples) != 1
-                or page.extrasamples[0].name not in ("UNASSALPHA", "ASSOCALPHA")
+                or page.extrasamples[0]
+                not in (
+                    tifffile.EXTRASAMPLE.UNASSALPHA,
+                    tifffile.EXTRASAMPLE.ASSOCALPHA,
+                )
             ):
                 raise MediaPreparationError("ambiguous TIFF extra sample")
             alpha = (
@@ -139,7 +154,7 @@ def decode_image(
                 if channels not in (2, 4)
                 else (
                     "associated"
-                    if page.extrasamples[0].name == "ASSOCALPHA"
+                    if page.extrasamples[0] == tifffile.EXTRASAMPLE.ASSOCALPHA
                     else "straight"
                 )
             )
@@ -152,7 +167,7 @@ def decode_image(
             )
     elif profile in ("png_uint_v1", "jpeg8_v1"):
         try:
-            import imagecodecs  # type: ignore[import-not-found]
+            import imagecodecs
         except ImportError as exc:
             raise MediaPreparationError(
                 "imagecodecs is required for image assets"

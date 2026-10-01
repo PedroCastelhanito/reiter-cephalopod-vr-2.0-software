@@ -50,7 +50,7 @@ class _PyAVContext:
         codec_threads: int,
     ) -> None:
         try:
-            import av  # type: ignore[import-not-found]
+            import av
         except ImportError as exc:
             raise VideoPlaybackError("PyAV is required for video playback") from exc
         self._reader_context = source.independent_reader()
@@ -67,9 +67,7 @@ class _PyAVContext:
                 raise VideoPlaybackError(
                     "protected video container differs from prepared profile"
                 )
-            streams = [
-                stream for stream in self._container.streams if stream.type == "video"
-            ]
+            streams = self._container.streams.video
             if len(streams) != 1 or streams[0].index != index.stream_index:
                 raise VideoPlaybackError(
                     "video stream identity changed after preparation"
@@ -105,7 +103,11 @@ class _PyAVContext:
 
         self._container.seek(frame.seek_anchor, stream=self._stream, backward=True)
         wanted_pts = Fraction(frame.pts) * frame.time_base
+        from av.video.frame import VideoFrame
+
         for decoded in self._container.decode(self._stream):
+            if not isinstance(decoded, VideoFrame):
+                raise VideoPlaybackError("video stream produced a non-video frame")
             if decoded.pts is None or decoded.time_base is None:
                 continue
             source_time = Fraction(decoded.pts) * Fraction(decoded.time_base)

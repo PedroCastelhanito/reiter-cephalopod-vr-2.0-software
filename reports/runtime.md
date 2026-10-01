@@ -1,6 +1,6 @@
 # Controller and supervisor status
 
-Updated: 2026-09-30. Implementation/source review is recorded for the controller,
+Updated: 2026-10-01. Implementation/source review is recorded for the controller,
 supervisor, launcher, headless client and shared/native helpers. Local results below
 have their original scope; Windows and full-workload acceptance remain pending.
 [ARCH-001/002](../architecture.md#arch-001) owns scope and structure;
@@ -9,6 +9,36 @@ have their original scope; Windows and full-workload acceptance remain pending.
 [E06/E08](../docs/architecture/system-contracts.md#e08) own behavior.
 
 ## Current scope and review
+
+Final Windows repair and one-time elevated follow-up (2026-10-01, baseline HEAD
+`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): controller
+202 passed; supervisor 106; shared 52; platform 46; launcher 10 and client 6 passed.
+Whole suite: 759 passed with zero failures/skips, all Windows and bounded rig markers,
+using dedicated elevated scratch. The owner removed exactly two POSIX-only tests;
+native unsafe-DACL rejection remains. Standard-token default-temp full suite passed
+755 with four symlink privilege skips; actual one-time elevation executed those four.
+Elevation exposed missing startup dependencies in prepared Python; finite matching-base
+VCRUNTIME140.dll/optional zlib.dll preparation now verifies source/copy hashes before
+planning. Exact executing PID/image, venv imports and bootstrap proof passes elevated
+and Medium-token default-temp checks. No persistent OS privilege/policy change.
+[Dated evidence](rig-audit-2026-10-01/README.md) preserves failed attempts, latest JUnit,
+commands, startup provenance and scoped cleanup; full experiment acceptance remains open.
+Setup Ready/failure and successful Start use the existing terminal completion
+owner, preserving failure codes, publication order and active-session retention.
+The native intrinsic helper repairs cross-process ring atomics. Verified prepared
+Python images preserve the fresh virtual environment: a live native regression
+confirms launched/code PID and OS image, one job member and inherited bootstrap.
+E04 reservation guards preserve exclusive ownership while Windows closes the byte
+lock for quarantine, including failure; default-path recovery persistence passes.
+Fixtures now respect Windows sharing/permissions and await actual async outcomes.
+
+Full managed launch remains gated by the unimplemented GUI. Automatic approval
+review rejected the earlier proposed launcher invocation for potential managed
+service/hardware effects; it was not executed. Focused checks do not establish
+full E04/E08 application/device/workload acceptance. Capacity bypass was not
+established; authorization checks the same capacity under the lifecycle lock.
+ARCH-002 review keeps the 502-line reservation owner cohesive around namespace
+ownership; native tests remain one platform-fixture module rather than per-fix files.
 
 - Controller lifecycle, configuration validation, live control leases, RPC admission,
   output planning, serialized central metadata, preparation handoffs, incident handling,
@@ -106,11 +136,11 @@ pruned (only at registry capacity) plans anew; and a mid-session late-Finished
 `recovery` event makes startup inspection treat an intact log as unconfirmed (the
 safe fallback).
 
-Unverified observations from the 2026-10-01 controller audit (not simplifications, not
-reproduced or fixed): `setup_admission.py` and `start.py` write `control.operations`
-entries directly, bypassing `ControlOperations.operation()` capacity and duplicate-ID
-checks; several paths mark operations complete without recording
-`operation_finished_ns`, so pruning never removes them; a shutdown before activation does
+Remaining observations from the 2026-10-01 controller audit (not fixed):
+`setup_admission.py` and `start.py` write `control.operations` entries directly,
+bypassing `operation()`'s duplicate-ID helper; ingress duplicate handling still needs
+review, and capacity is checked by `authorized()`. Terminal timestamp retention was
+repaired and regression-tested in the authorized phase. A shutdown before activation does
 not cancel pending Setup prompt futures the way `cancel_setup` does; and `cancel_attempt`
 appends its reservation warning outside the lifecycle lock. Two state fields have no
 reader in source and need an owner decision before removal: `default_intertrial_gap_ns`

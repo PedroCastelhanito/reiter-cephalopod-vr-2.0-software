@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="1" tests="31" time="1.008" timestamp="2026-10-01T13:02:29.934689+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.controller.test_storage" name="test_reservation_exclusive_and_cancel_removes_only_attempt_paths" time="0.018" /><testcase classname="tests.controller.test_storage" name="test_unexpected_file_blocks_cancel_without_deletion" time="0.012" /><testcase classname="tests.controller.test_storage" name="test_preexisting_session_cancellation_never_unlinks_new_owners_lock" time="0.011"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_preexisting_session_cance0\\20260929_experiment\\subject-131415\\.cephvr.lock'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_preexisting_session_cance0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002BA93C5F690&gt;
+
+    def test_preexisting_session_cancellation_never_unlinks_new_owners_lock(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        reservation = _reservation(tmp_path)
+        reservation.protocol_directory.mkdir(parents=True)
+        reservation.spikeglx_directory.mkdir()
+        assert reservation.acquire() == []
+        assert reservation._lock_created
+        original_release = reservation.release
+    
+        def competing_owner() -&gt; None:
+            # The old lock has been renamed while still held. A new owner can create
+            # the canonical name; the cancelled attempt must never unlink that file.
+            assert not reservation.lock_path.exists()
+            reservation.lock_path.write_bytes(b"new owner")
+            original_release()
+    
+        monkeypatch.setattr(reservation, "release", competing_owner)
+        reservation.cancel()
+&gt;       assert reservation.lock_path.read_bytes() == b"new owner"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_preexisting_session_cance0/20260929_experiment/subject-131415/.cephvr.lock')
+mode = 'rb', buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+&gt;       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_preexisting_session_cance0\\20260929_experiment\\subject-131415\\.cephvr.lock'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1044: FileNotFoundError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_existing_marker_inspection_requires_held_lock_and_keeps_recovery_evidence" time="0.012" /><testcase classname="tests.controller.test_storage" name="test_existing_lock_symlink_is_never_followed" time="0.003"><skipped type="pytest.skip" message="symlink creation unavailable on this host">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\controller\test_storage.py:120: symlink creation unavailable on this host</skipped></testcase><testcase classname="tests.controller.test_storage" name="test_failed_session_quarantine_preserves_unfinished_marker" time="0.009"><failure message="cephvr.controller.metadata.types.StorageError: marker read requires held reservation lock">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_failed_session_quarantine0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002BA93D72A10&gt;
+
+    def test_failed_session_quarantine_preserves_unfinished_marker(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        import os
+    
+        reservation = _reservation(tmp_path)
+        reservation.acquire()
+        original = os.replace
+    
+        def fail_session_rename(source: Path, destination: Path) -&gt; None:
+            if source == reservation.session_directory:
+                raise OSError("busy directory")
+            original(source, destination)
+    
+        monkeypatch.setattr(os, "replace", fail_session_rename)
+        with pytest.raises(StorageError, match="unfinished marker retained"):
+            reservation.cancel()
+&gt;       assert reservation.inspect_marker().complete is False
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:254: in inspect_marker
+    raw = self._read_marker_bytes()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x000002BA93D71B90&gt;
+
+    def _read_marker_bytes(self) -&gt; bytes:
+        if self._lock_fd is None:
+&gt;           raise StorageError("marker read requires held reservation lock")
+E           cephvr.controller.metadata.types.StorageError: marker read requires held reservation lock
+
+src\cephvr\controller\metadata\reservation.py:273: StorageError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_corrupt_existing_marker_is_preserved_for_startup_recovery" time="0.014" /><testcase classname="tests.controller.test_storage" name="test_writer_syncs_exact_json_and_rejects_changed_retry" time="0.017" /><testcase classname="tests.controller.test_storage" name="test_writer_rejects_unreserved_path_and_invalid_document" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_writer_preserves_late_sync_evidence_and_seal_capacity" time="0.007" /><testcase classname="tests.controller.test_storage" name="test_cancelled_waiter_cannot_erase_required_writer_completion" time="0.007" /><testcase classname="tests.controller.test_storage" name="test_completed_id_is_not_evicted_by_next_admission_before_retirement" time="0.012" /><testcase classname="tests.controller.test_storage" name="test_writer_never_appends_to_unowned_existing_log" time="0.005" /><testcase classname="tests.controller.test_storage" name="test_writer_binds_work_and_operation_to_exact_session" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_existing_reservation_recovery_requires_unchanged_marker" time="0.020" /><testcase classname="tests.controller.test_storage" name="test_recovery_log_adoption_requires_exact_held_file_identity" time="0.017" /><testcase classname="tests.controller.test_storage" name="test_owned_log_path_replacement_cannot_redirect_append" time="0.007"><failure message="PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_owned_log_path_replacemen0\\SESSION_LOG.jsonl' -&gt; 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_owned_log_path_replacemen0\\moved.jsonl'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_owned_log_path_replacemen0')
+
+    def test_owned_log_path_replacement_cannot_redirect_append(tmp_path: Path) -&gt; None:
+        path = tmp_path / "SESSION_LOG.jsonl"
+        outside = tmp_path / "outside.jsonl"
+        outside.write_bytes(b"preserve\n")
+        writer = MetadataWriter(
+            tmp_path, max_operations=2, max_bytes=1024, clock=lambda: 1, session_id="s"
+        )
+        first = _write("one", path, "append_jsonl_record", b'{"event_type":"first"}', 1, 2)
+        assert writer.submit(first).result(3).state == "synced"
+&gt;       path.rename(tmp_path / "moved.jsonl")
+
+tests\controller\test_storage.py:423: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_owned_log_path_replacemen0/SESSION_LOG.jsonl')
+target = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_owned_log_path_replacemen0/moved.jsonl')
+
+    def rename(self, target):
+        """
+        Rename this path to the target path.
+    
+        The target path may be absolute or relative. Relative paths are
+        interpreted relative to the current working directory, *not* the
+        directory of the Path object.
+    
+        Returns the new Path instance pointing to the target path.
+        """
+&gt;       os.rename(self, target)
+E       PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_owned_log_path_replacemen0\\SESSION_LOG.jsonl' -&gt; 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_owned_log_path_replacemen0\\moved.jsonl'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1175: PermissionError</failure></testcase><testcase classname="tests.controller.test_startup_recovery" name="test_torn_final_line_keeps_endpoint_and_run" time="0.030" /><testcase classname="tests.controller.test_startup_recovery" name="test_null_details_do_not_break_inspection" time="0.027" /><testcase classname="tests.controller.test_startup_recovery" name="test_stop_for_another_run_does_not_confirm_stop" time="0.054" /><testcase classname="tests.controller.test_startup_recovery" name="test_pointer_to_missing_namespace_is_cleared_with_notice" time="0.028" /><testcase classname="tests.controller.test_startup_recovery" name="test_leftover_quarantine_without_marker_is_removed" time="0.024" /><testcase classname="tests.controller.test_startup_recovery" name="test_quarantine_with_marker_keeps_strict_blocking" time="0.023" /><testcase classname="tests.controller.test_startup_recovery" name="test_pointer_with_not_activated_marker_is_cleared_without_report" time="0.036" /><testcase classname="tests.controller.test_startup_recovery" name="test_settled_recovery_notice_reaches_operator_warnings" time="0.002" /><testcase classname="tests.controller.test_startup_recovery" name="test_wrong_prior_generation_proof_blocks_before_opening_files" time="0.025" /><testcase classname="tests.controller.test_startup_recovery" name="test_intact_log_appends_only_observation_labeled_terminal_events" time="0.055" /><testcase classname="tests.controller.test_startup_recovery" name="test_incomplete_jsonl_is_preserved_and_reported_separately" time="0.049" /><testcase classname="tests.controller.test_startup_recovery" name="test_uncertain_append_is_never_resubmitted_in_same_recovery" time="0.229" /><testcase classname="tests.controller.test_startup_recovery" name="test_recovery_reader_rejects_zero_budget_and_nonregular_file" time="0.002" /><testcase classname="tests.controller.test_startup_recovery" name="test_prior_completed_recovery_event_is_not_duplicated" time="0.032" /></testsuite></testsuites>

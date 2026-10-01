@@ -1,0 +1,72 @@
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 28%]
+........................................................................ [ 37%]
+........................................................................ [ 47%]
+...............................................................F........ [ 56%]
+........................................................................ [ 66%]
+........................................................................ [ 75%]
+........................................................................ [ 85%]
+........................................................................ [ 94%]
+.......................................                                  [100%]
+================================== FAILURES ===================================
+______ test_managed_python_entry_preserves_identity_prefix_and_bootstrap ______
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-17/test_managed_python_entry_pres0')
+
+    def test_managed_python_entry_preserves_identity_prefix_and_bootstrap(
+        tmp_path: Path,
+    ) -> None:
+        runtime = resolve_python_executable(Path(sys.executable))
+        job = f"cephvr-python-runtime-{uuid4()}"
+        native = WindowsJobs()
+        native.create_launch_job(job)
+        read, write = create_bootstrap_pipe()
+        read_open = True
+        write_open = True
+        result_path = tmp_path / "runtime-probe.json"
+        release_path = tmp_path / "runtime-probe.release"
+        child = None
+        try:
+            child = native.launch_suspended(
+                str(runtime),
+                module_arguments(
+                    "tests.platform.test_windows_native_on_rig",
+                    ["--managed-runtime-probe", "--bootstrap-handle", str(read)],
+                ),
+                [job],
+                (read,),
+            )
+            close_handle(read)
+            read_open = False
+            write_bootstrap(
+                write,
+                {
+                    "marker": "inherited-bootstrap",
+                    "result": str(result_path),
+                    "release": str(release_path),
+                },
+            )
+            write_open = False
+            native.resume(child)
+>           _until(lambda: result_path.is_file())
+
+tests\platform\test_windows_native_on_rig.py:289: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+predicate = <function test_managed_python_entry_preserves_identity_prefix_and_bootstrap.<locals>.<lambda> at 0x0000015BC902E980>
+seconds = 5.0
+
+    def _until(predicate: Callable[[], bool], *, seconds: float = 5.0) -> None:
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            if predicate():
+                return
+            time.sleep(0.025)
+>       assert predicate(), "owned test child did not reach expected OS state"
+E       AssertionError: owned test child did not reach expected OS state
+E       assert False
+E        +  where False = <function test_managed_python_entry_preserves_identity_prefix_and_bootstrap.<locals>.<lambda> at 0x0000015BC902E980>()
+
+tests\platform\test_windows_native_on_rig.py:80: AssertionError
+1 failed, 758 passed in 14.80s

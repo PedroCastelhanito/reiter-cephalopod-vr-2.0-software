@@ -1,0 +1,17 @@
+
+Algorithm : SHA256
+Hash      : 4BCEBB9A9787179D3B8DA71A7B0689F1EAC0B101BB92BE0DFF7B4A4CD7375A1D
+Path      : C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\cephvr_atomics.dll
+
+Algorithm : SHA256
+Hash      : 347467DD568B04429C38C0699070557D65BDF281E84449801AA9136873E8CDAF
+Path      : C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\tracking\native\cephvr_nvof.dll
+
+Algorithm : SHA256
+Hash      : 5CE9617B7B1F66B1B967E28D543CC7B9E589860FE997DFF11401688FF2BE87E6
+Path      : C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-python.exe
+
+Algorithm : SHA256
+Hash      : F97CF1AD8D02B04D28C7E5B7824A6B8473474BD53312FDE12CD254B5187A8574
+Path      : C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python311.dll
+

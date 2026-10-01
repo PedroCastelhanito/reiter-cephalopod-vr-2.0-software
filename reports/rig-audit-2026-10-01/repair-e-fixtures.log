@@ -1,0 +1,83 @@
+.........s..............s.............ss...........F...                  [100%]
+================================== FAILURES ===================================
+______ test_real_movement_baseline_start_and_separate_stop_finish[True] _______
+
+rig_boundary = (<cephvr.tracking.runtime.TrackingRuntime object at 0x000002AFFFDC8B90>, <tests.tracking.test_runtime.Clock object at ...'token'), ('x-cephvr-deadline-ns', '71660945433600')), <tests.tracking.test_runtime.Peer object at 0x000002AFFFDCBED0>)
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-8/test_real_movement_baseline_st1')
+saving = True
+
+    @pytest.mark.parametrize("saving", [False, True])
+    async def test_real_movement_baseline_start_and_separate_stop_finish(
+        rig_boundary, tmp_path, saving
+    ):
+        runtime, clock, stub, preparation, metadata, peer = rig_boundary
+        setup, trial, _ = await setup_runtime(rig_boundary, tmp_path, saving=saving)
+        work = pb.WorkContext(trial=trial)
+        prepare = wire.PrepareTrialRequest(
+            command=command(runtime, work),
+            configuration_revision=1,
+            plan=pb.TrialPlan(context=trial, resolved_duration_ns=1_000_000_000),
+        )
+        if saving:
+            prepare.outputs.add(
+                output_key="tracking", backend=runtime.identity.backend, trial=trial
+            )
+            (tmp_path / "protocol-data").mkdir()
+        await stub.PrepareTrial(prepare, metadata=metadata)
+        await until(lambda: runtime.state.trial is not None)
+        start = clock() + 100_000_000
+        schedule = wire.ScheduleTrialRequest(
+            command=command(runtime, work),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=start + 1_000_000_000,
+            trial_file_prefix="trial",
+        )
+        if saving:
+            schedule.outputs.add(
+                output_key="tracking",
+                backend=runtime.identity.backend,
+                trial=trial,
+                path=str(tmp_path / "protocol-data/trial_tracking.jsonl"),
+            )
+        await stub.ScheduleTrial(schedule, metadata=metadata)
+        await until(lambda: runtime.state.schedule is not None)
+        release = wire.ReleaseTrialRequest(
+            command=command(runtime, work),
+            schedule_operation=pb.OperationContext(command_id=schedule.command.command_id),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=schedule.normal_end_monotonic_ns,
+        )
+        await stub.ReleaseTrial(release, metadata=metadata)
+        await until(lambda: runtime.state.release is not None)
+        assert runtime.state.started is None
+        clock.now = start
+        await until(lambda: runtime.trials.native is not None)
+        runtime.engine.source.feed(0, start)
+        await until(lambda: runtime.state.started is not None)
+        assert (
+            runtime.state.started.first_required_activity[
+                0
+            ].device_evidence.tracking_evaluation.disposition
+            == "baseline_only"
+        )
+        clock.now = start + 10_000_000
+        runtime.engine.source.feed(1, clock())
+        await until(lambda: runtime.engine.movement.result_sequence == 2)
+        clock.now = schedule.normal_end_monotonic_ns
+        await until(lambda: runtime.state.finished is not None)
+        reports = [
+            r.WhichOneof("report") for m, r in peer.reports if m == "ReportLifecycle"
+        ]
+        assert (
+>           reports.index("started") < reports.index("stopped") < reports.index("finished")
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+E       ValueError: 'finished' is not in list
+
+tests\tracking\test_runtime.py:386: ValueError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\controller\test_configuration_transactions.py:150: Windows account lacks symlink creation privilege
+SKIPPED [1] tests\controller\test_storage.py:137: symlink creation unavailable on this host
+SKIPPED [1] tests\shared\test_recovery.py:65: Windows account lacks symlink creation privilege
+SKIPPED [1] tests\shared\test_recovery.py:71: POSIX mode verification
+1 failed, 50 passed, 4 skipped in 1.83s

@@ -69,7 +69,13 @@ class ControlOperations:
         return operation
 
     def complete_operation(
-        self, command_id: str, *, success: bool, progress: str, error: str = ""
+        self,
+        command_id: str,
+        *,
+        success: bool,
+        progress: str,
+        error: str = "",
+        failure_code: str = "OPERATION_FAILED",
     ) -> None:
         operation = self.control.operations.get(command_id)
         if operation is None or operation.complete:
@@ -79,9 +85,7 @@ class ControlOperations:
         operation.succeeded = success
         operation.progress = progress
         if error:
-            operation.failure.CopyFrom(
-                pb.Failure(code="OPERATION_FAILED", message=error)
-            )
+            operation.failure.CopyFrom(pb.Failure(code=failure_code, message=error))
 
     def prune_operations(self) -> None:
         now = self.clock()

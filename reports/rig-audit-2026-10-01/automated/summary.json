@@ -1,0 +1,57 @@
+[
+  {
+    "step": "syntax",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\syntax.log"
+  },
+  {
+    "step": "ruff",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\ruff.log"
+  },
+  {
+    "step": "format",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\format.log"
+  },
+  {
+    "step": "module-boundaries",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\module-boundaries.log"
+  },
+  {
+    "step": "mypy-win32",
+    "exit_code": 1,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\mypy-win32.log"
+  },
+  {
+    "step": "contracts-tracking",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\contracts-tracking.log"
+  },
+  {
+    "step": "tracking-schema-drift",
+    "exit_code": 1,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\tracking-schema-drift.log"
+  },
+  {
+    "step": "contracts-visual_stimulus",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\contracts-visual_stimulus.log"
+  },
+  {
+    "step": "visual-stimulus-schema-drift",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\visual-stimulus-schema-drift.log"
+  },
+  {
+    "step": "pytest",
+    "exit_code": 1,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\pytest.log"
+  },
+  {
+    "step": "package",
+    "exit_code": 0,
+    "log": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\automated\\package.log"
+  }
+]

@@ -1,0 +1,3 @@
+index, name, uuid, pci.bus_id, driver_version, memory.total [MiB], pstate
+0, NVIDIA GeForce RTX 5060 Ti, GPU-77642118-1623-48dd-3686-1014aa86b818, 00000000:01:00.0, 617.14, 16311 MiB, P8
+1, NVIDIA GeForce RTX 2080 Ti, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, 00000000:03:00.0, 617.14, 11264 MiB, P8

@@ -1,0 +1,56 @@
+ M LOG.md
+ M MANIFEST.in
+ M TODO.md
+ M architecture.md
+ M contracts/acquisition/windows-resources.md
+ M contracts/tracking/schema_check.py
+ M contracts/windows-launch.md
+ M docs/architecture/supervisor.md
+ M pyproject.toml
+ M reports/acquisition.md
+ M reports/rig-verification.md
+ M reports/runtime.md
+ M reports/tracking.md
+ M reports/visual_stimulus.md
+ M src/cephvr/acquisition/main.py
+ M src/cephvr/acquisition/worker_launcher.py
+ M src/cephvr/controller/assembly.py
+ M src/cephvr/controller/control/operations.py
+ M src/cephvr/controller/lifecycle/setup_execution.py
+ M src/cephvr/controller/lifecycle/start.py
+ M src/cephvr/controller/metadata/files.py
+ M src/cephvr/controller/metadata/reservation.py
+ M src/cephvr/controller/startup/application.py
+ M src/cephvr/launcher/main.py
+ M src/cephvr/platform/windows/atomics.py
+ M src/cephvr/platform/windows/durable.py
+ M src/cephvr/platform/windows/guard.py
+ M src/cephvr/platform/windows/security.py
+ M src/cephvr/shared/recovery.py
+ M src/cephvr/supervisor/startup.py
+ M src/cephvr/visual_stimulus/resources/media.py
+ M src/cephvr/visual_stimulus/resources/video_decoder.py
+ M src/cephvr/visual_stimulus/resources/video_index.py
+ M src/cephvr/visual_stimulus/worker_launcher.py
+ M tests/acquisition/test_recording_paths.py
+ M tests/acquisition/test_worker_ring_regressions.py
+ M tests/controller/test_configuration_transactions.py
+ M tests/controller/test_safety_regressions.py
+ M tests/controller/test_setup.py
+ M tests/controller/test_storage.py
+ M tests/platform/test_windows_native_on_rig.py
+ M tests/shared/test_recovery.py
+ M tests/supervisor/test_health.py
+ M tests/supervisor/test_status.py
+ M tests/tracking/test_runtime.py
+ M tests/visual_stimulus/test_resources.py
+ M tools/README.md
+ M tools/test_on_rig.ps1
+?? native/windows/
+?? reports/rig-audit-2026-10-01/
+?? setup.py
+?? src/cephvr/platform/windows/cephvr_atomics.dll
+?? src/cephvr/platform/windows/paths.py
+?? src/cephvr/platform/windows/python_entry.py
+?? src/cephvr/platform/windows/python_runtime.py
+?? src/cephvr/tracking/native/cephvr_nvof.dll

@@ -15,8 +15,10 @@ def main() -> None:
     for name,model in {**METHODS,**RECORDS}.items():
         text=json.dumps(model.model_json_schema(),indent=2,ensure_ascii=False)+'\n'
         path=HERE/(name+'.schema.json')
-        if args.write:path.write_text(text)
-        elif not path.exists() or path.read_text()!=text:
-            raise SystemExit('stale generated schema: '+str(path))
+        if args.write:
+            with path.open("w", encoding="utf-8", newline="\n") as stream:
+                stream.write(text)
+        elif not path.exists() or path.read_text(encoding="utf-8") != text:
+            raise SystemExit("stale generated schema: " + str(path))
     print(f'{len(METHODS)+len(RECORDS)} tracking JSON schemas match the canonical models.')
 if __name__=='__main__':main()

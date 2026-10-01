@@ -230,7 +230,7 @@ def test_ring_retirement_cannot_be_cleared_by_stale_flag_update(
         ring.open_admission(run_id)
     assert ring.retired
     assert ring.input_sealed
-    with pytest.raises(RingError, match="irreversible"):
+    with pytest.raises(RingError, match="stale or ring has been retired"):
         ring.open_admission(run_id)
     ring.seal()
     assert ring.retired and ring.input_sealed

@@ -1,0 +1,4 @@
+....s....                                                                [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\platform\test_windows_native_on_rig.py:223: Windows symlink privilege or Developer Mode is unavailable
+8 passed, 1 skipped in 0.46s

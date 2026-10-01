@@ -1,0 +1,78 @@
+WRITER_COMPLETION MetadataCompletion(command_id='b5dbc473-1c91-4a5d-bdac-5719a9fc4c35', path=WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.repair-tmp/recovery-diag/test_intact_log_appends_only_o0/20260929_experiment/subject-000000/protocol-data/SESSION_LOG.jsonl'), state='synced', completed_ns=69799402961600, error='', deadline_met=True)
+WRITER_COMPLETION MetadataCompletion(command_id='019fb383-b302-4075-a5d0-d6bfacb4d5a4', path=WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.repair-tmp/recovery-diag/test_intact_log_appends_only_o0/20260929_experiment/subject-000000/protocol-data/SESSION_LOG.jsonl'), state='synced', completed_ns=69799405461900, error='', deadline_met=True)
+WRITER_COMPLETION MetadataCompletion(command_id='d2551936-22ab-4e95-8f0b-14481342a55b', path=WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.repair-tmp/recovery-diag/test_intact_log_appends_only_o0/20260929_experiment/subject-000000/protocol-data/SESSION_LOG.jsonl'), state='synced', completed_ns=69799407739000, error='', deadline_met=True)
+WRITER_COMPLETION MetadataCompletion(command_id='d0dc4bca-329e-48ff-858d-8c8934211a03', path=WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.repair-tmp/recovery-diag/test_intact_log_appends_only_o0/20260929_experiment/subject-000000/protocol-data/RECOVERY-cdac3fcd-740e-4afa-af6d-4daad2825b66.json'), state='failed', completed_ns=69799408350100, error="[Errno 2] No such file or directory: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\.repair-tmp\\\\recovery-diag\\\\test_intact_log_appends_only_o0\\\\20260929_experiment\\\\subject-000000\\\\protocol-data\\\\.RECOVERY-cdac3fcd-740e-4afa-af6d-4daad2825b66.json.3e0db738-d973-41c4-a132-e3c250087a04.tmp'", deadline_met=True)
+F
+================================== FAILURES ===================================
+______ test_intact_log_appends_only_observation_labeled_terminal_events _______
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.repair-tmp/recovery-diag/test_intact_log_appends_only_o0')
+
+    async def test_intact_log_appends_only_observation_labeled_terminal_events(
+        tmp_path: Path,
+    ) -> None:
+        log = _event("session_started") + _event("trial_started", trial_number=1)
+        store, pointer, path = _fixture(tmp_path, log)
+        recovery = StartupRecovery(
+            store,
+            current_generation=_id(),
+            timeout_ns=2_000_000_000,
+            max_operations=8,
+            max_bytes=65_536,
+        )
+    
+        async def query(_: str) -> svc.RecoverySnapshot:
+            return _snapshot(pointer)
+    
+        prompt = await recovery.prepare(query)
+        assert prompt is not None
+        assert "192.0.2.10:4142" in prompt.explanation
+        assert "known-run" in prompt.explanation
+        assert recovery.inspection is not None
+        assert recovery.inspection.spikeglx_stop_unconfirmed
+        assert recovery.inspection.spikeglx_endpoint == ("192.0.2.10", 4142)
+>       await recovery.recover()
+
+tests\controller\test_startup_recovery.py:331: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\recovery.py:343: in recover
+    await persist(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'RECOVERY-cdac3fcd-740e-4afa-af6d-4daad2825b66.json'
+action = 'create_json'
+document = {'schema_version': 1, 'session_id': '3ca70c10-343d-42ee-8fd2-531072a01bd2', 'prior_controller_generation': 'ebfafe93-50a1-45b2-9897-de1fe696e74d', 'recovery_controller_generation': 'e3597118-5637-499e-821d-debef6dcf9ef', ...}
+
+    async def persist(
+        name: str,
+        action: Literal["create_json", "append_jsonl_record"],
+        document: dict[str, object],
+    ) -> None:
+        command_id = str(uuid.uuid4())
+        request = MetadataWrite(
+            command_id=command_id,
+            path=writer.root / name,
+            action=action,
+            payload_utf8=json.dumps(
+                document, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+            ).encode(),
+            submitted_ns=host_time_ns(),
+            deadline_ns=deadline,
+            work=work,
+            operation=pb.OperationContext(command_id=command_id),
+        )
+        completion = await asyncio.wait_for(
+            asyncio.shield(asyncio.wrap_future(writer.submit(request))),
+            max(0, (deadline - host_time_ns()) / 1e9),
+        )
+        writer.retire(command_id)
+        if completion.state != "synced" or not completion.deadline_met:
+>           raise StorageError(
+                "recovery persistence failed or completed after its original deadline"
+            )
+E           cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline
+
+src\cephvr\controller\recovery.py:291: StorageError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_startup_recovery.py::test_intact_log_appends_only_observation_labeled_terminal_events
+1 failed in 0.18s

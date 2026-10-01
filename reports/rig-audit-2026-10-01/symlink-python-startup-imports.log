@@ -1,0 +1,121 @@
+Exact method: dumpbin /dependents on prepared Python startup images and matching base dependencies
+Microsoft (R) COFF/PE Dumper Version 14.44.35224.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file .venv\Scripts\cephvr-python.exe
+
+File Type: EXECUTABLE IMAGE
+
+  Image has the following dependencies:
+
+    python311.dll
+    VCRUNTIME140.dll
+    api-ms-win-crt-stdio-l1-1-0.dll
+    api-ms-win-crt-runtime-l1-1-0.dll
+    api-ms-win-crt-math-l1-1-0.dll
+    api-ms-win-crt-locale-l1-1-0.dll
+    api-ms-win-crt-heap-l1-1-0.dll
+    KERNEL32.dll
+
+  Summary
+
+        1000 .data
+        1000 .pdata
+        2000 .rdata
+        1000 .reloc
+       14000 .rsrc
+        2000 .text
+Microsoft (R) COFF/PE Dumper Version 14.44.35224.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file .venv\Scripts\python311.dll
+
+File Type: DLL
+
+  Image has the following dependencies:
+
+    VERSION.dll
+    WS2_32.dll
+    api-ms-win-core-path-l1-1-0.dll
+    bcrypt.dll
+    zlib.dll
+    ADVAPI32.dll
+    KERNEL32.dll
+    VCRUNTIME140.dll
+    api-ms-win-crt-stdio-l1-1-0.dll
+    api-ms-win-crt-environment-l1-1-0.dll
+    api-ms-win-crt-locale-l1-1-0.dll
+    api-ms-win-crt-string-l1-1-0.dll
+    api-ms-win-crt-runtime-l1-1-0.dll
+    api-ms-win-crt-convert-l1-1-0.dll
+    api-ms-win-crt-math-l1-1-0.dll
+    api-ms-win-crt-time-l1-1-0.dll
+    api-ms-win-crt-process-l1-1-0.dll
+    api-ms-win-crt-heap-l1-1-0.dll
+    api-ms-win-crt-conio-l1-1-0.dll
+    api-ms-win-crt-filesystem-l1-1-0.dll
+
+  Summary
+
+      154000 .data
+       24000 .pdata
+      1C4000 .rdata
+       15000 .reloc
+        1000 .rsrc
+      2BD000 .text
+       29000 PyRuntim
+Microsoft (R) COFF/PE Dumper Version 14.44.35224.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Library\bin\zlib.dll
+
+File Type: DLL
+
+  Image has the following dependencies:
+
+    VCRUNTIME140.dll
+    api-ms-win-crt-stdio-l1-1-0.dll
+    api-ms-win-crt-heap-l1-1-0.dll
+    api-ms-win-crt-convert-l1-1-0.dll
+    api-ms-win-crt-string-l1-1-0.dll
+    api-ms-win-crt-runtime-l1-1-0.dll
+    KERNEL32.dll
+
+  Summary
+
+        1000 .data
+        1000 .pdata
+        7000 .rdata
+        1000 .reloc
+        1000 .rsrc
+        F000 .text
+Microsoft (R) COFF/PE Dumper Version 14.44.35224.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file C:\Users\ReiterU_PC\miniforge3\envs\CephVR\vcruntime140.dll
+
+File Type: DLL
+
+  Image has the following dependencies:
+
+    api-ms-win-crt-runtime-l1-1-0.dll
+    api-ms-win-crt-string-l1-1-0.dll
+    api-ms-win-crt-heap-l1-1-0.dll
+    api-ms-win-crt-stdio-l1-1-0.dll
+    api-ms-win-crt-convert-l1-1-0.dll
+    KERNEL32.dll
+
+  Summary
+
+        1000 .data
+        1000 .pdata
+        5000 .rdata
+        1000 .reloc
+        1000 .rsrc
+       12000 .text
+        1000 _RDATA
+        1000 fothk

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import uuid
 from pathlib import Path
 
@@ -186,22 +185,3 @@ def test_operator_credentials_are_generation_scoped_and_owner_only(
         first.remove_client(type(principal)("cli", principal.generation, "wrong"))
     first.remove_client(principal)
     assert first.lookup(principal.generation) is None
-
-
-@pytest.mark.skipif(
-    os.name == "nt", reason="POSIX mode fixture; Windows ACLs have native tests"
-)
-def test_operator_credentials_reject_unsafe_file(tmp_path: Path) -> None:
-    store = CredentialStore(tmp_path / "runtime", _id())
-    principal = store.provision_client("gui")
-    path = store.generation_dir / f"{principal.generation}.json"
-    path.chmod(0o644)
-    with pytest.raises(CredentialError, match="owner-only"):
-        store.lookup(principal.generation)
-    path.chmod(0o600)
-    alternate = tmp_path / "alternate.json"
-    alternate.write_bytes(path.read_bytes())
-    path.unlink()
-    path.symlink_to(alternate)
-    with pytest.raises(CredentialError, match="symlink"):
-        store.lookup(principal.generation)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import json
 import struct
 import threading
@@ -10,7 +11,12 @@ from fractions import Fraction
 import pytest
 from tests.visual_stimulus.support import make_prepared_trial
 
-from cephvr.visual_stimulus.config.models.program_model import Time, VideoSettings
+from cephvr.visual_stimulus.config.models.program_model import (
+    Asset,
+    ColorOverride,
+    Time,
+    VideoSettings,
+)
 from cephvr.visual_stimulus.resources.budget import (
     BoundedBudget,
     arena_mesh_bytes,
@@ -23,7 +29,11 @@ from cephvr.visual_stimulus.resources.ffv1_configuration import (
 )
 from cephvr.visual_stimulus.resources.glb import GLBError, parse_glb
 from cephvr.visual_stimulus.resources.image_headers import image_shape
-from cephvr.visual_stimulus.resources.media import ImagePixels
+from cephvr.visual_stimulus.resources.media import (
+    ImagePixels,
+    MediaPreparationError,
+    decode_image,
+)
 from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
 from cephvr.visual_stimulus.resources.video import VideoPlayback
 from cephvr.visual_stimulus.resources.video_index import (
@@ -33,6 +43,41 @@ from cephvr.visual_stimulus.resources.video_index import (
 )
 from cephvr.visual_stimulus.resources.video_selection import PlaybackCursor
 from cephvr.visual_stimulus.resources.video_session import VideoSession
+
+
+def test_tiff_uint_decoder_accepts_supported_pixels_and_rejects_float() -> None:
+    tifffile = pytest.importorskip("tifffile")
+    np = pytest.importorskip("numpy")
+    asset = Asset(
+        asset_id="image",
+        logical_path="image.tif",
+        profile="tiff_uint_v1",
+        color_override=ColorOverride(
+            transfer="linear",
+            primaries="rec709_d65",
+            range="full",
+            matrix="rgb",
+            chroma_location="none",
+            reason="decoder regression",
+        ),
+    )
+    for pixels, expected_channels in (
+        (np.arange(12, dtype=np.uint8).reshape(3, 4), 1),
+        (np.arange(36, dtype=np.uint16).reshape(3, 4, 3), 3),
+    ):
+        encoded = io.BytesIO()
+        tifffile.imwrite(encoded, pixels)
+        decoded = decode_image(asset, encoded.getvalue())
+        np.testing.assert_array_equal(decoded.pixels, pixels)
+        assert decoded.pixels.shape == pixels.shape
+        assert decoded.dtype == str(pixels.dtype)
+        assert decoded.channel_count == expected_channels
+        assert decoded.transfer == "linear"
+
+    encoded = io.BytesIO()
+    tifffile.imwrite(encoded, np.arange(12, dtype=np.float32).reshape(3, 4))
+    with pytest.raises(MediaPreparationError, match="unsigned 8-bit or 16-bit"):
+        decode_image(asset, encoded.getvalue())
 
 
 def test_resource_budget_replacement_is_atomic() -> None:

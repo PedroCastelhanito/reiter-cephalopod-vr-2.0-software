@@ -60,11 +60,13 @@ def _reservation(identity: RecordingIdentity) -> RecordingPaths:
     )
 
 
-def test_valid_backend_context_and_exact_scheduled_paths_are_accepted() -> None:
+def test_valid_backend_context_and_exact_scheduled_paths_are_accepted(
+    tmp_path: Path,
+) -> None:
     identity = _identity()
     plans = _reservation(identity)
     plans.validate("behavioral", identity)
-    prefix = Path("/recordings/trial")
+    prefix = tmp_path / "trial"
     schedule = acq.WorkerSchedule(
         command=acq.WorkerCommand(
             target=acq.WorkerContext(
@@ -87,8 +89,8 @@ def test_valid_backend_context_and_exact_scheduled_paths_are_accepted() -> None:
         item.path = f"{prefix}_{item.output_tag}.{item.extension}"
 
     assert resolve_recording_paths(plans, "behavioral", identity, schedule) == (
-        Path("/recordings/trial_behavioral_cam.mp4"),
-        Path("/recordings/trial_behavioral_cam_frames.jsonl"),
+        Path(f"{prefix}_behavioral_cam.mp4"),
+        Path(f"{prefix}_behavioral_cam_frames.jsonl"),
     )
 
 

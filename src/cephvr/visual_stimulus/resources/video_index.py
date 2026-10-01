@@ -68,7 +68,7 @@ def index_video(
     if max_index_bytes <= 0 or codec_threads <= 0:
         raise ValueError("positive video index budget required")
     try:
-        import av  # type: ignore[import-not-found]
+        import av
     except ImportError as exc:
         raise MediaPreparationError("PyAV is required for video assets") from exc
     with source.independent_reader() as reader:
@@ -89,7 +89,7 @@ def index_video(
                 raise MediaPreparationError(
                     "FFV1 profile requires a Matroska container"
                 )
-            streams = [stream for stream in container.streams if stream.type == "video"]
+            streams = container.streams.video
             if len(streams) != 1:
                 raise MediaPreparationError(
                     "video profile requires exactly one video stream"
@@ -210,9 +210,15 @@ def index_video(
             decoded_format = None
             dimensions = (stream.width, stream.height)
             initial_pixels = None
+            from av.video.frame import VideoFrame
+
             for decoded in container.decode(stream):
                 if check is not None:
                     check()
+                if not isinstance(decoded, VideoFrame):
+                    raise MediaPreparationError(
+                        "video stream produced a non-video frame"
+                    )
                 if getattr(decoded, "is_corrupt", False):
                     raise MediaPreparationError(
                         "decoder reported corrupt video content"

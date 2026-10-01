@@ -30,6 +30,10 @@ from cephvr.platform.windows.bootstrap import (
 )
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs, WindowsLaunchError
+from cephvr.platform.windows.python_runtime import (
+    module_arguments,
+    resolve_python_executable,
+)
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.credentials import default_runtime_root
 from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
@@ -120,6 +124,7 @@ def run_launcher(
         raise WindowsLaunchError(
             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
         )
+    interpreter = resolve_python_executable(interpreter)
     if (
         supervisor_config.resolve()
         != (software_root / "config/backends/supervisor_config.toml").resolve()
@@ -170,18 +175,19 @@ def run_launcher(
             ack_read, ack_write = create_bootstrap_pipe()
             child = native.launch_suspended(
                 str(interpreter),
-                [
-                    "-m",
+                module_arguments(
                     "cephvr.supervisor.main",
-                    "--bootstrap-handle",
-                    str(bootstrap_read),
-                    "--launcher-control-handle",
-                    str(control_write),
-                    "--launcher-controller-control-handle",
-                    str(controller_control_write),
-                    "--launcher-ack-handle",
-                    str(ack_read),
-                ],
+                    [
+                        "--bootstrap-handle",
+                        str(bootstrap_read),
+                        "--launcher-control-handle",
+                        str(control_write),
+                        "--launcher-controller-control-handle",
+                        str(controller_control_write),
+                        "--launcher-ack-handle",
+                        str(ack_read),
+                    ],
+                ),
                 [application_job],
                 (bootstrap_read, control_write, controller_control_write, ack_read),
             )

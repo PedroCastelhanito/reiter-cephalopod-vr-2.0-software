@@ -10,6 +10,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.incident.registry import IncidentRegistry
 from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
@@ -45,6 +46,7 @@ class SetupExecution:
         incident_state: IncidentState,
         limits: LimitsState,
         clock: Callable[[], int],
+        control_operations: ControlOperations,
         publisher: SnapshotPublisher,
         reservation_started: Callable[[Attempt], Awaitable[None]] | None,
         spikeglx: SpikeGLXPort | None,
@@ -69,6 +71,7 @@ class SetupExecution:
         self.incident_state = incident_state
         self.limits = limits
         self.clock = clock
+        self.control_operations = control_operations
         self.publisher = publisher
         self.reservation_started = reservation_started
         self.spikeglx = spikeglx
@@ -376,10 +379,9 @@ class SetupExecution:
             if self.lifecycle.attempt is not attempt or attempt.cancel_requested:
                 return
             self.lifecycle.session.phase = pb.SESSION_PHASE_READY
-            operation = self.control.operations[command_id]
-            operation.complete = True
-            operation.succeeded = True
-            operation.progress = "Ready"
+            self.control_operations.complete_operation(
+                command_id, success=True, progress="Ready"
+            )
             self.publisher.publish()
 
     async def fail_setup(self, attempt: Attempt, command_id: str, error: str) -> None:
@@ -389,10 +391,14 @@ class SetupExecution:
             attempt.cancel_requested = True
             if attempt.handoff is not None:
                 attempt.handoff.retire()
-            operation = self.control.operations[command_id]
-            operation.complete = True
-            operation.succeeded = False
-            operation.failure.CopyFrom(pb.Failure(code="SETUP_FAILED", message=error))
+            progress = self.control.operations[command_id].progress
+            self.control_operations.complete_operation(
+                command_id,
+                success=False,
+                progress=progress,
+                error=error,
+                failure_code="SETUP_FAILED",
+            )
             self.control.add_warning("controller", error)
             self.publisher.publish()
         await self.cancel_attempt(attempt)

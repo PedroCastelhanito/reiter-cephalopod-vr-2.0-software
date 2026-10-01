@@ -379,6 +379,12 @@ async def test_real_movement_baseline_start_and_separate_stop_finish(
     await until(lambda: runtime.engine.movement.result_sequence == 2)
     clock.now = schedule.normal_end_monotonic_ns
     await until(lambda: runtime.state.finished is not None)
+    await until(
+        lambda: any(
+            method == "ReportLifecycle" and report.WhichOneof("report") == "finished"
+            for method, report in peer.reports
+        )
+    )
     reports = [
         r.WhichOneof("report") for m, r in peer.reports if m == "ReportLifecycle"
     ]

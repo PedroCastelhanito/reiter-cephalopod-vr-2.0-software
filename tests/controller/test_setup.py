@@ -460,14 +460,48 @@ async def test_failed_setup_leaves_sessionless_current_scope(
     runtime, attempt = _scoped_setup(tmp_path, monkeypatch)
     command_id = _id()
     runtime.control.operations[command_id] = pb.OperationState(
-        context=pb.OperationContext(command_id=command_id), command="Setup"
+        context=pb.OperationContext(command_id=command_id),
+        command="Setup",
+        work=pb.WorkContext(session=attempt.context),
     )
     await runtime.setup_execution.fail_setup(attempt, command_id, "boom")
+    operation = runtime.control.operations[command_id]
+    assert operation.complete and not operation.succeeded
+    assert operation.failure.code == "SETUP_FAILED"
+    assert runtime.control.operation_finished_ns[command_id] == 1_000
     assert runtime.projections.work.WhichOneof("work") is None
     assert (
         runtime.projections.configuration_revision
         == runtime.configuration_state.revision
     )
+
+
+async def test_ready_setup_records_terminal_time_for_retention(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime, attempt = _scoped_setup(tmp_path, monkeypatch)
+    command_id = _id()
+    runtime.control.operations[command_id] = pb.OperationState(
+        context=pb.OperationContext(command_id=command_id),
+        command="Setup",
+        work=pb.WorkContext(session=attempt.context),
+    )
+    runtime.configuration_state.policies.command_retention_after_finalization_ns = 10
+    now = [1_000]
+    runtime.control_operations.clock = lambda: now[0]
+
+    await runtime.setup_execution._publish_ready(attempt, command_id)
+
+    operation = runtime.control.operations[command_id]
+    assert operation.complete and operation.succeeded
+    assert operation.progress == "Ready"
+    assert runtime.control.operation_finished_ns[command_id] == 1_000
+    now[0] += 11
+    runtime.control_operations.prune_operations()
+    assert command_id in runtime.control.operations
+    runtime.lifecycle.session.cleanup_confirmed = True
+    runtime.control_operations.prune_operations()
+    assert command_id not in runtime.control.operations
 
 
 async def test_update_configuration_refreshes_projection_revision(

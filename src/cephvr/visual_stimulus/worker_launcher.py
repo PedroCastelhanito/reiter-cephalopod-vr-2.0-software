@@ -19,6 +19,10 @@ from cephvr.platform.windows.bootstrap import (
     write_bootstrap,
 )
 from cephvr.platform.windows.jobs import SuspendedProcess, WindowsJobs
+from cephvr.platform.windows.python_runtime import (
+    module_arguments,
+    resolve_python_executable,
+)
 from cephvr.shared.auth import Principal
 from cephvr.shared.backend_bootstrap import BackendBootstrap
 from cephvr.shared.clock import host_time_ns
@@ -63,6 +67,7 @@ async def launch_renderer(
     identity = identity or pb.ProcessIdentity(
         role="visual_stimulus_renderer", generation=str(uuid4())
     )
+    interpreter = resolve_python_executable(Path(sys.executable))
     command_id = str(uuid4())
     token = secrets.token_urlsafe(32)
     planned = await supervisor.call(
@@ -71,7 +76,7 @@ async def launch_renderer(
             command_id=command_id,
             owner=bootstrap.identity,
             child=identity,
-            executable=str(Path(sys.executable).resolve()),
+            executable=str(interpreter),
             python_worker=True,
             stop_method="grpc_shutdown",
         ),
@@ -89,13 +94,10 @@ async def launch_renderer(
     read, write = create_bootstrap_pipe()
     try:
         child = native.launch_suspended(
-            str(Path(sys.executable).resolve()),
-            [
-                "-m",
-                "cephvr.visual_stimulus.worker.main",
-                "--bootstrap-handle",
-                str(read),
-            ],
+            str(interpreter),
+            module_arguments(
+                "cephvr.visual_stimulus.worker.main", ["--bootstrap-handle", str(read)]
+            ),
             [job_name],
             (read,),
         )

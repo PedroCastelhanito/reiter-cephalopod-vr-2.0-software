@@ -23,6 +23,7 @@ class SingleInstanceGuard:
         ]
         self.api.CreateMutexW.restype = wintypes.HANDLE
         self.api.CloseHandle.argtypes = [wintypes.HANDLE]
+        ctypes.set_last_error(0)
         self.handle = self.api.CreateMutexW(None, False, f"Global\\CephVR2-{role}")
         if not self.handle:
             raise WindowsLaunchError(f"CreateMutexW failed: {ctypes.get_last_error()}")

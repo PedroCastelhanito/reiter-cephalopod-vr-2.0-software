@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 86
+**Status:** Accepted · **Revision:** 87
 
 **Identity and files**
 
@@ -86,6 +86,12 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
   establishes live ownership. If the controller dies the OS releases the lock, the
   marker stays unfinished and the next startup recovers it. Clean finalization marks
   complete, syncs the marker, then releases.
+  On Windows, a canonical-namespace OS guard precedes filesystem mutation and stays
+  held while the file-lock descriptor must close for directory quarantine; failed
+  quarantine retains exclusive ownership and unfinished evidence until explicit
+  release. Guard ownership is handle-based, not thread-affine, and OS-released on
+  process death. This accommodates Windows' prohibition on renaming a directory
+  containing open files without an unprotected ownership gap.
 - Complete collision checks before Ready. Existing files require a modal/listed-path
   Continue/Cancel choice from the control holder. Continue authorizes deletion only
   of listed files, followed by revalidation/reservation; Cancel preserves files and

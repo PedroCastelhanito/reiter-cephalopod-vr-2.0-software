@@ -132,25 +132,30 @@ def _read(path: Path) -> dict[str, object] | None:
 
 
 def _publish(path: Path, raw: bytes) -> None:
-    temporary = path.with_name(f".{path.name}.{uuid4()}.tmp")
+    temporary = path.with_name(f".cv-{uuid4().hex}.tmp")
+    temporary_io = temporary
+    if sys.platform == "win32":
+        from cephvr.platform.windows.paths import extended_path
+
+        temporary_io = Path(extended_path(temporary))
     try:
         if sys.platform == "win32":
             from cephvr.platform.windows.durable import create_synced
             from cephvr.platform.windows.security import create_owner_only
 
-            create_owner_only(temporary, raw)
+            create_owner_only(temporary_io, raw)
             create_synced(temporary, path)
         else:
             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
             if hasattr(os, "O_NOFOLLOW"):
                 flags |= os.O_NOFOLLOW
-            descriptor = os.open(temporary, flags, 0o600)
+            descriptor = os.open(temporary_io, flags, 0o600)
             with os.fdopen(descriptor, "wb") as stream:
                 stream.write(raw)
                 stream.flush()
                 os.fsync(stream.fileno())
-            os.link(temporary, path, follow_symlinks=False)
-            temporary.unlink()
+            os.link(temporary_io, path, follow_symlinks=False)
+            temporary_io.unlink()
             directory = os.open(path.parent, os.O_RDONLY)
             try:
                 os.fsync(directory)
@@ -158,7 +163,7 @@ def _publish(path: Path, raw: bytes) -> None:
                 os.close(directory)
         _check_private(path, directory=False)
     finally:
-        temporary.unlink(missing_ok=True)
+        temporary_io.unlink(missing_ok=True)
 
 
 class RecoveryStore:

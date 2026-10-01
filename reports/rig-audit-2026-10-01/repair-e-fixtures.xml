@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="4" tests="55" time="1.800" timestamp="2026-10-01T13:07:31.749468+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.acquisition.test_recording_paths" name="test_valid_backend_context_and_exact_scheduled_paths_are_accepted" time="0.007" /><testcase classname="tests.acquisition.test_recording_paths" name="test_non_acquisition_backend_context_is_rejected" time="0.000" /><testcase classname="tests.acquisition.test_recording_paths" name="test_stale_backend_generation_is_rejected" time="0.000" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_freezes_edited_recording_root_into_reservation_and_session_config" time="0.009" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_disk_check_uses_frozen_root" time="0.014" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[unset]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[blank]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[relative]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[missing]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[symlink]" time="0.002"><skipped type="pytest.skip" message="Windows account lacks symlink creation privilege">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\controller\test_configuration_transactions.py:150: Windows account lacks symlink creation privilege</skipped></testcase><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_setup_or_ready_commits_and_cancels_setup[2]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_setup_or_ready_commits_and_cancels_setup[3]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_start_is_rejected_unchanged[4]" time="0.002" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_start_is_rejected_unchanged[5]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_in_configuration_phase_just_commits" time="0.002" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_request_uses_prepared_backend_settings_not_live" time="0.000" /><testcase classname="tests.controller.test_configuration_transactions" name="test_wait_evidence_accepts_satisfied_predicate_past_wall_deadline" time="0.002" /><testcase classname="tests.controller.test_configuration_transactions" name="test_wait_evidence_still_times_out_when_evidence_missing" time="0.002" /><testcase classname="tests.controller.test_configuration_transactions" name="test_timed_out_save_cannot_overwrite_a_newer_save" time="0.240" /><testcase classname="tests.controller.test_configuration_transactions" name="test_concurrent_history_saves_do_not_overlap" time="0.066" /><testcase classname="tests.controller.test_storage" name="test_reservation_exclusive_and_cancel_removes_only_attempt_paths" time="0.011" /><testcase classname="tests.controller.test_storage" name="test_unexpected_file_blocks_cancel_without_deletion" time="0.009" /><testcase classname="tests.controller.test_storage" name="test_preexisting_session_cancellation_never_unlinks_new_owners_lock" time="0.010" /><testcase classname="tests.controller.test_storage" name="test_existing_marker_inspection_requires_held_lock_and_keeps_recovery_evidence" time="0.010" /><testcase classname="tests.controller.test_storage" name="test_existing_lock_symlink_is_never_followed" time="0.003"><skipped type="pytest.skip" message="symlink creation unavailable on this host">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\controller\test_storage.py:137: symlink creation unavailable on this host</skipped></testcase><testcase classname="tests.controller.test_storage" name="test_failed_session_quarantine_preserves_unfinished_marker" time="0.010" /><testcase classname="tests.controller.test_storage" name="test_corrupt_existing_marker_is_preserved_for_startup_recovery" time="0.009" /><testcase classname="tests.controller.test_storage" name="test_writer_syncs_exact_json_and_rejects_changed_retry" time="0.013" /><testcase classname="tests.controller.test_storage" name="test_writer_rejects_unreserved_path_and_invalid_document" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_writer_preserves_late_sync_evidence_and_seal_capacity" time="0.008" /><testcase classname="tests.controller.test_storage" name="test_cancelled_waiter_cannot_erase_required_writer_completion" time="0.008" /><testcase classname="tests.controller.test_storage" name="test_completed_id_is_not_evicted_by_next_admission_before_retirement" time="0.013" /><testcase classname="tests.controller.test_storage" name="test_writer_never_appends_to_unowned_existing_log" time="0.003" /><testcase classname="tests.controller.test_storage" name="test_writer_binds_work_and_operation_to_exact_session" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_existing_reservation_recovery_requires_unchanged_marker" time="0.017" /><testcase classname="tests.controller.test_storage" name="test_recovery_log_adoption_requires_exact_held_file_identity" time="0.015" /><testcase classname="tests.controller.test_storage" name="test_owned_log_path_replacement_cannot_redirect_append" time="0.019" /><testcase classname="tests.shared.test_recovery" name="test_pointer_and_receipt_are_exact_and_immutable" time="0.029" /><testcase classname="tests.shared.test_recovery" name="test_unverified_exit_and_unsafe_pointer_cannot_authorize_recovery" time="0.003"><skipped type="pytest.skip" message="Windows account lacks symlink creation privilege">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\shared\test_recovery.py:65: Windows account lacks symlink creation privilege</skipped></testcase><testcase classname="tests.shared.test_recovery" name="test_world_readable_record_is_rejected" time="0.000"><skipped type="pytest.skip" message="POSIX mode verification">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\shared\test_recovery.py:71: POSIX mode verification</skipped></testcase><testcase classname="tests.shared.test_recovery" name="test_duplicate_recovery_fields_cannot_select_an_identity" time="0.012" /><testcase classname="tests.shared.test_recovery" name="test_receipt_carries_bounded_controller_channel_loss" time="0.013" /><testcase classname="tests.supervisor.test_health" name="test_worker_heartbeat_rejected_coordinator_heartbeat_accepted" time="0.003" /><testcase classname="tests.supervisor.test_health" name="test_worker_error_admission_and_reserved_codes" time="0.007" /><testcase classname="tests.supervisor.test_health" name="test_supervisor_tasks_are_retained_and_cancelled" time="0.002" /><testcase classname="tests.supervisor.test_health" name="test_monitor_triggers_one_background_reconcile" time="0.002" /><testcase classname="tests.supervisor.test_health" name="test_pre_session_error_without_isolation_proof_fences_safety" time="0.011" /><testcase classname="tests.supervisor.test_health" name="test_unclassified_error_fences_safety" time="0.009" /><testcase classname="tests.supervisor.test_health" name="test_confirmed_controller_without_first_heartbeat_times_out" time="0.007" /><testcase classname="tests.tracking.test_runtime" name="test_authenticated_setup_duplicate_conflict_stale_and_cleanup" time="0.091" /><testcase classname="tests.tracking.test_runtime" name="test_real_movement_baseline_start_and_separate_stop_finish[False]" time="0.095" /><testcase classname="tests.tracking.test_runtime" name="test_real_movement_baseline_start_and_separate_stop_finish[True]" time="0.115"><failure message="ValueError: 'finished' is not in list">rig_boundary = (&lt;cephvr.tracking.runtime.TrackingRuntime object at 0x000002AFFFDC8B90&gt;, &lt;tests.tracking.test_runtime.Clock object at ...'token'), ('x-cephvr-deadline-ns', '71660945433600')), &lt;tests.tracking.test_runtime.Peer object at 0x000002AFFFDCBED0&gt;)
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-8/test_real_movement_baseline_st1')
+saving = True
+
+    @pytest.mark.parametrize("saving", [False, True])
+    async def test_real_movement_baseline_start_and_separate_stop_finish(
+        rig_boundary, tmp_path, saving
+    ):
+        runtime, clock, stub, preparation, metadata, peer = rig_boundary
+        setup, trial, _ = await setup_runtime(rig_boundary, tmp_path, saving=saving)
+        work = pb.WorkContext(trial=trial)
+        prepare = wire.PrepareTrialRequest(
+            command=command(runtime, work),
+            configuration_revision=1,
+            plan=pb.TrialPlan(context=trial, resolved_duration_ns=1_000_000_000),
+        )
+        if saving:
+            prepare.outputs.add(
+                output_key="tracking", backend=runtime.identity.backend, trial=trial
+            )
+            (tmp_path / "protocol-data").mkdir()
+        await stub.PrepareTrial(prepare, metadata=metadata)
+        await until(lambda: runtime.state.trial is not None)
+        start = clock() + 100_000_000
+        schedule = wire.ScheduleTrialRequest(
+            command=command(runtime, work),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=start + 1_000_000_000,
+            trial_file_prefix="trial",
+        )
+        if saving:
+            schedule.outputs.add(
+                output_key="tracking",
+                backend=runtime.identity.backend,
+                trial=trial,
+                path=str(tmp_path / "protocol-data/trial_tracking.jsonl"),
+            )
+        await stub.ScheduleTrial(schedule, metadata=metadata)
+        await until(lambda: runtime.state.schedule is not None)
+        release = wire.ReleaseTrialRequest(
+            command=command(runtime, work),
+            schedule_operation=pb.OperationContext(command_id=schedule.command.command_id),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=schedule.normal_end_monotonic_ns,
+        )
+        await stub.ReleaseTrial(release, metadata=metadata)
+        await until(lambda: runtime.state.release is not None)
+        assert runtime.state.started is None
+        clock.now = start
+        await until(lambda: runtime.trials.native is not None)
+        runtime.engine.source.feed(0, start)
+        await until(lambda: runtime.state.started is not None)
+        assert (
+            runtime.state.started.first_required_activity[
+                0
+            ].device_evidence.tracking_evaluation.disposition
+            == "baseline_only"
+        )
+        clock.now = start + 10_000_000
+        runtime.engine.source.feed(1, clock())
+        await until(lambda: runtime.engine.movement.result_sequence == 2)
+        clock.now = schedule.normal_end_monotonic_ns
+        await until(lambda: runtime.state.finished is not None)
+        reports = [
+            r.WhichOneof("report") for m, r in peer.reports if m == "ReportLifecycle"
+        ]
+        assert (
+&gt;           reports.index("started") &lt; reports.index("stopped") &lt; reports.index("finished")
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+E       ValueError: 'finished' is not in list
+
+tests\tracking\test_runtime.py:386: ValueError</failure></testcase><testcase classname="tests.tracking.test_runtime" name="test_preonset_stop_never_opens_recording_or_reports_started" time="0.085" /><testcase classname="tests.tracking.test_runtime" name="test_cleanup_failure_retains_catalogue_and_prevents_new_setup" time="0.082" /><testcase classname="tests.tracking.test_runtime" name="test_supervisor_accepts_real_tracking_heartbeat_catalogue" time="0.086" /></testsuite></testsuites>

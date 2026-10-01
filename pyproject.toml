@@ -75,6 +75,7 @@ namespaces = false
 [tool.setuptools.package-data]
 "*" = ["*.pyi"]
 "cephvr.tracking.native" = ["*.dll"]
+"cephvr.platform.windows" = ["*.dll"]
 
 [tool.ruff]
 target-version = "py311"
@@ -109,7 +110,7 @@ module = ["grpc", "grpc.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["onnx", "onnx.*", "onnxruntime", "onnxruntime.*", "cv2", "glfw", "moderngl", "numpy", "numpy.*", "OpenGL", "OpenGL.*"]
+module = ["onnx", "onnx.*", "onnxruntime", "onnxruntime.*", "cv2", "glfw", "moderngl", "numpy", "numpy.*", "OpenGL", "OpenGL.*", "av", "av.*", "tifffile", "tifffile.*", "imagecodecs", "imagecodecs.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

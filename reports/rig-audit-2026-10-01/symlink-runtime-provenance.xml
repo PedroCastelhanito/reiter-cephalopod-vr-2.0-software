@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.329" timestamp="2026-10-01T17:08:03.198300+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.platform.test_windows_native_on_rig" name="test_prepared_python_runtime_rejects_stale_or_mismatched_files" time="0.212"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'startup DLL provenance'&#10;  Actual message: 'prepared startup DLL copy differs: zlib.dll'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-20/test_prepared_python_runtime_r0')
+
+    def test_prepared_python_runtime_rejects_stale_or_mismatched_files(
+        tmp_path: Path,
+    ) -&gt; None:
+        home = tmp_path / "base"
+        scripts = tmp_path / "venv" / "Scripts"
+        home.mkdir()
+        scripts.mkdir(parents=True)
+        (scripts.parent / "pyvenv.cfg").write_text(f"home = {home}\n", encoding="utf-8")
+        base_executable = home / "python.exe"
+        base_dll = home / "python311.dll"
+        base_executable.write_bytes(b"base executable")
+        base_dll.write_bytes(b"matching runtime dll")
+        (home / "VCRUNTIME140.dll").write_bytes(b"matching runtime support")
+        (home / "zlib.dll").write_bytes(b"matching optional zlib")
+        wrapper = prepare_python_runtime(scripts.parent, base_executable, base_dll)
+        assert wrapper.read_bytes() == base_executable.read_bytes()
+        assert (scripts / "python311.dll").read_bytes() == base_dll.read_bytes()
+        assert (scripts / "VCRUNTIME140.dll").read_bytes() == b"matching runtime support"
+        assert (scripts / "zlib.dll").read_bytes() == b"matching optional zlib"
+        wrapper.unlink()
+        with pytest.raises(RuntimeError, match="changed"):
+            resolve_python_executable(scripts / "python.exe")
+        prepare_python_runtime(scripts.parent, base_executable, base_dll)
+    
+        manifest = scripts / "cephvr-python.runtime.json"
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+        payload["base_executable"] = str(home / "other-python.exe")
+        manifest.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(RuntimeError, match="changed|provenance"):
+            resolve_python_executable(wrapper)
+    
+        prepare_python_runtime(scripts.parent, base_executable, base_dll)
+        manifest.unlink()
+        with pytest.raises(RuntimeError, match="manifest unavailable"):
+            resolve_python_executable(scripts / "python.exe")
+        prepare_python_runtime(scripts.parent, base_executable, base_dll)
+        manifest_payload = json.loads(manifest.read_text(encoding="utf-8"))
+        manifest_payload["startup_dlls"][1]["base_sha256"] = "stale"
+        manifest.write_text(json.dumps(manifest_payload), encoding="utf-8")
+        with pytest.raises(RuntimeError, match="startup DLL (provenance|copy differs)"):
+            resolve_python_executable(wrapper)
+        prepare_python_runtime(scripts.parent, base_executable, base_dll)
+        (scripts / "zlib.dll").write_bytes(b"changed startup dependency")
+&gt;       with pytest.raises(RuntimeError, match="startup DLL provenance"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'startup DLL provenance'
+E         Actual message: 'prepared startup DLL copy differs: zlib.dll'
+
+tests\platform\test_windows_native_on_rig.py:260: AssertionError</failure></testcase></testsuite></testsuites>

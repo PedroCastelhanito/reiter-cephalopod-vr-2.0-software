@@ -19,3 +19,25 @@ See the [development guide](../docs/development.md) for existing setup/check
 commands, [ARCH-002](../architecture.md#arch-002) for repository boundaries and
 the [contract index](../contracts/README.md#verification-status) for existing
 contract compilation instructions.
+
+The runner builds the required 64-bit Windows shared-ring atomic helper during
+`-Install`. To rebuild it in an existing environment, pass `-BuildWindowsNative`;
+the DLL is installed beside the Windows platform package and included in
+Windows x64 wheels. Building a wheel with native DLLs requires a 64-bit Windows
+build host and validates each DLL's PE machine type. A source-only build without
+the generated DLL remains pure Python; shared-ring operations report the missing
+native helper until `-BuildWindowsNative` produces it.
+
+`-Install` also prepares `.venv/Scripts/cephvr-python.exe`, its matching runtime DLL
+and a provenance manifest for exact managed-child identity. This leaves the ordinary
+virtual-environment interpreter available for tooling. Managed launches verify the
+prepared files against the current base runtime and `pyvenv.cfg`, then use the
+versioned module entry to retain required DLL-directory handles. Refresh with
+`-Install` after a base interpreter/configuration change; missing or stale preparation
+fails before managed launch instead of falling back to the Windows redirector.
+
+For a fresh AMD64 Windows rig with Python 3.11, MSVC/CMake, CUDA and NVIDIA Optical
+Flow API 2 headers available, run
+`./tools/test_on_rig.ps1 -Install -Rig -BuildTrackingNative -NvofSdkRoot <actual-header-root>`.
+The Tracking build remains explicit; locate the installed headers on that machine.
+This automated command does not replace device/scientific/full-workload acceptance.

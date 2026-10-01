@@ -3,8 +3,9 @@
 Authority: [E06/E08](../docs/architecture/system-contracts.md). This shared contract
 covers every owned CephVR process on the rig, including controller/supervisor/GUI,
 acquisition, Visual Stimulus, tracking, workers and native helpers. SpikeGLX is a separate remote
-application and is never contained or killed here. No launcher is implemented or
-Windows behavior verified.
+application and is never contained or killed here. Implementation and bounded
+Windows verification status are recorded in [the runtime report](../reports/runtime.md);
+this contract does not establish full rig acceptance.
 
 ## Application containment and automatic failure shutdown
 
@@ -78,6 +79,15 @@ a versioned `-m` bootstrap entry point using ordinary process arguments. Transfe
 only declared registered bootstrap descriptors; never pickle objects or depend on
 private multiprocessing/Popen internals. Named resources and typed RPCs already
 carry worker state. The parent imports/initializes no child SDK or GPU runtime.
+For a Windows virtual environment whose interpreter redirects execution, environment
+preparation creates a separate real interpreter image and matching runtime DLL in
+the virtual environment's Scripts directory. A manifest binds those files to the
+current base interpreter and virtual-environment configuration. Resolve and verify
+that image before launch planning; missing, stale or mismatched preparation fails
+explicitly, without falling back to the redirector. Preserve virtual-environment
+imports and prefix. The managed Python entry retains documented DLL-directory
+handles for the matching base runtime before dispatching the owning module; all
+owned Python descendants use the same preparation and retain the executing PID/image.
 Native encoders/helpers use the same launch/containment helper without Python
 bootstrap or CephVR heartbeat requirements; their owners monitor actual progress.
 

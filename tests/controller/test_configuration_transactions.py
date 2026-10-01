@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import os
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -141,7 +142,13 @@ async def test_setup_rejects_unset_or_invalid_recording_root(
     real = tmp_path / "real"
     real.mkdir()
     link = tmp_path / "link"
-    link.symlink_to(real, target_is_directory=True)
+    if kind == "symlink":
+        try:
+            link.symlink_to(real, target_is_directory=True)
+        except OSError as exc:
+            if os.name == "nt" and getattr(exc, "winerror", None) == 1314:
+                pytest.skip("Windows account lacks symlink creation privilege")
+            raise
     root = {
         "unset": "",
         "blank": "   ",

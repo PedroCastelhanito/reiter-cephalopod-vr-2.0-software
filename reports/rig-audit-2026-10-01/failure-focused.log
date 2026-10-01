@@ -1,0 +1,171 @@
+F.FF                                                                     [100%]
+================================== FAILURES ===================================
+______ test_intact_log_appends_only_observation_labeled_terminal_events _______
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/failure-focused/test_intact_log_appends_only_o0')
+
+    async def test_intact_log_appends_only_observation_labeled_terminal_events(
+        tmp_path: Path,
+    ) -> None:
+        log = _event("session_started") + _event("trial_started", trial_number=1)
+        store, pointer, path = _fixture(tmp_path, log)
+        recovery = StartupRecovery(
+            store,
+            current_generation=_id(),
+            timeout_ns=2_000_000_000,
+            max_operations=8,
+            max_bytes=65_536,
+        )
+    
+        async def query(_: str) -> svc.RecoverySnapshot:
+            return _snapshot(pointer)
+    
+        prompt = await recovery.prepare(query)
+        assert prompt is not None
+        assert "192.0.2.10:4142" in prompt.explanation
+        assert "known-run" in prompt.explanation
+        assert recovery.inspection is not None
+        assert recovery.inspection.spikeglx_stop_unconfirmed
+        assert recovery.inspection.spikeglx_endpoint == ("192.0.2.10", 4142)
+>       await recovery.recover()
+
+tests\controller\test_startup_recovery.py:331: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\recovery.py:343: in recover
+    await persist(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'RECOVERY-31874fd1-659b-40e2-af7c-4eece48fbbdd.json'
+action = 'create_json'
+document = {'schema_version': 1, 'session_id': '50d5ab68-757a-47f2-8261-c9575ac5e3ab', 'prior_controller_generation': '3eaf70cd-fc38-4dff-bba4-33798b3908d6', 'recovery_controller_generation': '8d737378-42c8-4cfb-8055-0b5e787e8e67', ...}
+
+    async def persist(
+        name: str,
+        action: Literal["create_json", "append_jsonl_record"],
+        document: dict[str, object],
+    ) -> None:
+        command_id = str(uuid.uuid4())
+        request = MetadataWrite(
+            command_id=command_id,
+            path=writer.root / name,
+            action=action,
+            payload_utf8=json.dumps(
+                document, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+            ).encode(),
+            submitted_ns=host_time_ns(),
+            deadline_ns=deadline,
+            work=work,
+            operation=pb.OperationContext(command_id=command_id),
+        )
+        completion = await asyncio.wait_for(
+            asyncio.shield(asyncio.wrap_future(writer.submit(request))),
+            max(0, (deadline - host_time_ns()) / 1e9),
+        )
+        writer.retire(command_id)
+        if completion.state != "synced" or not completion.deadline_met:
+>           raise StorageError(
+                "recovery persistence failed or completed after its original deadline"
+            )
+E           cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline
+
+src\cephvr\controller\recovery.py:291: StorageError
+_________ test_supervisor_heartbeat_does_not_depend_on_status_change __________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/failure-focused/test_supervisor_heartbeat_does0')
+
+    async def test_supervisor_heartbeat_does_not_depend_on_status_change(
+        tmp_path: Path,
+    ) -> None:
+        runtime, _, outbound, _ = make_runtime(tmp_path)
+        runtime.health.heartbeat_interval_ns = 1_000_000
+        loop = asyncio.create_task(runtime.health.heartbeat_loop())
+        await asyncio.sleep(0.01)
+        loop.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await loop
+>       assert len(outbound.heartbeats) >= 2
+E       assert 1 >= 2
+E        +  where 1 = len([source {\n  role: "supervisor"\n  generation: "36569e9c-df7e-41c8-aa99-6455aaf14567"\n}\nsent_monotonic_ns: 67695850500600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: "supervisor control and monitor loop active"\n])
+E        +    where [source {\n  role: "supervisor"\n  generation: "36569e9c-df7e-41c8-aa99-6455aaf14567"\n}\nsent_monotonic_ns: 67695850500600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: "supervisor control and monitor loop active"\n] = <tests.supervisor.support.Outbound object at 0x00000248B67DAD90>.heartbeats
+
+tests\supervisor\test_status.py:104: AssertionError
+______ test_real_movement_baseline_start_and_separate_stop_finish[True] _______
+
+rig_boundary = (<cephvr.tracking.runtime.TrackingRuntime object at 0x00000248B67DB150>, <tests.tracking.test_runtime.Clock object at ...'token'), ('x-cephvr-deadline-ns', '67725855775200')), <tests.tracking.test_runtime.Peer object at 0x00000248B67D9D10>)
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/failure-focused/test_real_movement_baseline_st0')
+saving = True
+
+    @pytest.mark.parametrize("saving", [False, True])
+    async def test_real_movement_baseline_start_and_separate_stop_finish(
+        rig_boundary, tmp_path, saving
+    ):
+        runtime, clock, stub, preparation, metadata, peer = rig_boundary
+        setup, trial, _ = await setup_runtime(rig_boundary, tmp_path, saving=saving)
+        work = pb.WorkContext(trial=trial)
+        prepare = wire.PrepareTrialRequest(
+            command=command(runtime, work),
+            configuration_revision=1,
+            plan=pb.TrialPlan(context=trial, resolved_duration_ns=1_000_000_000),
+        )
+        if saving:
+            prepare.outputs.add(
+                output_key="tracking", backend=runtime.identity.backend, trial=trial
+            )
+            (tmp_path / "protocol-data").mkdir()
+        await stub.PrepareTrial(prepare, metadata=metadata)
+        await until(lambda: runtime.state.trial is not None)
+        start = clock() + 100_000_000
+        schedule = wire.ScheduleTrialRequest(
+            command=command(runtime, work),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=start + 1_000_000_000,
+            trial_file_prefix="trial",
+        )
+        if saving:
+            schedule.outputs.add(
+                output_key="tracking",
+                backend=runtime.identity.backend,
+                trial=trial,
+                path=str(tmp_path / "protocol-data/trial_tracking.jsonl"),
+            )
+        await stub.ScheduleTrial(schedule, metadata=metadata)
+        await until(lambda: runtime.state.schedule is not None)
+        release = wire.ReleaseTrialRequest(
+            command=command(runtime, work),
+            schedule_operation=pb.OperationContext(command_id=schedule.command.command_id),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=schedule.normal_end_monotonic_ns,
+        )
+        await stub.ReleaseTrial(release, metadata=metadata)
+        await until(lambda: runtime.state.release is not None)
+        assert runtime.state.started is None
+        clock.now = start
+        await until(lambda: runtime.trials.native is not None)
+        runtime.engine.source.feed(0, start)
+        await until(lambda: runtime.state.started is not None)
+        assert (
+            runtime.state.started.first_required_activity[
+                0
+            ].device_evidence.tracking_evaluation.disposition
+            == "baseline_only"
+        )
+        clock.now = start + 10_000_000
+        runtime.engine.source.feed(1, clock())
+        await until(lambda: runtime.engine.movement.result_sequence == 2)
+        clock.now = schedule.normal_end_monotonic_ns
+        await until(lambda: runtime.state.finished is not None)
+        reports = [
+            r.WhichOneof("report") for m, r in peer.reports if m == "ReportLifecycle"
+        ]
+        assert (
+>           reports.index("started") < reports.index("stopped") < reports.index("finished")
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+E       ValueError: 'finished' is not in list
+
+tests\tracking\test_runtime.py:386: ValueError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_startup_recovery.py::test_intact_log_appends_only_observation_labeled_terminal_events
+FAILED tests/supervisor/test_status.py::test_supervisor_heartbeat_does_not_depend_on_status_change
+FAILED tests/tracking/test_runtime.py::test_real_movement_baseline_start_and_separate_stop_finish[True]
+3 failed, 1 passed in 0.65s

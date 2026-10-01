@@ -1,0 +1,21 @@
+{
+  "administrator": true,
+  "prepare_command": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m cephvr.platform.windows.python_runtime --prepare",
+  "prepare_exit_code": 0,
+  "verify_command": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m cephvr.platform.windows.python_runtime --verify",
+  "verify_exit_code": 0,
+  "focused_command": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m pytest -q -rs --basetemp=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.symlink-elevated-tmp\\focused --junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\python-runtime-elevated-final-focused.xml tests/platform/test_windows_native_on_rig.py::test_prepared_python_runtime_rejects_stale_or_mismatched_files tests/platform/test_windows_native_on_rig.py::test_managed_python_entry_preserves_identity_prefix_and_bootstrap",
+  "focused_exit_code": 0,
+  "full_command": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m pytest tests -q -rs --basetemp=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.symlink-elevated-tmp\\full --junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\python-runtime-elevated-final-full.xml",
+  "full_exit_code": 0,
+  "failure": null,
+  "cleanup": [
+    "workspace pytest temp C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.symlink-elevated-tmp\\focused removed=True",
+    "workspace pytest temp C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.symlink-elevated-tmp\\full removed=True",
+    "workspace scratch root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.symlink-elevated-tmp removed=True",
+    "pytest-current link removed; exact target was C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-18",
+    "known pytest temp C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-17 removed=True",
+    "known pytest temp C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-18 removed=True"
+  ],
+  "completed_utc": "2026-10-01T08:11:04.1889067Z"
+}

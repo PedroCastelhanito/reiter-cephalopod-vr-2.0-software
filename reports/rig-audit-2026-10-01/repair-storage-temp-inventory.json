@@ -1,0 +1,94 @@
+[
+  {
+    "Path": "test_cancelled_waiter_cannot_e0\\SESSION_CONFIG.json",
+    "Bytes": 37
+  },
+  {
+    "Path": "test_completed_id_is_not_evict0\\SCHEMA.json",
+    "Bytes": 37
+  },
+  {
+    "Path": "test_completed_id_is_not_evict0\\SESSION_CONFIG.json",
+    "Bytes": 37
+  },
+  {
+    "Path": "test_corrupt_existing_marker_i0\\20260929_experiment\\subject-131415\\.cephvr-reservation.json",
+    "Bytes": 8
+  },
+  {
+    "Path": "test_corrupt_existing_marker_i0\\20260929_experiment\\subject-131415\\.cephvr.lock",
+    "Bytes": 0
+  },
+  {
+    "Path": "test_existing_lock_symlink_is_0\\outside-lock",
+    "Bytes": 8
+  },
+  {
+    "Path": "test_existing_marker_inspectio0\\20260929_experiment\\subject-131415\\.cephvr-reservation.json",
+    "Bytes": 152
+  },
+  {
+    "Path": "test_existing_marker_inspectio0\\20260929_experiment\\subject-131415\\.cephvr.lock",
+    "Bytes": 0
+  },
+  {
+    "Path": "test_existing_reservation_reco0\\20260929_experiment\\subject-131415\\.cephvr-reservation.json",
+    "Bytes": 151
+  },
+  {
+    "Path": "test_existing_reservation_reco0\\20260929_experiment\\subject-131415\\.cephvr.lock",
+    "Bytes": 0
+  },
+  {
+    "Path": "test_failed_session_quarantine0\\20260929_experiment\\subject-131415\\.cephvr-reservation.json",
+    "Bytes": 152
+  },
+  {
+    "Path": "test_failed_session_quarantine0\\20260929_experiment\\subject-131415\\.cephvr.lock",
+    "Bytes": 0
+  },
+  {
+    "Path": "test_owned_log_path_replacemen0\\outside.jsonl",
+    "Bytes": 9
+  },
+  {
+    "Path": "test_owned_log_path_replacemen0\\SESSION_LOG.jsonl",
+    "Bytes": 23
+  },
+  {
+    "Path": "test_recovery_log_adoption_req0\\20260929_experiment\\subject-131415\\.cephvr-reservation.json",
+    "Bytes": 152
+  },
+  {
+    "Path": "test_recovery_log_adoption_req0\\20260929_experiment\\subject-131415\\.cephvr.lock",
+    "Bytes": 0
+  },
+  {
+    "Path": "test_recovery_log_adoption_req0\\20260929_experiment\\subject-131415\\protocol-data\\SESSION_LOG.jsonl",
+    "Bytes": 49
+  },
+  {
+    "Path": "test_unexpected_file_blocks_ca0\\20260929_experiment\\subject-131415\\.cephvr-reservation.json",
+    "Bytes": 152
+  },
+  {
+    "Path": "test_unexpected_file_blocks_ca0\\20260929_experiment\\subject-131415\\.cephvr.lock",
+    "Bytes": 0
+  },
+  {
+    "Path": "test_unexpected_file_blocks_ca0\\20260929_experiment\\subject-131415\\protocol-data\\owner-data.bin",
+    "Bytes": 8
+  },
+  {
+    "Path": "test_writer_never_appends_to_u0\\SESSION_LOG.jsonl",
+    "Bytes": 12
+  },
+  {
+    "Path": "test_writer_preserves_late_syn0\\SESSION_CONFIG.json",
+    "Bytes": 37
+  },
+  {
+    "Path": "test_writer_syncs_exact_json_a0\\SESSION_CONFIG.json",
+    "Bytes": 75
+  }
+]

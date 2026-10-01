@@ -265,8 +265,11 @@ async def test_ready_edit_cancels_preparation_without_committing_unvalidated_res
     await runtime.close_watch(watch)
 
 
-async def test_interruption_during_start_cannot_restore_running(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("interrupt_on_start", [False, True])
+async def test_start_terminal_operation_time_and_interruption_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    interrupt_on_start: bool,
 ) -> None:
     runtime = _runtime(tmp_path)
     attempt, _ = _attempt(runtime, tmp_path)
@@ -295,10 +298,18 @@ async def test_interruption_during_start_cannot_restore_running(
         nonlocal started_log_seen
         if event_type == "session_started" and not started_log_seen:
             started_log_seen = True
-            await runtime.interruption.interrupt(attempt, "concurrent authority loss")
+            if interrupt_on_start:
+                await runtime.interruption.interrupt(
+                    attempt, "concurrent authority loss"
+                )
 
     monkeypatch.setattr(runtime.metadata, "persist", persisted)
     monkeypatch.setattr(runtime.metadata, "log_event", logged)
+
+    async def no_trials(_attempt: Attempt) -> None:
+        return None
+
+    monkeypatch.setattr(runtime.trials, "run_trials", no_trials)
     command_id = _id()
     runtime.control.operations[command_id] = pb.OperationState(
         context=pb.OperationContext(command_id=command_id), command="StartSession"
@@ -306,8 +317,20 @@ async def test_interruption_during_start_cannot_restore_running(
     try:
         await runtime.start.run_start(attempt, command_id)
         assert started_log_seen
-        assert attempt.interrupted
-        assert runtime.lifecycle.session.phase != pb.SESSION_PHASE_RUNNING
+        operation = runtime.control.operations[command_id]
+        if interrupt_on_start:
+            assert attempt.interrupted
+            assert runtime.lifecycle.session.phase != pb.SESSION_PHASE_RUNNING
+            if operation.complete:
+                assert not operation.succeeded
+                assert runtime.control.operation_finished_ns[command_id] == 1_000
+            else:
+                assert command_id not in runtime.control.operation_finished_ns
+        else:
+            assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
+            assert operation.complete and operation.succeeded
+            assert operation.progress == "session activated"
+            assert runtime.control.operation_finished_ns[command_id] == 1_000
     finally:
         await runtime.cancel_background_tasks()
         if attempt.reservation.held:

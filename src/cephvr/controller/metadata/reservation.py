@@ -12,10 +12,15 @@ import sys
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from cephvr.controller.metadata.files import atomic_json, safe_component, sync_directory
 from cephvr.controller.metadata.types import ReservationMarker, StorageError
+from cephvr.platform.windows.paths import logical_path
 from cephvr.shared.identity import require_uuid4
+
+if TYPE_CHECKING:
+    from cephvr.platform.windows.guard import SingleInstanceGuard
 
 
 def _sync(path: Path) -> None:
@@ -28,8 +33,8 @@ class OutputReservation:
 
     @property
     def held(self) -> bool:
-        """Whether this owner currently retains its reservation lock descriptor."""
-        return self._lock_fd is not None
+        """Whether this owner retains the lock or its covering Windows guard."""
+        return self._path_guard is not None or self._lock_fd is not None
 
     def __init__(
         self,
@@ -73,6 +78,7 @@ class OutputReservation:
         self.generation = generation
         self._created: list[Path] = []
         self._lock_fd: int | None = None
+        self._path_guard: SingleInstanceGuard | None = None
         self._lock_created = False
         self.marker_issue: str | None = None
 
@@ -86,24 +92,31 @@ class OutputReservation:
         directory = Path(session_directory)
         if not directory.is_absolute() or len(directory.parents) < 2:
             raise StorageError("recovery session directory is not absolute")
-        if directory != directory.resolve(strict=True):
-            raise StorageError("recovery session directory is not canonical")
-        root = directory.parent.parent
-        for path in (root, directory.parent, directory):
-            if path.is_symlink() or not path.is_dir():
-                raise StorageError("recovery namespace is missing or unsafe")
+        canonical = directory.resolve(strict=True)
+        root = canonical.parent.parent
         instance = cls.__new__(cls)
         instance._bind_paths(
             root.resolve(strict=True),
-            directory.parent,
-            directory,
+            canonical.parent,
+            canonical,
             session_id,
             generation,
         )
-        for path in (instance.protocol_directory, instance.spikeglx_directory):
-            if path.is_symlink() or not path.is_dir():
-                raise StorageError("recovery child namespace is missing or unsafe")
-        instance._acquire_lock(create=False)
+        instance._acquire_path_guard()
+        try:
+            if directory != canonical:
+                raise StorageError("recovery session directory is not canonical")
+            for path in (instance.root, instance.experiment_directory, directory):
+                if path.is_symlink() or not path.is_dir():
+                    raise StorageError("recovery namespace is missing or unsafe")
+            for path in (instance.protocol_directory, instance.spikeglx_directory):
+                if path.is_symlink() or not path.is_dir():
+                    raise StorageError("recovery child namespace is missing or unsafe")
+            instance._acquire_lock(create=False)
+        except BaseException:
+            if instance._lock_fd is None:
+                instance._release_path_guard()
+            raise
         try:
             marker = instance.inspect_marker()
             if (marker.session_id, marker.controller_generation) != (
@@ -118,22 +131,28 @@ class OutputReservation:
         return instance
 
     def acquire(self) -> list[Path]:
-        if self._lock_fd is not None:
+        if self.held:
             raise StorageError("reservation already held")
-        for path in (
-            self.experiment_directory,
-            self.session_directory,
-            self.protocol_directory,
-            self.spikeglx_directory,
-        ):
-            if path.is_symlink():
-                raise StorageError(f"symlink in reservation path: {path}")
-            if not path.exists():
-                path.mkdir()
-                self._created.append(path)
-            elif not path.is_dir():
-                raise StorageError(f"reservation path is not a directory: {path}")
-        self._acquire_lock(create=True)
+        self._acquire_path_guard()
+        try:
+            for path in (
+                self.experiment_directory,
+                self.session_directory,
+                self.protocol_directory,
+                self.spikeglx_directory,
+            ):
+                if path.is_symlink():
+                    raise StorageError(f"symlink in reservation path: {path}")
+                if not path.exists():
+                    path.mkdir()
+                    self._created.append(path)
+                elif not path.is_dir():
+                    raise StorageError(f"reservation path is not a directory: {path}")
+            self._acquire_lock(create=True)
+        except BaseException:
+            if self._lock_fd is None and not self._created:
+                self._release_path_guard()
+            raise
         if self.marker.exists():
             raise StorageError("existing reservation marker requires recovery")
         conflicts = self._direct_children()
@@ -146,6 +165,8 @@ class OutputReservation:
         return [*self.protocol_directory.iterdir(), *self.spikeglx_directory.iterdir()]
 
     def _acquire_lock(self, *, create: bool) -> None:
+        if sys.platform == "win32" and self._path_guard is None:
+            raise StorageError("Windows reservation lock requires path guard")
         if not create and (self.lock_path.is_symlink() or not self.lock_path.is_file()):
             raise StorageError("existing session lock is missing or unsafe")
         if sys.platform == "win32":
@@ -205,6 +226,26 @@ class OutputReservation:
             raise StorageError("session output namespace is locked") from exc
         self._lock_fd = fd
 
+    def _acquire_path_guard(self) -> None:
+        if sys.platform != "win32":
+            return
+        from cephvr.platform.windows.guard import SingleInstanceGuard
+        from cephvr.platform.windows.jobs import WindowsLaunchError
+
+        canonical = os.path.normcase(
+            os.path.normpath(logical_path(self.session_directory))
+        )
+        role = "reservation-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        try:
+            self._path_guard = SingleInstanceGuard(role)
+        except WindowsLaunchError as exc:
+            raise StorageError("session output namespace is locked") from exc
+
+    def _release_path_guard(self) -> None:
+        guard, self._path_guard = self._path_guard, None
+        if guard is not None:
+            guard.close()
+
     def inspect_marker(self) -> ReservationMarker:
         """Read bounded marker evidence only while this process holds the lock.
 
@@ -230,7 +271,7 @@ class OutputReservation:
             raise StorageError("reservation marker is corrupt or unavailable") from exc
 
     def _read_marker_bytes(self) -> bytes:
-        if self._lock_fd is None:
+        if not self.held:
             raise StorageError("marker read requires held reservation lock")
         flags = (
             os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
@@ -351,11 +392,20 @@ class OutputReservation:
         self._finish("not_activated")
 
     def cancel(self) -> None:
-        if self._lock_fd is None:
+        if self._lock_fd is None and self._path_guard is None:
             raise StorageError("reservation is not held")
         for child in (self.protocol_directory, self.spikeglx_directory):
-            if any(child.iterdir()):
+            if child.exists() and any(child.iterdir()):
                 raise StorageError(f"unexpected files block cleanup: {child}")
+        if self._lock_fd is None:
+            if self.lock_path.exists():
+                raise StorageError("session lock ownership is unconfirmed")
+            for path in reversed(self._created):
+                if path.exists():
+                    path.rmdir()
+            self._created.clear()
+            self._release_path_guard()
+            return
         has_marker = self.marker.exists()
         if has_marker:
             self._require_own_open_marker("marker identity mismatch; cleanup blocked")
@@ -372,6 +422,8 @@ class OutputReservation:
             quarantine = self.session_directory.with_name(
                 f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
             )
+            if sys.platform == "win32":
+                self._release_byte_lock()
             try:
                 os.replace(self.session_directory, quarantine)
             except OSError as exc:
@@ -379,7 +431,8 @@ class OutputReservation:
                     "session quarantine failed; unfinished marker retained"
                 ) from exc
             _sync(self.experiment_directory)
-            self.release()
+            if sys.platform != "win32":
+                self.release()
             if has_marker:
                 (quarantine / self.marker.name).unlink()
             (quarantine / self.lock_path.name).unlink()
@@ -397,6 +450,8 @@ class OutputReservation:
             ]
         else:
             tombstone: Path | None = None
+            if sys.platform == "win32":
+                self._release_byte_lock()
             if self._lock_created:
                 tombstone = self.lock_path.with_name(
                     f".{self.lock_path.name}.{uuid.uuid4()}.cleanup"
@@ -411,7 +466,8 @@ class OutputReservation:
             if has_marker:
                 self.marker.unlink()
                 _sync(self.session_directory)
-            self.release()
+            if sys.platform != "win32":
+                self.release()
             if tombstone is not None:
                 tombstone.unlink()
                 _sync(self.session_directory)
@@ -425,8 +481,9 @@ class OutputReservation:
                 path.rmdir()
             except OSError as exc:
                 raise StorageError(f"unexpected files block cleanup: {path}") from exc
+        self._release_path_guard()
 
-    def release(self) -> None:
+    def _release_byte_lock(self) -> None:
         if self._lock_fd is None:
             return
         fd, self._lock_fd = self._lock_fd, None
@@ -439,3 +496,7 @@ class OutputReservation:
 
             fcntl.flock(fd, fcntl.LOCK_UN)
         os.close(fd)
+
+    def release(self) -> None:
+        self._release_byte_lock()
+        self._release_path_guard()

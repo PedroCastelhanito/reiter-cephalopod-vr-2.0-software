@@ -1,0 +1,2604 @@
+diff --git a/LOG.md b/LOG.md
+index 4c30702..4b43b5e 100644
+--- a/LOG.md
++++ b/LOG.md
+@@ -71,3 +71,40 @@ This log starts on 2026-09-30; it is not a reconstruction of earlier repository
+ - Changes: linked the project-layout guide from the repository map; pointed contributors to checked-in formatting/lint/type/pytest settings, including scoped exceptions; clarified that the boundary checker's >500-line notices prompt cohesion review rather than impose a cap; and added brief intent-focused comment/docstring guidance. CLAUDE.md continues to import AGENTS.md without duplicated rules.
+ - Review: Astra and Sol independently approved the final actual delta with no actionable findings. Sol confirmed the TODO context link resolves and CLAUDE.md is unchanged.
+ - Verification: Local Markdown links/anchors and baseline-relative whitespace checks passed for AGENTS.md, TODO.md and LOG.md; `git diff --check` passed. No runtime suite was applicable. Task complete; CLAUDE.md remains an import of AGENTS.md.
++
++### [repo] [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] [shared] [launcher] Windows rig audit
++
++- Context: `windows-rig-audit`; owner requested full Windows/rig suite and backend review using Astra > Sol > Luna. Baseline clean HEAD `826984255e0a8469afccbda2dcaf8c642b528b33`.
++- Actions: created fresh Python 3.11.15 project environment, installed declared extras/dev, ran full runner and full suite including built native Tracking adapter. Read-only device/GPU inventory and bounded native/encoder/retention/identity probes retained in [dated evidence](reports/rig-audit-2026-10-01/README.md); updated owning reports and follow-up tasks. No redundant test module justified deletion; no implementation/scientific settings changed.
++- Results: full snapshot 727 passed, 18 failed, 6 skipped (751); focused native 8 passed, 1 privilege skip. Static lint/format/boundaries, 48/40 contract tests, Visual Stimulus schemas and package build passed; installed-extra mypy failed with 52 errors and Tracking schema default decoding failed despite UTF-8 equality. Runtime ring binding, interpreter identity, reservation/recovery and bounded FFmpeg failures remain; fixture/timing concerns are distinguished in evidence. Capacity bypass claim corrected; terminal timestamp leak reproduced at component scope. Early ensurepip/probe failures were resolved; raw initial probe stdout is only in tool transcript. Automatic approval review rejected managed launcher invocation for potential hardware side effects; it was not executed. GUI/SpikeGLX and full scientific/full-load acceptance remain open. Audit complete, repairs remain queued. Disposable audit scratch cleaned; documentation file links and whitespace passed.
++
++### [controller] [shared] [launcher] Authorized Windows repair preparation and terminal retention
++
++- Context: `windows-native-audit-repairs`; owner authorized audit items 1–4 and 6, leaving encoder item 5 deferred. ARCH-002 review selected existing operation owner and narrow native/environment mechanisms rather than a new bookkeeping framework.
++- Changes: Luna routed Setup Ready/failure and successful Start through existing terminal completion; explicit focused dependency wired into Setup execution, original failure code/progress and lock/publication order retained. Added regressions in existing owning modules. Sol reviewed the delta. Native atomic shim is next.
++- Verification: 21 focused controller cases passed; scoped Ruff/format, controller Windows-target mypy (74 files), boundaries (453 modules, zero violations) and whitespace passed. Initial missing dependency wiring and fixture expectations were corrected before the pass. Recovery diagnosis captured the exact failed long temporary pathname; direct real-interpreter proof preserves `.venv` prefix/imports, one OS/code PID, exact retained image and inherited bootstrap transfer after explicit matching-base runtime DLL-directory setup. First proof without that directory failed `_ctypes` loading and is retained separately. Probes are temporary/owned-resource checks, not managed application or scientific acceptance; repair continues.
++
++### [shared] [acquisition] [repo] Native atomic binding and binary packaging
++
++- Context: `windows-native-audit-repairs`; ARCH-002/SYS-003 review chose a tiny documented MSVC intrinsic export because the required Win32 atomic operation is not an exported kernel32 symbol on this rig. No Python fallback or extra atomic framework was introduced.
++- Changes: Luna added the x64 Windows helper, strict native binding, default rig-install build path, and cross-process shared-word coverage in the owning native module. Binary packaging validates AMD64 PE images and emits a Windows platform wheel; source distributions retain the native source. Sol reviewed interfaces and packaging checks. Existing ring retirement assertions retain sealed/retired state and reject reopening using the actual public diagnostic.
++- Verification: MSVC/CMake build and install passed; owning native/ring checks passed 14 with one symlink privilege skip. Scoped mypy, Ruff including root setup.py, format, boundaries and whitespace passed. Wheel inspection confirmed both native DLLs, `Root-Is-Purelib: false`, and `cp311-cp311-win_amd64`; sdist contains setup.py/CMake/C++ source. PowerShell parser passed after an initial shell quoting failure; sandbox artifact-read denial was resolved by authorized escalation. Raw build/test/package evidence is retained with repair-prefixed names in the dated audit directory. Interpreter and reservation/recovery repairs continue; these passes do not establish full acquisition or scientific acceptance.
++
++### [launcher] [supervisor] [controller] [acquisition] [visual_stimulus] [shared] Exact managed Python execution
++
++- Context: `windows-native-audit-repairs`; E08 identity/containment requires the planned process to execute the child code. A separate prepared real interpreter and matching DLL preserve the fresh virtual environment without altering its ordinary python.exe.
++- Changes: Luna added provenance/freshness validation, a small versioned entry retaining documented matching-base DLL-directory handles, and consistent launch arguments/executable resolution at the owning Windows boundaries. Existing rig install prepares the artifact; missing/stale/mismatched files fail explicitly. Sol and Astra reviewed the resolver, bootstrap and launch-site deltas. No production diagnostic mode or new security boundary was added.
++- Verification: prepare/verify commands and stale/mismatch regression passed. Luna's native suite passed 11 with one privilege skip; its live child regression verifies exact OS/code/launched identity, one job member, virtual-environment prefix/grpc import location and inherited bootstrap before bounded release. Sol's affected portable launch/registration/worker batch passed 153, with one rig case deselected; raw log/JUnit retained in the dated bundle. Scoped mypy/Ruff/boundary/whitespace checks passed. These checks ran on Windows; no Linux runtime or full managed application/scientific acceptance is claimed. Reservation/recovery and validation portability increments continue.
++
++### [controller] [shared] [supervisor] Windows reservation and recovery persistence
++
++- Context: `windows-native-audit-repairs`; E04 refinement records the documented Windows directory-rename restriction and retains exclusive namespace ownership while its byte-lock descriptor closes. ARCH-002 review kept the mechanism in the existing reservation owner and a small native path helper.
++- Changes: Luna added the canonical case-insensitive namespace guard before filesystem checks/mutation, preserved POSIX locking/release semantics, and retained Windows guard ownership through quarantine/cleanup and on failure. Normal and extended path aliases share one guard. Marker inspection remains bounded while ownership is held; a failed quarantine preserves unfinished evidence and does not claim cleanup. Native publication paths now use explicit extended-length spelling and short full-UUID temporary names; logical paths remain in records. E04/register and owning native contract were amended together.
++- Verification: first cancellation case passed; initial larger run passed 27 with three failures and one privilege skip, including corrected startup recovery persistence. Review found and corrected POSIX early-release, structural error handling and stale test-hook issues. Corrected default-temp storage/recovery/native batch passed 42, with two genuine symlink privilege skips and one known open-live-log fixture deselected for item 6. Cross-process lock-close alias exclusion, process-death release and failed-quarantine marker ownership pass. Raw attempts/results/JUnit are retained with repair-d prefixes. Luna's initial sandbox ACL restriction required escalation; scoped source type/lint checks passed. Final full-suite/static checks remain after the portability increment.
++
++### [repo] [controller] [supervisor] [acquisition] [tracking] [visual_stimulus] [shared] [launcher] Complete authorized Windows repairs
++
++- Context/outcome: `windows-native-audit-repairs` and `windows-validation-portability` complete for owner-authorized audit items 1–4 and 6. Encoder item 5 remains explicitly owner-deferred. Luna wrote the repairs; Sol/Astra reviewed interfaces, ownership and each increment under ARCH-002. Windows-aware fixtures retain meaningful assertions/permission skips; async tests await actual reports/heartbeats; schemas use UTF-8; media typing narrows real interfaces and generated TIFF preserves exact unsigned pixels/rejects floats. Optional-library import scopes retain the minimal-dev static baseline without disabling installed types.
++- Verification: final default-temp whole suite includes every Windows/rig marker: 755 passed, 6 skipped, 761 collected. Final Ruff/format (627 files), installed-extra Windows-target mypy (525 files), boundary checker (453 modules/zero violations), 48/40 contract tests, 19/11 schemas, syntax/dependency checks and package build pass. Wheel inspection verifies both native DLLs and runtime modules, non-pure cp311/cp311/win_amd64 tag; sdist retains native source. Six skips are four unavailable symlink cases and two POSIX mode fixtures; portable duplicate-JSON rejection and native broad-DACL rejection run on Windows. First full repair snapshot had one remaining fixed-sleep status heartbeat failure; bounded outcome waits fixed it, with original raw failure retained. Final changes after the passing suite were test formatting and static-import configuration only; typing/package metadata were rechecked.
++- Scope/cleanup: owning reports, rig worklist, current TODO and dated evidence are reconciled. Inspected repair scratch/package artifacts, `.tmp-luna-c`, empty `.codex-pytest-tmp` and traced D fixture scratch were removed after containment checks/hashes. Automatic review initially rejected recursive cleanup for unverified scratch provenance; inspection established the contents and narrower actions passed. Fresh environment/prepared interpreter and both untracked DLLs remain; preexisting caches/dist and default pytest12/13/14 were retained because mapping was unverified. No commit, encoder/scientific setting, firmware or OS privilege change. GUI/full application, devices and scientific/full-load acceptance remain open; no Linux or absent-extra runtime is claimed.
++- Provenance correction: the earlier B entry overstated raw compiler evidence retention. Exact original atomic compiler command/stdout/build-directory provenance was not saved in the evidence bundle; documented reproduction recipe, installed DLL hashes, native tests and package evidence remain. Source patch/new-file archive/hash manifest retain the uncommitted final snapshot. Earlier failed shell/selector/sandbox attempts remain scoped in evidence; no failed attempt is presented as a pass.
+diff --git a/MANIFEST.in b/MANIFEST.in
+index 22c9d58..321352f 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -1,6 +1,8 @@
+ include tools/build_backend.py
+ include tools/generate_contracts.py
++include setup.py
+ recursive-include contracts *.proto *.toml
+ recursive-include config/backends *.toml
+ global-exclude *_pb2.py *_pb2.pyi *_pb2_grpc.py
+ recursive-include native/tracking *.cpp CMakeLists.txt
++recursive-include native/windows *.cpp CMakeLists.txt
+diff --git a/TODO.md b/TODO.md
+index aa691ea..f9006a9 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -25,12 +25,14 @@ None recorded.
+ - [ ] `shutdown-health-checks` [supervisor] Resolve gaps in controller-loss monitoring and timeout fencing during accepted shutdown, preserving original deadlines. — [Finding](reports/runtime.md#unresolved-findings-and-limitations)
+ - [ ] `pruned-launch-replay` [supervisor] Resolve PlanLaunch replay behavior after a released registry entry is pruned; retain the agreed replay guarantees. — [Finding](reports/runtime.md#unresolved-findings-and-limitations)
+ - [ ] `late-finished-recovery` [controller] [supervisor] Recheck startup inspection of logs containing late-Finished recovery events; preserve conservative handling of genuinely unconfirmed evidence. — [Finding](reports/runtime.md#unresolved-findings-and-limitations)
+-- [ ] `controller-audit-observations` [controller] Verify the unverified 2026-10-01 audit observations (direct `control.operations` writes bypassing capacity checks, operations never pruned, pre-activation shutdown not cancelling Setup prompts, warning appended outside the lifecycle lock) and decide on the unread `default_intertrial_gap_ns` and `completed_camera_operation` fields; fix only observed defects. — [Observations](reports/runtime.md#unresolved-findings-and-limitations)
++- [ ] `controller-audit-observations` [controller] Review ingress duplicate handling, pre-activation prompt cancellation, warning lock scope and unread fields before changing them; terminal retention is repaired and capacity bypass was not established. — [Observations](reports/runtime.md#unresolved-findings-and-limitations)
+ 
+ ## Blocked
+ 
+-None recorded.
++- [ ] `rig-acceptance` [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] Complete remaining managed application/device/full-workload acceptance after GUI implementation, required scientific/wiring inputs and owner-deferred encoder compatibility; bounded native repairs pass. — [Rig worklist](reports/rig-verification.md)
+ 
+ ## Deferred
+ 
+-- [ ] `rig-acceptance` [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] Complete the existing Windows/device/full-workload acceptance worklist and record measured results. Deferred under E15 to rig execution; keep individual checks and input prerequisites only in the linked worklist. — [Rig worklist](reports/rig-verification.md)
++- [ ] `encoder-toolchain-owner-review` [acquisition] [visual_stimulus] Owner-deferred audit item 5: select/validate compatible encoder tools and existing settings before full-load acceptance; no encoder repair was authorized in this phase. — [Evidence and limits](reports/rig-audit-2026-10-01/README.md)
++
++Owner-deferred scientific settings and firmware remain in their owning architecture/worklist records.
+diff --git a/architecture.md b/architecture.md
+index dff5266..a22f56f 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -1,6 +1,6 @@
+ # CephVR2.0 architecture
+ 
+-Last updated: 2026-09-30
++Last updated: 2026-10-01
+ 
+ This overview and the linked records in `docs/architecture/` form the authoritative
+ architecture. Each decision has one home; this register locates it by permanent ID.
+@@ -64,7 +64,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+ | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 28 |
+-| <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 86 |
++| <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 87 |
+ | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
+ | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 76 |
+ | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 57 |
+diff --git a/contracts/acquisition/windows-resources.md b/contracts/acquisition/windows-resources.md
+index ad83689..d6cb3f6 100644
+--- a/contracts/acquisition/windows-resources.md
++++ b/contracts/acquisition/windows-resources.md
+@@ -28,6 +28,20 @@ the peer. Input format/throughput feasibility remains a rig check (A08).
+ 
+ ## Ownership ledger and storage synchronization
+ 
++Controller reservation ownership follows [E04](../../docs/architecture/supervisor.md#e04).
++Windows directory rename cannot proceed while a descendant file handle is open,
++even when the lock handle permits delete sharing. All Windows reservation acquire
++and recovery-open paths therefore retain a shared canonical-namespace named-object
++guard before directory creation/checks and the byte lock. The guard uses existing
++handle-existence semantics, not a thread-owned mutex wait/release. Normalize the
++canonical case-insensitive path before hashing its guard name. During cancellation,
++retain that guard while closing the descriptor, quarantining the namespace and
++finishing cleanup/bookkeeping before releasing ownership;
++failure preserves the guard and unfinished marker until explicit release. Process
++death releases both OS ownership mechanisms. Records keep logical canonical paths;
++native file operations use extended-length paths when required.
++The platform restriction is documented in [Microsoft's rename rules](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_rename_information#remarks).
++
+ The [shared resource ledger](../native-transport.md) owns native transfer/release
+ mechanics. [Frame buffers](frame-buffers.md) supplies acquisition's layouts and
+ Win32 named event binding; SDK views and recording resources register in the same
+diff --git a/contracts/tracking/schema_check.py b/contracts/tracking/schema_check.py
+index c2e6a6d..5b8cfef 100644
+--- a/contracts/tracking/schema_check.py
++++ b/contracts/tracking/schema_check.py
+@@ -15,8 +15,10 @@ def main() -> None:
+     for name,model in {**METHODS,**RECORDS}.items():
+         text=json.dumps(model.model_json_schema(),indent=2,ensure_ascii=False)+'\n'
+         path=HERE/(name+'.schema.json')
+-        if args.write:path.write_text(text)
+-        elif not path.exists() or path.read_text()!=text:
+-            raise SystemExit('stale generated schema: '+str(path))
++        if args.write:
++            with path.open("w", encoding="utf-8", newline="\n") as stream:
++                stream.write(text)
++        elif not path.exists() or path.read_text(encoding="utf-8") != text:
++            raise SystemExit("stale generated schema: " + str(path))
+     print(f'{len(METHODS)+len(RECORDS)} tracking JSON schemas match the canonical models.')
+ if __name__=='__main__':main()
+diff --git a/contracts/windows-launch.md b/contracts/windows-launch.md
+index 93c5701..bdf05a1 100644
+--- a/contracts/windows-launch.md
++++ b/contracts/windows-launch.md
+@@ -3,8 +3,9 @@
+ Authority: [E06/E08](../docs/architecture/system-contracts.md). This shared contract
+ covers every owned CephVR process on the rig, including controller/supervisor/GUI,
+ acquisition, Visual Stimulus, tracking, workers and native helpers. SpikeGLX is a separate remote
+-application and is never contained or killed here. No launcher is implemented or
+-Windows behavior verified.
++application and is never contained or killed here. Implementation and bounded
++Windows verification status are recorded in [the runtime report](../reports/runtime.md);
++this contract does not establish full rig acceptance.
+ 
+ ## Application containment and automatic failure shutdown
+ 
+@@ -78,6 +79,15 @@ a versioned `-m` bootstrap entry point using ordinary process arguments. Transfe
+ only declared registered bootstrap descriptors; never pickle objects or depend on
+ private multiprocessing/Popen internals. Named resources and typed RPCs already
+ carry worker state. The parent imports/initializes no child SDK or GPU runtime.
++For a Windows virtual environment whose interpreter redirects execution, environment
++preparation creates a separate real interpreter image and matching runtime DLL in
++the virtual environment's Scripts directory. A manifest binds those files to the
++current base interpreter and virtual-environment configuration. Resolve and verify
++that image before launch planning; missing, stale or mismatched preparation fails
++explicitly, without falling back to the redirector. Preserve virtual-environment
++imports and prefix. The managed Python entry retains documented DLL-directory
++handles for the matching base runtime before dispatching the owning module; all
++owned Python descendants use the same preparation and retain the executing PID/image.
+ Native encoders/helpers use the same launch/containment helper without Python
+ bootstrap or CephVR heartbeat requirements; their owners monitor actual progress.
+ 
+diff --git a/docs/architecture/supervisor.md b/docs/architecture/supervisor.md
+index 8688c33..aa3e7d3 100644
+--- a/docs/architecture/supervisor.md
++++ b/docs/architecture/supervisor.md
+@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
+ <a id="e04"></a>
+ ### E04 — Recording layout, identity, and metadata
+ 
+-**Status:** Accepted · **Revision:** 86
++**Status:** Accepted · **Revision:** 87
+ 
+ **Identity and files**
+ 
+@@ -86,6 +86,12 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
+   establishes live ownership. If the controller dies the OS releases the lock, the
+   marker stays unfinished and the next startup recovers it. Clean finalization marks
+   complete, syncs the marker, then releases.
++  On Windows, a canonical-namespace OS guard precedes filesystem mutation and stays
++  held while the file-lock descriptor must close for directory quarantine; failed
++  quarantine retains exclusive ownership and unfinished evidence until explicit
++  release. Guard ownership is handle-based, not thread-affine, and OS-released on
++  process death. This accommodates Windows' prohibition on renaming a directory
++  containing open files without an unprotected ownership gap.
+ - Complete collision checks before Ready. Existing files require a modal/listed-path
+   Continue/Cancel choice from the control holder. Continue authorizes deletion only
+   of listed files, followed by revalidation/reservation; Cancel preserves files and
+diff --git a/pyproject.toml b/pyproject.toml
+index 46c36ac..3d272df 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -75,6 +75,7 @@ namespaces = false
+ [tool.setuptools.package-data]
+ "*" = ["*.pyi"]
+ "cephvr.tracking.native" = ["*.dll"]
++"cephvr.platform.windows" = ["*.dll"]
+ 
+ [tool.ruff]
+ target-version = "py311"
+@@ -109,7 +110,7 @@ module = ["grpc", "grpc.*"]
+ ignore_missing_imports = true
+ 
+ [[tool.mypy.overrides]]
+-module = ["onnx", "onnx.*", "onnxruntime", "onnxruntime.*", "cv2", "glfw", "moderngl", "numpy", "numpy.*", "OpenGL", "OpenGL.*"]
++module = ["onnx", "onnx.*", "onnxruntime", "onnxruntime.*", "cv2", "glfw", "moderngl", "numpy", "numpy.*", "OpenGL", "OpenGL.*", "av", "av.*", "tifffile", "tifffile.*", "imagecodecs", "imagecodecs.*"]
+ ignore_missing_imports = true
+ 
+ [tool.pytest.ini_options]
+diff --git a/reports/acquisition.md b/reports/acquisition.md
+index 74e5860..cc32ea7 100644
+--- a/reports/acquisition.md
++++ b/reports/acquisition.md
+@@ -1,7 +1,7 @@
+ # Acquisition status
+ 
+ Status: host implementation, source review and lightweight local verification are
+-recorded below (2026-09-30). Native Windows, device and full-workload acceptance remain
++recorded below (2026-10-01). Bounded native checks pass; device and full-workload acceptance remain
+ pending on the rig. This is not experiment-readiness approval.
+ 
+ [ARCH-001](../architecture.md#arch-001) selects this stage;
+@@ -12,6 +12,19 @@ pending on the rig. This is not experiment-readiness approval.
+ 
+ ## Ownership and review
+ 
++Final Windows repair snapshot (2026-10-01, baseline HEAD
++`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): acquisition
++171 passed. All owning ring cases pass with a documented MSVC intrinsic helper
++under SYS-003, including native cross-process atomic visibility. Prepared Python
++launches preserve exact executing identity; Windows recording paths are tested
++with actual absolute temporary paths. The platform wheel includes both native DLLs.
++Read-only Basler enumeration sees expected serials/models; no capture/settings changed.
++The initial FFmpeg/ffprobe 4.3.2 three-frame 128x128 encode on RTX 2080 Ti failed
++at preset configuration. Encoder item 5 is explicitly owner-deferred and unchanged.
++[Dated evidence](rig-audit-2026-10-01/README.md) retains initial/final outcomes;
++camera, input-format and full-load acceptance remain in the
++[single rig worklist](rig-verification.md).
++
+ Review covered coordinator/camera/recording/serial ownership, focused peer interfaces,
+ authenticated bounded admission and original deadlines. Integration closed private
+ handoffs for applied MCU rates, exact tracking-consumer cleanup and future output
+diff --git a/reports/rig-verification.md b/reports/rig-verification.md
+index 1d716ca..ade6c46 100644
+--- a/reports/rig-verification.md
++++ b/reports/rig-verification.md
+@@ -1,5 +1,14 @@
+ # Rig verification — outstanding checks
+ 
++Latest execution: [2026-10-01 Windows audit](rig-audit-2026-10-01/README.md),
++baseline HEAD `826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs.
++Full default-temp automated suite including Windows and bounded NVIDIA smoke:
++755 passed, 6 skipped. Native ring binding, executing-interpreter identity and
++reservation/recovery repairs pass focused regressions. These are bounded evidence,
++not full-workload acceptance. Encoder compatibility item 5 remains owner-deferred
++and unchanged. GUI/SpikeGLX remain unimplemented under ARCH-001; deferred scientific
++inputs remain unset. No camera settings, projection, wiring or firmware changed.
++
+ Latest development handoff:
+ [hardware evidence and implementation constraints](rig-handoff-2026-09-29/README.md).
+ Camera roles/rates are now owner-confirmed (behavioral 40065509 at 30 Hz; tracking
+@@ -51,7 +60,7 @@ tracked separately from installation discovery and dependency smoke checks.
+ | Consumer precision and encoder compatibility | Verify native unpacking/alignment and source-depth RGB/grayscale preparation under the [pixel contract](../contracts/acquisition/pixel-processing.md), including high-bit-depth sources. Confirm the actual selected codec/output bit depth and color representation; no silent lower-depth conversion or widened 8-bit data labelled original-depth. Preview alone uses the approved display scaling. Keep lossy compression quality separate from representation bit depth. Verify the explicit per-camera output pixel format under A08, including detection of encoder format substitution. Check requested versus actual range/matrix conversion and output tags using known pixel values; tags alone do not prove the conversion. Verify that lower-depth output settings reject higher-depth sources until explicitly compatible arguments are provided. |
+ | Basler conversion mappings | Exercise the declared [SDK registry](../contracts/acquisition/sdk-mappings.md): native packing/stride, Bayer patterns and edges, private buffer lifetime, effective depth and preview scaling. Record actual device/SDK support; unsupported mappings must fail explicitly. |
+ | Windows ownership and cleanup | Exercise the shared [acquisition/Visual Stimulus launch contract](../contracts/windows-launch.md) and acquisition [I/O/sync contracts](../contracts/acquisition/windows-resources.md), including owner death at every launch stage, partial handle transfer, blocked pipe/stdin cancellation, process identity reuse, encoder sharing and failed storage sync. Require truthful cleanup blockers. |
+-| Windows venv interpreter process tree | Run `tools\test_on_rig.ps1` and read `interpreter-process-tree.log`: a venv `.venv\Scripts\python.exe` may be a redirector that starts the base interpreter as a child. Two processes with different `image` paths means the launcher's exact-image check (`retain_exact(..., str(interpreter))`) and per-launch job membership would see the redirector and base interpreter as a pair; one process means no issue. Diagnostic only; any launcher/jobs fix is deferred until this evidence exists. |
++| Windows venv interpreter process tree | Prepared-image native regression now verifies one live job member, exact launched/executing PID and OS image, fresh venv imports and inherited bootstrap. Verify real managed registration and shutdown after GUI implementation; focused evidence does not establish full application behavior. |
+ | Runtime finalization boundary | Under A07/E05, verify bounded online accounting, encoder finalization, sync and close without a separate file-validation pass. Measure drain/closure delay before the next trial. Output-content inspection belongs to external post hoc or development verification, never an automatic runtime validator. |
+ | Empty camera video | Verify the all-dropped case with actual input/muxer behavior: complete frame log with its completion line, truthful artifact presence/closure and grouped warning. Reject encoder failure disguised as empty success, missing-created artifacts and unknown closure; retain Interrupted/health outcomes. |
+ | MCU host boundary binding | Verify grouped ON/OFF dispatch at host T/end, reserved-channel drain, command/reply timestamps, Abort during an outstanding request and late OFF evidence. Validate report deadlines independently from physical pulse/exposure delay; no early compensation or shifted recording interval. |
+@@ -363,8 +372,9 @@ separate full-load acceptance procedures.
+ 
+ ## Tracking native/runtime handoff (2026-09-30)
+ 
+-Tracking code and lightweight local tests are present; native execution and scientific
+-acceptance remain pending. Follow the executable build/smoke-test commands and explicit
++Tracking code and lightweight local tests are present; scientific/full-workload
++acceptance remains pending. Follow the executable build/smoke-test commands and explicit
+ procedures in [Tracking status](tracking.md#windows-execution-handoff). The API 2.0 shim
+-is not compiled or GPU-validated on the development machine. Preserve the distinction
++was not compiled on the development machine at that handoff. The 2026-10-01 rig
++audit built it and passed the bounded native smoke; preserve the distinction
+ between automated Windows checks and full camera/model/closed-loop experiment evidence.
+diff --git a/reports/runtime.md b/reports/runtime.md
+index 5078df3..4fc19b5 100644
+--- a/reports/runtime.md
++++ b/reports/runtime.md
+@@ -1,6 +1,6 @@
+ # Controller and supervisor status
+ 
+-Updated: 2026-09-30. Implementation/source review is recorded for the controller,
++Updated: 2026-10-01. Implementation/source review is recorded for the controller,
+ supervisor, launcher, headless client and shared/native helpers. Local results below
+ have their original scope; Windows and full-workload acceptance remain pending.
+ [ARCH-001/002](../architecture.md#arch-001) owns scope and structure;
+@@ -10,6 +10,31 @@ have their original scope; Windows and full-workload acceptance remain pending.
+ 
+ ## Current scope and review
+ 
++Final Windows repair snapshot (2026-10-01, baseline HEAD
++`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): controller
++200 passed/2 skipped; supervisor 106 passed; shared 51 passed/3 skipped; platform
++45 passed/1 skipped; launcher 10 and client 6 passed. Whole-suite result is
++755 passed/6 skipped, including all Windows and bounded rig tests with default
++temporary paths. [Dated evidence](rig-audit-2026-10-01/README.md) preserves the
++initial failures, final JUnit, exact skip reasons and build/static checks.
++
++Setup Ready/failure and successful Start use the existing terminal completion
++owner, preserving failure codes, publication order and active-session retention.
++The native intrinsic helper repairs cross-process ring atomics. Verified prepared
++Python images preserve the fresh virtual environment: a live native regression
++confirms launched/code PID and OS image, one job member and inherited bootstrap.
++E04 reservation guards preserve exclusive ownership while Windows closes the byte
++lock for quarantine, including failure; default-path recovery persistence passes.
++Fixtures now respect Windows sharing/permissions and await actual async outcomes.
++
++Full managed launch remains gated by the unimplemented GUI. Automatic approval
++review rejected the earlier proposed launcher invocation for potential managed
++service/hardware effects; it was not executed. Focused checks do not establish
++full E04/E08 application/device/workload acceptance. Capacity bypass was not
++established; authorization checks the same capacity under the lifecycle lock.
++ARCH-002 review keeps the 502-line reservation owner cohesive around namespace
++ownership; native tests remain one platform-fixture module rather than per-fix files.
++
+ - Controller lifecycle, configuration validation, live control leases, RPC admission,
+   output planning, serialized central metadata, preparation handoffs, incident handling,
+   camera/preview forwarding, and headless control.
+@@ -106,11 +131,11 @@ pruned (only at registry capacity) plans anew; and a mid-session late-Finished
+ `recovery` event makes startup inspection treat an intact log as unconfirmed (the
+ safe fallback).
+ 
+-Unverified observations from the 2026-10-01 controller audit (not simplifications, not
+-reproduced or fixed): `setup_admission.py` and `start.py` write `control.operations`
+-entries directly, bypassing `ControlOperations.operation()` capacity and duplicate-ID
+-checks; several paths mark operations complete without recording
+-`operation_finished_ns`, so pruning never removes them; a shutdown before activation does
++Remaining observations from the 2026-10-01 controller audit (not fixed):
++`setup_admission.py` and `start.py` write `control.operations` entries directly,
++bypassing `operation()`'s duplicate-ID helper; ingress duplicate handling still needs
++review, and capacity is checked by `authorized()`. Terminal timestamp retention was
++repaired and regression-tested in the authorized phase. A shutdown before activation does
+ not cancel pending Setup prompt futures the way `cancel_setup` does; and `cancel_attempt`
+ appends its reservation warning outside the lifecycle lock. Two state fields have no
+ reader in source and need an owner decision before removal: `default_intertrial_gap_ns`
+diff --git a/reports/tracking.md b/reports/tracking.md
+index 69768d7..03909b0 100644
+--- a/reports/tracking.md
++++ b/reports/tracking.md
+@@ -1,5 +1,15 @@
+ # Tracking status
+ 
++Final Windows repair snapshot (2026-10-01, baseline HEAD
++`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): 43 passed,
++including the native NVIDIA same-image lease smoke built with
++MSVC 19.44/CUDA 12.8.61/API 2 headers. Fresh inventory confirms RTX 5060 Ti ordinal 0.
++The 128x128 smoke proves bounded native lease/readback/closure only. Finished
++ordering now waits for actual outbound delivery. All 48 contract tests and 19 JSON
++schemas pass; explicit UTF-8 fixes platform decoding without changing declarations.
++[Evidence](rig-audit-2026-10-01/README.md) retains scope/results;
++[scientific/full-load acceptance](rig-verification.md) remains open.
++
+ Updated: 2026-10-01. Tracking runtime implementation is selected under
+ [ARCH-001](../architecture.md#arch-001), before GUI and SpikeGLX integration.
+ Native adapters and the backend runtime are now implemented. Local checks below are
+@@ -112,9 +122,10 @@ loopback sockets. [Dated evidence](tracking-evidence-2026-10-01/README.md) retai
+ commands/results, the exact audit source diff and pre/post source hashes against the
+ initial dirty-tree snapshot. These checks establish local regression evidence only.
+ 
+-No native DLL build,
+-CUDA/ONNX inference, protected Windows assets, named-pipe cancellation, actual camera
+-conversion or combined closed-loop throughput has been validated on this machine.
++That development snapshot had no native DLL build or GPU smoke. The later rig audit
++above built the shim and passed bounded native flow execution. CUDA/ONNX inference,
++protected Windows assets, named-pipe cancellation, actual camera conversion and
++combined closed-loop throughput still have no acceptance evidence.
+ 
+ ## Windows execution handoff
+ 
+diff --git a/reports/visual_stimulus.md b/reports/visual_stimulus.md
+index 9b428ed..9dad6ab 100644
+--- a/reports/visual_stimulus.md
++++ b/reports/visual_stimulus.md
+@@ -8,6 +8,18 @@ remain authoritative; implementation does not mean experiment or rig acceptance.
+ 
+ ## Implemented scope
+ 
++Final Windows repair snapshot (2026-10-01, baseline HEAD
++`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): 123 tests,
++40 contract tests and 11 schemas pass. Concrete PyAV video stream/frame and TIFF
++page/dtype/enum handling clears installed-extra Windows-target mypy; repository
++check passes 525 source files. Bounded generated TIFF uint8/uint16 decoding preserves
++exact pixel values and rejects float input; most other resource tests use fake
++prepared decoders, so these results are not broad codec fidelity coverage. No physical projection,
++calibration or full composite/encoder workload was performed. The installed PATH
++FFmpeg4.3.2 failed bounded explicit-2080 Ti encoding; production encoding remains
++unvalidated. [Dated evidence](rig-audit-2026-10-01/README.md) and the
++[single rig worklist](rig-verification.md) retain current limitations.
++
+ [V01](../docs/architecture/visual_stimulus.md#v01) owns the Visual Stimulus name.
+ The runtime, tests, contracts, configuration and documentation use `visual_stimulus`;
+ console commands are `cephvr-visual-stimulus` and `cephvr-visual-stimulus-worker`.
+diff --git a/src/cephvr/acquisition/main.py b/src/cephvr/acquisition/main.py
+index 2434d6f..bcceb6a 100644
+--- a/src/cephvr/acquisition/main.py
++++ b/src/cephvr/acquisition/main.py
+@@ -38,6 +38,7 @@ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.platform.windows.bootstrap import close_handle, read_bootstrap
+ from cephvr.platform.windows.guard import SingleInstanceGuard
+ from cephvr.platform.windows.jobs import WindowsJobs
++from cephvr.platform.windows.python_runtime import resolve_python_executable
+ from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+ from cephvr.shared.auth import Principal
+ from cephvr.shared.clock import host_time_ns
+@@ -109,7 +110,7 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
+         supervisor_token=bootstrap.supervisor_token,
+         supervisor_endpoint=f"127.0.0.1:{bootstrap.supervisor_port}",
+         coordinator_endpoint=endpoint,
+-        python_executable=Path(sys.executable),
++        python_executable=resolve_python_executable(Path(sys.executable)),
+         max_message_bytes=bootstrap.max_message_bytes,
+         register_peer=lambda process, token: credentials.__setitem__(
+             (process.role, process.generation), token
+@@ -127,7 +128,9 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
+         heartbeat_interval_ns=bootstrap.heartbeat_interval_ns,
+         health_silence_ns=bootstrap.health_silence_ns,
+         bootstrap=bootstrap_port,
+-        executables=PythonWorkerExecutables(Path(sys.executable)),
++        executables=PythonWorkerExecutables(
++            resolve_python_executable(Path(sys.executable))
++        ),
+         supervisor=supervisor,
+         cleanup_complete=_worker_cleanup_complete,
+     )
+diff --git a/src/cephvr/acquisition/worker_launcher.py b/src/cephvr/acquisition/worker_launcher.py
+index be4405e..221839f 100644
+--- a/src/cephvr/acquisition/worker_launcher.py
++++ b/src/cephvr/acquisition/worker_launcher.py
+@@ -30,6 +30,10 @@ from cephvr.platform.windows.bootstrap import (
+     write_bootstrap,
+ )
+ from cephvr.platform.windows.jobs import WindowsJobs, WindowsLaunchError
++from cephvr.platform.windows.python_runtime import (
++    module_arguments,
++    resolve_python_executable,
++)
+ from cephvr.shared.auth import Principal
+ from cephvr.shared.clock import host_time_ns
+ from cephvr.shared.transport_deadlines import remaining_seconds
+@@ -103,7 +107,7 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
+         self.supervisor_token = supervisor_token
+         self.supervisor_endpoint = supervisor_endpoint
+         self.coordinator_endpoint = coordinator_endpoint
+-        self.python_executable = python_executable.resolve()
++        self.python_executable = resolve_python_executable(python_executable)
+         self.max_message_bytes = max_message_bytes
+         self.register_peer = register_peer
+         self.revoke_peer = revoke_peer
+@@ -154,12 +158,10 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
+             self.native.open_launch_job(planned.state.containment_job_name)
+             child = self.native.launch_suspended(
+                 str(self.python_executable),
+-                [
+-                    "-m",
++                module_arguments(
+                     "cephvr.acquisition.worker.main",
+-                    "--bootstrap-handle",
+-                    str(read_handle),
+-                ],
++                    ["--bootstrap-handle", str(read_handle)],
++                ),
+                 [planned.state.containment_job_name],
+                 (read_handle,),
+             )
+diff --git a/src/cephvr/controller/assembly.py b/src/cephvr/controller/assembly.py
+index 3c4a5c0..6498076 100644
+--- a/src/cephvr/controller/assembly.py
++++ b/src/cephvr/controller/assembly.py
+@@ -440,6 +440,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
+         incident_state=i.incident_state,
+         limits=i.limit_state,
+         clock=i.clock,
++        control_operations=control_operations,
+         publisher=publisher,
+         reservation_started=i.reservation_started,
+         spikeglx=i.spikeglx,
+diff --git a/src/cephvr/controller/control/operations.py b/src/cephvr/controller/control/operations.py
+index 74b7872..16d7d2c 100644
+--- a/src/cephvr/controller/control/operations.py
++++ b/src/cephvr/controller/control/operations.py
+@@ -69,7 +69,13 @@ class ControlOperations:
+         return operation
+ 
+     def complete_operation(
+-        self, command_id: str, *, success: bool, progress: str, error: str = ""
++        self,
++        command_id: str,
++        *,
++        success: bool,
++        progress: str,
++        error: str = "",
++        failure_code: str = "OPERATION_FAILED",
+     ) -> None:
+         operation = self.control.operations.get(command_id)
+         if operation is None or operation.complete:
+@@ -79,9 +85,7 @@ class ControlOperations:
+         operation.succeeded = success
+         operation.progress = progress
+         if error:
+-            operation.failure.CopyFrom(
+-                pb.Failure(code="OPERATION_FAILED", message=error)
+-            )
++            operation.failure.CopyFrom(pb.Failure(code=failure_code, message=error))
+ 
+     def prune_operations(self) -> None:
+         now = self.clock()
+diff --git a/src/cephvr/controller/lifecycle/setup_execution.py b/src/cephvr/controller/lifecycle/setup_execution.py
+index 91f10b6..727a951 100644
+--- a/src/cephvr/controller/lifecycle/setup_execution.py
++++ b/src/cephvr/controller/lifecycle/setup_execution.py
+@@ -10,6 +10,7 @@ from copy import deepcopy
+ from datetime import datetime
+ 
+ from cephvr.control.v1 import types_pb2 as pb
++from cephvr.controller.control.operations import ControlOperations
+ from cephvr.controller.control.snapshots import SnapshotPublisher
+ from cephvr.controller.incident.registry import IncidentRegistry
+ from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
+@@ -45,6 +46,7 @@ class SetupExecution:
+         incident_state: IncidentState,
+         limits: LimitsState,
+         clock: Callable[[], int],
++        control_operations: ControlOperations,
+         publisher: SnapshotPublisher,
+         reservation_started: Callable[[Attempt], Awaitable[None]] | None,
+         spikeglx: SpikeGLXPort | None,
+@@ -69,6 +71,7 @@ class SetupExecution:
+         self.incident_state = incident_state
+         self.limits = limits
+         self.clock = clock
++        self.control_operations = control_operations
+         self.publisher = publisher
+         self.reservation_started = reservation_started
+         self.spikeglx = spikeglx
+@@ -376,10 +379,9 @@ class SetupExecution:
+             if self.lifecycle.attempt is not attempt or attempt.cancel_requested:
+                 return
+             self.lifecycle.session.phase = pb.SESSION_PHASE_READY
+-            operation = self.control.operations[command_id]
+-            operation.complete = True
+-            operation.succeeded = True
+-            operation.progress = "Ready"
++            self.control_operations.complete_operation(
++                command_id, success=True, progress="Ready"
++            )
+             self.publisher.publish()
+ 
+     async def fail_setup(self, attempt: Attempt, command_id: str, error: str) -> None:
+@@ -389,10 +391,14 @@ class SetupExecution:
+             attempt.cancel_requested = True
+             if attempt.handoff is not None:
+                 attempt.handoff.retire()
+-            operation = self.control.operations[command_id]
+-            operation.complete = True
+-            operation.succeeded = False
+-            operation.failure.CopyFrom(pb.Failure(code="SETUP_FAILED", message=error))
++            progress = self.control.operations[command_id].progress
++            self.control_operations.complete_operation(
++                command_id,
++                success=False,
++                progress=progress,
++                error=error,
++                failure_code="SETUP_FAILED",
++            )
+             self.control.add_warning("controller", error)
+             self.publisher.publish()
+         await self.cancel_attempt(attempt)
+diff --git a/src/cephvr/controller/lifecycle/start.py b/src/cephvr/controller/lifecycle/start.py
+index d977514..2d74ae4 100644
+--- a/src/cephvr/controller/lifecycle/start.py
++++ b/src/cephvr/controller/lifecycle/start.py
+@@ -207,10 +207,9 @@ class StartActivation:
+                 ):
+                     raise RuntimeError("Start retired before Running transition")
+                 self.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+-                operation = self.control.operations[command_id]
+-                operation.complete = True
+-                operation.succeeded = True
+-                operation.progress = "session activated"
++                self.control_operations.complete_operation(
++                    command_id, success=True, progress="session activated"
++                )
+                 self.publisher.publish()
+             attempt.trial_task = self.spawn(self.trials.run_trials(attempt))
+         except Exception as exc:
+diff --git a/src/cephvr/controller/metadata/files.py b/src/cephvr/controller/metadata/files.py
+index 0bede11..7deb694 100644
+--- a/src/cephvr/controller/metadata/files.py
++++ b/src/cephvr/controller/metadata/files.py
+@@ -21,9 +21,14 @@ def sync_directory(path: Path) -> None:
+ 
+ 
+ def atomic_json(path: Path, payload: bytes, *, replace: bool) -> None:
+-    temporary = path.with_name(f".{path.name}.{uuid.uuid4()}.tmp")
++    temporary = path.with_name(f".cv-{uuid.uuid4().hex}.tmp")
++    temporary_io = temporary
++    if os.name == "nt":
++        from cephvr.platform.windows.paths import extended_path
++
++        temporary_io = Path(extended_path(temporary))
+     try:
+-        with temporary.open("xb") as stream:
++        with temporary_io.open("xb") as stream:
+             stream.write(payload)
+             stream.flush()
+             os.fsync(stream.fileno())
+@@ -41,7 +46,7 @@ def atomic_json(path: Path, payload: bytes, *, replace: bool) -> None:
+                 os.link(temporary, path, follow_symlinks=False)
+             sync_directory(path.parent)
+     finally:
+-        temporary.unlink(missing_ok=True)
++        temporary_io.unlink(missing_ok=True)
+ 
+ 
+ def safe_component(value: str) -> str:
+diff --git a/src/cephvr/controller/metadata/reservation.py b/src/cephvr/controller/metadata/reservation.py
+index af4e17b..da3d0ef 100644
+--- a/src/cephvr/controller/metadata/reservation.py
++++ b/src/cephvr/controller/metadata/reservation.py
+@@ -12,11 +12,16 @@ import sys
+ import uuid
+ from datetime import datetime
+ from pathlib import Path
++from typing import TYPE_CHECKING
+ 
+ from cephvr.controller.metadata.files import atomic_json, safe_component, sync_directory
+ from cephvr.controller.metadata.types import ReservationMarker, StorageError
++from cephvr.platform.windows.paths import logical_path
+ from cephvr.shared.identity import require_uuid4
+ 
++if TYPE_CHECKING:
++    from cephvr.platform.windows.guard import SingleInstanceGuard
++
+ 
+ def _sync(path: Path) -> None:
+     if os.name != "nt":
+@@ -28,8 +33,8 @@ class OutputReservation:
+ 
+     @property
+     def held(self) -> bool:
+-        """Whether this owner currently retains its reservation lock descriptor."""
+-        return self._lock_fd is not None
++        """Whether this owner retains the lock or its covering Windows guard."""
++        return self._path_guard is not None or self._lock_fd is not None
+ 
+     def __init__(
+         self,
+@@ -73,6 +78,7 @@ class OutputReservation:
+         self.generation = generation
+         self._created: list[Path] = []
+         self._lock_fd: int | None = None
++        self._path_guard: SingleInstanceGuard | None = None
+         self._lock_created = False
+         self.marker_issue: str | None = None
+ 
+@@ -86,24 +92,31 @@ class OutputReservation:
+         directory = Path(session_directory)
+         if not directory.is_absolute() or len(directory.parents) < 2:
+             raise StorageError("recovery session directory is not absolute")
+-        if directory != directory.resolve(strict=True):
+-            raise StorageError("recovery session directory is not canonical")
+-        root = directory.parent.parent
+-        for path in (root, directory.parent, directory):
+-            if path.is_symlink() or not path.is_dir():
+-                raise StorageError("recovery namespace is missing or unsafe")
++        canonical = directory.resolve(strict=True)
++        root = canonical.parent.parent
+         instance = cls.__new__(cls)
+         instance._bind_paths(
+             root.resolve(strict=True),
+-            directory.parent,
+-            directory,
++            canonical.parent,
++            canonical,
+             session_id,
+             generation,
+         )
+-        for path in (instance.protocol_directory, instance.spikeglx_directory):
+-            if path.is_symlink() or not path.is_dir():
+-                raise StorageError("recovery child namespace is missing or unsafe")
+-        instance._acquire_lock(create=False)
++        instance._acquire_path_guard()
++        try:
++            if directory != canonical:
++                raise StorageError("recovery session directory is not canonical")
++            for path in (instance.root, instance.experiment_directory, directory):
++                if path.is_symlink() or not path.is_dir():
++                    raise StorageError("recovery namespace is missing or unsafe")
++            for path in (instance.protocol_directory, instance.spikeglx_directory):
++                if path.is_symlink() or not path.is_dir():
++                    raise StorageError("recovery child namespace is missing or unsafe")
++            instance._acquire_lock(create=False)
++        except BaseException:
++            if instance._lock_fd is None:
++                instance._release_path_guard()
++            raise
+         try:
+             marker = instance.inspect_marker()
+             if (marker.session_id, marker.controller_generation) != (
+@@ -118,22 +131,28 @@ class OutputReservation:
+         return instance
+ 
+     def acquire(self) -> list[Path]:
+-        if self._lock_fd is not None:
++        if self.held:
+             raise StorageError("reservation already held")
+-        for path in (
+-            self.experiment_directory,
+-            self.session_directory,
+-            self.protocol_directory,
+-            self.spikeglx_directory,
+-        ):
+-            if path.is_symlink():
+-                raise StorageError(f"symlink in reservation path: {path}")
+-            if not path.exists():
+-                path.mkdir()
+-                self._created.append(path)
+-            elif not path.is_dir():
+-                raise StorageError(f"reservation path is not a directory: {path}")
+-        self._acquire_lock(create=True)
++        self._acquire_path_guard()
++        try:
++            for path in (
++                self.experiment_directory,
++                self.session_directory,
++                self.protocol_directory,
++                self.spikeglx_directory,
++            ):
++                if path.is_symlink():
++                    raise StorageError(f"symlink in reservation path: {path}")
++                if not path.exists():
++                    path.mkdir()
++                    self._created.append(path)
++                elif not path.is_dir():
++                    raise StorageError(f"reservation path is not a directory: {path}")
++            self._acquire_lock(create=True)
++        except BaseException:
++            if self._lock_fd is None and not self._created:
++                self._release_path_guard()
++            raise
+         if self.marker.exists():
+             raise StorageError("existing reservation marker requires recovery")
+         conflicts = self._direct_children()
+@@ -146,6 +165,8 @@ class OutputReservation:
+         return [*self.protocol_directory.iterdir(), *self.spikeglx_directory.iterdir()]
+ 
+     def _acquire_lock(self, *, create: bool) -> None:
++        if sys.platform == "win32" and self._path_guard is None:
++            raise StorageError("Windows reservation lock requires path guard")
+         if not create and (self.lock_path.is_symlink() or not self.lock_path.is_file()):
+             raise StorageError("existing session lock is missing or unsafe")
+         if sys.platform == "win32":
+@@ -205,6 +226,26 @@ class OutputReservation:
+             raise StorageError("session output namespace is locked") from exc
+         self._lock_fd = fd
+ 
++    def _acquire_path_guard(self) -> None:
++        if sys.platform != "win32":
++            return
++        from cephvr.platform.windows.guard import SingleInstanceGuard
++        from cephvr.platform.windows.jobs import WindowsLaunchError
++
++        canonical = os.path.normcase(
++            os.path.normpath(logical_path(self.session_directory))
++        )
++        role = "reservation-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
++        try:
++            self._path_guard = SingleInstanceGuard(role)
++        except WindowsLaunchError as exc:
++            raise StorageError("session output namespace is locked") from exc
++
++    def _release_path_guard(self) -> None:
++        guard, self._path_guard = self._path_guard, None
++        if guard is not None:
++            guard.close()
++
+     def inspect_marker(self) -> ReservationMarker:
+         """Read bounded marker evidence only while this process holds the lock.
+ 
+@@ -230,7 +271,7 @@ class OutputReservation:
+             raise StorageError("reservation marker is corrupt or unavailable") from exc
+ 
+     def _read_marker_bytes(self) -> bytes:
+-        if self._lock_fd is None:
++        if not self.held:
+             raise StorageError("marker read requires held reservation lock")
+         flags = (
+             os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+@@ -351,11 +392,20 @@ class OutputReservation:
+         self._finish("not_activated")
+ 
+     def cancel(self) -> None:
+-        if self._lock_fd is None:
++        if self._lock_fd is None and self._path_guard is None:
+             raise StorageError("reservation is not held")
+         for child in (self.protocol_directory, self.spikeglx_directory):
+-            if any(child.iterdir()):
++            if child.exists() and any(child.iterdir()):
+                 raise StorageError(f"unexpected files block cleanup: {child}")
++        if self._lock_fd is None:
++            if self.lock_path.exists():
++                raise StorageError("session lock ownership is unconfirmed")
++            for path in reversed(self._created):
++                if path.exists():
++                    path.rmdir()
++            self._created.clear()
++            self._release_path_guard()
++            return
+         has_marker = self.marker.exists()
+         if has_marker:
+             self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+@@ -372,6 +422,8 @@ class OutputReservation:
+             quarantine = self.session_directory.with_name(
+                 f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+             )
++            if sys.platform == "win32":
++                self._release_byte_lock()
+             try:
+                 os.replace(self.session_directory, quarantine)
+             except OSError as exc:
+@@ -379,7 +431,8 @@ class OutputReservation:
+                     "session quarantine failed; unfinished marker retained"
+                 ) from exc
+             _sync(self.experiment_directory)
+-            self.release()
++            if sys.platform != "win32":
++                self.release()
+             if has_marker:
+                 (quarantine / self.marker.name).unlink()
+             (quarantine / self.lock_path.name).unlink()
+@@ -397,6 +450,8 @@ class OutputReservation:
+             ]
+         else:
+             tombstone: Path | None = None
++            if sys.platform == "win32":
++                self._release_byte_lock()
+             if self._lock_created:
+                 tombstone = self.lock_path.with_name(
+                     f".{self.lock_path.name}.{uuid.uuid4()}.cleanup"
+@@ -411,7 +466,8 @@ class OutputReservation:
+             if has_marker:
+                 self.marker.unlink()
+                 _sync(self.session_directory)
+-            self.release()
++            if sys.platform != "win32":
++                self.release()
+             if tombstone is not None:
+                 tombstone.unlink()
+                 _sync(self.session_directory)
+@@ -425,8 +481,9 @@ class OutputReservation:
+                 path.rmdir()
+             except OSError as exc:
+                 raise StorageError(f"unexpected files block cleanup: {path}") from exc
++        self._release_path_guard()
+ 
+-    def release(self) -> None:
++    def _release_byte_lock(self) -> None:
+         if self._lock_fd is None:
+             return
+         fd, self._lock_fd = self._lock_fd, None
+@@ -439,3 +496,7 @@ class OutputReservation:
+ 
+             fcntl.flock(fd, fcntl.LOCK_UN)
+         os.close(fd)
++
++    def release(self) -> None:
++        self._release_byte_lock()
++        self._release_path_guard()
+diff --git a/src/cephvr/controller/startup/application.py b/src/cephvr/controller/startup/application.py
+index edf6247..e298636 100644
+--- a/src/cephvr/controller/startup/application.py
++++ b/src/cephvr/controller/startup/application.py
+@@ -50,6 +50,7 @@ from cephvr.controller.state import Attempt, ControllerLimits
+ from cephvr.controller.transport.auth import credential_store_authentication
+ from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
+ from cephvr.platform.windows.jobs import WindowsJobs
++from cephvr.platform.windows.python_runtime import resolve_python_executable
+ from cephvr.shared.auth import Principal
+ from cephvr.shared.clock import describe_host_clock
+ from cephvr.shared.credentials import CredentialStore, default_runtime_root
+@@ -115,7 +116,11 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
+ 
+     launcher_descriptor = msvcrt.open_osfhandle(launcher_handle, os.O_WRONLY)
+     native = WindowsJobs()
+-    native.retain_exact(supervisor_pid, supervisor_creation, sys.executable)
++    native.retain_exact(
++        supervisor_pid,
++        supervisor_creation,
++        str(resolve_python_executable(Path(sys.executable))),
++    )
+     for job in managed_jobs:
+         native.open_launch_job(job.job_name)
+     backend_ports = {
+diff --git a/src/cephvr/launcher/main.py b/src/cephvr/launcher/main.py
+index 546baa3..6aa7b8a 100644
+--- a/src/cephvr/launcher/main.py
++++ b/src/cephvr/launcher/main.py
+@@ -30,6 +30,10 @@ from cephvr.platform.windows.bootstrap import (
+ )
+ from cephvr.platform.windows.guard import SingleInstanceGuard
+ from cephvr.platform.windows.jobs import WindowsJobs, WindowsLaunchError
++from cephvr.platform.windows.python_runtime import (
++    module_arguments,
++    resolve_python_executable,
++)
+ from cephvr.shared.clock import host_time_ns
+ from cephvr.shared.credentials import default_runtime_root
+ from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
+@@ -120,6 +124,7 @@ def run_launcher(
+         raise WindowsLaunchError(
+             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
+         )
++    interpreter = resolve_python_executable(interpreter)
+     if (
+         supervisor_config.resolve()
+         != (software_root / "config/backends/supervisor_config.toml").resolve()
+@@ -170,18 +175,19 @@ def run_launcher(
+             ack_read, ack_write = create_bootstrap_pipe()
+             child = native.launch_suspended(
+                 str(interpreter),
+-                [
+-                    "-m",
++                module_arguments(
+                     "cephvr.supervisor.main",
+-                    "--bootstrap-handle",
+-                    str(bootstrap_read),
+-                    "--launcher-control-handle",
+-                    str(control_write),
+-                    "--launcher-controller-control-handle",
+-                    str(controller_control_write),
+-                    "--launcher-ack-handle",
+-                    str(ack_read),
+-                ],
++                    [
++                        "--bootstrap-handle",
++                        str(bootstrap_read),
++                        "--launcher-control-handle",
++                        str(control_write),
++                        "--launcher-controller-control-handle",
++                        str(controller_control_write),
++                        "--launcher-ack-handle",
++                        str(ack_read),
++                    ],
++                ),
+                 [application_job],
+                 (bootstrap_read, control_write, controller_control_write, ack_read),
+             )
+diff --git a/src/cephvr/platform/windows/atomics.py b/src/cephvr/platform/windows/atomics.py
+index 43f2a90..de8b78a 100644
+--- a/src/cephvr/platform/windows/atomics.py
++++ b/src/cephvr/platform/windows/atomics.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ import ctypes
+ import sys
++from pathlib import Path
+ from typing import Any
+ 
+ 
+@@ -11,23 +12,29 @@ class NativeAtomicError(RuntimeError):
+     """The process cannot safely perform the required native atomic operation."""
+ 
+ 
+-_KERNEL32: Any = None
++_NATIVE: Any = None
+ 
+ 
+-def _kernel32() -> Any:
+-    global _KERNEL32
++def _native() -> Any:
++    global _NATIVE
+     if sys.platform != "win32":
+         raise NativeAtomicError("shared-ring atomics require Windows Interlocked APIs")
+-    if _KERNEL32 is None:
+-        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+-        kernel.InterlockedCompareExchange64.argtypes = [
++    if _NATIVE is None:
++        path = Path(__file__).with_name("cephvr_atomics.dll")
++        try:
++            library = ctypes.WinDLL(str(path), use_last_error=True)
++        except OSError as exc:
++            raise NativeAtomicError(
++                f"native shared-ring atomics are unavailable: {path}"
++            ) from exc
++        library.cephvr_atomic_compare_exchange_64.argtypes = [
+             ctypes.POINTER(ctypes.c_longlong),
+             ctypes.c_longlong,
+             ctypes.c_longlong,
+         ]
+-        kernel.InterlockedCompareExchange64.restype = ctypes.c_longlong
+-        _KERNEL32 = kernel
+-    return _KERNEL32
++        library.cephvr_atomic_compare_exchange_64.restype = ctypes.c_longlong
++        _NATIVE = library
++    return _NATIVE
+ 
+ 
+ def _word(buffer: memoryview, offset: int) -> Any:
+@@ -41,7 +48,9 @@ def _word(buffer: memoryview, offset: int) -> Any:
+ 
+ def atomic_load_u64(buffer: memoryview, offset: int) -> int:
+     """Read atomically with the full fence supplied by InterlockedCompareExchange64."""
+-    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
++    value = int(
++        _native().cephvr_atomic_compare_exchange_64(_word(buffer, offset), 0, 0)
++    )
+     if value < 0:
+         raise NativeAtomicError("native unsigned word exceeds supported signed range")
+     return value
+@@ -56,7 +65,7 @@ def atomic_compare_exchange_u64(
+     if not 0 <= replacement <= 0x7FFFFFFFFFFFFFFF:
+         raise NativeAtomicError("replacement exceeds supported nonwrapping range")
+     observed = int(
+-        _kernel32().InterlockedCompareExchange64(
++        _native().cephvr_atomic_compare_exchange_64(
+             _word(buffer, offset), replacement, expected
+         )
+     )
+diff --git a/src/cephvr/platform/windows/durable.py b/src/cephvr/platform/windows/durable.py
+index 643d178..98be611 100644
+--- a/src/cephvr/platform/windows/durable.py
++++ b/src/cephvr/platform/windows/durable.py
+@@ -8,6 +8,7 @@ from ctypes import wintypes
+ from pathlib import Path
+ 
+ from cephvr.platform.windows.jobs import WindowsLaunchError
++from cephvr.platform.windows.paths import extended_path
+ 
+ MOVEFILE_REPLACE_EXISTING = 0x1
+ MOVEFILE_WRITE_THROUGH = 0x8
+@@ -19,15 +20,19 @@ def _move(source: Path, destination: Path, *, replace: bool) -> None:
+     source, destination = Path(source), Path(destination)
+     if source.parent.resolve(strict=True) != destination.parent.resolve(strict=True):
+         raise ValueError("metadata publication must remain in one directory")
+-    if source.is_symlink() or destination.is_symlink():
++    source_io, destination_io = (
++        Path(extended_path(source)),
++        Path(extended_path(destination)),
++    )
++    if source_io.is_symlink() or destination_io.is_symlink():
+         raise ValueError("metadata publication cannot follow a symlink")
+-    if not source.is_file():
++    if not source_io.is_file():
+         raise ValueError("synced source file does not exist")
+     api = ctypes.WinDLL("kernel32", use_last_error=True)
+     api.MoveFileExW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD]
+     api.MoveFileExW.restype = wintypes.BOOL
+     flags = MOVEFILE_WRITE_THROUGH | (MOVEFILE_REPLACE_EXISTING if replace else 0)
+-    if not api.MoveFileExW(str(source), str(destination), flags):
++    if not api.MoveFileExW(extended_path(source), extended_path(destination), flags):
+         raise WindowsLaunchError(
+             f"MoveFileExW write-through publication failed: {ctypes.get_last_error()}"
+         )
+diff --git a/src/cephvr/platform/windows/guard.py b/src/cephvr/platform/windows/guard.py
+index f31d6ac..6555fbc 100644
+--- a/src/cephvr/platform/windows/guard.py
++++ b/src/cephvr/platform/windows/guard.py
+@@ -23,6 +23,7 @@ class SingleInstanceGuard:
+         ]
+         self.api.CreateMutexW.restype = wintypes.HANDLE
+         self.api.CloseHandle.argtypes = [wintypes.HANDLE]
++        ctypes.set_last_error(0)
+         self.handle = self.api.CreateMutexW(None, False, f"Global\\CephVR2-{role}")
+         if not self.handle:
+             raise WindowsLaunchError(f"CreateMutexW failed: {ctypes.get_last_error()}")
+diff --git a/src/cephvr/platform/windows/security.py b/src/cephvr/platform/windows/security.py
+index 0f647ba..4eaec65 100644
+--- a/src/cephvr/platform/windows/security.py
++++ b/src/cephvr/platform/windows/security.py
+@@ -10,6 +10,8 @@ from functools import lru_cache
+ from pathlib import Path
+ from typing import Any
+ 
++from cephvr.platform.windows.paths import extended_path
++
+ SE_FILE_OBJECT = 1
+ OWNER_SECURITY_INFORMATION = 0x1
+ DACL_SECURITY_INFORMATION = 0x4
+@@ -243,16 +245,17 @@ def _apis() -> tuple[Any, Any]:
+ 
+ def _checked_path(path: Path, kernel: Any) -> str:
+     path = Path(path)
+-    if path.is_symlink():
++    native_name = extended_path(path)
++    if Path(native_name).is_symlink():
+         raise WindowsSecurityError("credential path is a link")
+-    attrs = kernel.GetFileAttributesW(str(path))
++    attrs = kernel.GetFileAttributesW(native_name)
+     if attrs == INVALID_FILE_ATTRIBUTES:
+         raise WindowsSecurityError(
+             f"GetFileAttributesW failed: {ctypes.get_last_error()}"
+         )
+     if attrs & FILE_ATTRIBUTE_REPARSE_POINT:
+         raise WindowsSecurityError("credential path is a reparse point")
+-    return str(path)
++    return native_name
+ 
+ 
+ def _user_sid(kernel: Any, advapi: Any) -> tuple[int, object, int]:
+@@ -345,7 +348,7 @@ def create_owner_only_directory(path: Path) -> None:
+     kernel, advapi = _apis()
+     attrs, backing = _creation_security(kernel, advapi)
+     _ = backing
+-    if not kernel.CreateDirectoryW(str(path), ctypes.byref(attrs)):
++    if not kernel.CreateDirectoryW(extended_path(path), ctypes.byref(attrs)):
+         raise WindowsSecurityError(
+             f"CreateDirectoryW failed: {ctypes.get_last_error()}"
+         )
+@@ -360,7 +363,7 @@ def create_owner_only(path: Path, payload: bytes) -> None:
+     attrs, backing = _creation_security(kernel, advapi)
+     _ = backing
+     handle = kernel.CreateFileW(
+-        str(path),
++        extended_path(path),
+         GENERIC_WRITE,
+         0,
+         ctypes.byref(attrs),
+@@ -391,7 +394,7 @@ def create_owner_only(path: Path, payload: bytes) -> None:
+             )
+     except BaseException:
+         kernel.CloseHandle(handle)
+-        kernel.DeleteFileW(str(path))
++        kernel.DeleteFileW(extended_path(path))
+         raise
+     else:
+         kernel.CloseHandle(handle)
+@@ -540,7 +543,7 @@ def open_owner_only_lock(path: Path) -> tuple[int, bool]:
+     share = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
+     flags = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT
+     handle = kernel.CreateFileW(
+-        str(path),
++        extended_path(path),
+         GENERIC_READ | GENERIC_WRITE,
+         share,
+         ctypes.byref(attrs),
+@@ -554,7 +557,7 @@ def open_owner_only_lock(path: Path) -> tuple[int, bool]:
+         if error not in (ERROR_FILE_EXISTS, ERROR_ALREADY_EXISTS):
+             raise WindowsSecurityError(f"CreateFileW failed: {error}")
+         handle = kernel.CreateFileW(
+-            str(path),
++            extended_path(path),
+             GENERIC_READ | GENERIC_WRITE,
+             share,
+             None,
+diff --git a/src/cephvr/shared/recovery.py b/src/cephvr/shared/recovery.py
+index e52571f..ca3c4f5 100644
+--- a/src/cephvr/shared/recovery.py
++++ b/src/cephvr/shared/recovery.py
+@@ -132,25 +132,30 @@ def _read(path: Path) -> dict[str, object] | None:
+ 
+ 
+ def _publish(path: Path, raw: bytes) -> None:
+-    temporary = path.with_name(f".{path.name}.{uuid4()}.tmp")
++    temporary = path.with_name(f".cv-{uuid4().hex}.tmp")
++    temporary_io = temporary
++    if sys.platform == "win32":
++        from cephvr.platform.windows.paths import extended_path
++
++        temporary_io = Path(extended_path(temporary))
+     try:
+         if sys.platform == "win32":
+             from cephvr.platform.windows.durable import create_synced
+             from cephvr.platform.windows.security import create_owner_only
+ 
+-            create_owner_only(temporary, raw)
++            create_owner_only(temporary_io, raw)
+             create_synced(temporary, path)
+         else:
+             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+             if hasattr(os, "O_NOFOLLOW"):
+                 flags |= os.O_NOFOLLOW
+-            descriptor = os.open(temporary, flags, 0o600)
++            descriptor = os.open(temporary_io, flags, 0o600)
+             with os.fdopen(descriptor, "wb") as stream:
+                 stream.write(raw)
+                 stream.flush()
+                 os.fsync(stream.fileno())
+-            os.link(temporary, path, follow_symlinks=False)
+-            temporary.unlink()
++            os.link(temporary_io, path, follow_symlinks=False)
++            temporary_io.unlink()
+             directory = os.open(path.parent, os.O_RDONLY)
+             try:
+                 os.fsync(directory)
+@@ -158,7 +163,7 @@ def _publish(path: Path, raw: bytes) -> None:
+                 os.close(directory)
+         _check_private(path, directory=False)
+     finally:
+-        temporary.unlink(missing_ok=True)
++        temporary_io.unlink(missing_ok=True)
+ 
+ 
+ class RecoveryStore:
+diff --git a/src/cephvr/supervisor/startup.py b/src/cephvr/supervisor/startup.py
+index 8d43a3d..8a60115 100644
+--- a/src/cephvr/supervisor/startup.py
++++ b/src/cephvr/supervisor/startup.py
+@@ -24,6 +24,10 @@ from cephvr.platform.windows.jobs import (
+     WindowsJobs,
+     WindowsLaunchError,
+ )
++from cephvr.platform.windows.python_runtime import (
++    module_arguments,
++    resolve_python_executable,
++)
+ from cephvr.shared.clock import HostClockDescriptor
+ from cephvr.supervisor.outbound import GrpcOutbound
+ from cephvr.supervisor.registry import LaunchRegistry
+@@ -65,7 +69,9 @@ async def launch_controller(
+     # child and the launcher's outer job supplies the final backstop.
+     child = inputs.native.launch_suspended(
+         str(inputs.bootstrap["interpreter"]),
+-        ["-m", "cephvr.controller.main", "--bootstrap-handle", str(pipe_read)],
++        module_arguments(
++            "cephvr.controller.main", ["--bootstrap-handle", str(pipe_read)]
++        ),
+         [state.containment_job_name],
+         (pipe_read, controller_control_handle),
+     )
+@@ -138,7 +144,7 @@ async def launch_role(
+     role_read, role_write = create_bootstrap_pipe()
+     role_child = inputs.native.launch_suspended(
+         str(inputs.bootstrap["interpreter"]),
+-        ["-m", module, "--bootstrap-handle", str(role_read)],
++        module_arguments(module, ["--bootstrap-handle", str(role_read)]),
+         [state.containment_job_name],
+         (role_read,),
+     )
+@@ -248,6 +254,9 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
+         raise WindowsLaunchError(
+             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
+         )
++    bootstrap["interpreter"] = str(
++        resolve_python_executable(Path(str(bootstrap["interpreter"])))
++    )
+     return required_modules
+ 
+ 
+diff --git a/src/cephvr/visual_stimulus/resources/media.py b/src/cephvr/visual_stimulus/resources/media.py
+index c983742..29f24c1 100644
+--- a/src/cephvr/visual_stimulus/resources/media.py
++++ b/src/cephvr/visual_stimulus/resources/media.py
+@@ -89,7 +89,7 @@ def decode_image(
+     alpha: Alpha
+     if profile == "tiff_uint_v1":
+         try:
+-            import tifffile  # type: ignore[import-not-found]
++            import tifffile
+         except ImportError as exc:
+             raise MediaPreparationError(
+                 "tifffile and NumPy are required for TIFF assets"
+@@ -100,15 +100,26 @@ def decode_image(
+                     "TIFF profile requires exactly one image and page"
+                 )
+             page = source.pages[0]
+-            if page.dtype.kind != "u" or page.dtype.itemsize not in (1, 2):
++            if not isinstance(page, tifffile.TiffPage):
++                raise MediaPreparationError("TIFF page is not a decoded image page")
++            dtype = page.dtype
++            if dtype is None or dtype.kind != "u" or dtype.itemsize not in (1, 2):
+                 raise MediaPreparationError(
+                     "TIFF requires unsigned 8-bit or 16-bit samples"
+                 )
+-            if page.photometric.name not in ("MINISBLACK", "RGB"):
++            if page.photometric not in (
++                tifffile.PHOTOMETRIC.MINISBLACK,
++                tifffile.PHOTOMETRIC.RGB,
++            ):
+                 raise MediaPreparationError(
+                     "TIFF photometric interpretation is unsupported"
+                 )
+-            if page.compression.name not in ("NONE", "LZW", "DEFLATE", "ADOBE_DEFLATE"):
++            if page.compression not in (
++                tifffile.COMPRESSION.NONE,
++                tifffile.COMPRESSION.LZW,
++                tifffile.COMPRESSION.DEFLATE,
++                tifffile.COMPRESSION.ADOBE_DEFLATE,
++            ):
+                 raise MediaPreparationError("TIFF compression is outside its profile")
+             if (
+                 page.tags.get("Orientation") is not None
+@@ -120,7 +131,7 @@ def decode_image(
+                     int(page.imagewidth),
+                     int(page.imagelength),
+                     int(page.samplesperpixel),
+-                    int(page.dtype.itemsize) * 8,
++                    int(dtype.itemsize) * 8,
+                 )
+             pixels = page.asarray()
+             if pixels.ndim == 2:
+@@ -131,7 +142,11 @@ def decode_image(
+                 raise MediaPreparationError("TIFF sample layout is unsupported")
+             if channels in (2, 4) and (
+                 len(page.extrasamples) != 1
+-                or page.extrasamples[0].name not in ("UNASSALPHA", "ASSOCALPHA")
++                or page.extrasamples[0]
++                not in (
++                    tifffile.EXTRASAMPLE.UNASSALPHA,
++                    tifffile.EXTRASAMPLE.ASSOCALPHA,
++                )
+             ):
+                 raise MediaPreparationError("ambiguous TIFF extra sample")
+             alpha = (
+@@ -139,7 +154,7 @@ def decode_image(
+                 if channels not in (2, 4)
+                 else (
+                     "associated"
+-                    if page.extrasamples[0].name == "ASSOCALPHA"
++                    if page.extrasamples[0] == tifffile.EXTRASAMPLE.ASSOCALPHA
+                     else "straight"
+                 )
+             )
+@@ -152,7 +167,7 @@ def decode_image(
+             )
+     elif profile in ("png_uint_v1", "jpeg8_v1"):
+         try:
+-            import imagecodecs  # type: ignore[import-not-found]
++            import imagecodecs
+         except ImportError as exc:
+             raise MediaPreparationError(
+                 "imagecodecs is required for image assets"
+diff --git a/src/cephvr/visual_stimulus/resources/video_decoder.py b/src/cephvr/visual_stimulus/resources/video_decoder.py
+index 3b0381d..5dc77e0 100644
+--- a/src/cephvr/visual_stimulus/resources/video_decoder.py
++++ b/src/cephvr/visual_stimulus/resources/video_decoder.py
+@@ -50,7 +50,7 @@ class _PyAVContext:
+         codec_threads: int,
+     ) -> None:
+         try:
+-            import av  # type: ignore[import-not-found]
++            import av
+         except ImportError as exc:
+             raise VideoPlaybackError("PyAV is required for video playback") from exc
+         self._reader_context = source.independent_reader()
+@@ -67,9 +67,7 @@ class _PyAVContext:
+                 raise VideoPlaybackError(
+                     "protected video container differs from prepared profile"
+                 )
+-            streams = [
+-                stream for stream in self._container.streams if stream.type == "video"
+-            ]
++            streams = self._container.streams.video
+             if len(streams) != 1 or streams[0].index != index.stream_index:
+                 raise VideoPlaybackError(
+                     "video stream identity changed after preparation"
+@@ -105,7 +103,11 @@ class _PyAVContext:
+ 
+         self._container.seek(frame.seek_anchor, stream=self._stream, backward=True)
+         wanted_pts = Fraction(frame.pts) * frame.time_base
++        from av.video.frame import VideoFrame
++
+         for decoded in self._container.decode(self._stream):
++            if not isinstance(decoded, VideoFrame):
++                raise VideoPlaybackError("video stream produced a non-video frame")
+             if decoded.pts is None or decoded.time_base is None:
+                 continue
+             source_time = Fraction(decoded.pts) * Fraction(decoded.time_base)
+diff --git a/src/cephvr/visual_stimulus/resources/video_index.py b/src/cephvr/visual_stimulus/resources/video_index.py
+index 4da1906..9f9c61f 100644
+--- a/src/cephvr/visual_stimulus/resources/video_index.py
++++ b/src/cephvr/visual_stimulus/resources/video_index.py
+@@ -68,7 +68,7 @@ def index_video(
+     if max_index_bytes <= 0 or codec_threads <= 0:
+         raise ValueError("positive video index budget required")
+     try:
+-        import av  # type: ignore[import-not-found]
++        import av
+     except ImportError as exc:
+         raise MediaPreparationError("PyAV is required for video assets") from exc
+     with source.independent_reader() as reader:
+@@ -89,7 +89,7 @@ def index_video(
+                 raise MediaPreparationError(
+                     "FFV1 profile requires a Matroska container"
+                 )
+-            streams = [stream for stream in container.streams if stream.type == "video"]
++            streams = container.streams.video
+             if len(streams) != 1:
+                 raise MediaPreparationError(
+                     "video profile requires exactly one video stream"
+@@ -210,9 +210,15 @@ def index_video(
+             decoded_format = None
+             dimensions = (stream.width, stream.height)
+             initial_pixels = None
++            from av.video.frame import VideoFrame
++
+             for decoded in container.decode(stream):
+                 if check is not None:
+                     check()
++                if not isinstance(decoded, VideoFrame):
++                    raise MediaPreparationError(
++                        "video stream produced a non-video frame"
++                    )
+                 if getattr(decoded, "is_corrupt", False):
+                     raise MediaPreparationError(
+                         "decoder reported corrupt video content"
+diff --git a/src/cephvr/visual_stimulus/worker_launcher.py b/src/cephvr/visual_stimulus/worker_launcher.py
+index d721963..850554e 100644
+--- a/src/cephvr/visual_stimulus/worker_launcher.py
++++ b/src/cephvr/visual_stimulus/worker_launcher.py
+@@ -19,6 +19,10 @@ from cephvr.platform.windows.bootstrap import (
+     write_bootstrap,
+ )
+ from cephvr.platform.windows.jobs import SuspendedProcess, WindowsJobs
++from cephvr.platform.windows.python_runtime import (
++    module_arguments,
++    resolve_python_executable,
++)
+ from cephvr.shared.auth import Principal
+ from cephvr.shared.backend_bootstrap import BackendBootstrap
+ from cephvr.shared.clock import host_time_ns
+@@ -63,6 +67,7 @@ async def launch_renderer(
+     identity = identity or pb.ProcessIdentity(
+         role="visual_stimulus_renderer", generation=str(uuid4())
+     )
++    interpreter = resolve_python_executable(Path(sys.executable))
+     command_id = str(uuid4())
+     token = secrets.token_urlsafe(32)
+     planned = await supervisor.call(
+@@ -71,7 +76,7 @@ async def launch_renderer(
+             command_id=command_id,
+             owner=bootstrap.identity,
+             child=identity,
+-            executable=str(Path(sys.executable).resolve()),
++            executable=str(interpreter),
+             python_worker=True,
+             stop_method="grpc_shutdown",
+         ),
+@@ -89,13 +94,10 @@ async def launch_renderer(
+     read, write = create_bootstrap_pipe()
+     try:
+         child = native.launch_suspended(
+-            str(Path(sys.executable).resolve()),
+-            [
+-                "-m",
+-                "cephvr.visual_stimulus.worker.main",
+-                "--bootstrap-handle",
+-                str(read),
+-            ],
++            str(interpreter),
++            module_arguments(
++                "cephvr.visual_stimulus.worker.main", ["--bootstrap-handle", str(read)]
++            ),
+             [job_name],
+             (read,),
+         )
+diff --git a/tests/acquisition/test_recording_paths.py b/tests/acquisition/test_recording_paths.py
+index 8a1e930..f360ead 100644
+--- a/tests/acquisition/test_recording_paths.py
++++ b/tests/acquisition/test_recording_paths.py
+@@ -60,11 +60,13 @@ def _reservation(identity: RecordingIdentity) -> RecordingPaths:
+     )
+ 
+ 
+-def test_valid_backend_context_and_exact_scheduled_paths_are_accepted() -> None:
++def test_valid_backend_context_and_exact_scheduled_paths_are_accepted(
++    tmp_path: Path,
++) -> None:
+     identity = _identity()
+     plans = _reservation(identity)
+     plans.validate("behavioral", identity)
+-    prefix = Path("/recordings/trial")
++    prefix = tmp_path / "trial"
+     schedule = acq.WorkerSchedule(
+         command=acq.WorkerCommand(
+             target=acq.WorkerContext(
+@@ -87,8 +89,8 @@ def test_valid_backend_context_and_exact_scheduled_paths_are_accepted() -> None:
+         item.path = f"{prefix}_{item.output_tag}.{item.extension}"
+ 
+     assert resolve_recording_paths(plans, "behavioral", identity, schedule) == (
+-        Path("/recordings/trial_behavioral_cam.mp4"),
+-        Path("/recordings/trial_behavioral_cam_frames.jsonl"),
++        Path(f"{prefix}_behavioral_cam.mp4"),
++        Path(f"{prefix}_behavioral_cam_frames.jsonl"),
+     )
+ 
+ 
+diff --git a/tests/acquisition/test_worker_ring_regressions.py b/tests/acquisition/test_worker_ring_regressions.py
+index 9dfd70c..b01ec60 100644
+--- a/tests/acquisition/test_worker_ring_regressions.py
++++ b/tests/acquisition/test_worker_ring_regressions.py
+@@ -230,7 +230,7 @@ def test_ring_retirement_cannot_be_cleared_by_stale_flag_update(
+         ring.open_admission(run_id)
+     assert ring.retired
+     assert ring.input_sealed
+-    with pytest.raises(RingError, match="irreversible"):
++    with pytest.raises(RingError, match="stale or ring has been retired"):
+         ring.open_admission(run_id)
+     ring.seal()
+     assert ring.retired and ring.input_sealed
+diff --git a/tests/controller/test_configuration_transactions.py b/tests/controller/test_configuration_transactions.py
+index 01a13b8..8c1e0b3 100644
+--- a/tests/controller/test_configuration_transactions.py
++++ b/tests/controller/test_configuration_transactions.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ import asyncio
+ import dataclasses
++import os
+ import shutil
+ from datetime import UTC, datetime
+ from pathlib import Path
+@@ -141,7 +142,13 @@ async def test_setup_rejects_unset_or_invalid_recording_root(
+     real = tmp_path / "real"
+     real.mkdir()
+     link = tmp_path / "link"
+-    link.symlink_to(real, target_is_directory=True)
++    if kind == "symlink":
++        try:
++            link.symlink_to(real, target_is_directory=True)
++        except OSError as exc:
++            if os.name == "nt" and getattr(exc, "winerror", None) == 1314:
++                pytest.skip("Windows account lacks symlink creation privilege")
++            raise
+     root = {
+         "unset": "",
+         "blank": "   ",
+diff --git a/tests/controller/test_safety_regressions.py b/tests/controller/test_safety_regressions.py
+index 7564413..f03e6ed 100644
+--- a/tests/controller/test_safety_regressions.py
++++ b/tests/controller/test_safety_regressions.py
+@@ -265,8 +265,11 @@ async def test_ready_edit_cancels_preparation_without_committing_unvalidated_res
+     await runtime.close_watch(watch)
+ 
+ 
+-async def test_interruption_during_start_cannot_restore_running(
+-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++@pytest.mark.parametrize("interrupt_on_start", [False, True])
++async def test_start_terminal_operation_time_and_interruption_order(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    interrupt_on_start: bool,
+ ) -> None:
+     runtime = _runtime(tmp_path)
+     attempt, _ = _attempt(runtime, tmp_path)
+@@ -295,10 +298,18 @@ async def test_interruption_during_start_cannot_restore_running(
+         nonlocal started_log_seen
+         if event_type == "session_started" and not started_log_seen:
+             started_log_seen = True
+-            await runtime.interruption.interrupt(attempt, "concurrent authority loss")
++            if interrupt_on_start:
++                await runtime.interruption.interrupt(
++                    attempt, "concurrent authority loss"
++                )
+ 
+     monkeypatch.setattr(runtime.metadata, "persist", persisted)
+     monkeypatch.setattr(runtime.metadata, "log_event", logged)
++
++    async def no_trials(_attempt: Attempt) -> None:
++        return None
++
++    monkeypatch.setattr(runtime.trials, "run_trials", no_trials)
+     command_id = _id()
+     runtime.control.operations[command_id] = pb.OperationState(
+         context=pb.OperationContext(command_id=command_id), command="StartSession"
+@@ -306,8 +317,20 @@ async def test_interruption_during_start_cannot_restore_running(
+     try:
+         await runtime.start.run_start(attempt, command_id)
+         assert started_log_seen
+-        assert attempt.interrupted
+-        assert runtime.lifecycle.session.phase != pb.SESSION_PHASE_RUNNING
++        operation = runtime.control.operations[command_id]
++        if interrupt_on_start:
++            assert attempt.interrupted
++            assert runtime.lifecycle.session.phase != pb.SESSION_PHASE_RUNNING
++            if operation.complete:
++                assert not operation.succeeded
++                assert runtime.control.operation_finished_ns[command_id] == 1_000
++            else:
++                assert command_id not in runtime.control.operation_finished_ns
++        else:
++            assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_RUNNING
++            assert operation.complete and operation.succeeded
++            assert operation.progress == "session activated"
++            assert runtime.control.operation_finished_ns[command_id] == 1_000
+     finally:
+         await runtime.cancel_background_tasks()
+         if attempt.reservation.held:
+diff --git a/tests/controller/test_setup.py b/tests/controller/test_setup.py
+index 351f232..1655c25 100644
+--- a/tests/controller/test_setup.py
++++ b/tests/controller/test_setup.py
+@@ -460,9 +460,15 @@ async def test_failed_setup_leaves_sessionless_current_scope(
+     runtime, attempt = _scoped_setup(tmp_path, monkeypatch)
+     command_id = _id()
+     runtime.control.operations[command_id] = pb.OperationState(
+-        context=pb.OperationContext(command_id=command_id), command="Setup"
++        context=pb.OperationContext(command_id=command_id),
++        command="Setup",
++        work=pb.WorkContext(session=attempt.context),
+     )
+     await runtime.setup_execution.fail_setup(attempt, command_id, "boom")
++    operation = runtime.control.operations[command_id]
++    assert operation.complete and not operation.succeeded
++    assert operation.failure.code == "SETUP_FAILED"
++    assert runtime.control.operation_finished_ns[command_id] == 1_000
+     assert runtime.projections.work.WhichOneof("work") is None
+     assert (
+         runtime.projections.configuration_revision
+@@ -470,6 +476,34 @@ async def test_failed_setup_leaves_sessionless_current_scope(
+     )
+ 
+ 
++async def test_ready_setup_records_terminal_time_for_retention(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    runtime, attempt = _scoped_setup(tmp_path, monkeypatch)
++    command_id = _id()
++    runtime.control.operations[command_id] = pb.OperationState(
++        context=pb.OperationContext(command_id=command_id),
++        command="Setup",
++        work=pb.WorkContext(session=attempt.context),
++    )
++    runtime.configuration_state.policies.command_retention_after_finalization_ns = 10
++    now = [1_000]
++    runtime.control_operations.clock = lambda: now[0]
++
++    await runtime.setup_execution._publish_ready(attempt, command_id)
++
++    operation = runtime.control.operations[command_id]
++    assert operation.complete and operation.succeeded
++    assert operation.progress == "Ready"
++    assert runtime.control.operation_finished_ns[command_id] == 1_000
++    now[0] += 11
++    runtime.control_operations.prune_operations()
++    assert command_id in runtime.control.operations
++    runtime.lifecycle.session.cleanup_confirmed = True
++    runtime.control_operations.prune_operations()
++    assert command_id not in runtime.control.operations
++
++
+ async def test_update_configuration_refreshes_projection_revision(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+ ) -> None:
+diff --git a/tests/controller/test_storage.py b/tests/controller/test_storage.py
+index 81b317f..70a507a 100644
+--- a/tests/controller/test_storage.py
++++ b/tests/controller/test_storage.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import json
++import os
+ import threading
+ import uuid
+ from pathlib import Path
+@@ -71,23 +72,39 @@ def test_unexpected_file_blocks_cancel_without_deletion(tmp_path: Path) -> None:
+ def test_preexisting_session_cancellation_never_unlinks_new_owners_lock(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+ ) -> None:
++    import os
++
+     reservation = _reservation(tmp_path)
+     reservation.protocol_directory.mkdir(parents=True)
+     reservation.spikeglx_directory.mkdir()
+     assert reservation.acquire() == []
+     assert reservation._lock_created
+-    original_release = reservation.release
+-
+-    def competing_owner() -> None:
+-        # The old lock has been renamed while still held. A new owner can create
+-        # the canonical name; the cancelled attempt must never unlink that file.
+-        assert not reservation.lock_path.exists()
+-        reservation.lock_path.write_bytes(b"new owner")
+-        original_release()
+-
+-    monkeypatch.setattr(reservation, "release", competing_owner)
++    if os.name == "nt":
++        original_replace = os.replace
++
++        def guarded_replace(source: Path, destination: Path) -> None:
++            if source == reservation.lock_path:
++                assert reservation._lock_fd is None
++                assert reservation.held
++            original_replace(source, destination)
++
++        monkeypatch.setattr(os, "replace", guarded_replace)
++    else:
++        original_release = reservation.release
++
++        def competing_owner() -> None:
++            # The old lock was renamed while held. A new owner may create the
++            # canonical name, which cancellation must never unlink.
++            assert not reservation.lock_path.exists()
++            reservation.lock_path.write_bytes(b"new owner")
++            original_release()
++
++        monkeypatch.setattr(reservation, "release", competing_owner)
+     reservation.cancel()
+-    assert reservation.lock_path.read_bytes() == b"new owner"
++    if os.name == "nt":
++        assert not reservation.lock_path.exists()
++    else:
++        assert reservation.lock_path.read_bytes() == b"new owner"
+ 
+ 
+ def test_existing_marker_inspection_requires_held_lock_and_keeps_recovery_evidence(
+@@ -420,6 +437,23 @@ def test_owned_log_path_replacement_cannot_redirect_append(tmp_path: Path) -> No
+     )
+     first = _write("one", path, "append_jsonl_record", b'{"event_type":"first"}', 1, 2)
+     assert writer.submit(first).result(3).state == "synced"
++    if os.name == "nt":
++        try:
++            path.rename(tmp_path / "moved.jsonl")
++        except PermissionError as exc:
++            assert getattr(exc, "winerror", None) == 32
++        else:
++            pytest.fail("Windows allowed renaming the writer's open live log")
++        completion = writer.submit(
++            _write("two", path, "append_jsonl_record", b'{"event_type":"second"}', 1, 2)
++        ).result(3)
++        assert completion.state == "synced"
++        assert path.read_bytes().endswith(
++            b'{"event_type":"first"}\n{"event_type":"second"}\n'
++        )
++        assert outside.read_bytes() == b"preserve\n"
++        assert writer.seal(3)
++        return
+     path.rename(tmp_path / "moved.jsonl")
+     try:
+         path.symlink_to(outside)
+diff --git a/tests/platform/test_windows_native_on_rig.py b/tests/platform/test_windows_native_on_rig.py
+index 6f05c52..01ce301 100644
+--- a/tests/platform/test_windows_native_on_rig.py
++++ b/tests/platform/test_windows_native_on_rig.py
+@@ -7,11 +7,16 @@ recording destinations, running CephVR processes, or a shared application job.
+ from __future__ import annotations
+ 
+ import ctypes
++import json
++import multiprocessing
+ import os
++import subprocess
+ import sys
+ import time
+ from collections.abc import Callable
+ from ctypes import wintypes
++from datetime import datetime
++from multiprocessing.shared_memory import SharedMemory
+ from pathlib import Path
+ from uuid import uuid4
+ 
+@@ -26,6 +31,13 @@ if sys.platform != "win32":
+ 
+ import msvcrt  # noqa: E402
+ 
++from cephvr.controller.metadata.reservation import OutputReservation  # noqa: E402
++from cephvr.controller.metadata.types import StorageError  # noqa: E402
++from cephvr.platform.windows.atomics import (  # noqa: E402
++    NativeAtomicError,
++    atomic_compare_exchange_u64,
++    atomic_load_u64,
++)
+ from cephvr.platform.windows.bootstrap import (  # noqa: E402
+     close_handle,
+     create_bootstrap_pipe,
+@@ -42,6 +54,12 @@ from cephvr.platform.windows.jobs import (  # noqa: E402
+     WindowsJobs,
+     WindowsLaunchError,
+ )
++from cephvr.platform.windows.paths import extended_path  # noqa: E402
++from cephvr.platform.windows.python_runtime import (  # noqa: E402
++    module_arguments,
++    prepare_python_runtime,
++    resolve_python_executable,
++)
+ from cephvr.platform.windows.security import (  # noqa: E402
+     WindowsSecurityError,
+     create_owner_only,
+@@ -81,6 +99,335 @@ def _synced(path: Path, payload: bytes) -> None:
+         os.fsync(stream.fileno())
+ 
+ 
++def _increment_shared_atomic(name: str, increments: int) -> None:
++    shared = SharedMemory(name=name)
++    buffer = shared.buf
++    assert buffer is not None
++    try:
++        for _ in range(increments):
++            while True:
++                current = atomic_load_u64(buffer, 0)
++                if atomic_compare_exchange_u64(buffer, 0, current, current + 1):
++                    break
++    finally:
++        buffer.release()
++        shared.close()
++
++
++def _try_reservation_from_process(
++    root: str,
++    experiment: str,
++    subject: str,
++    session_id: str,
++    generation: str,
++    anchor: str,
++    result: multiprocessing.Queue[tuple[str, str]],
++) -> None:
++    reservation = OutputReservation(
++        Path(root),
++        experiment,
++        subject,
++        session_id,
++        generation,
++        datetime.fromisoformat(anchor),
++    )
++    try:
++        reservation.acquire()
++    except StorageError as exc:
++        result.put(("blocked", str(exc)))
++    else:
++        result.put(("acquired", ""))
++        reservation.cancel()
++
++
++def _hold_reservation_until_terminated(
++    root: str,
++    experiment: str,
++    subject: str,
++    session_id: str,
++    generation: str,
++    anchor: str,
++    ready: multiprocessing.Event,
++) -> None:
++    reservation = OutputReservation(
++        Path(root),
++        experiment,
++        subject,
++        session_id,
++        generation,
++        datetime.fromisoformat(anchor),
++    )
++    reservation.acquire()
++    ready.set()
++    time.sleep(30)
++
++
++def test_native_atomic_compare_exchange_validates_and_observes_words() -> None:
++    shared = SharedMemory(create=True, size=16)
++    buffer = shared.buf
++    assert buffer is not None
++    try:
++        assert atomic_load_u64(buffer, 0) == 0
++        assert atomic_compare_exchange_u64(buffer, 0, 0, 7)
++        assert not atomic_compare_exchange_u64(buffer, 0, 0, 9)
++        assert atomic_load_u64(buffer, 0) == 7
++        with pytest.raises(NativeAtomicError, match="unaligned"):
++            atomic_load_u64(buffer, 1)
++        with pytest.raises(NativeAtomicError, match="signed range"):
++            atomic_compare_exchange_u64(buffer, 0, 1 << 63, 0)
++    finally:
++        buffer.release()
++        shared.close()
++        shared.unlink()
++
++
++def test_native_atomic_compare_exchange_serializes_independent_processes() -> None:
++    shared = SharedMemory(create=True, size=16)
++    buffer = shared.buf
++    assert buffer is not None
++    context = multiprocessing.get_context("spawn")
++    processes = [
++        context.Process(target=_increment_shared_atomic, args=(shared.name, 2_000))
++        for _ in range(2)
++    ]
++    try:
++        for process in processes:
++            process.start()
++        for process in processes:
++            process.join(20)
++        assert all(not process.is_alive() for process in processes)
++        assert [process.exitcode for process in processes] == [0, 0]
++        assert atomic_load_u64(buffer, 0) == 4_000
++    finally:
++        failed_to_stop = False
++        for process in processes:
++            if process.is_alive():
++                process.terminate()
++            if process.pid is not None:
++                process.join(5)
++                failed_to_stop |= process.is_alive()
++                if not process.is_alive():
++                    process.close()
++        buffer.release()
++        shared.close()
++        shared.unlink()
++        assert not failed_to_stop, "owned atomic test process did not exit"
++
++
++def test_prepared_python_runtime_rejects_stale_or_mismatched_files(
++    tmp_path: Path,
++) -> None:
++    home = tmp_path / "base"
++    scripts = tmp_path / "venv" / "Scripts"
++    home.mkdir()
++    scripts.mkdir(parents=True)
++    (scripts.parent / "pyvenv.cfg").write_text(f"home = {home}\n", encoding="utf-8")
++    base_executable = home / "python.exe"
++    base_dll = home / "python311.dll"
++    base_executable.write_bytes(b"base executable")
++    base_dll.write_bytes(b"matching runtime dll")
++    wrapper = prepare_python_runtime(scripts.parent, base_executable, base_dll)
++    assert wrapper.read_bytes() == base_executable.read_bytes()
++    assert (scripts / "python311.dll").read_bytes() == base_dll.read_bytes()
++    wrapper.unlink()
++    with pytest.raises(RuntimeError, match="changed"):
++        resolve_python_executable(scripts / "python.exe")
++    prepare_python_runtime(scripts.parent, base_executable, base_dll)
++
++    manifest = scripts / "cephvr-python.runtime.json"
++    payload = json.loads(manifest.read_text(encoding="utf-8"))
++    payload["base_executable"] = str(home / "other-python.exe")
++    manifest.write_text(json.dumps(payload), encoding="utf-8")
++    with pytest.raises(RuntimeError, match="changed|provenance"):
++        resolve_python_executable(wrapper)
++
++    prepare_python_runtime(scripts.parent, base_executable, base_dll)
++    manifest.unlink()
++    with pytest.raises(RuntimeError, match="manifest unavailable"):
++        resolve_python_executable(scripts / "python.exe")
++    prepare_python_runtime(scripts.parent, base_executable, base_dll)
++    (scripts / "python311.dll").write_bytes(b"changed runtime dll")
++    with pytest.raises(RuntimeError, match="changed|provenance"):
++        resolve_python_executable(wrapper)
++
++
++def test_managed_python_entry_preserves_identity_prefix_and_bootstrap(
++    tmp_path: Path,
++) -> None:
++    runtime = resolve_python_executable(Path(sys.executable))
++    job = f"cephvr-python-runtime-{uuid4()}"
++    native = WindowsJobs()
++    native.create_launch_job(job)
++    read, write = create_bootstrap_pipe()
++    read_open = True
++    write_open = True
++    result_path = tmp_path / "runtime-probe.json"
++    release_path = tmp_path / "runtime-probe.release"
++    child = None
++    try:
++        child = native.launch_suspended(
++            str(runtime),
++            module_arguments(
++                "tests.platform.test_windows_native_on_rig",
++                ["--managed-runtime-probe", "--bootstrap-handle", str(read)],
++            ),
++            [job],
++            (read,),
++        )
++        close_handle(read)
++        read_open = False
++        write_bootstrap(
++            write,
++            {
++                "marker": "inherited-bootstrap",
++                "result": str(result_path),
++                "release": str(release_path),
++            },
++        )
++        write_open = False
++        native.resume(child)
++        _until(lambda: result_path.is_file())
++        members = native.inspect_launch_job(job)
++        assert len(members) == 1
++        assert members[0][:2] == (child.pid, child.creation_time_100ns)
++        assert Path(members[0][2]).resolve() == runtime.resolve()
++        retained = native.retain_exact(
++            child.pid, child.creation_time_100ns, str(runtime)
++        )
++        assert retained.pid == child.pid
++        observed = json.loads(result_path.read_text(encoding="utf-8"))
++        assert observed["pid"] == child.pid
++        assert Path(observed["image"]).resolve() == runtime.resolve()
++        assert Path(observed["prefix"]).resolve() == Path(sys.prefix).resolve()
++        assert observed["marker"] == "inherited-bootstrap"
++        assert observed["grpc"]
++        assert (
++            Path(observed["grpc_file"])
++            .resolve()
++            .is_relative_to(Path(sys.prefix).resolve() / "Lib" / "site-packages")
++        )
++        release_path.write_text("release", encoding="utf-8")
++        assert native.wait_process_exit(child.pid, child.creation_time_100ns, 15_000)
++    finally:
++        if read_open:
++            close_handle(read)
++        if write_open:
++            close_handle(write)
++        if child is not None:
++            if native.process_running(child.pid, child.creation_time_100ns):
++                release_path.write_text("release", encoding="utf-8")
++                native.terminate_job(job)
++                native.wait_process_exit(child.pid, child.creation_time_100ns, 5_000)
++            native.release_process(child.pid, child.creation_time_100ns)
++        if job in native.jobs:
++            native.close_launch_job(job)
++
++
++def test_output_reservation_path_guard_covers_lock_close_and_aliases(
++    tmp_path: Path,
++) -> None:
++    context = multiprocessing.get_context("spawn")
++    root = tmp_path.resolve()
++    experiment, subject = "guard", "subject"
++    session_id, generation = str(uuid4()), str(uuid4())
++    anchor = datetime(2026, 1, 2, 3, 4, 5)
++    reservation = OutputReservation(
++        root, experiment, subject, session_id, generation, anchor
++    )
++    reservation.protocol_directory.mkdir(parents=True)
++    reservation.spikeglx_directory.mkdir()
++    assert reservation.acquire() == []
++    outcomes = context.Queue()
++    children: list[multiprocessing.Process] = []
++    close_lock = reservation._release_byte_lock
++
++    def interleave_competitor() -> None:
++        close_lock()
++        child = context.Process(
++            target=_try_reservation_from_process,
++            args=(
++                extended_path(root),
++                experiment,
++                subject,
++                session_id,
++                generation,
++                anchor.isoformat(),
++                outcomes,
++            ),
++        )
++        children.append(child)
++        child.start()
++        status = outcomes.get(timeout=10)
++        child.join(10)
++        assert not child.is_alive()
++        assert child.exitcode == 0
++        assert status[0] == "blocked" and "locked" in status[1]
++
++    reservation._release_byte_lock = interleave_competitor  # type: ignore[method-assign]
++    try:
++        reservation.cancel()
++    finally:
++        reservation._release_byte_lock = close_lock  # type: ignore[method-assign]
++        for child in children:
++            if child.is_alive():
++                child.terminate()
++                child.join(5)
++            if child.is_alive():
++                pytest.fail("owned path-guard competitor did not exit")
++            child.close()
++        outcomes.close()
++        outcomes.join_thread()
++        reservation.release()
++
++
++def test_output_reservation_guard_releases_when_owner_process_dies(
++    tmp_path: Path,
++) -> None:
++    context = multiprocessing.get_context("spawn")
++    ready = context.Event()
++    root = tmp_path.resolve()
++    experiment, subject = "death", "subject"
++    session_id, generation = str(uuid4()), str(uuid4())
++    anchor = datetime(2026, 1, 2, 3, 4, 5)
++    owner = context.Process(
++        target=_hold_reservation_until_terminated,
++        args=(
++            str(root),
++            experiment,
++            subject,
++            session_id,
++            generation,
++            anchor.isoformat(),
++            ready,
++        ),
++    )
++    owner.start()
++    try:
++        assert ready.wait(10)
++        owner.terminate()
++        owner.join(10)
++        assert not owner.is_alive()
++        assert owner.exitcode is not None
++        recovered = OutputReservation.open_existing(
++            root
++            / f"{anchor.strftime('%Y%m%d')}_{experiment}"
++            / f"subject-{anchor.strftime('%H%M%S')}",
++            session_id,
++            generation,
++        )
++        try:
++            assert recovered.held
++            assert not recovered.inspect_marker().complete
++        finally:
++            recovered.release()
++    finally:
++        if owner.is_alive():
++            owner.terminate()
++            owner.join(5)
++        assert not owner.is_alive(), "owned reservation process did not exit"
++        owner.close()
++
++
+ def test_creation_time_containment_and_outer_job_shutdown() -> None:
+     native = WindowsJobs()
+     observer = WindowsJobs()
+@@ -207,6 +554,22 @@ def test_atomic_owner_only_acl_and_renamable_lock(tmp_path: Path) -> None:
+         os.close(fd)
+ 
+ 
++def test_broad_dacl_is_rejected_for_owned_recovery_record(tmp_path: Path) -> None:
++    record = tmp_path / "private-recovery.json"
++    create_owner_only(record, b'{"owned":true}')
++    grant = subprocess.run(
++        ["icacls", str(record), "/grant", "*S-1-1-0:R"],
++        capture_output=True,
++        text=True,
++        timeout=10,
++        check=False,
++        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
++    )
++    assert grant.returncode == 0, grant.stderr or grant.stdout
++    with pytest.raises(WindowsSecurityError, match="ACL|access|owner|private"):
++        verify_owner_only(record)
++
++
+ def test_reparse_lock_target_is_rejected_when_symlinks_are_available(
+     tmp_path: Path,
+ ) -> None:
+@@ -273,3 +636,30 @@ def test_role_guard_rejects_second_owner_and_releases() -> None:
+             SingleInstanceGuard(role)
+     with SingleInstanceGuard(role):
+         pass
++
++
++if __name__ == "__main__" and "--managed-runtime-probe" in sys.argv:
++    handle_index = sys.argv.index("--bootstrap-handle") + 1
++    descriptor = read_bootstrap(int(sys.argv[handle_index]))
++    import grpc
++
++    result_path = Path(str(descriptor["result"]))
++    temporary = result_path.with_suffix(".tmp")
++    temporary.write_text(
++        json.dumps(
++            {
++                "pid": os.getpid(),
++                "image": sys.executable,
++                "prefix": sys.prefix,
++                "marker": descriptor["marker"],
++                "grpc": grpc.__version__,
++                "grpc_file": grpc.__file__,
++            }
++        ),
++        encoding="utf-8",
++    )
++    temporary.replace(result_path)
++    release = Path(str(descriptor["release"]))
++    deadline = time.monotonic() + 15
++    while not release.exists() and time.monotonic() < deadline:
++        time.sleep(0.025)
+diff --git a/tests/shared/test_recovery.py b/tests/shared/test_recovery.py
+index c6e0e62..902f0ae 100644
+--- a/tests/shared/test_recovery.py
++++ b/tests/shared/test_recovery.py
+@@ -13,6 +13,7 @@ from cephvr.shared.recovery import (
+     RecoveryStore,
+     RecoveryStoreError,
+     UnfinishedSessionPointer,
++    _publish,
+ )
+ 
+ 
+@@ -76,13 +77,12 @@ def test_world_readable_record_is_rejected(tmp_path: Path) -> None:
+         store.read_pointer()
+ 
+ 
+-@pytest.mark.skipif(os.name == "nt", reason="POSIX mode fixture")
+ def test_duplicate_recovery_fields_cannot_select_an_identity(tmp_path: Path) -> None:
+     store = RecoveryStore(tmp_path / "runtime")
+-    store.pointer_path.write_bytes(
+-        b'{"session_directory":"/tmp/a","session_directory":"/tmp/b"}'
++    _publish(
++        store.pointer_path,
++        b'{"session_directory":"/tmp/a","session_directory":"/tmp/b"}',
+     )
+-    store.pointer_path.chmod(0o600)
+     with pytest.raises(RecoveryStoreError, match="repeats a field"):
+         store.read_pointer()
+ 
+diff --git a/tests/supervisor/test_health.py b/tests/supervisor/test_health.py
+index 6636e5f..1846c87 100644
+--- a/tests/supervisor/test_health.py
++++ b/tests/supervisor/test_health.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ import asyncio
+ import json
++from collections.abc import Callable
+ from pathlib import Path
+ from uuid import uuid4
+ 
+@@ -18,6 +19,13 @@ from .support import (
+ )
+ 
+ 
++async def _eventually(predicate: Callable[[], bool], *, timeout_s: float = 2.0) -> None:
++    deadline = asyncio.get_running_loop().time() + timeout_s
++    while not predicate() and asyncio.get_running_loop().time() < deadline:
++        await asyncio.sleep(0.005)
++    assert predicate(), "expected supervisor state did not arrive"
++
++
+ def heartbeat(source: types.ProcessIdentity) -> types.HeartbeatReport:
+     return types.HeartbeatReport(
+         source=source,
+@@ -108,16 +116,22 @@ async def test_monitor_triggers_one_background_reconcile(tmp_path: Path) -> None
+ 
+     runtime.health.reconcile_helpers = blocked
+     monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
+-    await asyncio.sleep(0.05)  # ticks keep running while the reconcile is pending
+-    assert calls == 1
+-    assert not monitor.done()
+-    release.set()
+-    await asyncio.sleep(0.05)
+-    monitor.cancel()
+-    assert any(
+-        "ffmpeg:x" in warning.message
+-        for warning in runtime.status_state.warnings.values()
+-    )
++    try:
++        await _eventually(lambda: calls == 1)
++        assert not monitor.done()
++        await asyncio.sleep(0.05)
++        assert calls == 1
++        release.set()
++        await _eventually(
++            lambda: any(
++                "ffmpeg:x" in warning.message
++                for warning in runtime.status_state.warnings.values()
++            )
++        )
++    finally:
++        release.set()
++        monitor.cancel()
++        await asyncio.gather(monitor, return_exceptions=True)
+ 
+ 
+ async def test_pre_session_error_without_isolation_proof_fences_safety(
+@@ -166,9 +180,11 @@ async def test_unclassified_error_fences_safety(tmp_path: Path) -> None:
+     assert receipt.result == types.COMMAND_RESULT_ACCEPTED
+     assert runtime.shutdown_state.interruption is None
+     monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
+-    await asyncio.sleep(0.03)
+-    monitor.cancel()
+-    assert runtime.shutdown_state.interruption is not None
++    try:
++        await _eventually(lambda: runtime.shutdown_state.interruption is not None)
++    finally:
++        monitor.cancel()
++        await asyncio.gather(monitor, return_exceptions=True)
+     await runtime.shutdown_state.safety_task
+     assert len(outbound.interruptions) == 1
+     assert (tmp_path / "reports").is_dir()
+@@ -251,9 +267,11 @@ async def test_confirmed_controller_without_first_heartbeat_times_out(
+         ("controller", runtime.controller.generation)
+     ] = host_time_ns() - 16_000_000_000
+     monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
+-    await asyncio.sleep(0.03)
+-    monitor.cancel()
+-    assert runtime.shutdown_state.interruption is not None
++    try:
++        await _eventually(lambda: runtime.shutdown_state.interruption is not None)
++    finally:
++        monitor.cancel()
++        await asyncio.gather(monitor, return_exceptions=True)
+     assert runtime.shutdown_state.interruption.reason.code == "CONTROLLER_LOST"
+     assert runtime.shutdown_state.safety_task is not None
+     await runtime.shutdown_state.safety_task
+diff --git a/tests/supervisor/test_status.py b/tests/supervisor/test_status.py
+index ebfc48a..715aa62 100644
+--- a/tests/supervisor/test_status.py
++++ b/tests/supervisor/test_status.py
+@@ -5,8 +5,6 @@ from __future__ import annotations
+ import asyncio
+ from pathlib import Path
+ 
+-import pytest
+-
+ from cephvr.control.v1 import services_pb2 as wire
+ from tests.supervisor.support import make_runtime
+ 
+@@ -23,9 +21,16 @@ async def test_failed_status_send_is_resent_on_heartbeat_tick(tmp_path: Path) ->
+     assert runtime.status_state.acknowledged_revision == 0
+     runtime.health.heartbeat_interval_ns = 1_000_000
+     loop = asyncio.create_task(runtime.health.heartbeat_loop())
+-    await asyncio.sleep(0.05)
+-    loop.cancel()
+-    await asyncio.gather(loop, return_exceptions=True)
++    deadline = asyncio.get_running_loop().time() + 2.0
++    try:
++        while (
++            runtime.status_state.acknowledged_revision == 0
++            and asyncio.get_running_loop().time() < deadline
++        ):
++            await asyncio.sleep(0.005)
++    finally:
++        loop.cancel()
++        await asyncio.gather(loop, return_exceptions=True)
+     assert runtime.status_state.acknowledged_revision == 1
+     assert outbound.statuses[-1].status_revision == 1
+ 
+@@ -97,9 +102,16 @@ async def test_supervisor_heartbeat_does_not_depend_on_status_change(
+     runtime, _, outbound, _ = make_runtime(tmp_path)
+     runtime.health.heartbeat_interval_ns = 1_000_000
+     loop = asyncio.create_task(runtime.health.heartbeat_loop())
+-    await asyncio.sleep(0.01)
+-    loop.cancel()
+-    with pytest.raises(asyncio.CancelledError):
+-        await loop
++    deadline = asyncio.get_running_loop().time() + 2.0
++    try:
++        while (
++            len(outbound.heartbeats) < 2
++            and asyncio.get_running_loop().time() < deadline
++        ):
++            await asyncio.sleep(0.005)
++    finally:
++        loop.cancel()
++        await asyncio.gather(loop, return_exceptions=True)
++    assert loop.cancelled()
+     assert len(outbound.heartbeats) >= 2
+     assert runtime.status_state.revision == 0
+diff --git a/tests/tracking/test_runtime.py b/tests/tracking/test_runtime.py
+index f50d2f2..1d2a2b9 100644
+--- a/tests/tracking/test_runtime.py
++++ b/tests/tracking/test_runtime.py
+@@ -379,6 +379,12 @@ async def test_real_movement_baseline_start_and_separate_stop_finish(
+     await until(lambda: runtime.engine.movement.result_sequence == 2)
+     clock.now = schedule.normal_end_monotonic_ns
+     await until(lambda: runtime.state.finished is not None)
++    await until(
++        lambda: any(
++            method == "ReportLifecycle" and report.WhichOneof("report") == "finished"
++            for method, report in peer.reports
++        )
++    )
+     reports = [
+         r.WhichOneof("report") for m, r in peer.reports if m == "ReportLifecycle"
+     ]
+diff --git a/tests/visual_stimulus/test_resources.py b/tests/visual_stimulus/test_resources.py
+index 633b939..af1a2fa 100644
+--- a/tests/visual_stimulus/test_resources.py
++++ b/tests/visual_stimulus/test_resources.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import io
+ import json
+ import struct
+ import threading
+@@ -10,7 +11,12 @@ from fractions import Fraction
+ import pytest
+ from tests.visual_stimulus.support import make_prepared_trial
+ 
+-from cephvr.visual_stimulus.config.models.program_model import Time, VideoSettings
++from cephvr.visual_stimulus.config.models.program_model import (
++    Asset,
++    ColorOverride,
++    Time,
++    VideoSettings,
++)
+ from cephvr.visual_stimulus.resources.budget import (
+     BoundedBudget,
+     arena_mesh_bytes,
+@@ -23,7 +29,11 @@ from cephvr.visual_stimulus.resources.ffv1_configuration import (
+ )
+ from cephvr.visual_stimulus.resources.glb import GLBError, parse_glb
+ from cephvr.visual_stimulus.resources.image_headers import image_shape
+-from cephvr.visual_stimulus.resources.media import ImagePixels
++from cephvr.visual_stimulus.resources.media import (
++    ImagePixels,
++    MediaPreparationError,
++    decode_image,
++)
+ from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
+ from cephvr.visual_stimulus.resources.video import VideoPlayback
+ from cephvr.visual_stimulus.resources.video_index import (
+@@ -35,6 +45,41 @@ from cephvr.visual_stimulus.resources.video_selection import PlaybackCursor
+ from cephvr.visual_stimulus.resources.video_session import VideoSession
+ 
+ 
++def test_tiff_uint_decoder_accepts_supported_pixels_and_rejects_float() -> None:
++    tifffile = pytest.importorskip("tifffile")
++    np = pytest.importorskip("numpy")
++    asset = Asset(
++        asset_id="image",
++        logical_path="image.tif",
++        profile="tiff_uint_v1",
++        color_override=ColorOverride(
++            transfer="linear",
++            primaries="rec709_d65",
++            range="full",
++            matrix="rgb",
++            chroma_location="none",
++            reason="decoder regression",
++        ),
++    )
++    for pixels, expected_channels in (
++        (np.arange(12, dtype=np.uint8).reshape(3, 4), 1),
++        (np.arange(36, dtype=np.uint16).reshape(3, 4, 3), 3),
++    ):
++        encoded = io.BytesIO()
++        tifffile.imwrite(encoded, pixels)
++        decoded = decode_image(asset, encoded.getvalue())
++        np.testing.assert_array_equal(decoded.pixels, pixels)
++        assert decoded.pixels.shape == pixels.shape
++        assert decoded.dtype == str(pixels.dtype)
++        assert decoded.channel_count == expected_channels
++        assert decoded.transfer == "linear"
++
++    encoded = io.BytesIO()
++    tifffile.imwrite(encoded, np.arange(12, dtype=np.float32).reshape(3, 4))
++    with pytest.raises(MediaPreparationError, match="unsigned 8-bit or 16-bit"):
++        decode_image(asset, encoded.getvalue())
++
++
+ def test_resource_budget_replacement_is_atomic() -> None:
+     budget = BoundedBudget(cpu_limit=100, gpu_limit=50)
+     budget.reserve(owner="texture", cpu_bytes=40, gpu_bytes=30)
+diff --git a/tools/README.md b/tools/README.md
+index e4c551c..a90f218 100644
+--- a/tools/README.md
++++ b/tools/README.md
+@@ -19,3 +19,25 @@ See the [development guide](../docs/development.md) for existing setup/check
+ commands, [ARCH-002](../architecture.md#arch-002) for repository boundaries and
+ the [contract index](../contracts/README.md#verification-status) for existing
+ contract compilation instructions.
++
++The runner builds the required 64-bit Windows shared-ring atomic helper during
++`-Install`. To rebuild it in an existing environment, pass `-BuildWindowsNative`;
++the DLL is installed beside the Windows platform package and included in
++Windows x64 wheels. Building a wheel with native DLLs requires a 64-bit Windows
++build host and validates each DLL's PE machine type. A source-only build without
++the generated DLL remains pure Python; shared-ring operations report the missing
++native helper until `-BuildWindowsNative` produces it.
++
++`-Install` also prepares `.venv/Scripts/cephvr-python.exe`, its matching runtime DLL
++and a provenance manifest for exact managed-child identity. This leaves the ordinary
++virtual-environment interpreter available for tooling. Managed launches verify the
++prepared files against the current base runtime and `pyvenv.cfg`, then use the
++versioned module entry to retain required DLL-directory handles. Refresh with
++`-Install` after a base interpreter/configuration change; missing or stale preparation
++fails before managed launch instead of falling back to the Windows redirector.
++
++For a fresh AMD64 Windows rig with Python 3.11, MSVC/CMake, CUDA and NVIDIA Optical
++Flow API 2 headers available, run
++`./tools/test_on_rig.ps1 -Install -Rig -BuildTrackingNative -NvofSdkRoot <actual-header-root>`.
++The Tracking build remains explicit; locate the installed headers on that machine.
++This automated command does not replace device/scientific/full-workload acceptance.
+diff --git a/tools/test_on_rig.ps1 b/tools/test_on_rig.ps1
+index 35d547e..5575af2 100644
+--- a/tools/test_on_rig.ps1
++++ b/tools/test_on_rig.ps1
+@@ -6,6 +6,7 @@
+ param(
+     [switch]$Install,
+     [switch]$Rig,
++    [switch]$BuildWindowsNative,
+     [switch]$BuildTrackingNative,
+     [string]$NvofSdkRoot,
+     [string]$OutputDirectory
+@@ -14,7 +15,9 @@ param(
+ $ErrorActionPreference = 'Stop'
+ $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+ $venv = Join-Path $repo '.venv'
+-$python = Join-Path $venv 'Scripts\python.exe'
++$venvPython = Join-Path $venv 'Scripts\python.exe'
++$python = $venvPython
++$managedPython = Join-Path $venv 'Scripts\cephvr-python.exe'
+ $runId = Get-Date -Format 'yyyyMMdd-HHmmss'
+ $output = if ($OutputDirectory) {
+     [IO.Path]::GetFullPath($OutputDirectory)
+@@ -33,7 +36,10 @@ function Assert-Python311([string]$Executable, [string[]]$Prefix) {
+ }
+ 
+ if ($Install) {
+-    if (Get-Command py -ErrorAction SilentlyContinue) {
++    if (Test-Path $venvPython) {
++        $base = $venvPython
++        $prefix = @()
++    } elseif (Get-Command py -ErrorAction SilentlyContinue) {
+         $base = 'py'
+         $prefix = @('-3.11')
+     } elseif (Get-Command python -ErrorAction SilentlyContinue) {
+@@ -43,26 +49,65 @@ if ($Install) {
+         throw 'Install Python 3.11 (including its Windows launcher) before -Install.'
+     }
+     Assert-Python311 $base $prefix
+-    if (-not (Test-Path $python)) {
++    if (-not (Test-Path $venvPython)) {
+         & $base @prefix -m venv $venv
+         if ($LASTEXITCODE -ne 0) { throw 'Python 3.11 virtual environment creation failed.' }
+     }
+-    Assert-Python311 $python @()
++    Assert-Python311 $venvPython @()
+     $before = $ErrorActionPreference
+     $ErrorActionPreference = 'Continue'
+     try {
+-        & $python -m pip install --editable '.[dev,acquisition,visual_stimulus,tracking]' 2>&1 |
++        & $venvPython -m pip install --editable '.[dev,acquisition,visual_stimulus,tracking]' 2>&1 |
+             Tee-Object -FilePath (Join-Path $output 'install.log') | Out-Host
+         $installExit = $LASTEXITCODE
+     } finally {
+         $ErrorActionPreference = $before
+     }
+     if ($installExit -ne 0) { throw "Dependency installation failed; see $output\install.log" }
+-} elseif (-not (Test-Path $python)) {
+-    throw "Missing $python. Run this script once with -Install (network/package access required)."
++    & $venvPython -m cephvr.platform.windows.python_runtime --prepare
++    if ($LASTEXITCODE -ne 0) { throw 'Preparing the managed CephVR Python executable failed.' }
++} elseif (-not (Test-Path $venvPython)) {
++    throw "Missing $venvPython. Run this script once with -Install (network/package access required)."
+ }
+ 
++if (-not (Test-Path $managedPython)) { throw "Missing $managedPython. Run this script with -Install." }
+ Assert-Python311 $python @()
++& $managedPython -m cephvr.platform.windows.python_runtime --verify
++if ($LASTEXITCODE -ne 0) { throw 'The prepared CephVR Python executable is stale; run -Install.' }
++
++function Get-CMakeExecutable {
++    $fromPath = Get-Command cmake -ErrorAction SilentlyContinue
++    if ($fromPath) { return $fromPath.Source }
++
++    $programFilesX86 = [Environment]::GetFolderPath('ProgramFilesX86')
++    $vswhere = Join-Path $programFilesX86 'Microsoft Visual Studio\Installer\vswhere.exe'
++    if (Test-Path $vswhere) {
++        $found = & $vswhere -latest -products '*' `
++            -requires Microsoft.VisualStudio.Component.VC.CMake.Project `
++            -find 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
++        foreach ($candidate in $found) {
++            if (Test-Path $candidate) { return $candidate }
++        }
++    }
++    throw 'CMake was not found on PATH or in the installed Visual Studio CMake component.'
++}
++
++if ($Install -or $BuildWindowsNative) {
++    $cmake = Get-CMakeExecutable
++    $atomicBuild = Join-Path $output 'windows-atomics'
++    & $cmake -S (Join-Path $repo 'native\windows') -B $atomicBuild -A x64
++    if ($LASTEXITCODE -ne 0) { throw 'Windows atomics configuration failed.' }
++    & $cmake --build $atomicBuild --config Release
++    if ($LASTEXITCODE -ne 0) { throw 'Windows atomics compilation failed.' }
++    & $cmake --install $atomicBuild --config Release --prefix (Join-Path $repo 'src')
++    if ($LASTEXITCODE -ne 0) { throw 'Windows atomics installation failed.' }
++}
++
++$atomicsDll = Join-Path $repo 'src\cephvr\platform\windows\cephvr_atomics.dll'
++if (-not (Test-Path $atomicsDll)) {
++    throw "Missing $atomicsDll. Run .\tools\test_on_rig.ps1 -BuildWindowsNative first."
++}
++
+ $before = $ErrorActionPreference
+ $ErrorActionPreference = 'Continue'
+ try {
+@@ -78,13 +123,13 @@ if ($prerequisiteExit -ne 0) {
+ 
+ if ($BuildTrackingNative) {
+     if (-not $NvofSdkRoot) { throw '-BuildTrackingNative requires -NvofSdkRoot with API 2.0 headers.' }
+-    if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) { throw 'Install CMake, MSVC x64 tools and the CUDA Toolkit first.' }
++    $cmake = Get-CMakeExecutable
+     $nativeBuild = Join-Path $output 'tracking-native'
+-    & cmake -S (Join-Path $repo 'native\tracking') -B $nativeBuild -A x64 "-DNVOF_SDK_ROOT=$NvofSdkRoot"
++    & $cmake -S (Join-Path $repo 'native\tracking') -B $nativeBuild -A x64 "-DNVOF_SDK_ROOT=$NvofSdkRoot"
+     if ($LASTEXITCODE -ne 0) { throw 'Tracking native configuration failed.' }
+-    & cmake --build $nativeBuild --config Release
++    & $cmake --build $nativeBuild --config Release
+     if ($LASTEXITCODE -ne 0) { throw 'Tracking native compilation failed.' }
+-    & cmake --install $nativeBuild --config Release --prefix (Join-Path $repo 'src')
++    & $cmake --install $nativeBuild --config Release --prefix (Join-Path $repo 'src')
+     if ($LASTEXITCODE -ne 0) { throw 'Tracking native installation failed.' }
+ }
+ 

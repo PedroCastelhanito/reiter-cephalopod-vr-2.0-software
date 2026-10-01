@@ -207,10 +207,9 @@ class StartActivation:
                 ):
                     raise RuntimeError("Start retired before Running transition")
                 self.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
-                operation = self.control.operations[command_id]
-                operation.complete = True
-                operation.succeeded = True
-                operation.progress = "session activated"
+                self.control_operations.complete_operation(
+                    command_id, success=True, progress="session activated"
+                )
                 self.publisher.publish()
             attempt.trial_task = self.spawn(self.trials.run_trials(attempt))
         except Exception as exc:

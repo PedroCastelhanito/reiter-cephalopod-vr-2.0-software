@@ -1,0 +1,9 @@
+
+Algorithm : SHA256
+Hash      : A78FEFE6AC78ADDF9F10583954D15CD50EE7E083A78230CDE6B8212AE968004E
+Path      : C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-audit-2026-10-01\automated\packages\cephvr-2.0.0.dev0-py3-none-any.whl
+
+Algorithm : SHA256
+Hash      : 9BFABBC0D8398A4F84EA404A6AA19671AD9ED3CF23FACDF83781D87257C0CF45
+Path      : C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-audit-2026-10-01\automated\packages\cephvr-2.0.0.dev0.tar.gz
+

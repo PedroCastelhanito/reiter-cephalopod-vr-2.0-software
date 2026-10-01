@@ -30,6 +30,10 @@ from cephvr.platform.windows.bootstrap import (
     write_bootstrap,
 )
 from cephvr.platform.windows.jobs import WindowsJobs, WindowsLaunchError
+from cephvr.platform.windows.python_runtime import (
+    module_arguments,
+    resolve_python_executable,
+)
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.transport_deadlines import remaining_seconds
@@ -103,7 +107,7 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
         self.supervisor_token = supervisor_token
         self.supervisor_endpoint = supervisor_endpoint
         self.coordinator_endpoint = coordinator_endpoint
-        self.python_executable = python_executable.resolve()
+        self.python_executable = resolve_python_executable(python_executable)
         self.max_message_bytes = max_message_bytes
         self.register_peer = register_peer
         self.revoke_peer = revoke_peer
@@ -154,12 +158,10 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
             self.native.open_launch_job(planned.state.containment_job_name)
             child = self.native.launch_suspended(
                 str(self.python_executable),
-                [
-                    "-m",
+                module_arguments(
                     "cephvr.acquisition.worker.main",
-                    "--bootstrap-handle",
-                    str(read_handle),
-                ],
+                    ["--bootstrap-handle", str(read_handle)],
+                ),
                 [planned.state.containment_job_name],
                 (read_handle,),
             )

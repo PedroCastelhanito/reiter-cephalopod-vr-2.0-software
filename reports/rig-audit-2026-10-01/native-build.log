@@ -1,0 +1,11 @@
+MSBuild version 17.14.40+3e7442088 for .NET Framework
+
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(548,5): warning MSB8029: The Intermediate directory or Output directory cannot reside under the Temporary directory as it could lead to issues with incremental build. [C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.audit-tmp\tracking-native\ZERO_CHECK.vcxproj]
+  1>Checking Build System
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(548,5): warning MSB8029: The Intermediate directory or Output directory cannot reside under the Temporary directory as it could lead to issues with incremental build. [C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.audit-tmp\tracking-native\cephvr_nvof.vcxproj]
+  Building Custom Rule C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/native/tracking/CMakeLists.txt
+  nvof.cpp
+     Creating library C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/tracking-native/Release/cephvr_nvof.lib and object C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/tracking-native/Release/cephvr_nvof.exp
+  cephvr_nvof.vcxproj -> C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.audit-tmp\tracking-native\Release\cephvr_nvof.dll
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(548,5): warning MSB8029: The Intermediate directory or Output directory cannot reside under the Temporary directory as it could lead to issues with incremental build. [C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.audit-tmp\tracking-native\ALL_BUILD.vcxproj]
+  Building Custom Rule C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/native/tracking/CMakeLists.txt

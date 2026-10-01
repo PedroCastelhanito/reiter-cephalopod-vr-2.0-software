@@ -1,0 +1,66 @@
+{
+  "backend_counts": {
+    "acquisition": {
+      "passed": 171
+    },
+    "client": {
+      "passed": 6
+    },
+    "controller": {
+      "passed": 200,
+      "skipped": 2
+    },
+    "launcher": {
+      "passed": 10
+    },
+    "platform": {
+      "passed": 45,
+      "skipped": 1
+    },
+    "shared": {
+      "passed": 51,
+      "skipped": 3
+    },
+    "supervisor": {
+      "passed": 106
+    },
+    "tracking": {
+      "passed": 43
+    },
+    "visual_stimulus": {
+      "passed": 123
+    }
+  },
+  "skips": [
+    {
+      "owner": "controller",
+      "test": "tests.controller.test_configuration_transactions.test_setup_rejects_unset_or_invalid_recording_root[symlink]",
+      "reason": "Windows account lacks symlink creation privilege"
+    },
+    {
+      "owner": "controller",
+      "test": "tests.controller.test_storage.test_existing_lock_symlink_is_never_followed",
+      "reason": "symlink creation unavailable on this host"
+    },
+    {
+      "owner": "platform",
+      "test": "tests.platform.test_windows_native_on_rig.test_reparse_lock_target_is_rejected_when_symlinks_are_available",
+      "reason": "Windows symlink privilege or Developer Mode is unavailable"
+    },
+    {
+      "owner": "shared",
+      "test": "tests.shared.test_invariants.test_operator_credentials_reject_unsafe_file",
+      "reason": "POSIX mode fixture; Windows ACLs have native tests"
+    },
+    {
+      "owner": "shared",
+      "test": "tests.shared.test_recovery.test_unverified_exit_and_unsafe_pointer_cannot_authorize_recovery",
+      "reason": "Windows account lacks symlink creation privilege"
+    },
+    {
+      "owner": "shared",
+      "test": "tests.shared.test_recovery.test_world_readable_record_is_rejected",
+      "reason": "POSIX mode verification"
+    }
+  ]
+}

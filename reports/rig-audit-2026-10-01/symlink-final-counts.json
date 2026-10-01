@@ -1,0 +1,11 @@
+{
+  "visual_stimulus": 123,
+  "acquisition": 171,
+  "tracking": 43,
+  "shared": 52,
+  "supervisor": 106,
+  "platform": 46,
+  "launcher": 10,
+  "client": 6,
+  "controller": 202
+}

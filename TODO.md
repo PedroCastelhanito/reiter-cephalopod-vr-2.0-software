@@ -25,12 +25,15 @@ None recorded.
 - [ ] `shutdown-health-checks` [supervisor] Resolve gaps in controller-loss monitoring and timeout fencing during accepted shutdown, preserving original deadlines. — [Finding](reports/runtime.md#unresolved-findings-and-limitations)
 - [ ] `pruned-launch-replay` [supervisor] Resolve PlanLaunch replay behavior after a released registry entry is pruned; retain the agreed replay guarantees. — [Finding](reports/runtime.md#unresolved-findings-and-limitations)
 - [ ] `late-finished-recovery` [controller] [supervisor] Recheck startup inspection of logs containing late-Finished recovery events; preserve conservative handling of genuinely unconfirmed evidence. — [Finding](reports/runtime.md#unresolved-findings-and-limitations)
-- [ ] `controller-audit-observations` [controller] Verify the unverified 2026-10-01 audit observations (direct `control.operations` writes bypassing capacity checks, operations never pruned, pre-activation shutdown not cancelling Setup prompts, warning appended outside the lifecycle lock) and decide on the unread `default_intertrial_gap_ns` and `completed_camera_operation` fields; fix only observed defects. — [Observations](reports/runtime.md#unresolved-findings-and-limitations)
+- [ ] `controller-audit-observations` [controller] Review ingress duplicate handling, pre-activation prompt cancellation, warning lock scope and unread fields before changing them; terminal retention is repaired and capacity bypass was not established. — [Observations](reports/runtime.md#unresolved-findings-and-limitations)
 
 ## Blocked
 
-None recorded.
+
+- [ ] `rig-acceptance` [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] Complete remaining managed application/device/full-workload acceptance after GUI implementation, required scientific/wiring inputs and owner-deferred encoder compatibility; bounded native repairs pass. — [Rig worklist](reports/rig-verification.md)
 
 ## Deferred
 
-- [ ] `rig-acceptance` [controller] [supervisor] [acquisition] [visual_stimulus] [tracking] Complete the existing Windows/device/full-workload acceptance worklist and record measured results. Deferred under E15 to rig execution; keep individual checks and input prerequisites only in the linked worklist. — [Rig worklist](reports/rig-verification.md)
+- [ ] `encoder-toolchain-owner-review` [acquisition] [visual_stimulus] Owner-deferred audit item 5: select/validate compatible encoder tools and existing settings before full-load acceptance; no encoder repair was authorized in this phase. — [Evidence and limits](reports/rig-audit-2026-10-01/README.md)
+
+Owner-deferred scientific settings and firmware remain in their owning architecture/worklist records.

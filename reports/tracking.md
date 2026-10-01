@@ -1,9 +1,20 @@
 # Tracking status
 
+Final Windows repair snapshot (2026-10-01, baseline HEAD
+`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): 43 passed,
+including the native NVIDIA same-image lease smoke built with
+MSVC 19.44/CUDA 12.8.61/API 2 headers. Fresh inventory confirms RTX 5060 Ti ordinal 0.
+The 128x128 smoke proves bounded native lease/readback/closure only. Finished
+ordering now waits for actual outbound delivery. All 48 contract tests and 19 JSON
+schemas pass; explicit UTF-8 fixes platform decoding without changing declarations.
+[Evidence](rig-audit-2026-10-01/README.md) retains scope/results;
+[scientific/full-load acceptance](rig-verification.md) remains open.
+
 Updated: 2026-10-01. Tracking runtime implementation is selected under
 [ARCH-001](../architecture.md#arch-001), before GUI and SpikeGLX integration.
 Native adapters and the backend runtime are now implemented. Local checks below are
-implementation evidence; Windows-native and scientific acceptance remain pending.
+implementation evidence; bounded native checks pass, while full camera/model and
+scientific acceptance remain pending.
 The source review below was recorded on 2026-09-26; its source revision was not retained.
 
 The historical review compared CephVR 1.0 source with the then-current 2.0 declarations. No latency,
@@ -112,9 +123,10 @@ loopback sockets. [Dated evidence](tracking-evidence-2026-10-01/README.md) retai
 commands/results, the exact audit source diff and pre/post source hashes against the
 initial dirty-tree snapshot. These checks establish local regression evidence only.
 
-No native DLL build,
-CUDA/ONNX inference, protected Windows assets, named-pipe cancellation, actual camera
-conversion or combined closed-loop throughput has been validated on this machine.
+That development snapshot had no native DLL build or GPU smoke. The later rig audit
+above built the shim and passed bounded native flow execution. CUDA/ONNX inference,
+protected Windows assets, named-pipe cancellation, actual camera conversion and
+combined closed-loop throughput still have no acceptance evidence.
 
 ## Windows execution handoff
 

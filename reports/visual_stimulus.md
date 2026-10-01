@@ -8,6 +8,18 @@ remain authoritative; implementation does not mean experiment or rig acceptance.
 
 ## Implemented scope
 
+Final Windows repair snapshot (2026-10-01, baseline HEAD
+`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): 123 tests,
+40 contract tests and 11 schemas pass. Concrete PyAV video stream/frame and TIFF
+page/dtype/enum handling clears installed-extra Windows-target mypy; repository
+check passes 525 source files. Bounded generated TIFF uint8/uint16 decoding preserves
+exact pixel values and rejects float input; most other resource tests use fake
+prepared decoders, so these results are not broad codec fidelity coverage. No physical projection,
+calibration or full composite/encoder workload was performed. The installed PATH
+FFmpeg4.3.2 failed bounded explicit-2080 Ti encoding; production encoding remains
+unvalidated. [Dated evidence](rig-audit-2026-10-01/README.md) and the
+[single rig worklist](rig-verification.md) retain current limitations.
+
 [V01](../docs/architecture/visual_stimulus.md#v01) owns the Visual Stimulus name.
 The runtime, tests, contracts, configuration and documentation use `visual_stimulus`;
 console commands are `cephvr-visual-stimulus` and `cephvr-visual-stimulus-worker`.

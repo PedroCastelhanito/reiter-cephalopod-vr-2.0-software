@@ -1,0 +1,9 @@
+{
+  "administrator": true,
+  "focused_command": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m pytest -q -rs --junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\symlink-elevated-focused.xml tests/controller/test_configuration_transactions.py::test_setup_rejects_unset_or_invalid_recording_root[symlink] tests/controller/test_storage.py::test_existing_lock_symlink_is_never_followed tests/platform/test_windows_native_on_rig.py::test_reparse_lock_target_is_rejected_when_symlinks_are_available tests/shared/test_recovery.py::test_unverified_exit_and_unsafe_pointer_cannot_authorize_recovery",
+  "focused_exit_code": 0,
+  "full_command": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m pytest tests -q -rs --junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\symlink-elevated-full.xml",
+  "full_exit_code": 1,
+  "failure": null,
+  "completed_utc": "2026-10-01T08:02:52.4751583Z"
+}

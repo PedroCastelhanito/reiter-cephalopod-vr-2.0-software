@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import uuid
 from pathlib import Path
@@ -71,23 +72,39 @@ def test_unexpected_file_blocks_cancel_without_deletion(tmp_path: Path) -> None:
 def test_preexisting_session_cancellation_never_unlinks_new_owners_lock(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    import os
+
     reservation = _reservation(tmp_path)
     reservation.protocol_directory.mkdir(parents=True)
     reservation.spikeglx_directory.mkdir()
     assert reservation.acquire() == []
     assert reservation._lock_created
-    original_release = reservation.release
+    if os.name == "nt":
+        original_replace = os.replace
 
-    def competing_owner() -> None:
-        # The old lock has been renamed while still held. A new owner can create
-        # the canonical name; the cancelled attempt must never unlink that file.
-        assert not reservation.lock_path.exists()
-        reservation.lock_path.write_bytes(b"new owner")
-        original_release()
+        def guarded_replace(source: Path, destination: Path) -> None:
+            if source == reservation.lock_path:
+                assert reservation._lock_fd is None
+                assert reservation.held
+            original_replace(source, destination)
 
-    monkeypatch.setattr(reservation, "release", competing_owner)
+        monkeypatch.setattr(os, "replace", guarded_replace)
+    else:
+        original_release = reservation.release
+
+        def competing_owner() -> None:
+            # The old lock was renamed while held. A new owner may create the
+            # canonical name, which cancellation must never unlink.
+            assert not reservation.lock_path.exists()
+            reservation.lock_path.write_bytes(b"new owner")
+            original_release()
+
+        monkeypatch.setattr(reservation, "release", competing_owner)
     reservation.cancel()
-    assert reservation.lock_path.read_bytes() == b"new owner"
+    if os.name == "nt":
+        assert not reservation.lock_path.exists()
+    else:
+        assert reservation.lock_path.read_bytes() == b"new owner"
 
 
 def test_existing_marker_inspection_requires_held_lock_and_keeps_recovery_evidence(
@@ -420,6 +437,23 @@ def test_owned_log_path_replacement_cannot_redirect_append(tmp_path: Path) -> No
     )
     first = _write("one", path, "append_jsonl_record", b'{"event_type":"first"}', 1, 2)
     assert writer.submit(first).result(3).state == "synced"
+    if os.name == "nt":
+        try:
+            path.rename(tmp_path / "moved.jsonl")
+        except PermissionError as exc:
+            assert getattr(exc, "winerror", None) == 32
+        else:
+            pytest.fail("Windows allowed renaming the writer's open live log")
+        completion = writer.submit(
+            _write("two", path, "append_jsonl_record", b'{"event_type":"second"}', 1, 2)
+        ).result(3)
+        assert completion.state == "synced"
+        assert path.read_bytes().endswith(
+            b'{"event_type":"first"}\n{"event_type":"second"}\n'
+        )
+        assert outside.read_bytes() == b"preserve\n"
+        assert writer.seal(3)
+        return
     path.rename(tmp_path / "moved.jsonl")
     try:
         path.symlink_to(outside)

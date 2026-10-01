@@ -5,8 +5,6 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-import pytest
-
 from cephvr.control.v1 import services_pb2 as wire
 from tests.supervisor.support import make_runtime
 
@@ -23,9 +21,16 @@ async def test_failed_status_send_is_resent_on_heartbeat_tick(tmp_path: Path) ->
     assert runtime.status_state.acknowledged_revision == 0
     runtime.health.heartbeat_interval_ns = 1_000_000
     loop = asyncio.create_task(runtime.health.heartbeat_loop())
-    await asyncio.sleep(0.05)
-    loop.cancel()
-    await asyncio.gather(loop, return_exceptions=True)
+    deadline = asyncio.get_running_loop().time() + 2.0
+    try:
+        while (
+            runtime.status_state.acknowledged_revision == 0
+            and asyncio.get_running_loop().time() < deadline
+        ):
+            await asyncio.sleep(0.005)
+    finally:
+        loop.cancel()
+        await asyncio.gather(loop, return_exceptions=True)
     assert runtime.status_state.acknowledged_revision == 1
     assert outbound.statuses[-1].status_revision == 1
 
@@ -97,9 +102,16 @@ async def test_supervisor_heartbeat_does_not_depend_on_status_change(
     runtime, _, outbound, _ = make_runtime(tmp_path)
     runtime.health.heartbeat_interval_ns = 1_000_000
     loop = asyncio.create_task(runtime.health.heartbeat_loop())
-    await asyncio.sleep(0.01)
-    loop.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await loop
+    deadline = asyncio.get_running_loop().time() + 2.0
+    try:
+        while (
+            len(outbound.heartbeats) < 2
+            and asyncio.get_running_loop().time() < deadline
+        ):
+            await asyncio.sleep(0.005)
+    finally:
+        loop.cancel()
+        await asyncio.gather(loop, return_exceptions=True)
+    assert loop.cancelled()
     assert len(outbound.heartbeats) >= 2
     assert runtime.status_state.revision == 0

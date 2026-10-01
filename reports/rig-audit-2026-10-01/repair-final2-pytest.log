@@ -1,0 +1,19 @@
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 28%]
+........................s............................................... [ 37%]
+........................................................................ [ 47%]
+......s................................................................s [ 56%]
+.............................................s.ss....................... [ 66%]
+........................................................................ [ 75%]
+........................................................................ [ 85%]
+........................................................................ [ 94%]
+.........................................                                [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\controller\test_configuration_transactions.py:150: Windows account lacks symlink creation privilege
+SKIPPED [1] tests\controller\test_storage.py:137: symlink creation unavailable on this host
+SKIPPED [1] tests\platform\test_windows_native_on_rig.py:586: Windows symlink privilege or Developer Mode is unavailable
+SKIPPED [1] tests\shared\test_invariants.py:191: POSIX mode fixture; Windows ACLs have native tests
+SKIPPED [1] tests\shared\test_recovery.py:65: Windows account lacks symlink creation privilege
+SKIPPED [1] tests\shared\test_recovery.py:71: POSIX mode verification
+755 passed, 6 skipped in 9.83s

@@ -1,0 +1,23 @@
+{
+  "wheel": "cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+  "metadata": "Wheel-Version: 1.0\nGenerator: setuptools (79.0.1)\nRoot-Is-Purelib: false\nTag: cp311-cp311-win_amd64\n\n",
+  "native_members": [
+    "cephvr/platform/windows/cephvr_atomics.dll",
+    "cephvr/tracking/native/cephvr_nvof.dll"
+  ],
+  "runtime_members": [
+    "cephvr/platform/windows/python_runtime.py",
+    "cephvr/platform/windows/python_entry.py",
+    "cephvr/platform/windows/paths.py"
+  ],
+  "sdist": "cephvr-2.0.0.dev0.tar.gz",
+  "native_sources": [
+    "setup.py",
+    "native/windows/atomics.cpp",
+    "native/windows/CMakeLists.txt"
+  ],
+  "sha256": {
+    "cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl": "0c21528c5fc717a10912d3bb67cb0607e332c5022f089316494cf4e90e466ec9",
+    "cephvr-2.0.0.dev0.tar.gz": "5e46f2b01fa0fa382e0da50eb04e79a9bf42d8aa7c6c7f7a91120e42826e37e6"
+  }
+}

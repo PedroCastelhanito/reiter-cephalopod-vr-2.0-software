@@ -10,6 +10,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from cephvr.platform.windows.paths import extended_path
+
 SE_FILE_OBJECT = 1
 OWNER_SECURITY_INFORMATION = 0x1
 DACL_SECURITY_INFORMATION = 0x4
@@ -243,16 +245,17 @@ def _apis() -> tuple[Any, Any]:
 
 def _checked_path(path: Path, kernel: Any) -> str:
     path = Path(path)
-    if path.is_symlink():
+    native_name = extended_path(path)
+    if Path(native_name).is_symlink():
         raise WindowsSecurityError("credential path is a link")
-    attrs = kernel.GetFileAttributesW(str(path))
+    attrs = kernel.GetFileAttributesW(native_name)
     if attrs == INVALID_FILE_ATTRIBUTES:
         raise WindowsSecurityError(
             f"GetFileAttributesW failed: {ctypes.get_last_error()}"
         )
     if attrs & FILE_ATTRIBUTE_REPARSE_POINT:
         raise WindowsSecurityError("credential path is a reparse point")
-    return str(path)
+    return native_name
 
 
 def _user_sid(kernel: Any, advapi: Any) -> tuple[int, object, int]:
@@ -345,7 +348,7 @@ def create_owner_only_directory(path: Path) -> None:
     kernel, advapi = _apis()
     attrs, backing = _creation_security(kernel, advapi)
     _ = backing
-    if not kernel.CreateDirectoryW(str(path), ctypes.byref(attrs)):
+    if not kernel.CreateDirectoryW(extended_path(path), ctypes.byref(attrs)):
         raise WindowsSecurityError(
             f"CreateDirectoryW failed: {ctypes.get_last_error()}"
         )
@@ -360,7 +363,7 @@ def create_owner_only(path: Path, payload: bytes) -> None:
     attrs, backing = _creation_security(kernel, advapi)
     _ = backing
     handle = kernel.CreateFileW(
-        str(path),
+        extended_path(path),
         GENERIC_WRITE,
         0,
         ctypes.byref(attrs),
@@ -391,7 +394,7 @@ def create_owner_only(path: Path, payload: bytes) -> None:
             )
     except BaseException:
         kernel.CloseHandle(handle)
-        kernel.DeleteFileW(str(path))
+        kernel.DeleteFileW(extended_path(path))
         raise
     else:
         kernel.CloseHandle(handle)
@@ -540,7 +543,7 @@ def open_owner_only_lock(path: Path) -> tuple[int, bool]:
     share = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
     flags = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT
     handle = kernel.CreateFileW(
-        str(path),
+        extended_path(path),
         GENERIC_READ | GENERIC_WRITE,
         share,
         ctypes.byref(attrs),
@@ -554,7 +557,7 @@ def open_owner_only_lock(path: Path) -> tuple[int, bool]:
         if error not in (ERROR_FILE_EXISTS, ERROR_ALREADY_EXISTS):
             raise WindowsSecurityError(f"CreateFileW failed: {error}")
         handle = kernel.CreateFileW(
-            str(path),
+            extended_path(path),
             GENERIC_READ | GENERIC_WRITE,
             share,
             None,

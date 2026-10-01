@@ -1,0 +1,14 @@
+{
+  "wheel": "cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+  "sha256": "18B4BB0A81AFE3629E4FBC9797FDD6CAC5F6B8EE7F10F113DD7FE3516E69FC75",
+  "runtime_source_matches": true,
+  "native_dlls": [
+    "cephvr/platform/windows/cephvr_atomics.dll",
+    "cephvr/tracking/native/cephvr_nvof.dll"
+  ],
+  "runtime_modules": [
+    "cephvr/platform/windows/paths.py",
+    "cephvr/platform/windows/python_entry.py",
+    "cephvr/platform/windows/python_runtime.py"
+  ]
+}

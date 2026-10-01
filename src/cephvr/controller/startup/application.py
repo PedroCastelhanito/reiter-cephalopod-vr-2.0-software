@@ -50,6 +50,7 @@ from cephvr.controller.state import Attempt, ControllerLimits
 from cephvr.controller.transport.auth import credential_store_authentication
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
 from cephvr.platform.windows.jobs import WindowsJobs
+from cephvr.platform.windows.python_runtime import resolve_python_executable
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import describe_host_clock
 from cephvr.shared.credentials import CredentialStore, default_runtime_root
@@ -115,7 +116,11 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
 
     launcher_descriptor = msvcrt.open_osfhandle(launcher_handle, os.O_WRONLY)
     native = WindowsJobs()
-    native.retain_exact(supervisor_pid, supervisor_creation, sys.executable)
+    native.retain_exact(
+        supervisor_pid,
+        supervisor_creation,
+        str(resolve_python_executable(Path(sys.executable))),
+    )
     for job in managed_jobs:
         native.open_launch_job(job.job_name)
     backend_ports = {

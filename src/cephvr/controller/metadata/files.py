@@ -21,9 +21,14 @@ def sync_directory(path: Path) -> None:
 
 
 def atomic_json(path: Path, payload: bytes, *, replace: bool) -> None:
-    temporary = path.with_name(f".{path.name}.{uuid.uuid4()}.tmp")
+    temporary = path.with_name(f".cv-{uuid.uuid4().hex}.tmp")
+    temporary_io = temporary
+    if os.name == "nt":
+        from cephvr.platform.windows.paths import extended_path
+
+        temporary_io = Path(extended_path(temporary))
     try:
-        with temporary.open("xb") as stream:
+        with temporary_io.open("xb") as stream:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
@@ -41,7 +46,7 @@ def atomic_json(path: Path, payload: bytes, *, replace: bool) -> None:
                 os.link(temporary, path, follow_symlinks=False)
             sync_directory(path.parent)
     finally:
-        temporary.unlink(missing_ok=True)
+        temporary_io.unlink(missing_ok=True)
 
 
 def safe_component(value: str) -> str:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ctypes
 import sys
+from pathlib import Path
 from typing import Any
 
 
@@ -11,23 +12,29 @@ class NativeAtomicError(RuntimeError):
     """The process cannot safely perform the required native atomic operation."""
 
 
-_KERNEL32: Any = None
+_NATIVE: Any = None
 
 
-def _kernel32() -> Any:
-    global _KERNEL32
+def _native() -> Any:
+    global _NATIVE
     if sys.platform != "win32":
         raise NativeAtomicError("shared-ring atomics require Windows Interlocked APIs")
-    if _KERNEL32 is None:
-        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-        kernel.InterlockedCompareExchange64.argtypes = [
+    if _NATIVE is None:
+        path = Path(__file__).with_name("cephvr_atomics.dll")
+        try:
+            library = ctypes.WinDLL(str(path), use_last_error=True)
+        except OSError as exc:
+            raise NativeAtomicError(
+                f"native shared-ring atomics are unavailable: {path}"
+            ) from exc
+        library.cephvr_atomic_compare_exchange_64.argtypes = [
             ctypes.POINTER(ctypes.c_longlong),
             ctypes.c_longlong,
             ctypes.c_longlong,
         ]
-        kernel.InterlockedCompareExchange64.restype = ctypes.c_longlong
-        _KERNEL32 = kernel
-    return _KERNEL32
+        library.cephvr_atomic_compare_exchange_64.restype = ctypes.c_longlong
+        _NATIVE = library
+    return _NATIVE
 
 
 def _word(buffer: memoryview, offset: int) -> Any:
@@ -41,7 +48,9 @@ def _word(buffer: memoryview, offset: int) -> Any:
 
 def atomic_load_u64(buffer: memoryview, offset: int) -> int:
     """Read atomically with the full fence supplied by InterlockedCompareExchange64."""
-    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+    value = int(
+        _native().cephvr_atomic_compare_exchange_64(_word(buffer, offset), 0, 0)
+    )
     if value < 0:
         raise NativeAtomicError("native unsigned word exceeds supported signed range")
     return value
@@ -56,7 +65,7 @@ def atomic_compare_exchange_u64(
     if not 0 <= replacement <= 0x7FFFFFFFFFFFFFFF:
         raise NativeAtomicError("replacement exceeds supported nonwrapping range")
     observed = int(
-        _kernel32().InterlockedCompareExchange64(
+        _native().cephvr_atomic_compare_exchange_64(
             _word(buffer, offset), replacement, expected
         )
     )

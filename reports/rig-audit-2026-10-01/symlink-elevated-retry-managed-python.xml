@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="5.155" timestamp="2026-10-01T17:05:06.411280+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.platform.test_windows_native_on_rig" name="test_managed_python_entry_preserves_identity_prefix_and_bootstrap" time="5.034"><failure message="AssertionError: managed interpreter did not publish its probe result; child exited with code 3221225781; stdout=''; stderr=''">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-18/test_managed_python_entry_pres0')
+
+    def test_managed_python_entry_preserves_identity_prefix_and_bootstrap(
+        tmp_path: Path,
+    ) -&gt; None:
+        runtime = resolve_python_executable(Path(sys.executable))
+        job = f"cephvr-python-runtime-{uuid4()}"
+        native = WindowsJobs()
+        native.create_launch_job(job)
+        read, write = create_bootstrap_pipe()
+        read_open = True
+        write_open = True
+        result_path = tmp_path / "runtime-probe.json"
+        release_path = tmp_path / "runtime-probe.release"
+        stdout_path = tmp_path / "runtime-probe.stdout.log"
+        stderr_path = tmp_path / "runtime-probe.stderr.log"
+        stdin_stream = open(os.devnull, "rb", buffering=0)
+        stdout_stream = stdout_path.open("wb", buffering=0)
+        stderr_stream = stderr_path.open("wb", buffering=0)
+        standard_handles = tuple(
+            msvcrt.get_osfhandle(stream.fileno())
+            for stream in (stdin_stream, stdout_stream, stderr_stream)
+        )
+        for handle in standard_handles:
+            os.set_handle_inheritable(handle, True)
+        child = None
+        try:
+            child = native.launch_suspended(
+                str(runtime),
+                module_arguments(
+                    "tests.platform.test_windows_native_on_rig",
+                    ["--managed-runtime-probe", "--bootstrap-handle", str(read)],
+                ),
+                [job],
+                (read, *standard_handles),
+                stdin_handle=standard_handles[0],
+                stdout_handle=standard_handles[1],
+                stderr_handle=standard_handles[2],
+            )
+            close_handle(read)
+            read_open = False
+            write_bootstrap(
+                write,
+                {
+                    "marker": "inherited-bootstrap",
+                    "result": str(result_path),
+                    "release": str(release_path),
+                },
+            )
+            write_open = False
+            native.resume(child)
+            deadline = time.monotonic() + 5.0
+            while not result_path.is_file() and time.monotonic() &lt; deadline:
+                time.sleep(0.025)
+            if not result_path.is_file():
+                running = native.process_running(child.pid, child.creation_time_100ns)
+                if running:
+                    child_state = "still running at probe timeout"
+                else:
+                    exit_code = wintypes.DWORD()
+                    assert native.api.GetExitCodeProcess(
+                        child.process_handle, ctypes.byref(exit_code)
+                    )
+                    child_state = f"exited with code {exit_code.value}"
+&gt;               raise AssertionError(
+                    "managed interpreter did not publish its probe result; "
+                    f"child {child_state}; stdout={stdout_path.read_text(encoding='utf-8', errors='replace')!r}; "
+                    f"stderr={stderr_path.read_text(encoding='utf-8', errors='replace')!r}"
+                )
+E               AssertionError: managed interpreter did not publish its probe result; child exited with code 3221225781; stdout=''; stderr=''
+
+tests\platform\test_windows_native_on_rig.py:316: AssertionError</failure></testcase></testsuite></testsuites>

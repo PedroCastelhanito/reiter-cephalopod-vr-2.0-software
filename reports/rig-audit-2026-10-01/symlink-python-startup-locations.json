@@ -1,0 +1,22 @@
+[
+  {
+    "path": "C:/Users/ReiterU_PC/miniforge3/envs/CephVR/vcruntime140.dll",
+    "exists": true,
+    "sha256": "0205071C36C17F1EFBD70178C852CB7D49985C484202752B8704B7AC6B184E60"
+  },
+  {
+    "path": "C:/Users/ReiterU_PC/miniforge3/envs/CephVR/zlib.dll",
+    "exists": true,
+    "sha256": "85C711C83F96BED93184BEDE15BE6B5A3E5444DF09DFFFEF00564107189DC722"
+  },
+  {
+    "path": "C:/Users/ReiterU_PC/miniforge3/envs/CephVR/Library/bin/zlib.dll",
+    "exists": true,
+    "sha256": "85C711C83F96BED93184BEDE15BE6B5A3E5444DF09DFFFEF00564107189DC722"
+  },
+  {
+    "path": "C:/Windows/System32/vcruntime140.dll",
+    "exists": true,
+    "sha256": "D5E4D9A3E835FA679450145D6A7D94E36573A509317111904D9B3712C30D9066"
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "administrator": true,
+  "command": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m pytest -q -rs --junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-audit-2026-10-01\\symlink-elevated-retry-managed-python.xml tests/platform/test_windows_native_on_rig.py::test_managed_python_entry_preserves_identity_prefix_and_bootstrap",
+  "exit_code": 1,
+  "failure": null,
+  "completed_utc": "2026-10-01T08:05:11.9263082Z"
+}

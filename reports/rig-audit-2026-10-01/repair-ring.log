@@ -1,0 +1,42 @@
+...F.                                                                    [100%]
+================================== FAILURES ===================================
+_________ test_ring_retirement_cannot_be_cleared_by_stale_flag_update _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027079473B50>
+
+    def test_ring_retirement_cannot_be_cleared_by_stale_flag_update(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        ring, _layout = _ring()
+        run_id = uuid4()
+        ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+        injected = False
+    
+        def retire_between_read_and_cas(
+            buffer: memoryview, offset: int, expected: int, replacement: int
+        ) -> None:
+            nonlocal injected
+            if offset == 16 and not injected:
+                injected = True
+                retired = expected | ((FLAG_INPUT_SEALED | FLAG_RETIRED) << 32)
+                assert atomics.atomic_compare_exchange_u64(
+                    buffer, offset, expected, retired
+                )
+            _store_expected(buffer, offset, expected, replacement)
+    
+        monkeypatch.setattr(
+            "cephvr.acquisition.buffers.ring._store_expected", retire_between_read_and_cas
+        )
+        with pytest.raises(RingError, match="changed unexpectedly"):
+            ring.open_admission(run_id)
+        assert ring.retired
+        assert ring.input_sealed
+>       with pytest.raises(RingError, match="irreversible"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'irreversible'
+E         Actual message: 'run identity is stale or ring has been retired'
+
+tests\acquisition\test_worker_ring_regressions.py:233: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_worker_ring_regressions.py::test_ring_retirement_cannot_be_cleared_by_stale_flag_update
+1 failed, 4 passed in 0.11s

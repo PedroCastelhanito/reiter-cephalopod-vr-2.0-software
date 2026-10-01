@@ -1,0 +1,5 @@
+Removed inspected repair/test artifacts: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.repair-tmp
+Removed inspected repair/test artifacts: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp-luna-c
+Removed inspected empty directory: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.codex-pytest-tmp
+Removed inspected D storage fixture artifacts: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.tmp-luna-d (23 files, 1099 bytes; matched this repair phase)
+Removed verified final metadata package artifacts after hashes: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.repair-package-final

@@ -1,7 +1,7 @@
 # Acquisition status
 
 Status: host implementation, source review and lightweight local verification are
-recorded below (2026-09-30). Native Windows, device and full-workload acceptance remain
+recorded below (2026-10-01). Bounded native checks pass; device and full-workload acceptance remain
 pending on the rig. This is not experiment-readiness approval.
 
 [ARCH-001](../architecture.md#arch-001) selects this stage;
@@ -11,6 +11,19 @@ pending on the rig. This is not experiment-readiness approval.
 [controller/supervisor review](runtime.md) remains separate.
 
 ## Ownership and review
+
+Final Windows repair snapshot (2026-10-01, baseline HEAD
+`826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): acquisition
+171 passed. All owning ring cases pass with a documented MSVC intrinsic helper
+under SYS-003, including native cross-process atomic visibility. Prepared Python
+launches preserve exact executing identity; Windows recording paths are tested
+with actual absolute temporary paths. The platform wheel includes both native DLLs.
+Read-only Basler enumeration sees expected serials/models; no capture/settings changed.
+The initial FFmpeg/ffprobe 4.3.2 three-frame 128x128 encode on RTX 2080 Ti failed
+at preset configuration. Encoder item 5 is explicitly owner-deferred and unchanged.
+[Dated evidence](rig-audit-2026-10-01/README.md) retains initial/final outcomes;
+camera, input-format and full-load acceptance remain in the
+[single rig worklist](rig-verification.md).
 
 Review covered coordinator/camera/recording/serial ownership, focused peer interfaces,
 authenticated bounded admission and original deadlines. Integration closed private

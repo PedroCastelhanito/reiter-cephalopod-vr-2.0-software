@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\bootstrap.py", line 6, in <module>
+    import ctypes
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py", line 8, in <module>
+    from _ctypes import Union, Structure, Array
+ImportError: DLL load failed while importing _ctypes: The specified module could not be found.
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py", line 1058, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py", line 1044, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.repair-tmp\\identity.json'

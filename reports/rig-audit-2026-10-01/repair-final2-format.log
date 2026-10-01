@@ -1,0 +1,12 @@
+unformatted: File would be reformatted
+   --> tests\controller\test_storage.py:448:20
+    |
+447 |         completion = writer.submit(
+    -             _write(
+    -                 "two", path, "append_jsonl_record", b'{"event_type":"second"}', 1, 2
+    -             )
+448 +             _write("two", path, "append_jsonl_record", b'{"event_type":"second"}', 1, 2)
+449 |         ).result(3)
+    |
+
+1 file would be reformatted, 626 files already formatted

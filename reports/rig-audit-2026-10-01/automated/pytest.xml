@@ -1,0 +1,993 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="21" skipped="6" tests="750" time="9.782" timestamp="2026-10-01T12:00:37.845211+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_adapter_construction_does_not_load_pypylon" time="0.001" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_sdk_version_mismatch_is_explicit_and_does_not_import" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_idle_control_wait_keeps_native_deadline_wake_and_close" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_joint_wait_retains_control_priority_and_rounding[False]" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_joint_wait_retains_control_priority_and_rounding[True]" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_open_uses_exact_assigned_serial_not_enumeration_order" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_trigger_timing_selects_and_verifies_exact_selector" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_missing_trigger_mode_blocks_readiness" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_rgb_pylon_name_and_device_symbol_resolve_same_layout" time="0.000" /><testcase classname="tests.acquisition.test_camera_adapter_contracts" name="test_native_color_result_uses_pylon_registry_not_device_symbol_registry" time="0.000" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_cleanup_reports_never_dispatched_output_as_explicit_absence" time="0.000" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_cleanup_cannot_invent_never_started_for_dispatched_output" time="0.000" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_cleanup_preserves_exact_worker_output_result" time="0.000" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_cleanup_reports_keep_terminal_command_retention_after_session_expiry" time="0.000" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_cleanup_attempts_both_recipients_even_if_first_delivery_fails" time="0.001" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_retained_cleanup_query_survives_original_session_expiry" time="0.001" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_current_local_cleanup_proof_outlives_replay_payload_only" time="0.001" /><testcase classname="tests.acquisition.test_cleanup_aggregation" name="test_sessionless_cleanup_attempts_serial_off_while_worker_is_stalled" time="0.001" /><testcase classname="tests.acquisition.test_configuration" name="test_defaults_preserve_unset_hardware_values" time="0.025" /><testcase classname="tests.acquisition.test_configuration" name="test_operator_trigger_source_is_loaded_only_when_present" time="0.599" /><testcase classname="tests.acquisition.test_configuration" name="test_pfs_source_filename_is_provenance_only_and_is_not_opened" time="0.136" /><testcase classname="tests.acquisition.test_configuration" name="test_file_policies_resolve_exact_units_and_preserve_deferred_margin" time="0.014" /><testcase classname="tests.acquisition.test_configuration" name="test_validation_rejects_duplicate_active_pin_and_empty_encoder_list" time="0.000" /><testcase classname="tests.acquisition.test_configuration" name="test_missing_required_device_ids_do_not_report_a_duplicate" time="0.000" /><testcase classname="tests.acquisition.test_configuration" name="test_controller_accepts_acquisition_validator_identity" time="0.000" /><testcase classname="tests.acquisition.test_configuration" name="test_loader_rejects_unknown_camera_roles_and_missing_required_limits" time="0.275" /><testcase classname="tests.acquisition.test_configuration" name="test_file_policy_rejects_invalid_watchdog_relationship_and_resolution" time="0.158" /><testcase classname="tests.acquisition.test_configuration" name="test_controller_shaped_confirmation_uses_original_command_as_parent" time="0.001" /><testcase classname="tests.acquisition.test_configuration" name="test_confirmation_must_match_every_reported_camera_and_pulse_readback" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_trial_heartbeat_sets_only_trial_lifecycle_oneof" time="0.001" /><testcase classname="tests.acquisition.test_coordinator" name="test_launch_intent_survives_endpoint_registration_timeout" time="0.001" /><testcase classname="tests.acquisition.test_coordinator" name="test_acquisition_bootstrap_retains_exact_startup_policy_and_identities" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[0-setup]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[0-setup_cancel]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[0-trial_ready]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[0-trial_finished]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[0-supervisor_registration]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[-1-setup]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[-1-setup_cancel]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[-1-trial_ready]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[-1-trial_finished]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_bootstrap_rejects_missing_or_nonpositive_wait[-1-supervisor_registration]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_acquisition_bootstrap_rejects_invalid_protected_values[control_policies-not-base64]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_acquisition_bootstrap_rejects_invalid_protected_values[max_message_bytes-0]" time="0.000" /><testcase classname="tests.acquisition.test_coordinator" name="test_acquisition_bootstrap_rejects_invalid_protected_values[endpoint_port-65536]" time="0.000" /><testcase classname="tests.acquisition.test_frame_diagnostic_tracker" name="test_frame_counter_gap_is_only_classified_for_frame_semantics" time="0.000" /><testcase classname="tests.acquisition.test_frame_diagnostic_tracker" name="test_native_counter_reset_rebaselines_without_synthesizing_missing_frames" time="0.000" /><testcase classname="tests.acquisition.test_frame_diagnostic_tracker" name="test_only_documented_counter_wrap_is_exempt_from_discontinuity" time="0.000" /><testcase classname="tests.acquisition.test_manual_devices" name="test_device_status_retry_replays_original_report_and_is_queryable" time="0.001" /><testcase classname="tests.acquisition.test_manual_devices" name="test_manual_configuration_requires_local_cleanup_proof_not_delivery_receipt" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_second_external_preview_pauses_existing_role_before_configuration" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_pause_with_attached_viewer_waits_for_exact_release" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_release_receipt_lifetime_starts_at_release_not_attach_completion" time="0.000" /><testcase classname="tests.acquisition.test_microcontroller_owner" name="test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns" time="0.033" /><testcase classname="tests.acquisition.test_microcontroller_owner" name="test_waiting_owner_calls_cannot_overwrite_or_steal_the_exclusive_gate" time="0.031" /><testcase classname="tests.acquisition.test_microcontroller_owner" name="test_reconnect_explicitly_stops_running_outputs_and_reads_back_status" time="0.001" /><testcase classname="tests.acquisition.test_microcontroller_owner" name="test_reserved_off_blocks_routine_status_and_dispatches_with_original_deadline" time="0.001" /><testcase classname="tests.acquisition.test_microcontroller_protocol" name="test_v1_reply_accepts_multiple_spaces_and_caps_pin_list" time="0.000" /><testcase classname="tests.acquisition.test_microcontroller_protocol" name="test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies" time="0.001" /><testcase classname="tests.acquisition.test_microcontroller_protocol" name="test_dispatched_request_without_ack_is_timed_out_with_dispatch_evidence" time="0.000" /><testcase classname="tests.acquisition.test_microcontroller_protocol" name="test_partial_write_fails_after_dispatch_without_acknowledgement" time="0.000" /><testcase classname="tests.acquisition.test_microcontroller_protocol" name="test_cancellation_waits_for_blocked_call_return_and_is_not_off_evidence" time="0.000" /><testcase classname="tests.acquisition.test_microcontroller_protocol" name="test_malformed_matched_ack_has_no_ack_timestamp_or_fabricated_state" time="0.000" /><testcase classname="tests.acquisition.test_microcontroller_protocol" name="test_watchdog_stopped_off_retains_stop_state_and_matched_ack" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_applied_command_updates_only_state_on_same_mcu_observation[True]" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_applied_command_updates_only_state_on_same_mcu_observation[False]" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_unmatched_connection_or_non_applied_outcome_is_not_adopted" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_required_pulse_evidence_needs_applied_on_and_off[rejected]" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_required_pulse_evidence_needs_applied_on_and_off[timed_out]" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_required_pulse_evidence_needs_applied_on_and_off[failed]" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_required_pulse_evidence_requires_both_acknowledgements" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_off_ack_does_not_forge_a_full_status_timestamp" time="0.001" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it" time="0.000" /><testcase classname="tests.acquisition.test_pulse_evidence" name="test_unspecified_terminal_pulse_does_not_mutate_retained_evidence" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_probe_uses_setup_identity_and_reports_exact_local_release" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_nvenc_rate_control_mask_uses_enum_values" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_mp4_muxer_help_reads_only_flag_constants_under_movflags" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_encoder_help_retains_declaration_line_bounds_and_video_aliases" time="0.001" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_selected_encoder_does_not_inherit_other_encoders_private_options" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_output_beyond_device_dimensions_is_rejected[size0]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_output_beyond_device_dimensions_is_rejected[size1]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_device_limits_apply_after_explicit_filtering[filter_size0]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_device_limits_apply_after_explicit_filtering[filter_size1]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_filter_cannot_enlarge_output_beyond_device_limit" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_missing_or_invalid_device_dimension_evidence_blocks_preparation[None]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_missing_or_invalid_device_dimension_evidence_blocks_preparation[limits1]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_missing_or_invalid_device_dimension_evidence_blocks_preparation[limits2]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_invalid_options_raise_the_encoding_boundary_error[invalid]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_invalid_options_raise_the_encoding_boundary_error[fraction]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_invalid_options_raise_the_encoding_boundary_error[huge_integer]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_invalid_options_raise_the_encoding_boundary_error[infinite_bitrate]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_invalid_options_raise_the_encoding_boundary_error[alias_duplicate]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_invalid_options_raise_the_encoding_boundary_error[metadata_duplicate]" time="0.000" /><testcase classname="tests.acquisition.test_recording_capabilities" name="test_invalid_options_raise_the_encoding_boundary_error[reserved_metadata]" time="0.000" /><testcase classname="tests.acquisition.test_recording_cleanup" name="test_pre_t_cancel_preserves_unowned_replacement_and_closes_video_handle" time="0.005" /><testcase classname="tests.acquisition.test_recording_cleanup" name="test_terminal_write_is_fenced_and_late_video_handle_is_closed" time="0.000" /><testcase classname="tests.acquisition.test_recording_cleanup" name="test_progress_watchdog_bounds_blocked_input_while_records_are_pending" time="0.000" /><testcase classname="tests.acquisition.test_recording_cleanup" name="test_overload_dropped_frame_is_still_logged_without_encoder_write" time="0.000" /><testcase classname="tests.acquisition.test_recording_cleanup" name="test_all_dropped_run_uses_only_explicit_never_created_predicate" time="0.001" /><testcase classname="tests.acquisition.test_recording_cleanup" name="test_exact_path_replacement_never_proves_encoder_output_closure" time="0.001" /><testcase classname="tests.acquisition.test_recording_cleanup" name="test_recording_fault_retains_real_outputs_and_original_cleanup_deadline" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimensions_resolve_oh_dependency_without_substituting_input_height" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimension_parser_rejects_cycles_and_non_ffmpeg_expressions[oh-ow]" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimension_parser_rejects_cycles_and_non_ffmpeg_expressions[max(1)-ih]" time="0.001" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimension_parser_rejects_cycles_and_non_ffmpeg_expressions[iw//2-ih]" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_shipped_rgb_to_yuv_default_filter_chain_has_explicit_output_matrix" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_shipped_gray_to_yuv_default_filter_chain_needs_no_input_yuv_matrix" time="0.000" /><testcase classname="tests.acquisition.test_recording_negotiation" name="test_accepts_exact_live_input_and_filtered_output_streams" time="0.000" /><testcase classname="tests.acquisition.test_recording_negotiation" name="test_rejects_live_encoder_substitution" time="0.000" /><testcase classname="tests.acquisition.test_recording_negotiation" name="test_incomplete_dimensions_do_not_count_as_negotiation" time="0.000" /><testcase classname="tests.acquisition.test_recording_negotiation" name="test_stream_analysis_may_finish_after_a_later_input_packet" time="0.000" /><testcase classname="tests.acquisition.test_recording_negotiation" name="test_reader_drains_terminal_stream_data_after_idle_timeout" time="0.001" /><testcase classname="tests.acquisition.test_recording_paths" name="test_valid_backend_context_and_exact_scheduled_paths_are_accepted" time="0.000"><failure message="cephvr.acquisition.recording.session_contracts.RecordingFailure: trial prefix must be an authoritative absolute path">def test_valid_backend_context_and_exact_scheduled_paths_are_accepted() -&gt; None:
+        identity = _identity()
+        plans = _reservation(identity)
+        plans.validate("behavioral", identity)
+        prefix = Path("/recordings/trial")
+        schedule = acq.WorkerSchedule(
+            command=acq.WorkerCommand(
+                target=acq.WorkerContext(
+                    camera=camera.CAMERA_ROLE_BEHAVIORAL,
+                    work=control.WorkContext(
+                        trial=control.TrialContext(
+                            session=control.SessionContext(session_id=identity.session_id),
+                            trial_id=identity.trial_id,
+                            trial_number=identity.trial_number,
+                        )
+                    ),
+                )
+            ),
+            start_monotonic_ns=100,
+            end_monotonic_ns=200,
+            trial_file_prefix=str(prefix),
+            outputs=plans.outputs,
+        )
+        for item in schedule.outputs:
+            item.path = f"{prefix}_{item.output_tag}.{item.extension}"
+    
+&gt;       assert resolve_recording_paths(plans, "behavioral", identity, schedule) == (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            Path("/recordings/trial_behavioral_cam.mp4"),
+            Path("/recordings/trial_behavioral_cam_frames.jsonl"),
+        )
+
+tests\acquisition\test_recording_paths.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+paths = RecordingPaths(outputs=(backend {
+  backend_name: "acquisition"
+  backend_generation: "5f244f67-b2e4-4e2d-b5cf-d8c2aa9...
+}
+output_tag: "behavioral_cam_frames"
+extension: "jsonl"
+), backend_generation='5f244f67-b2e4-4e2d-b5cf-d8c2aa9e9c48')
+role = 'behavioral'
+identity = RecordingIdentity(session_id='8443a43f-f102-4bd0-bc66-23cfc3003c89', trial_id='b0487de4-c8e7-47af-abf3-514327594ada', ...emantics: "raw"
+counter_width_bits: 0
+counter_wrap_semantics: "unknown"
+counter_unavailable_reason: "SDK unavailable"
+)
+schedule = command {
+  target {
+    work {
+      trial {
+        session {
+          session_id: "8443a43f-f102-4bd0-bc66-23cfc30...7de4-c8e7-47af-abf3-514327594ada"
+    trial_number: 1
+  }
+  output_tag: "behavioral_cam_frames"
+  extension: "jsonl"
+}
+
+
+    def resolve_recording_paths(
+        paths: RecordingPaths,
+        role: str,
+        identity: RecordingIdentity,
+        schedule: acq.WorkerSchedule,
+    ) -&gt; tuple[Path, Path]:
+        if not schedule.HasField("command") or not schedule.command.HasField("target"):
+            raise RecordingFailure("ScheduleTrial lacks exact worker target context")
+        target = schedule.command.target
+        role_name = (
+            camera.CameraRole.Name(target.camera).lower().removeprefix("camera_role_")
+        )
+        if role_name != role:
+            raise RecordingFailure(
+                "scheduled camera role differs from prepared recording owner"
+            )
+        if target.work.WhichOneof("work") != "trial":
+            raise RecordingFailure("ScheduleTrial lacks exact trial work context")
+        work_trial = target.work.trial
+        if (
+            work_trial.trial_id != identity.trial_id
+            or work_trial.trial_number != identity.trial_number
+            or work_trial.session.session_id != identity.session_id
+        ):
+            raise RecordingFailure(
+                "ScheduleTrial work differs from prepared recording identity"
+            )
+        if not schedule.trial_file_prefix:
+            raise RecordingFailure("scheduled trial prefix is missing")
+        prefix = Path(schedule.trial_file_prefix)
+        if not prefix.is_absolute():
+&gt;           raise RecordingFailure("trial prefix must be an authoritative absolute path")
+E           cephvr.acquisition.recording.session_contracts.RecordingFailure: trial prefix must be an authoritative absolute path
+
+src\cephvr\acquisition\recording\paths.py:93: RecordingFailure</failure></testcase><testcase classname="tests.acquisition.test_recording_paths" name="test_non_acquisition_backend_context_is_rejected" time="0.000" /><testcase classname="tests.acquisition.test_recording_paths" name="test_stale_backend_generation_is_rejected" time="0.000" /><testcase classname="tests.acquisition.test_recording_payload" name="test_recording_payload_resolves_tools_depth_and_queue" time="0.002" /><testcase classname="tests.acquisition.test_recording_payload" name="test_recording_payload_rejects_depth_identity_and_policy_ambiguity" time="0.002" /><testcase classname="tests.acquisition.test_recording_payload" name="test_disabled_or_save_off_camera_needs_no_encoder_discovery" time="0.000" /><testcase classname="tests.acquisition.test_session_preparation" name="test_session_handoff_closes_manual_serial_owner_without_camera_workers" time="0.001" /><testcase classname="tests.acquisition.test_session_preparation" name="test_setup_accepts_zero_revision_when_tracking_is_inactive" time="0.000" /><testcase classname="tests.acquisition.test_session_preparation" name="test_setup_requires_tracking_camera_only_for_enabled_tracking_backend" time="0.000" /><testcase classname="tests.acquisition.test_session_preparation" name="test_tracking_camera_alone_does_not_imply_a_tracking_consumer" time="0.000" /><testcase classname="tests.acquisition.test_session_preparation" name="test_setup_retains_exact_acquisition_output_reservations" time="0.000" /><testcase classname="tests.acquisition.test_session_preparation" name="test_setup_rejects_incomplete_output_closure_before_ready" time="0.000" /><testcase classname="tests.acquisition.test_transport_admission" name="test_retry_reuses_one_admission_and_original_deadline" time="0.001" /><testcase classname="tests.acquisition.test_transport_admission" name="test_rpc_method_is_part_of_canonical_command_identity" time="0.001" /><testcase classname="tests.acquisition.test_transport_admission" name="test_concurrent_replay_gets_short_admission_for_one_owned_operation" time="0.001" /><testcase classname="tests.acquisition.test_transport_admission" name="test_late_executor_failure_preserves_admission_and_retains_terminal_operation" time="0.001" /><testcase classname="tests.acquisition.test_transport_admission" name="test_expired_new_command_is_rejected_but_expired_retry_replays_receipt" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_safety_fanout_survives_off_failure_and_missing_worker[False]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_safety_fanout_survives_off_failure_and_missing_worker[True]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_finished_cutoff_uses_retained_early_stop_time" time="0.000" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_terminal_pulse_acceptance_requires_exact_boundary_and_ack" time="0.000" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_no_frames_video_exception_requires_closed_exact_frame_log" time="0.000" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_saved_started_requires_recording_activity_until_exact_scope_is_fenced" time="0.000" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[rejection-started]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[rejection-stopped]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[rejection-finished]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[transport-started]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[transport-stopped]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[transport-finished]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[exhausted-started]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[exhausted-stopped]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_trial_delivery_retains_evidence_and_original_retry_budget[exhausted-finished]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_finished_delivery_rejects_stale_scope_before_output_retention[session]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_finished_delivery_rejects_stale_scope_before_output_retention[trial]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_finished_delivery_rejects_stale_scope_before_output_retention[report]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_finished_delivery_rejects_stale_scope_before_output_retention[no_session]" time="0.001" /><testcase classname="tests.acquisition.test_trial_lifecycle" name="test_finished_aggregation_delivers_current_trial_once" time="0.001" /><testcase classname="tests.acquisition.test_worker_admission" name="test_setup_catalogue_retains_exact_worker_output_fault_closure" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_setup_catalogue_rejects_an_incomplete_transitive_recording_closure" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_stop_pulse_and_cleanup_evidence_fit_safety_reserve_after_normal_saturation" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_ordinary_coordinator_evidence_cannot_consume_reserved_cleanup_capacity" time="0.000" /><testcase classname="tests.acquisition.test_worker_admission" name="test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work" time="0.001" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_queue_drops_oldest_pixels_and_preserves_ordered_rows" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_pending_record_capacity_fences_instead_of_losing_accounting" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_warning_view_is_cumulative_and_unavailability_counts_transitions" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_warning_text_is_bounded_without_splitting_utf8" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_worker_control_limits_follow_shared_transport_ceiling" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_priority_lifecycle_evidence_uses_the_reserved_safety_budget" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_continuous_invalid_result_stream_cannot_suppress_silence_deadline" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_early_cutoff_retrieval_is_excluded_from_trial_accounting" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_cancel_after_release_before_t_prevents_later_camera_start" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_capture_stop_retains_first_cutoff_and_original_deadline" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_consecutive_non_saving_trials_reset_shared_trial_state" time="0.000" /><testcase classname="tests.acquisition.test_worker_foundations" name="test_health_ages_owner_published_capture_snapshot_without_runtime_reads" time="0.000" /><testcase classname="tests.acquisition.test_worker_ring_regressions" name="test_ring_publish_read_lap_reset_and_retirement_are_run_bound" time="0.000"><failure message="AttributeError: function 'InterlockedCompareExchange64' not found">def test_ring_publish_read_lap_reset_and_retirement_are_run_bound() -&gt; None:
+        ring, _layout = _ring()
+        first_run, next_run = uuid4(), uuid4()
+&gt;       ring.reset_quiescent(first_run, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() &amp; FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) &gt;&gt; 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5ac1d3790&gt;
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+&gt;       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError</failure></testcase><testcase classname="tests.acquisition.test_worker_ring_regressions" name="test_ring_copy_recheck_reports_torn_when_slot_generation_changes" time="0.000"><failure message="AttributeError: function 'InterlockedCompareExchange64' not found">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC7E9FD0&gt;
+
+    def test_ring_copy_recheck_reports_torn_when_slot_generation_changes(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -&gt; None:
+        ring, _layout = _ring()
+        run_id = uuid4()
+&gt;       ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() &amp; FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) &gt;&gt; 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5dc7eb050&gt;
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+&gt;       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError</failure></testcase><testcase classname="tests.acquisition.test_worker_ring_regressions" name="test_ring_read_does_not_accept_copy_if_run_changes_during_copy" time="0.000"><failure message="AttributeError: function 'InterlockedCompareExchange64' not found">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC413890&gt;
+
+    def test_ring_read_does_not_accept_copy_if_run_changes_during_copy(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -&gt; None:
+        ring, _layout = _ring()
+        run_id, replacement_run = uuid4(), uuid4()
+&gt;       ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:181: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() &amp; FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) &gt;&gt; 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5dc410b10&gt;
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+&gt;       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError</failure></testcase><testcase classname="tests.acquisition.test_worker_ring_regressions" name="test_ring_retirement_cannot_be_cleared_by_stale_flag_update" time="0.000"><failure message="AttributeError: function 'InterlockedCompareExchange64' not found">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC62EE10&gt;
+
+    def test_ring_retirement_cannot_be_cleared_by_stale_flag_update(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -&gt; None:
+        ring, _layout = _ring()
+        run_id = uuid4()
+&gt;       ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() &amp; FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) &gt;&gt; 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5dc62c110&gt;
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+&gt;       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError</failure></testcase><testcase classname="tests.acquisition.test_worker_ring_regressions" name="test_event_creation_failure_retains_unclosed_mapping_ownership" time="0.000" /><testcase classname="tests.client.test_controller_rpc" name="test_forged_credentials_are_rejected" time="0.042" /><testcase classname="tests.client.test_controller_rpc" name="test_control_takeover_and_real_missing_backend_rejection" time="0.066" /><testcase classname="tests.client.test_state_views" name="test_stream_must_receive_matching_configuration" time="0.000" /><testcase classname="tests.client.test_state_views" name="test_older_view_cannot_roll_back_and_generation_change_requires_new_stream" time="0.000" /><testcase classname="tests.client.test_state_views" name="test_views_do_not_alias_transport_messages" time="0.000" /><testcase classname="tests.client.test_state_views" name="test_confirmed_command_survives_subsequent_stream_failure" time="0.003" /><testcase classname="tests.controller.test_activity_evidence" name="test_visual_stimulus_started_requires_returned_activity_for_every_prepared_output" time="0.001" /><testcase classname="tests.controller.test_activity_evidence" name="test_camera_started_cannot_use_one_worker_twice_or_an_unregistered_generation" time="0.000" /><testcase classname="tests.controller.test_activity_evidence" name="test_tracking_baseline_only_evaluation_with_frame_zero_is_real_activity" time="0.000" /><testcase classname="tests.controller.test_activity_evidence" name="test_interruption_retains_actual_local_cutoff_before_global_issuance" time="0.000" /><testcase classname="tests.controller.test_activity_evidence" name="test_normal_stop_requires_scheduled_cutoff_and_visual_stimulus_idle" time="0.000" /><testcase classname="tests.controller.test_authority" name="test_descendants_are_retained_and_exited_before_gui_group" time="0.001" /><testcase classname="tests.controller.test_authority" name="test_unknown_membership_never_becomes_verified_absence_or_unbounded_wait" time="0.001" /><testcase classname="tests.controller.test_authority" name="test_bootstrap_job_inventory_is_exact_and_never_accepts_outer_job" time="0.000" /><testcase classname="tests.controller.test_camera_configuration" name="test_exact_camera_status_after_deadline_is_retained_and_adopted_if_newer" time="0.002" /><testcase classname="tests.controller.test_camera_configuration" name="test_exact_duplicate_resolution_after_adoption_is_accepted" time="0.002" /><testcase classname="tests.controller.test_camera_configuration" name="test_manual_readback_rejection_leaves_configuration_untouched" time="0.002" /><testcase classname="tests.controller.test_camera_configuration" name="test_manual_readback_acceptance_commits_and_bumps_revision" time="0.003" /><testcase classname="tests.controller.test_camera_configuration" name="test_setup_rejected_while_camera_preview_or_operation_open[preview]" time="0.002" /><testcase classname="tests.controller.test_camera_configuration" name="test_setup_rejected_while_camera_preview_or_operation_open[operation]" time="0.002" /><testcase classname="tests.controller.test_camera_configuration" name="test_setup_not_blocked_by_camera_guard_when_closed" time="0.003" /><testcase classname="tests.controller.test_camera_configuration" name="test_camera_setting_edit_rejected_while_preview_open" time="0.002" /><testcase classname="tests.controller.test_camera_configuration" name="test_rejected_readback_confirmation_keeps_prior_configuration" time="0.003" /><testcase classname="tests.controller.test_camera_configuration" name="test_accepted_readback_confirmation_commits_and_bumps_revision" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[False-False]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[False-True]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[True-False]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[True-True]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_with_retained_terminal_but_no_confirmation_frees_slot" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_without_terminal_adopts_retained_result" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_without_result_frees_unconfirmed_with_warning" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_first_exact_report_for_slot_freed_operation_is_retained" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_late_terminal_report_never_replaces_a_newer_current_view" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_late_exact_stop_success_confirms_owner_release" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_shared_release_predicates_require_a_closed_device" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_camera_policy_must_be_unique" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_loss_retention_uses_the_safety_reserve" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_cleanup_failure_retries_with_warning_and_no_interruption" time="0.073" /><testcase classname="tests.controller.test_camera_evidence" name="test_stopped_preview_is_not_released_while_camera_remains_open" time="0.000" /><testcase classname="tests.controller.test_command_admission" name="test_rejected_abort_then_accepted_abort_same_session" time="0.001" /><testcase classname="tests.controller.test_command_admission" name="test_rejected_stop_after_trial_then_start_session_accepted" time="0.001" /><testcase classname="tests.controller.test_command_admission" name="test_same_id_retry_returns_retained_rejection_and_prunes_later" time="0.001" /><testcase classname="tests.controller.test_command_admission" name="test_failed_execution_does_not_finalize_session_scope" time="0.001" /><testcase classname="tests.controller.test_command_admission" name="test_missing_expected_work_rejected_for_work_commands" time="0.000" /><testcase classname="tests.controller.test_command_admission" name="test_matching_session_and_trial_accepted" time="0.000" /><testcase classname="tests.controller.test_command_admission" name="test_stale_trial_or_wrong_session_rejected_for_ordinary" time="0.000" /><testcase classname="tests.controller.test_command_admission" name="test_safety_commands_accept_stale_trial_of_same_session_only" time="0.000" /><testcase classname="tests.controller.test_command_admission" name="test_no_attempt_needs_no_expected_work" time="0.000" /><testcase classname="tests.controller.test_command_admission" name="test_cancelled_caller_does_not_cancel_owned_command_or_duplicate_it" time="0.001" /><testcase classname="tests.controller.test_command_admission" name="test_interruption_precedes_queued_report_and_keeps_observed_time" time="0.001" /><testcase classname="tests.controller.test_command_admission" name="test_safety_command_has_bounded_reserved_admission_when_ordinary_ledger_is_full" time="0.001" /><testcase classname="tests.controller.test_configuration" name="test_loader_binds_exact_file_timing_and_budget" time="0.036" /><testcase classname="tests.controller.test_configuration" name="test_loader_preserves_explicit_saved_false" time="0.037" /><testcase classname="tests.controller.test_configuration" name="test_loader_preserves_explicit_acquisition_false_and_empty_arguments" time="0.038" /><testcase classname="tests.controller.test_configuration" name="test_loader_rejects_removed_key_and_policy_mismatch" time="0.022" /><testcase classname="tests.controller.test_configuration" name="test_enabled_backend_without_pure_validator_is_unavailable" time="0.000" /><testcase classname="tests.controller.test_configuration" name="test_loader_rejects_fractional_nanosecond_duration" time="0.014" /><testcase classname="tests.controller.test_configuration" name="test_loader_rejects_unimplemented_fixed_policy[contracts/policy/experiment_policy.toml-automatic_adapter_fallback = false-automatic_adapter_fallback = true]" time="0.013" /><testcase classname="tests.controller.test_configuration" name="test_loader_rejects_unimplemented_fixed_policy[contracts/policy/experiment_policy.toml-continuable_failure = &quot;operator_continue_or_abort&quot;-continuable_failure = &quot;automatic_continue&quot;]" time="0.013" /><testcase classname="tests.controller.test_configuration" name="test_loader_rejects_unimplemented_fixed_policy[contracts/policy/supervisor_policy.toml-application_job_kill_on_close = true-application_job_kill_on_close = false]" time="0.014" /><testcase classname="tests.controller.test_configuration" name="test_corrupt_saved_history_kept_and_reported_without_fabricating_mode" time="0.039" /><testcase classname="tests.controller.test_configuration" name="test_saved_history_bound_uses_configured_message_limit" time="0.038" /><testcase classname="tests.controller.test_configuration" name="test_unknown_empty_toml_table_is_rejected" time="0.013" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_freezes_edited_recording_root_into_reservation_and_session_config" time="0.012" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_disk_check_uses_frozen_root" time="0.011" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[unset]" time="0.003"><failure message="OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in0\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in0\\link'">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC8B1C90&gt;
+kind = 'unset'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -&gt; None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+&gt;       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in0/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in0/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+&gt;       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in0\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in0\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError</failure></testcase><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[blank]" time="0.003"><failure message="OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in1\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in1\\link'">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC7F8AD0&gt;
+kind = 'blank'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -&gt; None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+&gt;       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in1/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in1/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+&gt;       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in1\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in1\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError</failure></testcase><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[relative]" time="0.002"><failure message="OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in2\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in2\\link'">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in2')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC650D50&gt;
+kind = 'relative'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -&gt; None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+&gt;       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in2/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in2/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+&gt;       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in2\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in2\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError</failure></testcase><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[missing]" time="0.003"><failure message="OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in3\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in3\\link'">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in3')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC8B0D50&gt;
+kind = 'missing'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -&gt; None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+&gt;       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in3/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in3/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+&gt;       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in3\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in3\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError</failure></testcase><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_rejects_unset_or_invalid_recording_root[symlink]" time="0.003"><failure message="OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in4\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in4\\link'">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in4')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC52ADD0&gt;
+kind = 'symlink'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -&gt; None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+&gt;       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in4/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in4/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+&gt;       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in4\\real' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in4\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError</failure></testcase><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_setup_or_ready_commits_and_cancels_setup[2]" time="0.004" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_setup_or_ready_commits_and_cancels_setup[3]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_start_is_rejected_unchanged[4]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_racing_start_is_rejected_unchanged[5]" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_commit_in_configuration_phase_just_commits" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_setup_request_uses_prepared_backend_settings_not_live" time="0.000" /><testcase classname="tests.controller.test_configuration_transactions" name="test_wait_evidence_accepts_satisfied_predicate_past_wall_deadline" time="0.002" /><testcase classname="tests.controller.test_configuration_transactions" name="test_wait_evidence_still_times_out_when_evidence_missing" time="0.003" /><testcase classname="tests.controller.test_configuration_transactions" name="test_timed_out_save_cannot_overwrite_a_newer_save" time="0.232" /><testcase classname="tests.controller.test_configuration_transactions" name="test_concurrent_history_saves_do_not_overlap" time="0.067" /><testcase classname="tests.controller.test_control_leases" name="test_watch_loss_releases_control_and_keeps_accepted_work[1]" time="0.001" /><testcase classname="tests.controller.test_control_leases" name="test_watch_loss_releases_control_and_keeps_accepted_work[5]" time="0.001" /><testcase classname="tests.controller.test_control_leases" name="test_takeover_and_release_invalidate_old_generation" time="0.001" /><testcase classname="tests.controller.test_device_admission" name="test_camera_admission_failure_keeps_slot_until_deadline" time="0.001" /><testcase classname="tests.controller.test_device_admission" name="test_display_capacity_race_leaves_no_display_state_and_warns" time="0.002" /><testcase classname="tests.controller.test_device_admission" name="test_display_capacity_early_uses_ordinary_rule_and_warns" time="0.001" /><testcase classname="tests.controller.test_device_admission" name="test_display_initialization_still_dispatches_with_capacity" time="0.002" /><testcase classname="tests.controller.test_entrypoint" name="test_controller_module_enters_cli_without_starting_devices" time="0.223" /><testcase classname="tests.controller.test_handoffs" name="test_handoff_is_acyclic_and_requires_exact_attachment_proof" time="0.000" /><testcase classname="tests.controller.test_handoffs" name="test_changed_retry_replacement_and_retirement_cannot_restore_setup" time="0.000" /><testcase classname="tests.controller.test_handoffs" name="test_warning_retries_preserve_absolute_counts_and_complete_scope" time="0.000" /><testcase classname="tests.controller.test_handoffs" name="test_preview_transfer_is_private_and_retired_attachment_only_releases" time="0.000" /><testcase classname="tests.controller.test_handoffs" name="test_camera_readback_is_atomic_and_preserves_requested_pulse_frequency" time="0.000" /><testcase classname="tests.controller.test_incident_scope" name="test_confirmed_full_nonessential_loss_skips_only_its_backend" time="0.002" /><testcase classname="tests.controller.test_incident_scope" name="test_pending_incident_preserves_next_valid_trial_until_original_deadline" time="0.002" /><testcase classname="tests.controller.test_incident_scope" name="test_reconfirmation_replaces_incident_in_scope_and_plans" time="0.002" /><testcase classname="tests.controller.test_incident_scope" name="test_confirmed_incident_is_not_reconfirmed[True]" time="0.003" /><testcase classname="tests.controller.test_incident_scope" name="test_confirmed_incident_is_not_reconfirmed[False]" time="0.004" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_interrupt_during_finalize_joins_the_one_task" time="0.021" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_shutdown_after_ended_completes_without_relabel[1]" time="0.009" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_shutdown_after_ended_completes_without_relabel[3]" time="0.010" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_failed_trial_metadata_still_seals_before_backend_cleanup" time="0.010" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_abort_during_starting_with_metadata_keeps_files_and_unblocks_setup" time="0.011" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_unactivated_attempt_without_files_keeps_plain_cancel" time="0.010" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_cancel_finishing_earlier_still_completes_a_later_shutdown" time="0.010" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_start_rejected_on_revision_mismatch_or_pending_cancel" time="0.009" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_interrupted_trial_without_accepted_started_is_closed" time="0.020" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_interruption_before_release_creates_no_trial" time="0.019" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_uncertain_trial_finished_is_not_appended_again" time="0.009" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_stop_in_starting_cancels_before_activation" time="0.009" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_stop_in_starting_after_activation_ends_before_first_trial" time="0.075" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_shutdown_interrupts_at_once_and_completes_after_handoff_and_cleanup" time="0.074" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_shutdown_with_rejected_handoff_completes_failed" time="0.020" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_cancel_background_tasks_stops_cleanup_retry_chain" time="0.169" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_interrupt_finalizes_even_when_trial_log_closure_raises" time="0.003" /><testcase classname="tests.controller.test_lifecycle_commands" name="test_owner_cleanup_releases_prepared_preview_like_setup_guard" time="0.002" /><testcase classname="tests.controller.test_lifecycle_reports" name="test_transport_error_is_retried_then_warns_at_deadline" time="0.042" /><testcase classname="tests.controller.test_lifecycle_reports" name="test_transport_error_then_accept_does_not_warn" time="0.015" /><testcase classname="tests.controller.test_lifecycle_reports" name="test_non_retryable_rejection_warns" time="0.002" /><testcase classname="tests.controller.test_lifecycle_reports" name="test_operation_completion_retains_exact_duplicate_without_publishing" time="0.002" /><testcase classname="tests.controller.test_lifecycle_reports" name="test_setup_ready_keeps_original_deadline_and_exact_duplicate_rule" time="0.002" /><testcase classname="tests.controller.test_lifecycle_reports" name="test_trial_ready_requires_exact_trial_and_active_participant" time="0.002" /><testcase classname="tests.controller.test_lifecycle_reports" name="test_late_finished_retains_one_exact_recovery_without_changing_duplicate" time="0.002" /><testcase classname="tests.controller.test_metadata" name="test_session_closure_drains_logs_then_seals_with_remaining_budget[None]" time="0.003" /><testcase classname="tests.controller.test_metadata" name="test_session_closure_drains_logs_then_seals_with_remaining_budget[recovery]" time="0.004" /><testcase classname="tests.controller.test_metadata" name="test_session_closure_drains_logs_then_seals_with_remaining_budget[unconfirmed]" time="0.003" /><testcase classname="tests.controller.test_metadata" name="test_session_closure_drains_logs_then_seals_with_remaining_budget[session_log]" time="0.003" /><testcase classname="tests.controller.test_metadata" name="test_session_closure_drains_logs_then_seals_with_remaining_budget[seal]" time="0.003" /><testcase classname="tests.controller.test_metadata" name="test_expired_session_closure_cancels_recovery_without_claiming_seal" time="0.002" /><testcase classname="tests.controller.test_metadata" name="test_session_config_excludes_dormant_settings_and_pfs_payload" time="0.000" /><testcase classname="tests.controller.test_metadata" name="test_interrupted_trial_logs_unknown_output_without_inventing_actual_end" time="0.002" /><testcase classname="tests.controller.test_metadata" name="test_metadata_projection_coalesces_synced_file_but_retains_failed_write" time="0.002" /><testcase classname="tests.controller.test_metadata" name="test_failed_append_poisons_log_and_old_bytes_never_reappear[write]" time="0.011" /><testcase classname="tests.controller.test_metadata" name="test_failed_append_poisons_log_and_old_bytes_never_reappear[fsync]" time="0.010" /><testcase classname="tests.controller.test_metadata" name="test_first_append_failure_is_poisoned_not_already_owned" time="0.003" /><testcase classname="tests.controller.test_metadata" name="test_partial_os_write_is_looped_until_record_complete" time="0.011" /><testcase classname="tests.controller.test_metadata" name="test_close_unactivated_keeps_files_and_marks_marker_complete" time="0.023" /><testcase classname="tests.controller.test_metadata" name="test_marker_outcome_other_than_not_activated_is_rejected" time="0.011" /><testcase classname="tests.controller.test_metadata" name="test_cancelled_persist_records_unconfirmed_and_reconciles_late_sync" time="0.177" /><testcase classname="tests.controller.test_output_evidence" name="test_exact_empty_video_with_closed_detailed_records_is_satisfied[False-acquisition]" time="0.000" /><testcase classname="tests.controller.test_output_evidence" name="test_exact_empty_video_with_closed_detailed_records_is_satisfied[False-visual_stimulus]" time="0.000" /><testcase classname="tests.controller.test_output_evidence" name="test_exact_empty_video_with_closed_detailed_records_is_satisfied[True-acquisition]" time="0.000" /><testcase classname="tests.controller.test_output_evidence" name="test_exact_empty_video_with_closed_detailed_records_is_satisfied[True-visual_stimulus]" time="0.000" /><testcase classname="tests.controller.test_output_evidence" name="test_video_evidence_rejects_unknown_presence_failure_conflicts_and_missing_pairs[acquisition]" time="0.000" /><testcase classname="tests.controller.test_output_evidence" name="test_video_evidence_rejects_unknown_presence_failure_conflicts_and_missing_pairs[visual_stimulus]" time="0.000" /><testcase classname="tests.controller.test_output_evidence" name="test_exact_identity_and_unavailable_obligations_are_not_silent_omissions" time="0.000" /><testcase classname="tests.controller.test_output_evidence" name="test_video_fields_and_never_created_exception_cannot_leak_to_tracking" time="0.000" /><testcase classname="tests.controller.test_planning" name="test_planner_preserves_visual_stimulus_save_switch_and_reserves_no_path" time="0.000" /><testcase classname="tests.controller.test_planning" name="test_planner_requires_exact_ready_and_resolved_switch" time="0.000" /><testcase classname="tests.controller.test_planning" name="test_schema_requires_actual_writer_definition_for_each_reserved_output" time="0.000" /><testcase classname="tests.controller.test_runtime_retention" name="test_late_camera_completion_reconciles_blocker_without_reviving_success" time="0.003" /><testcase classname="tests.controller.test_runtime_retention" name="test_ready_recovery_queries_frozen_missing_peer_once_without_accepting_ungated_push" time="0.002" /><testcase classname="tests.controller.test_runtime_retention" name="test_finished_recovery_keeps_exact_trial_identity_and_original_cutoff" time="0.002" /><testcase classname="tests.controller.test_safety_regressions" name="test_interrupt_delivery_is_independent_and_keeps_original_deadline[False]" time="0.031" /><testcase classname="tests.controller.test_safety_regressions" name="test_interrupt_delivery_is_independent_and_keeps_original_deadline[True]" time="0.031" /><testcase classname="tests.controller.test_safety_regressions" name="test_ready_arriving_after_original_setup_deadline_cannot_revive_attempt" time="0.003" /><testcase classname="tests.controller.test_safety_regressions" name="test_finished_before_end_or_with_failed_output_cannot_complete_trial" time="0.002" /><testcase classname="tests.controller.test_safety_regressions" name="test_ready_edit_cancels_preparation_without_committing_unvalidated_resources" time="0.003" /><testcase classname="tests.controller.test_safety_regressions" name="test_interruption_during_start_cannot_restore_running" time="0.010" /><testcase classname="tests.controller.test_setup" name="test_setup_reloads_mutable_limits_and_freezes_them_in_prepared_attempt" time="0.003" /><testcase classname="tests.controller.test_setup" name="test_setup_rejects_changed_startup_transport_settings_before_reservation" time="0.003" /><testcase classname="tests.controller.test_setup" name="test_setup_admission_is_blocked_while_manual_loss_cleanup_is_unresolved" time="0.002" /><testcase classname="tests.controller.test_setup" name="test_startup_recovery_cancel_preserves_blocker_then_continue_clears_after_handler" time="0.002" /><testcase classname="tests.controller.test_setup" name="test_reloaded_limits_are_applied_only_on_accepted_setup[2]" time="0.004" /><testcase classname="tests.controller.test_setup" name="test_reloaded_limits_are_applied_only_on_accepted_setup[1]" time="0.003" /><testcase classname="tests.controller.test_setup" name="test_prompt_cancel_choice_completes_setup_operation" time="0.003" /><testcase classname="tests.controller.test_setup" name="test_cancel_setup_during_pending_prompt_completes_setup_operation" time="0.003" /><testcase classname="tests.controller.test_setup" name="test_cancel_setup_during_evidence_wait_completes_setup_operation" time="0.305" /><testcase classname="tests.controller.test_setup" name="test_unclean_cancel_keeps_session_context_for_safety_commands" time="0.003" /><testcase classname="tests.controller.test_setup" name="test_cancelled_setup_leaves_sessionless_current_scope" time="0.017" /><testcase classname="tests.controller.test_setup" name="test_failed_setup_leaves_sessionless_current_scope" time="0.015" /><testcase classname="tests.controller.test_setup" name="test_update_configuration_refreshes_projection_revision" time="0.011" /><testcase classname="tests.controller.test_shutdown_handoff" name="test_shutdown_notifies_launcher_with_original_deadline" time="0.111" /><testcase classname="tests.controller.test_shutdown_handoff" name="test_clean_controller_waits_for_shutdown_handoff_completion" time="0.226" /><testcase classname="tests.controller.test_shutdown_handoff" name="test_failed_launcher_delivery_uses_first_deadline_for_exact_fallback" time="0.225" /><testcase classname="tests.controller.test_startup_recovery" name="test_torn_final_line_keeps_endpoint_and_run" time="0.032" /><testcase classname="tests.controller.test_startup_recovery" name="test_null_details_do_not_break_inspection" time="0.026" /><testcase classname="tests.controller.test_startup_recovery" name="test_stop_for_another_run_does_not_confirm_stop" time="0.050" /><testcase classname="tests.controller.test_startup_recovery" name="test_pointer_to_missing_namespace_is_cleared_with_notice" time="0.021"><failure message="cephvr.controller.metadata.types.StorageError: session quarantine failed; unfinished marker retained">self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC971ED0&gt;
+
+    def cancel(self) -&gt; None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+&gt;               os.replace(self.session_directory, quarantine)
+E               PermissionError: [WinError 5] Access is denied: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_pointer_to_missing_namesp0\\20260929_experiment\\subject-000000' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_pointer_to_missing_namesp0\\20260929_experiment\\.subject-000000.519c8a29-8267-4539-a8c6-e130f0c8cf88.cleanup'
+
+src\cephvr\controller\metadata\reservation.py:376: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_pointer_to_missing_namesp0')
+
+    async def test_pointer_to_missing_namespace_is_cleared_with_notice(
+        tmp_path: Path,
+    ) -&gt; None:
+        store, reservation, pointer = _pointer(tmp_path)
+&gt;       reservation.cancel()
+
+tests\controller\test_startup_recovery.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC971ED0&gt;
+
+    def cancel(self) -&gt; None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+                os.replace(self.session_directory, quarantine)
+            except OSError as exc:
+&gt;               raise StorageError(
+                    "session quarantine failed; unfinished marker retained"
+                ) from exc
+E               cephvr.controller.metadata.types.StorageError: session quarantine failed; unfinished marker retained
+
+src\cephvr\controller\metadata\reservation.py:378: StorageError</failure></testcase><testcase classname="tests.controller.test_startup_recovery" name="test_leftover_quarantine_without_marker_is_removed" time="0.023" /><testcase classname="tests.controller.test_startup_recovery" name="test_quarantine_with_marker_keeps_strict_blocking" time="0.021" /><testcase classname="tests.controller.test_startup_recovery" name="test_pointer_with_not_activated_marker_is_cleared_without_report" time="0.034" /><testcase classname="tests.controller.test_startup_recovery" name="test_settled_recovery_notice_reaches_operator_warnings" time="0.002" /><testcase classname="tests.controller.test_startup_recovery" name="test_wrong_prior_generation_proof_blocks_before_opening_files" time="0.023" /><testcase classname="tests.controller.test_startup_recovery" name="test_intact_log_appends_only_observation_labeled_terminal_events" time="0.040"><failure message="cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_intact_log_appends_only_o0')
+
+    async def test_intact_log_appends_only_observation_labeled_terminal_events(
+        tmp_path: Path,
+    ) -&gt; None:
+        log = _event("session_started") + _event("trial_started", trial_number=1)
+        store, pointer, path = _fixture(tmp_path, log)
+        recovery = StartupRecovery(
+            store,
+            current_generation=_id(),
+            timeout_ns=2_000_000_000,
+            max_operations=8,
+            max_bytes=65_536,
+        )
+    
+        async def query(_: str) -&gt; svc.RecoverySnapshot:
+            return _snapshot(pointer)
+    
+        prompt = await recovery.prepare(query)
+        assert prompt is not None
+        assert "192.0.2.10:4142" in prompt.explanation
+        assert "known-run" in prompt.explanation
+        assert recovery.inspection is not None
+        assert recovery.inspection.spikeglx_stop_unconfirmed
+        assert recovery.inspection.spikeglx_endpoint == ("192.0.2.10", 4142)
+&gt;       await recovery.recover()
+
+tests\controller\test_startup_recovery.py:331: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\recovery.py:343: in recover
+    await persist(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'RECOVERY-926e251e-4d23-43a6-8d8e-2a5112d23f4f.json'
+action = 'create_json'
+document = {'schema_version': 1, 'session_id': 'b9dba338-305c-4fe0-a01a-1e0b23aeec8a', 'prior_controller_generation': '1e9751ce-2e63-43eb-a1e3-9e014c52b57a', 'recovery_controller_generation': '4471779d-8268-4e58-a5f2-df9f8d59764a', ...}
+
+    async def persist(
+        name: str,
+        action: Literal["create_json", "append_jsonl_record"],
+        document: dict[str, object],
+    ) -&gt; None:
+        command_id = str(uuid.uuid4())
+        request = MetadataWrite(
+            command_id=command_id,
+            path=writer.root / name,
+            action=action,
+            payload_utf8=json.dumps(
+                document, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+            ).encode(),
+            submitted_ns=host_time_ns(),
+            deadline_ns=deadline,
+            work=work,
+            operation=pb.OperationContext(command_id=command_id),
+        )
+        completion = await asyncio.wait_for(
+            asyncio.shield(asyncio.wrap_future(writer.submit(request))),
+            max(0, (deadline - host_time_ns()) / 1e9),
+        )
+        writer.retire(command_id)
+        if completion.state != "synced" or not completion.deadline_met:
+&gt;           raise StorageError(
+                "recovery persistence failed or completed after its original deadline"
+            )
+E           cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline
+
+src\cephvr\controller\recovery.py:291: StorageError</failure></testcase><testcase classname="tests.controller.test_startup_recovery" name="test_incomplete_jsonl_is_preserved_and_reported_separately" time="0.035"><failure message="cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_incomplete_jsonl_is_prese0')
+
+    async def test_incomplete_jsonl_is_preserved_and_reported_separately(
+        tmp_path: Path,
+    ) -&gt; None:
+        log = _event("session_started") + b'{"event_type":"trial_started"'
+        store, pointer, path = _fixture(tmp_path, log)
+        recovery = StartupRecovery(
+            store,
+            current_generation=_id(),
+            timeout_ns=2_000_000_000,
+            max_operations=8,
+            max_bytes=65_536,
+        )
+    
+        async def query(_: str) -&gt; svc.RecoverySnapshot:
+            return _snapshot(pointer)
+    
+        assert await recovery.prepare(query) is not None
+        assert recovery.inspection is not None
+        assert recovery.inspection.log_identity is None
+&gt;       await recovery.recover()
+
+tests\controller\test_startup_recovery.py:364: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\recovery.py:343: in recover
+    await persist(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'RECOVERY-2a5d38c3-fd24-4e03-9eba-df225a297025.json'
+action = 'create_json'
+document = {'schema_version': 1, 'session_id': 'd4351daa-1911-4c25-80a7-84b95196d9d3', 'prior_controller_generation': '4074d0e0-3fa5-45cb-a735-24490dd6f8c6', 'recovery_controller_generation': '1c154c62-cae6-4f1d-8e0e-16eb84b4269d', ...}
+
+    async def persist(
+        name: str,
+        action: Literal["create_json", "append_jsonl_record"],
+        document: dict[str, object],
+    ) -&gt; None:
+        command_id = str(uuid.uuid4())
+        request = MetadataWrite(
+            command_id=command_id,
+            path=writer.root / name,
+            action=action,
+            payload_utf8=json.dumps(
+                document, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+            ).encode(),
+            submitted_ns=host_time_ns(),
+            deadline_ns=deadline,
+            work=work,
+            operation=pb.OperationContext(command_id=command_id),
+        )
+        completion = await asyncio.wait_for(
+            asyncio.shield(asyncio.wrap_future(writer.submit(request))),
+            max(0, (deadline - host_time_ns()) / 1e9),
+        )
+        writer.retire(command_id)
+        if completion.state != "synced" or not completion.deadline_met:
+&gt;           raise StorageError(
+                "recovery persistence failed or completed after its original deadline"
+            )
+E           cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline
+
+src\cephvr\controller\recovery.py:291: StorageError</failure></testcase><testcase classname="tests.controller.test_startup_recovery" name="test_uncertain_append_is_never_resubmitted_in_same_recovery" time="0.236" /><testcase classname="tests.controller.test_startup_recovery" name="test_recovery_reader_rejects_zero_budget_and_nonregular_file" time="0.003" /><testcase classname="tests.controller.test_startup_recovery" name="test_prior_completed_recovery_event_is_not_duplicated" time="0.029" /><testcase classname="tests.controller.test_storage" name="test_reservation_exclusive_and_cancel_removes_only_attempt_paths" time="0.011"><failure message="cephvr.controller.metadata.types.StorageError: session quarantine failed; unfinished marker retained">self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC8FC4D0&gt;
+
+    def cancel(self) -&gt; None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+&gt;               os.replace(self.session_directory, quarantine)
+E               PermissionError: [WinError 5] Access is denied: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_reservation_exclusive_and0\\20260929_experiment\\subject-131415' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_reservation_exclusive_and0\\20260929_experiment\\.subject-131415.6b45c59c-4d56-409d-b920-5f99dfc0f6e4.cleanup'
+
+src\cephvr\controller\metadata\reservation.py:376: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_reservation_exclusive_and0')
+
+    def test_reservation_exclusive_and_cancel_removes_only_attempt_paths(
+        tmp_path: Path,
+    ) -&gt; None:
+        first = _reservation(tmp_path)
+        assert first.acquire() == []
+        second = _reservation(tmp_path)
+        with pytest.raises(StorageError, match="locked"):
+            second.acquire()
+&gt;       first.cancel()
+
+tests\controller\test_storage.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC8FC4D0&gt;
+
+    def cancel(self) -&gt; None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+                os.replace(self.session_directory, quarantine)
+            except OSError as exc:
+&gt;               raise StorageError(
+                    "session quarantine failed; unfinished marker retained"
+                ) from exc
+E               cephvr.controller.metadata.types.StorageError: session quarantine failed; unfinished marker retained
+
+src\cephvr\controller\metadata\reservation.py:378: StorageError</failure></testcase><testcase classname="tests.controller.test_storage" name="test_unexpected_file_blocks_cancel_without_deletion" time="0.013" /><testcase classname="tests.controller.test_storage" name="test_preexisting_session_cancellation_never_unlinks_new_owners_lock" time="0.013" /><testcase classname="tests.controller.test_storage" name="test_existing_marker_inspection_requires_held_lock_and_keeps_recovery_evidence" time="0.010" /><testcase classname="tests.controller.test_storage" name="test_existing_lock_symlink_is_never_followed" time="0.003"><skipped type="pytest.skip" message="symlink creation unavailable on this host">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\controller\test_storage.py:120: symlink creation unavailable on this host</skipped></testcase><testcase classname="tests.controller.test_storage" name="test_failed_session_quarantine_preserves_unfinished_marker" time="0.011" /><testcase classname="tests.controller.test_storage" name="test_corrupt_existing_marker_is_preserved_for_startup_recovery" time="0.011" /><testcase classname="tests.controller.test_storage" name="test_writer_syncs_exact_json_and_rejects_changed_retry" time="0.016" /><testcase classname="tests.controller.test_storage" name="test_writer_rejects_unreserved_path_and_invalid_document" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_writer_preserves_late_sync_evidence_and_seal_capacity" time="0.009" /><testcase classname="tests.controller.test_storage" name="test_cancelled_waiter_cannot_erase_required_writer_completion" time="0.009" /><testcase classname="tests.controller.test_storage" name="test_completed_id_is_not_evicted_by_next_admission_before_retirement" time="0.014" /><testcase classname="tests.controller.test_storage" name="test_writer_never_appends_to_unowned_existing_log" time="0.006" /><testcase classname="tests.controller.test_storage" name="test_writer_binds_work_and_operation_to_exact_session" time="0.002" /><testcase classname="tests.controller.test_storage" name="test_existing_reservation_recovery_requires_unchanged_marker" time="0.019" /><testcase classname="tests.controller.test_storage" name="test_recovery_log_adoption_requires_exact_held_file_identity" time="0.017" /><testcase classname="tests.controller.test_storage" name="test_owned_log_path_replacement_cannot_redirect_append" time="0.008"><failure message="PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_owned_log_path_replacemen0\\SESSION_LOG.jsonl' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_owned_log_path_replacemen0\\moved.jsonl'">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_owned_log_path_replacemen0')
+
+    def test_owned_log_path_replacement_cannot_redirect_append(tmp_path: Path) -&gt; None:
+        path = tmp_path / "SESSION_LOG.jsonl"
+        outside = tmp_path / "outside.jsonl"
+        outside.write_bytes(b"preserve\n")
+        writer = MetadataWriter(
+            tmp_path, max_operations=2, max_bytes=1024, clock=lambda: 1, session_id="s"
+        )
+        first = _write("one", path, "append_jsonl_record", b'{"event_type":"first"}', 1, 2)
+        assert writer.submit(first).result(3).state == "synced"
+&gt;       path.rename(tmp_path / "moved.jsonl")
+
+tests\controller\test_storage.py:423: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_owned_log_path_replacemen0/SESSION_LOG.jsonl')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_owned_log_path_replacemen0/moved.jsonl')
+
+    def rename(self, target):
+        """
+        Rename this path to the target path.
+    
+        The target path may be absolute or relative. Relative paths are
+        interpreted relative to the current working directory, *not* the
+        directory of the Path object.
+    
+        Returns the new Path instance pointing to the target path.
+        """
+&gt;       os.rename(self, target)
+E       PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_owned_log_path_replacemen0\\SESSION_LOG.jsonl' -&gt; 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_owned_log_path_replacemen0\\moved.jsonl'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1175: PermissionError</failure></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_registration_window_starts_at_bootstrap_completion" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_late_registration_is_refused_and_backstop_stays_armed" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_bootstrap_failure_arms_backstop" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_hung_bootstrap_is_bounded_by_the_same_window" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_registration_requires_supervisor_channel_and_generations" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_second_different_controller_arms_backstop" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_supervisor_channel_loss_arms_but_controller_loss_only_records" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_shutdown_deadline_is_min_of_claim_and_backstop" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_parse_reports_each_violation_and_strips_reserved_key" time="0.000" /><testcase classname="tests.launcher.test_lifecycle" name="test_guard_waits_for_verified_absence_after_unknown_membership" time="0.051" /><testcase classname="tests.platform.test_byte_stream" name="test_idle_read_observation_resumes_the_same_pending_buffer" time="0.001" /><testcase classname="tests.platform.test_byte_stream" name="test_cleanup_cancels_then_observes_before_releasing_pending_memory" time="0.001" /><testcase classname="tests.platform.test_byte_stream" name="test_late_write_timeout_can_be_observed_during_bounded_cleanup" time="0.001" /><testcase classname="tests.platform.test_byte_stream" name="test_stop_event_ends_wait_and_cancels" time="0.000" /><testcase classname="tests.platform.test_byte_stream" name="test_cleanup_wait_ignores_signalled_stop_event" time="0.001" /><testcase classname="tests.platform.test_byte_stream" name="test_no_stop_event_keeps_single_object_wait" time="0.000" /><testcase classname="tests.platform.test_byte_stream" name="test_cancelled_write_with_partial_bytes_retires_pipe" time="0.000" /><testcase classname="tests.platform.test_byte_stream" name="test_cancelled_write_with_zero_bytes_keeps_pipe_usable" time="0.000" /><testcase classname="tests.platform.test_byte_stream" name="test_late_full_write_is_unconfirmed_and_retires" time="0.000" /><testcase classname="tests.platform.test_byte_stream" name="test_cancel_request_is_idempotent" time="0.000" /><testcase classname="tests.platform.test_mappings" name="test_attach_holds_open_only_handle_across_shared_memory_attach" time="0.000" /><testcase classname="tests.platform.test_mappings" name="test_attach_missing_name_never_reaches_shared_memory" time="0.000" /><testcase classname="tests.platform.test_mappings" name="test_attach_requires_page_exact_size_and_closes_guard" time="0.000" /><testcase classname="tests.platform.test_mappings" name="test_exact_page_multiple_matches_without_rounding_up" time="0.000" /><testcase classname="tests.platform.test_nvidia_device" name="test_malformed_uuid_fails_before_native_discovery" time="0.000" /><testcase classname="tests.platform.test_nvidia_device" name="test_discovery_on_unsupported_platform_raises_preparation_error" time="0.000" /><testcase classname="tests.platform.test_nvidia_device" name="test_missing_cuda_library_or_export_raises_preparation_error[False]" time="0.000" /><testcase classname="tests.platform.test_nvidia_device" name="test_missing_cuda_library_or_export_raises_preparation_error[True]" time="0.000" /><testcase classname="tests.platform.test_nvidia_device" name="test_uuid_selection_uses_the_adopted_device_not_list_position" time="0.000" /><testcase classname="tests.platform.test_nvidia_device" name="test_absent_uuid_never_falls_back_to_an_available_encoder" time="0.000" /><testcase classname="tests.platform.test_windows_jobs" name="test_member_exiting_between_enumeration_and_open_is_absent" time="0.001" /><testcase classname="tests.platform.test_windows_jobs" name="test_member_exiting_after_open_is_absent" time="0.001" /><testcase classname="tests.platform.test_windows_jobs" name="test_reenumerates_until_two_passes_agree" time="0.001" /><testcase classname="tests.platform.test_windows_jobs" name="test_unstable_membership_is_bounded" time="0.001" /><testcase classname="tests.platform.test_windows_jobs" name="test_other_open_error_still_raises" time="0.000" /><testcase classname="tests.platform.test_windows_jobs" name="test_terminate_of_exited_process_counts_as_absent" time="0.000" /><testcase classname="tests.platform.test_windows_jobs" name="test_terminate_failure_of_live_process_raises" time="0.000" /><testcase classname="tests.platform.test_windows_jobs" name="test_process_gone_is_not_running" time="0.000" /><testcase classname="tests.platform.test_windows_jobs" name="test_process_exit_uses_handle_wait_not_exit_code" time="0.000" /><testcase classname="tests.platform.test_windows_jobs" name="test_query_failure_is_unknown_not_absence" time="0.000" /><testcase classname="tests.platform.test_windows_jobs" name="test_new_process_handle_is_closed_when_creation_query_fails" time="0.000" /><testcase classname="tests.platform.test_windows_native_on_rig" name="test_creation_time_containment_and_outer_job_shutdown" time="0.033" /><testcase classname="tests.platform.test_windows_native_on_rig" name="test_exit_code_259_is_not_mistaken_for_running" time="0.056" /><testcase classname="tests.platform.test_windows_native_on_rig" name="test_bootstrap_framing_and_restricted_pipe_inheritance" time="0.001" /><testcase classname="tests.platform.test_windows_native_on_rig" name="test_atomic_owner_only_acl_and_renamable_lock" time="0.012" /><testcase classname="tests.platform.test_windows_native_on_rig" name="test_reparse_lock_target_is_rejected_when_symlinks_are_available" time="0.003"><skipped type="pytest.skip" message="Windows symlink privilege or Developer Mode is unavailable">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\platform\test_windows_native_on_rig.py:223: Windows symlink privilege or Developer Mode is unavailable</skipped></testcase><testcase classname="tests.platform.test_windows_native_on_rig" name="test_application_exit_receipt_is_durable_and_private" time="0.004"><failure message="cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_application_exit_receipt_0')
+
+    def test_application_exit_receipt_is_durable_and_private(tmp_path: Path) -&gt; None:
+        runtime_root = tmp_path / "runtime"
+        store = RecoveryStore(runtime_root)
+        controller_generation, supervisor_generation = str(uuid4()), str(uuid4())
+        receipt = ApplicationExitReceipt(
+            controller_generation=controller_generation,
+            supervisor_generation=supervisor_generation,
+            observed_monotonic_ns=host_time_ns(),
+            all_owned_processes_absent=True,
+        )
+&gt;       store.write_exit_receipt(receipt)
+
+tests\platform\test_windows_native_on_rig.py:240: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-762b4f93-4d28-4a89-b600-482394f2ed20.json.544b6ae3-bf8a-43ad-ac6f-3d9f81a16bdd.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"","controller_generation":"762b4f93-4d28-4a89-b600-482...rmat_version":1,"observed_monotonic_ns":67622843421200,"supervisor_generation":"0ef0629f-1bc9-4dda-8071-fd4ce0b3a291"}'
+
+    def create_owner_only(path: Path, payload: bytes) -&gt; None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+&gt;           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError</failure></testcase><testcase classname="tests.platform.test_windows_native_on_rig" name="test_write_through_same_directory_publication" time="0.026" /><testcase classname="tests.platform.test_windows_native_on_rig" name="test_role_guard_rejects_second_owner_and_releases" time="0.001" /><testcase classname="tests.shared.test_cleanup_outputs" name="test_cleanup_never_started_requires_explicit_absence_and_no_failure" time="0.000" /><testcase classname="tests.shared.test_cleanup_outputs" name="test_cleanup_never_started_rejects_unknown_or_present_artifact" time="0.000" /><testcase classname="tests.shared.test_cleanup_outputs" name="test_cleanup_failed_output_is_retained_as_failure" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_finalize_command_keeps_work_scope_open_and_prunes_after_retention" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_finalize_command_ignores_pending_and_does_not_restart_clock" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_finalize_work_still_blocks_new_commands" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_late_completion_after_scope_finalization_starts_its_own_window" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_ledger_deduplicates_and_never_evicts_active" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_ledger_reserves_result_capacity_at_admission" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_ledger_priority_admission_uses_only_reserved_safety_quota" time="0.001" /><testcase classname="tests.shared.test_commands" name="test_ledger_large_result_reservation_is_pinned_on_first_admission" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_finalization_is_scoped_and_pending_result_is_preserved" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_finalized_work_rejects_even_priority_commands" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_terminal_command_scope_uses_its_own_retention_window" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_ledger_pins_original_deadline_through_replay_completion_and_finalization" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_omitted_deadline_preserves_shared_command_ledger_behavior" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_retained_evidence_uses_command_count_and_byte_budgets" time="0.000" /><testcase classname="tests.shared.test_commands" name="test_retained_evidence_prunes_with_its_finalized_work" time="0.000" /><testcase classname="tests.shared.test_emergency" name="test_explicit_stop_uncertainty_and_byte_bound" time="0.011" /><testcase classname="tests.shared.test_emergency" name="test_slow_disk_does_not_hold_event_loop_or_default_executor" time="0.062" /><testcase classname="tests.shared.test_emergency" name="test_huge_failure_message_is_truncated_not_dropped" time="0.023" /><testcase classname="tests.shared.test_incidents" name="test_exact_isolated_camera_fault_can_continue_with_current_visual_stimulus_evidence" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_lifecycle_scope_requires_exact_visual_stimulus_and_camera_worker_ancestry" time="0.001" /><testcase classname="tests.shared.test_incidents" name="test_missing_or_stale_proof_never_extends_original_recovery_deadline" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_code_and_source_role_do_not_override_prepared_loss_closure" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_unsafe_lease_or_missing_feedback_hold_does_not_continue" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_downstream_feedback_is_discharged_by_exact_hold_scope" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_missing_output_function_declaration_rejects_topology" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_registered_native_cleanup_must_match_exact_ready_set" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_unprepared_trial_and_absent_safety_fact_do_not_continue" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_registry_retains_active_scope_and_rejects_stale_continue" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_blocking_incident_acknowledgement_never_reopens_continue" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_registry_preserves_cumulative_scope_and_original_deadline" time="0.000" /><testcase classname="tests.shared.test_incidents" name="test_registry_byte_capacity_fails_before_mutating_active_view" time="0.000" /><testcase classname="tests.shared.test_invariants" name="test_clock_requires_matching_validated_domain" time="0.000" /><testcase classname="tests.shared.test_invariants" name="test_uuid_requires_canonical_v4" time="0.000" /><testcase classname="tests.shared.test_invariants" name="test_deadline_does_not_renew_or_round" time="0.000" /><testcase classname="tests.shared.test_invariants" name="test_deadline_metadata_requires_one_positive_int64_decimal_value" time="0.000" /><testcase classname="tests.shared.test_invariants" name="test_interruption_remains_available_on_ordinary_overload" time="0.000" /><testcase classname="tests.shared.test_invariants" name="test_auth_requires_exact_registered_peer_token_and_generation" time="0.000" /><testcase classname="tests.shared.test_invariants" name="test_config_rejects_version_mismatch_and_unknown_keys" time="0.017" /><testcase classname="tests.shared.test_invariants" name="test_operator_credentials_are_generation_scoped_and_owner_only" time="0.015" /><testcase classname="tests.shared.test_invariants" name="test_operator_credentials_reject_unsafe_file" time="0.000"><skipped type="pytest.skip" message="POSIX mode fixture; Windows ACLs have native tests">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\shared\test_invariants.py:191: POSIX mode fixture; Windows ACLs have native tests</skipped></testcase><testcase classname="tests.shared.test_recovery" name="test_pointer_and_receipt_are_exact_and_immutable" time="0.014"><failure message="cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_pointer_and_receipt_are_e0')
+
+    def test_pointer_and_receipt_are_exact_and_immutable(tmp_path: Path) -&gt; None:
+        store = RecoveryStore(tmp_path / "runtime")
+        pointer = UnfinishedSessionPointer(str(tmp_path / "session"), _id(), _id(), _id())
+        store.write_pointer(pointer)
+        store.write_pointer(pointer)
+        assert store.read_pointer() == pointer
+        with pytest.raises(RecoveryStoreError, match="another unfinished"):
+            store.write_pointer(
+                UnfinishedSessionPointer(str(tmp_path / "other"), _id(), _id(), _id())
+            )
+        receipt = ApplicationExitReceipt(
+            pointer.controller_generation, pointer.supervisor_generation, 101, True
+        )
+&gt;       store.write_exit_receipt(receipt)
+
+tests\shared\test_recovery.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-54f0ece1-38c7-4ea5-ba5d-d314caad69fb.json.c2ec5e88-97f4-4c41-9d9a-9500d74cc98f.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"","controller_generation":"54f0ece1-38c7-4ea5-ba5d-d314caad69fb","format_version":1,"observed_monotonic_ns":101,"supervisor_generation":"fb6a69e1-7339-473e-a0b8-e16cb2d2cbf7"}'
+
+    def create_owner_only(path: Path, payload: bytes) -&gt; None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+&gt;           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError</failure></testcase><testcase classname="tests.shared.test_recovery" name="test_unverified_exit_and_unsafe_pointer_cannot_authorize_recovery" time="0.003"><skipped type="pytest.skip" message="Windows account lacks symlink creation privilege">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\shared\test_recovery.py:64: Windows account lacks symlink creation privilege</skipped></testcase><testcase classname="tests.shared.test_recovery" name="test_world_readable_record_is_rejected" time="0.000"><skipped type="pytest.skip" message="POSIX mode verification">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\shared\test_recovery.py:70: POSIX mode verification</skipped></testcase><testcase classname="tests.shared.test_recovery" name="test_duplicate_recovery_fields_cannot_select_an_identity" time="0.000"><skipped type="pytest.skip" message="POSIX mode fixture">C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\tests\shared\test_recovery.py:79: POSIX mode fixture</skipped></testcase><testcase classname="tests.shared.test_recovery" name="test_receipt_carries_bounded_controller_channel_loss" time="0.003"><failure message="cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_receipt_carries_bounded_c0')
+
+    def test_receipt_carries_bounded_controller_channel_loss(tmp_path: Path) -&gt; None:
+        store = RecoveryStore(tmp_path / "runtime")
+        receipt = ApplicationExitReceipt(
+            _id(), _id(), 101, True, controller_channel_loss="control line overflow"
+        )
+&gt;       store.write_exit_receipt(receipt)
+
+tests\shared\test_recovery.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-ec840dd4-0034-4a83-930a-530de5830497.json.36f2378e-50d9-448f-a839-485cfc72fbef.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"control line overflow","controller_generation":"ec840d...830497","format_version":1,"observed_monotonic_ns":101,"supervisor_generation":"78229327-1765-40c8-bd79-e1ba800cf002"}'
+
+    def create_owner_only(path: Path, payload: bytes) -&gt; None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+&gt;           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError</failure></testcase><testcase classname="tests.shared.test_resources" name="test_unknown_empty_cannot_clear_but_explicit_zero_with_fence_can" time="0.000" /><testcase classname="tests.shared.test_resources" name="test_append_only_revisions_and_exact_final_catalogue" time="0.000" /><testcase classname="tests.shared.test_resources" name="test_cleanup_must_match_last_revision_and_exact_releases" time="0.000" /><testcase classname="tests.shared.test_resources" name="test_capacity_and_wrong_owner_fail_without_mutating_revision" time="0.000" /><testcase classname="tests.shared.test_resources" name="test_cleanup_fences_are_exact_append_only_registered_commands" time="0.000" /><testcase classname="tests.shared.test_resources" name="test_supervisor_issued_cleanup_fence_requires_exact_command" time="0.000" /><testcase classname="tests.supervisor.test_health" name="test_worker_heartbeat_rejected_coordinator_heartbeat_accepted" time="0.003" /><testcase classname="tests.supervisor.test_health" name="test_worker_error_admission_and_reserved_codes" time="0.008" /><testcase classname="tests.supervisor.test_health" name="test_supervisor_tasks_are_retained_and_cancelled" time="0.002" /><testcase classname="tests.supervisor.test_health" name="test_monitor_triggers_one_background_reconcile" time="0.096" /><testcase classname="tests.supervisor.test_health" name="test_pre_session_error_without_isolation_proof_fences_safety" time="0.019" /><testcase classname="tests.supervisor.test_health" name="test_unclassified_error_fences_safety" time="0.020" /><testcase classname="tests.supervisor.test_health" name="test_confirmed_controller_without_first_heartbeat_times_out" time="0.008" /><testcase classname="tests.supervisor.test_recovery" name="test_concurrent_reconciles_are_serialized" time="0.031" /><testcase classname="tests.supervisor.test_recovery" name="test_owner_cleanup_required_releases_empty_helper_as_unconfirmed" time="0.002" /><testcase classname="tests.supervisor.test_recovery" name="test_unreachable_live_owner_records_error_and_keeps_helper" time="0.002" /><testcase classname="tests.supervisor.test_recovery" name="test_helper_release_uses_shared_output_discharge[1-True]" time="0.002" /><testcase classname="tests.supervisor.test_recovery" name="test_helper_release_uses_shared_output_discharge[4-True]" time="0.002" /><testcase classname="tests.supervisor.test_recovery" name="test_helper_release_uses_shared_output_discharge[6-False]" time="0.002" /><testcase classname="tests.supervisor.test_recovery" name="test_cleanup_reconcile_incomplete_retained_result_raises" time="0.002" /><testcase classname="tests.supervisor.test_recovery" name="test_prior_application_exit_requires_exact_private_receipt" time="0.004"><failure message="cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_prior_application_exit_re0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC66AFD0&gt;
+
+    async def test_prior_application_exit_requires_exact_private_receipt(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        runtime, _, _, caller = make_runtime(tmp_path)
+        runtime_root = tmp_path / "runtime"
+        monkeypatch.setattr(
+            "cephvr.supervisor.recovery.default_runtime_root", lambda: runtime_root
+        )
+        previous_controller = str(uuid4())
+        previous_supervisor = str(uuid4())
+        query = wire.RecoveryQuery(
+            expected_supervisor=runtime.identity,
+            prior_controller_generation=previous_controller,
+        )
+        missing = await runtime.service.GetRecoveryState(query, caller)
+        assert not missing.HasField("prior_application_exit")
+&gt;       RecoveryStore(runtime_root).write_exit_receipt(
+            ApplicationExitReceipt(
+                controller_generation=previous_controller,
+                supervisor_generation=previous_supervisor,
+                observed_monotonic_ns=host_time_ns(),
+                all_owned_processes_absent=True,
+            )
+        )
+
+tests\supervisor\test_recovery.py:195: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-19a50fe0-994c-41bf-8110-344b6ba55179.json.a77cdccc-2e60-4b48-ae34-f595aac5aca8.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"","controller_generation":"19a50fe0-994c-41bf-8110-344...rmat_version":1,"observed_monotonic_ns":67623314427000,"supervisor_generation":"7b9cc65c-063d-4b31-b427-e63df50fda41"}'
+
+    def create_owner_only(path: Path, payload: bytes) -&gt; None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+&gt;           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError</failure></testcase><testcase classname="tests.supervisor.test_registration" name="test_plan_launch_rejects_expired_deadline_and_never_reconciles" time="0.002" /><testcase classname="tests.supervisor.test_registration" name="test_failed_controller_registration_cancels_role_launches" time="0.002" /><testcase classname="tests.supervisor.test_registration" name="test_new_session_requires_verified_prior_cleanup" time="0.003" /><testcase classname="tests.supervisor.test_registration" name="test_worker_incident_ancestry_uses_exact_launch_owner_chain" time="0.003" /><testcase classname="tests.supervisor.test_registration" name="test_controller_cannot_claim_backend_prepared_function" time="0.002" /><testcase classname="tests.supervisor.test_registry" name="test_release_is_idempotent_and_never_resurrects" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_capacity_counts_only_live_launches_and_replay_survives_until_pruned" time="0.001" /><testcase classname="tests.supervisor.test_registry" name="test_tolerant_states_keep_other_entries_when_one_job_is_unreadable" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_top_level_self_owner_rejected_before_job_creation[controller]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_top_level_self_owner_rejected_before_job_creation[gui]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_top_level_self_owner_rejected_before_job_creation[acquisition]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_top_level_self_owner_rejected_before_job_creation[visual_stimulus]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_top_level_self_owner_rejected_before_job_creation[tracking]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_native_confirmation_rejects_python_fields[endpoint-False]" time="0.001" /><testcase classname="tests.supervisor.test_registry" name="test_native_confirmation_rejects_python_fields[endpoint-True]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_native_confirmation_rejects_python_fields[host_clock-False]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_native_confirmation_rejects_python_fields[host_clock-True]" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_exact_membership_and_retain_until_cleanup" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_visual_stimulus_ffmpeg_child_must_belong_to_exact_renderer_work" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_wrong_creation_time_blocks_instead_of_guessing_pid" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_creation_failure_cannot_hide_partial_child" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_python_endpoint_requires_present_clock_fields" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_exact_confirmation_replay_is_stable_after_operational" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_uninspectable_job_is_not_treated_as_empty" time="0.000" /><testcase classname="tests.supervisor.test_registry" name="test_registered_child_remains_valid_with_nested_descendant" time="0.000" /><testcase classname="tests.supervisor.test_shutdown" name="test_retained_finished_evidence_must_match_complete_output_payload" time="0.000" /><testcase classname="tests.supervisor.test_shutdown" name="test_controller_silence_after_shutdown_is_not_a_safety_fault" time="0.008" /><testcase classname="tests.supervisor.test_shutdown" name="test_lost_controller_with_active_session_interrupts_before_shutdown" time="0.207" /><testcase classname="tests.supervisor.test_shutdown" name="test_lost_controller_without_active_session_is_not_interrupted" time="0.003" /><testcase classname="tests.supervisor.test_shutdown" name="test_failed_launcher_notification_is_reported_unconfirmed" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_shutdown_completes_after_a_helper_was_released" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_explicit_shutdown_progresses_without_waiting_for_controller_exit" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_safety_delivery_failure_does_not_gate_other_deliveries[error]" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_safety_delivery_failure_does_not_gate_other_deliveries[timeout]" time="0.052" /><testcase classname="tests.supervisor.test_shutdown" name="test_process_exit_orders_groups_and_deduplicates_exact_members" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_final_inspection_controls_unconfirmed_exit_evidence[False]" time="0.001" /><testcase classname="tests.supervisor.test_shutdown" name="test_final_inspection_controls_unconfirmed_exit_evidence[True]" time="0.001" /><testcase classname="tests.supervisor.test_shutdown" name="test_process_exit_uses_original_outer_deadline" time="0.001" /><testcase classname="tests.supervisor.test_shutdown" name="test_shutdown_completion_keeps_exit_and_cleanup_evidence_distinct[none]" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_shutdown_completion_keeps_exit_and_cleanup_evidence_distinct[process]" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_shutdown_completion_keeps_exit_and_cleanup_evidence_distinct[inspection]" time="0.002" /><testcase classname="tests.supervisor.test_shutdown" name="test_shutdown_completion_keeps_exit_and_cleanup_evidence_distinct[cleanup]" time="0.002" /><testcase classname="tests.supervisor.test_status" name="test_failed_status_send_is_resent_on_heartbeat_tick" time="0.032" /><testcase classname="tests.supervisor.test_status" name="test_change_during_failing_send_is_not_lost" time="0.003" /><testcase classname="tests.supervisor.test_status" name="test_status_never_probes_a_released_helper_pid" time="0.002" /><testcase classname="tests.supervisor.test_status" name="test_repeated_task_failure_replaces_its_warning" time="0.002" /><testcase classname="tests.supervisor.test_status" name="test_status_retry_preserves_revision_and_timestamp" time="0.002" /><testcase classname="tests.supervisor.test_status" name="test_supervisor_heartbeat_does_not_depend_on_status_change" time="0.002"><failure message="assert 1 &gt;= 2&#10; +  where 1 = len([source {\n  role: &quot;supervisor&quot;\n  generation: &quot;601742a2-5ed3-400d-99d1-1b66b07b70f8&quot;\n}\nsent_monotonic_ns: 67623689817600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: &quot;supervisor control and monitor loop active&quot;\n])&#10; +    where [source {\n  role: &quot;supervisor&quot;\n  generation: &quot;601742a2-5ed3-400d-99d1-1b66b07b70f8&quot;\n}\nsent_monotonic_ns: 67623689817600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: &quot;supervisor control and monitor loop active&quot;\n] = &lt;tests.supervisor.support.Outbound object at 0x000002B5DC85BA90&gt;.heartbeats">tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_supervisor_heartbeat_does0')
+
+    async def test_supervisor_heartbeat_does_not_depend_on_status_change(
+        tmp_path: Path,
+    ) -&gt; None:
+        runtime, _, outbound, _ = make_runtime(tmp_path)
+        runtime.health.heartbeat_interval_ns = 1_000_000
+        loop = asyncio.create_task(runtime.health.heartbeat_loop())
+        await asyncio.sleep(0.01)
+        loop.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await loop
+&gt;       assert len(outbound.heartbeats) &gt;= 2
+E       assert 1 &gt;= 2
+E        +  where 1 = len([source {\n  role: "supervisor"\n  generation: "601742a2-5ed3-400d-99d1-1b66b07b70f8"\n}\nsent_monotonic_ns: 67623689817600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: "supervisor control and monitor loop active"\n])
+E        +    where [source {\n  role: "supervisor"\n  generation: "601742a2-5ed3-400d-99d1-1b66b07b70f8"\n}\nsent_monotonic_ns: 67623689817600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: "supervisor control and monitor loop active"\n] = &lt;tests.supervisor.support.Outbound object at 0x000002B5DC85BA90&gt;.heartbeats
+
+tests\supervisor\test_status.py:104: AssertionError</failure></testcase><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_rejected_worker_commands_raise" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_release_retires_worker_channel_and_close_closes_outbound" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_grpc_worker_outbound_close_and_retire_close_channels" time="0.001" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_stub_rejects_stale_launch_and_caches_nothing[5-127.0.0.1:1]" time="0.000" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_stub_rejects_stale_launch_and_caches_nothing[3-127.0.0.1:2]" time="0.000" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_stub_requires_bound_registry" time="0.000" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_outbound_uses_registered_supervisor_principal_and_deadline" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_outbound_rejects_camera_context_from_another_launch" time="0.000" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_visual_stimulus_worker_outbound_accepts_exact_renderer_and_session_trial_work" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_visual_stimulus_worker_outbound_rejects_wrong_renderer_role" time="0.000" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_outbound_keeps_trial_work_inside_registered_session" time="0.000" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[absent-empty-True-True-acquisition]" time="0.005" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[absent-empty-True-True-visual_stimulus]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[absent-session-False-True-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[absent-session-False-True-visual_stimulus]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[absent-trial-False-True-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[absent-trial-False-True-visual_stimulus]" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[empty-empty-True-True-acquisition]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[empty-empty-True-True-visual_stimulus]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[empty-session-False-False-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[empty-session-False-False-visual_stimulus]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[empty-trial-False-False-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[empty-trial-False-False-visual_stimulus]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-empty-False-False-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-empty-False-False-visual_stimulus]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-session-True-True-acquisition]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-session-True-True-visual_stimulus]" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-trial-True-True-acquisition]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-trial-True-True-visual_stimulus]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-other_session-False-False-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-other_session-False-False-visual_stimulus]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-foreign_trial-False-False-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[session-foreign_trial-False-False-visual_stimulus]" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[trial-trial-True-True-acquisition]" time="0.004" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[trial-trial-True-True-visual_stimulus]" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[trial-other_trial-False-False-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[trial-other_trial-False-False-visual_stimulus]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[trial-session-False-False-acquisition]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_worker_discovery_and_transport_agree_on_work[trial-session-False-False-visual_stimulus]" time="0.002" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_cached_worker_channel_revalidates_launch_at_capacity[endpoint-acquisition]" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_cached_worker_channel_revalidates_launch_at_capacity[endpoint-visual_stimulus]" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_cached_worker_channel_revalidates_launch_at_capacity[released-acquisition]" time="0.003" /><testcase classname="tests.supervisor.test_worker_outbound_contracts" name="test_cached_worker_channel_revalidates_launch_at_capacity[released-visual_stimulus]" time="0.012" /><testcase classname="tests.tracking.test_configuration" name="test_defaults_leave_scientific_inputs_unset_and_load_exact_file_limits" time="0.018" /><testcase classname="tests.tracking.test_configuration" name="test_saved_false_and_complete_method_settings_are_preserved" time="0.018" /><testcase classname="tests.tracking.test_configuration" name="test_fin_pipeline_requires_explicit_wedge" time="0.018" /><testcase classname="tests.tracking.test_configuration" name="test_unknown_method_and_unavailable_selected_camera_fail_without_fallback" time="0.010" /><testcase classname="tests.tracking.test_configuration" name="test_disabled_tracking_retains_incomplete_saved_settings" time="0.009" /><testcase classname="tests.tracking.test_configuration" name="test_file_policy_mismatch_and_unknown_operator_keys_fail" time="0.029" /><testcase classname="tests.tracking.test_configuration" name="test_controller_discovers_lightweight_tracking_exports_without_native_imports" time="0.297" /><testcase classname="tests.tracking.test_methods" name="test_source_depth_and_half_up_flow_quantization" time="0.001" /><testcase classname="tests.tracking.test_methods" name="test_circle_arc_origin_direction_and_distance_band" time="0.017" /><testcase classname="tests.tracking.test_methods" name="test_original_neighbor_screening_outlier_and_no_fallback" time="0.006" /><testcase classname="tests.tracking.test_methods" name="test_proxy_translation_units_filter_duplicate_and_invalid_clearing" time="0.014" /><testcase classname="tests.tracking.test_methods" name="test_clipping_uses_intended_support_and_readback_span_checks" time="0.012" /><testcase classname="tests.tracking.test_methods" name="test_contour_observed_triplet_and_clipped_component_rejection" time="0.001" /><testcase classname="tests.tracking.test_methods" name="test_native_block_centres_include_partial_edge_blocks" time="0.018" /><testcase classname="tests.tracking.test_methods" name="test_model_letterbox_preserves_native_range_and_pixel_centres[gray]" time="0.001" /><testcase classname="tests.tracking.test_methods" name="test_model_letterbox_preserves_native_range_and_pixel_centres[rgb]" time="0.001" /><testcase classname="tests.tracking.test_processing" name="test_private_frame_is_not_reused_while_pose_holds_it" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_history_keeps_invalid_selection_age_boundary_and_borrowed_retirement" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_credit_overflow_changes_delivery_only_and_preserves_inflight_owner" time="0.001" /><testcase classname="tests.tracking.test_processing" name="test_history_clear_waits_for_every_borrow_and_rejects_double_return" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_pose_retirement_and_close_stay_on_owner_thread_after_failure[False]" time="0.001" /><testcase classname="tests.tracking.test_processing" name="test_pose_retirement_and_close_stay_on_owner_thread_after_failure[True]" time="0.001" /><testcase classname="tests.tracking.test_processing" name="test_movement_input_reset_preserves_evidence_order_and_pose_history[input_overflow-False]" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_movement_input_reset_preserves_evidence_order_and_pose_history[input_overflow-True]" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_movement_input_reset_preserves_evidence_order_and_pose_history[input_age-True]" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_movement_input_reset_preserves_evidence_order_and_pose_history[camera_gap-True]" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_movement_commit_records_before_feedback_and_first_activity[accepted]" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_movement_commit_records_before_feedback_and_first_activity[record_failure]" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_movement_commit_records_before_feedback_and_first_activity[stale_generation]" time="0.000" /><testcase classname="tests.tracking.test_processing" name="test_movement_commit_records_before_feedback_and_first_activity[cutoff]" time="0.000" /><testcase classname="tests.tracking.test_recording" name="test_idle_writer_syncs_then_completes_empty_scientific_stream" time="0.036" /><testcase classname="tests.tracking.test_recording" name="test_sync_failure_is_closed_failure_not_success" time="0.011" /><testcase classname="tests.tracking.test_recording" name="test_admission_reserves_bookkeeping_and_rejects_preonset_start" time="0.010" /><testcase classname="tests.tracking.test_recording" name="test_movement_record_retains_exact_wire_payload_and_stage_order[baseline]" time="0.000" /><testcase classname="tests.tracking.test_recording" name="test_movement_record_retains_exact_wire_payload_and_stage_order[no_sections]" time="0.000" /><testcase classname="tests.tracking.test_recording" name="test_movement_record_retains_exact_wire_payload_and_stage_order[sections]" time="0.000" /><testcase classname="tests.tracking.test_runtime" name="test_authenticated_setup_duplicate_conflict_stale_and_cleanup" time="0.096" /><testcase classname="tests.tracking.test_runtime" name="test_real_movement_baseline_start_and_separate_stop_finish[False]" time="0.110" /><testcase classname="tests.tracking.test_runtime" name="test_real_movement_baseline_start_and_separate_stop_finish[True]" time="0.114"><failure message="ValueError: 'finished' is not in list">rig_boundary = (&lt;cephvr.tracking.runtime.TrackingRuntime object at 0x000002B5DCB760D0&gt;, &lt;tests.tracking.test_runtime.Clock object at ...'token'), ('x-cephvr-deadline-ns', '67654571778500')), &lt;tests.tracking.test_runtime.Peer object at 0x000002B5DCB779D0&gt;)
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_real_movement_baseline_st1')
+saving = True
+
+    @pytest.mark.parametrize("saving", [False, True])
+    async def test_real_movement_baseline_start_and_separate_stop_finish(
+        rig_boundary, tmp_path, saving
+    ):
+        runtime, clock, stub, preparation, metadata, peer = rig_boundary
+        setup, trial, _ = await setup_runtime(rig_boundary, tmp_path, saving=saving)
+        work = pb.WorkContext(trial=trial)
+        prepare = wire.PrepareTrialRequest(
+            command=command(runtime, work),
+            configuration_revision=1,
+            plan=pb.TrialPlan(context=trial, resolved_duration_ns=1_000_000_000),
+        )
+        if saving:
+            prepare.outputs.add(
+                output_key="tracking", backend=runtime.identity.backend, trial=trial
+            )
+            (tmp_path / "protocol-data").mkdir()
+        await stub.PrepareTrial(prepare, metadata=metadata)
+        await until(lambda: runtime.state.trial is not None)
+        start = clock() + 100_000_000
+        schedule = wire.ScheduleTrialRequest(
+            command=command(runtime, work),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=start + 1_000_000_000,
+            trial_file_prefix="trial",
+        )
+        if saving:
+            schedule.outputs.add(
+                output_key="tracking",
+                backend=runtime.identity.backend,
+                trial=trial,
+                path=str(tmp_path / "protocol-data/trial_tracking.jsonl"),
+            )
+        await stub.ScheduleTrial(schedule, metadata=metadata)
+        await until(lambda: runtime.state.schedule is not None)
+        release = wire.ReleaseTrialRequest(
+            command=command(runtime, work),
+            schedule_operation=pb.OperationContext(command_id=schedule.command.command_id),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=schedule.normal_end_monotonic_ns,
+        )
+        await stub.ReleaseTrial(release, metadata=metadata)
+        await until(lambda: runtime.state.release is not None)
+        assert runtime.state.started is None
+        clock.now = start
+        await until(lambda: runtime.trials.native is not None)
+        runtime.engine.source.feed(0, start)
+        await until(lambda: runtime.state.started is not None)
+        assert (
+            runtime.state.started.first_required_activity[
+                0
+            ].device_evidence.tracking_evaluation.disposition
+            == "baseline_only"
+        )
+        clock.now = start + 10_000_000
+        runtime.engine.source.feed(1, clock())
+        await until(lambda: runtime.engine.movement.result_sequence == 2)
+        clock.now = schedule.normal_end_monotonic_ns
+        await until(lambda: runtime.state.finished is not None)
+        reports = [
+            r.WhichOneof("report") for m, r in peer.reports if m == "ReportLifecycle"
+        ]
+        assert (
+&gt;           reports.index("started") &lt; reports.index("stopped") &lt; reports.index("finished")
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+E       ValueError: 'finished' is not in list
+
+tests\tracking\test_runtime.py:386: ValueError</failure></testcase><testcase classname="tests.tracking.test_runtime" name="test_preonset_stop_never_opens_recording_or_reports_started" time="0.089" /><testcase classname="tests.tracking.test_runtime" name="test_cleanup_failure_retains_catalogue_and_prevents_new_setup" time="0.088" /><testcase classname="tests.tracking.test_runtime" name="test_supervisor_accepts_real_tracking_heartbeat_catalogue" time="0.098" /><testcase classname="tests.visual_stimulus.test_compilation.VideoTransitionTests" name="test_video_asset_variants_restart_after_absence_but_behavior_change_resumes" time="0.001" /><testcase classname="tests.visual_stimulus.test_compilation.DurationResolutionTests" name="test_fixed_and_uniquely_constrained_cases" time="0.000" /><testcase classname="tests.visual_stimulus.test_compilation.DurationResolutionTests" name="test_large_stafford_workspace_is_reserved_before_allocation" time="0.009" /><testcase classname="tests.visual_stimulus.test_compilation.DurationResolutionTests" name="test_rejects_infeasible_target_and_explicit_random_epoch" time="0.000" /><testcase classname="tests.visual_stimulus.test_compilation.DurationResolutionTests" name="test_stafford_golden_and_repeatability" time="0.000" /><testcase classname="tests.visual_stimulus.test_compilation.ExpansionTests" name="test_condition_values_are_substituted_at_setup" time="0.001" /><testcase classname="tests.visual_stimulus.test_compilation.ExpansionTests" name="test_prepared_artifact_and_canonical_bytes" time="0.002" /><testcase classname="tests.visual_stimulus.test_compilation.ExpansionTests" name="test_repeated_group_preserves_authored_identity_and_lineage" time="0.001" /><testcase classname="tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests" name="test_default_and_file_policy_values_are_typed" time="0.013" /><testcase classname="tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests" name="test_display_validation_returns_exact_output_ids" time="0.001" /><testcase classname="tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests" name="test_predictable_clipping_warns_without_rejecting_or_rewriting" time="0.002" /><testcase classname="tests.visual_stimulus.test_controller_communication" name="test_controller_exposes_nonfatal_validation_without_invalidating_configuration" time="0.003" /><testcase classname="tests.visual_stimulus.test_controller_communication" name="test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware" time="0.015" /><testcase classname="tests.visual_stimulus.test_controller_communication" name="test_controller_initialize_display_retains_confirmed_idle_separately_from_ready" time="0.021" /><testcase classname="tests.visual_stimulus.test_coordinator" name="test_save_off_recipe_uses_exact_retained_bytes_and_private_confirmation" time="0.038" /><testcase classname="tests.visual_stimulus.test_coordinator" name="test_pre_onset_cancellation_discloses_not_started_without_creating_file" time="0.004" /><testcase classname="tests.visual_stimulus.test_coordinator" name="test_interruption_wakes_pending_release_confirmation" time="0.004" /><testcase classname="tests.visual_stimulus.test_coordinator" name="test_post_onset_reports_use_lifecycle_deadlines_not_release_rpc_deadline" time="0.000" /><testcase classname="tests.visual_stimulus.test_coordinator" name="test_missing_release_execution_receipt_keeps_recipe_outcome_unknown" time="0.004" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_discards_incomplete_tail_and_marks_partial" time="0.006" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_rejects_group_gaps" time="0.006" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_rejects_missing_header" time="0.004" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_accepts_empty_stage_clipping_as_covered_output" time="0.005" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_rejects_clipping_with_invalid_reference[diagnostic0-group not yet written]" time="0.006" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_rejects_clipping_with_invalid_reference[diagnostic1-output absent]" time="0.005" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_rejects_clipping_with_invalid_reference[diagnostic2-epoch or timestamp differs]" time="0.005" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_rejects_clipping_with_invalid_reference[diagnostic3-epoch or timestamp differs]" time="0.005" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_reader_rejects_duplicate_clipping_for_group_output" time="0.005" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_evidence_rejects_missing_active_instance_state" time="0.000" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_evidence_rejects_missing_required_shader_uniform" time="0.000" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_evidence_requires_media_selection_for_every_active_video_instance" time="0.000" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_published_recipe_retains_analysis_inputs_without_source_file" time="0.011" /><testcase classname="tests.visual_stimulus.test_evidence_contract" name="test_evidence_writer_preserves_exact_inputs_when_review_frame_drops" time="0.008" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_feedback_generation_freshness_and_hold" time="0.000" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_boundary_sweep_slides_and_does_not_cross_wall" time="0.000" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_boundary_rejects_invalid_polygon_and_nonfinite_motion" time="0.000" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_batch_consumer_returns_immutable_render_group_evidence" time="0.001" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_wire_result_requires_exact_trial_source_and_canonical_generation" time="0.000" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_feedback_credit_is_exact_bounded_and_reset_fenced" time="0.000" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_prepared_mapping_integrates_only_declared_source_interval" time="0.000" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_named_pipe_client_authenticates_nonce_and_process_instance" time="0.000" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_pipe_consumer_captures_finite_batch_then_returns_exact_credit" time="0.114" /><testcase classname="tests.visual_stimulus.test_feedback" name="test_partial_pipe_open_retains_owner_when_cleanup_fails" time="0.000" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_release_is_required_and_no_activity_before_onset" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_recording_closure_does_not_block_gl_or_extend_deadline" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_cancel_before_onset_has_no_started_or_finished_and_joins_cleanup" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_idle_failure_cannot_be_promoted_to_stopped" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_late_stop_keeps_scheduled_producer_cutoff[False]" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_late_stop_keeps_scheduled_producer_cutoff[True]" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_cleanup_keeps_graphics_until_capture_cancellation_is_confirmed" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_delayed_clipping_diagnostics_drain_before_finished_with_original_group[False]" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_delayed_clipping_diagnostics_drain_before_finished_with_original_group[True]" time="0.003" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_timing_counts_actual_submissions_and_epochs_without_attempts" time="0.002" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_cleanup_retains_prior_trial_results_and_unscheduled_output_absence" time="0.002" /><testcase classname="tests.visual_stimulus.test_lifecycle" name="test_idle_wakeup_tracks_native_progress_without_counting_idle_as_stall" time="0.002" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recipe_publication_is_precomputed_and_never_overwrites" time="0.012" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_worker_copies_frames_and_prioritizes_evidence" time="0.008" /><testcase classname="tests.visual_stimulus.test_recording" name="test_rawvideo_abi_flips_rows_and_clears_packed_x_bits[rgba8_bottom_up-downUP!!-UP!!down]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_rawvideo_abi_flips_rows_and_clears_packed_x_bits[r10g10b10a2_le_bottom_up-\x01\x02\x03\xff\x04\x05\x06\xc0-\x04\x05\x06\x00\x01\x02\x03?]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_evidence_pending_budget_fails_instead_of_growing" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_session_cancel_before_header_reconciles_process_without_output" time="0.007" /><testcase classname="tests.visual_stimulus.test_recording" name="test_empty_review_completion_requires_clean_encoder_exit_and_exact_absence" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_video_presence_and_exit_are_insufficient_without_creator_identity" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_pending_capture_remains_owned_until_gl_cancellation_is_confirmed" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_capture_exception_still_queues_required_render_evidence" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_feedback_evidence_follows_group_and_records_hold_transitions" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_clipping_evidence_records_empty_coverage_and_exact_group_output" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_evidence_queue_runs_while_overlapped_encoder_write_is_pending" time="0.006" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[False-False-True-None-True]" time="0.004" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[False-True-False-None-False]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[False-True-True-None-True]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[False-True-True-False-False]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[False-True-False-True-True]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[True-False-True-None-True]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[True-True-False-None-False]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[True-True-True-None-True]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[True-True-True-False-False]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_requires_exact_child_and_session_release[True-True-False-True-True]" time="0.000" /><testcase classname="tests.visual_stimulus.test_recording" name="test_recording_cleanup_retains_pending_capture_and_prior_releases" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_linear_rate_integral_and_keyframe_evaluation" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_instance_absence_pauses_motion_and_return_reanchors" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_off_axis_projection_and_float_color_boundaries" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_projected_layer_vertices_are_retained_as_exact_shader_words" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_engine_freezes_exact_provider_evidence_for_recording" time="0.002" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_arena_state_snapshot_has_no_planar_appearance_requirements" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_arena_model_and_physical_projection_are_finite_and_pose_sensitive" time="0.002" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_clipping_diagnostic_reservation_and_flag_decode_are_bounded" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_gpu_diagnostic_ring_preserves_group_order_across_slot_reuse" time="0.000" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_scene_dispatch_draws_arena_before_layers_and_records_model_uniform" time="0.003" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_live_layer_skips_unmapped_surface" time="0.002" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_native_submission_orders_marker_last_and_preserves_failed_attempt" time="0.003" /><testcase classname="tests.visual_stimulus.test_rendering" name="test_native_failed_gpu_release_keeps_context_for_cleanup_retry" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_resource_budget_replacement_is_atomic" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_arena_gpu_budget_covers_generated_attributes_and_both_mip_chains" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_glb_reader_rejects_malformed_or_unbounded_container" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_builtin_shader_layouts_cover_each_instance_without_binding_collisions" time="0.002" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_cursor_uses_pts_intervals_and_preserves_loop_remainder" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_pts_are_normalized_to_the_first_presentation_timestamp" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_ffv1_configuration_record_version_is_exactly_three" time="0.001" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_cursor_holds_the_final_valid_frame_without_overshoot" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_cursor_changes_end_behavior_without_resetting_playback_generation" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_session_registers_and_selects_each_incompatible_asset_variant" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_bounded_video_worker_hands_off_a_leased_exact_frame_off_render_thread" time="0.001" /><testcase classname="tests.visual_stimulus.test_resources" name="test_glb_indexed_unlit_geometry_and_sampler_sources_are_preserved" time="0.001" /><testcase classname="tests.visual_stimulus.test_resources" name="test_glb_rejects_out_of_bounds_indices_and_repeated_scene_nodes" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_glb_reserves_workspace_before_decoding_accessors" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_png_header_rejects_animated_content_before_pixel_allocation" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_invalid_calibration_releases_source_and_parse_workspace" time="0.006" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_cursor_reset_restarts_loop_clock_and_releases_final_hold" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_delivery_coalesces_requests_but_rejects_stale_content[request]" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_delivery_coalesces_requests_but_rejects_stale_content[frame]" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_delivery_coalesces_requests_but_rejects_stale_content[generation]" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_delivery_coalesces_requests_but_rejects_stale_content[loop]" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_worker_discards_decode_from_before_cursor_reset" time="0.001" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_registration_sums_mixed_frame_sizes_atomically[widths0-32-128-2]" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_registration_sums_mixed_frame_sizes_atomically[widths1-64-96-2]" time="0.000" /><testcase classname="tests.visual_stimulus.test_resources" name="test_video_registration_sums_mixed_frame_sizes_atomically[widths2-32-96-3]" time="0.000" /><testcase classname="tests.visual_stimulus.test_transport" name="test_authenticated_coordinator_renderer_replay_and_stale_generation" time="0.012" /><testcase classname="tests.visual_stimulus.test_transport" name="test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state" time="0.013" /><testcase classname="tests.visual_stimulus.test_transport" name="test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial" time="0.011" /><testcase classname="tests.visual_stimulus.test_transport" name="test_completed_worker_outcome_survives_report_receipt_loss" time="0.002" /><testcase classname="tests.visual_stimulus.test_windows_resources" name="test_protected_source_denies_mutation_until_all_reader_owners_close" time="0.009" /></testsuite></testsuites>

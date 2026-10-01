@@ -1,0 +1,10 @@
+
+Name   : ffmpeg.exe
+Source : C:\Dev\software\ffmpeg-4.3.2-2021\bin\ffmpeg.exe
+
+Name   : ffprobe.exe
+Source : C:\Dev\software\ffmpeg-4.3.2-2021\bin\ffprobe.exe
+
+Name   : nvcc.exe
+Source : C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\bin\nvcc.exe
+

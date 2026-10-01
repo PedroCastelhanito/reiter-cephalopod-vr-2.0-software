@@ -28,6 +28,20 @@ the peer. Input format/throughput feasibility remains a rig check (A08).
 
 ## Ownership ledger and storage synchronization
 
+Controller reservation ownership follows [E04](../../docs/architecture/supervisor.md#e04).
+Windows directory rename cannot proceed while a descendant file handle is open,
+even when the lock handle permits delete sharing. All Windows reservation acquire
+and recovery-open paths therefore retain a shared canonical-namespace named-object
+guard before directory creation/checks and the byte lock. The guard uses existing
+handle-existence semantics, not a thread-owned mutex wait/release. Normalize the
+canonical case-insensitive path before hashing its guard name. During cancellation,
+retain that guard while closing the descriptor, quarantining the namespace and
+finishing cleanup/bookkeeping before releasing ownership;
+failure preserves the guard and unfinished marker until explicit release. Process
+death releases both OS ownership mechanisms. Records keep logical canonical paths;
+native file operations use extended-length paths when required.
+The platform restriction is documented in [Microsoft's rename rules](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_rename_information#remarks).
+
 The [shared resource ledger](../native-transport.md) owns native transfer/release
 mechanics. [Frame buffers](frame-buffers.md) supplies acquisition's layouts and
 Win32 named event binding; SDK views and recording resources register in the same

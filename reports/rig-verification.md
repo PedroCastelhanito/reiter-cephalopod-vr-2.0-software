@@ -1,5 +1,18 @@
 # Rig verification — outstanding checks
 
+Latest execution: [2026-10-01 Windows audit](rig-audit-2026-10-01/README.md),
+baseline HEAD `826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs.
+Final all-marker suite under the actual High-integrity token, using a dedicated
+workspace basetemp: 759 passed, zero skipped or failed. This ran the four previously
+privilege-skipped symlink cases; the two POSIX mode tests were explicitly removed,
+and native broad-DACL rejection remains covered. The earlier Medium-token
+default-temp snapshot (755 passed, 6 skipped) is historical. Native ring binding,
+executing-interpreter identity and reservation/recovery repairs pass focused
+regressions. These are bounded evidence, not full-workload acceptance. Encoder
+compatibility item 5 remains owner-deferred and unchanged. GUI/SpikeGLX remain
+unimplemented under ARCH-001; deferred scientific inputs remain unset. No camera
+settings, projection, wiring or firmware changed.
+
 Latest development handoff:
 [hardware evidence and implementation constraints](rig-handoff-2026-09-29/README.md).
 Camera roles/rates are now owner-confirmed (behavioral 40065509 at 30 Hz; tracking
@@ -51,7 +64,7 @@ tracked separately from installation discovery and dependency smoke checks.
 | Consumer precision and encoder compatibility | Verify native unpacking/alignment and source-depth RGB/grayscale preparation under the [pixel contract](../contracts/acquisition/pixel-processing.md), including high-bit-depth sources. Confirm the actual selected codec/output bit depth and color representation; no silent lower-depth conversion or widened 8-bit data labelled original-depth. Preview alone uses the approved display scaling. Keep lossy compression quality separate from representation bit depth. Verify the explicit per-camera output pixel format under A08, including detection of encoder format substitution. Check requested versus actual range/matrix conversion and output tags using known pixel values; tags alone do not prove the conversion. Verify that lower-depth output settings reject higher-depth sources until explicitly compatible arguments are provided. |
 | Basler conversion mappings | Exercise the declared [SDK registry](../contracts/acquisition/sdk-mappings.md): native packing/stride, Bayer patterns and edges, private buffer lifetime, effective depth and preview scaling. Record actual device/SDK support; unsupported mappings must fail explicitly. |
 | Windows ownership and cleanup | Exercise the shared [acquisition/Visual Stimulus launch contract](../contracts/windows-launch.md) and acquisition [I/O/sync contracts](../contracts/acquisition/windows-resources.md), including owner death at every launch stage, partial handle transfer, blocked pipe/stdin cancellation, process identity reuse, encoder sharing and failed storage sync. Require truthful cleanup blockers. |
-| Windows venv interpreter process tree | Run `tools\test_on_rig.ps1` and read `interpreter-process-tree.log`: a venv `.venv\Scripts\python.exe` may be a redirector that starts the base interpreter as a child. Two processes with different `image` paths means the launcher's exact-image check (`retain_exact(..., str(interpreter))`) and per-launch job membership would see the redirector and base interpreter as a pair; one process means no issue. Diagnostic only; any launcher/jobs fix is deferred until this evidence exists. |
+| Windows venv interpreter process tree | Prepared-image native regression now verifies one live job member, exact launched/executing PID and OS image, fresh venv imports and inherited bootstrap. Verify real managed registration and shutdown after GUI implementation; focused evidence does not establish full application behavior. |
 | Runtime finalization boundary | Under A07/E05, verify bounded online accounting, encoder finalization, sync and close without a separate file-validation pass. Measure drain/closure delay before the next trial. Output-content inspection belongs to external post hoc or development verification, never an automatic runtime validator. |
 | Empty camera video | Verify the all-dropped case with actual input/muxer behavior: complete frame log with its completion line, truthful artifact presence/closure and grouped warning. Reject encoder failure disguised as empty success, missing-created artifacts and unknown closure; retain Interrupted/health outcomes. |
 | MCU host boundary binding | Verify grouped ON/OFF dispatch at host T/end, reserved-channel drain, command/reply timestamps, Abort during an outstanding request and late OFF evidence. Validate report deadlines independently from physical pulse/exposure delay; no early compensation or shifted recording interval. |
@@ -363,8 +376,9 @@ separate full-load acceptance procedures.
 
 ## Tracking native/runtime handoff (2026-09-30)
 
-Tracking code and lightweight local tests are present; native execution and scientific
-acceptance remain pending. Follow the executable build/smoke-test commands and explicit
+Tracking code and lightweight local tests are present; scientific/full-workload
+acceptance remains pending. Follow the executable build/smoke-test commands and explicit
 procedures in [Tracking status](tracking.md#windows-execution-handoff). The API 2.0 shim
-is not compiled or GPU-validated on the development machine. Preserve the distinction
+was not compiled on the development machine at that handoff. The 2026-10-01 rig
+audit built it and passed the bounded native smoke; preserve the distinction
 between automated Windows checks and full camera/model/closed-loop experiment evidence.

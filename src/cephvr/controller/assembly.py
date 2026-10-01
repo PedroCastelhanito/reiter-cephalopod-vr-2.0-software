@@ -440,6 +440,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         incident_state=i.incident_state,
         limits=i.limit_state,
         clock=i.clock,
+        control_operations=control_operations,
         publisher=publisher,
         reservation_started=i.reservation_started,
         spikeglx=i.spikeglx,

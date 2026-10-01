@@ -1,6 +1,6 @@
 # CephVR2.0 architecture
 
-Last updated: 2026-09-30
+Last updated: 2026-10-01
 
 This overview and the linked records in `docs/architecture/` form the authoritative
 architecture. Each decision has one home; this register locates it by permanent ID.
@@ -64,7 +64,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 28 |
-| <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 86 |
+| <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 87 |
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 76 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 57 |

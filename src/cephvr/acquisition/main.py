@@ -38,6 +38,7 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.bootstrap import close_handle, read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs
+from cephvr.platform.windows.python_runtime import resolve_python_executable
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
@@ -109,7 +110,7 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
         supervisor_token=bootstrap.supervisor_token,
         supervisor_endpoint=f"127.0.0.1:{bootstrap.supervisor_port}",
         coordinator_endpoint=endpoint,
-        python_executable=Path(sys.executable),
+        python_executable=resolve_python_executable(Path(sys.executable)),
         max_message_bytes=bootstrap.max_message_bytes,
         register_peer=lambda process, token: credentials.__setitem__(
             (process.role, process.generation), token
@@ -127,7 +128,9 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
         heartbeat_interval_ns=bootstrap.heartbeat_interval_ns,
         health_silence_ns=bootstrap.health_silence_ns,
         bootstrap=bootstrap_port,
-        executables=PythonWorkerExecutables(Path(sys.executable)),
+        executables=PythonWorkerExecutables(
+            resolve_python_executable(Path(sys.executable))
+        ),
         supervisor=supervisor,
         cleanup_complete=_worker_cleanup_complete,
     )

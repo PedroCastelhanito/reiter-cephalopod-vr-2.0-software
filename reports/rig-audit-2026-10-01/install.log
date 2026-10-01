@@ -1,0 +1,176 @@
+Obtaining file:///C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Collecting grpcio<1.85,>=1.84.0 (from cephvr==2.0.0.dev0)
+  Downloading grpcio-1.84.0-cp311-cp311-win_amd64.whl.metadata (3.9 kB)
+Collecting protobuf<8,>=7.36.2 (from cephvr==2.0.0.dev0)
+  Downloading protobuf-7.36.2-cp310-abi3-win_amd64.whl.metadata (595 bytes)
+Collecting tzdata>=2026.4 (from cephvr==2.0.0.dev0)
+  Downloading tzdata-2026.4-py2.py3-none-any.whl.metadata (1.4 kB)
+Collecting tzlocal<6,>=5.4.4 (from cephvr==2.0.0.dev0)
+  Downloading tzlocal-5.4.4-py3-none-any.whl.metadata (7.7 kB)
+Collecting pydantic<3,>=2.10 (from cephvr==2.0.0.dev0)
+  Downloading pydantic-2.13.5-py3-none-any.whl.metadata (110 kB)
+     -------------------------------------- 110.2/110.2 kB 1.3 MB/s eta 0:00:00
+Collecting numpy==2.4.4 (from cephvr==2.0.0.dev0)
+  Downloading numpy-2.4.4-cp311-cp311-win_amd64.whl.metadata (6.6 kB)
+Collecting opencv-python-headless==4.13.0.92 (from cephvr==2.0.0.dev0)
+  Downloading opencv_python_headless-4.13.0.92-cp37-abi3-win_amd64.whl.metadata (20 kB)
+Collecting pypylon==26.3.1 (from cephvr==2.0.0.dev0)
+  Downloading pypylon-26.3.1-cp39-abi3-win_amd64.whl.metadata (9.4 kB)
+Collecting onnx<2,>=1.20 (from cephvr==2.0.0.dev0)
+  Downloading onnx-1.23.1-cp311-cp311-win_amd64.whl.metadata (8.7 kB)
+Collecting onnxruntime-gpu<2,>=1.23 (from cephvr==2.0.0.dev0)
+  Downloading onnxruntime_gpu-1.30.0-cp311-cp311-win_amd64.whl.metadata (6.0 kB)
+Collecting PyOpenGL<4,>=3.1.7 (from cephvr==2.0.0.dev0)
+  Downloading pyopengl-3.1.10-py3-none-any.whl.metadata (3.3 kB)
+Collecting moderngl==5.12.0 (from cephvr==2.0.0.dev0)
+  Downloading moderngl-5.12.0-cp311-cp311-win_amd64.whl.metadata (8.0 kB)
+Collecting glfw==2.10.0 (from cephvr==2.0.0.dev0)
+  Downloading glfw-2.10.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38.py39.py310.py311.py312.py313.py314-none-win_amd64.whl.metadata (5.4 kB)
+Collecting glcontext==3.0.0 (from cephvr==2.0.0.dev0)
+  Downloading glcontext-3.0.0-cp311-cp311-win_amd64.whl.metadata (6.2 kB)
+Collecting av==16.1.0 (from cephvr==2.0.0.dev0)
+  Downloading av-16.1.0-cp311-cp311-win_amd64.whl.metadata (4.7 kB)
+Collecting imagecodecs==2025.3.30 (from cephvr==2.0.0.dev0)
+  Downloading imagecodecs-2025.3.30-cp311-cp311-win_amd64.whl.metadata (20 kB)
+Collecting tifffile==2025.5.10 (from cephvr==2.0.0.dev0)
+  Downloading tifffile-2025.5.10-py3-none-any.whl.metadata (31 kB)
+Collecting pyserial==3.5 (from cephvr==2.0.0.dev0)
+  Downloading pyserial-3.5-py2.py3-none-any.whl.metadata (1.6 kB)
+Collecting build==1.6.1 (from cephvr==2.0.0.dev0)
+  Downloading build-1.6.1-py3-none-any.whl.metadata (5.6 kB)
+Collecting grpcio-tools==1.84.0 (from cephvr==2.0.0.dev0)
+  Downloading grpcio_tools-1.84.0-cp311-cp311-win_amd64.whl.metadata (5.5 kB)
+Collecting mypy==2.3.1 (from cephvr==2.0.0.dev0)
+  Downloading mypy-2.3.1-cp311-cp311-win_amd64.whl.metadata (2.4 kB)
+Collecting pytest==9.1.1 (from cephvr==2.0.0.dev0)
+  Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+Collecting pytest-asyncio==1.4.0 (from cephvr==2.0.0.dev0)
+  Downloading pytest_asyncio-1.4.0-py3-none-any.whl.metadata (4.1 kB)
+Collecting ruff==0.16.9 (from cephvr==2.0.0.dev0)
+  Downloading ruff-0.16.9-py3-none-win_amd64.whl.metadata (21 kB)
+Requirement already satisfied: setuptools>=77.0.3 in c:\dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\lib\site-packages (from cephvr==2.0.0.dev0) (79.0.1)
+Collecting types-protobuf==7.35.1.20260906 (from cephvr==2.0.0.dev0)
+  Downloading types_protobuf-7.35.1.20260906-py3-none-any.whl.metadata (2.3 kB)
+Collecting packaging>=24.0 (from build==1.6.1->cephvr==2.0.0.dev0)
+  Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pyproject_hooks (from build==1.6.1->cephvr==2.0.0.dev0)
+  Downloading pyproject_hooks-1.3.3-py3-none-any.whl.metadata (1.3 kB)
+Collecting colorama (from build==1.6.1->cephvr==2.0.0.dev0)
+  Downloading colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+Collecting typing_extensions>=4.6.0 (from mypy==2.3.1->cephvr==2.0.0.dev0)
+  Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting mypy_extensions>=1.0.0 (from mypy==2.3.1->cephvr==2.0.0.dev0)
+  Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+Collecting pathspec>=1.0.0 (from mypy==2.3.1->cephvr==2.0.0.dev0)
+  Downloading pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+Collecting librt>=0.13.0 (from mypy==2.3.1->cephvr==2.0.0.dev0)
+  Downloading librt-0.16.0-cp311-cp311-win_amd64.whl.metadata (1.3 kB)
+Collecting ast-serialize<1.0.0,>=0.6.0 (from mypy==2.3.1->cephvr==2.0.0.dev0)
+  Downloading ast_serialize-0.11.2-cp39-abi3-win_amd64.whl.metadata (1.4 kB)
+Collecting iniconfig>=1.0.1 (from pytest==9.1.1->cephvr==2.0.0.dev0)
+  Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest==9.1.1->cephvr==2.0.0.dev0)
+  Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest==9.1.1->cephvr==2.0.0.dev0)
+  Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting ml_dtypes>=0.5.4 (from onnx<2,>=1.20->cephvr==2.0.0.dev0)
+  Downloading ml_dtypes-0.6.0-cp311-cp311-win_amd64.whl.metadata (8.8 kB)
+Collecting flatbuffers (from onnxruntime-gpu<2,>=1.23->cephvr==2.0.0.dev0)
+  Downloading flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)
+Collecting annotated-types>=0.6.0 (from pydantic<3,>=2.10->cephvr==2.0.0.dev0)
+  Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.46.5 (from pydantic<3,>=2.10->cephvr==2.0.0.dev0)
+  Downloading pydantic_core-2.46.5-cp311-cp311-win_amd64.whl.metadata (6.7 kB)
+Collecting typing-inspection>=0.4.2 (from pydantic<3,>=2.10->cephvr==2.0.0.dev0)
+  Downloading typing_inspection-0.4.4-py3-none-any.whl.metadata (2.6 kB)
+Downloading av-16.1.0-cp311-cp311-win_amd64.whl (31.8 MB)
+   ---------------------------------------- 31.8/31.8 MB 15.6 MB/s eta 0:00:00
+Downloading build-1.6.1-py3-none-any.whl (31 kB)
+Downloading glcontext-3.0.0-cp311-cp311-win_amd64.whl (12 kB)
+Downloading glfw-2.10.0-py2.py27.py3.py30.py31.py32.py33.py34.py35.py36.py37.py38.py39.py310.py311.py312.py313.py314-none-win_amd64.whl (559 kB)
+   ---------------------------------------- 559.5/559.5 kB 8.7 MB/s eta 0:00:00
+Downloading grpcio_tools-1.84.0-cp311-cp311-win_amd64.whl (1.2 MB)
+   ---------------------------------------- 1.2/1.2 MB 15.2 MB/s eta 0:00:00
+Downloading imagecodecs-2025.3.30-cp311-cp311-win_amd64.whl (28.9 MB)
+   ---------------------------------------- 28.9/28.9 MB 7.5 MB/s eta 0:00:00
+Downloading moderngl-5.12.0-cp311-cp311-win_amd64.whl (108 kB)
+   ---------------------------------------- 108.3/108.3 kB ? eta 0:00:00
+Downloading mypy-2.3.1-cp311-cp311-win_amd64.whl (11.1 MB)
+   ---------------------------------------- 11.1/11.1 MB 16.8 MB/s eta 0:00:00
+Downloading numpy-2.4.4-cp311-cp311-win_amd64.whl (12.6 MB)
+   ---------------------------------------- 12.6/12.6 MB 14.9 MB/s eta 0:00:00
+Downloading opencv_python_headless-4.13.0.92-cp37-abi3-win_amd64.whl (40.1 MB)
+   ---------------------------------------- 40.1/40.1 MB 14.5 MB/s eta 0:00:00
+Downloading pypylon-26.3.1-cp39-abi3-win_amd64.whl (110.5 MB)
+   ---------------------------------------- 110.5/110.5 MB 2.8 MB/s eta 0:00:00
+Downloading pyserial-3.5-py2.py3-none-any.whl (90 kB)
+   ---------------------------------------- 90.6/90.6 kB ? eta 0:00:00
+Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+   --------------------------------------- 386.5/386.5 kB 12.1 MB/s eta 0:00:00
+Downloading pytest_asyncio-1.4.0-py3-none-any.whl (16 kB)
+Downloading ruff-0.16.9-py3-none-win_amd64.whl (10.6 MB)
+   ---------------------------------------- 10.6/10.6 MB 13.9 MB/s eta 0:00:00
+Downloading tifffile-2025.5.10-py3-none-any.whl (226 kB)
+   ---------------------------------------- 226.5/226.5 kB 7.0 MB/s eta 0:00:00
+Downloading types_protobuf-7.35.1.20260906-py3-none-any.whl (86 kB)
+   ---------------------------------------- 86.4/86.4 kB 4.8 MB/s eta 0:00:00
+Downloading grpcio-1.84.0-cp311-cp311-win_amd64.whl (5.3 MB)
+   ---------------------------------------- 5.3/5.3 MB 13.4 MB/s eta 0:00:00
+Downloading onnx-1.23.1-cp311-cp311-win_amd64.whl (7.9 MB)
+   ---------------------------------------- 7.9/7.9 MB 14.4 MB/s eta 0:00:00
+Downloading onnxruntime_gpu-1.30.0-cp311-cp311-win_amd64.whl (160.5 MB)
+   --------------------------------------- 160.5/160.5 MB 13.9 MB/s eta 0:00:00
+Downloading protobuf-7.36.2-cp310-abi3-win_amd64.whl (456 kB)
+   --------------------------------------- 456.5/456.5 kB 14.4 MB/s eta 0:00:00
+Downloading pydantic-2.13.5-py3-none-any.whl (472 kB)
+   ---------------------------------------- 472.6/472.6 kB 9.8 MB/s eta 0:00:00
+Downloading pydantic_core-2.46.5-cp311-cp311-win_amd64.whl (2.0 MB)
+   ---------------------------------------- 2.0/2.0 MB 12.9 MB/s eta 0:00:00
+Downloading pyopengl-3.1.10-py3-none-any.whl (3.2 MB)
+   ---------------------------------------- 3.2/3.2 MB 17.0 MB/s eta 0:00:00
+Downloading tzdata-2026.4-py2.py3-none-any.whl (347 kB)
+   --------------------------------------- 347.5/347.5 kB 10.9 MB/s eta 0:00:00
+Downloading tzlocal-5.4.4-py3-none-any.whl (18 kB)
+Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+Downloading ast_serialize-0.11.2-cp39-abi3-win_amd64.whl (1.2 MB)
+   ---------------------------------------- 1.2/1.2 MB 12.3 MB/s eta 0:00:00
+Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Downloading librt-0.16.0-cp311-cp311-win_amd64.whl (125 kB)
+   ---------------------------------------- 125.1/125.1 kB 2.4 MB/s eta 0:00:00
+Downloading ml_dtypes-0.6.0-cp311-cp311-win_amd64.whl (433 kB)
+   --------------------------------------- 433.7/433.7 kB 13.7 MB/s eta 0:00:00
+Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+Downloading packaging-26.3-py3-none-any.whl (129 kB)
+   ---------------------------------------- 130.0/130.0 kB ? eta 0:00:00
+Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+   ---------------------------------------- 57.3/57.3 kB 2.9 MB/s eta 0:00:00
+Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+   ---------------------------------------- 1.3/1.3 MB 13.2 MB/s eta 0:00:00
+Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+   ---------------------------------------- 45.6/45.6 kB 2.2 MB/s eta 0:00:00
+Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+Downloading pyproject_hooks-1.3.3-py3-none-any.whl (10 kB)
+Checking if build backend supports build_editable: started
+Checking if build backend supports build_editable: finished with status 'done'
+Building wheels for collected packages: cephvr
+  Building editable for cephvr (pyproject.toml): started
+  Building editable for cephvr (pyproject.toml): finished with status 'done'
+  Created wheel for cephvr: filename=cephvr-2.0.0.dev0-0.editable-py3-none-any.whl size=3669 sha256=5052b7cd52a08606a92d16622c50743a7406177abd0d6ed354a253ada10bdb23
+  Stored in directory: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.audit-tmp\pip-ephem-wheel-cache-ca8dzj_e\wheels\1f\77\f1\d493e70cb8d6937567d0a7613b3b5bb92b668d652100a0e6d3
+Successfully built cephvr
+Installing collected packages: pyserial, pypylon, PyOpenGL, glfw, glcontext, flatbuffers, tzdata, typing_extensions, types-protobuf, ruff, pyproject_hooks, pygments, protobuf, pluggy, pathspec, packaging, numpy, mypy_extensions, moderngl, librt, iniconfig, colorama, av, ast-serialize, annotated-types, tzlocal, typing-inspection, tifffile, pytest, pydantic-core, opencv-python-headless, onnxruntime-gpu, mypy, ml_dtypes, imagecodecs, grpcio, build, pytest-asyncio, pydantic, onnx, grpcio-tools, cephvr
+Successfully installed PyOpenGL-3.1.10 annotated-types-0.8.0 ast-serialize-0.11.2 av-16.1.0 build-1.6.1 cephvr-2.0.0.dev0 colorama-0.4.6 flatbuffers-25.12.19 glcontext-3.0.0 glfw-2.10.0 grpcio-1.84.0 grpcio-tools-1.84.0 imagecodecs-2025.3.30 iniconfig-2.3.0 librt-0.16.0 ml_dtypes-0.6.0 moderngl-5.12.0 mypy-2.3.1 mypy_extensions-1.1.0 numpy-2.4.4 onnx-1.23.1 onnxruntime-gpu-1.30.0 opencv-python-headless-4.13.0.92 packaging-26.3 pathspec-1.1.1 pluggy-1.6.0 protobuf-7.36.2 pydantic-2.13.5 pydantic-core-2.46.5 pygments-2.21.0 pyproject_hooks-1.3.3 pypylon-26.3.1 pyserial-3.5 pytest-9.1.1 pytest-asyncio-1.4.0 ruff-0.16.9 tifffile-2025.5.10 types-protobuf-7.35.1.20260906 typing-inspection-0.4.4 typing_extensions-4.16.0 tzdata-2026.4 tzlocal-5.4.4
+
+[notice] A new release of pip is available: 24.0 -> 26.2.1
+[notice] To update, run: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe -m pip install --upgrade pip

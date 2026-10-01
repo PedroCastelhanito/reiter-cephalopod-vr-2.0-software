@@ -24,6 +24,10 @@ from cephvr.platform.windows.jobs import (
     WindowsJobs,
     WindowsLaunchError,
 )
+from cephvr.platform.windows.python_runtime import (
+    module_arguments,
+    resolve_python_executable,
+)
 from cephvr.shared.clock import HostClockDescriptor
 from cephvr.supervisor.outbound import GrpcOutbound
 from cephvr.supervisor.registry import LaunchRegistry
@@ -65,7 +69,9 @@ async def launch_controller(
     # child and the launcher's outer job supplies the final backstop.
     child = inputs.native.launch_suspended(
         str(inputs.bootstrap["interpreter"]),
-        ["-m", "cephvr.controller.main", "--bootstrap-handle", str(pipe_read)],
+        module_arguments(
+            "cephvr.controller.main", ["--bootstrap-handle", str(pipe_read)]
+        ),
         [state.containment_job_name],
         (pipe_read, controller_control_handle),
     )
@@ -138,7 +144,7 @@ async def launch_role(
     role_read, role_write = create_bootstrap_pipe()
     role_child = inputs.native.launch_suspended(
         str(inputs.bootstrap["interpreter"]),
-        ["-m", module, "--bootstrap-handle", str(role_read)],
+        module_arguments(module, ["--bootstrap-handle", str(role_read)]),
         [state.containment_job_name],
         (role_read,),
     )
@@ -248,6 +254,9 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
         raise WindowsLaunchError(
             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
         )
+    bootstrap["interpreter"] = str(
+        resolve_python_executable(Path(str(bootstrap["interpreter"])))
+    )
     return required_modules
 
 

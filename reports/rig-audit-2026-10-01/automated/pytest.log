@@ -1,0 +1,1090 @@
+........................................................................ [  9%]
+........................................F............................... [ 19%]
+......................FFFF.............................................. [ 28%]
+....................FFFFF............................................... [ 38%]
+.............................................................F.....FF... [ 48%]
+F...s...........F.............................................sF........ [ 57%]
+....................................sFsssF....................F......... [ 67%]
+......................................F................................. [ 76%]
+................................................F....................... [ 86%]
+........................................................................ [ 96%]
+..............................                                           [100%]
+================================== FAILURES ===================================
+______ test_valid_backend_context_and_exact_scheduled_paths_are_accepted ______
+
+    def test_valid_backend_context_and_exact_scheduled_paths_are_accepted() -> None:
+        identity = _identity()
+        plans = _reservation(identity)
+        plans.validate("behavioral", identity)
+        prefix = Path("/recordings/trial")
+        schedule = acq.WorkerSchedule(
+            command=acq.WorkerCommand(
+                target=acq.WorkerContext(
+                    camera=camera.CAMERA_ROLE_BEHAVIORAL,
+                    work=control.WorkContext(
+                        trial=control.TrialContext(
+                            session=control.SessionContext(session_id=identity.session_id),
+                            trial_id=identity.trial_id,
+                            trial_number=identity.trial_number,
+                        )
+                    ),
+                )
+            ),
+            start_monotonic_ns=100,
+            end_monotonic_ns=200,
+            trial_file_prefix=str(prefix),
+            outputs=plans.outputs,
+        )
+        for item in schedule.outputs:
+            item.path = f"{prefix}_{item.output_tag}.{item.extension}"
+    
+>       assert resolve_recording_paths(plans, "behavioral", identity, schedule) == (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            Path("/recordings/trial_behavioral_cam.mp4"),
+            Path("/recordings/trial_behavioral_cam_frames.jsonl"),
+        )
+
+tests\acquisition\test_recording_paths.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+paths = RecordingPaths(outputs=(backend {
+  backend_name: "acquisition"
+  backend_generation: "5f244f67-b2e4-4e2d-b5cf-d8c2aa9...
+}
+output_tag: "behavioral_cam_frames"
+extension: "jsonl"
+), backend_generation='5f244f67-b2e4-4e2d-b5cf-d8c2aa9e9c48')
+role = 'behavioral'
+identity = RecordingIdentity(session_id='8443a43f-f102-4bd0-bc66-23cfc3003c89', trial_id='b0487de4-c8e7-47af-abf3-514327594ada', ...emantics: "raw"
+counter_width_bits: 0
+counter_wrap_semantics: "unknown"
+counter_unavailable_reason: "SDK unavailable"
+)
+schedule = command {
+  target {
+    work {
+      trial {
+        session {
+          session_id: "8443a43f-f102-4bd0-bc66-23cfc30...7de4-c8e7-47af-abf3-514327594ada"
+    trial_number: 1
+  }
+  output_tag: "behavioral_cam_frames"
+  extension: "jsonl"
+}
+
+
+    def resolve_recording_paths(
+        paths: RecordingPaths,
+        role: str,
+        identity: RecordingIdentity,
+        schedule: acq.WorkerSchedule,
+    ) -> tuple[Path, Path]:
+        if not schedule.HasField("command") or not schedule.command.HasField("target"):
+            raise RecordingFailure("ScheduleTrial lacks exact worker target context")
+        target = schedule.command.target
+        role_name = (
+            camera.CameraRole.Name(target.camera).lower().removeprefix("camera_role_")
+        )
+        if role_name != role:
+            raise RecordingFailure(
+                "scheduled camera role differs from prepared recording owner"
+            )
+        if target.work.WhichOneof("work") != "trial":
+            raise RecordingFailure("ScheduleTrial lacks exact trial work context")
+        work_trial = target.work.trial
+        if (
+            work_trial.trial_id != identity.trial_id
+            or work_trial.trial_number != identity.trial_number
+            or work_trial.session.session_id != identity.session_id
+        ):
+            raise RecordingFailure(
+                "ScheduleTrial work differs from prepared recording identity"
+            )
+        if not schedule.trial_file_prefix:
+            raise RecordingFailure("scheduled trial prefix is missing")
+        prefix = Path(schedule.trial_file_prefix)
+        if not prefix.is_absolute():
+>           raise RecordingFailure("trial prefix must be an authoritative absolute path")
+E           cephvr.acquisition.recording.session_contracts.RecordingFailure: trial prefix must be an authoritative absolute path
+
+src\cephvr\acquisition\recording\paths.py:93: RecordingFailure
+________ test_ring_publish_read_lap_reset_and_retirement_are_run_bound ________
+
+    def test_ring_publish_read_lap_reset_and_retirement_are_run_bound() -> None:
+        ring, _layout = _ring()
+        first_run, next_run = uuid4(), uuid4()
+>       ring.reset_quiescent(first_run, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() & FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) >> 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5ac1d3790>
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+>       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError
+______ test_ring_copy_recheck_reports_torn_when_slot_generation_changes _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC7E9FD0>
+
+    def test_ring_copy_recheck_reports_torn_when_slot_generation_changes(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        ring, _layout = _ring()
+        run_id = uuid4()
+>       ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() & FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) >> 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5dc7eb050>
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+>       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError
+_______ test_ring_read_does_not_accept_copy_if_run_changes_during_copy ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC413890>
+
+    def test_ring_read_does_not_accept_copy_if_run_changes_during_copy(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        ring, _layout = _ring()
+        run_id, replacement_run = uuid4(), uuid4()
+>       ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:181: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() & FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) >> 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5dc410b10>
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+>       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError
+_________ test_ring_retirement_cannot_be_cleared_by_stale_flag_update _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC62EE10>
+
+    def test_ring_retirement_cannot_be_cleared_by_stale_flag_update(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        ring, _layout = _ring()
+        run_id = uuid4()
+>       ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+
+tests\acquisition\test_worker_ring_regressions.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\buffers\ring.py:169: in reset_quiescent
+    if not self.input_sealed or self.retired:
+           ^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:147: in input_sealed
+    return bool(self._header_flags() & FLAG_INPUT_SEALED)
+                ^^^^^^^^^^^^^^^^^^^^
+src\cephvr\acquisition\buffers\ring.py:385: in _header_flags
+    return atomic_load_u64(self._buf(), 16) >> 32
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:44: in atomic_load_u64
+    value = int(_kernel32().InterlockedCompareExchange64(_word(buffer, offset), 0, 0))
+                ^^^^^^^^^^^
+src\cephvr\platform\windows\atomics.py:23: in _kernel32
+    kernel.InterlockedCompareExchange64.argtypes = [
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:389: in __getattr__
+    func = self.__getitem__(name)
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <WinDLL 'kernel32', handle 7ffe319c0000 at 0x2b5dc62c110>
+name_or_ordinal = 'InterlockedCompareExchange64'
+
+    def __getitem__(self, name_or_ordinal):
+>       func = self._FuncPtr((name_or_ordinal, self))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: function 'InterlockedCompareExchange64' not found
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\ctypes\__init__.py:394: AttributeError
+__________ test_setup_rejects_unset_or_invalid_recording_root[unset] __________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC8B1C90>
+kind = 'unset'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+>       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in0/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in0/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+>       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in0\\real' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in0\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError
+__________ test_setup_rejects_unset_or_invalid_recording_root[blank] __________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC7F8AD0>
+kind = 'blank'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+>       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in1/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in1/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+>       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in1\\real' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in1\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError
+________ test_setup_rejects_unset_or_invalid_recording_root[relative] _________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC650D50>
+kind = 'relative'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+>       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in2/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in2/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+>       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in2\\real' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in2\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError
+_________ test_setup_rejects_unset_or_invalid_recording_root[missing] _________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC8B0D50>
+kind = 'missing'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+>       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in3/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in3/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+>       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in3\\real' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in3\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError
+_________ test_setup_rejects_unset_or_invalid_recording_root[symlink] _________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC52ADD0>
+kind = 'symlink'
+
+    @pytest.mark.parametrize("kind", ["unset", "blank", "relative", "missing", "symlink"])
+    async def test_setup_rejects_unset_or_invalid_recording_root(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+>       link.symlink_to(real, target_is_directory=True)
+
+tests\controller\test_configuration_transactions.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in4/link')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_setup_rejects_unset_or_in4/real')
+target_is_directory = True
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+>       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in4\\real' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_setup_rejects_unset_or_in4\\link'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError
+__________ test_pointer_to_missing_namespace_is_cleared_with_notice ___________
+
+self = <cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC971ED0>
+
+    def cancel(self) -> None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+>               os.replace(self.session_directory, quarantine)
+E               PermissionError: [WinError 5] Access is denied: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_pointer_to_missing_namesp0\\20260929_experiment\\subject-000000' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_pointer_to_missing_namesp0\\20260929_experiment\\.subject-000000.519c8a29-8267-4539-a8c6-e130f0c8cf88.cleanup'
+
+src\cephvr\controller\metadata\reservation.py:376: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_pointer_to_missing_namesp0')
+
+    async def test_pointer_to_missing_namespace_is_cleared_with_notice(
+        tmp_path: Path,
+    ) -> None:
+        store, reservation, pointer = _pointer(tmp_path)
+>       reservation.cancel()
+
+tests\controller\test_startup_recovery.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC971ED0>
+
+    def cancel(self) -> None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+                os.replace(self.session_directory, quarantine)
+            except OSError as exc:
+>               raise StorageError(
+                    "session quarantine failed; unfinished marker retained"
+                ) from exc
+E               cephvr.controller.metadata.types.StorageError: session quarantine failed; unfinished marker retained
+
+src\cephvr\controller\metadata\reservation.py:378: StorageError
+______ test_intact_log_appends_only_observation_labeled_terminal_events _______
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_intact_log_appends_only_o0')
+
+    async def test_intact_log_appends_only_observation_labeled_terminal_events(
+        tmp_path: Path,
+    ) -> None:
+        log = _event("session_started") + _event("trial_started", trial_number=1)
+        store, pointer, path = _fixture(tmp_path, log)
+        recovery = StartupRecovery(
+            store,
+            current_generation=_id(),
+            timeout_ns=2_000_000_000,
+            max_operations=8,
+            max_bytes=65_536,
+        )
+    
+        async def query(_: str) -> svc.RecoverySnapshot:
+            return _snapshot(pointer)
+    
+        prompt = await recovery.prepare(query)
+        assert prompt is not None
+        assert "192.0.2.10:4142" in prompt.explanation
+        assert "known-run" in prompt.explanation
+        assert recovery.inspection is not None
+        assert recovery.inspection.spikeglx_stop_unconfirmed
+        assert recovery.inspection.spikeglx_endpoint == ("192.0.2.10", 4142)
+>       await recovery.recover()
+
+tests\controller\test_startup_recovery.py:331: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\recovery.py:343: in recover
+    await persist(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'RECOVERY-926e251e-4d23-43a6-8d8e-2a5112d23f4f.json'
+action = 'create_json'
+document = {'schema_version': 1, 'session_id': 'b9dba338-305c-4fe0-a01a-1e0b23aeec8a', 'prior_controller_generation': '1e9751ce-2e63-43eb-a1e3-9e014c52b57a', 'recovery_controller_generation': '4471779d-8268-4e58-a5f2-df9f8d59764a', ...}
+
+    async def persist(
+        name: str,
+        action: Literal["create_json", "append_jsonl_record"],
+        document: dict[str, object],
+    ) -> None:
+        command_id = str(uuid.uuid4())
+        request = MetadataWrite(
+            command_id=command_id,
+            path=writer.root / name,
+            action=action,
+            payload_utf8=json.dumps(
+                document, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+            ).encode(),
+            submitted_ns=host_time_ns(),
+            deadline_ns=deadline,
+            work=work,
+            operation=pb.OperationContext(command_id=command_id),
+        )
+        completion = await asyncio.wait_for(
+            asyncio.shield(asyncio.wrap_future(writer.submit(request))),
+            max(0, (deadline - host_time_ns()) / 1e9),
+        )
+        writer.retire(command_id)
+        if completion.state != "synced" or not completion.deadline_met:
+>           raise StorageError(
+                "recovery persistence failed or completed after its original deadline"
+            )
+E           cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline
+
+src\cephvr\controller\recovery.py:291: StorageError
+_________ test_incomplete_jsonl_is_preserved_and_reported_separately __________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_incomplete_jsonl_is_prese0')
+
+    async def test_incomplete_jsonl_is_preserved_and_reported_separately(
+        tmp_path: Path,
+    ) -> None:
+        log = _event("session_started") + b'{"event_type":"trial_started"'
+        store, pointer, path = _fixture(tmp_path, log)
+        recovery = StartupRecovery(
+            store,
+            current_generation=_id(),
+            timeout_ns=2_000_000_000,
+            max_operations=8,
+            max_bytes=65_536,
+        )
+    
+        async def query(_: str) -> svc.RecoverySnapshot:
+            return _snapshot(pointer)
+    
+        assert await recovery.prepare(query) is not None
+        assert recovery.inspection is not None
+        assert recovery.inspection.log_identity is None
+>       await recovery.recover()
+
+tests\controller\test_startup_recovery.py:364: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\recovery.py:343: in recover
+    await persist(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'RECOVERY-2a5d38c3-fd24-4e03-9eba-df225a297025.json'
+action = 'create_json'
+document = {'schema_version': 1, 'session_id': 'd4351daa-1911-4c25-80a7-84b95196d9d3', 'prior_controller_generation': '4074d0e0-3fa5-45cb-a735-24490dd6f8c6', 'recovery_controller_generation': '1c154c62-cae6-4f1d-8e0e-16eb84b4269d', ...}
+
+    async def persist(
+        name: str,
+        action: Literal["create_json", "append_jsonl_record"],
+        document: dict[str, object],
+    ) -> None:
+        command_id = str(uuid.uuid4())
+        request = MetadataWrite(
+            command_id=command_id,
+            path=writer.root / name,
+            action=action,
+            payload_utf8=json.dumps(
+                document, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+            ).encode(),
+            submitted_ns=host_time_ns(),
+            deadline_ns=deadline,
+            work=work,
+            operation=pb.OperationContext(command_id=command_id),
+        )
+        completion = await asyncio.wait_for(
+            asyncio.shield(asyncio.wrap_future(writer.submit(request))),
+            max(0, (deadline - host_time_ns()) / 1e9),
+        )
+        writer.retire(command_id)
+        if completion.state != "synced" or not completion.deadline_met:
+>           raise StorageError(
+                "recovery persistence failed or completed after its original deadline"
+            )
+E           cephvr.controller.metadata.types.StorageError: recovery persistence failed or completed after its original deadline
+
+src\cephvr\controller\recovery.py:291: StorageError
+______ test_reservation_exclusive_and_cancel_removes_only_attempt_paths _______
+
+self = <cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC8FC4D0>
+
+    def cancel(self) -> None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+>               os.replace(self.session_directory, quarantine)
+E               PermissionError: [WinError 5] Access is denied: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_reservation_exclusive_and0\\20260929_experiment\\subject-131415' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_reservation_exclusive_and0\\20260929_experiment\\.subject-131415.6b45c59c-4d56-409d-b920-5f99dfc0f6e4.cleanup'
+
+src\cephvr\controller\metadata\reservation.py:376: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_reservation_exclusive_and0')
+
+    def test_reservation_exclusive_and_cancel_removes_only_attempt_paths(
+        tmp_path: Path,
+    ) -> None:
+        first = _reservation(tmp_path)
+        assert first.acquire() == []
+        second = _reservation(tmp_path)
+        with pytest.raises(StorageError, match="locked"):
+            second.acquire()
+>       first.cancel()
+
+tests\controller\test_storage.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.controller.metadata.reservation.OutputReservation object at 0x000002B5DC8FC4D0>
+
+    def cancel(self) -> None:
+        if self._lock_fd is None:
+            raise StorageError("reservation is not held")
+        for child in (self.protocol_directory, self.spikeglx_directory):
+            if any(child.iterdir()):
+                raise StorageError(f"unexpected files block cleanup: {child}")
+        has_marker = self.marker.exists()
+        if has_marker:
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
+        for path in (self.spikeglx_directory, self.protocol_directory):
+            if path in self._created:
+                try:
+                    path.rmdir()
+                except OSError as exc:
+                    raise StorageError(
+                        f"unexpected files block cleanup: {path}"
+                    ) from exc
+        _sync(self.session_directory)
+        if self.session_directory in self._created:
+            quarantine = self.session_directory.with_name(
+                f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
+            )
+            try:
+                os.replace(self.session_directory, quarantine)
+            except OSError as exc:
+>               raise StorageError(
+                    "session quarantine failed; unfinished marker retained"
+                ) from exc
+E               cephvr.controller.metadata.types.StorageError: session quarantine failed; unfinished marker retained
+
+src\cephvr\controller\metadata\reservation.py:378: StorageError
+___________ test_owned_log_path_replacement_cannot_redirect_append ____________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_owned_log_path_replacemen0')
+
+    def test_owned_log_path_replacement_cannot_redirect_append(tmp_path: Path) -> None:
+        path = tmp_path / "SESSION_LOG.jsonl"
+        outside = tmp_path / "outside.jsonl"
+        outside.write_bytes(b"preserve\n")
+        writer = MetadataWriter(
+            tmp_path, max_operations=2, max_bytes=1024, clock=lambda: 1, session_id="s"
+        )
+        first = _write("one", path, "append_jsonl_record", b'{"event_type":"first"}', 1, 2)
+        assert writer.submit(first).result(3).state == "synced"
+>       path.rename(tmp_path / "moved.jsonl")
+
+tests\controller\test_storage.py:423: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_owned_log_path_replacemen0/SESSION_LOG.jsonl')
+target = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_owned_log_path_replacemen0/moved.jsonl')
+
+    def rename(self, target):
+        """
+        Rename this path to the target path.
+    
+        The target path may be absolute or relative. Relative paths are
+        interpreted relative to the current working directory, *not* the
+        directory of the Path object.
+    
+        Returns the new Path instance pointing to the target path.
+        """
+>       os.rename(self, target)
+E       PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_owned_log_path_replacemen0\\SESSION_LOG.jsonl' -> 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.audit-tmp\\pytest-of-ReiterU_PC\\pytest-0\\test_owned_log_path_replacemen0\\moved.jsonl'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1175: PermissionError
+____________ test_application_exit_receipt_is_durable_and_private _____________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_application_exit_receipt_0')
+
+    def test_application_exit_receipt_is_durable_and_private(tmp_path: Path) -> None:
+        runtime_root = tmp_path / "runtime"
+        store = RecoveryStore(runtime_root)
+        controller_generation, supervisor_generation = str(uuid4()), str(uuid4())
+        receipt = ApplicationExitReceipt(
+            controller_generation=controller_generation,
+            supervisor_generation=supervisor_generation,
+            observed_monotonic_ns=host_time_ns(),
+            all_owned_processes_absent=True,
+        )
+>       store.write_exit_receipt(receipt)
+
+tests\platform\test_windows_native_on_rig.py:240: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-762b4f93-4d28-4a89-b600-482394f2ed20.json.544b6ae3-bf8a-43ad-ac6f-3d9f81a16bdd.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"","controller_generation":"762b4f93-4d28-4a89-b600-482...rmat_version":1,"observed_monotonic_ns":67622843421200,"supervisor_generation":"0ef0629f-1bc9-4dda-8071-fd4ce0b3a291"}'
+
+    def create_owner_only(path: Path, payload: bytes) -> None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+>           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError
+______________ test_pointer_and_receipt_are_exact_and_immutable _______________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_pointer_and_receipt_are_e0')
+
+    def test_pointer_and_receipt_are_exact_and_immutable(tmp_path: Path) -> None:
+        store = RecoveryStore(tmp_path / "runtime")
+        pointer = UnfinishedSessionPointer(str(tmp_path / "session"), _id(), _id(), _id())
+        store.write_pointer(pointer)
+        store.write_pointer(pointer)
+        assert store.read_pointer() == pointer
+        with pytest.raises(RecoveryStoreError, match="another unfinished"):
+            store.write_pointer(
+                UnfinishedSessionPointer(str(tmp_path / "other"), _id(), _id(), _id())
+            )
+        receipt = ApplicationExitReceipt(
+            pointer.controller_generation, pointer.supervisor_generation, 101, True
+        )
+>       store.write_exit_receipt(receipt)
+
+tests\shared\test_recovery.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-54f0ece1-38c7-4ea5-ba5d-d314caad69fb.json.c2ec5e88-97f4-4c41-9d9a-9500d74cc98f.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"","controller_generation":"54f0ece1-38c7-4ea5-ba5d-d314caad69fb","format_version":1,"observed_monotonic_ns":101,"supervisor_generation":"fb6a69e1-7339-473e-a0b8-e16cb2d2cbf7"}'
+
+    def create_owner_only(path: Path, payload: bytes) -> None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+>           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError
+____________ test_receipt_carries_bounded_controller_channel_loss _____________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_receipt_carries_bounded_c0')
+
+    def test_receipt_carries_bounded_controller_channel_loss(tmp_path: Path) -> None:
+        store = RecoveryStore(tmp_path / "runtime")
+        receipt = ApplicationExitReceipt(
+            _id(), _id(), 101, True, controller_channel_loss="control line overflow"
+        )
+>       store.write_exit_receipt(receipt)
+
+tests\shared\test_recovery.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-ec840dd4-0034-4a83-930a-530de5830497.json.36f2378e-50d9-448f-a839-485cfc72fbef.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"control line overflow","controller_generation":"ec840d...830497","format_version":1,"observed_monotonic_ns":101,"supervisor_generation":"78229327-1765-40c8-bd79-e1ba800cf002"}'
+
+    def create_owner_only(path: Path, payload: bytes) -> None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+>           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError
+_________ test_prior_application_exit_requires_exact_private_receipt __________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_prior_application_exit_re0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B5DC66AFD0>
+
+    async def test_prior_application_exit_requires_exact_private_receipt(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        runtime, _, _, caller = make_runtime(tmp_path)
+        runtime_root = tmp_path / "runtime"
+        monkeypatch.setattr(
+            "cephvr.supervisor.recovery.default_runtime_root", lambda: runtime_root
+        )
+        previous_controller = str(uuid4())
+        previous_supervisor = str(uuid4())
+        query = wire.RecoveryQuery(
+            expected_supervisor=runtime.identity,
+            prior_controller_generation=previous_controller,
+        )
+        missing = await runtime.service.GetRecoveryState(query, caller)
+        assert not missing.HasField("prior_application_exit")
+>       RecoveryStore(runtime_root).write_exit_receipt(
+            ApplicationExitReceipt(
+                controller_generation=previous_controller,
+                supervisor_generation=previous_supervisor,
+                observed_monotonic_ns=host_time_ns(),
+                all_owned_processes_absent=True,
+            )
+        )
+
+tests\supervisor\test_recovery.py:195: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\shared\recovery.py:243: in write_exit_receipt
+    _publish(
+src\cephvr\shared\recovery.py:141: in _publish
+    create_owner_only(temporary, raw)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/py...runtime/recovery/.application-exit-19a50fe0-994c-41bf-8110-344b6ba55179.json.a77cdccc-2e60-4b48-ae34-f595aac5aca8.tmp')
+payload = b'{"all_owned_processes_absent":true,"controller_channel_loss":"","controller_generation":"19a50fe0-994c-41bf-8110-344...rmat_version":1,"observed_monotonic_ns":67623314427000,"supervisor_generation":"7b9cc65c-063d-4b31-b427-e63df50fda41"}'
+
+    def create_owner_only(path: Path, payload: bytes) -> None:
+        """Exclusively create and flush a private credential file without an ACL gap."""
+        if not isinstance(payload, bytes):
+            raise TypeError("credential payload must be bytes")
+        kernel, advapi = _apis()
+        attrs, backing = _creation_security(kernel, advapi)
+        _ = backing
+        handle = kernel.CreateFileW(
+            str(path),
+            GENERIC_WRITE,
+            0,
+            ctypes.byref(attrs),
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            None,
+        )
+        if handle == INVALID_HANDLE_VALUE or handle is None:
+>           raise WindowsSecurityError(f"CreateFileW failed: {ctypes.get_last_error()}")
+E           cephvr.platform.windows.security.WindowsSecurityError: CreateFileW failed: 3
+
+src\cephvr\platform\windows\security.py:372: WindowsSecurityError
+_________ test_supervisor_heartbeat_does_not_depend_on_status_change __________
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_supervisor_heartbeat_does0')
+
+    async def test_supervisor_heartbeat_does_not_depend_on_status_change(
+        tmp_path: Path,
+    ) -> None:
+        runtime, _, outbound, _ = make_runtime(tmp_path)
+        runtime.health.heartbeat_interval_ns = 1_000_000
+        loop = asyncio.create_task(runtime.health.heartbeat_loop())
+        await asyncio.sleep(0.01)
+        loop.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await loop
+>       assert len(outbound.heartbeats) >= 2
+E       assert 1 >= 2
+E        +  where 1 = len([source {\n  role: "supervisor"\n  generation: "601742a2-5ed3-400d-99d1-1b66b07b70f8"\n}\nsent_monotonic_ns: 67623689817600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: "supervisor control and monitor loop active"\n])
+E        +    where [source {\n  role: "supervisor"\n  generation: "601742a2-5ed3-400d-99d1-1b66b07b70f8"\n}\nsent_monotonic_ns: 67623689817600\nsession_phase: SESSION_PHASE_CONFIGURATION\nhealth_summary: "supervisor control and monitor loop active"\n] = <tests.supervisor.support.Outbound object at 0x000002B5DC85BA90>.heartbeats
+
+tests\supervisor\test_status.py:104: AssertionError
+______ test_real_movement_baseline_start_and_separate_stop_finish[True] _______
+
+rig_boundary = (<cephvr.tracking.runtime.TrackingRuntime object at 0x000002B5DCB760D0>, <tests.tracking.test_runtime.Clock object at ...'token'), ('x-cephvr-deadline-ns', '67654571778500')), <tests.tracking.test_runtime.Peer object at 0x000002B5DCB779D0>)
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.audit-tmp/pytest-of-ReiterU_PC/pytest-0/test_real_movement_baseline_st1')
+saving = True
+
+    @pytest.mark.parametrize("saving", [False, True])
+    async def test_real_movement_baseline_start_and_separate_stop_finish(
+        rig_boundary, tmp_path, saving
+    ):
+        runtime, clock, stub, preparation, metadata, peer = rig_boundary
+        setup, trial, _ = await setup_runtime(rig_boundary, tmp_path, saving=saving)
+        work = pb.WorkContext(trial=trial)
+        prepare = wire.PrepareTrialRequest(
+            command=command(runtime, work),
+            configuration_revision=1,
+            plan=pb.TrialPlan(context=trial, resolved_duration_ns=1_000_000_000),
+        )
+        if saving:
+            prepare.outputs.add(
+                output_key="tracking", backend=runtime.identity.backend, trial=trial
+            )
+            (tmp_path / "protocol-data").mkdir()
+        await stub.PrepareTrial(prepare, metadata=metadata)
+        await until(lambda: runtime.state.trial is not None)
+        start = clock() + 100_000_000
+        schedule = wire.ScheduleTrialRequest(
+            command=command(runtime, work),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=start + 1_000_000_000,
+            trial_file_prefix="trial",
+        )
+        if saving:
+            schedule.outputs.add(
+                output_key="tracking",
+                backend=runtime.identity.backend,
+                trial=trial,
+                path=str(tmp_path / "protocol-data/trial_tracking.jsonl"),
+            )
+        await stub.ScheduleTrial(schedule, metadata=metadata)
+        await until(lambda: runtime.state.schedule is not None)
+        release = wire.ReleaseTrialRequest(
+            command=command(runtime, work),
+            schedule_operation=pb.OperationContext(command_id=schedule.command.command_id),
+            start_monotonic_ns=start,
+            normal_end_monotonic_ns=schedule.normal_end_monotonic_ns,
+        )
+        await stub.ReleaseTrial(release, metadata=metadata)
+        await until(lambda: runtime.state.release is not None)
+        assert runtime.state.started is None
+        clock.now = start
+        await until(lambda: runtime.trials.native is not None)
+        runtime.engine.source.feed(0, start)
+        await until(lambda: runtime.state.started is not None)
+        assert (
+            runtime.state.started.first_required_activity[
+                0
+            ].device_evidence.tracking_evaluation.disposition
+            == "baseline_only"
+        )
+        clock.now = start + 10_000_000
+        runtime.engine.source.feed(1, clock())
+        await until(lambda: runtime.engine.movement.result_sequence == 2)
+        clock.now = schedule.normal_end_monotonic_ns
+        await until(lambda: runtime.state.finished is not None)
+        reports = [
+            r.WhichOneof("report") for m, r in peer.reports if m == "ReportLifecycle"
+        ]
+        assert (
+>           reports.index("started") < reports.index("stopped") < reports.index("finished")
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+E       ValueError: 'finished' is not in list
+
+tests\tracking\test_runtime.py:386: ValueError
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_recording_paths.py::test_valid_backend_context_and_exact_scheduled_paths_are_accepted
+FAILED tests/acquisition/test_worker_ring_regressions.py::test_ring_publish_read_lap_reset_and_retirement_are_run_bound
+FAILED tests/acquisition/test_worker_ring_regressions.py::test_ring_copy_recheck_reports_torn_when_slot_generation_changes
+FAILED tests/acquisition/test_worker_ring_regressions.py::test_ring_read_does_not_accept_copy_if_run_changes_during_copy
+FAILED tests/acquisition/test_worker_ring_regressions.py::test_ring_retirement_cannot_be_cleared_by_stale_flag_update
+FAILED tests/controller/test_configuration_transactions.py::test_setup_rejects_unset_or_invalid_recording_root[unset]
+FAILED tests/controller/test_configuration_transactions.py::test_setup_rejects_unset_or_invalid_recording_root[blank]
+FAILED tests/controller/test_configuration_transactions.py::test_setup_rejects_unset_or_invalid_recording_root[relative]
+FAILED tests/controller/test_configuration_transactions.py::test_setup_rejects_unset_or_invalid_recording_root[missing]
+FAILED tests/controller/test_configuration_transactions.py::test_setup_rejects_unset_or_invalid_recording_root[symlink]
+FAILED tests/controller/test_startup_recovery.py::test_pointer_to_missing_namespace_is_cleared_with_notice
+FAILED tests/controller/test_startup_recovery.py::test_intact_log_appends_only_observation_labeled_terminal_events
+FAILED tests/controller/test_startup_recovery.py::test_incomplete_jsonl_is_preserved_and_reported_separately
+FAILED tests/controller/test_storage.py::test_reservation_exclusive_and_cancel_removes_only_attempt_paths
+FAILED tests/controller/test_storage.py::test_owned_log_path_replacement_cannot_redirect_append
+FAILED tests/platform/test_windows_native_on_rig.py::test_application_exit_receipt_is_durable_and_private
+FAILED tests/shared/test_recovery.py::test_pointer_and_receipt_are_exact_and_immutable
+FAILED tests/shared/test_recovery.py::test_receipt_carries_bounded_controller_channel_loss
+FAILED tests/supervisor/test_recovery.py::test_prior_application_exit_requires_exact_private_receipt
+FAILED tests/supervisor/test_status.py::test_supervisor_heartbeat_does_not_depend_on_status_change
+FAILED tests/tracking/test_runtime.py::test_real_movement_baseline_start_and_separate_stop_finish[True]
+21 failed, 723 passed, 6 skipped, 1 deselected in 9.80s

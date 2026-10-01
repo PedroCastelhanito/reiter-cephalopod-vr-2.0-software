@@ -6,6 +6,7 @@
 param(
     [switch]$Install,
     [switch]$Rig,
+    [switch]$BuildWindowsNative,
     [switch]$BuildTrackingNative,
     [string]$NvofSdkRoot,
     [string]$OutputDirectory
@@ -14,7 +15,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $venv = Join-Path $repo '.venv'
-$python = Join-Path $venv 'Scripts\python.exe'
+$venvPython = Join-Path $venv 'Scripts\python.exe'
+$python = $venvPython
+$managedPython = Join-Path $venv 'Scripts\cephvr-python.exe'
 $runId = Get-Date -Format 'yyyyMMdd-HHmmss'
 $output = if ($OutputDirectory) {
     [IO.Path]::GetFullPath($OutputDirectory)
@@ -33,7 +36,10 @@ function Assert-Python311([string]$Executable, [string[]]$Prefix) {
 }
 
 if ($Install) {
-    if (Get-Command py -ErrorAction SilentlyContinue) {
+    if (Test-Path $venvPython) {
+        $base = $venvPython
+        $prefix = @()
+    } elseif (Get-Command py -ErrorAction SilentlyContinue) {
         $base = 'py'
         $prefix = @('-3.11')
     } elseif (Get-Command python -ErrorAction SilentlyContinue) {
@@ -43,26 +49,65 @@ if ($Install) {
         throw 'Install Python 3.11 (including its Windows launcher) before -Install.'
     }
     Assert-Python311 $base $prefix
-    if (-not (Test-Path $python)) {
+    if (-not (Test-Path $venvPython)) {
         & $base @prefix -m venv $venv
         if ($LASTEXITCODE -ne 0) { throw 'Python 3.11 virtual environment creation failed.' }
     }
-    Assert-Python311 $python @()
+    Assert-Python311 $venvPython @()
     $before = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $python -m pip install --editable '.[dev,acquisition,visual_stimulus,tracking]' 2>&1 |
+        & $venvPython -m pip install --editable '.[dev,acquisition,visual_stimulus,tracking]' 2>&1 |
             Tee-Object -FilePath (Join-Path $output 'install.log') | Out-Host
         $installExit = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $before
     }
     if ($installExit -ne 0) { throw "Dependency installation failed; see $output\install.log" }
-} elseif (-not (Test-Path $python)) {
-    throw "Missing $python. Run this script once with -Install (network/package access required)."
+    & $venvPython -m cephvr.platform.windows.python_runtime --prepare
+    if ($LASTEXITCODE -ne 0) { throw 'Preparing the managed CephVR Python executable failed.' }
+} elseif (-not (Test-Path $venvPython)) {
+    throw "Missing $venvPython. Run this script once with -Install (network/package access required)."
 }
 
+if (-not (Test-Path $managedPython)) { throw "Missing $managedPython. Run this script with -Install." }
 Assert-Python311 $python @()
+& $managedPython -m cephvr.platform.windows.python_runtime --verify
+if ($LASTEXITCODE -ne 0) { throw 'The prepared CephVR Python executable is stale; run -Install.' }
+
+function Get-CMakeExecutable {
+    $fromPath = Get-Command cmake -ErrorAction SilentlyContinue
+    if ($fromPath) { return $fromPath.Source }
+
+    $programFilesX86 = [Environment]::GetFolderPath('ProgramFilesX86')
+    $vswhere = Join-Path $programFilesX86 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (Test-Path $vswhere) {
+        $found = & $vswhere -latest -products '*' `
+            -requires Microsoft.VisualStudio.Component.VC.CMake.Project `
+            -find 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+        foreach ($candidate in $found) {
+            if (Test-Path $candidate) { return $candidate }
+        }
+    }
+    throw 'CMake was not found on PATH or in the installed Visual Studio CMake component.'
+}
+
+if ($Install -or $BuildWindowsNative) {
+    $cmake = Get-CMakeExecutable
+    $atomicBuild = Join-Path $output 'windows-atomics'
+    & $cmake -S (Join-Path $repo 'native\windows') -B $atomicBuild -A x64
+    if ($LASTEXITCODE -ne 0) { throw 'Windows atomics configuration failed.' }
+    & $cmake --build $atomicBuild --config Release
+    if ($LASTEXITCODE -ne 0) { throw 'Windows atomics compilation failed.' }
+    & $cmake --install $atomicBuild --config Release --prefix (Join-Path $repo 'src')
+    if ($LASTEXITCODE -ne 0) { throw 'Windows atomics installation failed.' }
+}
+
+$atomicsDll = Join-Path $repo 'src\cephvr\platform\windows\cephvr_atomics.dll'
+if (-not (Test-Path $atomicsDll)) {
+    throw "Missing $atomicsDll. Run .\tools\test_on_rig.ps1 -BuildWindowsNative first."
+}
+
 $before = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
 try {
@@ -78,13 +123,13 @@ if ($prerequisiteExit -ne 0) {
 
 if ($BuildTrackingNative) {
     if (-not $NvofSdkRoot) { throw '-BuildTrackingNative requires -NvofSdkRoot with API 2.0 headers.' }
-    if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) { throw 'Install CMake, MSVC x64 tools and the CUDA Toolkit first.' }
+    $cmake = Get-CMakeExecutable
     $nativeBuild = Join-Path $output 'tracking-native'
-    & cmake -S (Join-Path $repo 'native\tracking') -B $nativeBuild -A x64 "-DNVOF_SDK_ROOT=$NvofSdkRoot"
+    & $cmake -S (Join-Path $repo 'native\tracking') -B $nativeBuild -A x64 "-DNVOF_SDK_ROOT=$NvofSdkRoot"
     if ($LASTEXITCODE -ne 0) { throw 'Tracking native configuration failed.' }
-    & cmake --build $nativeBuild --config Release
+    & $cmake --build $nativeBuild --config Release
     if ($LASTEXITCODE -ne 0) { throw 'Tracking native compilation failed.' }
-    & cmake --install $nativeBuild --config Release --prefix (Join-Path $repo 'src')
+    & $cmake --install $nativeBuild --config Release --prefix (Join-Path $repo 'src')
     if ($LASTEXITCODE -ne 0) { throw 'Tracking native installation failed.' }
 }
 

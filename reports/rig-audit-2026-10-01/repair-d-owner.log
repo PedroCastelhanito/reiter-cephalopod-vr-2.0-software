@@ -1,0 +1,130 @@
+..F.sF..........F..............                                          [100%]
+================================== FAILURES ===================================
+_____ test_preexisting_session_cancellation_never_unlinks_new_owners_lock _____
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_preexisting_session_cance0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002BA93C5F690>
+
+    def test_preexisting_session_cancellation_never_unlinks_new_owners_lock(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        reservation = _reservation(tmp_path)
+        reservation.protocol_directory.mkdir(parents=True)
+        reservation.spikeglx_directory.mkdir()
+        assert reservation.acquire() == []
+        assert reservation._lock_created
+        original_release = reservation.release
+    
+        def competing_owner() -> None:
+            # The old lock has been renamed while still held. A new owner can create
+            # the canonical name; the cancelled attempt must never unlink that file.
+            assert not reservation.lock_path.exists()
+            reservation.lock_path.write_bytes(b"new owner")
+            original_release()
+    
+        monkeypatch.setattr(reservation, "release", competing_owner)
+        reservation.cancel()
+>       assert reservation.lock_path.read_bytes() == b"new owner"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_preexisting_session_cance0/20260929_experiment/subject-131415/.cephvr.lock')
+mode = 'rb', buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_preexisting_session_cance0\\20260929_experiment\\subject-131415\\.cephvr.lock'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1044: FileNotFoundError
+_________ test_failed_session_quarantine_preserves_unfinished_marker __________
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_failed_session_quarantine0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002BA93D72A10>
+
+    def test_failed_session_quarantine_preserves_unfinished_marker(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import os
+    
+        reservation = _reservation(tmp_path)
+        reservation.acquire()
+        original = os.replace
+    
+        def fail_session_rename(source: Path, destination: Path) -> None:
+            if source == reservation.session_directory:
+                raise OSError("busy directory")
+            original(source, destination)
+    
+        monkeypatch.setattr(os, "replace", fail_session_rename)
+        with pytest.raises(StorageError, match="unfinished marker retained"):
+            reservation.cancel()
+>       assert reservation.inspect_marker().complete is False
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\controller\test_storage.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\metadata\reservation.py:254: in inspect_marker
+    raw = self._read_marker_bytes()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.controller.metadata.reservation.OutputReservation object at 0x000002BA93D71B90>
+
+    def _read_marker_bytes(self) -> bytes:
+        if self._lock_fd is None:
+>           raise StorageError("marker read requires held reservation lock")
+E           cephvr.controller.metadata.types.StorageError: marker read requires held reservation lock
+
+src\cephvr\controller\metadata\reservation.py:273: StorageError
+___________ test_owned_log_path_replacement_cannot_redirect_append ____________
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_owned_log_path_replacemen0')
+
+    def test_owned_log_path_replacement_cannot_redirect_append(tmp_path: Path) -> None:
+        path = tmp_path / "SESSION_LOG.jsonl"
+        outside = tmp_path / "outside.jsonl"
+        outside.write_bytes(b"preserve\n")
+        writer = MetadataWriter(
+            tmp_path, max_operations=2, max_bytes=1024, clock=lambda: 1, session_id="s"
+        )
+        first = _write("one", path, "append_jsonl_record", b'{"event_type":"first"}', 1, 2)
+        assert writer.submit(first).result(3).state == "synced"
+>       path.rename(tmp_path / "moved.jsonl")
+
+tests\controller\test_storage.py:423: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_owned_log_path_replacemen0/SESSION_LOG.jsonl')
+target = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-6/test_owned_log_path_replacemen0/moved.jsonl')
+
+    def rename(self, target):
+        """
+        Rename this path to the target path.
+    
+        The target path may be absolute or relative. Relative paths are
+        interpreted relative to the current working directory, *not* the
+        directory of the Path object.
+    
+        Returns the new Path instance pointing to the target path.
+        """
+>       os.rename(self, target)
+E       PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_owned_log_path_replacemen0\\SESSION_LOG.jsonl' -> 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-6\\test_owned_log_path_replacemen0\\moved.jsonl'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1175: PermissionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\controller\test_storage.py:120: symlink creation unavailable on this host
+3 failed, 27 passed, 1 skipped in 1.04s
