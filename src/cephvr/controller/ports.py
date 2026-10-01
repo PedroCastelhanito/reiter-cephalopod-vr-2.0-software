@@ -9,6 +9,9 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.synchronization.v1 import spikeglx_pb2
 from cephvr.tracking.v1 import services_pb2 as tracking_svc
 
+# Top-level backends the controller registers and supervises (gui is a separate process).
+BACKEND_NAMES = frozenset({"acquisition", "visual_stimulus", "tracking"})
+
 
 class BackendPort(Protocol):
     context: pb.BackendContext
@@ -56,7 +59,10 @@ class BackendPort(Protocol):
         self, request: svc.AcquisitionConfigurationConfirmation, *, deadline_ns: int
     ) -> pb.CommandAdmission: ...
     async def initialize_display(
-        self, request: svc.VRDisplayInitializationRequest, *, deadline_ns: int
+        self,
+        request: svc.VisualStimulusDisplayInitializationRequest,
+        *,
+        deadline_ns: int,
     ) -> pb.CommandAdmission: ...
     async def execute_camera_command(
         self, request: svc.AcquisitionCameraCommand, *, deadline_ns: int

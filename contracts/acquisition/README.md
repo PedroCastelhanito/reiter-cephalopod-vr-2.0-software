@@ -4,7 +4,7 @@ The [acquisition architecture](../../docs/architecture/acquisition.md) and
 [system contracts](../../docs/architecture/system-contracts.md) remain authoritative. These are declared
 implementation contracts under E15, derived from A01–A11. Host implementation is the
 authorized stage under [ARCH-001](../../architecture.md#arch-001); its
-[implementation review](../../reports/acquisition-implementation-review.md) records
+[implementation review](../../reports/acquisition.md) records
 progress, acceptance and verification separately from these declarations.
 
 | Artifact | Defined scope |
@@ -190,7 +190,7 @@ validated for interruption, recovery cleanup and shutdown under existing rules.
 bindings: worker lifecycle reports go to the coordinator; the supervisor queries
 retained worker evidence after coordinator loss under E08. Setup/preparation payloads are defined. Native resources, launch registration
 and cleanup follow [Windows resources](windows-resources.md); host implementation
-status belongs in the [review](../../reports/acquisition-implementation-review.md).
+status belongs in the [review](../../reports/acquisition.md).
 Do not infer that context registration launches a process.
 
 ## Private image working storage
@@ -246,7 +246,7 @@ retain A11's scope.
 This is the single acquisition completion worklist. The audited rig-independent
 acquisition declaration gaps are now bound by the contracts below. Their syntax and
 cross-contract consistency have been checked. Host implementation is now authorized
-and in progress under ARCH-001; the [implementation review](../../reports/acquisition-implementation-review.md)
+and in progress under ARCH-001; the [implementation review](../../reports/acquisition.md)
 tracks code acceptance and static results. Actual hardware inputs and rig verification
 remain outstanding. Newly discovered concrete conflicts still follow GOV-001.
 Resolve any newly discovered contract gap under GOV-001, asking only for a concrete
@@ -277,7 +277,7 @@ supplies inventory and bounded probes; remaining workload/behavior checks stay i
 | Encoder raw-input format and throughput | Bounded generated-frame probes are recorded in the handoff; production native conversion, simultaneous full workload and failure behavior remain unverified. | A08/E15, rig verification list |
 | Timing/performance, startup-buffer behavior, hardware/electrical checks, crash/durability tests | Rig validation after the main architecture is established; retain evidence and failure limits. | E15 |
 | Projector-locked camera pulses and assisted firmware flashing | Explicitly deferred features; no current implementation authority. | A10/A11 |
-| Tracking estimator/reset response, VR presentation/lineage and synchronization pulse inventory | Their owning backend stages. Acquisition supplies its accepted interfaces; do not invent their behavior here. | A04–A06, tracking/VR/synchronization records |
+| Tracking estimator/reset response, Visual Stimulus presentation/lineage and synchronization pulse inventory | Their owning backend stages. Acquisition supplies its accepted interfaces; do not invent their behavior here. | A04–A06, tracking/Visual Stimulus/synchronization records |
 
 Basler conversion and explicit supported FFmpeg argument validation are accepted
 under A01/A08. They are no longer unresolved choices.

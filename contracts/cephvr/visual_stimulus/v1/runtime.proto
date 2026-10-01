@@ -1,0 +1,120 @@
+syntax = "proto3";
+package cephvr.visual_stimulus.v1;
+
+// V15/V19: canonical structural/semantic definition is DisplayProfile in
+// contracts/visual_stimulus/display_profile.py. Transport its complete UTF-8 JSON document;
+// never maintain a second set of display fields or silently accept arbitrary JSON.
+message DisplayConfiguration {
+  string profile_json = 1;
+}
+// E14: required positive file-owned limits, resolved before allocating. No defaults
+// in Protobuf and no operator overrides. Zero/absent fails for an applicable path.
+message ResourceLimits {
+  optional uint64 max_document_bytes = 1;
+  optional uint32 max_expanded_epochs = 2;
+  optional uint64 max_prepared_plan_bytes = 3;
+  optional uint64 max_asset_cpu_bytes = 4;
+  optional uint64 max_asset_gpu_bytes = 5;
+  optional uint32 decoder_threads = 6;
+  optional uint32 codec_threads_per_context = 7;
+  optional uint32 codec_threads_total = 8;
+  optional uint32 decoder_contexts = 9;
+  optional uint32 decoded_frames_per_instance = 10;
+  optional uint64 decoded_bytes_total = 11;
+  optional uint64 decoder_working_bytes_total = 12;
+  optional uint32 capture_slots = 13; // V12 in-process PBO readback slots; one composite.
+  reserved 14;
+  reserved "pixel_slots";
+  optional uint64 recording_bytes_total = 15;
+  reserved 16, 17;
+  reserved "evidence_queue_messages", "evidence_max_message_bytes";
+  optional uint64 evidence_pending_bytes = 18; // In-process evidence lines awaiting write.
+}
+message VisualStimulusFilePolicies {
+  optional uint32 contract_version = 1; // Required 1.
+  ResourceLimits limits = 2;
+  optional int64 record_sync_interval_ns = 3;
+  optional int64 video_sync_interval_ns = 4;
+  optional int64 fragment_target_ns = 5;
+  optional int64 encoder_stall_timeout_ns = 6;
+  optional int64 record_stall_timeout_ns = 7;
+  optional int64 max_result_age_ns = 8; // V26: positive; visual_stimulus_config default 350 ms; closed loop.
+  // Lifecycle/recovery use shared ControlPolicies; health comes from startup policy.
+}
+// Compact software observations, not a scientific per-frame control stream.
+enum SubmissionOutcome {
+  SUBMISSION_OUTCOME_UNSPECIFIED = 0;
+  SUBMISSION_OUTCOME_UNKNOWN = 1;
+  SUBMISSION_OUTCOME_RETURNED = 2;
+  SUBMISSION_OUTCOME_FAILED = 3;
+}
+message OutputInitialization {
+  string output_id = 1;
+  optional bool resources_ready = 2;
+  optional uint32 requested_rgb_bits = 3;
+  repeated uint32 observed_rgb_bits = 4; // Exact RGB framebuffer components.
+  optional int32 requested_swap_interval = 5;
+  optional int64 idle_swap_entry_ns = 6;
+  optional int64 idle_swap_return_ns = 7;
+  SubmissionOutcome idle_submission = 8;
+  optional bool resources_released = 9;
+  // Unset is unknown; swap return never confirms photons, scanout or actual VSync.
+}
+message PreparedHandle {
+  string prepared_generation = 1;
+  uint64 configuration_revision = 2;
+  string model_compatibility = 3;
+  string compiler_compatibility = 4;
+  string resource_generation = 5;
+  string plan_sha256 = 6;
+  uint64 plan_bytes = 7;
+  // Identity of locally retained immutable preparation, not an editable file path.
+  // Handle alone is not Ready; exact trials, outputs/resources must be confirmed.
+}
+message TrialTimingSummary {
+  string trial_id = 1;
+  string output_id = 2;
+  uint64 render_groups = 3;
+  uint64 submission_attempts = 4;
+  uint64 returned_submissions = 5;
+  uint64 failed_submissions = 6;
+  uint64 unknown_submissions = 7;
+  uint64 epochs_without_submission = 8;
+  reserved 9, 11;
+  reserved "recording_capacity_drops", "recording_timestamp_collision_drops";
+  uint64 video_starvation_intervals = 10;
+  uint64 alpha_clipped_groups = 12;
+  uint64 linear_output_clipped_groups = 13;
+  uint64 device_code_clipped_groups = 14;
+  // Compact completed administrative evidence; retained even when saving is Off.
+  // No invented physical display counters. Recording counts: ReviewRecordingSummary.
+}
+message ReviewRecordingSummary {
+  string trial_id = 1;
+  uint64 render_groups = 2;
+  uint64 recording_capacity_drops = 3;
+  reserved 4;
+  reserved "recording_timestamp_collision_drops";
+  // One tiled composite stream per trial (E13); absent when saving is Off.
+}
+message OutputActivity {
+  string output_id = 1;
+  uint64 render_group_id = 2;
+  optional int64 swap_entry_ns = 3;
+  optional int64 swap_return_ns = 4;
+  SubmissionOutcome submission = 5;
+  // First required trial activity; distinct from startup Idle observations.
+  // E05: one per required output, swap_return_ns set and submission not failed,
+  // for the first render group evaluated at or after T. Software evidence only.
+}
+
+message FeedbackAttachment {
+  string attachment_generation = 1;
+  string result_pipe = 2;
+  bytes startup_nonce = 3;
+  string source_process_instance_id = 4;
+  repeated string stream_ids = 5;
+  uint32 queue_capacity = 6; // Resolved A06-owned capacity, not a new default.
+  uint32 maximum_message_bytes = 7;
+  string credit_pipe = 8;
+}

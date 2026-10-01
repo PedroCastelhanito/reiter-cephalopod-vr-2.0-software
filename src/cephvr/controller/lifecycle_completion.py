@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine, Sized
 from copy import deepcopy
-from functools import partial
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeVar
 from uuid import uuid4
 
+from google.protobuf.message import Message
+
+from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.evidence import outputs_satisfied
+from cephvr.controller.ports import BackendPort
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.state import (
+    RETAINED_LIMIT,
     Attempt,
     LifecycleState,
     LimitsState,
@@ -19,6 +24,21 @@ from cephvr.controller.state import (
 )
 from cephvr.shared.cleanup_outputs import cleanup_output_discharged
 from cephvr.shared.resources import cleanup_command_fenced
+
+_Report = TypeVar("_Report", bound=Message)
+
+
+def retain_or_conflict(
+    store: dict[str, _Report], key: str, payload: _Report, conflict_message: str
+) -> pb.ReportReceipt | None:
+    """Reject a changed duplicate report, else retain a copy of the payload."""
+    existing = store.get(key)
+    if existing is not None and existing.SerializeToString(
+        deterministic=True
+    ) != payload.SerializeToString(deterministic=True):
+        return rejected_receipt("CONFLICT", conflict_message)
+    store[key] = deepcopy(payload)
+    return None
 
 
 class CompletionHooks(Protocol):
@@ -33,9 +53,6 @@ class CompletionHooks(Protocol):
 
     @property
     def log_event(self) -> Callable[..., Coroutine[Any, Any, None]]: ...
-
-    @property
-    def recovery_log_done(self) -> Callable[[Attempt, asyncio.Task[object]], None]: ...
 
 
 class DetailedCompletion:
@@ -69,16 +86,6 @@ class DetailedCompletion:
             and heartbeat.work.session == attempt.context
             and heartbeat.HasField("cleanup_resources_revision")
         )
-        obligations = {
-            resource.resource: resource
-            for resource in (
-                attempt.ready[name].cleanup_resources
-                if attempt.incident_topology is not None and name in attempt.ready
-                else heartbeat.cleanup_resources
-                if catalogued and heartbeat is not None
-                else ()
-            )
-        }
         source_obligations = (
             attempt.ready[name].cleanup_resources
             if attempt.incident_topology is not None and name in attempt.ready
@@ -86,6 +93,7 @@ class DetailedCompletion:
             if catalogued and heartbeat is not None
             else ()
         )
+        obligations = {resource.resource: resource for resource in source_obligations}
         revision = (
             attempt.cleanup_catalogue_revisions.get(name)
             if attempt.incident_topology is not None
@@ -104,7 +112,53 @@ class DetailedCompletion:
             else set()
         )
         actual_outputs = {output.output_key: output for output in payload.outputs}
+        if not self._cleanup_proof_valid(
+            attempt,
+            payload,
+            backend=backend,
+            registered=registered,
+            revision=revision,
+            obligations=obligations,
+            source_obligations=source_obligations,
+            releases=releases,
+            expected_outputs=expected_outputs,
+            actual_outputs=actual_outputs,
+        ):
+            return rejected_receipt(
+                "EVIDENCE", "cleanup identity or release proof missing"
+            )
         if (
+            conflict := retain_or_conflict(
+                attempt.cleanup, name, payload, "changed duplicate Cleanup"
+            )
+        ) is not None:
+            return conflict
+        attempt.changed.set()
+        self.hooks.publish()
+        if (
+            self.lifecycle.session.phase
+            in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_ENDED)
+            and not self.lifecycle.session.cleanup_confirmed
+        ):
+            self.hooks.spawn(self.hooks.late_cleanup(attempt))
+        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    @staticmethod
+    def _cleanup_proof_valid(
+        attempt: Attempt,
+        payload: pb.CleanupReport,
+        *,
+        backend: BackendPort | None,
+        registered: svc.RegisteredContext | None,
+        revision: int | None,
+        obligations: dict[str, pb.ResourceObligation],
+        source_obligations: Sized,
+        releases: dict[str, pb.ResourceRelease],
+        expected_outputs: set[str],
+        actual_outputs: dict[str, pb.OutputResult],
+    ) -> bool:
+        """Exact identity, release and output-closure proof for one Cleanup report."""
+        return not (
             backend is None
             or payload.source.generation != backend.context.backend_generation
             or payload.work.WhichOneof("work") != "session"
@@ -134,34 +188,81 @@ class DetailedCompletion:
                 not cleanup_output_discharged(output)
                 for output in actual_outputs.values()
             )
-        ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="EVIDENCE",
-                    message="cleanup identity or release proof missing",
-                ),
-            )
-        previous_cleanup = attempt.cleanup.get(name)
-        if previous_cleanup is not None and previous_cleanup.SerializeToString(
-            deterministic=True
-        ) != payload.SerializeToString(deterministic=True):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CONFLICT", message="changed duplicate Cleanup"
-                ),
-            )
-        attempt.cleanup[name] = deepcopy(payload)
-        attempt.changed.set()
-        self.hooks.publish()
+        )
+
+    def _retain_late_finished(
+        self,
+        attempt: Attempt,
+        payload: pb.FinishedReport,
+        name: str,
+        backend: BackendPort,
+        ingress_ns: int,
+    ) -> pb.ReportReceipt | None:
+        """Retain an exact late Finished with its recovery record, or reject it."""
+        trial_id = payload.context.work.trial.trial_id
+        recovered_key = (trial_id, name)
         if (
-            self.lifecycle.session.phase
-            in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_ENDED)
-            and not self.lifecycle.session.cleanup_confirmed
+            len(attempt.recovered_finished)
+            >= len(attempt.prepared.trials) * len(attempt.required)
+            and recovered_key not in attempt.recovered_finished
         ):
-            self.hooks.spawn(self.hooks.late_cleanup(attempt))
-        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+            return rejected_receipt("CAPACITY", "late Finished retention exhausted")
+        attempt.recovered_finished[recovered_key] = deepcopy(payload)
+        closure = [
+            {
+                "output_key": item.output_key,
+                "closure": pb.OutputClosure.Name(item.closure),
+            }
+            for item in payload.outputs
+        ]
+        recovered = pb.RecoveryState(
+            attempt_id=str(uuid4()),
+            affected=pb.ProcessIdentity(
+                role=name, generation=backend.context.backend_generation
+            ),
+            work=pb.WorkContext(trial=payload.context.work.trial),
+            trigger=pb.Failure(
+                code="FINISHED_TIMEOUT",
+                message="initial Finished evidence deadline expired",
+            ),
+            action="reconcile exact Finished output closure",
+            start_monotonic_ns=attempt.finished_deadline_ns,
+            deadline_monotonic_ns=attempt.finished_deadline_ns
+            + self.limits.current.recovery_ns,
+            completion_monotonic_ns=ingress_ns,
+            progress="exact late Finished accepted; original trial outcome unchanged",
+            outcome=pb.RECOVERY_OUTCOME_COMPLETED,
+            evidence=f"{len(payload.outputs)} exact output closure result(s) retained",
+        )
+        self.supervisor.controller_recoveries.append(recovered)
+        self.supervisor.controller_recoveries = self.supervisor.controller_recoveries[
+            -RETAINED_LIMIT:
+        ]
+        if (
+            attempt.writer is not None
+            and not attempt.writer_closed
+            and not attempt.recovery_log_closed
+        ):
+            recovery_task = self.hooks.spawn(
+                self.hooks.log_event(
+                    attempt,
+                    "recovery",
+                    details={
+                        "component": "Finished",
+                        "action": "reconcile exact output closure",
+                        "trial_id": trial_id,
+                        "backend": name,
+                        "outputs": closure,
+                        "initial_deadline_ns": attempt.finished_deadline_ns,
+                    },
+                    at_ns=ingress_ns,
+                    trial_number=payload.context.work.trial.trial_number,
+                    outcome="completed",
+                )
+            )
+            attempt.recovery_log_tasks.add(recovery_task)
+            recovery_task.add_done_callback(attempt.recovery_log_finished)
+        return None
 
     def finished(
         self, attempt: Attempt, payload: pb.FinishedReport, name: str, ingress_ns: int
@@ -173,11 +274,7 @@ class DetailedCompletion:
             if output.trial == attempt.prepared.trials[attempt.trial_index].context
             and output.backend.backend_name == name
         ]
-        unavailable = {
-            key
-            for incident in attempt.confirmed_incidents.values()
-            for key in incident.affected_resources
-        }
+        unavailable = attempt.unavailable_resources()
         interrupted_recovery_deadline = (
             min(
                 attempt.finished_deadline_ns + self.limits.current.recovery_ns,
@@ -209,93 +306,17 @@ class DetailedCompletion:
                 unavailable=unavailable,
             )
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="EVIDENCE", message="Finished closure incomplete"
-                ),
-            )
+            return rejected_receipt("EVIDENCE", "Finished closure incomplete")
         old_finished = attempt.finished.get(name)
         if old_finished is not None and old_finished.SerializeToString(
             deterministic=True
         ) != payload.SerializeToString(deterministic=True):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CONFLICT", message="changed duplicate Finished"
-                ),
-            )
+            return rejected_receipt("CONFLICT", "changed duplicate Finished")
         if old_finished is None and ingress_ns > attempt.finished_deadline_ns:
-            trial_id = payload.context.work.trial.trial_id
-            recovered_key = (trial_id, name)
-            if (
-                len(attempt.recovered_finished)
-                >= len(attempt.prepared.trials) * len(attempt.required)
-                and recovered_key not in attempt.recovered_finished
-            ):
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(
-                        code="CAPACITY",
-                        message="late Finished retention exhausted",
-                    ),
-                )
-            attempt.recovered_finished[recovered_key] = deepcopy(payload)
-            closure = [
-                {
-                    "output_key": item.output_key,
-                    "closure": pb.OutputClosure.Name(item.closure),
-                }
-                for item in payload.outputs
-            ]
-            recovered = pb.RecoveryState(
-                attempt_id=str(uuid4()),
-                affected=pb.ProcessIdentity(
-                    role=name, generation=backend.context.backend_generation
-                ),
-                work=pb.WorkContext(trial=payload.context.work.trial),
-                trigger=pb.Failure(
-                    code="FINISHED_TIMEOUT",
-                    message="initial Finished evidence deadline expired",
-                ),
-                action="reconcile exact Finished output closure",
-                start_monotonic_ns=attempt.finished_deadline_ns,
-                deadline_monotonic_ns=attempt.finished_deadline_ns
-                + self.limits.current.recovery_ns,
-                completion_monotonic_ns=ingress_ns,
-                progress="exact late Finished accepted; original trial outcome unchanged",
-                outcome=pb.RECOVERY_OUTCOME_COMPLETED,
-                evidence=f"{len(payload.outputs)} exact output closure result(s) retained",
+            rejected = self._retain_late_finished(
+                attempt, payload, name, backend, ingress_ns
             )
-            self.supervisor.controller_recoveries.append(recovered)
-            self.supervisor.controller_recoveries = (
-                self.supervisor.controller_recoveries[-256:]
-            )
-            if (
-                attempt.writer is not None
-                and not attempt.writer_closed
-                and not attempt.recovery_log_closed
-            ):
-                recovery_task = self.hooks.spawn(
-                    self.hooks.log_event(
-                        attempt,
-                        "recovery",
-                        details={
-                            "component": "Finished",
-                            "action": "reconcile exact output closure",
-                            "trial_id": trial_id,
-                            "backend": name,
-                            "outputs": closure,
-                            "initial_deadline_ns": attempt.finished_deadline_ns,
-                        },
-                        at_ns=ingress_ns,
-                        trial_number=payload.context.work.trial.trial_number,
-                        outcome="completed",
-                    )
-                )
-                attempt.recovery_log_tasks.add(recovery_task)
-                recovery_task.add_done_callback(
-                    partial(self.hooks.recovery_log_done, attempt)
-                )
+            if rejected is not None:
+                return rejected
         attempt.finished[name] = deepcopy(payload)
         return None

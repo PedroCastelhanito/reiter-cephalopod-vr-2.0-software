@@ -18,6 +18,7 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.backend import GrpcBackendPort
 from cephvr.controller.configuration import SupervisorStartup
+from cephvr.controller.ports import BACKEND_NAMES
 from cephvr.controller.state import AuthorityStatus, LimitsState
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
 from cephvr.shared.clock import host_time_ns
@@ -53,7 +54,7 @@ def managed_jobs_from_bootstrap(value: object) -> tuple[ManagedJob, ...]:
             not isinstance(item, dict)
             or set(item) != {"role", "generation", "job_name"}
             or any(not isinstance(v, str) for v in item.values())
-            or item["role"] not in {"acquisition", "vr", "tracking", "gui"}
+            or item["role"] not in BACKEND_NAMES | {"gui"}
         ):
             raise ValueError("managed job descriptor is invalid")
         require_uuid4(item["generation"])
@@ -152,7 +153,7 @@ async def shutdown_owned_jobs(
                 return
             await sleep(min(0.05, (deadline - clock()) / 1e9))
 
-    for roles in ({"acquisition", "vr", "tracking"}, {"gui"}):
+    for roles in (BACKEND_NAMES, {"gui"}):
         group = [job for job in jobs if job.role in roles]
         await wait_until(group, min(absolute_deadline_ns, clock() + graceful_exit_ns))
         current = members(group)

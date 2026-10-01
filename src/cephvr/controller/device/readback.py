@@ -159,10 +159,7 @@ class CameraReadback:
                         progress="camera readback or confirmation failed",
                         error=str(exc),
                     )
-                    self.device.completed_camera_operation = operation
-                    self.status_retention.complete_internal(operation)
-                    self.device.camera_operation = None
-                    self.device.camera_operation_changed.set()
+                    self.status_retention.retire_operation(operation)
                     self.hooks.publish()
 
     def finish_camera_operation(self, operation: CameraOperation) -> None:
@@ -170,10 +167,7 @@ class CameraReadback:
         if status is None or self.device.camera_operation is not operation:
             return
         if operation.timed_out:
-            self.device.completed_camera_operation = operation
-            self.status_retention.complete_internal(operation)
-            self.device.camera_operation = None
-            self.device.camera_operation_changed.set()
+            self.status_retention.retire_operation(operation)
             return
         if not status.result.HasField("succeeded"):
             return
@@ -218,7 +212,4 @@ class CameraReadback:
             progress="camera command confirmed" if success else "camera command failed",
             error="required camera result evidence incomplete" if not success else "",
         )
-        self.device.completed_camera_operation = operation
-        self.status_retention.complete_internal(operation)
-        self.device.camera_operation = None
-        self.device.camera_operation_changed.set()
+        self.status_retention.retire_operation(operation)

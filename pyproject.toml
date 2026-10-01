@@ -14,9 +14,28 @@ dependencies = [
     "protobuf>=7.36.2,<8",
     "tzdata>=2026.4",
     "tzlocal>=5.4.4,<6",
+    "pydantic>=2.10,<3",
 ]
 
 [project.optional-dependencies]
+tracking = [
+    "numpy==2.4.4",
+    "opencv-python-headless==4.13.0.92",
+    "pypylon==26.3.1",
+    "onnx>=1.20,<2",
+    "onnxruntime-gpu>=1.23,<2; sys_platform == 'win32'",
+]
+
+visual_stimulus = [
+    "PyOpenGL>=3.1.7,<4",
+    "moderngl==5.12.0",
+    "glfw==2.10.0",
+    "glcontext==3.0.0",
+    "numpy==2.4.4",
+    "av==16.1.0",
+    "imagecodecs==2025.3.30",
+    "tifffile==2025.5.10",
+]
 acquisition = [
     "pypylon==26.3.1",
     "numpy==2.4.4",
@@ -26,7 +45,6 @@ dev = [
     "build==1.6.1",
     "grpcio-tools==1.84.0",
     "mypy==2.3.1",
-    "pydantic>=2.10,<3",
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "ruff==0.16.9",
@@ -40,6 +58,9 @@ cephvr-supervisor = "cephvr.supervisor.main:main"
 cephvr-controller = "cephvr.controller.main:main"
 cephvr-acquisition = "cephvr.acquisition.main:main"
 cephvr-acquisition-worker = "cephvr.acquisition.worker.main:main"
+cephvr-visual-stimulus = "cephvr.visual_stimulus.main:main"
+cephvr-visual-stimulus-worker = "cephvr.visual_stimulus.worker.main:main"
+cephvr-tracking = "cephvr.tracking.main:main"
 cephvr-control = "cephvr.client.main:main"
 
 [tool.setuptools]
@@ -53,6 +74,7 @@ namespaces = false
 
 [tool.setuptools.package-data]
 "*" = ["*.pyi"]
+"cephvr.tracking.native" = ["*.dll"]
 
 [tool.ruff]
 target-version = "py311"
@@ -84,6 +106,10 @@ exclude = ['(^|/)[^/]*_pb2(_grpc)?\.pyi?$']
 
 [[tool.mypy.overrides]]
 module = ["grpc", "grpc.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["onnx", "onnx.*", "onnxruntime", "onnxruntime.*", "cv2", "glfw", "moderngl", "numpy", "numpy.*", "OpenGL", "OpenGL.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

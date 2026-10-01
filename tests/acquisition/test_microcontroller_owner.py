@@ -18,7 +18,7 @@ from cephvr.shared.clock import host_time_ns
 def test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns() -> None:
     async def scenario() -> None:
         fake = _BlockingOwner()
-        bridge = SerialOwnerBridge(cast(SerialOwner, fake))
+        bridge = SerialOwnerBridge(lambda: cast(SerialOwner, fake))
         with pytest.raises(TimeoutError):
             await bridge.connect(deadline_ns=host_time_ns() + 20_000_000)
         assert await asyncio.to_thread(fake.finished.wait, 1.0)
@@ -33,7 +33,7 @@ def test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns() -> No
 def test_waiting_owner_calls_cannot_overwrite_or_steal_the_exclusive_gate() -> None:
     async def scenario() -> None:
         fake = _StubbornOwner()
-        bridge = SerialOwnerBridge(cast(SerialOwner, fake))
+        bridge = SerialOwnerBridge(lambda: cast(SerialOwner, fake))
         with pytest.raises(TimeoutError):
             await bridge.connect(deadline_ns=host_time_ns() + 20_000_000)
         assert fake.started.wait(0.2)

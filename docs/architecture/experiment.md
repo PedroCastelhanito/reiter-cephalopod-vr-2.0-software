@@ -118,7 +118,7 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   initial writing gate prevents first release. During execution, E06 classifies
   later remote failures and uncertainty for operator decision or automatic
   stopping under its runtime incident policy.
-- Remote ephys recording is not a camera/VR per-trial output and does not change
+- Remote ephys recording is not a camera/Visual Stimulus per-trial output and does not change
   the trial clock. Its completion result follows E12's delegated native
   finalization contract; transport/runtime integration remains local work.
 - Remain in Ended with the session result visible until an explicit **New session**
@@ -153,15 +153,15 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   applicable.
 - Each participant sends **Stopped** promptly when trial activity has ended,
   independently of output closure. Include actual activity-stop time, each producer
-  recording cutoff under E11, and confirmation of the stop conditions: VR is Idle
+  recording cutoff under E11, and confirmation of the stop conditions: Visual Stimulus is Idle
   and recording no longer admits samples outside the trial interval. Draining
   already admitted samples may continue.
 - Each participant sends **Finished** only after trial work has ended and every
   enabled output obligation is satisfied. Normally this requires successful
-  closure; explicitly empty camera/VR review-video results may instead confirm an
+  closure; explicitly empty camera/Visual Stimulus review-video results may instead confirm an
   artifact was never created, with complete accounting and cleanup under the owning
   [A07 camera](../../contracts/acquisition/empty-video.md) or
-  [V12 VR](../../contracts/vr/video-completion.md) contract. These exceptions cannot
+  [V12 Visual Stimulus](../../contracts/visual_stimulus/video-completion.md) contract. These exceptions cannot
   hide failed/unknown output or waive required activity/health evidence. Finished
   lists each enabled output's reserved path, artifact presence, applicable content
   evidence and closure state. A lost report may be recovered without closing files
@@ -185,7 +185,7 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
 - Setup cannot become Ready until output-path collision handling and reservation
   have completed successfully. No session or trial may start from an unreserved
   output plan.
-- VR stays running in the same configurable Idle presentation before the first
+- Visual Stimulus stays running in the same configurable Idle presentation before the first
   trial, between trials, during finalization and after session termination. Idle
   has no relevant trial stimulus; all-black windows must be supported.
 
@@ -220,20 +220,20 @@ Configuration: [experiment_config.toml](../../config/backends/experiment_config.
   `trial_started` only on E04's actual evidence.
 - Each backend sends an explicit Started report with its process/trial/operation
   context, actual start time and first required activity evidence: the first
-  expected current-trial camera callback; for VR, one returned presentation call per
+  expected current-trial camera callback; for Visual Stimulus, one returned presentation call per
   required output (the swap call of the first render group evaluated at or after T
   has returned); or, for tracking, a completed first frame evaluation under
   [T08](tracking.md#t08). Actual software start, that evidence and controller
   receipt of the report must all occur by `T + 250 ms`.
-- VR evidence is software-only: the rig cannot observe the photodiode; optical
+- Visual Stimulus evidence is software-only: the rig cannot observe the photodiode; optical
   onset is recovered post hoc from SpikeGLX.
 - A required backend that cannot meet this liveness limit must not start late;
   interrupt the session. T is never shifted to T+250 ms. Reports add no routine
   session-log entries; command acceptance alone is not evidence of execution.
-- Planned trials last at least **60 seconds**; validate this during Setup. VR
-  resolves the protocol duration from its epoch plan under [V06](vr.md#v06); the
+- Planned trials last at least **60 seconds**; validate this during Setup. Visual Stimulus
+  resolves the protocol duration from its epoch plan under [V06](visual_stimulus.md#v06); the
   controller retains the common trial boundaries. The
-  [duration contract](../../contracts/vr/durations.md) binds VR-owned resolved
+  [duration contract](../../contracts/visual_stimulus/durations.md) binds Visual Stimulus-owned resolved
   duration and schedule validation; there is no independently editable duration in
   operator configuration. Keep the HHMMSS filename scheme without a trial-number
   suffix (E04).
@@ -285,7 +285,7 @@ The [lifecycle tables](../experiment-control-transitions.md) formalize the accep
 transitions and guards.
 
 **Backend follow-up:** camera frame association is defined in [A09](acquisition.md#a09);
-display evidence and remaining timing diagnostics belong to [VR](vr.md) and
+display evidence and remaining timing diagnostics belong to [Visual Stimulus](visual_stimulus.md) and
 [A05](system-contracts.md#a05).
 
 <a id="e07"></a>
@@ -327,7 +327,7 @@ display evidence and remaining timing diagnostics belong to [VR](vr.md) and
 - On startup without a GUI, the controller loads the same saved configuration with
   the same fallback rules. Loading configuration never automatically runs Setup or
   starts a session. After initial configuration adoption, V19's bounded startup
-  display initialization may validate/apply only VR display/Idle settings; it does
+  display initialization may validate/apply only Visual Stimulus display/Idle settings; it does
   not grant session readiness. GUI and headless startup follow the same rule.
 
 #### Configuration history
@@ -441,7 +441,7 @@ display evidence and remaining timing diagnostics belong to [VR](vr.md) and
   backends validate their required assets during Setup. The root follows ordinary
   configuration editing, history and session-locking rules. It does not change
   recording-output paths or E04's minimal central asset metadata; V13 owns the
-  scoped VR replay manifest.
+  scoped Visual Stimulus replay manifest.
 - Each active backend returns the filename of every validated asset for the
   minimal session metadata defined in E04.
 - Setup resolves and retains every effective shared and trial-specific setting,
@@ -450,20 +450,20 @@ display evidence and remaining timing diagnostics belong to [VR](vr.md) and
 - During Setup, resolve the main computer's local IANA timezone and include it in
   the prepared session configuration. A later host-timezone change does not alter
   that Setup/session's timezone.
-- The VR/stimulus backend generates missing stimulus seeds and planned stimulus
+- The Visual Stimulus backend generates missing stimulus seeds and planned stimulus
   sequences during Setup. Preserve explicit seeds and reuse resolved seeds across
   later sessions until changed. Invalid explicit seeds block Ready.
 - Store each trial's resolved seed and compact planned epochs, including scene and
   ordered group/repetition/unit/visit lineage, in its central trial log at trial
   start. Reference the complete immutable `_stimulus_LOG.json` under
-  [V13](vr.md#v13), required independently of Save VR data; never rely on later
+  [V13](visual_stimulus.md#v13), required independently of Save Visual Stimulus data; never rely on later
   editable files or seed regeneration. Actual presentation and behavior remain
   backend output data.
 - Control timing and timeout values are editable only in their owning TOML files;
   reject session-level and trial-level overrides (E05).
 
 **Backend follow-up:** each backend owns its remaining settings schema/ranges.
-Stimulus shuffle/repeat and seed-stream contracts belong to [VR](vr.md);
+Stimulus shuffle/repeat and seed-stream contracts belong to [Visual Stimulus](visual_stimulus.md);
 these are not unanswered controller ownership choices.
 
 <a id="e10"></a>
@@ -471,7 +471,7 @@ these are not unanswered controller ownership choices.
 
 **Status:** Accepted · **Revision:** 20
 
-- Support two session modes, open-loop VR and closed-loop VR; VR runs in both.
+- Support two session modes, open-loop Visual Stimulus and closed-loop Visual Stimulus; Visual Stimulus runs in both.
 - Select one mode and one active-backend set for the whole session. Trial-specific
   gains may change, including gains that simulate open-loop behavior, without
   changing the session mode or participant set.
@@ -488,13 +488,13 @@ these are not unanswered controller ownership choices.
 
 | Role or output | Default |
 | --- | --- |
-| VR runtime | On |
+| Visual Stimulus runtime | On |
 | Behavioral camera | On |
 | Behavioral-camera video | On |
 | Tracking backend | Off |
 | Tracking camera | Off |
 | Tracking-camera video, when camera enabled | On |
-| Save VR data | On |
+| Save Visual Stimulus data | On |
 | SpikeGLX pairing (E12) | On; default editable in `synchronization_config.toml` |
 
 - SpikeGLX pairing is a per-session configuration choice like the rows above; an
@@ -515,7 +515,7 @@ these are not unanswered controller ownership choices.
 
 **Status:** Accepted · **Revision:** 17
 
-- All local camera/VR/tracking trial outputs use the authoritative start T and
+- All local camera/Visual Stimulus/tracking trial outputs use the authoritative start T and
   normal end `T + duration`. E12's separate session-scoped SpikeGLX recording may
   span trials/intertrial periods; its remote boundary observations do not replace
   the producer cutoffs below.

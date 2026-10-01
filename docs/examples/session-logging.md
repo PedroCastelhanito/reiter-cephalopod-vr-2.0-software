@@ -41,8 +41,8 @@ stimulus schemas are supplied as executable configuration here.
 
 SESSION_CONFIG.json contains active participants' resolved setup, the fixed order,
 clock anchor/timezone, supervisor/active-backend software versions and asset filenames.
-For an open-loop session with camera recording and Save VR data off, retain acquisition
-and VR setup; omit inactive tracking. Asset hashes/paths, PFS snapshot contents,
+For an open-loop session with camera recording and Save Visual Stimulus data off, retain acquisition
+and Visual Stimulus setup; omit inactive tracking. Asset hashes/paths, PFS snapshot contents,
 scientific histories and unrelated environment inventories are excluded under E04.
 
 ## Interrupted or uncertain recordings

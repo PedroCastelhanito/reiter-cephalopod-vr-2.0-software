@@ -1,0 +1,37 @@
+2026-10-01 — local results transcribed from tool output, not a retained full raw transcript.
+Dirty-tree provenance and scope: README.md and source-sha256.txt.
+
+Baseline, restricted sandbox:
+$ .venv/bin/python -m pytest tests/tracking -q -m 'not windows and not rig' --tb=short
+22 passed, 1 deselected, 6 errors
+All six errors were authenticated gRPC fixture setup: local loopback bind denied (Operation not permitted).
+
+Baseline, loopback permitted:
+$ .venv/bin/python -m pytest tests/tracking -q -m 'not windows and not rig' --tb=short
+28 passed, 1 deselected in 3.11s
+Exit: 0
+Ruff check/format, Windows-target mypy (59 source files), boundaries (450 modules): passed.
+
+Increment 1 (unused bookkeeping and pose retirement), loopback permitted:
+$ .venv/bin/python -m pytest tests/tracking -q -m 'not windows and not rig' --tb=short
+31 passed, 1 deselected in 3.28s
+Exit: 0
+Ruff check/format (67 files), Windows-target mypy (59 source files), boundaries (450 modules): passed.
+
+Increment 2 (movement discard/reset and scientific record formatting):
+$ .venv/bin/python -m pytest tests/tracking/test_processing.py tests/tracking/test_recording.py -q
+20 passed in 0.59s
+Exit: 0
+
+$ .venv/bin/python -m pytest tests/tracking -q -m 'not windows and not rig' --tb=short
+42 passed, 1 deselected in 3.00s
+Exit: 0 (loopback permitted)
+Initial Ruff check found one import-order error; fixed with Ruff and rechecked successfully.
+Final static and contract command output is retained in checks.txt.
+
+Final related integration, loopback permitted:
+$ .venv/bin/python -m pytest tests -q -m 'not windows and not rig' --tb=short
+736 passed, 6 skipped, 2 deselected in 12.80s
+Exit: 0
+
+E15 exclusions are retained. These are not rig/native/scientific acceptance results.

@@ -21,7 +21,7 @@ from cephvr.controller.recovery import StartupRecovery
 from cephvr.controller.recovery_inspection import inspect_recovery, read_recovery_file
 from cephvr.controller.startup.recovery import prepare_recovery
 from cephvr.shared.recovery import RecoveryStore, UnfinishedSessionPointer
-from tests.controller.support_components import _runtime
+from tests.controller.support_components import _id, _runtime
 
 
 def _recovery() -> StartupRecovery:
@@ -211,10 +211,6 @@ async def test_settled_recovery_notice_reaches_operator_warnings(
     assert [
         w.message for w in runtime.control.warnings if w.component == "recovery"
     ] == ["cancelled Setup cleanup completed at recovery"]
-
-
-def _id() -> str:
-    return str(uuid.uuid4())
 
 
 def _event(kind: str, **extra: object) -> bytes:

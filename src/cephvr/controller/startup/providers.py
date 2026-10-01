@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from types import ModuleType
 from typing import cast
 
 from google.protobuf.message import Message
@@ -18,19 +19,26 @@ from cephvr.controller.planning import (
     WriterSchemaKey,
     build_schema,
 )
-from cephvr.controller.ports import SpikeGLXPort
+from cephvr.controller.ports import BACKEND_NAMES, SpikeGLXPort
+
+
+def _import_optional(module_name: str) -> ModuleType | None:
+    """Import a module; None only when that exact module is absent."""
+    try:
+        return importlib.import_module(module_name)
+    except ModuleNotFoundError as exc:
+        if exc.name == module_name:
+            return None
+        raise
 
 
 def _installed_validators() -> dict[str, BackendValidator]:
     providers: dict[str, BackendValidator] = {}
-    for name in ("acquisition", "vr", "tracking", "synchronization"):
+    for name in ("acquisition", "visual_stimulus", "tracking", "synchronization"):
         module_name = f"cephvr.{name}.configuration"
-        try:
-            module = importlib.import_module(module_name)
-        except ModuleNotFoundError as exc:
-            if exc.name == module_name:
-                continue
-            raise
+        module = _import_optional(module_name)
+        if module is None:
+            continue
         validator = getattr(module, "validate_configuration", None)
         if not callable(validator):
             raise RuntimeError(f"{module_name} has no pure validate_configuration")
@@ -42,16 +50,13 @@ def _installed_file_policies(
     software_root: Path, active_names: frozenset[str]
 ) -> dict[str, Message]:
     policies: dict[str, Message] = {}
-    for name in ("acquisition", "vr", "tracking"):
+    for name in ("acquisition", "visual_stimulus", "tracking"):
         if name not in active_names:
             continue
         module_name = f"cephvr.{name}.configuration"
-        try:
-            module = importlib.import_module(module_name)
-        except ModuleNotFoundError as exc:
-            if exc.name == module_name:
-                continue
-            raise
+        module = _import_optional(module_name)
+        if module is None:
+            continue
         loader = getattr(module, "load_file_policies", None)
         if loader is None:
             continue
@@ -68,7 +73,7 @@ def _writer_schema(prepared: pb.PreparedSession) -> dict[str, object]:
     """Load only owning writers' pure schema definitions for enabled outputs."""
     definitions: dict[WriterSchemaKey, WriterSchema] = {}
     for name in sorted({output.backend.backend_name for output in prepared.outputs}):
-        if name not in {"acquisition", "vr", "tracking"}:
+        if name not in BACKEND_NAMES:
             raise RuntimeError("prepared output has an unsupported writer owner")
         module_name = f"cephvr.{name}.recording_schema"
         try:
@@ -103,12 +108,9 @@ def _writer_schema(prepared: pb.PreparedSession) -> dict[str, object]:
 def _installed_spikeglx(software_root: Path, generation: str) -> SpikeGLXPort | None:
     """Bind the later synchronization stage's controller-owned remote client."""
     module_name = "cephvr.synchronization.client"
-    try:
-        module = importlib.import_module(module_name)
-    except ModuleNotFoundError as exc:
-        if exc.name == module_name:
-            return None
-        raise
+    module = _import_optional(module_name)
+    if module is None:
+        return None
     factory = getattr(module, "create_controller_client", None)
     if not callable(factory):
         raise RuntimeError("synchronization client factory unavailable")
@@ -129,16 +131,15 @@ def _installed_spikeglx(software_root: Path, generation: str) -> SpikeGLXPort | 
 
 
 def _installed_display_validator() -> Callable[[str], frozenset[str]] | None:
-    module_name = "cephvr.vr.configuration"
-    try:
-        module = importlib.import_module(module_name)
-    except ModuleNotFoundError as exc:
-        if exc.name == module_name:
-            return None
-        raise
+    module_name = "cephvr.visual_stimulus.configuration"
+    module = _import_optional(module_name)
+    if module is None:
+        return None
     provider = getattr(module, "validate_display_profile", None)
     if not callable(provider):
-        raise RuntimeError("VR configuration module has no pure display validator")
+        raise RuntimeError(
+            "Visual Stimulus configuration module has no pure display validator"
+        )
 
     def validate(profile_json: str) -> frozenset[str]:
         outputs = provider(profile_json)
@@ -147,7 +148,9 @@ def _installed_display_validator() -> Callable[[str], frozenset[str]] | None:
             or not outputs
             or any(not isinstance(value, str) or not value for value in outputs)
         ):
-            raise ValueError("VR display validator returned no exact output set")
+            raise ValueError(
+                "Visual Stimulus display validator returned no exact output set"
+            )
         return outputs
 
     return validate

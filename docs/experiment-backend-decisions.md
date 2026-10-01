@@ -17,10 +17,10 @@ policies.
 | SpikeGLX scope and modes | E09–E13, SYS-004 |
 | Contract status and later rig verification | E15 |
 
-- The shared wire files compile, but no runtime or rig verification is complete.
-  See the architecture's **Current position** and the
-  [audit assessment](../reports/audit-assessment.md) for current decisions and
-  contract gaps.
+- See the architecture's **Current position** for scope and decisions, the
+  [runtime report](../reports/runtime.md) for dated implementation/local validation
+  evidence, and [rig verification](../reports/rig-verification.md) for pending acceptance.
+  Wire compilation alone does not establish runtime or rig behavior.
 - Backend payloads, device checks, scientific formats and final process boundaries
   belong to their backend designs; do not infer them from empty message
   definitions.

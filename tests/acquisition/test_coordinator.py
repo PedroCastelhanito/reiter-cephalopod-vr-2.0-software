@@ -239,6 +239,8 @@ def _document() -> dict[str, object]:
         "controller_port": 20_002,
         "supervisor_port": 20_003,
         "max_message_bytes": 1_000_000,
+        "heartbeat_interval_ns": 5_000_000_000,
+        "health_silence_ns": 15_000_000_000,
         "software_root": ".",
         "token": "worker-token",
         "controller_token": "controller-token",
@@ -256,6 +258,30 @@ def test_acquisition_bootstrap_retains_exact_startup_policy_and_identities() -> 
     assert decoded.tracking.role == "tracking"
     assert decoded.policies.setup.initial_ns == 1
     assert decoded.max_message_bytes == 1_000_000
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "setup",
+        "setup_cancel",
+        "trial_ready",
+        "trial_finished",
+        "supervisor_registration",
+    ],
+)
+@pytest.mark.parametrize("value", [0, -1])
+def test_bootstrap_rejects_missing_or_nonpositive_wait(name: str, value: int) -> None:
+    document = _document()
+    policies = control.ControlPolicies.FromString(
+        base64.b64decode(str(document["control_policies"]))
+    )
+    getattr(policies, name).initial_ns = value
+    document["control_policies"] = base64.b64encode(
+        policies.SerializeToString()
+    ).decode()
+    with pytest.raises(ValueError, match=name + r"\.initial_ns"):
+        decode_acquisition_bootstrap(document)
 
 
 @pytest.mark.parametrize(

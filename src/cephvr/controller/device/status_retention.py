@@ -101,6 +101,17 @@ class CameraStatusRetention:
             )
             ledger.finalize_work(operation.status_work_key, self.clock())
 
+    def retire_operation(self, operation: CameraOperation) -> None:
+        """Free the active slot under the caller's lifecycle lock, retaining evidence.
+
+        Manual effects stay admitted in case an expired command was delivered.
+        Callers own the terminal/timeout decision and verify the active operation.
+        """
+        self.device.completed_camera_operation = operation
+        self.complete_internal(operation)
+        self.device.camera_operation = None
+        self.device.camera_operation_changed.set()
+
     def complete_internal(self, operation: CameraOperation) -> None:
         if not operation.internal_retention or not operation.status_work_key:
             return

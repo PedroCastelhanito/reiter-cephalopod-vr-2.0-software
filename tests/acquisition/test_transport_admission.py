@@ -145,7 +145,12 @@ def test_late_executor_failure_preserves_admission_and_retains_terminal_operatio
             max_bytes=1_000_000,
             result_reservation_bytes=4096,
         )
-        transport = CommandAdmissionTransport(ledger)
+        terminal_reported = asyncio.Event()
+
+        async def terminal_failure(*_args: object) -> None:
+            terminal_reported.set()
+
+        transport = CommandAdmissionTransport(ledger, terminal_failure=terminal_failure)
         request = wire.BackendCommand(
             command_id=_id(),
             issuer=control.ProcessIdentity(role="controller", generation=_id()),
@@ -173,7 +178,7 @@ def test_late_executor_failure_preserves_admission_and_retains_terminal_operatio
         )
         assert replay_while_running == first
         release.set()
-        await transport.close(host_time_ns() + 1_000_000_000)
+        await asyncio.wait_for(terminal_reported.wait(), 1)
         replay_after_failure = await transport.dispatch(
             "Cleanup", request, request, deadline + 2_000, handler
         )
@@ -183,6 +188,7 @@ def test_late_executor_failure_preserves_admission_and_retains_terminal_operatio
         terminal = control.OperationState.FromString(retained.executor_result)
         assert terminal.complete and not terminal.succeeded
         assert terminal.failure.code == "LATE_FAILURE"
+        await transport.close(host_time_ns() + 1_000_000_000)
 
     asyncio.run(run())
 

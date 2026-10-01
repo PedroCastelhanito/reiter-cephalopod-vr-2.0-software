@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import threading
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -14,6 +13,7 @@ from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.metadata.types import MetadataWrite as _MetadataWrite
 from cephvr.controller.metadata.types import StorageError
 from cephvr.controller.metadata.writer import MetadataWriter
+from tests.controller.support_components import _reservation
 
 
 def _write(
@@ -40,17 +40,6 @@ def _write(
         payload_utf8=payload_utf8,
         submitted_ns=submitted_ns,
         deadline_ns=deadline_ns,
-    )
-
-
-def _reservation(root: Path) -> OutputReservation:
-    return OutputReservation(
-        root,
-        "experiment",
-        "subject",
-        "81d85f03-ac85-4d5e-885c-4754ee594540",
-        "470b220b-6272-4fa3-8677-3957c29eea5f",
-        datetime(2026, 9, 29, 13, 14, 15, tzinfo=UTC),
     )
 
 

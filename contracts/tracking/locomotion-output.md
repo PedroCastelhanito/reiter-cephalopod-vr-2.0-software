@@ -31,9 +31,9 @@ All three drive channels declare quantity=interval_average_rate and coordinate_f
 anatomical_body. Their declared method units describe rate-like relative controls;
 channel names alone never imply physical velocity. Each valid result identifies its
 valid source interval [t0,t1), dt=(t1-t0) in seconds, with t1>t0 and the existing lineage.
-Use the VR feedback contract's existing interval-average-rate integration without a
+Use the Visual Stimulus feedback contract's existing interval-average-rate integration without a
 second formula or integrator in tracking. Gains have virtual-speed units per declared
-drive unit; the integration offset has virtual-speed units. VR retains ownership of
+drive unit; the integration offset has virtual-speed units. Visual Stimulus retains ownership of
 epoch attribution, overlap/reset gates and application of the source interval.
 
 The estimator must state how its measured input produces an interval-representative
@@ -50,13 +50,13 @@ T45 binds water-flow exponential smoothing and its filtered interval average in
 [water-flow-proxy.md](water-flow-proxy.md). No deadband, saturation, inertia or numeric
 gain default is selected here.
 
-## VR mapping and recording ownership
+## Visual Stimulus mapping and recording ownership
 
-Reuse [VR feedback](../vr/feedback.md) and its existing stimulus-program bindings for
+Reuse [Visual Stimulus feedback](../visual_stimulus/feedback.md) and its existing stimulus-program bindings for
 gain, offset, target compatibility and source-interval integration. Units are spelled
-as VR input units: forward/sideways px/s bind together through heading_relative_planar_integration
+as Visual Stimulus input units: forward/sideways px/s bind together through heading_relative_planar_integration
 to arena x/y (mm per px); turn 1/s binds by movement_integration to arena yaw (deg per radian). Do not add a second
-tracking-owned copy of those VR gains. Mapping relative drive into virtual metres or
+tracking-owned copy of those Visual Stimulus gains. Mapping relative drive into virtual metres or
 radians does not make the input a physically calibrated animal velocity. Gain values
 remain explicit program settings with existing epoch/program ownership; this decision
 adds no numeric defaults or live configuration exception.
@@ -64,7 +64,7 @@ adds no numeric defaults or live configuration exception.
 The estimator's channels use the existing PreparedMethods.channels declarations and
 tracking-result transport. Validate the three required channel identities,
 quantity=interval_average_rate, coordinate_frame=anatomical_body and each selected
-method's explicit unit/gain compatibility before Ready. Retain separate source evidence, derived controls and VR-applied changes
+method's explicit unit/gain compatibility before Ready. Retain separate source evidence, derived controls and Visual Stimulus-applied changes
 through existing compact records and source/result links; introduce no duplicate log
 or dense-data output. T09/A06/V25 retain invalid/reset/hold behavior, without remembered
 velocity, invented zero motion or integration across missing source intervals.

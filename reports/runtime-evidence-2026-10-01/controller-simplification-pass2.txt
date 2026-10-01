@@ -1,0 +1,132 @@
+Controller simplification, second pass: validation
+UTC: 2026-09-30T22:58:28+00:00
+HEAD: 7ae3767cea92bf7af94153d417e40df997e1fd05
+Source: uncommitted working tree, including pre-existing changes; HEAD alone does not identify this snapshot.
+Method: seven behavior-preserving increments (dead wiring; static file_policies and recovery_log_done; warning/receipt/predicate single owners; backend/service/metadata/transport/startup duplicates; lifecycle duplicates and shared cleanup dispatch; runtime.py logic moved to owners; named-step splits and a setup_resolution extraction; test-fixture consolidation). Each was delegated to a coder, reviewed against a pre-change snapshot and re-validated. The snapshot and a patch of the pre-change dirty state were kept outside the repository.
+Scope: portable tests, scoped static checks, repository boundary inspection. Native Windows/rig acceptance not executed; startup/application.py run_controller is Windows-only and was not changed.
+
+$ python -m pytest tests/controller tests/client tests/shared tests/launcher tests/supervisor tests/visual_stimulus/test_controller_communication.py -q -m 'not windows and not rig'
+379 passed in 7.17s
+$ python -m pytest tests/controller --collect-only -q
+200 tests collected in 0.57s
+$ python -m pytest tests -q -m 'not windows and not rig'   (whole repository, earlier in the same working tree)
+736 passed, 6 skipped, 2 deselected
+$ python -m ruff check src/cephvr/controller tests/controller
+All checks passed!
+$ python -m ruff format --check src/cephvr/controller tests/controller
+99 files already formatted
+$ python -m mypy --platform win32 src/cephvr/controller
+Success: no issues found in 74 source files
+$ python tools/check_backend_boundaries.py | grep -i 'controller|Checked'
+REVIEW src/cephvr/acquisition/microcontroller/owner.py: 521 lines; review cohesion
+REVIEW src/cephvr/controller/assembly.py: 519 lines; review cohesion
+Checked 453 backend modules; 0 boundary violations.
+$ git diff --check
+clean
+
+Sizes (lines): controller source before    16494 in       72 files; after    16297 in       74 files. tests/controller before     7069, after     6991.
+runtime.py:      527 ->      422
+assembly.py:      533 ->      519
+lifecycle/setup_execution.py:      482 ->      423
+lifecycle/interruption.py:      471 ->      444
+
+SHA256 controller sources and tests:
+b589cffc826c61afb60d863e6287ba96bfde0e8dec2485c31b4ad002e5fd8012  src/cephvr/controller/__init__.py
+753987886c9556b7e7b98a670b611ab7a7a2af57811869e7417f2f4f9900e5cf  src/cephvr/controller/assembly.py
+c0c9bab124053786402d91f0a3bd187de96ff0a7211405a2806796d1e142c97b  src/cephvr/controller/authority.py
+5a4dd024afcaa50a490d98ea9a783f99bc818f719a5f3ebf6595570dc5b5ebf3  src/cephvr/controller/backend.py
+884fb4cac139792f6208aeb6cc30a7c07e9e4a8bac1b734d9ee3058091f9eefd  src/cephvr/controller/configuration.py
+2eab0e4cfa69fb676016218957e7ad45ca78402a94320376975b6c3395ee3ee0  src/cephvr/controller/configuration_files.py
+ad7f83878821826758d08fb69aaa27f0d2be5eeecbc39b40cfbc7c314d0bc1c7  src/cephvr/controller/control/__init__.py
+3f79411bc74d689a5a5e5a5568dc8338a8f8c8ce72597c17c54357b873531f55  src/cephvr/controller/control/configuration.py
+f2223f74bf69a3b25e2094b498445a725cf7d8e7bfc18eff524533f691309e7e  src/cephvr/controller/control/leases.py
+f8b03d95ba4d937919f1b75c142461fdf16974ff23f367b55b4d72340d40687a  src/cephvr/controller/control/operations.py
+a7bb17146546fdf75ef2675bfe19de9b2fe1eae35a9a8e816b42b63af47c241f  src/cephvr/controller/control/prompts.py
+0edf0c5125746fb6e91cf2807f872ed377b96a45ef77dcb6f985fb53a73fb5bf  src/cephvr/controller/control/snapshots.py
+b87153ae4cb01c19ddeb51be05e964022211278d695e1a53972bc2ff40907b6e  src/cephvr/controller/device/__init__.py
+5461b322e6b41972d5162e9f00bef87a810c6e2a478714777c2ebc16dde53844  src/cephvr/controller/device/camera.py
+fe77650c9167ce2a4f27611e1f166cf9bb08c141bd72bf5f4c23c17cb1189ff3  src/cephvr/controller/device/display.py
+38324a16fa8bb2a810c1bf5098ca1dc468eee15779683c8e1ce011ad3bb812c3  src/cephvr/controller/device/owner_cleanup.py
+a3ea5d74b1ed242daa8a1fc9248587ef3a567cf48248060c70dae7a9e3dd5c59  src/cephvr/controller/device/ports.py
+e987cdf6fbf3c52814fe75810ff753f962454f64f6767c2a4f9650f34b257f21  src/cephvr/controller/device/preview.py
+48630a1d5aef0b2e0dd789bbc82bd3f078d442b19cb549a2157fab8df597de89  src/cephvr/controller/device/readback.py
+cd6717dcf02347e7e4d327d975a514d41eb62e8f3eb46176daf0b7c7ee627a6d  src/cephvr/controller/device/release_evidence.py
+b88d00bf4fdfc1b30c7059da7085c4017bc67c58fa52fafe5b5b19c69e033dea  src/cephvr/controller/device/status_retention.py
+fb02542c61918405b289cbe523cc500aea9d8c063d6bb71b45fe482011013d9f  src/cephvr/controller/device/views.py
+efb0784504823606ed9b36030d7926d34dec4e493e929f4b5c545f98e139a872  src/cephvr/controller/evidence.py
+cd0524902648359f781d98a4c2663863cfb9c51e612422405ac6225dfb0bc691  src/cephvr/controller/incident/__init__.py
+700842579bb3f43f011367abb7f9dae3ddf96760aceb0beb98479470b909a4a8  src/cephvr/controller/incident/coordination.py
+44fb18e036144a8911f1012d04770071c1de9854bdc575006eb9c36949d8dbd6  src/cephvr/controller/incident/registry.py
+fc8f6524974c3baf5079b65209b0a3c9bb486da0de71ae5a4d2d429366e437dd  src/cephvr/controller/incident/scope.py
+c99c0c6c1b7ccecaff96a84383227554bb4403ad34cc7e973fcaa4e9ab382c4c  src/cephvr/controller/lifecycle/__init__.py
+97afe4d6441ba7b170a73a11b3262d3315298d27eda22b1b80fe649bb86d5875  src/cephvr/controller/lifecycle/acquisition_resolution.py
+9d0ade23c070d398539fc3e42a4833b1306e2ae5e88e19784981237279d3042b  src/cephvr/controller/lifecycle/activity.py
+ff250193557d23aec95eee04d575d31385d57e9336e304228e30200e4c8c2d8d  src/cephvr/controller/lifecycle/cleanup.py
+617fdca4de2b92cbc694cf1fb3ea30548b114c3f7e05ca820779e3f74195825b  src/cephvr/controller/lifecycle/commands.py
+234905589da18eb08f9dc56a48d9ba968d5617faf13f1240c6eb1de23b51931c  src/cephvr/controller/lifecycle/evidence_wait.py
+64a9d231ac7248bc3ef7d51d072f39ff779f98dfc45db824599c7fa5dda1fb2d  src/cephvr/controller/lifecycle/handoffs.py
+41bffeaef933650ccc57ed9a1ac2c2c475ea6285eb11ff32f3e96784c69a2097  src/cephvr/controller/lifecycle/interruption.py
+e51eacdb877509daf8869635e8a31613b0bc1757f50aa0f4f0ab48e987d6edd1  src/cephvr/controller/lifecycle/preparation_context.py
+c0bca386e3b5d1125971d107e74e46d65c963e3d1c44dcbb69e469610ce03653  src/cephvr/controller/lifecycle/setup_admission.py
+eef8c0773b01976d14f75e7f0db820b01fa93a3f1bd4d914707e179461563785  src/cephvr/controller/lifecycle/setup_execution.py
+65943ea3f77f39573c97193b5e13c3746cde06d9b0ca2ff0ba90836bf2b1f1fc  src/cephvr/controller/lifecycle/setup_resolution.py
+b4e07cac68d72c182b6bcef46c4eb5f7c8b1f29cd0bf3f1d4c1be08d643f0027  src/cephvr/controller/lifecycle/start.py
+579e90b7ff417f5f10939cd50f340cadf6dde5f03c48f3430b9dd314cb2f7722  src/cephvr/controller/lifecycle/trials.py
+f10a3165ad4a3bc9e288bc80f5a69dc620d1838cb82b0f65d7bfa434155847e1  src/cephvr/controller/lifecycle_completion.py
+989c5063fe9e66d38adeb4a8cc4dfcae8420be3b9c3efdeda7d5cca7e13b7a99  src/cephvr/controller/lifecycle_reports.py
+1ebd73c832ef9f5fb14fcee09ec1668b9a9c17a6c8fcb7522c4a58b624de77ce  src/cephvr/controller/main.py
+b692b710d394ef4ffbb0fb99d7fb3aa1d32f72e0576c02e6c29712420aa99c78  src/cephvr/controller/metadata/__init__.py
+7b619338794a771296bf4c31108c7fbfaa27c16f81d089a6487b878bcdf75e7f  src/cephvr/controller/metadata/coordination.py
+759b528c66383c271335bea6654ab8b7262575363181a8f88bdb63db1d0b32de  src/cephvr/controller/metadata/documents.py
+92c70b631de757c73def3d0df1319cf1684beafb55ab71ae8d2e820711223854  src/cephvr/controller/metadata/files.py
+69d30931419d20faf2ffdc24a2e2813c67e461d78ae1db431e979f04dc9ed5b8  src/cephvr/controller/metadata/reservation.py
+f49640fd95f34083a20fb701f3ad9aa722a12f7c1d3e9e25b2108b5705d3b4a4  src/cephvr/controller/metadata/trial_logs.py
+fc56f55dceb2d479ae0b0549bb39020e4b9a930d472a1afef68493d09ebbf9c7  src/cephvr/controller/metadata/types.py
+bd2694dae3eb9371046bedaa2bbdcc6c9d8453e62a2b99569f52afce9183c149  src/cephvr/controller/metadata/writer.py
+a86c9db9ef353f281cc70576aa2bb6b3dc35b1d8ab96430d695a52cd46456f1f  src/cephvr/controller/planning.py
+acfd1744df34f1dcf140cb641f12477746211bec715b69f11ee9c8748a8b3c66  src/cephvr/controller/ports.py
+9bfd81c3f5ec6d1e3aac2cc353a971c994972566a406e9718ceee14de51b0453  src/cephvr/controller/preparation.py
+bf82c6cbd7aa16db528a8fda12715212eed4725c672c45a542d96981048a6e70  src/cephvr/controller/projections.py
+27485fd1bb2569cfce7b5d28f39cd3b12488fc4e44e16a7acf36edd28b64779d  src/cephvr/controller/receipts.py
+a643c3d01dc2b90d8a3725acb829807c4c833f4d114e0e696d4c7c80150655a1  src/cephvr/controller/recovery.py
+87eda3103db940d9a8f30103d110b3d83c48deb364ca61064c6eec61ba42a818  src/cephvr/controller/recovery_inspection.py
+45fb03bd8ca07357557579e5bd79a2f309b75eb8599ae7154da4dc29bcd03e66  src/cephvr/controller/resolution.py
+f0bfcd5c9746b76121a0fc7bff49a4d698006ed42c4509d12051a10e37194500  src/cephvr/controller/runtime.py
+1f5e85292a1be6b9af4a0b2edfe8d32561104a4606b700c715e3e236b3a55fa8  src/cephvr/controller/service.py
+295d6fc8e53ee8d1ff3d7afc1f3affb75e4cfd81d0bc6311ec7c9fbd6234ee14  src/cephvr/controller/startup/__init__.py
+323131e74c9bf6757ca1b5c91131010971ae0500d36f5828a606fd56f1595ff2  src/cephvr/controller/startup/application.py
+8127de539cc686cdaa81df465d4fbf6306be65809438233d10ca68fc310104a6  src/cephvr/controller/startup/bootstrap.py
+c03a5ec49698e9c5f52c2c11f29f01a1a850bf6b2c035e915d28c3936e1cd366  src/cephvr/controller/startup/monitor.py
+f215dd9f2fc35c2c2c0f4974968cb4e4bd3bd55000886d4196fba49cae91fc84  src/cephvr/controller/startup/providers.py
+aee96d29471a2b55e9affda66c16ba79475661c3553e3355d13c9a1678f42531  src/cephvr/controller/startup/recovery.py
+2fa1599b8a84d14328b96dc58747267166f80fe9903523995d5a8f1ae390358d  src/cephvr/controller/state.py
+ad979cd0821262b3b61ce61e5a4c75901556b4ff1295b1dc1504ced3ca5d2e17  src/cephvr/controller/supervision.py
+ac9a6fa46babc0363d2537913e34676fefe93f62f21b57ebcb93c2fc70398be7  src/cephvr/controller/transport/__init__.py
+f44baadece695fba871249749c0c6b1a611d178e699358ed9dc948c0f0108912  src/cephvr/controller/transport/admission.py
+c9c0434ad2d3741c06a87637d8063138af38c4d51db654bd8f09e2397e37d7f8  src/cephvr/controller/transport/auth.py
+296c8cf7d170ad9011baf5c84e940e34eb32646db9b1843bb9409b9bbc66d2b0  src/cephvr/controller/transport/ingress.py
+9713bfb06edf6f70a7ca93a805e49076f28b934042367cef9bec6b00062bc7af  tests/controller/__init__.py
+9bd47f2f312ae5fd23cb44dc508939986a69604fd5bf9a07037af015279dabf3  tests/controller/support_components.py
+6c25519ed861ff12348f7a9d0ca11241b9fe33ba78e6ec58f22b6461dac94b3d  tests/controller/test_activity_evidence.py
+3cf294966beb932717b8ee4d74d3e14b4a440731db244a4e87638c88fe230ae0  tests/controller/test_authority.py
+5b09eaaa78637b9519c7f6c3da644b62fb94fefc03edacbf6cfaa09ca4d16191  tests/controller/test_camera_configuration.py
+e951757981d0518316527d3a3573c2711552b5305bd4b5daf5946798f72ea807  tests/controller/test_camera_evidence.py
+dabae92a29e47eccd9a4d64e9de3a1f0dd4818a714605341ccddda932728f580  tests/controller/test_command_admission.py
+bef4ece4c4d331521894fe81d50909494ee81b8173e57945161ec5e1aaee52ca  tests/controller/test_configuration.py
+cb5d89e33eda2aed208b874bfbe70d404abb46142a6cb3d20b6512a5e3c071f3  tests/controller/test_configuration_transactions.py
+519139f0463acdc103e4802f38efdba00b2481b67a19b57089ad5b59299c6026  tests/controller/test_control_leases.py
+fa897d41eaa36ef1d547ed6d0b5a7e5997e77d2ad82402656ebcf328f5d81bfb  tests/controller/test_device_admission.py
+3b45aa59ceb582baa4738cb6d3def9defe7765760961e02adcf9f68bf83a92bf  tests/controller/test_entrypoint.py
+b51abdc5e3bc386479ff24062107001be9a07e1c4939544677e92a19ef4aa255  tests/controller/test_handoffs.py
+d448ef4f2e850e5d80d80f2d0d5627410aaddefe139b7817629bb8f86d8020d2  tests/controller/test_incident_scope.py
+6529a2b8e36041a3e3719f51bfd95519ff1bdbf569fad4a6ee92238642d2e49d  tests/controller/test_lifecycle_commands.py
+4ee8359aef985154197a422e4b88058e0216a689a74f267b82c29e71afe09723  tests/controller/test_lifecycle_reports.py
+afbc0e765587b3f42993592f1bea8dd0fa296c6317fe697645213de99e5bac8c  tests/controller/test_metadata.py
+276ee35142a1bc9c1002f449aecfc67aaa525267bf48329a60ef25a7a2a00adf  tests/controller/test_output_evidence.py
+9b4bdfc10990e2e6bde09b31e7322e855014887185c875368283c507e65ba8b7  tests/controller/test_planning.py
+50f7108b2d01b5d2dadf2b282c3699649dec2978bd31707a8fa87dde43e617dd  tests/controller/test_runtime_retention.py
+915b2b797e603fd6f275d94d18827107ae20edefd488db13d03244d669e3b843  tests/controller/test_safety_regressions.py
+f44dde74c8e1dce52013311a59f46ae7e7965ad52d0ff3fa794bb72fc5f015f9  tests/controller/test_setup.py
+a1737e5f202158c98aa00c40bb581f24e3e6ccaf808b650d44ed85fe06e20e32  tests/controller/test_shutdown_handoff.py
+49b9a41f31fe0528703118e90e279668f2edfb8edad14a0d22ffae6754e1d009  tests/controller/test_startup_recovery.py
+bc6bec0f2666f6d567ecb7ddf41351e83735a604ff068ea5199524f438794e3b  tests/controller/test_storage.py

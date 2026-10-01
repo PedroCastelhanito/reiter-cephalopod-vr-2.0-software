@@ -4,9 +4,18 @@ from __future__ import annotations
 
 import uuid
 
+from google.protobuf.message import Message
+
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import Attempt, ConfigurationState, SupervisorState
+
+
+def _copy_policy(attempt: Attempt, name: str, target: Message, message: str) -> None:
+    policy = attempt.file_policies.get(name)
+    if policy is None or policy.DESCRIPTOR != target.DESCRIPTOR:
+        raise RuntimeError(message)
+    target.ParseFromString(policy.SerializeToString())
 
 
 class PreparationContext:
@@ -42,30 +51,48 @@ class PreparationContext:
                 break
         name = backend.context.backend_name
         if name == "acquisition":
-            policy = attempt.file_policies.get(name)
-            if (
-                policy is None
-                or policy.DESCRIPTOR != request.acquisition_policies.DESCRIPTOR
-            ):
-                raise RuntimeError("acquisition file policies unavailable")
-            request.acquisition_policies.ParseFromString(policy.SerializeToString())
+            _copy_policy(
+                attempt,
+                name,
+                request.acquisition_policies,
+                "acquisition file policies unavailable",
+            )
         elif name == "tracking":
-            policy = attempt.file_policies.get(name)
-            if (
-                policy is None
-                or policy.DESCRIPTOR != request.tracking_policies.DESCRIPTOR
-            ):
-                raise RuntimeError("tracking file policies unavailable")
-            request.tracking_policies.ParseFromString(policy.SerializeToString())
-        elif name == "vr":
-            policy = attempt.file_policies.get(name)
-            if policy is None or policy.DESCRIPTOR != request.vr_policies.DESCRIPTOR:
-                raise RuntimeError("VR file policies unavailable")
-            request.vr_policies.ParseFromString(policy.SerializeToString())
+            _copy_policy(
+                attempt,
+                name,
+                request.tracking_policies,
+                "tracking file policies unavailable",
+            )
+            if attempt.handoff is not None and attempt.handoff.closed_loop:
+                workers = self.worker_owners(attempt).get(
+                    "visual_stimulus", frozenset()
+                )
+                renderers = [
+                    identity
+                    for identity in workers
+                    if identity[0] == "visual_stimulus_renderer"
+                ]
+                if len(renderers) != 1:
+                    raise RuntimeError(
+                        "closed-loop tracking needs one registered renderer generation"
+                    )
+                request.feedback_consumer.role, request.feedback_consumer.generation = (
+                    renderers[0]
+                )
+        elif name == "visual_stimulus":
+            _copy_policy(
+                attempt,
+                name,
+                request.visual_stimulus_policies,
+                "Visual Stimulus file policies unavailable",
+            )
             if attempt.handoff is not None and attempt.handoff.closed_loop:
                 tracking = attempt.handoff.tracking
                 if tracking is None or not tracking.HasField("feedback"):
-                    raise RuntimeError("closed-loop VR feedback descriptor unavailable")
+                    raise RuntimeError(
+                        "closed-loop Visual Stimulus feedback descriptor unavailable"
+                    )
                 request.feedback_attachment.CopyFrom(tracking.feedback)
         return request
 
@@ -145,14 +172,6 @@ class PreparationContext:
             (name, backend.context.backend_generation): name
             for name, backend in attempt.required.items()
         }
-        statuses = {
-            (status.process.role, status.process.generation): status
-            for status in self.supervisor_state.all_processes
-            if status.process.role
-            and status.process.generation
-            and status.process_running
-            and status.connected
-        }
         connected = [
             status
             for status in self.supervisor_state.all_processes
@@ -161,6 +180,10 @@ class PreparationContext:
             and status.process_running
             and status.connected
         ]
+        statuses = {
+            (status.process.role, status.process.generation): status
+            for status in connected
+        }
         if len(statuses) != len(connected):
             raise RuntimeError(
                 "supervisor status repeats an operational process identity"
@@ -186,10 +209,3 @@ class PreparationContext:
                     break
                 current = next_status
         return {name: frozenset(workers) for name, workers in result.items()}
-
-    def registered_workers(self, attempt: Attempt) -> frozenset[tuple[str, str]]:
-        return frozenset(
-            worker
-            for workers in self.worker_owners(attempt).values()
-            for worker in workers
-        )

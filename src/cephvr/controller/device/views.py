@@ -12,13 +12,14 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.status_retention import CameraStatusRetention
 from cephvr.controller.projections import ProjectionError, ProjectionStore
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.state import (
     CameraOperation,
     ConfigurationState,
     DeviceState,
     LifecycleState,
 )
-from cephvr.vr.v1 import runtime_pb2 as vr_pb
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
 class DeviceViews:
@@ -136,7 +137,7 @@ class DeviceViews:
                         cast(svc.AcquisitionWarningReport, report)
                     )
                 elif kind == "display":
-                    display_view = cast(pb.VRDisplayView, report)
+                    display_view = cast(pb.VisualStimulusDisplayView, report)
                     pending = self.device.display_pending
                     if (
                         pending is None
@@ -160,7 +161,7 @@ class DeviceViews:
                                 item.HasField("resources_ready")
                                 and item.resources_ready
                                 and item.idle_submission
-                                == vr_pb.SUBMISSION_OUTCOME_RETURNED
+                                == visual_stimulus_pb.SUBMISSION_OUTCOME_RETURNED
                                 and item.HasField("idle_swap_return_ns")
                                 for item in display_view.outputs
                             )
@@ -183,10 +184,7 @@ class DeviceViews:
                 else:
                     raise ProjectionError("unknown projection report")
             except (ProjectionError, ValueError) as exc:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(code="EVIDENCE", message=str(exc)),
-                )
+                return rejected_receipt("EVIDENCE", str(exc))
             if changed and kind != "preview":
                 self.hooks.publish()
             return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)

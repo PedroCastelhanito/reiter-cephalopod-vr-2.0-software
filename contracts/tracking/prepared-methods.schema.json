@@ -238,6 +238,12 @@
       ],
       "title": "Nvof Api Version"
     },
+    "flow_sample_convention": {
+      "const": "native_block_estimate_at_footprint_centre",
+      "default": "native_block_estimate_at_footprint_centre",
+      "title": "Flow Sample Convention",
+      "type": "string"
+    },
     "driver_version": {
       "anyOf": [
         {

@@ -14,7 +14,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
-from cephvr.supervisor.acquisition_cleanup import AcquisitionWorkerCleanup
+from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
 from tests.supervisor.support import Outbound, make_runtime
 
 from .support import (
@@ -39,7 +39,7 @@ async def test_concurrent_reconciles_are_serialized(tmp_path: Path) -> None:
         return acq.WorkerState()
 
     outbound.get_worker_state = slow_state  # type: ignore[method-assign]
-    reconciler = runtime.shutdown.worker_shutdown
+    reconciler = runtime.shutdown.acquisition_worker_control
     deadline = host_time_ns() + 5_000_000_000
     await asyncio.gather(
         reconciler.reconcile_native_helper_exits(deadline),
@@ -56,7 +56,7 @@ async def test_owner_cleanup_required_releases_empty_helper_as_unconfirmed(
     native.jobs[worker.containment_job_name] = []  # owner exited
     assert _phase(runtime, worker) == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
     deadline = host_time_ns() + 5_000_000_000
-    reconciler = runtime.shutdown.worker_shutdown
+    reconciler = runtime.shutdown.acquisition_worker_control
     # Helper process still running: not released, not recorded as an error.
     assert await reconciler.reconcile_native_helper_exits(deadline) == []
     assert _phase(runtime, helper) == wire.LAUNCH_PHASE_OPERATIONAL
@@ -78,7 +78,7 @@ async def test_unreachable_live_owner_records_error_and_keeps_helper(
         raise ConnectionError("worker down")
 
     outbound.get_worker_state = down  # type: ignore[method-assign]
-    reconciler = runtime.shutdown.worker_shutdown
+    reconciler = runtime.shutdown.acquisition_worker_control
     assert (
         await reconciler.reconcile_native_helper_exits(host_time_ns() + 5_000_000_000)
         == []
@@ -143,8 +143,10 @@ async def test_helper_release_uses_shared_output_discharge(
 
     outbound.get_worker_state = state  # type: ignore[method-assign]
     outbound.get_worker_retained_result = retained  # type: ignore[method-assign]
-    messages = await runtime.shutdown.worker_shutdown.reconcile_native_helper_exits(
-        host_time_ns() + 5_000_000_000
+    messages = (
+        await runtime.shutdown.acquisition_worker_control.reconcile_native_helper_exits(
+            host_time_ns() + 5_000_000_000
+        )
     )
     assert messages == []  # confirmed evidence is never an unconfirmed release
     expected = wire.LAUNCH_PHASE_RELEASED if released else wire.LAUNCH_PHASE_OPERATIONAL
@@ -162,13 +164,16 @@ async def test_cleanup_reconcile_incomplete_retained_result_raises(
         camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
         work=WORK,
     )
-    cleanup = AcquisitionWorkerCleanup(
-        outbound=Outbound(), issuer=runtime.identity, command_ids={}
+    cleanup = AcquisitionWorkerControl(
+        registration=runtime.registration,
+        registry=runtime.registry,
+        outbound=Outbound(),
+        issuer=runtime.identity,
+        interrupt_commands={},
+        cleanup_commands={},
     )
     with pytest.raises(RuntimeError, match="not retained"):
-        await cleanup.reconcile(
-            worker, target, deadline_ns=host_time_ns() + 5_000_000_000
-        )
+        await cleanup.cleanup_worker(worker, target, host_time_ns() + 5_000_000_000)
 
 
 async def test_prior_application_exit_requires_exact_private_receipt(

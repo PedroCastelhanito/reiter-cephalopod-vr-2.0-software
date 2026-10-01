@@ -12,10 +12,10 @@ from datetime import datetime
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.incident.registry import IncidentRegistry
-from cephvr.controller.lifecycle.activity import activity_requirements
 from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
 from cephvr.controller.lifecycle.handoffs import PreparationHandoffs
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
+from cephvr.controller.lifecycle.setup_resolution import SetupResolution
 from cephvr.controller.metadata.files import safe_component as _safe_component
 from cephvr.controller.ports import SpikeGLXPort, SupervisorPort
 from cephvr.controller.state import (
@@ -76,9 +76,14 @@ class SetupExecution:
         self.preparation_context = preparation_context
         self.evidence_waiter = evidence_waiter
         self.handoffs = handoffs
-        self.validators = validators
-        self.display_validator = display_validator
-        self.output_planner = output_planner
+        self.resolution = SetupResolution(
+            clock=clock,
+            preparation_context=preparation_context,
+            evidence_waiter=evidence_waiter,
+            validators=validators,
+            display_validator=display_validator,
+            output_planner=output_planner,
+        )
         self.max_incident_bytes = max_incident_bytes
         self.cancel_attempt = cancel_attempt
 
@@ -92,7 +97,7 @@ class SetupExecution:
             deadline, supervisor = await self._prepare_participants(
                 attempt, command_id, retained_deadline
             )
-            await self._resolve_settings_and_outputs(attempt, deadline)
+            await self.resolution.resolve_settings_and_outputs(attempt, deadline)
             await self._register_final_context(
                 attempt, command_id, deadline, supervisor
             )
@@ -116,14 +121,12 @@ class SetupExecution:
             free = None
             reason = f"recording space unknown: {exc}"
         if free is None or free < self.limits.current.low_space_bytes:
-            choice, wait_ns = await self.setup_prompt(
-                attempt, command_id, f"{reason}; Continue or Cancel Setup"
+            extended = await self._prompt_extending_deadline(
+                attempt, command_id, f"{reason}; Continue or Cancel Setup", deadline
             )
-            deadline += wait_ns
-            attempt.setup_deadline_ns += wait_ns
-            if choice == "cancel":
-                await self.cancel_attempt(attempt)
+            if extended is None:
                 return None
+            deadline = extended
             attempt.overrides.append(
                 {"check": "recording_space", "free_bytes": free, "reason": reason}
             )
@@ -133,18 +136,17 @@ class SetupExecution:
         )
         if conflicts:
             listed = [str(path) for path in conflicts]
-            choice, wait_ns = await self.setup_prompt(
+            extended = await self._prompt_extending_deadline(
                 attempt,
                 command_id,
                 "Existing output files: "
                 + ", ".join(listed)
                 + "; Continue deletes exactly these files or Cancel preserves them",
+                deadline,
             )
-            deadline += wait_ns
-            attempt.setup_deadline_ns += wait_ns
-            if choice == "cancel":
-                await self.cancel_attempt(attempt)
+            if extended is None:
                 return None
+            deadline = extended
             await asyncio.wait_for(
                 asyncio.to_thread(attempt.reservation.resolve_collisions, conflicts),
                 max(0, (deadline - self.clock()) / 1e9),
@@ -174,32 +176,70 @@ class SetupExecution:
                     raise RuntimeError("Setup retired after reservation registration")
         return deadline
 
+    async def _prompt_extending_deadline(
+        self, attempt: Attempt, command_id: str, explanation: str, deadline: int
+    ) -> int | None:
+        """Prompt; extend the Setup deadline by the wait, or cancel and return None."""
+        choice, wait_ns = await self.setup_prompt(attempt, command_id, explanation)
+        deadline += wait_ns
+        attempt.setup_deadline_ns += wait_ns
+        if choice == "cancel":
+            await self.cancel_attempt(attempt)
+            return None
+        return deadline
+
     async def _prepare_participants(
         self, attempt: Attempt, command_id: str, deadline: int
     ) -> tuple[int, SupervisorPort]:
         """Confirm paired ephys, preliminary authority, backend Setup and Ready."""
         if attempt.paired:
-            assert self.spikeglx is not None
-            preparation = await asyncio.wait_for(
-                self.spikeglx.prepare(attempt.prepared.configuration, attempt.context),
-                max(0, (deadline - self.clock()) / 1e9),
+            await self._prepare_spikeglx(attempt, deadline)
+        supervisor = await self._register_preliminary_context(
+            attempt, command_id, deadline
+        )
+        closed_loop_handoff = (
+            attempt.handoff is not None and attempt.handoff.closed_loop
+        )
+        for name in attempt.required:
+            attempt.setup_operations.setdefault(name, str(uuid.uuid4()))
+        await self._setup_acquisition(attempt, deadline)
+        await self._setup_other_backends(attempt, deadline, closed_loop_handoff)
+        if attempt.handoff is not None:
+            await self.handoffs.complete_preparation_handoff(attempt, deadline)
+        if await self.evidence_waiter.wait_lifecycle_with_recovery(
+            attempt, "setup_ready", frozenset(attempt.required), deadline
+        ):
+            deadline += self.limits.current.recovery_ns
+        return deadline, supervisor
+
+    async def _prepare_spikeglx(self, attempt: Attempt, deadline: int) -> None:
+        """Prepare the paired SpikeGLX run and validate its readback identity."""
+        assert self.spikeglx is not None
+        preparation = await asyncio.wait_for(
+            self.spikeglx.prepare(attempt.prepared.configuration, attempt.context),
+            max(0, (deadline - self.clock()) / 1e9),
+        )
+        anchor = datetime.fromisoformat(attempt.prepared.anchor_wall_time)
+        expected_run = f"{_safe_component(attempt.prepared.configuration.experiment)}_{_safe_component(attempt.prepared.configuration.subject)}_{anchor.strftime('%Y%m%d')}_{anchor.strftime('%H%M%S')}"
+        if (
+            not preparation.address.strip()
+            or not 1 <= preparation.port <= 65535
+            or preparation.run_name != expected_run
+            or not preparation.spikeglx_version
+            or not preparation.sdk_version
+            or not preparation.mapping_id
+            or not preparation.data_directory
+            or not preparation.streams
+        ):
+            raise RuntimeError(
+                "SpikeGLX preparation endpoint, run identity or required readback missing"
             )
-            anchor = datetime.fromisoformat(attempt.prepared.anchor_wall_time)
-            expected_run = f"{_safe_component(attempt.prepared.configuration.experiment)}_{_safe_component(attempt.prepared.configuration.subject)}_{anchor.strftime('%Y%m%d')}_{anchor.strftime('%H%M%S')}"
-            if (
-                not preparation.address.strip()
-                or not 1 <= preparation.port <= 65535
-                or preparation.run_name != expected_run
-                or not preparation.spikeglx_version
-                or not preparation.sdk_version
-                or not preparation.mapping_id
-                or not preparation.data_directory
-                or not preparation.streams
-            ):
-                raise RuntimeError(
-                    "SpikeGLX preparation endpoint, run identity or required readback missing"
-                )
-            attempt.prepared.spikeglx.CopyFrom(preparation)
+        attempt.prepared.spikeglx.CopyFrom(preparation)
+
+    async def _register_preliminary_context(
+        self, attempt: Attempt, command_id: str, deadline: int
+    ) -> SupervisorPort:
+        """Register the preliminary Setup work identity with the supervisor."""
         supervisor = self.supervisor
         if supervisor is None:
             raise RuntimeError("supervisor registration unavailable")
@@ -215,11 +255,10 @@ class SetupExecution:
         ):
             raise RuntimeError("supervisor did not register Setup work identity")
         attempt.registered_context = deepcopy(initial_registration.registered)
-        closed_loop_handoff = (
-            attempt.handoff is not None and attempt.handoff.closed_loop
-        )
-        for name in attempt.required:
-            attempt.setup_operations.setdefault(name, str(uuid.uuid4()))
+        return supervisor
+
+    async def _setup_acquisition(self, attempt: Attempt, deadline: int) -> None:
+        """Run acquisition Setup first and wait for its resolution evidence."""
         acquisition = attempt.required.get("acquisition")
         if acquisition is not None:
             response = await asyncio.wait_for(
@@ -240,10 +279,16 @@ class SetupExecution:
             await self.evidence_waiter.wait_evidence(
                 lambda: attempt.resolution_confirmed, deadline, attempt
             )
+
+    async def _setup_other_backends(
+        self, attempt: Attempt, deadline: int, closed_loop_handoff: bool
+    ) -> None:
+        """Run the remaining backends' Setup in parallel within the deadline."""
         initial = {
             name: backend
             for name, backend in attempt.required.items()
-            if name != "acquisition" and (name != "vr" or not closed_loop_handoff)
+            if name != "acquisition"
+            and (name != "visual_stimulus" or not closed_loop_handoff)
         }
         responses = await asyncio.wait_for(
             asyncio.gather(
@@ -262,97 +307,6 @@ class SetupExecution:
         for name, response in zip(initial, responses, strict=True):
             if response.result != pb.COMMAND_RESULT_ACCEPTED:
                 raise RuntimeError(f"{name} rejected Setup: {response.failure.message}")
-        if attempt.handoff is not None:
-            await self.handoffs.complete_preparation_handoff(attempt, deadline)
-        if await self.evidence_waiter.wait_lifecycle_with_recovery(
-            attempt, "setup_ready", frozenset(attempt.required), deadline
-        ):
-            deadline += self.limits.current.recovery_ns
-        return deadline, supervisor
-
-    async def _resolve_settings_and_outputs(
-        self, attempt: Attempt, deadline: int
-    ) -> None:
-        """Validate exact resolved settings, display, trial plans and outputs."""
-        effective = deepcopy(attempt.prepared.configuration)
-        for name in attempt.required:
-            ready = attempt.ready[name]
-            current = next(
-                (item for item in effective.backends if item.backend_name == name),
-                None,
-            )
-            resolved = ready.resolved_settings
-            if (
-                current is None
-                or not current.enabled
-                or resolved.backend_name != name
-                or not resolved.enabled
-                or resolved.WhichOneof("settings") != current.WhichOneof("settings")
-            ):
-                raise RuntimeError(f"{name} Ready lacks exact resolved settings")
-            current.CopyFrom(resolved)
-        results = await asyncio.wait_for(
-            asyncio.gather(
-                *(
-                    asyncio.to_thread(validator, effective)
-                    for validator in self.validators.values()
-                )
-            ),
-            max(0, (deadline - self.clock()) / 1e9),
-        )
-        if not results or any(
-            not result.completed or not result.valid for result in results
-        ):
-            raise RuntimeError("resolved effective settings failed pure validation")
-        attempt.prepared.configuration.CopyFrom(effective)
-        vr = attempt.ready.get("vr")
-        if vr is None or len(vr.resolved_trials) != len(attempt.prepared.trials):
-            raise RuntimeError("VR did not provide every resolved trial")
-        if self.display_validator is None:
-            raise RuntimeError("display output validator unavailable")
-        vr_settings = next(
-            item.vr
-            for item in effective.backends
-            if item.backend_name == "vr" and item.enabled
-        )
-        attempt.vr_output_ids = await asyncio.wait_for(
-            asyncio.to_thread(self.display_validator, vr_settings.display.profile_json),
-            max(0, (deadline - self.clock()) / 1e9),
-        )
-        if not attempt.vr_output_ids:
-            raise RuntimeError("VR resolved display has no required outputs")
-        for index, resolved_trial in enumerate(vr.resolved_trials):
-            if (
-                resolved_trial.context != attempt.prepared.trials[index].context
-                or resolved_trial.definition
-                != attempt.prepared.trials[index].definition
-                or not resolved_trial.HasField("resolved_duration_ns")
-                or resolved_trial.resolved_duration_ns < 60_000_000_000
-            ):
-                raise RuntimeError("VR resolved duration or trial identity invalid")
-            attempt.prepared.trials[index].CopyFrom(resolved_trial)
-        if self.output_planner is None:
-            raise RuntimeError("output reservation planner unavailable")
-        outputs = self.output_planner(attempt.prepared, attempt.ready)
-        if not outputs:
-            raise RuntimeError("required output plan unavailable")
-        for name in attempt.required:
-            activity_requirements(attempt, name)
-        seen: set[str] = set()
-        for output in outputs:
-            if (
-                not output.output_key
-                or output.output_key in seen
-                or output.trial.session != attempt.context
-            ):
-                raise RuntimeError("output plan identity or key invalid")
-            seen.add(output.output_key)
-            attempt.prepared.outputs.add().CopyFrom(output)
-        await self.evidence_waiter.wait_evidence(
-            lambda: self.preparation_context.catalogues_match_ready(attempt),
-            deadline,
-            attempt,
-        )
 
     async def _register_final_context(
         self,
@@ -439,11 +393,7 @@ class SetupExecution:
             operation.complete = True
             operation.succeeded = False
             operation.failure.CopyFrom(pb.Failure(code="SETUP_FAILED", message=error))
-            self.control.warnings.append(
-                pb.Warning(
-                    warning_id=str(uuid.uuid4()), component="controller", message=error
-                )
-            )
+            self.control.add_warning("controller", error)
             self.publisher.publish()
         await self.cancel_attempt(attempt)
 

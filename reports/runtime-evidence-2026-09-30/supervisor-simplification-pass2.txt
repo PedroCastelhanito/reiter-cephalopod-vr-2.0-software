@@ -1,0 +1,63 @@
+Supervisor simplification, second pass: validation
+UTC: 2026-09-30T12:44:57+00:00
+HEAD: 7ae3767cea92bf7af94153d417e40df997e1fd05
+Source: uncommitted working tree, including pre-existing changes; HEAD alone does not identify this snapshot.
+Method: four behavior-preserving increments (constants/work-scope/registry/registration; worker controls and shutdown decomposition; outbound consolidation; health/recovery extraction), each followed by the commands below. Pre-refactor snapshot of the package and a patch of its uncommitted state were kept outside the repository for comparison.
+Scope: portable tests, scoped static checks, repository boundary inspection. Native Windows/rig acceptance not executed; startup.py and main.py (Windows-only) were not changed.
+
+$ python -m pytest tests/supervisor tests/visual_stimulus/test_transport.py -q -m 'not windows and not rig'
+......................................                                   [100%]
+110 passed in 2.81s
+
+$ python -m ruff check src/cephvr/supervisor tests/supervisor
+All checks passed!
+$ python -m ruff format --check src/cephvr/supervisor tests/supervisor
+29 files already formatted
+$ python -m mypy --platform win32 src/cephvr/supervisor
+Success: no issues found in 20 source files
+$ python tools/check_backend_boundaries.py | grep -i 'supervisor|Checked'
+REVIEW src/cephvr/supervisor/shutdown.py: 505 lines; review cohesion
+Checked 450 backend modules; 0 boundary violations.
+$ git diff --check
+clean
+
+Integration (consumers of the supervisor package):
+$ python -m pytest tests/supervisor tests/launcher tests/shared tests/client tests/controller/test_shutdown_handoff.py tests/tracking/test_runtime.py tests/visual_stimulus/test_transport.py -q -m 'not windows and not rig'
+............................................                             [100%]
+188 passed in 5.90s
+
+Transient unrelated failure during validation (resolved; not caused by this refactor):
+An earlier integration run (187 passed, 1 failed) and solo runs failed tests/tracking/test_runtime.py::test_supervisor_accepts_real_tracking_heartbeat_catalogue (RegisterContext rejected: ReportHeartbeat INVALID_CATALOGUE: first catalogue must be revision-zero empty). The same test failed against a copy of the tree taken at that time with the pre-refactor supervisor swapped in (PYTHONPATH override, two runs), so the supervisor changes were not the cause. A later diff showed src/cephvr/tracking/runtime.py and tracking/methods/nvidia.py had been edited concurrently (not by this work); with the current tree the test passes (3/3 file-level, 3/3 solo) and the 188-case integration run above passes (3/3 repeats). The old-source copy, which predates that tracking edit, still fails (3/3). Tracking's own change and its verification are out of this task's scope.
+
+Sizes (lines, src/cephvr/supervisor/*.py): before     5208 in       21 files; after     5013 in       20 files. shutdown.py 541 ->      505. tests/supervisor:     2712 ->     2731.
+
+SHA256 supervisor sources and tests:
+4774a328cd50a342fed86daa2f3bbb0bbc6caa9bd830a11f2f780c4e799049aa  src/cephvr/supervisor/__init__.py
+647cf7b1eed52e9dc631399123449cd4d65c4954605fe19afb7f1a982d37b3d5  src/cephvr/supervisor/acquisition_worker.py
+1cbbf14e24c6545e4a44aa297402da3f822bdb34457c2a2d4979bb83a5f074e1  src/cephvr/supervisor/health.py
+e800c36622efa4948523b9efd2cb87d15850f64886c03b30d56a8e707b55de2f  src/cephvr/supervisor/main.py
+b2423eacca555a91a7996eaac84493e586de25ffef4d872d5b5b15cdb34a3634  src/cephvr/supervisor/outbound.py
+da38cb44e55d822edc2b4a6213ab43721e546f831b4b587536e4d9e1e5e12b19  src/cephvr/supervisor/ports.py
+16efb38c585e24d2db2e183bb94da0a749138ce72df8b190ef7a9cd71b4acf72  src/cephvr/supervisor/process_exit.py
+21ffc3f9a39369aa949dfe5982b64d6f4f7eb954fe372fb534070d5f6c39c72d  src/cephvr/supervisor/receipts.py
+b57009ba28998c2cb0b1b34627d3c14c632ab7ec2504f79eb32c3cb3ce2c56d0  src/cephvr/supervisor/recovery.py
+99f916fc2d0e4f52551c24edfe77fb66770dd896af54f803410c1e8155a731db  src/cephvr/supervisor/registration.py
+9b345dadc83ec300f9a6adac3ec4b03164744d2225450335cbaf54d4c8903e8b  src/cephvr/supervisor/registry.py
+79af6d597fe7153ef56956b763b84ffeb2b78c11bb444f52a7c0c73851203d66  src/cephvr/supervisor/runtime.py
+b0e5679db699029ba21e6bbfe26ebe0c26a3d092a949208c59d3ffa7b74c17ee  src/cephvr/supervisor/service.py
+d6cc328528a695d9cb496440424899770d7281f148970c8dccb49360e68087c6  src/cephvr/supervisor/shutdown.py
+d4c16078bbefc307cfe8372f8d007dc96b65758ba128ef9461307bc12848806e  src/cephvr/supervisor/startup.py
+689e72a41a7153bcb9598687e73693e4c0a6da2e99608febb623ec483449e139  src/cephvr/supervisor/state.py
+080eabfed95237a1177eb33090565caebaa3b9d411f6dcf4dcb728a1bd6327cc  src/cephvr/supervisor/status.py
+30f4b6a32190c1622b8accf2771d2341b150e30acd66a50664088cd4dae2bec3  src/cephvr/supervisor/visual_stimulus_worker.py
+e8d351ff3d38295bf5c93b91adc512f077c1d707ed65395fa270a6947214f052  src/cephvr/supervisor/worker_context.py
+33d7be243e3451142a12a9310ea6ef9a7ad76ba25ffe598b8de29aea11c5637f  src/cephvr/supervisor/worker_outbound.py
+bc73394527efc9add5dd76d8cd3ded48d0d1699da9874f6427bc3f34dc7488b9  tests/supervisor/__init__.py
+5eb06fd4b3582654950a43a5ed962ec9592ad9d8d46e44dcb41580d2e55f46fa  tests/supervisor/support.py
+5ff53c19c8fe07cd1fb30b07230ac95c13d980e98ba0408a10cfc078930ad3ce  tests/supervisor/test_health.py
+55997748cfeb083becbd57c7875c161696c77848ad809e7261487167ee970bf8  tests/supervisor/test_recovery.py
+9efeec7c08582ca9fbd68ba15a97c21b6f7ba5a60387ff3fafe49f0f9967400f  tests/supervisor/test_registration.py
+63a809f7cf30fc413f2f8f3e992ac198b57adfc0f86138ad66bff5525fe9e2bd  tests/supervisor/test_registry.py
+1365cf1c4bbae9587d13d1bc9ffe403a66fa64b85a2cd76e37e1b2bc38f710ed  tests/supervisor/test_shutdown.py
+9a345f166eb9fb2d0e78e9ef7bd2f1b5b5d45f046926fe5abda5943636e40272  tests/supervisor/test_status.py
+54a0d7a868220b32d2b8f94baa8b3acd7bfcd7bf8bf6f153ab487426424ad3a5  tests/supervisor/test_worker_outbound_contracts.py

@@ -19,14 +19,15 @@ Accepted design does not imply implemented or rig-validated behavior.
 ## Current position
 
 - Architecture and implementation-contract review is complete for every backend.
-  [ARCH-001](#arch-001) selects acquisition host implementation following the
-  controller/supervisor stage. The [acquisition review](reports/acquisition-implementation-review.md)
-  records source review and pending rig verification; the [controller/supervisor review](reports/runtime-implementation-review.md)
-  retains its separate static-check results and pending E15 behavioral verification.
+  [ARCH-001](#arch-001) selects Tracking implementation next, followed by GUI and
+  finally SpikeGLX integration. Firmware is deferred; analysis software is much later. The [acquisition review](reports/acquisition.md)
+  records source review and pending rig verification; the [controller/supervisor review](reports/runtime.md)
+  retains dated local results and pending E15 rig acceptance. Current Visual Stimulus and tracking
+  status is recorded in [Visual Stimulus](reports/visual_stimulus.md) and [tracking](reports/tracking.md).
 - Repository packaging and code ownership are accepted under [ARCH-002](#arch-002).
   Package scaffolding and development-tool configuration do not implement a backend.
 - Contract indexes: [acquisition](contracts/acquisition/README.md),
-  [visual stimulus](contracts/vr/README.md), [tracking](contracts/tracking/README.md),
+  [visual stimulus](contracts/visual_stimulus/README.md), [tracking](contracts/tracking/README.md),
   [SpikeGLX control](contracts/spikeglx-control.md) and the
   [shared contract index](contracts/README.md).
 - The decision register below is the authority map; supporting reports keep no
@@ -45,8 +46,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [Acquisition](docs/architecture/acquisition.md) | Camera workers, frame delivery, encoding, frame log and camera pulse control |
 | [Supervisor](docs/architecture/supervisor.md) | Process supervision, emergency reports and shared E04 storage rules (output reservation and central metadata writer are controller-owned); links to supervision contracts |
 | [GUI](docs/architecture/gui.md) | Disconnection, control ownership and GUI recovery |
-| [VR/stimulus](docs/architecture/vr.md) | Runtime topology/rendering stack, stimulus scope/program model/storage, recording policy and interfaces |
-| [Tracking](docs/architecture/tracking.md) | Complete initial water/fin pipeline declarations and VR result delivery; runtime outstanding |
+| [Visual Stimulus](docs/architecture/visual_stimulus.md) | Runtime topology/rendering stack, stimulus scope/program model/storage, recording policy and interfaces |
+| [Tracking](docs/architecture/tracking.md) | Complete initial water/fin pipeline declarations and Visual Stimulus result delivery; runtime outstanding |
 | [Synchronization](docs/architecture/synchronization.md) | Controller-owned SpikeGLX session control, pulse inventory and external post hoc alignment |
 
 ## Decision register
@@ -57,8 +58,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [SYS-002](#sys-002) | GPU workload placement | Accepted | 2 |
 | [SYS-003](#sys-003) | Backend language and environment | Accepted | 2 |
 | [SYS-004](#sys-004) | Scientific synchronization authority | Accepted | 3 |
-| [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 24 |
-| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 13 |
+| [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
+| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 17 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
@@ -67,53 +68,53 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 76 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 57 |
-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 159 |
+| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 160 |
 | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 20 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
 | <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 17 |
-| <a id="e13"></a>[E13](docs/architecture/vr.md#e13) | Save VR data | Accepted | 17 |
-| <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 205 |
-| <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 8 |
+| <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 17 |
+| <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 206 |
+| <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
 | <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 16 |
 | <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 29 |
 | <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 31 |
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
-| <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-VR delay measurement | Accepted | 6 |
-| <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to VR | Accepted | 14 |
+| <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
+| <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
 | <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 57 |
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 48 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 12 |
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 49 |
 | <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 34 |
-| <a id="v01"></a>[V01](docs/architecture/vr.md#v01) | VR coordinator and rendering worker | Accepted | 9 |
-| <a id="v02"></a>[V02](docs/architecture/vr.md#v02) | Structured trial stimulus programs | Accepted | 9 |
-| <a id="v03"></a>[V03](docs/architecture/vr.md#v03) | Versioned JSON stimulus-program files | Accepted | 8 |
-| <a id="v04"></a>[V04](docs/architecture/vr.md#v04) | Rendering stack and required stimulus scope | Accepted | 10 |
-| <a id="v05"></a>[V05](docs/architecture/vr.md#v05) | Declarative parameter animation | Accepted | 6 |
-| <a id="v06"></a>[V06](docs/architecture/vr.md#v06) | Epoch durations and trial duration | Accepted | 5 |
-| <a id="v07"></a>[V07](docs/architecture/vr.md#v07) | Stimulus state continuity and trial initialization | Accepted | 5 |
-| <a id="v08"></a>[V08](docs/architecture/vr.md#v08) | Group ordering and repetition | Accepted | 2 |
-| <a id="v09"></a>[V09](docs/architecture/vr.md#v09) | Video clip completion | Accepted | 4 |
-| <a id="v10"></a>[V10](docs/architecture/vr.md#v10) | Clock-preserving playback and nonfatal timing misses | Accepted | 4 |
-| <a id="v11"></a>[V11](docs/architecture/vr.md#v11) | Bounded video decode-ahead preparation | Accepted | 5 |
-| <a id="v12"></a>[V12](docs/architecture/vr.md#v12) | VR recording thread and overload | Accepted | 9 |
-| <a id="v13"></a>[V13](docs/architecture/vr.md#v13) | Trial replay from program and actual render evidence | Accepted | 9 |
-| <a id="v14"></a>[V14](docs/architecture/vr.md#v14) | Explicit stimulus coordinate spaces | Accepted | 3 |
-| <a id="v15"></a>[V15](docs/architecture/vr.md#v15) | Four calibrated off-axis surface views | Accepted | 5 |
-| <a id="v16"></a>[V16](docs/architecture/vr.md#v16) | Explicit simple arena movement boundaries | Accepted | 4 |
-| <a id="v17"></a>[V17](docs/architecture/vr.md#v17) | Unlit arena appearance | Accepted | 2 |
-| <a id="v18"></a>[V18](docs/architecture/vr.md#v18) | Externally prepared arena assets | Accepted | 2 |
-| <a id="v19"></a>[V19](docs/architecture/vr.md#v19) | Uniform Idle background | Accepted | 3 |
-| <a id="v20"></a>[V20](docs/architecture/vr.md#v20) | Configurable projector presentation pacing | Accepted | 5 |
-| <a id="v21"></a>[V21](docs/architecture/vr.md#v21) | Output-range clipping with evidence | Accepted | 2 |
-| <a id="v22"></a>[V22](docs/architecture/vr.md#v22) | Photodiode frame alternation with landmarks | Accepted | 2 |
-| <a id="v23"></a>[V23](docs/architecture/vr.md#v23) | Explicit photometric calibration mode | Accepted | 3 |
-| <a id="v24"></a>[V24](docs/architecture/vr.md#v24) | Explicit feedback parameter mappings | Accepted | 6 |
-| <a id="v25"></a>[V25](docs/architecture/vr.md#v25) | Hold feedback-driven state during invalid input | Accepted | 4 |
-| <a id="v26"></a>[V26](docs/architecture/vr.md#v26) | Feedback freshness guard with local hold | Accepted | 8 |
-| <a id="v27"></a>[V27](docs/architecture/vr.md#v27) | Additive motion on retained stimulus state | Accepted | 2 |
-| <a id="v28"></a>[V28](docs/architecture/vr.md#v28) | VR evidence file and crash behavior | Accepted | 4 |
+| <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 12 |
+| <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 9 |
+| <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 8 |
+| <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 10 |
+| <a id="v05"></a>[V05](docs/architecture/visual_stimulus.md#v05) | Declarative parameter animation | Accepted | 6 |
+| <a id="v06"></a>[V06](docs/architecture/visual_stimulus.md#v06) | Epoch durations and trial duration | Accepted | 5 |
+| <a id="v07"></a>[V07](docs/architecture/visual_stimulus.md#v07) | Stimulus state continuity and trial initialization | Accepted | 5 |
+| <a id="v08"></a>[V08](docs/architecture/visual_stimulus.md#v08) | Group ordering and repetition | Accepted | 2 |
+| <a id="v09"></a>[V09](docs/architecture/visual_stimulus.md#v09) | Video clip completion | Accepted | 4 |
+| <a id="v10"></a>[V10](docs/architecture/visual_stimulus.md#v10) | Clock-preserving playback and nonfatal timing misses | Accepted | 4 |
+| <a id="v11"></a>[V11](docs/architecture/visual_stimulus.md#v11) | Bounded video decode-ahead preparation | Accepted | 5 |
+| <a id="v12"></a>[V12](docs/architecture/visual_stimulus.md#v12) | Visual Stimulus recording thread and overload | Accepted | 9 |
+| <a id="v13"></a>[V13](docs/architecture/visual_stimulus.md#v13) | Trial replay from program and actual render evidence | Accepted | 10 |
+| <a id="v14"></a>[V14](docs/architecture/visual_stimulus.md#v14) | Explicit stimulus coordinate spaces | Accepted | 3 |
+| <a id="v15"></a>[V15](docs/architecture/visual_stimulus.md#v15) | Four calibrated off-axis surface views | Accepted | 5 |
+| <a id="v16"></a>[V16](docs/architecture/visual_stimulus.md#v16) | Explicit simple arena movement boundaries | Accepted | 4 |
+| <a id="v17"></a>[V17](docs/architecture/visual_stimulus.md#v17) | Unlit arena appearance | Accepted | 2 |
+| <a id="v18"></a>[V18](docs/architecture/visual_stimulus.md#v18) | Externally prepared arena assets | Accepted | 2 |
+| <a id="v19"></a>[V19](docs/architecture/visual_stimulus.md#v19) | Uniform Idle background | Accepted | 4 |
+| <a id="v20"></a>[V20](docs/architecture/visual_stimulus.md#v20) | Configurable projector presentation pacing | Accepted | 5 |
+| <a id="v21"></a>[V21](docs/architecture/visual_stimulus.md#v21) | Output-range clipping with evidence | Accepted | 2 |
+| <a id="v22"></a>[V22](docs/architecture/visual_stimulus.md#v22) | Photodiode frame alternation with landmarks | Accepted | 2 |
+| <a id="v23"></a>[V23](docs/architecture/visual_stimulus.md#v23) | Explicit photometric calibration mode | Accepted | 3 |
+| <a id="v24"></a>[V24](docs/architecture/visual_stimulus.md#v24) | Explicit feedback parameter mappings | Accepted | 6 |
+| <a id="v25"></a>[V25](docs/architecture/visual_stimulus.md#v25) | Hold feedback-driven state during invalid input | Accepted | 4 |
+| <a id="v26"></a>[V26](docs/architecture/visual_stimulus.md#v26) | Feedback freshness guard with local hold | Accepted | 8 |
+| <a id="v27"></a>[V27](docs/architecture/visual_stimulus.md#v27) | Additive motion on retained stimulus state | Accepted | 2 |
+| <a id="v28"></a>[V28](docs/architecture/visual_stimulus.md#v28) | Visual Stimulus evidence file and crash behavior | Accepted | 4 |
 | <a id="t01"></a>[T01](docs/architecture/tracking.md#t01) | Tracking image representation | Accepted | 3 |
 | <a id="t02"></a>[T02](docs/architecture/tracking.md#t02) | Named tracking pipelines with shared stages | Accepted | 4 |
 | <a id="t03"></a>[T03](docs/architecture/tracking.md#t03) | One selected tracking camera per session | Accepted | 1 |
@@ -121,7 +122,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="t05"></a>[T05](docs/architecture/tracking.md#t05) | Explicit manual or automatic pose mode | Accepted | 2 |
 | <a id="t06"></a>[T06](docs/architecture/tracking.md#t06) | Selectable keypoint-model or threshold/contour pose | Accepted | 5 |
 | <a id="t07"></a>[T07](docs/architecture/tracking.md#t07) | NVIDIA Optical Flow with need-driven extensions | Accepted | 7 |
-| <a id="t08"></a>[T08](docs/architecture/tracking.md#t08) | One tracking process with internal workers | Accepted | 5 |
+| <a id="t08"></a>[T08](docs/architecture/tracking.md#t08) | One tracking process with internal workers | Accepted | 6 |
 | <a id="t09"></a>[T09](docs/architecture/tracking.md#t09) | Independent automatic pose and ordered movement | Accepted | 4 |
 | <a id="t10"></a>[T10](docs/architecture/tracking.md#t10) | Shared three-landmark pose | Accepted | 4 |
 | <a id="t11"></a>[T11](docs/architecture/tracking.md#t11) | ONNX pose models with ONNX Runtime CUDA | Accepted | 4 |
@@ -146,12 +147,12 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="t30"></a>[T30](docs/architecture/tracking.md#t30) | Band scale and ROI dimension meanings | Accepted | 2 |
 | <a id="t31"></a>[T31](docs/architecture/tracking.md#t31) | Full-band sampling geometry | Accepted | 5 |
 | <a id="t32"></a>[T32](docs/architecture/tracking.md#t32) | Equal-arc outline sections | Accepted | 6 |
-| <a id="t33"></a>[T33](docs/architecture/tracking.md#t33) | Full flow samples available to the estimator | Accepted | 2 |
+| <a id="t33"></a>[T33](docs/architecture/tracking.md#t33) | Full flow samples available to the estimator | Accepted | 3 |
 | <a id="t34"></a>[T34](docs/architecture/tracking.md#t34) | Measured flow with separate pose evidence | Accepted | 2 |
 | <a id="t35"></a>[T35](docs/architecture/tracking.md#t35) | Relative locomotion-control outputs | Accepted | 3 |
 | <a id="t36"></a>[T36](docs/architecture/tracking.md#t36) | Full planar locomotion control | Accepted | 3 |
 | <a id="t37"></a>[T37](docs/architecture/tracking.md#t37) | Drive controls virtual speed over source intervals | Accepted | 1 |
-| <a id="t38"></a>[T38](docs/architecture/tracking.md#t38) | Direct estimator units through existing VR gains | Accepted | 3 |
+| <a id="t38"></a>[T38](docs/architecture/tracking.md#t38) | Direct estimator units through existing Visual Stimulus gains | Accepted | 4 |
 | <a id="t39"></a>[T39](docs/architecture/tracking.md#t39) | Dense tracer-water flow for swimming intent | Accepted | 3 |
 | <a id="t40"></a>[T40](docs/architecture/tracking.md#t40) | Flow-transport and turning proxy | Accepted | 2 |
 | <a id="t41"></a>[T41](docs/architecture/tracking.md#t41) | Local flow-consistency screening | Accepted | 3 |
@@ -174,7 +175,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 **Status:** Accepted · **Revision:** 3
 
 - The main computer acquires and records camera streams, processes tracking, and
-  renders VR/projection.
+  renders Visual Stimulus/projection.
 - A separate computer runs SpikeGLX and records electrophysiology and incoming
   synchronization pulses.
 - Camera frames do not pass through the SpikeGLX computer.
@@ -188,7 +189,7 @@ Accepted design does not imply implemented or rig-validated behavior.
   tracking GPU work (NVIDIA Optical Flow and ONNX CUDA inference). T08's CPU
   preparation/geometry/estimation and normal CPU control work retain their owners.
 - Use the RTX 2080 Ti NVENC engines for all recorded video: both cameras and the
-  VR review composite. Keep rendering/readback on the RTX 5060 Ti and the existing
+  Visual Stimulus review composite. Keep rendering/readback on the RTX 5060 Ti and the existing
   host-buffer/raw-stdin recording paths; no GPU-to-GPU sharing is assumed.
 - Use the Ryzen 9 9950X's integrated AMD Radeon graphics for the main operator
   display and GUI graphics. GUI application logic continues on the CPU.
@@ -239,7 +240,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="gov-001"></a>
 ### GOV-001 — Decision workflow and document format
 
-**Status:** Accepted · **Revision:** 24
+**Status:** Accepted · **Revision:** 26
 
 - All backend architecture and implementation contracts have been reviewed against
   the owner's intended behavior. Runtime implementation requires explicit owner
@@ -288,8 +289,19 @@ Accepted design does not imply implemented or rig-validated behavior.
   declarations go in the versioned `contracts/policy/<backend>_policy.toml` (E14).
 - Amendments replace the relevant bullet. Add a new decision only for a real
   behavior/ownership tradeoff. Before saving, remove duplication and check dependent
-  configs/contracts. Reports link to current decisions instead of accumulating
-  copies of accepted rules.
+  configs/contracts. Development reports link to current decisions: maintain one
+  current report per backend area (`reports/runtime.md`, `acquisition.md`, `visual_stimulus.md`,
+  `tracking.md`), updated in place with scope, unresolved findings and dated validation
+  evidence/limits. Keep outstanding rig checks and execution instructions only in
+  `reports/rig-verification.md`; retain raw evidence and its assessment in dated
+  bundles. Preserve result provenance and unresolved findings when consolidating;
+  Git retains review history. Do not create per-review reports or duplicate policy.
+  E04 runtime emergency/recovery reports retain their separate role.
+- Root `TODO.md` indexes open tasks by status and affected backend; root `LOG.md`
+  records brief dated actions, findings, code/report changes and verification limits.
+  Contributors and agents keep them current as they work. Link authoritative
+  decisions, current backend reports and the single rig checklist rather than
+  copying them; task entries do not authorize new scope or close deferred acceptance.
 - Keep the overview and global decision register in root `architecture.md`; store
   backend records in `docs/architecture/<backend>.md` and cross-component rules in
   `docs/architecture/system-contracts.md`. Use one authoritative home per decision;
@@ -306,21 +318,25 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="arch-001"></a>
 ### ARCH-001 — Backend process boundaries and build order
 
-**Status:** Undecided · **Revision:** 13
+**Status:** Undecided · **Revision:** 17
 
-- The owner has authorized runtime implementation and tests for the supervisor,
-  experiment controller and acquisition host backend, including required shared
-  helpers, launcher/native mechanisms and headless client. Acquisition is the next
-  selected stage; firmware/flashing and other backend runtimes remain outside it.
-  Code organization follows [ARCH-002](#arch-002). Remaining implementation order
-  is undecided; unavailable backend
-  implementations cannot be replaced by fabricated readiness or rig validation.
+- The owner has authorized implementation and tests for Tracking next, followed by
+  the GUI. Existing controller, supervisor, acquisition host and Visual Stimulus work
+  remains in scope for required integration and shared helpers. Tracking is the
+  current implementation stage; GUI follows its implementation/integration review.
+- SpikeGLX integration comes last in this sequence, after Tracking and GUI.
+  Acquisition firmware/flashing is deferred to a later stage. Analysis software,
+  including V13 offline replay/export, is deferred much later; the experiment
+  backend must continue recording the inputs that analysis requires.
+- Code organization follows [ARCH-002](#arch-002). Local implementation/communication
+  checks follow E15; Windows-native, scientific and full-workload acceptance remains
+  rig work. Unavailable implementations never imply readiness or rig validation.
 - The complete process split remains undecided. Selected process structure so far:
   - E08: separate controller, supervisor and GUI processes.
   - A02: acquisition coordinator and one camera worker process per camera (capture
     and recording threads), with encoding in an FFmpeg subprocess.
-  - [V01](docs/architecture/vr.md#v01): VR coordinator and separate rendering worker;
-    [V12](docs/architecture/vr.md#v12) adds a recording thread and FFmpeg subprocess
+  - [V01](docs/architecture/visual_stimulus.md#v01): Visual Stimulus coordinator and separate rendering worker;
+    [V12](docs/architecture/visual_stimulus.md#v12) adds a recording thread and FFmpeg subprocess
     inside the renderer when saving is enabled.
   - E12: no added process; the controller calls SpikeGLX directly. No separate
     alignment process is selected.
@@ -329,7 +345,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 - Other unresolved backend names identify logical responsibilities and configuration
   ownership without a selected process layout. One logical backend may contain
   several worker processes.
-- Discussion order follows GOV-001; it does not settle implementation order.
+- GOV-001 owns decision review; the implementation sequence above is owner-selected.
 
 <a id="arch-002"></a>
 ### ARCH-002 — Repository packaging and code ownership

@@ -19,7 +19,7 @@ ClassificationStatus = Literal["pending", "continuable", "blocking"]
 _LIFECYCLE_SOURCES = {
     "acquisition": frozenset({"behavioral", "tracking"}),
     "tracking": frozenset({"tracking"}),
-    "vr": frozenset({"renderer"}),
+    "visual_stimulus": frozenset({"renderer"}),
 }
 
 
@@ -211,9 +211,12 @@ class IncidentTopology:
                         "lifecycle source has multiple functions"
                     )
                 lifecycle_claims.update((backend, source_id) for source_id in lifecycle)
-                if backend == "vr" and not declaration.essential_to_stimulus_control:
+                if (
+                    backend == "visual_stimulus"
+                    and not declaration.essential_to_stimulus_control
+                ):
                     raise IncidentEvidenceError(
-                        "VR renderer must be an essential function"
+                        "Visual Stimulus renderer must be an essential function"
                     )
                 if backend == "acquisition":
                     if (
@@ -244,9 +247,9 @@ class IncidentTopology:
             raise IncidentEvidenceError(
                 "essential prepared function closure is missing"
             )
-        if ("vr", "renderer") not in lifecycle_claims:
+        if ("visual_stimulus", "renderer") not in lifecycle_claims:
             raise IncidentEvidenceError(
-                "essential VR renderer lifecycle source is missing"
+                "essential Visual Stimulus renderer lifecycle source is missing"
             )
         for key, declaration in functions.items():
             closure = tuple(declaration.affected_closure_resource_ids)

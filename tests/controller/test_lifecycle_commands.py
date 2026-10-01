@@ -26,7 +26,9 @@ from tests.controller.support_components import (
 def _setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[ControllerRuntime, Attempt]:
-    backend = pb.BackendContext(backend_name="vr", backend_generation=_id())
+    backend = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
     runtime = _runtime(tmp_path, backend)
     attempt = _attempt(runtime, tmp_path, {})
     assert attempt.reservation.acquire() == []
@@ -127,6 +129,34 @@ class _Writer:
         return True
 
 
+async def test_failed_trial_metadata_still_seals_before_backend_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    writer = _Writer()
+    attempt.writer = cast(Any, writer)
+    attempt.finalization_deadline_ns = 1_000_001_000
+    events: list[str] = []
+
+    async def log_event(_attempt: Attempt, event: str, **_kwargs: object) -> None:
+        events.append(event)
+
+    async def fenced(_attempt: Attempt, _requests: object, deadline_ns: int) -> bool:
+        assert writer.sealed == 1 and attempt.writer_closed
+        assert deadline_ns == 1_000_001_000
+        events.append("cleanup")
+        return True
+
+    monkeypatch.setattr(runtime.metadata, "log_event", log_event)
+    monkeypatch.setattr(runtime.cleanup, "register_cleanup_fences", fenced)
+    await runtime.interruption.finalize(attempt, metadata_clean=False)
+    assert events == ["session_ended", "cleanup"]
+    assert attempt.closure.done and not attempt.closure.clean
+    assert not runtime.lifecycle.session.cleanup_confirmed
+    assert attempt.reservation.held  # failed evidence cannot complete the marker
+    attempt.reservation.release()
+
+
 async def test_abort_during_starting_with_metadata_keeps_files_and_unblocks_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -211,7 +241,7 @@ def _trial_attempt(runtime: ControllerRuntime, attempt: Attempt) -> pb.TrialPlan
     plan = attempt.prepared.trials.add(context=trial)
     attempt.trial_index = 0
     attempt.trial_log_name = "s_000000_LOG.json"
-    attempt.trial_participants = {"vr": cast(Any, object())}
+    attempt.trial_participants = {"visual_stimulus": cast(Any, object())}
     runtime.lifecycle.trial = pb.TrialState(
         context=trial, phase=pb.TRIAL_PHASE_STARTING
     )
@@ -249,11 +279,11 @@ async def test_interrupted_trial_without_accepted_started_is_closed(
 ) -> None:
     runtime, attempt = _setup(tmp_path, monkeypatch)
     _trial_attempt(runtime, attempt)
-    attempt.trial_closure.released = frozenset({"vr"})
+    attempt.trial_closure.released = frozenset({"visual_stimulus"})
     persisted, events = _patch_logs(runtime, monkeypatch)
     await runtime.interruption.interrupt(attempt, "abort")
     assert persisted[-1]["outcome"] == "interrupted"
-    assert persisted[-1]["start_unconfirmed"] == ["vr"]
+    assert persisted[-1]["start_unconfirmed"] == ["visual_stimulus"]
     assert persisted[-1]["participants_started"] == []
     assert [kind for kind, _ in events].count("trial_finished") == 1
     assert runtime.lifecycle.trial.outcome == pb.TRIAL_OUTCOME_INTERRUPTED
@@ -277,7 +307,7 @@ async def test_uncertain_trial_finished_is_not_appended_again(
 ) -> None:
     runtime, attempt = _setup(tmp_path, monkeypatch)
     _trial_attempt(runtime, attempt)
-    attempt.trial_closure.released = frozenset({"vr"})
+    attempt.trial_closure.released = frozenset({"visual_stimulus"})
     attempt.trial_closure.finish_append_issued = True
     persisted, events = _patch_logs(runtime, monkeypatch)
 
@@ -447,7 +477,9 @@ async def test_cancel_background_tasks_stops_cleanup_retry_chain(
 async def test_interrupt_finalizes_even_when_trial_log_closure_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    backend = pb.BackendContext(backend_name="vr", backend_generation=_id())
+    backend = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
     runtime = _runtime(tmp_path, backend)
     attempt = _attempt(runtime, tmp_path, {})
     attempt.activated = True

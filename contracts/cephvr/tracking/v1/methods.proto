@@ -4,7 +4,7 @@ package cephvr.tracking.v1;
 import "cephvr/tracking/v1/recording.proto";
 
 // Canonical strict typed JSON models in contracts/tracking/method_models.py.
-// Like VR program/profile bindings: schema-backed documents, not arbitrary maps.
+// Like Visual Stimulus program/profile bindings: schema-backed documents, not arbitrary maps.
 // T27: each payload must validate against the registered concrete settings model.
 // An unknown implementation/schema is an error, never an untyped extension.
 message StageConfiguration {

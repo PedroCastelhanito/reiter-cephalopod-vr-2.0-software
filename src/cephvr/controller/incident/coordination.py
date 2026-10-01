@@ -59,10 +59,6 @@ class IncidentCoordinator:
         self.clock = clock
         self.publisher = publisher
         self.metadata = metadata
-        self.evidence_waiter = evidence_waiter
-        self.preparation_context = preparation_context
-        self.lifecycle_reports = lifecycle_reports
-        self.supervisor = supervisor
         self.interrupt = interrupt
         self.spawn = spawn
         self.scope = ScopeConfirmation(
@@ -185,19 +181,17 @@ class IncidentCoordinator:
                 None,
             )
             prompt_id = existing_prompt_id or str(uuid.uuid4())
-            if classification.status == "blocking":
-                prompt = pb.Prompt(
-                    prompt_id=prompt_id,
-                    setup=attempt.context,
-                    operation=error.operation,
-                    explanation=classification.reason,
-                    permitted_choices=["acknowledge"],
-                    runtime_incident=incident,
-                )
-                self.incident_state.incident_prompts[prompt.prompt_id] = (
-                    prompt,
-                    attempt,
-                )
+            blocking = classification.status == "blocking"
+            prompt = pb.Prompt(
+                prompt_id=prompt_id,
+                setup=attempt.context,
+                operation=error.operation,
+                explanation=classification.reason,
+                permitted_choices=["acknowledge"] if blocking else ["abort_session"],
+                runtime_incident=incident,
+            )
+            self.incident_state.incident_prompts[prompt.prompt_id] = (prompt, attempt)
+            if blocking:
                 self.spawn(
                     self.interrupt(
                         attempt,
@@ -206,18 +200,6 @@ class IncidentCoordinator:
                     )
                 )
             else:
-                prompt = pb.Prompt(
-                    prompt_id=prompt_id,
-                    setup=attempt.context,
-                    operation=error.operation,
-                    explanation=classification.reason,
-                    permitted_choices=["abort_session"],
-                    runtime_incident=incident,
-                )
-                self.incident_state.incident_prompts[prompt.prompt_id] = (
-                    prompt,
-                    attempt,
-                )
                 self.spawn(self.incident_deadline(attempt, error.error_id, deadline))
                 if (
                     verified_scope is not None
@@ -228,7 +210,7 @@ class IncidentCoordinator:
                     if in_flight is None:
                         attempt.scope_inflight[incident.incident_id] = affected
                         self.spawn(
-                            self.confirm_incident_scope(
+                            self.scope.confirm_incident_scope(
                                 attempt, error, incident, verified_scope, deadline
                             )
                         )
@@ -255,18 +237,6 @@ class IncidentCoordinator:
                         },
                     )
                 )
-
-    async def confirm_incident_scope(
-        self,
-        attempt: Attempt,
-        error: pb.ErrorReport,
-        pending: pb.RuntimeIncident,
-        classification: Any,
-        deadline_ns: int,
-    ) -> None:
-        await self.scope.confirm_incident_scope(
-            attempt, error, pending, classification, deadline_ns
-        )
 
     async def incident_deadline(
         self, attempt: Attempt, error_id: str, deadline_ns: int

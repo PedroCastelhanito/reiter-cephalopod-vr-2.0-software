@@ -8,22 +8,24 @@ from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.evidence import started_satisfied, stopped_satisfied
 from cephvr.tracking.v1 import methods_pb2 as tracking
-from cephvr.vr.v1 import runtime_pb2 as vr
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus
 
 
-def test_vr_started_requires_returned_activity_for_every_prepared_output() -> None:
+def test_visual_stimulus_started_requires_returned_activity_for_every_prepared_output() -> (
+    None
+):
     report = pb.StartedReport(actual_start_monotonic_ns=1_000)
-    report.context.backend.backend_name = "vr"
+    report.context.backend.backend_name = "visual_stimulus"
     for output_id in ("left", "right"):
         report.first_required_activity.add(
-            kind="vr_presentation_call",
+            kind="visual_stimulus_presentation_call",
             observed_monotonic_ns=1_030,
             device_evidence=pb.DeviceProgressEvidence(
-                vr_output=vr.OutputActivity(
+                visual_stimulus_output=visual_stimulus.OutputActivity(
                     output_id=output_id,
                     swap_entry_ns=1_010,
                     swap_return_ns=1_025,
-                    submission=vr.SUBMISSION_OUTCOME_RETURNED,
+                    submission=visual_stimulus.SUBMISSION_OUTCOME_RETURNED,
                 )
             ),
         )
@@ -31,12 +33,14 @@ def test_vr_started_requires_returned_activity_for_every_prepared_output() -> No
         target_ns=1_000,
         ingress_ns=1_040,
         allowance_ns=250,
-        vr_outputs={"left", "right"},
+        visual_stimulus_outputs={"left", "right"},
     )
     assert started_satisfied(report, **kwargs)
     report.first_required_activity[
         1
-    ].device_evidence.vr_output.submission = vr.SUBMISSION_OUTCOME_UNKNOWN
+    ].device_evidence.visual_stimulus_output.submission = (
+        visual_stimulus.SUBMISSION_OUTCOME_UNKNOWN
+    )
     assert not started_satisfied(report, **kwargs)
     del report.first_required_activity[1:]
     assert not started_satisfied(report, **kwargs)
@@ -127,20 +131,20 @@ def test_interruption_retains_actual_local_cutoff_before_global_issuance() -> No
     assert not stopped_satisfied(report, **kwargs)
 
 
-def test_normal_stop_requires_scheduled_cutoff_and_vr_idle() -> None:
+def test_normal_stop_requires_scheduled_cutoff_and_visual_stimulus_idle() -> None:
     producer = pb.ProcessIdentity(role="renderer", generation=str(uuid.uuid4()))
     report = pb.StoppedReport(
         actual_stop_monotonic_ns=2_010,
         trial_activity_stopped=True,
         recording_interval_sealed=True,
-        vr_idle=True,
+        visual_stimulus_idle=True,
         producer_ends=[
             pb.ProducerRecordingEnd(
                 producer=producer, source_id="renderer", end_monotonic_ns=2_000
             )
         ],
     )
-    report.context.backend.backend_name = "vr"
+    report.context.backend.backend_name = "visual_stimulus"
     kwargs = dict(
         target_ns=1_000,
         end_ns=2_000,
@@ -153,5 +157,5 @@ def test_normal_stop_requires_scheduled_cutoff_and_vr_idle() -> None:
     report.producer_ends[0].end_monotonic_ns = 2_001
     assert not stopped_satisfied(report, **kwargs)
     report.producer_ends[0].end_monotonic_ns = 2_000
-    report.ClearField("vr_idle")
+    report.ClearField("visual_stimulus_idle")
     assert not stopped_satisfied(report, **kwargs)

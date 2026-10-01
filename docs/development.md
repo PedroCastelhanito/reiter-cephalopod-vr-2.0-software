@@ -4,6 +4,8 @@
 [SYS-003](../architecture.md#sys-003) owns the Python environment.
 [ARCH-001](../architecture.md#arch-001) records the authorized implementation stage.
 This guide documents commands and navigation; architecture remains authoritative.
+Offline stimulus replay/export belongs to analysis software under V13. The experiment
+package provides live execution and the saved recipe/evidence consumed by analysis.
 
 ## Project layout
 
@@ -13,6 +15,8 @@ src/cephvr/
   controller/              Lifecycle, RPC service, configuration and metadata
   supervisor/              Registration, health, interruption and shutdown
   acquisition/             Camera workers, frame paths, recording and MCU host control
+  visual_stimulus/          Stimulus preparation, live rendering and evidence recording
+  tracking/                Tracking configuration, native methods, runtime and recording
   launcher/                Persistent application containment owner
   client/                  Headless control client and command-line interface
   shared/                  Process-local identity, deadline and control helpers
@@ -75,8 +79,8 @@ trial stop, recording completion, warnings and report delivery. These components
 share the owning state records; extraction must not create another source of truth.
 
 The current stage implements acquisition host code, following the controller/supervisor
-refactor. See the [acquisition implementation review](../reports/acquisition-implementation-review.md)
-for its current acceptance and verification status. VR, tracking, synchronization and
+refactor. See the [acquisition implementation review](../reports/acquisition.md)
+for its current acceptance and verification status. Visual Stimulus, tracking, synchronization and
 GUI runtimes remain separate stages. Generated message bindings alone do not implement
 those components. Managed
 application startup reports missing required modules and exits; there is no replacement
@@ -173,7 +177,7 @@ Windows tests, the existing pure contract checks, and the package build. It save
 logs, `summary.json`, and `pytest.xml` under
 `$env:LOCALAPPDATA/CephVR2/TestRuns/<timestamp>`.
 
-See the [runtime test handoff](../reports/runtime-rig-test-handoff.md) for transfer,
+See the [runtime test handoff](../reports/rig-verification.md) for transfer,
 expected results, and the distinction between native platform tests and a complete
 experiment. `-Rig` is reserved for actual hardware-marked tests and refuses to imply
 hardware coverage when no such tests have been implemented.
@@ -187,7 +191,7 @@ use the owning contract models and writer definitions; none is a device simulato
 | --- | --- | --- |
 | `cephvr.<backend>.configuration` | `validate_configuration(candidate)` | Pure E07 validation, returning `ValidationResult` |
 | `cephvr.<backend>.configuration` | `load_file_policies(software_root)` | Strict owning TOML/policy loader, returning its typed policy message |
-| `cephvr.vr.configuration` | `validate_display_profile(profile_json)` | Pure V19 validation, returning the exact nonempty `frozenset` of output IDs |
+| `cephvr.visual_stimulus.configuration` | `validate_display_profile(profile_json)` | Pure V19 validation, returning the exact nonempty `frozenset` of output IDs |
 | `cephvr.<backend>.recording_schema` | `get_writer_schemas()` | Mapping of `(backend, output_tag, extension)` to `controller.planning.WriterSchema`, shared with actual writers |
 | `cephvr.synchronization.client` | `create_controller_client(software_root=..., controller_generation=...)` | Controller-owned E12 client implementing `controller.ports.SpikeGLXPort`; constructor does not begin remote work |
 

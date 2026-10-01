@@ -90,6 +90,7 @@ def load_pair(
     *,
     allowed_config_keys: Collection[str],
     allowed_policy_keys: Collection[str],
+    allowed_empty_tables: Collection[str] = (),
     expected_policy: Mapping[str, object] | None = None,
     max_file_bytes: int = 1_048_576,
 ) -> LoadedPair:
@@ -128,6 +129,7 @@ def load_pair(
             p
             for p in _empty_table_paths(config)
             if not _allowed_table(p, allowed_config_keys)
+            and p not in allowed_empty_tables
         )
     )
     bad_policy.extend(

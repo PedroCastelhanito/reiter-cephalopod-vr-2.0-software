@@ -53,9 +53,9 @@ Compute the global centroid over accepted selected support, not independently pe
 section. Screening neighborhoods must respect the selected fin support under the shared
 quality binding; never borrow surrounding-water samples solely to pass support.
 
-Units (px/s, px/s, 1/s), quantities and VR gain compatibility are identical to the shared proxy. Fin and
+Units (px/s, px/s, 1/s), quantities and Visual Stimulus gain compatibility are identical to the shared proxy. Fin and
 water configurations resolve their own region, section, quality, support, smoothing and
-VR gain values; sharing code/fixed policy does not copy numerical tuning. Configuration
+Visual Stimulus gain values; sharing code/fixed policy does not copy numerical tuning. Configuration
 changes require fresh Setup; no simultaneous pipelines or automatic method switching.
 
 Retain pipeline_id=fin_flow, the prepared fin selection and exact shared implementation

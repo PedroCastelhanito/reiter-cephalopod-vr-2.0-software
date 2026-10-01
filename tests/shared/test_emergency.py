@@ -84,7 +84,9 @@ async def test_huge_failure_message_is_truncated_not_dropped(tmp_path: Path) -> 
     errors = [
         types.ErrorReport(
             error_id=str(uuid4()),
-            source=types.ProcessIdentity(role="vr", generation=str(uuid4())),
+            source=types.ProcessIdentity(
+                role="visual_stimulus", generation=str(uuid4())
+            ),
             failure=types.Failure(code=f"CODE_{index}", message="x" * 2_000_000),
         )
         for index in range(3)

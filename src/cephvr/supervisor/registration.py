@@ -17,10 +17,13 @@ from cephvr.shared.resources import (
     validate_cleanup_fence_update,
 )
 from cephvr.supervisor.receipts import accepted, failure, rejected
-from cephvr.supervisor.registry import LaunchRegistry
+from cephvr.supervisor.registry import (
+    BACKEND_ROLES,
+    TOP_LEVEL_ROLES,
+    LaunchRegistry,
+)
 from cephvr.supervisor.state import HealthState, RecoveryState, RegistrationState
-
-TOP_COORDINATORS = frozenset({"acquisition", "vr", "tracking"})
+from cephvr.supervisor.worker_context import work_covered_by
 
 
 class RegistrationCoordinator:
@@ -56,20 +59,9 @@ class RegistrationCoordinator:
         self.changed = changed
 
     def same_work(self, work: types.WorkContext) -> bool:
-        if self.state.context is None:
-            return not work.WhichOneof("work")
-        expected = self.state.context.work
-        if not expected.WhichOneof("work"):
-            return not work.WhichOneof("work")
-        # Session registration covers its trial reports, not just the empty trial.
-        if expected.WhichOneof("work") == "session":
-            actual = (
-                work.session
-                if work.WhichOneof("work") == "session"
-                else work.trial.session
-            )
-            return actual == expected.session
-        return work == expected
+        return work_covered_by(
+            self.state.context.work if self.state.context else None, work
+        )
 
     def required_backends(self) -> dict[str, str]:
         if self.state.context is None:
@@ -83,7 +75,7 @@ class RegistrationCoordinator:
         self, participants: set[tuple[str, str]]
     ) -> dict[tuple[str, str], str]:
         """Resolve only exact active descendants of required backend generations."""
-        top_roles = {"controller", "supervisor", "acquisition", "vr", "tracking", "gui"}
+        top_roles = TOP_LEVEL_ROLES | {"supervisor"}
         states: dict[tuple[str, str], wire.LaunchState] = {}
         for state in self.registry.states():
             if state.HasField("pid") and state.phase == wire.LAUNCH_PHASE_OPERATIONAL:
@@ -141,7 +133,7 @@ class RegistrationCoordinator:
         """
         if source == self.controller:
             return True
-        if not allow_worker and source.role not in TOP_COORDINATORS:
+        if not allow_worker and source.role not in BACKEND_ROLES:
             return False
         for state in self.registry.states():
             if (
@@ -345,6 +337,44 @@ class RegistrationCoordinator:
         )
         return receipt, True
 
+    @staticmethod
+    def _participant_keys(
+        request: wire.RegisterContextRequest,
+    ) -> set[tuple[str, str]]:
+        """Stateless participant checks; returns the exact required participant keys."""
+        for participant in request.context.required_participants:
+            require_uuid4(participant.backend_generation)
+            if participant.backend_name not in BACKEND_ROLES:
+                raise ValueError("unsupported required backend")
+        if not any(
+            x.backend_name == "visual_stimulus"
+            for x in request.context.required_participants
+        ):
+            raise ValueError("required Visual Stimulus coordinator is absent")
+        participant_keys = {
+            (x.backend_name, x.backend_generation)
+            for x in request.context.required_participants
+        }
+        if len(participant_keys) != len(request.context.required_participants):
+            raise ValueError("duplicate required participant")
+        return participant_keys
+
+    @staticmethod
+    def _validate_outputs(
+        request: wire.RegisterContextRequest,
+        participant_keys: set[tuple[str, str]],
+    ) -> None:
+        output_keys: set[str] = set()
+        for output in request.context.outputs:
+            if (
+                output.backend.backend_name,
+                output.backend.backend_generation,
+            ) not in participant_keys:
+                raise ValueError("output owner is not a required participant")
+            if not output.output_key or output.output_key in output_keys:
+                raise ValueError("duplicate or empty output key")
+            output_keys.add(output.output_key)
+
     async def register_context(
         self, request: wire.RegisterContextRequest
     ) -> wire.RegistrationReceipt:
@@ -370,23 +400,7 @@ class RegistrationCoordinator:
                 "work"
             ) or not request.context.work.WhichOneof("work"):
                 raise ValueError("registered work is required")
-            if self.state.context and not self.same_work(request.context.work):
-                if self.cleanup_blockers():
-                    raise ValueError("previous work still has cleanup obligations")
-            for participant in request.context.required_participants:
-                require_uuid4(participant.backend_generation)
-                if participant.backend_name not in {"acquisition", "vr", "tracking"}:
-                    raise ValueError("unsupported required backend")
-            if not any(
-                x.backend_name == "vr" for x in request.context.required_participants
-            ):
-                raise ValueError("required VR coordinator is absent")
-            participant_keys = {
-                (x.backend_name, x.backend_generation)
-                for x in request.context.required_participants
-            }
-            if len(participant_keys) != len(request.context.required_participants):
-                raise ValueError("duplicate required participant")
+            participant_keys = self._participant_keys(request)
             if self.state.context and self.same_work(request.context.work):
                 prior_participants = {
                     (item.backend_name, item.backend_generation)
@@ -396,22 +410,7 @@ class RegistrationCoordinator:
                     raise ValueError(
                         "registered participant set cannot change within work"
                     )
-            output_keys: set[str] = set()
-            for output in request.context.outputs:
-                if (
-                    output.backend.backend_name,
-                    output.backend.backend_generation,
-                ) not in participant_keys:
-                    raise ValueError("output owner is not a required participant")
-                if not output.output_key or output.output_key in output_keys:
-                    raise ValueError("duplicate or empty output key")
-                output_keys.add(output.output_key)
-            validate_cleanup_fence_update(
-                self.state.context,
-                request.context,
-                max_fences=self.max_retained_entries,
-                max_bytes=self.max_message_bytes // 4,
-            )
+            self._validate_outputs(request, participant_keys)
             async with self.lock:
                 worker_backend, topology, final_catalogues = (
                     self._validate_operational_context(request, participant_keys)

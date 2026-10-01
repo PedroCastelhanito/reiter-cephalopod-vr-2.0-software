@@ -1,0 +1,364 @@
+Date: 2026-09-30
+Scope: ARCH-002 controller simplification; E04/E05/E06/E07/E08 preserved.
+Source: HEAD 7ae3767cea92bf7af94153d417e40df997e1fd05 plus existing and new uncommitted changes.
+No native Windows/device/rig acceptance. Existing Visual Stimulus rename and unrelated edits preserved.
+
+Increment observations (captured from tool results):
+Baseline controller suite: 187 passed in 4.18s.
+Lifecycle/metadata extraction: 187 passed in 5.01s; with regressions 195 passed in 5.09s.
+First new-test run: three fixture errors (wrong nested RPC field and writer without seal); corrected fixtures.
+Camera increment first run: 198 passed, one stale complete_internal-only retention mock failed; replaced with real retention.
+Camera increment corrected run: 199 passed in 4.32s.
+Both increments: scoped Ruff lint/format passed (97 files), Windows-target mypy passed (72 sources), boundary checker passed (390 modules, zero violations).
+Added final integration regression for failed trial metadata still sealing before backend cleanup.
+Source AST review: extracted metadata body exactly matches snapshot after deadline/dependency renaming; both old interruption try bodies match new helper; camera retirement statements match after dependency renaming. This is source preservation evidence, not rig equivalence.
+
+Controller source/test SHA256 manifest before final checks:
+b589cffc826c61afb60d863e6287ba96bfde0e8dec2485c31b4ad002e5fd8012  src/cephvr/controller/__init__.py
+c9f51e32c50f1f9124257a5b5890f7306454620b4b65ba73cff62ee9dd554a30  src/cephvr/controller/assembly.py
+2d5b813b9377e8ec8e3d3073fc13d5ecb8d494ad6026934d041160a8924685c7  src/cephvr/controller/authority.py
+91c0fd6193f65764673c4ade99d6170bba88ba4c4d70abc6d918291b42c42a0e  src/cephvr/controller/backend.py
+7e39b4fe39e1b8cf02b034b9bdf63072b9e3294336d33e83f8314edda672646e  src/cephvr/controller/configuration.py
+2eab0e4cfa69fb676016218957e7ad45ca78402a94320376975b6c3395ee3ee0  src/cephvr/controller/configuration_files.py
+ad7f83878821826758d08fb69aaa27f0d2be5eeecbc39b40cfbc7c314d0bc1c7  src/cephvr/controller/control/__init__.py
+bb1df947c47f134849724ae2a868b21917ff8931fa7649e410dbcb79e05f7eaf  src/cephvr/controller/control/configuration.py
+f2223f74bf69a3b25e2094b498445a725cf7d8e7bfc18eff524533f691309e7e  src/cephvr/controller/control/leases.py
+756ca128fe19ae88704a094dc4afd33abc30ffb8e1bab73c447a1fd394845561  src/cephvr/controller/control/operations.py
+e1e5ad4efe997477a9ced9fd64be9e073493bedc843eca8fe5e215bf8ca2a10d  src/cephvr/controller/control/prompts.py
+3e9fd2a742c1023071aeefacac3f4405a63146c8d17c280c43297179b0b24229  src/cephvr/controller/control/snapshots.py
+b87153ae4cb01c19ddeb51be05e964022211278d695e1a53972bc2ff40907b6e  src/cephvr/controller/device/__init__.py
+5461b322e6b41972d5162e9f00bef87a810c6e2a478714777c2ebc16dde53844  src/cephvr/controller/device/camera.py
+6596a58d6cb4da9c1bfb93deb803dce7b5bf42b2d76826cbcb26af4b9f6908f0  src/cephvr/controller/device/display.py
+e1b724edbef87ecff1e47e1b387598a93d34c846c0192dea611cc93a482f43a1  src/cephvr/controller/device/owner_cleanup.py
+a3ea5d74b1ed242daa8a1fc9248587ef3a567cf48248060c70dae7a9e3dd5c59  src/cephvr/controller/device/ports.py
+8e12cf5a698cfc878346f3b0695121571c05ae3d64d0c8501025bae81f84398b  src/cephvr/controller/device/preview.py
+48630a1d5aef0b2e0dd789bbc82bd3f078d442b19cb549a2157fab8df597de89  src/cephvr/controller/device/readback.py
+cd6717dcf02347e7e4d327d975a514d41eb62e8f3eb46176daf0b7c7ee627a6d  src/cephvr/controller/device/release_evidence.py
+b88d00bf4fdfc1b30c7059da7085c4017bc67c58fa52fafe5b5b19c69e033dea  src/cephvr/controller/device/status_retention.py
+c7fddf31b054936e26d6da135ec9f1fa2408589e987b051e81cf2fed150b932c  src/cephvr/controller/device/views.py
+efb0784504823606ed9b36030d7926d34dec4e493e929f4b5c545f98e139a872  src/cephvr/controller/evidence.py
+cd0524902648359f781d98a4c2663863cfb9c51e612422405ac6225dfb0bc691  src/cephvr/controller/incident/__init__.py
+87ad65b3faf8c6493f4397cd69f0b5c945ba6571614510ea7819f17766f18f07  src/cephvr/controller/incident/coordination.py
+44fb18e036144a8911f1012d04770071c1de9854bdc575006eb9c36949d8dbd6  src/cephvr/controller/incident/registry.py
+fc8f6524974c3baf5079b65209b0a3c9bb486da0de71ae5a4d2d429366e437dd  src/cephvr/controller/incident/scope.py
+c99c0c6c1b7ccecaff96a84383227554bb4403ad34cc7e973fcaa4e9ab382c4c  src/cephvr/controller/lifecycle/__init__.py
+13295e165a8b0c9047f0d834291bc51b424269af3af8d9875f294e708b056fa9  src/cephvr/controller/lifecycle/acquisition_resolution.py
+66504515ca59fd146dbaa53249c05e203b3fcc9b73485893c9885d99ea56e08d  src/cephvr/controller/lifecycle/activity.py
+95b2a30cbd891b87399cca6bf77e177c5c808172fa710f986720351aac0dbab7  src/cephvr/controller/lifecycle/cleanup.py
+3a567938e7e0e9d913e34d17fec474f80d8faf6ea09ecd1db03d3397a2faec88  src/cephvr/controller/lifecycle/commands.py
+a52869951cc7422b44f7144a2b6a04b1537d68a335e53eb1e413fe7e14fbcbc6  src/cephvr/controller/lifecycle/evidence_wait.py
+2cad980a397f1fd877570aa2e07798ac7dca7bcc22b05f175d309fe244accaf2  src/cephvr/controller/lifecycle/handoffs.py
+368f4770412fabb98aed4ecb6519b539bd92cc5e34cd3e176db4289d5940274c  src/cephvr/controller/lifecycle/interruption.py
+90d2444bbcca9cc84dab1f299ff055d65578e8a093072ff9c7827f99f8b70582  src/cephvr/controller/lifecycle/preparation_context.py
+2df65412a52c42f2fbcdab7b712215ea28b1883a42906a199bae3f15dbffb5be  src/cephvr/controller/lifecycle/setup_admission.py
+c2df9f1322f09faeb238d84c74a636ee5c77b629ca66dea54e10be3dd6b144b4  src/cephvr/controller/lifecycle/setup_execution.py
+b4e07cac68d72c182b6bcef46c4eb5f7c8b1f29cd0bf3f1d4c1be08d643f0027  src/cephvr/controller/lifecycle/start.py
+af764a2ddc0ad5203eaaaf1a3ec38846debc439bd1a3dd12192e0553b2b5f919  src/cephvr/controller/lifecycle/trials.py
+1c672ecabf776b114bd3079a474d07f37bb2c2f3ad771509876ed009bdef238a  src/cephvr/controller/lifecycle_completion.py
+3d4f7bcd7625f35ac9a07d705073b6ad97d82de4fa176fe89f27803b0533f856  src/cephvr/controller/lifecycle_reports.py
+1ebd73c832ef9f5fb14fcee09ec1668b9a9c17a6c8fcb7522c4a58b624de77ce  src/cephvr/controller/main.py
+b692b710d394ef4ffbb0fb99d7fb3aa1d32f72e0576c02e6c29712420aa99c78  src/cephvr/controller/metadata/__init__.py
+7824eb53760efc1c2b630ab52ee77c9a893db3b161adcbcbf726968949623710  src/cephvr/controller/metadata/coordination.py
+759b528c66383c271335bea6654ab8b7262575363181a8f88bdb63db1d0b32de  src/cephvr/controller/metadata/documents.py
+92c70b631de757c73def3d0df1319cf1684beafb55ab71ae8d2e820711223854  src/cephvr/controller/metadata/files.py
+78ff254303f5d0e29625a1351c1c2d62d2a4f053a3fc54f5df86d52549cf3c87  src/cephvr/controller/metadata/reservation.py
+69bb1c174aeb2dfe765b7c897d05edbb5bcd234a36f503908136d57c8b0405c6  src/cephvr/controller/metadata/trial_logs.py
+fc56f55dceb2d479ae0b0549bb39020e4b9a930d472a1afef68493d09ebbf9c7  src/cephvr/controller/metadata/types.py
+bd2694dae3eb9371046bedaa2bbdcc6c9d8453e62a2b99569f52afce9183c149  src/cephvr/controller/metadata/writer.py
+a86c9db9ef353f281cc70576aa2bb6b3dc35b1d8ab96430d695a52cd46456f1f  src/cephvr/controller/planning.py
+21fdfe5fc720d75381871443829bf92b2c6f6ab018507a38230abcc01febdee5  src/cephvr/controller/ports.py
+9bfd81c3f5ec6d1e3aac2cc353a971c994972566a406e9718ceee14de51b0453  src/cephvr/controller/preparation.py
+bf82c6cbd7aa16db528a8fda12715212eed4725c672c45a542d96981048a6e70  src/cephvr/controller/projections.py
+a643c3d01dc2b90d8a3725acb829807c4c833f4d114e0e696d4c7c80150655a1  src/cephvr/controller/recovery.py
+87eda3103db940d9a8f30103d110b3d83c48deb364ca61064c6eec61ba42a818  src/cephvr/controller/recovery_inspection.py
+45fb03bd8ca07357557579e5bd79a2f309b75eb8599ae7154da4dc29bcd03e66  src/cephvr/controller/resolution.py
+a106999155f023cfac2650ecb2bd13aa689f5bc5cac0c0b6ff9a5bf8141b9fa7  src/cephvr/controller/runtime.py
+18152da31e8f693be3f15ef76ba501729d40138f9358fcde3d59751a7bdc3cb9  src/cephvr/controller/service.py
+295d6fc8e53ee8d1ff3d7afc1f3affb75e4cfd81d0bc6311ec7c9fbd6234ee14  src/cephvr/controller/startup/__init__.py
+59e64d6fd4d062e85f0ba30c26e4780a000026e76eebd1fb6a93061d0aa9b403  src/cephvr/controller/startup/application.py
+8127de539cc686cdaa81df465d4fbf6306be65809438233d10ca68fc310104a6  src/cephvr/controller/startup/bootstrap.py
+c03a5ec49698e9c5f52c2c11f29f01a1a850bf6b2c035e915d28c3936e1cd366  src/cephvr/controller/startup/monitor.py
+4d516c77b515c4ea601bc16e1a41ea3d40b3c35c930a402f6deb7ca5e2b3c34d  src/cephvr/controller/startup/providers.py
+aee96d29471a2b55e9affda66c16ba79475661c3553e3355d13c9a1678f42531  src/cephvr/controller/startup/recovery.py
+0e4fcd698e5098fbce98cee75a673eed889209844383844a89c02312c7cdf2b8  src/cephvr/controller/state.py
+c8d06823cfd425fbc7c7efd2a2838e77a656e7c81059aaba9e67478b158d3225  src/cephvr/controller/supervision.py
+ac9a6fa46babc0363d2537913e34676fefe93f62f21b57ebcb93c2fc70398be7  src/cephvr/controller/transport/__init__.py
+8ad9e843f493efaddccf1da8f8966d057fe2c39f6d93fd7a4c4797d787ab07de  src/cephvr/controller/transport/admission.py
+c9c0434ad2d3741c06a87637d8063138af38c4d51db654bd8f09e2397e37d7f8  src/cephvr/controller/transport/auth.py
+3b879f3fab30cf23497d9b56ec0e8b76531df962303548808435ad4856fd3eba  src/cephvr/controller/transport/ingress.py
+9713bfb06edf6f70a7ca93a805e49076f28b934042367cef9bec6b00062bc7af  tests/controller/__init__.py
+5b779975174d073118584b64f14c6a30b799f824405cd0e80a4651d5ed3c29ab  tests/controller/support_components.py
+6c25519ed861ff12348f7a9d0ca11241b9fe33ba78e6ec58f22b6461dac94b3d  tests/controller/test_activity_evidence.py
+3cf294966beb932717b8ee4d74d3e14b4a440731db244a4e87638c88fe230ae0  tests/controller/test_authority.py
+6648eae8ed41e5afe7166a465afd31a30b2762c84fa7c51918695f1bd4381121  tests/controller/test_camera_configuration.py
+e951757981d0518316527d3a3573c2711552b5305bd4b5daf5946798f72ea807  tests/controller/test_camera_evidence.py
+3fa5aef3a5d88e709d4f2f298460655b2d166969eb69f9397184ec77690ef5ae  tests/controller/test_command_admission.py
+bef4ece4c4d331521894fe81d50909494ee81b8173e57945161ec5e1aaee52ca  tests/controller/test_configuration.py
+841a8e0722a0300a5dc454efeefc747c77cb2e465ccfd3b9e439559175d521aa  tests/controller/test_configuration_transactions.py
+519139f0463acdc103e4802f38efdba00b2481b67a19b57089ad5b59299c6026  tests/controller/test_control_leases.py
+01fac11182b088370d0745bea9bff07a26380fc6c1d954adbf2b3e8a2f8ce114  tests/controller/test_device_admission.py
+3b45aa59ceb582baa4738cb6d3def9defe7765760961e02adcf9f68bf83a92bf  tests/controller/test_entrypoint.py
+b0fe6a62952dc28d5951f9a1075d1169e2d804b51aa914a6fa789c992d6df4dc  tests/controller/test_handoffs.py
+d448ef4f2e850e5d80d80f2d0d5627410aaddefe139b7817629bb8f86d8020d2  tests/controller/test_incident_scope.py
+6529a2b8e36041a3e3719f51bfd95519ff1bdbf569fad4a6ee92238642d2e49d  tests/controller/test_lifecycle_commands.py
+d7d97bd6bbb3379781e05773fda0ecc04df4f611f8b8588b7fa4697216d45e6f  tests/controller/test_lifecycle_reports.py
+43d0e9558bf4fce85b3c79f30fe9bfb45cc86001c15306d094a00a4958ceaba9  tests/controller/test_metadata.py
+276ee35142a1bc9c1002f449aecfc67aaa525267bf48329a60ef25a7a2a00adf  tests/controller/test_output_evidence.py
+b35caed85c4255977d6ab96731e85dca03709d43bc77b66c4a02d12c974585fe  tests/controller/test_planning.py
+50f7108b2d01b5d2dadf2b282c3699649dec2978bd31707a8fa87dde43e617dd  tests/controller/test_runtime_retention.py
+426ed43047889dcec2fa3d7a77ece0b0f5cc8fe814a07c35b1a9e54b352504b0  tests/controller/test_safety_regressions.py
+41b9bf20cba5bbb69e0a72087669c9b337a5d00939a56502c94306cc80b98dbf  tests/controller/test_setup.py
+a1737e5f202158c98aa00c40bb581f24e3e6ccaf808b650d44ed85fe06e20e32  tests/controller/test_shutdown_handoff.py
+659bd654d2159721ce8b942afc629fcd2dd469df2e37b43f684a5a64c55e293a  tests/controller/test_startup_recovery.py
+3724cb20f11d739bd0e5373b1634850421cbc566e378009169daa5fe16a6b10a  tests/controller/test_storage.py
+
+COMMAND: ['.venv/bin/python', '-m', 'pytest', 'tests/controller', 'tests/supervisor', 'tests/shared', 'tests/launcher', 'tests/client', 'tests/acquisition/test_manual_devices.py', 'tests/acquisition/test_manual_preview.py', 'tests/acquisition/test_cleanup_aggregation.py', '-q', '-m', 'not windows and not rig', '--ignore=tests/client/test_controller_rpc.py']
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+........................................................................ [ 55%]
+........................................................................ [ 74%]
+........................................................................ [ 93%]
+.................F.........                                              [100%]
+=================================== FAILURES ===================================
+___________ test_pause_with_attached_viewer_waits_for_exact_release ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1087eed10>
+
+    @pytest.mark.asyncio
+    async def test_pause_with_attached_viewer_waits_for_exact_release(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        preview = WorkerPreview(
+            run_id=str(uuid4()),
+            configuration_revision=2,
+            allocation_id=str(uuid4()),
+            resolved_camera=camera.CameraResolvedState(),
+            viewer=control.ProcessIdentity(role="preview_viewer", generation=str(uuid4())),
+            viewer_transfer_id=str(uuid4()),
+        )
+        context = acq.WorkerContext(
+            worker=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=str(uuid4())
+            ),
+            owner=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        )
+        port = _Port(preview)
+        worker = WorkerRecord(
+            context=context,
+            port=cast(WorkerPort, port),
+            launch=LaunchRecord(
+                command_id=str(uuid4()),
+                worker=context.worker,
+                owner=context.owner,
+                work=control.WorkContext(),
+                camera=camera.CAMERA_ROLE_BEHAVIORAL,
+                parent_operation=control.OperationContext(command_id=str(uuid4())),
+                planned_ns=1,
+            ),
+            preview=preview,
+        )
+    
+        def retained_command(
+            *args: object, **kwargs: object
+        ) -> tuple[acq.WorkerCommand, ChildOperation, WorkerPort]:
+            _ = args, kwargs
+            return (
+                acq.WorkerCommand(),
+                cast(ChildOperation, object()),
+                cast(WorkerPort, port),
+            )
+    
+        async def child_complete(*args: object, **kwargs: object) -> control.OperationState:
+            _ = args, kwargs
+            return control.OperationState(complete=True, succeeded=True)
+    
+        monkeypatch.setattr(pulse_module, "retain_worker_command", retained_command)
+        monkeypatch.setattr(pulse_module, "wait_child_operation", child_complete)
+        settings = control.AcquisitionSettings()
+        settings.behavioral.enabled = True
+        settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+        lifecycle = ManualPreviewPulseLifecycle(
+            identity=cast(CoordinatorIdentity, object()),
+            configuration=ConfigurationRecord(
+                settings, runtime.AcquisitionFilePolicies(), 2
+            ),
+            workers={camera.CAMERA_ROLE_BEHAVIORAL: worker},
+            pulse=PulseRecord(),
+            serial=cast(SerialOwnerPort, object()),
+            resources={},
+            resource_ledger=cast(NativeResourceLedger, object()),
+            resource_port=cast(ResourcePort, object()),
+            transfers=cast(ManualPreviewTransferOwner, _TransferOwner()),
+            device_status=cast(ManualDeviceStatusReporter, _Status()),
+            lock=asyncio.Lock(),
+            clock=lambda: 10,
+        )
+    
+        task = asyncio.create_task(
+            lifecycle.pause_for_pulse_change(
+                (camera.CAMERA_ROLE_BEHAVIORAL,), deadline_ns=100
+            )
+        )
+        await asyncio.sleep(0)
+>       assert not task.done()
+E       AssertionError: assert not True
+E        +  where True = <built-in method done of _asyncio.Task object at 0x10852de40>()
+E        +    where <built-in method done of _asyncio.Task object at 0x10852de40> = <Task finished name='Task-962' coro=<ManualPreviewPulseLifecycle.pause_for_pulse_change() done, defined at /Users/pedr...er-software/reiter-cephalopod-vr-2.0-software/src/cephvr/acquisition/coordinator/manual_preview_pulse.py:79> result=()>.done
+
+tests/acquisition/test_manual_preview.py:250: AssertionError
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_manual_preview.py::test_pause_with_attached_viewer_waits_for_exact_release
+1 failed, 386 passed in 8.07s
+EXIT: 1
+
+COMMAND: ['.venv/bin/python', '-m', 'pytest', 'tests/acquisition/test_manual_preview.py::test_pause_with_attached_viewer_waits_for_exact_release', '-q']
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_pause_with_attached_viewer_waits_for_exact_release ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x106891750>
+
+    @pytest.mark.asyncio
+    async def test_pause_with_attached_viewer_waits_for_exact_release(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        preview = WorkerPreview(
+            run_id=str(uuid4()),
+            configuration_revision=2,
+            allocation_id=str(uuid4()),
+            resolved_camera=camera.CameraResolvedState(),
+            viewer=control.ProcessIdentity(role="preview_viewer", generation=str(uuid4())),
+            viewer_transfer_id=str(uuid4()),
+        )
+        context = acq.WorkerContext(
+            worker=control.ProcessIdentity(
+                role="acquisition_behavioral_worker", generation=str(uuid4())
+            ),
+            owner=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        )
+        port = _Port(preview)
+        worker = WorkerRecord(
+            context=context,
+            port=cast(WorkerPort, port),
+            launch=LaunchRecord(
+                command_id=str(uuid4()),
+                worker=context.worker,
+                owner=context.owner,
+                work=control.WorkContext(),
+                camera=camera.CAMERA_ROLE_BEHAVIORAL,
+                parent_operation=control.OperationContext(command_id=str(uuid4())),
+                planned_ns=1,
+            ),
+            preview=preview,
+        )
+    
+        def retained_command(
+            *args: object, **kwargs: object
+        ) -> tuple[acq.WorkerCommand, ChildOperation, WorkerPort]:
+            _ = args, kwargs
+            return (
+                acq.WorkerCommand(),
+                cast(ChildOperation, object()),
+                cast(WorkerPort, port),
+            )
+    
+        async def child_complete(*args: object, **kwargs: object) -> control.OperationState:
+            _ = args, kwargs
+            return control.OperationState(complete=True, succeeded=True)
+    
+        monkeypatch.setattr(pulse_module, "retain_worker_command", retained_command)
+        monkeypatch.setattr(pulse_module, "wait_child_operation", child_complete)
+        settings = control.AcquisitionSettings()
+        settings.behavioral.enabled = True
+        settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+        lifecycle = ManualPreviewPulseLifecycle(
+            identity=cast(CoordinatorIdentity, object()),
+            configuration=ConfigurationRecord(
+                settings, runtime.AcquisitionFilePolicies(), 2
+            ),
+            workers={camera.CAMERA_ROLE_BEHAVIORAL: worker},
+            pulse=PulseRecord(),
+            serial=cast(SerialOwnerPort, object()),
+            resources={},
+            resource_ledger=cast(NativeResourceLedger, object()),
+            resource_port=cast(ResourcePort, object()),
+            transfers=cast(ManualPreviewTransferOwner, _TransferOwner()),
+            device_status=cast(ManualDeviceStatusReporter, _Status()),
+            lock=asyncio.Lock(),
+            clock=lambda: 10,
+        )
+    
+        task = asyncio.create_task(
+            lifecycle.pause_for_pulse_change(
+                (camera.CAMERA_ROLE_BEHAVIORAL,), deadline_ns=100
+            )
+        )
+        await asyncio.sleep(0)
+>       assert not task.done()
+E       AssertionError: assert not True
+E        +  where True = <built-in method done of _asyncio.Task object at 0x10687cd00>()
+E        +    where <built-in method done of _asyncio.Task object at 0x10687cd00> = <Task finished name='Task-2' coro=<ManualPreviewPulseLifecycle.pause_for_pulse_change() done, defined at /Users/pedroc...er-software/reiter-cephalopod-vr-2.0-software/src/cephvr/acquisition/coordinator/manual_preview_pulse.py:79> result=()>.done
+
+tests/acquisition/test_manual_preview.py:250: AssertionError
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_manual_preview.py::test_pause_with_attached_viewer_waits_for_exact_release
+1 failed in 0.19s
+EXIT: 1
+
+COMMAND: ['.venv/bin/python', '-m', 'pytest', 'tests/controller', 'tests/supervisor', 'tests/shared', 'tests/launcher', 'tests/client', '-q', '-m', 'not windows and not rig', '--ignore=tests/client/test_controller_rpc.py']
+........................................................................ [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 57%]
+........................................................................ [ 77%]
+........................................................................ [ 96%]
+..............                                                           [100%]
+374 passed in 5.13s
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'ruff', 'check', 'src/cephvr/controller', 'tests/controller']
+All checks passed!
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'ruff', 'format', '--check', 'src/cephvr/controller', 'tests/controller']
+97 files already formatted
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'mypy', '--platform', 'win32', 'src/cephvr/controller']
+Success: no issues found in 72 source files
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', 'tools/check_backend_boundaries.py']
+REVIEW src/cephvr/acquisition/camera/basler.py: 682 lines; review cohesion
+REVIEW src/cephvr/acquisition/coordinator/trial_lifecycle.py: 574 lines; review cohesion
+REVIEW src/cephvr/acquisition/microcontroller/owner.py: 521 lines; review cohesion
+REVIEW src/cephvr/acquisition/recording/session.py: 536 lines; review cohesion
+REVIEW src/cephvr/acquisition/runtime.py: 557 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/capture_runtime.py: 600 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/execution.py: 589 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/service.py: 557 lines; review cohesion
+REVIEW src/cephvr/controller/assembly.py: 533 lines; review cohesion
+REVIEW src/cephvr/controller/runtime.py: 527 lines; review cohesion
+REVIEW src/cephvr/supervisor/shutdown.py: 541 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/config/models/program_model.py: 712 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/recording/native.py: 781 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/engine.py: 553 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/native.py: 565 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/scene.py: 555 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/resources/video.py: 598 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/worker/lifecycle.py: 547 lines; review cohesion
+Checked 390 backend modules; 0 boundary violations.
+EXIT: 0
+
+COMMAND: ['git', 'diff', '--check']
+EXIT: 0
+
+Network-permitted RPC run (captured tool output):
+COMMAND: .venv/bin/python -m pytest tests/client/test_controller_rpc.py -q -m "not windows and not rig"
+2 passed in 0.54s
+EXIT: 0
+
+Broader acquisition failure assessment: fixture creates WorkerPreview with default started=False, so pause_for_pulse_change skips it. Reproduced in isolation. Both tests/acquisition/test_manual_preview.py and src/cephvr/acquisition/coordinator/manual_preview_pulse.py are unchanged relative to HEAD. This existing acquisition fixture mismatch is outside this controller refactor; no acquisition files changed.
+
+Controller source/test manifest unchanged during final checks.

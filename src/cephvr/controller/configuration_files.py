@@ -175,7 +175,11 @@ def load_control_files(root: Path) -> tuple[LoadedPair, LoadedPair]:
         expected_policy={
             "processes.launch_policy": "backend_owned_children",
             "processes.registration": "planned_then_confirmed",
-            "processes.windows.contained_backends": ["acquisition", "vr", "tracking"],
+            "processes.windows.contained_backends": [
+                "acquisition",
+                "visual_stimulus",
+                "tracking",
+            ],
             "processes.windows.containment": "job_objects",
             "processes.windows.kill_on_job_close": False,
             "processes.windows.application_job_owner": "persistent_launcher",

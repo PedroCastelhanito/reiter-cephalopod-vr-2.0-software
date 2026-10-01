@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from collections.abc import Callable, Coroutine
 from typing import Any
 
@@ -14,6 +13,60 @@ from cephvr.controller.metadata.coordination import MetadataCoordinator
 from cephvr.controller.metadata.documents import message_dict
 from cephvr.controller.metadata.types import StorageError
 from cephvr.controller.state import Attempt, ControlState, LifecycleState, LimitsState
+
+
+def _trial_log_document(
+    attempt: Attempt, plan: pb.TrialPlan, /, *, complete: bool, **extra: object
+) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "session_id": attempt.context.session_id,
+        "trial_id": plan.context.trial_id,
+        "trial_number": plan.context.trial_number,
+        "session_config": "SESSION_CONFIG.json",
+        "complete": complete,
+        **extra,
+    }
+
+
+def _actual_stop_ns(attempt: Attempt, active_backends: frozenset[str]) -> int | None:
+    if active_backends <= attempt.stopped.keys() and attempt.stopped:
+        return max(
+            report.actual_stop_monotonic_ns for report in attempt.stopped.values()
+        )
+    return None
+
+
+def _interrupted_output_results(
+    attempt: Attempt, plan: pb.TrialPlan
+) -> list[dict[str, object]]:
+    # A missing Finished report leaves every corresponding reserved output
+    # explicitly unknown. A reported closure is retained exactly as sent.
+    reported = {
+        result.output_key: result
+        for finished in attempt.finished.values()
+        for result in finished.outputs
+    }
+    reported.update(
+        {result.output_key: result for result in attempt.unavailable_outputs}
+    )
+    output_results: list[dict[str, object]] = []
+    for output in attempt.prepared.outputs:
+        if output.trial != plan.context:
+            continue
+        result = reported.get(output.output_key)
+        if result is None:
+            result = pb.OutputResult(
+                output_key=output.output_key,
+                path=output.path,
+                closure=pb.OUTPUT_CLOSURE_UNCONFIRMED,
+                failure=pb.Failure(
+                    code="OUTPUT_CLOSURE_UNCONFIRMED",
+                    message="no exact Finished closure by original interruption deadline",
+                ),
+            )
+        output_results.append(message_dict(result))
+    return output_results
 
 
 class TrialLogs:
@@ -48,15 +101,7 @@ class TrialLogs:
             attempt,
             attempt.trial_log_name,
             "create_json",
-            {
-                "schema_version": 1,
-                "session_id": attempt.context.session_id,
-                "trial_id": plan.context.trial_id,
-                "trial_number": plan.context.trial_number,
-                "session_config": "SESSION_CONFIG.json",
-                "complete": False,
-                "plan": message_dict(plan),
-            },
+            _trial_log_document(attempt, plan, complete=False, plan=message_dict(plan)),
         )
         await self.metadata.log_event(
             attempt,
@@ -82,17 +127,14 @@ class TrialLogs:
             attempt,
             attempt.trial_log_name,
             "replace_json",
-            {
-                "schema_version": 1,
-                "session_id": attempt.context.session_id,
-                "trial_id": plan.context.trial_id,
-                "trial_number": plan.context.trial_number,
-                "session_config": "SESSION_CONFIG.json",
-                "complete": True,
-                "outcome": "completed",
-                "plan": message_dict(plan),
-                "outputs": outputs,
-            },
+            _trial_log_document(
+                attempt,
+                plan,
+                complete=True,
+                outcome="completed",
+                plan=message_dict(plan),
+                outputs=outputs,
+            ),
         )
         await self.metadata.log_event(
             attempt,
@@ -161,64 +203,29 @@ class TrialLogs:
                 )
             except TimeoutError:
                 pass
-            # A missing Finished report leaves every corresponding reserved output
-            # explicitly unknown. A reported closure is retained exactly as sent.
-            reported = {
-                result.output_key: result
-                for finished in attempt.finished.values()
-                for result in finished.outputs
-            }
-            reported.update(
-                {result.output_key: result for result in attempt.unavailable_outputs}
-            )
-            output_results: list[dict[str, object]] = []
-            for output in attempt.prepared.outputs:
-                if output.trial != plan.context:
-                    continue
-                result = reported.get(output.output_key)
-                if result is None:
-                    result = pb.OutputResult(
-                        output_key=output.output_key,
-                        path=output.path,
-                        closure=pb.OUTPUT_CLOSURE_UNCONFIRMED,
-                        failure=pb.Failure(
-                            code="OUTPUT_CLOSURE_UNCONFIRMED",
-                            message="no exact Finished closure by original interruption deadline",
-                        ),
-                    )
-                output_results.append(message_dict(result))
+            output_results = _interrupted_output_results(attempt, plan)
             await asyncio.wait_for(
                 self.metadata.persist(
                     attempt,
                     attempt.trial_log_name,
                     "replace_json",
-                    {
-                        "schema_version": 1,
-                        "session_id": attempt.context.session_id,
-                        "trial_id": plan.context.trial_id,
-                        "trial_number": plan.context.trial_number,
-                        "session_config": "SESSION_CONFIG.json",
-                        "complete": True,
-                        "outcome": "interrupted",
-                        "participants_started": sorted(attempt.started),
-                        "start_unconfirmed": sorted(
+                    _trial_log_document(
+                        attempt,
+                        plan,
+                        complete=True,
+                        outcome="interrupted",
+                        participants_started=sorted(attempt.started),
+                        start_unconfirmed=sorted(
                             closure.released - attempt.started.keys()
                         ),
-                        "plan": message_dict(plan),
-                        "outputs": output_results,
-                    },
+                        plan=message_dict(plan),
+                        outputs=output_results,
+                    ),
                 ),
                 max(0, (deadline_ns - self.clock()) / 1e9),
             )
             if not attempt.trial_log_finished:
-                actual_end_ns = (
-                    max(
-                        report.actual_stop_monotonic_ns
-                        for report in attempt.stopped.values()
-                    )
-                    if active_backends <= attempt.stopped.keys() and attempt.stopped
-                    else None
-                )
+                actual_end_ns = _actual_stop_ns(attempt, active_backends)
                 await asyncio.wait_for(
                     self.metadata.log_event(
                         attempt,
@@ -244,11 +251,9 @@ class TrialLogs:
                 if self.lifecycle.attempt is attempt:
                     self.lifecycle.trial.phase = pb.TRIAL_PHASE_ENDED
                     self.lifecycle.trial.outcome = pb.TRIAL_OUTCOME_INTERRUPTED
-                    if active_backends <= attempt.stopped.keys() and attempt.stopped:
-                        self.lifecycle.trial.actual_end_monotonic_ns = max(
-                            report.actual_stop_monotonic_ns
-                            for report in attempt.stopped.values()
-                        )
+                    stop_ns = _actual_stop_ns(attempt, active_backends)
+                    if stop_ns is not None:
+                        self.lifecycle.trial.actual_end_monotonic_ns = stop_ns
                     self.publish()
             await self.metadata.retire_completed_trial_metadata(
                 attempt, attempt.trial_log_name
@@ -256,13 +261,9 @@ class TrialLogs:
             return True
         except (StorageError, TimeoutError, RuntimeError) as exc:
             async with self.lifecycle.lock:
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="interrupted_trial",
-                        message=f"interrupted trial log or closure unconfirmed: {exc}",
-                    )
+                self.control.add_warning(
+                    "interrupted_trial",
+                    f"interrupted trial log or closure unconfirmed: {exc}",
                 )
-                self.control.warnings = self.control.warnings[-256:]
                 self.publish()
             return False

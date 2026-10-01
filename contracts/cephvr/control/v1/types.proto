@@ -4,8 +4,8 @@ package cephvr.control.v1;
 
 import "cephvr/acquisition/v1/runtime.proto";
 import "cephvr/synchronization/v1/spikeglx.proto";
-import "cephvr/vr/v1/runtime.proto";
-import "cephvr/vr/v1/plan.proto";
+import "cephvr/visual_stimulus/v1/runtime.proto";
+import "cephvr/visual_stimulus/v1/plan.proto";
 import "cephvr/tracking/v1/pose.proto";
 import "cephvr/tracking/v1/methods.proto";
 
@@ -160,24 +160,24 @@ message AcquisitionSettings {
   // File-policy bindings: acquisition/configuration-bindings.md. Applied MCU
   // timing is separate evidence, never an operator override.
 }
-message VRSettings {
-  cephvr.vr.v1.DisplayConfiguration display = 1;
-  optional bool save_vr_data = 2;
+message VisualStimulusSettings {
+  cephvr.visual_stimulus.v1.DisplayConfiguration display = 1;
+  optional bool save_visual_stimulus_data = 2;
   reserved 3;
   reserved "encoding";
   repeated string review_ffmpeg_args = 4; // E13: one complete list for the tiled composite.
   // Full display snapshot, no profile-path-only substitution. E07 preserves false.
   // Arguments are required only when saving is enabled.
-  // Further stimulus/feedback settings remain explicitly in the VR worklist.
+  // Further stimulus/feedback settings remain explicitly in the Visual Stimulus worklist.
 }
-message VRDisplayView {
+message VisualStimulusDisplayView {
   ProcessIdentity source = 1;
   BackendContext backend = 2;
   ProcessIdentity controller = 3;
   string command_id = 4;
   uint64 requested_revision = 5;
   optional uint64 applied_revision = 6;
-  repeated cephvr.vr.v1.OutputInitialization outputs = 7;
+  repeated cephvr.visual_stimulus.v1.OutputInitialization outputs = 7;
   repeated FieldIssue issues = 8;
   repeated ResourceRelease resources = 9;
   int64 observed_monotonic_ns = 10;
@@ -215,17 +215,17 @@ message TrackingSettings {
 // E12: participation uses BackendSettings.enabled. Connection/native installation
 // fields are host-file-only; no extra operator acquisition settings are exposed.
 message SynchronizationSettings {}
-message VRTrialSettings {
-  cephvr.vr.v1.ProgramSource program = 1;
+message VisualStimulusTrialSettings {
+  cephvr.visual_stimulus.v1.ProgramSource program = 1;
   optional string stimulus_seed_decimal = 2;
   // Canonical nonnegative integer text; absence invokes E07 seed resolution.
-  cephvr.vr.v1.ArenaBoundaries arena_boundaries = 3;
+  cephvr.visual_stimulus.v1.ArenaBoundaries arena_boundaries = 3;
 }
 message ResolvedStimulusPlan {
   reserved 1, 2;
   reserved "schedule", "artifact";
-  // E08/D1: the full PreparedTrial stays with VR; control carries its identity only.
-  cephvr.vr.v1.PreparedHandle prepared = 3; // plan_sha256/plan_bytes/compiler identity.
+  // E08/D1: the full PreparedTrial stays with Visual Stimulus; control carries its identity only.
+  cephvr.visual_stimulus.v1.PreparedHandle prepared = 3; // plan_sha256/plan_bytes/compiler identity.
   repeated PlannedOccurrence occurrences = 4; // Compact E07 planned-epoch summary.
   string seed_decimal = 5; // Canonical nonnegative decimal, copied from PreparedTrial.
 }
@@ -246,7 +246,7 @@ message PlannedGroupVisit {
   // Exact PreparedTrial GroupVisit values; indices are zero based.
 }
 message DeviceProgressEvidence {
-  cephvr.vr.v1.OutputActivity vr_output = 1;
+  cephvr.visual_stimulus.v1.OutputActivity visual_stimulus_output = 1;
   // Used only for the first required output activity, not per-frame updates.
   cephvr.tracking.v1.TrackingFirstEvaluation tracking_evaluation = 2;
   optional cephvr.acquisition.v1.CameraRole camera = 3; // Camera callback's exact enabled role; UNSPECIFIED is invalid.
@@ -259,7 +259,7 @@ message BackendSettings {
   bool enabled = 2;
   oneof settings {
     AcquisitionSettings acquisition = 3;
-    VRSettings vr = 4;
+    VisualStimulusSettings visual_stimulus = 4;
     TrackingSettings tracking = 5;
     SynchronizationSettings synchronization = 6;
   }
@@ -268,7 +268,7 @@ message TrialDefinition {
   uint32 trial_number = 1;
   reserved 2;
   reserved "duration_ns"; // V06: no independently editable trial duration.
-  VRTrialSettings stimulus = 3;
+  VisualStimulusTrialSettings stimulus = 3;
 }
 message IntertrialGap {
   uint32 after_trial_number = 1;
@@ -315,8 +315,8 @@ message TrialPlan {
   TrialDefinition definition = 2;
   ResolvedStimulusPlan resolved_stimulus = 3;
   optional int64 resolved_duration_ns = 4;
-  // VR-derived epoch sum for this exact trial/configuration, >= 60 s (E05/V06).
-  // Absent only before VR plan resolution; required in VR resolved-plan evidence
+  // Visual Stimulus-derived epoch sum for this exact trial/configuration, >= 60 s (E05/V06).
+  // Absent only before Visual Stimulus plan resolution; required in Visual Stimulus resolved-plan evidence
   // and every prepared trial distributed by the controller, never an operator field.
   repeated RuntimeIncident continuation_incidents = 5;
   // Runtime E06 scopes; not authored stimulus data or a modification of its digest.
@@ -403,12 +403,12 @@ enum CameraVideoContent {
   CAMERA_VIDEO_CONTENT_FRAMES_SUBMITTED = 3;
   // Online input/accounting evidence only; no claim of persisted encoded samples.
 }
-// VR-specific completion evidence; existing camera names/tags remain stable.
-enum VrReviewVideoContent {
-  VR_REVIEW_VIDEO_CONTENT_UNSPECIFIED = 0;
-  VR_REVIEW_VIDEO_CONTENT_UNKNOWN = 1;
-  VR_REVIEW_VIDEO_CONTENT_NO_FRAMES = 2;
-  VR_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED = 3;
+// Visual Stimulus-specific completion evidence; existing camera names/tags remain stable.
+enum VisualStimulusReviewVideoContent {
+  VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_UNSPECIFIED = 0;
+  VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_UNKNOWN = 1;
+  VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_NO_FRAMES = 2;
+  VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED = 3;
   // Online input/accounting evidence, not persisted encoded-sample validation.
 }
 message OutputResult {
@@ -418,10 +418,10 @@ message OutputResult {
   Failure failure = 4;
   optional bool artifact_present = 5; // Absent means unknown, never false.
   CameraVideoContent camera_video_content = 6; // Camera MP4 only; otherwise UNSPECIFIED.
-  VrReviewVideoContent vr_review_video_content = 7; // VR review MP4 only.
+  VisualStimulusReviewVideoContent visual_stimulus_review_video_content = 7; // Visual Stimulus review MP4 only.
   // Populate only the applicable video content field; the other is UNSPECIFIED.
   // NO_FRAMES never waives errors. Owning predicates: acquisition/empty-video.md
-  // and vr/video-completion.md. Unknown/unspecified is not confirmed empty success.
+  // and visual_stimulus/video-completion.md. Unknown/unspecified is not confirmed empty success.
 }
 message MetadataResult {
   OperationContext operation = 1;
@@ -435,9 +435,9 @@ message ReadyReport {
   bool required_checks_passed = 3;
   BackendSettings resolved_settings = 4;
   repeated TrialPlan resolved_trials = 5;
-  // VR owns resolved stimulus/duration values. The controller validates current
+  // Visual Stimulus owns resolved stimulus/duration values. The controller validates current
   // configuration/trial identity and duration before sharing the common trial plan;
-  // another backend cannot replace the VR-owned duration.
+  // another backend cannot replace the Visual Stimulus-owned duration.
   repeated string asset_filenames = 6; // Filename with extension only, E04.
   repeated PreparedFunctionScope prepared_functions = 7; // E06 exact owned loss closure; retained for this generation/session.
   repeated ResourceObligation cleanup_resources = 8; // Exact native resource/path release obligations; separate from output closure.
@@ -458,7 +458,7 @@ message PreparedFunctionScope {
   repeated string lifecycle_sources = 8; // Backend-scoped E11 producer IDs whose activity/cutoff gates this function owns; empty for output-only functions.
 }
 message ActivityEvidence {
-  string kind = 1; // "camera_callback", "vr_presentation_call" or "tracking_frame_evaluation".
+  string kind = 1; // "camera_callback", "visual_stimulus_presentation_call" or "tracking_frame_evaluation".
   int64 observed_monotonic_ns = 2;
   optional uint64 native_counter = 3;
   DeviceProgressEvidence device_evidence = 4;
@@ -479,7 +479,7 @@ message StoppedReport {
   ReportContext context = 1;
   int64 actual_stop_monotonic_ns = 2;
   bool trial_activity_stopped = 3;
-  optional bool vr_idle = 4;
+  optional bool visual_stimulus_idle = 4;
   optional bool recording_interval_sealed = 5;
   repeated ProducerRecordingEnd producer_ends = 6;
   // Exact expected source set; unknown cutoffs are absent, never guessed.
@@ -509,9 +509,9 @@ message FinishedReport {
   repeated CameraTransportSummary acquisition_transport_summaries = 4;
   // Acquisition only; at most one per camera role, matching this completed trial.
   // Optional evidence; unavailable summaries never block normal closure.
-  repeated cephvr.vr.v1.TrialTimingSummary vr_timing_summaries = 5;
-  cephvr.vr.v1.ReviewRecordingSummary vr_review_summary = 6;
-  // VR compact administrative counts; never a detailed frame history.
+  repeated cephvr.visual_stimulus.v1.TrialTimingSummary visual_stimulus_timing_summaries = 5;
+  cephvr.visual_stimulus.v1.ReviewRecordingSummary visual_stimulus_review_summary = 6;
+  // Visual Stimulus compact administrative counts; never a detailed frame history.
 }
 message ResourceRelease {
   string resource = 1; // A registered trial/session resource, not the resident runtime.
@@ -827,7 +827,7 @@ message Snapshot {
   reserved "recording_recovery"; // Standalone offline CLI; no runtime projection.
   reserved 18;
   reserved "remote_recording";
-  VRDisplayView vr_display = 19;
+  VisualStimulusDisplayView visual_stimulus_display = 19;
   cephvr.synchronization.v1.SpikeGLXRecordingView spikeglx_recording = 20;
   // E12 controller-client state; stopped evidence, not native file closure.
   repeated RuntimeIncident runtime_incidents = 21; // Current retained incidents, including acknowledged active loss.

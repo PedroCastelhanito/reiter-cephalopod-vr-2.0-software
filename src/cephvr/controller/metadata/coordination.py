@@ -7,7 +7,7 @@ import json
 import uuid
 from collections.abc import Callable, Coroutine
 from concurrent.futures import Future
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
@@ -19,6 +19,7 @@ from cephvr.controller.metadata.types import (
 )
 from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.state import (
+    RETAINED_LIMIT,
     Attempt,
     ControlState,
     LifecycleState,
@@ -209,7 +210,7 @@ class MetadataCoordinator:
                             message=f"{completion.path.name}: late verified sync; original timeout retained: {reason}",
                         )
                     )
-                    self.control.warnings = self.control.warnings[-256:]
+                    self.control.warnings = self.control.warnings[-RETAINED_LIMIT:]
             elif completion.error:
                 result.failure.CopyFrom(
                     pb.Failure(code="METADATA_WRITE", message=completion.error)
@@ -257,8 +258,6 @@ class MetadataCoordinator:
     ) -> dict[str, object]:
         event_ns = self.clock() if at_ns is None else at_ns
         anchor = datetime.fromisoformat(attempt.prepared.anchor_wall_time)
-        from datetime import timedelta
-
         wall = anchor + timedelta(
             microseconds=(event_ns - attempt.prepared.anchor_monotonic_ns) / 1000
         )
@@ -299,3 +298,62 @@ class MetadataCoordinator:
                 details=details,
             ),
         )
+
+    async def finish_session(
+        self, attempt: Attempt, *, outcome: str, deadline_ns: int
+    ) -> bool:
+        """Drain admitted recovery logs, append the terminal event, then seal (E04).
+
+        The lifecycle coordinator retains the finalization deadline and combines
+        this metadata evidence with backend cleanup and reservation release.
+        """
+        clean = True
+        if attempt.writer is not None:
+            # The receipt for every accepted late Finished is paired with an owned
+            # recovery event task before releasing the state lock. Close that
+            # admission gate and join those writes before sealing the writer.
+            async with self.lifecycle.lock:
+                attempt.recovery_log_closed = True
+                recovery_logs = tuple(attempt.recovery_log_tasks)
+            if recovery_logs:
+                try:
+                    recovery_results = await asyncio.wait_for(
+                        asyncio.gather(*recovery_logs, return_exceptions=True),
+                        max(0, (deadline_ns - self.clock()) / 1e9),
+                    )
+                    if any(
+                        isinstance(result, BaseException) for result in recovery_results
+                    ):
+                        clean = False
+                except TimeoutError:
+                    clean = False
+            if attempt.recovery_log_failed or any(
+                result.state
+                in (pb.METADATA_PERSISTENCE_FAILED, pb.METADATA_PERSISTENCE_UNCONFIRMED)
+                for result in self.metadata_state.results.values()
+            ):
+                clean = False
+            try:
+                await asyncio.wait_for(
+                    self.log_event(attempt, "session_ended", outcome=outcome),
+                    max(0, (deadline_ns - self.clock()) / 1e9),
+                )
+            except (StorageError, TimeoutError):
+                clean = False
+            try:
+                sealed = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        attempt.writer.seal,
+                        max(0, (deadline_ns - self.clock()) / 1e9),
+                    ),
+                    max(0, (deadline_ns - self.clock()) / 1e9),
+                )
+            except (TimeoutError, StorageError, OSError):
+                sealed = False
+            if not sealed:
+                clean = False
+            else:
+                attempt.writer_closed = True
+        else:
+            attempt.writer_closed = True
+        return clean

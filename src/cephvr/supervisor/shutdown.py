@@ -13,14 +13,20 @@ from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.emergency import write_emergency_report
 from cephvr.shared.identity import require_uuid4
-from cephvr.supervisor.acquisition_cleanup import AcquisitionWorkerCleanup
-from cephvr.supervisor.acquisition_shutdown import AcquisitionWorkerShutdown
+from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
 from cephvr.supervisor.ports import SupervisorOutbound
+from cephvr.supervisor.process_exit import (
+    ProcessExitEvidence,
+    stop_owned_processes,
+    wait_while,
+)
 from cephvr.supervisor.receipts import accepted, rejected
 from cephvr.supervisor.recovery import RecoveryCoordinator
 from cephvr.supervisor.registration import RegistrationCoordinator
 from cephvr.supervisor.registry import LaunchRegistry, NativeLaunches
 from cephvr.supervisor.state import HealthState, ShutdownState, SupervisorTasks
+from cephvr.supervisor.visual_stimulus_worker import VisualStimulusWorkerControl
+from cephvr.supervisor.worker_context import WorkerControl
 
 
 class ShutdownCoordinator:
@@ -56,17 +62,26 @@ class ShutdownCoordinator:
         self.registry = registry
         self.native = native
         self.outbound = outbound
-        self.acquisition_cleanup = AcquisitionWorkerCleanup(
-            outbound=outbound,
-            issuer=identity,
-            command_ids=state.worker_cleanup_commands,
-        )
-        self.worker_shutdown = AcquisitionWorkerShutdown(
+        self.acquisition_worker_control = AcquisitionWorkerControl(
             registration=registration,
             registry=registry,
             outbound=outbound,
             issuer=identity,
             interrupt_commands=state.worker_interrupt_commands,
+            cleanup_commands=state.worker_cleanup_commands,
+        )
+        self.visual_stimulus_worker_control = VisualStimulusWorkerControl(
+            registration=registration,
+            registry=registry,
+            outbound=outbound,
+            issuer=identity,
+            interrupt_commands=state.worker_interrupt_commands,
+            cleanup_commands=state.worker_cleanup_commands,
+        )
+        # Acquisition first: its helper reconcile and request order are fixed.
+        self.worker_controls: tuple[WorkerControl, ...] = (
+            self.acquisition_worker_control,
+            self.visual_stimulus_worker_control,
         )
         self.software_root = software_root
         self.lock = lock
@@ -187,14 +202,15 @@ class ShutdownCoordinator:
 
     async def deliver_safety(self, report: wire.InterruptionReport) -> None:
         # Independent tasks: controller delivery cannot gate direct participant safety.
-        names = ["interruption report", "launcher notification", "emergency report"]
-        tasks: list[asyncio.Task[Any]] = [
-            asyncio.create_task(self.outbound.report_interruption(report)),
+        tasks: dict[asyncio.Task[Any], str] = {
+            asyncio.create_task(
+                self.outbound.report_interruption(report)
+            ): "interruption report",
             asyncio.create_task(
                 self.outbound.notify_launcher_shutdown(
                     self.state.shutdown_deadline_ns or 0, report.reason.code
                 )
-            ),
+            ): "launcher notification",
             asyncio.create_task(
                 write_emergency_report(
                     self.software_root,
@@ -212,11 +228,21 @@ class ShutdownCoordinator:
                     ),
                     timeout_ns=self.emergency_timeout_ns,
                 )
-            ),
-        ]
-        interrupts = self.interrupt_participants(report)
-        tasks.extend(interrupts)
-        names.extend("participant interruption" for _ in interrupts)
+            ): "emergency report",
+        }
+        tasks.update(
+            (task, "participant interruption")
+            for task in self.interrupt_participants(report)
+        )
+        await self._wait_for_deliveries(tasks)
+        if self.state.shutdown_task is None:
+            self.state.shutdown_task = asyncio.create_task(self.shutdown_owned())
+        await self.state.shutdown_task
+
+    async def _wait_for_deliveries(self, tasks: dict[asyncio.Task[Any], str]) -> None:
+        """Bound independent deliveries without letting one failure cancel peers."""
+        if not tasks:
+            return
         remaining_s = max(
             0.0,
             min(
@@ -228,22 +254,19 @@ class ShutdownCoordinator:
         done, pending = await asyncio.wait(tasks, timeout=remaining_s)
         for task in pending:
             task.cancel()
-            self.tasks.report_failure(names[tasks.index(task)], TimeoutError())
+            self.tasks.report_failure(tasks[task], TimeoutError())
         for task in done:
             try:
                 task.result()
             except Exception as exc:
                 # Retained safety/launcher state stays authoritative; a failed
                 # delivery is surfaced, never silent.
-                self.tasks.report_failure(names[tasks.index(task)], exc)
-        if self.state.shutdown_task is None:
-            self.state.shutdown_task = asyncio.create_task(self.shutdown_owned())
-        await self.state.shutdown_task
+                self.tasks.report_failure(tasks[task], exc)
 
     def interrupt_participants(
         self, report: wire.InterruptionReport
     ) -> list[asyncio.Task[Any]]:
-        """Start InterruptSession for registered coordinators and acquisition workers."""
+        """Start InterruptSession for registered coordinators and workers."""
         registered = self.registration.state.context
         tasks: list[asyncio.Task[Any]] = []
         if not registered:
@@ -254,16 +277,15 @@ class ShutdownCoordinator:
             or host_time_ns(),
             self.state.shutdown_deadline_ns or host_time_ns(),
         )
-        for launch, worker in self.worker_shutdown.registered_acquisition_workers(
-            registered.work
-        ):
-            tasks.append(
-                asyncio.create_task(
-                    self.worker_shutdown.interrupt_worker(
-                        launch, worker, report, worker_deadline
+        for control in self.worker_controls:
+            for launch, worker in control.registered_workers(registered.work):
+                tasks.append(
+                    asyncio.create_task(
+                        control.interrupt_worker(
+                            launch, worker, report, worker_deadline
+                        )
                     )
                 )
-            )
         for participant in registered.required_participants:
             command = wire.BackendCommand(
                 command_id=str(uuid4()),
@@ -345,26 +367,106 @@ class ShutdownCoordinator:
             ),
             work=self.registration.state.context.work,
         )
-        tasks = self.interrupt_participants(report)
-        if not tasks:
-            return
-        remaining_s = max(
-            0.0,
-            min(
-                5_000_000_000,
-                (self.state.shutdown_deadline_ns or host_time_ns()) - host_time_ns(),
-            )
-            / 1e9,
+        await self._wait_for_deliveries(
+            {
+                task: "participant interruption"
+                for task in self.interrupt_participants(report)
+            }
         )
-        done, pending = await asyncio.wait(tasks, timeout=remaining_s)
-        for task in pending:
-            task.cancel()
-            self.tasks.report_failure("participant interruption", TimeoutError())
-        for task in done:
-            if task.exception() is not None:
-                self.tasks.report_failure(
-                    "participant interruption", task.exception() or RuntimeError()
+
+    def _outer_deadline(self, cleanup_deadline: int) -> int:
+        return min(
+            cleanup_deadline, self.state.shutdown_deadline_ns or cleanup_deadline
+        )
+
+    async def _wait_for_cleanup_blockers(self, until_ns: int) -> None:
+        await wait_while(self.recovery.cleanup_blockers, until_ns)
+
+    def _registered_context(self) -> wire.RegisteredContext:
+        # Re-read at each step: a re-registration may replace the context.
+        context = self.registration.state.context
+        assert context is not None
+        return context
+
+    async def _cleanup_workers(
+        self, control: WorkerControl, cleanup_deadline: int
+    ) -> bool:
+        """Clean up one backend's registered workers; True when cleanup ran."""
+        targets = control.registered_workers(self._registered_context().work)
+        if not targets or host_time_ns() >= cleanup_deadline:
+            return False
+        results = await asyncio.gather(
+            *(
+                control.cleanup_worker(launch, worker, cleanup_deadline)
+                for launch, worker in targets
+            ),
+            return_exceptions=True,
+        )
+        # Shutdown stays bounded; an unconfirmed worker cleanup is reported.
+        for (_, worker), result in zip(targets, results, strict=True):
+            if isinstance(result, Exception):
+                self.tasks.report_failure(f"{worker.worker.role} cleanup", result)
+        return True
+
+    async def _request_participant_shutdown(self, cleanup_deadline: int) -> None:
+        context = self._registered_context()
+        requests = []
+        for target in context.required_participants:
+            command = wire.BackendCommand(
+                command_id=str(uuid4()),
+                issuer=self.identity,
+                target=target,
+                work=context.work,
+            )
+            requests.append(
+                self.outbound.shutdown_backend(
+                    target,
+                    command,
+                    deadline_ns=self._outer_deadline(cleanup_deadline),
                 )
+            )
+        for control in self.worker_controls:
+            for launch, worker in control.registered_workers(context.work):
+                requests.append(
+                    control.shutdown_worker(
+                        launch, worker, self._outer_deadline(cleanup_deadline)
+                    )
+                )
+        if requests:
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*requests, return_exceptions=True), timeout=5
+                )
+            except TimeoutError:
+                pass
+
+    def _record_shutdown_outcome(self, exits: ProcessExitEvidence) -> None:
+        if not self.state.shutdown_request:
+            return
+        request = wire.ApplicationShutdownRequest.FromString(
+            self.state.shutdown_request
+        )
+        operation = self.recovery.state.operations.get(request.command_id)
+        if operation is None:
+            return
+        blockers = self.recovery.cleanup_blockers()
+        operation.complete = True
+        operation.succeeded = (
+            not exits.remaining and not blockers and not exits.unconfirmed_jobs
+        )
+        operation.progress = (
+            "verified process absence and cleanup"
+            if operation.succeeded
+            else "process absence or cleanup remains unverified"
+        )
+        if not operation.succeeded:
+            operation.failure.CopyFrom(
+                types.Failure(
+                    code="SHUTDOWN_UNCONFIRMED",
+                    message=operation.progress,
+                )
+            )
+        self.changed()
 
     async def shutdown_owned(self) -> None:
         """Preserve the original outer deadline; exit groups have fixed inner bounds."""
@@ -374,160 +476,30 @@ class ShutdownCoordinator:
                 self.state.cleanup_deadline_ns or host_time_ns(),
                 self.state.shutdown_deadline_ns or host_time_ns(),
             )
-            recovery_ns = max(0, self.registration.state.context.policies.recovery_ns)
+            recovery_ns = max(0, self._registered_context().policies.recovery_ns)
             initial_deadline = max(host_time_ns(), cleanup_deadline - recovery_ns)
-            while (
-                self.recovery.cleanup_blockers() and host_time_ns() < initial_deadline
+            await self._wait_for_cleanup_blockers(initial_deadline)
+            if await self._cleanup_workers(
+                self.acquisition_worker_control, cleanup_deadline
             ):
-                await asyncio.sleep(
-                    min(0.05, (initial_deadline - host_time_ns()) / 1e9)
-                )
-            worker_targets = self.worker_shutdown.registered_acquisition_workers(
-                self.registration.state.context.work
-            )
-            if worker_targets and host_time_ns() < cleanup_deadline:
-                results = await asyncio.gather(
-                    *(
-                        self.acquisition_cleanup.reconcile(
-                            launch, worker, deadline_ns=cleanup_deadline
-                        )
-                        for launch, worker in worker_targets
-                    ),
-                    return_exceptions=True,
-                )
-                # Shutdown stays bounded; an unconfirmed worker cleanup is reported.
-                for (_, worker), result in zip(worker_targets, results, strict=True):
-                    if isinstance(result, Exception):
-                        self.tasks.report_failure(
-                            f"{worker.worker.role} cleanup", result
-                        )
-                await self.worker_shutdown.reconcile_native_helper_exits(
+                # Only acquisition workers own EOF-stopped native helpers, so the
+                # helper reconcile follows their cleanup and only when it ran.
+                await self.acquisition_worker_control.reconcile_native_helper_exits(
                     cleanup_deadline
                 )
-            while (
-                self.recovery.cleanup_blockers() and host_time_ns() < cleanup_deadline
-            ):
-                await asyncio.sleep(
-                    min(0.05, (cleanup_deadline - host_time_ns()) / 1e9)
-                )
+            await self._cleanup_workers(
+                self.visual_stimulus_worker_control, cleanup_deadline
+            )
+            await self._wait_for_cleanup_blockers(cleanup_deadline)
             await self.interrupt_if_controller_lost()
-            requests = []
-            for target in self.registration.state.context.required_participants:
-                command = wire.BackendCommand(
-                    command_id=str(uuid4()),
-                    issuer=self.identity,
-                    target=target,
-                    work=self.registration.state.context.work,
-                )
-                requests.append(
-                    self.outbound.shutdown_backend(
-                        target,
-                        command,
-                        deadline_ns=min(
-                            cleanup_deadline,
-                            self.state.shutdown_deadline_ns or cleanup_deadline,
-                        ),
-                    )
-                )
-            for launch, worker in self.worker_shutdown.registered_acquisition_workers(
-                self.registration.state.context.work
-            ):
-                requests.append(
-                    self.worker_shutdown.shutdown_worker(
-                        launch,
-                        worker,
-                        min(
-                            cleanup_deadline,
-                            self.state.shutdown_deadline_ns or cleanup_deadline,
-                        ),
-                    )
-                )
-            if requests:
-                try:
-                    await asyncio.wait_for(
-                        asyncio.gather(*requests, return_exceptions=True), timeout=5
-                    )
-                except TimeoutError:
-                    pass
-        unconfirmed: set[str] = set()
-
-        def inspect(state: wire.LaunchState) -> list[tuple[int, int, str]]:
-            # A released launch proved absence and closed its job handle.
-            if state.phase == wire.LAUNCH_PHASE_RELEASED:
-                return []
-            # One unreadable job must not stop shutdown of the other children.
-            try:
-                return self.native.inspect_launch_job(state.containment_job_name)
-            except Exception:
-                unconfirmed.add(state.containment_job_name)
-                return []
-
-        for roles in ({"acquisition", "vr", "tracking"}, {"controller", "gui"}):
-            candidates = [
-                state
-                for state in self.registry.states(tolerant=True)
-                if state.plan.child.role in roles
-            ]
-
-            def remaining_members(
-                states: tuple[wire.LaunchState, ...] = tuple(candidates),
-            ) -> list[tuple[int, int, str]]:
-                found: dict[tuple[int, int], tuple[int, int, str]] = {}
-                for state in states:
-                    for member in inspect(state):
-                        found[member[:2]] = member
-                return list(found.values())
-
-            grace_until = min(
-                host_time_ns() + self.graceful_exit_ns,
-                self.state.shutdown_deadline_ns
-                or (host_time_ns() + self.graceful_exit_ns),
-            )
-            while host_time_ns() < grace_until and remaining_members():
-                await asyncio.sleep(0.05)
-            for pid, created, _ in remaining_members():
-                try:
-                    if self.native.process_running(pid, created):
-                        self.native.terminate_exact(pid, created)
-                except Exception:
-                    # Continue with the other members; the final job inspection
-                    # decides whether this one is still present.
-                    continue
-            terminate_until = min(
-                host_time_ns() + self.terminate_exit_ns,
-                self.state.shutdown_deadline_ns
-                or (host_time_ns() + self.terminate_exit_ns),
-            )
-            while host_time_ns() < terminate_until and remaining_members():
-                await asyncio.sleep(0.05)
-        unconfirmed.clear()  # only the final inspection can leave absence unconfirmed
-        remaining = [
-            member
-            for state in self.registry.states(tolerant=True)
-            if state.plan.child.role != "supervisor"
-            for member in inspect(state)
-        ]
-        if self.state.shutdown_request:
-            request = wire.ApplicationShutdownRequest.FromString(
-                self.state.shutdown_request
-            )
-            operation = self.recovery.state.operations.get(request.command_id)
-            if operation is not None:
-                blockers = self.recovery.cleanup_blockers()
-                operation.complete = True
-                operation.succeeded = not remaining and not blockers and not unconfirmed
-                operation.progress = (
-                    "verified process absence and cleanup"
-                    if operation.succeeded
-                    else "process absence or cleanup remains unverified"
-                )
-                if not operation.succeeded:
-                    operation.failure.CopyFrom(
-                        types.Failure(
-                            code="SHUTDOWN_UNCONFIRMED",
-                            message=operation.progress,
-                        )
-                    )
-                self.changed()
-        if not remaining and not unconfirmed:
+            await self._request_participant_shutdown(cleanup_deadline)
+        exits = await stop_owned_processes(
+            registry=self.registry,
+            native=self.native,
+            shutdown=self.state,
+            graceful_exit_ns=self.graceful_exit_ns,
+            terminate_exit_ns=self.terminate_exit_ns,
+        )
+        self._record_shutdown_outcome(exits)
+        if not exits.remaining and not exits.unconfirmed_jobs:
             self.state.shutdown_complete.set()

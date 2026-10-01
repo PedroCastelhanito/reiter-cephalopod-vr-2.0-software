@@ -6,7 +6,7 @@ import asyncio
 import uuid
 from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from copy import deepcopy
-from typing import Any
+from typing import Any, Literal
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
@@ -85,11 +85,7 @@ class CleanupWorkflow:
     async def release_reservation_pointer(
         self, attempt: Attempt, deadline_ns: int
     ) -> bool:
-        if (
-            self.lifecycle.authority_lost
-            or attempt.reservation_registration_started
-            and not attempt.reservation_registered
-        ):
+        if self.lifecycle.authority_lost or attempt.reservation_unconfirmed:
             return False
         if (
             not attempt.reservation_registration_started
@@ -104,14 +100,9 @@ class CleanupWorkflow:
             return True
         except Exception as exc:
             async with self.lifecycle.lock:
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="reservation",
-                        message=f"durable reservation release unconfirmed: {exc}",
-                    )
+                self.control.add_warning(
+                    "reservation", f"durable reservation release unconfirmed: {exc}"
                 )
-                self.control.warnings = self.control.warnings[-256:]
                 self.publisher.publish()
             return False
 
@@ -185,6 +176,50 @@ class CleanupWorkflow:
                 error=f"start cancelled: {closure.reason or 'session closed'}",
             )
 
+    async def dispatch_backend_cleanup(
+        self,
+        attempt: Attempt,
+        deadline: int,
+        method: Literal["cancel_setup", "cleanup"],
+    ) -> bool:
+        """Fence, then dispatch one cleanup-class command to every required backend.
+
+        Returns whether the fences registered and every backend accepted; the
+        caller handles ``TimeoutError``.
+        """
+        requests = {
+            name: self.backend_command(attempt, backend)
+            for name, backend in attempt.required.items()
+        }
+        attempt.cleanup_commands.update(
+            {name: request.command_id for name, request in requests.items()}
+        )
+        fenced = (
+            await self.register_cleanup_fences(attempt, requests, deadline)
+            if not self.lifecycle.authority_lost
+            else False
+        )
+        if fenced or self.lifecycle.authority_lost:
+            results = await asyncio.wait_for(
+                asyncio.gather(
+                    *(
+                        getattr(backend, method)(requests[name], deadline_ns=deadline)
+                        for name, backend in attempt.required.items()
+                    ),
+                    return_exceptions=True,
+                ),
+                max(0, (deadline - self.clock()) / 1e9),
+            )
+            return (
+                all(
+                    isinstance(result, pb.CommandAdmission)
+                    and result.result == pb.COMMAND_RESULT_ACCEPTED
+                    for result in results
+                )
+                and fenced
+            )
+        return fenced
+
     async def cancel_attempt(self, attempt: Attempt) -> None:
         async with self.lifecycle.lock:
             if attempt.cancelling:
@@ -200,45 +235,14 @@ class CleanupWorkflow:
             deadline = min(deadline, attempt.finalization_deadline_ns)
         clean = True
         try:
-            requests = {
-                name: self.backend_command(attempt, backend)
-                for name, backend in attempt.required.items()
-            }
-            attempt.cleanup_commands.update(
-                {name: request.command_id for name, request in requests.items()}
+            clean = await self.dispatch_backend_cleanup(
+                attempt, deadline, "cancel_setup"
             )
-            clean = (
-                await self.register_cleanup_fences(attempt, requests, deadline)
-                if not self.lifecycle.authority_lost
-                else False
-            )
-            if clean or self.lifecycle.authority_lost:
-                results = await asyncio.wait_for(
-                    asyncio.gather(
-                        *(
-                            backend.cancel_setup(requests[name], deadline_ns=deadline)
-                            for name, backend in attempt.required.items()
-                        ),
-                        return_exceptions=True,
-                    ),
-                    max(0, (deadline - self.clock()) / 1e9),
-                )
-                clean = (
-                    all(
-                        isinstance(result, pb.CommandAdmission)
-                        and result.result == pb.COMMAND_RESULT_ACCEPTED
-                        for result in results
-                    )
-                    and clean
-                )
         except TimeoutError:
             clean = False
         if attempt.setup_operations:
             clean = await self.await_cleanups(attempt, deadline) and clean
-        if (
-            attempt.reservation_registration_started
-            and not attempt.reservation_registered
-        ):
+        if attempt.reservation_unconfirmed:
             clean = False
         if clean and not self.lifecycle.authority_lost and attempt.reservation.held:
             try:
@@ -250,13 +254,7 @@ class CleanupWorkflow:
                 )
             except (StorageError, OSError) as exc:
                 clean = False
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="reservation",
-                        message=str(exc),
-                    )
-                )
+                self.control.add_warning("reservation", str(exc))
             except TimeoutError:
                 clean = False
         async with self.lifecycle.lock:
@@ -310,7 +308,7 @@ class CleanupWorkflow:
                     await self.report(
                         pb.LifecycleReport(cleanup=state.cleanup), self.clock()
                     )
-            except (TimeoutError, Exception):
+            except Exception:
                 return
 
         await asyncio.gather(*(query(name) for name in missing))
@@ -401,8 +399,7 @@ class CleanupWorkflow:
         async with self.lifecycle.lock:
             if (
                 self.lifecycle.authority_lost
-                or attempt.reservation_registration_started
-                and not attempt.reservation_registered
+                or attempt.reservation_unconfirmed
                 or self.lifecycle.attempt is not attempt
                 or self.lifecycle.session.cleanup_confirmed
                 or len(attempt.cleanup) != len(attempt.required)

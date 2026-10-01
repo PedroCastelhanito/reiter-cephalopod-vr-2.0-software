@@ -1,0 +1,200 @@
+"""Controller-to-renderer lifecycle binding; no per-frame traffic (V01/E08)."""
+
+from __future__ import annotations
+
+from uuid import uuid4
+
+from google.protobuf.message import Message
+
+from cephvr.control.v1 import services_pb2 as wire
+from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.identity import require_uuid4
+from cephvr.visual_stimulus.transport.messages import backend_command
+from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
+
+from .state import CommandLink, Identity, State
+
+
+def bind_command(
+    identity: Identity, state: State, method: str, request: Message, deadline_ns: int
+) -> tuple[Message, CommandLink]:
+    if isinstance(request, wire.VisualStimulusDisplayInitializationRequest):
+        parent = wire.BackendCommand(
+            command_id=request.command_id, issuer=request.issuer, target=request.target
+        )
+        revision = request.configuration_revision
+    else:
+        parent = backend_command(request)
+        revision = (
+            request.plan.configuration_revision
+            if isinstance(request, wire.SetupSessionRequest)
+            else (state.setup.plan.configuration_revision if state.setup else 0)
+        )
+    child = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=identity.process,
+        target=visual_stimulus.WorkerContext(
+            worker=identity.worker,
+            owner=identity.process,
+            work=parent.work,
+            configuration_revision=revision,
+        ),
+        parent_operation=pb.OperationContext(command_id=parent.command_id),
+        deadline_monotonic_ns=deadline_ns,
+    )
+    link = CommandLink(
+        method,
+        wire.BackendCommand.FromString(parent.SerializeToString()),
+        child,
+        deadline_ns,
+    )
+    if isinstance(request, wire.VisualStimulusDisplayInitializationRequest):
+        initialization = visual_stimulus.InitializeDisplay(
+            command=child,
+            display=request.display,
+            limits=request.limits,
+            policies=request.policies,
+        )
+        if request.HasField("asset_root"):
+            initialization.asset_root = request.asset_root
+        return initialization, link
+    if isinstance(request, wire.SetupSessionRequest):
+        return visual_stimulus.WorkerSetup(
+            command=child,
+            session=request.plan,
+            settings=request.settings.visual_stimulus,
+            policies=request.visual_stimulus_policies,
+            feedback_attachment=request.feedback_attachment,
+        ), link
+    if isinstance(request, wire.PrepareTrialRequest):
+        prepared = state.prepared.get(request.plan.context.trial_id)
+        if (
+            prepared is None
+            or prepared.trial != request.plan.context
+            or prepared.handle != request.plan.resolved_stimulus.prepared
+        ):
+            raise ValueError("trial does not match retained preparation")
+        return visual_stimulus.WorkerPrepareTrial(
+            command=child,
+            trial=request.plan,
+            prepared=prepared.handle,
+            outputs=request.outputs,
+        ), link
+    if isinstance(request, wire.ScheduleTrialRequest):
+        prepared = state.prepared.get(parent.work.trial.trial_id)
+        if prepared is None:
+            raise ValueError("trial preparation absent")
+        return visual_stimulus.WorkerSchedule(
+            command=child,
+            prepared=prepared.handle,
+            start_monotonic_ns=request.start_monotonic_ns,
+            normal_end_monotonic_ns=request.normal_end_monotonic_ns,
+            trial_file_prefix=request.trial_file_prefix,
+            outputs=request.outputs,
+        ), link
+    if isinstance(request, wire.ReleaseTrialRequest):
+        scheduled = next(
+            (
+                x
+                for x in state.links.values()
+                if x.method == "ScheduleTrial"
+                and x.parent.command_id == request.schedule_operation.command_id
+            ),
+            None,
+        )
+        if scheduled is None:
+            raise ValueError("release has no matching scheduled operation")
+        return visual_stimulus.WorkerRelease(
+            command=child,
+            schedule_operation=pb.OperationContext(
+                command_id=scheduled.child.command_id
+            ),
+            start_monotonic_ns=request.start_monotonic_ns,
+            normal_end_monotonic_ns=request.normal_end_monotonic_ns,
+        ), link
+    if isinstance(request, (wire.StopTrialRequest, wire.InterruptSessionRequest)):
+        return visual_stimulus.WorkerStop(
+            command=child,
+            issued_monotonic_ns=request.issued_monotonic_ns,
+            cause=request.reason,
+        ), link
+    if isinstance(request, wire.BackendCommand):
+        return child, link
+    raise ValueError(f"unsupported Visual Stimulus command {method}")
+
+
+def validate(identity: Identity, state: State, method: str, request: Message) -> None:
+    command = backend_command(request)
+    require_uuid4(command.command_id)
+    if command.target != identity.backend:
+        raise ValueError("wrong Visual Stimulus backend generation")
+    expected = (
+        (identity.controller, identity.supervisor)
+        if method
+        in {
+            "CancelSetup",
+            "InterruptSession",
+            "Cleanup",
+            "Shutdown",
+            "StopTrial",
+            "AbortTrial",
+        }
+        else (identity.controller,)
+    )
+    if command.issuer not in expected:
+        raise ValueError("wrong Visual Stimulus authority generation")
+    if state.interrupted and method not in {
+        "Cleanup",
+        "Shutdown",
+        "InterruptSession",
+        "CancelSetup",
+        "StopTrial",
+        "AbortTrial",
+        "SetupSession",
+        "InitializeDisplay",
+    }:
+        raise ValueError("interrupted Visual Stimulus session is permanently fenced")
+    if isinstance(request, wire.SetupSessionRequest):
+        if state.setup is not None and (
+            state.cleanup is None
+            or not state.cleanup.trial_activity_stopped
+            or any(not item.released for item in state.cleanup.resources)
+            or any(
+                item.closure
+                not in {
+                    pb.OUTPUT_CLOSURE_CLOSED,
+                    pb.OUTPUT_CLOSURE_FAILED,
+                    pb.OUTPUT_CLOSURE_NOT_STARTED,
+                }
+                or not item.HasField("artifact_present")
+                for item in state.cleanup.outputs
+            )
+        ):
+            raise ValueError("previous Visual Stimulus session has unresolved cleanup")
+        if (
+            command.work.WhichOneof("work") != "session"
+            or command.work.session != request.plan.context
+        ):
+            raise ValueError("Setup context differs from allocated session")
+        if (
+            request.settings.backend_name != "visual_stimulus"
+            or request.settings.WhichOneof("settings") != "visual_stimulus"
+        ):
+            raise ValueError("typed Visual Stimulus settings required")
+        closed = request.plan.configuration.mode == pb.SESSION_MODE_CLOSED_LOOP
+        if closed != request.HasField("feedback_attachment"):
+            raise ValueError("feedback attachment must match session mode")
+    elif isinstance(request, wire.VisualStimulusDisplayInitializationRequest):
+        if state.setup is not None and state.cleanup is None:
+            raise ValueError(
+                "display initialization forbidden during session preparation"
+            )
+    elif method not in {"Shutdown"}:
+        if state.setup is None:
+            raise ValueError("Visual Stimulus session is not prepared")
+        work = command.work
+        session = (
+            work.trial.session if work.WhichOneof("work") == "trial" else work.session
+        )
+        if session != state.setup.plan.context:
+            raise ValueError("stale Visual Stimulus session")

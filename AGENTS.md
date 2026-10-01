@@ -1,16 +1,76 @@
-# Guidance for CephVR2.0 contributors and AI agents
+# AGENTS.md
 
-This file applies to this directory and its descendants.
+Repository instructions for CephVR2.0 contributors, OpenAI ChatGPT/Codex agents
+and Anthropic Claude agents. CephVR2.0 is a Python experiment-control system with
+Windows-native device/process ownership and separate rig acceptance.
+
+## Scope and instruction precedence
+
+- This root file governs the repository. Check for more specific instructions in
+  the directories containing files you edit. Deeper instructions take precedence
+  within their scope; direct system/developer/user instructions take precedence
+  over repository guidance.
+- Codex discovers `AGENTS.override.md` before `AGENTS.md` in each directory, loading
+  at most one file per directory from the project root to its working directory.
+  Do not add a root override that unintentionally hides these shared rules.
+- Keep this file as ordinary Markdown. Read linked documents when directed below;
+  links are references, not a substitute for reading their contents. Root
+  [CLAUDE.md](CLAUDE.md) imports this same guidance for Claude Code.
+- Use the current client's available tools and permissions. Report unavailable
+  checks accurately; never claim a read, action or test result without evidence.
+
+Format and discovery reference: [OpenAI's AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+
+## Repository map
+
+- `src/cephvr/<owner>/`: backend implementation; `shared/` contains common helpers
+  and `platform/windows/` contains native mechanisms.
+- `tests/<owner>/`: owning behavior tests; extend these before adding test modules.
+- `contracts/` and `config/`: interface/policy declarations and operator settings.
+- `architecture.md`, `docs/architecture/`, `reports/`, `TODO.md` and `LOG.md`:
+  decisions, current evidence, open work and activity history, respectively.
+- For package and module navigation, see the development guide's
+  [project layout](docs/development.md#project-layout).
+- Generated files under `src/cephvr/<owner>/v1/` are not hand-edited. Change the
+  owning `.proto` and run `python tools/generate_contracts.py` when needed.
+
+## Setup and validation commands
+
+Use the repository's Python 3.11 environment. Below, `python` means
+`.venv/bin/python` on macOS/Linux or `.venv/Scripts/python.exe` on Windows.
+For a fresh environment, follow [the development guide](docs/development.md#environment)
+and install the declared development dependencies with `python -m pip install -e ".[dev]"`.
+Use backend extras only when required; dependency versions belong in `pyproject.toml`.
+The checked-in `.editorconfig` and `pyproject.toml` are the source of truth for
+formatting, lint, type-check and pytest settings, including scoped exceptions; follow
+their configuration instead of adding ad hoc local overrides.
+
+Run checks for the affected owner first, then relevant integration tests. For example,
+a supervisor change uses:
+
+```sh
+python -m pytest tests/supervisor -q -m "not windows and not rig"
+python -m ruff check src/cephvr/supervisor tests/supervisor
+python -m ruff format --check src/cephvr/supervisor tests/supervisor
+python -m mypy --platform win32 src/cephvr/supervisor
+python tools/check_backend_boundaries.py
+git diff --check
+```
+
+Replace the supervisor paths with the affected owner(s). Run appropriate contract
+checks for contract edits and `python -m build` for packaging changes. Documentation-only
+changes need link/anchor and whitespace checks, not an unrelated runtime suite.
+Report actual commands, outcomes and blockers. Windows-target mypy is static analysis;
+local passes do not close E15 rig checks. Authenticated transport tests need loopback
+socket permission; do not weaken their assertions to bypass an environment restriction.
 
 ## Architecture is the starting point
 
-- The owner has explicitly authorized runtime implementation and tests for the
-  experiment controller, supervisor and acquisition host backend, including their
-  required shared helpers, launcher, native mechanisms and headless client.
-  Acquisition firmware, flashing and other backend runtimes remain outside this
-  stage. Follow GOV-001 and ARCH-001;
-  other backend implementation stages still need owner selection. Existing
-  declarative schemas, interfaces and contract checks remain authoritative inputs,
+- The owner has selected Tracking implementation next, followed by GUI and finally
+  SpikeGLX integration. Existing controller, supervisor, acquisition host and Visual
+  Stimulus work and required shared helpers remain authorized. Firmware/flashing is
+  deferred; analysis software and offline replay/export are deferred much later.
+  Follow GOV-001 and ARCH-001. Declarative contracts remain authoritative inputs,
   not proof of implemented or rig-validated behavior.
 
 - Read [architecture.md](architecture.md), [system contracts](docs/architecture/system-contracts.md),
@@ -57,7 +117,7 @@ This file applies to this directory and its descendants.
   each with options and an explained recommendation; explain complex choices
   individually. Never invent minor choices merely to fill the next pair.
   Complete acquisition's rig-independent choices and implementation contracts before
-  moving to another backend. Discuss tracking last under GOV-001. Keep hardware inputs
+  moving to another backend. Follow the owner-selected build order in ARCH-001. Keep hardware inputs
   and rig verification pending under
   their existing deferrals; local contract work is not deferred. Acquisition includes concrete schemas,
   worker interfaces, device mappings and recording mechanisms. Resolve routine details
@@ -83,6 +143,61 @@ This file applies to this directory and its descendants.
   in scope. Replace the current rule under the same ID for refinements; do not keep
   historical discussion or rejected alternatives in architecture records.
 
+## Reports and verification evidence
+
+- Follow [GOV-001](architecture.md#gov-001)'s reporting convention: maintain one
+  current report per backend area in `reports/runtime.md` (controller/supervisor and
+  shared helpers), `reports/acquisition.md`, `reports/visual_stimulus.md` and `reports/tracking.md`.
+  Update these in place; do not create files or append sections per audit/review round.
+- Keep reports focused on current scope, unresolved findings, review evidence,
+  validation results and limitations. Link governing decision IDs and contracts;
+  do not copy policy inventories or maintain another decision history.
+- Use `reports/rig-verification.md` as the single outstanding rig checklist and
+  execution guide. Backend reports link to it instead of duplicating handoffs,
+  procedures or deferred checks. Preserve explicit owner-approved deferrals.
+- Preserve dated raw evidence and its contextual assessment together in dated
+  evidence directories. Record date, source revision when known, command/method,
+  outcome and validation scope; label missing provenance and historical results.
+  Never turn source review, collection or static checks into runtime/rig passes.
+- When consolidating, retain unresolved findings, unique evidence and useful source
+  references, update incoming links, and remove redundant resolved commentary.
+  Git retains review history; do not create a parallel archive of narrative reports.
+  These rules concern development reports, not E04 runtime emergency/recovery outputs.
+
+## Task and change tracking
+
+- Read root [TODO.md](TODO.md) and the recent entries in [LOG.md](LOG.md) at task
+  start, alongside the governing architecture and relevant backend report. Use
+  these same files across agents; do not create separate per-agent task lists/logs.
+- TODO is the current work queue: one concise action/completion condition per entry,
+  a stable descriptive task ID, affected-backend tags and a link to supporting
+  context. Use its In progress, Next, Blocked and Deferred sections. In-progress
+  work names its owner/chat when known; blocked/deferred entries state the reason.
+  Reuse an existing task before adding one. A TODO entry does not grant permission
+  to implement a proposed decision or start a deferred stage.
+- Use the same tags in both files: `[controller]`, `[supervisor]`, `[acquisition]`,
+  `[visual_stimulus]`, `[tracking]`, `[gui]`, `[spikeglx]`, `[launcher]`, `[shared]`.
+  Tag every affected area; `[repo]` is for repository-wide tooling/documentation.
+  Report edits use the backend tags of their subject, not a separate report tag.
+- Update TODO whenever work starts, its status changes, a follow-up is discovered,
+  or a task completes. Record new findings promptly with their source and validation
+  status; distinguish an observed defect from an unverified concern. Keep detailed
+  findings/evidence in the owning report and link them from the task.
+- Append a dated LOG entry for each coherent action or work increment, including
+  code/report edits, reviews, investigations, validation, failed attempts and new
+  findings. Briefly record context, what changed or was learned, and checks/limits;
+  include the task ID when applicable. Group related tool calls into one entry and
+  state when a review found nothing actionable. Do not record every shell command
+  or recursively log edits made solely to maintain TODO/LOG.
+- Before handing work back, reconcile both files with actual results. Remove a
+  completed task from TODO only after LOG records its outcome and verification;
+  leave partial/blocked work open. Record cancellation or supersession before
+  removing a task. Do not mark a task complete merely because an attempt ended.
+- Re-read the relevant entries immediately before editing; preserve concurrent
+  agents' entries and ownership. Append log history rather than rewriting it;
+  identify corrections explicitly. These files index work under GOV-001 and do
+  not duplicate architecture decisions, backend reports or the rig checklist.
+
 ## Backend default files
 
 - Read [config/backends/README.md](config/backends/README.md) and E14 before changing
@@ -103,8 +218,12 @@ This file applies to this directory and its descendants.
 
 ## Work discipline
 
-- Use Luna models for delegated code writing. The supervising model establishes
-  interfaces, reviews each increment and resolves integration issues before acceptance.
+- For delegated code writing in ChatGPT/Codex, prefer Luna when available. In Claude,
+  use the owner's configured Claude model; if a preferred model is unavailable, use
+  a suitable available model without assuming cross-provider access. Follow explicit
+  owner model selections. This preference does not itself authorize delegation.
+  The supervising agent establishes interfaces, reviews each increment and resolves
+  integration issues before acceptance, regardless of provider.
 
 - Before every coding increment, apply [ARCH-002](architecture.md#arch-002)'s
   simplification and dependency review to the affected code, including agent-written
@@ -116,7 +235,9 @@ This file applies to this directory and its descendants.
 - Apply ARCH-002's dependency boundaries: feature modules use focused records and
   explicit operations, never whole-runtime back-references. Run
   `python tools/check_backend_boundaries.py` alongside static checks; review its
-  size warnings and document cohesive exceptions in the implementation report.
+  size warnings and document cohesive exceptions in the implementation report. Its
+  warnings for backend source files over 500 lines prompt a cohesion review; they
+  are not a file-size cap. Split only separable responsibilities under ARCH-002.
 - Apply [ARCH-002](architecture.md#arch-002)'s test organization rule before adding
   tests: extend the owning behavior module by default and justify any new module
   by responsibility or fixture/platform needs. Do not add per-fix test files.
@@ -129,12 +250,28 @@ This file applies to this directory and its descendants.
   display/GUI. SpikeGLX remains on the separate computer under SYS-001.
 - Consult [SYS-003](architecture.md#sys-003) for the Python backend-language policy
   and its treatment of compiled dependencies and justified exceptions.
-- Follow E15's rig-first behavioral verification plan: the owner will test after
-  the main architecture is established. Do not introduce a simulated-backend
+- Follow E15: run lightweight local implementation and authenticated communication
+  tests; native Windows, hardware and full-workload acceptance run on the rig. Do not introduce a simulated-backend
   milestone without a new request. Encoder input-format and throughput feasibility
-  (acquisition and VR) checks are explicitly deferred to rig verification
+  (acquisition and Visual Stimulus) checks are explicitly deferred to rig verification
   in reports/rig-verification.md; continue other acquisition contracts. Do not treat
   deferred feasibility as proven or silently choose an input container. Check contract
   syntax and consistency, keeping those checks distinct from runtime/rig validation.
 - Do not infer current machine specifications or performance guarantees from old
   benchmarks. Document evidence and its limits.
+- Keep inline comments concise and use them for intent, constraints or non-obvious
+  invariants; do not restate the code. Docstrings should explain behavior or
+  interfaces briefly.
+
+## Code Review Rules
+
+- Flag behavior that conflicts with accepted decision IDs or changes deferred scope
+  without authorization. Cite the owning decision and the concrete consequence.
+- Check that refactors preserve original deadlines, exact process/generation identity,
+  resource ownership and truthful output/cleanup evidence. Request focused behavioral
+  coverage when those guarantees change; local tests cannot establish rig equivalence.
+- Flag whole-runtime back-references, duplicated policy/state and generated-code edits
+  under ARCH-002. Prefer existing focused helpers and owning behavior test modules.
+- Verify that changed behavior, unresolved findings and validation limits reach the
+  owning report and TODO/LOG. Distinguish pre-existing issues from changes introduced
+  by the patch; leave routine formatting checks to the automated tools.

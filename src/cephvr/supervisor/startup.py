@@ -100,7 +100,7 @@ async def launch_controller(
                 "token": inputs.role_bootstrap[role][1],
                 "launch_confirmed": False,
             }
-            for role in ("acquisition", "vr", "tracking")
+            for role in ("acquisition", "visual_stimulus", "tracking")
         ],
         "launch_command_id": plan.command_id,
         "pid": child.pid,
@@ -116,7 +116,7 @@ async def launch_controller(
                 "generation": inputs.role_bootstrap[role][0],
                 "job_name": inputs.role_states[role].containment_job_name,
             }
-            for role in ("acquisition", "vr", "tracking", "gui")
+            for role in ("acquisition", "visual_stimulus", "tracking", "gui")
         ],
     }
     await run_pipe_io_daemon(
@@ -180,7 +180,7 @@ async def launch_role(
         ),
         "software_root": str(inputs.software_root),
     }
-    if role == "acquisition":
+    if role in {"acquisition", "visual_stimulus"}:
         policy_descriptor = inputs.bootstrap.get("control_policies")
         if not isinstance(policy_descriptor, str) or not policy_descriptor:
             raise WindowsLaunchError(
@@ -232,7 +232,7 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
         raise WindowsLaunchError("resolved control policies are missing")
     required_modules = {
         "acquisition": "cephvr.acquisition.main",
-        "vr": "cephvr.vr.main",
+        "visual_stimulus": "cephvr.visual_stimulus.main",
         "tracking": "cephvr.tracking.main",
         "gui": "cephvr.gui.main",
     }
@@ -269,7 +269,7 @@ async def run_supervisor(
     raw_ports = bootstrap["backend_ports"]
     if not isinstance(raw_ports, dict) or set(raw_ports) != {
         "acquisition",
-        "vr",
+        "visual_stimulus",
         "tracking",
     }:
         raise WindowsLaunchError("backend port registry is invalid")

@@ -54,7 +54,7 @@ waivable ([operator incidents](../contracts/operator-incidents.md)).
 | Starting, activated | `session_started` sync succeeds; for a paired session, SpikeGLX startRun and the E12 writing gate pass | Running; first trial may prepare once all gates pass |
 | Starting, activated | Paired session: startRun or the E12 writing gate fails | Finalizing with Interrupted outcome; stopRun if started; no trial is created |
 | Starting, activated | Required failure, including session-start log failure | Finalizing with Interrupted outcome; close real resources; do not fabricate a trial |
-| Running | A trial ends, more remain, no stop/blocking failure | Stay Running during closure, gap and next readiness; VR Idle |
+| Running | A trial ends, more remain, no stop/blocking failure | Stay Running during closure, gap and next readiness; Visual Stimulus Idle |
 | Running | Isolated data/function failure or bounded uncertainty | Remain Running on original schedule; retain incident and show Continue/Abort. Discharge only registered affected data-path gates as unavailable; healthy/control/stimulus gates remain required |
 | Running | Continue for the current incident revision | Keep running; log exact accepted scope without restoring failed outputs or changing protocol |
 | Running | Stop after trial during an active trial | Stay Running with pending stop until the trial's normal end |
@@ -62,7 +62,7 @@ waivable ([operator incidents](../contracts/operator-incidents.md)).
 | Running | Last trial ends, pending stop reaches boundary, or Stop between trials | Finalizing; no later trial; completed or stopped session outcome as applicable |
 | Running | Operator Abort or coordination-blocking failure | Finalizing; interrupt only a trial that actually began; preserve previous completed files |
 | Finalizing | Paired session: local Stopped deadline plus stop margin reached, or no trial involved | Controller calls SpikeGLX stopRun (E12); after controller loss nothing stops it and the emergency report says so. Fresh expected-run identity required; later isRunning=false confirms stop; unconfirmed stop remains a blocker |
-| Finalizing | Required output/metadata cleanup confirmed | Ended with outcome and closure states; VR remains Idle |
+| Finalizing | Required output/metadata cleanup confirmed | Ended with outcome and closure states; Visual Stimulus remains Idle |
 | Finalizing | Finalization/recovery limits expire with unresolved resources | Ended, Interrupted, cleanup blocked; warn why New session is unavailable; no automatic kill/restart outside full Shutdown |
 | Ended / blocked Configuration | Matching late evidence resolves every cleanup obligation | Clear cleanup block and update available commands; retain outcome/errors; no automatic New session/Setup |
 | Any phase | Confirmed controller or supervisor loss | Fence work; survivor cancels/interrupts, stops the paired SpikeGLX run if it is the controller, writes emergency evidence and automatically shuts down. Launcher enforces the final deadline; no replacement or session resume |
@@ -85,7 +85,7 @@ waivable ([operator incidents](../contracts/operator-incidents.md)).
 | Starting | Target acknowledgements and release meet both cutoffs | Remain armed for T; schedule acknowledgement alone never authorizes activity |
 | Starting | Successfully released interval begins at T | Running; actual backend activity is separately confirmed by Started evidence within its deadline |
 | Starting / Running | At least one valid Started report | Append one `trial_started`; preserve actual partial outputs if another participant fails; no fabricated successful starts |
-| Running | Normal end T + duration | Finalizing; stop trial activity locally, return VR to Idle, close outputs while draining only in-interval data |
+| Running | Normal end T + duration | Finalizing; stop trial activity locally, return Visual Stimulus to Idle, close outputs while draining only in-interval data |
 | Starting / Running | Abort or required failure after any activity began | Finalizing with Interrupted outcome; request immediate producer stopping under E11; preserve each confirmed cutoff and real partial outputs |
 | Pending / Preparing / Starting | Session ends before this trial actually begins | Never write trial frames or a fake started/Interrupted trial; retire scheduled execution; acquisition terminates its pre-launched FFmpeg and deletes only the output it created (A08) |
 | Finalizing | Valid start/stop evidence, required output obligations satisfied under E05 (including the explicit A07/V12 empty-video predicates), and completion metadata synced | Ended; Completed unless already Interrupted |
@@ -109,7 +109,7 @@ waivable ([operator incidents](../contracts/operator-incidents.md)).
   acknowledgement, a heartbeat or process exit cannot substitute for missing
   closure evidence.
 - Returning to Configuration after cleanup timeout does not unlock edits while
-  E07's cleanup guard remains unsatisfied. Resident VR remains running in Idle.
+  E07's cleanup guard remains unsatisfied. Resident Visual Stimulus remains running in Idle.
 - Backends deliver typed Stopped and Finished payloads to the controller, and
   Cleanup independently to both authorities, through `ReportLifecycle`.
 - Directory reservation and release are controller-local (E04): verified

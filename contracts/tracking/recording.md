@@ -16,7 +16,7 @@ Pose/movement/control producers enqueue immutable compact observations and event
 one bounded admission boundary. Admission order gives the line order; each payload also
 retains its own occurrence/source time. Admit a pose observation before making it visible
 to movement selection so dependent lines never reference an unadmitted pose. Baselines,
-invalid observations and reset/discard events remain scientific records. The A06 VR queue
+invalid observations and reset/discard events remain scientific records. The A06 Visual Stimulus queue
 is independent: a result discarded there is not removed from this record stream.
 
 The writer serializes each typed record once to one line. Bound both queued and in-flight
@@ -35,12 +35,12 @@ arbitrary object deserialization. There is no envelope, framing, per-line sequen
 or checksum; [record_codec.py](record_codec.py) is the pure line helper. Line one is the
 header: `stream_kind=tracking`, schema version, session/trial IDs, exact writer
 generation and prepared tracking/source identity. A reader rejects an unsupported stream
-kind/schema rather than interpreting tracking lines as VR evidence.
+kind/schema rather than interpreting tracking lines as Visual Stimulus evidence.
 
 Line kinds are header, pose observation, movement result, reset, discard accounting and
 trial completion. Each dependent line refers only to already-declared identities/
 observations. Pose identity/timestamps/selection evidence follow T09/T17; result lineage
-follows A05/A06 and the existing VR feedback boundary; every reset is one line with its
+follows A05/A06 and the existing Visual Stimulus feedback boundary; every reset is one line with its
 reset_generation and causes. Keep physical units, validity and missing values explicit.
 Do not add dense flow, masks or image histories. [records.md](records.md) owns exact
 independent payloads/limits. Estimator-dependent quality fields are bound in the

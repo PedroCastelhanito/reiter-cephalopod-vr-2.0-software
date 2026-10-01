@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-import uuid
+import asyncio
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -15,10 +16,59 @@ from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.runtime import ControllerRuntime
 from cephvr.controller.state import Attempt, ControllerLimits
+from tests.controller.support_components import _id
 
 
-def _id() -> str:
-    return str(uuid.uuid4())
+@pytest.mark.parametrize("authority_loss", [False, True])
+async def test_interrupt_delivery_is_independent_and_keeps_original_deadline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, authority_loss: bool
+) -> None:
+    runtime = _runtime(tmp_path)
+    attempt, _ = _attempt(runtime, tmp_path)
+    runtime.limit_state.current = replace(
+        runtime.limit_state.current, stop_evidence_ns=20_000_000
+    )
+    attempt.interruption_issued_ns = 500
+    calls: dict[str, int] = {}
+    requests: list[svc.InterruptSessionRequest] = []
+    cancelled = asyncio.Event()
+
+    class Peer:
+        def __init__(self, name: str) -> None:
+            self.context = pb.BackendContext(
+                backend_name=name, backend_generation=_id()
+            )
+
+        async def interrupt_session(self, request: Any, *, deadline_ns: int) -> None:
+            name = self.context.backend_name
+            calls[name] = deadline_ns
+            requests.append(request)
+            if name == "acquisition":
+                raise OSError("peer unavailable")
+            if name == "tracking":
+                try:
+                    await asyncio.Event().wait()
+                finally:
+                    cancelled.set()
+
+    attempt.required = {
+        name: cast(BackendPort, Peer(name))
+        for name in ("acquisition", "visual_stimulus", "tracking")
+    }
+
+    async def finish_trial(_attempt: Attempt) -> bool:
+        assert cancelled.is_set()
+        return True
+
+    monkeypatch.setattr(runtime.trial_logs, "finish_interrupted_trial", finish_trial)
+    if authority_loss:
+        await runtime.interruption.authority_emergency_interrupt(attempt, "lost owner")
+    else:
+        assert await runtime.interruption._stop_backends_and_trial(attempt, "abort")
+    assert calls == dict.fromkeys(attempt.required, 20_000_500)
+    assert cancelled.is_set()
+    assert all(request.command.work.session == attempt.context for request in requests)
+    assert all(request.issued_monotonic_ns == 500 for request in requests)
 
 
 def _runtime(tmp_path: Path, *, now: int = 1_000) -> ControllerRuntime:
@@ -69,10 +119,18 @@ def _attempt(
         runtime.generation,
         datetime(2026, 9, 29, tzinfo=UTC),
     )
-    backend = pb.BackendContext(backend_name="vr", backend_generation=_id())
+    backend = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
     # Report validation only needs the registered peer's exact context.
     peer = cast(BackendPort, type("Peer", (), {"context": backend})())
-    attempt = Attempt(session, prepared, reservation, {"vr": peer}, {"vr": _id()})
+    attempt = Attempt(
+        session,
+        prepared,
+        reservation,
+        {"visual_stimulus": peer},
+        {"visual_stimulus": _id()},
+    )
     runtime.lifecycle.attempt = attempt
     return attempt, backend
 
@@ -85,7 +143,11 @@ def _context(
         if trial
         else pb.WorkContext(session=attempt.context)
     )
-    command_id = attempt.trial_operation if trial else attempt.setup_operations["vr"]
+    command_id = (
+        attempt.trial_operation
+        if trial
+        else attempt.setup_operations["visual_stimulus"]
+    )
     return pb.ReportContext(
         backend=backend,
         work=work,

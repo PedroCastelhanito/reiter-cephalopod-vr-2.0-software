@@ -55,9 +55,9 @@ def test_loader_preserves_explicit_saved_false(tmp_path: Path) -> None:
                 "configuration": {
                     "backends": [
                         {
-                            "backendName": "vr",
+                            "backendName": "visual_stimulus",
                             "enabled": True,
-                            "vr": {"saveVrData": False},
+                            "visual_stimulus": {"saveVisualStimulusData": False},
                         }
                     ]
                 },
@@ -65,8 +65,13 @@ def test_loader_preserves_explicit_saved_false(tmp_path: Path) -> None:
         )
     )
     loaded = load_controller_configuration(tmp_path)
-    assert loaded.configuration.backends[0].vr.HasField("save_vr_data")
-    assert loaded.configuration.backends[0].vr.save_vr_data is False
+    assert loaded.configuration.backends[0].visual_stimulus.HasField(
+        "save_visual_stimulus_data"
+    )
+    assert (
+        loaded.configuration.backends[0].visual_stimulus.save_visual_stimulus_data
+        is False
+    )
 
 
 def test_loader_preserves_explicit_acquisition_false_and_empty_arguments(
@@ -128,15 +133,15 @@ def test_loader_rejects_removed_key_and_policy_mismatch(tmp_path: Path) -> None:
 
 def test_enabled_backend_without_pure_validator_is_unavailable() -> None:
     candidate = pb.ExperimentConfiguration(
-        backends=[pb.BackendSettings(backend_name="vr", enabled=True)]
+        backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)]
     )
     results = {
         name: validator(candidate)
         for name, validator in controller_validators().items()
     }
     assert results["experiment"].completed
-    assert not results["vr"].completed
-    assert results["vr"].unavailable_reason.code == "VALIDATOR_UNAVAILABLE"
+    assert not results["visual_stimulus"].completed
+    assert results["visual_stimulus"].unavailable_reason.code == "VALIDATOR_UNAVAILABLE"
     assert results["tracking"].completed  # Disabled work has no validator obligation.
 
 

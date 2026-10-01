@@ -24,7 +24,7 @@ Configuration:
 - SpikeGLX acquires electrophysiology and synchronization inputs on the ephys
   computer, writing to its local storage. Session configuration/start/stop is
   coordinated from the rig computer under E12 over the existing Ethernet link.
-- Existing camera/VR owners retain their timing/event evidence. Scientific alignment
+- Existing camera/Visual Stimulus owners retain their timing/event evidence. Scientific alignment
   and normal file-content validation stay external post hoc; do not introduce a
   separate alignment process or live ephys data-transfer requirement.
 - Hardware pulses retain scientific timing authority under SYS-004. Network

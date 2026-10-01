@@ -58,7 +58,7 @@ class ProjectionStore:
         self.max_entries = max_entries
         self.max_payload_bytes = max_payload_bytes
         self.devices: pb.AcquisitionDeviceViews | None = None
-        self.display: pb.VRDisplayView | None = None
+        self.display: pb.VisualStimulusDisplayView | None = None
         self.warnings: dict[tuple[str, int, bytes], pb.AcquisitionWarningView] = {}
         self.transfers: dict[str, PreviewTransfer] = {}
         self.expected_display: tuple[str, int] | None = None
@@ -165,10 +165,10 @@ class ProjectionStore:
         require_uuid4(command_id)
         self.expected_display = command_id, revision
 
-    def accept_display(self, view: pb.VRDisplayView) -> bool:
-        self._source(view.backend, "vr")
+    def accept_display(self, view: pb.VisualStimulusDisplayView) -> bool:
+        self._source(view.backend, "visual_stimulus")
         if (
-            view.source.role != "vr"
+            view.source.role != "visual_stimulus"
             or view.source.generation != view.backend.backend_generation
             or view.controller.role != "controller"
             or view.controller.generation != self.generation
@@ -191,7 +191,7 @@ class ProjectionStore:
             if self.display.complete and view != self.display:
                 raise ProjectionError("completed display operation changed result")
         self._budget(view.ByteSize() - (self.display.ByteSize() if self.display else 0))
-        self.display = pb.VRDisplayView.FromString(view.SerializeToString())
+        self.display = pb.VisualStimulusDisplayView.FromString(view.SerializeToString())
         return True
 
     def accept_warnings(self, report: rpc.AcquisitionWarningReport) -> bool:
@@ -443,7 +443,7 @@ class ProjectionStore:
         if self.devices is not None:
             snapshot.acquisition_devices.CopyFrom(self.devices)
         if self.display is not None:
-            snapshot.vr_display.CopyFrom(self.display)
+            snapshot.visual_stimulus_display.CopyFrom(self.display)
         snapshot.warnings.extend(
             warning for view in self.warnings.values() for warning in view.warnings
         )

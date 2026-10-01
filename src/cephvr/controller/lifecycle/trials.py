@@ -6,7 +6,7 @@ import asyncio
 import uuid
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 from typing import Any
 
@@ -28,7 +28,6 @@ from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
     Attempt,
-    ConfigurationState,
     LifecycleState,
     LimitsState,
     TrialClosureState,
@@ -51,7 +50,6 @@ class TrialExecution:
         self,
         *,
         lifecycle: LifecycleState,
-        configuration: ConfigurationState,
         limit_state: LimitsState,
         clock: Callable[[], int],
         projections: ProjectionStore,
@@ -63,7 +61,6 @@ class TrialExecution:
         spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
     ) -> None:
         self.lifecycle = lifecycle
-        self.configuration_state = configuration
         self.limit_state = limit_state
         self.clock = clock
         self.projections = projections
@@ -190,8 +187,6 @@ class TrialExecution:
         schedule_deadline = target - self.limit_state.current.controller_release_ns
         release_deadline = target - self.limit_state.current.backend_release_ns
         anchor = datetime.fromisoformat(attempt.prepared.anchor_wall_time)
-        from datetime import timedelta
-
         trial_wall = anchor + timedelta(
             microseconds=(target - attempt.prepared.anchor_monotonic_ns) / 1000
         )
@@ -218,11 +213,7 @@ class TrialExecution:
                     / f"{prefix}_{output.output_tag}.{output.extension}"
                 )
                 if output.backend.backend_name not in attempt.trial_participants:
-                    if output.output_key not in {
-                        key
-                        for incident in attempt.confirmed_incidents.values()
-                        for key in incident.affected_resources
-                    }:
+                    if output.output_key not in attempt.unavailable_resources():
                         raise RuntimeError(
                             "omitted backend has an unproven output obligation"
                         )

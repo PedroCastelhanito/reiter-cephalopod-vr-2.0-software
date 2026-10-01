@@ -25,6 +25,12 @@ def accepted(command_id: str) -> types.CommandAdmission:
     )
 
 
+def require_accepted(admission: types.CommandAdmission, what: str) -> None:
+    """Raise unless a worker command admission was accepted."""
+    if admission.result != types.COMMAND_RESULT_ACCEPTED:
+        raise RuntimeError(f"{what} not accepted: {admission.failure.code}")
+
+
 def report_rejected(code: str, message: str) -> types.ReportReceipt:
     return types.ReportReceipt(
         result=types.COMMAND_RESULT_REJECTED,

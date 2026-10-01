@@ -39,11 +39,15 @@ async def test_worker_heartbeat_rejected_coordinator_heartbeat_accepted(
     tmp_path: Path,
 ) -> None:
     runtime, native, _, _ = make_runtime(tmp_path)
-    vr = types.ProcessIdentity(role="vr", generation=str(uuid4()))
+    visual_stimulus = types.ProcessIdentity(
+        role="visual_stimulus", generation=str(uuid4())
+    )
     worker = types.ProcessIdentity(role="renderer-worker", generation=str(uuid4()))
-    launch(runtime, native, runtime.identity, vr, 41)
-    launch(runtime, native, vr, worker, 42)
-    ok = await runtime.health.report_heartbeat(heartbeat(vr), host_time_ns())
+    launch(runtime, native, runtime.identity, visual_stimulus, 41)
+    launch(runtime, native, visual_stimulus, worker, 42)
+    ok = await runtime.health.report_heartbeat(
+        heartbeat(visual_stimulus), host_time_ns()
+    )
     assert ok.result == types.COMMAND_RESULT_ACCEPTED
     bad = await runtime.health.report_heartbeat(heartbeat(worker), host_time_ns())
     assert bad.result == types.COMMAND_RESULT_REJECTED
@@ -52,10 +56,12 @@ async def test_worker_heartbeat_rejected_coordinator_heartbeat_accepted(
 
 async def test_worker_error_admission_and_reserved_codes(tmp_path: Path) -> None:
     runtime, native, _, _ = make_runtime(tmp_path)
-    vr = types.ProcessIdentity(role="vr", generation=str(uuid4()))
+    visual_stimulus = types.ProcessIdentity(
+        role="visual_stimulus", generation=str(uuid4())
+    )
     worker = types.ProcessIdentity(role="renderer-worker", generation=str(uuid4()))
-    launch(runtime, native, runtime.identity, vr, 41)
-    launch(runtime, native, vr, worker, 42)
+    launch(runtime, native, runtime.identity, visual_stimulus, 41)
+    launch(runtime, native, visual_stimulus, worker, 42)
     runtime.shutdown.graceful_exit_ns = runtime.shutdown.terminate_exit_ns = 1
     reserved = await runtime.health.report_error(error(worker, "CONTROLLER_LOST"))
     assert reserved.result == types.COMMAND_RESULT_REJECTED
@@ -63,7 +69,9 @@ async def test_worker_error_admission_and_reserved_codes(tmp_path: Path) -> None
     assert runtime.shutdown_state.interruption is None
     ordinary = await runtime.health.report_error(error(worker, "RENDER_FAULT"))
     assert ordinary.result == types.COMMAND_RESULT_ACCEPTED
-    coordinator = await runtime.health.report_error(error(vr, "CONTROLLER_LOST"))
+    coordinator = await runtime.health.report_error(
+        error(visual_stimulus, "CONTROLLER_LOST")
+    )
     assert coordinator.result == types.COMMAND_RESULT_ACCEPTED
     assert runtime.shutdown_state.interruption is not None
     await runtime.shutdown_state.safety_task
@@ -99,7 +107,7 @@ async def test_monitor_triggers_one_background_reconcile(tmp_path: Path) -> None
         return ["ffmpeg:x released without worker closure evidence"]
 
     runtime.health.reconcile_helpers = blocked
-    monitor = asyncio.create_task(runtime.monitor(period_s=0.001))
+    monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
     await asyncio.sleep(0.05)  # ticks keep running while the reconcile is pending
     assert calls == 1
     assert not monitor.done()
@@ -157,7 +165,7 @@ async def test_unclassified_error_fences_safety(tmp_path: Path) -> None:
     receipt = await runtime.service.ReportError(report, caller)
     assert receipt.result == types.COMMAND_RESULT_ACCEPTED
     assert runtime.shutdown_state.interruption is None
-    monitor = asyncio.create_task(runtime.monitor(period_s=0.001))
+    monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
     await asyncio.sleep(0.03)
     monitor.cancel()
     assert runtime.shutdown_state.interruption is not None
@@ -242,7 +250,7 @@ async def test_confirmed_controller_without_first_heartbeat_times_out(
     runtime.health_state.last_heartbeat[
         ("controller", runtime.controller.generation)
     ] = host_time_ns() - 16_000_000_000
-    monitor = asyncio.create_task(runtime.monitor(period_s=0.001))
+    monitor = asyncio.create_task(runtime.health.monitor(period_s=0.001))
     await asyncio.sleep(0.03)
     monitor.cancel()
     assert runtime.shutdown_state.interruption is not None

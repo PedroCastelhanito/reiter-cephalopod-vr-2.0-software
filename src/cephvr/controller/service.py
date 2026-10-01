@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from typing import Literal
 
 import grpc
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.receipts import rejected_admission, rejected_receipt
 from cephvr.controller.runtime import ControllerRuntime
 from cephvr.controller.transport.admission import CommandAdmissionGate
 from cephvr.controller.transport.auth import ClientAuthentication
@@ -87,6 +89,24 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             )
         except (AuthenticationError, ValueError) as exc:
             await context.abort(grpc.StatusCode.UNAUTHENTICATED, str(exc))
+
+    async def _admit_safety(
+        self,
+        name: str,
+        kind: Literal["abort", "shutdown"],
+        request: svc.OperatorCommand,
+        operation: Callable[[], Awaitable[pb.CommandAdmission]],
+    ) -> pb.CommandAdmission:
+        command_id = request.operator.command_id
+        try:
+            fresh = self._commands.fresh(name, command_id)
+        except ValueError as exc:
+            return rejected_admission(command_id, "ADMISSION", str(exc))
+        if fresh:
+            error = await self.runtime.safety_command_precondition(request, kind)
+            if error:
+                return rejected_admission(command_id, "PRECONDITION", error)
+        return await self._commands.admit(name, command_id, request, operation)
 
     async def GetSnapshot(
         self, request: svc.SnapshotRequest, context: grpc.aio.ServicerContext
@@ -213,27 +233,8 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        try:
-            fresh = self._commands.fresh("AbortNow", request.operator.command_id)
-        except ValueError as exc:
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=request.operator.command_id,
-                failure=pb.Failure(code="ADMISSION", message=str(exc)),
-            )
-        if fresh:
-            error = await self.runtime.safety_command_precondition(request, "abort")
-            if error:
-                return pb.CommandAdmission(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    command_id=request.operator.command_id,
-                    failure=pb.Failure(code="PRECONDITION", message=error),
-                )
-        return await self._commands.admit(
-            "AbortNow",
-            request.operator.command_id,
-            request,
-            lambda: self.runtime.abort_now(request),
+        return await self._admit_safety(
+            "AbortNow", "abort", request, lambda: self.runtime.abort_now(request)
         )
 
     async def NewSession(
@@ -253,10 +254,7 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         ingress_ns = self.runtime.clock()
         kind = request.WhichOneof("report")
         if kind is None:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(code="INVALID", message="empty report"),
-            )
+            return rejected_receipt("INVALID", "empty report")
         payload = getattr(request, kind)
         if kind == "cleanup":
             role, generation = payload.source.role, payload.source.generation
@@ -320,27 +318,9 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
     ) -> pb.CommandAdmission:
         await self._client(context, request.operator.client_id)
-        try:
-            fresh = self._commands.fresh(
-                "ShutdownApplication", request.operator.command_id
-            )
-        except ValueError as exc:
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=request.operator.command_id,
-                failure=pb.Failure(code="ADMISSION", message=str(exc)),
-            )
-        if fresh:
-            error = await self.runtime.safety_command_precondition(request, "shutdown")
-            if error:
-                return pb.CommandAdmission(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    command_id=request.operator.command_id,
-                    failure=pb.Failure(code="PRECONDITION", message=error),
-                )
-        return await self._commands.admit(
+        return await self._admit_safety(
             "ShutdownApplication",
-            request.operator.command_id,
+            "shutdown",
             request,
             lambda: self.runtime.shutdown_application(request),
         )
@@ -356,8 +336,8 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         )
         return await self._reports.enqueue("preparation", request, ingress_ns)
 
-    async def ReportVRDisplay(
-        self, request: pb.VRDisplayView, context: grpc.aio.ServicerContext
+    async def ReportVisualStimulusDisplay(
+        self, request: pb.VisualStimulusDisplayView, context: grpc.aio.ServicerContext
     ) -> pb.ReportReceipt:
         await self._peer(
             context, request.backend.backend_name, request.backend.backend_generation

@@ -111,12 +111,12 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
 | Backend files | Actual frames, tracking, behavior, presentations, device timing and scientific quality |
 
 - Use readable UTF-8 JSON with explicit units and `schema_version: 1`. Shared setup
-  appears once. Include active VR setup even with Save VR data off; omit inactive/
+  appears once. Include active Visual Stimulus setup even with Save Visual Stimulus data off; omit inactive/
   unused/default dumps. Provenance is supervisor/active-backend software versions
   only, not GUI/Git/Python/package inventories. Assets log filenames/extensions only,
   not paths/hashes/sizes/times/copies. Central logs do not contain scientific
   histories.
-- [V13](vr.md#v13) adds a scoped VR-owned replay manifest in the always-retained
+- [V13](visual_stimulus.md#v13) adds a scoped Visual Stimulus-owned replay manifest in the always-retained
   `_stimulus_LOG.json` for content fingerprints and replay-relevant
   renderer/decoder/graphics provenance; it references verified external originals
   without automatic asset copying. Central trial metadata retains its verified
@@ -213,7 +213,7 @@ cephvr-data/<setup_YYYYMMDD>_<experiment_slug>/<subject>-<setup_HHMMSS>/
   Continue/Cancel with value/reason. Continue cannot override confirmed storage
   failure. No automatic pretrial or in-recording space checks.
 
-**Other-backend work:** VR and tracking output names/formats are bound (V28, T19).
-VR [artifact names/ownership](../../contracts/vr/runtime-bindings.md#output-reservation-and-replay-artifacts)
+**Other-backend work:** Visual Stimulus and tracking output names/formats are bound (V28, T19).
+Visual Stimulus [artifact names/ownership](../../contracts/visual_stimulus/runtime-bindings.md#output-reservation-and-replay-artifacts)
 use this same namespace/reservation/start-time rule, with no duplicate metadata
 writer and no trial file created during Setup.

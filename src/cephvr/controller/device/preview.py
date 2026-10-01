@@ -10,6 +10,7 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.ports import BackendPort, SupervisorPort
 from cephvr.controller.projections import ProjectionError, ProjectionStore
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.state import (
     CameraOperation,
     DeviceState,
@@ -59,17 +60,11 @@ class PreviewHandling:
             try:
                 self.projections.preview_result(report)
             except (ProjectionError, ValueError) as exc:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(code="EVIDENCE", message=str(exc)),
-                )
+                return rejected_receipt("EVIDENCE", str(exc))
         acquisition = self.backends.get("acquisition")
         if acquisition is None or self.supervisor is None:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="UNAVAILABLE", message="preview release recipients unavailable"
-                ),
+            return rejected_receipt(
+                "UNAVAILABLE", "preview release recipients unavailable"
             )
         try:
             results = await asyncio.wait_for(
@@ -80,17 +75,10 @@ class PreviewHandling:
                 self.limits.current.registration_ns / 1e9,
             )
         except Exception as exc:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(code="HANDOFF", message=str(exc)),
-            )
+            return rejected_receipt("HANDOFF", str(exc))
         if any(item.result != pb.COMMAND_RESULT_ACCEPTED for item in results):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="HANDOFF",
-                    message="preview consumer result was not retained by every owner",
-                ),
+            return rejected_receipt(
+                "HANDOFF", "preview consumer result was not retained by every owner"
             )
         async with self.lifecycle.lock:
             operation = self.device.camera_operation

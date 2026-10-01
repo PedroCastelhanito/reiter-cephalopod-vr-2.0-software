@@ -37,7 +37,7 @@ second decision record.
   Camera-trigger ownership follows A10. Hardware inventory/channel/edge routing and
   measurements remain rig work; do not reopen those accepted ownership/scope
   choices. See the [SpikeGLX control contract](../contracts/spikeglx-control.md).
-- **Stimulus / VR:** stimulus types/combinations, projector layout, presentation
+- **Stimulus / Visual Stimulus:** stimulus types/combinations, projector layout, presentation
   clock, onset evidence, response gains, applied-state recording, stale tracking.
 - **Tracking:** pose/body methods, flow estimators, locomotion model, coordinates,
   calibration, pose/flow scheduling, frame skipping, quality, and source age.

@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from copy import deepcopy
-from typing import cast
 
 from cephvr.acquisition.coordinator.session_payloads import role_name
 from cephvr.acquisition.ports import ControllerPort
@@ -15,13 +14,13 @@ from cephvr.acquisition.state import (
     TrialRecord,
     WorkerRecord,
 )
-from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
+from .trial_delivery import TrialReportDelivery
 from .trial_helpers import _external_roles
 from .trial_validation import (
     TrialLifecycleValidation,
@@ -51,12 +50,17 @@ class TrialLifecycleReports:
         self.identity = identity
         self.session_slot = session_slot
         self.workers = workers
-        self.controller = controller
         self.policies = policies
-        self.commands = commands
         self.lock = lock
         self.clock = clock
         self.validation = TrialLifecycleValidation()
+        self.delivery = TrialReportDelivery(
+            session_slot=session_slot,
+            workers=workers,
+            controller=controller,
+            commands=commands,
+            clock=clock,
+        )
 
     async def report(
         self,
@@ -239,7 +243,7 @@ class TrialLifecycleReports:
                     report.acquisition_pulse_on.CopyFrom(trial.pulse_on)
                 trial.pending_started_report = report
             pending = deepcopy(trial.pending_started_report)
-        return await self._deliver(trial, "started", pending, cutoff)
+        return await self.delivery.deliver(trial, "started", pending, cutoff)
 
     async def _stopped(
         self,
@@ -337,7 +341,7 @@ class TrialLifecycleReports:
                     report.acquisition_pulse_off.CopyFrom(trial.pulse_off)
                 trial.pending_stopped_report = report
             pending = deepcopy(trial.pending_stopped_report)
-        return await self._deliver(trial, "stopped", pending, cutoff)
+        return await self.delivery.deliver(trial, "stopped", pending, cutoff)
 
     async def _finished(
         self,
@@ -465,93 +469,9 @@ class TrialLifecycleReports:
                         report.acquisition_transport_summaries.add().CopyFrom(summary)
                 trial.pending_finished_report = report
             pending = deepcopy(trial.pending_finished_report)
-        return await self._deliver(trial, "finished", pending, finalization_cutoff)
-
-    async def _deliver(
-        self,
-        trial: TrialRecord,
-        kind: str,
-        report: control.StartedReport | control.StoppedReport | control.FinishedReport,
-        deadline_ns: int,
-    ) -> control.ReportReceipt:
-        now = self.clock()
-        if now > deadline_ns:
-            return control.ReportReceipt(
-                result=control.COMMAND_RESULT_REJECTED,
-                failure=control.Failure(
-                    code="LIFECYCLE_CUTOFF",
-                    message="retained lifecycle deadline expired",
-                ),
-            )
-        attempts = trial.lifecycle_report_attempts.get(kind, 0)
-        if attempts >= 3:
-            return _rejected(
-                "LIFECYCLE_UNCONFIRMED", "controller did not accept report"
-            )
-        trial.lifecycle_report_attempts[kind] = attempts + 1
-        lifecycle = control.LifecycleReport()
-        if kind == "started":
-            lifecycle.started.CopyFrom(cast(control.StartedReport, report))
-        elif kind == "stopped":
-            lifecycle.stopped.CopyFrom(cast(control.StoppedReport, report))
-        else:
-            finished = cast(control.FinishedReport, report)
-            lifecycle.finished.CopyFrom(finished)
-            session = self.session_slot.current
-            if session is None or session.work != finished.context.work:
-                return _rejected(
-                    "STALE_FINISHED", "Finished output retention lost its session scope"
-                )
-            try:
-                for output in finished.outputs:
-                    plans = [
-                        item
-                        for item in session.reserved_outputs
-                        if item.output_key == output.output_key
-                    ]
-                    if len(plans) != 1:
-                        raise ValueError(
-                            "Finished output is outside the exact Setup reservation"
-                        )
-                    tag = plans[0].output_tag
-                    role = (
-                        camera.CAMERA_ROLE_BEHAVIORAL
-                        if tag.startswith("behavioral_cam")
-                        else camera.CAMERA_ROLE_TRACKING
-                        if tag.startswith("tracking_cam")
-                        else 0
-                    )
-                    worker = self.workers.get(role)
-                    if worker is None or worker.commands is None:
-                        raise ValueError(
-                            "Finished output has no registered retention owner"
-                        )
-                    session.retain_output_result(output, worker.commands)
-            except (ValueError, RuntimeError) as exc:
-                return _rejected("FINISHED_RETENTION", str(exc))
-        receipt = await self.controller.report_lifecycle(
-            lifecycle, deadline_ns=deadline_ns
+        return await self.delivery.deliver(
+            trial, "finished", pending, finalization_cutoff
         )
-        if receipt.result == control.COMMAND_RESULT_ACCEPTED:
-            if kind == "started":
-                trial.started_report = deepcopy(cast(control.StartedReport, report))
-                trial.pending_started_report = None
-            elif kind == "stopped":
-                trial.stopped_report = deepcopy(cast(control.StoppedReport, report))
-                trial.pending_stopped_report = None
-            else:
-                trial.finished_report = deepcopy(cast(control.FinishedReport, report))
-                trial.pending_finished_report = None
-                session = self.session_slot.current
-                if session is not None and session.work == report.context.work:
-                    try:
-                        self.commands.finalize_work(
-                            trial.work.trial.trial_id, self.clock()
-                        )
-                    except ValueError:
-                        # A local/internal trial may have only payload retention.
-                        pass
-        return receipt
 
 
 def _matching(

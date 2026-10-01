@@ -1,7 +1,5 @@
 """Controller-owned descriptor and projection regressions; no devices are opened."""
 
-from uuid import uuid4
-
 import pytest
 
 from cephvr.acquisition.v1 import camera_pb2 as camera
@@ -11,17 +9,14 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.preparation import PreparationError, PreparationHandoff
 from cephvr.controller.projections import ProjectionError, ProjectionStore
 from cephvr.controller.resolution import resolved_configuration
-
-
-def uid() -> str:
-    return str(uuid4())
+from tests.controller.support_components import _id as uid
 
 
 def setup():
     session = pb.SessionContext(controller_generation=uid(), session_id=uid())
     peers = {
         name: pb.BackendContext(backend_name=name, backend_generation=uid())
-        for name in ("acquisition", "tracking", "vr")
+        for name in ("acquisition", "tracking", "visual_stimulus")
     }
     commands = {name: uid() for name in peers}
     handoff = PreparationHandoff(
@@ -90,7 +85,7 @@ def test_handoff_is_acyclic_and_requires_exact_attachment_proof() -> None:
     handoff.accept(frames)
     assert handoff.can_bind_input
     assert not handoff.can_confirm_input
-    assert not handoff.can_prepare_vr
+    assert not handoff.can_prepare_visual_stimulus
     report.report_revision = 2
     report.tracking.data_attached = True
     report.tracking.attached_input.resource_id = (
@@ -102,7 +97,7 @@ def test_handoff_is_acyclic_and_requires_exact_attachment_proof() -> None:
     report.tracking.attached_input.transfer_id = frames.tracking_input.sync.transfer_id
     handoff.accept(report)
     assert handoff.can_confirm_input
-    assert not handoff.can_prepare_vr
+    assert not handoff.can_prepare_visual_stimulus
 
 
 def test_changed_retry_replacement_and_retirement_cannot_restore_setup() -> None:

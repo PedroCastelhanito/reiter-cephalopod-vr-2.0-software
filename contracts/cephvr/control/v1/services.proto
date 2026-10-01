@@ -7,7 +7,7 @@ import "cephvr/acquisition/v1/messages.proto";
 import "cephvr/acquisition/v1/camera.proto";
 import "cephvr/acquisition/v1/microcontroller.proto";
 import "cephvr/acquisition/v1/runtime.proto";
-import "cephvr/vr/v1/runtime.proto";
+import "cephvr/visual_stimulus/v1/runtime.proto";
 import "cephvr/tracking/v1/methods.proto";
 import "cephvr/tracking/v1/preparation.proto";
 
@@ -16,7 +16,7 @@ import "cephvr/tracking/v1/preparation.proto";
 // these payloads. Server admission must enforce role, generation and lease rules.
 service ExperimentControllerService {
   rpc ReportDataPreparation(DataPreparationReport) returns (ReportReceipt);
-  rpc ReportVRDisplay(VRDisplayView) returns (ReportReceipt);
+  rpc ReportVisualStimulusDisplay(VisualStimulusDisplayView) returns (ReportReceipt);
   rpc GetSnapshot(SnapshotRequest) returns (Snapshot);
   rpc WatchState(WatchRequest) returns (stream Snapshot);
   rpc UpdateConfiguration(UpdateConfigurationRequest) returns (CommandAdmission);
@@ -62,23 +62,24 @@ service SupervisorService {
   rpc ExecuteRecoveryAction(RecoveryActionRequest) returns (CommandAdmission);
   // E08/O2: top-level backend Cleanup only; Stopped/Finished go to controller alone.
   // Query internal worker retained state after coordinator loss: acquisition
-  // GetState/GetRetainedResult; VR GetState. Output reservation is controller-local (E04).
+  // GetState/GetRetainedResult; Visual Stimulus GetState. Output reservation is controller-local (E04).
   rpc ReportLifecycle(LifecycleReport) returns (ReportReceipt);
   rpc RequestApplicationShutdown(ApplicationShutdownRequest) returns (CommandAdmission);
 }
 // V19: controller-only initial display preparation, not an operator retry API.
-service VRConfigurationService {
-  rpc InitializeDisplay(VRDisplayInitializationRequest) returns (CommandAdmission);
+service VisualStimulusConfigurationService {
+  rpc InitializeDisplay(VisualStimulusDisplayInitializationRequest) returns (CommandAdmission);
 }
-message VRDisplayInitializationRequest {
+message VisualStimulusDisplayInitializationRequest {
   string command_id = 1;
   ProcessIdentity issuer = 2;
   BackendContext target = 3;
   uint64 configuration_revision = 4;
-  cephvr.vr.v1.DisplayConfiguration display = 5;
-  cephvr.vr.v1.ResourceLimits limits = 6;
+  cephvr.visual_stimulus.v1.DisplayConfiguration display = 5;
+  cephvr.visual_stimulus.v1.ResourceLimits limits = 6;
   ControlPolicies policies = 7;
   int64 deadline_monotonic_ns = 8;
+  optional string asset_root = 9; // Display-only protected dependencies before Setup.
 }
 service BackendService {
   rpc ApplyIncidentScope(IncidentScopeRequest) returns (CommandAdmission);
@@ -311,9 +312,10 @@ message SetupSessionRequest {
   PreparedSession plan = 2; // Shared fields plus this target's settings/outputs only.
   BackendSettings settings = 3;
   cephvr.acquisition.v1.AcquisitionFilePolicies acquisition_policies = 4;
-  cephvr.vr.v1.VRFilePolicies vr_policies = 5; // Required only for VR.
+  cephvr.visual_stimulus.v1.VisualStimulusFilePolicies visual_stimulus_policies = 5; // Required only for Visual Stimulus.
   cephvr.tracking.v1.TrackingFilePolicies tracking_policies = 6; // Enabled tracking only.
-  cephvr.vr.v1.FeedbackAttachment feedback_attachment = 7; // VR closed-loop Setup only; protected metadata.
+  cephvr.visual_stimulus.v1.FeedbackAttachment feedback_attachment = 7; // Visual Stimulus closed-loop Setup only; protected metadata.
+  ProcessIdentity feedback_consumer = 8; // Tracking closed-loop Setup: exact registered renderer child from supervisor status.
   // Backend file policies are file-resolved, never session/trial overrides.
 }
 message PrepareTrialRequest {
@@ -328,7 +330,7 @@ message ScheduleTrialRequest {
   int64 start_monotonic_ns = 2;
   int64 normal_end_monotonic_ns = 3;
   // Reject unless checked (end - start) equals retained TrialPlan.resolved_duration_ns
-  // for this exact trial/configuration. VR also checks its actual resolved epoch sum.
+  // for this exact trial/configuration. Visual Stimulus also checks its actual resolved epoch sum.
   // No new duration is accepted through scheduling; release retains the same check.
   string trial_file_prefix = 4;
   repeated OutputPlan outputs = 5;

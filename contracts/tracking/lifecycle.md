@@ -9,8 +9,8 @@ It is hosted on the existing tracking process/port, not another service process.
 ## Setup dependency handshake
 
 The shared [data-preparation handoff](../data-preparation.md) is the canonical
-controller/acquisition/tracking/VR ordering. It binds protected early reports,
-BindData, acquisition attachment confirmation and VR Setup's feedback attachment.
+controller/acquisition/tracking/Visual Stimulus ordering. It binds protected early reports,
+BindData, acquisition attachment confirmation and Visual Stimulus Setup's feedback attachment.
 Reports and retained reads are available before final Ready; no readiness cycle or
 polling loop substitutes for a missing handoff.
 
@@ -25,7 +25,7 @@ Resolve typed method settings and the pipeline once. Prepare private/native buff
 validate device capabilities, provider placement, byte/time limits and method assets.
 Retain PreparedMethods with actual versions, resolved settings and binding identities.
 For closed loop publish the protected feedback descriptor once its listener/resources
-are prepared, before waiting for VR's peer handshake. Open loop allocates no unused VR
+are prepared, before waiting for Visual Stimulus's peer handshake. Open loop allocates no unused Visual Stimulus
 queue. Disabled tracking loads no methods and creates no data/output obligations.
 
 Send Ready only after required input and feedback attachment checks, selected methods,
@@ -44,7 +44,7 @@ publication, retires preparation, reconciles native work and confirms cleanup un
 PrepareTrial resets pose/history, movement/native temporal state and per-trial counters;
 prepare no source interval spanning trials. Allocate finite reset/completion bookkeeping.
 No recording file is opened before authoritative T. ScheduleTrial adopts exact T/end,
-reserved prefix/paths and VR-owned duration; ReleaseTrial requires the existing deadlines.
+reserved prefix/paths and Visual Stimulus-owned duration; ReleaseTrial requires the existing deadlines.
 
 At T, accept only frames whose host receipt is in the trial interval. The first admitted
 frame establishes source baseline and the trial's first reset generation, carried by
@@ -96,7 +96,7 @@ or cutoff wins before commit, discard the computation and account its known sour
 IDs instead of manufacturing a usable result. If evidence was already admitted but
 feedback is subsequently retired, retain that result record and append its actual discard
 reason; never erase or relabel it as applied. Open loop uses the same evidence/generation
-checks without a VR queue. Writer admission failure follows E06 and exposes no dependent
+checks without a Visual Stimulus queue. Writer admission failure follows E06 and exposes no dependent
 result. Independent automatic pose follows its existing record-before-history rule.
 
 An in-flight pose completion after cutoff is recorded as cutoff_excluded when saving;

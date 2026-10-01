@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from collections.abc import Callable, Coroutine
-from typing import Any
+from typing import Any, Literal
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
@@ -23,6 +22,8 @@ from cephvr.controller.state import (
     LimitsState,
     MetadataState,
 )
+
+_ABORT_UNAVAILABLE = "Abort unavailable"
 
 
 class SessionCommands:
@@ -115,18 +116,37 @@ class SessionCommands:
             self.publisher.publish()
             return self.control_operations.admission(command.operator.command_id)
 
-    async def abort_now(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
-        async with self.lifecycle.lock:
-            error = self.control_operations.authorized(command, safety="abort")
-            attempt = self.lifecycle.attempt
+    def _safety_refusal(
+        self, command: svc.OperatorCommand, kind: Literal["abort", "shutdown"]
+    ) -> str | None:
+        """Refusal text for an Abort or Shutdown command; call with the lock held."""
+        error = self.control_operations.authorized(command, safety=kind)
+        if kind == "abort":
             if (
                 error
-                or attempt is None
+                or self.lifecycle.attempt is None
                 or self.lifecycle.session.phase
                 not in (pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING)
             ):
+                return error or _ABORT_UNAVAILABLE
+            return None
+        if error or self.lifecycle.session.shutdown_requested:
+            return error or "shutdown already requested"
+        return None
+
+    async def safety_precondition(
+        self, command: svc.OperatorCommand, kind: Literal["abort", "shutdown"]
+    ) -> str | None:
+        async with self.lifecycle.lock:
+            return self._safety_refusal(command, kind)
+
+    async def abort_now(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
+        async with self.lifecycle.lock:
+            refusal = self._safety_refusal(command, "abort")
+            attempt = self.lifecycle.attempt
+            if refusal is not None or attempt is None:
                 return self.control_operations.admission(
-                    command.operator.command_id, error=error or "Abort unavailable"
+                    command.operator.command_id, error=refusal or _ABORT_UNAVAILABLE
                 )
             attempt.abort_command_ids.append(command.operator.command_id)
             self.control_operations.operation(
@@ -175,11 +195,10 @@ class SessionCommands:
         self, command: svc.OperatorCommand
     ) -> pb.CommandAdmission:
         async with self.lifecycle.lock:
-            error = self.control_operations.authorized(command, safety="shutdown")
-            if error or self.lifecycle.session.shutdown_requested:
+            refusal = self._safety_refusal(command, "shutdown")
+            if refusal is not None:
                 return self.control_operations.admission(
-                    command.operator.command_id,
-                    error=error or "shutdown already requested",
+                    command.operator.command_id, error=refusal
                 )
             attempt = self.lifecycle.attempt
             issued_ns = self.clock()
@@ -250,12 +269,8 @@ class SessionCommands:
             failure = str(exc) or type(exc).__name__
         async with self.lifecycle.lock:
             if failure:
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="shutdown",
-                        message=f"supervisor handoff unconfirmed: {failure}",
-                    )
+                self.control.add_warning(
+                    "shutdown", f"supervisor handoff unconfirmed: {failure}"
                 )
             if attempt is None:
                 self.control_operations.complete_operation(

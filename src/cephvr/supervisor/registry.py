@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from typing import Protocol
 from uuid import uuid4
 
+from cephvr.acquisition.identity import ACQUISITION_WORKER_ROLES
+from cephvr.acquisition.identity import FFMPEG_ROLES as ACQ_FFMPEG_ROLES
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import (
@@ -18,6 +20,11 @@ from cephvr.shared.clock import (
     validate_host_clock,
 )
 from cephvr.shared.identity import require_uuid4
+from cephvr.visual_stimulus.identity import FFMPEG_ROLES as VISUAL_STIMULUS_FFMPEG_ROLES
+
+LIVE_PHASES = (wire.LAUNCH_PHASE_OPERATIONAL, wire.LAUNCH_PHASE_CLEANUP_REQUIRED)
+BACKEND_ROLES = frozenset({"acquisition", "visual_stimulus", "tracking"})
+TOP_LEVEL_ROLES = BACKEND_ROLES | {"controller", "gui"}
 
 
 class LaunchError(ValueError):
@@ -54,6 +61,10 @@ class _Entry:
     os_confirm_command_id: str | None = None
     confirmations: dict[str, bytes] = field(default_factory=dict)
     released_seq: int = 0
+
+
+def _snapshot(entry: _Entry) -> wire.LaunchState:
+    return wire.LaunchState.FromString(entry.state.SerializeToString())
 
 
 def _identity_key(process: types.ProcessIdentity) -> tuple[str, str]:
@@ -93,7 +104,8 @@ class LaunchRegistry:
                 break
             del self._entries[command_id]
 
-    def plan(self, request: wire.PlanLaunchRequest) -> wire.LaunchState:
+    @staticmethod
+    def _validate_plan(request: wire.PlanLaunchRequest) -> None:
         require_uuid4(request.command_id)
         require_uuid4(request.owner.generation)
         require_uuid4(request.child.generation)
@@ -113,25 +125,31 @@ class LaunchRegistry:
             )
         if request.child.role == "supervisor":
             raise LaunchError("INVALID_CHILD", "launcher alone creates supervisor")
+        if request.child.role in VISUAL_STIMULUS_FFMPEG_ROLES:
+            if request.owner.role != "visual_stimulus_renderer" or not request.HasField(
+                "work"
+            ):
+                raise LaunchError(
+                    "INVALID_OWNER",
+                    "Visual Stimulus media children require their exact renderer owner and work",
+                )
         if (
-            request.child.role in {"controller", "gui", "acquisition", "vr", "tracking"}
-            and request.owner.role != "supervisor"
+            request.child.role in ACQ_FFMPEG_ROLES
+            and request.owner.role not in ACQUISITION_WORKER_ROLES
         ):
-            raise LaunchError("INVALID_OWNER", "top-level launch owner is invalid")
-        if request.owner.role == request.child.role and request.child.role in {
-            "controller",
-            "gui",
-            "acquisition",
-            "vr",
-            "tracking",
-        }:
             raise LaunchError(
-                "INVALID_OWNER", "top-level process cannot launch a peer instance"
+                "INVALID_OWNER",
+                "acquisition media children require an acquisition worker owner",
             )
+        if request.child.role in TOP_LEVEL_ROLES and request.owner.role != "supervisor":
+            raise LaunchError("INVALID_OWNER", "top-level launch owner is invalid")
         if request.HasField("work") and not request.HasField("parent_operation"):
             raise LaunchError(
                 "MISSING_OPERATION", "work-scoped launch requires parent operation"
             )
+
+    def plan(self, request: wire.PlanLaunchRequest) -> wire.LaunchState:
+        self._validate_plan(request)
         prior = self._entries.get(request.command_id)
         if prior:
             if prior.plan.SerializeToString(
@@ -175,7 +193,7 @@ class LaunchRegistry:
     def refresh(self, command_id: str) -> wire.LaunchState:
         entry = self._get(command_id)
         if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:
-            return wire.LaunchState.FromString(entry.state.SerializeToString())
+            return _snapshot(entry)
         members = self._members(entry)
         if len(members) > 1 and entry.state.phase == wire.LAUNCH_PHASE_PLANNED:
             self._block(entry, "AMBIGUOUS_JOB", "planned job has multiple children")
@@ -188,16 +206,12 @@ class LaunchRegistry:
             if not members or not self._running(entry):
                 if (
                     entry.plan.stop_method == "owner_stdin_eof"
-                    and entry.plan.owner.role
-                    in {
-                        "acquisition_behavioral_worker",
-                        "acquisition_tracking_worker",
-                    }
+                    and entry.plan.owner.role in ACQUISITION_WORKER_ROLES
                 ):
                     # A camera-owned encoder normally exits at EOF. Its exact
                     # worker must retain output closure before this launch can
                     # be released; process exit alone is not a helper failure.
-                    return wire.LaunchState.FromString(entry.state.SerializeToString())
+                    return _snapshot(entry)
                 self._block(
                     entry,
                     "CHILD_EXITED",
@@ -209,7 +223,7 @@ class LaunchRegistry:
             and host_time_ns() >= entry.deadline_ns
         ):
             self._block(entry, "LAUNCH_TIMEOUT", "launch registration deadline expired")
-        return wire.LaunchState.FromString(entry.state.SerializeToString())
+        return _snapshot(entry)
 
     def confirm(
         self, request: wire.ConfirmLaunchRequest, expected_clock: HostClockDescriptor
@@ -238,11 +252,12 @@ class LaunchRegistry:
             in (wire.LAUNCH_PHASE_PLANNED, wire.LAUNCH_PHASE_OS_CONFIRMED)
             and host_time_ns() >= entry.deadline_ns
         ):
-            self._block(entry, "LAUNCH_TIMEOUT", "launch registration deadline expired")
-            raise LaunchError("LAUNCH_TIMEOUT", "launch registration deadline expired")
+            raise self._block(
+                entry, "LAUNCH_TIMEOUT", "launch registration deadline expired"
+            )
         if entry.state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED:
             if previous_confirmation is not None:
-                return wire.LaunchState.FromString(entry.state.SerializeToString())
+                return _snapshot(entry)
             raise LaunchError(
                 "CLEANUP_REQUIRED", "planned child requires reconciliation"
             )
@@ -291,19 +306,15 @@ class LaunchRegistry:
                     request.pid, request.creation_time_100ns, entry.plan.executable
                 )
             except Exception as exc:
-                self._block(
+                raise self._block(
                     entry,
                     "PROCESS_RETAIN_FAILED",
                     "exact child handle could not be retained",
-                )
-                raise LaunchError(
-                    "PROCESS_RETAIN_FAILED", "exact child handle could not be retained"
                 ) from exc
         entry.state.pid = request.pid
         entry.state.creation_time_100ns = request.creation_time_100ns
         if not self._running(entry):
-            self._block(entry, "CHILD_EXITED", "child exited before confirmation")
-            raise LaunchError("CHILD_EXITED", "child exited before confirmation")
+            raise self._block(entry, "CHILD_EXITED", "child exited before confirmation")
         if entry.state.phase == wire.LAUNCH_PHASE_OPERATIONAL:
             if (
                 request.HasField("endpoint")
@@ -358,11 +369,6 @@ class LaunchRegistry:
             entry.state.endpoint = request.endpoint
             entry.state.host_clock.CopyFrom(request.host_clock)
         else:
-            if request.HasField("endpoint") or request.HasField("host_clock"):
-                raise LaunchError(
-                    "INVALID_NATIVE_CONFIRMATION",
-                    "native helper has no Python endpoint or clock",
-                )
             if request.command_id == entry.os_confirm_command_id:
                 entry.confirmations[request.command_id] = canonical
                 return self.refresh(request.launch_command_id)
@@ -374,7 +380,7 @@ class LaunchRegistry:
         entry = self._get(command_id)
         if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:
             # Idempotent: the job is already closed, never re-inspect it.
-            return wire.LaunchState.FromString(entry.state.SerializeToString())
+            return _snapshot(entry)
         if self._members(entry):
             raise LaunchError("PROCESS_STILL_RUNNING", "job still contains a child")
         if not obligations_met:
@@ -389,7 +395,7 @@ class LaunchRegistry:
         entry.state.phase = wire.LAUNCH_PHASE_RELEASED
         self._release_seq += 1
         entry.released_seq = self._release_seq
-        released = wire.LaunchState.FromString(entry.state.SerializeToString())
+        released = _snapshot(entry)
         for listener in self._release_listeners:
             listener(released)
         return released
@@ -403,8 +409,7 @@ class LaunchRegistry:
             try:
                 result.append(self.refresh(command_id))
             except LaunchError:
-                state = self._entries[command_id].state
-                result.append(wire.LaunchState.FromString(state.SerializeToString()))
+                result.append(_snapshot(self._entries[command_id]))
         return result
 
     def _get(self, command_id: str) -> _Entry:
@@ -419,13 +424,10 @@ class LaunchRegistry:
         try:
             return self.native.inspect_launch_job(entry.state.containment_job_name)
         except Exception as exc:
-            self._block(
+            raise self._block(
                 entry,
                 "JOB_INSPECTION_FAILED",
                 "planned job membership could not be verified",
-            )
-            raise LaunchError(
-                "JOB_INSPECTION_FAILED", "planned job membership could not be verified"
             ) from exc
 
     def _running(self, entry: _Entry) -> bool:
@@ -434,16 +436,14 @@ class LaunchRegistry:
                 entry.state.pid, entry.state.creation_time_100ns
             )
         except Exception as exc:
-            self._block(
+            raise self._block(
                 entry,
                 "PROCESS_INSPECTION_FAILED",
                 "exact child process state is unknown",
-            )
-            raise LaunchError(
-                "PROCESS_INSPECTION_FAILED", "exact child process state is unknown"
             ) from exc
 
     @staticmethod
-    def _block(entry: _Entry, code: str, message: str) -> None:
+    def _block(entry: _Entry, code: str, message: str) -> LaunchError:
         entry.state.phase = wire.LAUNCH_PHASE_CLEANUP_REQUIRED
         entry.state.failure.CopyFrom(types.Failure(code=code, message=message))
+        return LaunchError(code, message)

@@ -51,7 +51,7 @@ def test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies() -> No
         return len(payload)
 
     port.on_write = write
-    channel = SerialChannel("fake", 115200, 1000, clock=clock, serial_port=port)
+    channel = SerialChannel("fake", 115200, 10_000, clock=clock, serial_port=port)
     channel.open(10000)
 
     result = channel.request("PING", {}, 10000)

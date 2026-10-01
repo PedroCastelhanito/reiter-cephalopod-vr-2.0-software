@@ -8,6 +8,7 @@ from collections.abc import Awaitable, Callable
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
+    RETAINED_LIMIT,
     ConfigurationState,
     ControlState,
     IncidentState,
@@ -59,6 +60,15 @@ class SnapshotPublisher:
             state_revision=self.control.revision,
         )
         view.configuration.revision = self.configuration_state.revision
+        view.configuration.edit_validation.extend(self.configuration_state.validation)
+        for validation in self.configuration_state.validation:
+            if validation.completed and validation.valid and validation.issues:
+                view.warnings.add(
+                    warning_id=f"configuration:{self.configuration_state.revision}:{validation.component}:nonfatal",
+                    component=validation.component,
+                    message="Configuration has nonfatal preparation warnings",
+                    issues=validation.issues,
+                )
         view.configuration.locked = self.lifecycle.session.phase in (
             pb.SESSION_PHASE_STARTING,
             pb.SESSION_PHASE_RUNNING,
@@ -74,9 +84,11 @@ class SnapshotPublisher:
             view.control.holder_client_id = self.control.owner[0]
             view.control.control_generation = self.control.owner[2]
         view.operations.extend(self.control.operations.values())
-        view.errors.extend((self.control.errors + self.supervisor_state.errors)[-256:])
+        view.errors.extend(
+            (self.control.errors + self.supervisor_state.errors)[-RETAINED_LIMIT:]
+        )
         view.warnings.extend(
-            (self.control.warnings + self.supervisor_state.warnings)[-256:]
+            (self.control.warnings + self.supervisor_state.warnings)[-RETAINED_LIMIT:]
         )
         if self.lifecycle.startup_blocker:
             view.warnings.add(
@@ -88,7 +100,7 @@ class SnapshotPublisher:
             (
                 self.supervisor_state.recoveries
                 + self.supervisor_state.controller_recoveries
-            )[-256:]
+            )[-RETAINED_LIMIT:]
         )
         view.metadata.extend(self.metadata_state.results.values())
         view.prompts.extend(item[0] for item in self.incident_state.prompts.values())

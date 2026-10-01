@@ -6,7 +6,7 @@ Derived from [A02/A03/A07–A10](../../docs/architecture/acquisition.md),
 Definitions: [messages.proto](../cephvr/acquisition/v1/messages.proto),
 [camera settings](camera-settings.md), [frame buffers](frame-buffers.md).
 These declare payloads and validation. Runtime implementation and verification
-status belong in the [implementation review](../../reports/acquisition-implementation-review.md).
+status belong in the [implementation review](../../reports/acquisition.md).
 
 ## Final Setup payload
 

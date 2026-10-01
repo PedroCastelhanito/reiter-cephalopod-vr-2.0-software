@@ -12,6 +12,7 @@ from cephvr.platform.windows.byte_stream_factory import (
     create_child_endpoint,
 )
 from cephvr.platform.windows.byte_stream_native import (
+    ERROR_IO_INCOMPLETE,
     ERROR_IO_PENDING,
     ERROR_NOT_FOUND,
     WAIT_OBJECT_0,
@@ -39,6 +40,7 @@ class OverlappedPipe:
         handle: int,
         *,
         writable: bool,
+        readable: bool | None = None,
         maximum_read_bytes: int,
         stop_event: int | None = None,
     ) -> None:
@@ -46,6 +48,9 @@ class OverlappedPipe:
             raise ValueError("native pipe read limit must be positive")
         self.handle = handle
         self.writable = writable
+        self.readable = (not writable) if readable is None else readable
+        if not writable and not self.readable:
+            raise ValueError("pipe endpoint must support at least one direction")
         self.maximum_read_bytes = maximum_read_bytes
         self._closed = False
         self._pending: NativePendingIO | None = None
@@ -102,8 +107,125 @@ class OverlappedPipe:
                 self._retired = f"{offset} of {len(view)} bytes written"
                 raise TimeoutError(f"pipe write deadline passed after {self._retired}")
 
+    def write_message(self, data: memoryview, *, deadline_ns: int) -> None:
+        """Write exactly one message-mode OS message; retire on partial transfer."""
+        if not self.writable or self._closed:
+            raise WindowsLaunchError("byte-stream endpoint is not writable")
+        if self._retired is not None:
+            raise WindowsLaunchError(f"byte-stream endpoint retired: {self._retired}")
+        if self._pending is not None:
+            raise WindowsLaunchError("prior native pipe I/O remains unresolved")
+        view = memoryview(data).cast("B")
+        if not view.contiguous or view.readonly or not len(view):
+            raise TypeError(
+                "message write requires nonempty contiguous writable storage"
+            )
+        if len(view) > _MAX_DWORD:
+            raise ValueError("one pipe message cannot exceed the Win32 DWORD limit")
+        buffer = (ctypes.c_char * len(view)).from_buffer(view)
+        transferred = self._start_and_wait(
+            buffer, len(view), write=True, deadline_ns=deadline_ns
+        )
+        if transferred != len(view):
+            self._retired = (
+                f"one message transferred {transferred} of {len(view)} bytes"
+            )
+            raise WindowsLaunchError(
+                "message-mode pipe write was partial; endpoint retired"
+            )
+
+    def begin_write(self, data: bytes | memoryview, *, deadline_ns: int) -> None:
+        """Start one bounded overlapped write without waiting for pipe capacity.
+
+        The copied bytearray remains pinned by NativePendingIO until poll_write
+        confirms completion. This lets the Visual Stimulus recording owner service mandatory
+        evidence while encoder stdin is backpressured.
+        """
+        if not self.writable or self._closed:
+            raise WindowsLaunchError("byte-stream endpoint is not writable")
+        if self._retired is not None:
+            raise WindowsLaunchError(f"byte-stream endpoint retired: {self._retired}")
+        if self._pending is not None:
+            raise WindowsLaunchError("prior native pipe write remains unresolved")
+        view = memoryview(data).cast("B")
+        if not view.contiguous or not len(view):
+            raise TypeError(
+                "nonblocking pipe writes require a nonempty contiguous buffer"
+            )
+        amount = min(len(view), _MAX_DWORD)
+        backing = bytearray(view[:amount])
+        buffer = (ctypes.c_char * amount).from_buffer(backing)
+        if time.perf_counter_ns() >= deadline_ns:
+            raise TimeoutError("native pipe write deadline already expired")
+        api = native_api()
+        from cephvr.platform.windows.security import owner_only_security_attributes
+
+        security, security_backing = owner_only_security_attributes(EVENT_ALL_ACCESS)
+        event = api.CreateEventW(ctypes.byref(security), True, False, None)
+        _ = security_backing
+        check(event, "CreateEventW")
+        overlapped = Overlapped()
+        overlapped.hEvent = event
+        pointer = ctypes.cast(buffer, ctypes.c_void_p)
+        ok = api.WriteFile(self.handle, pointer, amount, None, ctypes.byref(overlapped))
+        pending = NativePendingIO(
+            int(event), overlapped, buffer, True, deadline_ns, backing=backing
+        )
+        self._pending = pending
+        if not ok and ctypes.get_last_error() != ERROR_IO_PENDING:
+            code = ctypes.get_last_error()
+            pending.error_code = code
+            pending.transferred = 0
+            pending.completed = True
+            self._retire_failed_start(pending, code)
+            raise WindowsLaunchError("nonblocking encoder input write made no progress")
+
+    def poll_write(self) -> int | None:
+        """Observe one write without waiting; None means the kernel still owns it."""
+        pending = self._pending
+        if pending is None or not pending.writing:
+            raise WindowsLaunchError("no pending overlapped pipe write to poll")
+        transferred = wintypes.DWORD()
+        if not native_api().GetOverlappedResult(
+            self.handle,
+            ctypes.byref(pending.overlapped),
+            ctypes.byref(transferred),
+            False,
+        ):
+            code = ctypes.get_last_error()
+            if code == ERROR_IO_INCOMPLETE:
+                if (
+                    time.perf_counter_ns() >= pending.deadline_ns
+                    and not pending.cancel_requested
+                ):
+                    self.request_cancel()
+                return None
+            pending.error_code = code
+            pending.transferred = int(transferred.value)
+            pending.completed = True
+            self._retire_uncertain_write(pending)
+            if not self._close_completed_event(pending):
+                raise WindowsLaunchError(
+                    f"closing failed write event failed: WinError {ctypes.get_last_error()}"
+                )
+            self._pending = None
+            self._retired = f"write outcome unconfirmed (WinError {code})"
+            raise WindowsLaunchError(f"overlapped pipe write failed: WinError {code}")
+        pending.transferred = int(transferred.value)
+        pending.completed = True
+        pending.late = time.perf_counter_ns() > pending.deadline_ns
+        self._retire_uncertain_write(pending)
+        if not self._close_completed_event(pending):
+            raise WindowsLaunchError(
+                f"closing completed write event failed: WinError {ctypes.get_last_error()}"
+            )
+        self._pending = None
+        if pending.late:
+            raise TimeoutError("overlapped pipe write completed after its deadline")
+        return pending.transferred
+
     def read(self, *, deadline_ns: int) -> bytes | None:
-        if self.writable or self._closed:
+        if not self.readable or self._closed:
             raise WindowsLaunchError("byte-stream endpoint is not readable")
         pending = self._pending
         if pending is not None:

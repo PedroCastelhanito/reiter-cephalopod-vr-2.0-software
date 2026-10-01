@@ -40,7 +40,7 @@ async def controller(tmp_path: Path) -> AsyncIterator[tuple[int, CredentialStore
             recording_root=str(tmp_path),
             mode=pb.SESSION_MODE_OPEN_LOOP,
             trials=[pb.TrialDefinition(trial_number=1)],
-            backends=[pb.BackendSettings(backend_name="vr", enabled=True)],
+            backends=[pb.BackendSettings(backend_name="visual_stimulus", enabled=True)],
         ),
         limits=ControllerLimits(**settings.limits_kwargs),
         validators={},

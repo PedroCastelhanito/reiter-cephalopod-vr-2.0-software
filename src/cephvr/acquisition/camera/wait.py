@@ -18,7 +18,6 @@ class PylonWaitGate:
     def __init__(self) -> None:
         self._event: ManualResetEvent | None = None
         self._waits: Any | None = None
-        self._control_waits: Any | None = None
         self._control_wait: Any | None = None
         self._camera_wait: Any | None = None
         self._pylon: Any | None = None
@@ -118,20 +117,11 @@ class PylonWaitGate:
     def wait_control(self, timeout_ns: int) -> bool:
         if timeout_ns < 0:
             raise ValueError("control wait timeout must be nonnegative")
-        if self._control_waits is None:
-            # Before camera preparation, the already-created command event still
-            # wakes Resolve/Edit/Cleanup. This waits on that event directly; the
-            # active capture path always uses the SDK joint WaitObjects binding.
-            if self._event is None:
-                raise CameraAdapterError("SDK_STATE", "control event is unavailable")
-            return self._event.wait(timeout_ns)
-        timeout_ms = min((timeout_ns + 999_999) // 1_000_000, 0xFFFFFFFE)
-        try:
-            return bool(self._control_waits.WaitForAny(timeout_ms))
-        except Exception as exc:
-            raise CameraAdapterError(
-                "SDK_FAILURE", f"Basler control-only wait failed: {exc}"
-            ) from exc
+        # Idle work waits directly on the already-created command event. Active
+        # capture uses the SDK joint WaitObjects binding in wait().
+        if self._event is None:
+            raise CameraAdapterError("SDK_STATE", "control event is unavailable")
+        return self._event.wait(timeout_ns)
 
     def verify_blocking_control_wakeup(
         self,
@@ -188,9 +178,6 @@ class PylonWaitGate:
 
     def close(self) -> None:
         self.remove()
-        if self._control_waits is not None:
-            self._control_waits.RemoveAll()
-            self._control_waits = None
         if self._event is not None:
             self._event.close()
             self._event = None

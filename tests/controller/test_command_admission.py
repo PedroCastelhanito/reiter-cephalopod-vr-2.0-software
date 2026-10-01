@@ -7,7 +7,6 @@ import time
 import uuid
 from types import SimpleNamespace
 from typing import Literal, cast
-from uuid import uuid4
 
 import pytest
 
@@ -23,10 +22,7 @@ from cephvr.controller.state import (
 )
 from cephvr.controller.transport.admission import CommandAdmissionGate, CommandWorkView
 from cephvr.controller.transport.ingress import BoundedReportIngress, ReportSink
-
-
-def _id() -> str:
-    return str(uuid4())
+from tests.controller.support_components import _id
 
 
 class _Work:

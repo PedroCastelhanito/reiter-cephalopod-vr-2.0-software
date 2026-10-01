@@ -1,0 +1,55 @@
+Date: 2026-10-01 (Asia/Tokyo)
+Repository HEAD: 7ae3767cea92bf7af94153d417e40df997e1fd05
+Working tree provenance: dirty/untracked files existed before this audit. HEAD alone
+does not identify the source snapshot. The pre-edit candidate was copied to
+/private/tmp/backend-audit-baseline-20261001/native.py; its SHA256 was
+fcf160f1a5012d0613b41d7d7fe00e2c8de992d923b43b2d0cafa2b6d47998f8.
+
+Scope: inventoried module/folder layouts under `src/cephvr/shared`, `acquisition`,
+`visual_stimulus`, `tracking`, `controller`, and `supervisor`, the corresponding
+`tests/<owner>/` trees, and the existing backend reports. Current-source cohesion checks
+covered `acquisition/runtime.py`, `acquisition/camera/basler.py`,
+`acquisition/worker/execution.py`, `acquisition/worker/capture_runtime.py`,
+`acquisition/recording/session.py`, `visual_stimulus/recording/native.py`,
+`visual_stimulus/worker/lifecycle.py`, `visual_stimulus/transport/boundary.py`,
+`tracking/processing/movement.py`, `tracking/transport/boundary.py`, and
+`shared/auth.py`; earlier controller/supervisor and Tracking simplification records
+remain linked from their current reports. `python tools/check_backend_boundaries.py`
+checked all 453 backend modules. `rg -n 'video_sync_factory|NativeRecording'
+--glob '!**/.git/**' .` found no reads of `NativeRecording.video_sync_factory`; its
+argument remains passed to `EncoderTrialOwner` and owned there. This was a structural
+and representative-source audit, not a line-by-line review of every module. No public
+interface or accepted behavior changed.
+
+Change: removed the write-only attribute assignment in
+`src/cephvr/visual_stimulus/recording/native.py`. The constructor parameter,
+`EncoderTrialOwner` wiring, video sync behavior, and resource/evidence ownership remain.
+The post-edit source SHA256 is
+`db2dd9a935fbe6916a2d34bce180e1694e3a2271ef8a7e9ba398f883c2d129ce`.
+
+Commands and results:
+
+```text
+.venv/bin/python -m pytest tests/visual_stimulus -q -m 'not windows and not rig'
+Initial sandbox run: 116 passed, 1 deselected, 5 failed because local gRPC binds to
+127.0.0.1:0 were denied with Operation not permitted. Retried unchanged with loopback
+permission: 121 passed, 1 deselected.
+
+.venv/bin/python -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus
+Passed.
+.venv/bin/python -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus
+Passed: 134 files already formatted.
+.venv/bin/python -m mypy --platform win32 src/cephvr/visual_stimulus
+Passed: 119 source files, no issues.
+.venv/bin/python tools/check_backend_boundaries.py
+Passed: 453 backend modules, zero boundary violations. Sixteen size warnings remain:
+7 acquisition, 1 controller, 1 supervisor, 7 Visual Stimulus; each owner is recorded
+as cohesive in its current report. Tracking and shared have no size warning.
+git diff --check
+Passed.
+Inline Python local Markdown link/anchor check over TODO.md, LOG.md and the four
+current backend reports: passed; all local targets and anchors resolved.
+```
+
+The checks are local static/regression evidence only. Native Windows, GPU, hardware,
+and full-workload rig acceptance remain pending under E15.

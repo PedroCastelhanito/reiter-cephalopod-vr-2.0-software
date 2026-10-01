@@ -1,4 +1,4 @@
-"""Protected E08 acquisition/tracking/VR Setup dependency state.
+"""Protected E08 acquisition/tracking/Visual Stimulus Setup dependency state.
 
 This holds descriptors, never frames. Its contents must not enter public snapshots,
 configuration history or logs. The controller dispatches its existing RPCs from
@@ -87,7 +87,7 @@ class PreparationHandoff:
         )
 
     @property
-    def can_prepare_vr(self) -> bool:
+    def can_prepare_visual_stimulus(self) -> bool:
         if self.retired:
             return False
         state = self.tracking

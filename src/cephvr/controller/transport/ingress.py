@@ -9,6 +9,7 @@ from google.protobuf.message import Message
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.shared.ingress import BoundedEventIngress, IngressOverload
 
 
@@ -93,10 +94,7 @@ class BoundedReportIngress:
                             cast(svc.InterruptionReport, request)
                         )
                 except Exception as exc:
-                    result = pb.ReportReceipt(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(code="INTERNAL", message=str(exc)),
-                    )
+                    result = rejected_receipt("INTERNAL", str(exc))
                 if not future.done():
                     future.set_result(result)
                 self._active = None
@@ -106,12 +104,7 @@ class BoundedReportIngress:
         self, kind: str, request: Message, ingress_ns: int
     ) -> pb.ReportReceipt:
         if self._closed:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="SHUTDOWN", message="controller service is closing"
-                ),
-            )
+            return rejected_receipt("SHUTDOWN", "controller service is closing")
         future: asyncio.Future[pb.ReportReceipt] = (
             asyncio.get_running_loop().create_future()
         )
@@ -130,20 +123,14 @@ class BoundedReportIngress:
                     ingress_ns=ingress_ns,
                 )
                 if not accepted:
-                    return pb.ReportReceipt(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(
-                            code="OVERLOAD", message="controller report ingress full"
-                        ),
+                    return rejected_receipt(
+                        "OVERLOAD", "controller report ingress full"
                     )
         except IngressOverload as exc:
             self._sink.ingress_exhausted(
                 f"essential controller ingress exhausted: {exc}"
             )
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(code="OVERLOAD", message=str(exc)),
-            )
+            return rejected_receipt("OVERLOAD", str(exc))
         self._ready.set()
         return await future
 
@@ -152,12 +139,8 @@ class BoundedReportIngress:
             return
         self._disposed = True
         self._closed = True
-        closing = pb.ReportReceipt(
-            result=pb.COMMAND_RESULT_REJECTED,
-            failure=pb.Failure(
-                code="SHUTDOWN",
-                message="controller service closed before report processing",
-            ),
+        closing = rejected_receipt(
+            "SHUTDOWN", "controller service closed before report processing"
         )
         while (item := self._queue.take()) is not None:
             future = item.event[3]

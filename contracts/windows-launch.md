@@ -2,7 +2,7 @@
 
 Authority: [E06/E08](../docs/architecture/system-contracts.md). This shared contract
 covers every owned CephVR process on the rig, including controller/supervisor/GUI,
-acquisition, VR, tracking, workers and native helpers. SpikeGLX is a separate remote
+acquisition, Visual Stimulus, tracking, workers and native helpers. SpikeGLX is a separate remote
 application and is never contained or killed here. No launcher is implemented or
 Windows behavior verified.
 
@@ -95,7 +95,7 @@ registration; device initialization starts only after registration acknowledgeme
 The endpoint confirmation includes its [host-clock descriptor](host-clock.md);
 validate and retain it before marking that Python process operational.
 Native helpers resume only after confirmation and their owning backend's launch
-boundary; acquisition FFmpeg launches at A08's ScheduleTrial acceptance and receives no frames before T. VR encoder launch/container
+boundary; acquisition FFmpeg launches at A08's ScheduleTrial acceptance and receives no frames before T. Visual Stimulus encoder launch/container
 bindings remain owned by V12, not A08. Register each helper's actual graceful-stop
 method and exact process handle; do not assume every helper uses stdin EOF.
 Bootstrap work has no device/output-file/session side effects. Registration stages
@@ -105,9 +105,9 @@ starts E08's automatic graceful shutdown; closing an inner job is never the clea
 algorithm. The outer launcher job remains the bounded final backstop above. Close retained job/process handles only when obligations
 and descendant exit are established. No extra readiness state is introduced.
 
-## VR integration and failure ownership
+## Visual Stimulus integration and failure ownership
 
-The supervisor plans/launches the VR coordinator; that coordinator plans/launches
+The supervisor plans/launches the Visual Stimulus coordinator; that coordinator plans/launches
 its renderer, which owns the saving-enabled FFmpeg child (V12). Each worker uses this
 same helper for any subprocess it owns, including decoder/codec helpers where selected. A library
 that creates unmanaged descendants cannot bypass registration or containment; bind
@@ -118,7 +118,7 @@ Reuse the existing per-launch job and parent-tree membership checks within the o
 application job; do not add backend-specific alternative containment mechanisms. Membership never proves display/GPU or
 file readiness. A partial renderer launch cannot open stimulus windows before its
 process registration is confirmed. Startup Idle additionally follows the
-[VR startup contract](vr/startup.md); recording-only work remains saving-dependent.
+[Visual Stimulus startup contract](visual_stimulus/startup.md); recording-only work remains saving-dependent.
 
 Inner-job closure never requests termination. Supervisor loss invokes E06/E08's
 automatic full shutdown; exact-generation termination follows graceful cleanup, with
@@ -126,6 +126,6 @@ the outer application job enforcing the final deadline. Process exit proves neit
 surviving descendant released a device. Preserve independent cleanup obligations.
 
 Acquisition-specific FFmpeg stdin, file-sync and SDK rules remain in
-[Windows resources](acquisition/windows-resources.md); VR resource bindings remain
-in its [contract worklist](vr/README.md). No GPU isolation or throughput guarantee is
+[Windows resources](acquisition/windows-resources.md); Visual Stimulus resource bindings remain
+in its [contract worklist](visual_stimulus/README.md). No GPU isolation or throughput guarantee is
 created by process containment.

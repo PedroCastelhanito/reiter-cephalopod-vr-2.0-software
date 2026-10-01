@@ -44,7 +44,7 @@ def test_session_handoff_closes_manual_serial_owner_without_camera_workers() -> 
         ),
     )
 
-    asyncio.run(preparation.retire_manual_workers(deadline_ns=500))
+    asyncio.run(SessionPreparation.retire_manual_workers(preparation, deadline_ns=500))
 
     assert owner.closed
     assert pulse.observation is None

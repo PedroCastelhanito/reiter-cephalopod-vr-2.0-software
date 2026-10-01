@@ -60,7 +60,6 @@ class TrialPulseEvidence:
         )
         if (
             not pulse.connection_id
-            or not pulse.HasField("outcome")
             or pulse.outcome == mcu.PULSE_COMMAND_OUTCOME_UNSPECIFIED
             or selected is not True
         ):

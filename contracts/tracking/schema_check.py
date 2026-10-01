@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent / 'vr'))
+sys.path.insert(0, str(HERE.parent / 'visual_stimulus'))
 from method_models import SCHEMAS as METHODS
 from record_models import SCHEMAS as RECORDS
 

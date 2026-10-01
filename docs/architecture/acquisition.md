@@ -17,7 +17,7 @@ Configuration: [acquisition_config.toml](../../config/backends/acquisition_confi
 The [acquisition contract index and worklist](../../contracts/acquisition/README.md)
 is the single worklist for declared contracts, hardware inputs and explicit rig
 deferrals. Host code acceptance and static results belong in the
-[implementation review](../../reports/acquisition-implementation-review.md).
+[implementation review](../../reports/acquisition.md).
 Manual preview is Configuration-only; session preview is rate-capped (A03).
 Hardware inputs and explicitly deferred rig checks remain pending; accepted design
 is not runtime or rig validation (E15).
@@ -287,7 +287,7 @@ remain in the contract worklist.
   histories belong in the owning backend outputs, not the session log.
 
 **Other-backend work:** [A06](tracking.md#a06) owns result validity and the remaining
-tracking-reset/VR response contracts; these do not reopen acquisition drop policies.
+tracking-reset/Visual Stimulus response contracts; these do not reopen acquisition drop policies.
 
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
@@ -560,7 +560,7 @@ deferral (E15) remains.
   every trial, independently of recording success. Received invalid images take IDs
   in the same sequence with their receipt timestamp; their frame-log lines are dropped
   (A07) and their pixels never reach consumers. Identities persist through recording,
-  tracking and VR lineage; recording drops and tracking-state resets never renumber
+  tracking and Visual Stimulus lineage; recording drops and tracking-state resets never renumber
   frames.
 - Trial numbers remain **1-based** under E04; camera-native hardware counters are
   separate and unchanged. A frame reference must include its camera and trial

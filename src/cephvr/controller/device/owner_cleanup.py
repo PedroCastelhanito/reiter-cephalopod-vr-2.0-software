@@ -26,8 +26,10 @@ from cephvr.controller.device.status_retention import CameraStatusRetention
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
+    RETAINED_LIMIT,
     CameraOperation,
     ConfigurationState,
+    ControlState,
     DeviceState,
     LifecycleState,
     LimitsState,
@@ -35,6 +37,27 @@ from cephvr.controller.state import (
 
 MANUAL_CLEANUP_TASK_NAME = "manual-camera-cleanup"
 _RETRY_MAX_S = 10.0
+
+
+def record_manual_cleanup_warning(
+    control: ControlState, publish: Callable[[], None], error: BaseException | None
+) -> None:
+    """Replace the retained cleanup warning by the current failure, or clear it."""
+    kept = [
+        item for item in control.warnings if item.component != "manual_camera_cleanup"
+    ]
+    changed = error is not None or len(kept) != len(control.warnings)
+    if error is not None:
+        kept.append(
+            pb.Warning(
+                warning_id=str(uuid.uuid4()),
+                component="manual_camera_cleanup",
+                message=f"manual camera cleanup pending, retrying: {error}",
+            )
+        )
+    control.warnings = kept[-RETAINED_LIMIT:]
+    if changed:
+        publish()
 
 
 class ManualControlCleanup:

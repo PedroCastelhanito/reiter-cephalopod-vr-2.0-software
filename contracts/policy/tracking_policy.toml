@@ -3,7 +3,7 @@
 # Source rules: Tracking defaults. See architecture.md: E10, E14, A04, A06, T01–T12, T14–T45.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/tracking_config.toml. The loader rejects a version mismatch.
-policy_version = 40
+policy_version = 42
 
 [frames]
 pixel_processing = "shared_methods_in_consumer"
@@ -147,6 +147,9 @@ perimeter_relative_error = 0.0001
 # T33/T34: estimator input guarantees; no operator mode selectors.
 [estimator_input]
 samples = "all_available_provider_grid_samples_in_band"
+# T33: declared coordinate convention; not an arithmetic mean of pixel flow.
+sample_position = "represented_block_centre"
+sample_value = "native_block_estimate"
 preaggregation = "none"
 spatial_subsampling = "none"
 preprocessing_motion_compensation = "none"
@@ -158,9 +161,9 @@ meaning = "relative_control_not_physical_swimming_velocity"
 channels = ["forward_drive", "sideways_drive", "turn_drive"]
 coordinate_frame = "anatomical_body"
 positive_directions = ["anterior", "animal_left", "turn_toward_animal_left"]
-vr_gain_owner = "existing_stimulus_feedback_bindings"
+visual_stimulus_gain_owner = "existing_stimulus_feedback_bindings"
 quantity = "interval_average_rate"
-vr_control = "virtual_speed_over_valid_source_interval"
+visual_stimulus_control = "virtual_speed_over_valid_source_interval"
 normalization = "none_direct_declared_method_units"
 
 # T39: evidence semantics for the current water-flow method, not a pipeline default.

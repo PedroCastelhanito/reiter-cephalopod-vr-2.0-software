@@ -60,7 +60,7 @@ async def test_descendants_are_retained_and_exited_before_gui_group() -> None:
     failures = await shutdown_owned_jobs(
         native,
         [
-            ManagedJob("vr", "generation", "backend"),
+            ManagedJob("visual_stimulus", "generation", "backend"),
             ManagedJob("gui", "generation", "gui"),
         ],
         absolute_deadline_ns=now + 20_000_000_000,
@@ -87,7 +87,7 @@ async def test_unknown_membership_never_becomes_verified_absence_or_unbounded_wa
     native = NativeEvidence(unknown=True)
     failures = await shutdown_owned_jobs(
         native,
-        [ManagedJob("vr", "generation", "backend")],
+        [ManagedJob("visual_stimulus", "generation", "backend")],
         absolute_deadline_ns=2_000_000_001,
         graceful_exit_ns=5_000_000_000,
         terminate_exit_ns=2_000_000_000,
@@ -108,7 +108,7 @@ def test_bootstrap_job_inventory_is_exact_and_never_accepts_outer_job() -> None:
             "generation": str(uuid.uuid4()),
             "job_name": f"Local\\CephVR2-{uuid.uuid4()}",
         }
-        for role in ("acquisition", "vr", "tracking", "gui")
+        for role in ("acquisition", "visual_stimulus", "tracking", "gui")
     ]
     assert len(managed_jobs_from_bootstrap(values)) == 4
     with pytest.raises(ValueError):

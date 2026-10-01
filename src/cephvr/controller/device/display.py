@@ -1,4 +1,4 @@
-"""VR Idle display initialization and confirmation."""
+"""Visual Stimulus Idle display initialization and confirmation."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
-from cephvr.vr.v1 import runtime_pb2 as vr_pb
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
 class DisplayInitialization:
@@ -60,12 +60,12 @@ class DisplayInitialization:
         """One startup V19 preparation against the adopted revision, never Setup."""
         command_id = str(uuid.uuid4())
         async with self.lifecycle.lock:
-            backend = self.backends.get("vr")
+            backend = self.backends.get("visual_stimulus")
             setting = next(
                 (
                     item
                     for item in self.configuration.current.backends
-                    if item.backend_name == "vr" and item.enabled
+                    if item.backend_name == "visual_stimulus" and item.enabled
                 ),
                 None,
             )
@@ -85,27 +85,22 @@ class DisplayInitialization:
             if (
                 backend is None
                 or setting is None
-                or setting.WhichOneof("settings") != "vr"
-                or not setting.vr.display.profile_json
+                or setting.WhichOneof("settings") != "visual_stimulus"
+                or not setting.visual_stimulus.display.profile_json
             ):
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="vr_display",
-                        message="VR display settings or registered coordinator unavailable",
-                    )
+                self.control.add_warning(
+                    "visual_stimulus_display",
+                    "Visual Stimulus display settings or registered coordinator unavailable",
                 )
                 self.hooks.publish()
                 return self.hooks.admission(
-                    command_id, error="VR display settings or coordinator unavailable"
+                    command_id,
+                    error="Visual Stimulus display settings or coordinator unavailable",
                 )
             if self.display_validator is None or self.file_policy_loader is None:
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="vr_display",
-                        message="display validator or file policy loader unavailable",
-                    )
+                self.control.add_warning(
+                    "visual_stimulus_display",
+                    "display validator or file policy loader unavailable",
                 )
                 self.hooks.publish()
                 return self.hooks.admission(
@@ -113,12 +108,14 @@ class DisplayInitialization:
                     error="display validator or file policy loader unavailable",
                 )
             revision = self.configuration.revision
-            display = deepcopy(setting.vr.display)
+            display = deepcopy(setting.visual_stimulus.display)
         try:
             output_ids, loaded = await asyncio.wait_for(
                 asyncio.gather(
                     asyncio.to_thread(self.display_validator, display.profile_json),
-                    asyncio.to_thread(self.file_policy_loader, frozenset({"vr"})),
+                    asyncio.to_thread(
+                        self.file_policy_loader, frozenset({"visual_stimulus"})
+                    ),
                 ),
                 self.limits.current.validation_ns / 1e9,
             )
@@ -126,20 +123,27 @@ class DisplayInitialization:
                 raise ValueError(
                     "display validator returned no bounded required output identities"
                 )
-            policy = loaded.get("vr")
-            if policy is None or policy.DESCRIPTOR != vr_pb.VRFilePolicies.DESCRIPTOR:
-                raise ValueError("VR file policies unavailable")
-            vr_policy = vr_pb.VRFilePolicies.FromString(policy.SerializeToString())
-            if not vr_policy.HasField("limits") or not vr_policy.limits.ListFields():
-                raise ValueError("VR resource limits unresolved")
-        except (TimeoutError, ValueError, Exception) as exc:
+            policy = loaded.get("visual_stimulus")
+            if (
+                policy is None
+                or policy.DESCRIPTOR
+                != visual_stimulus_pb.VisualStimulusFilePolicies.DESCRIPTOR
+            ):
+                raise ValueError("Visual Stimulus file policies unavailable")
+            visual_stimulus_policy = (
+                visual_stimulus_pb.VisualStimulusFilePolicies.FromString(
+                    policy.SerializeToString()
+                )
+            )
+            if (
+                not visual_stimulus_policy.HasField("limits")
+                or not visual_stimulus_policy.limits.ListFields()
+            ):
+                raise ValueError("Visual Stimulus resource limits unresolved")
+        except Exception as exc:
             async with self.lifecycle.lock:
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="vr_display",
-                        message=f"display settings unavailable: {exc}",
-                    )
+                self.control.add_warning(
+                    "visual_stimulus_display", f"display settings unavailable: {exc}"
                 )
                 self.hooks.publish()
             return self.hooks.admission(
@@ -160,7 +164,7 @@ class DisplayInitialization:
                 + self.limits.current.setup_ns
                 + self.limits.current.recovery_ns
             )
-            request = svc.VRDisplayInitializationRequest(
+            request = svc.VisualStimulusDisplayInitializationRequest(
                 command_id=command_id,
                 issuer=pb.ProcessIdentity(
                     role="controller", generation=self.generation
@@ -168,10 +172,12 @@ class DisplayInitialization:
                 target=backend.context,
                 configuration_revision=revision,
                 display=display,
-                limits=vr_policy.limits,
+                limits=visual_stimulus_policy.limits,
                 policies=self.configuration.policies,
                 deadline_monotonic_ns=deadline_ns,
             )
+            if self.configuration.current.HasField("asset_root"):
+                request.asset_root = self.configuration.current.asset_root
             try:
                 # Reserve the record first: a capacity failure must leave no display state.
                 self.hooks.operation(
@@ -218,12 +224,9 @@ class DisplayInitialization:
         return self.hooks.admission(command_id)
 
     def _capacity_failure(self, command_id: str) -> pb.CommandAdmission:
-        self.control.warnings.append(
-            pb.Warning(
-                warning_id=str(uuid.uuid4()),
-                component="vr_display",
-                message="display initialization not started: retained operation capacity exhausted",
-            )
+        self.control.add_warning(
+            "visual_stimulus_display",
+            "display initialization not started: retained operation capacity exhausted",
         )
         self.hooks.publish()
         return self.hooks.admission(

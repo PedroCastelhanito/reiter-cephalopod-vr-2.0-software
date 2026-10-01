@@ -86,7 +86,7 @@ No model loading, provider discovery or JSON parsing belongs in the frame loop.
    Baseline-only, invalid and reset evaluations retain existing reporting/record rules.
    Recheck processing identity and cutoff before construction/publication, and stamp
    the current reset_generation under feedback-delivery.md. Never republish or retag
-   a retired result; delivery-only overflow need not discard an unfinished valid computation. No optimization changes source intervals or VR hold.
+   a retired result; delivery-only overflow need not discard an unfinished valid computation. No optimization changes source intervals or Visual Stimulus hold.
 
 ### Buffer ownership and bounds
 
@@ -166,7 +166,7 @@ contains an eligible observation, report missing pose rather than fabricating al
 
 Read shared host time at selection and compute `pose_age_ns = check_host_ns -
 pose_source_host_receipt_ns`. Accept equality with the configured maximum. This bound
-includes processing delay; it is separate from A04 input age and V26 VR-result age.
+includes processing delay; it is separate from A04 input age and V26 Visual Stimulus-result age.
 Negative/missing timing evidence is a contract failure, not an ordinary fresh/invalid
 estimate. No eligible pose, invalid pose or excess age makes pose-dependent movement
 invalid. Retain reason, pose identity/source, check time, age/limit and movement-frame

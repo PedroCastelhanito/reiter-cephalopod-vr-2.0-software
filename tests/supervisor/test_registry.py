@@ -14,6 +14,7 @@ from cephvr.shared.clock import (
     describe_host_clock,
 )
 from cephvr.supervisor.registry import LaunchError, LaunchRegistry
+from cephvr.visual_stimulus.identity import FFMPEG_ROLE as VISUAL_STIMULUS_FFMPEG_ROLE
 from tests.supervisor.support import Native
 
 from .support import EXE, WORKER_ROLE, _identity, _launch
@@ -94,7 +95,7 @@ def test_tolerant_states_keep_other_entries_when_one_job_is_unreadable() -> None
     bad = _launch(
         registry,
         native,
-        _identity("acquisition"),
+        _identity("acquisition_behavioral_worker"),
         _identity(FFMPEG_ROLE),
         2,
         python=False,
@@ -167,6 +168,52 @@ def confirmation(
     )
 
 
+@pytest.mark.parametrize(
+    "role", ["controller", "gui", "acquisition", "visual_stimulus", "tracking"]
+)
+def test_top_level_self_owner_rejected_before_job_creation(role: str) -> None:
+    native = RegistryNative()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    request = plan()
+    request.owner.role = request.child.role = role
+    with pytest.raises(LaunchError, match="top-level launch owner is invalid") as error:
+        registry.plan(request)
+    assert error.value.code == "INVALID_OWNER"
+    assert not native.jobs
+
+
+@pytest.mark.parametrize("os_confirmed", [False, True])
+@pytest.mark.parametrize("field", ["endpoint", "host_clock"])
+def test_native_confirmation_rejects_python_fields(
+    os_confirmed: bool, field: str
+) -> None:
+    native = RegistryNative()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    request = plan()
+    state = registry.plan(request)
+    native.jobs[state.containment_job_name] = [(42, 1234, request.executable)]
+    clock = describe_host_clock()
+    os_request = confirmation(request)
+    if os_confirmed:
+        state = registry.confirm(os_request, clock)
+        assert registry.confirm(os_request, clock) == state
+    invalid = confirmation(request)
+    if field == "endpoint":
+        invalid.endpoint = "127.0.0.1:50099"
+    else:
+        invalid.host_clock.SetInParent()
+    with pytest.raises(
+        LaunchError, match="native helper has no Python endpoint"
+    ) as error:
+        registry.confirm(invalid, clock)
+    assert error.value.code == "INVALID_NATIVE_CONFIRMATION"
+    assert registry.refresh(request.command_id).phase == state.phase
+    if os_confirmed:
+        operational = registry.confirm(confirmation(request), clock)
+        assert operational.phase == wire.LAUNCH_PHASE_OPERATIONAL
+        assert registry.confirm(os_request, clock) == operational
+
+
 def test_exact_membership_and_retain_until_cleanup() -> None:
     native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)
@@ -186,6 +233,23 @@ def test_exact_membership_and_retain_until_cleanup() -> None:
     released = registry.release(request.command_id, obligations_met=True)
     assert released.phase == wire.LAUNCH_PHASE_RELEASED
     assert state.containment_job_name in native.closed
+
+
+def test_visual_stimulus_ffmpeg_child_must_belong_to_exact_renderer_work() -> None:
+    registry = LaunchRegistry(RegistryNative(), 15_000_000_000)
+    request = wire.PlanLaunchRequest(
+        command_id=str(uuid4()),
+        owner=_identity("visual_stimulus"),
+        child=_identity(VISUAL_STIMULUS_FFMPEG_ROLE),
+        executable=EXE,
+        stop_method="owner_stdin_eof",
+        parent_operation=types.OperationContext(command_id=str(uuid4())),
+        work=types.WorkContext(session=types.SessionContext(session_id=str(uuid4()))),
+    )
+    with pytest.raises(LaunchError, match="exact renderer owner"):
+        registry.plan(request)
+    request.owner.CopyFrom(_identity("visual_stimulus_renderer"))
+    assert registry.plan(request).plan.child == request.child
 
 
 def test_wrong_creation_time_blocks_instead_of_guessing_pid() -> None:

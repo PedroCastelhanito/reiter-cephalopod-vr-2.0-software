@@ -10,17 +10,15 @@ from typing import cast
 
 import grpc
 
-from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import services_pb2_grpc
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
 from cephvr.shared.transport_deadlines import deadline_metadata, remaining_seconds
-from cephvr.supervisor.registry import LaunchRegistry
 from cephvr.supervisor.worker_outbound import GrpcWorkerOutbound
 
 
-class GrpcOutbound:
+class GrpcOutbound(GrpcWorkerOutbound):
     def __init__(
         self,
         identity: types.ProcessIdentity,
@@ -30,48 +28,41 @@ class GrpcOutbound:
         max_message_bytes: int,
         backend_ports: dict[str, int],
     ) -> None:
-        self.identity = identity
-        self.metadata = (
-            ("x-cephvr-role", identity.role),
-            ("x-cephvr-generation", identity.generation),
-            ("x-cephvr-token", token),
+        super().__init__(
+            supervisor=identity, token=token, max_message_bytes=max_message_bytes
         )
-        options = [
-            ("grpc.max_send_message_length", max_message_bytes),
-            ("grpc.max_receive_message_length", max_message_bytes),
-        ]
+        self.identity = identity
         self.controller_channel = grpc.aio.insecure_channel(
-            f"127.0.0.1:{controller_port}", options=options
+            f"127.0.0.1:{controller_port}", options=self.options
         )
         self.controller = services_pb2_grpc.ExperimentControllerServiceStub(
             self.controller_channel
         )  # type: ignore[no-untyped-call]
         self.backend_ports = backend_ports
-        self.options = options
         self.backend_channels: dict[str, grpc.aio.Channel] = {}
         self.control_handle = control_handle
         self.control_lock = asyncio.Lock()
-        self.workers = GrpcWorkerOutbound(
-            supervisor=identity,
-            token=token,
-            max_message_bytes=max_message_bytes,
-        )
-
-    def bind_registry(self, registry: LaunchRegistry) -> None:
-        self.workers.bind_registry(registry)
-
-    async def retire_worker_generation(self, role: str, generation: str) -> None:
-        await self.workers.retire_generation(role, generation)
 
     async def close(self) -> None:
         """Close every gRPC channel; idempotent."""
         channels = [self.controller_channel, *self.backend_channels.values()]
         self.backend_channels.clear()
         await asyncio.gather(
-            self.workers.close(),
+            super().close(),
             *(channel.close() for channel in channels),
             return_exceptions=True,
         )
+
+    @staticmethod
+    def _require_accepted(receipt: types.CommandAdmission, what: str) -> None:
+        if receipt.result != types.COMMAND_RESULT_ACCEPTED:
+            raise RuntimeError(f"{what}: {receipt.failure.code}")
+
+    def _backend_call_options(self, deadline_ns: int) -> dict[str, object]:
+        return {
+            "metadata": (*self.metadata, deadline_metadata(deadline_ns)),
+            "timeout": self._deadline_timeout(deadline_ns),
+        }
 
     @staticmethod
     def _deadline_timeout(deadline_ns: int) -> float:
@@ -84,70 +75,18 @@ class GrpcOutbound:
         receipt = await self.controller.ReportInterruption(
             report, metadata=self.metadata, timeout=5
         )
-        if receipt.result != types.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError(
-                f"controller rejected interruption: {receipt.failure.code}"
-            )
-
-    async def interrupt_worker(
-        self,
-        launch: wire.LaunchState,
-        request: acq.WorkerInterrupt,
-        *,
-        deadline_ns: int,
-    ) -> types.CommandAdmission:
-        return await self.workers.interrupt(launch, request, deadline_ns=deadline_ns)
-
-    async def cleanup_worker(
-        self,
-        launch: wire.LaunchState,
-        request: acq.WorkerCommand,
-        *,
-        deadline_ns: int,
-    ) -> types.CommandAdmission:
-        return await self.workers.cleanup(launch, request, deadline_ns=deadline_ns)
-
-    async def shutdown_worker(
-        self,
-        launch: wire.LaunchState,
-        request: acq.WorkerCommand,
-        *,
-        deadline_ns: int,
-    ) -> types.CommandAdmission:
-        return await self.workers.shutdown(launch, request, deadline_ns=deadline_ns)
-
-    async def get_worker_state(
-        self,
-        launch: wire.LaunchState,
-        request: acq.WorkerQuery,
-        *,
-        deadline_ns: int,
-    ) -> acq.WorkerState:
-        return await self.workers.get_state(launch, request, deadline_ns=deadline_ns)
-
-    async def get_worker_retained_result(
-        self,
-        launch: wire.LaunchState,
-        request: acq.WorkerRetainedResultQuery,
-        *,
-        deadline_ns: int,
-    ) -> acq.WorkerRetainedResult:
-        return await self.workers.get_retained_result(
-            launch, request, deadline_ns=deadline_ns
-        )
+        self._require_accepted(receipt, "controller rejected interruption")
 
     async def confirm_tracking_cleanup(
         self, request: wire.TrackingInputConfirmation, *, deadline_ns: int
     ) -> types.CommandAdmission:
         target = request.command.target
-        channel = self._channel(target.backend_name)
+        channel = self._backend_channel(target.backend_name)
         stub = services_pb2_grpc.AcquisitionConfigurationServiceStub(channel)  # type: ignore[no-untyped-call]
         receipt = cast(
             types.CommandAdmission,
             await stub.ConfirmTrackingInput(
-                request,
-                metadata=(*self.metadata, deadline_metadata(deadline_ns)),
-                timeout=self._deadline_timeout(deadline_ns),
+                request, **self._backend_call_options(deadline_ns)
             ),
         )
         return receipt
@@ -156,24 +95,22 @@ class GrpcOutbound:
         receipt = await self.controller.ReportSupervisorStatus(
             report, metadata=self.metadata, timeout=5
         )
-        if receipt.result != types.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError(f"controller rejected status: {receipt.failure.code}")
+        self._require_accepted(receipt, "controller rejected status")
 
     async def report_heartbeat(self, report: types.HeartbeatReport) -> None:
         receipt = await self.controller.ReportHeartbeat(
             report, metadata=self.metadata, timeout=5
         )
-        if receipt.result != types.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError(
-                f"controller rejected supervisor heartbeat: {receipt.failure.code}"
-            )
+        self._require_accepted(receipt, "controller rejected supervisor heartbeat")
 
     def _backend(
         self, target: types.BackendContext
     ) -> services_pb2_grpc.BackendServiceStub:
-        return services_pb2_grpc.BackendServiceStub(self._channel(target.backend_name))  # type: ignore[no-untyped-call]
+        return services_pb2_grpc.BackendServiceStub(
+            self._backend_channel(target.backend_name)
+        )  # type: ignore[no-untyped-call]
 
-    def _channel(self, backend_name: str) -> grpc.aio.Channel:
+    def _backend_channel(self, backend_name: str) -> grpc.aio.Channel:
         if backend_name not in self.backend_ports:
             raise RuntimeError(f"no declared backend endpoint for {backend_name}")
         channel = self.backend_channels.get(backend_name)
@@ -193,14 +130,11 @@ class GrpcOutbound:
         deadline_ns: int,
     ) -> None:
         receipt = await self._backend(target).InterruptSession(
-            request,
-            metadata=(*self.metadata, deadline_metadata(deadline_ns)),
-            timeout=self._deadline_timeout(deadline_ns),
+            request, **self._backend_call_options(deadline_ns)
         )
-        if receipt.result != types.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError(
-                f"backend {target.backend_name} rejected interruption: {receipt.failure.code}"
-            )
+        self._require_accepted(
+            receipt, f"backend {target.backend_name} rejected interruption"
+        )
 
     async def shutdown_backend(
         self,
@@ -210,14 +144,11 @@ class GrpcOutbound:
         deadline_ns: int,
     ) -> None:
         receipt = await self._backend(target).Shutdown(
-            request,
-            metadata=(*self.metadata, deadline_metadata(deadline_ns)),
-            timeout=self._deadline_timeout(deadline_ns),
+            request, **self._backend_call_options(deadline_ns)
         )
-        if receipt.result != types.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError(
-                f"backend {target.backend_name} rejected shutdown: {receipt.failure.code}"
-            )
+        self._require_accepted(
+            receipt, f"backend {target.backend_name} rejected shutdown"
+        )
 
     async def cleanup_backend(
         self,
@@ -227,14 +158,11 @@ class GrpcOutbound:
         deadline_ns: int,
     ) -> None:
         receipt = await self._backend(target).Cleanup(
-            request,
-            metadata=(*self.metadata, deadline_metadata(deadline_ns)),
-            timeout=self._deadline_timeout(deadline_ns),
+            request, **self._backend_call_options(deadline_ns)
         )
-        if receipt.result != types.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError(
-                f"backend {target.backend_name} rejected cleanup: {receipt.failure.code}"
-            )
+        self._require_accepted(
+            receipt, f"backend {target.backend_name} rejected cleanup"
+        )
 
     async def notify_launcher_shutdown(self, deadline_ns: int, cause: str) -> None:
         document = {

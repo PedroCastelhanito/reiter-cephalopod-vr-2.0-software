@@ -1,5 +1,5 @@
-"""Errors shared by the supervised FFmpeg launcher and owned process."""
+"""Acquisition compatibility export for shared encoder ownership errors."""
 
+from cephvr.shared.encoder_errors import EncoderLaunchError
 
-class EncoderLaunchError(RuntimeError):
-    """An FFmpeg launch could not reach exact registered process ownership."""
+__all__ = ["EncoderLaunchError"]

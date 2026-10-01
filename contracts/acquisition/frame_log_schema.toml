@@ -1,7 +1,7 @@
 # A07/E04 format declaration, NOT runtime configuration or a writer.
 # One append-only JSON Lines frame log per recorded camera/trial, next to that
 # camera's MP4: a header line, one frame line per received image, a completion line.
-contract_status = "declared" # Host acceptance/verification: reports/acquisition-implementation-review.md.
+contract_status = "declared" # Host acceptance/verification: reports/acquisition.md.
 schema_version = 2 # v1 was CSV frames + separate meta JSON.
 camera_roles = ["behavioral", "tracking"]
 camera_tags = ["behavioral_cam", "tracking_cam"]

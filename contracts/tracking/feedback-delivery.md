@@ -1,9 +1,9 @@
 # Tracking feedback generations and queue credits
 
 Authority: [A06](../../docs/architecture/tracking.md#a06), R1A, with
-[V25/V26](../../docs/architecture/vr.md#v25), T08/T19 and E08. This is an internal
+[V25/V26](../../docs/architecture/visual_stimulus.md#v25), T08/T19 and E08. This is an internal
 contract for the existing ordered result/credit pipes, not another queue, service,
-worker or runtime implementation. [data.proto](../cephvr/vr/v1/data.proto) owns the types.
+worker or runtime implementation. [data.proto](../cephvr/visual_stimulus/v1/data.proto) owns the types.
 
 ## Identities and ordering
 
@@ -31,18 +31,18 @@ baseline, temporal hints, filter, input queue and eligible pose/geometry history
 start, camera gaps or input-age/overflow also start a new processing generation with a
 fresh flow baseline/filter; a joined processing cause wins over delivery-only overflow.
 Tracking sends a result, invalid or baseline-only when necessary, for every evaluated
-frame, so a new generation becomes visible to VR without an acknowledgement round trip.
+frame, so a new generation becomes visible to Visual Stimulus without an acknowledgement round trip.
 
-VR first checks registered attachment/source/stream and the current trial. A result with
-a greater reset_generation than VR's current one is the reset: discard/account for
+Visual Stimulus first checks registered attachment/source/stream and the current trial. A result with
+a greater reset_generation than Visual Stimulus's current one is the reset: discard/account for
 unapplied older-generation entries, including already captured batch entries, preserve
 movement already applied, and apply only results marked usable (baseline-only after a
-processing reset; usable at once after delivery-only overflow). VR need not
+processing reset; usable at once after delivery-only overflow). Visual Stimulus need not
 have seen every intermediate generation. A lower generation is retired and cannot regress
 state. Ordinary results retain the existing trial/age/validity checks.
 
-V26 staleness is a local VR disposition. It neither advances generations nor calls
-tracking control. A fresh valid result can resume VR in the same generation, using only
+V26 staleness is a local Visual Stimulus disposition. It neither advances generations nor calls
+tracking control. A fresh valid result can resume Visual Stimulus in the same generation, using only
 its explicit source interval; retained filter state does not authorize catch-up motion.
 
 ## Calculation continuity and publication boundary
@@ -55,7 +55,7 @@ relabel a lease or retained image to match a transport reset. A newly constructe
 carries the current reset_generation; an already constructed/recorded older-generation
 result is discarded/accounted, never retagged or replayed. A dropped result does not
 undo the filter update that was validly computed from its source pair.
-Saving retains those calculations and discard evidence. VR applies only the explicit
+Saving retains those calculations and discard evidence. Visual Stimulus applies only the explicit
 interval of a surviving valid result, never a summed interval across missing deliveries.
 
 Pose observations keep their original identity and processing-generation provenance.
@@ -92,7 +92,7 @@ exhausted required resource uses existing progress/failure rules. Generation cha
 When saving, admit a reset line with its reset_generation and causes for every locally
 committed reset before any result carrying that generation. Lines keep ordinal order even
 when overflow drops every result of an intermediate generation. Failure to admit required
-evidence follows E06. Do not imply VR received/applied a dropped result; VR's existing
+evidence follows E06. Do not imply Visual Stimulus received/applied a dropped result; Visual Stimulus's existing
 evidence owns its actual observations. Saving Off promises no full scientific
 history, while administrative reset/failure handling remains active.
 

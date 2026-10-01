@@ -37,6 +37,45 @@ def discover_encoder_device() -> NvidiaDevice:
     return matches[0]
 
 
+def verify_opengl_rendering_device(renderer: str, vendor: str) -> NvidiaDevice:
+    """Resolve the OpenGL context to the unique SYS-002 renderer adapter.
+
+    NVIDIA's OpenGL renderer string exposes the physical board model while CUDA
+    supplies the stable UUID. Requiring one matching adapter and the exact model
+    string avoids ordinal assumptions and refuses ambiguous/mismatched contexts.
+    """
+    if sys.platform != "win32":
+        raise WindowsLaunchError("OpenGL adapter resolution requires Windows")
+    devices = _enumerate_cuda_devices()
+    matches = [
+        device for device in devices if device.name.endswith("GeForce RTX 5060 Ti")
+    ]
+    if len(matches) != 1:
+        raise WindowsLaunchError(
+            f"render adapter discovery found {len(matches)} RTX 5060 Ti devices"
+        )
+    selected = matches[0]
+    if "NVIDIA" not in vendor.upper() or selected.name not in renderer:
+        raise WindowsLaunchError(
+            f"OpenGL context {vendor!r}/{renderer!r} does not resolve to {selected.name!r}"
+        )
+    return selected
+
+
+def verify_tracking_device(ordinal: int) -> NvidiaDevice:
+    """SYS-002: verify the configured ordinal against the unique processing GPU."""
+    matches = [
+        device
+        for device in _enumerate_cuda_devices()
+        if device.name.endswith("GeForce RTX 5060 Ti")
+    ]
+    if len(matches) != 1 or matches[0].ordinal != ordinal:
+        raise WindowsLaunchError(
+            "tracking ordinal does not identify the unique RTX 5060 Ti"
+        )
+    return matches[0]
+
+
 def resolve_cuda_ordinal(device_uuid: str) -> NvidiaDevice:
     """Require one exact UUID match; never fall back to another enumerated adapter."""
     if sys.platform != "win32":

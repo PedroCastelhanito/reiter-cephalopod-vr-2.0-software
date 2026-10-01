@@ -26,7 +26,12 @@ from cephvr.controller.state import (
     LifecycleState,
 )
 from cephvr.shared.commands import CommandLedger
-from tests.controller.support_components import _attempt, _id, _runtime
+from tests.controller.support_components import (
+    _attempt,
+    _id,
+    _runtime,
+    operator_command,
+)
 
 
 class _Projection:
@@ -308,7 +313,8 @@ async def test_manual_readback_acceptance_commits_and_bumps_revision(
 
 def _runtime_with_validators(tmp_path: Path) -> ControllerRuntime:
     runtime = _runtime(
-        tmp_path, pb.BackendContext(backend_name="vr", backend_generation=_id())
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
     )
     runtime.configuration_commands.validators = {
         "v": lambda _c: pb.ValidationResult(completed=True, valid=True)
@@ -326,13 +332,6 @@ def _open_preview(runtime: ControllerRuntime) -> None:
     runtime.projections.devices = views
 
 
-def _command(runtime: ControllerRuntime) -> svc.OperatorCommand:
-    return svc.OperatorCommand(
-        controller_generation=runtime.generation,
-        operator=pb.OperatorContext(command_id=_id()),
-    )
-
-
 @pytest.mark.parametrize("via", ["preview", "operation"])
 async def test_setup_rejected_while_camera_preview_or_operation_open(
     tmp_path: Path, via: str
@@ -342,14 +341,14 @@ async def test_setup_rejected_while_camera_preview_or_operation_open(
         _open_preview(runtime)
     else:
         runtime.device_state.camera_operation = cast(Any, object())
-    admission = await runtime.setup(_command(runtime))
+    admission = await runtime.setup(operator_command(runtime))
     assert admission.result == pb.COMMAND_RESULT_REJECTED
     assert admission.failure.message == "stop camera preview/editing first"
 
 
 async def test_setup_not_blocked_by_camera_guard_when_closed(tmp_path: Path) -> None:
     runtime = _runtime_with_validators(tmp_path)
-    admission = await runtime.setup(_command(runtime))
+    admission = await runtime.setup(operator_command(runtime))
     assert admission.failure.message != "stop camera preview/editing first"
 
 

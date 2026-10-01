@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from collections.abc import Callable, Coroutine
 from typing import Any, Literal
 
@@ -107,14 +106,10 @@ class EvidenceWaiter:
             missing = frozenset(expected - received_names())
             attempt.recovering_evidence = kind
             attempt.recovery_deadline_ns = recovery_deadline_ns
-            self.control.warnings.append(
-                pb.Warning(
-                    warning_id=str(uuid.uuid4()),
-                    component="lifecycle_recovery",
-                    message=f"{kind} initial evidence deadline expired; querying the frozen missing set",
-                )
+            self.control.add_warning(
+                "lifecycle_recovery",
+                f"{kind} initial evidence deadline expired; querying the frozen missing set",
             )
-            self.control.warnings = self.control.warnings[-256:]
             self.publisher.publish()
 
         async def query(name: str) -> None:
@@ -157,7 +152,7 @@ class EvidenceWaiter:
                         return
                     lifecycle = pb.LifecycleReport(ready=retained.ready)
                 await self.report(lifecycle, self.clock())
-            except (TimeoutError, Exception):
+            except Exception:
                 return
 
         try:

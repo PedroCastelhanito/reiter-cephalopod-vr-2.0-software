@@ -6,6 +6,8 @@
 param(
     [switch]$Install,
     [switch]$Rig,
+    [switch]$BuildTrackingNative,
+    [string]$NvofSdkRoot,
     [string]$OutputDirectory
 )
 
@@ -49,7 +51,7 @@ if ($Install) {
     $before = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $python -m pip install --editable '.[dev,acquisition]' 2>&1 |
+        & $python -m pip install --editable '.[dev,acquisition,visual_stimulus,tracking]' 2>&1 |
             Tee-Object -FilePath (Join-Path $output 'install.log') | Out-Host
         $installExit = $LASTEXITCODE
     } finally {
@@ -64,14 +66,26 @@ Assert-Python311 $python @()
 $before = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
 try {
-    & $python -c 'import grpc, google.protobuf, pytest, pytest_asyncio, pydantic, setuptools, numpy, serial, pypylon; import cephvr.control.v1.services_pb2' 2>&1 |
+    & $python -c 'import grpc, google.protobuf, pytest, pytest_asyncio, pydantic, setuptools, numpy, serial, pypylon, cv2, onnx, onnxruntime; import cephvr.control.v1.services_pb2; import cephvr.visual_stimulus.v1.services_pb2; import moderngl, glfw, av, imagecodecs, tifffile, OpenGL.GL' 2>&1 |
         Tee-Object -FilePath (Join-Path $output 'prerequisites.log') | Out-Host
     $prerequisiteExit = $LASTEXITCODE
 } finally {
     $ErrorActionPreference = $before
 }
 if ($prerequisiteExit -ne 0) {
-    throw "Virtual environment lacks CephVR, acquisition SDK, or test dependencies; use -Install. See $output\prerequisites.log"
+    throw "Virtual environment lacks CephVR, acquisition/Visual Stimulus/Tracking, or test dependencies; use -Install. See $output\prerequisites.log"
+}
+
+if ($BuildTrackingNative) {
+    if (-not $NvofSdkRoot) { throw '-BuildTrackingNative requires -NvofSdkRoot with API 2.0 headers.' }
+    if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) { throw 'Install CMake, MSVC x64 tools and the CUDA Toolkit first.' }
+    $nativeBuild = Join-Path $output 'tracking-native'
+    & cmake -S (Join-Path $repo 'native\tracking') -B $nativeBuild -A x64 "-DNVOF_SDK_ROOT=$NvofSdkRoot"
+    if ($LASTEXITCODE -ne 0) { throw 'Tracking native configuration failed.' }
+    & cmake --build $nativeBuild --config Release
+    if ($LASTEXITCODE -ne 0) { throw 'Tracking native compilation failed.' }
+    & cmake --install $nativeBuild --config Release --prefix (Join-Path $repo 'src')
+    if ($LASTEXITCODE -ne 0) { throw 'Tracking native installation failed.' }
 }
 
 $results = @()
@@ -144,7 +158,12 @@ if ($Rig) {
 [void](Invoke-Logged 'module-boundaries' @('tools/check_backend_boundaries.py'))
 [void](Invoke-Logged 'mypy-win32' @('-m', 'mypy', '--platform', 'win32', 'src/cephvr'))
 [void](Invoke-Logged 'contracts-tracking' @('-m', 'unittest', 'discover', '-s', 'contracts/tracking', '-p', 'test_*.py'))
-[void](Invoke-Logged 'contracts-vr' @('-m', 'unittest', 'discover', '-s', 'contracts/vr/tests', '-p', 'test_*.py'))
+[void](Invoke-Logged 'tracking-schema-drift' @('contracts/tracking/schema_check.py'))
+[void](Invoke-Logged 'contracts-visual_stimulus' @('-m', 'unittest', 'discover', '-s', 'contracts/visual_stimulus/tests', '-p', 'test_*.py'))
+[void](Invoke-Logged 'visual-stimulus-schema-drift' @('contracts/visual_stimulus/generate_schemas.py', '--check'))
+# tests/visual_stimulus includes pure implementation and authenticated loopback checks. Installing
+# the graphics extra does not turn these into physical rendering/encoding acceptance.
+# Explicit hardware procedures remain in reports/rig-verification.md.
 $junit = Join-Path $output 'pytest.xml'
 $pytestArgs = @('-m', 'pytest', '-q', '--junitxml', $junit)
 if (-not $Rig) { $pytestArgs += @('-m', 'not rig') }

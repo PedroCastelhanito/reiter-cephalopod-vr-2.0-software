@@ -39,8 +39,8 @@ remain uncertain only inside the original recovery bound. Controller validates a
 registers the aggregate with supervisor; an absent/inconsistent declaration grants no
 Continue.
 `lifecycle_sources` identifies the backend-scoped E11 activity/cutoff gates lost with
-each function: acquisition `behavioral`/`tracking`, tracking `tracking`, VR `renderer`.
-Output-only functions use an empty list. Source claims are unique per backend; the VR
+each function: acquisition `behavioral`/`tracking`, tracking `tracking`, Visual Stimulus `renderer`.
+Output-only functions use an empty list. Source claims are unique per backend; the Visual Stimulus
 renderer is always essential. Each acquisition camera source binds one exact
 supervisor-registered worker reporter through `ProcessHealthStatus.launch_owner`
 ancestry, never an inferred worker name. A retained loss closes the named source's

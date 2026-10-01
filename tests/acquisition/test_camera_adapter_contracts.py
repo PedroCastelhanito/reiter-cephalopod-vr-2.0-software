@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from threading import Event
 from types import SimpleNamespace
 
 import pytest
@@ -13,6 +14,12 @@ from cephvr.acquisition.camera.native_formats import (
     native_pixel_format,
     pylon_pixel_format,
 )
+from cephvr.acquisition.camera.wait import PylonWaitGate
+
+
+@pytest.fixture(autouse=True)
+def native_control_event(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("cephvr.acquisition.camera.wait.ManualResetEvent.create", Event)
 
 
 def test_adapter_construction_does_not_load_pypylon() -> None:
@@ -30,6 +37,7 @@ def test_sdk_version_mismatch_is_explicit_and_does_not_import(
         "cephvr.acquisition.camera.basler.importlib.metadata.version",
         lambda _name: "26.4.0",
     )
+
     monkeypatch.setattr(
         "cephvr.acquisition.camera.basler.importlib.import_module",
         lambda name: imports.append(name),
@@ -38,6 +46,64 @@ def test_sdk_version_mismatch_is_explicit_and_does_not_import(
         adapter._sdk()
     assert failure.value.code == "SDK_UNAVAILABLE"
     assert imports == []
+
+
+def test_idle_control_wait_keeps_native_deadline_wake_and_close(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[int] = []
+
+    class NativeEvent:
+        closed = False
+        signaled = False
+
+        def wait(self, timeout_ns: int) -> bool:
+            calls.append(timeout_ns)
+            return self.signaled
+
+        def set(self) -> None:
+            self.signaled = True
+
+        def clear(self) -> None:
+            self.signaled = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    event = NativeEvent()
+    monkeypatch.setattr(
+        "cephvr.acquisition.camera.wait.ManualResetEvent.create", lambda: event
+    )
+    gate = PylonWaitGate()
+    assert not gate.wait_control(123_456)
+    gate.wake()
+    assert gate.wait_control(0)
+    gate.clear()
+    assert not gate.wait_control(789)
+    with pytest.raises(ValueError, match="nonnegative"):
+        gate.wait_control(-1)
+    assert calls == [123_456, 0, 789]
+    gate.close()
+    gate.close()
+    assert event.closed
+    with pytest.raises(CameraAdapterError, match="unavailable"):
+        gate.wait_control(0)
+
+
+@pytest.mark.parametrize("control_ready", [False, True])
+def test_joint_wait_retains_control_priority_and_rounding(control_ready: bool) -> None:
+    gate = PylonWaitGate()
+    waits: list[int] = []
+
+    def wait(timeout: int) -> bool:
+        waits.append(timeout)
+        return True
+
+    gate._waits = SimpleNamespace(WaitForAny=wait)
+    if control_ready:
+        gate.wake()
+    assert gate.wait(1_000_001) == ("control" if control_ready else "frame")
+    assert waits == [2]
 
 
 def test_open_uses_exact_assigned_serial_not_enumeration_order() -> None:

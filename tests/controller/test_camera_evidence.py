@@ -54,6 +54,41 @@ def _start(runtime: Any, parent: str, child: str, kind: int, readback: bool) -> 
     runtime.device_state.camera_operation = operation
 
 
+@pytest.mark.parametrize("internal", [False, True])
+@pytest.mark.parametrize("succeeded", [False, True])
+async def test_terminal_camera_report_retires_slot_but_retains_exact_evidence(
+    tmp_path: Path, internal: bool, succeeded: bool
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    ledger = runtime.camera_status_retention.ledger
+    assert ledger is not None
+    if not internal:
+        ledger.admit(parent, b"cmd", 1, work_key=parent)
+    _start(runtime, parent, child, svc.CAMERA_COMMAND_KIND_START_PREVIEW, False)
+    operation = runtime.device_state.camera_operation
+    assert operation is not None
+    runtime.device_state.manual_effects_admitted = True
+    status = _status(backend, child, succeeded=succeeded)
+
+    receipt = await runtime.report_projection("devices", status, ingress_ns=900)
+
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.control.operations[parent].succeeded == succeeded
+    assert runtime.device_state.camera_operation is None
+    assert runtime.device_state.camera_operation_changed.is_set()
+    assert runtime.device_state.completed_camera_operation is operation
+    assert runtime.device_state.manual_effects_admitted
+    assert runtime.camera_status_retention.find(child) is operation
+    assert operation.final_status == status
+    record = ledger.get(child if internal else parent)
+    assert record is not None
+    # Public completion belongs to RPC admission; synthetic cleanup has no RPC owner.
+    assert (record.completed_ns is not None) == internal
+    assert (record.finalized_ns is not None) == internal
+
+
 async def test_deadline_with_retained_terminal_but_no_confirmation_frees_slot(
     tmp_path: Path,
 ) -> None:

@@ -166,11 +166,11 @@ class _StatusSerial:
         return mcu.PulseCommandEvidence(
             connection_id=self.observation.connection_id,
             request_id="off-1",
-            dispatched_monotonic_ns=400,
+            dispatched_monotonic_ns=201,
             outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
             applied=True,
             resulting_state=result,
-            acknowledged_monotonic_ns=456,
+            acknowledged_monotonic_ns=205,
         )
 
 
@@ -272,3 +272,15 @@ def test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it() -> 
         tracker.record(conflict, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
     assert tracker.combined() == retained
     assert tracker.connection_id == "mcu-generation"
+
+
+def test_unspecified_terminal_pulse_does_not_mutate_retained_evidence() -> None:
+    work = _trial_work()
+    request = _pulse(work, applied=True, command_id="pulse")
+    request.evidence.ClearField("outcome")
+    tracker = TrialPulseEvidence()
+    tracker.reset(required=True)
+    with pytest.raises(ValueError, match="selected terminal outcome"):
+        tracker.record(request, _schedule(work), camera.CAMERA_ROLE_BEHAVIORAL)
+    assert tracker.connection_id is None
+    assert tracker.on is None

@@ -13,13 +13,13 @@ See the root register for backend-specific decisions; wire/schema detail remains
 ## Decisions
 
 <a id="a05"></a>
-### A05 — Acquisition-to-VR delay measurement
+### A05 — Acquisition-to-Visual Stimulus delay measurement
 
 **Status:** Accepted · **Revision:** 6
 
-- Measure delay from acquisition through tracking to VR output, not only tracking
+- Measure delay from acquisition through tracking to Visual Stimulus output, not only tracking
   wait time. Carry source-frame identity and acquisition timestamps through tracking
-  results and the VR outputs that use them.
+  results and the Visual Stimulus outputs that use them.
 - The camera worker assigns the source host-monotonic nanosecond timestamp
   immediately on receipt, before application copying or processing; later software
   handling counts as measured delay. This is host receipt time, not exposure time,
@@ -34,19 +34,19 @@ See the root register for backend-specific decisions; wire/schema detail remains
   and continue. Rounded-video-PTS collision handling is separate; optional
   camera-native counter/timestamp behavior is not a host clock regression.
 - Link each applied tracking result, with its source-frame identity and acquisition
-  timestamp, to the first VR output incorporating it. Several results may link to
+  timestamp, to the first Visual Stimulus output incorporating it. Several results may link to
   one output; this does not mean each intermediate state was displayed.
 - Keep detailed timing/lineage records in backend output files under the existing
   save settings, never as per-frame histories in session configuration or the
   session-wide log.
-- The 250 ms pre-processing frame-age guard is a separate rule. [V26](vr.md#v26) owns
-  the configurable VR application-age guard and local hold/resumption, which is not
+- The 250 ms pre-processing frame-age guard is a separate rule. [V26](visual_stimulus.md#v26) owns
+  the configurable Visual Stimulus application-age guard and local hold/resumption, which is not
   a physical display-latency guarantee.
 
-**Contract work:** the [feedback contract](../../contracts/vr/feedback.md) defines
+**Contract work:** the [feedback contract](../../contracts/visual_stimulus/feedback.md) defines
 application observation times and their distinction from output submission/optical
-evidence. [Result-to-render layouts](../../contracts/vr/evidence-format.md) and
-[delivery bindings](../../contracts/vr/runtime-bindings.md) are declared; their
+evidence. [Result-to-render layouts](../../contracts/visual_stimulus/evidence-format.md) and
+[delivery bindings](../../contracts/visual_stimulus/runtime-bindings.md) are declared; their
 runtime providers, V26's numeric limit and rig evidence remain outstanding.
 
 <a id="e06"></a>
@@ -74,10 +74,10 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
   relabeling a completed trial. Abort overrides a pending Stop after trial.
 - **Shutdown application** is a separate full-system command. In an active session it
   first runs Abort now's interruption and graceful finalization, then terminates
-  every tracked CephVR process: all backends including VR, the GUI, the controller,
+  every tracked CephVR process: all backends including Visual Stimulus, the GUI, the controller,
   and the supervisor last. In Configuration, SettingUp or Ready it cancels or unarms
   prepared work and closes resources without an Interrupted session. Interrupting a
-  session alone leaves CephVR running with VR in Idle, except controller/supervisor
+  session alone leaves CephVR running with Visual Stimulus in Idle, except controller/supervisor
   loss, which enters full shutdown under E08.
 
 **Failure classification**
@@ -144,7 +144,7 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
   outcome and error history; the operator still requests New session or fresh Setup
   explicitly.
 - Cleanup evidence covers stopped work, output/metadata results and release of
-  trial/session resources, not exit of normal resident processes or the VR runtime.
+  trial/session resources, not exit of normal resident processes or the Visual Stimulus runtime.
   Resource release is distinct from successful recording; cleanup never relabels a
   failed output Closed. A reserved output that never started retains NotStarted with
   confirmed absence only after exact writer/command ownership proves it was never
@@ -217,7 +217,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 159
+**Status:** Accepted · **Revision:** 160
 
 **Processes and startup**
 
@@ -226,7 +226,8 @@ design; runtime monitoring remains unimplemented.
   deadlines, never session control or replacement authority. Once its service is
   ready, the supervisor launches controller, GUI and top-level backends
   concurrently. Backends own workers, workers own helpers; the supervisor watches
-  all descendants.
+  all descendants. Visual Stimulus registration and containment use the canonical
+  backend identifier owned by [V01](visual_stimulus.md#v01).
 - One shared launch helper registers planned ownership before creation, then
   confirms exact process generation/identity, endpoint and stop information before
   operational work, covering partial launches and owner failure. Unconfirmed
@@ -234,7 +235,7 @@ design; runtime monitoring remains unimplemented.
   health silence timeout (15 s) from PlanLaunch is a required launch failure. Health
   values are startup-only settings every process reads at startup.
 - A launcher-held application Job Object with kill-on-close contains supervisor,
-  controller, GUI and all backend descendants (acquisition, VR, tracking); the
+  controller, GUI and all backend descendants (acquisition, Visual Stimulus, tracking); the
   launcher keeps the sole non-inherited handle outside it. Per-launch jobs stay
   nested with kill-on-close disabled, preserving graceful cleanup after authority
   loss. Verify membership before work; no breakout. At the startup-only
@@ -243,7 +244,7 @@ design; runtime monitoring remains unimplemented.
   its handle; launcher failure also triggers kill-on-close. The
   [Windows launch contract](../../contracts/windows-launch.md) binds creation-time
   containment, job mechanics, partial-child identification and typed registration.
-- Acquisition, VR and tracking reuse the small
+- Acquisition, Visual Stimulus and tracking reuse the small
   [native transport helpers](../../contracts/native-transport.md) for bounded
   message-mode pipes, mapping attachment, cancellation and resource ownership.
   Queue/drop/credit and storage-sync policies stay with each backend; no service or
@@ -254,9 +255,9 @@ design; runtime monitoring remains unimplemented.
   headless clients may coexist. Released guards never prove descendant cleanup after
   a crash.
 - The GUI opens in startup/synchronizing state and observes registered health.
-  Backends start dormant without opening disabled devices. Always-active VR
+  Backends start dormant without opening disabled devices. Always-active Visual Stimulus
   initializes configured Idle from validated saved display settings under
-  [V19](vr.md#v19); missing/invalid settings leave its outputs uninitialized with an
+  [V19](visual_stimulus.md#v19); missing/invalid settings leave its outputs uninitialized with an
   actionable issue. Headless startup is the same and still needs explicit Setup and
   Start.
 - The [data-preparation handoff](../../contracts/data-preparation.md) binds early
@@ -284,7 +285,7 @@ design; runtime monitoring remains unimplemented.
   operator control is deferred; local headless clients may run through SSH.
   Pixels/scientific streams use backend data paths, not control RPCs.
 - Fixed configurable top-level ports, owned separately: controller **50051**,
-  supervisor **50052**, acquisition **50053**, VR **50054**, tracking **50055**
+  supervisor **50052**, acquisition **50053**, Visual Stimulus **50054**, tracking **50055**
   (single process per T08). Conflicts are reported at startup/Setup with no
   automatic replacement port. Private worker ports are OS-assigned and registered
   with exact process generations. Port edits require restart.
@@ -478,19 +479,19 @@ Tracking's
 are bound; estimator-dependent payloads remain with T12/T04. Platform implementation
 and rig validation remain later work under E15.
 
-- VR's [worker/control binding](../../contracts/vr/worker-control.md) adds typed
+- Visual Stimulus's [worker/control binding](../../contracts/visual_stimulus/worker-control.md) adds typed
   startup-display status and private worker lifecycle reports to existing
   processes. Snapshot display state stays separate from Ready, with no extra
   streaming RPC or per-frame control traffic.
-- VR [private data bindings](../../contracts/vr/runtime-bindings.md) declare direct
+- Visual Stimulus [private data bindings](../../contracts/visual_stimulus/runtime-bindings.md) declare direct
   bounded data attachments and tracking-owned result generations, using existing
-  process registration/deadlines. VR freshness handling is local; no reset service
+  process registration/deadlines. Visual Stimulus freshness handling is local; no reset service
   or scientific per-frame RPC/controller relay is added.
 
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 205
+**Status:** Accepted · **Revision:** 206
 
 - **Operator files contain only settings.** Human-readable `<backend>_config.toml`
   files under [config/backends/](../../config/backends/README.md) hold only values an
@@ -529,22 +530,22 @@ and rig validation remain later work under E15.
 | `supervisor_config.toml` / `supervisor_policy.toml` | E03–E06/E08 |
 | `acquisition_config.toml` / `acquisition_policy.toml` | A01–A11 |
 | `gui_config.toml` / `gui_policy.toml` | E03/A10 |
-| `vr_config.toml` / `vr_policy.toml` | V01–V28/E13/A06 |
+| `visual_stimulus_config.toml` / `visual_stimulus_policy.toml` | V01–V28/E13/A06 |
 | `tracking_config.toml` / `tracking_policy.toml` | E10/A04–A06/T01–T12/T14–T45 |
 | `synchronization_config.toml` / `synchronization_policy.toml` | SYS-004/E09/E10/E12 |
 
 - Changing repository defaults requires updating the governing rule and checking
   TOML syntax/consistency. Customizing an already configurable value is not a new
   architecture decision. Static checks do not prove runtime/rig behavior.
-- VR capacity/progress fields and public-port ownership are bound in the
-  [worker/control contract](../../contracts/vr/worker-control.md#resource-policy-binding),
+- Visual Stimulus capacity/progress fields and public-port ownership are bound in the
+  [worker/control contract](../../contracts/visual_stimulus/worker-control.md#resource-policy-binding),
   with engineering defaults supplied and required scientific/rig inputs unset; none
   is a measured performance guarantee.
 
 <a id="e15"></a>
 ### E15 — Contract artifacts and verification
 
-**Status:** Accepted · **Revision:** 8
+**Status:** Accepted · **Revision:** 9
 
 - Write the shared Protobuf definitions and lifecycle transition tables from
   accepted decisions, linked to this record and updated together: wire contracts
@@ -557,12 +558,14 @@ and rig validation remain later work under E15.
   under `contracts/cephvr/acquisition/v1/` reusing shared control semantics. Mark
   unresolved fields, bindings and encoding integration explicitly; partial contracts
   neither authorize new behavior nor claim a runnable backend.
-- Behavioral verification happens on the rig; a simulated-backend implementation is
-  not the initial verification milestone. Track inventory, bounded capability probes
+- Lightweight implementation and authenticated backend-communication tests run
+  locally with narrow hardware-boundary test adapters. Native Windows, device,
+  rendering, timing and full-workload acceptance run on the rig; no simulated
+  scientific backend product or readiness substitute is introduced. Track inventory, bounded capability probes
   and full-workload/backend verification separately in the
   [rig verification list](../../reports/rig-verification.md). Retain each result's
   device, build, settings and workload scope; successful generated-frame checks do
   not close untested source conversion, throughput, timing or failure checks.
 - Contract compilation and static consistency checks do not establish runtime,
-  hardware, timing, storage durability or recovery correctness. No rig validation
-  has been performed for these contracts, and no runtime is implemented here.
+  hardware, timing, storage durability or recovery correctness. Runtime implementation and local-test results are recorded separately from
+  pending rig acceptance in the owning implementation reports.

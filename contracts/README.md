@@ -14,10 +14,10 @@ These files translate accepted rules into wire types; they do not add another de
 | [Host clock](host-clock.md), [helper interface](host_clock.pyi) | Shared integer timestamp API, process compatibility, scheduler and storage bindings |
 | [Acquisition contracts](acquisition/README.md) | Acquisition configuration, SDK/worker/resource/encoding contracts and frame-log schema |
 | [Policy files](policy/) | Versioned fixed-policy constants per backend (`<backend>_policy.toml`), paired with the operator TOMLs by `policy_version` (E14) |
-| [VR contract index](vr/README.md) | Declared stimulus, feedback, display and recording contracts, with concrete gaps |
+| [Visual Stimulus contract index](visual_stimulus/README.md) | Declared stimulus, feedback, display and recording contracts, with concrete gaps |
 | [Tracking contract index](tracking/README.md) | Initial water/fin pipelines, pose/flow/estimator declarations, preparation, worker leases and compact records |
-| [VR continuity contract](vr/state-continuity.md) | V07 instance identity, retained state and renderer-local epoch transitions |
-| [Data-preparation handoff](data-preparation.md) | Early protected descriptors, input attachment confirmation and acyclic acquisition/tracking/VR Setup |
+| [Visual Stimulus continuity contract](visual_stimulus/state-continuity.md) | V07 instance identity, retained state and renderer-local epoch transitions |
+| [Data-preparation handoff](data-preparation.md) | Early protected descriptors, input attachment confirmation and acyclic acquisition/tracking/Visual Stimulus Setup |
 | [Lifecycle tables](../docs/experiment-control-transitions.md) | State changes, guards and timing; backend evidence requires its concrete bindings |
 
 This is a contract draft. All Protobuf files under `cephvr/` compile together; no runtime server,
@@ -28,7 +28,7 @@ after publication, never renumber or reuse them.
 
 ## Scope and unfinished interfaces
 
-Shared control, acquisition, VR, synchronization and tracking declarations have their
+Shared control, acquisition, Visual Stimulus, synchronization and tracking declarations have their
 owning indexes above. Initial tracking geometry/estimators, dependent settings/channels
 and pipeline connections are bound in its catalogue. The [data-preparation handoff](data-preparation.md)
 binds the cross-backend Setup metadata path. ARCH-001 and runtime implementation remain
@@ -127,7 +127,7 @@ Every gRPC client and server uses one maximum message size, `[rpc] max_message_b
 in experiment_config.toml (default 16 MiB), read at process startup. The controller
 event queue and the central-metadata writer each budget at least four maximum
 messages (defaults 64 MiB). Prepared artifacts stay with their producing backend;
-control messages carry digest/size references (for VR, PreparedHandle plus a compact
+control messages carry digest/size references (for Visual Stimulus, PreparedHandle plus a compact
 planned-occurrence summary). Setup rejects a configuration or Ready report exceeding
 the limit, naming the largest items. Before committing UpdateConfiguration, size its
 resulting complete Snapshot with envelope/status headroom and reject an
@@ -181,11 +181,11 @@ supplies Continue. Runtime incident prompts follow the
 - Stopped evidence retains E11 producer cutoffs separately from activity-stop time.
   `ProducerRecordingEnd.source_id` is scoped to its backend: acquisition uses
   `behavioral` and/or `tracking` for each enabled camera, tracking uses `tracking`
-  for its local producer, and VR uses `renderer` for its shared composite-group
+  for its local producer, and Visual Stimulus uses `renderer` for its shared composite-group
   stream. Saving Off does not erase an enabled producer's cutoff. Each entry names
   the exact registered producer generation; duplicate/missing expected entries
   are unconfirmed. Camera `StartedReport` first-callback evidence similarly carries
-  the exact enabled `CameraRole` and registered worker identity; the VR and tracking
+  the exact enabled `CameraRole` and registered worker identity; the Visual Stimulus and tracking
   evidence arms do not substitute for a camera callback.
   `TrialState.interruption_issued_monotonic_ns` anchors interruption deadlines;
   `actual_end_monotonic_ns` is only the E11 aggregate summary. See acquisition
@@ -350,7 +350,7 @@ configuration fields and the Python modules themselves remain unimplemented.
 ## Managed-process launch contract
 
 E08/A02 assign internal worker launching to the owning backend and FFmpeg launching
-to the worker that feeds it (acquisition camera worker, VR rendering worker). A shared helper
+to the worker that feeds it (acquisition camera worker, Visual Stimulus rendering worker). A shared helper
 registers launch intent before creation and confirms exact identity/generation, owner
 and stop/control information before operational work. The supervisor tracks every managed descendant for failure
 handling and full shutdown, including when its owner dies during startup.
@@ -379,7 +379,7 @@ context at Setup, Start and session-level updates (not per trial), separately fr
 ## Verification status
 
 The owner selected the rig for full runtime verification under E15; see the
-[runtime test handoff](../reports/runtime-rig-test-handoff.md). The declarations and
+[runtime test handoff](../reports/rig-verification.md). The declarations and
 pure checks in this directory remain distinct from runtime tests in `tests/`.
 Contract compilation and descriptor inspection only check wire
 syntax, type references, RPC inventory, enums and streaming shape. They do not

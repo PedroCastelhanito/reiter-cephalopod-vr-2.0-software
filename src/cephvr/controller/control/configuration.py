@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 import threading
-import uuid
 from collections.abc import Callable, Coroutine, Mapping
 from pathlib import Path
 from typing import Any
@@ -131,7 +130,7 @@ class ConfigurationCommands:
                 ),
                 self.limit_state.current.validation_ns / 1e9,
             )
-        except (TimeoutError, Exception) as exc:
+        except Exception as exc:
             return self.control_operations.admission(
                 command_id, error=f"configuration validation unavailable: {exc}"
             )
@@ -154,6 +153,7 @@ class ConfigurationCommands:
                     "configuration or session phase changed during validation",
                 )
             if request.proposed == self.configuration_state.current:
+                self.configuration_state.retain_validation(results)
                 self.control_operations.operation(
                     command_id,
                     "UpdateConfiguration",
@@ -184,6 +184,7 @@ class ConfigurationCommands:
                 self.spawn(self.cleanup.cancel_attempt(attempt))
             self.configuration_state.current.CopyFrom(request.proposed)
             self.configuration_state.revision += 1
+            self.configuration_state.retain_validation(results)
             self.projections.set_scope(
                 self.projections.work, self.configuration_state.revision
             )
@@ -246,12 +247,8 @@ class ConfigurationCommands:
             )
         except Exception as exc:
             async with self.lifecycle.lock:
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="configuration_history",
-                        message=f"save unconfirmed or failed: {exc}",
-                    )
+                self.control.add_warning(
+                    "configuration_history", f"save unconfirmed or failed: {exc}"
                 )
                 self.control_operations.complete_operation(
                     command.operator.command_id,

@@ -42,9 +42,6 @@ def _settings(limits: ControllerLimits) -> ControllerConfiguration:
         max_pending_events=32,
         max_pending_payload_bytes=1_000_000,
         max_retained_incidents=limits.max_retained_incidents,
-        history_save_timeout_ns=limits.history_ns,
-        space_query_timeout_ns=limits.space_query_ns,
-        low_space_warning_bytes=limits.low_space_bytes,
         default_intertrial_gap_ns=1_000,
         history_warning=None,
     )
@@ -53,13 +50,19 @@ def _settings(limits: ControllerLimits) -> ControllerConfiguration:
 async def test_setup_reloads_mutable_limits_and_freezes_them_in_prepared_attempt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    vr = pb.BackendContext(backend_name="vr", backend_generation=_id())
-    runtime = _runtime(tmp_path, vr)
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(tmp_path, visual_stimulus)
     runtime.setup_admission.backends = {
-        "vr": cast(BackendPort, _RetainedPeer(vr, svc.RetainedResult()))
+        "visual_stimulus": cast(
+            BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult())
+        )
     }
-    runtime.supervisor_state.processes["vr"] = svc.ProcessHealthStatus(
-        process=pb.ProcessIdentity(role="vr", generation=vr.backend_generation),
+    runtime.supervisor_state.processes["visual_stimulus"] = svc.ProcessHealthStatus(
+        process=pb.ProcessIdentity(
+            role="visual_stimulus", generation=visual_stimulus.backend_generation
+        ),
         process_running=True,
         connected=True,
     )
@@ -67,14 +70,16 @@ async def test_setup_reloads_mutable_limits_and_freezes_them_in_prepared_attempt
     runtime.configuration_state.current.recording_root = str(tmp_path)
     runtime.configuration_state.current.experiment = "experiment"
     runtime.configuration_state.current.subject = "subject"
-    runtime.configuration_state.current.backends.add(backend_name="vr", enabled=True)
+    runtime.configuration_state.current.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
     runtime.configuration_state.current.trials.add(trial_number=1)
     runtime.setup_admission.validators = {
         "structural": lambda _: pb.ValidationResult(completed=True, valid=True)
     }
     runtime.setup_admission.file_policy_loader = lambda active: (
         {}
-        if active == frozenset({"vr"})
+        if active == frozenset({"visual_stimulus"})
         else (_ for _ in ()).throw(AssertionError("wrong active policy set"))
     )
     baseline = _settings(runtime.limits)
@@ -223,13 +228,19 @@ async def test_startup_recovery_cancel_preserves_blocker_then_continue_clears_af
 async def test_reloaded_limits_are_applied_only_on_accepted_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, trial_number: int
 ) -> None:
-    vr = pb.BackendContext(backend_name="vr", backend_generation=_id())
-    runtime = _runtime(tmp_path, vr)
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(tmp_path, visual_stimulus)
     runtime.setup_admission.backends = {
-        "vr": cast(BackendPort, _RetainedPeer(vr, svc.RetainedResult()))
+        "visual_stimulus": cast(
+            BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult())
+        )
     }
-    runtime.supervisor_state.processes["vr"] = svc.ProcessHealthStatus(
-        process=pb.ProcessIdentity(role="vr", generation=vr.backend_generation),
+    runtime.supervisor_state.processes["visual_stimulus"] = svc.ProcessHealthStatus(
+        process=pb.ProcessIdentity(
+            role="visual_stimulus", generation=visual_stimulus.backend_generation
+        ),
         process_running=True,
         connected=True,
     )
@@ -238,7 +249,7 @@ async def test_reloaded_limits_are_applied_only_on_accepted_setup(
     current.recording_root = str(tmp_path)
     current.experiment = "experiment"
     current.subject = "subject"
-    current.backends.add(backend_name="vr", enabled=True)
+    current.backends.add(backend_name="visual_stimulus", enabled=True)
     current.trials.add(trial_number=trial_number)  # 2 is rejected after the reload
     runtime.setup_admission.validators = {
         "structural": lambda _: pb.ValidationResult(completed=True, valid=True)
@@ -275,7 +286,8 @@ def _cancelling_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[ControllerRuntime, Attempt, str]:
     runtime = _runtime(
-        tmp_path, pb.BackendContext(backend_name="vr", backend_generation=_id())
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
     )
     attempt = _attempt(runtime, tmp_path, {})
     runtime.lifecycle.attempt = attempt
@@ -410,7 +422,8 @@ def _scoped_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[ControllerRuntime, Attempt]:
     runtime = _runtime(
-        tmp_path, pb.BackendContext(backend_name="vr", backend_generation=_id())
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
     )
     attempt = _attempt(runtime, tmp_path, {})
     assert attempt.reservation.acquire() == []

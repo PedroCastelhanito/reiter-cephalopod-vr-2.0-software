@@ -42,6 +42,7 @@ class SetupCandidate:
     settings: ControllerConfiguration | None
     limits: ControllerLimits
     file_policies: dict[str, Message]
+    validation: tuple[pb.ValidationResult, ...]
 
 
 _CAMERA_OPEN_MESSAGE = "stop camera preview/editing first"
@@ -73,7 +74,6 @@ class SetupAdmission:
         limit_state: LimitsState,
         backends: Mapping[str, BackendPort],
         spikeglx: SpikeGLXPort | None,
-        file_policies: Mapping[str, Message],
         file_policy_loader: Callable[[frozenset[str]], Mapping[str, Message]] | None,
         settings_loader: Callable[[], ControllerConfiguration] | None,
         startup_settings: ControllerConfiguration | None,
@@ -97,7 +97,6 @@ class SetupAdmission:
         self.limit_state = limit_state
         self.backends = backends
         self.spikeglx = spikeglx
-        self.file_policies = file_policies
         self.file_policy_loader = file_policy_loader
         self.settings_loader = settings_loader
         self.startup_settings = startup_settings
@@ -117,14 +116,14 @@ class SetupAdmission:
             for setting in self.configuration_state.current.backends
             if setting.enabled
         }
-        if "vr" not in configured:
-            raise ValueError("VR participant is required in both modes")
+        if "visual_stimulus" not in configured:
+            raise ValueError("Visual Stimulus participant is required in both modes")
         local = configured - {"synchronization"}
         if (
             self.configuration_state.current.mode == pb.SESSION_MODE_CLOSED_LOOP
             and "tracking" not in local
         ):
-            raise ValueError("closed-loop VR requires tracking feedback")
+            raise ValueError("closed-loop Visual Stimulus requires tracking feedback")
         if "tracking" in local and "acquisition" not in local:
             raise ValueError("tracking requires acquisition camera input")
         missing = local - self.backends.keys()
@@ -244,13 +243,15 @@ class SetupAdmission:
                     )
                 )
                 if self.file_policy_loader is not None
-                else dict(self.file_policies)
+                else {}
             )
         except Exception as exc:
             return self.control_operations.admission(
                 command_id, error=f"backend file policies unavailable: {exc}"
             )
-        return SetupCandidate(loaded_settings, candidate_limits, file_policies)
+        return SetupCandidate(
+            loaded_settings, candidate_limits, file_policies, tuple(validation)
+        )
 
     async def _commit_setup(
         self,
@@ -283,6 +284,7 @@ class SetupAdmission:
                 return self.control_operations.admission(
                     command_id, error=_CAMERA_OPEN_MESSAGE
                 )
+            self.configuration_state.retain_validation(candidate.validation)
             if (
                 not self.configuration_state.current.HasField("mode")
                 or self.configuration_state.current.mode == pb.SESSION_MODE_UNSPECIFIED

@@ -22,7 +22,7 @@ async def test_failed_status_send_is_resent_on_heartbeat_tick(tmp_path: Path) ->
     await runtime.status_state.status_task
     assert runtime.status_state.acknowledged_revision == 0
     runtime.health.heartbeat_interval_ns = 1_000_000
-    loop = asyncio.create_task(runtime.heartbeat_loop())
+    loop = asyncio.create_task(runtime.health.heartbeat_loop())
     await asyncio.sleep(0.05)
     loop.cancel()
     await asyncio.gather(loop, return_exceptions=True)
@@ -96,7 +96,7 @@ async def test_supervisor_heartbeat_does_not_depend_on_status_change(
 ) -> None:
     runtime, _, outbound, _ = make_runtime(tmp_path)
     runtime.health.heartbeat_interval_ns = 1_000_000
-    loop = asyncio.create_task(runtime.heartbeat_loop())
+    loop = asyncio.create_task(runtime.health.heartbeat_loop())
     await asyncio.sleep(0.01)
     loop.cancel()
     with pytest.raises(asyncio.CancelledError):

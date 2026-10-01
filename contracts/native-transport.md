@@ -1,7 +1,7 @@
 # Shared native transport mechanisms
 
 Authority: [E08](../docs/architecture/system-contracts.md#e08), with backend policy
-owned by [acquisition](acquisition/frame-buffers.md) and [VR](vr/runtime-bindings.md).
+owned by [acquisition](acquisition/frame-buffers.md) and [Visual Stimulus](visual_stimulus/runtime-bindings.md).
 [Native interfaces](native_transport.pyi) describe small imported helpers, not a new
 service, universal queue or running Windows implementation.
 
@@ -14,11 +14,21 @@ backend descriptor and limits; they never read another configuration file or cho
 queue capacities, required participants, overflow behavior or stopping policy.
 
 Use Windows message-mode named pipes, one bounded serialized Protobuf message per OS
-message with send_bytes/recv_bytes semantics. VR feedback result/credit paths use
-this adapter; VR recording and acquisition have no cross-process pipe (V12, A07). No extra VR length-prefix codec and no Python
+message with send_bytes/recv_bytes semantics. Visual Stimulus feedback result/credit paths use
+this adapter; Visual Stimulus recording and acquisition have no cross-process pipe (V12, A07). No extra Visual Stimulus length-prefix codec and no Python
 object unpickling. Preserve existing message payload types, source/generation identities,
 sequence numbers, final counts and acknowledgements. Byte-stream FFmpeg stdin is a
 separate adapter over the same cancellation primitive; it is not message-mode media input.
+
+The shared pipe prelude is `cephvr.control.v1.PipeHandshake` (protocol version 1),
+one message on the same message-mode pipe. The server sends a challenge containing its
+registered process-instance ID and the descriptor's startup nonce. The client checks
+both against its retained attachment, replies with its own process-instance ID and the
+same nonce, then requires an accepted server response with the exact server ID and nonce.
+Malformed, oversized, wrong-generation or rejected handshakes close the endpoint and
+fail preparation. The nonce is secret descriptor material and is never logged. This
+authenticates the registered process instance at the protocol boundary; Windows pipe
+security still restricts access to the authorized local process tree.
 
 Use overlapped reads/writes with one in-flight operation per direction. Retain the exact
 OVERLAPPED/event/buffer until completion. The receiver allocates only its configured
@@ -52,11 +62,11 @@ cleanup is idempotent; a timeout cannot grant permission to reuse a live allocat
 | Backend path | Rules supplied by its owner, not by the helper |
 | --- | --- |
 | Acquisition tracking/preview | A03 seqlock slots, reset-to-newest/latest-slot policies, Win32 named event adapter and attachment rules. Recording stays in-process. |
-| VR recording | V12 drop-incoming admission, in-process PBO capture slots, distinct required-evidence capacity. Recording stays in-process. |
-| Tracking results to VR | A06 ordered pending capacity, generation-scoped credits/discards and finite batch. |
+| Visual Stimulus recording | V12 drop-incoming admission, in-process PBO capture slots, distinct required-evidence capacity. Recording stays in-process. |
+| Tracking results to Visual Stimulus | A06 ordered pending capacity, generation-scoped credits/discards and finite batch. |
 
 Never force these paths into one ring implementation or import a camera overload policy
-into VR. Backend data threads call the potentially waiting pipe helper; render
+into Visual Stimulus. Backend data threads call the potentially waiting pipe helper; render
 and control event loops retain their existing bounded admission and health obligations.
 This sharing reduces native mechanism duplication without claiming new latency guarantees.
 

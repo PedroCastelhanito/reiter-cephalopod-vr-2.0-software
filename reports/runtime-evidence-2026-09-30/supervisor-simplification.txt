@@ -1,0 +1,325 @@
+Supervisor simplification validation
+UTC: 2026-09-30T11:50:53.551650+00:00
+HEAD: 7ae3767cea92bf7af94153d417e40df997e1fd05
+Source: uncommitted working tree, including pre-existing changes; HEAD alone does not identify this snapshot.
+Scope: portable behavioral and RPC tests, scoped static checks and repository boundary inspection. Native Windows/rig acceptance not executed.
+Native exit extraction AST review: unchanged control flow after explicit dependency renaming, excluding result packaging.
+
+SHA256 supervisor sources and tests:
+4774a328cd50a342fed86daa2f3bbb0bbc6caa9bd830a11f2f780c4e799049aa  src/cephvr/supervisor/__init__.py
+7289d0522e5973799b0528b4815d145a99783af8b555b4b33bb3da6cf2a8f95a  src/cephvr/supervisor/acquisition_cleanup.py
+258e595f60ffb8e702ed10f664d9002347061f32ea350fbebdee5eb744801ec5  src/cephvr/supervisor/acquisition_shutdown.py
+0faed80eaf8f68f56db2d0dc4caf56965d2e8a7ad9be9a4c31d8e52884f318cd  src/cephvr/supervisor/health.py
+e800c36622efa4948523b9efd2cb87d15850f64886c03b30d56a8e707b55de2f  src/cephvr/supervisor/main.py
+40663210439d5275f52c27f23fb41d4338bb8573644f859ed30891165f6d3cd6  src/cephvr/supervisor/outbound.py
+006927b12a1bfb1714f8788374a7fbd1960a21fb8d3705e5e6e3bd66761def7a  src/cephvr/supervisor/ports.py
+2758bf249bb0cf7f14baabad10327cb3d4fa0845bb8cf38ff81cf13f318f34d8  src/cephvr/supervisor/process_exit.py
+1d93efbfe55e16024c0b3aef2634d80656a4124238b52a01c649c2a8dc31715b  src/cephvr/supervisor/receipts.py
+b7f72e4aa548e8ae39db5b1d773366a101a9328f44c8234944d13b9076c02499  src/cephvr/supervisor/recovery.py
+fc0b7da67253474b87e0baa157f94625a1544a1660a157aaf7703975ba237f29  src/cephvr/supervisor/registration.py
+4ae7a1b544fba22c61a9c7a392c34ce92e32eaccf531077ab3a2afa9367be179  src/cephvr/supervisor/registry.py
+e2862a202a605e319aa066130cc6ed949d13b53e865c201bec5f75e1703e02da  src/cephvr/supervisor/runtime.py
+102404330648d11854b75624308f9ee4f509be9e8a48e4feefaeb1ac4a22a44a  src/cephvr/supervisor/service.py
+5ea9bc0cacbb7fd9bd18f04b37677ffdb1180cf259c1b1b715107c09c1b2a911  src/cephvr/supervisor/shutdown.py
+458807c6636fdd9493053c5200e25607f275a6f92c13159149bf64e54241bbfd  src/cephvr/supervisor/startup.py
+689e72a41a7153bcb9598687e73693e4c0a6da2e99608febb623ec483449e139  src/cephvr/supervisor/state.py
+080eabfed95237a1177eb33090565caebaa3b9d411f6dcf4dcb728a1bd6327cc  src/cephvr/supervisor/status.py
+c5f69d541f6ddf41fe78469991e5bc31fad94080bbd645edec36c0e256238f66  src/cephvr/supervisor/vr_worker.py
+c2a9ecc1473f300b57b5b87f2d1df5dde0f5b7063c3558c54c535b604077550b  src/cephvr/supervisor/worker_context.py
+bea778f13e96560860360c4d28e6c0344a9a470abae505de9ca7fc6b9270de62  src/cephvr/supervisor/worker_outbound.py
+bc73394527efc9add5dd76d8cd3ded48d0d1699da9874f6427bc3f34dc7488b9  tests/supervisor/__init__.py
+056dc71804ffa58489c6c5ac27e486367f56aff212858c33b4181e73cbe28328  tests/supervisor/support.py
+e3d8c54e7b5746ce3ff029f1244a6d3d8078b8efc719bf43afb81dadfbc846a5  tests/supervisor/test_health.py
+3aec227a6834cc094a6ed676389a466ac28db3b3133d63074e6dc7bacf7ff562  tests/supervisor/test_recovery.py
+6c9db927a3926ea3c7230278a4bd4b13d6ca8d45493bb58b4dabea1a61fee271  tests/supervisor/test_registration.py
+4100226523c024556b7814c0bbce04c7d1ee0757384c73ab4fdb2f2a45039682  tests/supervisor/test_registry.py
+fbcdac9a4f98ae0fd3490f61c114d3940fdd34c2b098eb993c5bef7731105fcd  tests/supervisor/test_shutdown.py
+5b98407ecdf01caf08b50e094c1f96378aeb6b662b2f46d869821e5614297b80  tests/supervisor/test_status.py
+6b0fbd8af4f43b8986bda93a5b449b99d599ef6a9cbee2996ed5bc73f0c8478a  tests/supervisor/test_worker_outbound_contracts.py
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', '-m', 'pytest', 'tests/supervisor', 'tests/launcher', 'tests/shared', 'tests/client', 'tests/controller/test_shutdown_handoff.py', '-q', '-m', 'not windows and not rig']
+........................................................................ [ 40%]
+........................................................................ [ 80%]
+..........................EE.......                                      [100%]
+==================================== ERRORS ====================================
+____________ ERROR at setup of test_forged_credentials_are_rejected ____________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-401/test_forged_credentials_are_re0')
+
+    @pytest_asyncio.fixture
+    async def controller(tmp_path: Path) -> AsyncIterator[tuple[int, CredentialStore]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="vr", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+        service = ExperimentControllerService(
+            runtime, client_authentication=authenticate, peer_tokens={}
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)  # type: ignore[no-untyped-call]
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E0930 20:50:55.225902 2857607 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+__ ERROR at setup of test_control_takeover_and_real_missing_backend_rejection __
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-401/test_control_takeover_and_real0')
+
+    @pytest_asyncio.fixture
+    async def controller(tmp_path: Path) -> AsyncIterator[tuple[int, CredentialStore]]:
+        generation = str(uuid4())
+        store = CredentialStore(tmp_path / "credentials", generation)
+        settings = load_controller_configuration(Path(__file__).resolve().parents[2])
+        runtime = ControllerRuntime(
+            generation=generation,
+            configuration=pb.ExperimentConfiguration(
+                subject="subject",
+                experiment="experiment",
+                recording_root=str(tmp_path),
+                mode=pb.SESSION_MODE_OPEN_LOOP,
+                trials=[pb.TrialDefinition(trial_number=1)],
+                backends=[pb.BackendSettings(backend_name="vr", enabled=True)],
+            ),
+            limits=ControllerLimits(**settings.limits_kwargs),
+            validators={},
+            backends={},
+        )
+    
+        async def authenticate(
+            client_id: str, controller_generation: str, peer: str, metadata: object
+        ) -> None:
+            if controller_generation != generation:
+                raise AuthenticationError("wrong controller generation")
+            principal = await asyncio.to_thread(store.lookup, client_id)
+            if principal is None:
+                raise AuthenticationError("client not provisioned")
+            require_authenticated_peer(
+                peer,
+                cast(list[tuple[str, str]], metadata),
+                expected_role=principal.role,
+                expected_generation=principal.generation,
+                expected_token=principal.token,
+            )
+    
+        server = grpc.aio.server()
+        service = ExperimentControllerService(
+            runtime, client_authentication=authenticate, peer_tokens={}
+        )
+        wire.add_ExperimentControllerServiceServicer_to_server(service, server)  # type: ignore[no-untyped-call]
+>       port = server.add_insecure_port("127.0.0.1:0")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/client/test_controller_rpc.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E0930 20:50:55.311675 2857607 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+=========================== short test summary info ============================
+ERROR tests/client/test_controller_rpc.py::test_forged_credentials_are_rejected
+ERROR tests/client/test_controller_rpc.py::test_control_takeover_and_real_missing_backend_rejection
+177 passed, 2 errors in 2.05s
+EXIT: 1
+
+RPC retry recorded from exec tool output (network permission granted):
+COMMAND: .venv/bin/python -m pytest tests/client/test_controller_rpc.py -q
+..                                                                       [100%]
+2 passed in 0.37s
+EXIT: 0
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', '-m', 'ruff', 'check', 'src/cephvr/supervisor', 'tests/supervisor']
+All checks passed!
+EXIT: 0
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', '-m', 'ruff', 'format', '--check', 'src/cephvr/supervisor', 'tests/supervisor']
+30 files already formatted
+EXIT: 0
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', '-m', 'mypy', '--platform', 'win32', 'src/cephvr/supervisor']
+Success: no issues found in 21 source files
+EXIT: 0
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', 'tools/check_backend_boundaries.py']
+REVIEW src/cephvr/acquisition/camera/basler.py: 682 lines; review cohesion
+REVIEW src/cephvr/acquisition/coordinator/trial_lifecycle.py: 574 lines; review cohesion
+REVIEW src/cephvr/acquisition/microcontroller/owner.py: 521 lines; review cohesion
+REVIEW src/cephvr/acquisition/recording/session.py: 536 lines; review cohesion
+REVIEW src/cephvr/acquisition/runtime.py: 557 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/capture_runtime.py: 600 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/execution.py: 589 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/service.py: 557 lines; review cohesion
+REVIEW src/cephvr/controller/assembly.py: 534 lines; review cohesion
+REVIEW src/cephvr/controller/lifecycle/interruption.py: 525 lines; review cohesion
+REVIEW src/cephvr/controller/runtime.py: 527 lines; review cohesion
+REVIEW src/cephvr/supervisor/shutdown.py: 541 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/config/models/program_model.py: 712 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/recording/native.py: 781 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/engine.py: 553 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/native.py: 565 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/scene.py: 555 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/resources/video.py: 598 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/worker/lifecycle.py: 547 lines; review cohesion
+Checked 390 backend modules; 0 boundary violations.
+EXIT: 0
+
+REVALIDATION AFTER CONCURRENT VR TO VISUAL STIMULUS RENAME
+UTC: 2026-09-30T11:52:48.497194+00:00
+Earlier source hashes describe the earlier working copy; concurrent edits were detected during final review. The following results apply after the rename.
+Native exit extraction AST matches after dependency and backend-role renaming, excluding result packaging.
+
+Tests recorded from exec tool output:
+COMMAND: .venv/bin/python -m pytest tests/supervisor tests/launcher tests/shared tests/client/test_state_views.py tests/controller/test_shutdown_handoff.py -q -m "not windows and not rig"
+177 passed in 2.12s
+EXIT: 0
+
+COMMAND (network permission granted): .venv/bin/python -m pytest tests/client/test_controller_rpc.py -q
+2 passed in 0.44s
+EXIT: 0
+
+SHA256 supervisor sources and tests after rename:
+4774a328cd50a342fed86daa2f3bbb0bbc6caa9bd830a11f2f780c4e799049aa  src/cephvr/supervisor/__init__.py
+7289d0522e5973799b0528b4815d145a99783af8b555b4b33bb3da6cf2a8f95a  src/cephvr/supervisor/acquisition_cleanup.py
+258e595f60ffb8e702ed10f664d9002347061f32ea350fbebdee5eb744801ec5  src/cephvr/supervisor/acquisition_shutdown.py
+0faed80eaf8f68f56db2d0dc4caf56965d2e8a7ad9be9a4c31d8e52884f318cd  src/cephvr/supervisor/health.py
+e800c36622efa4948523b9efd2cb87d15850f64886c03b30d56a8e707b55de2f  src/cephvr/supervisor/main.py
+adae94a1c58296fdf16f5fa8ad31ccf70d2d3eaf4651b7f2babb6937f9a13de0  src/cephvr/supervisor/outbound.py
+c8610cc9e6db32094ff5c01e31b8211aa25e02a23f49e2ad1e426ecca9beac7f  src/cephvr/supervisor/ports.py
+0c2c0de379bf12bb6bf85dfb9a6ae3a30286a953998334734885376c4983d2e6  src/cephvr/supervisor/process_exit.py
+1d93efbfe55e16024c0b3aef2634d80656a4124238b52a01c649c2a8dc31715b  src/cephvr/supervisor/receipts.py
+b7f72e4aa548e8ae39db5b1d773366a101a9328f44c8234944d13b9076c02499  src/cephvr/supervisor/recovery.py
+c6c0f84e3dae1fd5045e8d0faa366edc7f3b985b88844d525361a82a5be4312b  src/cephvr/supervisor/registration.py
+02fdd19084246c9badbb28499caa439747ac982670664a94f3abd08902437c2c  src/cephvr/supervisor/registry.py
+e2862a202a605e319aa066130cc6ed949d13b53e865c201bec5f75e1703e02da  src/cephvr/supervisor/runtime.py
+1f3bcf0db97eb1fafa01b981a9e89362b6547b3bf8c0b3d0bfd783ae61b56be3  src/cephvr/supervisor/service.py
+50d4784848618e67c05b8c54dcf89971523b6b4fb34d175e6660a76421551742  src/cephvr/supervisor/shutdown.py
+d4c16078bbefc307cfe8372f8d007dc96b65758ba128ef9461307bc12848806e  src/cephvr/supervisor/startup.py
+689e72a41a7153bcb9598687e73693e4c0a6da2e99608febb623ec483449e139  src/cephvr/supervisor/state.py
+080eabfed95237a1177eb33090565caebaa3b9d411f6dcf4dcb728a1bd6327cc  src/cephvr/supervisor/status.py
+a19cc2d9d4d4d9bd1ae4008f718f3ad6191b2669b3f19ec1b23108808493aeb5  src/cephvr/supervisor/visual_stimulus_worker.py
+c1bda0096f34010e805ce44de3de86854b68da0064c9be1d7c4024e190dd5dd9  src/cephvr/supervisor/worker_context.py
+f533c394e72ed859445fda434fd9204bed407b39d06aa65d9e6a148d415352ab  src/cephvr/supervisor/worker_outbound.py
+bc73394527efc9add5dd76d8cd3ded48d0d1699da9874f6427bc3f34dc7488b9  tests/supervisor/__init__.py
+056dc71804ffa58489c6c5ac27e486367f56aff212858c33b4181e73cbe28328  tests/supervisor/support.py
+2b58e239a1e1d77da5a56acac5968a5cd9f4a74def0301974059d5bcfe3b2410  tests/supervisor/test_health.py
+3aec227a6834cc094a6ed676389a466ac28db3b3133d63074e6dc7bacf7ff562  tests/supervisor/test_recovery.py
+698b0e57e2a1377850e09234de52a900a4b31dc7ca3378e76947748b74946b1d  tests/supervisor/test_registration.py
+63a809f7cf30fc413f2f8f3e992ac198b57adfc0f86138ad66bff5525fe9e2bd  tests/supervisor/test_registry.py
+96bc78b1446823d6c3e7b6e908b388192baae206ea11c6cc506f8b53ef309dcc  tests/supervisor/test_shutdown.py
+5b98407ecdf01caf08b50e094c1f96378aeb6b662b2f46d869821e5614297b80  tests/supervisor/test_status.py
+2afc9624bf5bf1df309186d716ad11a0d9c4d5752b0c6cae54bda6c6a62301ad  tests/supervisor/test_worker_outbound_contracts.py
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', '-m', 'ruff', 'check', 'src/cephvr/supervisor', 'tests/supervisor']
+All checks passed!
+EXIT: 0
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', '-m', 'ruff', 'format', '--check', 'src/cephvr/supervisor', 'tests/supervisor']
+30 files already formatted
+EXIT: 0
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', '-m', 'mypy', '--platform', 'win32', 'src/cephvr/supervisor']
+Success: no issues found in 21 source files
+EXIT: 0
+
+COMMAND: ['/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python', 'tools/check_backend_boundaries.py']
+REVIEW src/cephvr/acquisition/camera/basler.py: 682 lines; review cohesion
+REVIEW src/cephvr/acquisition/coordinator/trial_lifecycle.py: 574 lines; review cohesion
+REVIEW src/cephvr/acquisition/microcontroller/owner.py: 521 lines; review cohesion
+REVIEW src/cephvr/acquisition/recording/session.py: 536 lines; review cohesion
+REVIEW src/cephvr/acquisition/runtime.py: 557 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/capture_runtime.py: 600 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/execution.py: 589 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/service.py: 557 lines; review cohesion
+REVIEW src/cephvr/controller/assembly.py: 534 lines; review cohesion
+REVIEW src/cephvr/controller/lifecycle/interruption.py: 525 lines; review cohesion
+REVIEW src/cephvr/controller/runtime.py: 527 lines; review cohesion
+REVIEW src/cephvr/supervisor/shutdown.py: 541 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/config/models/program_model.py: 712 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/recording/native.py: 781 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/engine.py: 553 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/native.py: 565 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/scene.py: 555 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/resources/video.py: 598 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/worker/lifecycle.py: 547 lines; review cohesion
+Checked 390 backend modules; 0 boundary violations.
+EXIT: 0
+
+Supervisor/test manifest remained stable during static validation.

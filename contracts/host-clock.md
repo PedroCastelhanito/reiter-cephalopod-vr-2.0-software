@@ -90,7 +90,7 @@ separately bound; raw QPC ticks are not already host nanoseconds.
 The acquisition frame-log header's `clocks.host_clock` field is exactly the fixed domain
 ID; `timestamp_unit` is `ns`. The validated shared helper supplies these constants,
 so they need no duplicate per-camera clock-selection field. Camera-native provenance
-remains separate. VR host timestamps use the same binding in its eventual schema.
+remains separate. Visual Stimulus host timestamps use the same binding in its eventual schema.
 Old files without this identity are not silently relabeled; readers require an
 explicit known legacy mapping before interpreting them as this domain.
 

@@ -7,6 +7,7 @@ from typing import Literal
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.receipts import rejected_admission
 from cephvr.controller.state import (
     Attempt,
     ConfigurationState,
@@ -112,11 +113,7 @@ class ControlOperations:
         self, command_id: str, *, error: str = "", code: str = "REJECTED"
     ) -> pb.CommandAdmission:
         if error:
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(code=code, message=error),
-            )
+            return rejected_admission(command_id, code, error)
         return pb.CommandAdmission(
             result=pb.COMMAND_RESULT_ACCEPTED, command_id=command_id
         )

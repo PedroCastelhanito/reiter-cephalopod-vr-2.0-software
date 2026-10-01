@@ -1,0 +1,45 @@
+2026-10-01 local validation; dirty working tree based on 7ae3767cea92bf7af94153d417e40df997e1fd05
+
+$ .venv/bin/python -m ruff check src/cephvr/tracking tests/tracking
+All checks passed!
+Exit: 0
+
+$ .venv/bin/python -m ruff format --check src/cephvr/tracking tests/tracking
+68 files already formatted
+Exit: 0
+
+$ .venv/bin/python -m mypy --platform win32 src/cephvr/tracking
+Success: no issues found in 60 source files
+Exit: 0
+
+$ .venv/bin/python tools/check_backend_boundaries.py
+REVIEW src/cephvr/acquisition/camera/basler.py: 682 lines; review cohesion
+REVIEW src/cephvr/acquisition/microcontroller/owner.py: 521 lines; review cohesion
+REVIEW src/cephvr/acquisition/recording/session.py: 536 lines; review cohesion
+REVIEW src/cephvr/acquisition/runtime.py: 557 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/capture_runtime.py: 600 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/execution.py: 589 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/service.py: 557 lines; review cohesion
+REVIEW src/cephvr/controller/assembly.py: 525 lines; review cohesion
+REVIEW src/cephvr/controller/runtime.py: 516 lines; review cohesion
+REVIEW src/cephvr/supervisor/shutdown.py: 505 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/config/models/program_model.py: 712 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/recording/native.py: 751 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/engine.py: 553 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/native.py: 565 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/scene.py: 555 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/resources/video.py: 512 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/worker/lifecycle.py: 547 lines; review cohesion
+Checked 451 backend modules; 0 boundary violations.
+Exit: 0
+
+$ .venv/bin/python -m unittest discover -s contracts/tracking -p test*.py
+................................................
+----------------------------------------------------------------------
+Ran 48 tests in 0.020s
+
+OK
+Exit: 0
+
+$ git diff --check
+Exit: 0

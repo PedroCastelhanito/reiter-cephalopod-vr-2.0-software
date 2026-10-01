@@ -19,7 +19,10 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.assembly import AssemblyInputs, assemble_controller
 from cephvr.controller.configuration import ControllerConfiguration
-from cephvr.controller.device.owner_cleanup import MANUAL_CLEANUP_TASK_NAME
+from cephvr.controller.device.owner_cleanup import (
+    MANUAL_CLEANUP_TASK_NAME,
+    record_manual_cleanup_warning,
+)
 from cephvr.controller.ports import BackendPort, SpikeGLXPort, SupervisorPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
@@ -38,7 +41,6 @@ from cephvr.controller.state import (
 )
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
-from cephvr.shared.identity import require_uuid4
 
 
 def _id() -> str:
@@ -69,7 +71,6 @@ class ControllerRuntime:
         ]
         | None = None,
         schema_factory: Callable[[pb.PreparedSession], dict[str, object]] | None = None,
-        file_policies: Mapping[str, Message] | None = None,
         file_policy_loader: Callable[[frozenset[str]], Mapping[str, Message]]
         | None = None,
         settings_loader: Callable[[], ControllerConfiguration] | None = None,
@@ -95,7 +96,6 @@ class ControllerRuntime:
         registered_backends = dict(backends)
         validation_ports = dict(validators)
         self.supervisor_generation = supervisor_generation
-        fixed_file_policies = dict(file_policies or {})
         if (settings_loader is None) != (startup_settings is None):
             raise ValueError(
                 "Setup settings loader requires its startup-fixed baseline"
@@ -122,13 +122,7 @@ class ControllerRuntime:
         self.incident_state = IncidentState()
         self.device_state = DeviceState()
         if history_warning:
-            self.control.warnings.append(
-                pb.Warning(
-                    warning_id=_id(),
-                    component="configuration_history",
-                    message=history_warning,
-                )
-            )
+            self.control.add_warning("configuration_history", history_warning)
         self._tasks: set[asyncio.Task[object]] = set()
         self.lifecycle.startup_warning_id = _id() if initial_startup_blocker else ""
         components = assemble_controller(
@@ -148,7 +142,6 @@ class ControllerRuntime:
                 supervisor=supervisor,
                 spikeglx=spikeglx,
                 validators=validation_ports,
-                file_policies=fixed_file_policies,
                 file_policy_loader=file_policy_loader,
                 display_validator=display_validator,
                 output_planner=output_planner,
@@ -164,7 +157,6 @@ class ControllerRuntime:
                 health_silence_ns=health_silence_ns,
                 clock=self.clock,
                 spawn=self._spawn,
-                recovery_log_done=self._recovery_log_done,
             )
         )
         self.control_operations = components.control_operations
@@ -185,7 +177,6 @@ class ControllerRuntime:
         self.trial_logs = components.trial_logs
         self.interruption = components.interruption
         self.session_commands = components.session_commands
-        self.incidents = components.incidents
         self.supervision = components.supervision
         self.prompts = components.prompts
         self.trials = components.trials
@@ -231,38 +222,11 @@ class ControllerRuntime:
     ) -> str | None:
         if kind not in {"abort", "shutdown"}:
             raise ValueError("unknown safety command")
-        async with self.lifecycle.lock:
-            error = self.control_operations.authorized(request, safety=kind)
-            if kind == "abort" and (
-                self.lifecycle.attempt is None
-                or self.lifecycle.session.phase
-                not in (pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING)
-            ):
-                return error or "Abort unavailable"
-            if kind == "shutdown" and self.lifecycle.session.shutdown_requested:
-                return error or "shutdown already requested"
-            return error or None
+        return await self.session_commands.safety_precondition(request, kind)
 
     def authority_status(self) -> AuthorityStatus:
-        attempt = self.lifecycle.attempt
-        work = pb.WorkContext()
-        if attempt is not None:
-            work.session.CopyFrom(attempt.context)
-        return AuthorityStatus(
-            shutdown_intent_ns=self.lifecycle.shutdown_intent_ns,
-            supervisor_last_seen_ns=self.supervisor_state.last_seen_ns,
-            session_phase=self.lifecycle.session.phase,
-            cleanup_confirmed=self.lifecycle.session.cleanup_confirmed,
-            handoff_complete=all(
-                operation.complete
-                for operation in self.control.operations.values()
-                if operation.command == "ShutdownApplication"
-            ),
-            work=work,
-            activated=bool(attempt and attempt.activated),
-            spikeglx_stop_unconfirmed=bool(
-                attempt and attempt.paired and not attempt.spikeglx_stopped
-            ),
+        return AuthorityStatus.capture(
+            self.lifecycle, self.control, self.supervisor_state
         )
 
     async def record_warning(self, warning: pb.Warning) -> None:
@@ -307,18 +271,11 @@ class ControllerRuntime:
         if task.get_name() == MANUAL_CLEANUP_TASK_NAME:
             # A device-cleanup blocker, not an experiment fault: the pending
             # barrier stays and the task retries itself, so never interrupt.
-            self._manual_cleanup_warning(error)
+            record_manual_cleanup_warning(self.control, self.publisher.publish, error)
             return
         if error is None:
             return
-        self.control.warnings.append(
-            pb.Warning(
-                warning_id=_id(),
-                component="controller",
-                message=f"background operation failed: {error}",
-            )
-        )
-        self.control.warnings = self.control.warnings[-256:]
+        self.control.add_warning("controller", f"background operation failed: {error}")
         self.publisher.publish()
         attempt = self.lifecycle.attempt
         if (
@@ -332,31 +289,6 @@ class ControllerRuntime:
                 )
             )
 
-    def _manual_cleanup_warning(self, error: BaseException | None) -> None:
-        kept = [
-            item
-            for item in self.control.warnings
-            if item.component != "manual_camera_cleanup"
-        ]
-        changed = error is not None or len(kept) != len(self.control.warnings)
-        if error is not None:
-            kept.append(
-                pb.Warning(
-                    warning_id=_id(),
-                    component="manual_camera_cleanup",
-                    message=f"manual camera cleanup pending, retrying: {error}",
-                )
-            )
-        self.control.warnings = kept[-256:]
-        if changed:
-            self.publisher.publish()
-
-    @staticmethod
-    def _recovery_log_done(attempt: Attempt, task: asyncio.Task[object]) -> None:
-        attempt.recovery_log_tasks.discard(task)
-        if task.cancelled() or task.exception() is not None:
-            attempt.recovery_log_failed = True
-
     async def install_startup_recovery(
         self,
         prompt: pb.Prompt | None,
@@ -365,46 +297,9 @@ class ControllerRuntime:
         completion_warning: str | None = None,
         notice: str | None = None,
     ) -> None:
-        if (prompt is None) != (handler is None):
-            raise ValueError(
-                "startup recovery prompt and handler must be installed together"
-            )
-        if prompt is not None:
-            if (
-                not blocker
-                or set(prompt.permitted_choices) != {"continue", "cancel"}
-                or not prompt.HasField("setup")
-                or not prompt.HasField("operation")
-            ):
-                raise ValueError(
-                    "startup recovery requires a concrete bounded prompt and blocker"
-                )
-            for identity in (
-                prompt.prompt_id,
-                prompt.setup.controller_generation,
-                prompt.setup.session_id,
-                prompt.operation.command_id,
-            ):
-                require_uuid4(identity)
-        async with self.lifecycle.lock:
-            if (
-                self.lifecycle.authority_lost
-                or self.lifecycle.session.shutdown_requested
-                or self.lifecycle.startup_recovery_running
-            ):
-                raise RuntimeError("startup recovery authority unavailable")
-            self.lifecycle.startup_prompt = (
-                deepcopy(prompt) if prompt is not None else None
-            )
-            self.lifecycle.startup_recovery_handler = handler
-            self.lifecycle.startup_blocker = blocker or ""
-            self.lifecycle.startup_warning_id = _id() if blocker else ""
-            self.lifecycle.startup_completion_warning = completion_warning
-            if notice:
-                self.control.warnings.append(
-                    pb.Warning(warning_id=_id(), component="recovery", message=notice)
-                )
-            self.publisher.publish()
+        await self.prompts.install_startup_recovery(
+            prompt, handler, blocker, completion_warning, notice
+        )
 
     async def snapshot(self) -> pb.Snapshot:
         return await self.publisher.snapshot()

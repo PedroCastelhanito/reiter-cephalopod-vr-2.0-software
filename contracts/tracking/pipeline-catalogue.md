@@ -51,8 +51,8 @@ views. FlowGridMapping supplies source positions and represented rectangular foo
 in acquired-image coordinates, in read-only float64 arrays allocated once per prepared
 layout. Its mapping_id is repeated in each FlowLease;
 [host-buffer validation](method-bindings.md#completed-host-buffer-contract) binds the
-lease context, byte order, pitches and native availability before estimator access. The flow adapter must establish the actual SDK convention; never infer the sample
-position from the footprint center or grid stride alone. Validate finite positions,
+lease context, byte order, pitches and native availability before estimator access. T33 declares the native estimate at the represented block centre; the adapter supplies
+that explicit mapping rather than relying on an implicit origin or grid stride. Validate finite positions,
 positive nonoverlapping footprints clipped to source bounds and exact grid dimensions
 at Setup. Native mapping/SDK verification remains a runtime integration obligation.
 Section and selected-area intersection follow water-flow-proxy.md without upsampling.
@@ -72,13 +72,13 @@ stages, registered concrete schemas, supported implementations, compatible ports
 required cost availability. It returns canonical stage order and channel declarations.
 All three channels are anatomical_body interval_average_rate: forward_drive and
 sideways_drive in px/s; turn_drive in 1/s (radians per second).
-The [output contract](locomotion-output.md) owns VR gain and integration compatibility.
+The [output contract](locomotion-output.md) owns Visual Stimulus gain and integration compatibility.
 No arbitrary GUI units or per-frame provider selection.
 
 Both configuration validation and backend preparation use this same pure catalogue.
 The existing lifecycle additionally checks manual/reference/search inputs, source
 allocation/layout, assets, physical device capabilities, byte/time budgets, factory
-versions and VR feedback bindings before Ready. These runtime checks are not implemented
+versions and Visual Stimulus feedback bindings before Ready. These runtime checks are not implemented
 by resolve_pipeline. Save the returned StageBindings and channels in PreparedMethods;
 validate_prepared rejects mismatches and requires geometry/estimator binding identities.
 Binding IDs identify prepared objects, unique within the preparation, and cannot refer

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Coroutine
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, cast
 from uuid import UUID
@@ -14,7 +13,11 @@ import grpc
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.evidence import started_satisfied, stopped_satisfied
-from cephvr.controller.lifecycle_completion import DetailedCompletion
+from cephvr.controller.lifecycle_completion import (
+    DetailedCompletion,
+    retain_or_conflict,
+)
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.state import (
     Attempt,
     ConfigurationState,
@@ -38,7 +41,6 @@ class ReportHooks:
     spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]]
     late_cleanup: Callable[[Attempt], Coroutine[Any, Any, None]]
     log_event: Callable[..., Coroutine[Any, Any, None]]
-    recovery_log_done: Callable[[Attempt, asyncio.Task[object]], None]
     activity_requirements: Callable[[Attempt, str], ActivityRequirements]
     source_producers: Callable[[Attempt, str], dict[str, tuple[str, str]]]
     clock: Callable[[], int]
@@ -69,19 +71,13 @@ class LifecycleReports:
     ) -> pb.ReportReceipt:
         kind = report.WhichOneof("report")
         if kind is None:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(code="INVALID", message="empty lifecycle report"),
-            )
+            return rejected_receipt("INVALID", "empty lifecycle report")
         payload = getattr(report, kind)
         context = payload.context if kind not in {"cleanup", "operation"} else None
         async with self.lifecycle.lock:
             attempt = self.lifecycle.attempt
             if attempt is None:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(code="STALE", message="no matching live work"),
-                )
+                return rejected_receipt("STALE", "no matching live work")
             if kind == "operation":
                 return self._operation(attempt, payload)
             if kind == "cleanup":
@@ -101,19 +97,11 @@ class LifecycleReports:
                         self._warn_unconfirmed("no finalization deadline")
                 return receipt
             if attempt.cancel_requested or context is None:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(code="STALE", message="attempt retired"),
-                )
+                return rejected_receipt("STALE", "attempt retired")
             name = context.backend.backend_name
             backend = attempt.required.get(name)
             if backend is None or context.backend != backend.context:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(
-                        code="IDENTITY", message="unregistered backend generation"
-                    ),
-                )
+                return rejected_receipt("IDENTITY", "unregistered backend generation")
             work_kind = context.work.WhichOneof("work")
             if (
                 kind == "ready"
@@ -127,10 +115,7 @@ class LifecycleReports:
                     attempt, payload, context, kind, name, work_kind, ingress_ns
                 )
             else:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(code="PHASE", message="report not applicable"),
-                )
+                return rejected_receipt("PHASE", "report not applicable")
             if failure is not None:
                 return failure
             self.hooks.publish()
@@ -213,25 +198,16 @@ class LifecycleReports:
             or operation.work.session != attempt.context
             or not operation.complete
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="EVIDENCE",
-                    message="unexpected backend operation result",
-                ),
+            return rejected_receipt("EVIDENCE", "unexpected backend operation result")
+        if (
+            conflict := retain_or_conflict(
+                attempt.scope_results,
+                operation.context.command_id,
+                operation,
+                "changed backend operation completion",
             )
-        prior = attempt.scope_results.get(operation.context.command_id)
-        if prior is not None and prior.SerializeToString(
-            deterministic=True
-        ) != operation.SerializeToString(deterministic=True):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CONFLICT",
-                    message="changed backend operation completion",
-                ),
-            )
-        attempt.scope_results[operation.context.command_id] = deepcopy(operation)
+        ) is not None:
+            return conflict
         attempt.changed.set()
         return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
 
@@ -258,25 +234,10 @@ class LifecycleReports:
             or payload.configuration_revision != self.configuration.revision
             or not payload.required_checks_passed
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="EVIDENCE",
-                    message="Setup Ready identity/check mismatch",
-                ),
-            )
-        old = attempt.ready.get(name)
-        if old is not None and old.SerializeToString(
-            deterministic=True
-        ) != payload.SerializeToString(deterministic=True):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CONFLICT", message="changed duplicate Setup Ready"
-                ),
-            )
-        attempt.ready[name] = deepcopy(payload)
-        return None
+            return rejected_receipt("EVIDENCE", "Setup Ready identity/check mismatch")
+        return retain_or_conflict(
+            attempt.ready, name, payload, "changed duplicate Setup Ready"
+        )
 
     def _trial(
         self,
@@ -298,19 +259,10 @@ class LifecycleReports:
             != attempt.prepared.trials[attempt.trial_index].context
             or context.operation.command_id != attempt.trial_operation
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="EVIDENCE", message="trial report identity mismatch"
-                ),
-            )
+            return rejected_receipt("EVIDENCE", "trial report identity mismatch")
         if name not in attempt.trial_participants:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="EVIDENCE",
-                    message="backend is not an active trial participant",
-                ),
+            return rejected_receipt(
+                "EVIDENCE", "backend is not an active trial participant"
             )
         if kind == "ready":
             return self._trial_ready(
@@ -343,27 +295,15 @@ class LifecycleReports:
             or payload.configuration_revision != self.configuration.revision
             or not payload.required_checks_passed
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(code="EVIDENCE", message="trial readiness failed"),
-            )
-        old = attempt.trial_ready.get(name)
-        if old is not None and old.SerializeToString(
-            deterministic=True
-        ) != payload.SerializeToString(deterministic=True):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CONFLICT", message="changed duplicate trial Ready"
-                ),
-            )
-        attempt.trial_ready[name] = deepcopy(payload)
-        return None
+            return rejected_receipt("EVIDENCE", "trial readiness failed")
+        return retain_or_conflict(
+            attempt.trial_ready, name, payload, "changed duplicate trial Ready"
+        )
 
     def _started(
         self, attempt: Attempt, payload: pb.StartedReport, name: str, ingress_ns: int
     ) -> pb.ReportReceipt | None:
-        camera_roles, external_roles, vr_outputs, sources, producers = (
+        camera_roles, external_roles, visual_stimulus_outputs, sources, producers = (
             self.hooks.activity_requirements(attempt, name)
         )
         if (
@@ -379,33 +319,18 @@ class LifecycleReports:
                 external_camera_roles=external_roles,
                 allowed_producers=producers,
                 source_producers=self.hooks.source_producers(attempt, name),
-                vr_outputs=vr_outputs,
+                visual_stimulus_outputs=visual_stimulus_outputs,
             )
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="LATE",
-                    message="Started evidence late or incomplete",
-                ),
-            )
-        old_started = attempt.started.get(name)
-        if old_started is not None and old_started.SerializeToString(
-            deterministic=True
-        ) != payload.SerializeToString(deterministic=True):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CONFLICT", message="changed duplicate Started"
-                ),
-            )
-        attempt.started[name] = deepcopy(payload)
-        return None
+            return rejected_receipt("LATE", "Started evidence late or incomplete")
+        return retain_or_conflict(
+            attempt.started, name, payload, "changed duplicate Started"
+        )
 
     def _stopped(
         self, attempt: Attempt, payload: pb.StoppedReport, name: str, ingress_ns: int
     ) -> pb.ReportReceipt | None:
-        _camera_roles, external_roles, _vr_outputs, sources, producers = (
+        _camera_roles, external_roles, _visual_stimulus_outputs, sources, producers = (
             self.hooks.activity_requirements(attempt, name)
         )
         if (
@@ -429,21 +354,7 @@ class LifecycleReports:
                 external_camera_roles=external_roles,
             )
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="EVIDENCE", message="Stopped conditions missing"
-                ),
-            )
-        old_stopped = attempt.stopped.get(name)
-        if old_stopped is not None and old_stopped.SerializeToString(
-            deterministic=True
-        ) != payload.SerializeToString(deterministic=True):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CONFLICT", message="changed duplicate Stopped"
-                ),
-            )
-        attempt.stopped[name] = deepcopy(payload)
-        return None
+            return rejected_receipt("EVIDENCE", "Stopped conditions missing")
+        return retain_or_conflict(
+            attempt.stopped, name, payload, "changed duplicate Stopped"
+        )

@@ -7,7 +7,6 @@ import json
 import os
 import uuid
 from concurrent.futures import Future
-from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -27,7 +26,13 @@ from cephvr.controller.metadata.types import (
 from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import Attempt
-from tests.controller.support_components import _attempt, _id, _RetainedPeer, _runtime
+from tests.controller.support_components import (
+    _attempt,
+    _id,
+    _reservation,
+    _RetainedPeer,
+    _runtime,
+)
 
 
 class _RetiringWriter:
@@ -36,6 +41,77 @@ class _RetiringWriter:
 
     def retire(self, command_id: str) -> None:
         self.retired.append(command_id)
+
+
+@pytest.mark.parametrize(
+    "failure", [None, "recovery", "unconfirmed", "session_log", "seal"]
+)
+async def test_session_closure_drains_logs_then_seals_with_remaining_budget(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {})
+    events: list[str] = []
+    now = 1_000
+    monkeypatch.setattr(runtime.metadata, "clock", lambda: now)
+
+    class Writer:
+        def seal(self, timeout: float) -> bool:
+            assert timeout == 0.5
+            events.append("seal")
+            return failure != "seal"
+
+    attempt.writer = cast(MetadataWriter, Writer())
+
+    async def recovery() -> None:
+        nonlocal now
+        assert attempt.recovery_log_closed
+        events.append("recovery")
+        now += 250_000_000
+        if failure == "recovery":
+            raise StorageError("recovery log failed")
+
+    async def log_event(_attempt: Attempt, event: str, *, outcome: str) -> None:
+        nonlocal now
+        assert outcome == "interrupted"
+        events.append(event)
+        now += 250_000_000
+        if failure == "session_log":
+            raise StorageError("session log failed")
+
+    attempt.recovery_log_tasks.add(asyncio.create_task(recovery()))
+    monkeypatch.setattr(runtime.metadata, "log_event", log_event)
+    if failure == "unconfirmed":
+        runtime.metadata_state.results[_id()] = pb.MetadataResult(
+            state=pb.METADATA_PERSISTENCE_UNCONFIRMED
+        )
+    clean = await runtime.metadata.finish_session(
+        attempt, outcome="interrupted", deadline_ns=1_000_001_000
+    )
+    assert clean == (failure is None)
+    assert events == ["recovery", "session_ended", "seal"]
+    assert attempt.writer_closed == (failure != "seal")
+
+
+async def test_expired_session_closure_cancels_recovery_without_claiming_seal(
+    tmp_path: Path,
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _runtime(tmp_path, backend)
+    attempt = _attempt(runtime, tmp_path, {})
+
+    def seal(_timeout: float) -> bool:
+        pytest.fail("expired closure must not start sealing")
+
+    attempt.writer = cast(MetadataWriter, SimpleNamespace(seal=seal))
+    recovery = asyncio.create_task(asyncio.Event().wait())
+    attempt.recovery_log_tasks.add(recovery)
+    assert not await runtime.metadata.finish_session(
+        attempt, outcome="interrupted", deadline_ns=999
+    )
+    assert recovery.cancelled()
+    assert attempt.recovery_log_closed and not attempt.writer_closed
 
 
 def test_session_config_excludes_dormant_settings_and_pfs_payload() -> None:
@@ -303,17 +379,6 @@ def test_partial_os_write_is_looped_until_record_complete(
     monkeypatch.undo()
     assert log.read_bytes() == b'{"n":1}\n'
     assert writer.seal(3)
-
-
-def _reservation(root: Path) -> OutputReservation:
-    return OutputReservation(
-        root,
-        "experiment",
-        "subject",
-        SESSION,
-        GENERATION,
-        datetime(2026, 9, 29, 13, 14, 15, tzinfo=UTC),
-    )
 
 
 def test_close_unactivated_keeps_files_and_marks_marker_complete(

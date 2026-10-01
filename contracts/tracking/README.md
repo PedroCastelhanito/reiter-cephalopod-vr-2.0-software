@@ -3,12 +3,16 @@
 Authority: [tracking decisions](../../docs/architecture/tracking.md). T02–T11 bind
 pipeline organization, families, camera scope and pose/image-flow method scope.
 The independent method, lifecycle and compact-record contracts are declared below.
-These pure declarations/validators do not implement tracking or prove rig behavior.
+Canonical lightweight models, configuration and validators now live in
+`src/cephvr/tracking`; contract modules re-export them. They do not implement native
+tracking or prove rig behavior.
 T08's [optimized frame path](execution.md#optimized-frame-path) is accepted: CPU
 preparation/estimation in one ordered movement worker, independent pose, reusable
 private leases and one native-grid host readback. The typed private-frame retention
-and completed host-flow views are bound in runtime_types.pyi; their runtime providers
-remain to be built. The [flow operation contract](method-bindings.md#baseline-and-pair-operation-contract)
+and completed host-flow views are bound in runtime_types.pyi; runtime providers and
+local tests are implemented under `src/cephvr/tracking` and `tests/tracking`.
+See the [tracking report](../../reports/tracking.md) for current evidence and pending
+native/rig acceptance. The [flow operation contract](method-bindings.md#baseline-and-pair-operation-contract)
 and [host-buffer contract](method-bindings.md#completed-host-buffer-contract) now specify
 first-frame establishment, completion/lease ordering, source/mapping identity, byte order
 and optional native availability explicitly. These are declarations, not executable methods.
@@ -36,7 +40,7 @@ and optional native availability explicitly. These are declarations, not executa
 Generated JSON schemas come from the two pure model modules; run `schema_check.py`
 to check freshness and `test_contracts.py` / `test_pipeline_contracts.py` for local boundary checks. Neither opens
 experimental files or invokes a backend/SDK. Shared strict JSON helpers are reused
-from contracts/vr without adding another service or framework.
+from contracts/visual_stimulus without adding another service or framework.
 
 ## Selection and configuration binding
 
@@ -46,7 +50,7 @@ no second tracking configuration envelope or independent device owner is introdu
 
 | Operator value | Typed control field | Validation |
 | --- | --- | --- |
-| `recording.save_tracking_data` | `TrackingSettings.save_tracking_data` | Boolean, default true; preserve explicit false. Independent of activation/camera/VR saving; no outputs from disabled tracking. |
+| `recording.save_tracking_data` | `TrackingSettings.save_tracking_data` | Boolean, default true; preserve explicit false. Independent of activation/camera/Visual Stimulus saving; no outputs from disabled tracking. |
 | `pipeline.name` | `TrackingSettings.pipeline_id` | `water_flow` or `fin_flow` from the versioned pipeline catalogue; default `water_flow`. No fallback pipeline. |
 | `input.camera_role` | `TrackingSettings.input_camera_role` | `behavioral` or `tracking`, mapped to the existing CameraRole enum. Exactly one selected role; unspecified/unknown values fail. |
 | `pose.threshold.level` / `polarity` | `stages[pose].settings_json` (ContourSettings) | Required for automatic threshold_contour; finite level in prepared grayscale range; dark/bright enum under T18. |
@@ -122,7 +126,7 @@ metadata. Do not copy camera settings into tracking, select the first discovered
 or silently switch input when the selected source fails. Required failures follow E06.
 
 A03/A04 own frame transport and backlog handling; A06 and V25/V26 own the already
-accepted result/reset and VR hold behavior. Selecting one camera changes none of those
+accepted result/reset and Visual Stimulus hold behavior. Selecting one camera changes none of those
 policies. [Execution binding](execution.md) names the tracking process as the attachment
 and result owner. Use [lifecycle.md](lifecycle.md) for typed preparation and the existing A06 channel.
 T35/T36 channel names/meanings are bound in [locomotion-output.md](locomotion-output.md);
@@ -141,7 +145,7 @@ not computation, result publication or administrative failure reporting.
 Use supervisor-owned E04 output reservations and common E11 trial admission/finalization.
 Keep scientific records in backend outputs, not SESSION_LOG or per-trial configuration.
 Record actual observations/results, including invalid/baseline/reset/discard evidence;
-VR-owned applied-result/render links remain with VR. Missing/dropped input cannot be
+Visual Stimulus-owned applied-result/render links remain with Visual Stimulus. Missing/dropped input cannot be
 represented as a fabricated observation. T09 pose selection links must identify the
 observation used or its missing/invalid/stale disposition.
 
@@ -171,8 +175,8 @@ their owners without introducing another decision list. No critical owner choice
 left in the four requested groups: fin sampling, contour landmarks, water completion
 and pipeline registration. Alternative methods remain possible through T27.
 
-Current work is architecture/contract review under [GOV-001](../../architecture.md#gov-001);
-these declarations do not authorize starting implementation. The following scenarios
+Runtime implementation is authorized under [ARCH-001](../../architecture.md#arch-001).
+The [Tracking report](../../reports/tracking.md) records progress and validation limits. The following scenarios
 must be traced through the owning contracts before overall architecture review is closed:
 
 | Scenario | Owning contract and expected evidence |
@@ -180,17 +184,18 @@ must be traced through the owning contracts before overall architecture review i
 | Setup/manual or automatic pose; saving On or Off; open or closed loop | [Lifecycle](lifecycle.md): active resources and Ready obligations match the selected mode. |
 | First frame, subsequent pair and source reset | [Flow operations](method-bindings.md#baseline-and-pair-operation-contract): baseline creates no displacement; only completed matching leases reach the estimator. |
 | Missing/newer-invalid/stale pose or insufficient support | [Execution](execution.md), [proxy](water-flow-proxy.md): no older-valid fallback, usable control or retained filter tail. |
-| Input gap/overload or feedback-age reset | [A04](../../docs/architecture/acquisition.md#a04), [A06](../../docs/architecture/tracking.md#a06), [VR feedback](../vr/feedback.md): one reset owner, result reset_generation, exclusions and fresh baseline. |
+| Input gap/overload or feedback-age reset | [A04](../../docs/architecture/acquisition.md#a04), [A06](../../docs/architecture/tracking.md#a06), [Visual Stimulus feedback](../visual_stimulus/feedback.md): one reset owner, result reset_generation, exclusions and fresh baseline. |
 | Evidence admission failure, normal cutoff or Abort | [Recording](recording.md), [lifecycle](lifecycle.md): required evidence precedes dependent publication, producer cutoff is distinct from file closure, no between-trial file scan. |
 | Native timeout or incomplete cleanup | [Execution](execution.md), [E06](../../docs/architecture/system-contracts.md#e06): no reuse of live buffers or false cleanup success. |
 
-The [integration review](../../reports/tracking-integration-contract-review.md) records
+The [integration review](../../reports/tracking.md) records
 an earlier pass; its reset-marker findings are superseded by A06's result generations.
 This is a document-review checklist, not a runtime test suite or a claim that the
 scenarios have been exercised on hardware.
 
 Runtime workers, geometry/estimator computations, SDK adapters, lifecycle integration,
-recording and configuration loading remain unimplemented. In particular the adapter must
+and recording remain unimplemented. Lightweight configuration loading/validation
+and schema discovery are implemented; see the report for checks and limits. In particular the adapter must
 establish the actual native grid mapping/capabilities and enforce the declared resource
 and lease contracts before Ready. Pure declaration checks do not execute these methods.
 Rig/subject inputs still require operator entry, and timing, image/landmark accuracy,

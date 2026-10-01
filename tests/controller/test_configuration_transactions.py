@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import shutil
-import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
@@ -18,37 +17,19 @@ from cephvr.controller.control import configuration as configuration_module
 from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.runtime import ControllerRuntime
-from cephvr.controller.state import Attempt, ControllerLimits
-from cephvr.vr.v1 import runtime_pb2 as vr_pb
-from tests.controller.support_components import TaskCapture, _RetainedPeer
+from cephvr.controller.state import Attempt
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
+from tests.controller.support_components import (
+    TaskCapture,
+    _id,
+    _RetainedPeer,
+    default_limits,
+)
 from tests.controller.support_components import _runtime as component_runtime
 
 
-def _id() -> str:
-    return str(uuid.uuid4())
-
-
 def _runtime(backend: pb.BackendContext | None = None) -> ControllerRuntime:
-    limits = ControllerLimits(
-        setup_ns=1_000_000_000,
-        setup_cancel_ns=1_000_000_000,
-        ready_ns=1_000_000_000,
-        finished_ns=1_000_000_000,
-        registration_ns=1_000_000_000,
-        recovery_ns=1_000_000_000,
-        metadata_ns=1_000_000_000,
-        validation_ns=1_000_000_000,
-        lead_ns=500_000_000,
-        controller_release_ns=100_000_000,
-        backend_release_ns=50_000_000,
-        start_evidence_ns=250_000_000,
-        stop_evidence_ns=250_000_000,
-        max_metadata_operations=8,
-        max_metadata_bytes=4096,
-        history_ns=1_000_000_000,
-        space_query_ns=1_000_000_000,
-        low_space_bytes=1,
-    )
+    limits = default_limits()
     backends = {}
     if backend is not None:
         backends[backend.backend_name] = cast(
@@ -70,10 +51,14 @@ def _runtime(backend: pb.BackendContext | None = None) -> ControllerRuntime:
 def _setup_ready_runtime(
     monkeypatch: pytest.MonkeyPatch, root: str
 ) -> tuple[ControllerRuntime, TaskCapture]:
-    vr = pb.BackendContext(backend_name="vr", backend_generation=_id())
-    runtime = _runtime(vr)
-    runtime.supervisor_state.processes["vr"] = svc.ProcessHealthStatus(
-        process=pb.ProcessIdentity(role="vr", generation=vr.backend_generation),
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(visual_stimulus)
+    runtime.supervisor_state.processes["visual_stimulus"] = svc.ProcessHealthStatus(
+        process=pb.ProcessIdentity(
+            role="visual_stimulus", generation=visual_stimulus.backend_generation
+        ),
         process_running=True,
         connected=True,
     )
@@ -82,7 +67,7 @@ def _setup_ready_runtime(
     current.recording_root = root
     current.experiment = "experiment"
     current.subject = "subject"
-    current.backends.add(backend_name="vr", enabled=True)
+    current.backends.add(backend_name="visual_stimulus", enabled=True)
     current.trials.add(trial_number=1)
     runtime.setup_admission.validators = {
         "structural": lambda _: pb.ValidationResult(completed=True, valid=True)
@@ -270,24 +255,32 @@ async def test_commit_in_configuration_phase_just_commits(
 
 
 def test_setup_request_uses_prepared_backend_settings_not_live() -> None:
-    vr = pb.BackendContext(backend_name="vr", backend_generation=_id())
-    runtime = _runtime(vr)
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(visual_stimulus)
     session = pb.SessionContext(
         controller_generation=runtime.generation, session_id=_id()
     )
     prepared = pb.PreparedSession(context=session)
-    frozen = prepared.configuration.backends.add(backend_name="vr", enabled=True)
-    frozen.vr.save_vr_data = True
+    frozen = prepared.configuration.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    frozen.visual_stimulus.save_visual_stimulus_data = True
     live = runtime.configuration_state.current.backends.add(
-        backend_name="vr", enabled=True
+        backend_name="visual_stimulus", enabled=True
     )
-    live.vr.save_vr_data = False
+    live.visual_stimulus.save_visual_stimulus_data = False
     attempt = Attempt(session, prepared, cast(OutputReservation, None), {}, {})
-    attempt.file_policies["vr"] = vr_pb.VRFilePolicies()
-    request = runtime.preparation_context.setup_request(
-        attempt, cast(BackendPort, _RetainedPeer(vr, svc.RetainedResult())), _id()
+    attempt.file_policies["visual_stimulus"] = (
+        visual_stimulus_pb.VisualStimulusFilePolicies()
     )
-    assert request.settings.vr.save_vr_data is True
+    request = runtime.preparation_context.setup_request(
+        attempt,
+        cast(BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult())),
+        _id(),
+    )
+    assert request.settings.visual_stimulus.save_visual_stimulus_data is True
 
 
 # ---- evidence cutoff --------------------------------------------------------
@@ -338,7 +331,8 @@ async def test_timed_out_save_cannot_overwrite_a_newer_save(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runtime: ControllerRuntime = component_runtime(
-        tmp_path, pb.BackendContext(backend_name="vr", backend_generation=_id())
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
     )
     commands = runtime.configuration_commands
     commands.configuration_history_path = tmp_path / "history.json"
@@ -375,7 +369,8 @@ async def test_concurrent_history_saves_do_not_overlap(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runtime = component_runtime(
-        tmp_path, pb.BackendContext(backend_name="vr", backend_generation=_id())
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
     )
     commands = runtime.configuration_commands
     commands.configuration_history_path = tmp_path / "history.json"

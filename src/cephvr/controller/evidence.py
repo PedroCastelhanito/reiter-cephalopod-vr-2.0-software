@@ -13,7 +13,7 @@ from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import microcontroller_pb2 as pulses
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.identity import require_uuid4
-from cephvr.vr.v1 import runtime_pb2 as vr
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus
 
 ProcessKey = tuple[str, str]
 
@@ -27,7 +27,7 @@ def started_satisfied(
     camera_roles: Set[int] = frozenset(),
     external_camera_roles: Set[int] = frozenset(),
     allowed_producers: Set[ProcessKey] = frozenset(),
-    vr_outputs: Set[str] = frozenset(),
+    visual_stimulus_outputs: Set[str] = frozenset(),
     source_producers: Mapping[str, ProcessKey] | None = None,
 ) -> bool:
     """Actual first work for the entire expected source set, within original T."""
@@ -55,7 +55,7 @@ def started_satisfied(
                 or not device.HasField("camera")
                 or device.camera
                 not in {camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING}
-                or device.HasField("vr_output")
+                or device.HasField("visual_stimulus_output")
                 or device.HasField("tracking_evaluation")
                 or (device.producer.role, device.producer.generation)
                 not in allowed_producers
@@ -72,15 +72,15 @@ def started_satisfied(
                 device.producer.generation,
             ):
                 return False
-        elif role == "vr":
-            output = device.vr_output
+        elif role == "visual_stimulus":
+            output = device.visual_stimulus_output
             if (
-                activity.kind != "vr_presentation_call"
+                activity.kind != "visual_stimulus_presentation_call"
                 or device.HasField("camera")
                 or device.HasField("tracking_evaluation")
                 or device.HasField("producer")
                 or not output.output_id
-                or output.submission != vr.SUBMISSION_OUTCOME_RETURNED
+                or output.submission != visual_stimulus.SUBMISSION_OUTCOME_RETURNED
                 or not output.HasField("swap_entry_ns")
                 or not output.HasField("swap_return_ns")
                 or not target_ns
@@ -95,7 +95,7 @@ def started_satisfied(
             if (
                 activity.kind != "tracking_frame_evaluation"
                 or device.HasField("camera")
-                or device.HasField("vr_output")
+                or device.HasField("visual_stimulus_output")
                 or device.HasField("producer")
                 or not evaluation.HasField("source_frame_id")
                 or evaluation.disposition not in {"baseline_only", "invalid", "valid"}
@@ -139,8 +139,8 @@ def started_satisfied(
                 != (camera.CAMERA_ROLE_TRACKING in external_camera_roles)
             ):
                 return False
-    elif role == "vr":
-        expected = vr_outputs
+    elif role == "visual_stimulus":
+        expected = visual_stimulus_outputs
     else:
         expected = {"tracking"}
     return bool(expected) and observed == expected
@@ -172,8 +172,11 @@ def stopped_satisfied(
         or not report.recording_interval_sealed
         or not interruption_issued_ns
         and report.actual_stop_monotonic_ns < end_ns
-        or report.context.backend.backend_name == "vr"
-        and (not report.HasField("vr_idle") or not report.vr_idle)
+        or report.context.backend.backend_name == "visual_stimulus"
+        and (
+            not report.HasField("visual_stimulus_idle")
+            or not report.visual_stimulus_idle
+        )
     ):
         return False
     sources: set[str] = set()
@@ -263,8 +266,8 @@ def outputs_satisfied(
             and plan.output_tag in {"behavioral_cam", "tracking_cam"}
             and plan.extension == "mp4"
         )
-        vr_video = (
-            plan.backend.backend_name == "vr"
+        visual_stimulus_video = (
+            plan.backend.backend_name == "visual_stimulus"
             and plan.output_tag == "stimulus"
             and plan.extension == "mp4"
         )
@@ -272,7 +275,10 @@ def outputs_satisfied(
         valid_contents: set[int]
         no_frames: int
         if camera_video:
-            if result.vr_review_video_content != pb.VR_REVIEW_VIDEO_CONTENT_UNSPECIFIED:
+            if (
+                result.visual_stimulus_review_video_content
+                != pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_UNSPECIFIED
+            ):
                 return False
             content = result.camera_video_content
             valid_contents = {
@@ -281,22 +287,22 @@ def outputs_satisfied(
             }
             no_frames = pb.CAMERA_VIDEO_CONTENT_NO_FRAMES
             required_details = {(f"{plan.output_tag}_frames", "jsonl")}
-        elif vr_video:
+        elif visual_stimulus_video:
             if result.camera_video_content != pb.CAMERA_VIDEO_CONTENT_UNSPECIFIED:
                 return False
-            content = result.vr_review_video_content
+            content = result.visual_stimulus_review_video_content
             valid_contents = {
-                pb.VR_REVIEW_VIDEO_CONTENT_NO_FRAMES,
-                pb.VR_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED,
+                pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_NO_FRAMES,
+                pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED,
             }
-            no_frames = pb.VR_REVIEW_VIDEO_CONTENT_NO_FRAMES
+            no_frames = pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_NO_FRAMES
             required_details = {("stimulus_LOG", "json"), ("stimulus_frames", "jsonl")}
         else:
             if (
                 plan.extension == "mp4"
                 or result.camera_video_content != pb.CAMERA_VIDEO_CONTENT_UNSPECIFIED
-                or result.vr_review_video_content
-                != pb.VR_REVIEW_VIDEO_CONTENT_UNSPECIFIED
+                or result.visual_stimulus_review_video_content
+                != pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_UNSPECIFIED
                 or result.closure != pb.OUTPUT_CLOSURE_CLOSED
                 or not result.artifact_present
             ):

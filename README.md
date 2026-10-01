@@ -1,11 +1,14 @@
 # CephVR2.0
 
 CephVR2.0 experiment-control software. Architecture and implementation contracts
-have been reviewed. [ARCH-001](architecture.md#arch-001) now selects acquisition host
-implementation following controller/supervisor development. Acquisition host implementation
-and source review are complete; rig behavioral verification remains pending. See its [review record](reports/acquisition-implementation-review.md).
-The [controller/supervisor review](reports/runtime-implementation-review.md)
-and [rig test handoff](reports/runtime-rig-test-handoff.md) retain their validation limits.
+have been reviewed. [ARCH-001](architecture.md#arch-001) selects Tracking next, then GUI and finally
+SpikeGLX integration. Firmware is deferred, and analysis software comes much later.
+Acquisition host implementation
+and source review are complete; rig behavioral verification remains pending. See its [review record](reports/acquisition.md).
+The [controller/supervisor review](reports/runtime.md)
+and [rig test handoff](reports/rig-verification.md) retain their validation limits.
+Offline stimulus replay/export belongs to analysis software; this package records
+the recipe and render evidence it needs under [V13](docs/architecture/visual_stimulus.md#v13).
 See the [development guide](docs/development.md) for package layout, environment setup,
 code checks and the distinction between local checks and Windows/rig verification.
 
@@ -35,6 +38,9 @@ dependency inventory and explicitly deferred installation inputs.
    behavioral testing is planned on the rig after the main architecture is established.
 7. [Development guide](docs/development.md): project setup and commands for the
    structure accepted in [ARCH-002](architecture.md#arch-002).
+8. [Task list](TODO.md) and [development log](LOG.md): open work and dated actions,
+   findings and changes, tagged by affected backend. Agents maintain these under
+   [the contributor workflow](AGENTS.md#task-and-change-tracking).
 
 Refer to decisions by their permanent IDs and links, for example
 [E01](docs/architecture/experiment.md#e01). Amend each decision in its owning architecture document and update the root register;

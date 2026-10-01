@@ -54,9 +54,9 @@ class HealthMonitor:
         shutdown_owned: Callable[[], Coroutine[Any, Any, None]],
         changed: Callable[[], None],
         resend_status: Callable[[], None],
-        reconcile_helpers: Callable[[int], Awaitable[list[str]]] | None = None,
-        tasks: SupervisorTasks | None = None,
-        warn: Callable[[str], None] | None = None,
+        reconcile_helpers: Callable[[int], Awaitable[list[str]]],
+        tasks: SupervisorTasks,
+        warn: Callable[[str], None],
     ) -> None:
         self.state = state
         self.registration = registration
@@ -291,22 +291,18 @@ class HealthMonitor:
             self.changed()
 
     async def _reconcile_helper_exits(self) -> None:
-        assert self.reconcile_helpers is not None
         unconfirmed = await self.reconcile_helpers(
             host_time_ns() + HELPER_RECONCILE_BUDGET_NS
         )
-        if self.warn is not None:
-            for message in unconfirmed:
-                self.warn(message)
+        for message in unconfirmed:
+            self.warn(message)
 
     def _maybe_reconcile_helpers(
         self, states: list[wire.LaunchState], now_ns: int
     ) -> None:
         """Background, one at a time, rate limited; never awaited by the tick."""
         if (
-            self.reconcile_helpers is None
-            or self.tasks is None
-            or self.shutdown.shutdown_request
+            self.shutdown.shutdown_request
             or now_ns < self._next_reconcile_ns
             or (self._reconcile_task is not None and not self._reconcile_task.done())
             or not any(
@@ -322,6 +318,85 @@ class HealthMonitor:
             "helper reconcile", self._reconcile_helper_exits()
         )
 
+    def _expire_pending_errors(self, now: int) -> None:
+        for error_id, deadline in list(self.state.pending_error_deadlines.items()):
+            if now >= deadline:
+                error = self.state.errors[error_id]
+                if not self.verified_continuation(error):
+                    self.begin_safety(error.failure, error_id)
+                del self.state.pending_error_deadlines[error_id]
+
+    def _check_authority_silence(self, now: int) -> None:
+        key = self.controller.role, self.controller.generation
+        last = self.state.last_heartbeat.get(key)
+        # After an accepted shutdown, ShutdownCoordinator owns the controller
+        # and backends; their silence/exit is no longer a safety fault.
+        if (
+            not self.shutdown.shutdown_request
+            and last is not None
+            and now >= last + self.silence_timeout_ns
+        ):
+            self.begin_safety(
+                types.Failure(
+                    code="CONTROLLER_LOST",
+                    message="controller heartbeat silence",
+                )
+            )
+        for role, generation in self.registration.required_backends().items():
+            last = self.state.last_heartbeat.get((role, generation))
+            if (
+                not self.shutdown.shutdown_request
+                and last is not None
+                and now >= last + self.silence_timeout_ns
+            ):
+                self.begin_safety(
+                    types.Failure(
+                        code="BACKEND_HEARTBEAT_LOST",
+                        message=f"{role} heartbeat silence",
+                    )
+                )
+
+    def _check_launch_states(self, states: list[wire.LaunchState], now: int) -> None:
+        for state in states:
+            if (
+                state.plan.child == self.controller
+                and state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+            ):
+                if self.shutdown.shutdown_request:
+                    if self.shutdown.shutdown_task is None:
+                        self.shutdown.shutdown_task = asyncio.create_task(
+                            self.shutdown_owned()
+                        )
+                else:
+                    self.begin_safety(
+                        types.Failure(
+                            code="CONTROLLER_LOST",
+                            message="controller process exited",
+                        )
+                    )
+            if state.plan.child.role in {"controller", "gui"}:
+                continue
+            if state.phase != wire.LAUNCH_PHASE_CLEANUP_REQUIRED:
+                continue
+            if state.failure.code == "CHILD_EXITED":
+                self.observe_backend_exit(state, now)
+            elif state.failure.code in {"LAUNCH_TIMEOUT", "UNCONFIRMED_CHILD"}:
+                self.begin_safety(
+                    types.Failure(
+                        code="UNSAFE_OWNERSHIP", message=state.failure.message
+                    )
+                )
+
+    def _check_pending_backend_exits(self, now: int) -> None:
+        for backend, (observed_ns, deadline_ns, failure) in list(
+            self.state.pending_backend_exits.items()
+        ):
+            if self.backend_exit_isolated(backend, observed_ns):
+                self.state.isolated_backend_exits.add(backend)
+                del self.state.pending_backend_exits[backend]
+            elif now >= deadline_ns:
+                self.begin_safety(failure)
+
     async def monitor(self, period_s: float = 0.25) -> None:
         if self.state.monitor_task is not None:
             raise RuntimeError("supervisor monitor already active")
@@ -329,86 +404,17 @@ class HealthMonitor:
         try:
             while True:
                 now = host_time_ns()
-                for error_id, deadline in list(
-                    self.state.pending_error_deadlines.items()
-                ):
-                    if now >= deadline:
-                        error = self.state.errors[error_id]
-                        if not self.verified_continuation(error):
-                            self.begin_safety(error.failure, error_id)
-                        del self.state.pending_error_deadlines[error_id]
-                key = self.controller.role, self.controller.generation
-                last = self.state.last_heartbeat.get(key)
-                # After an accepted shutdown, ShutdownCoordinator owns the controller
-                # and backends; their silence/exit is no longer a safety fault.
-                if (
-                    not self.shutdown.shutdown_request
-                    and last is not None
-                    and now >= last + self.silence_timeout_ns
-                ):
-                    self.begin_safety(
-                        types.Failure(
-                            code="CONTROLLER_LOST",
-                            message="controller heartbeat silence",
-                        )
-                    )
-                for role, generation in self.registration.required_backends().items():
-                    last = self.state.last_heartbeat.get((role, generation))
-                    if (
-                        not self.shutdown.shutdown_request
-                        and last is not None
-                        and now >= last + self.silence_timeout_ns
-                    ):
-                        self.begin_safety(
-                            types.Failure(
-                                code="BACKEND_HEARTBEAT_LOST",
-                                message=f"{role} heartbeat silence",
-                            )
-                        )
+                self._expire_pending_errors(now)
+                self._check_authority_silence(now)
                 try:
                     states = self.registry.states()
                 except LaunchError as exc:
                     self.begin_safety(types.Failure(code=exc.code, message=str(exc)))
                     await asyncio.sleep(period_s)
                     continue
-                for state in states:
-                    if (
-                        state.plan.child == self.controller
-                        and state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
-                    ):
-                        if self.shutdown.shutdown_request:
-                            if self.shutdown.shutdown_task is None:
-                                self.shutdown.shutdown_task = asyncio.create_task(
-                                    self.shutdown_owned()
-                                )
-                        else:
-                            self.begin_safety(
-                                types.Failure(
-                                    code="CONTROLLER_LOST",
-                                    message="controller process exited",
-                                )
-                            )
-                    if state.plan.child.role in {"controller", "gui"}:
-                        continue
-                    if state.phase != wire.LAUNCH_PHASE_CLEANUP_REQUIRED:
-                        continue
-                    if state.failure.code == "CHILD_EXITED":
-                        self.observe_backend_exit(state, now)
-                    elif state.failure.code in {"LAUNCH_TIMEOUT", "UNCONFIRMED_CHILD"}:
-                        self.begin_safety(
-                            types.Failure(
-                                code="UNSAFE_OWNERSHIP", message=state.failure.message
-                            )
-                        )
+                self._check_launch_states(states, now)
                 self._maybe_reconcile_helpers(states, now)
-                for backend, (observed_ns, deadline_ns, failure) in list(
-                    self.state.pending_backend_exits.items()
-                ):
-                    if self.backend_exit_isolated(backend, observed_ns):
-                        self.state.isolated_backend_exits.add(backend)
-                        del self.state.pending_backend_exits[backend]
-                    elif now >= deadline_ns:
-                        self.begin_safety(failure)
+                self._check_pending_backend_exits(now)
                 await asyncio.sleep(period_s)
         finally:
             self.state.monitor_task = None

@@ -8,6 +8,8 @@ from uuid import uuid4
 
 import pytest
 
+from cephvr.acquisition.coordinator.trial_delivery import TrialReportDelivery
+from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.coordinator.trial_pulses import TrialPulseBoundaries
 from cephvr.acquisition.coordinator.trial_termination import TrialTermination
 from cephvr.acquisition.coordinator.trial_validation import (
@@ -17,7 +19,7 @@ from cephvr.acquisition.coordinator.trial_validation import (
     finished_is_timely,
     valid_pulse,
 )
-from cephvr.acquisition.ports import SerialOwnerPort, WorkerPort
+from cephvr.acquisition.ports import ControllerPort, SerialOwnerPort, WorkerPort
 from cephvr.acquisition.state import (
     ChildOperation,
     CoordinatorIdentity,
@@ -405,3 +407,173 @@ def test_saved_started_requires_recording_activity_until_exact_scope_is_fenced()
         ingress_ns=120,
         allowance_ns=250,
     )
+
+
+@pytest.mark.parametrize("kind", ["started", "stopped", "finished"])
+@pytest.mark.parametrize("failure", ["rejection", "transport", "exhausted"])
+async def test_trial_delivery_retains_evidence_and_original_retry_budget(
+    kind: str, failure: str
+) -> None:
+    _, worker, _, session, trial = _started_case(recording_unavailable=False)
+    ledger = CommandLedger(
+        str(uuid4()),
+        1_000,
+        max_records=16,
+        max_bytes=1_000_000,
+        result_reservation_bytes=4096,
+    )
+    command_id = str(uuid4())
+    ledger.admit(command_id, b"trial", 1, work_key=trial.work.trial.trial_id)
+    ledger.complete(command_id, b"done", 2)
+    worker.commands = ledger
+    wire_report = control.LifecycleReport()
+    report = getattr(wire_report, kind)
+    report.context.work.CopyFrom(trial.work)
+    if kind == "finished":
+        session.reserved_outputs.append(
+            control.OutputPlan(
+                output_key="camera", output_tag="behavioral_cam", trial=trial.work.trial
+            )
+        )
+        report.outputs.add(output_key="camera", closure=control.OUTPUT_CLOSURE_CLOSED)
+    setattr(trial, "pending_" + kind + "_report", report)
+    calls: list[int] = []
+
+    class Controller:
+        async def report_lifecycle(
+            self, item: control.LifecycleReport, *, deadline_ns: int
+        ) -> control.ReportReceipt:
+            calls.append(deadline_ns)
+            assert item == wire_report
+            if kind == "finished":
+                assert session.output_results["camera"] == report.outputs[0]
+            if len(calls) < 3 or failure == "exhausted":
+                if failure == "transport":
+                    raise OSError("controller unavailable")
+                return control.ReportReceipt(result=control.COMMAND_RESULT_REJECTED)
+            return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    delivery = TrialReportDelivery(
+        session_slot=SessionSlot(current=session),
+        workers={worker.context.camera: worker},
+        controller=cast(ControllerPort, Controller()),
+        commands=ledger,
+        clock=lambda: 100,
+    )
+    for _ in range(3):
+        try:
+            await delivery.deliver(trial, kind, report, 500)
+        except OSError:
+            assert failure == "transport"
+        if len(calls) < 3 or failure == "exhausted":
+            assert getattr(trial, kind + "_report") is None
+            assert getattr(trial, "pending_" + kind + "_report") == report
+    assert calls == [500, 500, 500]
+    assert trial.lifecycle_report_attempts[kind] == 3
+    if failure == "exhausted":
+        result = await delivery.deliver(trial, kind, report, 500)
+        assert result.failure.code == "LIFECYCLE_UNCONFIRMED"
+    else:
+        assert getattr(trial, kind + "_report") == report
+        assert getattr(trial, "pending_" + kind + "_report") is None
+        report.context.operation.command_id = "mutated caller copy"
+        assert getattr(trial, kind + "_report") != report
+    retained = ledger.get(command_id)
+    assert retained is not None
+    assert (retained.finalized_ns is not None) == (
+        kind == "finished" and failure != "exhausted"
+    )
+    assert (
+        await delivery.deliver(trial, kind, report, 99)
+    ).failure.code == "LIFECYCLE_CUTOFF"
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize("stale", ["session", "trial", "report", "no_session"])
+async def test_finished_delivery_rejects_stale_scope_before_output_retention(
+    stale: str,
+) -> None:
+    _, worker, _, session, trial = _started_case(recording_unavailable=False)
+    report = control.FinishedReport(context=control.ReportContext(work=trial.work))
+    slot = SessionSlot(current=session)
+    if stale == "session":
+        session.work.session.controller_generation = str(uuid4())
+    elif stale == "trial":
+        session.trial = None
+    elif stale == "report":
+        report.context.work.trial.trial_id = str(uuid4())
+    else:
+        slot.current = None
+    delivery = TrialReportDelivery(
+        session_slot=slot,
+        workers={worker.context.camera: worker},
+        controller=cast(ControllerPort, object()),
+        commands=CommandLedger(
+            str(uuid4()),
+            1_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        ),
+        clock=lambda: 100,
+    )
+    assert (
+        await delivery.deliver(trial, "finished", report, 500)
+    ).failure.code == "STALE_FINISHED"
+    assert not session.output_results and trial.finished_report is None
+
+
+async def test_finished_aggregation_delivers_current_trial_once() -> None:
+    _, worker, evidence, session, trial = _started_case(recording_unavailable=False)
+    assert worker.trial is not None and session.confirmed_settings is not None
+    session.confirmed_settings.behavioral.save_video = False
+    worker.trial.stop = evidence.operation
+    worker.child_operations[evidence.operation.command_id].kind = "stop_trial"
+    trial.stop = evidence.operation
+    evidence.finished.activity_stopped = True
+    worker.lifecycle_evidence[
+        (trial.work.trial.trial_id, evidence.operation.command_id, "finished")
+    ] = evidence
+    policies = control.ControlPolicies()
+    policies.trial_finished.initial_ns = 250
+    calls: list[control.LifecycleReport] = []
+
+    class Controller:
+        async def report_lifecycle(
+            self, report: control.LifecycleReport, *, deadline_ns: int
+        ) -> control.ReportReceipt:
+            assert deadline_ns == 370
+            calls.append(report)
+            return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    owner = TrialLifecycleReports(
+        identity=CoordinatorIdentity(
+            control.BackendContext(
+                backend_name="acquisition", backend_generation=str(uuid4())
+            ),
+            worker.context.owner,
+            control.ProcessIdentity(),
+            control.ProcessIdentity(),
+            control.ProcessIdentity(),
+        ),
+        session_slot=SessionSlot(current=session),
+        workers={worker.context.camera: worker},
+        controller=cast(ControllerPort, Controller()),
+        policies=policies,
+        commands=CommandLedger(
+            str(uuid4()),
+            1_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        ),
+        lock=asyncio.Lock(),
+        clock=lambda: 120,
+    )
+    for _ in range(2):
+        receipt = await owner.report(worker, evidence, ingress_ns=120)
+        assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+    assert len(calls) == 1
+    assert calls[0].finished.context.work == trial.work
+    assert trial.finished_report == calls[0].finished
+    assert trial.pending_finished_report is None

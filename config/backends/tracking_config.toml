@@ -1,7 +1,7 @@
 # Tracking defaults. See architecture.md: E10, E14, A04, A06, T01–T12, T14–T45.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/tracking_policy.toml; versions must match.
-policy_version = 40
+policy_version = 42
 
 [backend]
 # E10: new-configuration default; saved choices win. Presence does not enable tracking.
@@ -23,7 +23,7 @@ port = 50055
 
 [frames]
 # A04 pre-processing frame-age limit (host receipt to processing start); not an
-# acquisition-to-VR or display-latency bound. Ring capacity lives in acquisition_config.
+# acquisition-to-Visual Stimulus or display-latency bound. Ring capacity lives in acquisition_config.
 max_frame_age_ms = 250
 
 [results]

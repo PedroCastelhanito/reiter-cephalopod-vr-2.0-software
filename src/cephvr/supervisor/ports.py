@@ -7,6 +7,7 @@ from typing import Protocol
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
+from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
 
 class SupervisorOutbound(Protocol):
@@ -68,8 +69,38 @@ class SupervisorOutbound(Protocol):
         *,
         deadline_ns: int,
     ) -> acq.WorkerRetainedResult: ...
+    async def interrupt_visual_stimulus_worker(
+        self,
+        launch: wire.LaunchState,
+        request: visual_stimulus.WorkerStop,
+        *,
+        deadline_ns: int,
+    ) -> types.CommandAdmission: ...
+    async def cleanup_visual_stimulus_worker(
+        self,
+        launch: wire.LaunchState,
+        request: visual_stimulus.WorkerCommand,
+        *,
+        deadline_ns: int,
+    ) -> types.CommandAdmission: ...
+    async def shutdown_visual_stimulus_worker(
+        self,
+        launch: wire.LaunchState,
+        request: visual_stimulus.WorkerCommand,
+        *,
+        deadline_ns: int,
+    ) -> types.CommandAdmission: ...
+    async def get_visual_stimulus_worker_state(
+        self,
+        launch: wire.LaunchState,
+        request: visual_stimulus.WorkerQuery,
+        *,
+        deadline_ns: int,
+    ) -> visual_stimulus.WorkerState: ...
     async def confirm_tracking_cleanup(
         self, request: wire.TrackingInputConfirmation, *, deadline_ns: int
     ) -> types.CommandAdmission: ...
     async def notify_launcher_shutdown(self, deadline_ns: int, cause: str) -> None: ...
     async def report_heartbeat(self, report: types.HeartbeatReport) -> None: ...
+    async def retire_worker_generation(self, role: str, generation: str) -> None: ...
+    async def close(self) -> None: ...

@@ -37,7 +37,7 @@ async def test_plan_launch_rejects_expired_deadline_and_never_reconciles(
         calls.append(deadline_ns)
         return []
 
-    runtime.shutdown.worker_shutdown.reconcile_native_helper_exits = spy  # type: ignore[method-assign]
+    runtime.shutdown.acquisition_worker_control.reconcile_native_helper_exits = spy  # type: ignore[method-assign]
     worker, _ = _worker_and_helper(runtime, native)
     worker_key = (worker.plan.child.role, worker.plan.child.generation)
     runtime.credentials[worker_key] = "worker-secret"
@@ -82,7 +82,7 @@ async def test_failed_controller_registration_cancels_role_launches(
 
     class FakeOutbound:
         def __init__(self, *args: object) -> None:
-            self.backend_ports = {"acquisition": 1, "vr": 2, "tracking": 3}
+            self.backend_ports = {"acquisition": 1, "visual_stimulus": 2, "tracking": 3}
 
         def bind_registry(self, registry: object) -> None:
             pass
@@ -90,6 +90,9 @@ async def test_failed_controller_registration_cancels_role_launches(
         async def register_controller(self, *args: object) -> None:
             await asyncio.sleep(0.01)  # let the role launches start first
             raise RuntimeError("launcher pipe closed")
+
+        async def retire_worker_generation(self, role: str, generation: str) -> None:
+            pass
 
         async def close(self) -> None:
             state["closed"] += 1
@@ -115,7 +118,12 @@ async def test_failed_controller_registration_cancels_role_launches(
     monkeypatch.setattr(
         startup,
         "validate_bootstrap",
-        lambda bootstrap: {"acquisition": "a", "vr": "v", "tracking": "t", "gui": "g"},
+        lambda bootstrap: {
+            "acquisition": "a",
+            "visual_stimulus": "v",
+            "tracking": "t",
+            "gui": "g",
+        },
     )
     monkeypatch.setattr(startup, "WindowsJobs", Native)
     monkeypatch.setattr(startup, "GrpcOutbound", FakeOutbound)
@@ -131,7 +139,7 @@ async def test_failed_controller_registration_cancels_role_launches(
         "supervisor_port": 1,
         "controller_port": 2,
         "interpreter": EXE,
-        "backend_ports": {"acquisition": 1, "vr": 2, "tracking": 3},
+        "backend_ports": {"acquisition": 1, "visual_stimulus": 2, "tracking": 3},
         "max_message_bytes": 1 << 20,
         "max_retained_incidents": 16,
         "command_retention_ns": 1_000_000_000,
@@ -145,19 +153,25 @@ async def test_failed_controller_registration_cancels_role_launches(
     with pytest.raises(RuntimeError, match="launcher pipe closed"):
         await startup.run_supervisor(bootstrap, 0, 0, 0)
     assert (
-        sorted(started) == sorted(cancelled) == ["acquisition", "gui", "tracking", "vr"]
+        sorted(started)
+        == sorted(cancelled)
+        == ["acquisition", "gui", "tracking", "visual_stimulus"]
     )
     assert state == {"closed": 1, "stopped": 1}
 
 
 async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> None:
     runtime, native, outbound, controller_context = make_runtime(tmp_path)
-    vr = types.ProcessIdentity(role="vr", generation=str(uuid4()))
-    runtime.credentials[(vr.role, vr.generation)] = "vr-secret"
+    visual_stimulus = types.ProcessIdentity(
+        role="visual_stimulus", generation=str(uuid4())
+    )
+    runtime.credentials[(visual_stimulus.role, visual_stimulus.generation)] = (
+        "visual-stimulus-secret"
+    )
     planned = wire.PlanLaunchRequest(
         command_id=str(uuid4()),
         owner=runtime.identity,
-        child=vr,
+        child=visual_stimulus,
         executable="C:\\Python311\\python.exe",
         python_worker=True,
         stop_method="grpc_shutdown",
@@ -168,7 +182,7 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
         command_id=str(uuid4()),
         launch_command_id=planned.command_id,
         owner=planned.owner,
-        child=vr,
+        child=visual_stimulus,
         pid=25,
         creation_time_100ns=100,
     )
@@ -199,15 +213,15 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
                 ),
                 required_participants=[
                     types.BackendContext(
-                        backend_name="vr",
-                        backend_generation=vr.generation,
+                        backend_name="visual_stimulus",
+                        backend_generation=visual_stimulus.generation,
                     )
                 ],
                 prepared_functions=[
                     types.PreparedFunctionScope(
-                        resource_id="vr.control",
-                        owner=vr,
-                        affected_closure_resource_ids=["vr.control"],
+                        resource_id="visual_stimulus.control",
+                        owner=visual_stimulus,
+                        affected_closure_resource_ids=["visual_stimulus.control"],
                         essential_to_stimulus_control=True,
                         feedback_hold_required_on_loss=False,
                         bounded_uncertainty_supported=False,
@@ -215,7 +229,9 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
                     )
                 ],
                 cleanup_resources=[
-                    types.ResourceObligation(owner=vr, resource="vr.control")
+                    types.ResourceObligation(
+                        owner=visual_stimulus, resource="visual_stimulus.control"
+                    )
                 ],
             ),
         )
@@ -228,29 +244,37 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
     assert (
         await runtime.service.RegisterContext(preliminary, controller_context)
     ).admission.result == types.COMMAND_RESULT_ACCEPTED
-    vr_context = Context("vr", vr.generation, "vr-secret")
+    visual_stimulus_context = Context(
+        "visual_stimulus", visual_stimulus.generation, "visual-stimulus-secret"
+    )
     empty_catalogue = types.HeartbeatReport(
-        source=vr,
+        source=visual_stimulus,
         work=first.context.work,
         sent_monotonic_ns=host_time_ns(),
         session_phase=types.SESSION_PHASE_SETTING_UP,
         cleanup_resources_revision=0,
     )
     assert (
-        await runtime.service.ReportHeartbeat(empty_catalogue, vr_context)
+        await runtime.service.ReportHeartbeat(empty_catalogue, visual_stimulus_context)
     ).result == types.COMMAND_RESULT_ACCEPTED
     resource_catalogue = types.HeartbeatReport.FromString(
         empty_catalogue.SerializeToString()
     )
     resource_catalogue.cleanup_resources_revision = 1
-    resource_catalogue.cleanup_resources.add(owner=vr, resource="vr.control")
+    resource_catalogue.cleanup_resources.add(
+        owner=visual_stimulus, resource="visual_stimulus.control"
+    )
     assert (
-        await runtime.service.ReportHeartbeat(resource_catalogue, vr_context)
+        await runtime.service.ReportHeartbeat(
+            resource_catalogue, visual_stimulus_context
+        )
     ).result == types.COMMAND_RESULT_ACCEPTED
     if runtime.status_state.status_task is not None:
         await runtime.status_state.status_task
     process = next(
-        process for process in outbound.statuses[-1].processes if process.process == vr
+        process
+        for process in outbound.statuses[-1].processes
+        if process.process == visual_stimulus
     )
     assert process.launch_owner == runtime.identity
     assert process.last_heartbeat == resource_catalogue
@@ -267,7 +291,7 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
     fenced = wire.RegisterContextRequest.FromString(first.SerializeToString())
     fenced.command_id = str(uuid4())
     fenced.context.cleanup_commands.add(
-        target=vr,
+        target=visual_stimulus,
         work=first.context.work,
         operation=types.OperationContext(command_id=cleanup_command_id),
     )
@@ -277,16 +301,20 @@ async def test_new_session_requires_verified_prior_cleanup(tmp_path: Path) -> No
 
     cleanup = types.LifecycleReport(
         cleanup=types.CleanupReport(
-            source=vr,
+            source=visual_stimulus,
             work=first.context.work,
             operation=types.OperationContext(command_id=cleanup_command_id),
             verified_monotonic_ns=host_time_ns(),
             trial_activity_stopped=True,
             cleanup_resources_revision=1,
-            resources=[types.ResourceRelease(resource="vr.control", released=True)],
+            resources=[
+                types.ResourceRelease(resource="visual_stimulus.control", released=True)
+            ],
         )
     )
-    cleanup_context = Context("vr", vr.generation, "vr-secret")
+    cleanup_context = Context(
+        "visual_stimulus", visual_stimulus.generation, "visual-stimulus-secret"
+    )
     # Cleanup reports carry their original absolute deadline (E08).
     cleanup_context.metadata += (deadline_metadata(host_time_ns() + 10**10),)
     receipt = await runtime.service.ReportLifecycle(cleanup, cleanup_context)
@@ -300,7 +328,9 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
     tmp_path: Path,
 ) -> None:
     runtime, native, _, controller_context = make_runtime(tmp_path)
-    vr = types.ProcessIdentity(role="vr", generation=str(uuid4()))
+    visual_stimulus = types.ProcessIdentity(
+        role="visual_stimulus", generation=str(uuid4())
+    )
     renderer_worker = types.ProcessIdentity(
         role="renderer-worker", generation=str(uuid4())
     )
@@ -349,20 +379,22 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
             confirmed.host_clock.resolution_s = descriptor.resolution_s
         runtime.registry.confirm(confirmed, runtime.clock)
 
-    launch(runtime.identity, vr, 41, python_worker=True)
-    launch(vr, renderer_worker, 42)
+    launch(runtime.identity, visual_stimulus, 41, python_worker=True)
+    launch(visual_stimulus, renderer_worker, 42)
     launch(renderer_worker, nested_worker, 43)
     launch(runtime.identity, gui, 44)
     launch(gui, foreign_worker, 45)
     worker_backend = runtime.registration.worker_backend_ancestry(
-        {("vr", vr.generation)}
+        {("visual_stimulus", visual_stimulus.generation)}
     )
     assert worker_backend == {
-        (renderer_worker.role, renderer_worker.generation): "vr",
-        (nested_worker.role, nested_worker.generation): "vr",
+        (renderer_worker.role, renderer_worker.generation): "visual_stimulus",
+        (nested_worker.role, nested_worker.generation): "visual_stimulus",
     }
 
-    runtime.credentials[(vr.role, vr.generation)] = "vr-secret"
+    runtime.credentials[(visual_stimulus.role, visual_stimulus.generation)] = (
+        "visual-stimulus-secret"
+    )
     work = types.WorkContext(
         session=types.SessionContext(
             controller_generation=runtime.controller.generation,
@@ -375,7 +407,10 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
         paired_spikeglx=False,
         work=work,
         required_participants=[
-            types.BackendContext(backend_name="vr", backend_generation=vr.generation)
+            types.BackendContext(
+                backend_name="visual_stimulus",
+                backend_generation=visual_stimulus.generation,
+            )
         ],
     )
     preliminary = wire.RegisterContextRequest(command_id=str(uuid4()), context=prepared)
@@ -385,13 +420,15 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
     assert (
         await runtime.service.ReportHeartbeat(
             types.HeartbeatReport(
-                source=vr,
+                source=visual_stimulus,
                 work=work,
                 sent_monotonic_ns=host_time_ns(),
                 session_phase=types.SESSION_PHASE_SETTING_UP,
                 cleanup_resources_revision=0,
             ),
-            Context("vr", vr.generation, "vr-secret"),
+            Context(
+                "visual_stimulus", visual_stimulus.generation, "visual-stimulus-secret"
+            ),
         )
     ).result == types.COMMAND_RESULT_ACCEPTED
 
@@ -399,7 +436,7 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
         [
             types.PreparedFunctionScope(
                 resource_id="renderer",
-                owner=vr,
+                owner=visual_stimulus,
                 affected_closure_resource_ids=["renderer"],
                 essential_to_stimulus_control=True,
                 feedback_hold_required_on_loss=False,
@@ -448,7 +485,9 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
 
 def test_controller_cannot_claim_backend_prepared_function(tmp_path: Path) -> None:
     runtime, _, _, _ = make_runtime(tmp_path)
-    vr = types.ProcessIdentity(role="vr", generation=str(uuid4()))
+    visual_stimulus = types.ProcessIdentity(
+        role="visual_stimulus", generation=str(uuid4())
+    )
     work = types.WorkContext(
         session=types.SessionContext(
             controller_generation=runtime.controller.generation, session_id=str(uuid4())
@@ -459,7 +498,10 @@ def test_controller_cannot_claim_backend_prepared_function(tmp_path: Path) -> No
         supervisor=runtime.identity,
         work=work,
         required_participants=[
-            types.BackendContext(backend_name="vr", backend_generation=vr.generation)
+            types.BackendContext(
+                backend_name="visual_stimulus",
+                backend_generation=visual_stimulus.generation,
+            )
         ],
         policies=types.ControlPolicies(recovery_ns=100_000_000),
         prepared_functions=[

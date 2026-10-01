@@ -1,4 +1,4 @@
-"""Acquisition/tracking/VR Setup handoffs with exact attempt identity."""
+"""Acquisition/tracking/Visual Stimulus Setup handoffs with exact attempt identity."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.preparation import PreparationError
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.state import Attempt, LifecycleState
 from cephvr.tracking.v1 import services_pb2 as tracking_svc
 
@@ -36,7 +37,7 @@ class PreparationHandoffs:
     ) -> None:
         handoff = attempt.handoff
         assert handoff is not None
-        vr_sent = not handoff.closed_loop
+        visual_stimulus_sent = not handoff.closed_loop
         while True:
             async with self.lifecycle.lock:
                 if (
@@ -73,26 +74,28 @@ class PreparationHandoffs:
                         tracking_evidence=evidence,
                     )
                     action = "confirm"
-                elif not vr_sent and handoff.can_prepare_vr:
+                elif not visual_stimulus_sent and handoff.can_prepare_visual_stimulus:
                     request = self.preparation_context.setup_request(
-                        attempt, attempt.required["vr"], attempt.setup_operations["vr"]
+                        attempt,
+                        attempt.required["visual_stimulus"],
+                        attempt.setup_operations["visual_stimulus"],
                     )
-                    vr_sent = True
-                    action = "vr"
+                    visual_stimulus_sent = True
+                    action = "visual_stimulus"
                 elif (
                     handoff.input_binding_command
                     and handoff.input_confirmation_command
-                    and vr_sent
+                    and visual_stimulus_sent
                 ):
                     return
             if action is None:
-                vr_pending = not vr_sent
+                visual_stimulus_pending = not visual_stimulus_sent
 
-                def actionable(pending: bool = vr_pending) -> bool:
+                def actionable(pending: bool = visual_stimulus_pending) -> bool:
                     return (
                         handoff.can_bind_input
                         or handoff.can_confirm_input
-                        or (pending and handoff.can_prepare_vr)
+                        or (pending and handoff.can_prepare_visual_stimulus)
                     )
 
                 await self.evidence_waiter.wait_evidence(
@@ -121,7 +124,7 @@ class PreparationHandoffs:
             else:
                 assert isinstance(request, svc.SetupSessionRequest)
                 response = await asyncio.wait_for(
-                    attempt.required["vr"].setup_session(
+                    attempt.required["visual_stimulus"].setup_session(
                         request, deadline_ns=deadline_ns
                     ),
                     remaining,
@@ -143,27 +146,16 @@ class PreparationHandoffs:
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_SETTING_UP
                 or ingress_ns > attempt.setup_deadline_ns
             ):
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(
-                        code="STALE", message="no matching live Setup handoff"
-                    ),
-                )
+                return rejected_receipt("STALE", "no matching live Setup handoff")
             if "acquisition" in attempt.required and not attempt.resolution_confirmed:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(
-                        code="ORDER",
-                        message="acquisition readback was not adopted before resource allocation",
-                    ),
+                return rejected_receipt(
+                    "ORDER",
+                    "acquisition readback was not adopted before resource allocation",
                 )
             try:
                 changed = attempt.handoff.accept(report)
             except (PreparationError, ValueError) as exc:
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(code="EVIDENCE", message=str(exc)),
-                )
+                return rejected_receipt("EVIDENCE", str(exc))
             if changed:
                 attempt.changed.set()
             return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)

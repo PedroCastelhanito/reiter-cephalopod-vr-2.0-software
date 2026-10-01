@@ -104,7 +104,7 @@ def run_launcher(
         raise WindowsLaunchError("CephVR managed launch requires Windows")
     required_modules = {
         "acquisition": "cephvr.acquisition.main",
-        "vr": "cephvr.vr.main",
+        "visual_stimulus": "cephvr.visual_stimulus.main",
         "tracking": "cephvr.tracking.main",
         "gui": "cephvr.gui.main",
     }
@@ -128,7 +128,7 @@ def run_launcher(
     resolved = load_controller_configuration(software_root)
     policy_root = supervisor_config.parents[2] / "contracts" / "policy"
     backend_ports: dict[str, int] = {}
-    for role in ("acquisition", "vr", "tracking"):
+    for role in ("acquisition", "visual_stimulus", "tracking"):
         with (supervisor_config.parent / f"{role}_config.toml").open("rb") as stream:
             backend_config = tomllib.load(stream)
         with (policy_root / f"{role}_policy.toml").open("rb") as stream:

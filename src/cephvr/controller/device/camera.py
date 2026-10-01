@@ -430,13 +430,6 @@ class CameraCommands:
         self._report_devices = report_devices
         self._warn = warn
 
-    def _free_slot(self, operation: CameraOperation) -> None:
-        # Manual effects stay admitted in case the expired command was delivered.
-        self.device.completed_camera_operation = operation
-        self.status_retention.complete_internal(operation)
-        self.device.camera_operation = None
-        self.device.camera_operation_changed.set()
-
     async def _camera_timeout(self, child_id: str, deadline_ns: int) -> None:
         await asyncio.sleep(max(0, (deadline_ns - self.clock()) / 1e9))
         async with self.lifecycle.lock:
@@ -453,14 +446,14 @@ class CameraCommands:
             if operation.admission_unconfirmed or operation.final_status is not None:
                 # The expired command can no longer be admitted, or its terminal
                 # report arrived but confirmation did not: free the slot.
-                self._free_slot(operation)
+                self.status_retention.retire_operation(operation)
             self.hooks.publish()
             if self.device.camera_operation is not operation:
                 return
         await self._recover_terminal(operation)
         async with self.lifecycle.lock:
             if self.device.camera_operation is operation:
-                self._free_slot(operation)
+                self.status_retention.retire_operation(operation)
                 self._warn(
                     "camera command result unconfirmed after its deadline and "
                     f"one recovery query: {operation.child_id}"

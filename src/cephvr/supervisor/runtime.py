@@ -148,7 +148,9 @@ class SupervisorRuntime:
             changed=status.changed,
             resend_status=status.resend_unacknowledged,
             reconcile_helpers=lambda deadline_ns: (
-                shutdown.worker_shutdown.reconcile_native_helper_exits(deadline_ns)
+                shutdown.acquisition_worker_control.reconcile_native_helper_exits(
+                    deadline_ns
+                )
             ),
             tasks=self.tasks,
             warn=lambda message: status.unavailable_component("supervisor", message),
@@ -218,25 +220,15 @@ class SupervisorRuntime:
 
     def _retire_released_worker(self, released: wire.LaunchState) -> None:
         """Close the cached worker channel once its exact launch is released."""
-        # Concrete outbound only (fakes and the port protocol omit it).
-        retire = getattr(self.outbound, "retire_worker_generation", None)
-        if retire is not None:
-            child = released.plan.child
-            self.tasks.spawn(
-                "worker channel retirement", retire(child.role, child.generation)
-            )
+        child = released.plan.child
+        self.tasks.spawn(
+            "worker channel retirement",
+            self.outbound.retire_worker_generation(child.role, child.generation),
+        )
 
     async def close_outbound(self) -> None:
         """Close every outbound channel; safe to call more than once."""
-        close = getattr(self.outbound, "close", None)
-        if close is not None:
-            await close()
-
-    async def monitor(self, period_s: float = 0.25) -> None:
-        await self.health.monitor(period_s)
-
-    async def heartbeat_loop(self) -> None:
-        await self.health.heartbeat_loop()
+        await self.outbound.close()
 
     def acknowledge_controller_registration(self) -> None:
         """Permit controller endpoint admission after launcher retains its exact handle."""

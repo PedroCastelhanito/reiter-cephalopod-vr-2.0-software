@@ -122,66 +122,71 @@ class RecoveryCoordinator:
                 event.set()
         self.changed()
         if report.source.role == "tracking":
-            context = self.registration.state.context
-            if context is None:
-                return report_rejected(
-                    "TRACKING_CLEANUP_CONTEXT", "registered context is absent"
-                )
-            acquisition_contexts = [
-                participant
-                for participant in context.required_participants
-                if participant.backend_name == "acquisition"
-            ]
-            tracking_contexts = [
-                participant
-                for participant in context.required_participants
-                if participant.backend_name == "tracking"
-            ]
-            if (
-                len(acquisition_contexts) != 1
-                or len(tracking_contexts) != 1
-                or report.source.generation != tracking_contexts[0].backend_generation
-            ):
-                return report_rejected(
-                    "TRACKING_INPUT_RELEASE",
-                    "cleanup source is not the registered tracking participant",
-                )
-            admission = wire.TrackingInputConfirmation(
-                command=wire.BackendCommand(
-                    command_id=report.operation.command_id,
-                    issuer=self.identity,
-                    target=acquisition_contexts[0],
-                    work=report.work,
-                    parent_operation=report.operation,
-                ),
-                tracking_cleanup=report,
-            )
-            delay_s = 0.01
-            while host_time_ns() < deadline_ns:
-                try:
-                    receipt = await self.outbound.confirm_tracking_cleanup(
-                        admission, deadline_ns=deadline_ns
-                    )
-                    if receipt.result == types.COMMAND_RESULT_ACCEPTED:
-                        return report_accepted()
-                    if receipt.failure.code not in {"UNAVAILABLE", "RETRY"}:
-                        return report_rejected(
-                            receipt.failure.code or "TRACKING_RELEASE",
-                            receipt.failure.message
-                            or "acquisition rejected tracking release",
-                        )
-                except (TimeoutError, OSError, RuntimeError):
-                    pass
-                remaining = max(0.0, (deadline_ns - host_time_ns()) / 1_000_000_000)
-                if remaining <= 0:
-                    break
-                await asyncio.sleep(min(delay_s, remaining))
-                delay_s = min(delay_s * 2, 0.1)
-            return report_rejected(
-                "TRACKING_RELEASE_UNCONFIRMED",
-                "acquisition did not confirm tracking transfer release before its deadline",
-            )
+            return await self._forward_tracking_release(report, deadline_ns=deadline_ns)
         return report_accepted()
+
+    async def _forward_tracking_release(
+        self, report: types.CleanupReport, *, deadline_ns: int
+    ) -> types.ReportReceipt:
+        context = self.registration.state.context
+        if context is None:
+            return report_rejected(
+                "TRACKING_CLEANUP_CONTEXT", "registered context is absent"
+            )
+        acquisition_contexts = [
+            participant
+            for participant in context.required_participants
+            if participant.backend_name == "acquisition"
+        ]
+        tracking_contexts = [
+            participant
+            for participant in context.required_participants
+            if participant.backend_name == "tracking"
+        ]
+        if (
+            len(acquisition_contexts) != 1
+            or len(tracking_contexts) != 1
+            or report.source.generation != tracking_contexts[0].backend_generation
+        ):
+            return report_rejected(
+                "TRACKING_INPUT_RELEASE",
+                "cleanup source is not the registered tracking participant",
+            )
+        admission = wire.TrackingInputConfirmation(
+            command=wire.BackendCommand(
+                command_id=report.operation.command_id,
+                issuer=self.identity,
+                target=acquisition_contexts[0],
+                work=report.work,
+                parent_operation=report.operation,
+            ),
+            tracking_cleanup=report,
+        )
+        delay_s = 0.01
+        while host_time_ns() < deadline_ns:
+            try:
+                receipt = await self.outbound.confirm_tracking_cleanup(
+                    admission, deadline_ns=deadline_ns
+                )
+                if receipt.result == types.COMMAND_RESULT_ACCEPTED:
+                    return report_accepted()
+                if receipt.failure.code not in {"UNAVAILABLE", "RETRY"}:
+                    return report_rejected(
+                        receipt.failure.code or "TRACKING_RELEASE",
+                        receipt.failure.message
+                        or "acquisition rejected tracking release",
+                    )
+            except (TimeoutError, OSError, RuntimeError):
+                pass
+            remaining = max(0.0, (deadline_ns - host_time_ns()) / 1_000_000_000)
+            if remaining <= 0:
+                break
+            await asyncio.sleep(min(delay_s, remaining))
+            delay_s = min(delay_s * 2, 0.1)
+        return report_rejected(
+            "TRACKING_RELEASE_UNCONFIRMED",
+            "acquisition did not confirm tracking transfer release before its deadline",
+        )
 
     def cleanup_verified(self, report: types.CleanupReport) -> bool:
         if not self.registration.state.context or not report.trial_activity_stopped:

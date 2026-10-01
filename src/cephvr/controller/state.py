@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import uuid
 from collections.abc import Awaitable, Callable
 from concurrent.futures import Future
 from dataclasses import dataclass, field
@@ -19,6 +20,9 @@ from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.preparation import PreparationHandoff
 from cephvr.shared.incidents import IncidentTopology
+
+# Retained display/report lists (warnings, errors, recoveries) keep this many newest items.
+RETAINED_LIMIT = 256
 
 
 @dataclass(frozen=True)
@@ -106,6 +110,17 @@ class ConfigurationState:
     current: pb.ExperimentConfiguration
     policies: pb.ControlPolicies
     revision: int = 1
+    validation: tuple[pb.ValidationResult, ...] = ()
+
+    def retain_validation(
+        self, results: list[pb.ValidationResult] | tuple[pb.ValidationResult, ...]
+    ) -> None:
+        self.validation = tuple(
+            pb.ValidationResult.FromString(result.SerializeToString())
+            for result in results
+        )
+        for result in self.validation:
+            result.configuration_revision = self.revision
 
 
 @dataclass
@@ -146,6 +161,15 @@ class ControlState:
     operation_finished_ns: dict[str, int] = field(default_factory=dict)
     errors: list[pb.ErrorReport] = field(default_factory=list)
     warnings: list[pb.Warning] = field(default_factory=list)
+
+    def add_warning(self, component: str, message: str) -> None:
+        """Retain a fresh warning; the caller publishes under its own lock."""
+        self.warnings.append(
+            pb.Warning(
+                warning_id=str(uuid.uuid4()), component=component, message=message
+            )
+        )
+        self.warnings = self.warnings[-RETAINED_LIMIT:]
 
 
 @dataclass
@@ -216,6 +240,34 @@ class AuthorityStatus:
     activated: bool
     spikeglx_stop_unconfirmed: bool
 
+    @classmethod
+    def capture(
+        cls,
+        lifecycle: LifecycleState,
+        control: ControlState,
+        supervisor_state: SupervisorState,
+    ) -> AuthorityStatus:
+        attempt = lifecycle.attempt
+        work = pb.WorkContext()
+        if attempt is not None:
+            work.session.CopyFrom(attempt.context)
+        return cls(
+            shutdown_intent_ns=lifecycle.shutdown_intent_ns,
+            supervisor_last_seen_ns=supervisor_state.last_seen_ns,
+            session_phase=lifecycle.session.phase,
+            cleanup_confirmed=lifecycle.session.cleanup_confirmed,
+            handoff_complete=all(
+                operation.complete
+                for operation in control.operations.values()
+                if operation.command == "ShutdownApplication"
+            ),
+            work=work,
+            activated=bool(attempt and attempt.activated),
+            spikeglx_stop_unconfirmed=bool(
+                attempt and attempt.paired and not attempt.spikeglx_stopped
+            ),
+        )
+
 
 @dataclass
 class ClosureState:
@@ -281,7 +333,6 @@ class Attempt:
     trial_log_start_task: asyncio.Task[object] | None = None
     trial_log_finish_task: asyncio.Task[object] | None = None
     start_task: asyncio.Task[object] | None = None
-    finalizing: bool = False
     interruption_issued_ns: int = 0
     overrides: list[dict[str, object]] = field(default_factory=list)
     cancelling: bool = False
@@ -308,7 +359,7 @@ class Attempt:
     resolution_requested_revision: int = 0
     resolution_confirmed: bool = False
     setup_command_id: str = ""
-    vr_output_ids: frozenset[str] = frozenset()
+    visual_stimulus_output_ids: frozenset[str] = frozenset()
     trial_participants: dict[str, BackendPort] = field(default_factory=dict)
     unavailable_outputs: list[pb.OutputResult] = field(default_factory=list)
     recovering_evidence: str = ""
@@ -320,3 +371,19 @@ class Attempt:
     reservation_registered: bool = True
     closure: ClosureState = field(default_factory=ClosureState)
     trial_closure: TrialClosureState = field(default_factory=TrialClosureState)
+
+    @property
+    def reservation_unconfirmed(self) -> bool:
+        return self.reservation_registration_started and not self.reservation_registered
+
+    def unavailable_resources(self) -> frozenset[str]:
+        return frozenset(
+            key
+            for incident in self.confirmed_incidents.values()
+            for key in incident.affected_resources
+        )
+
+    def recovery_log_finished(self, task: asyncio.Task[object]) -> None:
+        self.recovery_log_tasks.discard(task)
+        if task.cancelled() or task.exception() is not None:
+            self.recovery_log_failed = True

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 from collections.abc import Awaitable, Callable, Coroutine
+from copy import deepcopy
 from typing import Any, Literal, cast
 
 from cephvr.control.v1 import services_pb2 as svc
@@ -18,11 +19,13 @@ from cephvr.controller.incident.registry import (
 )
 from cephvr.controller.lifecycle.interruption import InterruptionWorkflow
 from cephvr.controller.state import (
+    RETAINED_LIMIT,
     ControlState,
     IncidentState,
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.identity import require_uuid4
 
 
 class OperatorPrompts:
@@ -50,6 +53,53 @@ class OperatorPrompts:
         self.interruption = interruption
         self.publisher = publisher
         self.spawn = spawn
+
+    async def install_startup_recovery(
+        self,
+        prompt: pb.Prompt | None,
+        handler: Callable[[], Awaitable[None]] | None,
+        blocker: str | None,
+        completion_warning: str | None = None,
+        notice: str | None = None,
+    ) -> None:
+        if (prompt is None) != (handler is None):
+            raise ValueError(
+                "startup recovery prompt and handler must be installed together"
+            )
+        if prompt is not None:
+            if (
+                not blocker
+                or set(prompt.permitted_choices) != {"continue", "cancel"}
+                or not prompt.HasField("setup")
+                or not prompt.HasField("operation")
+            ):
+                raise ValueError(
+                    "startup recovery requires a concrete bounded prompt and blocker"
+                )
+            for identity in (
+                prompt.prompt_id,
+                prompt.setup.controller_generation,
+                prompt.setup.session_id,
+                prompt.operation.command_id,
+            ):
+                require_uuid4(identity)
+        async with self.lifecycle.lock:
+            if (
+                self.lifecycle.authority_lost
+                or self.lifecycle.session.shutdown_requested
+                or self.lifecycle.startup_recovery_running
+            ):
+                raise RuntimeError("startup recovery authority unavailable")
+            self.lifecycle.startup_prompt = (
+                deepcopy(prompt) if prompt is not None else None
+            )
+            self.lifecycle.startup_recovery_handler = handler
+            self.lifecycle.startup_blocker = blocker or ""
+            self.lifecycle.startup_warning_id = str(uuid.uuid4()) if blocker else ""
+            self.lifecycle.startup_completion_warning = completion_warning
+            if notice:
+                self.control.add_warning("recovery", notice)
+            self.publisher.publish()
 
     async def respond_to_prompt(
         self, request: svc.PromptResponse
@@ -221,13 +271,7 @@ class OperatorPrompts:
                     progress="startup recovery remains blocked",
                     error=error,
                 )
-                self.control.warnings.append(
-                    pb.Warning(
-                        warning_id=str(uuid.uuid4()),
-                        component="startup_recovery",
-                        message=error,
-                    )
-                )
+                self.control.add_warning("startup_recovery", error)
             else:
                 self.control_operations.complete_operation(
                     command_id,
@@ -239,15 +283,11 @@ class OperatorPrompts:
                 self.lifecycle.startup_recovery_handler = None
                 self.lifecycle.startup_warning_id = ""
                 if self.lifecycle.startup_completion_warning:
-                    self.control.warnings.append(
-                        pb.Warning(
-                            warning_id=str(uuid.uuid4()),
-                            component="startup_recovery",
-                            message=self.lifecycle.startup_completion_warning,
-                        )
+                    self.control.add_warning(
+                        "startup_recovery", self.lifecycle.startup_completion_warning
                     )
                 self.lifecycle.startup_completion_warning = None
                 if self.lifecycle.attempt is None:
                     self.lifecycle.session.cleanup_confirmed = True
-            self.control.warnings = self.control.warnings[-256:]
+            self.control.warnings = self.control.warnings[-RETAINED_LIMIT:]
             self.publisher.publish()

@@ -17,6 +17,7 @@ from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.lifecycle.setup_execution import SetupExecution
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.resolution import resolved_configuration
 from cephvr.controller.state import (
     Attempt,
@@ -79,23 +80,14 @@ class AcquisitionResolution:
                     or not report.HasField("requested_configuration_revision")
                     or report.requested_configuration_revision != camera_op.revision
                 ):
-                    return pb.ReportReceipt(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(
-                            code="EVIDENCE",
-                            message="camera readback operation or deadline mismatch",
-                        ),
+                    return rejected_receipt(
+                        "EVIDENCE", "camera readback operation or deadline mismatch"
                     )
                 if camera_op.resolution is not None:
                     if camera_op.resolution.SerializeToString(
                         deterministic=True
                     ) != report.SerializeToString(deterministic=True):
-                        return pb.ReportReceipt(
-                            result=pb.COMMAND_RESULT_REJECTED,
-                            failure=pb.Failure(
-                                code="CONFLICT", message="changed camera readback"
-                            ),
-                        )
+                        return rejected_receipt("CONFLICT", "changed camera readback")
                     return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
                 camera_op.resolution = deepcopy(report)
                 self.spawn(
@@ -111,12 +103,7 @@ class AcquisitionResolution:
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_SETTING_UP
                 or ingress_ns > attempt.setup_deadline_ns
             ):
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(
-                        code="STALE", message="no live acquisition Setup resolution"
-                    ),
-                )
+                return rejected_receipt("STALE", "no live acquisition Setup resolution")
             backend = attempt.required.get("acquisition")
             requested = (
                 attempt.resolution_requested_revision
@@ -133,23 +120,16 @@ class AcquisitionResolution:
                 or not report.HasField("requested_configuration_revision")
                 or report.requested_configuration_revision != requested
             ):
-                return pb.ReportReceipt(
-                    result=pb.COMMAND_RESULT_REJECTED,
-                    failure=pb.Failure(
-                        code="IDENTITY",
-                        message="acquisition resolution source/work/revision mismatch",
-                    ),
+                return rejected_receipt(
+                    "IDENTITY", "acquisition resolution source/work/revision mismatch"
                 )
             old = attempt.resolution_received
             if old is not None:
                 if old.SerializeToString(
                     deterministic=True
                 ) != report.SerializeToString(deterministic=True):
-                    return pb.ReportReceipt(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(
-                            code="CONFLICT", message="changed acquisition resolution"
-                        ),
+                    return rejected_receipt(
+                        "CONFLICT", "changed acquisition resolution"
                     )
                 return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
             attempt.resolution_received = deepcopy(report)

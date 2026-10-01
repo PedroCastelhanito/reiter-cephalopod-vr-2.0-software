@@ -45,7 +45,7 @@ belong to the proxy contract. An unevaluable local test is never treated as a su
 one. Preserve separate geometric coverage (T26), native availability and
 screening support. Use compact counts/dispositions through the method's existing quality
 records; no dense rejection-mask recording or new worker is introduced. Insufficient
-reliable support follows existing invalid-result/VR-hold behavior, not an unscreened
+reliable support follows existing invalid-result/Visual Stimulus-hold behavior, not an unscreened
 fallback. Spatial coherence alone cannot identify body texture or prove swimming intent.
 
 ## Samples, sections and units
@@ -62,6 +62,10 @@ footprints and source-coordinate conventions. Keep that mapping explicit at the 
 port; grid stride alone is not permission to guess a grid origin or a different frame
 anchor. The NVIDIA mapping in [method-bindings.md](method-bindings.md) already fixes
 forward earlier-to-later displacement, source resolution, grid layout and native scaling.
+T33 places each native block estimate at the centre of its represented footprint.
+With integer pixel centres, a block covering pixels `i*g` through
+`min((i+1)*g, size)-1` spans `[i*g-0.5, min((i+1)*g,size)-0.5]` on each axis;
+the midpoint is its declared sample coordinate. No per-pixel averaging is performed.
 The [proxy sampling contract](water-flow-proxy.md) binds flow-cell/band area association;
 it does not reduce the provider grid or invent additional measurements.
 

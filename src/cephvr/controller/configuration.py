@@ -17,7 +17,7 @@ from cephvr.shared.config import ConfigurationError
 from cephvr.shared.deadlines import duration_ns
 
 BackendValidator = Callable[[pb.ExperimentConfiguration], pb.ValidationResult]
-_BACKENDS = frozenset({"acquisition", "vr", "tracking", "synchronization"})
+_BACKENDS = frozenset({"acquisition", "visual_stimulus", "tracking", "synchronization"})
 
 
 @dataclass(frozen=True)
@@ -42,9 +42,6 @@ class ControllerConfiguration:
     max_pending_events: int
     max_pending_payload_bytes: int
     max_retained_incidents: int
-    history_save_timeout_ns: int
-    space_query_timeout_ns: int
-    low_space_warning_bytes: int
     default_intertrial_gap_ns: int
     history_warning: str | None
 
@@ -132,6 +129,68 @@ def _load_saved_configuration(
         ) from exc
 
 
+def _load_supervisor_startup(
+    sc: Mapping[str, Any],
+    supervisor_port: int,
+    setup_cancel: int,
+    trial_finished: int,
+    recovery: int,
+) -> SupervisorStartup:
+    """Load supervisor startup timing and check the derived shutdown backstop."""
+    startup = SupervisorStartup(
+        port=supervisor_port,
+        heartbeat_interval_ns=_ns(sc, "health", "heartbeat_interval_s"),
+        silence_timeout_ns=_ns(sc, "health", "silence_timeout_s"),
+        emergency_timeout_ns=_ns(sc, "emergency_report", "completion_timeout_s"),
+        graceful_exit_ns=_ns(sc, "shutdown", "graceful_process_exit_s"),
+        terminate_exit_ns=_ns(sc, "shutdown", "terminate_process_exit_s"),
+        application_backstop_ns=_ns(sc, "shutdown", "application_shutdown_backstop_s"),
+    )
+    if startup.silence_timeout_ns <= startup.heartbeat_interval_ns:
+        raise ConfigurationError("health silence must exceed heartbeat interval")
+    minimum_backstop = (
+        startup.silence_timeout_ns
+        + max(setup_cancel, trial_finished)
+        + recovery
+        + 3 * (startup.graceful_exit_ns + startup.terminate_exit_ns)
+    )
+    if startup.application_backstop_ns < minimum_backstop:
+        raise ConfigurationError("application shutdown backstop is below derived sum")
+    return startup
+
+
+def _load_reusable_configuration(
+    root: Path, ec: Mapping[str, Any], max_message: int
+) -> tuple[pb.ExperimentConfiguration, str | None]:
+    """Load saved history, fill acquisition/tracking defaults and the asset root."""
+    history_warning: str | None = None
+    try:
+        reusable = _load_saved_configuration(
+            root / "config/last_configuration.json", max_message_bytes=max_message
+        )
+    except ConfigurationError as exc:
+        # E07 keeps the original file for diagnosis and starts with editable
+        # defaults; this never grants Setup or replaces a valid default TOML.
+        reusable = pb.ExperimentConfiguration()
+        history_warning = str(exc)
+    _fill_acquisition_defaults(reusable, root)
+    tracking = next(
+        (item for item in reusable.backends if item.backend_name == "tracking"), None
+    )
+    if tracking is not None and tracking.WhichOneof("settings") in (None, "tracking"):
+        from cephvr.tracking.configuration import resolve_settings
+
+        tracking.tracking.CopyFrom(resolve_settings(root, tracking.tracking))
+    assets = ec.get("assets", {})
+    if isinstance(assets, dict) and "asset_root" in assets:
+        asset_root = assets["asset_root"]
+        if not isinstance(asset_root, str) or not asset_root:
+            raise ConfigurationError("assets.asset_root must be a nonempty path")
+        if not reusable.HasField("asset_root"):
+            reusable.asset_root = asset_root
+    return reusable, history_warning
+
+
 def load_controller_configuration(software_root: Path) -> ControllerConfiguration:
     """Resolve only accepted file-owned values; missing scientific inputs stay unset."""
     root = Path(software_root)
@@ -191,25 +250,9 @@ def load_controller_configuration(software_root: Path) -> ControllerConfiguratio
     setup_cancel = _ns(ec, "timeouts", "setup_cancel", "initial_s")
     trial_finished = _ns(ec, "timeouts", "trial_finished", "initial_s")
     recovery = _ns(ec, "timeouts", "recovery_s")
-    startup = SupervisorStartup(
-        port=supervisor_port,
-        heartbeat_interval_ns=_ns(sc, "health", "heartbeat_interval_s"),
-        silence_timeout_ns=_ns(sc, "health", "silence_timeout_s"),
-        emergency_timeout_ns=_ns(sc, "emergency_report", "completion_timeout_s"),
-        graceful_exit_ns=_ns(sc, "shutdown", "graceful_process_exit_s"),
-        terminate_exit_ns=_ns(sc, "shutdown", "terminate_process_exit_s"),
-        application_backstop_ns=_ns(sc, "shutdown", "application_shutdown_backstop_s"),
+    startup = _load_supervisor_startup(
+        sc, supervisor_port, setup_cancel, trial_finished, recovery
     )
-    if startup.silence_timeout_ns <= startup.heartbeat_interval_ns:
-        raise ConfigurationError("health silence must exceed heartbeat interval")
-    minimum_backstop = (
-        startup.silence_timeout_ns
-        + max(setup_cancel, trial_finished)
-        + recovery
-        + 3 * (startup.graceful_exit_ns + startup.terminate_exit_ns)
-    )
-    if startup.application_backstop_ns < minimum_backstop:
-        raise ConfigurationError("application shutdown backstop is below derived sum")
     retention = _ns(ec, "control", "command_record_retention_after_finalization_s")
     policies = pb.ControlPolicies(
         setup=pb.WaitPolicy(initial_ns=_ns(ec, "timeouts", "setup", "initial_s")),
@@ -256,24 +299,7 @@ def load_controller_configuration(software_root: Path) -> ControllerConfiguratio
         "max_metadata_operations": metadata_operations,
         "max_metadata_bytes": metadata_bytes,
     }
-    history_warning: str | None = None
-    try:
-        reusable = _load_saved_configuration(
-            root / "config/last_configuration.json", max_message_bytes=max_message
-        )
-    except ConfigurationError as exc:
-        # E07 keeps the original file for diagnosis and starts with editable
-        # defaults; this never grants Setup or replaces a valid default TOML.
-        reusable = pb.ExperimentConfiguration()
-        history_warning = str(exc)
-    _fill_acquisition_defaults(reusable, root)
-    assets = ec.get("assets", {})
-    if isinstance(assets, dict) and "asset_root" in assets:
-        asset_root = assets["asset_root"]
-        if not isinstance(asset_root, str) or not asset_root:
-            raise ConfigurationError("assets.asset_root must be a nonempty path")
-        if not reusable.HasField("asset_root"):
-            reusable.asset_root = asset_root
+    reusable, history_warning = _load_reusable_configuration(root, ec, max_message)
     return ControllerConfiguration(
         configuration=reusable,
         policies=policies,
@@ -284,9 +310,6 @@ def load_controller_configuration(software_root: Path) -> ControllerConfiguratio
         max_pending_events=max_events,
         max_pending_payload_bytes=queue_bytes,
         max_retained_incidents=max_incidents,
-        history_save_timeout_ns=history_save_timeout,
-        space_query_timeout_ns=space_query_timeout,
-        low_space_warning_bytes=low_space_warning,
         default_intertrial_gap_ns=default_gap,
         history_warning=history_warning,
     )
@@ -378,8 +401,8 @@ def validate_experiment_candidate(
         pb.SESSION_MODE_OPEN_LOOP,
         pb.SESSION_MODE_CLOSED_LOOP,
     ):
-        if "vr" not in enabled:
-            issue("backends", "VR is required for both session modes")
+        if "visual_stimulus" not in enabled:
+            issue("backends", "Visual Stimulus is required for both session modes")
         if candidate.mode == pb.SESSION_MODE_CLOSED_LOOP and "tracking" not in enabled:
             issue("backends", "closed-loop mode requires tracking")
     for index, trial in enumerate(candidate.trials, 1):

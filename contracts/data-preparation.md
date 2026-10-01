@@ -1,4 +1,4 @@
-# Acquisition, tracking and VR preparation handoff
+# Acquisition, tracking and Visual Stimulus preparation handoff
 
 Authority: [E08](../docs/architecture/system-contracts.md#e08),
 [A03](../docs/architecture/acquisition.md#a03), [T08](../docs/architecture/tracking.md#t08)
@@ -19,17 +19,23 @@ is available before its final Ready report; no step waits for mutually dependent
 | Make camera input available | Acquisition → controller, ReportDataPreparation | After confirmed camera layout and allocation, tracking_input carries the exact FrameBufferAttachment targeted at the registered tracking process. Acquisition does not wait for tracking attachment or final Ready to send it. |
 | Bind camera input | Controller → tracking, TrackingPreparationService.BindData | Exact descriptor, current tracking preparation generation and configuration revision. Admission means accepted work, not attachment completion. |
 | Confirm camera input | Tracking → controller, ReportDataPreparation; controller → acquisition, AcquisitionConfigurationService.ConfirmTrackingInput | The tracking state has data_attached=true and exact allocation/resource_id plus transfer_id in attached_input. Controller forwards that validated report unchanged; acquisition checks it against its registered consumer obligation. |
-| Make feedback endpoint available, closed loop only | Tracking → controller, ReportDataPreparation | FeedbackAttachment after listener, catalogue and bounded transport resources are prepared. It can be reported with input completion or later; do not wait for a VR connection before publishing the descriptor. |
-| Bind feedback endpoint, closed loop only | Controller → VR, BackendService.SetupSession | feedback_attachment is required on this request. The coordinator forwards it unchanged in renderer WorkerSetup; renderer and tracking complete the existing peer/nonce/credit handshake. |
-| Complete preparation | Each backend → controller, ordinary ReadyReport | Verify all of that backend's obligations. Acquisition includes confirmed tracking attachment; tracking/VR include the actual feedback handshake in closed loop. Controller still requires all participant/resource/output gates. |
+| Make feedback endpoint available, closed loop only | Tracking → controller, ReportDataPreparation | FeedbackAttachment after listener, catalogue and bounded transport resources are prepared. It can be reported with input completion or later; do not wait for a Visual Stimulus connection before publishing the descriptor. |
+| Bind feedback endpoint, closed loop only | Controller → Visual Stimulus, BackendService.SetupSession | feedback_attachment is required on this request. The coordinator forwards it unchanged in renderer WorkerSetup; renderer and tracking complete the existing peer/nonce/credit handshake. |
+| Complete preparation | Each backend → controller, ordinary ReadyReport | Verify all of that backend's obligations. Acquisition includes confirmed tracking attachment; tracking/Visual Stimulus include the actual feedback handshake in closed loop. Controller still requires all participant/resource/output gates. |
 
-Open-loop VR Setup does not wait for tracking's feedback endpoint and must not receive
+Open-loop Visual Stimulus Setup does not wait for tracking's feedback endpoint and must not receive
 one. Open-loop tracking still attaches its selected camera and computes/records under its
 save setting; it has no unconsumed result queue. Disabled tracking adds no ring/confirmation.
 Saving Off removes only the corresponding writer/output obligations, never a required
 tracking input or closed-loop connection. Existing display/Idle initialization is independent
-of this session handoff. Delay VR's closed-loop Setup dispatch until its descriptor exists;
+of this session handoff. Delay Visual Stimulus's closed-loop Setup dispatch until its descriptor exists;
 do not mutate an already accepted Setup request or introduce a second feedback-binding RPC.
+
+Closed-loop Tracking Setup also carries `feedback_consumer` (SetupSessionRequest tag 8):
+the exact supervisor-registered `visual_stimulus_renderer` process generation, resolved
+by the controller through its retained worker ownership. Tracking authenticates this
+generation during its private pipe handshake. Missing or ambiguous renderer identity
+fails preparation; an endpoint or backend generation cannot substitute for it.
 
 ## Report identity, retention and secrecy
 

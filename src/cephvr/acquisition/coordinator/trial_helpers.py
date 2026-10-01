@@ -84,8 +84,8 @@ def _trial_finished(trial: TrialRecord) -> bool:
             and plan.extension == "mp4"
         ):
             if (
-                result.vr_review_video_content
-                != control.VR_REVIEW_VIDEO_CONTENT_UNSPECIFIED
+                result.visual_stimulus_review_video_content
+                != control.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_UNSPECIFIED
                 or result.camera_video_content
                 not in {
                     control.CAMERA_VIDEO_CONTENT_NO_FRAMES,
@@ -109,8 +109,8 @@ def _trial_finished(trial: TrialRecord) -> bool:
             result.closure != control.OUTPUT_CLOSURE_CLOSED
             or not result.artifact_present
             or result.camera_video_content != control.CAMERA_VIDEO_CONTENT_UNSPECIFIED
-            or result.vr_review_video_content
-            != control.VR_REVIEW_VIDEO_CONTENT_UNSPECIFIED
+            or result.visual_stimulus_review_video_content
+            != control.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_UNSPECIFIED
         ):
             return False
     return True

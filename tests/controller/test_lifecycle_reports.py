@@ -133,7 +133,9 @@ def _fixture(root: Path) -> _Fixture:
     session_id = str(uuid4())
     generation = str(uuid4())
     session = pb.SessionContext(controller_generation=generation, session_id=session_id)
-    backend = pb.BackendContext(backend_name="vr", backend_generation=str(uuid4()))
+    backend = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=str(uuid4())
+    )
     trial = pb.TrialContext(session=session, trial_id=str(uuid4()), trial_number=1)
     prepared = pb.PreparedSession(context=session)
     prepared.trials.add(context=trial)
@@ -145,15 +147,15 @@ def _fixture(root: Path) -> _Fixture:
         context=session,
         prepared=prepared,
         reservation=reservation,
-        required={"vr": participant},
-        setup_operations={"vr": "setup"},
+        required={"visual_stimulus": participant},
+        setup_operations={"visual_stimulus": "setup"},
     )
-    attempt.scope_commands["scope"] = ("vr", "incident", 1)
+    attempt.scope_commands["scope"] = ("visual_stimulus", "incident", 1)
     attempt.setup_deadline_ns = 100
     attempt.ready_deadline_ns = 100
     attempt.trial_index = 0
     attempt.trial_operation = "trial-command"
-    attempt.trial_participants["vr"] = participant
+    attempt.trial_participants["visual_stimulus"] = participant
     lifecycle = LifecycleState(
         session=pb.SessionState(phase=pb.SESSION_PHASE_SETTING_UP),
         trial=pb.TrialState(phase=pb.TRIAL_PHASE_PREPARING),
@@ -177,15 +179,11 @@ def _fixture(root: Path) -> _Fixture:
     async def log_event(*_args: object, **_kwargs: object) -> None:
         pass
 
-    def recovery_log_done(_attempt: Attempt, _task: asyncio.Task[object]) -> None:
-        pass
-
     hooks = ReportHooks(
         publish=publish,
         spawn=spawn,
         late_cleanup=late_cleanup,
         log_event=log_event,
-        recovery_log_done=recovery_log_done,
         clock=lambda: 0,
         activity_requirements=lambda _attempt, _name: (
             frozenset(),
@@ -287,10 +285,10 @@ async def test_trial_ready_requires_exact_trial_and_active_participant(
     attempt.trial_participants.clear()
     absent = await reports.receive(report, 50)
     assert absent.failure.code == "EVIDENCE"
-    attempt.trial_participants["vr"] = attempt.required["vr"]
+    attempt.trial_participants["visual_stimulus"] = attempt.required["visual_stimulus"]
     accepted = await reports.receive(report, 50)
     assert accepted.result == pb.COMMAND_RESULT_ACCEPTED
-    assert "vr" in attempt.trial_ready
+    assert "visual_stimulus" in attempt.trial_ready
     assert fixture.publications[0] == 1
 
 
@@ -347,14 +345,14 @@ async def test_late_finished_retains_one_exact_recovery_without_changing_duplica
         fixture.supervisor.controller_recoveries[0].outcome
         == pb.RECOVERY_OUTCOME_COMPLETED
     )
-    assert (trial.trial_id, "vr") in attempt.recovered_finished
+    assert (trial.trial_id, "visual_stimulus") in attempt.recovered_finished
     duplicate = await reports.receive(report, 150)
     assert duplicate.result == pb.COMMAND_RESULT_ACCEPTED
     assert len(fixture.supervisor.controller_recoveries) == 1
     changed = pb.LifecycleReport()
     changed.CopyFrom(report)
-    changed.finished.vr_review_summary.trial_id = trial.trial_id
-    changed.finished.vr_review_summary.render_groups = 1
+    changed.finished.visual_stimulus_review_summary.trial_id = trial.trial_id
+    changed.finished.visual_stimulus_review_summary.render_groups = 1
     rejected = await reports.receive(changed, 150)
     assert rejected.result == pb.COMMAND_RESULT_REJECTED
     assert rejected.failure.code == "CONFLICT"

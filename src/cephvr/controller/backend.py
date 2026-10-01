@@ -10,6 +10,7 @@ import grpc
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.ports import BACKEND_NAMES
 from cephvr.shared.auth import Principal
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.transport_deadlines import deadline_metadata, remaining_seconds
@@ -25,7 +26,7 @@ class BackendRegistration:
     token: str = field(repr=False)
 
     def __post_init__(self) -> None:
-        if self.backend_name not in {"acquisition", "vr", "tracking"}:
+        if self.backend_name not in BACKEND_NAMES:
             raise ValueError("unsupported top-level backend name")
         require_uuid4(self.backend_generation)
         if (
@@ -70,9 +71,9 @@ class GrpcBackendPort:
             if registration.backend_name == "tracking"
             else None
         )
-        self.vr = (
-            rpc.VRConfigurationServiceStub(self.channel)  # type: ignore[no-untyped-call]
-            if registration.backend_name == "vr"
+        self.visual_stimulus = (
+            rpc.VisualStimulusConfigurationServiceStub(self.channel)  # type: ignore[no-untyped-call]
+            if registration.backend_name == "visual_stimulus"
             else None
         )
 
@@ -86,61 +87,45 @@ class GrpcBackendPort:
             timeout=timeout,
         )
 
+    async def _admission(
+        self, method: object, request: object, deadline_ns: int
+    ) -> pb.CommandAdmission:
+        return cast(pb.CommandAdmission, await self._call(method, request, deadline_ns))
+
     async def setup_session(
         self, request: svc.SetupSessionRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.SetupSession, request, deadline_ns),
-        )
+        return await self._admission(self.stub.SetupSession, request, deadline_ns)
 
     async def cancel_setup(
         self, request: svc.BackendCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.CancelSetup, request, deadline_ns),
-        )
+        return await self._admission(self.stub.CancelSetup, request, deadline_ns)
 
     async def prepare_trial(
         self, request: svc.PrepareTrialRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.PrepareTrial, request, deadline_ns),
-        )
+        return await self._admission(self.stub.PrepareTrial, request, deadline_ns)
 
     async def schedule_trial(
         self, request: svc.ScheduleTrialRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.ScheduleTrial, request, deadline_ns),
-        )
+        return await self._admission(self.stub.ScheduleTrial, request, deadline_ns)
 
     async def release_trial(
         self, request: svc.ReleaseTrialRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.ReleaseTrial, request, deadline_ns),
-        )
+        return await self._admission(self.stub.ReleaseTrial, request, deadline_ns)
 
     async def interrupt_session(
         self, request: svc.InterruptSessionRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.InterruptSession, request, deadline_ns),
-        )
+        return await self._admission(self.stub.InterruptSession, request, deadline_ns)
 
     async def cleanup(
         self, request: svc.BackendCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.Cleanup, request, deadline_ns),
-        )
+        return await self._admission(self.stub.Cleanup, request, deadline_ns)
 
     async def get_state(
         self, request: svc.BackendQuery, *, deadline_ns: int
@@ -155,21 +140,15 @@ class GrpcBackendPort:
     ) -> pb.CommandAdmission:
         if self.tracking is None:
             raise RuntimeError("tracking preparation endpoint unavailable")
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.tracking.BindData, request, deadline_ns),
-        )
+        return await self._admission(self.tracking.BindData, request, deadline_ns)
 
     async def confirm_tracking_input(
         self, request: svc.TrackingInputConfirmation, *, deadline_ns: int
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
-        return cast(
-            pb.CommandAdmission,
-            await self._call(
-                self.acquisition.ConfirmTrackingInput, request, deadline_ns
-            ),
+        return await self._admission(
+            self.acquisition.ConfirmTrackingInput, request, deadline_ns
         )
 
     async def report_preview_consumer_state(
@@ -187,10 +166,7 @@ class GrpcBackendPort:
     async def apply_incident_scope(
         self, request: svc.IncidentScopeRequest, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.ApplyIncidentScope, request, deadline_ns),
-        )
+        return await self._admission(self.stub.ApplyIncidentScope, request, deadline_ns)
 
     async def get_retained_result(
         self, request: svc.RetainedResultQuery, *, deadline_ns: int
@@ -205,11 +181,8 @@ class GrpcBackendPort:
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
-        return cast(
-            pb.CommandAdmission,
-            await self._call(
-                self.acquisition.ConfirmConfiguration, request, deadline_ns
-            ),
+        return await self._admission(
+            self.acquisition.ConfirmConfiguration, request, deadline_ns
         )
 
     async def execute_camera_command(
@@ -217,11 +190,8 @@ class GrpcBackendPort:
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
-        return cast(
-            pb.CommandAdmission,
-            await self._call(
-                self.acquisition.ExecuteCameraCommand, request, deadline_ns
-            ),
+        return await self._admission(
+            self.acquisition.ExecuteCameraCommand, request, deadline_ns
         )
 
     async def apply_camera_settings(
@@ -229,11 +199,8 @@ class GrpcBackendPort:
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
-        return cast(
-            pb.CommandAdmission,
-            await self._call(
-                self.acquisition.ApplyCameraSettings, request, deadline_ns
-            ),
+        return await self._admission(
+            self.acquisition.ApplyCameraSettings, request, deadline_ns
         )
 
     async def apply_pulse_configuration(
@@ -241,30 +208,26 @@ class GrpcBackendPort:
     ) -> pb.CommandAdmission:
         if self.acquisition is None:
             raise RuntimeError("acquisition configuration endpoint unavailable")
-        return cast(
-            pb.CommandAdmission,
-            await self._call(
-                self.acquisition.ApplyPulseConfiguration, request, deadline_ns
-            ),
+        return await self._admission(
+            self.acquisition.ApplyPulseConfiguration, request, deadline_ns
         )
 
     async def initialize_display(
-        self, request: svc.VRDisplayInitializationRequest, *, deadline_ns: int
+        self,
+        request: svc.VisualStimulusDisplayInitializationRequest,
+        *,
+        deadline_ns: int,
     ) -> pb.CommandAdmission:
-        if self.vr is None:
-            raise RuntimeError("VR configuration endpoint unavailable")
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.vr.InitializeDisplay, request, deadline_ns),
+        if self.visual_stimulus is None:
+            raise RuntimeError("Visual Stimulus configuration endpoint unavailable")
+        return await self._admission(
+            self.visual_stimulus.InitializeDisplay, request, deadline_ns
         )
 
     async def shutdown(
         self, request: svc.BackendCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission:
-        return cast(
-            pb.CommandAdmission,
-            await self._call(self.stub.Shutdown, request, deadline_ns),
-        )
+        return await self._admission(self.stub.Shutdown, request, deadline_ns)
 
     async def close(self) -> None:
         await self.channel.close()

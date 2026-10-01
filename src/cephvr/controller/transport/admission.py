@@ -9,6 +9,7 @@ from typing import Protocol
 from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.receipts import rejected_admission
 from cephvr.shared.commands import CommandCapacityError, CommandConflict, CommandLedger
 
 
@@ -42,20 +43,9 @@ class CommandAdmissionGate:
             max_bytes=max_pending_payload_bytes,
             result_reservation_bytes=4096,
         )
-        self._abort_ledger = CommandLedger(
-            work.generation,
-            command_retention_ns,
-            max_records=8,
-            max_bytes=65_536,
-            result_reservation_bytes=4096,
-        )
-        self._shutdown_ledger = CommandLedger(
-            work.generation,
-            command_retention_ns,
-            max_records=8,
-            max_bytes=65_536,
-            result_reservation_bytes=4096,
-        )
+        self._abort_ledger = self._safety_ledger(work, command_retention_ns)
+        self._shutdown_ledger = self._safety_ledger(work, command_retention_ns)
+        self._ledgers = (self._ledger, self._abort_ledger, self._shutdown_ledger)
         self._pending: dict[str, asyncio.Future[pb.CommandAdmission]] = {}
         self._tasks: set[asyncio.Task[None]] = set()
         self._closed = False
@@ -64,6 +54,18 @@ class CommandAdmissionGate:
         self._session_work_key: str | None = None
         self._camera_work_keys: set[str] = set()
         self._housekeeping = asyncio.create_task(self._housekeep())
+
+    @staticmethod
+    def _safety_ledger(
+        work: CommandWorkView, command_retention_ns: int
+    ) -> CommandLedger:
+        return CommandLedger(
+            work.generation,
+            command_retention_ns,
+            max_records=8,
+            max_bytes=65_536,
+            result_reservation_bytes=4096,
+        )
 
     def fresh(self, name: str, command_id: str) -> bool:
         """Check the matching safety lane before its first precondition check."""
@@ -92,16 +94,15 @@ class CommandAdmissionGate:
                 if self._work.command_work_complete(key):
                     self._ledger.finalize_work(key, self._work.clock())
                     self._camera_work_keys.discard(key)
-            self._ledger.prune(self._work.clock())
-            self._abort_ledger.prune(self._work.clock())
-            self._shutdown_ledger.prune(self._work.clock())
+            for ledger in self._ledgers:
+                ledger.prune(self._work.clock())
 
     def _retire_clean_work(self) -> None:
         if not self._work.clean_work_retired():
             return
         for key in (self._setup_work_key, self._session_work_key):
             if key is not None:
-                for ledger in (self._ledger, self._abort_ledger, self._shutdown_ledger):
+                for ledger in self._ledgers:
                     try:
                         ledger.finalize_work(key, self._work.clock())
                     except ValueError:
@@ -117,22 +118,14 @@ class CommandAdmissionGate:
         action: Callable[[], Awaitable[pb.CommandAdmission]],
     ) -> pb.CommandAdmission:
         if self._closed:
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(
-                    code="SHUTDOWN", message="controller service is closing"
-                ),
+            return rejected_admission(
+                command_id, "SHUTDOWN", "controller service is closing"
             )
         canonical = (
             name.encode() + b"\0" + request.SerializeToString(deterministic=True)
         )
         ledger = self._lane(name)
-        other_ledgers = tuple(
-            other
-            for other in (self._ledger, self._abort_ledger, self._shutdown_ledger)
-            if other is not ledger
-        )
+        other_ledgers = tuple(other for other in self._ledgers if other is not ledger)
         synchronous = name in {
             "AcquireControl",
             "TakeOverControl",
@@ -159,23 +152,15 @@ class CommandAdmissionGate:
                 command_id, canonical, self._work.clock(), work_key=work_key
             )
         except (ValueError, CommandConflict, CommandCapacityError) as exc:
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(code="ADMISSION", message=str(exc)),
-            )
+            return rejected_admission(command_id, "ADMISSION", str(exc))
         if admission.replayed:
             if admission.record.result is not None:
                 return pb.CommandAdmission.FromString(admission.record.result)
             pending = self._pending.get(command_id)
             if pending is not None:
                 return await asyncio.shield(pending)
-            return pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(
-                    code="PENDING", message="matching command admission is pending"
-                ),
+            return rejected_admission(
+                command_id, "PENDING", "matching command admission is pending"
             )
         future: asyncio.Future[pb.CommandAdmission] = (
             asyncio.get_running_loop().create_future()
@@ -229,39 +214,40 @@ class CommandAdmissionGate:
             if not future.done():
                 future.set_result(result)
         except asyncio.CancelledError:
-            result = pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(
-                    code="SHUTDOWN",
-                    message="controller service closed before admission completed",
-                ),
-            )
-            ledger.complete(
+            result = rejected_admission(
                 command_id,
-                result.SerializeToString(deterministic=True),
-                self._work.clock(),
+                "SHUTDOWN",
+                "controller service closed before admission completed",
             )
-            self._finalize_failed(ledger, command_id, work_key, synchronous)
-            if not future.done():
-                future.set_result(result)
+            self._fail_admission(
+                ledger, command_id, work_key, synchronous, future, result
+            )
             raise
         except Exception as exc:
-            result = pb.CommandAdmission(
-                result=pb.COMMAND_RESULT_REJECTED,
-                command_id=command_id,
-                failure=pb.Failure(code="INTERNAL", message=str(exc)),
+            result = rejected_admission(command_id, "INTERNAL", str(exc))
+            self._fail_admission(
+                ledger, command_id, work_key, synchronous, future, result
             )
-            ledger.complete(
-                command_id,
-                result.SerializeToString(deterministic=True),
-                self._work.clock(),
-            )
-            self._finalize_failed(ledger, command_id, work_key, synchronous)
-            if not future.done():
-                future.set_result(result)
         finally:
             self._pending.pop(command_id, None)
+
+    def _fail_admission(
+        self,
+        ledger: CommandLedger,
+        command_id: str,
+        work_key: str,
+        synchronous: bool,
+        future: asyncio.Future[pb.CommandAdmission],
+        result: pb.CommandAdmission,
+    ) -> None:
+        ledger.complete(
+            command_id,
+            result.SerializeToString(deterministic=True),
+            self._work.clock(),
+        )
+        self._finalize_failed(ledger, command_id, work_key, synchronous)
+        if not future.done():
+            future.set_result(result)
 
     def _finalize_failed(
         self, ledger: CommandLedger, command_id: str, work_key: str, synchronous: bool

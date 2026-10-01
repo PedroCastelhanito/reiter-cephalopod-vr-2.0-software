@@ -11,6 +11,7 @@ from cephvr.platform.windows.jobs import WindowsLaunchError
 from cephvr.platform.windows.security import SecurityAttributes
 
 ERROR_IO_PENDING = 997
+ERROR_IO_INCOMPLETE = 996
 ERROR_NOT_FOUND = 1168
 WAIT_OBJECT_0 = 0
 WAIT_TIMEOUT = 0x102
@@ -35,6 +36,7 @@ class NativePendingIO:
     buffer: ctypes.Array[ctypes.c_char]
     writing: bool
     deadline_ns: int
+    backing: bytearray | None = None
     completed: bool = False
     transferred: int | None = None
     error_code: int | None = None
@@ -70,6 +72,15 @@ def native_api() -> ctypes.WinDLL:
         wintypes.HANDLE,
     ]
     api.CreateFileW.restype = wintypes.HANDLE
+    api.SetNamedPipeHandleState.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    api.SetNamedPipeHandleState.restype = wintypes.BOOL
+    api.WaitNamedPipeW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD]
+    api.WaitNamedPipeW.restype = wintypes.BOOL
     api.ConnectNamedPipe.argtypes = [wintypes.HANDLE, ctypes.POINTER(Overlapped)]
     api.ConnectNamedPipe.restype = wintypes.BOOL
     api.SetHandleInformation.argtypes = [

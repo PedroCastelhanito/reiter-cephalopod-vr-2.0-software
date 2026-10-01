@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import tomllib
 import unittest
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'vr'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'visual_stimulus'))
 from method_models import parse_method
 from record_models import PoseUse, TrackingRecord, parse_record
 from record_codec import encode_line, decode_lines
@@ -151,7 +151,7 @@ class ContractTests(unittest.TestCase):
         # A06: the reset is a newer result generation; saving records it with its cause.
         x=dict(kind='reset',reset_generation='2',causes=['camera_gap','result_overflow'],observed_host_ns=5)
         self.assertEqual(record(x).record.causes,('camera_gap','result_overflow'))
-        for change in ({'causes':[]},{'causes':['camera_gap','camera_gap']},{'causes':['vr_stale']},
+        for change in ({'causes':[]},{'causes':['camera_gap','camera_gap']},{'causes':['visual_stimulus_stale']},
                        {'reset_generation':'0'},{'reset_generation':UUID},
                        {'feedback_reset_marker':{'protobuf_base64':'CA=='}},{'prior_generation':'1'}):
             with self.subTest(change=change),self.assertRaises(ValueError):record(x|change)

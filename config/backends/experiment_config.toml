@@ -112,7 +112,7 @@ backend_release_cutoff_before_start_ms = 50
 # Dispatch release as soon as all gates pass; cutoffs are deadlines, not added waits.
 
 # Start lateness covers actual software start and the first expected current-trial
-# camera callback/returned VR presentation call per required output (software only;
+# camera callback/returned Visual Stimulus presentation call per required output (software only;
 # no photodiode feedback on the rig) under one host-observed liveness
 # tolerance after T (E05), including controller receipt of valid Started evidence.
 # Configure here before Setup; session-locked at Start. T remains the boundary.

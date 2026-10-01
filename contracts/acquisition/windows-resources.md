@@ -3,7 +3,7 @@
 Derived from [E06/E08](../../docs/architecture/system-contracts.md) and
 [A02/A03/A07/A08](../../docs/architecture/acquisition.md). This defines the native
 adapter contract. Implementation status and static evidence are recorded in the
-[implementation review](../../reports/acquisition-implementation-review.md);
+[implementation review](../../reports/acquisition.md);
 Windows behavior and deployment compatibility require rig verification.
 Reuse the shared helper; it is not a new launcher service.
 
@@ -12,7 +12,7 @@ Reuse the shared helper; it is not a new launcher service.
 Use the shared [Windows launch contract](../windows-launch.md) for planned jobs,
 creation-time membership, partial-child registration and graceful cleanup. Acquisition
 FFmpeg follows A08's pre-T launch (no frames before T) and cancel-before-T cleanup. The sections below bind acquisition-specific
-I/O and storage resources; VR uses the same launch mechanism without importing them.
+I/O and storage resources; Visual Stimulus uses the same launch mechanism without importing them.
 
 ## FFmpeg stdin and cancellation
 

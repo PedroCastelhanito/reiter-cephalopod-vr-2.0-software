@@ -42,7 +42,7 @@ delivery-only; any other cause also starts a processing generation. Reset genera
 strictly increase within the file; gaps between trial files are allowed because the
 counter is attachment/stream-scoped (the [delivery contract](feedback-delivery.md)).
 When saving, every locally committed reset has its line, including one whose results
-were all dropped before VR delivery. A result's reset_generation equals the latest
+were all dropped before Visual Stimulus delivery. A result's reset_generation equals the latest
 preceding Reset line. Result IDs are unique; result_sequence is monotonic under the
 adopted feedback boundary. Late old-generation evidence can be retained
 only as excluded/discard accounting, never as newly usable movement. Same-binding pose
@@ -53,11 +53,11 @@ whole-trial in-memory history. The external reader may use bounded disk-backed i
 
 ## Reuse FeedbackResult without a second scientific schema
 
-A result embeds the exact serialized cephvr.vr.v1.FeedbackResult as canonical base64.
-The existing [data.proto](../cephvr/vr/v1/data.proto) remains its sole wire definition. The tracking
+A result embeds the exact serialized cephvr.visual_stimulus.v1.FeedbackResult as canonical base64.
+The existing [data.proto](../cephvr/visual_stimulus/v1/data.proto) remains its sole wire definition. The tracking
 boundary validates typed messages before encoding, checks finite values and all required
-fields, then serializes once; the same result bytes can feed VR. Saving does not depend on
-whether VR consumes the result. There are no dense arrays or arbitrary estimator dictionaries.
+fields, then serializes once; the same result bytes can feed Visual Stimulus. Saving does not depend on
+whether Visual Stimulus consumes the result. There are no dense arrays or arbitrary estimator dictionaries.
 
 The external reader decodes within the record byte limit and parses against the exact
 supported descriptor. Reject unknown fields/enum values, mismatched identity, duplicate
@@ -85,7 +85,7 @@ large batches into bounded records; no truncation, unbounded ID arrays or fabric
 identities for frames never delivered. Acquisition owns native camera gaps/counters;
 tracking records its known rejected inputs and reset cause. A06 result overflow records
 which pending results were retired; it never removes their already-admitted scientific
-records. Publication to VR and recording admission must be ordered so that recording
+records. Publication to Visual Stimulus and recording admission must be ordered so that recording
 failure cannot silently claim complete tracking history.
 
 ## Cutoff and completion

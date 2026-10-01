@@ -21,7 +21,7 @@ from cephvr.supervisor.receipts import (
 )
 from cephvr.supervisor.recovery import RecoveryCoordinator
 from cephvr.supervisor.registration import RegistrationCoordinator
-from cephvr.supervisor.registry import LaunchError, LaunchRegistry
+from cephvr.supervisor.registry import BACKEND_ROLES, LaunchError, LaunchRegistry
 from cephvr.supervisor.shutdown import ShutdownCoordinator
 from cephvr.supervisor.status import StatusPublisher
 
@@ -165,8 +165,7 @@ class SupervisorService(services_pb2_grpc.SupervisorServiceServicer):
                 if (
                     state.phase == wire.LAUNCH_PHASE_OPERATIONAL
                     and planned.phase != wire.LAUNCH_PHASE_OPERATIONAL
-                    and request.child.role
-                    in {"controller", "acquisition", "vr", "tracking"}
+                    and request.child.role in BACKEND_ROLES | {"controller"}
                 ):
                     self.health.state.last_heartbeat[
                         (request.child.role, request.child.generation)

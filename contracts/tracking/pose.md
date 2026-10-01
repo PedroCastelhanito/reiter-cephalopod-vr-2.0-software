@@ -149,7 +149,7 @@ separation; do not apply separate x/y scaling to that distance metric. T30 also 
 body-following width (anterior-posterior) and height (left-right), rotated into the image.
 The sampling construction and its remaining fields are owned by [geometry.md](geometry.md).
 T26 below binds acquired-image clipping independently of those choices.
-Body-axis-to-VR mapping and locomotion interpretation stay with the estimator discussion.
+Body-axis-to-Visual Stimulus mapping and locomotion interpretation stay with the estimator discussion.
 
 ## Analysis-region coverage
 
@@ -163,7 +163,7 @@ Use one declared pixel-centre inclusion rule consistently for requested/intersec
 Do not pool regions, fill missing pixels or shift/shrink the intended region to manufacture
 coverage. Bound mask construction and off-image support accounting during preparation.
 
-Empty visible support or a failed support gate invalidates the dependent result; VR
+Empty visible support or a failed support gate invalidates the dependent result; Visual Stimulus
 follows existing hold behavior. Clipping alone does not interrupt the session, and
 clipping can bias sampling. Record coverage whenever a region is evaluated, through
 the geometry stage's typed compact evidence. No region evaluation means an absent geometry

@@ -1,6 +1,6 @@
 """E08 shared native mechanism interfaces; Windows runtime implementation exists.
 
-See native-transport.md and reports/acquisition-implementation-review.md.
+See native-transport.md and reports/acquisition.md.
 Backend messages, byte layouts, credits, overflow and
 scheduling remain backend-owned. No universal queue/lifecycle framework.
 """

@@ -30,6 +30,7 @@ from cephvr.controller.configuration import (
 from cephvr.controller.planning import (
     plan_outputs,
 )
+from cephvr.controller.ports import BACKEND_NAMES
 from cephvr.controller.recovery import StartupRecovery
 from cephvr.controller.runtime import ControllerRuntime
 from cephvr.controller.service import (
@@ -101,11 +102,7 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
         for entry in descriptors
     ):
         raise ValueError("backend credentials and managed job generations disagree")
-    if {entry.backend_name for entry in descriptors} != {
-        "acquisition",
-        "vr",
-        "tracking",
-    }:
+    if {entry.backend_name for entry in descriptors} != BACKEND_NAMES:
         raise ValueError("bootstrap omits a required top-level backend identity")
     launcher_handle = cast(
         int, _bootstrap_value(bootstrap, "launcher_control_handle", int)

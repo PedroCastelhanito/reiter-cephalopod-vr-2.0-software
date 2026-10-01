@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any, cast
-from uuid import uuid4
 
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.control.v1 import services_pb2 as svc
@@ -17,46 +16,22 @@ from cephvr.controller.device.camera import (
 )
 from cephvr.controller.device.display import DisplayInitialization
 from cephvr.controller.device.ports import DeviceHooks
+from cephvr.controller.device.status_retention import CameraStatusRetention
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import (
     CameraOperation,
     ConfigurationState,
-    ControllerLimits,
     ControlState,
     DeviceState,
     LifecycleState,
     LimitsState,
 )
-from cephvr.vr.v1 import runtime_pb2 as vr_pb
-
-
-def _id() -> str:
-    return str(uuid4())
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
+from tests.controller.support_components import _id, default_limits
 
 
 def _limits() -> LimitsState:
-    return LimitsState(
-        ControllerLimits(
-            setup_ns=1_000_000_000,
-            setup_cancel_ns=1_000_000_000,
-            ready_ns=1_000_000_000,
-            finished_ns=1_000_000_000,
-            registration_ns=1_000_000_000,
-            recovery_ns=1_000_000_000,
-            metadata_ns=1_000_000_000,
-            validation_ns=1_000_000_000,
-            lead_ns=500_000_000,
-            controller_release_ns=100_000_000,
-            backend_release_ns=50_000_000,
-            start_evidence_ns=250_000_000,
-            stop_evidence_ns=250_000_000,
-            max_metadata_operations=8,
-            max_metadata_bytes=4096,
-            history_ns=1_000_000_000,
-            space_query_ns=1_000_000_000,
-            low_space_bytes=1,
-        )
-    )
+    return LimitsState(default_limits())
 
 
 class _Env:
@@ -101,8 +76,7 @@ class _FailingBackend:
 
 async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
     env = _Env()
-    completed: list[CameraOperation] = []
-    retention = type("R", (), {"complete_internal": staticmethod(completed.append)})()
+    retention = CameraStatusRetention(env.device, clock=lambda: env.now)
     camera = CameraCommands(
         lifecycle=env.lifecycle,
         configuration=env.configuration,
@@ -114,7 +88,7 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
         limits=_limits(),
         clock=lambda: env.now,
         hooks=env.hooks,
-        status_retention=cast(Any, retention),
+        status_retention=retention,
     )
     child = _id()
     deadline = env.now + 500
@@ -169,12 +143,12 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
     assert operation.admission_unconfirmed
     assert env.device.camera_operation is None
     assert env.device.completed_camera_operation is operation
-    assert completed == [operation]
+    assert env.device.camera_operation_changed.is_set()
 
 
 def _display(env: _Env, loader: Any) -> DisplayInitialization:
-    setting = pb.BackendSettings(backend_name="vr", enabled=True)
-    setting.vr.display.profile_json = "{}"
+    setting = pb.BackendSettings(backend_name="visual_stimulus", enabled=True)
+    setting.visual_stimulus.display.profile_json = "{}"
     env.configuration.current.backends.append(setting)
     projections = type("P", (), {"expected_display": None})()
     projections.expect_display = lambda command_id, revision: setattr(  # type: ignore[attr-defined]
@@ -187,7 +161,9 @@ def _display(env: _Env, loader: Any) -> DisplayInitialization:
         control=env.control,
         device=env.device,
         backends={
-            "vr": cast(BackendPort, type("B", (), {"context": pb.BackendContext()})())
+            "visual_stimulus": cast(
+                BackendPort, type("B", (), {"context": pb.BackendContext()})()
+            )
         },
         projections=cast(Any, projections),
         file_policy_loader=loader,
@@ -201,9 +177,9 @@ def _display(env: _Env, loader: Any) -> DisplayInitialization:
 
 
 def _policies() -> dict[str, Any]:
-    policy = vr_pb.VRFilePolicies()
+    policy = visual_stimulus_pb.VisualStimulusFilePolicies()
     policy.limits.max_document_bytes = 1
-    return {"vr": policy}
+    return {"visual_stimulus": policy}
 
 
 def _fill(env: _Env, count: int) -> None:
@@ -223,7 +199,7 @@ async def test_display_capacity_race_leaves_no_display_state_and_warns() -> None
     assert result.result == pb.COMMAND_RESULT_REJECTED
     assert env.device.display_pending is None
     assert cast(Any, env.projections).expected_display is None
-    assert any(w.component == "vr_display" for w in env.control.warnings)
+    assert any(w.component == "visual_stimulus_display" for w in env.control.warnings)
 
 
 async def test_display_capacity_early_uses_ordinary_rule_and_warns() -> None:
@@ -248,7 +224,7 @@ async def test_display_initialization_still_dispatches_with_capacity() -> None:
             return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
 
     display = _display(env, lambda names: _policies())
-    display.backends = {"vr": cast(BackendPort, Backend())}
+    display.backends = {"visual_stimulus": cast(BackendPort, Backend())}
     result = await display.initialize_display()
     assert result.result == pb.COMMAND_RESULT_ACCEPTED
     assert env.device.display_pending is not None

@@ -166,6 +166,12 @@ class Outbound:
             command_id=request.command.command_id,
         )
 
+    async def retire_worker_generation(self, role: str, generation: str) -> None:
+        pass
+
+    async def close(self) -> None:
+        pass
+
 
 class Context:
     def __init__(self, role: str, generation: str, token: str) -> None:

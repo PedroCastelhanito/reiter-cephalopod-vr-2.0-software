@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -77,7 +76,6 @@ class AssemblyInputs:
     validators: Mapping[
         str, Callable[[pb.ExperimentConfiguration], pb.ValidationResult]
     ]
-    file_policies: Mapping[str, Message]
     file_policy_loader: Callable[[frozenset[str]], Mapping[str, Message]] | None
     display_validator: Callable[[str], frozenset[str]] | None
     output_planner: (
@@ -98,7 +96,6 @@ class AssemblyInputs:
     health_silence_ns: int
     clock: Callable[[], int]
     spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]]
-    recovery_log_done: Callable[[Attempt, asyncio.Task[object]], None]
 
 
 @dataclass(frozen=True)
@@ -121,7 +118,6 @@ class ControllerComponents:
     trial_logs: TrialLogs
     interruption: InterruptionWorkflow
     session_commands: SessionCommands
-    incidents: IncidentCoordinator
     supervision: SupervisorObservations
     prompts: OperatorPrompts
     trials: TrialExecution
@@ -293,12 +289,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
     )
 
     def warn_controller(message: str) -> None:
-        i.control.warnings.append(
-            pb.Warning(
-                warning_id=str(uuid.uuid4()), component="controller", message=message
-            )
-        )
-        i.control.warnings = i.control.warnings[-256:]
+        i.control.add_warning("controller", message)
         publisher.publish()
 
     camera.bind_recovery(device_views.report_projection, warn_controller)
@@ -313,7 +304,6 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
             spawn=i.spawn,
             late_cleanup=cleanup.late_cleanup,
             log_event=metadata.log_event,
-            recovery_log_done=i.recovery_log_done,
             activity_requirements=activity_requirements,
             source_producers=source_producers,
             clock=i.clock,
@@ -343,7 +333,6 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         lifecycle=i.lifecycle,
         control=i.control,
         incidents=i.incident_state,
-        metadata_state=i.metadata_state,
         supervisor_state=i.supervisor_state,
         limit_state=i.limit_state,
         cleanup=cleanup,
@@ -351,7 +340,6 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         trial_logs=trial_logs,
         spikeglx=i.spikeglx,
         publisher=publisher,
-        control_operations=control_operations,
         generation=i.generation,
         supervisor_generation=i.supervisor_generation,
         clock=i.clock,
@@ -411,7 +399,6 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
     )
     trials = TrialExecution(
         lifecycle=i.lifecycle,
-        configuration=i.configuration_state,
         limit_state=i.limit_state,
         clock=i.clock,
         projections=i.projections,
@@ -475,7 +462,6 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         limit_state=i.limit_state,
         backends=i.backends,
         spikeglx=i.spikeglx,
-        file_policies=i.file_policies,
         file_policy_loader=i.file_policy_loader,
         settings_loader=i.settings_loader,
         startup_settings=i.startup_settings,
@@ -522,7 +508,6 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         trial_logs=trial_logs,
         interruption=interruption,
         session_commands=session_commands,
-        incidents=incidents,
         supervision=supervision,
         prompts=prompts,
         trials=trials,

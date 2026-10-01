@@ -5,7 +5,9 @@
 
 Records input, pipeline/camera scope, pose and image-flow methods (T01–T11), result
 delivery (A06) and compact recording scope (T14/T15). Complete initial estimator and
-pipeline declarations are bound; no tracking runtime code is retained in CephVR2.0.
+pipeline declarations are bound. Tracking implementation is the selected stage under
+[ARCH-001](../../architecture.md#arch-001); progress and validation limits belong in
+the [Tracking report](../../reports/tracking.md).
 
 **Method scope:** under [T27](#t27), accepted methods are replaceable starting
 implementations for experimentation: precise contracts for the selected method, not
@@ -20,15 +22,15 @@ throughput or rig validation; [T12](#t12) states runtime and verification scope.
 - [A03 — Frame transport](acquisition.md#a03) and
   [A04 — Delivery/overload](acquisition.md#a04): input buffers, ordering, reset and loss
   rules.
-- [A05 — Acquisition-to-VR delay](system-contracts.md#a05): timing evidence and
+- [A05 — Acquisition-to-Visual Stimulus delay](system-contracts.md#a05): timing evidence and
   boundaries.
-- [A06 — Results to VR](#a06): result delivery and consumer behavior.
+- [A06 — Results to Visual Stimulus](#a06): result delivery and consumer behavior.
 
 **Status:** water-flow and fin-flow pipelines, contour landmarks, estimator
 settings/evidence, worker ports and pipeline registration are declared in the
-[contract index](../../contracts/tracking/README.md). Coding awaits explicit
-authorization under [GOV-001](../../architecture.md#gov-001). VR freshness/hold is
-[V26](vr.md#v26).
+[contract index](../../contracts/tracking/README.md). The owner has authorized runtime implementation under
+[ARCH-001](../../architecture.md#arch-001). Visual Stimulus freshness/hold is
+[V26](visual_stimulus.md#v26).
 
 Configuration: [tracking_config.toml](../../config/backends/tracking_config.toml); fixed
 policy: [tracking_policy.toml](../../contracts/policy/tracking_policy.toml).
@@ -190,7 +192,7 @@ completed-buffer identity/layout/availability).
 <a id="t08"></a>
 ### T08 — One tracking process with internal workers
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 6
 
 - One Python tracking backend process owns control, preparation, source attachments,
   estimator state and result publication, with internal worker threads; no separate
@@ -210,6 +212,8 @@ completed-buffer identity/layout/availability).
 - Reuse E08 launch registration, loopback lifecycle control, health monitoring, Windows
   containment and shared native helpers. Attach to A03's selected-camera input and
   publish A06's direct result stream; scientific data does not cross the controller.
+  Closed-loop Setup carries the exact registered renderer identity through the
+  controller-owned preparation handoff; missing or ambiguous identity fails Setup.
 - Control/health responsiveness is distinct from computation progress. Blocking native
   calls run outside control handling; cancellation requests do not prove completion or
   release. Retain resources until consumers finish, report blocked cleanup under E06,
@@ -250,7 +254,7 @@ attachments);
 - Missing, invalid or over-age pose invalidates dependent movement. Never search past a
   newer invalid pose for an older valid one, use future-frame pose, predict geometry or
   silently switch method. Recovery cannot bridge an invalid/discarded movement interval;
-  A06 and V25/V26 own baseline and VR hold.
+  A06 and V25/V26 own baseline and Visual Stimulus hold.
 - Manual mode uses T05's fixed prepared geometry with no pose worker or pose-age
   requirement. Automatic mode needs valid age/history bounds at Setup; E14 configurable
   defaults are history capacity 8 and maximum pose age 500 ms (current CephVR's 30-frame
@@ -341,7 +345,7 @@ the two optical-flow options and this ID imposes no implementation requirement.
 **Status:** Accepted · **Revision:** 1
 
 - A session-level Save tracking data switch, independent of tracking activation, camera
-  recording and Save VR data. New-configuration default On; preserve an explicit saved
+  recording and Save Visual Stimulus data. New-configuration default On; preserve an explicit saved
   Off under E07. Disabled tracking creates no tracking outputs.
 - With saving Off, enabled tracking keeps observation/feedback and administrative
   error/lifecycle obligations, without detailed scientific history. E07 Setup/Start
@@ -356,8 +360,8 @@ the two optical-flow options and this ID imposes no implementation requirement.
 
 - With T14 saving On, retain compact pose observations, movement results and their
   quality evidence, source-frame/timing links, invalidity, reset and tracking-owned
-  discard accounting: all generated observations/results, not only valid or VR-applied
-  ones. VR keeps its own application/presentation evidence under V13/A05.
+  discard accounting: all generated observations/results, not only valid or Visual Stimulus-applied
+  ones. Visual Stimulus keeps its own application/presentation evidence under V13/A05.
 - Dense flow fields, intermediate image masks and diagnostic image histories are
   excluded; the owner confirmed no dense-flow saving for now. No dense-flow writer,
   payload or save switch unless the owner later requests that scope.
@@ -429,9 +433,9 @@ extraction, quality fields, scoring).
   one line per pose observation, movement result or reset, append-only, OS-synced every
   `sync_interval_s` and at closure. A bounded tracking-owned writer thread runs outside
   movement computation; feedback delivery never waits for disk. No checksums, envelopes
-  or dependency on VR's former framing code.
+  or dependency on Visual Stimulus's former framing code.
 - Admission, write/sync/progress or closure failure of required records follows E06/E10.
-  A06's lossy VR delivery queue is separate and never authorizes dropping scientific
+  A06's lossy Visual Stimulus delivery queue is separate and never authorizes dropping scientific
   records. Finalization drains admitted work, syncs and closes before reporting output
   closure; cleanup stays under shared deadlines.
 - After a crash the file is valid up to its last complete line; readers discard an
@@ -690,7 +694,7 @@ sectioning policy, not rig tuning.
 <a id="t33"></a>
 ### T33 — Full flow samples available to the estimator
 
-**Status:** Accepted · **Revision:** 2
+**Status:** Accepted · **Revision:** 3
 
 - Give the estimator all available provider-grid flow samples in the analysis band, with
   acquired-image positions and T32 section association; no representative vectors,
@@ -700,6 +704,10 @@ sectioning policy, not rig tuning.
   interpolation/upsampling and out-of-band samples are not required as scientific input.
   Quality rejection and weighting are explicit T12/T04 method choices, not hidden
   preprocessing.
+- NVIDIA samples use the native block estimate, positioned at the centre of its
+  represented acquired-image footprint, including clipped edge blocks. This is the
+  declared coordinate convention for turning, not an arithmetic mean of pixel flow
+  or a claim that NVIDIA exposes an independent sample at that point.
 - Use existing native buffer leases and the bounded path; no per-sample RPC, extra
   process, mandatory CPU copy or duplicate full-field representation.
 
@@ -728,14 +736,14 @@ handoff).
 
 **Status:** Accepted · **Revision:** 3
 
-- Target relative locomotion-control signals for closed-loop VR, mapped to virtual
+- Target relative locomotion-control signals for closed-loop Visual Stimulus, mapped to virtual
   movement by configurable gains; never label them measured physical swimming velocities
   or infer calibration from camera flow or body dimensions.
-- Keep measured evidence, estimator control signals and VR-applied movement
+- Keep measured evidence, estimator control signals and Visual Stimulus-applied movement
   distinguishable in compact records and declarations. Method identities, units/scaling
   and source timing stay explicit (T27/A05); no undocumented arbitrary units or
   camera-FPS-dependent behavior.
-- Reuse existing VR feedback binding/gain ownership; no tracking-owned VR gain layer.
+- Reuse existing Visual Stimulus feedback binding/gain ownership; no tracking-owned Visual Stimulus gain layer.
   T37/T38 bind speed control and direct method units.
 
 **Contracts:** [output contract](../../contracts/tracking/locomotion-output.md) (channel
@@ -750,7 +758,7 @@ meanings; links each method's unit/mathematics bindings and remaining work).
   Sideways is an independent planar translation, never dropped or derived from yaw. No
   vertical translation, pitch or roll control.
 - Control meanings use the animal's anatomical body frame, independent of camera
-  orientation/mirroring. The output contract binds names and sign conventions; VR's
+  orientation/mirroring. The output contract binds names and sign conventions; Visual Stimulus's
   motion/feedback contracts own conversion to virtual-observer movement.
 - Each estimator declares support and evidence for all three components before meeting
   the full-planar target; this does not establish identifiability. Never publish an
@@ -763,7 +771,7 @@ meanings; links each method's unit/mathematics bindings and remaining work).
 
 **Status:** Accepted · **Revision:** 1
 
-- Forward, sideways and turn drive set virtual linear/angular speed through existing VR
+- Forward, sideways and turn drive set virtual linear/angular speed through existing Visual Stimulus
   feedback gains. Channels are interval_average_rate, integrated only over explicit
   valid source intervals under V24–V26; render FPS or result spacing never sets movement
   amount.
@@ -776,13 +784,14 @@ meanings; links each method's unit/mathematics bindings and remaining work).
   consistent with that interval and their declared units.
 
 <a id="t38"></a>
-### T38 — Direct estimator units through existing VR gains
+### T38 — Direct estimator units through existing Visual Stimulus gains
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 4
 
+- Consumer identifiers use the canonical Visual Stimulus name owned by [V01](visual_stimulus.md#v01).
 - Feed each relative drive in its declared estimator units directly into the compatible
-  VR feedback binding; no reference normalization, session activity rescaling, fixed
-  [-1,1] range or adaptive gain normalization before the VR gain.
+  Visual Stimulus feedback binding; no reference normalization, session activity rescaling, fixed
+  [-1,1] range or adaptive gain normalization before the Visual Stimulus gain.
 - Retain exact method/version, units and configuration with compact evidence; gains keep
   their stimulus-program/epoch owner. New methods or subjects may need new explicit
   gains; changing method never silently remaps units, reuses incompatible bindings or
@@ -825,7 +834,7 @@ meanings; links each method's unit/mathematics bindings and remaining work).
   tracks remaining contracts. Neither the old implementation nor a specific momentum law
   is adopted.
 - Reuses T33/T34 measured input, T32 sections and T41 screening; existing
-  invalid/reset/VR-hold behavior applies. Scientific support for all three outputs needs
+  invalid/reset/Visual Stimulus-hold behavior applies. Scientific support for all three outputs needs
   validation, never an assumed valid zero for a missing component.
 
 <a id="t41"></a>
@@ -981,12 +990,12 @@ Withdrawn with the other fin-undulation choices; [T04](#t04) owns the optical-fl
 options and this ID imposes no implementation requirement.
 
 <a id="a06"></a>
-### A06 — Tracking-result delivery to VR
+### A06 — Tracking-result delivery to Visual Stimulus
 
 **Status:** Accepted · **Revision:** 14
 
 - A bounded tracking-result queue, capacity configurable with default 10 results,
-  independent of camera-frame ring capacities, delivers retained results to VR in order.
+  independent of camera-frame ring capacities, delivers retained results to Visual Stimulus in order.
   Ordered delivery needs no rendered frame per result and specifies no smoothing,
   prediction or catch-up movement.
 - **Delivery overflow:** drop old pending results and advance only the delivery
@@ -994,7 +1003,7 @@ options and this ID imposes no implementation requirement.
   and eligible pose/geometry history; never replay discarded movement. This explicit
   exception to lossless ordered delivery is not a newest-state mailbox during normal
   operation. Overflow alone does not interrupt the session; required failures retain
-  E06. [V26](vr.md#v26) rejects stale feedback locally in VR without requesting a
+  E06. [V26](visual_stimulus.md#v26) rejects stale feedback locally in Visual Stimulus without requesting a
   tracking reset.
 - **Processing reset** (camera gaps or input-age/overflow): clear pending results,
   advance processing and delivery generations and restart flow from the newest available
@@ -1004,26 +1013,26 @@ options and this ID imposes no implementation requirement.
   compute a delta across a discarded frame gap.
 - Every result carries its `reset_generation`, monotonic per attachment/stream, and
   states whether it is valid; results are identified by delivery generation. A newer
-  generation is the reset (no separate marker): after exact trial/source checks VR
+  generation is the reset (no separate marker): after exact trial/source checks Visual Stimulus
   discards older pending results. Reject late previous-generation results, including
-  dequeued but unapplied ones; applied VR movement stays applied.
+  dequeued but unapplied ones; applied Visual Stimulus movement stays applied.
 - After a processing reset the first new-generation result is baseline-only (invalid
   movement); after delivery-only overflow the preserved baseline makes new-generation
   results usable at once. Tracking sends a result, marked invalid when necessary, for
-  every evaluated frame, so V25's hold applies. VR must distinguish reset/invalid
-  reports from usable updates; [V25](vr.md#v25) owns behavior without valid feedback.
+  every evaluated frame, so V25's hold applies. Visual Stimulus must distinguish reset/invalid
+  reports from usable updates; [V25](visual_stimulus.md#v25) owns behavior without valid feedback.
 - Account for discarded results by result/source-frame identity, timestamps and reason
   in the owning backend outputs under existing save settings; saving records every reset
-  with its cause. Discarded, unapplied results get no fictitious VR-output timing link.
+  with its cause. Discarded, unapplied results get no fictitious Visual Stimulus-output timing link.
 - At each render update start, take the already-pending batch, apply it in order, then
   render once; later results wait for the next update.
 - Preserve result identity and source-frame/timestamp lineage under A05.
 
 **Contracts:** [delivery contract](../../contracts/tracking/feedback-delivery.md)
-(generations, credits); [feedback contract](../../contracts/vr/feedback.md) (result
-generation semantics, VR generation gate, local freshness hold);
-[concrete result/reset interfaces](../../contracts/vr/runtime-bindings.md) (shared
+(generations, credits); [feedback contract](../../contracts/visual_stimulus/feedback.md) (result
+generation semantics, Visual Stimulus generation gate, local freshness hold);
+[concrete result/reset interfaces](../../contracts/visual_stimulus/runtime-bindings.md) (shared
 boundary; runtime providers remain implementation work). Water-flow reset state is bound
 under T45 and reused by fin-flow under T04. A05 defines required result-to-output links;
-[VR evidence layouts](../../contracts/vr/evidence-format.md) bind its output-side
+[Visual Stimulus evidence layouts](../../contracts/visual_stimulus/evidence-format.md) bind its output-side
 records.

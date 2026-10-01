@@ -56,9 +56,9 @@ of accepted water velocities about c. All three declare quantity=interval_averag
 and coordinate_frame=anatomical_body under the [output contract](locomotion-output.md).
 The negative signs are the adopted opposite-water-motion inference, not a force-balance
 theorem. Positive turning means inferred turning toward animal-left, opposite positive
-(anterior-toward-animal-left) water rotation in this basis. Existing VR gains own
+(anterior-toward-animal-left) water rotation in this basis. Existing Visual Stimulus gains own
 conversion to virtual speed: linear gain is virtual mm per input px and turn gain is
-virtual deg per radian, each integrated once over the source interval in VR.
+virtual deg per radian, each integrated once over the source interval in Visual Stimulus.
 
 Because sum(a_i*(p_i-c))=0, adding any spatially uniform velocity leaves m and
 turn_drive unchanged. Subtracting u_bar only within the moment sum is an algebraically equivalent
@@ -127,7 +127,7 @@ y_average = x + (y0-x)*(tau/dt)*alpha
 ```
 
 Publish y_average over this interval and retain y_end for the next one. This preserves
-T37's interval_average_rate meaning: VR integrates the filtered average once over dt,
+T37's interval_average_rate meaning: Visual Stimulus integrates the filtered average once over dt,
 not an endpoint mislabelled as an interval average or the entire history window again.
 Use numerically stable exponential/series evaluations for very small dt/tau. Arrival
 time, pose-completion spacing and renderer FPS do not enter the filter coefficient.
@@ -143,15 +143,15 @@ adjacent usable source intervals in the same lineage reuse state. Do not manufac
 flow pair across a gap, preserve stale filter history across invalid observations, or
 fill unobserved source time. Duplicate computation never advances state twice. Delivery-
 only overflow does not undo a valid filter update or clear state: subsequent contiguous
-source pairs continue it even when earlier results were discarded before reaching VR.
-Save their calculations/discard evidence under A06; VR never integrates missing delivery
+source pairs continue it even when earlier results were discarded before reaching Visual Stimulus.
+Save their calculations/discard evidence under A06; Visual Stimulus never integrates missing delivery
 intervals. Actual processing reset or invalid input still clears all filter channels.
 
 Record the raw triplet, filtered average, filter end state and seeded/continued/cleared
 disposition in existing compact method evidence when saving, with existing source/result
 lineage and prepared tau. The first valid pair after source baseline restoration can
 seed immediately; no extra warm-up period or new reset generation is required solely
-for smoothing. Closed-loop VR retains its existing invalid/hold and epoch rules.
+for smoothing. Closed-loop Visual Stimulus retains its existing invalid/hold and epoch rules.
 
 ## Implementation boundary
 

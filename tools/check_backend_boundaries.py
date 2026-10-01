@@ -13,6 +13,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src"
 ASSEMBLY = {
+    "cephvr.tracking.main",
+    "cephvr.tracking.transport.services",
+    "cephvr.tracking.transport.server",
+    "cephvr.visual_stimulus.main",
+    "cephvr.visual_stimulus.worker.main",
+    "cephvr.visual_stimulus.worker.runtime",
+    "cephvr.visual_stimulus.transport.services",
+    "cephvr.visual_stimulus.transport.server",
     "cephvr.controller.runtime",
     "cephvr.controller.service",
     "cephvr.controller.main",
@@ -30,9 +38,18 @@ ASSEMBLY = {
 }
 ENTRY_MODULES = {
     f"cephvr.{backend}.{module}"
-    for backend in ("controller", "supervisor", "acquisition")
+    for backend in (
+        "controller",
+        "supervisor",
+        "acquisition",
+        "visual_stimulus",
+        "tracking",
+    )
     for module in ("runtime", "service", "main")
 } | {
+    "cephvr.visual_stimulus.worker.main",
+    "cephvr.visual_stimulus.worker.runtime",
+    "cephvr.visual_stimulus.transport.services",
     "cephvr.acquisition.worker.main",
     "cephvr.acquisition.worker.runtime",
     "cephvr.acquisition.worker.server",
@@ -94,7 +111,13 @@ def main() -> int:
     warnings: list[str] = []
     paths = [
         path
-        for backend in ("controller", "supervisor", "acquisition")
+        for backend in (
+            "controller",
+            "supervisor",
+            "acquisition",
+            "visual_stimulus",
+            "tracking",
+        )
         for path in (SOURCE / "cephvr" / backend).rglob("*.py")
         if not path.name.endswith(("_pb2.py", "_pb2_grpc.py"))
     ]

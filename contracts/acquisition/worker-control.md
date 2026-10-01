@@ -6,7 +6,7 @@ Governing decisions: [A02/A03/A10](../../docs/architecture/acquisition.md),
 [Messages](../cephvr/acquisition/v1/messages.proto) and
 [services](../cephvr/acquisition/v1/services.proto) define the wire types.
 These contracts define server behavior, not verified deadline guarantees. See the
-[implementation review](../../reports/acquisition-implementation-review.md) for
+[implementation review](../../reports/acquisition.md) for
 implementation and validation status.
 
 ## Endpoints and direction

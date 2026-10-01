@@ -7,7 +7,7 @@ edited here. [E14](../../docs/architecture/system-contracts.md#e14) defines the 
 the file-to-decision map and maintenance rules; runtime loading is not implemented yet.
 
 Files: `experiment_config.toml`, `supervisor_config.toml`, `acquisition_config.toml`,
-`vr_config.toml`, `gui_config.toml`, `tracking_config.toml`,
+`visual_stimulus_config.toml`, `gui_config.toml`, `tracking_config.toml`,
 `synchronization_config.toml`. Each starts with `format_version` and a `policy_version`
 that must equal its policy file's.
 
@@ -46,7 +46,7 @@ that must equal its policy file's.
   override these tables. GUI exposure remains a later decision.
 - For other session settings, defaults fill missing values. Explicit saved/operator settings, including
   `false`, retain their values. Existing stored stimulus seeds are also retained.
-  For example, saved `save_vr_data = false` stays false even though its default is true.
+  For example, saved `save_visual_stimulus_data = false` stays false even though its default is true.
 - Use values within the accepted policies: positive finite timeouts, a health
   silence limit longer than the heartbeat interval, and nonnegative gaps. The
   shipped defaults remain starting values awaiting rig validation. Shared deadline
@@ -58,7 +58,7 @@ that must equal its policy file's.
   cannot alter a prepared or active session; applying changes requires fresh Setup.
   V19 separately permits initial startup display preparation from adopted saved
   settings; editing values does not trigger live display reconfiguration.
-- A file's presence does not activate its role. VR and control services remain
+- A file's presence does not activate its role. Visual Stimulus and control services remain
   required; camera and tracking activation follows the configured dependencies.
   The synchronization file records accepted E12 policies; its presence does not enable ephys recording.
 - Unresolved choices are comments without assigned values. Do not use zero, empty

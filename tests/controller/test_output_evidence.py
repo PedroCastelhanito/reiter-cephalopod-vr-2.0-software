@@ -40,7 +40,7 @@ def _outputs(owner: str) -> tuple[list[pb.OutputPlan], list[pb.OutputResult]]:
     return plans, results
 
 
-@pytest.mark.parametrize("owner", ["acquisition", "vr"])
+@pytest.mark.parametrize("owner", ["acquisition", "visual_stimulus"])
 @pytest.mark.parametrize("never_created", [False, True])
 def test_exact_empty_video_with_closed_detailed_records_is_satisfied(
     owner: str, never_created: bool
@@ -48,7 +48,9 @@ def test_exact_empty_video_with_closed_detailed_records_is_satisfied(
     plans, results = _outputs(owner)
     video = results[0]
     field = (
-        "camera_video_content" if owner == "acquisition" else "vr_review_video_content"
+        "camera_video_content"
+        if owner == "acquisition"
+        else "visual_stimulus_review_video_content"
     )
     setattr(video, field, 2)  # The separately typed NO_FRAMES values.
     if never_created:
@@ -59,14 +61,16 @@ def test_exact_empty_video_with_closed_detailed_records_is_satisfied(
     assert not outputs_satisfied(plans, results)
 
 
-@pytest.mark.parametrize("owner", ["acquisition", "vr"])
+@pytest.mark.parametrize("owner", ["acquisition", "visual_stimulus"])
 def test_video_evidence_rejects_unknown_presence_failure_conflicts_and_missing_pairs(
     owner: str,
 ) -> None:
     plans, results = _outputs(owner)
     video = results[0]
     field = (
-        "camera_video_content" if owner == "acquisition" else "vr_review_video_content"
+        "camera_video_content"
+        if owner == "acquisition"
+        else "visual_stimulus_review_video_content"
     )
     for invalid in (0, 1, 123):
         setattr(video, field, invalid)
@@ -84,7 +88,9 @@ def test_video_evidence_rejects_unknown_presence_failure_conflicts_and_missing_p
     assert not outputs_satisfied(plans, results)
     video.ClearField("failure")
     other = (
-        "vr_review_video_content" if owner == "acquisition" else "camera_video_content"
+        "visual_stimulus_review_video_content"
+        if owner == "acquisition"
+        else "camera_video_content"
     )
     setattr(video, other, 2)
     assert not outputs_satisfied(plans, results)
@@ -93,8 +99,12 @@ def test_video_evidence_rejects_unknown_presence_failure_conflicts_and_missing_p
 
 
 def test_exact_identity_and_unavailable_obligations_are_not_silent_omissions() -> None:
-    plans, results = _outputs("vr")
-    results[0].vr_review_video_content = pb.VR_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED
+    plans, results = _outputs("visual_stimulus")
+    results[
+        0
+    ].visual_stimulus_review_video_content = (
+        pb.VISUAL_STIMULUS_REVIEW_VIDEO_CONTENT_FRAMES_SUBMITTED
+    )
     assert outputs_satisfied(plans, results)
     assert not outputs_satisfied(plans, results + [results[0]])
     results[1].path = "/other/file"

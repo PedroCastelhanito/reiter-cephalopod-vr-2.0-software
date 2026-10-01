@@ -22,11 +22,15 @@ def test_confirmed_full_nonessential_loss_skips_only_its_backend(
     tmp_path: Path,
 ) -> None:
     acq = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
-    vr = pb.BackendContext(backend_name="vr", backend_generation=_id())
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
     runtime = _runtime(tmp_path, acq)
     peers = {
         "acquisition": cast(BackendPort, _RetainedPeer(acq, svc.RetainedResult())),
-        "vr": cast(BackendPort, _RetainedPeer(vr, svc.RetainedResult())),
+        "visual_stimulus": cast(
+            BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult())
+        ),
     }
     attempt = _attempt(runtime, tmp_path, peers)
     trial = pb.TrialContext(session=attempt.context, trial_id=_id(), trial_number=1)
@@ -34,8 +38,10 @@ def test_confirmed_full_nonessential_loss_skips_only_its_backend(
     attempt.ready["acquisition"] = pb.ReadyReport(
         prepared_functions=[pb.PreparedFunctionScope(resource_id="acq-output")]
     )
-    attempt.ready["vr"] = pb.ReadyReport(
-        prepared_functions=[pb.PreparedFunctionScope(resource_id="vr-renderer")]
+    attempt.ready["visual_stimulus"] = pb.ReadyReport(
+        prepared_functions=[
+            pb.PreparedFunctionScope(resource_id="visual-stimulus-renderer")
+        ]
     )
     attempt.prepared.outputs.add(output_key="acq-output", trial=trial, backend=acq)
     attempt.confirmed_incidents[_id()] = pb.RuntimeIncident(
@@ -43,19 +49,21 @@ def test_confirmed_full_nonessential_loss_skips_only_its_backend(
     )
 
     selected = select_trial_participants(attempt, plan)
-    assert set(selected) == {"vr"}
+    assert set(selected) == {"visual_stimulus"}
 
 
 async def test_pending_incident_preserves_next_valid_trial_until_original_deadline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    vr = pb.BackendContext(backend_name="vr", backend_generation=_id())
-    runtime = _runtime(tmp_path, vr)
-    peer = cast(BackendPort, _RetainedPeer(vr, svc.RetainedResult()))
-    attempt = _attempt(runtime, tmp_path, {"vr": peer})
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(tmp_path, visual_stimulus)
+    peer = cast(BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult()))
+    attempt = _attempt(runtime, tmp_path, {"visual_stimulus": peer})
     trial = pb.TrialContext(session=attempt.context, trial_id=_id(), trial_number=1)
     attempt.prepared.trials.add(context=trial)
-    attempt.ready["vr"] = pb.ReadyReport(
+    attempt.ready["visual_stimulus"] = pb.ReadyReport(
         prepared_functions=[pb.PreparedFunctionScope(resource_id="renderer")]
     )
     error_id, incident_id = _id(), _id()
@@ -78,7 +86,7 @@ async def test_pending_incident_preserves_next_valid_trial_until_original_deadli
     await runtime.trials.run_trials(attempt)
 
     assert entered == ["trial", "finalize"]
-    assert set(attempt.trial_participants) == {"vr"}
+    assert set(attempt.trial_participants) == {"visual_stimulus"}
 
 
 class _Supervisor:
@@ -100,7 +108,8 @@ async def test_reconfirmation_replaces_incident_in_scope_and_plans(
     tmp_path: Path,
 ) -> None:
     runtime = _runtime(
-        tmp_path, pb.BackendContext(backend_name="vr", backend_generation=_id())
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
     )
     attempt = _attempt(runtime, tmp_path, {})
     prior = pb.RuntimeIncident(incident_id="inc", revision=1)
@@ -167,7 +176,8 @@ async def test_confirmed_incident_is_not_reconfirmed(
         lambda *a, **k: _Class("continuable", "ok", ("r",), 10**12),
     )
     runtime = _runtime(
-        tmp_path, pb.BackendContext(backend_name="vr", backend_generation=_id())
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
     )
     attempt = _attempt(runtime, tmp_path, {})
     attempt.incident_topology = cast(Any, object())

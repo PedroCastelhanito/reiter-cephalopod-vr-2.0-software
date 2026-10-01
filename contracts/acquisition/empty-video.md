@@ -71,8 +71,8 @@ camera/trial, applying this predicate rather than a blanket `every output CLOSED
 Missing fields fail confirmation; retries join retained results and never close or
 recreate files twice.
 
-Other outputs retain their owning predicates. VR's separately accepted result is
-bound in [VR completion](../vr/video-completion.md); this camera contract grants no
+Other outputs retain their owning predicates. Visual Stimulus's separately accepted result is
+bound in [Visual Stimulus completion](../visual_stimulus/video-completion.md); this camera contract grants no
 tracking exception. Preview and saving Off do not create
 camera recording obligations. Existing result, metadata and cleanup deadlines remain.
 CLOSED/FRAMES_SUBMITTED do not claim a reread, decoded-frame count or integrity check.

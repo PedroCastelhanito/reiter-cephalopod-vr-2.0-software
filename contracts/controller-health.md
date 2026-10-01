@@ -49,8 +49,8 @@ the supervisor in `InterruptionReport`.
 
 | Local work at failure | Required action |
 | --- | --- |
-| Configuration / Setup / Ready / Starting before activation | Fence the affected preparation/start attempt; cancel pending execution and release prepared resources through existing cleanup. Stop manual preview if owned; VR retains/returns to valid Idle where possible. Do not invent a trial or an Interrupted session. |
-| Activated session, including between trials | Permanently fence the session and prevent further trials. Stop active producers promptly, return VR to Idle, drain only admitted eligible recording work, then finalize/sync/close and release resources under existing limits. Preserve completed trials; do not fabricate an empty one. |
+| Configuration / Setup / Ready / Starting before activation | Fence the affected preparation/start attempt; cancel pending execution and release prepared resources through existing cleanup. Stop manual preview if owned; Visual Stimulus retains/returns to valid Idle where possible. Do not invent a trial or an Interrupted session. |
+| Activated session, including between trials | Permanently fence the session and prevent further trials. Stop active producers promptly, return Visual Stimulus to Idle, drain only admitted eligible recording work, then finalize/sync/close and release resources under existing limits. Preserve completed trials; do not fabricate an empty one. |
 | Already stopping/finalizing or cleanup blocked | Join the existing cleanup operation and reconcile retained evidence. Preserve its original deadlines, producer cutoffs, output results and unresolved obligations. Never reopen outputs or reset the cleanup budget. |
 
 Deduplicate identical commands by their command IDs. Independent detectors converge

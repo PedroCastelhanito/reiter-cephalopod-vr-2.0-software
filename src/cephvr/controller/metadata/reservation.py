@@ -18,6 +18,11 @@ from cephvr.controller.metadata.types import ReservationMarker, StorageError
 from cephvr.shared.identity import require_uuid4
 
 
+def _sync(path: Path) -> None:
+    if os.name != "nt":
+        sync_directory(path)
+
+
 class OutputReservation:
     """Exclusive session namespace ownership; never removes unlisted user files."""
 
@@ -37,17 +42,33 @@ class OutputReservation:
     ):
         require_uuid4(session_id)
         require_uuid4(generation)
-        self.root = root.resolve(strict=True)
+        resolved_root = root.resolve(strict=True)
         date = anchor.strftime("%Y%m%d")
         time = anchor.strftime("%H%M%S")
-        self.experiment_directory = self.root / f"{date}_{safe_component(experiment)}"
-        self.session_directory = (
-            self.experiment_directory / f"{safe_component(subject)}-{time}"
+        experiment_directory = resolved_root / f"{date}_{safe_component(experiment)}"
+        self._bind_paths(
+            resolved_root,
+            experiment_directory,
+            experiment_directory / f"{safe_component(subject)}-{time}",
+            session_id,
+            generation,
         )
-        self.protocol_directory = self.session_directory / "protocol-data"
-        self.spikeglx_directory = self.session_directory / "spikeglx-data"
-        self.marker = self.session_directory / ".cephvr-reservation.json"
-        self.lock_path = self.session_directory / ".cephvr.lock"
+
+    def _bind_paths(
+        self,
+        root: Path,
+        experiment_directory: Path,
+        session_directory: Path,
+        session_id: str,
+        generation: str,
+    ) -> None:
+        self.root = root
+        self.experiment_directory = experiment_directory
+        self.session_directory = session_directory
+        self.protocol_directory = session_directory / "protocol-data"
+        self.spikeglx_directory = session_directory / "spikeglx-data"
+        self.marker = session_directory / ".cephvr-reservation.json"
+        self.lock_path = session_directory / ".cephvr.lock"
         self.session_id = session_id
         self.generation = generation
         self._created: list[Path] = []
@@ -72,22 +93,16 @@ class OutputReservation:
             if path.is_symlink() or not path.is_dir():
                 raise StorageError("recovery namespace is missing or unsafe")
         instance = cls.__new__(cls)
-        instance.root = root.resolve(strict=True)
-        instance.experiment_directory = directory.parent
-        instance.session_directory = directory
-        instance.protocol_directory = directory / "protocol-data"
-        instance.spikeglx_directory = directory / "spikeglx-data"
+        instance._bind_paths(
+            root.resolve(strict=True),
+            directory.parent,
+            directory,
+            session_id,
+            generation,
+        )
         for path in (instance.protocol_directory, instance.spikeglx_directory):
             if path.is_symlink() or not path.is_dir():
                 raise StorageError("recovery child namespace is missing or unsafe")
-        instance.marker = directory / ".cephvr-reservation.json"
-        instance.lock_path = directory / ".cephvr.lock"
-        instance.session_id = session_id
-        instance.generation = generation
-        instance._created = []
-        instance._lock_fd = None
-        instance._lock_created = False
-        instance.marker_issue = None
         instance._acquire_lock(create=False)
         try:
             marker = instance.inspect_marker()
@@ -121,13 +136,14 @@ class OutputReservation:
         self._acquire_lock(create=True)
         if self.marker.exists():
             raise StorageError("existing reservation marker requires recovery")
-        conflicts = [p for p in self.protocol_directory.iterdir()] + [
-            p for p in self.spikeglx_directory.iterdir()
-        ]
+        conflicts = self._direct_children()
         if conflicts:
             return conflicts
         self._write_marker()
         return []
+
+    def _direct_children(self) -> list[Path]:
+        return [*self.protocol_directory.iterdir(), *self.spikeglx_directory.iterdir()]
 
     def _acquire_lock(self, *, create: bool) -> None:
         if not create and (self.lock_path.is_symlink() or not self.lock_path.is_file()):
@@ -270,9 +286,7 @@ class OutputReservation:
             raise StorageError(
                 "collision resolution requires an unmarked held reservation"
             )
-        current = [p for p in self.protocol_directory.iterdir()] + [
-            p for p in self.spikeglx_directory.iterdir()
-        ]
+        current = self._direct_children()
         if set(current) != set(listed_paths):
             raise StorageError("output collision set changed during operator choice")
         for path in current:
@@ -284,9 +298,8 @@ class OutputReservation:
                 raise StorageError(f"collision is not a direct regular file: {path}")
         for path in current:
             path.unlink()
-        if os.name != "nt":
-            sync_directory(self.protocol_directory)
-            sync_directory(self.spikeglx_directory)
+        _sync(self.protocol_directory)
+        _sync(self.spikeglx_directory)
         self._write_marker()
 
     def _marker_payload(self, *, complete: bool, outcome: str | None = None) -> bytes:
@@ -307,43 +320,35 @@ class OutputReservation:
             replace=False,
         )
 
-    def complete(self) -> None:
-        if self._lock_fd is None or not self.marker.exists():
-            raise StorageError("reservation is not held")
+    def _require_own_open_marker(self, message: str) -> None:
         marker = self.inspect_marker()
         if (
             marker.session_id != self.session_id
             or marker.controller_generation != self.generation
             or marker.complete
         ):
-            raise StorageError("reservation marker identity or state mismatch")
+            raise StorageError(message)
+
+    def _finish(self, outcome: str | None) -> None:
+        if self._lock_fd is None or not self.marker.exists():
+            raise StorageError("reservation is not held")
+        self._require_own_open_marker("reservation marker identity or state mismatch")
         atomic_json(
             self.marker,
-            self._marker_payload(complete=True),
+            self._marker_payload(complete=True, outcome=outcome),
             replace=True,
         )
         self.release()
+
+    def complete(self) -> None:
+        self._finish(None)
 
     def close_unactivated(self) -> None:
         """Keep all files; mark a never-activated Setup finished, then release.
 
         The caller seals the writer first and clears the recovery pointer after.
         """
-        if self._lock_fd is None or not self.marker.exists():
-            raise StorageError("reservation is not held")
-        marker = self.inspect_marker()
-        if (
-            marker.session_id != self.session_id
-            or marker.controller_generation != self.generation
-            or marker.complete
-        ):
-            raise StorageError("reservation marker identity or state mismatch")
-        atomic_json(
-            self.marker,
-            self._marker_payload(complete=True, outcome="not_activated"),
-            replace=True,
-        )
-        self.release()
+        self._finish("not_activated")
 
     def cancel(self) -> None:
         if self._lock_fd is None:
@@ -353,13 +358,7 @@ class OutputReservation:
                 raise StorageError(f"unexpected files block cleanup: {child}")
         has_marker = self.marker.exists()
         if has_marker:
-            marker = self.inspect_marker()
-            if (
-                marker.session_id != self.session_id
-                or marker.controller_generation != self.generation
-                or marker.complete
-            ):
-                raise StorageError("marker identity mismatch; cleanup blocked")
+            self._require_own_open_marker("marker identity mismatch; cleanup blocked")
         for path in (self.spikeglx_directory, self.protocol_directory):
             if path in self._created:
                 try:
@@ -368,8 +367,7 @@ class OutputReservation:
                     raise StorageError(
                         f"unexpected files block cleanup: {path}"
                     ) from exc
-        if os.name != "nt":
-            sync_directory(self.session_directory)
+        _sync(self.session_directory)
         if self.session_directory in self._created:
             quarantine = self.session_directory.with_name(
                 f".{self.session_directory.name}.{uuid.uuid4()}.cleanup"
@@ -380,15 +378,13 @@ class OutputReservation:
                 raise StorageError(
                     "session quarantine failed; unfinished marker retained"
                 ) from exc
-            if os.name != "nt":
-                sync_directory(self.experiment_directory)
+            _sync(self.experiment_directory)
             self.release()
             if has_marker:
                 (quarantine / self.marker.name).unlink()
             (quarantine / self.lock_path.name).unlink()
             quarantine.rmdir()
-            if os.name != "nt":
-                sync_directory(self.experiment_directory)
+            _sync(self.experiment_directory)
             remaining = [
                 p
                 for p in reversed(self._created)
@@ -411,17 +407,14 @@ class OutputReservation:
                     raise StorageError(
                         "lock quarantine failed; unfinished marker retained"
                     ) from exc
-                if os.name != "nt":
-                    sync_directory(self.session_directory)
+                _sync(self.session_directory)
             if has_marker:
                 self.marker.unlink()
-                if os.name != "nt":
-                    sync_directory(self.session_directory)
+                _sync(self.session_directory)
             self.release()
             if tombstone is not None:
                 tombstone.unlink()
-                if os.name != "nt":
-                    sync_directory(self.session_directory)
+                _sync(self.session_directory)
             remaining = [
                 p
                 for p in reversed(self._created)

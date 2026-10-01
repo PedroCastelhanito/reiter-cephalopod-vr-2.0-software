@@ -35,11 +35,13 @@ def _save_flag(message: object, field: str) -> bool:
 def _tags(
     backend_name: str, settings: pb.BackendSettings
 ) -> tuple[tuple[str, str], ...]:
-    if backend_name == "vr":
-        if settings.WhichOneof("settings") != "vr":
-            raise PlanningError("VR Ready lacks resolved VR settings")
+    if backend_name == "visual_stimulus":
+        if settings.WhichOneof("settings") != "visual_stimulus":
+            raise PlanningError(
+                "Visual Stimulus Ready lacks resolved Visual Stimulus settings"
+            )
         tags = [("stimulus_LOG", "json")]
-        if _save_flag(settings.vr, "save_vr_data"):
+        if _save_flag(settings.visual_stimulus, "save_visual_stimulus_data"):
             tags.extend((("stimulus_frames", "jsonl"), ("stimulus", "mp4")))
         return tuple(tags)
     if backend_name == "acquisition":
@@ -76,7 +78,7 @@ def plan_outputs(
         for item in prepared.configuration.backends
         if item.enabled and item.backend_name != "synchronization"
     }
-    if "vr" not in configured or set(ready) != set(configured):
+    if "visual_stimulus" not in configured or set(ready) != set(configured):
         raise PlanningError("exact enabled backend Ready set is required")
     if len(configured) != sum(
         item.enabled and item.backend_name != "synchronization"

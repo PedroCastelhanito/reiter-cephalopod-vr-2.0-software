@@ -3,7 +3,7 @@
 Captured 2026-09-29, Asia/Tokyo, after the NVIDIA driver repair. Start here on the
 development machine. This document summarizes evidence; the linked architecture
 and contracts remain authoritative. Older audit snapshots describe earlier states.
-The subsequent [evidence review](../rig-evidence-review-2026-09-29.md) checks the
+The subsequent [evidence review](review.md) checks the
 included records against current contracts and lists remaining evidence gaps.
 
 The portable archive includes the **entire current CephVR2.0 directory**, including
@@ -16,7 +16,7 @@ snapshot, not an installed application. No backend implementation was added.
 | Role | Confirmed owner choice | Hardware identity |
 | --- | --- | --- |
 | Rendering / projection / tracking GPU work | RTX 5060 Ti | UUID `GPU-77642118-1623-48dd-3686-1014aa86b818`; PCI `00000000:01:00.0` |
-| All video encoding, including VR composite | RTX 2080 Ti | UUID `GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc`; PCI `00000000:03:00.0` |
+| All video encoding, including Visual Stimulus composite | RTX 2080 Ti | UUID `GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc`; PCI `00000000:03:00.0` |
 | Operator display / GUI graphics | Ryzen 9 9950X integrated AMD Radeon | Windows PCI device `VEN_1002&DEV_13C0`; Dell S2721HS attached |
 | Behavioral camera | **30 Hz** | Basler acA4112-30uc, serial **40065509** |
 | Tracking camera | **60 Hz** | Basler a2A2464-77umPRO, serial **40747103** |
@@ -65,7 +65,7 @@ FFmpeg upload/encode on 2080 Ti. No peer-to-peer/zero-copy capability was establ
 For scale only, the current behavioral ROI at 30 Hz is 368.64 MB/s Bayer8 and
 1105.92 MB/s reconstructed RGB24; tracking's current ROI at 60 Hz is 300.81 MB/s
 Mono8. These are arithmetic payload rates, excluding copying, padding, chunks,
-USB overhead, tracking buffers and VR recording. They are not measured throughput
+USB overhead, tracking buffers and Visual Stimulus recording. They are not measured throughput
 or selected future resolutions. Wider precision multiplies memory/transfer costs.
 
 ## Acquisition: concrete device bindings
@@ -158,7 +158,7 @@ color correctness, source-depth preservation or lossless compression is claimed.
 Earlier 2080 Ti tests also passed three concurrent 640 × 480 / 30 fps H.264 sessions
 and one separate 10-bit HEVC test (90 frames each). See
 [concurrency evidence](../rig-audit-2026-09-29/rtx2080-encoder-probes.jsonl).
-This does **not** show that two full-resolution cameras plus VR recording fit.
+This does **not** show that two full-resolution cameras plus Visual Stimulus recording fit.
 Do not choose a codec/depth automatically: A08 requires explicit compatible settings.
 A full-width behavioral image cannot use the tested H.264 path unchanged; HEVC
 or an explicitly selected narrower ROI/recording transform must be considered later.
@@ -167,10 +167,10 @@ FFmpeg resolution is still deployment work: shell PATH finds 4.3.2 without the
 required hybrid MP4 option, old CephVR Scripts contains 2013 tools, and the tested
 7.1 executable is bundled inside imageio-ffmpeg. Install/select a deliberate matching
 FFmpeg/ffprobe pair for the new environment's PATH, then repeat validation. Camera
-recording uses hybrid MP4 (A08); VR review retains fragmented MP4 (E13). The above
-camera-style probes do not verify VR's separate finalization contract.
+recording uses hybrid MP4 (A08); Visual Stimulus review retains fragmented MP4 (E13). The above
+camera-style probes do not verify Visual Stimulus's separate finalization contract.
 
-## Displays and VR
+## Displays and Visual Stimulus
 
 All four intended DLP5050 / ITE6801 projector outputs are on the 5060 Ti. Physical
 surface mapping is deliberately deferred. Their reported EDID name does not
@@ -199,7 +199,7 @@ backends, so verify GUI and renderer placement independently in the implementati
 
 Geometry, photometry, marker locations, output precision, pacing mode and composite
 layout still need the later installation/session inputs in
-[V04/V15/V19–V23](../../docs/architecture/vr.md).
+[V04/V15/V19–V23](../../docs/architecture/visual_stimulus.md).
 
 ## Tracking and native dependencies
 

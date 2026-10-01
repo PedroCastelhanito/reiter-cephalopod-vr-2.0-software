@@ -30,7 +30,9 @@ def _id() -> str:
 def _registered() -> svc.RegisteredContext:
     controller = pb.ProcessIdentity(role="controller", generation=_id())
     supervisor = pb.ProcessIdentity(role="supervisor", generation=_id())
-    vr = pb.BackendContext(backend_name="vr", backend_generation=_id())
+    visual_stimulus = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
     acquisition = pb.BackendContext(
         backend_name="acquisition", backend_generation=_id()
     )
@@ -41,7 +43,7 @@ def _registered() -> svc.RegisteredContext:
         controller=controller,
         supervisor=supervisor,
         work=pb.WorkContext(session=session),
-        required_participants=[vr, acquisition],
+        required_participants=[visual_stimulus, acquisition],
     )
     context.outputs.add(
         backend=acquisition,
@@ -51,9 +53,11 @@ def _registered() -> svc.RegisteredContext:
         trial=pb.TrialContext(session=session, trial_id=_id(), trial_number=1),
     )
     context.prepared_functions.add(
-        resource_id="vr.presentation",
-        owner=pb.ProcessIdentity(role="vr", generation=vr.backend_generation),
-        affected_closure_resource_ids=["vr.presentation"],
+        resource_id="visual_stimulus.presentation",
+        owner=pb.ProcessIdentity(
+            role="visual_stimulus", generation=visual_stimulus.backend_generation
+        ),
+        affected_closure_resource_ids=["visual_stimulus.presentation"],
         essential_to_stimulus_control=True,
         feedback_hold_required_on_loss=False,
         bounded_uncertainty_supported=False,
@@ -96,17 +100,21 @@ def _error(context: svc.RegisteredContext) -> pb.ErrorReport:
 
 
 def _proof(context: svc.RegisteredContext, *, observed: int = 110) -> IsolationProof:
-    vr = next(
-        item for item in context.required_participants if item.backend_name == "vr"
+    visual_stimulus = next(
+        item
+        for item in context.required_participants
+        if item.backend_name == "visual_stimulus"
     )
-    identity = pb.ProcessIdentity(role="vr", generation=vr.backend_generation)
+    identity = pb.ProcessIdentity(
+        role="visual_stimulus", generation=visual_stimulus.backend_generation
+    )
     heartbeat = pb.HeartbeatReport(
         source=identity,
         work=context.work,
         sent_monotonic_ns=observed,
         continuing_functions=[
             pb.ContinuingFunctionEvidence(
-                resource_id="vr.presentation",
+                resource_id="visual_stimulus.presentation",
                 functioning=True,
                 schedule_valid=True,
                 host_clock_valid=True,
@@ -141,7 +149,9 @@ def _classify(
     )
 
 
-def test_exact_isolated_camera_fault_can_continue_with_current_vr_evidence() -> None:
+def test_exact_isolated_camera_fault_can_continue_with_current_visual_stimulus_evidence() -> (
+    None
+):
     context = _registered()
     topology = IncidentTopology.from_registered(context)
     result = _classify(_error(context), topology, _proof(context))
@@ -149,10 +159,12 @@ def test_exact_isolated_camera_fault_can_continue_with_current_vr_evidence() -> 
     assert result.affected_resources == ("camera.mp4",)
 
 
-def test_lifecycle_scope_requires_exact_vr_and_camera_worker_ancestry() -> None:
+def test_lifecycle_scope_requires_exact_visual_stimulus_and_camera_worker_ancestry() -> (
+    None
+):
     context = _registered()
     context.prepared_functions[0].ClearField("lifecycle_sources")
-    with pytest.raises(IncidentEvidenceError, match="VR renderer"):
+    with pytest.raises(IncidentEvidenceError, match="Visual Stimulus renderer"):
         IncidentTopology.from_registered(context)
 
     context.prepared_functions[0].lifecycle_sources.append("renderer")
@@ -197,7 +209,7 @@ def test_code_and_source_role_do_not_override_prepared_loss_closure() -> None:
     camera = next(
         item for item in context.prepared_functions if item.resource_id == "camera.mp4"
     )
-    camera.affected_closure_resource_ids.append("vr.presentation")
+    camera.affected_closure_resource_ids.append("visual_stimulus.presentation")
     topology = IncidentTopology.from_registered(context)
     error = _error(context)
     assert _classify(error, topology, _proof(context)).status == "blocking"
@@ -227,14 +239,18 @@ def test_downstream_feedback_is_discharged_by_exact_hold_scope() -> None:
     camera = next(
         item for item in context.prepared_functions if item.resource_id == "camera.mp4"
     )
-    vr = next(
-        item for item in context.required_participants if item.backend_name == "vr"
+    visual_stimulus = next(
+        item
+        for item in context.required_participants
+        if item.backend_name == "visual_stimulus"
     )
-    camera.affected_closure_resource_ids.append("vr.feedback")
+    camera.affected_closure_resource_ids.append("visual_stimulus.feedback")
     context.prepared_functions.add(
-        resource_id="vr.feedback",
-        owner=pb.ProcessIdentity(role="vr", generation=vr.backend_generation),
-        affected_closure_resource_ids=["vr.feedback"],
+        resource_id="visual_stimulus.feedback",
+        owner=pb.ProcessIdentity(
+            role="visual_stimulus", generation=visual_stimulus.backend_generation
+        ),
+        affected_closure_resource_ids=["visual_stimulus.feedback"],
         essential_to_stimulus_control=False,
         feedback_hold_required_on_loss=True,
         bounded_uncertainty_supported=False,
@@ -242,7 +258,7 @@ def test_downstream_feedback_is_discharged_by_exact_hold_scope() -> None:
     topology = IncidentTopology.from_registered(context)
     error = _error(context)
     assert _classify(error, topology, _proof(context)).status == "pending"
-    error.isolation.feedback_hold_resource_ids.append("vr.feedback")
+    error.isolation.feedback_hold_resource_ids.append("visual_stimulus.feedback")
     error.isolation.feedback_hold_active = True
     assert _classify(error, topology, _proof(context)).status == "continuable"
 
@@ -256,16 +272,20 @@ def test_missing_output_function_declaration_rejects_topology() -> None:
 
 def test_registered_native_cleanup_must_match_exact_ready_set() -> None:
     context = _registered()
-    vr = next(
-        item for item in context.required_participants if item.backend_name == "vr"
+    visual_stimulus = next(
+        item
+        for item in context.required_participants
+        if item.backend_name == "visual_stimulus"
     )
     acquisition = next(
         item
         for item in context.required_participants
         if item.backend_name == "acquisition"
     )
-    vr_obligation = pb.ResourceObligation(
-        owner=pb.ProcessIdentity(role="vr", generation=vr.backend_generation),
+    visual_stimulus_obligation = pb.ResourceObligation(
+        owner=pb.ProcessIdentity(
+            role="visual_stimulus", generation=visual_stimulus.backend_generation
+        ),
         resource="display-window",
     )
     camera_obligation = pb.ResourceObligation(
@@ -275,12 +295,12 @@ def test_registered_native_cleanup_must_match_exact_ready_set() -> None:
         resource="camera-handle",
         path="/dev/camera1",
     )
-    context.cleanup_resources.extend([vr_obligation, camera_obligation])
+    context.cleanup_resources.extend([visual_stimulus_obligation, camera_obligation])
     ready = {
-        "vr": pb.ReadyReport(
-            context=pb.ReportContext(backend=vr, work=context.work),
+        "visual_stimulus": pb.ReadyReport(
+            context=pb.ReportContext(backend=visual_stimulus, work=context.work),
             required_checks_passed=True,
-            cleanup_resources=[vr_obligation],
+            cleanup_resources=[visual_stimulus_obligation],
         ),
         "acquisition": pb.ReadyReport(
             context=pb.ReportContext(backend=acquisition, work=context.work),
@@ -293,7 +313,7 @@ def test_registered_native_cleanup_must_match_exact_ready_set() -> None:
     with pytest.raises(IncidentEvidenceError, match="differ from Ready"):
         validate_registered_cleanup(context, ready)
     context.cleanup_resources.append(camera_obligation)
-    ready["vr"].cleanup_resources.clear()
+    ready["visual_stimulus"].cleanup_resources.clear()
     with pytest.raises(IncidentEvidenceError, match="empty cleanup"):
         validate_registered_cleanup(context, ready)
 

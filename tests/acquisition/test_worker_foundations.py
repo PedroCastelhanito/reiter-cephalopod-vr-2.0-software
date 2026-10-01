@@ -298,7 +298,7 @@ def test_early_cutoff_retrieval_is_excluded_from_trial_accounting() -> None:
 
     pool = PixelBufferPool(payload_bytes=1, capacity=3)
     queue = RecordingQueue(capacity_frames=1, pending_records_capacity=3)
-    times = iter((150, 250))
+    times = iter((150, 150, 250, 250))
     loop = CameraCaptureLoop(
         adapter=Adapter(),  # type: ignore[arg-type]
         layout=layout,
@@ -456,7 +456,7 @@ def test_consecutive_non_saving_trials_reset_shared_trial_state() -> None:
     session = control.SessionContext(session_id="session")
     source = acq.WorkerContext(
         worker=control.ProcessIdentity(
-            role="acquisition_behavioral_worker", generation="worker"
+            role="acquisition_behavioral_worker", generation=str(uuid4())
         ),
         owner=control.ProcessIdentity(role="acquisition", generation="owner"),
         camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
@@ -473,7 +473,7 @@ def test_consecutive_non_saving_trials_reset_shared_trial_state() -> None:
         context=source,
         supervisor=control.ProcessIdentity(role="supervisor", generation="supervisor"),
         commands=CommandLedger(
-            "worker",
+            source.worker.generation,
             1_000,
             max_records=8,
             max_bytes=1024 * 1024,
@@ -557,7 +557,7 @@ def test_health_ages_owner_published_capture_snapshot_without_runtime_reads() ->
         context=source,
         supervisor=control.ProcessIdentity(role="supervisor", generation="supervisor"),
         commands=CommandLedger(
-            "worker-generation",
+            str(uuid4()),
             1_000,
             max_records=16,
             max_bytes=1024 * 1024,

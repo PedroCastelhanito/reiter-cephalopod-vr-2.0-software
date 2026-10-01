@@ -2,14 +2,14 @@
 # Source rules: Supervisor-owned defaults. See architecture.md: E04, E06, E08, E14.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/supervisor_config.toml. The loader rejects a version mismatch.
-policy_version = 6
+policy_version = 7
 
 [processes]
 launch_policy = "backend_owned_children"
 registration = "planned_then_confirmed"
 
 [processes.windows]
-contained_backends = ["acquisition", "vr", "tracking"]
+contained_backends = ["acquisition", "visual_stimulus", "tracking"]
 containment = "job_objects"
 kill_on_job_close = false # Inner per-launch jobs only.
 application_job_owner = "persistent_launcher"

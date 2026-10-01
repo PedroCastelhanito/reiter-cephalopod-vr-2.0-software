@@ -1,0 +1,707 @@
+--- before/src/cephvr/tracking/feedback/delivery.py
++++ after/src/cephvr/tracking/feedback/delivery.py
+@@ -28,7 +28,6 @@
+         self.pending: deque[pb.FeedbackEntry] = deque()
+         self.inflight: pb.FeedbackEntry | None = None
+         self.sequence = 0
+-        self.generation = 0
+         self.sealed = False
+ 
+     def before_result(self, now: int) -> None:
+--- before/src/cephvr/tracking/processing/history.py
++++ after/src/cephvr/tracking/processing/history.py
+@@ -14,7 +14,6 @@
+ class _Entry:
+     value: PoseGeometryObservation
+     borrowed: int = 0
+-    retired: bool = False
+ 
+ 
+ class PoseHistory:
+@@ -36,7 +35,6 @@
+                 raise ValueError("pose completion source order regressed")
+             if len(self.entries) == self.capacity:
+                 entry = self.entries.pop(0)
+-                entry.retired = True
+                 self.retired.append(entry)
+             self.entries.append(_Entry(value))
+ 
+@@ -104,8 +102,6 @@
+ 
+     def clear(self) -> None:
+         with self.lock:
+-            for entry in self.entries:
+-                entry.retired = True
+             self.retired.extend(self.entries)
+             self.entries.clear()
+ 
+--- before/src/cephvr/tracking/processing/movement.py
++++ after/src/cephvr/tracking/processing/movement.py
+@@ -2,11 +2,10 @@
+ 
+ from __future__ import annotations
+ 
+-import base64
+ import time
+ from collections.abc import Callable
+ from dataclasses import dataclass
+-from typing import Protocol
++from typing import Literal, Protocol
+ from uuid import uuid4
+ 
+ from cephvr.control.v1.types_pb2 import ProcessIdentity, WorkContext
+@@ -14,13 +13,7 @@
+ from cephvr.tracking.config.models.methods import FlowSettings
+ from cephvr.tracking.config.models.records import (
+     FlowProxyEvidence,
+-    GeometryEvidence,
+-    MovementResult,
+     PoseUse,
+-    RegionCoverage,
+-    StageEvidence,
+-    TrackingRecord,
+-    WirePayload,
+ )
+ from cephvr.tracking.feedback.delivery import FeedbackDelivery
+ from cephvr.tracking.methods.proxy import FlowProxy
+@@ -28,14 +21,18 @@
+ from cephvr.tracking.processing.gate import TrialGate
+ from cephvr.tracking.processing.history import PoseHistory
+ from cephvr.tracking.processing.pose import PoseWorker
++from cephvr.tracking.recording.results import movement_record
+ from cephvr.tracking.types import (
+     FlowLease,
+     FlowMethod,
+     FlowProxyInput,
++    PoseGeometryObservation,
+     PrivateFrame,
+     SamplingGeometry,
+ )
+ from cephvr.visual_stimulus.v1 import data_pb2 as feedback
++
++InputResetCause = Literal["input_overflow", "input_age", "camera_gap"]
+ 
+ 
+ class SourcePort(Protocol):
+@@ -95,11 +92,7 @@
+                 raise RuntimeError("automatic pose worker failed") from p.pose.failure
+             frame, gap = p.source.read(work, generation)
+             if gap:
+-                if frame is not None:
+-                    p.gate.discard((str(frame.source.frame_id),), "input_overflow", now)
+-                    p.source.pool.release(frame)
+-                self._reset("input_overflow", now)
+-                p.source.latest()
++                self._discard_input(frame, "input_overflow", now)
+                 continue
+             if frame is None:
+                 time.sleep(0.001)
+@@ -112,19 +105,13 @@
+                 p.source.pool.release(frame)
+                 continue
+             if now - frame.source.host_receipt_ns > p.maximum_frame_age_ns:
+-                p.gate.discard((str(frame.source.frame_id),), "input_age", now)
+-                p.source.pool.release(frame)
+-                self._reset("input_age", now)
+-                p.source.latest()
++                self._discard_input(frame, "input_age", now)
+                 continue
+             if (
+                 self.baseline is not None
+                 and frame.source.frame_id != self.baseline.source.frame_id + 1
+             ):
+-                p.gate.discard((str(frame.source.frame_id),), "camera_gap", now)
+-                p.source.pool.release(frame)
+-                self._reset("camera_gap", now)
+-                p.source.latest()
++                self._discard_input(frame, "camera_gap", now)
+                 continue
+             self.current = frame
+             with p.gate.lock:
+@@ -217,19 +204,31 @@
+         p.history.clear()
+         return p.source.pool.idle()
+ 
+-    def _reset(self, cause: str, now: int) -> None:
++    def _discard_input(
++        self, frame: PrivateFrame | None, cause: InputResetCause, now: int
++    ) -> None:
++        p = self.ports
++        if frame is not None:
++            p.gate.discard((str(frame.source.frame_id),), cause, now)
++            p.source.pool.release(frame)
++        self._reset(cause, now)
++        p.source.latest()
++
++    def _reset(self, cause: InputResetCause, now: int) -> None:
+         p = self.ports
+         with p.gate.lock:
+             if p.feedback is not None:
+                 p.feedback.retire(now, cause)
+-            generation = p.gate.reset((cause,), now)  # type: ignore[arg-type]
++            generation = p.gate.reset((cause,), now)
+         p.flow.reset(generation)
+         p.estimator.reset(generation)
+         if self.baseline is not None:
+             p.source.pool.release(self.baseline)
+             self.baseline = None
+ 
+-    def _pose(self, frame: PrivateFrame):  # type: ignore[no-untyped-def]
++    def _pose(
++        self, frame: PrivateFrame
++    ) -> tuple[PoseUse, PoseGeometryObservation | None]:
+         p = self.ports
+         now = self.clock()
+         if p.manual_geometry is not None:
+@@ -297,55 +296,9 @@
+             if evidence is not None and evidence.filtered_average is not None:
+                 for name, value in evidence.filtered_average.model_dump().items():
+                     result.values.add(channel_id=name, value=value)
+-            stages = (
+-                ()
+-                if evidence is None
+-                else (
+-                    StageEvidence(
+-                        stage_id="estimator",
+-                        schema_id="tracking.flow-proxy-evidence.v1",
+-                        payload_json=evidence.model_dump_json(),
+-                    ),
+-                )
+-            )
+-            if evidence is not None and evidence.sections:
+-                coverage = GeometryEvidence(
+-                    schema_version=1,
+-                    regions=tuple(
+-                        RegionCoverage(
+-                            region_id=f"section_{section.section_index}",
+-                            requested_pixels=int(section.intended_area_px2),
+-                            visible_pixels=int(section.visible_area_px2),
+-                            clipped_fraction=(
+-                                section.intended_area_px2 - section.visible_area_px2
+-                            )
+-                            / section.intended_area_px2,
+-                        )
+-                        for section in evidence.sections
+-                        if section.intended_area_px2 > 0
+-                    ),
+-                )
+-                stages = (
+-                    StageEvidence(
+-                        stage_id="geometry",
+-                        schema_id="tracking.geometry-evidence.v1",
+-                        payload_json=coverage.model_dump_json(),
+-                    ),
+-                    *stages,
+-                )
+             p.gate.record(
+-                TrackingRecord(
+-                    record=MovementResult(
+-                        kind="result",
+-                        feedback_result=WirePayload(
+-                            protobuf_base64=base64.b64encode(
+-                                result.SerializeToString(deterministic=True)
+-                            ).decode("ascii")
+-                        ),
+-                        produced_host_ns=now,
+-                        pose=use,
+-                        stage_evidence=stages,
+-                    )
++                movement_record(
++                    result, produced_host_ns=now, pose=use, evidence=evidence
+                 )
+             )
+             if p.feedback is not None:
+--- before/src/cephvr/tracking/processing/pose.py
++++ after/src/cephvr/tracking/processing/pose.py
+@@ -124,9 +124,7 @@
+             operations = self.factory()
+             self.ready.set_result(None)
+             while True:
+-                for value in self.history.take_retired():
+-                    if value.geometry is not None:
+-                        operations.release_geometry(value.geometry)
++                self._release_retired(operations)
+                 with self.condition:
+                     if self.waiting is None and not self.stopping:
+                         self.condition.wait(0.05)
+@@ -145,9 +143,7 @@
+                     with self.condition:
+                         self.running = False
+                         self.pending_since_ns = None
+-            for value in self.history.take_retired():
+-                if value.geometry is not None:
+-                    operations.release_geometry(value.geometry)
++            self._release_retired(operations)
+             self.closed = operations.close(self.close_deadline)
+         except BaseException as exc:
+             self.failure = exc
+@@ -160,14 +156,18 @@
+             try:
+                 if operations is not None:
+                     self.history.clear()
+-                    for value in self.history.take_retired():
+-                        if value.geometry is not None:
+-                            operations.release_geometry(value.geometry)
++                    self._release_retired(operations)
+                     self.closed = operations.close(self.close_deadline)
+                 else:
+                     self.closed = self.failure_close(self.close_deadline)
+             except BaseException:
+                 self.closed = False
++
++    def _release_retired(self, operations: PoseOperations) -> None:
++        """Release unborrowed geometry on its owning pose thread."""
++        for value in self.history.take_retired():
++            if value.geometry is not None:
++                operations.release_geometry(value.geometry)
+ 
+     def _compute(self, operations: PoseOperations, job: _Job) -> None:
+         frame = job.frame
+--- before/src/cephvr/tracking/recording/results.py
++++ after/src/cephvr/tracking/recording/results.py
+@@ -0,0 +1,73 @@
++"""T19 scientific movement record formatting from completed result values."""
++
++import base64
++
++from cephvr.tracking.config.models.records import (
++    FlowProxyEvidence,
++    GeometryEvidence,
++    MovementResult,
++    PoseUse,
++    RegionCoverage,
++    StageEvidence,
++    TrackingRecord,
++    WirePayload,
++)
++from cephvr.visual_stimulus.v1.data_pb2 import FeedbackResult
++
++
++def movement_record(
++    result: FeedbackResult,
++    *,
++    produced_host_ns: int,
++    pose: PoseUse,
++    evidence: FlowProxyEvidence | None,
++) -> TrackingRecord:
++    stages = (
++        ()
++        if evidence is None
++        else (
++            StageEvidence(
++                stage_id="estimator",
++                schema_id="tracking.flow-proxy-evidence.v1",
++                payload_json=evidence.model_dump_json(),
++            ),
++        )
++    )
++    if evidence is not None and evidence.sections:
++        coverage = GeometryEvidence(
++            schema_version=1,
++            regions=tuple(
++                RegionCoverage(
++                    region_id=f"section_{section.section_index}",
++                    requested_pixels=int(section.intended_area_px2),
++                    visible_pixels=int(section.visible_area_px2),
++                    clipped_fraction=(
++                        section.intended_area_px2 - section.visible_area_px2
++                    )
++                    / section.intended_area_px2,
++                )
++                for section in evidence.sections
++                if section.intended_area_px2 > 0
++            ),
++        )
++        stages = (
++            StageEvidence(
++                stage_id="geometry",
++                schema_id="tracking.geometry-evidence.v1",
++                payload_json=coverage.model_dump_json(),
++            ),
++            *stages,
++        )
++    return TrackingRecord(
++        record=MovementResult(
++            kind="result",
++            feedback_result=WirePayload(
++                protobuf_base64=base64.b64encode(
++                    result.SerializeToString(deterministic=True)
++                ).decode("ascii")
++            ),
++            produced_host_ns=produced_host_ns,
++            pose=pose,
++            stage_evidence=stages,
++        )
++    )
+--- before/tests/tracking/test_processing.py
++++ after/tests/tracking/test_processing.py
+@@ -111,3 +111,269 @@
+     delivery.written(second)
+     delivery.seal(3)
+     assert records[-1].record.kind == "reset"
++
++
++def test_history_clear_waits_for_every_borrow_and_rejects_double_return():
++    work = WorkContext()
++    history = PoseHistory(2)
++    value = observation(work, 1, 100)
++    history.publish(value)
++    for _ in range(2):
++        assert history.select(work, "prepared", "attached", 1, 101, 10)[1] is value
++    history.clear()
++    assert history.select(work, "prepared", "attached", 1, 101, 10)[1] is None
++    assert history.take_retired() == ()
++    history.release(value)
++    assert history.take_retired() == ()
++    history.release(value)
++    assert history.take_retired() == (value,)
++    assert history.take_retired() == ()
++    with pytest.raises(ValueError, match="unknown or already returned"):
++        history.release(value)
++
++
++@pytest.mark.parametrize("fail_compute", [False, True])
++def test_pose_retirement_and_close_stay_on_owner_thread_after_failure(fail_compute):
++    import threading
++    from dataclasses import replace
++
++    from cephvr.tracking.processing.pose import PoseOperations, PoseWorker
++
++    work = WorkContext()
++    gate = TrialGate(lambda record: True)
++    gate.begin(work, "prepared", "attached", 1, 100, 1)
++    pool = FramePool(ImageLayout(2, 2, 2, "gray", "uint8", 8, "lsb", 0, 255, "x"), 1, 4)
++    history = PoseHistory(1)
++    geometries = (object(), object())
++    for index, geometry in enumerate(geometries):
++        history.publish(replace(observation(work, index, index + 1), geometry=geometry))
++    events = []
++    computed = threading.Event()
++
++    def compute(frame):
++        computed.set()
++        raise RuntimeError("pose computation failed")
++
++    def close(deadline):
++        events.append(("close", deadline, threading.get_ident()))
++        return True
++
++    worker = PoseWorker(
++        lambda: PoseOperations(
++            compute,
++            lambda landmarks: None,
++            lambda geometry: events.append(
++                ("release", geometry, threading.get_ident())
++            ),
++            close,
++            "threshold_contour",
++        ),
++        pool,
++        history,
++        gate,
++        failure_close=lambda deadline: False,
++        clock=lambda: 10,
++    )
++    try:
++        worker.ready.result(timeout=1)
++        if fail_compute:
++            slot, pixels = pool.acquire()
++            pixels.release()
++            frame = pool.publish(
++                slot, SourceFrame(frame_id=2, host_receipt_ns=5), work, "1"
++            )
++            worker.offer(frame)
++            pool.release(frame)
++            assert computed.wait(1)
++    finally:
++        assert worker.close(1_000_000_010)
++    assert [(kind, value) for kind, value, _ in events] == [
++        ("release", geometries[0]),
++        ("release", geometries[1]),
++        ("close", 1_000_000_010),
++    ]
++    assert all(owner == worker.thread.ident for _, _, owner in events)
++    assert bool(worker.failure) == fail_compute
++    assert pool.idle()
++
++
++@pytest.mark.parametrize(
++    "cause,has_frame",
++    [
++        ("input_overflow", False),
++        ("input_overflow", True),
++        ("input_age", True),
++        ("camera_gap", True),
++    ],
++)
++def test_movement_input_reset_preserves_evidence_order_and_pose_history(
++    cause, has_frame
++):
++    from types import SimpleNamespace
++
++    from cephvr.control.v1.types_pb2 import ProcessIdentity
++    from cephvr.tracking.processing.movement import Movement, MovementPorts
++
++    events = []
++    records = []
++
++    def admit(record):
++        records.append(record.record)
++        events.append(record.record.kind)
++        return True
++
++    gate = TrialGate(admit)
++    work = WorkContext()
++    gate.begin(work, "prepared", "attached", 1, 200, 1)
++    pool = FramePool(ImageLayout(2, 2, 2, "gray", "uint8", 8, "lsb", 0, 255, "x"), 2, 8)
++
++    def frame(frame_id, receipt):
++        slot, pixels = pool.acquire()
++        pixels.release()
++        return pool.publish(
++            slot, SourceFrame(frame_id=frame_id, host_receipt_ns=receipt), work, "1"
++        )
++
++    baseline = frame(1, 80)
++    incoming = frame(3, 10 if cause == "input_age" else 90) if has_frame else None
++    history = PoseHistory(1)
++    pose = observation(work, 1, 80)
++    history.publish(pose)
++    delivery = FeedbackDelivery("attached", "water_flow", 2, 4096, gate)
++    delivery.publish(wire.FeedbackResult(reset_generation="1", result_id="pending"))
++
++    def reset_flow(generation):
++        assert generation == "2"
++        assert not pool.idle()  # The prior baseline still owns its slot here.
++        if incoming is not None:
++            with pytest.raises(ValueError, match="retired"):
++                pool.retain(incoming)
++        events.append("flow_reset")
++
++    def latest():
++        assert pool.idle()
++        events.append("latest")
++        gate.seal(100)
++
++    ports = MovementPorts(
++        source=SimpleNamespace(
++            pool=pool,
++            begin=lambda: None,
++            read=lambda *_: (incoming, cause == "input_overflow"),
++            latest=latest,
++        ),
++        flow=SimpleNamespace(reset=reset_flow),
++        estimator=SimpleNamespace(
++            reset=lambda generation: events.append(("estimator_reset", generation))
++        ),
++        gate=gate,
++        history=history,
++        pose=None,
++        manual_geometry=None,
++        feedback=delivery,
++        identity=ProcessIdentity(),
++        stream_id="water_flow",
++        maximum_frame_age_ns=50,
++        maximum_pose_age_ns=50,
++        movement_timeout_ns=20,
++        first_evaluation=lambda *_: pytest.fail(
++            "discarded input cannot start activity"
++        ),
++    )
++    movement = Movement(ports, clock=lambda: 100)
++    movement.baseline = baseline
++    records.clear()
++    events.clear()
++    movement.run()
++    assert events == (["discard"] if has_frame else []) + [
++        "discard",
++        "reset",
++        "flow_reset",
++        ("estimator_reset", "2"),
++        "latest",
++    ]
++    assert records[-1].causes == (cause,)
++    assert records[-1].reset_generation == "2"
++    assert all(record.observed_host_ns == 100 for record in records)
++    assert records[-2].target == "result" and records[-2].ids == ("pending",)
++    if has_frame:
++        assert records[0].target == "source_frame" and records[0].ids == ("3",)
++    assert all(
++        record.reset_generation == "1" and record.reason == cause
++        for record in records[:-1]
++    )
++    assert gate.processing_generation == "2" and gate.end == 200
++    assert movement.baseline is None and pool.idle()
++    assert history.select(work, "prepared", "attached", 3, 100, 50)[1] is pose
++    history.release(pose)
++
++
++@pytest.mark.parametrize(
++    "outcome", ["accepted", "record_failure", "stale_generation", "cutoff"]
++)
++def test_movement_commit_records_before_feedback_and_first_activity(outcome):
++    from types import SimpleNamespace
++
++    from cephvr.control.v1.types_pb2 import ProcessIdentity
++    from cephvr.tracking.processing.movement import Movement, MovementPorts
++
++    events = []
++
++    def admit(record):
++        events.append(record.record.kind)
++        return outcome != "record_failure" or record.record.kind != "result"
++
++    gate = TrialGate(admit)
++    work = WorkContext()
++    gate.begin(work, "prepared", "attached", 1, 200, 1)
++    pool = FramePool(ImageLayout(2, 2, 2, "gray", "uint8", 8, "lsb", 0, 255, "x"), 1, 4)
++    slot, pixels = pool.acquire()
++    pixels.release()
++    frame = pool.publish(slot, SourceFrame(frame_id=1, host_receipt_ns=90), work, "1")
++    movement = Movement(
++        MovementPorts(
++            source=SimpleNamespace(pool=pool),
++            flow=None,
++            estimator=None,
++            gate=gate,
++            history=PoseHistory(1),
++            pose=None,
++            manual_geometry=None,
++            feedback=SimpleNamespace(
++                before_result=lambda now: events.append("before"),
++                publish=lambda result: events.append("publish"),
++            ),
++            identity=ProcessIdentity(),
++            stream_id="water_flow",
++            maximum_frame_age_ns=50,
++            maximum_pose_age_ns=50,
++            movement_timeout_ns=20,
++            first_evaluation=lambda *_: events.append("first"),
++        ),
++        clock=lambda: 100,
++    )
++    if outcome == "stale_generation":
++        gate.reset(("camera_gap",), 99)
++    elif outcome == "cutoff":
++        gate.seal(99)
++    use, _ = movement._pose(frame)
++    events.clear()
++    try:
++        if outcome == "record_failure":
++            with pytest.raises(RuntimeError, match="evidence admission failed"):
++                movement._commit(frame, None, "baseline_only", use)
++            assert events == ["before", "result"] and not movement.first
++        elif outcome == "accepted":
++            movement._commit(frame, None, "baseline_only", use)
++            assert events == ["before", "result", "publish", "first"]
++            events.clear()
++            movement._commit(frame, None, "baseline_only", use)
++            assert events == ["before", "result", "publish"]
++            assert movement.result_sequence == 2
++        else:
++            movement._commit(frame, None, "baseline_only", use)
++            assert events == ["discard"] and movement.result_sequence == 0
++            assert not movement.first
++    finally:
++        pool.release(frame)
++    assert pool.idle()
+--- before/tests/tracking/test_recording.py
++++ after/tests/tracking/test_recording.py
+@@ -118,3 +118,97 @@
+     with pytest.raises(ValueError, match="onset"):
+         writer.start(future)
+     assert not writer.path.exists()
++
++
++@pytest.mark.parametrize("stage_mode", ["baseline", "no_sections", "sections"])
++def test_movement_record_retains_exact_wire_payload_and_stage_order(stage_mode):
++    import base64
++
++    from cephvr.tracking.config.models.records import (
++        FlowProxyEvidence,
++        FlowSectionEvidence,
++        PoseUse,
++    )
++    from cephvr.tracking.recording.results import movement_record
++    from cephvr.visual_stimulus.v1.data_pb2 import FeedbackResult
++
++    result = FeedbackResult(
++        result_id="exact-result", reset_generation="2", source_frame_ids=["4", "5"]
++    )
++    result.values.add(channel_id="forward_drive", value=1.25)
++    pose = PoseUse(
++        disposition="missing",
++        observation_id=None,
++        manual_geometry_id=None,
++        check_host_ns=100,
++        pose_source_host_ns=None,
++        age_ns=None,
++        maximum_age_ns=10,
++    )
++    evidence = (
++        None
++        if stage_mode == "baseline"
++        else FlowProxyEvidence(
++            schema_version=1,
++            pipeline_id="water_flow",
++            validity="invalid",
++            reason="insufficient_support",
++            sections=()
++            if stage_mode == "no_sections"
++            else (
++                FlowSectionEvidence(
++                    section_index=0,
++                    intended_area_px2=4,
++                    visible_area_px2=3,
++                    accepted_area_px2=0,
++                ),
++                FlowSectionEvidence(
++                    section_index=1,
++                    intended_area_px2=0,
++                    visible_area_px2=0,
++                    accepted_area_px2=0,
++                ),
++            ),
++            counts=None,
++            centroid_body_px=None,
++            mean_velocity_body_px_per_s=None,
++            centred_moment_px2_per_s=None,
++            centred_second_moment_px2=None,
++            raw=None,
++            filtered_average=None,
++            filter_end=None,
++            filter_disposition="cleared",
++        )
++    )
++    record = movement_record(
++        result, produced_host_ns=101, pose=pose, evidence=evidence
++    ).record
++    assert (
++        record.kind == "result"
++        and record.produced_host_ns == 101
++        and record.pose == pose
++    )
++    assert base64.b64decode(
++        record.feedback_result.protobuf_base64
++    ) == result.SerializeToString(deterministic=True)
++    assert [stage.stage_id for stage in record.stage_evidence] == {
++        "baseline": [],
++        "no_sections": ["estimator"],
++        "sections": ["geometry", "estimator"],
++    }[stage_mode]
++    if evidence is not None:
++        assert record.stage_evidence[-1].schema_id == "tracking.flow-proxy-evidence.v1"
++        assert record.stage_evidence[-1].payload_json == evidence.model_dump_json()
++    if stage_mode == "sections":
++        assert record.stage_evidence[0].schema_id == "tracking.geometry-evidence.v1"
++        assert json.loads(record.stage_evidence[0].payload_json) == {
++            "schema_version": 1,
++            "regions": [
++                {
++                    "region_id": "section_0",
++                    "requested_pixels": 4,
++                    "visible_pixels": 3,
++                    "clipped_fraction": 0.25,
++                }
++            ],
++        }

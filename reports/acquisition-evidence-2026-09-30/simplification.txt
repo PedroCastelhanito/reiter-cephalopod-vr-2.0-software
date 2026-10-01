@@ -1,0 +1,629 @@
+Date: 2026-09-30
+HEAD: 7ae3767cea92bf7af94153d417e40df997e1fd05
+Dirty working tree; pre-existing changes preserved, including shared backend/FFmpeg extraction and Visual Stimulus naming. HEAD alone does not identify the tested snapshot.
+Scope: acquisition simplification under ARCH-002, A02/A10/A11 and E05/E06/E08/E15. No schema, policy, package or native-platform change.
+
+BASELINE COMMAND: .venv/bin/python -m pytest tests/acquisition -q -m "not windows and not rig" --tb=short
+FFFFF.......................F.........F.FF...F............FF............ [ 50%]
+................................F........F...................F..FFsssss  [100%]
+=================================== FAILURES ===================================
+_______________ test_adapter_construction_does_not_load_pypylon ________________
+tests/acquisition/test_camera_adapter_contracts.py:19: in test_adapter_construction_does_not_load_pypylon
+    adapter = BaslerCameraAdapter()
+              ^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/basler.py:62: in __init__
+    self._wait_gate = PylonWaitGate()
+                      ^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/wait.py:25: in __init__
+    self.initialize_event()
+src/cephvr/acquisition/camera/wait.py:30: in initialize_event
+    self._event = ManualResetEvent.create()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:105: in create
+    kernel = _kernel32()
+             ^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:163: in _kernel32
+    raise NativeEventError("native ring events require Windows")
+E   cephvr.platform.windows.events.NativeEventError: native ring events require Windows
+__________ test_sdk_version_mismatch_is_explicit_and_does_not_import ___________
+tests/acquisition/test_camera_adapter_contracts.py:27: in test_sdk_version_mismatch_is_explicit_and_does_not_import
+    adapter = BaslerCameraAdapter()
+              ^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/basler.py:62: in __init__
+    self._wait_gate = PylonWaitGate()
+                      ^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/wait.py:25: in __init__
+    self.initialize_event()
+src/cephvr/acquisition/camera/wait.py:30: in initialize_event
+    self._event = ManualResetEvent.create()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:105: in create
+    kernel = _kernel32()
+             ^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:163: in _kernel32
+    raise NativeEventError("native ring events require Windows")
+E   cephvr.platform.windows.events.NativeEventError: native ring events require Windows
+__________ test_open_uses_exact_assigned_serial_not_enumeration_order __________
+tests/acquisition/test_camera_adapter_contracts.py:77: in test_open_uses_exact_assigned_serial_not_enumeration_order
+    adapter = BaslerCameraAdapter()
+              ^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/basler.py:62: in __init__
+    self._wait_gate = PylonWaitGate()
+                      ^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/wait.py:25: in __init__
+    self.initialize_event()
+src/cephvr/acquisition/camera/wait.py:30: in initialize_event
+    self._event = ManualResetEvent.create()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:105: in create
+    kernel = _kernel32()
+             ^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:163: in _kernel32
+    raise NativeEventError("native ring events require Windows")
+E   cephvr.platform.windows.events.NativeEventError: native ring events require Windows
+___________ test_trigger_timing_selects_and_verifies_exact_selector ____________
+tests/acquisition/test_camera_adapter_contracts.py:94: in test_trigger_timing_selects_and_verifies_exact_selector
+    adapter = BaslerCameraAdapter()
+              ^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/basler.py:62: in __init__
+    self._wait_gate = PylonWaitGate()
+                      ^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/wait.py:25: in __init__
+    self.initialize_event()
+src/cephvr/acquisition/camera/wait.py:30: in initialize_event
+    self._event = ManualResetEvent.create()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:105: in create
+    kernel = _kernel32()
+             ^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:163: in _kernel32
+    raise NativeEventError("native ring events require Windows")
+E   cephvr.platform.windows.events.NativeEventError: native ring events require Windows
+__________________ test_missing_trigger_mode_blocks_readiness __________________
+tests/acquisition/test_camera_adapter_contracts.py:116: in test_missing_trigger_mode_blocks_readiness
+    adapter = BaslerCameraAdapter()
+              ^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/basler.py:62: in __init__
+    self._wait_gate = PylonWaitGate()
+                      ^^^^^^^^^^^^^^^
+src/cephvr/acquisition/camera/wait.py:25: in __init__
+    self.initialize_event()
+src/cephvr/acquisition/camera/wait.py:30: in initialize_event
+    self._event = ManualResetEvent.create()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:105: in create
+    kernel = _kernel32()
+             ^^^^^^^^^^^
+src/cephvr/platform/windows/events.py:163: in _kernel32
+    raise NativeEventError("native ring events require Windows")
+E   cephvr.platform.windows.events.NativeEventError: native ring events require Windows
+____ test_acquisition_bootstrap_retains_exact_startup_policy_and_identities ____
+tests/acquisition/test_coordinator.py:253: in test_acquisition_bootstrap_retains_exact_startup_policy_and_identities
+    decoded = decode_acquisition_bootstrap(_document())
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/startup.py:11: in decode_acquisition_bootstrap
+    return decode_backend_bootstrap(document, expected_role="acquisition")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/shared/backend_bootstrap.py:66: in decode_backend_bootstrap
+    heartbeat_interval_ns = _positive_integer(document, "heartbeat_interval_ns")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/shared/backend_bootstrap.py:155: in _positive_integer
+    raise ValueError(f"backend bootstrap {key} must be a positive integer")
+E   ValueError: backend bootstrap heartbeat_interval_ns must be a positive integer
+___________ test_pause_with_attached_viewer_waits_for_exact_release ____________
+tests/acquisition/test_manual_preview.py:250: in test_pause_with_attached_viewer_waits_for_exact_release
+    assert not task.done()
+E   AssertionError: assert not True
+E    +  where True = <built-in method done of _asyncio.Task object at 0x107b46740>()
+E    +    where <built-in method done of _asyncio.Task object at 0x107b46740> = <Task finished name='Task-35' coro=<ManualPreviewPulseLifecycle.pause_for_pulse_change() done, defined at /Users/pedro...er-software/reiter-cephalopod-vr-2.0-software/src/cephvr/acquisition/coordinator/manual_preview_pulse.py:79> result=()>.done
+_____ test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns _____
+tests/acquisition/test_microcontroller_owner.py:30: in test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns
+    asyncio.run(scenario())
+.venv/lib/python3.11/asyncio/runners.py:190: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/asyncio/base_events.py:654: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/acquisition/test_microcontroller_owner.py:23: in scenario
+    await bridge.connect(deadline_ns=host_time_ns() + 20_000_000)
+src/cephvr/acquisition/microcontroller/bridge.py:47: in connect
+    return await self._call(
+src/cephvr/acquisition/microcontroller/bridge.py:218: in _call
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv/lib/python3.11/concurrent/futures/thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/microcontroller/bridge.py:179: in invoke_before_deadline
+    return operation()
+           ^^^^^^^^^^^
+src/cephvr/acquisition/microcontroller/bridge.py:48: in <lambda>
+    lambda: self._get_owner().connect(deadline_ns), deadline_ns
+            ^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/microcontroller/bridge.py:263: in _get_owner
+    owner = factory()
+            ^^^^^^^^^
+E   TypeError: '_BlockingOwner' object is not callable
+____ test_waiting_owner_calls_cannot_overwrite_or_steal_the_exclusive_gate _____
+tests/acquisition/test_microcontroller_owner.py:51: in test_waiting_owner_calls_cannot_overwrite_or_steal_the_exclusive_gate
+    asyncio.run(scenario())
+.venv/lib/python3.11/asyncio/runners.py:190: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/asyncio/base_events.py:654: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/acquisition/test_microcontroller_owner.py:38: in scenario
+    await bridge.connect(deadline_ns=host_time_ns() + 20_000_000)
+src/cephvr/acquisition/microcontroller/bridge.py:47: in connect
+    return await self._call(
+src/cephvr/acquisition/microcontroller/bridge.py:218: in _call
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv/lib/python3.11/concurrent/futures/thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/microcontroller/bridge.py:179: in invoke_before_deadline
+    return operation()
+           ^^^^^^^^^^^
+src/cephvr/acquisition/microcontroller/bridge.py:48: in <lambda>
+    lambda: self._get_owner().connect(deadline_ns), deadline_ns
+            ^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/microcontroller/bridge.py:263: in _get_owner
+    owner = factory()
+            ^^^^^^^^^
+E   TypeError: '_StubbornOwner' object is not callable
+_____ test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies _____
+tests/acquisition/test_microcontroller_protocol.py:57: in test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies
+    result = channel.request("PING", {}, 10000)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/microcontroller/channel.py:126: in request
+    return self._perform_request(
+src/cephvr/acquisition/microcontroller/channel.py:244: in _perform_request
+    raise ChannelTimeout(
+E   cephvr.acquisition.microcontroller.channel.ChannelTimeout: no matched complete acknowledgement for PING before deadline
+_____________ test_off_ack_does_not_forge_a_full_status_timestamp ______________
+tests/acquisition/test_pulse_evidence.py:211: in test_off_ack_does_not_forge_a_full_status_timestamp
+    await boundaries.ensure_outputs_off(session, deadline_ns=500)
+src/cephvr/acquisition/coordinator/trial_pulses.py:86: in ensure_outputs_off
+    retain_applied_pulse_state(self.pulse, off, deadline_ns=off_deadline_ns)
+src/cephvr/acquisition/coordinator/manual_pulse_observation.py:32: in retain_applied_pulse_state
+    raise RuntimeError("pulse command lacks exact timely APPLIED/ACK evidence")
+E   RuntimeError: pulse command lacks exact timely APPLIED/ACK evidence
+____ test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it ____
+tests/acquisition/test_pulse_evidence.py:264: in test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it
+    tracker.record(accepted, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
+src/cephvr/acquisition/worker/pulse_evidence.py:63: in record
+    or not pulse.HasField("outcome")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ValueError: Field cephvr.acquisition.v1.PulseCommandEvidence.outcome does not have presence.
+____ test_session_handoff_closes_manual_serial_owner_without_camera_workers ____
+tests/acquisition/test_session_preparation.py:47: in test_session_handoff_closes_manual_serial_owner_without_camera_workers
+    asyncio.run(preparation.retire_manual_workers(deadline_ns=500))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'types.SimpleNamespace' object has no attribute 'retire_manual_workers'
+_ test_late_executor_failure_preserves_admission_and_retains_terminal_operation _
+tests/acquisition/test_transport_admission.py:187: in test_late_executor_failure_preserves_admission_and_retains_terminal_operation
+    asyncio.run(run())
+.venv/lib/python3.11/asyncio/runners.py:190: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/asyncio/base_events.py:654: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/acquisition/test_transport_admission.py:181: in run
+    assert replay_after_failure == first
+E   assert result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "SERVICE_CLOSING"\n  message: "backend transport no longer accepts new commands"\n}\ncommand_id: "68af06e2-5b4b-4e54-98c8-fe1f908c2be9"\n == result: COMMAND_RESULT_ACCEPTED\ncommand_id: "68af06e2-5b4b-4e54-98c8-fe1f908c2be9"\n
+________ test_early_cutoff_retrieval_is_excluded_from_trial_accounting _________
+tests/acquisition/test_worker_foundations.py:314: in test_early_cutoff_retrieval_is_excluded_from_trial_accounting
+    assert loop.capture_once(lambda: True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/worker/capture.py:161: in capture_once
+    receipt_ns = self.clock_ns()
+                 ^^^^^^^^^^^^^^^
+tests/acquisition/test_worker_foundations.py:310: in <lambda>
+    clock_ns=lambda: next(times),
+                     ^^^^^^^^^^^
+E   StopIteration
+_________ test_consecutive_non_saving_trials_reset_shared_trial_state __________
+src/cephvr/shared/identity.py:37: in require_uuid4
+    parsed = uuid.UUID(value)
+             ^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/uuid.py:178: in __init__
+    raise ValueError('badly formed hexadecimal UUID string')
+E   ValueError: badly formed hexadecimal UUID string
+
+The above exception was the direct cause of the following exception:
+tests/acquisition/test_worker_foundations.py:475: in test_consecutive_non_saving_trials_reset_shared_trial_state
+    commands=CommandLedger(
+src/cephvr/shared/commands.py:55: in __init__
+    self.generation = require_uuid4(generation)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/shared/identity.py:39: in require_uuid4
+    raise ValueError("invalid UUID") from exc
+E   ValueError: invalid UUID
+___ test_health_ages_owner_published_capture_snapshot_without_runtime_reads ____
+src/cephvr/shared/identity.py:37: in require_uuid4
+    parsed = uuid.UUID(value)
+             ^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/uuid.py:178: in __init__
+    raise ValueError('badly formed hexadecimal UUID string')
+E   ValueError: badly formed hexadecimal UUID string
+
+The above exception was the direct cause of the following exception:
+tests/acquisition/test_worker_foundations.py:559: in test_health_ages_owner_published_capture_snapshot_without_runtime_reads
+    commands=CommandLedger(
+src/cephvr/shared/commands.py:55: in __init__
+    self.generation = require_uuid4(generation)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/shared/identity.py:39: in require_uuid4
+    raise ValueError("invalid UUID") from exc
+E   ValueError: invalid UUID
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_camera_adapter_contracts.py::test_adapter_construction_does_not_load_pypylon
+FAILED tests/acquisition/test_camera_adapter_contracts.py::test_sdk_version_mismatch_is_explicit_and_does_not_import
+FAILED tests/acquisition/test_camera_adapter_contracts.py::test_open_uses_exact_assigned_serial_not_enumeration_order
+FAILED tests/acquisition/test_camera_adapter_contracts.py::test_trigger_timing_selects_and_verifies_exact_selector
+FAILED tests/acquisition/test_camera_adapter_contracts.py::test_missing_trigger_mode_blocks_readiness
+FAILED tests/acquisition/test_coordinator.py::test_acquisition_bootstrap_retains_exact_startup_policy_and_identities
+FAILED tests/acquisition/test_manual_preview.py::test_pause_with_attached_viewer_waits_for_exact_release
+FAILED tests/acquisition/test_microcontroller_owner.py::test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns
+FAILED tests/acquisition/test_microcontroller_owner.py::test_waiting_owner_calls_cannot_overwrite_or_steal_the_exclusive_gate
+FAILED tests/acquisition/test_microcontroller_protocol.py::test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies
+FAILED tests/acquisition/test_pulse_evidence.py::test_off_ack_does_not_forge_a_full_status_timestamp
+FAILED tests/acquisition/test_pulse_evidence.py::test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it
+FAILED tests/acquisition/test_session_preparation.py::test_session_handoff_closes_manual_serial_owner_without_camera_workers
+FAILED tests/acquisition/test_transport_admission.py::test_late_executor_failure_preserves_admission_and_retains_terminal_operation
+FAILED tests/acquisition/test_worker_foundations.py::test_early_cutoff_retrieval_is_excluded_from_trial_accounting
+FAILED tests/acquisition/test_worker_foundations.py::test_consecutive_non_saving_trials_reset_shared_trial_state
+FAILED tests/acquisition/test_worker_foundations.py::test_health_ages_owner_published_capture_snapshot_without_runtime_reads
+17 failed, 121 passed, 5 skipped in 2.11s
+
+FIXTURE-REPAIR COMMAND: same acquisition pytest scope
+............................F..............................F............ [ 50%]
+..................................................................sssss  [100%]
+=================================== FAILURES ===================================
+____ test_acquisition_bootstrap_retains_exact_startup_policy_and_identities ____
+tests/acquisition/test_coordinator.py:255: in test_acquisition_bootstrap_retains_exact_startup_policy_and_identities
+    decoded = decode_acquisition_bootstrap(_document())
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/acquisition/startup.py:11: in decode_acquisition_bootstrap
+    return decode_backend_bootstrap(document, expected_role="acquisition")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/shared/backend_bootstrap.py:76: in decode_backend_bootstrap
+    policies = _decode_policies(_string(document, "control_policies"))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/shared/backend_bootstrap.py:125: in _decode_policies
+    if not wait.HasField("initial_ns") or wait.initial_ns <= 0:
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ValueError: Field cephvr.control.v1.WaitPolicy.initial_ns does not have presence.
+____ test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it ____
+tests/acquisition/test_pulse_evidence.py:264: in test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it
+    tracker.record(accepted, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
+src/cephvr/acquisition/worker/pulse_evidence.py:63: in record
+    or not pulse.HasField("outcome")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ValueError: Field cephvr.acquisition.v1.PulseCommandEvidence.outcome does not have presence.
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_coordinator.py::test_acquisition_bootstrap_retains_exact_startup_policy_and_identities
+FAILED tests/acquisition/test_pulse_evidence.py::test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it
+2 failed, 136 passed, 5 skipped in 4.08s
+
+Assessment: 15 baseline failures were stale test setup or uncontrolled Windows event allocation in portable adapter tests. Two were invalid HasField calls on scalar protobuf fields (pulse outcome and shared bootstrap WaitPolicy.initial_ns). Corrected fixtures without dropping scenarios/markers; scalar validation retains UNSPECIFIED/positive-value checks.
+Increment evidence from tool outputs: 149 passed/5 skipped after fixture and presence-check corrections; 165 passed/5 skipped with wait/delivery regressions. Intermediate new-test defects (misplaced SDK-version assertions and missing required ledger test arguments) were corrected. Final Finished aggregation test passed within its 20-case module.
+
+Review also found session-vs-trial work equality incorrectly rejected valid Finished and prevented work finalization. Delivery now checks exact current trial, its containing session, and report work; retention/retry/deadline ownership remains unchanged. This is a behavior correction under existing E05/E08, not merely AST-preserving extraction.
+
+Source/test SHA256 manifest before final checks:
+4fdadcbfb5c26a7eba522f0c294f9c3269ceb3d809498c79aa12d0e53f62f7de  src/cephvr/acquisition/__init__.py
+d5238587313e672ac1ad73d59058064b208129145bf1a377362a7489cbcca644  src/cephvr/acquisition/buffers/__init__.py
+ab62f71eeb8c7c08c013df2fed8293e7aee10a3c8d80f51a671ae8b018486233  src/cephvr/acquisition/buffers/end_marker.py
+1c555bd1e947b1f23c41f8d97d26fa779d2dd9a36ca91fce182b95ca700236f5  src/cephvr/acquisition/buffers/layout.py
+add0eb29e7d2433321c68745bea1beb939fe268955ecc9605f9198f62b2dd134  src/cephvr/acquisition/buffers/pixel_pool.py
+e4096fe9ea3bae5f6045959fc5ce312d74bbb7ee8dada46e6167c0436abcaff5  src/cephvr/acquisition/buffers/queue.py
+2e7da3ed9437c0a9862e78b155dc04851a181ddcf3cc4da212ad91fe2003f2b1  src/cephvr/acquisition/buffers/records.py
+ac915bc39861f040d2ed7a6d5e0f36df98cba9841ec3e0e70da7846feef66274  src/cephvr/acquisition/buffers/resource_port.py
+7ff70adcf80df1a8fe2e32f0c6c3edac6c830cf7d11e3d5c7645d84067109aa5  src/cephvr/acquisition/buffers/ring.py
+71b452ee6d765263aee33c373a53fee3ca8b4c7155c4e340e5b6411a6214328d  src/cephvr/acquisition/buffers/ring_attachment.py
+aa204f6db5e4e79e6d95cfcf07c6fde35994107a756adbec43c82be2781cd667  src/cephvr/acquisition/camera/__init__.py
+a2eb058df8913fda28fdb7bef20f9e144476bd3a31b61e91227881a217090df9  src/cephvr/acquisition/camera/basler.py
+e862e8189e4a3d024898ab167f0f01b922d0c11fa6caf8b365b78db1ab57e040  src/cephvr/acquisition/camera/errors.py
+76d5585cf6576d1b8358276bbcd940c9f9d12945554ae5052bef81259d7b1199  src/cephvr/acquisition/camera/features.py
+1d9eb9c18138977a9fc613ede68acbd8011cdb13bab8905ccf7b14b51e684c12  src/cephvr/acquisition/camera/grab.py
+de827452d0d5cd4e557adeb2ff555d1fbef78d476479293cbefdaedadf449472  src/cephvr/acquisition/camera/metadata.py
+7a337900fa764bfbe5315648b546088e67d986439a14833106eef3763ecb664a  src/cephvr/acquisition/camera/native_formats.py
+3279adc6a7d7fc6c0d3d210ed228cca4f7c0f3d6ad536a14ef8d9e4f073b4ed3  src/cephvr/acquisition/camera/records.py
+c8014ea3fbf89ead4c3c32319a7967fc9cc420ebaab931715d9ef7832bf4bd13  src/cephvr/acquisition/camera/roi.py
+882f80cba2d21958ed782b4aa8665720cfbc0fb56d4d9d3dbbc49f5107c59c19  src/cephvr/acquisition/camera/settings.py
+c51e27a0241bcbf40933795aad8e8ded0b512ccfc77b21a4b15c15f42ae82500  src/cephvr/acquisition/camera/transport.py
+0912afb535a4ac017096e36efe075e338deb03d0f700d312e26ad8c996e3d47f  src/cephvr/acquisition/camera/types.py
+a4ae905265168b060356f3f20dfd2cb2e69c75ad398a274f3826e928e1b81f23  src/cephvr/acquisition/camera/wait.py
+de57b851d649df7b2146612e410b96ab4b7ecbdcf31b48f68e76723cb4f0d0e5  src/cephvr/acquisition/config/__init__.py
+a5886c79b3289647367da309701aa6b995cb080dfeb75717ea716164f1b1b237  src/cephvr/acquisition/config/defaults.py
+516e0bf9f2eac6ed7c0893ca69bd1e580f20959a6ad688162bea54e9086c0706  src/cephvr/acquisition/config/file_policies.py
+1821920fab1a019905cf03dafd4906783e908914c0740ad35d36dd68874e53e3  src/cephvr/acquisition/config/policy.py
+3042c4d319e57e91b6082edd6c5808e7f14902fce3854e2ad70c0976ad49abf6  src/cephvr/acquisition/config/validation.py
+f2116a462e491a4581fcfc20bbb89062492425d6aaf0a093bc87082a372208fa  src/cephvr/acquisition/config/validation_buffers.py
+23fa17d705f685fbd1414998d51696a4c87968fcae6318cc08d2769f98453603  src/cephvr/acquisition/config/validation_camera.py
+706393d0871c5532ad3df96d65e3085dd7b03c6395754e2cfebbfd6b59b930c0  src/cephvr/acquisition/config/validation_pulse.py
+961452ad3f3adee30f1634f933131af60192c23badd843353a3bbd9756889d4e  src/cephvr/acquisition/config/validation_values.py
+fab6bbf79d9d52d80eeaf141733e04311676b868c6ce12b81ac76abcec6e9a33  src/cephvr/acquisition/config/values.py
+d0ff8532ff84302ba77a660bc29b343ef7fdc6a9539c4a82c703879ba00cd1a9  src/cephvr/acquisition/configuration.py
+a041fc4a54dcf591c3d922a61ab3a42a85ae2fe3cb1bcb969f8ae27b3edbcddf  src/cephvr/acquisition/coordinator/__init__.py
+6adbbfd1dde686e7637a5302b23ea382c09784dc9d9031e91b15acd163432117  src/cephvr/acquisition/coordinator/authority_failure.py
+e6631ecb2c4798dd6d9e176dc0d72d121df4c6163feef91097311b7021ba0e18  src/cephvr/acquisition/coordinator/cleanup.py
+59fb7c3774a1f76a7606e7a1b0410ff5305649bb911a5c55e2a3b6c17109c976  src/cephvr/acquisition/coordinator/cleanup_report.py
+06f4caaf3a4f1c56c850f01f97f98a32cf4139b764e58800752b1bd5dd1a1557  src/cephvr/acquisition/coordinator/commands.py
+f4249ba2653bb884e52cc4dca50d412fe2d8b8c5f15d18ca1526281b22d6b0df  src/cephvr/acquisition/coordinator/configuration_resolution.py
+3e76175a20064a601a9c8fa3df044ed24b928839f2785aaa0c8838a80c864664  src/cephvr/acquisition/coordinator/evidence.py
+d9046407db5e5181f9d6121f358d27bf2c58a1e325daae7941fd82c08f032098  src/cephvr/acquisition/coordinator/evidence_cleanup.py
+23239cf3cf6e2f67f8bdbe20501a9619bb7afbff7ac4073b108eca21a94e7bb8  src/cephvr/acquisition/coordinator/evidence_helpers.py
+6f60218be888461f47d1f14af899a70f502fbaf2cbb73944386b31b102ca3b6c  src/cephvr/acquisition/coordinator/evidence_lifecycle.py
+1a729d4a2ac2548c4a7477a727c69863a6ff210cf1fb663c0010a57a011ec12c  src/cephvr/acquisition/coordinator/evidence_operations.py
+a6f93deff47e4da4324f7107e61c082df08482d42767d7cb1de3b0052873318a  src/cephvr/acquisition/coordinator/evidence_ready.py
+b2b5f280f42c94ce7faaae766062c77786b4d7da556492b38b8c0ed971a2528e  src/cephvr/acquisition/coordinator/evidence_telemetry.py
+3414dd42d015551d7dea12fae34d66379a689d7c70ac9bd9a965d88d628c8dd8  src/cephvr/acquisition/coordinator/health.py
+a5d245c3d0ceba7741ef9ca5fe19d98ef602d7401c6a04401b2f9fbd623a95f0  src/cephvr/acquisition/coordinator/incidents.py
+d4f5fb7ffc82169e7f6ecae89d1e7723c3ed1cbf6864dd340061fe8df9eab74e  src/cephvr/acquisition/coordinator/manual_device_commands.py
+30417844f7dcdd13e67de9c4d39d9c27ac5ea36fb439e2994871f0e82c009dc9  src/cephvr/acquisition/coordinator/manual_device_status.py
+c38c88dfc93993b200ce2879d5a6c5d3d33271e0e9a9f66a4d559cb24936ea10  src/cephvr/acquisition/coordinator/manual_devices.py
+40b7f95f3a41e5d472c8ae0f5f62361dc52d6486c54a6f5c6c6c948f688ed4e5  src/cephvr/acquisition/coordinator/manual_operation_results.py
+b99882205ad7d76b8aa314f570b4ad36f965aae134aa7edcaa89706587920be6  src/cephvr/acquisition/coordinator/manual_preview.py
+d5ab3a6dbc3dd3c94fcd2e6864eecb9afdce395d2c406336b7b297bf5d5cc487  src/cephvr/acquisition/coordinator/manual_preview_pulse.py
+f78d76338e491b8fd8816532325cfbe9b6463725c345af019fa39f4a15a5cd9d  src/cephvr/acquisition/coordinator/manual_preview_resources.py
+e53d08b52506ebc386531fc4199f9b81f418767e3b2a2b7fb7a973c7b170f491  src/cephvr/acquisition/coordinator/manual_preview_setup.py
+f239e09c11d479ad5fc320850bc0a0ebb8100ed6d1f27415a3a21c3d06618733  src/cephvr/acquisition/coordinator/manual_preview_start.py
+e5d905d0483df12c96b3cbcc9a21b28598287bcb48597b1e0d0529bd9bb930ff  src/cephvr/acquisition/coordinator/manual_preview_transfer.py
+380711ecbaa1d308d1d749ac92c9dccf0cdd67deecc529290bee85e62ca2a2fd  src/cephvr/acquisition/coordinator/manual_pulse_observation.py
+10b4fd81e6e60cece1c3d6abe8728e89249c338945d4562c14b6cc3b98508b1e  src/cephvr/acquisition/coordinator/manual_pulses.py
+5273c835599b8423ad5a2ac9e881df20fdd628829e1b34a3deeede4f8094fbf3  src/cephvr/acquisition/coordinator/manual_session_access.py
+9a91c49971f6e60ecd13de0c92f5fb2f47bdf10d1937e26250ae661785703046  src/cephvr/acquisition/coordinator/operations.py
+bc9eaa05800933f4b8be190e6ea3d02ed066afd10a957ab990b78765abef6b92  src/cephvr/acquisition/coordinator/prepared_functions.py
+f64d0ab186d6247c05160188fe8a04139c807aa225b6dad359c0d274789b5323  src/cephvr/acquisition/coordinator/queries.py
+d6a0e713765f4da27cf28f81aa98bad136b741c95af50097ad00a82ec40e6413  src/cephvr/acquisition/coordinator/recording_payload.py
+7b1c6ed50368413da9b5114d3971d7fa8d7b935242e60d63e8eab4515dd6c3e9  src/cephvr/acquisition/coordinator/session.py
+4982aa27dcb51ff0040697894522f80dfd2eb8b46ae6972efaebfc3244a4afca  src/cephvr/acquisition/coordinator/session_catalogue.py
+3f8d5d7320435c71bf0de1fe8560a5cca084524dbbf6ff9aff29d8e0ff9704e7  src/cephvr/acquisition/coordinator/session_payloads.py
+06f4f46e0167695214c9e9b79ba92d0d2fb9f863bfca3ccf38614d8d4cb7de26  src/cephvr/acquisition/coordinator/session_preparation.py
+f2e8131adda46ad12d5372b3d00a326fc565f35d91a1f42e5edcc9946d76b274  src/cephvr/acquisition/coordinator/session_resources.py
+22847330dfb65d62b77795695ed96870fb010eaf097cc0b4ec3a13d37e22354e  src/cephvr/acquisition/coordinator/session_tracking.py
+5e9619cf8ef39aa62d2e717ca5f67a41f9cb14467ad9429dad7b1a85035d6119  src/cephvr/acquisition/coordinator/session_validation.py
+9212368b92a0017ae76d2492924e6ccd5de74f24224fe0d892d19bb140a08be6  src/cephvr/acquisition/coordinator/sessionless_cleanup.py
+6741dcbaae4aee8e99abe423745c964505fdbb2ab3ea22e228657ff7bfdba430  src/cephvr/acquisition/coordinator/shutdown.py
+1a63e53831d04e0c4de564f8456987560d593450c61111e501fc14bdbe01dedc  src/cephvr/acquisition/coordinator/state/__init__.py
+eafb39f48d4cf8fd6730144f4ed60fb511027252c69d7192003ca78fdccd1a32  src/cephvr/acquisition/coordinator/state/aggregate.py
+caecc8495c97cedcdceb93bb0c7787936e4189e535adb337671116664b7c617c  src/cephvr/acquisition/coordinator/state/base.py
+2d3f242e60454f0e91d841aa64beab9361cc95b8ae26e50735c23660d961bcd6  src/cephvr/acquisition/coordinator/state/sessions.py
+ae8faf29788e5147142f27f66d06a56a10ccc7533e222fb9f052bd989ecd1ada  src/cephvr/acquisition/coordinator/state/workers.py
+99a4dff5b161ac40e162f043e4e0570c1ec5aa564171e8cbd5eb792772dc6b11  src/cephvr/acquisition/coordinator/trial_delivery.py
+845bdfd53e3d602b4a0c3c90570a52cf8bc2c9caa3daa413b8ef4b7232a5ae83  src/cephvr/acquisition/coordinator/trial_helpers.py
+51fa3ea9c4d6d6f9ff038d54ecad7fc95c6495328b3f9d1d09c6943e419d6632  src/cephvr/acquisition/coordinator/trial_lifecycle.py
+73156469d0a6b68667f8e0da32ab90a0a7936284772d993194b98cda3aeaf9f7  src/cephvr/acquisition/coordinator/trial_preparation.py
+822e9897214f2b81a2729b4ee07fb84892e0d83b05ada77c8d2d4ec1bf41abae  src/cephvr/acquisition/coordinator/trial_pulses.py
+c02df74d80c6d8ba43d3c1008bb3ff8cd8fd2b7b2917030655ad71b9c7c16022  src/cephvr/acquisition/coordinator/trial_schedule_release.py
+1a9de5a08bf35325c263510d546d045889fffaa60fa55d163219bdf02aa7bea9  src/cephvr/acquisition/coordinator/trial_termination.py
+9663a4c2d0a5d73f89ef7161b3c1a18235e7efef3c58f826abd4bce1fcd8757b  src/cephvr/acquisition/coordinator/trial_validation.py
+45f8c5c44e778a31cd2c52c08f8fca8de39059bd28f28fff04e98a648119ab43  src/cephvr/acquisition/coordinator/trials.py
+131825308063513ff092560502ce6def85d6365370682cdd77253141bebf18d5  src/cephvr/acquisition/coordinator/workers.py
+fc8be583210992b843095d5a0b5445dea0feaedd46e2e797e4e646ba866957d4  src/cephvr/acquisition/executables.py
+e2663aec732c6a7f5a29f31b084aab7ee5d56937265ec2751b4f2f1503fa5671  src/cephvr/acquisition/identity.py
+9a57fbc612a3f4cdcada839bbad4a49efae8e2bf048a677f25f870e55fc975a2  src/cephvr/acquisition/main.py
+3f2e75c26ad4108de2dbcd5b1f4dc6091111702d45516ca403102d862824bc04  src/cephvr/acquisition/microcontroller/__init__.py
+ddf4e586a29d3b24dc795a2549e8024662102e7f2b1d80d9f9cf0fcc409e8b86  src/cephvr/acquisition/microcontroller/bridge.py
+1920d1b7510222f62e337b4700c129718eb15d5c95f58576ca6ff115e87d2a3d  src/cephvr/acquisition/microcontroller/channel.py
+eae8427fbb7b2db0b1252526d8d95ac56280574a256954227c854adfcd9b5d6c  src/cephvr/acquisition/microcontroller/lazy_owner.py
+273cb0d20998f32cd18864438e3636a327d35e252584b586fe2db5e984e91fcc  src/cephvr/acquisition/microcontroller/owner.py
+f8e7faa67c6e658b611a01b0abffec359ef2d21fee5f8de1cd2e4b9953b0c197  src/cephvr/acquisition/microcontroller/protocol.py
+1b88e72b8874f32eab4ae48bcb6127c1d45181005a8242800a1ea80d2b0ed91b  src/cephvr/acquisition/microcontroller/pulses.py
+52af9e1df756f8c8639803af99aa6d9da53977d08f2df75418e05154c43b6775  src/cephvr/acquisition/microcontroller/serial_port.py
+ba44f903e1562dc3ca415f4159bde2fb57acd5f85338e3e7c4395f78c39bfc82  src/cephvr/acquisition/ports.py
+b24c270167fe9eff531bf8e13d7ff86204341cd12774a9ea79942706b0b9f9ab  src/cephvr/acquisition/recording/__init__.py
+b2de23ff63d6d91cbf0b2330ac4f0d8d4363c062d6aaa9cbaa6ebbc403816d8a  src/cephvr/acquisition/recording/capabilities.py
+69e5459fa348e3d82bb991c30e4ce2f6b6596eb2ab9d4f94d8621a5539fc112c  src/cephvr/acquisition/recording/encoder.py
+a62d19eb493f714158abfac60f8c90643369b465d645153c0908f8a38a9641bb  src/cephvr/acquisition/recording/encoder_errors.py
+2c05d80c560542829701b52ac5dcf94036adf67b0d6e6d66abc392263e01f2af  src/cephvr/acquisition/recording/encoder_probe.py
+4c853d023f9e588556abaa1d04a52d6b7f543a96c7b84a0f435d2d3cca806bfb  src/cephvr/acquisition/recording/encoder_process.py
+7092ee1b50af211e00d0dba9cfceb1f4eba1df7f6442657bf26272f4d20e494e  src/cephvr/acquisition/recording/encoding.py
+d3f31ab3d1e73e9d1ebc2bac41a3d84268432110205123ee225813f0480fa91a  src/cephvr/acquisition/recording/encoding_rules.py
+6614c46f154e99f4cb3efe1e9543b00bbfd7fca4ec96f31b236aa65602fb4807  src/cephvr/acquisition/recording/encoding_types.py
+55de10168a9390cffb97dcb39b6c1d06d04361a3819c54d3e709de92a11b5aa2  src/cephvr/acquisition/recording/encoding_validation.py
+15b000bcf9f45354cf3f580417e9bf42a301f3b6c6824da2b7faca6ed6fad4b4  src/cephvr/acquisition/recording/filter_expressions.py
+9feed7e493f88b7afda7744ca2c54786015b7cb9555360faecfa794e4836821e  src/cephvr/acquisition/recording/filter_syntax.py
+a8ba2814f48d80f5fa67b8257343a9f032fa265c6868dd4ef4768b8177fde570  src/cephvr/acquisition/recording/filters.py
+b4191d6e27d9423d5c1bb24a5987dd06c160674bc431e8de5c5819485491b9fc  src/cephvr/acquisition/recording/frame_log.py
+2386a52e08aa2ad68b9f0433cf35b6136e96a0d2a78ca9751da037e61fb4b1b6  src/cephvr/acquisition/recording/identity.py
+02d3b40bfc8788208cabfaaa07e2667f0e91140f199752f80c52e9f47806616a  src/cephvr/acquisition/recording/negotiation.py
+f96324f2a66ae57689c67bd7fede94c1a52c86a7be40a2c4d05ce3a22856013d  src/cephvr/acquisition/recording/paths.py
+28867b479656ac389bdea609ecf428cf560dbe402b52f368bec5d0b84f39a0c2  src/cephvr/acquisition/recording/pixel_formats.py
+eaa9cfe69f3d8b7c066d05e0c11b2dab8854774ea33515dc4840f50ead93d5b2  src/cephvr/acquisition/recording/progress_watchdog.py
+0f67471954a86ae57d1112bb2a8831f915334e0263bb131b46ae0e265cbd39ef  src/cephvr/acquisition/recording/session.py
+389c9aab6325bd8b588d46b58dbf76ffa4783a13db56183021f04a9f9c57ae34  src/cephvr/acquisition/recording/session_cleanup.py
+9fabcd1c43cbf3d7789bf2632b29f745ee81260c30e4cf9403398c6ee126d967  src/cephvr/acquisition/recording/session_completion.py
+3c14dd53d13b19979d66f0a5cf35e01bfbc190d9a5d2134b0fa49f7cdbb2820b  src/cephvr/acquisition/recording/session_contracts.py
+414391471ceb3d8540725c0c991ad0804243c7ffada416e0c68272f1d0df12e6  src/cephvr/acquisition/recording/session_diagnostics.py
+3b4cf0c70ffb8bb476277ae07b9f9f521bd799659307da4c7bf39e351d1c0417  src/cephvr/acquisition/recording/session_finalizer.py
+8dbda8a1ab1e978156736a80403d9f88309e36b6dba86775c2e9f5fa6476674c  src/cephvr/acquisition/recording/session_outputs.py
+29781528bf719035f5fed99649e49db706c7d497e1c5977c0f65f79788c8b716  src/cephvr/acquisition/recording/session_prepare.py
+ba2f089ce2b1eff2246764af7683d9edc98969f537669222240bda2fe2283d0a  src/cephvr/acquisition/recording/session_pump.py
+ebb7e4fac7376857bdd63b59a3b9084bff9b4d5d5241923ffc66859666d69b2b  src/cephvr/acquisition/recording/session_schedule.py
+6fb59a89fea893569694783a24abfe431ff5cb56b353aa75ee333981e5346e16  src/cephvr/acquisition/recording/session_storage.py
+5b7a666995d1a0cd1e8dee85f4cb4d2c1aad509558badb8fca0c8d87c56df607  src/cephvr/acquisition/recording_schema.py
+e2877d27bec41564e68b542f17a213d557d2c0622eaaf888e0e061b5f7755c2c  src/cephvr/acquisition/runtime.py
+428d5bd4da7a653e11d4aaefa13eddd1509f6dd9fe29f344ebe6372c260c354f  src/cephvr/acquisition/startup.py
+494cfd3764d18ffc4854caad2cee3e26e12d0cbc11b07390302035bc58a18d41  src/cephvr/acquisition/state.py
+f04e810a6361c08b96809b42e9a3c776ef579fdd149d6661b4c364249266f09e  src/cephvr/acquisition/transport/__init__.py
+bdb96e36887a098cab50947bd5b752e4f5319dfffe75089528b8b68f6ba62ee3  src/cephvr/acquisition/transport/admission.py
+43c583cd24c4fb285cf1af58481c24d73ae080d35c5d45d3bb181b0a42dbcd29  src/cephvr/acquisition/transport/grpc_ports.py
+aca8c0a860764600ce7513bbdeeda0156d02017361b687eb507c5ddae1b72300  src/cephvr/acquisition/transport/server.py
+c1c8b57f53cf1f9ce5699a4b3c0064c91241318ba517c503efe4261239106b8e  src/cephvr/acquisition/transport/services.py
+4fdadcbfb5c26a7eba522f0c294f9c3269ceb3d809498c79aa12d0e53f62f7de  src/cephvr/acquisition/v1/__init__.py
+2abab47d8ec7a50875927c4aa6f694baf40c4e443c86b1908eb7f0c289653967  src/cephvr/acquisition/v1/camera_pb2.py
+ccb5c0208aec9512f6ae54a6d2dde41958ee9161266a07632cd6ea1c060c7408  src/cephvr/acquisition/v1/camera_pb2_grpc.py
+ff9b7b7c9c2fb667c2478d9cfece2db8409d078c3741f8e92b704d8914b64796  src/cephvr/acquisition/v1/messages_pb2.py
+b6db317c0e535377f2db401fa83d10d96fefe5cd5488c3c97b221595a2d0ac46  src/cephvr/acquisition/v1/messages_pb2_grpc.py
+eaf9c70707f2e4dbb77a8371e399e28f3f478dddb06a3074071604fb5f4a90f5  src/cephvr/acquisition/v1/microcontroller_pb2.py
+51586f28ee1ab8428c61c67ca570dee010046af157d0698036d138995482fb09  src/cephvr/acquisition/v1/microcontroller_pb2_grpc.py
+dbd388a1de6b6d8b234b53d63164f9ceda5cd09e8945a43f766ba180f8c3890e  src/cephvr/acquisition/v1/runtime_pb2.py
+fb4ed00a6726ffa686ab7137f5b05d63fc2151e4ea97913e6a10a16090e327f0  src/cephvr/acquisition/v1/runtime_pb2_grpc.py
+85338deba32a58f0387c8ed5df19af859fab63f9cd3720a55b08e2077906ed63  src/cephvr/acquisition/v1/services_pb2.py
+1a734cdfda8b3249d60a1ad1f036cfe60361e1c5159f89df0ea29c2f6e8c4807  src/cephvr/acquisition/v1/services_pb2_grpc.py
+83be5f0e41163c189584c64c5081821f1b18dd68c2675a4afdbce8debb1e618d  src/cephvr/acquisition/worker/__init__.py
+efbd45c52fade40586c911fd24951475357f82cc293a772bf651c0156829d13f  src/cephvr/acquisition/worker/bootstrap.py
+ae8470136d564393cb9d2b9774999f1887bbb5b88fce35eacdd16cd1a4d9ed33  src/cephvr/acquisition/worker/camera_configuration.py
+b32bfafaa6c0e997d460a441beba636963bd7e8a5a358bc1a335b6223626dfef  src/cephvr/acquisition/worker/camera_resolution.py
+7cd45716f79e4cc2a95f5a1433351ad8a96b828776b15624b6f3c49344c5425f  src/cephvr/acquisition/worker/capture.py
+6eafb493c820ef38a439328a37a02f5be29b398b8d4a5315ec0f00c78a11f3a6  src/cephvr/acquisition/worker/capture_runtime.py
+9fa9713a87f13a51e3ddd9dcc9e9140ae4ede6141c0fe0c4921b76644bfd0658  src/cephvr/acquisition/worker/cleanup_lifecycle.py
+eea53af4f035a3a60ead01529220cac47ad671cf0ae206ecd7cad4ba90198013  src/cephvr/acquisition/worker/execution.py
+f56e813c5089330db74649a2c4e4343563944b119dc361270a324ebd1718fba0  src/cephvr/acquisition/worker/frame_diagnostics.py
+8bdd58c4af4948d7c7b1e24d8937fe8361fe3bb43a44482d01a5acf6dfd47c14  src/cephvr/acquisition/worker/function_scopes.py
+3441db80a844876d53ae713f9601fb9f9796c57d2e1fa482aab15e0a48440f35  src/cephvr/acquisition/worker/health.py
+01ae08586761971347a6d3348245e4b02db1b1705cfac1ffd7a7262a2bafaec5  src/cephvr/acquisition/worker/limits.py
+7eb9609354e724691555adce70c04b527a0d74d3260f6b14ea5df0dbcd9f991e  src/cephvr/acquisition/worker/main.py
+9e11e74d9b08da5252f26571b241bba53ba5d7bba9f22101ad63b8c8b3f7d32e  src/cephvr/acquisition/worker/owner.py
+4162044637c7b8164e4a57e72d52553b100879fb3603ebe90e3d1780849bdced  src/cephvr/acquisition/worker/ports.py
+65b5ca2071fb86bd80e4bf9caa9181e30eae2ad7f13e0e4c2555a050a6444943  src/cephvr/acquisition/worker/preview_lifecycle.py
+bbbc7d8a2fa10908ec6aeb36068d8deb4616f264159079fdf9f2b1f7bb62649a  src/cephvr/acquisition/worker/pulse_evidence.py
+181506d924507873bcbd3b25ffb65092ae712be58ffb990e57d23399f42074ab  src/cephvr/acquisition/worker/recording_fault.py
+aa831baa8bea77d2e12b68908d09f3e0d8264a782fb3d45505f9600521e77e47  src/cephvr/acquisition/worker/recording_handoff.py
+08c2ddd133d9240fea486d922c4ef993a5565374cbac3b3d790d358b8dd8fa2d  src/cephvr/acquisition/worker/recording_ports.py
+2da5248881fa940c854dbd6d9e3113d103210d1409a0a0734f50f3e73dea6e9a  src/cephvr/acquisition/worker/recording_preparation.py
+faba5b01135ee3cf4dd557860133eaaf5523502c3c41ee0cc9fb34bf23892f61  src/cephvr/acquisition/worker/recording_runtime.py
+1fe7cb571a98a69037db5d2686e54de71c961b367fc9d2f5925fc852790416d0  src/cephvr/acquisition/worker/recording_thread.py
+b9b7ab5b362b49c3d5e3dc37507ee3fdde0b25fb640caed9cb390ab0b19f3346  src/cephvr/acquisition/worker/registration.py
+474492cd7495635cb6040673aececab5dc4f6b89b3c286c18ac40c8be02360b0  src/cephvr/acquisition/worker/report_dispatch.py
+1ce64c72056e9f8776ee0e3ace81a33ddfb265edfde1bf18e72b14c7c3557bf4  src/cephvr/acquisition/worker/reports.py
+9f20c7cc1161caadc98cc0d40b04f2927155b108a97c0e9e4ed8b04647cfd24c  src/cephvr/acquisition/worker/server.py
+d7c5e85a406386a54e34abea61f90f533eeece772046420050749bb9fdac8f7a  src/cephvr/acquisition/worker/service.py
+c67879f48c494a7296008666579cd06f6e88017f9c833e40c0b59f9890fc85a3  src/cephvr/acquisition/worker/state.py
+5446593a6090ea26dca08a5215a75f84f08178bb70e8e237e130629883c0f59c  src/cephvr/acquisition/worker/terminal_scope.py
+420d55d2d0d843f9c5d84f37f1e20c044e3d700c3871c5b9a4703e9e78fb69f7  src/cephvr/acquisition/worker/transport_summary.py
+1f96a5f0d048352e0b70371dd0a5d53bfd30d184d48cdbe0fdde5b67589b2522  src/cephvr/acquisition/worker/trial_activity.py
+3982657e5585f5afd92a0b4c6050d4d6d9a48a58f2055517c9a3b0ccaf771944  src/cephvr/acquisition/worker/trial_lifecycle.py
+cd82321903d810087fd52385f397ac811f42ec4fc7e37119bf390e193b15f4bb  src/cephvr/acquisition/worker/trial_recording_terminal.py
+7aabc1d0ef172a8ed2d4430dd6ce5999e04a70478ccbf710bc0492ba85a8713e  src/cephvr/acquisition/worker/trial_state.py
+eeccf808f0d362e35ed46ccf89ef7d0a9eab775dc800b9127a2328ffc2fb400a  src/cephvr/acquisition/worker/trial_stop.py
+d24692358b8a691e291a7b5c94d22281a87882d6701c7d3d6be705bd6e8b0cf4  src/cephvr/acquisition/worker/warnings.py
+9857272755edadf894604ea4e67704ceede1d13fe5a18ad74629c270c7c8fa4a  src/cephvr/acquisition/worker_launcher.py
+15c4750a953204dd5195ff29cae572cbac86a181aa9c771d4901e3b0ee757148  src/cephvr/shared/backend_bootstrap.py
+39355ad01b903942cb3cf6d016053ca42cb04e664903613aef99452a899206ce  tests/acquisition/__init__.py
+3de52550e6deacf389e510d7471af352b023823b7e585f95b2666fcadc4e651f  tests/acquisition/test_camera_adapter_contracts.py
+d0004717564fb775ce0956f231fd72ed8e914fc8c879a5de1aba951d9a077abd  tests/acquisition/test_cleanup_aggregation.py
+4b42ae3ab4e42892bb8f5f5f07140c477551122fcd8737286d4fe953cc4dc3db  tests/acquisition/test_configuration.py
+f8f1cadb22091866130e7c4d3fe293d229596ad0f8926216b2552aa081794aa8  tests/acquisition/test_coordinator.py
+de10e806516a9773b3f212c0b57360ff3963d126de8d05aba615836f44beda55  tests/acquisition/test_frame_diagnostic_tracker.py
+7c185e2037fb0a6d57a82a72ebb7ddd4d002ea2e94c484c8eb42a6a304c1b693  tests/acquisition/test_manual_devices.py
+3a6c0d2c441f1ae40270240466f0c457af6d93f2f4c8bf738e91956b8d34ad78  tests/acquisition/test_manual_preview.py
+e243f07e72d5e5da3ca601d7df0db2c7c042125802b00c35dc342340bdf4d86d  tests/acquisition/test_microcontroller_owner.py
+3d133de481185c5461772848609c72d0d76b71299681e783b4acdf4d56020ea1  tests/acquisition/test_microcontroller_protocol.py
+5a412e5eb1ae0e2d94e0c85e78758b3fd0c3716b69d9034348e44e9a73860f98  tests/acquisition/test_pulse_evidence.py
+ed722d15f29e2e376dbd21e1a36b915889f71b8e218fd564f746c20efc8a3737  tests/acquisition/test_recording_capabilities.py
+0692b45d7e8c5abd83c0556ce445c65665876c68957e71a72044ababfb7df185  tests/acquisition/test_recording_cleanup.py
+2587d8fbcbe6d6492140c57c5b0bdc3cd429fa8b7ab24c865708da80386964ee  tests/acquisition/test_recording_filter_expressions.py
+3e2514aea9a79f27e937dd6a1196aa9ff9e4b2295ef01e07660544a8f8105d3c  tests/acquisition/test_recording_negotiation.py
+a69f22fbc728ebb3d8dfa786220fcfb6f3b72ce8d63d2db3818c55692cb05e55  tests/acquisition/test_recording_paths.py
+61a4865c66e1e74cc7f69bbd2cb98914a0d035b62c50d15829c0324da8b26f87  tests/acquisition/test_recording_payload.py
+2ed04fb8354cb1987bc5df724d7822d393f882ee9a169cbe977497cae5355e2a  tests/acquisition/test_session_preparation.py
+d3a523109ab8c891b7b6863a3c47350462b86ab3c08ba9a8d01b84919d1fa7c0  tests/acquisition/test_transport_admission.py
+0ce3dfafa62dc32fe394a7cad6abf3901aa745297e992c015888a9dac3c71cfb  tests/acquisition/test_trial_lifecycle.py
+ac9bb5d576159241fc125505d195c8cecc3e7b6da8106b3771f2a4b808e2ccfa  tests/acquisition/test_worker_admission.py
+230df04fb5a8d09d01fa2b0e86fe077f68258c013625ec8c8507d2b5d5838ffc  tests/acquisition/test_worker_foundations.py
+cd0f5ee86ebcdf323b9f8e4a94395a2831e131db09b53b5dcd7e8c6bb3ac4233  tests/acquisition/test_worker_ring_regressions.py
+
+AST comparison PASS: moved delivery body unchanged except method name, two intentional work-scope guards and type-narrowing assertion.
+
+COMMAND: ['.venv/bin/python', '-m', 'pytest', 'tests/acquisition', 'tests/controller', 'tests/supervisor', 'tests/shared', 'tests/launcher', 'tests/client', '-q', '-rs', '-m', 'not windows and not rig', '--ignore=tests/client/test_controller_rpc.py']
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+......................sssss............................................. [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 66%]
+........................................................................ [ 79%]
+........................................................................ [ 92%]
+.........................................                                [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:120: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:147: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:176: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:206: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:240: ring tests require documented Win32 atomics
+540 passed, 5 skipped in 11.67s
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'ruff', 'check', 'src/cephvr/acquisition', 'tests/acquisition', 'src/cephvr/shared/backend_bootstrap.py']
+All checks passed!
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'ruff', 'format', '--check', 'src/cephvr/acquisition', 'tests/acquisition', 'src/cephvr/shared/backend_bootstrap.py']
+204 files already formatted
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'mypy', '--platform', 'win32', 'src/cephvr/acquisition', 'src/cephvr/shared/backend_bootstrap.py']
+Success: no issues found in 181 source files
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', 'tools/check_backend_boundaries.py']
+REVIEW src/cephvr/acquisition/camera/basler.py: 682 lines; review cohesion
+REVIEW src/cephvr/acquisition/microcontroller/owner.py: 521 lines; review cohesion
+REVIEW src/cephvr/acquisition/recording/session.py: 536 lines; review cohesion
+REVIEW src/cephvr/acquisition/runtime.py: 557 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/capture_runtime.py: 600 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/execution.py: 589 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/service.py: 557 lines; review cohesion
+REVIEW src/cephvr/controller/assembly.py: 533 lines; review cohesion
+REVIEW src/cephvr/controller/runtime.py: 527 lines; review cohesion
+REVIEW src/cephvr/supervisor/shutdown.py: 541 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/config/models/program_model.py: 712 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/recording/native.py: 781 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/engine.py: 553 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/native.py: 565 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/scene.py: 555 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/resources/video.py: 598 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/worker/lifecycle.py: 547 lines; review cohesion
+Checked 406 backend modules; 0 boundary violations.
+EXIT: 0
+
+COMMAND: ['git', 'diff', '--check']
+EXIT: 0
+
+Manifest remained unchanged through checks.
+
+Network-permitted integration (captured tool output):
+COMMAND: .venv/bin/python -m pytest tests/client/test_controller_rpc.py -q -m "not windows and not rig"
+2 passed in 0.57s
+EXIT: 0
+Combined final integration: 542 passed; five native Win32 ring tests skipped. No rig acceptance.
+
+Extended source-and-test mypy initially identified two new-test typing issues: callback append used as a return value and a string instead of tuple lifecycle key. Fixtures corrected; runtime files unchanged. Refreshed hashes for those test-only corrections:
+32439ffbf5304db70347bd0a21f34cbdc7fb19e299382fe77640ffe0df801550  tests/acquisition/test_camera_adapter_contracts.py
+2716b9d697ab0f35f210653f937bf2440e5aadbef859045a7ec67e0767704438  tests/acquisition/test_trial_lifecycle.py
+
+COMMAND: ['.venv/bin/python', '-m', 'pytest', 'tests/acquisition/test_camera_adapter_contracts.py', 'tests/acquisition/test_trial_lifecycle.py', '-q']
+..............................                                           [100%]
+30 passed in 0.22s
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'mypy', '--platform', 'win32', 'src/cephvr/acquisition', 'src/cephvr/shared/backend_bootstrap.py', 'tests/acquisition']
+Success: no issues found in 204 source files
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'ruff', 'check', 'src/cephvr/acquisition', 'src/cephvr/shared/backend_bootstrap.py', 'tests/acquisition']
+All checks passed!
+EXIT: 0
+
+COMMAND: ['.venv/bin/python', '-m', 'ruff', 'format', '--check', 'src/cephvr/acquisition', 'src/cephvr/shared/backend_bootstrap.py', 'tests/acquisition']
+204 files already formatted
+EXIT: 0
+
+COMMAND: ['git', 'diff', '--check']
+EXIT: 0

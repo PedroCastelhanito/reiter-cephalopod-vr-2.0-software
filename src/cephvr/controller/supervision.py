@@ -8,7 +8,8 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.incident.coordination import IncidentCoordinator
-from cephvr.controller.state import LifecycleState, SupervisorState
+from cephvr.controller.receipts import rejected_receipt
+from cephvr.controller.state import RETAINED_LIMIT, LifecycleState, SupervisorState
 
 
 class SupervisorObservations:
@@ -38,12 +39,7 @@ class SupervisorObservations:
             report.source.role != "supervisor"
             or report.source.generation != self.supervisor_generation
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="IDENTITY", message="supervisor identity mismatch"
-                ),
-            )
+            return rejected_receipt("IDENTITY", "supervisor identity mismatch")
         async with self.lifecycle.lock:
             self.supervisor_state.last_seen_ns = ingress_ns
         return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
@@ -56,17 +52,10 @@ class SupervisorObservations:
             or report.supervisor.generation != self.supervisor_generation
             or report.controller_generation != self.generation
         ):
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(code="IDENTITY", message="status identity mismatch"),
-            )
+            return rejected_receipt("IDENTITY", "status identity mismatch")
         if len(report.processes) > 256:
-            return pb.ReportReceipt(
-                result=pb.COMMAND_RESULT_REJECTED,
-                failure=pb.Failure(
-                    code="CAPACITY",
-                    message="supervisor process projection exceeds controller limit",
-                ),
+            return rejected_receipt(
+                "CAPACITY", "supervisor process projection exceeds controller limit"
             )
         serialized = report.SerializeToString(deterministic=True)
         new_errors: list[pb.ErrorReport] = []
@@ -75,12 +64,8 @@ class SupervisorObservations:
                 return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
             if report.status_revision == self.supervisor_state.status_revision:
                 if serialized != self.supervisor_state.status_bytes:
-                    return pb.ReportReceipt(
-                        result=pb.COMMAND_RESULT_REJECTED,
-                        failure=pb.Failure(
-                            code="CONFLICT",
-                            message="changed duplicate supervisor status",
-                        ),
+                    return rejected_receipt(
+                        "CONFLICT", "changed duplicate supervisor status"
                     )
                 self.supervisor_state.last_seen_ns = ingress_ns
                 return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
@@ -94,13 +79,13 @@ class SupervisorObservations:
                 deepcopy(item) for item in report.processes
             ]
             self.supervisor_state.errors = [
-                deepcopy(item) for item in report.errors[-256:]
+                deepcopy(item) for item in report.errors[-RETAINED_LIMIT:]
             ]
             self.supervisor_state.warnings = [
-                deepcopy(item) for item in report.warnings[-256:]
+                deepcopy(item) for item in report.warnings[-RETAINED_LIMIT:]
             ]
             self.supervisor_state.recoveries = [
-                deepcopy(item) for item in report.recoveries[-256:]
+                deepcopy(item) for item in report.recoveries[-RETAINED_LIMIT:]
             ]
             self.supervisor_state.operations = {
                 item.context.command_id: deepcopy(item)

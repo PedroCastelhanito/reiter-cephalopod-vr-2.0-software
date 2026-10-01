@@ -45,8 +45,12 @@ from cephvr.shared.commands import CommandLedger
 
 
 class _TransferOwner:
+    def __init__(self) -> None:
+        self.retired = asyncio.Event()
+
     def retire(self, preview: WorkerPreview) -> None:
         _ = preview
+        self.retired.set()
 
     def close_retired_resource(self, preview: WorkerPreview) -> None:
         _ = preview
@@ -181,6 +185,7 @@ async def test_pause_with_attached_viewer_waits_for_exact_release(
         resolved_camera=camera.CameraResolvedState(),
         viewer=control.ProcessIdentity(role="preview_viewer", generation=str(uuid4())),
         viewer_transfer_id=str(uuid4()),
+        started=True,
     )
     context = acq.WorkerContext(
         worker=control.ProcessIdentity(
@@ -211,7 +216,13 @@ async def test_pause_with_attached_viewer_waits_for_exact_release(
         _ = args, kwargs
         return (
             acq.WorkerCommand(),
-            cast(ChildOperation, object()),
+            ChildOperation(
+                command_id=str(uuid4()),
+                camera=context.camera,
+                work=control.WorkContext(),
+                parent_operation=control.OperationContext(),
+                kind="stop_preview",
+            ),
             cast(WorkerPort, port),
         )
 
@@ -224,6 +235,7 @@ async def test_pause_with_attached_viewer_waits_for_exact_release(
     settings = control.AcquisitionSettings()
     settings.behavioral.enabled = True
     settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    transfers = _TransferOwner()
     lifecycle = ManualPreviewPulseLifecycle(
         identity=cast(CoordinatorIdentity, object()),
         configuration=ConfigurationRecord(
@@ -235,7 +247,7 @@ async def test_pause_with_attached_viewer_waits_for_exact_release(
         resources={},
         resource_ledger=cast(NativeResourceLedger, object()),
         resource_port=cast(ResourcePort, object()),
-        transfers=cast(ManualPreviewTransferOwner, _TransferOwner()),
+        transfers=cast(ManualPreviewTransferOwner, transfers),
         device_status=cast(ManualDeviceStatusReporter, _Status()),
         lock=asyncio.Lock(),
         clock=lambda: 10,
@@ -243,10 +255,10 @@ async def test_pause_with_attached_viewer_waits_for_exact_release(
 
     task = asyncio.create_task(
         lifecycle.pause_for_pulse_change(
-            (camera.CAMERA_ROLE_BEHAVIORAL,), deadline_ns=100
+            (camera.CAMERA_ROLE_BEHAVIORAL,), deadline_ns=1_000_000_010
         )
     )
-    await asyncio.sleep(0)
+    await asyncio.wait_for(transfers.retired.wait(), 1)
     assert not task.done()
     preview.viewer = None
     preview.viewer_transfer_id = None
