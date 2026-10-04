@@ -1119,6 +1119,25 @@
           "title": "Idle Linear Rgb",
           "type": "array"
         },
+        "photodiode_enabled": {
+          "default": true,
+          "title": "Photodiode Enabled",
+          "type": "boolean"
+        },
+        "pacing_output_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacing Output Id"
+        },
         "photodiode_output_id": {
           "anyOf": [
             {
@@ -1168,6 +1187,12 @@
           "maxLength": 128,
           "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
           "title": "Epoch Id",
+          "type": "string"
+        },
+        "batch_label": {
+          "default": "",
+          "maxLength": 128,
+          "title": "Batch Label",
           "type": "string"
         },
         "scene_id": {
@@ -2531,6 +2556,11 @@
     "Output": {
       "additionalProperties": false,
       "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
         "output_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -2760,6 +2790,40 @@
             }
           ],
           "title": "Gain"
+        },
+        "sideways_gain": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "constant": "#/$defs/Constant",
+                  "keyframes": "#/$defs/Keyframes",
+                  "ramp": "#/$defs/Ramp",
+                  "sine": "#/$defs/Sine"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/Constant"
+                },
+                {
+                  "$ref": "#/$defs/Ramp"
+                },
+                {
+                  "$ref": "#/$defs/Sine"
+                },
+                {
+                  "$ref": "#/$defs/Keyframes"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sideways Gain"
         }
       },
       "required": [

@@ -129,6 +129,11 @@
     "Output": {
       "additionalProperties": false,
       "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
         "output_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -427,6 +432,25 @@
       ],
       "title": "Idle Linear Rgb",
       "type": "array"
+    },
+    "photodiode_enabled": {
+      "default": true,
+      "title": "Photodiode Enabled",
+      "type": "boolean"
+    },
+    "pacing_output_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pacing Output Id"
     },
     "photodiode_output_id": {
       "anyOf": [

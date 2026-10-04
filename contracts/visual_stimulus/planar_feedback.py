@@ -14,17 +14,20 @@ def heading_vectors(yaw_rad: float) -> tuple[tuple[float, float], tuple[float, f
 
 def planar_feedback_increment(*, yaw_before_deg: float, forward: float, sideways: float,
                               linear_gain_mm: float, turn: float, turn_gain_deg_per_rad: float,
-                              turn_offset_deg_per_s: float, dt_s: float) -> tuple[float, float, float]:
+                              turn_offset_deg_per_s: float, dt_s: float,
+                              sideways_gain_mm: float | None = None) -> tuple[float, float, float]:
     """Return (dx_mm, dy_mm, dyaw_deg) for one interval_average_rate result over dt_s.
 
     The yaw increment is the ordinary movement_integration rule; the planar increment
     uses the interval's midpoint heading because results are interval averages (T37).
     """
-    values = (yaw_before_deg, forward, sideways, linear_gain_mm, turn,
+    lateral_gain = linear_gain_mm if sideways_gain_mm is None else sideways_gain_mm
+    values = (lateral_gain, yaw_before_deg, forward, sideways, linear_gain_mm, turn,
               turn_gain_deg_per_rad, turn_offset_deg_per_s, dt_s)
     if not all(math.isfinite(v) for v in values) or dt_s <= 0:
         raise ValueError('finite values and a positive source interval required')
     dyaw = (turn_gain_deg_per_rad*turn + turn_offset_deg_per_s)*dt_s
     f, l = heading_vectors(math.radians(yaw_before_deg + dyaw/2))
-    scale = linear_gain_mm*dt_s
-    return (scale*(forward*f[0] + sideways*l[0]), scale*(forward*f[1] + sideways*l[1]), dyaw)
+    forward *= linear_gain_mm*dt_s
+    sideways *= lateral_gain*dt_s
+    return (forward*f[0] + sideways*l[0], forward*f[1] + sideways*l[1], dyaw)

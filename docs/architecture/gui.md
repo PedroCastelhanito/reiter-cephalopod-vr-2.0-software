@@ -3,8 +3,8 @@
 [Overview and decision register](../../architecture.md) ·
 [System contracts](system-contracts.md)
 
-GUI connection and control rules. The controller remains authoritative; the GUI is a
-client.
+GUI navigation, connection and control rules. The controller remains authoritative;
+the GUI is a client.
 
 Related: [controller authority](experiment.md#e02),
 [process startup/shutdown and state transport](system-contracts.md#e08).
@@ -12,6 +12,407 @@ Related: [controller authority](experiment.md#e02),
 Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 
 ## Decisions
+
+<a id="g01"></a>
+### G01 — GUI navigation and settings ownership
+
+**Status:** Accepted · **Revision:** 65
+
+- Main navigation orders **Dashboard, Protocol, Devices, Tracking**. Protocol owns
+  session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
+  left of one Assets folder (E07 root); narrow windows stack the pair. Dashboard owns
+  camera/stimulus video recording and Tracking velocities in a Recordings card below
+  Session config, using two columns with each checkbox beside its label. Assets are prepared externally. Tracking participation follows
+  E10 without a Protocol status indicator; required acquisition/rendering is independent
+  of optional video recording. Device controls stay in Devices.
+- Protocol uses a widened Trials column beside Trial timeline, with a full-width Epoch
+  editor below at all widths. Trials provides a selectable list and compact Add/Delete
+  controls. Trials and timeline cards keep a fixed height; extra trials/layers scroll
+  internally, without a resize grip. Center the timeline count/duration summary.
+  Align the overview's left edge with the projector labels and its right edge with
+  the projector rows; leave a clear vertical gap before current-epoch details.
+  A single duration-proportional overview bar shows all epochs; matching ordered
+  stimulus settings, assets, projector mappings and scene background share a color,
+  ignoring epoch names, durations and scene/instance identifiers. Color is an authoring
+  cue, not a serialized epoch type. Unknown timing uses sequence order. Click selects
+  one source, Shift a range, Ctrl/Command toggles membership. Beneath the bar, show
+  the current occurrence's name/duration and one row per enabled projector, including
+  ordered layers, prepared asset names and compact parameter descriptions. Full text
+  is available on hover; batch multi-selection retains the current occurrence details.
+  Groups expand for authoring inspection; example shuffled order never chooses Setup's retained seed.
+  Repeated occurrences select their shared source and identify that edit scope. No
+  nested-scope timeline replaces the full-trial overview. No trial table, HUD/log,
+  draft badge or standalone Validate action. Configuration content scrolls within
+  the fixed navigation shell.
+- Local review startup supplies four explicitly simulated projector displays, assigned
+  Front/Left/Right/Bottom. Devices, its layout and Protocol share that review inventory;
+  Refresh preserves local assignments/participation. This fixture does not discover,
+  connect to or persist hardware and is absent from non-review startup.
+- Epoch editor has **Batch create** and **Batch edit** tabs within the card.
+  Forms use the existing configuration scroller. Switching tabs preserves local
+  drafts without committing; explicit Add/Apply commits, and Discard changes resets
+  pending edit patches. Invalid input stays visible. Loss of editing authority closes
+  file pickers and disables forms. All parameters opens the complete single-source
+  inspector in the card.
+  Batch create owns a local reference
+  epoch with prepared assets, independent projector layers, exact duration and complete
+  family parameters. Show each enabled projector's reference layers and prepared
+  asset filename and stimulus-specific values in one compact row; full paths remain
+  available on hover. Omit the Projector heading and display Looming as the short
+  family name. The stimulus dropdown changes the selected layer's type, resetting
+  its asset; incomplete asset choices remain local drafts and block generation.
+  Share column headings, repeating parameter headings only when meanings or units
+  change; reserve equal heading space to keep projector rows evenly spaced. A Layer
+  dropdown per projector selects the visible asset/parameters; its ordinal follows
+  stack order. Layer management and advanced settings retain the row menu.
+  Leave a clear gap below the batch tabs. Stimulus mode occupies its own row and matches the Duration field width;
+  Duration/Repetitions/Batch label/Order/Insert share the next row, with extra
+  separation before stimulus rows. Arena mode omits the redundant type selector and exposes Longitudinal/Lateral/Angular
+  movement toggles and signed gains under V24 (zero gain disables an axis). Keep
+  imported programmed motion and custom feedback unchanged unless explicitly edited.
+  Tracking channel conflicts reject the edit.
+  Advanced settings use one indented section with vertical separation below the
+  selected projector/layer: Opacity, Retain state (inverse of reset), and Feedback.
+  Retaining state preserves explicit saved boundary assignments. Feedback entries
+  show Input signal, Parameter and coefficients; generate binding IDs internally
+  and derive value-following or movement integration from the declared signal kind
+  under V24. Select compatible targets only. Input declarations are added inline
+  within Feedback, with explicit source, measurement, units and coordinates when
+  missing; this does not imply a live connection. Preserve imported coefficient
+  functions and keep arena axis controls synchronized with accepted feedback edits.
+  Stimulus mode selects Per-projector stimuli or 3D arena; retain
+  the other mode's draft while generating only the selected mode. Keep projector
+  edits independent and retain inactive-projector content. Narrow windows stack
+  the same controls with labels.
+  Optional numeric variations pair values or cross combinations;
+  preview count/duration before Add epochs. Materialize combinations as individually
+  editable canonical source epochs; repetitions/listed or shuffled order use V08 groups.
+  Store the optional batch label on every generated source epoch under V03; Batch
+  edit can select all source epochs with that label, including nested groups.
+  Insert at beginning/end, before/after the selected top-level block, replace the
+  trial, or distribute one generated block after every N existing top-level blocks
+  and append the remainder. Groups count as blocks, retaining repetition semantics.
+  After label inserts an independently identified batch after every original matching
+  source epoch in its existing group scope, retaining repetition/condition semantics.
+  List labels from the current trial; missing matches or invalid results reject the
+  entire operation. Bound the expanded label-insertion result to 2000 epochs.
+  Replacement is explicit and undoable. A short reference
+  is not itself a trial: final insertion validates the complete trial and remains
+  atomic. File cancellation, invalid settings or failed insertion leave it unchanged.
+- Batch edit targets an explicit projector and family/layer ordinal across selected
+  source epochs. Common values are shown directly and differing values as Mixed;
+  only checked fields change on Apply. Shared duration, prepared file, applicable
+  motion/playback, opacity and simple looming size controls support batching. Missing
+  targets or invalid values reject the entire operation; no silent partial application.
+  Pending batch changes block target/selection changes and saving until applied or
+  discarded. All parameters opens the complete single-source editor, retaining custom
+  functions, state, feedback and input declarations. Replace Placement controls with
+  an Opacity override; preserve loaded placement/dimensions without exposing edits.
+  Local field-completion edits there keep existing validation; untouched imported values are preserved.
+- All mutation controls belong to Epoch editor, including naming, duration, layer
+  management and structural Actions. A first projector-local edit detaches a shared
+  2D instance while retaining other projectors' identities, settings, assets and stack
+  order. All projectors supports shared edits; arena remains rig-wide under V02.
+  Disabled targets retain content/geometry and are labeled inactive. No enabled
+  outputs shows a neutral lane for offline authoring. Epoch timing is shared across
+  projectors; different boundaries remain separate epochs. No embedded rendering.
+- Existing repeat/condition groups remain editable after canonical JSON reload;
+  preserve child-block versus condition-row semantics, complete settings and V07
+  continuity. Structural rename/duplicate/reorder/remove act on one source epoch;
+  multiple-source changes use the explicit batch editor. Undo/Redo remain in Actions,
+  without toolbar buttons. Load/save validates canonical JSON and saves atomically
+  per trial. Trial deletion confirms the named local draft, preserves saved files
+  and leaves a blank draft if deleting the last. Trial drafts are local documents,
+  not a session schedule. Expanded sequence inspection has an explicit Close action;
+  Setup retains the final seed/order. Invalid mutations preserve the last valid program.
+- CephVR1 texture designs resolve an existing exported PNG plus declared tile dimensions
+  into canonical V03; missing/invalid companions fail without synthesizing appearance.
+  File replacement is epoch-local and E07 root-relative. Omit texture-design controls;
+  expose speed/direction/angular speed, opacity, playback, retain-state and feedback.
+  Preserve imported canonical motion functions without flattening them. Managed application, session-setting persistence and scheduling
+  remain unfinished; local authoring is not Setup readiness.
+- Devices groups camera, microcontroller, SpikeGLX and projector/display hardware
+  configuration and supported connection/output checks into device-specific sections.
+  Tracking methods,
+  subject landmarks and analysis geometry belong to Tracking. Each setting has one
+  editing home. Devices orders its icon subtabs Cameras, Microcontroller, Projectors, SpikeGLX.
+  Cameras stacks Available devices above Camera config in the left column, with
+  its HUD/log column at the right. The inventory provides experiment enablement,
+  stable identity, role, selection, refresh, connect/disconnect and external preview.
+  Refresh is an icon action in the inventory header's upper-right corner; Connect
+  toggles to Disconnect for the selected editing connection. Camera config omits
+  the redundant selected-camera caption; identity remains in the inventory/HUD.
+  The Devices footer has no draft-settings text; local fixtures remain identified
+  in the review window title and activity messages.
+  Inventory actions are ordered Test enabled, Connect, Preview. Test enabled
+  targets enabled cameras without changing selection or connection
+  state. Initial review only logs requested checks as not tested; actual backend
+  check semantics/integration remain unfinished and no Setup readiness is claimed.
+  Camera config exposes role, an Internal clock / External controller dropdown, requested
+  external trigger frequency and a PFS parameter-file path with Browse. Preserve
+  per-camera drafts and unique roles; selection/connection never enables a camera.
+  Detailed camera parameters are edited in PylonViewer and supplied through PFS;
+  the GUI has no exposure/gain/ROI/pixel-format editors or PFS export controls for now.
+  Trigger frequency edits the camera's requested A11 pulse rate, not a free-running
+  frame-rate override; Microcontroller retains board/port/pin ownership. The asynchronous
+  PFS picker selects an existing file, preserves cancellation and rejects late results
+  after camera selection or editing authority changes. On selection or completed path
+  editing, inspect the PFS FrameStart snapshot (bounded to 1 MiB) to populate the
+  dropdown: TriggerMode Off is Internal clock; On with a Line source is External
+  controller. Retain the exact source separately; missing, ambiguous or unsupported
+  values leave the choice unset with an explanation. This offline hint does not
+  apply or validate camera settings: A10's SDK import/readback remains authoritative.
+  Changing the path clears stale hints; later explicit dropdown edits remain drafts.
+- Microcontroller owns one selected COM port for all camera triggers; Cameras has
+  no controller/port selector. Scan ports lists only discovered COM-number names,
+  without opening devices, preserving a still-present selection. Do not expose
+  macOS/Linux serial device names or invent a second controller in the draft.
+  Inputs precedes Outputs. Inputs lists Projector flip; Outputs lists Trial state
+  followed by configured camera roles, with no camera subsection heading or Hz column.
+  Each row contains an enable checkbox/name, pin and a Test/Stop toggle with stable
+  geometry. Camera enablement shares Cameras' experiment participation state;
+  retain disabled rows for re-enabling and preserve their pins. Fixed input/output
+  enablement is local draft configuration. Disabled signals have dimmed pin/test
+  controls, cannot start tests and do not participate in pin-conflict checks.
+  Disabling a signal ends its local review test; editing authority gates enablement.
+  In local review, Test enters labelled review state and Stop exits it; no pulse is
+  claimed. Lock port/scan and pin editing during review tests. Reset affected camera
+  tests when their configuration changes, and reset all review tests on port or
+  phase/control loss. Live start/stop acknowledgements remain integration work.
+  Fixed active-high Trial state and
+  rising-edge Projector flip behavior belongs to A11; no level/edge selectors remain.
+  Camera test rates are read from Cameras rather than duplicated here. Output tests
+  target one pin for observation in SpikeGLX; the input test observes rising edges,
+  never drives the input pin. Test requests require Configuration/control, a COM port,
+  a nonempty pin and no target-pin conflict; camera requests additionally require an
+  enabled external-trigger role and valid retained rate. Until managed diagnostics
+  are integrated, report requests as not tested/no command sent, never as pulse evidence.
+- Projectors uses a compact table of Display index, Projector assignment, Resolution
+  in pixels, plus a scaled Displays layout diagram. A Use checkbox per display
+  retains its assignment and geometry while disabling participation; edits follow
+  Configuration/control gates. Preserve participation across inventory refresh.
+  V15 owns output selection without altering calibrated surfaces.
+  Below the inventory, sections are ordered Screen calibration, Synchronization,
+  Rig geometry. Screen calibration uses a CephVR1.0-style per-face table containing
+  only paired scale, pixel offset and inverse-axis controls. Rig geometry owns tank
+  dimensions and fixed subject distances labeled Subject → Left wall / Front wall /
+  Bottom (mm). Perpendicular distances to Left, Front and Bottom screens sit below these
+  in the Rig geometry card. The screen-dimensions table contains width, height,
+  projector distance and throw ratio, with an unlabeled row-name column and wrapped
+  headers. Clip/tolerance settings remain in Rig geometry without an Advanced
+  subtitle. One Load JSON / Save as action row handles the complete rig, projection
+  limits and all-screen correction/dimension values under the
+  [GUI calibration contract](../../contracts/gui-calibration.md), replacing the
+  per-screen profile picker. Validate the complete bounded document before applying;
+  invalid files preserve drafts. Save atomically, retain unset values, respect editing
+  authority and cancel pickers on authority loss. The JSON excludes discovered
+  display/projector lists, output assignments and participation; load leaves these
+  untouched. Loading is not backend preparation.
+  Retain per-face drafts without adopting measured defaults. Planar geometry
+  conversion retains all four inward-facing surfaces and the fixed observer.
+  Subject distances position screen planes independently of tank walls, parallel to
+  their corresponding faces. Front is centered on the tank width/height; sides remain
+  vertically centered and Bottom centered across the tank width. Side and Bottom
+  front edges start at the Front screen plane, extending toward the tank back using
+  their own dimensions. Changing Front distance moves these shared front edges. Require
+  finite positive screen dimensions/distances; unset values never imply tank-wall
+  placement. The owner-selected parallel-plane editor assumes equal left/right
+  tank-wall offsets: right subject distance = tank width + left screen distance −
+  twice subject-to-left-wall distance. Right distance has no independent editor or
+  stored JSON field. Recompute for both diagram and projection; invalid/missing
+  inputs cannot retain a stale right plane. Version 1 calibration import checks any
+  explicit right distance against this rule before adopting; unequal offsets reject
+  the whole load. Version 2 saves only independent calibration values.
+  Diagram and projection conversion share the same corner calculation.
+  Synchronization places VSync mode beside Pulse display. Pacing identity and the
+  60 Hz target live in Visual Stimulus configuration only, without a GUI editor. Pulse-off dims and locks
+  all other synchronization editors while retaining independent pulse/pacing values;
+  this editing gate does not couple their runtime ownership. Omit explanatory pulse,
+  subject-offset and projected-width footer text.
+  Projectors replaces its HUD with Displays layout above a labeled tank/screen
+  diagram without an explanatory footer, retaining the activity log below. Left-button
+  dragging rotates only the view; double-click resets it. Fit tank, screens and ideal
+  projection cones within the available plot, with readable screen/display labels.
+  Enabled assigned projectors with finite positive distance/throw use centered
+  optical paths: footprint width = total optical distance / throw, height = width /
+  assigned display aspect ratio. Front/side axes are perpendicular to their screens.
+  Bottom uses a 45° mirror below the tank, with its projector directly beneath the
+  Right projector (same horizontal coordinates), aimed at the mirror. Locate the
+  mirror from the retained Right geometry/distance and Bottom total optical path;
+  the reflected axis reaches the Bottom screen center perpendicularly. Draw the
+  mirror area intercepted by the ideal cone, not a measured reflector size. Right
+  participation does not alter this placement. Missing/impossible central paths omit
+  Bottom optics with a hover explanation; never substitute a direct Bottom projector.
+  Outer-ray clearance failure alone retains the valid projector, central reflected
+  axis and mirror-position marker. Draw the ideal footprint dashed and explain
+  incomplete coverage on hover; do not invent a full mirror polygon. The Bottom
+  view uses a simple schematic pyramid from mirror center to footprint corners,
+  distinct from the physical reflected-ray/clearance calculation.
+  Show full footprints including overspill;
+  do not guess missing inputs or draw inactive output cones. Physical screens remain
+  visible independently of participation. Compact checkable buttons independently
+  toggle Tank, Screens, Projection, Subject and Labels. Projection groups
+  projectors, rays, footprints and mirror in both visibility controls and one legend
+  entry; footprints use a distinct violet color. Retain view choices through draft/phase changes; they never alter output
+  participation, calibration or runtime control. The legend stays visible and identifies
+  visible line/dot colors and ray styling. These outlines are an operator estimate,
+  not measured optical calibration or a runtime warp model. Pulse-off retains inactive/missing targets without blocking;
+  enabled pulses require valid target/placement under V22. Timing and geometry
+  drafts remain local until managed configuration integration. Exclude the operating system's
+  primary display from both views, without renumbering the remaining Windows IDs.
+  An empty inventory explains that no secondary displays were found. No Size column remains.
+  Projector choices are Unassigned, Front, Left, Right and Bottom; account for
+  Unassigned when sizing. Display uses its content width; Projector and Resolution
+  share the remaining width evenly with shared cell padding. Refresh retains
+  assignments and reports missing/duplicate identities without silently remapping.
+  Windows numbering uses active QueryDisplayConfig path indices matched to source
+  names, preserving clone-path numbers, following Microsoft's PowerToys approach;
+  matching Windows Settings on the actual rig remains unverified. Other platforms or
+  failed queries show unavailable indices, never Qt enumeration order as Windows IDs.
+  V15 surface/viewport/calibration ownership stays separate; no one-projector-per-
+  surface constraint or output-mode changes are introduced.
+- SpikeGLX exposes local channel-mapping drafts for discovered camera roles, Trial
+  state, Projector flip and photodiode only while pulse generation is enabled.
+  Disabled sources retain dimmed mappings; hidden photodiode mappings survive toggles.
+  Each mapping has a local Use checkbox, preserving values while disabled; this
+  does not disable its source camera or waive E12 required-channel validation.
+  Additional named inputs may be added and removed with the row's remove action.
+  Source-derived rows remain linked to their owning device and can be disabled
+  rather than independently removed. All edits/removals obey Configuration authority. Rows identify stream, stream index, saved
+  channel; no Bit editor is shown. Digital-bit metadata remains an E12 configuration
+  concern, not an inferred bit-zero default; camera triggers use OneBox under E12. Configuration
+  authority gates edits. These drafts do not configure SpikeGLX acquisition, enumerate
+  remote saved channels or prove physical recording; managed adoption/validation is pending.
+- Page grouping preserves E02/E08's backend ownership: acquisition owns cameras and
+  microcontroller I/O, Visual Stimulus owns display output, and E12's controller client
+  owns SpikeGLX. Connection checks do not establish E05 Setup readiness or E15 physical
+  verification. New diagnostic operations require defined backend behavior; navigation
+  does not lift ARCH-001's integration order or A11's firmware/flashing deferral.
+- Dashboard keeps compact runtime readiness above session actions, then subject/session
+  details in the left column, with a runtime HUD and activity console in the right.
+  The Session config card places Subject ID and Experiment in the first field row,
+  followed by a full-width output directory. Spacing separates the species, sex, age,
+  size and condition fields below, without a subsection heading.
+  Runtime readiness uses a horizontal row inside System controls with independent
+  read-only round indicators and detailed status
+  in tooltips/accessibility text. Setup spans both columns above equally sized Start and
+  Stop buttons. Subject age is labeled Age (dph); experiment phase appears in the HUD
+  only, without a System controls badge. Setup requests
+  preparation in Configuration and E05 New session in Ended; the latter returns to
+  Configuration after cleanup and still requires fresh Setup/Start.
+  Stop requests Cancel Setup in SettingUp/Ready. During a session it opens a chooser:
+  Stop now maps to E06 Abort now, Stop after trial retains E06's trial-completion meaning,
+  and Cancel/window dismissal sends no command. The chooser keeps current phase/control
+  gates, closes when none remain available and rechecks authority on selection.
+  These contextual controls replace the redundant Session menu; backend commands remain
+  distinct and no automatic session progression is introduced.
+  The HUD includes recording and metadata evidence. Dashboard excludes trial-plan
+  editing, backend participation/use editing, the separate session-progress card,
+  embedded previews, the design-review banner, frontend footer and header
+  connection/local-control badges. Removing badges does not change command authority.
+  Camera experiment enablement belongs to Devices. Dashboard shows a video-recording
+  switch for each camera role and Visual Stimulus, plus Tracking velocities.
+  Recording selections are retained but disabled while their source is inactive.
+- A secondary **Previews…** button at the right of the Dashboard header opens one reusable modeless
+  selector, with one checkbox per available camera/tracking/stimulus viewer and no
+  open-window count. The same button toggles the selector open/closed. First opening without valid saved geometry snaps the selector's
+  outer frame to the right of the main window with a shared 12-pixel gap and aligned
+  top edges, constrained to the available screen. Remember its position across
+  close/reopen and frontend restarts using local GUI preferences; Qt restores saved
+  geometry within available screens, then fits width/height to the current rows. Closing the selector via its toggle or
+  window controls leaves viewer visibility unchanged.
+  The selector uses a compact bordered Source/Show grid, with source labels left,
+  aligned visibility checkboxes right, blue column captions and shared hover/focus
+  styling. It contains no duplicate window heading, instructions,
+  footer buttons or redundant Open/Hidden labels. Pending/error/unavailable status
+  remains visible; the local review label lives in the window title.
+  Checkboxes reflect reported visibility, including external-window closure; pending
+  requests and unavailable viewers disable their controls with explanatory status.
+  Preview rows are ordered Behavior cam, Tracking cam, any further configured camera
+  roles, Tracking, Visual stimulus. Retain inactive sources as dimmed, disabled rows:
+  a camera must be enabled for the experiment; tracking requires an active protocol
+  pipeline; Visual stimulus requires protocol participation. Check active state again
+  when requesting visibility. The Devices preview button uses the same participation
+  restriction and additionally requires the selected editing connection. GUI restrictions
+  do not expand A10's manual-preview phase or backend authority. Visibility never changes
+  participation, recording or session actions. Protocol Tracking participation updates
+  review preview availability; the review menu retains labelled backend fixtures.
+  Managed Protocol integration remains unfinished.
+  Controller/owning backends admit visibility requests and own external rendering;
+  no image stream enters the Dashboard. Initial local review demonstrates labeled
+  sample state only; transport, runtime viewers and performance acceptance remain
+  unfinished under E03/E08/E15 and owning backend preview rules.
+- Output directory has an asynchronous existing-folder picker beside the editable
+  path. Cancellation preserves the draft; selection rechecks editing availability.
+  Camera Preview and the Dashboard selector target the same source identity and
+  visibility state, with one backend-owned external viewer per source. The local
+  review updates visibility fixtures only and creates no image window.
+  Path display is compact when unfocused, with the full path in its tooltip and
+  unchanged full text for editing/copying. Activity logs follow new messages only
+  when already at the bottom; otherwise preserve the retained message being read,
+  falling back to the oldest retained entry if it is evicted. These GUI conveniences
+  do not reserve output, validate experiment storage or change backend state.
+
+<a id="g02"></a>
+### G02 — Shared frontend formatting
+
+**Status:** Accepted · **Revision:** 23
+
+- Use the current CephVR1.0 Dashboard as the visual template: dark blue/black
+  surfaces, subtle bordered cards, blue primary actions, muted red stopping actions,
+  Segoe UI control text and pink monospace HUD/log panels. Embedded stimulus plots
+  are excluded from the initial Dashboard increment.
+- One GUI-owned theme defines palette, typography, spacing, radii and sizing tokens.
+  Small shared components, layout helpers and value formatters apply those tokens;
+  pages compose them using focused data and callbacks under ARCH-002. Do not copy
+  page-local styles or introduce a generic form/runtime framework.
+- Keep a common content-measured title row, with Dashboard Previews at the right.
+  Device icon subtabs occupy the top of the left content column, with configuration
+  cards below them. Subtabs expand to fill their column and align their top edge
+  with the HUD card’s painted top border. The right HUD stays at the same top position across pages and
+  device subtabs in the two-column layout. Use the existing stacked layout on narrow
+  windows; tab overflow scrolls without replacing navigation with a dropdown.
+- Wheel/trackpad events never change combo, spinbox or slider input values, even
+  with focus; route them to the enclosing scroll container. Explicit clicks, typing
+  and keyboard edits remain available. Apply this once at application scope.
+- Use one dim selection color for rows, navigation, subtabs and text selections,
+  distinct from table-header fill. Table cells and headers share horizontal padding;
+  content-sized columns include that padding rather than ending at their text width.
+  Header sections round their outer top corners with transparent header backgrounds
+  so native header fills do not protrude beyond the table outline.
+- Keep page alignment, fixed card gaps, labeled fields, natural button heights,
+  content-measured table columns, semantic status labels and inherited dialog styling
+  consistent across pages. Same-row controls share their tallest natural height
+  through the shared row helper, including pin/Test and path/Browse pairs. Compact
+  checkbox/radio indicators and icon-only header actions are explicit exceptions.
+  Shared card headers leave extra vertical space before
+  content. A shared compact Card density (12-pixel padding, 8-pixel title gap)
+  keeps small Inputs/Outputs cards fitted without changing other cards. Their shared
+  row layout separates enable, signal name, pin and Test/Stop into aligned columns:
+  compact centered checkboxes and equally distributed name, pin and action columns.
+  Both cards use the same column proportions and spacing; longer names wrap.
+  Card titles sit near the top-left corner in a true gap in the rounded
+  outline, with transparent captions and continuous card fill. Console cards contain
+  no Clear button or separate action row.
+  Reflow/scroll before clipping; preserve widget ownership
+  and state during layout changes. Connection evidence remains distinct from Ready.
+- Except Protocol's G01 full-width planner and Projectors' display/tank diagram column, every page and device subtab keeps controls at the left, with a fitted HUD above
+  an expanding Activity log at the right; placeholder pages retain this same layout.
+  HUD height follows its rendered text, including wrapped lines and panel padding.
+  The Activity log fills the remaining column height. Shared fitted-text helpers,
+  size policies and layout stretch implement this rule; retain readable log minimum
+  height. The shared left configuration column scrolls independently when inventory
+  or controls exceed available height; the right status/diagram/log column stays in
+  place. Hide vertical and horizontal scrollbar tracks throughout the Qt GUI,
+  retaining wheel/trackpad and keyboard scrolling. Their zero-size gutter is stable
+  across tabs regardless of overflow. Protocol scrolls its authoring region while navigation and the page heading stay fixed. Other pages have no outer whole-page scroll. Narrow windows stack the columns.
+  Activity logs wrap at word boundaries without forced splitting of long tokens;
+  an over-width indivisible token remains horizontally scrollable. Preserve the
+  visible message and wrapped-line offset when appending or evicting old entries.
+- Implement the native frontend with PyQt6, matching the reference. Initial local
+  design review uses explicitly labeled presentation fixtures, no device/runtime
+  calls and no admitted experiment commands. Managed bootstrap, E03 transport/leases
+  and E15 full application/rig acceptance remain separate unfinished work.
 
 <a id="e03"></a>
 ### E03 — GUI disconnection and control lease

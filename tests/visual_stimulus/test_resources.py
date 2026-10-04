@@ -313,7 +313,7 @@ def test_video_session_registers_and_selects_each_incompatible_asset_variant():
             "identity": type(
                 "Identity", (), {"trial_id": "trial", "prepared_generation": "prepared"}
             )(),
-            "display": type("Display", (), {"outputs": (1, 2)})(),
+            "display": type("Display", (), {"active_outputs": (1, 2)})(),
         },
     )()
     asset_a = type("Asset", (), {"profile": "mp4_h264_sdr8_v1", "source": object()})()
@@ -547,7 +547,7 @@ def test_invalid_calibration_releases_source_and_parse_workspace(tmp_path):
 
     budget = BoundedBudget(cpu_limit=1000000, gpu_limit=1000000)
     display = NS(
-        mappings=(
+        active_mappings=(
             NS(mapping_id="view", geometric_profile=NS(logical_path="broken.json")),
         )
     )

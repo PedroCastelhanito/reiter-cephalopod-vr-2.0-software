@@ -87,7 +87,7 @@ class TrialExecution:
         )
         update = self.engine.render_tick(now_ns, feedback_batch)
         trial.groups += 1
-        for output in trial.artifact.artifact.display.outputs:
+        for output in trial.artifact.artifact.display.active_outputs:
             trial.timing.setdefault(output.output_id, OutputTiming()).observe(
                 output.output_id, update
             )
@@ -112,7 +112,7 @@ class TrialExecution:
                 )
                 trial.activities[activity.output_id] = evidence
         if not trial.started and set(trial.activities) == {
-            x.output_id for x in trial.artifact.artifact.display.outputs
+            x.output_id for x in trial.artifact.artifact.display.active_outputs
         }:
             limit = (
                 release.start_monotonic_ns + self.policies.start_evidence_allowance_ns
@@ -141,7 +141,9 @@ class TrialExecution:
             return
         if trial is None or not trial.begun:
             raise RuntimeError("GPU diagnostics arrived outside a begun trial")
-        outputs = {item.output_id for item in trial.artifact.artifact.display.outputs}
+        outputs = {
+            item.output_id for item in trial.artifact.artifact.display.active_outputs
+        }
         for record in records:
             if record.output_id not in outputs or record.group_id >= trial.groups:
                 raise RuntimeError(
@@ -165,7 +167,7 @@ class TrialExecution:
         if self.feedback is not None:
             self.feedback.discard_pending()
         if {x.output_id for x in idle} != {
-            x.output_id for x in trial.artifact.artifact.display.outputs
+            x.output_id for x in trial.artifact.artifact.display.active_outputs
         } or any(x.error or x.swap_return_ns < x.swap_entry_ns for x in idle):
             raise RuntimeError("renderer could not confirm Idle on every output")
         if any(
@@ -213,7 +215,7 @@ class TrialExecution:
             or any(
                 trial.timing.get(output.output_id, OutputTiming()).diagnostics_count
                 != trial.groups
-                for output in trial.artifact.artifact.display.outputs
+                for output in trial.artifact.artifact.display.active_outputs
             )
         ):
             if (
@@ -275,7 +277,7 @@ class TrialExecution:
                                 trial.groups,
                                 elapsed_epochs,
                             )
-                            for o in trial.artifact.artifact.display.outputs
+                            for o in trial.artifact.artifact.display.active_outputs
                         ],
                     )
                 ),

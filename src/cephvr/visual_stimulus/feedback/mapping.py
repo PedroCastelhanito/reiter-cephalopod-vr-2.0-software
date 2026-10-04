@@ -249,9 +249,12 @@ class FeedbackMappingApplier:
         yaw_mid = math.radians(yaw_before + dyaw / 2)
         forward = values[binding.forward_channel]
         sideways = values[binding.sideways_channel]
-        scale = _evaluate(binding.gain, local_ns) * interval
-        dx = scale * (-math.sin(yaw_mid) * forward - math.cos(yaw_mid) * sideways)
-        dy = scale * (math.cos(yaw_mid) * forward - math.sin(yaw_mid) * sideways)
+        forward *= _evaluate(binding.gain, local_ns) * interval
+        sideways *= (
+            _evaluate(binding.sideways_gain or binding.gain, local_ns) * interval
+        )
+        dx = -math.sin(yaw_mid) * forward - math.cos(yaw_mid) * sideways
+        dy = math.cos(yaw_mid) * forward - math.sin(yaw_mid) * sideways
         current = (instance.values["x"].value, instance.values["y"].value)
         walls = inset_convex_polygon(region.vertices_mm, region.margin_mm)
         position, actual, constrained = slide_displacement(

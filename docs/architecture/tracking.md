@@ -342,10 +342,11 @@ the two optical-flow options and this ID imposes no implementation requirement.
 <a id="t14"></a>
 ### T14 — Independent tracking-data saving
 
-**Status:** Accepted · **Revision:** 1
+**Status:** Accepted · **Revision:** 3
 
-- A session-level Save tracking data switch, independent of tracking activation, camera
-  recording and Save Visual Stimulus data. New-configuration default On; preserve an explicit saved
+- A session-level Save tracking data switch (GUI label owned by [G01](gui.md#g01)), independent of
+  camera recording and Save Visual Stimulus data. Enabling it requires Tracking under
+  E10; disabling it still permits required closed-loop feedback. New-configuration default On; preserve an explicit saved
   Off under E07. Disabled tracking creates no tracking outputs.
 - With saving Off, enabled tracking keeps observation/feedback and administrative
   error/lifecycle obligations, without detailed scientific history. E07 Setup/Start

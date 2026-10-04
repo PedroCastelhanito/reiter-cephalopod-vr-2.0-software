@@ -64,7 +64,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 9
+**Status:** Accepted · **Revision:** 11
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -75,9 +75,14 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   stack of 2D images/videos/textures. Arena geometry has normal depth occlusion; 2D
   overlays follow authored order and source-over opacity, independent of arena
   depth. Objects needing arena occlusion belong in its externally authored asset.
-- The GUI edits this model through an ordered program list, scene/parameter controls
-  and condition tables (add, reorder, duplicate, group). Its expanded timeline is
-  derived, not a second editable timing definition. GUI and headless authoring share
+- The GUI presents ordered program nodes through timeline-only trial programming,
+  scene/parameter controls and condition editors (add, reorder, duplicate, group).
+  Stimulus appearances are prepared externally as texture/image/video/arena assets;
+  the planner selects files and edits protocol structure and epoch parameters such
+  as speed/direction, without texture-design controls. Legacy texture export imports
+  normalize the exported image and tile dimensions into the existing model.
+  Timeline edits modify the canonical nodes; expanded timing remains derived rather
+  than a second editable schedule. GUI and headless authoring share
   one model and validation.
 - CephVR owns the stimulus model and explicit parameter definitions.
   [PsychoPy](https://psychopy.org/api/visual/index.html) (scientific stimulus
@@ -101,18 +106,20 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   [authoring contract](../../contracts/visual_stimulus/program-authoring.md);
   [canonical family/settings schema](../../contracts/visual_stimulus/program.schema.json)
   (declaration boundary);
-  [semantic/compiler obligations](../../contracts/Visual Stimulus-schema.md) (separate
+  [semantic/compiler obligations](../../contracts/visual_stimulus/stimulus-schema.md) (separate
   from structural parsing; no settings inheritance).
 
 <a id="v03"></a>
 ### V03 — Versioned JSON stimulus-program files
 
-**Status:** Accepted · **Revision:** 8
+**Status:** Accepted · **Revision:** 9
 
 - Store reusable authored programs as versioned JSON documents (scenes, epoch/group
   structure, conditions, parameter settings). Keep media external, resolved through
   E07's asset root. visual_stimulus_config.toml (settings) and visual_stimulus_policy.toml (fixed policy, E14)
-  are not a second program format.
+  are not a second program format. Optional epoch `batch_label` is bounded authoring
+  metadata (empty when omitted), retained in source/prepared-source JSON for GUI
+  targeting; it never controls ordering, timing, state continuity or rendering.
 - One canonical Pydantic model in the Visual Stimulus lightweight configuration module generates
   JSON Schema, with shared structural and semantic validation for GUI and headless
   use. Apply E07's edit/Setup/locking rules; JSON is not executable Python or a code
@@ -137,7 +144,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - **Contracts:** [program validation](../../contracts/visual_stimulus/program-validation.md)
   (strict parsing, schema generation, compatibility, preparation;
   [schema primitives/parsing](../../contracts/visual_stimulus/program-validation.md));
-  [canonical source/prepared schemas](../../contracts/Visual Stimulus-schema.md)
+  [canonical source/prepared schemas](../../contracts/visual_stimulus/stimulus-schema.md)
   (vocabulary, serialization, compiler obligations);
   [PreparedTrial artifact](../../contracts/visual_stimulus/prepared-plan.md).
 
@@ -207,7 +214,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Keyframe curves stop at the epoch boundary; longer epochs hold the final keyframe
   value. Expose truncation in the prepared timeline.
 - **Contracts:** [animation/playback contract](../../contracts/visual_stimulus/animation-and-playback.md);
-  [typed function binding](../../contracts/Visual Stimulus-schema.md) (interpolation,
+  [typed function binding](../../contracts/visual_stimulus/stimulus-schema.md) (interpolation,
   units, integration).
 
 <a id="v06"></a>
@@ -288,7 +295,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - **Contracts:** [continuity contract](../../contracts/visual_stimulus/state-continuity.md);
   [prepared-plan binding](../../contracts/visual_stimulus/prepared-plan.md) (transition
   descriptors, boundary compilation);
-  [compatibility matrix and complete prepared artifact](../../contracts/Visual Stimulus-schema.md).
+  [compatibility matrix and complete prepared artifact](../../contracts/visual_stimulus/stimulus-schema.md).
 
 <a id="v08"></a>
 ### V08 — Group ordering and repetition
@@ -315,7 +322,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   its derived timeline shows group/repetition boundaries. Before Setup, random
   order/durations are unresolved; any illustration is labeled as an example, not the
   prepared plan.
-- **Contracts:** [compiler binding](../../contracts/Visual Stimulus-schema.md) (bounded
+- **Contracts:** [compiler binding](../../contracts/visual_stimulus/stimulus-schema.md) (bounded
   expansion, explicit condition substitution, independent versioned ordering RNG).
 
 <a id="v09"></a>
@@ -496,17 +503,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   degrees-to-pixels scale across a wide field or treat angular as physical frequency.
 - Measured calibration values and physical accuracy keep the hardware-input and
   rig-verification deferrals.
-- **Contracts:** [stimulus-schema.md](../../contracts/Visual Stimulus-schema.md) (axes,
+- **Contracts:** [stimulus-schema.md](../../contracts/visual_stimulus/stimulus-schema.md) (axes,
   angular parameterization, conversions, typed units, surface maps, angular-frame
   interpretation).
 
 <a id="v15"></a>
 ### V15 — Four calibrated off-axis surface views
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 10
 
 - V01's single rendering worker renders four calibrated views for the rectangular
-  tank's front, left, right and bottom faces by direct per-surface rendering with the
+  rig's front, left, right and bottom screens by direct per-surface rendering with the
   generalized off-axis perspective method documented by PsychoPy (Kooima), on V04's
   ModernGL/GLFW stack; no cubemap intermediate.
 - One shared scene/stimulus state per render update serves every face, with a common
@@ -520,6 +527,23 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   rendering; record final outputs under E13. Imported static calibration meshes map
   surfaces to outputs, with optional static masks and overlap weights, validated once
   and fixed for the session. No automatic calibration solver or runtime optical model.
+- Per-output participation is independent of fixed rig geometry/calibration. Retain
+  all four surfaces and stored mappings; prepare, render, present and record only
+  enabled outputs and their mappings, in retained authored order. Never stretch,
+  recenter, reassign coverage or renormalize calibration when outputs are disabled.
+  Participation is fixed for prepared execution; changes require fresh preparation.
+  At least one output and the selected pacing output must be enabled. V22
+  independently gates the pulse target; reject invalid selections rather than
+  moving either target silently.
+- Physical screen planes need not coincide with tank walls. The GUI parallel-plane
+  editor uses an explicit perpendicular distance from the fixed subject for each
+  independent screen. Left/right screens have equal tank-wall offsets in that
+  editor, so right distance is derived from tank width, subject position and left
+  distance under G01. Side and Bottom front edges start at the Front screen plane;
+  G01 owns the shared draft corner construction and ideal centered-projector diagram.
+  The diagram does not change output corrections or introduce a runtime optical model.
+  Corner-based backend geometry remains authoritative. Tank dimensions,
+  subject position and projector-to-screen distances are distinct inputs.
 - The display model covers physical corners/observer, explicit tolerances/clipping,
   output identities and viewport/profile references. Invalid/incomplete geometry or
   output mappings block preparation (E07). Geometric-profile content validation and
@@ -558,7 +582,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   replay; runtime implementation remains required.
 - **Contracts:** [arena movement contract](../../contracts/visual_stimulus/arena-movement.md)
   (preparation, state, replay evidence);
-  [typed planar boundary/solver declarations](../../contracts/Visual Stimulus-schema.md).
+  [typed planar boundary/solver declarations](../../contracts/visual_stimulus/stimulus-schema.md).
 
 <a id="v17"></a>
 ### V17 — Unlit arena appearance
@@ -635,9 +659,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v20"></a>
 ### V20 — Configurable projector presentation pacing
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 7
 
-- Default: VSync on the explicitly designated photodiode projector, immediate
+- Default: VSync on the explicitly designated pacing projector, immediate
   presentation on the other outputs (current CephVR rig behavior). All-output VSync
   stays selectable for rig testing. Select the mode at Setup, preserve saved
   selections and lock at Start (E07); changing it needs fresh Setup, never automatic
@@ -650,9 +674,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   request and adopted calibration profile before startup Idle/Ready; no automatic
   precision selection or downgrade. Float32 working color, review-video
   representation and physical signal precision stay distinct.
-- Mixed mode requires an unambiguous configured photodiode output and independent
+- Mixed mode requires an unambiguous configured pacing output and independent
   presentation control for outputs with different intervals; reject incompatible
-  configurations rather than changing modes or guessing the photodiode face.
+  configurations rather than changing modes or guessing the pacing face.
+- The pacing target is 60 Hz, configured with the pacing output identity only in
+  the Visual Stimulus config file, not a GUI field. Adopt and validate it before
+  startup Idle/Setup; no timing guarantee follows from the requested value alone.
+- Pacing selection is independent of V22 pulse visibility/placement. Existing profiles
+  without an explicit pacing ID retain their enabled photodiode target as a legacy
+  fallback; pulse-disabled profiles require explicit pacing.
 - VSync requests and sequential swaps do not establish simultaneous scanout or
   effective driver behavior. Immediate outputs may tear; one photodiode measures only
   its own output. Throughput, swap behavior and optical timing retain E15's rig
@@ -685,9 +715,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v22"></a>
 ### V22 — Photodiode frame alternation with landmarks
 
-**Status:** Accepted · **Revision:** 2
+**Status:** Accepted · **Revision:** 3
 
-- The designated photodiode output shows a bright/dark frame-alternating patch with
+- Pulse enablement and target/rectangle are operator settings independent of V20
+  pacing. When disabled, retain placement but require neither target participation
+  nor availability; draw no patch and emit no marker-state/submission evidence.
+  When enabled, require an active target with a valid in-bounds patch at Setup.
+- The enabled designated photodiode output shows a bright/dark frame-alternating patch with
   periodic distinctive markers. Detailed E13/V13 evidence associates intended states
   and marker positions with trial-relative output-frame identities.
 - Each 60-submission cycle starts with six marker frames (three bright, then three
@@ -732,7 +766,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v24"></a>
 ### V24 — Explicit feedback parameter mappings
 
-**Status:** Accepted · **Revision:** 6
+**Status:** Accepted · **Revision:** 7
 
 - A feedback binding is an input channel, target stimulus parameter, gain, offset
   and a declared direct-value, movement-integration or heading-relative planar
@@ -749,15 +783,18 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   execution; unsupported or ambiguous bindings block Setup (E07).
 - T36 anatomical_body channels bind only by `heading_relative_planar_integration`
   (one ordered forward/sideways pair of equal unit, interval_average_rate, onto one
-  arena's world x/y with one linear gain and no offset) or by movement integration
-  to that arena's yaw (1/s, deg per radian); direct world x/y binding fails Setup.
-  Each result's yaw and midpoint-heading planar increments apply together, then V16.
+  arena's world x/y with independent longitudinal/lateral gains and no offset) or
+  by movement integration to that arena's yaw (1/s, deg per radian); direct world x/y binding fails Setup.
+  `gain` scales longitudinal movement; optional `sideways_gain` scales lateral
+  movement and falls back to `gain` for existing programs. A zero gain disables
+  that axis; yaw retains its independent gain. Each result's yaw and midpoint-heading
+  planar increments apply together, then V16.
 - Process due epoch transitions first; eligible results use the current epoch's
   bindings and gains at the render update's logical time, whatever their source
   epoch. Never backdate state changes or discard results merely for crossing an epoch
   boundary. Trial, absence, reset-generation and V26 freshness exclusions apply.
 - **Contracts:** [feedback contract](../../contracts/visual_stimulus/feedback.md) (preparation,
-  application, evidence); [typed targets/units](../../contracts/Visual Stimulus-schema.md)
+  application, evidence); [typed targets/units](../../contracts/visual_stimulus/stimulus-schema.md)
   and [result/reset messages](../../contracts/visual_stimulus/runtime-bindings.md) (independent
   of the later tracking estimator design).
 
@@ -856,7 +893,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 17
+**Status:** Accepted · **Revision:** 18
 
 - One **Save Visual Stimulus data** switch controls rendered Visual Stimulus video, associated frame logs and
   detailed Visual Stimulus state and presentation outputs. It defaults to On for a new
@@ -878,7 +915,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Explicitly configured review-video depth reduction is allowed with validated
   conversion and retained source/target representation evidence; silent negotiation
   is forbidden. Rendering and V13 reconstruction keep their original precision.
-- The review video is constant-rate at the designated photodiode output's nominal
+- The review video is constant-rate at the designated pacing output's nominal
   refresh rate in both presentation modes. Video frame n is the nth admitted render
   group; real timing (state-evaluation host time, per-output swap observations)
   lives in the V28 evidence file. Each omission shortens playback by one frame

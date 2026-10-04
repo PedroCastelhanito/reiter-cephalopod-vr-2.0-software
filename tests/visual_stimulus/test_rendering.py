@@ -85,9 +85,9 @@ def test_instance_absence_pauses_motion_and_return_reanchors() -> None:
 def test_off_axis_projection_and_float_color_boundaries() -> None:
     frustum = off_axis_frustum(
         observer=(0.0, 0.0, 0.0),
-        bottom_left=(-1.0, -1.0, 2.0),
-        bottom_right=(1.0, -1.0, 2.0),
-        top_left=(-1.0, 1.0, 2.0),
+        bottom_left=(-1.0, -1.0, -2.0),
+        bottom_right=(1.0, -1.0, -2.0),
+        top_left=(-1.0, 1.0, -2.0),
         near=0.1,
         far=10.0,
     )
@@ -111,8 +111,21 @@ def test_projected_layer_vertices_are_retained_as_exact_shader_words() -> None:
     )
 
 
-def test_engine_freezes_exact_provider_evidence_for_recording() -> None:
+@pytest.mark.parametrize("pulse_enabled", [True, False])
+def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> None:
     artifact = make_prepared_trial()
+    if not pulse_enabled:
+        artifact = artifact.model_copy(
+            update={
+                "display": artifact.display.model_copy(
+                    update={
+                        "photodiode_enabled": False,
+                        "pacing_output_id": artifact.display.photodiode_output_id,
+                        "photodiode_output_id": "projector/disconnected",
+                    }
+                )
+            }
+        )
     display = artifact.display
     output = display.outputs[0]
 
@@ -164,6 +177,9 @@ def test_engine_freezes_exact_provider_evidence_for_recording() -> None:
     assert len(update.evidence_submissions) == 1
     assert update.evidence_submissions[0].phase == "returned"
     assert update.evidence_submissions[0].marker_high == update.group.photodiode_high
+    if not pulse_enabled:
+        assert update.group.photodiode_high is None
+        assert update.evidence_submissions[0].marker_index is None
     stopped_idle = engine.stop_trial(1)
     assert len(stopped_idle) == 1 and stopped_idle[0].output_id == output.output_id
 
@@ -205,13 +221,6 @@ def test_arena_model_and_physical_projection_are_finite_and_pose_sensitive():
     assert len(gl_matrix_words(moved)) == 16
 
     display = make_prepared_trial().display
-    display = display.model_copy(
-        update={
-            "geometry": display.geometry.model_copy(
-                update={"observer_mm": (0.0, 0.0, 200.0)}
-            )
-        }
-    )
     surface = display.geometry.surfaces[0]
     projection = off_axis_view_projection(display, surface)
     assert len(projection) == 4 and all(len(row) == 4 for row in projection)

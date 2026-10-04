@@ -1,10 +1,88 @@
 # Visual Stimulus status
 
-Updated: 2026-10-01. The complete Visual Stimulus implementation is selected under
+Updated: 2026-10-04. The complete Visual Stimulus implementation is selected under
 [ARCH-001](../architecture.md#arch-001). This report describes the uncommitted working
 tree, preserving the existing controller, supervisor and acquisition work.
 [V01–V28/E13](../docs/architecture/visual_stimulus.md) and [E05–E08/E14–E15](../docs/architecture/system-contracts.md)
 remain authoritative; implementation does not mean experiment or rig acceptance.
+
+## Arena movement gains
+
+[V24 revision 7](../docs/architecture/visual_stimulus.md#v24) now supports independent
+longitudinal/lateral gains, explicitly selected by the owner to match CephVR1.0.
+The canonical planar mapping adds optional `sideways_gain`; omission/null retains
+legacy shared-gain behavior. Both gains use existing unit/function validation and
+application-time evaluation before the unchanged midpoint-heading transform and
+boundary slide. Zero disables an axis; yaw retains its existing independent mapping.
+Program/prepared-trial schemas and the pure reference were updated. No input stream,
+tracking estimator, resource ownership or timing semantics changed.
+
+Local GUI/feedback/compiler/contract validation passes 194 tests and 79 subtests;
+two additional focused authoring/reference tests pass. Ten runtime mapping cases
+exercise unequal/zero/reversed/fallback gains at two headings; contracts check units
+and source round trips. Static/schema/boundary checks and native GUI evidence are
+in [frontend evidence](runtime.md#dashboard-frontend-implementation). Native Windows,
+managed binding and physical closed-loop acceptance remain pending under
+[the rig worklist](rig-verification.md). These are local implementation results.
+
+## Authoring labels
+
+[V03 revision 9](../docs/architecture/visual_stimulus.md#v03) adds optional epoch
+batch labels for [G01 targeting](../docs/architecture/gui.md#g01). The bounded field
+is retained in source/prepared-source JSON; compiler expansion settings and durations
+are unchanged. Program and prepared-trial schemas were regenerated from the canonical
+model; all 11 schema drift checks pass. Current GUI/compiler/contract results and
+native authoring evidence are recorded in [runtime frontend evidence](runtime.md#dashboard-frontend-implementation).
+A broader configuration test reproduces the existing loader rejection of
+`presentation.pacing_refresh_hz`, whose managed adoption remains listed in TODO.
+No renderer, pacing implementation or physical acceptance changed in this increment.
+
+## Output participation
+
+[V15 revision 10](../docs/architecture/visual_stimulus.md#v15) and
+[G01 revision 65](../docs/architecture/gui.md#g01) align the GUI draft
+corner conversion with front-attached side/Bottom screens. The operator plot adds
+drag rotation and ideal centered-projector footprints from distance/throw and
+assigned display aspect, including the Bottom 45° mirror fold beneath Right.
+One Projection button/legend entry groups the optics, with distinct violet footprints.
+The Bottom diagram uses a schematic pyramid from mirror center to footprint.
+Valid central Bottom paths remain visible when outer-ray clearance is incomplete. Backend corner validation, off-axis math and output
+corrections are unchanged. Local tests and native plot evidence are recorded in
+[frontend evidence](runtime.md#dashboard-frontend-implementation); managed binding
+and physical optical acceptance remain pending.
+
+[V15 revision 6](../docs/architecture/visual_stimulus.md#v15) separates output
+participation from the full fixed calibration. Optional `enabled` defaults true;
+active-output/mapping properties drive preparation, native windows, renderer checks,
+recording tiles/budgets and output evidence. Full profiles retain geometry/mappings.
+Photodiode visibility/placement and pacing are independent under V20/V22.
+Explicit `pacing_output_id` selects an enabled timing output; old pulse-enabled
+profiles without it retain their photodiode target. `photodiode_enabled=false`
+retains inactive/missing placement without target/bounds checks, suppresses the
+patch and emits null marker fields. Enabled pulse placement remains validated.
+Native swap order/intervals and review encoding use pacing, not pulse placement.
+All 15 nonempty four-output subsets preserve projection matrices in local tests.
+Those tests exposed a pre-existing frustum-distance sign opposite to the documented
+`-dot(pa-pe, normal)` and model validator. Corrected the sign and removed an invalid
+observer override from the earlier renderer test. Physical calibration and optical
+accuracy remain unverified; see [rig checks](rig-verification.md).
+
+Validation on 2026-10-03: combined GUI/client/Visual Stimulus suite passes 186 tests
+(one optional dependency skip, one Windows deselection), authenticated transport
+included with loopback permission. Contracts pass 40 tests and 79 subtests; 11 schemas
+match, Ruff/format and Windows-target mypy (141 GUI/backend files) pass. Boundary
+checker reports zero violations across 475 modules, with retained cohesion warnings.
+[Native UI evidence](gui-dashboard-2026-10-01/README.md) is distinct from rig evidence.
+GUI participation, timing and geometry drafts are not yet connected to managed
+configuration transport. The rig editor produces canonical four-surface geometry
+from entered centered screen/tank dimensions and subject offsets; tests validate
+corner winding and projection matrices. Per-face projector distance/throw ratio,
+scale/offset/reversal and imported calibration/mask paths remain local drafts;
+applying authored corrections to adopted profiles is still integration work.
+
+ARCH-002 review reuses immutable display records and filtered properties, without
+new coordination/dependencies. Existing large native/engine/recording owners receive
+only focused iteration changes; geometry and process/resource ownership stay intact.
 
 ## Implemented scope
 
@@ -232,3 +310,16 @@ The current checks exercise application behavior and authenticated transport on 
 host. They do not establish native runtime or rig equivalence. Keep pending native/rendering/encoding, optical,
 calibration, failure/durability and simultaneous-load checks in
 [rig verification](rig-verification.md). No historical declaration pass closes them.
+
+The 2026-10-03 GUI refinement moves pacing identity and the 60 Hz target to the Visual
+Stimulus TOML under [V20](../docs/architecture/visual_stimulus.md#v20). TOML syntax is
+checked; managed adoption/native refresh validation remains pending. No physical
+refresh or render-rate guarantee is established by this configuration declaration.
+
+The GUI geometry builder now positions parallel screen planes by explicit positive
+perpendicular subject-to-screen distances under [V15](../docs/architecture/visual_stimulus.md#v15),
+independently of tank walls. The GUI now derives the right-screen distance from
+the left using equal tank-wall offsets, as explicitly confirmed by the owner;
+o independent right distance remains in GUI calibration JSON v2. It shares corner generation with the schematic; backend
+corner schema/rendering is unchanged. Physical placement and managed profile adoption
+remain unverified. Local geometry tests cover independent planes and invalid distances.

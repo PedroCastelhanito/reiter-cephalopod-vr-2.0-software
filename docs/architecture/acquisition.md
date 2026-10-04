@@ -598,7 +598,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 49
+**Status:** Accepted · **Revision:** 50
 
 **Capture lifetime**
 
@@ -713,10 +713,12 @@ stamping/filtering and the mappings still need runtime implementation.
   crop solely to fit an encoder. If full sensor width is required, explicitly select
   compatible HEVC recording arguments under A08 and verify throughput. This does
   not authorize automatic ROI, codec, depth or cadence changes.
-- Manual exposure/gain with automatic controls disabled. GUI/headless controls cover
+- Manual exposure/gain with automatic controls disabled. Device configuration operations cover
   exposure, gain, free-running rate, ROI, pixel format and applicable triggers, using
   `exposure_us`, `frame_rate_hz`, pixel ROI and explicit SDK gain units (dB or
   labelled native/raw). Uncommon features stay available through PFS.
+  The initial GUI exposes the narrower PylonViewer/PFS workflow in
+  [G01](gui.md#g01); this does not remove backend/headless parameter operations.
 - External triggering is the per-camera default; free-running is configurable before
   session locking only with that camera's explicit `unaligned_free_running = true`,
   recorded in `SESSION_CONFIG.json`; otherwise Setup rejects it. Such a camera has no
@@ -813,7 +815,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 34
+**Status:** Accepted · **Revision:** 35
 
 **Board and firmware**
 
@@ -936,6 +938,16 @@ hardware information and later implementation; no new deferral is implied.
   Validation rejection leaves outputs unchanged; application failure after stop
   leaves them off. Fault/Stop takes precedence over restoration. Boot configuration
   starts off.
+
+**Operator I/O diagnostics**
+
+- Trial state is an active-high output; Projector flip is a rising-edge input.
+  Their pin assignments belong to Microcontroller. Per-output test intent targets
+  one assigned pin for external observation in SpikeGLX; camera tests use the rate
+  already configured in Cameras. Input diagnostics observe edges rather than drive
+  the input. Firmware/transport support, bounded test duration and diagnostic evidence
+  remain unimplemented; these requests do not add opcodes to protocol version 1,
+  lift firmware deferral or establish physical verification.
 
 **Status and capabilities**
 

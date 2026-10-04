@@ -76,7 +76,7 @@ Calibration tolerances are explicit input values, not invented physical measurem
 One GL-owner thread creates all GLFW contexts/windows and shared immutable resources.
 Keep context-local VAOs/FBOs per context. At each group snapshot state once, render all
 surface/composed final output textures, then present in authored output order, with
-the designated photodiode output last. In mixed pacing only it requests interval 1;
+the designated pacing output last. In mixed pacing only it requests interval 1;
 others request 0. In all-VSync each requests 1. Log each call separately; sequential
 swap calls do not promise synchronized scanout. Shared-context resources use a producer
 fence plus flush and consumer GPU-side wait; never read incomplete shared textures.

@@ -21,8 +21,12 @@ through `heading_relative_planar_integration` or by `movement_integration` to an
 yaw; binding it directly to world x/y, a layer target or direct_value fails Setup. The
 planar operation, allowed only in an arena block, names one ordered pair
 (`forward_channel`, `sideways_channel`) of distinct anatomical_body interval_average_rate
-channels with the same unit and one linear gain in mm per input unit (e.g. mm per px),
-with no offset. The order declares the axes; Visual Stimulus does not infer them from channel names.
+channels with the same unit and independent linear gains in mm per input unit
+(e.g. mm per px), with no offset. `gain` applies longitudinally; optional
+`sideways_gain` applies laterally and defaults to `gain` when omitted or null,
+preserving existing programs. A zero gain disables its axis; negative gains reverse
+its movement. Both functions receive the same unit checks and application time. The
+order declares the axes; Visual Stimulus does not infer them from channel names.
 Turning uses '1/s' (radians per second) onto yaw with a deg-per-radian gain.
 
 Compile bindings into direct references to renderer-owned state and prepared parameter
@@ -46,8 +50,8 @@ For each eligible result covering source interval [t0,t1), dt=t1-t0, the arena's
 increment is dpsi=(g_turn*turn + offset_turn)*dt from its ordinary yaw binding (zero
 without one). The planar increment uses the midpoint heading psi_m=psi_before+dpsi/2,
 where psi_before is the retained yaw just before this result, and f/l from
-[stimulus-schema.md](stimulus-schema.md): dxy = g_lin*dt*(forward*f(psi_m) +
-sideways*l(psi_m)). Apply both increments together, then V16's boundary slide to dxy.
+[stimulus-schema.md](stimulus-schema.md): dxy = dt*(g_forward*forward*f(psi_m) +
+g_sideways*sideways*l(psi_m)). Apply both increments together, then V16's boundary slide to dxy.
 Tracking results are interval averages (T37), so the midpoint heading approximates the
 heading over the interval; the existing CephVR integrator used the start-of-step heading.
 [planar_feedback.py](planar_feedback.py) is the pure reference for these signs.

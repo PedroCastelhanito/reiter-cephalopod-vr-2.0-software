@@ -1,0 +1,8 @@
+2026-10-04 · HEAD 5c24d99aacf41f75fd07249faa1bfb52cf1dea78 plus working tree
+Images deleted at owner request after native inspection.
+22c77df74b61c0349e00dd6af575e3d738a0ad814aa4a39ffd9e3e3bba046037  src/cephvr/gui/tank_diagram.py
+b7e1db55b443af1cabc5c6629ea3800fdb7a36b4c97cabaf8a23ce6c273a93c6  src/cephvr/gui/projectors.py
+4024c52c661787c4e8d7818e3309ae87b5c92758422974bf6b89237c866c7001  src/cephvr/gui/projector_optics.py
+2fd882a741b1e3daf5007e05730710e5f43901df8d340867de6552fb61847e96  src/cephvr/gui/theme.py
+b6a071dac11c03181e3b539ddea9b24eccadb08d38d52fd030ad9429d489818d  tests/gui/test_dashboard.py
+0037c3370463ca180283212e22cb52cea7623c8d9b23f31de4f45c592181ed0f  reports/gui-dashboard-2026-10-01/tank-pyramid-native-review.py

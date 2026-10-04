@@ -1,0 +1,7 @@
+2026-10-04 · base 5c24d99aacf41f75fd07249faa1bfb52cf1dea78 plus working tree
+5499f18262e8d358381a5eaf50d3c0f1b5283bb566e275149b17b189a972b190  src/cephvr/gui/projector_geometry.py
+3db61deb31cc621700675b03331b36abb7114bbb5cec9ed1dbb56ae49e1993b0  src/cephvr/gui/tank_diagram.py
+4a175f33c57ba7460faf0647736c9646479d27113627b449e09118d1ed8c1d13  src/cephvr/gui/projectors.py
+099f6bdb7e07776def866f2673d98e7cb172ff7d2e92b09c973003ffd83c54e9  src/cephvr/gui/theme.py
+807597df179e2090da965db5027a6f637a2f046081534a9003a88460fee4805f  tests/gui/test_dashboard.py
+ecbe49da3625f19ed44debd9d58fb076f9d76bb25249cab9f96630d54fda3495  reports/gui-dashboard-2026-10-01/tank-rotation-native-review.py

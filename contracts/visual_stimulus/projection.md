@@ -6,6 +6,10 @@ Governing rule: [V15](../../docs/architecture/visual_stimulus.md#v15). Coordinat
 [E13](../../docs/architecture/visual_stimulus.md#e13). This is a declared contract, not a renderer
 implementation or evidence of optical/timing accuracy.
 
+Output participation never modifies the four-surface geometry, fixed observer,
+viewport, correction mesh, mask or overlap weights. Render only mappings targeting
+enabled outputs; omit disabled outputs without redistributing their coverage.
+
 ## Geometry and projection mathematics
 
 Use the generalized perspective construction documented by

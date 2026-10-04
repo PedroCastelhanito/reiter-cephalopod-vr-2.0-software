@@ -10,6 +10,13 @@ pending on the rig. This is not experiment-readiness approval.
 [contracts](../contracts/acquisition/README.md) own behavior. The previous
 [controller/supervisor review](runtime.md) remains separate.
 
+GUI-requested per-pin diagnostics (2026-10-02) are recorded under
+[A11](../docs/architecture/acquisition.md#a11). Fixed trial-state polarity and
+projector-flip input edge are accepted; firmware commands, bounded test duration,
+input-observation evidence and managed diagnostic transport remain unimplemented.
+The frontend logs unsent requests and does not exercise hardware. See the
+[frontend report](runtime.md#dashboard-frontend-implementation).
+
 ## Ownership and review
 
 Final Windows repair snapshot (2026-10-01, baseline HEAD

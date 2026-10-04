@@ -1,0 +1,7 @@
+PID: 31239
+Visible: True
+Title: CephVR — explicit projector layout/geometry fixtures
+Size: 720x800
+Layout: wide
+Native Qt window grab: screen-distance-microcontroller.png
+Closed after inspection: True

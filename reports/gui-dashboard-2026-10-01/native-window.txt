@@ -1,0 +1,6 @@
+PID: 31977
+Visible: True
+Title: CephVR2.0 — Dashboard · design review
+Size: 1175x883
+Layout: wide
+Native Qt window grab: dashboard-native.png

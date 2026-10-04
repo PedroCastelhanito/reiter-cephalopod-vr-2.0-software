@@ -1,0 +1,8 @@
+2026-10-04 · base 5c24d99aacf41f75fd07249faa1bfb52cf1dea78 plus working tree
+daea908f36fca60b0ce36620d04ede9a5ffe9d34a88c988dcb42270dc9308bad  src/cephvr/gui/projector_geometry.py
+74d596bf99cb923c66a4ed5fcbfac029376ada88004f550b07f7087ea72aebc6  src/cephvr/gui/projector_optics.py
+c418a64397a9e2d55cc6edd9b05f9856bb55b3ead52d153f0c01b37d14b40fa0  src/cephvr/gui/tank_diagram.py
+db98d9e2cdca2b65fc45a37a5baf627b7742c99accfc7271e03583c6553c60e9  src/cephvr/gui/projectors.py
+c68e6d96b687e954263fd6eb6a6b1144c75de7166e91d4f4156596a44d4ccfad  src/cephvr/gui/theme.py
+102aa5068d8114264ca3b3a435676c523aefeacf3ec7422d67cbeaa29ec14abd  tests/gui/test_dashboard.py
+8e10518e8dde8555b059ceddaba066fd6589919598983e4a21a1723c3ca9b0f7  reports/gui-dashboard-2026-10-01/tank-mirror-native-review.py

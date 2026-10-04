@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src"
 ASSEMBLY = {
+    "cephvr.gui.review",
     "cephvr.tracking.main",
     "cephvr.tracking.transport.services",
     "cephvr.tracking.transport.server",
@@ -44,6 +45,7 @@ ENTRY_MODULES = {
         "acquisition",
         "visual_stimulus",
         "tracking",
+        "gui",
     )
     for module in ("runtime", "service", "main")
 } | {
@@ -54,6 +56,7 @@ ENTRY_MODULES = {
     "cephvr.acquisition.worker.runtime",
     "cephvr.acquisition.worker.server",
     "cephvr.acquisition.worker.service",
+    "cephvr.gui.review",
     "cephvr.acquisition.transport.services",
 }
 
@@ -117,6 +120,7 @@ def main() -> int:
             "acquisition",
             "visual_stimulus",
             "tracking",
+            "gui",
         )
         for path in (SOURCE / "cephvr" / backend).rglob("*.py")
         if not path.name.endswith(("_pb2.py", "_pb2_grpc.py"))

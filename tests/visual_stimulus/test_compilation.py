@@ -220,6 +220,25 @@ class ExpansionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "max_expanded_epochs"):
             expand_program(program, seed_decimal="1234", max_expanded_epochs=3)
 
+    def test_batch_labels_round_trip_without_changing_expansion(self) -> None:
+        payload = json.loads(fixture_source())
+        original = self._program(payload)
+        self.assertEqual(original.sequence[0].batch_label, "")
+        payload["sequence"][0]["batch_label"] = "Adaptation"
+        labelled = self._program(payload)
+        reloaded = parse_program_json(labelled.model_dump_json(), max_bytes=1_000_000)
+        self.assertEqual(reloaded, labelled)
+        old = expand_program(original, seed_decimal="1234", max_expanded_epochs=8)
+        new = expand_program(reloaded, seed_decimal="1234", max_expanded_epochs=8)
+        self.assertEqual(new[0].source.batch_label, "Adaptation")
+        self.assertEqual([e.settings for e in old], [e.settings for e in new])
+        self.assertEqual(
+            [e.source.duration for e in old], [e.source.duration for e in new]
+        )
+        payload["sequence"][0]["batch_label"] = "x" * 129
+        with self.assertRaises(ValueError):
+            self._program(payload)
+
     def test_condition_values_are_substituted_at_setup(self) -> None:
         payload = json.loads(fixture_source())
         block = payload["sequence"][0]["settings"][0]

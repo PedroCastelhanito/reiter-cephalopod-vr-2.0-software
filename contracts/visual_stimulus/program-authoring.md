@@ -40,6 +40,14 @@ inheritance or a second saved timing/program format as a shortcut. Repetition re
 authored body; there is no requirement to duplicate every expanded occurrence in the
 source file. Condition references are explicit settings expressions, not missing values.
 
+## Batch labels
+
+An epoch may carry `batch_label`, a string of at most 128 characters (default empty).
+It is authoring metadata for selecting source epochs, including children of repeat
+or condition groups. Source JSON and the retained prepared source preserve it.
+It does not alter ordering, conditions, durations, rendering or state continuity.
+An empty label is unlabelled; labels need not be unique.
+
 ## Complete settings do not reset live state
 
 Keep initialization/reset inputs separate from continuous settings and one-time state

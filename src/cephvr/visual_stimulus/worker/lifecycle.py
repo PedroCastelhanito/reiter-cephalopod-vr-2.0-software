@@ -191,7 +191,7 @@ class LifecycleDriver:
         display = parse_display_json(
             request.display.profile_json, max_bytes=request.limits.max_document_bytes
         )
-        for output in display.outputs:
+        for output in display.active_outputs:
             self.announce("display:" + output.output_id, None)
         command = visual_stimulus.WorkerCommand.FromString(
             request.command.SerializeToString()
@@ -216,7 +216,7 @@ class LifecycleDriver:
         activities = {x.output_id: x for x in observed.idle_activity}
         bits = {x[0]: x[1:] for x in observed.observed_rgb_bits}
         intervals = dict(observed.requested_swap_intervals)
-        if set(activities) != {x.output_id for x in display.outputs} or any(
+        if set(activities) != {x.output_id for x in display.active_outputs} or any(
             x.error or x.swap_return_ns < x.swap_entry_ns for x in activities.values()
         ):
             raise RuntimeError("Idle submission missing for required display output")
@@ -230,7 +230,7 @@ class LifecycleDriver:
             observed_monotonic_ns=self.clock(),
             complete=True,
         )
-        for output in display.outputs:
+        for output in display.active_outputs:
             observed_output = activities[output.output_id]
             view.outputs.add(
                 output_id=output.output_id,
@@ -312,7 +312,7 @@ class LifecycleDriver:
             max_bytes=request.policies.limits.max_document_bytes,
         )
         display.require_trial_marker()
-        for output in display.outputs:
+        for output in display.active_outputs:
             self.announce("display:" + output.output_id, None)
         # Keep the previous, validated Idle visible while Setup loads and
         # validates the adopted calibration on its CPU worker. prepare_graphics

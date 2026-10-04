@@ -1,0 +1,4 @@
+Reference source: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-software/protocol/src/protocol/gui/experiment_window.py
+SHA256: 06eb36bdfcac7b4fd62b403ee278cd2514def746a7b92f3f451752272892de53
+Read 2026-10-02: inventory/assignment 8065–8230; camera parameters 8250–8310; actions/fields 8440–8505; compact HUD 29010–29085.
+Only UI source evidence; no hardware execution.

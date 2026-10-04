@@ -111,3 +111,93 @@ class VisualStimulusConfigurationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_output_subsets_preserve_rig_geometry_and_calibrated_mappings():
+    from itertools import product
+
+    import pytest
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+    from cephvr.visual_stimulus.rendering.arena import off_axis_view_projection
+
+    source = json.loads(valid_display_json())
+    prototype = source["outputs"][0]
+    source["outputs"] = [
+        dict(prototype, output_id=f"projector/{name}", device_identity=f"edid:{name}")
+        for name in ("front", "left", "right", "bottom")
+    ]
+    for mapping, output in zip(source["mappings"], source["outputs"], strict=True):
+        mapping["output_id"] = output["output_id"]
+    source["photodiode_output_id"] = None
+    source["photodiode_patch"] = None
+    source["presentation_mode"] = "all_outputs_vsync"
+    full = DisplayProfile.model_validate_json(json.dumps(source))
+    matrices = [
+        off_axis_view_projection(full, surface) for surface in full.geometry.surfaces
+    ]
+    for choices in product((False, True), repeat=4):
+        if not any(choices):
+            continue
+        for output, enabled in zip(source["outputs"], choices, strict=True):
+            output["enabled"] = enabled
+        selected = DisplayProfile.model_validate_json(json.dumps(source))
+        assert selected.geometry == full.geometry
+        assert selected.mappings == full.mappings
+        assert len(selected.active_outputs) == sum(choices)
+        assert {m.output_id for m in selected.active_mappings} == {
+            o.output_id for o in selected.active_outputs
+        }
+        assert [
+            off_axis_view_projection(selected, surface)
+            for surface in selected.geometry.surfaces
+        ] == matrices
+        assert validate_display_profile(
+            json.dumps(source), max_bytes=1_000_000
+        ) == frozenset(o.output_id for o in selected.active_outputs)
+    for output in source["outputs"]:
+        output["enabled"] = False
+    with pytest.raises(ValueError, match="at least one"):
+        DisplayProfile.model_validate_json(json.dumps(source))
+    source["outputs"][1]["enabled"] = True
+    source["photodiode_output_id"] = source["outputs"][0]["output_id"]
+    with pytest.raises(ValueError, match="photodiode output must be enabled"):
+        DisplayProfile.model_validate_json(json.dumps(source))
+
+
+def test_photodiode_visibility_is_independent_of_pacing_and_disabled_target():
+    import pytest
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+
+    source = json.loads(valid_display_json())
+    output = dict(
+        source["outputs"][0],
+        output_id="projector/off",
+        device_identity="edid:off",
+        enabled=False,
+    )
+    source["outputs"].append(output)
+    source["mappings"].append(
+        dict(source["mappings"][0], mapping_id="off-map", output_id="projector/off")
+    )
+    source.update(
+        photodiode_enabled=False,
+        photodiode_output_id="projector/off",
+        pacing_output_id="projector/main",
+    )
+    display = DisplayProfile.model_validate_json(json.dumps(source))
+    display.require_trial_marker()
+    assert display.marker_output_id is None
+    assert display.selected_pacing_output_id == "projector/main"
+    source["photodiode_output_id"] = "projector/disconnected"
+    DisplayProfile.model_validate_json(json.dumps(source)).require_trial_marker()
+    source["photodiode_enabled"] = True
+    with pytest.raises(ValueError, match="unknown photodiode"):
+        DisplayProfile.model_validate_json(json.dumps(source))
+    source["photodiode_enabled"] = False
+    source["pacing_output_id"] = "projector/off"
+    with pytest.raises(ValueError, match="pacing output"):
+        DisplayProfile.model_validate_json(json.dumps(source))

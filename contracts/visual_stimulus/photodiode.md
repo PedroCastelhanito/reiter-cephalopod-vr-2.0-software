@@ -4,7 +4,12 @@ Governing rule: [V22](../../docs/architecture/visual_stimulus.md#v22). Presentat
 [V20](presentation.md), recording/replay [V13](replay.md), and physical alignment
 [SYS-004](../../architecture.md#sys-004). The frame-alternation/periodic-landmark
 strategy and the six-frame marker every 60 submitted frames are accepted.
-No photodiode runtime or optical timing validation is implemented here.
+Physical optical timing validation remains a rig obligation.
+
+The operator may disable the pulse independently of pacing. Disabled pulses keep
+stored placement but do not require that target to be enabled or available, do not
+draw a patch and retain null marker fields in submission evidence. Explicit pacing
+still requires an active output. Enabled pulses validate target and rectangle at Setup.
 
 ## Sequence definition
 
@@ -33,7 +38,7 @@ Stop at the actual trial cutoff even if the final landmark is incomplete.
 Use one configured output-space patch on the designated photodiode projector. Patch
 geometry, bright/dark levels and the versioned pattern definition resolve during
 Setup; validate that the patch is visible within that output and has distinct finite
-levels. Do not inherit a particular face, channel, patch rectangle or disabled flag
+levels. Do not inherit a particular face, channel or patch rectangle
 from the old implementation. Mapping to the real detector remains a rig input.
 
 The rendering worker composites the marker into the same final image presented and

@@ -278,7 +278,7 @@ class NativePreparation:
                     snapshot_limit_bytes=limits.max_asset_cpu_bytes,
                     video_index_limit_bytes=limits.decoded_bytes_total,
                     glb_element_limit=max(1, limits.max_asset_cpu_bytes // 256),
-                    output_count=len(display.outputs),
+                    output_count=len(display.active_outputs),
                     owner_prefix=f"visual_stimulus:{trial.context.trial_id}",
                     display=display,
                     max_document_bytes=limits.max_document_bytes,
@@ -377,21 +377,22 @@ class NativePreparation:
             raise RuntimeError("scene preparation requires the active resource budget")
         mappings = sum(
             mapping.viewport.width * mapping.viewport.height
-            for mapping in artifact.display.mappings
+            for mapping in artifact.display.active_mappings
         )
         output_pixels = sum(
-            output.width_px * output.height_px for output in artifact.display.outputs
+            output.width_px * output.height_px
+            for output in artifact.display.active_outputs
         )
         # Each mapped surface retains RGBA32F color plus a 32-bit depth buffer;
         # final and calibrated-device outputs each retain an RGBA32F texture.
         gpu_bytes = (
             mappings * 20
             + output_pixels * 32
-            + reservation_bytes(len(artifact.display.outputs))
+            + reservation_bytes(len(artifact.display.active_outputs))
         )
         self._budget.reserve(
             owner=f"visual_stimulus:{artifact.identity.trial_id}:scene-surfaces",
-            cpu_bytes=len(artifact.display.outputs) * DIAGNOSTIC_SLOTS * 512,
+            cpu_bytes=len(artifact.display.active_outputs) * DIAGNOSTIC_SLOTS * 512,
             gpu_bytes=gpu_bytes,
         )
 

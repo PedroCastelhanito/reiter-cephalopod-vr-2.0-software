@@ -1,0 +1,7 @@
+PID: 3778
+Visible: True
+Title: CephVR2.0 — Dashboard · design review
+Size: 720x800
+Layout: wide
+Native Qt window grab: even-io-microcontroller.png
+Closed after inspection: True

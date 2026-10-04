@@ -150,7 +150,7 @@ class ModernGLSceneRenderer:
             # prepared scene order and all four faces share the same instance state.
             for mapping in (
                 item
-                for item in artifact.display.mappings
+                for item in artifact.display.active_mappings
                 if item.output_id == output_id
             ):
                 target = frame.surface_fbos[mapping.mapping_id]
@@ -182,7 +182,7 @@ class ModernGLSceneRenderer:
             frame.warp_program["scene_tex"].value = 0
             for mapping in (
                 item
-                for item in artifact.display.mappings
+                for item in artifact.display.active_mappings
                 if item.output_id == output_id
             ):
                 texture = frame.surface_textures[mapping.mapping_id]
@@ -427,7 +427,7 @@ class ModernGLSceneRenderer:
 
     @staticmethod
     def _output_index(artifact: PreparedTrial, output_id: str) -> int:
-        return tuple(item.output_id for item in artifact.display.outputs).index(
+        return tuple(item.output_id for item in artifact.display.active_outputs).index(
             output_id
         )
 
@@ -465,13 +465,15 @@ class ModernGLSceneRenderer:
         )
         frame.output_program["lut_size"].value = max(2, frame.lut_texture.size[0])
         patch = artifact.display.photodiode_patch
-        marker_output = output_id == artifact.display.photodiode_output_id
+        marker_output = output_id == artifact.display.marker_output_id
         frame.output_program["marker_active"].value = float(
             marker_output and patch is not None
         )
         if patch is not None:
             output = next(
-                item for item in artifact.display.outputs if item.output_id == output_id
+                item
+                for item in artifact.display.active_outputs
+                if item.output_id == output_id
             )
             low, high = patch.rect.x / output.width_px, patch.rect.y / output.height_px
             right = (patch.rect.x + patch.rect.width) / output.width_px

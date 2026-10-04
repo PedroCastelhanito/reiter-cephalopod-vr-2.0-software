@@ -469,14 +469,16 @@ these are not unanswered controller ownership choices.
 <a id="e10"></a>
 ### E10 — Modes and required participants
 
-**Status:** Accepted · **Revision:** 20
+**Status:** Accepted · **Revision:** 22
 
 - Support two session modes, open-loop Visual Stimulus and closed-loop Visual Stimulus; Visual Stimulus runs in both.
 - Select one mode and one active-backend set for the whole session. Trial-specific
   gains may change, including gains that simulate open-loop behavior, without
   changing the session mode or participant set.
-- Tracking may be enabled in either mode. It records/observes without driving an
-  open-loop stimulus and supplies required feedback in closed-loop mode.
+- Derive Tracking participation from the session mode and T14 saving: active for
+  closed-loop or velocity recording, otherwise inactive. Open-loop saved tracking
+  does not drive the stimulus; closed-loop requires feedback even with saving Off.
+  Camera and Visual Stimulus video recording remain independent of this derivation.
 - Every enabled backend, device, input dependency and scientific output is required
   at initial preparation/start; disabled roles add no obligations. During
   execution E06 permits explicit incident-scoped unavailable data functions while
@@ -491,7 +493,7 @@ these are not unanswered controller ownership choices.
 | Visual Stimulus runtime | On |
 | Behavioral camera | On |
 | Behavioral-camera video | On |
-| Tracking backend | Off |
+| Tracking backend | Derived from mode and T14 saving |
 | Tracking camera | Off |
 | Tracking-camera video, when camera enabled | On |
 | Save Visual Stimulus data | On |

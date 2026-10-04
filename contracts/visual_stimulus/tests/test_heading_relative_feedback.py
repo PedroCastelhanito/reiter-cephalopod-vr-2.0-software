@@ -59,6 +59,11 @@ class SignConventionTests(unittest.TestCase):
         self.close(self.step(sideways=1.), (-1., 0., 0.))     # animal-left at psi=0 is -X.
         self.assertGreater(self.step(turn=1.)[2], 0.)          # +turn (animal-left) raises yaw.
         self.close(self.step(yaw=90., forward=1.), (-1., 0., 0.))
+    def test_independent_planar_gains(self):
+        self.close(planar_feedback_increment(yaw_before_deg=0., forward=4., sideways=6.,
+            linear_gain_mm=2., sideways_gain_mm=3., turn=0., turn_gain_deg_per_rad=1.,
+            turn_offset_deg_per_s=0., dt_s=.5), (-9., 4., 0.))
+
     def test_midpoint_heading_and_rejected_interval(self):
         dx, dy, dyaw = self.step(forward=1., turn=math.pi/2)  # 90 deg turn over the interval.
         self.assertAlmostEqual(dyaw, 90.)
@@ -89,6 +94,21 @@ class TrackingChannelBindingTests(unittest.TestCase):
         parse(source)
         source['sequence'][0]['conditions']['columns'][0]['unit']['output_unit'] = 'deg/s'
         with self.assertRaises(ValueError): parse(source)
+
+    def test_independent_gain_roundtrip_and_unit_validation(self):
+        source = arena_program([PLANAR | {'sideways_gain': constant(-0.3)}, TURN])
+        loaded = parse(source)
+        self.assertEqual(loaded.sequence[0].settings[0].feedback[0].sideways_gain.value, -0.3)
+        self.assertIsNone(parse(arena_program([PLANAR])).sequence[0].settings[0].feedback[0].sideways_gain)
+        source['sequence'] = [{'kind': 'group', 'group_id': 'g', 'repetitions': 1, 'order': 'as_listed',
+            'order_unit': 'condition_rows', 'conditions': {'columns': [{'column_id': 'gain', 'value_type': 'number',
+            'unit': {'kind': 'feedback_gain', 'input_unit': 'px/s', 'output_unit': 'deg/s', 'coefficient': 'value'}}],
+            'rows': [{'row_id': 'r', 'cells': [{'column_id': 'gain', 'value': 0.1}]}]}, 'body': source['sequence']}]
+        for epoch in source['sequence'][0]['body']:
+            epoch['settings'][0]['feedback'][0]['sideways_gain'] = constant({'kind': 'condition', 'group_id': 'g', 'column_id': 'gain'})
+        with self.assertRaises(ValueError): parse(source)
+        source['sequence'][0]['conditions']['columns'][0]['unit']['output_unit'] = 'mm/s'
+        parse(source)
 
     def test_body_frame_and_pair_violations_rejected(self):
         world = [{'channel_id': 'forward_drive', 'stream_id': 'tracking', 'value_kind': 'interval_average_rate',

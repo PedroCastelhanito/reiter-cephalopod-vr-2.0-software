@@ -207,12 +207,13 @@ class Feedback(Model):
 
 class PlanarFeedback(Model):
     # V24: ordered anatomical_body forward/sideways pair onto the enclosing arena's
-    # world x/y at the current heading; one linear gain, no offset/rate bias.
+    # world x/y at the current heading, with independent gains and no rate bias.
     binding_id: Id
     operation: Literal["heading_relative_planar_integration"]
     forward_channel: Id
     sideways_channel: Id
     gain: Function
+    sideways_gain: Function | None = None
 
     def channel_ids(self) -> tuple[str, ...]:
         return (self.forward_channel, self.sideways_channel)
@@ -456,6 +457,7 @@ class Conditions(Model):
 class Epoch(Model):
     kind: Literal["epoch"]
     epoch_id: Id
+    batch_label: str = Field(default="", max_length=128)
     scene_id: Id
     duration: Duration
     settings: tuple[Settings, ...]

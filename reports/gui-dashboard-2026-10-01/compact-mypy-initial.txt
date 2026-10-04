@@ -1,0 +1,14 @@
+src/cephvr/gui/dashboard.py:77: error: Incompatible types in assignment (expression has type "QAction", variable has type "QPushButton")  [assignment]
+src/cephvr/gui/dashboard.py:78: error: "QPushButton" has no attribute "triggered"  [attr-defined]
+src/cephvr/gui/window.py:79: error: No overload variant of "addAction" of "QWidget" matches argument type "QPushButton"  [call-overload]
+src/cephvr/gui/window.py:79: note: Possible overload variants:
+src/cephvr/gui/window.py:79: note:     def addAction(self, icon: QIcon, text: str | None) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, icon: QIcon, text: str | None, slot: Callable[..., Any] | pyqtBoundSignal, type: ConnectionType = ...) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Callable[..., Any] | pyqtBoundSignal, type: ConnectionType = ...) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, text: str | None) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, text: str | None, slot: Callable[..., Any] | pyqtBoundSignal, type: ConnectionType = ...) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Callable[..., Any] | pyqtBoundSignal, type: ConnectionType = ...) -> QAction | None
+src/cephvr/gui/window.py:79: note:     def addAction(self, action: QAction | None) -> None
+Found 3 errors in 2 files (checked 9 source files)

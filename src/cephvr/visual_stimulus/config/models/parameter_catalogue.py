@@ -346,6 +346,8 @@ def validate_settings_units(
                     f"{base}.{path}: source unit cannot supply planar increments"
                 )
             function(binding.gain, gain, path + ".gain")
+            if binding.sideways_gain is not None:
+                function(binding.sideways_gain, gain, path + ".sideways_gain")
             continue
         source = channels[binding.source_channel]
         if source.frame_id == BODY_FRAME and not (

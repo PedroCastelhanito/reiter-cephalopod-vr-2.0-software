@@ -11,14 +11,20 @@ Each physical output explicitly selects 8 or 10 RGB bits per channel and must pa
 its adopted calibration profile. This does not change the float32 working pipeline
 or establish physical projector precision.
 
+`pacing_output_id` owns timing independently of pulse visibility and placement.
+The legacy enum spelling `photodiode_only_vsync` is retained for compatibility; it
+now refers to the selected pacing output even with the pulse disabled or elsewhere.
+Absent explicit pacing, legacy pulse-enabled profiles retain their marker target.
+New pulse-disabled configurations require explicit active pacing.
+
 Use two session modes with explicit requested swap intervals:
 
-| Mode | Photodiode output | Other outputs |
+| Mode | Pacing output | Other outputs |
 | --- | --- | --- |
 | `photodiode_only_vsync` (default for new profiles) | 1 | 0 |
 | `all_outputs_vsync` (selectable for rig testing) | 1 | 1 |
 
-Resolve the designated photodiode output through a stable output identity, not a
+Resolve the designated pacing output through a stable output identity, not a
 hard-coded tank face, monitor enumeration index or window creation order. The mixed
 mode requires exactly one designated active output. Output identity names a physical
 presentation target; surface-to-output mappings remain separate under V15.

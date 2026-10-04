@@ -490,7 +490,7 @@ class NativeRecording:
                 recipe=receipt,
                 trial_start_host_ns=schedule.start_monotonic_ns,
                 required_output_ids=tuple(
-                    item.output_id for item in artifact.display.outputs
+                    item.output_id for item in artifact.display.active_outputs
                 ),
                 renderer_compatibility=artifact.renderer_compatibility,
             )

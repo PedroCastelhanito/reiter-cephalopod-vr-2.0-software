@@ -718,6 +718,12 @@
           "title": "Epoch Id",
           "type": "string"
         },
+        "batch_label": {
+          "default": "",
+          "maxLength": 128,
+          "title": "Batch Label",
+          "type": "string"
+        },
         "scene_id": {
           "maxLength": 128,
           "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
@@ -1749,6 +1755,40 @@
             }
           ],
           "title": "Gain"
+        },
+        "sideways_gain": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "constant": "#/$defs/Constant",
+                  "keyframes": "#/$defs/Keyframes",
+                  "ramp": "#/$defs/Ramp",
+                  "sine": "#/$defs/Sine"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/Constant"
+                },
+                {
+                  "$ref": "#/$defs/Ramp"
+                },
+                {
+                  "$ref": "#/$defs/Sine"
+                },
+                {
+                  "$ref": "#/$defs/Keyframes"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sideways Gain"
         }
       },
       "required": [

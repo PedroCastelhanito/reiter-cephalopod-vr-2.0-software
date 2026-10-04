@@ -109,7 +109,7 @@ class SceneOutputBuilder:
             diagnostics = DiagnosticRing(context, track)
             mappings = [
                 mapping
-                for mapping in artifact.display.mappings
+                for mapping in artifact.display.active_mappings
                 if mapping.output_id == output_id
             ]
             surface_textures: dict[str, Any] = {}

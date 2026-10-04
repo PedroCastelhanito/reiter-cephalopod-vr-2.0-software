@@ -127,6 +127,74 @@ install `.[dev,acquisition]` in the project environment. The pypylon, NumPy and
 pySerial pins come from rig inventory; pinning them does not establish compatibility
 or performance. FFmpeg remains an external PATH prerequisite under A08.
 
+## Dashboard frontend review
+
+The native Dashboard uses the [shared GUI formatting rules](architecture/gui.md#g02).
+On the Windows rig, install the GUI extra with `python -m pip install -e '.[dev,gui]'`.
+For an existing macOS source environment, install its declared PyQt6 version directly;
+the complete package's native DLLs are intentionally restricted to AMD64 Windows.
+
+```sh
+# Existing repository Python environment; no controller or devices are launched.
+python scripts/start_gui.py
+# Optional disconnected view, without local review controls:
+python scripts/start_gui.py --read-only
+# Equivalent module entry for review:
+python -m cephvr.gui.review --review
+```
+
+The script selects the repository's `.venv` Python on Windows/macOS/Linux and works
+from any working directory when called by its full path. Local review currently loads
+four simulated 1920 × 1080 projector displays (2–5), assigned Front/Left/Right/Bottom.
+Their Devices checkboxes drive the Protocol lanes, and Refresh retains this sample
+inventory and its local choices. These are authoring fixtures, not hardware discovery;
+`--read-only` does not load them.
+
+The design review is identified in the window title and permits local subject edits.
+Phase/observer inspection lives in the View menu. Session buttons report local intent
+only. Dashboard currently shows a review candidate with horizontal read-only readiness
+indicators inside System controls, above a full-width Setup button and equal Start/Stop
+buttons. Phase appears in the content-height HUD only; the Activity log fills remaining height; subject age reads Age (dph). Setup requests New session from Ended. Stop cancels preparation in
+Setting up/Ready, or opens Stop now / Stop after trial / Cancel during a session.
+Stop now interrupts an active trial; the other option finishes it. Selections retain
+current phase/control gates; Cancel or dismissal sends no intent.
+Camera experiment enablement lives in Devices. Dashboard has a two-column Recordings
+card below Session config for camera/stimulus video and Tracking velocities, and no
+trial-plan editor or separate progress card. The top-right Previews button toggles a modeless selector; no open-window count is shown. First opening uses the
+12-pixel gap/top alignment; later openings restore saved position from local
+CephVR/Frontend GUI preferences and fit the compact selector to its current rows. The selector uses
+labeled local visibility fixtures; it does not open runtime viewers or call devices. Close inspection windows
+after checking changes, then reopen the reviewed GUI for the owner to inspect.
+Devices has icon subtabs for Cameras, Microcontroller, Projectors and SpikeGLX with local
+draft fields and review-only check actions. Visual Stimulus and Tracking remain placeholders. Omitting `--review` shows a disconnected,
+read-only frontend. Neither mode is the managed GUI bootstrap or an experiment mode;
+controller transport, control leases and runtime viewers remain unfinished.
+
+Camera frontend review uses two labelled sample devices with per-device drafts and
+experiment checkboxes. The View → Review active backends menu exercises protocol
+preview gating until Protocol integration exists. Disabled sources remain dimmed.
+Camera configuration sits below the inventory: role, trigger source, requested
+Microcontroller trigger frequency and PFS path/Browse. Configure detailed parameters in
+PylonViewer. Browse reads FrameStart trigger hints to update the dropdown, but never
+applies SDK settings. Unknown hints remain unset. Microcontroller Scan ports and
+Projectors Refresh displays enumerate local OS devices without opening hardware.
+Only discovered COM ports are listed. Inputs (Projector flip) precedes Outputs
+(Trial state/camera triggers). Rows contain pin and per-element Test controls, with
+fixed rising-edge input and active-high Trial state; camera rates stay in Cameras. Projectors uses a compact
+assignment table and desktop-layout diagram; Windows display indices are unavailable
+on other systems and still need rig verification. These remain unsaved drafts;
+trigger tests report not tested.
+All pages
+and subtabs share a fitted HUD above an expanding Activity log in the right column.
+
+Dashboard output paths have an existing-folder picker and compact unfocused display
+with full-path tooltips. Activity logs preserve the retained entry being read and
+follow new entries only when already at the bottom. These controls edit local drafts.
+
+Portable widget checks run with `QT_QPA_PLATFORM=offscreen python -m pytest tests/gui -q`
+(set the environment variable separately in PowerShell). These tests and local
+screenshots do not establish Windows integration or full-workload rig acceptance.
+
 ## Checks
 
 ```sh

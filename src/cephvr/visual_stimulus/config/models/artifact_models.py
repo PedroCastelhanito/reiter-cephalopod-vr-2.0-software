@@ -142,7 +142,7 @@ class Boundary(Model):
 class ReviewTiming(
     Model
 ):  # E13: constant rate; frame n is the n-th admitted render group.
-    pacing_output_id: OutputId  # Always the designated photodiode output (E13).
+    pacing_output_id: OutputId  # Always the designated pacing output (E13).
     rate_numerator: Pos  # Equals that output's nominal refresh numerator/denominator.
     rate_denominator: Pos
     implementation: str
@@ -240,16 +240,16 @@ class PreparedTrial(Model):
             raise ValueError(
                 "terminal boundary must deactivate exactly the final active instances"
             )
-        self.display.require_trial_marker()  # Photodiode output/patch required in both pacing modes.
+        self.display.require_trial_marker()  # Validate independent pacing and optional marker.
         if (r := self.review_encoding) is not None:
             if any(
                 o.width_px // r.scale_denominator < 1
                 or o.height_px // r.scale_denominator < 1
-                for o in self.display.outputs
+                for o in self.display.active_outputs
             ):
                 raise ValueError("composite scale leaves an empty tile")
             expected_tiles = tile_layout(
-                self.display.outputs, r.scale_denominator, r.composite_height
+                self.display.active_outputs, r.scale_denominator, r.composite_height
             )
             actual = [
                 (t.output_id, t.rect.x, t.rect.y, t.rect.width, t.rect.height)
@@ -262,7 +262,7 @@ class PreparedTrial(Model):
                 raise ValueError(
                     "review composite must tile every display output in the fixed layout"
                 )
-            bits = [o.rgb_bits_per_channel for o in self.display.outputs]
+            bits = [o.rgb_bits_per_channel for o in self.display.active_outputs]
             if [
                 t.source_code_bits for t in r.tiles
             ] != bits or r.native_pixel_format != (
@@ -272,11 +272,11 @@ class PreparedTrial(Model):
                     "composite depth must be the largest output depth, with tile source depths retained"
                 )
             d = self.display
-            pacing = {o.output_id: o for o in d.outputs}.get(r.timing.pacing_output_id)
-            if pacing is None or pacing.output_id != d.photodiode_output_id:
-                raise ValueError(
-                    "review timing must use the designated photodiode output"
-                )
+            pacing = {o.output_id: o for o in d.active_outputs}.get(
+                r.timing.pacing_output_id
+            )
+            if pacing is None or pacing.output_id != d.selected_pacing_output_id:
+                raise ValueError("review timing must use the designated pacing output")
             if (
                 r.timing.rate_numerator * pacing.refresh_denominator
                 != pacing.refresh_numerator * r.timing.rate_denominator

@@ -453,3 +453,96 @@ def test_partial_pipe_open_retains_owner_when_cleanup_fails():
     owner.close(deadline_ns=10**30)
     assert owner.closed
     assert result_pipe.close_attempts == 2
+
+
+@pytest.mark.parametrize("yaw", (0.0, 90.0))
+@pytest.mark.parametrize(
+    "forward_gain,sideways_gain", ((2, 3), (0, 3), (2, 0), (2, None), (2, -3))
+)
+def test_planar_mapping_independent_gains_and_legacy_fallback(
+    yaw, forward_gain, sideways_gain
+):
+    import math
+
+    from cephvr.visual_stimulus.config.models.program_model import (
+        ArenaSettings,
+        PlanarFeedback,
+    )
+
+    mapping = PlanarFeedback(
+        binding_id="walk",
+        operation="heading_relative_planar_integration",
+        forward_channel="forward",
+        sideways_channel="sideways",
+        gain=Constant(kind="constant", value=forward_gain),
+        sideways_gain=None
+        if sideways_gain is None
+        else Constant(kind="constant", value=sideways_gain),
+    )
+    program = SimpleNamespace(
+        input_channels=tuple(
+            InputChannel(
+                channel_id=name,
+                stream_id="stream",
+                value_kind="interval_average_rate",
+                unit="px/s",
+                frame_id="anatomical_body",
+            )
+            for name in ("forward", "sideways")
+        )
+    )
+    target = MutableState()
+    target.values = {
+        key: SimpleNamespace(value=value)
+        for key, value in (("x", 0.0), ("y", 0.0), ("yaw", yaw))
+    }
+    target.advance = lambda now_ns: None
+    trial = SimpleNamespace(instances={"arena": target})
+    region = SimpleNamespace(
+        kind="convex_polygon_xy",
+        vertices_mm=(
+            (-100.0, -100.0),
+            (100.0, -100.0),
+            (100.0, 100.0),
+            (-100.0, 100.0),
+        ),
+        margin_mm=0.0,
+    )
+    applier = FeedbackMappingApplier(
+        program,
+        arena_boundaries=SimpleNamespace(
+            bindings=(SimpleNamespace(instance_id="arena", region=region),)
+        ),
+    )
+    epoch = SimpleNamespace(
+        settings=(
+            ArenaSettings.model_construct(
+                instance_id="arena", world_frame_id="world", feedback=(mapping,)
+            ),
+        )
+    )
+    result = FeedbackResult(
+        "trial",
+        "stream",
+        1,
+        1,
+        1,
+        0,
+        500_000_000,
+        "valid",
+        (("forward", 4.0), ("sideways", 6.0)),
+        "result",
+    )
+    evidence = applier((result,), trial, epoch, 500_000_000, 0)
+    f = 4 * forward_gain * 0.5
+    lateral = 6 * (forward_gain if sideways_gain is None else sideways_gain) * 0.5
+    angle = math.radians(yaw)
+    expected = (
+        -math.sin(angle) * f - math.cos(angle) * lateral,
+        math.cos(angle) * f - math.sin(angle) * lateral,
+    )
+    assert evidence[0].requested_increment == pytest.approx(expected)
+    assert evidence[0].applied_increment == pytest.approx(expected)
+    assert (target.values["x"].value, target.values["y"].value) == pytest.approx(
+        expected
+    )

@@ -1,0 +1,18 @@
+REVIEW src/cephvr/acquisition/camera/basler.py: 682 lines; review cohesion
+REVIEW src/cephvr/acquisition/microcontroller/owner.py: 521 lines; review cohesion
+REVIEW src/cephvr/acquisition/recording/session.py: 536 lines; review cohesion
+REVIEW src/cephvr/acquisition/runtime.py: 557 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/capture_runtime.py: 600 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/execution.py: 589 lines; review cohesion
+REVIEW src/cephvr/acquisition/worker/service.py: 557 lines; review cohesion
+REVIEW src/cephvr/controller/assembly.py: 520 lines; review cohesion
+REVIEW src/cephvr/controller/metadata/reservation.py: 502 lines; review cohesion
+REVIEW src/cephvr/supervisor/shutdown.py: 505 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/config/models/program_model.py: 712 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/recording/native.py: 750 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/engine.py: 553 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/native.py: 565 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/rendering/scene.py: 555 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/resources/video.py: 512 lines; review cohesion
+REVIEW src/cephvr/visual_stimulus/worker/lifecycle.py: 547 lines; review cohesion
+Checked 467 backend modules; 0 boundary violations.

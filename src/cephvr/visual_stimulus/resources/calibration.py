@@ -113,7 +113,7 @@ def prepare_calibration(
     resources: list[Resource] = []
     content: dict[str, object] = {}
     try:
-        for mapping in display.mappings:
+        for mapping in display.active_mappings:
             budget.check_cancelled_or_expired()
             resource_id = mapping.mapping_id
             asset, data = _protected_bytes(
@@ -143,7 +143,9 @@ def prepare_calibration(
                 max_depth=32,
             )
             output = next(
-                item for item in display.outputs if item.output_id == mapping.output_id
+                item
+                for item in display.active_outputs
+                if item.output_id == mapping.output_id
             )
             if (
                 profile.mapping_id != mapping.mapping_id
@@ -195,7 +197,7 @@ def prepare_calibration(
                 )
             )
         if display.photometric_mode == "calibrated":
-            for output in display.outputs:
+            for output in display.active_outputs:
                 budget.check_cancelled_or_expired()
                 reference = output.photometric_profile
                 if reference is None:

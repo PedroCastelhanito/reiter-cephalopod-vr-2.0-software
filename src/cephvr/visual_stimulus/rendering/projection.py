@@ -46,7 +46,7 @@ def off_axis_frustum(
     right = _unit(_sub(bottom_right, bottom_left))
     up = _unit(_sub(top_left, bottom_left))
     normal = _unit(_cross(right, up))
-    distance = _dot(_sub(bottom_left, observer), normal)
+    distance = -_dot(_sub(bottom_left, observer), normal)
     if distance <= 0:
         raise ValueError("observer must be in front of projection surface")
     scale = near / distance

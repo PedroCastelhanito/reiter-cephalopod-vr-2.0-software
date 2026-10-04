@@ -120,6 +120,7 @@ class Geometry(Model):
 
 
 class Output(Model):
+    enabled: bool = True
     output_id: OutputId
     device_identity: (
         DeviceIdentity  # Stable installation identity, never monitor array index.
@@ -166,8 +167,32 @@ class DisplayProfile(Model):
     )
     photometric_mode: Literal["calibrated", "uncalibrated"]
     idle_linear_rgb: Vec3
+    photodiode_enabled: bool = True
+    pacing_output_id: OutputId | None = None
     photodiode_output_id: OutputId | None = None
     photodiode_patch: PhotodiodePatch | None = None
+
+    @property
+    def selected_pacing_output_id(self) -> str | None:
+        # Legacy profiles coupled timing and marker placement; explicit pacing wins.
+        return self.pacing_output_id or (
+            self.photodiode_output_id if self.photodiode_enabled else None
+        )
+
+    @property
+    def marker_output_id(self) -> str | None:
+        return self.photodiode_output_id if self.photodiode_enabled else None
+
+    @property
+    def active_outputs(self) -> tuple[Output, ...]:
+        return tuple(output for output in self.outputs if output.enabled)
+
+    @property
+    def active_mappings(self) -> tuple[Mapping, ...]:
+        active = {output.output_id for output in self.active_outputs}
+        return tuple(
+            mapping for mapping in self.mappings if mapping.output_id in active
+        )
 
     @model_validator(mode="after")
     def references(self) -> Self:
@@ -179,6 +204,14 @@ class DisplayProfile(Model):
             if len(values) != len(set(values)):
                 raise ValueError(f"duplicate {label}")
         outputs = {x.output_id: x for x in self.outputs}
+        if not self.active_outputs:
+            raise ValueError("at least one display output must be enabled")
+        if (
+            self.photodiode_enabled
+            and self.photodiode_output_id in outputs
+            and not outputs[self.photodiode_output_id].enabled
+        ):
+            raise ValueError("the designated photodiode output must be enabled")
         if {m.surface_id for m in self.mappings} != {
             "front",
             "left",
@@ -197,16 +230,22 @@ class DisplayProfile(Model):
         ):
             raise ValueError("calibrated mode requires a profile for every output")
         if (
-            self.photodiode_output_id is not None
+            self.photodiode_enabled
+            and self.photodiode_output_id is not None
             and self.photodiode_output_id not in outputs
         ):
             raise ValueError("unknown photodiode output")
         if (
             self.presentation_mode == "photodiode_only_vsync"
-            and self.photodiode_output_id is None
+            and self.selected_pacing_output_id is None
         ):
-            raise ValueError("mixed pacing requires an explicit photodiode output")
-        if self.photodiode_patch is not None:
+            raise ValueError("mixed pacing requires an explicit pacing output")
+        pacing = self.selected_pacing_output_id
+        if pacing is not None and (
+            pacing not in outputs or not outputs[pacing].enabled
+        ):
+            raise ValueError("the pacing output must exist and be enabled")
+        if self.photodiode_enabled and self.photodiode_patch is not None:
             if self.photodiode_output_id is None:
                 raise ValueError("patch requires an explicit output")
             self._check_rect(
@@ -224,7 +263,11 @@ class DisplayProfile(Model):
 
     def require_trial_marker(self) -> None:
         """Setup-only requirement; startup Idle never needs a flashing patch."""
-        if self.photodiode_output_id is None or self.photodiode_patch is None:
+        if self.selected_pacing_output_id is None:
+            raise ValueError("trial Setup requires an explicit pacing output")
+        if self.photodiode_enabled and (
+            self.photodiode_output_id is None or self.photodiode_patch is None
+        ):
             raise ValueError("trial Setup requires the photodiode output and patch")
 
 

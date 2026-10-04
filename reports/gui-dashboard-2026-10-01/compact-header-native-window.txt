@@ -1,0 +1,7 @@
+PID: 95641
+Visible: True
+Title: CephVR2.0 — Dashboard · design review
+Size: 720x800
+Layout: wide
+Native Qt window grab: dashboard-compact-header-native.png
+Closed after inspection: True

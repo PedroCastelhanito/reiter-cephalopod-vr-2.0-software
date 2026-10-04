@@ -28,6 +28,13 @@ The fin-undulation method contract and policy/settings were removed. Old IDs rem
 superseded anchors only. The undeployed family ID is now `fin_flow`; `fin_undulation`
 is not an alias and its old method settings are not silently migrated.
 
+GUI integration note (2026-10-03): [E10](../docs/architecture/experiment.md#e10)
+and [T14](../docs/architecture/tracking.md#t14) now derive participation from
+closed-loop or Record velocities. The local GUI draft and preview gate implement
+that derivation; managed configuration/default resolution and runtime adoption remain
+pending. The review fixture explicitly selects saving Off; T14's persisted/default
+settings are not overwritten. [Frontend evidence](runtime.md#dashboard-frontend-implementation).
+
 ## Implementation and local validation
 
 The runtime now lives under `src/cephvr/tracking`, with `cephvr-tracking` as the

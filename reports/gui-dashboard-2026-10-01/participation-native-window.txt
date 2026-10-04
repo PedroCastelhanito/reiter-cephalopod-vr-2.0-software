@@ -1,0 +1,7 @@
+PID: 14192
+Visible: True
+Title: CephVR — explicit projector layout fixtures
+Size: 720x800
+Layout: wide
+Native Qt window grab: participation-microcontroller.png
+Closed after inspection: True

@@ -232,7 +232,7 @@ def validate_display_profile(
 ) -> frozenset[str]:
     """Validate the saved display profile without touching graphics devices."""
     profile = parse_display_json(profile_json, max_bytes=max_bytes)
-    return frozenset(output.output_id for output in profile.outputs)
+    return frozenset(output.output_id for output in profile.active_outputs)
 
 
 def validate_configuration(

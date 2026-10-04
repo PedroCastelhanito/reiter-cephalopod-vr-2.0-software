@@ -157,7 +157,7 @@ class ModernGLPort:
         glfw = self._glfw
         created: list[_OutputContext] = []
         try:
-            for output in display.outputs:
+            for output in display.active_outputs:
                 monitor = self.monitor_resolver(output.device_identity, glfw)
                 self.announce(f"visual_stimulus:window:{output.output_id}", None)
                 self._window_obligations.add(output.output_id)
@@ -194,7 +194,7 @@ class ModernGLPort:
                 )
                 swap_interval = (
                     1
-                    if output.output_id == display.photodiode_output_id
+                    if output.output_id == display.selected_pacing_output_id
                     or display.presentation_mode == "all_outputs_vsync"
                     else 0
                 )
@@ -213,7 +213,7 @@ class ModernGLPort:
                 )
             self._display = display
             self._display_report = DisplayInitialization(
-                tuple(output.output_id for output in display.outputs),
+                tuple(output.output_id for output in display.active_outputs),
                 tuple(
                     (item.output_id, item.bits, item.bits, item.bits)
                     for item in created
@@ -408,10 +408,12 @@ class ModernGLPort:
         if self._display is None:
             raise NativeRenderingError("display missing during presentation")
         order = [
-            key for key in self._outputs if key != self._display.photodiode_output_id
+            key
+            for key in self._outputs
+            if key != self._display.selected_pacing_output_id
         ]
-        if self._display.photodiode_output_id is not None:
-            order.append(self._display.photodiode_output_id)
+        if self._display.selected_pacing_output_id is not None:
+            order.append(self._display.selected_pacing_output_id)
         for output_id in order:
             context = self._outputs[output_id]
             entry = self.clock_ns()
@@ -433,7 +435,7 @@ class ModernGLPort:
         if not isinstance(display, DisplayProfile) or display != self._display:
             raise NativeRenderingError("active display is unavailable for Idle")
         activities = []
-        for output in display.outputs:
+        for output in display.active_outputs:
             context = self._outputs[output.output_id]
             self._glfw.make_context_current(context.window)
             entry = self.clock_ns()

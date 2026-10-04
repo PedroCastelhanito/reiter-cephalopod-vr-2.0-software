@@ -35,7 +35,7 @@ Configuration:
 <a id="e12"></a>
 ### E12 — Remote SpikeGLX control
 
-**Status:** Accepted · **Revision:** 17
+**Status:** Accepted · **Revision:** 18
 
 - **Owner and transport:** the controller owns the only SpikeGLX client (no
   supervisor fallback), using the official SDK Python wrapper against SpikeGLX's
@@ -62,7 +62,9 @@ Configuration:
   index, saved channel and optional digital bit; camera roles use OneBox. The
   operator reassigns roles by editing that table; it is reread at each Setup without
   restart. Required roles are every enabled externally triggered camera plus the
-  photodiode; an unmapped role, wrong stream or unsaved channel blocks Ready. An
+  photodiode when pulse generation is enabled (V22); a disabled photodiode retains
+  its mapping without requiring a saved channel. An unmapped required role, wrong
+  stream or unsaved channel blocks Ready. An
   unpaired session records a Setup warning in the session log, with no prompt, that
   CephVR cannot verify pulse recording. The check proves saved-channel configuration,
   not wiring or recorded pulses.

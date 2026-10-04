@@ -32,6 +32,17 @@ content validation and operating-condition/capability comparisons remain Setup w
 Uncalibrated mode may retain a stored photometric reference but does not load/apply
 it; calibrated mode requires a compatible profile for every required output.
 
+Each output has `enabled` (default true for existing profiles). Full rig geometry,
+output declarations and mappings remain stored; only enabled outputs/mappings
+participate in resource preparation, rendering, presentation and recording. Disabled
+outputs do not require connected devices or loaded calibration assets. At least one
+output must be enabled. `pacing_output_id` independently selects an active timing
+output; legacy profiles may use their enabled photodiode target when this is absent.
+`photodiode_enabled` defaults true for existing profiles. When false, retain
+`photodiode_output_id`/patch without target availability, enablement or bounds checks;
+no patch is drawn. Enabled pulses require valid active placement at Setup. There is
+no implicit relocation of either marker or pacing. A participation change needs fresh preparation.
+
 The model binds four surfaces in millimetres with explicit corner ordering, one fixed
 observer, clipping distances/tolerances, physical outputs, viewports and imported
 geometric/photometric references. Idle RGB is linear Rec.709/D65; finite excursions

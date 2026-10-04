@@ -90,7 +90,7 @@ class RendererEngine:
             return self._display_observation
         observation = self._port.initialize_display(display)
         requested = {
-            item.output_id: item.rgb_bits_per_channel for item in display.outputs
+            item.output_id: item.rgb_bits_per_channel for item in display.active_outputs
         }
         observed = {
             output: (red, green, blue)
@@ -106,7 +106,7 @@ class RendererEngine:
                     f"{output_id}: actual RGB framebuffer precision does not match request"
                 )
             configured = next(
-                item for item in display.outputs if item.output_id == output_id
+                item for item in display.active_outputs if item.output_id == output_id
             )
             if sizes.get(output_id) != (configured.width_px, configured.height_px):
                 raise RendererStateError(
@@ -217,7 +217,7 @@ class RendererEngine:
         if self._display is None:
             raise RendererStateError("display unexpectedly absent")
         self._output_attempts = {
-            output.output_id: 0 for output in self._display.outputs
+            output.output_id: 0 for output in self._display.active_outputs
         }
         self._last_time_ns = None
         self._stopped = False
@@ -431,7 +431,7 @@ class RendererEngine:
         frames = rendered.outputs
         if self._display is None:
             raise RendererStateError("display unexpectedly absent")
-        expected = {item.output_id for item in self._display.outputs}
+        expected = {item.output_id for item in self._display.active_outputs}
         if {frame.output_id for frame in frames} != expected:
             raise RendererStateError(
                 "renderer did not produce exactly one image per configured output"
@@ -441,8 +441,8 @@ class RendererEngine:
             raise RendererStateError(
                 "presentation did not report exactly one outcome per output"
             )
-        photodiode_id = self._display.photodiode_output_id
-        if photodiode_id is None or photodiode_id not in expected:
+        photodiode_id = self._display.marker_output_id
+        if photodiode_id is not None and photodiode_id not in expected:
             raise RendererStateError(
                 "trial display lacks its required photodiode output"
             )
@@ -485,7 +485,7 @@ class RendererEngine:
             snapshots,
             activities,
             rendered.clipping_stages,
-            marker,
+            marker if self._display.photodiode_enabled else None,
         )
         self._photodiode_index += 1
         self._group_id += 1

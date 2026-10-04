@@ -18,6 +18,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+gui = [
+    "PyQt6==6.11.0",
+]
 tracking = [
     "numpy==2.4.4",
     "opencv-python-headless==4.13.0.92",
@@ -62,6 +65,7 @@ cephvr-visual-stimulus = "cephvr.visual_stimulus.main:main"
 cephvr-visual-stimulus-worker = "cephvr.visual_stimulus.worker.main:main"
 cephvr-tracking = "cephvr.tracking.main:main"
 cephvr-control = "cephvr.client.main:main"
+cephvr-dashboard = "cephvr.gui.review:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

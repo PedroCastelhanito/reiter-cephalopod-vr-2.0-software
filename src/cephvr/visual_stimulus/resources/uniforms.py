@@ -44,7 +44,7 @@ def build_uniform_layouts(
             )
             seen.add(binding)
         if display is not None:
-            for mapping in display.mappings:
+            for mapping in display.active_mappings:
                 binding = f"{instance_id}-{mapping.mapping_id}-clip"
                 if binding in seen:
                     continue

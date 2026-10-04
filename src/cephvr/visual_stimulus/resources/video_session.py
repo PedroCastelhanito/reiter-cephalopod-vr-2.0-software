@@ -52,7 +52,7 @@ class VideoSession:
                 gpu_bytes=index.width
                 * index.height
                 * 16
-                * len(artifact.display.outputs),
+                * len(artifact.display.active_outputs),
             )
             playback_id = _playback_id(
                 artifact.identity.trial_id, instance_id, asset_id

@@ -1,0 +1,7 @@
+Python: 3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:59:26) [Clang 19.1.7 ]
+Platform: macOS-26.6.2-arm64-arm-64bit
+PyQt: 6.11.0
+Qt headers: 6.11.0
+Qt runtime: 6.11.2
+Baseline HEAD: 5c24d99aacf41f75fd07249faa1bfb52cf1dea78
+Source: uncommitted GUI increment; source-sha256.txt identifies tested files.

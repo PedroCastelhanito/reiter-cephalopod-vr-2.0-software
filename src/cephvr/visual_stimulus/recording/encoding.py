@@ -44,9 +44,9 @@ def prepare_review_encoding(
     validated against the installed build. Actual encoder input feasibility remains
     a rig check.
     """
-    if not display.outputs or display.photodiode_output_id is None:
+    if not display.active_outputs or display.selected_pacing_output_id is None:
         raise EncodingOptionsError(
-            "review encoding requires configured output and photodiode identities"
+            "review encoding requires configured output and pacing identities"
         )
     expected_input = ffmpeg_input_format(display)
     if input_pixel_format != expected_input:
@@ -82,7 +82,7 @@ def prepare_review_encoding(
     output_bits = pixel_format_depth(
         parsed["-pix_fmt"][0].removeprefix("+"), error=EncodingOptionsError
     )
-    source_bits = max(item.rgb_bits_per_channel for item in display.outputs)
+    source_bits = max(item.rgb_bits_per_channel for item in display.active_outputs)
     if output_bits > source_bits:
         raise EncodingOptionsError(
             "review encoding cannot widen beyond the source device-code depth"
@@ -118,14 +118,14 @@ def prepare_review_encoding(
     pacing = next(
         (
             item
-            for item in display.outputs
-            if item.output_id == display.photodiode_output_id
+            for item in display.active_outputs
+            if item.output_id == display.selected_pacing_output_id
         ),
         None,
     )
     if pacing is None:
         raise EncodingOptionsError(
-            "configured photodiode output is missing from display profile"
+            "configured pacing output is missing from display profile"
         )
     review = ReviewEncoding(
         composite_width=composite_width,
@@ -142,7 +142,7 @@ def prepare_review_encoding(
                 ),
                 source_code_bits=next(
                     item.rgb_bits_per_channel
-                    for item in display.outputs
+                    for item in display.active_outputs
                     if item.output_id == output_id
                 ),
             )
@@ -169,7 +169,7 @@ def prepare_review_encoding(
 
 def ffmpeg_input_format(display: DisplayProfile) -> str:
     """Return the FFmpeg rawvideo format implied by the exact capture ABI."""
-    bits = {output.rgb_bits_per_channel for output in display.outputs}
+    bits = {output.rgb_bits_per_channel for output in display.active_outputs}
     if bits == {8}:
         return "rgba"
     if bits == {10}:
@@ -244,12 +244,14 @@ def build_review_argv(
 def _composite_geometry(
     display: DisplayProfile, maximum: tuple[int, int]
 ) -> tuple[int, int, int, tuple[tuple[str, int, int, int, int], ...]]:
-    count = len(display.outputs)
+    count = len(display.active_outputs)
     columns = isqrt(count - 1) + 1
     for scale in range(
-        1, max(max(o.width_px, o.height_px) for o in display.outputs) + 1
+        1, max(max(o.width_px, o.height_px) for o in display.active_outputs) + 1
     ):
-        sizes = [(o.width_px // scale, o.height_px // scale) for o in display.outputs]
+        sizes = [
+            (o.width_px // scale, o.height_px // scale) for o in display.active_outputs
+        ]
         if any(min(size) <= 0 for size in sizes):
             break
         widths = [
@@ -266,7 +268,7 @@ def _composite_geometry(
         ]
         width, height = sum(widths), sum(heights)
         if width <= maximum[0] and height <= maximum[1]:
-            layout = tile_layout(display.outputs, scale, height)
+            layout = tile_layout(display.active_outputs, scale, height)
             return width, height, scale, tuple(layout)
     raise EncodingOptionsError(
         "no integer tile scale fits the selected encoder maximum"

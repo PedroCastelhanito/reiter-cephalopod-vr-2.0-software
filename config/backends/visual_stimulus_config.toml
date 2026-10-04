@@ -62,12 +62,16 @@ record_stall_timeout_s = 10
 # V11 decoder budgets are the [resources] limits above; Setup requires positive values.
 
 [presentation]
+# Config-file-only target cadence; no GUI pacing editor. Native timing still needs rig verification.
+pacing_refresh_hz = 60.0
+# Configure the active pacing output identity here; no display is guessed.
+# pacing_output_id = "<configured output ID>"
 # V20 pacing mode is owned by the display profile (DisplayProfile.presentation_mode).
 # New profiles default to photodiode_only_vsync; all_outputs_vsync is selectable for
 # rig testing. No second default here.
 # Renderer dithering and implicit sRGB conversion are disabled on final code writes.
 # External driver/projector processing remains a rig-verification obligation.
-# The mixed mode requires a configured photodiode output ID; no face/device is guessed.
+# The mixed mode requires a configured pacing output ID; no face/device is guessed.
 # Validate startup Idle pacing; resolve again at Setup and keep fixed through the session.
 # Rig throughput is pending.
 
