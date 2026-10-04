@@ -14,9 +14,11 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QTableWidget,
     QTableWidgetItem,
+    QVBoxLayout,
     QWidget,
 )
 
+from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.gui.components import ActionHeader, Card, StatusColumn, button, combo, field
 from cephvr.gui.formatting import metrics_text
 from cephvr.gui.icons import device_icon
@@ -67,6 +69,7 @@ class CamerasPanel(ResponsiveColumns):
             else []
         )
         self.view = DashboardView()
+        self.real_devices = False
         self.loading = False
         inventory = Card("Available devices")
         self.table = QTableWidget(len(self.drafts), 4)
@@ -94,6 +97,34 @@ class CamerasPanel(ResponsiveColumns):
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
         header.resizeSection(3, 36)
         self.enable_controls: list[QCheckBox] = []
+        self.populate_inventory()
+        inventory.body.addWidget(self.table)
+        actions = QHBoxLayout()
+        self.test_button = button(
+            "Test enabled", hint="Check connections for cameras enabled for experiment"
+        )
+        self.test_button.clicked.connect(self.test_enabled)
+        self.connect_button = button("Connect", "primary")
+        self.preview_button = button("Preview")
+        self.refresh_button.clicked.connect(self.refresh_inventory)
+        self.connect_button.clicked.connect(self.toggle_connection)
+        self.preview_button.clicked.connect(self.toggle_preview)
+        for control in (self.test_button, self.connect_button, self.preview_button):
+            actions.addWidget(control)
+        inventory.body.addLayout(actions)
+        left_layout.addWidget(inventory)
+        self.configuration = Card("Camera config")
+        self.role = combo(("Behavior cam", "Tracking cam", "Unassigned"))
+        self.role.currentTextChanged.connect(self.assign_role)
+        self.configuration.body.addWidget(field("ROLE", self.role))
+        form = QGridLayout()
+        self._finish_configuration(form, left_layout)
+
+    def populate_inventory(self) -> None:
+        self.enable_controls.clear()
+        self.table.setRowCount(len(self.drafts))
+        header = self.table.horizontalHeader()
+        assert header is not None
         for row, draft in enumerate(self.drafts):
             enabled = QCheckBox()
             enabled.setChecked(draft.enabled)
@@ -118,26 +149,10 @@ class CamerasPanel(ResponsiveColumns):
             + max(1, len(self.drafts)) * 58
             + 2 * self.table.frameWidth()
         )
-        inventory.body.addWidget(self.table)
-        actions = QHBoxLayout()
-        self.test_button = button(
-            "Test enabled", hint="Check connections for cameras enabled for experiment"
-        )
-        self.test_button.clicked.connect(self.test_enabled)
-        self.connect_button = button("Connect", "primary")
-        self.preview_button = button("Preview")
-        self.refresh_button.clicked.connect(lambda: self.report("Refresh inventory"))
-        self.connect_button.clicked.connect(self.toggle_connection)
-        self.preview_button.clicked.connect(self.toggle_preview)
-        for control in (self.test_button, self.connect_button, self.preview_button):
-            actions.addWidget(control)
-        inventory.body.addLayout(actions)
-        left_layout.addWidget(inventory)
-        self.configuration = Card("Camera config")
-        self.role = combo(("Behavior cam", "Tracking cam", "Unassigned"))
-        self.role.currentTextChanged.connect(self.assign_role)
-        self.configuration.body.addWidget(field("ROLE", self.role))
-        form = QGridLayout()
+
+    def _finish_configuration(
+        self, form: QGridLayout, left_layout: QVBoxLayout
+    ) -> None:
         form.setHorizontalSpacing(SIZES.field_x_gap)
         form.setVerticalSpacing(SIZES.field_y_gap)
         form.setColumnStretch(0, 1)
@@ -177,6 +192,71 @@ class CamerasPanel(ResponsiveColumns):
         if self.drafts:
             self.table.selectRow(0)
         self.refresh_controls()
+
+    def refresh_inventory(self) -> None:
+        if not self.can_operate:
+            return
+        if not self.real_devices:
+            self.report("Refresh inventory")
+            return
+        adapter = BaslerCameraAdapter()
+        try:
+            pylon = adapter._sdk()
+            found = tuple(
+                (str(info.GetSerialNumber()), str(info.GetModelName()))
+                for info in pylon.TlFactory.GetInstance().EnumerateDevices()
+            )
+            if any(not serial or not model for serial, model in found):
+                raise ValueError("incomplete camera identity")
+            if len({serial for serial, _ in found}) != len(found):
+                raise ValueError("duplicate camera serial")
+        except Exception as exc:
+            self.console.appendPlainText(f"Camera discovery failed: {exc}")
+            return
+        finally:
+            try:
+                adapter.close()
+            except Exception as exc:
+                self.console.appendPlainText(f"Camera discovery cleanup failed: {exc}")
+        previous = {draft.serial: draft for draft in self.drafts}
+        selected_serial = self.selected.serial if self.selected else None
+        discovered_serials = {serial for serial, _ in found}
+        roles = {
+            draft.role
+            for serial, draft in previous.items()
+            if serial in discovered_serials
+        }
+        for serial, model in found:
+            if serial not in previous:
+                role = next(
+                    (
+                        candidate
+                        for candidate in ("Behavior cam", "Tracking cam")
+                        if candidate not in roles
+                    ),
+                    "Unassigned",
+                )
+                previous[serial] = CameraDraft(f"camera-{serial}", role, serial, model)
+                roles.add(role)
+        self.drafts = [previous[serial] for serial, _ in found]
+        self.populate_inventory()
+        row = next(
+            (
+                i
+                for i, draft in enumerate(self.drafts)
+                if draft.serial == selected_serial
+            ),
+            0,
+        )
+        if self.drafts:
+            self.table.selectRow(row)
+        else:
+            self.load_selected()
+        self.participation_changed.emit()
+        self.drafts_changed.emit()
+        self.console.appendPlainText(
+            f"{len(found)} Basler cameras discovered; no camera opened."
+        )
 
     @property
     def selected(self) -> CameraDraft | None:
@@ -284,6 +364,26 @@ class CamerasPanel(ResponsiveColumns):
             return
         for draft in self.drafts:
             if draft.enabled:
+                if self.real_devices:
+                    adapter = BaslerCameraAdapter()
+                    try:
+                        adapter.open(draft.serial)
+                        identity = adapter.read_device_identity()
+                        self.console.appendPlainText(
+                            f"{draft.role} ({identity.physical_id}): opened and identified {identity.model}."
+                        )
+                    except Exception as exc:
+                        self.console.appendPlainText(
+                            f"{draft.role} ({draft.serial}): connection test failed: {exc}"
+                        )
+                    finally:
+                        try:
+                            adapter.close()
+                        except Exception as exc:
+                            self.console.appendPlainText(
+                                f"{draft.role} ({draft.serial}): close unconfirmed: {exc}"
+                            )
+                    continue
                 self.console.appendPlainText(
                     f"Review · Test connection requested for {draft.role} ({draft.serial}); "
                     "not tested — hardware checks are not integrated."

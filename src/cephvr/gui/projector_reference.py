@@ -108,8 +108,6 @@ class ProjectorReference(QWidget):
             + reference_fields(self.parameters)
             + [("", self.actions_button)]
         )
-        self.stimulus.setVisible(bool(self.face))
-        self.layer.setVisible(bool(self.face))
         self.headings = [label(title, "label") for title, _ in self.columns]
         self.arrange()
         self.layout_changed.emit()
@@ -134,12 +132,10 @@ class ProjectorReference(QWidget):
         for index, ((_, control), heading) in enumerate(
             zip(self.columns, self.headings, strict=True)
         ):
-            control.show()
             slot = index if self.face or index == 0 else index + 2
             visible = self.identity_header if slot < 4 else self.show_header
             heading.setText(self.columns[index][0] if visible or self.narrow else "")
             heading.setFixedHeight(header_height)
-            heading.show()
             if self.narrow:
                 # Identity and source above three numeric fields on small windows.
                 positions = (
@@ -158,6 +154,8 @@ class ProjectorReference(QWidget):
                 row, col, span = 0, index, 1
             self.grid.addWidget(heading, row, col, 1, span)
             self.grid.addWidget(control, row + 1, col, 1, span)
+            heading.show()
+            control.show()
         if self.narrow:
             for col in range(3):
                 self.grid.setColumnStretch(col, 1)

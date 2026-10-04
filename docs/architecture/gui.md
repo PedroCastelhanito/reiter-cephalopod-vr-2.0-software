@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 65
+**Status:** Accepted · **Revision:** 77
 
 - Main navigation orders **Dashboard, Protocol, Devices, Tracking**. Protocol owns
   session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
@@ -44,17 +44,19 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   nested-scope timeline replaces the full-trial overview. No trial table, HUD/log,
   draft badge or standalone Validate action. Configuration content scrolls within
   the fixed navigation shell.
-- Local review startup supplies four explicitly simulated projector displays, assigned
-  Front/Left/Right/Bottom. Devices, its layout and Protocol share that review inventory;
-  Refresh preserves local assignments/participation. This fixture does not discover,
-  connect to or persist hardware and is absent from non-review startup.
-- Epoch editor has **Batch create** and **Batch edit** tabs within the card.
+- Rig review startup discovers attached Basler cameras, secondary Windows displays
+  and COM ports without assigning surfaces or claiming Setup readiness. Camera
+  refresh preserves drafts by serial; Test enabled opens, identifies and closes each
+  enabled camera. Display refresh preserves local assignments/participation. Explicit
+  test fixtures may still supply simulated displays for isolated frontend checks.
+- Epoch editor has **Batch generate** and **Batch edit** tabs within the card;
+  wheel gestures do not switch tabs.
   Forms use the existing configuration scroller. Switching tabs preserves local
   drafts without committing; explicit Add/Apply commits, and Discard changes resets
   pending edit patches. Invalid input stays visible. Loss of editing authority closes
   file pickers and disables forms. All parameters opens the complete single-source
   inspector in the card.
-  Batch create owns a local reference
+  Batch generate owns a local reference
   epoch with prepared assets, independent projector layers, exact duration and complete
   family parameters. Show each enabled projector's reference layers and prepared
   asset filename and stimulus-specific values in one compact row; full paths remain
@@ -64,9 +66,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Share column headings, repeating parameter headings only when meanings or units
   change; reserve equal heading space to keep projector rows evenly spaced. A Layer
   dropdown per projector selects the visible asset/parameters; its ordinal follows
-  stack order. Layer management and advanced settings retain the row menu.
-  Leave a clear gap below the batch tabs. Stimulus mode occupies its own row and matches the Duration field width;
-  Duration/Repetitions/Batch label/Order/Insert share the next row, with extra
+  stack order. Prepared asset paths can be copied and pasted between projector rows;
+  pasted paths resolve within the Assets folder and use the same validation as file
+  selection. Successful file selection leaves no status line. Layer management and
+  advanced settings retain the row menu.
+  Leave a clear gap below the batch tabs. Stimulus mode, Duration (hh:mm:ss),
+  Repetitions (at most three digits), Batch label and Insert share one row at wide
+  widths, with widths reflecting their values; narrow widths wrap. Leave extra
   separation before stimulus rows. Arena mode omits the redundant type selector and exposes Longitudinal/Lateral/Angular
   movement toggles and signed gains under V24 (zero gain disables an axis). Keep
   imported programmed motion and custom feedback unchanged unless explicitly edited.
@@ -84,9 +90,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the other mode's draft while generating only the selected mode. Keep projector
   edits independent and retain inactive-projector content. Narrow windows stack
   the same controls with labels.
-  Optional numeric variations pair values or cross combinations;
+  Optional numeric variations accept explicit values or bounded min/max/step
+  sweeps, then pair values or cross combinations;
   preview count/duration before Add epochs. Materialize combinations as individually
-  editable canonical source epochs; repetitions/listed or shuffled order use V08 groups.
+  editable canonical source epochs; repetitions retain listed order in V08 groups.
+  Trial-wide shuffle belongs to a separate epoch-reordering action.
   Store the optional batch label on every generated source epoch under V03; Batch
   edit can select all source epochs with that label, including nested groups.
   Insert at beginning/end, before/after the selected top-level block, replace the
@@ -99,9 +107,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Replacement is explicit and undoable. A short reference
   is not itself a trial: final insertion validates the complete trial and remains
   atomic. File cancellation, invalid settings or failed insertion leave it unchanged.
-- Batch edit targets an explicit projector and family/layer ordinal across selected
-  source epochs. Common values are shown directly and differing values as Mixed;
-  only checked fields change on Apply. Shared duration, prepared file, applicable
+- Batch edit places Epochs and Parameter selectors on one row. Duration is a single
+  epoch-wide value without projector or layer controls. For stimulus parameters,
+  each projector has its own layer selector and value field or prepared-file picker;
+  the rig-wide arena has one row. The parameter dropdown lists supported values in
+  the selected epochs. Common values are shown directly and differing values as Mixed;
+  only edited projector rows change on Apply. Shared duration, prepared file, applicable
   motion/playback, opacity and simple looming size controls support batching. Missing
   targets or invalid values reject the entire operation; no silent partial application.
   Pending batch changes block target/selection changes and saving until applied or
@@ -164,8 +175,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   apply or validate camera settings: A10's SDK import/readback remains authoritative.
   Changing the path clears stale hints; later explicit dropdown edits remain drafts.
 - Microcontroller owns one selected COM port for all camera triggers; Cameras has
-  no controller/port selector. Scan ports lists only discovered COM-number names,
-  without opening devices, preserving a still-present selection. Do not expose
+  no controller/port selector. Scan ports lists discovered COM-number names with
+  the available device description, preserving the port identity separately and
+  a still-present selection without opening devices. Do not expose
   macOS/Linux serial device names or invent a second controller in the draft.
   Inputs precedes Outputs. Inputs lists Projector flip; Outputs lists Trial state
   followed by configured camera roles, with no camera subsection heading or Hz column.
@@ -188,7 +200,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   enabled external-trigger role and valid retained rate. Until managed diagnostics
   are integrated, report requests as not tested/no command sent, never as pulse evidence.
 - Projectors uses a compact table of Display index, Projector assignment, Resolution
-  in pixels, plus a scaled Displays layout diagram. A Use checkbox per display
+  in pixels, plus a scaled Displays layout diagram. Its indices are GUI-owned,
+  assigned to secondary displays by desktop position and shared with the diagram.
+  A Use checkbox per display
   retains its assignment and geometry while disabling participation; edits follow
   Configuration/control gates. Preserve participation across inventory refresh.
   V15 owns output selection without altering calibrated surfaces.
@@ -208,6 +222,19 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   authority and cancel pickers on authority loss. The JSON excludes discovered
   display/projector lists, output assignments and participation; load leaves these
   untouched. Loading is not backend preparation.
+  A separate Prepare calibration files action uses the current four enabled face
+  assignments, current rig fields and native monitor identities to export a static
+  arena asset, display profile and explicitly diagnostic geometric
+  profiles into Protocol Assets. The exported mapping applies each face's scale,
+  pixel offset and inverse-axis drafts, defaulting unset values to diagnostic
+  identity; reject corrections extending outside the output. Reject missing or
+  ambiguous monitor bindings.
+  These profiles are uncalibrated optical placeholders and do not set experiment
+  defaults. Launch calibration targets all four assigned projectors together;
+  after confirmed output activation the same control reads Close. It returns to
+  Launch only after confirmed closure. Failed/pending commands never claim an
+  output-state change. Launch/Close controls V01's diagnostic presentation outside
+  trial timing; preparation sends no output command.
   Retain per-face drafts without adopting measured defaults. Planar geometry
   conversion retains all four inward-facing surfaces and the fixed observer.
   Subject distances position screen planes independently of tank walls, parallel to
@@ -229,10 +256,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   all other synchronization editors while retaining independent pulse/pacing values;
   this editing gate does not couple their runtime ownership. Omit explanatory pulse,
   subject-offset and projected-width footer text.
-  Projectors replaces its HUD with Displays layout above a labeled tank/screen
+  Projectors replaces its HUD with Displays layout above a tank/screen
   diagram without an explanatory footer, retaining the activity log below. Left-button
   dragging rotates only the view; double-click resets it. Fit tank, screens and ideal
-  projection cones within the available plot, with readable screen/display labels.
+  projection cones within the available plot. The plot has no element labels; its
+  legend identifies the drawn elements.
   Enabled assigned projectors with finite positive distance/throw use centered
   optical paths: footprint width = total optical distance / throw, height = width /
   assigned display aspect ratio. Front/side axes are perpendicular to their screens.
@@ -251,7 +279,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Show full footprints including overspill;
   do not guess missing inputs or draw inactive output cones. Physical screens remain
   visible independently of participation. Compact checkable buttons independently
-  toggle Tank, Screens, Projection, Subject and Labels. Projection groups
+  toggle Tank, Screens, Projection and Subject. Projection groups
   projectors, rays, footprints and mirror in both visibility controls and one legend
   entry; footprints use a distinct violet color. Retain view choices through draft/phase changes; they never alter output
   participation, calibration or runtime control. The legend stays visible and identifies
@@ -259,16 +287,18 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   not measured optical calibration or a runtime warp model. Pulse-off retains inactive/missing targets without blocking;
   enabled pulses require valid target/placement under V22. Timing and geometry
   drafts remain local until managed configuration integration. Exclude the operating system's
-  primary display from both views, without renumbering the remaining Windows IDs.
+  primary display from both views. Number discovered secondary displays locally
+  from 1 in desktop-position order (left to right, then top to bottom); use the
+  same CephVR number in the table, display layout and status labels. These numbers
+  identify GUI rows for projector assignment and are independent of Windows
+  Settings numbers. The operator compares the two layouts visually to associate
+  them; no ID entry or inferred Windows-number claim is required. Refresh keeps
+  projector assignments by display identity even if the local number changes.
   An empty inventory explains that no secondary displays were found. No Size column remains.
   Projector choices are Unassigned, Front, Left, Right and Bottom; account for
   Unassigned when sizing. Display uses its content width; Projector and Resolution
   share the remaining width evenly with shared cell padding. Refresh retains
   assignments and reports missing/duplicate identities without silently remapping.
-  Windows numbering uses active QueryDisplayConfig path indices matched to source
-  names, preserving clone-path numbers, following Microsoft's PowerToys approach;
-  matching Windows Settings on the actual rig remains unverified. Other platforms or
-  failed queries show unavailable indices, never Qt enumeration order as Windows IDs.
   V15 surface/viewport/calibration ownership stays separate; no one-projector-per-
   surface constraint or output-mode changes are introduced.
 - SpikeGLX exposes local channel-mapping drafts for discovered camera roles, Trial

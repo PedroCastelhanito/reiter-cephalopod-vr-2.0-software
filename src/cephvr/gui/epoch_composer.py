@@ -1,9 +1,10 @@
 """One reference epoch with independent, visible per-projector editors."""
 
-from PyQt6.QtCore import QEvent, QObject, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
-from cephvr.gui.components import combo, field, label
+from cephvr.gui.components import combo, label
+from cephvr.gui.formatting import parse_clock_duration
 from cephvr.gui.prepared_file_picker import PreparedFilePicker
 from cephvr.gui.projector_layers import reorder_projector_layer
 from cephvr.gui.projector_reference import ProjectorReference
@@ -28,19 +29,12 @@ class EpochComposer(QWidget):
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(0, 0, 0, 0)
         self.body.setSpacing(16)
-        row = QHBoxLayout()
-        self.duration = QLineEdit("60")
+        self.duration = QLineEdit("00:01:00")
         self.mode = combo(("Per-projector stimuli", "3D arena"))
         self.batch_label = QLineEdit()
         self.batch_label.setPlaceholderText("Optional · e.g. Adaptation")
         self.batch_label.setMaxLength(128)
-        self.mode.setMinimumWidth(0)
-        self.mode_field = field("Stimulus mode", self.mode)
-        row.addWidget(self.mode_field)
-        row.addStretch(1)
-        self.duration.installEventFilter(self)
         self.mode.currentIndexChanged.connect(self.change_mode)
-        self.body.addLayout(row)
         self.references = QVBoxLayout()
         self.references.setSpacing(8)
         self.body.addLayout(self.references)
@@ -54,19 +48,10 @@ class EpochComposer(QWidget):
         self.add_row("")
         self.refresh_rows()
 
-    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:  # noqa: N802
-        if (
-            watched is self.duration
-            and event is not None
-            and event.type() == QEvent.Type.Resize
-        ):
-            self.mode_field.setFixedWidth(self.duration.width())
-        return super().eventFilter(watched, event)
-
     def set_generation_controls(self, controls: QWidget) -> None:
         """Place batch operations between epoch identity and stimulus references."""
-        self.body.insertWidget(1, controls)
-        self.body.insertSpacing(2, 8)
+        self.body.insertWidget(0, controls)
+        self.body.insertSpacing(1, 8)
 
     def add_row(self, face: str) -> None:
         reference = ProjectorReference(face)
@@ -165,7 +150,10 @@ class EpochComposer(QWidget):
 
     def duration_value(self) -> Fixed:
         value = Fixed.model_validate(
-            {"kind": "fixed", "duration": {"seconds": self.duration.text().strip()}}
+            {
+                "kind": "fixed",
+                "duration": {"seconds": parse_clock_duration(self.duration.text())},
+            }
         )
         if value.duration.ns() <= 0:
             raise ValueError("Epoch duration must be positive")

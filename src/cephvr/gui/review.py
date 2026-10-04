@@ -19,7 +19,11 @@ class ReviewControls(QObject):
     """Keep optional fixture inspection in the View menu, outside the Dashboard."""
 
     def __init__(
-        self, window: DashboardWindow, *, simulate_projectors: bool = False
+        self,
+        window: DashboardWindow,
+        *,
+        simulate_projectors: bool = False,
+        real_devices: bool = False,
     ) -> None:
         super().__init__(window)
         menu_bar = window.menuBar()
@@ -54,6 +58,12 @@ class ReviewControls(QObject):
         )
         window.dashboard.preview_requested.connect(self.preview_visibility)
         cameras = window.devices.cameras
+        cameras.real_devices = real_devices
+        if real_devices:
+            cameras.drafts = []
+            cameras.populate_inventory()
+            cameras.load_selected()
+            cameras.drafts_changed.emit()
         cameras.participation_changed.connect(self.refresh_preview_sources)
         cameras.preview_requested.connect(self.preview_visibility)
         self.backend_actions: dict[str, QAction] = {}
@@ -83,7 +93,7 @@ class ReviewControls(QObject):
                 DisplayInfo(
                     f"review-projector-{face.lower()}",
                     f"Simulated {face} projector",
-                    str(index + 2),
+                    str(index + 1),
                     QRect((index % 2) * 1920, (index // 2) * 1080, 1920, 1080),
                 )
                 for index, face in enumerate(faces)
@@ -94,6 +104,11 @@ class ReviewControls(QObject):
             )
             projectors.request("Refresh displays")
             window.setWindowTitle(window.windowTitle() + " · 4 simulated projectors")
+        elif real_devices:
+            window.devices.projectors.request("Refresh displays")
+            cameras.refresh_inventory()
+            window.devices.microcontroller.request("Scan ports")
+            window.setWindowTitle(window.windowTitle() + " · rig device review")
         window.dashboard.log_console.setPlainText(
             "Sample subject loaded.\nNo controller connection."
         )
@@ -173,6 +188,11 @@ def main() -> None:
         action="store_true",
         help="Show labeled sample data and review state controls.",
     )
+    parser.add_argument(
+        "--simulated-devices",
+        action="store_true",
+        help="Use isolated frontend camera and projector fixtures instead of attached devices.",
+    )
     args = parser.parse_args()
     app = QApplication(sys.argv[:1])
     app.setApplicationName("CephVR2.0 Dashboard")
@@ -181,7 +201,11 @@ def main() -> None:
         sample=args.review, settings=QSettings("CephVR", "Frontend")
     )
     if args.review:
-        ReviewControls(window, simulate_projectors=True)
+        ReviewControls(
+            window,
+            simulate_projectors=args.simulated_devices,
+            real_devices=not args.simulated_devices,
+        )
     fit_window_to_screen(window)
     window.show()
     window.raise_()

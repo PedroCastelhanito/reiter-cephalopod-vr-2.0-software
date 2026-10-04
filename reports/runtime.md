@@ -200,6 +200,52 @@ windows already reuse useful reference patterns with smaller focused components.
 
 ### Dashboard frontend implementation
 
+Live camera Preview remains pending under [A10](../docs/architecture/acquisition.md#a10)
+and [G01](../docs/architecture/gui.md#g01). The review GUI's Connect flag and
+Preview visibility signal do not open a capture stream or image window. The
+acquisition backend has manual preview commands, but this frontend has no managed
+controller connection or registered viewer. An independent GUI SDK reader would
+change A10's camera ownership; the owner choice for the rig test is pending.
+
+2026-10-04 rig device review: [G01 revision 66](../docs/architecture/gui.md#g01)
+changes normal `scripts/start_gui.py` and `cephvr.gui.review --review` startup to
+discover attached Basler cameras, secondary Qt/Windows displays and COM ports.
+Camera refresh retains drafts by serial; Test enabled uses the A10 adapter for a
+bounded open/identity/close check. COM labels include the available description
+while selection retains the system port path. Explicit `--simulated-devices` keeps
+isolated frontend fixtures available. This remains a local review GUI; Connect,
+preview, projector output, controller commands and Setup are not managed device
+operations. Direct rig inventory on 2026-10-04 found behavioral serial 40065509
+(acA4112-30uc), tracking serial 40747103 (a2A2464-77umPRO), COM8 Arduino Uno
+and COM9 USB-Serial Controller. Both cameras opened, returned identity and closed
+through `BaslerCameraAdapter`. Qt reported only the primary DELL S2721HS display;
+no secondary projector output was available for an output test. This is device
+discovery/control-open evidence, not acquisition, projection or lifecycle acceptance.
+The rig GUI construction smoke check showed those two physical camera rows, zero
+projector rows and named COM8/COM9 entries. Focused GUI checks passed (3); Ruff,
+format, Windows-target mypy, boundaries and `git diff --check` passed.
+
+Later on 2026-10-04, four secondary Qt projector screens appeared. The owner's
+Windows Settings screenshot showed that DisplayConfig path positions **5, 2, 3, 4**
+in Qt order did not match Settings IDs; the primary `DISPLAY9` was path 1 but
+Settings label 5. QueryDisplayConfig returns path priority order, not a documented
+Settings number. Under [G01 revision 70](../docs/architecture/gui.md#g01), the
+GUI now assigns its own consecutive numbers to secondary screens sorted by desktop
+position. The table, scaled layout, timing labels and projector labels use the same
+CephVR numbers. The operator compares layout positions with Windows Settings to
+associate each number; no manual ID entry or Windows-number inference remains.
+Assignments and Use state stay keyed by display identity through refresh, so local
+renumbering does not silently transfer a projector face. Four focused GUI checks
+pass for local labels, primary exclusion, sorted ordering and retained assignment.
+An additional projector-focused run passed seven tests; three unrelated file-fixture
+cases could not set up because the host denied pytest's temp directory. Ruff,
+format, Windows-target mypy (67 GUI source files), boundaries (520 modules, zero
+violations) and whitespace pass. A native read-only GUI construction on the rig
+resolved four secondary screens in spatial order: CephVR 1 at (-3840, 0), 2 at
+(-2560, 0), 3 at (-2280, 720), and 4 at (-1280, 0). Actual physical surface
+correspondence and projector output remain rig checks. The prior broad GUI attempt
+also encountered a native Qt access violation; it is not a passing suite.
+
 2026-10-04 projector plot: [G01 revision 65](../docs/architecture/gui.md#g01)
 and [V15 revision 10](../docs/architecture/visual_stimulus.md#v15) retain shared
 front-attached screen geometry, independent calibration and view-only rotation.
@@ -256,7 +302,7 @@ survive camera disablement. Device control remains in Devices. The review fixtur
 explicitly starts velocity saving Off without changing T14's saved/file default On.
 
 The planner places a 208-pixel Trials list beside the fixed-height Trial timeline, with
-full-width Epoch editor with inline Batch create / Batch edit tabs below. Add/Delete sit at the foot of the trial list; draft
+full-width Epoch editor with inline Batch generate / Batch edit tabs below. Add/Delete sit at the foot of the trial list; draft
 selection and existing deletion confirmation/history semantics are preserved.
 
 - **Trial timeline:** a single full-program bar shows duration-proportional expanded
@@ -275,12 +321,12 @@ selection and existing deletion confirmation/history semantics are preserved.
   additional layers scroll internally. The old resize grip and its unused helper were removed.
   Overview expansion is bounded to 2000 occurrences; exceeding this reports the limit
   rather than silently truncating. No enabled outputs shows an All row for offline inspection.
-- **Batch create tab:** local reference composition supports prepared files,
+- **Batch generate tab:** local reference composition supports prepared files,
   a compact reference grid per projector with independently selected layers/assets,
   family-specific motion, looming or playback cells, exact duration and optional
-  numeric variation rows. Paired lists or crossed combinations generate individually
+  numeric variation rows with explicit lists or bounded sweeps. Paired lists or crossed combinations generate individually
   editable canonical source epochs with an optional persisted batch label.
-  Repetition/shuffle uses V08 child-block groups; count/duration preview precede
+  Repetition uses listed V08 child-block groups; count/duration preview precedes
   explicit insertion. Beginning/end, before/after a selected top-level block,
   replacement and interval distribution preserve groups, remap imported identities
   and validate the resulting trial
@@ -289,9 +335,24 @@ selection and existing deletion confirmation/history semantics are preserved.
   condition combinations and 2000 expanded occurrences per operation. These are GUI
   operation bounds, not runtime policy. Variation rules target explicit reference
   layers and reject stale targets after composition changes.
-- **Batch edit tab:** target the timeline selection, all source epochs or a saved
-  batch label, then choose a projector and family/layer ordinal. Mixed
-  values are labeled; only checked fields change on Apply. Supported batch fields are
+  The authoring controls now place stimulus mode beside clock-formatted duration,
+  compact three-digit repetitions, label and insertion; generation has no Order
+  control. Epoch tab wheel gestures are ignored. The compact projector asset field
+  accepts a pasted path from another row, validates it within the Assets folder and
+  shows the full path while focused. File selection no longer leaves a success line;
+  redundant section headings were removed. This follows G01 revision 72 and
+  keeps the CephVR1 reference/variation/options and explicit batch-edit target flow.
+  Windows traces found unparented reference-grid labels and projector dropdowns being
+  shown as transient top-level windows. The grid now parents labels/controls before
+  showing them and does not show projector selectors early. A visible launch with four
+  simulated projectors, followed by mode and value updates, traced only Dashboard.
+- **Batch edit tab:** Epochs and Parameter share a row. Duration has one epoch-wide
+  clock value without a projector or layer selector. For stimulus parameters, each
+  projector row has its own layer selector and corresponding value or asset picker;
+  the arena uses one rig-wide row. Targets can be the timeline selection, all source
+  epochs or a saved batch label. Mixed values are labeled; only edited projector
+  rows change on one atomic Apply.
+  Supported batch fields are
   shared duration, prepared asset, family-appropriate speed/direction/angular motion,
   playback start, opacity and symmetric linear looming start/end/growth duration.
   Batch file replacement supports texture exports and preserves physical speed when
@@ -353,10 +414,10 @@ checks (508 modules, zero violations; existing size advisories) and whitespace p
 Focused coverage checks review inventory/refresh/participation, list selection/draft
 preservation, centered summary and stable card bounds with internal scrolling.
 
-2026-10-04 epoch-controls refinement under [G01 revision 64](../docs/architecture/gui.md#g01)
-and [V03 revision 9](../docs/architecture/visual_stimulus.md#v03): Batch create has
-Stimulus mode on its own row at the same width as Duration, then Duration/Repetitions/Batch label/Order/Insert
-together, with a clear gap before compact projector rows. Tabs have extra bottom spacing; reserved
+2026-10-04 epoch-controls review under [G01](../docs/architecture/gui.md#g01)
+and [V03 revision 9](../docs/architecture/visual_stimulus.md#v03): the earlier captured
+layout placed Stimulus mode on its own row and included Order; G01 revision 68 now
+places mode with clock duration, repetitions, label and insertion. Reserved
 heading space keeps row pitch equal with or without repeated headings. Arena mode
 omits the type column and exposes independent Longitudinal/Lateral/Angular toggles
 and gains using [V24 revision 7](../docs/architecture/visual_stimulus.md#v24). A zero
@@ -704,7 +765,27 @@ Tank dimensions, left/front/bottom subject offsets, clip/tolerance fields and
 per-face screen dimensions/distances/throw/scale/pixel offsets/reversal
 remain local drafts. Geometry conversion creates four inward-facing parallel screens at explicit
 subject distances, with side/Bottom front edges starting at the Front screen plane.
-The rotatable diagram updates on edits and labels assigned Windows IDs/off outputs.
+The rotatable diagram updates on edits; its legend identifies the drawn elements
+without in-plot labels. CephVR IDs remain in the display table and layout.
+CephVR1.0's Launch calibration ran a world-phase multicolor calibration grid through
+its VR runtime, with a Disconnect action. The owner selected V01's managed Visual
+Stimulus renderer for CephVR2.0. The saved rig JSON now feeds an offline GLB exporter;
+the resulting asset is under ignored `cephvr-data/calibration`. The owner rejected
+the timed 60-second trial program; calibration is to remain visible until manually
+closed through a distinct V01 diagnostic state.
+Screen calibration now has Prepare calibration files: it reads the current four
+enabled face assignments and native monitor identities, computes bounded diagnostic
+projection limits from the rig dimensions and writes a V15 display profile plus four
+diagnostic geometric profiles into Protocol Assets. This is a local export, with no
+output command. The review GUI still has no managed projector command, so Launch/Close
+and physical presentation remain open under `projector-calibration-launch`.
+The Screen calibration card now has a Launch/Close control interface for all four
+outputs. It stays disabled without a managed controller connection and changes its
+label only after confirmed output state; the local review frontend cannot project.
+The diagnostic profile exporter now applies each face's scale, pixel offset and
+inverse-axis drafts to its geometric mesh, so software centering values are prepared
+per projector. Adjustments require a new preparation and later managed presentation;
+they are not live projector output in the review GUI.
 CephVR1.0 reference inspected: experiment_window.py 8990–9068 and 10274–10309.
 No old measured rig values are adopted. Optical calibration/config transport remain
 pending; parallel-plane placement follows the GUI geometry draft, not rig measurements.
@@ -765,23 +846,20 @@ Projectors uses a compact index/assignment/resolution/Use table and scaled deskt
 Displays layout diagram. Per-display Use retains assignments/geometry, persists
 through refresh and dims disabled diagram rectangles. GUI drafts remain local;
 managed config binding is unfinished. Shared equal-row-height helper matches
-Microcontroller pin/Test and path/Browse controls. Both exclude the current primary screen; remaining IDs keep the
-existing Windows mapping without renumbering. Primary-only setups show a clear
-empty state. Local tests cover primary removal, retained index 4 and empty refresh;
-actual Settings matching remains rig work. Size and verbose properties are removed. Projector choices are
+Microcontroller pin/Test and path/Browse controls. Both exclude the current primary screen;
+remaining screens receive local CephVR IDs from 1 in desktop-position order.
+Primary-only setups show a clear empty state. Local tests cover primary removal,
+ordering, retained assignment and empty refresh; physical layout comparison remains
+rig work. Size and verbose properties are removed. Projector choices are
 Unassigned/Front/Left/Right/Bottom. Display is content-sized and the remaining two
 columns share spare width evenly; native inspection confirms Unassigned fits.
 Selection/drafts survive refresh by identity. ARCH-002 review removed physical-size
 collection and obsolete editable-combo caret handling; no new helper or dependency.
-A focused read-only Windows helper queries active display paths and source names,
-with bounded topology-change retries and clone-path numbers. It follows
-[Microsoft PowerToys numbering](https://microsoft.github.io/PowerToys/modules/powerdisplay/design/#monitor-number-windows-display-settings)
-and the [QueryDisplayConfig API](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig).
-Non-Windows/error cases show unknown indices. Mock API tests cover clone numbering
-and changing-topology failure; actual Settings equivalence remains a
-[rig check](rig-verification.md). CephVR1.0's inferred adapter ordering was not copied.
-ARCH-002 review replaced the generic I/O form and long property cards with focused
-composition and one standard-library Windows query helper; no dependency added.
+The former Windows path-index helper and manual-ID dialog were removed under ARCH-002;
+neither yielded a reliable automatic Windows Settings number. The
+[QueryDisplayConfig API](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig)
+documents path priority order, which differed on this rig. Actual surface matching
+remains a [rig check](rig-verification.md). No dependency was added.
 Native inspection corrected projector-name clipping and selected-row bottom overlap.
 Camera Preview shares Dashboard source/visibility state, without an actual image window.
 Full validation, persistence/apply and backend checks remain under A10/A11/V15/E12.

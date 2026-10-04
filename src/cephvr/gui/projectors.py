@@ -1,9 +1,10 @@
 """Compact display assignments and desktop geometry; no rendering ownership."""
 
 from dataclasses import dataclass
+from pathlib import Path
 
-from PyQt6.QtCore import QRect, QRectF, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QGuiApplication, QPainter, QPaintEvent
+from PyQt6.QtCore import QRect, Qt, pyqtSignal
+from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -21,9 +22,14 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.calibration_files import CalibrationFiles
+from cephvr.gui.calibration_profile import (
+    AssignedDisplay,
+    active_monitor_bindings,
+    write_diagnostic_bundle,
+)
 from cephvr.gui.components import Card, button, combo
 from cephvr.gui.device_panel import DevicePanel
-from cephvr.gui.display_indices import windows_display_indices
+from cephvr.gui.display_layout import DisplayLayout
 from cephvr.gui.projector_calibration import CalibrationTable
 from cephvr.gui.projector_geometry import (
     RigGeometryEditor,
@@ -32,7 +38,7 @@ from cephvr.gui.projector_geometry import (
 )
 from cephvr.gui.projector_timing import ProjectorTiming
 from cephvr.gui.tank_diagram import TankDiagram
-from cephvr.gui.theme import COLORS, SIZES
+from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView
 
 
@@ -45,55 +51,10 @@ class DisplayInfo:
     pixel_ratio: float = 1.0
 
 
-class DisplayLayout(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
-        self.outputs: list[tuple[str, QRect]] = []
-        self.refreshed = False
-        self.disabled_indices: set[int] = set()
-        self.setMinimumHeight(80)
-        self.setAccessibleName("Displays layout")
-
-    def sizeHint(self) -> QSize:  # noqa: N802
-        return QSize(260, 145)
-
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(QColor(COLORS.muted))
-        if not self.outputs:
-            painter.drawText(
-                self.rect(),
-                Qt.AlignmentFlag.AlignCenter,
-                "No secondary displays found" if self.refreshed else "Refresh displays",
-            )
-            return
-        bounds = QRect()
-        for _, rect in self.outputs:
-            bounds = bounds.united(rect)
-        scale = min(
-            (self.width() - 20) / max(1, bounds.width()),
-            (self.height() - 20) / max(1, bounds.height()),
-        )
-        for row, (name, rect) in enumerate(self.outputs):
-            box = QRectF(
-                (rect.x() - bounds.x()) * scale
-                + (self.width() - bounds.width() * scale) / 2,
-                (rect.y() - bounds.y()) * scale
-                + (self.height() - bounds.height() * scale) / 2,
-                rect.width() * scale,
-                rect.height() * scale,
-            ).adjusted(2, 2, -2, -2)
-            painter.setBrush(QColor(COLORS.selection))
-            painter.setPen(
-                QColor(COLORS.muted if row in self.disabled_indices else COLORS.accent)
-            )
-            painter.drawRoundedRect(box, 5, 5)
-            painter.drawText(box, Qt.AlignmentFlag.AlignCenter, name)
-
-
 class ProjectorsPanel(DevicePanel):
     outputs_changed = pyqtSignal()
+    calibration_launch_requested = pyqtSignal(str)
+    calibration_close_requested = pyqtSignal()
 
     @property
     def enabled_screens(self) -> tuple[str, ...]:
@@ -114,7 +75,7 @@ class ProjectorsPanel(DevicePanel):
         )
         self.table = QTableWidget(0, 4)
         self.table.setHorizontalHeaderLabels(
-            ["Display", "Projector", "Resolution (px)", "Use"]
+            ["CephVR ID", "Projector", "Resolution (px)", "Use"]
         )
         vertical = self.table.verticalHeader()
         header = self.table.horizontalHeader()
@@ -139,7 +100,8 @@ class ProjectorsPanel(DevicePanel):
         self.display_aspects: dict[str, float] = {}
         self.loading = False
         self.review_displays: tuple[DisplayInfo, ...] | None = None
-        self.layout_card = Card("Displays layout")
+        self.asset_root = ""
+        self.layout_card = Card("Displays layout · CephVR IDs")
         self.diagram = DisplayLayout()
         self.layout_card.body.addWidget(self.diagram)
         layout = self.columns[0].layout()
@@ -154,6 +116,9 @@ class ProjectorsPanel(DevicePanel):
             )
         self.timing = ProjectorTiming()
         self.calibration = CalibrationTable(self.screen_editor.drafts)
+        self.calibration.prepare_requested.connect(self.prepare_calibration)
+        self.calibration.launch_requested.connect(self.launch_calibration)
+        self.calibration.close_requested.connect(self.calibration_close_requested.emit)
         calibration_fields: dict[str, QLineEdit | QCheckBox] = {
             **{f"rig.{key}": editor for key, editor in self.rig_editor.fields.items()},
             **{
@@ -214,7 +179,6 @@ class ProjectorsPanel(DevicePanel):
                 ("screens", "Screens"),
                 ("projection", "Projection"),
                 ("subject", "Subject"),
-                ("labels", "Labels"),
             )
         ):
             control = button(
@@ -230,10 +194,8 @@ class ProjectorsPanel(DevicePanel):
                 lambda visible, k=key: self.tank.set_element_visible(k, visible)
             )
             self.plot_toggles[key] = control
-            plot_controls.addWidget(
-                control, i // 3, i % 3, 1, 2 if key == "labels" else 1
-            )
-            plot_controls.setColumnStretch(i % 3, 1)
+            plot_controls.addWidget(control, i // 2, i % 2)
+            plot_controls.setColumnStretch(i % 2, 1)
         self.tank_card.body.addLayout(plot_controls)
         self.tank_card.body.addWidget(self.tank)
         right.insertWidget(1, self.tank_card)
@@ -253,18 +215,29 @@ class ProjectorsPanel(DevicePanel):
             else ""
         )
         if self.review_displays is None:
-            indices, issue = windows_display_indices()
             primary = QGuiApplication.primaryScreen()
+            secondary = sorted(
+                (screen for screen in QGuiApplication.screens() if screen != primary),
+                key=lambda screen: (
+                    screen.geometry().x(),
+                    screen.geometry().y(),
+                    screen.name(),
+                    screen.serialNumber(),
+                ),
+            )
             displays = tuple(
                 DisplayInfo(
                     f"{screen.name()}|{screen.manufacturer()}|{screen.model()}|{screen.serialNumber()}",
                     screen.name(),
-                    indices.get(screen.name().casefold(), "—"),
+                    str(index),
                     screen.geometry(),
                     screen.devicePixelRatio(),
                 )
-                for screen in QGuiApplication.screens()
-                if screen != primary
+                for index, screen in enumerate(secondary, 1)
+            )
+            issue = (
+                "CephVR IDs follow desktop position. Compare this layout with "
+                "Windows Settings; the numbers are independent."
             )
         else:
             displays = self.review_displays
@@ -291,7 +264,7 @@ class ProjectorsPanel(DevicePanel):
             if geometry.width() > 0 and geometry.height() > 0:
                 self.display_aspects[key] = geometry.width() / geometry.height()
             ratio = display.pixel_ratio
-            index = display.index
+            index = display.index if self.review_displays is not None else str(row + 1)
             for col, value in (
                 (0, index),
                 (
@@ -363,6 +336,57 @@ class ProjectorsPanel(DevicePanel):
         self.participation[key] = enabled
         self.update_participation()
 
+    def prepare_calibration(self) -> Path | None:
+        if not self.can_review:
+            return None
+        if self.review_displays is not None:
+            self.console.appendPlainText(
+                "Calibration export requires actual secondary displays, not review fixtures."
+            )
+            return None
+        try:
+            if not self.asset_root:
+                raise ValueError("Choose the Protocol Assets folder first")
+            self.request("Refresh displays")
+            rows = tuple(
+                AssignedDisplay(
+                    self.assignments.get(key, "Unassigned"),
+                    geometry.x(),
+                    geometry.y(),
+                    geometry.width(),
+                    geometry.height(),
+                    self.participation.get(key, True),
+                )
+                for key, (_, geometry) in zip(
+                    self.keys, self.diagram.outputs, strict=True
+                )
+            )
+            path = write_diagnostic_bundle(
+                Path(self.asset_root),
+                self.calibration_files.snapshot(),
+                rows,
+                active_monitor_bindings(),
+            )
+            self.console.appendPlainText(
+                f"Diagnostic calibration files prepared: {path}. No output command sent."
+            )
+            return path
+        except (OSError, RuntimeError, ValueError) as exc:
+            self.console.appendPlainText(f"Calibration export failed: {exc}")
+            return None
+
+    def launch_calibration(self) -> None:
+        arena_path = self.prepare_calibration()
+        if arena_path is not None:
+            self.calibration_launch_requested.emit(str(arena_path))
+
+    def set_calibration_presentation_state(
+        self, *, active: bool, available: bool, pending: bool = False
+    ) -> None:
+        self.calibration.set_presentation_state(
+            active=active, available=available, pending=pending
+        )
+
     def update_participation(self) -> None:
         self.diagram.disabled_indices = {
             row
@@ -393,12 +417,6 @@ class ProjectorsPanel(DevicePanel):
     def update_geometry(self) -> None:
         self.tank.rig = self.rig_editor.dimensions()
         self.tank.screens = resolved_screens(self.tank.rig, self.screen_editor.drafts)
-        self.tank.identifiers = {
-            self.assignments[key]: self.diagram.outputs[row][0]
-            + (" (off)" if not self.participation.get(key, True) else "")
-            for row, key in enumerate(self.keys)
-            if self.assignments.get(key, "Unassigned") != "Unassigned"
-        }
         self.tank.aspects = {
             self.assignments[key]: aspect
             for key, aspect in self.display_aspects.items()
@@ -434,7 +452,7 @@ class ProjectorsPanel(DevicePanel):
         key = self.keys[row] if 0 <= row < len(self.keys) else ""
         item = self.table.item(row, 0)
         self.status_column.hud.setPlainText(
-            f"DISPLAY    {item.text() if item else '—'}\nPROJECTOR  {self.assignments.get(key, 'Unassigned')}\nOUTPUT     Not tested"
+            f"CEPHVR ID  {item.text() if item else '—'}\nPROJECTOR  {self.assignments.get(key, 'Unassigned')}\nOUTPUT     Not tested"
         )
 
     def apply_view(self, view: DashboardView) -> None:

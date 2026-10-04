@@ -256,7 +256,7 @@ class StimulusParameters(QWidget):
                 path_control = PathEdit(filename_only=self.compact)
                 path_control.setText(asset.logical_path)
                 path_control.setAccessibleName("Stimulus file")
-                path_control.setReadOnly(True)
+                path_control.textEdited.connect(self.mark_changed)
                 browse = button("Replace…")
                 equal_row_height(path_control, browse)
                 browse.clicked.connect(
@@ -298,14 +298,33 @@ class StimulusParameters(QWidget):
             if identity in self.asset_forms:
                 path = self.asset_forms[identity].text()
                 if self.compact and not path:
+                    if asset["logical_path"]:
+                        raise ValueError("Choose an asset")
                     continue
+                profile = self.pending_profiles.get(identity, asset["profile"])
+                if (
+                    path != asset["logical_path"]
+                    and identity not in self.pending_profiles
+                ):
+                    source = Path(path)
+                    selected = resolve_stimulus_file(
+                        self.asset_root,
+                        str(
+                            source
+                            if source.is_absolute()
+                            else Path(self.asset_root) / source
+                        ),
+                        texture=setting["kind"] == "texture",
+                    )
+                    path, profile = selected.path, selected.profile
+                    apply_texture_dimensions(setting, selected)
                 select_epoch_asset(
                     candidate,
                     self.node_index,
                     self.layer_index,
                     identity,
                     path,
-                    self.pending_profiles.get(identity, asset["profile"]),
+                    profile,
                 )
         setting["reset"] = not self.retain.isChecked()
         for form in self.forms:
@@ -324,7 +343,7 @@ class StimulusParameters(QWidget):
             program, selected = projector_edit(
                 self.program, program, self.node_index, self.layer_index, self.projector
             )
-        except (ValueError, TypeError) as error:
+        except (ValueError, TypeError, OSError) as error:
             self.message.setText(f"Cannot update · {error}")
             self.message.show()
             self.reset_button.setText("Discard invalid edit")
@@ -422,10 +441,6 @@ class StimulusParameters(QWidget):
                 self.committed.emit(program)
                 self.bind(program, self.node_index, self.layer_index, self.projector)
                 self.media_selected.emit()
-                self.message.show()
-                self.message.setText(
-                    f"Loaded {Path(path).name} → {Path(selected.path).name}"
-                )
                 return
         except (OSError, ValueError, TypeError) as error:
             self.message.setText("Cannot select stimulus file · see details")

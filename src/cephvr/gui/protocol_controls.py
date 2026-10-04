@@ -92,7 +92,7 @@ class PlannerControls(QWidget):
         self.settings_card = Card("Epoch editor")
         self.settings_card.header.addWidget(self.epoch_button)
         self.modes = QTabBar()
-        self.modes.addTab("Batch create")
+        self.modes.addTab("Batch generate")
         self.modes.addTab("Batch edit")
         self.modes.setExpanding(False)
         self.modes.setDrawBase(False)

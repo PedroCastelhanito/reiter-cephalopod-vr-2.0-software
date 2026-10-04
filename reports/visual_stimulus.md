@@ -6,6 +6,32 @@ tree, preserving the existing controller, supervisor and acquisition work.
 [V01–V28/E13](../docs/architecture/visual_stimulus.md) and [E05–E08/E14–E15](../docs/architecture/system-contracts.md)
 remain authoritative; implementation does not mean experiment or rig acceptance.
 
+## Calibration arena asset
+
+[V18 revision 4](../docs/architecture/visual_stimulus.md#v18) permits a dedicated
+offline exporter for a static calibration GLB. It reads the G01 version 2 saved
+rig JSON and reuses the GUI's four screen-corner calculation. The resulting unlit
+mesh has a 10 mm grid, a center cross and a Front/Left/Right/Bottom name on each
+screen, plus a thin tank outline. The owner's 2026-10-04 Desktop JSON defines a
+120 × 166 × 110 mm tank and four screen planes; the generated local asset is under
+ignored `cephvr-data/calibration`. The earlier timed trial program was removed when
+the owner selected manual open/close. The
+Visual Stimulus GLB reader parsed the 55,688-byte asset (806 triangles). This is
+source/format evidence, not a managed launch or optical check. The saved JSON has
+unset near/far/tolerance and correction values. The GUI's Prepare calibration files
+action computes bounded diagnostic projection limits and explicit uncalibrated
+geometric meshes from the current four face assignments and native monitor identities;
+it exports the V15 display profile with the GLB into Protocol Assets.
+The profile builder and complete bundle pass focused tests, but the GUI still has no
+managed untimed diagnostic launch/close command or optical rig verification; see
+`projector-calibration-launch` in TODO.
+The GUI has a tested confirmed-state Launch/Close button interface, but its local
+review entry point has no controller transport, so the button remains disabled and
+no renderer command has been sent.
+The four exported geometric profiles now carry per-face scale, pixel offsets and
+axis inversion when entered; unset fields produce identity mappings. A focused test
+checks adjustment, mirroring and rejection of corrections beyond the output.
+
 ## Arena movement gains
 
 [V24 revision 7](../docs/architecture/visual_stimulus.md#v24) now supports independent

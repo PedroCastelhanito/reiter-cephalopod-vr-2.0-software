@@ -83,6 +83,12 @@ class DashboardWindow(QMainWindow):
         assert isinstance(dashboard_controls, QVBoxLayout)
         dashboard_controls.insertWidget(2, self.recordings)
         self.protocol = ProtocolPage(self.recordings, sample=sample)
+        self.protocol.assets.folders["root"].editor.textChanged.connect(
+            lambda path: setattr(self.devices.projectors, "asset_root", path)
+        )
+        self.devices.projectors.asset_root = self.protocol.assets.folders[
+            "root"
+        ].editor.text()
         self.devices.projectors.outputs_changed.connect(
             lambda: self.protocol.editor.timeline.set_screens(
                 self.devices.projectors.enabled_screens

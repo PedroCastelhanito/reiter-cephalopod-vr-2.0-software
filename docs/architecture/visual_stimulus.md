@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 12
+**Status:** Accepted · **Revision:** 13
 
 - The backend is named **Visual Stimulus**, with `visual_stimulus` as its canonical
   configuration, registration, package and protocol identifier. Use
@@ -41,6 +41,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   to provide E05's configurable Idle presentation. Programs follow V02/V03, rendering
   stack V04, surface views V15; V12 owns the renderer's recording thread and FFmpeg
   subprocess when saving is enabled.
+- Controller-authorized calibration presentation uses that same rendering worker,
+  prepared static arena and V15 display pipeline during Configuration. It is a
+  diagnostic state outside trial programs and recording, with no duration or trial
+  clock. One presentation remains visible until the operator closes it; Close
+  submits Idle and confirms cleanup. Setup requires it closed. Control-authority
+  loss, renderer failure or application shutdown ends the diagnostic through E06/E08
+  cleanup, retaining truthful output evidence rather than assuming a blank screen.
 - Prepare the renderer's required plan/resources before Ready. After valid schedule
   and release, execute prepared stimulus timing locally against the trial clock; the
   coordinator sends no per-frame commands and relays no rendered pixels. Setup hands
@@ -300,7 +307,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v08"></a>
 ### V08 — Group ordering and repetition
 
-**Status:** Accepted · **Revision:** 2
+**Status:** Accepted · **Revision:** 3
 
 - Each group uses authored order (default) or a fresh shuffle without replacement per
   repetition. Every selected condition row or child block appears exactly once per
@@ -587,7 +594,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v17"></a>
 ### V17 — Unlit arena appearance
 
-**Status:** Accepted · **Revision:** 2
+**Status:** Accepted · **Revision:** 4
 
 - Render 3D arenas with unlit authored colors/textures, including baked shading. No
   runtime scene lighting, dynamic shadows, reflections or physically based shading.
@@ -608,8 +615,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 **Status:** Accepted · **Revision:** 2
 
 - Arenas are generated beforehand in an external authoring workflow and loaded as
-  prepared assets. CephVR loads, validates and renders them; no built-in parametric
-  generation or modeling editor.
+  prepared assets. CephVR loads, validates and renders them; no general parametric
+  generation or modeling editor. A dedicated offline calibration exporter may use
+  G01's saved tank and four screen dimensions to author a static GLB containing
+  a physical screen grid, center cross and face name. It creates an asset for V01's
+  manually controlled diagnostic presentation through V15, not a timed trial,
+  alternate display owner or calibration solver.
 - Resolve assets through E07's asset root and prepare geometry/material resources
   before Ready. Assets supply visual geometry and V17-compatible appearance; only
   V16's protocol settings define movement boundaries and margins.

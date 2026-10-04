@@ -16,6 +16,13 @@ The trial protocol is the single editable source of each arena instance's moveme
 mode, allowed-region geometry and optional wall margin. Bind protocol movement
 settings to the program's stable arena instance ID, not its filename: multiple
 instances may share one visual asset while using different movement settings.
+
+The dedicated offline calibration exporter reads G01's saved rig calibration JSON
+and emits a static unlit GLB in millimetres in the same coordinate frame as the
+four physical screen planes. It draws a grid, center cross and face name on each
+screen and a thin tank outline. The operator uses the GLB for V01's manually
+opened and closed diagnostic presentation; the exporter does not create a timed
+trial program. Exporting it does not start output or validate optics.
 Validate missing/unknown instance references and conflicting assignments during
 Setup. Do not maintain another editable boundary definition in the visual asset
 or silently accept its embedded collision/navigation metadata as authoritative.

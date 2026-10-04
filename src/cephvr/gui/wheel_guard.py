@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
     QScrollBar,
+    QTabBar,
     QWidget,
 )
 
@@ -21,6 +22,9 @@ class WheelGuard(QObject):
         while target is not None:
             if isinstance(target, QScrollBar):
                 return False
+            if isinstance(target, QTabBar):
+                event.ignore()
+                return True
             if isinstance(target, (QComboBox, QAbstractSpinBox, QAbstractSlider)):
                 container = target.parentWidget()
                 while container is not None:

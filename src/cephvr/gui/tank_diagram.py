@@ -1,7 +1,6 @@
 """Rotatable operator view of physical screens and ideal centered projector cones."""
 
 import math
-from typing import cast
 
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
 from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent, QPen, QPolygonF
@@ -21,7 +20,6 @@ class TankDiagram(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.rig: RigDimensions | None = None
-        self.identifiers: dict[str, str] = {}
         self.screens: dict[str, dict[str, str]] = {}
         self.aspects: dict[str, float] = {}
         self.enabled_faces: tuple[str, ...] = ()
@@ -36,7 +34,6 @@ class TankDiagram(QWidget):
                 "screens",
                 "projection",
                 "subject",
-                "labels",
             )
         }
         self.setMinimumHeight(150)
@@ -324,66 +321,8 @@ class TankDiagram(QWidget):
             painter.setPen(amber)
             painter.setBrush(amber)
             painter.drawEllipse(point(projection.projector), 3, 3)
-        font = painter.font()
-        font.setPointSize(SIZES.label_font)
-        painter.setFont(font)
-        occupied: list[QRectF] = []
-
-        def draw_label(anchor: QPointF, text: str, color: str) -> None:
-            if not self.visible_elements["labels"]:
-                return
-            metrics = painter.fontMetrics()
-            bounds = metrics.boundingRect(text)
-            area = QRectF(self.rect()).adjusted(3, legend_height, -3, -3)
-            box = QRectF()
-            for step in range(24):
-                dx = 8 if step % 2 == 0 else -bounds.width() - 8
-                offset = (step // 4) * (bounds.height() + 5)
-                dy = -bounds.height() - 5 - offset if step % 4 < 2 else 5 + offset
-                box = QRectF(
-                    anchor.x() + dx,
-                    anchor.y() + dy,
-                    bounds.width() + 6,
-                    bounds.height() + 4,
-                )
-                box.moveLeft(
-                    max(area.left(), min(box.left(), area.right() - box.width()))
-                )
-                box.moveTop(
-                    max(area.top(), min(box.top(), area.bottom() - box.height()))
-                )
-                if not any(box.intersects(other) for other in occupied):
-                    break
-            occupied.append(box.adjusted(-2, -2, 2, 2))
-            painter.setPen(QPen(QColor(COLORS.muted), 0.7))
-            painter.drawLine(anchor, box.center())
-            background = QColor(COLORS.card)
-            background.setAlpha(220)
-            painter.fillRect(box, background)
-            painter.setPen(QColor(color))
-            painter.drawText(box, Qt.AlignmentFlag.AlignCenter, text)
-
-        for face, corners in faces.items():
-            if not self.visible_elements["screens"]:
-                continue
-            screen_center = cast(
-                Point3, tuple(sum(p[i] for p in corners) / 4 for i in range(3))
-            )
-            draw_label(
-                point(screen_center),
-                f"{face} · {self.identifiers.get(face, '—')}",
-                COLORS.text if face in self.enabled_faces else COLORS.muted,
-            )
-        for face, projection in projections.items():
-            if self.visible_elements["projection"]:
-                draw_label(
-                    point(projection.projector), f"{face} projector", COLORS.projection
-                )
-            if projection.mirror_center and self.visible_elements["projection"]:
-                draw_label(point(projection.mirror_center), "45° mirror", COLORS.mirror)
         painter.setBrush(QColor(COLORS.text))
         painter.setPen(QColor(COLORS.text))
         subject = point(rig.subject)
         if self.visible_elements["subject"]:
             painter.drawEllipse(subject, 4, 4)
-            draw_label(subject, "Subject", COLORS.text)

@@ -1,5 +1,7 @@
 """Reference composition and optional canonical variation generation."""
 
+from decimal import Decimal, InvalidOperation
+
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import (
@@ -19,7 +21,7 @@ from cephvr.gui.epoch_composer import EpochComposer
 from cephvr.gui.group_dialog import VariationRow
 from cephvr.gui.program_editing import node_at, unique_id, validate
 from cephvr.gui.projector_layers import layer_title
-from cephvr.gui.protocol_groups import make_group
+from cephvr.gui.protocol_groups import Variation, make_group
 from cephvr.gui.stimulus_scope import surfaces
 from cephvr.visual_stimulus.compiler.expansion import expand_program
 from cephvr.visual_stimulus.config.models.program_model import (
@@ -28,6 +30,49 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Node,
     Program,
 )
+
+
+class BatchVariationRow(VariationRow):
+    """A reference-layer rule with explicit values or a bounded numeric sweep."""
+
+    def __init__(self, targets: list[tuple[str, tuple[int, ...], int, str]]) -> None:
+        super().__init__(targets)
+        self.method = combo(("Values", "Sweep (min, max, step)"))
+        layout = self.layout()
+        assert isinstance(layout, QHBoxLayout)
+        layout.insertWidget(2, field("Method", self.method), 1)
+        self.method.currentIndexChanged.connect(self.update_hint)
+
+    def update_hint(self) -> None:
+        self.values.setPlaceholderText(
+            "0, 10, 2" if self.method.currentIndex() else "10, 20, 30"
+        )
+
+    def read(self) -> Variation:
+        rule = super().read()
+        if self.method.currentIndex() == 0:
+            return rule
+        try:
+            start, stop, step = (
+                Decimal(part.strip()) for part in self.values.text().split(",")
+            )
+        except (InvalidOperation, ValueError) as error:
+            raise ValueError("Sweep needs min, max, step") from error
+        if (
+            not all(value.is_finite() for value in (start, stop, step))
+            or step <= 0
+            or stop < start
+        ):
+            raise ValueError("Sweep needs finite min ≤ max and positive step")
+        count = int((stop - start) // step) + 1
+        if count > 512:
+            raise ValueError("Sweep exceeds 512 values")
+        return Variation(
+            rule.path,
+            rule.layer,
+            rule.parameter,
+            tuple(float(start + i * step) for i in range(count)),
+        )
 
 
 class BatchCreate(QWidget):
@@ -39,18 +84,18 @@ class BatchCreate(QWidget):
         body.setContentsMargins(0, 0, 0, 0)
         self.composer = EpochComposer()
         body.addWidget(self.composer)
-        self.vary = QCheckBox("Vary parameters")
+        self.vary = QCheckBox("Variation rules")
         body.addWidget(self.vary)
         self.variation_host = QWidget()
         self.variation_body = QVBoxLayout(self.variation_host)
         self.variation_body.setContentsMargins(0, 0, 0, 0)
-        self.rows: list[VariationRow] = []
-        self.rule_ids: dict[VariationRow, list[str]] = {}
-        self.add_rule = button("+ Vary parameter")
+        self.rows: list[BatchVariationRow] = []
+        self.rule_ids: dict[BatchVariationRow, list[str]] = {}
+        self.add_rule = button("+ Add variation rule")
         self.add_rule.clicked.connect(self.add_variation)
         self.variation_body.addWidget(self.add_rule)
         self.combine = combo(("Pair values by position", "All combinations"))
-        self.variation_body.addWidget(self.combine)
+        self.variation_body.addWidget(field("Combine", self.combine))
         self.variation_host.hide()
         self.vary.toggled.connect(self.variation_host.setVisible)
         self.vary.toggled.connect(self.queue_preview)
@@ -65,7 +110,7 @@ class BatchCreate(QWidget):
         self.generation_grid.setContentsMargins(0, 0, 0, 0)
         self.parameter_fields: list[QWidget] = []
         self.repetitions = QLineEdit("1")
-        self.order = combo(("As listed", "Shuffle each repetition"))
+        self.repetitions.setMaxLength(3)
         self.insert = combo(())
         for title, mode in (
             ("Append to end", "append"),
@@ -89,10 +134,10 @@ class BatchCreate(QWidget):
         self.stride_field.hide()
         self.insert.currentIndexChanged.connect(self.arrange_insertion)
         for caption, control in (
-            ("Duration (s)", self.composer.duration),
+            ("Stimulus mode", self.composer.mode),
+            ("Duration (hh:mm:ss)", self.composer.duration),
             ("Repetitions", self.repetitions),
             ("Batch label", self.composer.batch_label),
-            ("Order", self.order),
             ("Insert", self.insert),
         ):
             control.setMinimumWidth(0)
@@ -104,9 +149,7 @@ class BatchCreate(QWidget):
         generation.addWidget(self.insertion_hint)
         self.composer.set_generation_controls(self.generation_controls)
         self.summary = label("", wrap=True)
-        self.summary.setToolTip(
-            "Example ordering only; Setup retains the experiment seed and final order"
-        )
+        self.summary.setToolTip("Generated epochs retain their listed order")
         actions = QHBoxLayout()
         actions.addWidget(self.summary, 1)
         self.add_button = button("Add epochs")
@@ -116,7 +159,6 @@ class BatchCreate(QWidget):
         self.composer.changed.connect(self.queue_preview)
         self.composer.batch_label.textChanged.connect(self.queue_preview)
         self.repetitions.textChanged.connect(self.queue_preview)
-        self.order.currentIndexChanged.connect(self.queue_preview)
         self.combine.currentIndexChanged.connect(self.queue_preview)
         self.preview_timer = QTimer(self)
         self.preview_timer.setSingleShot(True)
@@ -156,9 +198,12 @@ class BatchCreate(QWidget):
         for col in range(6):
             self.generation_grid.setColumnStretch(col, 0)
         columns = 3 if self.width() < 760 else len(fields)
+        weights = (3, 2, 1, 3, 3, 2)
         for i, widget in enumerate(fields):
             self.generation_grid.addWidget(widget, i // columns, i % columns)
-            self.generation_grid.setColumnStretch(i % columns, 1)
+            self.generation_grid.setColumnStretch(
+                i % columns, weights[i] if columns > 3 else 1
+            )
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
         super().resizeEvent(event)
@@ -204,17 +249,18 @@ class BatchCreate(QWidget):
             )
             for i, s in enumerate(node.settings)
         ]
-        row = VariationRow(targets)
+        row = BatchVariationRow(targets)
         self.rule_ids[row] = [s.instance_id for s in node.settings]
         row.remove.clicked.connect(lambda: self.remove_variation(row))
         row.values.textChanged.connect(self.queue_preview)
+        row.method.currentIndexChanged.connect(self.queue_preview)
         row.target.currentIndexChanged.connect(self.queue_preview)
         row.parameter.currentIndexChanged.connect(self.queue_preview)
         self.rows.append(row)
         self.variation_body.insertWidget(len(self.rows) - 1, row)
         self.queue_preview()
 
-    def remove_variation(self, row: VariationRow) -> None:
+    def remove_variation(self, row: BatchVariationRow) -> None:
         self.rows.remove(row)
         self.rule_ids.pop(row)
         self.variation_body.removeWidget(row)
@@ -224,8 +270,8 @@ class BatchCreate(QWidget):
     def candidate(self) -> Program:
         program = self.composer.value()
         repetitions = int(self.repetitions.text())
-        if not 1 <= repetitions <= 2000:
-            raise ValueError("Use 1–2000 repetitions in the authoring editor")
+        if not 1 <= repetitions <= 999:
+            raise ValueError("Use 1–999 repetitions in the authoring editor")
         rules = tuple(row.read() for row in self.rows) if self.vary.isChecked() else ()
         # Reject stale targets rather than varying a replacement layer by accident.
         node = program.sequence[0]
@@ -256,14 +302,14 @@ class BatchCreate(QWidget):
                 ]
                 data["sequence"].append(epoch)
             program = validate(data)
-        if repetitions != 1 or self.order.currentIndex() == 1:
+        if repetitions != 1:
             program, _ = make_group(
                 program,
                 (),
                 0,
                 len(program.sequence) - 1,
                 repetitions,
-                self.order.currentIndex() == 1,
+                False,
             )
         duration = self.composer.duration_value()
 

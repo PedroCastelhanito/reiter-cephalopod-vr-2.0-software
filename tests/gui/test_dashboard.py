@@ -3,6 +3,7 @@
 from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -10,7 +11,13 @@ pytest.importorskip("PyQt6")
 
 from PyQt6.QtCore import QPoint, QRect, QSettings, QSize, Qt
 from PyQt6.QtTest import QTest
-from PyQt6.QtWidgets import QApplication, QFileDialog, QLabel, QPushButton, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QLabel,
+    QPushButton,
+    QWidget,
+)
 
 from cephvr.gui.layouts import tool_window_position
 from cephvr.gui.review import ReviewControls
@@ -856,6 +863,65 @@ def test_pfs_trigger_hint_and_per_camera_drafts(
     assert "unsupported" in camera.console.toPlainText()
 
 
+def test_real_camera_inventory_preserves_roles_and_tests_open_close(
+    window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.gui import cameras
+
+    class Info:
+        def __init__(self, serial: str, model: str) -> None:
+            self.serial = serial
+            self.model = model
+
+        def GetSerialNumber(self) -> str:
+            return self.serial
+
+        def GetModelName(self) -> str:
+            return self.model
+
+    found = [Info("40065509", "Basler A"), Info("40747103", "Basler B")]
+
+    class Factory:
+        def EnumerateDevices(self):
+            return found
+
+    class Adapter:
+        events: list[str] = []
+
+        def _sdk(self):
+            return SimpleNamespace(
+                TlFactory=SimpleNamespace(GetInstance=lambda: Factory())
+            )
+
+        def open(self, serial: str) -> None:
+            self.events.append(f"open {serial}")
+            self.serial = serial
+
+        def read_device_identity(self):
+            return SimpleNamespace(physical_id=self.serial, model="Basler A")
+
+        def close(self) -> None:
+            self.events.append("close")
+
+    monkeypatch.setattr(cameras, "BaslerCameraAdapter", Adapter)
+    panel = window.devices.cameras
+    panel.real_devices = True
+    panel.refresh_inventory()
+    assert [draft.serial for draft in panel.drafts] == ["40065509", "40747103"]
+    assert [draft.role for draft in panel.drafts] == ["Behavior cam", "Tracking cam"]
+    Adapter.events.clear()
+    panel.drafts[1].enabled = False
+    panel.test_enabled()
+    assert Adapter.events == ["open 40065509", "close"]
+    panel.assign_role("Unassigned")
+    panel.refresh_inventory()
+    assert panel.drafts[0].role == "Unassigned"
+    found.clear()
+    panel.refresh_inventory()
+    assert not panel.drafts
+    assert window.devices.microcontroller.camera_rows == ()
+
+
 def test_microcontroller_camera_rows_and_discovery(
     window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -882,7 +948,7 @@ def test_microcontroller_camera_rows_and_discovery(
     panel = window.devices.microcontroller
     panel.request("Scan ports")
     assert panel.port.count() == 1
-    assert panel.port.itemText(0) == "COM7"
+    assert panel.port.itemText(0) == "COM7 — Test board"
     assert panel.port.itemData(0) == "COM7"
     panel.port.setCurrentIndex(0)
     camera = window.devices.cameras
@@ -960,71 +1026,18 @@ def test_projector_refresh_preserves_assignment(
     assert panel.diagram.outputs
 
 
-def test_windows_display_number_mapping_and_unknowns(
+def test_gui_display_number_is_local_and_shared_with_layout(
     window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from cephvr.gui import projectors
 
-    screen = projectors.QGuiApplication.screens()[0]
     monkeypatch.setattr(projectors.QGuiApplication, "primaryScreen", lambda: None)
-    monkeypatch.setattr(
-        projectors,
-        "windows_display_indices",
-        lambda: ({screen.name().casefold(): "4"}, ""),
-    )
     panel = window.devices.projectors
     panel.request("Refresh displays")
-    assert panel.table.item(0, 0).text() == "4"
-    assert panel.diagram.outputs[0][0] == "4"
-    monkeypatch.setattr(
-        projectors, "windows_display_indices", lambda: ({}, "Unavailable")
-    )
-    panel.request("Refresh displays")
-    assert panel.table.item(0, 0).text() == "—"
-    assert "Unavailable" in panel.console.toPlainText()
-
-
-def test_windows_display_query_preserves_clone_numbers(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    from cephvr.gui import display_indices as native
-
-    class Function:
-        def __init__(self, fn):
-            self.fn = fn
-
-        def __call__(self, *args):
-            return self.fn(*args)
-
-    def sizes(flags, paths, modes):
-        paths._obj.value = 2
-        modes._obj.value = 1
-        return 0
-
-    def query(flags, count, paths, modes_count, modes, topology):
-        paths[0].source.id = 0
-        paths[1].source.id = 0
-        return 0
-
-    def source(header):
-        name = native.ct.cast(header, native.ct.POINTER(native.SourceName)).contents
-        name.name = "display-source"
-        return 0
-
-    class Api:
-        GetDisplayConfigBufferSizes = Function(sizes)
-        QueryDisplayConfig = Function(query)
-        DisplayConfigGetDeviceInfo = Function(source)
-
-    monkeypatch.setattr(native.sys, "platform", "win32")
-    monkeypatch.setattr(
-        native.ct, "WinDLL", lambda *args, **kwargs: Api(), raising=False
-    )
-    assert native.windows_display_indices() == ({"display-source": "1/2"}, "")
-    assert native.ct.sizeof(native.DisplayPath) == 72
-    Api.QueryDisplayConfig = Function(lambda *args: 122)
-    values, error = native.windows_display_indices()
-    assert not values and "repeatedly" in error
+    assert panel.table.item(0, 0).text() == "1"
+    assert panel.diagram.outputs[0][0] == "1"
+    assert "numbers are independent" in panel.console.toPlainText()
+    assert panel.table.horizontalHeaderItem(0).text() == "CephVR ID"
 
 
 def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) -> None:
@@ -1127,7 +1140,7 @@ def test_microcontroller_enablement_preserves_pins_and_syncs_cameras(
     assert not any(c.isEnabled() for c in panel.enable_controls.values())
 
 
-def test_projectors_exclude_primary_without_renumbering(
+def test_projectors_number_secondary_screens_by_position(
     window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from PyQt6.QtCore import QRect
@@ -1135,8 +1148,9 @@ def test_projectors_exclude_primary_without_renumbering(
     from cephvr.gui import projectors
 
     class Screen:
-        def __init__(self, name):
+        def __init__(self, name, x):
             self.identity = name
+            self.x = x
 
         def name(self):
             return self.identity
@@ -1151,22 +1165,34 @@ def test_projectors_exclude_primary_without_renumbering(
             return ""
 
         def geometry(self):
-            return QRect(0, 0, 1920, 1080)
+            return QRect(self.x, 0, 1920, 1080)
 
         def devicePixelRatio(self):
             return 1
 
-    main, extra = Screen("main"), Screen("extra")
-    monkeypatch.setattr(projectors.QGuiApplication, "screens", lambda: [main, extra])
-    monkeypatch.setattr(projectors.QGuiApplication, "primaryScreen", lambda: main)
+    main, left, right = Screen("main", 0), Screen("left", -3840), Screen("right", -1280)
     monkeypatch.setattr(
-        projectors, "windows_display_indices", lambda: ({"main": "2", "extra": "4"}, "")
+        projectors.QGuiApplication, "screens", lambda: [right, main, left]
     )
+    monkeypatch.setattr(projectors.QGuiApplication, "primaryScreen", lambda: main)
     panel = window.devices.projectors
     panel.request("Refresh displays")
-    assert panel.table.rowCount() == 1
-    assert panel.table.item(0, 0).text() == "4"
-    assert [index for index, _ in panel.diagram.outputs] == ["4"]
+    assert panel.table.rowCount() == 2
+    assert panel.keys == ["left|||", "right|||"]
+    assert [panel.table.item(row, 0).text() for row in range(2)] == ["1", "2"]
+    assert [index for index, _ in panel.diagram.outputs] == ["1", "2"]
+    panel.projectors[panel.keys[0]].setCurrentText("Front")
+    monkeypatch.setattr(
+        projectors.QGuiApplication, "screens", lambda: [left, right, main]
+    )
+    panel.request("Refresh displays")
+    assert panel.table.item(0, 0).text() == "1"
+    assert panel.projectors[panel.keys[0]].currentText() == "Front"
+    left.x, right.x = -1000, -3840
+    panel.request("Refresh displays")
+    assert panel.keys == ["right|||", "left|||"]
+    assert panel.projectors["left|||"].currentText() == "Front"
+    assert panel.table.item(1, 0).text() == "2"
     monkeypatch.setattr(projectors.QGuiApplication, "screens", lambda: [main])
     panel.request("Refresh displays")
     assert panel.table.rowCount() == 0
@@ -1455,6 +1481,101 @@ def test_wheel_never_changes_input_values(
             else editor.value() == 5
         )
         assert panel.config_scroll.verticalScrollBar().value() > 0
+
+
+def test_wheel_does_not_switch_epoch_tabs(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    from PyQt6.QtGui import QWheelEvent
+
+    window.page_buttons[1].click()
+    tabs = window.protocol.editor.modes
+    tabs.setCurrentIndex(0)
+    event = QWheelEvent(
+        QPoint(10, 10).toPointF(),
+        QPoint(10, 10).toPointF(),
+        QPoint(),
+        QPoint(0, -120),
+        Qt.MouseButton.NoButton,
+        Qt.KeyboardModifier.NoModifier,
+        Qt.ScrollPhase.NoScrollPhase,
+        False,
+    )
+    QApplication.sendEvent(tabs, event)
+    app.processEvents()
+    assert tabs.currentIndex() == 0
+
+
+def test_epoch_clock_duration_retains_fractional_precision() -> None:
+    from cephvr.gui.formatting import clock_duration, parse_clock_duration
+
+    assert parse_clock_duration("01:02:03.000000001") == "3723.000000001"
+    assert clock_duration("3723.000000001") == "01:02:03.000000001"
+    for invalid in ("62", "1:02:03", "00:60:00", "00:00:60", "00:00:00.1234567890"):
+        with pytest.raises(ValueError):
+            parse_clock_duration(invalid)
+
+
+def test_batch_variation_sweep_is_bounded(app: QApplication) -> None:
+    from cephvr.gui.batch_create import BatchVariationRow
+
+    row = BatchVariationRow([("Left · Texture", (0,), 0, "texture")])
+    row.method.setCurrentIndex(1)
+    row.values.setText("0, 1, 0.25")
+    assert row.read().values == (0.0, 0.25, 0.5, 0.75, 1.0)
+    row.values.setText("0, 1000, 0.1")
+    with pytest.raises(ValueError, match="512"):
+        row.read()
+    row.deleteLater()
+
+
+def test_epoch_reference_updates_do_not_show_detached_windows(
+    app: QApplication,
+) -> None:
+    from PyQt6.QtCore import QEvent, QObject
+
+    from cephvr.gui.epoch_composer import EpochComposer
+    from cephvr.gui.epoch_motion import EpochMotion
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    class DetachedWindowTrace(QObject):
+        def __init__(self) -> None:
+            super().__init__()
+            self.shown: list[QWidget] = []
+
+        def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:  # noqa: N802
+            if (
+                isinstance(watched, QWidget)
+                and watched.isWindow()
+                and event is not None
+                and event.type() == QEvent.Type.Show
+            ):
+                self.shown.append(watched)
+            return False
+
+    trace = DetachedWindowTrace()
+    app.installEventFilter(trace)
+    try:
+        composer = EpochComposer()
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        composer.program = add_stimulus(composer.program, 0, "Sine grating", ("Left",))
+        composer.refresh_rows()
+        motion = next(
+            form
+            for form in composer.rows["Left"].parameters.forms
+            if isinstance(form, EpochMotion)
+        )
+        motion.speed.setText("12")
+        motion.speed.textEdited.emit("12")
+        assert composer.rows["Left"].parameters.apply()
+        composer.change_type("Left", "Texture")
+        composer.refresh_rows()
+        composer.duration.setText("00:00:03")
+        composer.update_duration()
+        assert not trace.shown
+        composer.deleteLater()
+    finally:
+        app.removeEventFilter(trace)
 
 
 def test_spikeglx_disable_restore_and_remove_custom(window: DashboardWindow):
@@ -1910,6 +2031,7 @@ def test_prepared_texture_bundle_and_epoch_motion(
     identity = editor.program.sequence[0].settings[0].pattern.asset_id
     parameters.set_media_path(identity, str(design))
     assert editor.program.assets[0].logical_path == "pattern.png"
+    assert not parameters.message.text()
     assert editor.program.sequence[0].settings[0].pattern.period_x.value == 104
     assert parameters.file_rows
     assert parameters.advanced.isHidden()
@@ -2662,9 +2784,15 @@ def test_batch_create_variations_preview_insert_and_reload(
     editor.modes.setCurrentIndex(0)
     original = editor.program
     create.composer.add_file("Texture", str(path), "Left")
-    create.composer.duration.setText("2.000000001")
+    create.composer.duration.setText("00:00:02.000000001")
     create.vary.setChecked(True)
     create.add_variation()
+    create.rows[0].method.setCurrentIndex(1)
+    create.rows[0].values.setText("0, 1, 0.25")
+    create.refresh_preview()
+    assert create.add_button.isEnabled(), create.summary.text()
+    assert create.summary.text().startswith("5 epochs")
+    create.rows[0].method.setCurrentIndex(0)
     create.rows[0].values.setText("10, 20, 40")
     create.add_variation()
     create.rows[1].parameter.setCurrentText("Direction")
@@ -2674,7 +2802,6 @@ def test_batch_create_variations_preview_insert_and_reload(
     assert editor.program == original
     create.combine.setCurrentIndex(1)
     create.repetitions.setText("2")
-    create.order.setCurrentIndex(1)
     create.refresh_preview()
     assert create.add_button.isEnabled(), create.summary.text()
     assert create.summary.text().startswith("12 epochs")
@@ -2683,7 +2810,7 @@ def test_batch_create_variations_preview_insert_and_reload(
     program = editor.program
     assert len(epoch_paths(program)) == 7
     assert len(expand_program(program, seed_decimal="8", max_expanded_epochs=100)) == 13
-    assert program.sequence[1].order == "shuffle_each_repetition"
+    assert program.sequence[1].order == "as_listed"
     assert program.sequence[1].conditions is None
     numbers = {
         tuple(
@@ -2733,32 +2860,50 @@ def test_batch_edit_mixed_values_isolation_atomic_failure_and_undo(
     editor.set_program(program)
     editor.select_epochs(epoch_paths(program))
     panel = editor.batch_edit
-    panel.face.setCurrentIndex(panel.face.findData("Left"))
-    panel.layer.setCurrentIndex(
-        next(i for i, t in enumerate(panel.targets) if t.family == "Texture")
-    )
-    check, value = panel.fields["Speed"]
+    assert panel.parameter.findText("Speed") >= 0
+    assert panel.parameter.findText("Playback start") < 0
+    selectors = panel.layout().itemAt(1).layout()
+    assert selectors.itemAt(0).widget() is panel.epoch_scope.parentWidget()
+    assert selectors.itemAt(1).widget() is panel.parameter.parentWidget()
+    panel.parameter.setCurrentText("Start size")
+    assert panel.parameter.findText("Start size") >= 0
+    assert panel.rows["Left"].target.family == "Looming image"
+    assert panel.rows["Right"].target is None
+    panel.parameter.setCurrentText("Speed")
+    assert panel.duration_row.isHidden() and not panel.projector_host.isHidden()
+    assert panel.rows["Left"].target.family == "Texture"
+    assert panel.rows["Right"].target.family == "Texture"
+    value = panel.rows["Left"].value
     assert value.text() == "" and value.placeholderText() == "Mixed"
-    assert not check.isChecked()
+    assert not panel.dirty
     value.setText("25")
     value.textEdited.emit("25")
+    right_value = panel.rows["Right"].value
+    right_value.setText("30")
+    right_value.textEdited.emit("30")
     app.processEvents()
-    assert check.isChecked() and editor.program == program
+    assert panel.dirty and editor.program == program
     panel.apply()
     edited = editor.program
     for old, new in zip(program.sequence, edited.sequence, strict=True):
         left = new.settings[layers_for(edited, new, "Left")[0]]
         assert motion_numbers(left.model_dump(mode="json"))[0] == pytest.approx(25)
         right = new.settings[layers_for(edited, new, "Right")[0]]
-        original_right = old.settings[0].model_dump(mode="json")
-        actual_right = right.model_dump(mode="json")
-        original_right["space"] = actual_right["space"]
-        assert original_right == actual_right
+        assert motion_numbers(right.model_dump(mode="json"))[0] == pytest.approx(30)
         assert new.settings[-1] == old.settings[-1]  # Looming overlay untouched.
         assert new.duration == old.duration
     assert len(editor.selected_paths) == 2
     editor.undo(False)
     assert editor.program == program
+    panel = editor.batch_edit
+    panel.parameter.setCurrentText("Speed")
+    panel.rows["Left"].value.setText("25")
+    panel.rows["Left"].value.textEdited.emit("25")
+    panel.rows["Right"].value.setText("invalid")
+    panel.rows["Right"].value.textEdited.emit("invalid")
+    panel.apply()
+    assert editor.program == program and panel.message.text()
+    panel.discard()
     with pytest.raises(ValueError, match="no Video"):
         apply_batch(
             program,
@@ -2768,6 +2913,8 @@ def test_batch_edit_mixed_values_isolation_atomic_failure_and_undo(
         )
     assert editor.program == program
     panel = editor.batch_edit
+    panel.parameter.setCurrentText("Duration")
+    assert not panel.duration_row.isHidden() and panel.projector_host.isHidden()
     check, value = panel.fields["Duration"]
     check.setChecked(True)
     value.setText("-1")
@@ -2864,15 +3011,32 @@ def test_batch_media_changes_and_pending_edits_are_isolated(
     editor = window.protocol.editor
     editor.set_program(program)
     editor.timeline.set_screens(("Left", "Right"))
+    window.protocol.assets.folders["root"].editor.setText(str(tmp_path))
     editor.select_epochs(((0,),))
     panel = editor.batch_edit
+    panel.parameter.setCurrentText("Asset")
+    left_value = panel.rows["Left"].value
+    assert left_value.text() == "a.png"
+    assert panel.rows["Right"].value.text() == "a.png"
+    left_value.setText("b.texture.json")
+    left_value.textEdited.emit("b.texture.json")
+    panel.apply()
+    updated = editor.program.sequence[0]
+    left = updated.settings[layers_for(editor.program, updated, "Left")[0]]
+    right = updated.settings[layers_for(editor.program, updated, "Right")[0]]
+    assets = {asset.asset_id: asset.logical_path for asset in editor.program.assets}
+    assert assets[left.pattern.asset_id] == "b.png"
+    assert assets[right.pattern.asset_id] == "a.png"
+    editor.set_program(program)
+    panel = editor.batch_edit
+    panel.parameter.setCurrentText("Duration")
     check, value = panel.fields["Duration"]
     value.setText("45")
     value.textEdited.emit("45")
     assert panel.dirty
-    old_face = panel.face.currentIndex()
-    panel.face.setCurrentIndex(1)
-    assert panel.face.currentIndex() == old_face
+    old_parameter = panel.parameter.currentIndex()
+    panel.parameter.setCurrentText("Asset")
+    assert panel.parameter.currentIndex() == old_parameter
     editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
     assert editor.selected_paths == ((0,),)
     assert editor.timeline.selection == ((0,),)
@@ -2895,7 +3059,7 @@ def test_review_projector_inventory_drives_devices_and_planner(
         faces = ("Front", "Left", "Right", "Bottom")
         assert panel.table.rowCount() == 4
         assert panel.enabled_screens == editor.timeline.screens == faces
-        assert [panel.table.item(i, 0).text() for i in range(4)] == ["2", "3", "4", "5"]
+        assert [panel.table.item(i, 0).text() for i in range(4)] == ["1", "2", "3", "4"]
         key = panel.keys[2]
         panel.enable_controls[key].setChecked(False)
         assert editor.timeline.screens == ("Front", "Left", "Bottom")
@@ -2954,7 +3118,7 @@ def test_timeline_overview_colors_and_current_epoch_details(
     assert editor.selected_paths == ((1,), (2,))
     assert timeline.index == 2
     assert all(rows == [(-1, "Blank")] for _, rows in timeline.detail_rows())
-    assert editor.modes.tabText(0) == "Batch create"
+    assert editor.modes.tabText(0) == "Batch generate"
     assert editor.modes.tabText(1) == "Batch edit"
     assert editor.timeline_card.height() == 366
     assert editor.program == program
@@ -2992,12 +3156,12 @@ def test_batch_tabs_preserve_drafts_apply_and_phase_lock(
     assert editor.batch_edit.isVisible() and not editor.create_batch.isVisible()
     check, value = editor.batch_edit.fields["Duration"]
     check.setChecked(True)
-    value.setText("12")
+    value.setText("00:00:12")
     editor.modes.setCurrentIndex(0)
     assert editor.create_batch.repetitions.text() == "2"
     assert editor.program == original
     editor.modes.setCurrentIndex(1)
-    assert value.text() == "12" and check.isChecked()
+    assert value.text() == "00:00:12" and check.isChecked()
     editor.batch_edit.reset.click()
     assert not editor.batch_edit.dirty and editor.program == original
     check, value = editor.batch_edit.fields["Duration"]
@@ -3005,7 +3169,7 @@ def test_batch_tabs_preserve_drafts_apply_and_phase_lock(
     value.setText("-1")
     editor.batch_edit.apply_button.click()
     assert editor.batch_edit.isVisible() and editor.program == original
-    value.setText("12")
+    value.setText("00:00:12")
     editor.batch_edit.apply_button.click()
     assert editor.batch_edit.isVisible()
     assert editor.program.sequence[0].duration.duration.seconds == "12"
@@ -3167,6 +3331,37 @@ def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
     assert left.height() == right.height()
     assert left.parameters.more.isHidden()
     assert not left.parameters.advanced.isVisible()
+    second = tmp_path / "second.png"
+    assert image.save(str(second))
+    left.parameters.set_media_path(next(iter(left.parameters.asset_forms)), str(second))
+    source = next(iter(left.parameters.asset_forms.values()))
+    destination = next(iter(right.parameters.asset_forms.values()))
+    assert not destination.isReadOnly()
+    destination.setFocus()
+    destination.selectAll()
+    QTest.keyClicks(destination, source.text())
+    composer.duration.setFocus()
+    app.processEvents()
+    assert [asset.logical_path for asset in composer.program.assets] == [
+        "second.png",
+        "second.png",
+    ]
+    assert not right.parameters.message.text()
+    saved = composer.program
+    destination = next(iter(right.parameters.asset_forms.values()))
+    destination.setFocus()
+    destination.selectAll()
+    QTest.keyClicks(destination, "missing.png")
+    composer.duration.setFocus()
+    app.processEvents()
+    assert composer.program == saved
+    assert "missing" in right.parameters.message.text()
+    destination.setFocus()
+    destination.selectAll()
+    QTest.keyClicks(destination, "second.png")
+    composer.duration.setFocus()
+    app.processEvents()
+    assert composer.program == saved
     motion = next(f for f in left.parameters.forms if isinstance(f, EpochMotion))
     # The row uses the actual family controls, including their focus/validation path.
     motion.speed.setFocus()
@@ -3329,7 +3524,7 @@ def test_generated_batch_label_survives_reload_and_targets_edits(
     assert edit.paths == labelled
     check, duration = edit.fields["Duration"]
     check.setChecked(True)
-    duration.setText("7")
+    duration.setText("00:00:07")
     edit.epoch_scope.setCurrentIndex(edit.epoch_scope.findData("all"))
     assert edit.epoch_scope.currentData() == "label:Adaptation"
     edit.apply()
@@ -3854,7 +4049,6 @@ def test_projection_group_replaces_individual_visibility_controls(
         "screens",
         "projection",
         "subject",
-        "labels",
     }
     assert set(panel.tank.visible_elements) == set(panel.plot_toggles)
     assert COLORS.footprint != COLORS.projection
@@ -3862,6 +4056,139 @@ def test_projection_group_replaces_individual_visibility_controls(
     assert not panel.tank.visible_elements["projection"]
     assert panel.tank.visible_elements["screens"]
     assert panel.enabled_screens == ()
+
+
+def test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile():
+    from cephvr.gui.calibration_arena import (
+        geometry_from_calibration,
+        make_calibration_glb,
+    )
+    from cephvr.gui.projector_geometry import FACES
+    from cephvr.visual_stimulus.resources.glb import parse_glb
+
+    values = {
+        "rig.width": 200,
+        "rig.depth": 300,
+        "rig.height": 150,
+        "rig.subject_x": 80,
+        "rig.subject_y": 100,
+        "rig.subject_z": 75,
+    }
+    for face in FACES:
+        values[f"screens.{face}.width"] = 180
+        values[f"screens.{face}.height"] = 130
+        if face != "Right":
+            values[f"screens.{face}.subject_distance"] = 90
+    payload = {"format": "cephvr-rig-calibration", "version": 2, "values": values}
+    rig, screens = geometry_from_calibration(payload)
+    assert screens["Right"][0][0] == pytest.approx(210)
+    scene = parse_glb(
+        make_calibration_glb(rig, screens), max_bytes=1_000_000, max_elements=200_000
+    )
+    primitive = scene.nodes[0].primitives[0]
+    assert primitive.colors is not None
+    colors = set(primitive.colors)
+    assert (1.0, 1.0, 1.0, 1.0) in colors  # face names
+    assert any(color == pytest.approx((1.0, 0.86, 0.12, 1.0)) for color in colors)
+    for face in FACES:
+        for corner in screens[face]:
+            assert any(point == pytest.approx(corner) for point in primitive.positions)
+
+
+def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path):
+    from cephvr.gui.calibration_profile import (
+        AssignedDisplay,
+        MonitorBinding,
+        diagnostic_display_profile,
+        write_diagnostic_bundle,
+    )
+    from cephvr.gui.projector_geometry import FACES
+
+    values = {
+        "rig.width": 120,
+        "rig.depth": 166,
+        "rig.height": 110,
+        "rig.subject_x": 60,
+        "rig.subject_y": 93,
+        "rig.subject_z": 53,
+    }
+    for face in FACES:
+        values[f"screens.{face}.width"] = 90
+        values[f"screens.{face}.height"] = 80
+        if face != "Right":
+            values[f"screens.{face}.subject_distance"] = 50
+    calibration = {"format": "cephvr-rig-calibration", "version": 2, "values": values}
+    assignments = tuple(
+        AssignedDisplay(face, index * 1280, 0, 1280, 720, True)
+        for index, face in enumerate(FACES)
+    )
+    monitors = tuple(
+        MonitorBinding(f"interface-{index}", index * 1280, 0, 1280, 720, 60, 8)
+        for index in range(4)
+    )
+    profile, meshes = diagnostic_display_profile(calibration, assignments, monitors)
+    assert {output.device_identity for output in profile.outputs} == {
+        monitor.interface for monitor in monitors
+    }
+    assert profile.photometric_mode == "uncalibrated"
+    assert profile.presentation_mode == "all_outputs_vsync"
+    assert profile.geometry.near_mm < 1 < profile.geometry.far_mm
+    assert set(meshes) == {face.lower() for face in FACES}
+    assert all(mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in meshes.values())
+    assert all(mesh.orientation == "preserving" for mesh in meshes.values())
+    values["screens.Front.scale_u"] = 0.8
+    values["screens.Front.offset_x"] = 40
+    values["screens.Left.flip_x"] = True
+    adjusted, adjusted_meshes = diagnostic_display_profile(
+        calibration, assignments, monitors
+    )
+    assert adjusted == profile
+    assert adjusted_meshes["front"].vertices[0].xy[0] == pytest.approx(
+        0.5 - 0.4 + 40 / 1280
+    )
+    assert adjusted_meshes["left"].orientation == "mirrored"
+    values["screens.Front.offset_x"] = 1000
+    with pytest.raises(ValueError, match="extends beyond"):
+        diagnostic_display_profile(calibration, assignments, monitors)
+    values["screens.Front.offset_x"] = None
+    values["screens.Front.scale_u"] = None
+    values["screens.Left.flip_x"] = False
+    with pytest.raises(ValueError, match="unique native monitor"):
+        diagnostic_display_profile(calibration, assignments, monitors[:-1])
+    arena_path = write_diagnostic_bundle(tmp_path, calibration, assignments, monitors)
+    assert arena_path.is_file()
+    assert not (arena_path.parent / "rig_geometry_grid.program.json").exists()
+    assert (arena_path.parent / "diagnostic_display_profile.json").is_file()
+    assert all(
+        (arena_path.parent / f"diagnostic_{face.lower()}.json").is_file()
+        for face in FACES
+    )
+
+
+def test_calibration_button_reflects_confirmed_managed_output(app):
+    from cephvr.gui.projector_calibration import CalibrationTable
+    from cephvr.gui.projector_geometry import FACES
+
+    table = CalibrationTable({face: {} for face in FACES})
+    launched: list[bool] = []
+    closed: list[bool] = []
+    table.launch_requested.connect(lambda: launched.append(True))
+    table.close_requested.connect(lambda: closed.append(True))
+    assert not table.presentation_button.isEnabled()
+    table.set_presentation_state(active=False, available=True)
+    table.presentation_button.click()
+    assert launched == [True]
+    assert table.presentation_button.text() == "Launch"
+    table.set_presentation_state(active=True, available=True)
+    assert table.presentation_button.text() == "Close"
+    table.presentation_button.click()
+    assert closed == [True]
+    assert table.presentation_button.text() == "Close"
+    table.set_presentation_state(active=True, available=True, pending=True)
+    assert not table.presentation_button.isEnabled()
+    table.set_presentation_state(active=False, available=False)
+    assert table.presentation_button.text() == "Launch"
+    assert not table.presentation_button.isEnabled()
 
 
 def test_unified_feedback_input_mapping_and_retain_state(window, app):

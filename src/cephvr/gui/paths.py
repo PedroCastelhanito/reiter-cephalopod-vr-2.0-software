@@ -27,7 +27,7 @@ class PathEdit(QLineEdit):
         self.textChanged.connect(self.setToolTip)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
-        if (self.hasFocus() and not self.filename_only) or not self.text():
+        if self.hasFocus() or not self.text():
             super().paintEvent(event)
             return
         option = QStyleOptionFrame()

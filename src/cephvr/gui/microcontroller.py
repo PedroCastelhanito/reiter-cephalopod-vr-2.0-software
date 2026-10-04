@@ -133,8 +133,14 @@ class MicrocontrollerPanel(DevicePanel):
                 if not re.fullmatch(r"COM[1-9][0-9]*", name) or name in seen:
                     continue
                 seen.add(name)
+                description = port.description().strip()
+                label = (
+                    f"{name} — {description}"
+                    if description and description != name
+                    else name
+                )
                 self.port.addItem(
-                    name,
+                    label,
                     port.systemLocation(),
                 )
             self.port.setCurrentIndex(self.port.findData(current) if current else -1)
