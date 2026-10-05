@@ -1,0 +1,178 @@
+2026-10-05 Random batch variations
+Base revision:3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree.
+Governing:G01 revision89, ARCH-002; concrete authored epochs, no runtime schema/seed change.
+
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig'
+170 passed in70.28s.
+Focused random_variations/random_batch/batch_variation_sweep/batch_variations_target:
+4 passed in3.09s.
+Ruff check GUI/tests:pass. Ruff format check:87 files formatted.
+Windows-target mypy GUI:86 sources pass. check_backend_boundaries:539 modules/zero
+violations, existing cohesion advisories retained. git diff --check:pass.
+
+Native method:prepared test textures, four simulated projector roles; Random Front
+Speed, min0/max100/precision0.1/count100. Wide and720x900 editor inspected after
+shared row-height correction; final native refresh icon verified. 100 concrete epochs
+are shown in summary and planning preview. Inspection closed exit0 and all temporary
+screenshots deleted. Reopened GUI on variation controls without opening preview.
+Native harness below preserves method; data is illustrative, not rig validation.
+
+Semantics:uniform draws with replacement over multiples of positive precision inside
+inclusive bounds. Empty grid, nonfinite inputs, unsupported precision/count and
+oversized text reject. Samples cache while inputs are unchanged; refresh resamples.
+Each all-projector/layer rule shares its list across targets; separate rules pair by
+position and need matching counts. Concrete values are stored in generated epoch
+settings and remain through JSON round-trip. No runtime rerandomization or seed edits.
+Bounded sampler does not enumerate its full grid; GUI uses existing512-variant bound.
+No performance/full-workload guarantee, live feedback or hardware acceptance claimed.
+
+SHA256:
+1c2bfea360b6bb53a767db6806f3a0338575215fe43ccf12acdf2e1d1a15efb6  src/cephvr/gui/batch_random.py
+716dd7f6aa7654f5e170bc5e1a5c912a43dc269b61d9ecfbb5ae4a8e5f949b35  src/cephvr/gui/batch_variation.py
+68a9643e88211374af16f44251e7e9cc234f10173be5d22b1c7ac5fa308a944c  tests/gui/test_dashboard.py
+
+Native harness:
+from pathlib import Path
+import sys
+from PyQt6.QtCore import QSettings,QTimer
+from PyQt6.QtWidgets import QApplication,QScrollArea
+from cephvr.gui.theme import apply_theme
+from cephvr.gui.window import DashboardWindow
+from cephvr.gui.review import ReviewControls
+from cephvr.gui.layouts import fit_window_to_screen
+app=QApplication([]);apply_theme(app)
+w=DashboardWindow(sample=True,settings=QSettings('/private/tmp/cephvr-timeline-preview-review.ini',QSettings.Format.IniFormat))
+r=ReviewControls(w,simulate_projectors=True)
+w.page_buttons[1].click();w.protocol.session_mode.setCurrentText('Closed-loop')
+root='/private/tmp/cephvr-file-review-assets';w.protocol.assets.folders['root'].editor.setText(root)
+e=w.protocol.editor;e.modes.setCurrentIndex(0);batch=e.create_batch;c=batch.composer
+for face,kind,file in [('Front','Texture','example.texture.json'),('Right','Texture','checker.png'),('Bottom','Texture','example.png'),('Left','Texture','checker.png')]:c.add_file(kind,root+'/'+file,face)
+c.duration.setText('00:00:10');front=c.rows['Front'];front.layer.setCurrentIndex(0);front.advanced.setChecked(True)
+batch.vary.setChecked(True);batch.add_variation();batch.rows[0].method.setCurrentText('Random')
+for key,value in {'minimum':'0','maximum':'100','precision':'0.1','count':'100'}.items():batch.rows[0].random_fields[key].setText(value)
+e.set_program(batch.candidate());e.modes.setCurrentIndex(0)
+p=w.devices.projectors
+for key,value in {'width':120,'depth':166,'height':110,'subject_x':60,'subject_y':83,'subject_z':55}.items():p.rig_editor.fields[key].setText(str(value))
+for face in ('Front','Left','Right','Bottom'):
+ for key,value in {'width':120 if face in ('Front','Bottom') else 166,'height':166 if face=='Bottom' else 110}.items():p.screen_editor.fields[face,key].setText(str(value))
+for face,value in {'Left':60,'Front':83,'Bottom':55}.items():p.rig_editor.screen_distances[face].setText(str(value))
+for (face,key),value in {('Front','scale_u'):'0.8',('Front','scale_v'):'0.8',('Front','offset_x'):'20',('Front','offset_y'):'10',('Right','scale_u'):'0.7',('Right','scale_v'):'0.8'}.items():p.calibration.controls[face,key].setText(value)
+p.calibration.controls['Front','flip_x'].setChecked(True)
+fit_window_to_screen(w);w.show();w.raise_();w.activateWindow()
+def scroll():
+ parent=front.parentWidget()
+ while parent is not None:
+  if isinstance(parent,QScrollArea):parent.ensureWidgetVisible(batch.variation_host)
+  parent=parent.parentWidget()
+ app.processEvents()
+def open_preview():
+ e.output_preview_button.click()
+ if w.trial_preview:w.trial_preview.slider.setValue(4500)
+ print('Visible:',w.isVisible(),'Preview:',bool(w.trial_preview and w.trial_preview.isVisible()),flush=True)
+def capture():
+ scroll();w.grab().save('/private/tmp/cephvr-random-main.png');open_preview();QTimer.singleShot(450,preview_capture)
+def preview_capture():
+ w.trial_preview.grab().save('/private/tmp/cephvr-random-preview.png');w.trial_preview.close();w.resize(720,900);QTimer.singleShot(350,narrow)
+def narrow():
+ scroll();w.grab().save('/private/tmp/cephvr-random-narrow.png');w.close();app.quit();print('Inspection closed',flush=True)
+close_flag=Path('/private/tmp/cephvr-random-review-close.flag');close_flag.unlink(missing_ok=True)
+timer=QTimer();timer.timeout.connect(lambda:w.close() if close_flag.exists() else None);timer.start(250)
+if '--capture' in sys.argv:QTimer.singleShot(650,capture)
+else:QTimer.singleShot(650,lambda:(scroll(),print("Visible:",w.isVisible(),"Random:",batch.rows[0].random_host.isVisible(),flush=True)))
+app.exec()
+
+244 local file links resolve; G01 register revision89 matches.
+
+2026-10-05 G01 revision90 refinement (same base HEAD, dirty authorized working tree):
+Removed the separate Epochs field. Batch Repetitions supplies Random count.
+Random-only repetitions100 produces100 concrete epochs, not10000. Mixed fixed
+lists repeat in entered order; random draws cover every resulting epoch.
+Random materialization uses the existing2000 expanded-epoch cap; nonrandom-only
+materialization keeps512 variants and repeat groups. Count participates in cache.
+Focused command: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest
+tests/gui/test_dashboard.py -q -k "random or batch_variation_sweep or batch_variations_target"
+Outcome:4 passed166 deselected19.40s, including100/10/999 counts and mixed lists.
+Initial mixed fixture selected a unit-bearing caption using an incomplete label,
+leaving Speed selected twice; corrected selection to canonical Direction data.
+Initial full suite loaded the old fixture before correction and ended169pass/1fail;
+final full-suite rerun recorded below. Mypy count-name shadowing corrected.
+Ruff/format87 files and Windows-target mypy86 sources pass. Boundary check539
+modules/zero violations, prior cohesion advisories retained. Whitespace passes.
+244 local links resolve; root G01 register matches90.
+Native cocoa harness inspection:100 Repetitions, Min0/Max100/Precision0.1.
+Wide/narrow controls inspected with no Epochs field; summary100 epochs1000s.
+Inspection exited0; all three temporary PNGs deleted. Reopened native GUI prints
+Visible:True Random:True, left open for owner review. No rig acceptance claimed.
+Updated source SHA256:
+399ee84e5db93842a7ecdaf09847daab16a220f9778099b2514221972038b25e  src/cephvr/gui/batch_random.py
+308804b2300ed255637e3cc98e82a16c186731491bf11d0ced4754c7b5216bbb  src/cephvr/gui/batch_variation.py
+a9a6a6896a26ef4269979a5d4330e651486cb8932e967c2b2b6cb513fecf8a19  src/cephvr/gui/batch_values.py
+34ba531cde854c20f829688fcaa969d099572605738b8869795e3719d26969ce  src/cephvr/gui/batch_create.py
+ea881f3151d1a5f9b394144893b73711c3c551ee7f70cde367990550c35b3745  tests/gui/test_dashboard.py
+Updated native harness:
+from pathlib import Path
+import sys
+from PyQt6.QtCore import QSettings,QTimer
+from PyQt6.QtWidgets import QApplication,QScrollArea
+from cephvr.gui.theme import apply_theme
+from cephvr.gui.window import DashboardWindow
+from cephvr.gui.review import ReviewControls
+from cephvr.gui.layouts import fit_window_to_screen
+app=QApplication([]);apply_theme(app)
+w=DashboardWindow(sample=True,settings=QSettings('/private/tmp/cephvr-timeline-preview-review.ini',QSettings.Format.IniFormat))
+r=ReviewControls(w,simulate_projectors=True)
+w.page_buttons[1].click();w.protocol.session_mode.setCurrentText('Closed-loop')
+root='/private/tmp/cephvr-file-review-assets';w.protocol.assets.folders['root'].editor.setText(root)
+e=w.protocol.editor;e.modes.setCurrentIndex(0);batch=e.create_batch;c=batch.composer
+for face,kind,file in [('Front','Texture','example.texture.json'),('Right','Texture','checker.png'),('Bottom','Texture','example.png'),('Left','Texture','checker.png')]:c.add_file(kind,root+'/'+file,face)
+c.duration.setText('00:00:10');front=c.rows['Front'];front.layer.setCurrentIndex(0);front.advanced.setChecked(True)
+batch.vary.setChecked(True);batch.add_variation();batch.rows[0].method.setCurrentText('Random')
+batch.repetitions.setText('100')
+for key,value in {'minimum':'0','maximum':'100','precision':'0.1'}.items():batch.rows[0].random_fields[key].setText(value)
+e.set_program(batch.candidate());e.modes.setCurrentIndex(0)
+p=w.devices.projectors
+for key,value in {'width':120,'depth':166,'height':110,'subject_x':60,'subject_y':83,'subject_z':55}.items():p.rig_editor.fields[key].setText(str(value))
+for face in ('Front','Left','Right','Bottom'):
+ for key,value in {'width':120 if face in ('Front','Bottom') else 166,'height':166 if face=='Bottom' else 110}.items():p.screen_editor.fields[face,key].setText(str(value))
+for face,value in {'Left':60,'Front':83,'Bottom':55}.items():p.rig_editor.screen_distances[face].setText(str(value))
+for (face,key),value in {('Front','scale_u'):'0.8',('Front','scale_v'):'0.8',('Front','offset_x'):'20',('Front','offset_y'):'10',('Right','scale_u'):'0.7',('Right','scale_v'):'0.8'}.items():p.calibration.controls[face,key].setText(value)
+p.calibration.controls['Front','flip_x'].setChecked(True)
+fit_window_to_screen(w);w.show();w.raise_();w.activateWindow()
+def scroll():
+ parent=front.parentWidget()
+ while parent is not None:
+  if isinstance(parent,QScrollArea):parent.ensureWidgetVisible(batch.variation_host)
+  parent=parent.parentWidget()
+ app.processEvents()
+def open_preview():
+ e.output_preview_button.click()
+ if w.trial_preview:w.trial_preview.slider.setValue(4500)
+ print('Visible:',w.isVisible(),'Preview:',bool(w.trial_preview and w.trial_preview.isVisible()),flush=True)
+def capture():
+ scroll();w.grab().save('/private/tmp/cephvr-random-main.png');open_preview();QTimer.singleShot(450,preview_capture)
+def preview_capture():
+ w.trial_preview.grab().save('/private/tmp/cephvr-random-preview.png');w.trial_preview.close();w.resize(720,900);QTimer.singleShot(350,narrow)
+def narrow():
+ scroll();w.grab().save('/private/tmp/cephvr-random-narrow.png');w.close();app.quit();print('Inspection closed',flush=True)
+close_flag=Path('/private/tmp/cephvr-random-review-close.flag');close_flag.unlink(missing_ok=True)
+timer=QTimer();timer.timeout.connect(lambda:w.close() if close_flag.exists() else None);timer.start(250)
+if '--capture' in sys.argv:QTimer.singleShot(650,capture)
+else:QTimer.singleShot(650,lambda:(scroll(),print("Visible:",w.isVisible(),"Random:",batch.rows[0].random_host.isVisible(),flush=True)))
+app.exec()
+
+Final full-suite command: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q
+Outcome:170 passed91.46s exit0, after canonical Direction fixture correction.
+
+2026-10-05 G01 revision91 two-row layout refinement:
+Projectors/Layer/Parameter and remove first row. Method/Values or Method/Minimum/
+Maximum/Precision/resample second row. No authoring-generation changes.
+Two focused variation/sweep checks pass1.55s; Ruff/format87, mypy86 and boundaries539/
+zero violations pass. Prior full170-test91.46s result not rerun for layout-only edit.
+Native wide/narrow inspected and closed exit0; screenshots deleted; reopened review.
+00d31f60147adb4fc631ccdee1981eacb2cdcaf65e1c05f55625b5506c387612  src/cephvr/gui/batch_variation.py
+
+2026-10-05 G01 revision92: removed manual resample button/icon and method.
+Samples change only with range/precision/resulting count. Four focused owning tests
+pass16.42s; Ruff/format87, mypy86 and boundaries539/zero violations pass.
+Native no-button controls inspected and closed exit0; screenshots deleted and
+GUI reopened for owner review. Prior full-suite evidence is historical.

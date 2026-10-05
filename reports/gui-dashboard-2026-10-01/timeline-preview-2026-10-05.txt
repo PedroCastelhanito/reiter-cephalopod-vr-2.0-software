@@ -1,0 +1,85 @@
+2026-10-05 timeline planning preview and authoring controls
+Source: base 3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree; hashes below.
+Scope: G01 revision 83, ARCH-002, V07/V24 existing pure helpers. Local macOS only.
+
+Commands/outcomes:
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q -m 'not windows and not rig'
+178 passed in 67.97s (165 GUI + 13 client/compiler).
+.venv/bin/python -m mypy --platform win32 src/cephvr/gui
+Success: no issues found in 84 source files.
+.venv/bin/python -m ruff check src/cephvr/gui tests/gui: all checks passed.
+.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui: 85 files formatted.
+.venv/bin/python tools/check_backend_boundaries.py: 537 modules, zero violations.
+Cohesion advisories retained; ProtocolEditor 628 lines adds focused request dispatch only.
+git diff --check: pass.
+
+Native method: QApplication/DashboardWindow sample + ReviewControls simulate four
+projectors, real prepared texture JSON/image assets, three 10-second epochs varying
+Front speed 0/10/20; Front also layered looming. Captured wide editor, 720x900 editor
+and separate paused preview at 13.5s; inspected images, closed inspection exit 0,
+deleted temporary captures. Harness retained below for reproduction.
+
+Limits: authoring snapshot/example seed 0; unresolved random durations reject.
+No physical projectors, live Tracking, calibration warp or rig equivalence. Geometry
+unset uses labelled normalized content view. Arena is approximate (4000 triangle
+cap, two scene cache); prepared image textures supported, procedural textures show
+unsupported error. Actual video codec playback not exercised locally. Playback timer
+runs only when playing; active decoders/cache cleanup covered locally. Prior 200-epoch
+benchmark was not rerun; historical measurements remain in planner-performance.
+Pending scientific/control choices and managed adoption remain in TODO/current reports.
+
+Source SHA256:
+f3120a9cd7d412532b362ff902400c9b823aaf6f1f757322c058882e5d022ae9  src/cephvr/gui/trial_preview.py
+68ef5bfbab8e647e1940cd9c5630e88b49ae4107230f311c1a22169408364a18  src/cephvr/gui/trial_preview_arena.py
+2d36dc6c9f00e1fa16802f62632b06ffc582aaec2420d92b7422658a57df566a  src/cephvr/gui/trial_preview_canvas.py
+d4eb0b76f6a457b7c6605e693f5c5e5947c7cd20c8f8d7b2609f46f843d9e30d  src/cephvr/gui/trial_preview_media.py
+8d505b85c18578be7ce2b56fa6eb7acb08f1d50bafe814a5d06cb238a821bdd9  src/cephvr/gui/trial_preview_plan.py
+9aba52ac50bf81d2e250f4c921c5e2f7517163545c1296ea5561e838d50bb74d  src/cephvr/gui/trial_preview_surfaces.py
+f7b76a4c10f587aa82771afdc6346a191ef04c6a99ddea90c148ca8734019f29  src/cephvr/gui/stimulus_columns.py
+752c5c0943ec5375ec564def05b8ed1728abff29b5e40732ed81e837b7f02dc2  src/cephvr/gui/batch_values.py
+99e670974fe5c05cdc9e7e84b02134c5ca3ae5745a057a175f4834c771973c59  src/cephvr/gui/batch_variation.py
+86fe59ef3e109104b49009e99faca59ddaf901a564a9958b599f157dfd6e60db  tests/gui/test_dashboard.py
+
+Native harness used:
+from pathlib import Path
+import sys
+from PyQt6.QtCore import QSettings,QTimer
+from PyQt6.QtWidgets import QApplication,QScrollArea
+from cephvr.gui.theme import apply_theme
+from cephvr.gui.window import DashboardWindow
+from cephvr.gui.review import ReviewControls
+from cephvr.gui.layouts import fit_window_to_screen
+app=QApplication([]);apply_theme(app)
+w=DashboardWindow(sample=True,settings=QSettings('/private/tmp/cephvr-timeline-preview-review.ini',QSettings.Format.IniFormat))
+r=ReviewControls(w,simulate_projectors=True)
+w.page_buttons[1].click();w.protocol.session_mode.setCurrentText('Closed-loop')
+root='/private/tmp/cephvr-file-review-assets';w.protocol.assets.folders['root'].editor.setText(root)
+e=w.protocol.editor;e.modes.setCurrentIndex(0);batch=e.create_batch;c=batch.composer
+for face,kind,file in [('Front','Texture','example.texture.json'),('Front','Looming image','example.png'),('Right','Texture','checker.png'),('Bottom','Texture','example.png'),('Left','Texture','checker.png')]:c.add_file(kind,root+'/'+file,face)
+c.duration.setText('00:00:10');front=c.rows['Front'];front.layer.setCurrentIndex(0);front.advanced.setChecked(True)
+batch.vary.setChecked(True);batch.add_variation();batch.rows[0].values.setText('0, 10, 20')
+e.set_program(batch.candidate());e.modes.setCurrentIndex(0)
+fit_window_to_screen(w);w.show();w.raise_();w.activateWindow()
+def scroll():
+ parent=front.parentWidget()
+ while parent is not None:
+  if isinstance(parent,QScrollArea):parent.ensureWidgetVisible(batch.variation_host)
+  parent=parent.parentWidget()
+ app.processEvents()
+def open_preview():
+ e.output_preview_button.click()
+ if w.trial_preview:w.trial_preview.slider.setValue(4500)
+ print('Visible:',w.isVisible(),'Preview:',bool(w.trial_preview and w.trial_preview.isVisible()),flush=True)
+def capture():
+ scroll();w.grab().save('/private/tmp/cephvr-timeline-main.png');open_preview();QTimer.singleShot(450,preview_capture)
+def preview_capture():
+ w.trial_preview.grab().save('/private/tmp/cephvr-timeline-preview.png');w.trial_preview.close();w.resize(720,900);QTimer.singleShot(350,narrow)
+def narrow():
+ scroll();w.grab().save('/private/tmp/cephvr-timeline-narrow.png');w.close();app.quit();print('Inspection closed',flush=True)
+close_flag=Path('/private/tmp/cephvr-timeline-preview-close.flag');close_flag.unlink(missing_ok=True)
+timer=QTimer();timer.timeout.connect(lambda:w.close() if close_flag.exists() else None);timer.start(250)
+if '--capture' in sys.argv:QTimer.singleShot(650,capture)
+else:QTimer.singleShot(650,lambda:(scroll(),open_preview()))
+app.exec()
+
+Local documentation checks: 244 local file links resolve; G01 register revision 83 matches.

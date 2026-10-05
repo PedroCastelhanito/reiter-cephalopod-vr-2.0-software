@@ -1,0 +1,23 @@
+2026-10-05 Advanced card / Tracking controls / fades local evidence
+Base: 3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree; G01 revision 80.
+Shared Advanced card edge aligns to Layer; Retain first, Linked to and fade durations, then controls. Narrow row reflows without horizontal clipping.
+Opacity editor removed; fades are ordinary V05 keyframes, fixed epoch time with constant base; custom imports preserved. GUI duration edits retime standard fade-out and reject insufficient duration.
+Control only appears Closed-loop; canonical three Tracking channels. Existing V24 arena planar/yaw operations; selecting one planar axis preserves the other and binding ID.
+Linked selector disabled: source/target feedback ownership unanswered. 2D control creation disabled: local screen axes versus rig/subject-heading projection unanswered. Explicit range clipping versus extrapolation also unanswered. No runtime/link schema or unit conversion invented.
+Validation command: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q -m "not windows and not rig"
+Outcome: 165 passed in 57.28s (152 GUI checks).
+Ruff check/format pass (74 files); Windows-target mypy pass (73 GUI files).
+Backend boundaries: 526 modules, zero violations; pre-existing cohesion advisories.
+Local file link check: 245 links and governing G01/V02/V07/V24 anchors pass. git diff --check pass.
+Native inspection harness: /private/tmp/cephvr-advanced-card-review.py --capture; simulated outputs, uncommitted placeholder. Wide/narrow reviewed; first narrow capture revealed minimum-width clipping, corrected with responsive appearance helper and verified a second narrow capture. Inspection exits 0; all four generated captures deleted.
+Updated harness reopened without --capture: Visible: True Protocol / Batch generate / Advanced cards. GUI remains open for review; no output command invoked.
+Limits: no managed Tracking delivery, physical projector output or Windows/rig acceptance; renderer fade evaluation exercised in a pure local test.
+Corrections during validation: reference retiming JSON strict tuple validation; retain reference minimum-duration placeholder; prepared-asset fixture omission and wrong evaluator import fixed before final pass.
+SHA256 at capture:
+ce70c62c3a490bc01588820c7b5792b9fdfb21011727fb998b7dd0a77e1f85b6 src/cephvr/gui/advanced_appearance.py
+60cd8d5489ab6c510d1920d2bfa563973a4c6d2ff9d4231caf8e4df5aafc78df src/cephvr/gui/stimulus_fades.py
+6895fa3f733592846d3e45949013d26e3a05fabb1acec97cda879fbe5ad0d93f src/cephvr/gui/stimulus_parameters.py
+c5556b48daf290f4275894200f26c4182f4e1bca545427cb684197fa32044d1f src/cephvr/gui/control_editor.py
+3b65710a5cba467275f3c2625a0e5ee2e78e293a3685a1017dbf4f62e3689a56 src/cephvr/gui/feedback_mappings.py
+9dc94fcbe985db068772ef49be9cd2b60d3104f162c3758c9fe6eb287a68ae93 src/cephvr/gui/epoch_composer.py
+358cfda9ab0f3a282c2981f917d6baebf24d8a81d06f5bcdf891988b649f5c0d tests/gui/test_dashboard.py

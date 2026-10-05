@@ -8,7 +8,7 @@ harnesses and source hashes remain; image references below are historical only.
 
 Inspected Projectors (review image removed): Size removed, Display
 content-sized, Projector/Resolution share remaining width. Unassigned fits fully.
-[Harness](balanced-columns-native-review.py), [closure](balanced-columns-native-window.txt),
+Harness (temporary artifact removed), [closure](balanced-columns-native-window.txt),
 [hashes](balanced-columns-source-sha256.txt). Uncommitted snapshot. 58 GUI/client
 checks and static checks pass; boundaries 473 modules, zero violations, existing
 non-GUI warnings. Windows numbering and actual hardware operation remain unverified.
@@ -19,7 +19,7 @@ non-GUI warnings. Windows numbering and actual hardware operation remain unverif
 Inspected compact Microcontroller (review image removed) and
 Stop state (review image removed). Stop-state capture uses a labelled temporary
 COM fixture only inside the harness; ordinary discovery remains COM-only.
-[Harness](test-toggle-native-review.py), [closure](test-toggle-native-window.txt),
+Harness (temporary artifact removed), [closure](test-toggle-native-window.txt),
 [hashes](test-toggle-source-sha256.txt). Uncommitted snapshot. 58 GUI/client checks,
 Ruff/format, Windows-target mypy (20 files), boundaries (473 modules, zero violations)
 pass. Existing non-GUI size warnings remain. No physical test start/stop occurred.
@@ -29,7 +29,7 @@ pass. Existing non-GUI size warnings remain. No physical test start/stop occurre
 
 Inspected Microcontroller (review image removed): Inputs before Outputs,
 name/pin/Test rows, no camera header/rate or configurable level/edge. All page/subtab
-and narrow captures retained. [Harness](pin-tests-native-review.py),
+and narrow captures retained. Harness (temporary artifact removed),
 [closure](pin-tests-native-window.txt), [hashes](pin-tests-source-sha256.txt).
 Uncommitted snapshot. 57 GUI/client checks, Ruff/format, Windows-target mypy
 (20 files) and boundaries (473 modules, zero violations) pass. Existing non-GUI
@@ -43,7 +43,7 @@ Inspected Microcontroller (review image removed) and
 Projectors (review image removed); other pages/subtabs and narrow Cameras captured.
 Fixed Outputs/Inputs, COM-only discovery, compact assignment table and desktop diagram.
 This Mac has no COM ports or Windows display indices; unknown values are explicit.
-[Harness](fixed-io-native-review.py), [closure](fixed-io-native-window.txt),
+Harness (temporary artifact removed), [closure](fixed-io-native-window.txt),
 [source hashes](fixed-io-source-sha256.txt). Uncommitted snapshot.
 56 GUI/client checks, Ruff/format, Windows-target mypy (20 files) and boundaries
 (473 modules, zero violations) pass. Windows API calls are mocked locally; actual
@@ -59,7 +59,7 @@ Projectors (review image removed); all page/subtab views and
 narrow Cameras (review image removed) captured. An example I/O row appears only
 in this inspection; live drafts start empty. Qt port/display discovery is local and
 read-only. PFS values are offline hints, not applied camera settings.
-[Harness](device-config-native-review.py), [closure](device-config-native-window.txt),
+Harness (temporary artifact removed), [closure](device-config-native-window.txt),
 [source hashes](device-config-source-sha256.txt). Uncommitted source snapshot; final
 numeric frequency validation was tightened after captures without changing layout.
 54 GUI/client tests, Ruff/format and Windows-target mypy (19 files) pass; boundaries
@@ -74,7 +74,7 @@ and narrow Cameras (review image removed). Tabs fill their column and align
 with the HUD border. Refresh occupies the table-header corner. Rounded header
 sections plus transparent native header backgrounds remove protruding fills.
 Selected-camera caption/footer removed; Test enabled is a review-only proposal.
-[Harness](camera-polish-native-review.py), [closure](camera-polish-native-window.txt),
+Harness (temporary artifact removed), [closure](camera-polish-native-window.txt),
 [source hashes](camera-polish-source-sha256.txt). Source is an uncommitted snapshot.
 50 GUI/client tests and Ruff/format, Windows-target mypy (15 files), boundaries
 (468 modules, zero violations) pass. Existing non-GUI size warnings remain.
@@ -85,7 +85,7 @@ Actual camera tests and Windows/rig verification remain unimplemented/unverified
 
 Inspected Cameras (review image removed) and narrow Cameras (review image removed).
 Device tabs occupy the left column above cards while the right HUD remains aligned
-across pages. All four icon labels fit. [Harness](left-tabs-native-review.py),
+across pages. All four icon labels fit. Harness (temporary artifact removed),
 [closure](left-tabs-native-window.txt), [source hashes](left-tabs-source-sha256.txt).
 49 GUI/client checks, Ruff/format, Windows-target mypy (15 files) and boundaries
 (468 modules, zero violations) pass. Existing non-GUI cohesion warnings remain.
@@ -99,7 +99,7 @@ Inspected Dashboard (review image removed),
 Devices (review image removed), and narrow device selector (review image removed).
 One header row removes the empty band while retaining card/HUD alignment. The narrow
 selector preserves the active subtab. This visual trial awaits owner review.
-[Harness](compact-header-native-review.py), [closure](compact-header-native-window.txt),
+Harness (temporary artifact removed), [closure](compact-header-native-window.txt),
 [source hashes](compact-header-source-sha256.txt).
 
 49 GUI/client tests pass, including resizing/tab synchronization and stable card
@@ -115,7 +115,7 @@ Inspected native Dashboard (review image removed),
 Cameras (review image removed) and narrow Cameras (review image removed).
 Shared tools-row height aligns first cards/HUDs across pages; selected rows are
 visibly dimmer than headers, and Role text has shared horizontal padding.
-[Harness](aligned-cards-native-review.py), [closure](aligned-cards-native-window.txt),
+Harness (temporary artifact removed), [closure](aligned-cards-native-window.txt),
 [source hashes](aligned-cards-source-sha256.txt).
 
 Offscreen GUI/client pytest: 48 passed, including equal card/HUD top coordinates on
@@ -132,7 +132,7 @@ Visual Stimulus layout (review image removed). All device subtabs,
 Dashboard, Tracking and inactive preview rows were also captured.
 Camera config now sits below inventory and exposes role, trigger source/rate and
 PFS Browse only. Shared StatusColumn preserves fitted HUD/expanding log placement.
-[Harness](camera-pfs-native-review.py), [closure](camera-pfs-native-window.txt),
+Harness (temporary artifact removed), [closure](camera-pfs-native-window.txt),
 [source hashes](camera-pfs-source-sha256.txt).
 
 Offscreen GUI/client pytest: 48 passed (44 GUI + 4 client); Ruff check/format and
@@ -150,7 +150,7 @@ narrow Cameras (review image removed). The two-card layout retains local
 per-camera drafts and experiment enablement. Backend activity is a review-menu
 fixture until Protocol integration. Camera operations/PFS remain local intent only.
 [Reference provenance](camera-inventory-reference.txt), [source hashes](camera-inventory-source-sha256.txt),
-[harness](camera-inventory-native-review.py), [confirmed closure](camera-inventory-native-window.txt).
+harness (temporary artifact removed), [confirmed closure](camera-inventory-native-window.txt).
 
 Validation: offscreen pytest tests/gui tests/client/test_state_views.py: 46 passed
 (42 GUI + 4 client); Ruff check/format passed; Windows-target mypy passed 15 source
@@ -167,7 +167,7 @@ acceptance remain unfinished.
 Removed Clear controls/action rows from Dashboard and Devices, renamed the card
 Session config, and removed the subject subsection heading while retaining spacing.
 Inspected the native macOS Dashboard (review image removed); the
-[harness](clean-cards-native-review.py) also captured all Devices tabs and narrow
+harness (temporary artifact removed) also captured all Devices tabs and narrow
 layout. [Closure record](clean-cards-native-window.txt), [source hashes](clean-cards-source-sha256.txt).
 Offscreen GUI/client pytest: 44 passed. Ruff check/format, Windows-target mypy
 (14 source files), boundaries (467 modules, zero violations) passed; existing
@@ -179,7 +179,7 @@ non-GUI cohesion warnings remain. Windows/rig acceptance remains pending.
 Native macOS inspection of Dashboard (review image removed) and
 narrow Devices (review image removed) confirms increased title spacing,
 inset Clear controls and separated session/subject fields without clipping.
-All four Devices subtabs were also captured. [Harness](card-spacing-native-review.py),
+All four Devices subtabs were also captured. Harness (temporary artifact removed),
 [closure](card-spacing-native-window.txt), [source hashes](card-spacing-source-sha256.txt).
 Validation: offscreen pytest for tests/gui and tests/client/test_state_views.py:
 44 passed; GUI/test Ruff check and format passed; Windows-target mypy passed
@@ -194,7 +194,7 @@ now fills the card once and clips only the border underneath the transparent tit
 The G02 style trial remains under review. Local macOS native inspection found no
 rectangular patch or title clipping on Dashboard, Cameras or narrow Devices.
 
-- [Source hashes](border-gap-source-sha256.txt), [capture harness](border-gap-native-review.py),
+- [Source hashes](border-gap-source-sha256.txt), capture harness (temporary artifact removed),
   [closure record](border-gap-native-window.txt).
 - Dashboard (review image removed), Cameras (review image removed),
   narrow Devices (review image removed); all four device tabs were captured.
@@ -209,12 +209,12 @@ rectangular patch or title clipping on Dashboard, Cameras or narrow Devices.
 The G02 revision 4 visual trial places shared card titles in the top-left border.
 It remains under owner review. [Hashes](legend-cards-source-sha256.txt) identify sources.
 
-- [44 passing tests](legend-cards-pytest.txt), [JUnit](legend-cards-pytest.xml),
-  [Ruff](legend-cards-ruff.txt), [format](legend-cards-format.txt),
-  [mypy](legend-cards-mypy.txt), [boundaries](legend-cards-boundaries.txt).
+- 44 passing tests (temporary artifact removed), JUnit (temporary artifact removed),
+  Ruff (temporary artifact removed), format (temporary artifact removed),
+  mypy (temporary artifact removed), boundaries (temporary artifact removed).
 - Inspected Dashboard (review image removed),
   Devices (review image removed), narrow Devices (review image removed).
-  [Harness](legend-cards-native-review.py), [confirmed closure](legend-cards-native-window.txt).
+  Harness (temporary artifact removed), [confirmed closure](legend-cards-native-window.txt).
   Local presentation evidence only; earlier sections retain previous layouts.
 
 ## Earlier Devices draft and preview toggle
@@ -222,13 +222,13 @@ It remains under owner review. [Hashes](legend-cards-source-sha256.txt) identify
 G01 revision 13 removes the count, toggles the selector and adds four Devices icon
 subtabs. [Source hashes](devices-draft-source-sha256.txt) identify the local draft.
 
-- [44 passing tests](devices-draft-pytest.txt), [JUnit](devices-draft-pytest.xml),
-  [Ruff](devices-draft-ruff.txt), [format](devices-draft-format.txt),
-  [mypy](devices-draft-mypy.txt), [boundaries](devices-draft-boundaries.txt).
+- 44 passing tests (temporary artifact removed), JUnit (temporary artifact removed),
+  Ruff (temporary artifact removed), format (temporary artifact removed),
+  mypy (temporary artifact removed), boundaries (temporary artifact removed).
 - Native captures inspected: Cameras (review image removed),
   Arduino (review image removed), SpikeGLX (review image removed),
   Projectors (review image removed), narrow (review image removed).
-  [Harness](devices-draft-native-review.py) asserts zero horizontal scroll after
+  Harness (temporary artifact removed) asserts zero horizontal scroll after
   layout settles; [closure evidence](devices-draft-native-window.txt).
 - Device actions report local review intent only. No backend connection, inventory,
   hardware check or saved configuration is claimed by this frontend draft.
@@ -237,12 +237,12 @@ subtabs. [Source hashes](devices-draft-source-sha256.txt) identify the local dra
 
 G02 revision 3 fits HUD text and gives remaining height to the log.
 Native capture (review image removed) was inspected; the
-[harness](fitted-hud-native-review.py) and [closure evidence](fitted-hud-native-window.txt)
+harness (temporary artifact removed) and [closure evidence](fitted-hud-native-window.txt)
 record local scope. [Hashes](fitted-hud-source-sha256.txt) identify current sources.
 
-- [41 passing tests](fitted-hud-pytest.txt), [JUnit](fitted-hud-pytest.xml),
-  [Ruff](fitted-hud-ruff.txt), [format](fitted-hud-format.txt),
-  [mypy](fitted-hud-mypy.txt), [boundaries](fitted-hud-boundaries.txt).
+- 41 passing tests (temporary artifact removed), JUnit (temporary artifact removed),
+  Ruff (temporary artifact removed), format (temporary artifact removed),
+  mypy (temporary artifact removed), boundaries (temporary artifact removed).
 - Existing layout tests now verify content-height changes and allocation of all
   extra window height to the log. Native/rig acceptance remains separate.
 
@@ -250,12 +250,12 @@ record local scope. [Hashes](fitted-hud-source-sha256.txt) identify current sour
 
 G01 revision 12 adopts the reference source-table structure with refined shared
 styling. Native selector capture (review image removed) was inspected.
-The [harness](styled-selector-native-review.py) and [closure evidence](styled-selector-native-window.txt)
+The harness (temporary artifact removed) and [closure evidence](styled-selector-native-window.txt)
 record local scope. [Hashes](styled-selector-source-sha256.txt) identify current sources.
 
-- [41 passing tests](styled-selector-pytest.txt), [JUnit](styled-selector-pytest.xml),
-  [Ruff](styled-selector-ruff.txt), [format](styled-selector-format.txt),
-  [mypy](styled-selector-mypy.txt), [boundaries](styled-selector-boundaries.txt).
+- 41 passing tests (temporary artifact removed), JUnit (temporary artifact removed),
+  Ruff (temporary artifact removed), format (temporary artifact removed),
+  mypy (temporary artifact removed), boundaries (temporary artifact removed).
 - Reference: CephVR1.0 `experiment_window.py` Source/Live table and tool-window
   construction around lines 7948–8051. No reference runtime or rig equivalence claimed.
 
@@ -266,10 +266,10 @@ rows determine dimensions after saved-position restoration. Review labeling rema
 in the native title; pending/error/unavailable status remains visible.
 
 - [Source hashes](compact-selector-source-sha256.txt),
-  [41 passing tests](compact-selector-pytest.txt), [JUnit](compact-selector-pytest.xml),
-  [Ruff](compact-selector-ruff.txt), [format](compact-selector-format.txt),
-  [mypy](compact-selector-mypy.txt), [boundaries](compact-selector-boundaries.txt).
-- [Native harness](compact-selector-native-review.py),
+  41 passing tests (temporary artifact removed), JUnit (temporary artifact removed),
+  Ruff (temporary artifact removed), format (temporary artifact removed),
+  mypy (temporary artifact removed), boundaries (temporary artifact removed).
+- Native harness (temporary artifact removed),
   inspected selector (review image removed),
   [closure evidence](compact-selector-native-window.txt). Earlier captures below are historical.
 - Initial type checking caught a QWidget.scroll name collision; renamed the member
@@ -281,10 +281,10 @@ G01 revision 10 adds the accepted conveniences. [Source hashes](quality-source-s
 identify the current frontend. Geometry memory applies to the modeless selector;
 backend image viewers are not implemented by this increment.
 
-- [41 passing GUI/client tests](quality-pytest.txt), [JUnit](quality-pytest.xml),
-  [Ruff](quality-ruff.txt), [format](quality-format.txt), [mypy](quality-mypy.txt),
-  [boundary check](quality-boundaries.txt). Existing backend size warnings remain.
-- [Native inspection harness](quality-native-review.py),
+- 41 passing GUI/client tests (temporary artifact removed), JUnit (temporary artifact removed),
+  Ruff (temporary artifact removed), format (temporary artifact removed), mypy (temporary artifact removed),
+  boundary check (temporary artifact removed). Existing backend size warnings remain.
+- Native inspection harness (temporary artifact removed),
   Dashboard capture (review image removed), selector (review image removed),
   [confirmed visibility/closure](quality-native-window.txt). Inspected native output
   path elision, Browse placement and populated log at 1175×883. The harness uses a
@@ -299,10 +299,10 @@ G01 revision 9 moves preview access to the Dashboard's top-right header and uses
 CephVR1.0's top-aligned right-column placement with a shared 12-pixel gap, constrained
 to the main screen. [Source hashes](snap-source-sha256.txt) identify this increment.
 
-- [37 passing GUI/client tests](snap-pytest.txt), [JUnit](snap-pytest.xml),
-  [Ruff](snap-ruff.txt), [format](snap-format.txt), [mypy](snap-mypy.txt),
-  [boundary check](snap-boundaries.txt): all passed. Existing backend size warnings remain.
-- [Native harness](snap-native-review.py) verified frame alignment in the clamped case
+- 37 passing GUI/client tests (temporary artifact removed), JUnit (temporary artifact removed),
+  Ruff (temporary artifact removed), format (temporary artifact removed), mypy (temporary artifact removed),
+  boundary check (temporary artifact removed): all passed. Existing backend size warnings remain.
+- Native harness (temporary artifact removed) verified frame alignment in the clamped case
   and exact 12-pixel separation with space available; [geometry/closure evidence](snap-native-window.txt).
   Inspected 1175-pixel Dashboard (review image removed) and
   900-pixel Dashboard (review image removed); selector capture (review image removed).
@@ -316,15 +316,15 @@ historical. [Current hashes](previews-source-sha256.txt) identify the uncommitte
 frontend and behavior tests; no backend viewer or transport implementation is claimed.
 
 - `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/previews-pytest.xml`:
-  [34 passes](previews-pytest.txt), [JUnit](previews-pytest.xml).
+  34 passes (temporary artifact removed), JUnit (temporary artifact removed).
 - GUI Ruff check, Ruff format check, Windows-target mypy and boundary checker:
-  [lint](previews-ruff.txt), [format](previews-format.txt),
-  [types](previews-mypy.txt), [464 modules / zero violations](previews-boundaries.txt).
-- [Native harness](previews-native-review.py):
+  lint (temporary artifact removed), format (temporary artifact removed),
+  types (temporary artifact removed), 464 modules / zero violations (temporary artifact removed).
+- Native harness (temporary artifact removed):
   Dashboard (review image removed), selector (review image removed),
   [visibility and confirmed closure](previews-native-window.txt). Inspected the
   1175×883 Dashboard and 460×350 selector, then closed and reopened for owner review.
-- [Offscreen script](previews-visual-qa.py) generated
+- Offscreen script (temporary artifact removed) generated
   Configuration (review image removed),
   Running (review image removed) and narrow (review image removed);
   the narrow capture was inspected alongside native captures.
@@ -340,19 +340,19 @@ G01 revision 7 removes header connection/local-control badges and unused pill he
 Earlier evidence below retains historical layouts; current sources are identified by
 [badge-removal hashes](badges-source-sha256.txt). No backend behavior changed.
 
-- GUI/client tests: [31 passes](badges-pytest.txt), [JUnit](badges-pytest.xml).
-- Static checks: [Ruff](badges-ruff.txt), [format](badges-format.txt),
-  [Windows-target mypy](badges-mypy.txt), [boundaries](badges-boundaries.txt).
+- GUI/client tests: 31 passes (temporary artifact removed), JUnit (temporary artifact removed).
+- Static checks: Ruff (temporary artifact removed), format (temporary artifact removed),
+  Windows-target mypy (temporary artifact removed), boundaries (temporary artifact removed).
 - Native capture: Dashboard (review image removed),
-  [capture harness](badges-native-review.py), [closure evidence](badges-native-window.txt).
+  capture harness (temporary artifact removed), [closure evidence](badges-native-window.txt).
   Inspected at 1175×883, closed with exit 0, then reopened for owner review.
-- Offscreen captures generated by [this script](badges-visual-qa.py):
+- Offscreen captures generated by this script (temporary artifact removed):
   Configuration (review image removed),
   Running (review image removed), narrow (review image removed).
 - Interactive sketches live in the task visualization directory as
   `dashboard-preview-sketches.html`. All three wide captures were visually inspected;
-  [browser QA script](badges-sketch-qa.cjs) records its absolute artifact location and
-  [transcribed successful output](badges-sketch-qa.txt) records geometry/interaction scope.
+  browser QA script (temporary artifact removed) records its absolute artifact location and
+  transcribed successful output (temporary artifact removed) records geometry/interaction scope.
   Sketches are proposals and local interactions only, with no device/viewer integration.
 
 
@@ -371,13 +371,13 @@ Baseline HEAD: `5c24d99aacf41f75fd07249faa1bfb52cf1dea78`, plus uncommitted GUI 
 
 | Method | Outcome | Evidence |
 | --- | --- | --- |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/pytest.xml` | 21 passed: 17 widget checks, 4 existing state-view checks | [stdout](pytest.txt), [JUnit](pytest.xml) |
-| Ruff check on `src/cephvr/gui tests/gui tools/check_backend_boundaries.py` | Passed | [stdout](ruff.txt) |
-| Ruff format check on the same paths | 12 files formatted | [stdout](format.txt) |
-| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 10 source files; static only | [stdout](mypy.txt) |
-| `.venv/bin/python tools/check_backend_boundaries.py` | 463 modules, zero violations; existing non-GUI size warnings | [stdout](boundaries.txt) |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python /private/tmp/cephvr-dashboard-visual-qa.py` | Rendered and visually inspected Configuration/Running at 1440×940 and narrow at 720×800 | [Exact script](visual_qa.py), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
-| `.venv/bin/python /private/tmp/cephvr-dashboard-open-review.py` with desktop access | Native Qt window verified visible, captured/inspected at 1175×883 and left running; compact three-column layout | [Exact script](open_review.py), [Window result](native-window.txt), Native Qt capture (review image removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/pytest.xml` | 21 passed: 17 widget checks, 4 existing state-view checks | stdout (temporary artifact removed), JUnit (temporary artifact removed) |
+| Ruff check on `src/cephvr/gui tests/gui tools/check_backend_boundaries.py` | Passed | stdout (temporary artifact removed) |
+| Ruff format check on the same paths | 12 files formatted | stdout (temporary artifact removed) |
+| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 10 source files; static only | stdout (temporary artifact removed) |
+| `.venv/bin/python tools/check_backend_boundaries.py` | 463 modules, zero violations; existing non-GUI size warnings | stdout (temporary artifact removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python /private/tmp/cephvr-dashboard-visual-qa.py` | Rendered and visually inspected Configuration/Running at 1440×940 and narrow at 720×800 | Exact script (temporary artifact removed), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
+| `.venv/bin/python /private/tmp/cephvr-dashboard-open-review.py` with desktop access | Native Qt window verified visible, captured/inspected at 1175×883 and left running; compact three-column layout | Exact script (temporary artifact removed), [Window result](native-window.txt), Native Qt capture (review image removed) |
 
 Checks cover phase/observer edit locks, offline command refusal, local intent without
 session advancement, trial value/reordering/removal preservation, Use/Save behavior,
@@ -421,13 +421,13 @@ increment from the initial files.
 
 | Method | Outcome | Evidence |
 | --- | --- | --- |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/simplified-pytest.xml` | 21 passed: 17 widget checks, 4 existing state-view checks | [stdout](simplified-pytest.txt), [JUnit](simplified-pytest.xml) |
-| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | [stdout](simplified-ruff.txt) |
-| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 10 files formatted | [stdout](simplified-format.txt) |
-| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 9 source files; static only | [stdout](simplified-mypy.txt) |
-| `.venv/bin/python tools/check_backend_boundaries.py` | 462 modules, zero violations; existing non-GUI size warnings | [stdout](simplified-boundaries.txt) |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python /private/tmp/cephvr-dashboard-visual-qa.py` | Rendered/inspected Configuration and Running at 1440×940, narrow at 720×800 | [Exact script](simplified-visual-qa.py), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
-| `.venv/bin/python /private/tmp/cephvr-dashboard-open-review.py` with desktop access | Native window visible and inspected at 1175×883; left open at PID 32876 | [Exact script](simplified-open-review.py), [Window result](simplified-native-window.txt), Native Qt capture (review image removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/simplified-pytest.xml` | 21 passed: 17 widget checks, 4 existing state-view checks | stdout (temporary artifact removed), JUnit (temporary artifact removed) |
+| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | stdout (temporary artifact removed) |
+| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 10 files formatted | stdout (temporary artifact removed) |
+| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 9 source files; static only | stdout (temporary artifact removed) |
+| `.venv/bin/python tools/check_backend_boundaries.py` | 462 modules, zero violations; existing non-GUI size warnings | stdout (temporary artifact removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python /private/tmp/cephvr-dashboard-visual-qa.py` | Rendered/inspected Configuration and Running at 1440×940, narrow at 720×800 | Exact script (temporary artifact removed), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
+| `.venv/bin/python /private/tmp/cephvr-dashboard-open-review.py` with desktop access | Native window visible and inspected at 1175×883; left open at PID 32876 | Exact script (temporary artifact removed), [Window result](simplified-native-window.txt), Native Qt capture (review image removed) |
 
 The existing behavior checks were updated for two-column reflow and menu fixture
 inspection. The obsolete trial-edit test was replaced with exact six-card contents
@@ -452,13 +452,13 @@ applies; [source hashes](height-source-sha256.txt) identify this increment.
 
 | Method | Outcome | Evidence |
 | --- | --- | --- |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/height-pytest.xml` | 21 passed: 17 widget checks, 4 existing state-view checks | [stdout](height-pytest.txt), [JUnit](height-pytest.xml) |
-| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | [stdout](height-ruff.txt) |
-| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 10 files formatted | [stdout](height-format.txt) |
-| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 9 source files; static only | [stdout](height-mypy.txt) |
-| `.venv/bin/python tools/check_backend_boundaries.py` | 462 modules, zero violations; existing non-GUI size warnings | [stdout](height-boundaries.txt) |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/height-visual-qa.py` | Inspected Configuration/Running at 1440×940 and narrow at 720×800 | [Exact script](height-visual-qa.py), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
-| `.venv/bin/python reports/gui-dashboard-2026-10-01/height-native-review.py` with desktop access | Actual native window inspected at 1175×883, then closed; process exited successfully | [Exact script](height-native-review.py), [Window/closure result](height-native-window.txt), Native Qt capture (review image removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/height-pytest.xml` | 21 passed: 17 widget checks, 4 existing state-view checks | stdout (temporary artifact removed), JUnit (temporary artifact removed) |
+| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | stdout (temporary artifact removed) |
+| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 10 files formatted | stdout (temporary artifact removed) |
+| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 9 source files; static only | stdout (temporary artifact removed) |
+| `.venv/bin/python tools/check_backend_boundaries.py` | 462 modules, zero violations; existing non-GUI size warnings | stdout (temporary artifact removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/height-visual-qa.py` | Inspected Configuration/Running at 1440×940 and narrow at 720×800 | Exact script (temporary artifact removed), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
+| `.venv/bin/python reports/gui-dashboard-2026-10-01/height-native-review.py` with desktop access | Actual native window inspected at 1175×883, then closed; process exited successfully | Exact script (temporary artifact removed), [Window/closure result](height-native-window.txt), Native Qt capture (review image removed) |
 
 The obsolete participation/save test was replaced by a layout/resize check: HUD/log
 cards share the full right-column height, text areas grow at 883/1100 px and runtime
@@ -483,20 +483,20 @@ applies; [source hashes](compact-source-sha256.txt) identify the current files.
 
 | Method | Outcome | Evidence |
 | --- | --- | --- |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/compact-pytest.xml` | 23 passed: 19 widget checks, 4 existing state-view checks | [stdout](compact-pytest.txt), [JUnit](compact-pytest.xml) |
-| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | [stdout](compact-ruff.txt) |
-| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 10 files formatted | [stdout](compact-format.txt) |
-| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 9 source files; static only | [stdout](compact-mypy.txt) |
-| `.venv/bin/python tools/check_backend_boundaries.py` | 462 modules, zero violations; existing non-GUI size warnings | [stdout](compact-boundaries.txt) |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/compact-visual-qa.py` | Inspected Configuration/Running at 1440×940 and narrow at 720×800 | [Exact script](compact-visual-qa.py), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
-| `.venv/bin/python reports/gui-dashboard-2026-10-01/compact-native-review.py` with desktop access | Native window inspected at 1175×883 and then closed (exit 0); frontend reopened afterward for owner review | [Exact script](compact-native-review.py), [Inspection/closure result](compact-native-window.txt), Native Qt capture (review image removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/compact-pytest.xml` | 23 passed: 19 widget checks, 4 existing state-view checks | stdout (temporary artifact removed), JUnit (temporary artifact removed) |
+| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | stdout (temporary artifact removed) |
+| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 10 files formatted | stdout (temporary artifact removed) |
+| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 9 source files; static only | stdout (temporary artifact removed) |
+| `.venv/bin/python tools/check_backend_boundaries.py` | 462 modules, zero violations; existing non-GUI size warnings | stdout (temporary artifact removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/compact-visual-qa.py` | Inspected Configuration/Running at 1440×940 and narrow at 720×800 | Exact script (temporary artifact removed), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
+| `.venv/bin/python reports/gui-dashboard-2026-10-01/compact-native-review.py` with desktop access | Native window inspected at 1175×883 and then closed (exit 0); frontend reopened afterward for owner review | Exact script (temporary artifact removed), [Inspection/closure result](compact-native-window.txt), Native Qt capture (review image removed) |
 
 Regressions verify immutable independent readiness lamps, the three main labels,
 separate Stop/Abort intents and phase/observer locking for menu actions. The initial
 test run had one stale New session button lookup after its move to the menu (22 passed,
 1 failed); that assertion was updated. Initial mypy runs exposed mixed Qt action/button
 inference, repaired with separate locals and explicit unions without behavior changes:
-[first diagnostics](compact-mypy-initial.txt), [intermediate diagnostics](compact-mypy-intermediate.txt).
+first diagnostics (temporary artifact removed), intermediate diagnostics (temporary artifact removed).
 Native/offscreen captures precede only those final type annotations; visual behavior
 is unchanged. The earlier review PID 33489 was identified and retired before refresh;
 inspection PID 33786 confirmed closure. The reviewed frontend was reopened using
@@ -519,13 +519,13 @@ the redundant Session menu. Baseline/environment above still applies;
 
 | Method | Outcome | Evidence |
 | --- | --- | --- |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/contextual-pytest.xml` | 31 passed: 27 widget checks, 4 existing state-view checks | [stdout](contextual-pytest.txt), [JUnit](contextual-pytest.xml) |
-| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | [stdout](contextual-ruff.txt) |
-| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 11 files formatted | [stdout](contextual-format.txt) |
-| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 10 source files; static only | [stdout](contextual-mypy.txt) |
-| `.venv/bin/python tools/check_backend_boundaries.py` | 463 modules, zero violations; existing non-GUI size warnings | [stdout](contextual-boundaries.txt) |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/contextual-visual-qa.py` | Inspected Configuration/Running at 1440×940, narrow at 720×800 and dialog at 440×158 | [Exact script](contextual-visual-qa.py), Configuration (review image removed), Running (review image removed), Narrow (review image removed), Dialog (review image removed) |
-| `.venv/bin/python reports/gui-dashboard-2026-10-01/contextual-native-review.py` with desktop access | Native Dashboard (1175×883) and chooser (440×158) inspected, then closed with exit 0 | [Exact script](contextual-native-review.py), [Inspection/closure result](contextual-native-window.txt), Dashboard (review image removed), Dialog (review image removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/contextual-pytest.xml` | 31 passed: 27 widget checks, 4 existing state-view checks | stdout (temporary artifact removed), JUnit (temporary artifact removed) |
+| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | stdout (temporary artifact removed) |
+| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 11 files formatted | stdout (temporary artifact removed) |
+| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 10 source files; static only | stdout (temporary artifact removed) |
+| `.venv/bin/python tools/check_backend_boundaries.py` | 463 modules, zero violations; existing non-GUI size warnings | stdout (temporary artifact removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/contextual-visual-qa.py` | Inspected Configuration/Running at 1440×940, narrow at 720×800 and dialog at 440×158 | Exact script (temporary artifact removed), Configuration (review image removed), Running (review image removed), Narrow (review image removed), Dialog (review image removed) |
+| `.venv/bin/python reports/gui-dashboard-2026-10-01/contextual-native-review.py` with desktop access | Native Dashboard (1175×883) and chooser (440×158) inspected, then closed with exit 0 | Exact script (temporary artifact removed), [Inspection/closure result](contextual-native-window.txt), Dashboard (review image removed), Dialog (review image removed) |
 
 The existing owning test module covers direct preparation cancellation, Setup/New
 session dispatch, both session stop choices, Cancel/Escape/window close, one dialog
@@ -549,13 +549,13 @@ applies; [current source hashes](controls-source-sha256.txt) identify this incre
 
 | Method | Outcome | Evidence |
 | --- | --- | --- |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/controls-pytest.xml` | 31 passed: 27 widget checks, 4 existing state-view checks | [stdout](controls-pytest.txt), [JUnit](controls-pytest.xml) |
-| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | [stdout](controls-ruff.txt) |
-| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 11 files formatted | [stdout](controls-format.txt) |
-| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 10 source files; static only | [stdout](controls-mypy.txt) |
-| `.venv/bin/python tools/check_backend_boundaries.py` | 463 modules, zero violations; existing non-GUI size warnings | [stdout](controls-boundaries.txt) |
-| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/controls-visual-qa.py` | Inspected Configuration/Running at 1440×940 and narrow at 720×800 | [Exact script](controls-visual-qa.py), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
-| `.venv/bin/python reports/gui-dashboard-2026-10-01/controls-native-review.py` with desktop access | Native Dashboard inspected at 1175×883, then closed with exit 0 | [Exact script](controls-native-review.py), [Inspection/closure result](controls-native-window.txt), Dashboard (review image removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py -q --junit-xml=reports/gui-dashboard-2026-10-01/controls-pytest.xml` | 31 passed: 27 widget checks, 4 existing state-view checks | stdout (temporary artifact removed), JUnit (temporary artifact removed) |
+| `.venv/bin/python -m ruff check src/cephvr/gui tests/gui` | Passed | stdout (temporary artifact removed) |
+| `.venv/bin/python -m ruff format --check src/cephvr/gui tests/gui` | 11 files formatted | stdout (temporary artifact removed) |
+| `.venv/bin/python -m mypy --platform win32 src/cephvr/gui` | Passed, 10 source files; static only | stdout (temporary artifact removed) |
+| `.venv/bin/python tools/check_backend_boundaries.py` | 463 modules, zero violations; existing non-GUI size warnings | stdout (temporary artifact removed) |
+| `QT_QPA_PLATFORM=offscreen .venv/bin/python reports/gui-dashboard-2026-10-01/controls-visual-qa.py` | Inspected Configuration/Running at 1440×940 and narrow at 720×800 | Exact script (temporary artifact removed), Configuration (review image removed), Running (review image removed), Narrow (review image removed) |
+| `.venv/bin/python reports/gui-dashboard-2026-10-01/controls-native-review.py` with desktop access | Native Dashboard inspected at 1175×883, then closed with exit 0 | Exact script (temporary artifact removed), [Inspection/closure result](controls-native-window.txt), Dashboard (review image removed) |
 
 Updated existing assertions verify Setup spanning both Start/Stop columns, equal lower
 button widths, horizontal indicator placement within System controls, four card titles,
@@ -569,7 +569,7 @@ Windows, managed integration, backend viewers and rig acceptance remain pending.
 ### 2026-10-02 — Per-signal enable checkboxes
 
 Uncommitted source snapshot: [hashes](enabled-io-source-sha256.txt).
-[Native harness](enabled-io-native-review.py) captures
+Native harness (temporary artifact removed) captures
 enabled rows (review image removed), disabled rows (review image removed)
 and narrow layout (review image removed). All three inspected with no clipped controls;
 [window record](enabled-io-native-window.txt) confirms inspection closure.
@@ -585,7 +585,7 @@ port was opened, no signal applied and no physical test claimed.
 
 ### 2026-10-02 — Balanced Microcontroller columns
 
-Uncommitted [source hashes](even-io-source-sha256.txt), [native harness](even-io-native-review.py),
+Uncommitted [source hashes](even-io-source-sha256.txt), native harness (temporary artifact removed),
 wide layout (review image removed), disabled rows (review image removed),
 narrow layout (review image removed), and [inspection closure](even-io-native-window.txt).
 Wide/narrow captures inspected: both cards align checkbox/name/pin/action columns,
@@ -601,7 +601,7 @@ change does not add hardware integration or Windows/rig evidence.
 ### 2026-10-03 — Secondary displays and wider pin controls
 
 Uncommitted [source hashes](secondary-displays-source-sha256.txt),
-[native harness](secondary-displays-native-review.py),
+native harness (temporary artifact removed),
 Microcontroller (review image removed),
 Projectors empty state (review image removed),
 narrow layout (review image removed) and
@@ -621,7 +621,7 @@ actual Windows Settings/rig comparison remains outstanding.
 ### 2026-10-03 — Projector participation and equal heights
 
 Uncommitted [hashes](participation-source-sha256.txt),
-[native harness](participation-native-review.py),
+native harness (temporary artifact removed),
 Microcontroller (review image removed),
 explicit projector fixtures (review image removed),
 narrow layout (review image removed) and
@@ -642,7 +642,7 @@ verification remain pending; no applied-hardware or optical accuracy claim.
 
 ### 2026-10-03 — Independent photodiode/pacing and rig geometry
 
-Uncommitted [source hashes](rig-geometry-source-sha256.txt), [native harness](rig-geometry-native-review.py),
+Uncommitted [source hashes](rig-geometry-source-sha256.txt), native harness (temporary artifact removed),
 Timing (review image removed), Rig geometry (review image removed),
 Screen calibration (review image removed), and [closure](rig-geometry-native-window.txt).
 Explicit review screen/geometry fixtures were used only in this harness; real inventory
@@ -659,3 +659,10 @@ existing backend cohesion warnings), whitespace and local links pass. Tests cove
 independent pulse-off/pacing, disabled or missing stored marker target, null marker
 evidence, valid physical geometry and retained per-face drafts. GUI profile adoption,
 physical optics and Windows acceptance remain pending; no rig pass claimed.
+
+
+2026-10-05 owner-requested commit cleanup removed temporary native/capture/benchmark
+harnesses, duplicate JUnit exports and routine pytest/lint/type-check stdout files.
+Recorded commands/outcomes, source hashes and unique performance/native evidence
+remain historical evidence; removed harness paths in commands describe past runs.
+Current validation and rig limitations live in reports/runtime.md.

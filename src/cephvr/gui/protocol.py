@@ -20,6 +20,7 @@ from cephvr.gui.recordings import RecordingsCard
 from cephvr.gui.stimulus_assets import StimulusAssetsCard
 from cephvr.gui.view import DashboardView
 from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
 
 class ProtocolPage(QWidget):
@@ -79,9 +80,16 @@ class ProtocolPage(QWidget):
         self.assets.folders["root"].editor.textChanged.connect(
             lambda path: setattr(self.editor.batch_edit, "asset_root", path)
         )
+        self.session_mode.currentTextChanged.connect(self.update_control_mode)
+        self.update_control_mode()
         body.addWidget(self.editor, 1)
         self.save_dialog: QFileDialog | None = None
         self.load_dialog: QFileDialog | None = None
+
+    def update_control_mode(self) -> None:
+        closed = self.session_mode.currentText() == "Closed-loop"
+        self.editor.parameters.set_closed_loop(closed)
+        self.editor.create_batch.composer.set_closed_loop(closed)
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
         super().resizeEvent(event)
@@ -106,8 +114,10 @@ class ProtocolPage(QWidget):
             return
         try:
             with Path(path).open("rb") as stream:
-                data = stream.read(1_048_577)
-            program = parse_program_json(data.decode("utf-8"), max_bytes=1_048_576)
+                data = stream.read(DEFAULT_DOCUMENT_BYTES + 1)
+            program = parse_program_json(
+                data.decode("utf-8"), max_bytes=DEFAULT_DOCUMENT_BYTES
+            )
         except (OSError, ValueError) as error:
             self.show_error("Cannot load program", error)
             return
@@ -156,9 +166,11 @@ class ProtocolPage(QWidget):
             return
         try:
             program = parse_program_json(
-                self.editor.program.model_dump_json(), max_bytes=1_048_576
+                self.editor.program.model_dump_json(), max_bytes=DEFAULT_DOCUMENT_BYTES
             )
             data = program.model_dump_json(indent=2).encode("utf-8")
+            if len(data) > DEFAULT_DOCUMENT_BYTES:
+                raise ValueError("Formatted protocol exceeds the document byte budget")
             output = QSaveFile(path)
             if not output.open(QIODevice.OpenModeFlag.WriteOnly):
                 raise OSError(output.errorString())

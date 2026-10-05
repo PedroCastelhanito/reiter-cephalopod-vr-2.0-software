@@ -1,0 +1,17 @@
+2026-10-05 Combined Control editor local evidence
+Base revision: 3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree.
+G01 revision 79. No V24 runtime/schema changes.
+One + Control action; existing/new compatible input, parameter, gain and offset.
+Explicit ranges not implemented: clamp-versus-extrapolation question unanswered.
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q -m "not windows and not rig": 162 passed in 59.57s.
+Ruff check/format: pass, 72 files formatted. Windows-target mypy: 71 GUI files pass.
+Backend boundaries: 524 modules, zero violations; pre-existing cohesion warnings.
+Native review: /private/tmp/cephvr-control-review.py --capture, simulated projectors, Front Texture placeholder; wide/narrow views inspected, exit 0; both temporary PNGs deleted.
+Old owned advanced-review GUI closed; updated control-review GUI reopened, reports Visible: True Protocol / Batch generate / Front / Control draft.
+No managed transport, actual input delivery, projector output or Windows/rig acceptance exercised.
+SHA256 at evidence capture:
+0d3e1cd825ba4bd43e572cf7bde167d0ba576f7c1deb275ab2fe201db428309f src/cephvr/gui/control_editor.py
+1b7a04b7f4d093677de5a331540398df312e52cef50cf81da18c4a3bcde389bd src/cephvr/gui/feedback_mappings.py
+7ba9fb62289241e1b802ac83a4c533bdbb3ad53fd1494fa72266f52a7f483bf4 src/cephvr/gui/feedback_signals.py
+13a5554f0a21612b6ea74792efebf64f95e673d3ca875016918b238699ab09e8 src/cephvr/gui/feedback_entry.py
+693f7e3b9dab8165fe6399712f7caddb2cce0a9bde7590bcc19012ee0f320c38 tests/gui/test_dashboard.py

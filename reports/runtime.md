@@ -200,6 +200,187 @@ windows already reuse useful reference patterns with smaller focused components.
 
 ### Dashboard frontend implementation
 
+2026-10-05 planner/layer/performance update at base commit
+`3af4289814927c1c3fdc4251731ef894a49a1489` plus working tree follows
+[G01 revision 93](../docs/architecture/gui.md#g01) and
+[V07](../docs/architecture/visual_stimulus.md#v07). New GUI-created stimuli use
+reset false for every family; imported explicit resets/assignments remain intact.
+A shared-style Advanced settings card sits below each projector row, aligned to
+Layer. Retain state comes first, then Linked to and Fade in/Fade out, then controls.
+The linking/fade row reflows at narrow widths. The opacity editor is removed;
+new stimuli use their constant base opacity and optional V05 linear keyframe fades.
+Standard fades use exact seconds and reject negative/nonfinite/sub-nanosecond or
+combined lengths exceeding the fixed epoch. Explicit duration edits retain their
+lengths and move fade-out to the new end. Imported custom opacity curves remain
+unchanged, with simple fade fields disabled rather than flattening saved functions.
+
++ Control sits below the Advanced settings/entries and opens a separate draft dialog
+without changing row height. Its action hides while configuring and restores on commit
+or cancellation; entries appear only after Add control. It appears only for Texture/Looming under Closed-loop, with
+canonical Tracking longitudinal, lateral and angular inputs. The current V24
+catalogue has no body-to-2D conversion, so committing those mappings is disabled
+pending the owner's coordinate choice. Imported mappings and existing arena axis
+controls remain intact. Open-loop closes the draft; Cancel/invalid drafts preserve
+state. Add layer creates an empty local slot; choosing its family creates the
+canonical instance, then prepared-file/motion/fade settings persist independently
+across layer and projector switches. Empty slots are not serialized as stimuli.
+Variation rules use a Card with body Enable and separate Projectors/Layer selectors,
+including All projectors and All layers. Local ordinals resolve independently per
+projector; canonical identities reject stale layers and shared targets are deduplicated.
+Remove controls share the Projectors/Layer/Parameter row and height. Combine is removed from Batch generate;
+equal-length rules pair by value position in entered order, without random assignment.
+Method and all value controls occupy the second row; Random shows Minimum, Maximum and Precision there. Precision is a positive step (1, 0.1, 0.01, etc.).
+A focused Decimal-grid sampler draws uniformly with replacement from grid multiples
+inside bounds, without allocating the full grid; numeric/input-size guards and the
+existing 2000 expanded-epoch bound apply to Random batches. Batch Repetitions
+supplies the count: 100 creates 100 random epochs, without a second repetition
+multiplier. Mixed Values/Sweep lists retain their ordered repeated sequence, with
+one draw per resulting epoch; nonrandom-only batches retain existing repeat groups
+and the 512-variant bound. Per-row caches include the resulting count and stay stable through preview
+and insertion; changed range/precision/count resamples. Final concrete epochs
+survive JSON round-trips, leaving Setup/V08 randomization unchanged. Multiple rules
+still pair by position with matching counts, and one all-projector/layer rule shares
+its drawn list across selected targets. Categorical video end behavior stays Values-only.
+ARCH-002 reuses canonical materialization and shared row sizing, with no dependencies.
+The shared stimulus-column catalogue supplies matching captions/units, including
+Rotation, with Width/Height/Opacity removed. Looming size/growth and Video start/end
+values materialize directly into independent canonical epochs; categorical video
+end modes are preserved. Existing imported conditions and the
+separate group authoring dialog retain their semantics. ARCH-002 extracted the focused
+Batch variation row rather than extending the reference composer.
+ARCH-002 uses focused local layer-slot and bounded timeline-view owners, without
+threads or new dependencies. Unchanged metadata no longer validates the whole
+program; selection reuses expanded paths/content keys (four immutable views maximum).
+The timeline remains painted rather than allocating widgets or decoding each asset.
+A real 200-epoch, four-projector, two-layer program exceeded the GUI's previous 1 MiB
+read guard. GUI read/save validation now shares the backend's existing 16 MiB
+engineering default; managed Setup limits stay authoritative. Configuration/policy
+values and runtime capacity guarantees have not changed.
+
+Heavy local offscreen benchmark: 200 epochs, eight layers per epoch, 3,202,179-byte
+pretty JSON; parsing 463.26 ms, initial UI binding 333.45 ms, warm switching between
+two distinct trials median 12.63 ms. These are development-machine observations,
+not rig acceptance or rendering/asset-decoding throughput. A first-source fade test
+confirms independently generated later epochs are unchanged; a repeated source still
+applies to all its occurrences, so a first-occurrence-only fade needs a separate intro.
+
+Explicit input/output ranges remain pending the owner's clamp-versus-extrapolation
+answer. V24 currently applies gain/offset without input clipping; this update does
+not silently turn authoring ranges into runtime bounds. The editor currently shows
+gain/offset, not range controls.
+
+Linked to is visible as a disabled selector in the card; movement linking is not
+implemented yet. The owner confirmed clockwise Bottom drives
+Right front→back and Left back→front when both sides are linked. [V02 revision 12](../docs/architecture/visual_stimulus.md#v02)
+records that accepted convention and the distance-based lever arms. Pure analytic
+examples with unequal distances verify opposite side directions and different
+linear speeds; runtime behavior has not been exercised. The remaining pending
+question is whether links follow total source motion while replacing target motion
+or follow programmed motion with additive target feedback. These affect experiment
+behavior and cannot be silently selected under GOV-001. CephVR1.0 reference
+`optic_flow_motion.py:415–510` preserves target appearance and maps subject-frame
+motion by face, but its yaw lever arm uses half the source dimensions. The new link
+must use accepted rig geometry/subject distances rather than copy that approximation.
+V24 does not currently declare inter-stimulus motion sources; resolve semantics
+before changing program schemas/preparation/rendering. Old planner fade-in and video
+loop overrides were reviewed as separate candidates; no extra overrides were added.
+
+Trial timeline Preview opens a separate read-only snapshot window for enabled
+screens on one rotatable tank view, with Play/Pause, seeking, epoch navigation and speed.
+CephVR1.0 reference `protocol/gui/trial_preview_dialog.py:_TankView` paints
+stimuli onto calibrated planes and culls outward-facing content. The new view reuses
+TankDiagram placement/rotation, paints enabled faces from both sides without
+back-face culling, using cached reduced-resolution
+compositions and keeps inactive planes as outlines. Screen labels remain above the
+completed scene. Default/reset azimuth is now 25° instead of 155°: Left appears
+left of Right, while fixed rig planes, mappings and calibration stay attached to
+the same identities. Shared TankDiagram screen painting sorts ascending view depth
+so nearer screens cover farther ones consistently; the previous reverse order could
+leave a face label on another face’s visible content. Native inspection confirms
+separate Left/Right textures on their planes. The planning-description banner, enabled-projector text and subject
+marker are removed; the observer remains in projection geometry. Rotation reuses frames; playback/seek/media changes invalidate them.
+It reuses canonical
+expansion and V07 state helpers, with example seed 0 and fixed-duration validation.
+Images use a bounded cache; only active videos own Qt decoders. Paused windows stop
+the playback timer; close/edit-authority loss cleans up resources. Current geometry
+projects supported image/texture layers; unset tank/plane geometry shows a Devices
+configuration prompt. No fallback tank dimensions are invented. Arena rendering is approximate, capped at 4000 triangles
+and two cached scenes; unsupported/missing content reports errors per screen.
+Screen scale, pixel offsets and inversions now use the shared calibration export
+mapping after complete per-face composition. Pixel offsets use the assigned display
+resolution, not the <=512px planning frame. Invalid/out-of-range corrections or
+unresolved nonzero pixel offsets display an error; blank fields reuse export's
+identity defaults. Geometry and corrections are frozen at opening, independent of
+output enablement. Reopen after changing calibration. Arbitrary imported runtime
+warp meshes, masks/weights and photometric corrections are not applied by this
+planning view; ideal projector optics remain schematic. No live Tracking or physical
+output is applied. Actual video
+codec playback has not been exercised locally; Qt multimedia availability alone
+is not decoding evidence. Procedural textures are not rendered in this planner.
+
+ARCH-002 review keeps preview expansion/state, geometry snapshots, asset ownership,
+canvas drawing and bounded arena rendering in focused modules. ProtocolEditor's
+628-line cohesion advisory remains: its six added lines only flush/emit the request;
+window/resource ownership is separate. No whole-runtime references or dependencies
+were introduced. Prior 200-epoch measurements above remain historical observations;
+this increment did not rerun that benchmark.
+
+Commit cleanup (2026-10-05): removed 173 temporary native/visual/benchmark scripts,
+duplicate JUnit exports and routine check outputs from the dated GUI evidence folder.
+Recorded outcomes, source hashes and unique performance/native evidence remain;
+removed links are labelled as removed artifacts. Functional test assets stay local.
+All 170 owning GUI tests remain; the obsolete single-rule compatibility wrapper was
+removed and its sweep test now exercises canonical ValueRule generation. Shared row
+sizing runs once. Native narrow inspection exposed a linking/fade container that
+kept its wide-row height after reflow; reserving the new minimum height keeps controls
+visible while preserving Layer alignment. The owning alignment test now checks fade
+control containment. Focused docstrings explain blank-layer preservation, immutable
+cache identity and retained-state seeking. Batch IDs reuse one edit-local identifier
+set instead of rescanning the growing document; 1000 allocations match uncached
+numbering, including reserved-ID collisions. No dependencies or experiment policy changed.
+
+Final validation: **183 GUI/client-state/compiler checks pass in 69.28s**
+(`QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui
+tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q
+-m "not windows and not rig"`). Four focused random/batch checks pass in 3.63s; 23 advanced/control/fade/reference
+checks pass in 14.94s, and the extended narrow containment test passes in 2.10s.
+Ruff checks the GUI/tests/launcher and two affected Visual Stimulus sources;
+format check passes 90 files and Windows-target mypy passes 88 sources.
+Backend boundaries check 539 modules with zero violations; unchanged 505-line
+Cameras/628-line ProtocolEditor cohesion advisories remain, with new responsibilities
+kept in focused modules. The earlier broader configuration run had **187 passes and
+one existing failure**, `test_default_and_file_policy_values_are_typed`: the loader
+rejects checked-in `presentation.pacing_refresh_hz`. Its assertions remain unchanged;
+managed pacing adoption is indexed separately in TODO. Local passes do not establish
+Windows, optical calibration, video-codec or full rig acceptance.
+
+Native wide/narrow controls inspected after cleanup; inspection exited successfully.
+173 temporary repository review artifacts and 75 local review scripts/settings/flags/
+captures are removed; GUI reopened for owner review.
+The launch guide now distinguishes real-device discovery from optional simulated
+fixtures and describes the current Protocol/Projectors layouts. Rig-specific
+frontend checks live in [the rig checklist](rig-verification.md).
+
+Prior behavior validation: **170 GUI checks pass in 91.46s**. Four focused random/paired/sweep
+checks also pass in 19.40s. New coverage includes finite bounds, negative ranges,
+precision grid membership, repetition-driven 100/10/999-epoch generation, ordered
+mixed fixed/random rules, invalid/empty grids, cached
+preview/commit values, resampling after settings change, saved JSON values and wide/narrow layout.
+Existing preview/calibration tests remain in the full GUI pass. Tests compare the shared
+export mapping and actual scaled/offset/inverted pixels, assigned-resolution
+normalization, missing-resolution errors and invalid bounds. Prior combined
+client/compiler results are historical; not rerun for this GUI-only increment.
+Coverage includes menu ordering/moves, matching and ordered variation values, arena
+gain variants, retained preview motion/backward seeking, image cache, window cleanup,
+bounded arena drawing and rejection of unresolved timing. Windows-target mypy
+passes 86 GUI files. Ruff/format and boundaries are recorded with current source
+hashes in [random-variation evidence](gui-dashboard-2026-10-01/random-variation-2026-10-05.txt).
+Native wide/narrow editor and four-screen planning preview were inspected; inspection
+closed cleanly and temporary screenshots deleted. Reopened review uses prepared test
+assets and simulated projector discovery. The existing pacing-key loader failure,
+managed viewers/calibration adoption, pending scientific choices above and rig
+acceptance remain open. Earlier dated evidence retains prior scope/counts.
+
 Live camera Preview remains pending under [A10](../docs/architecture/acquisition.md#a10)
 and [G01](../docs/architecture/gui.md#g01). The review GUI's Connect flag and
 Preview visibility signal do not open a capture stream or image window. The
@@ -279,7 +460,7 @@ fit both widths. Inspection exited 0 and closed its window. Method:
 `.venv/bin/python reports/gui-dashboard-2026-10-01/tank-pyramid-native-review.py --capture`
 uses Qt grabs, temporary QSettings and four simulated 1920×1080 displays; no device
 commands or rig measurements. Base source `5c24d99aacf41f75fd07249faa1bfb52cf1dea78`
-plus working tree; [harness](gui-dashboard-2026-10-01/tank-pyramid-native-review.py)
+plus working tree; harness (temporary artifact removed)
 and [source hashes](gui-dashboard-2026-10-01/tank-pyramid-source-sha256.txt) remain.
 At the owner's request, all 383 generated GUI review images (including this inspection)
 and three temporary synthetic assets were deleted on 2026-10-04. Their historical
@@ -462,7 +643,7 @@ selected layer (review image removed),
 opacity (review image removed),
 arena mode (review image removed) and
 narrow layout (review image removed) were inspected
-using the [capture script](gui-dashboard-2026-10-01/protocol-layer-label-native-review.py)
+using the capture script (temporary artifact removed)
 with `--capture`, temporary QSettings and generated PNG/placeholder GLB references.
 Command: `.venv/bin/python reports/gui-dashboard-2026-10-01/protocol-layer-label-native-review.py --capture`.
 These are authoring fixtures; no GLB decoding, rendering or device connections occur.
@@ -475,7 +656,7 @@ planner; previously recorded reference revision `38f728291ed551a332392dc2c7b6897
 Current advanced-settings evidence (2026-10-04, G01 revision 64):
 wide (review image removed) and
 narrow (review image removed) native layouts were
-inspected using the [review script](gui-dashboard-2026-10-01/protocol-feedback-native-review.py)
+inspected using the review script (temporary artifact removed)
 with `--capture`; both inspections closed normally. The script uses temporary
 assets/settings, four review projectors and an explicitly declared sample brightness
 signal. No device connections or live feedback transport are exercised. Base revision
@@ -547,7 +728,7 @@ accepted detail selection; expanded occurrences keep their condition-specific di
 Native overview and details (review image removed),
 narrow layout (review image removed) and
 Batch create (review image removed) were inspected
-using the [review script](gui-dashboard-2026-10-01/protocol-epoch-overview-native-review.py)
+using the review script (temporary artifact removed)
 with `--capture`, isolated temporary QSettings and the existing built-in sample.
 Base revision remains `5c24d99aacf41f75fd07249faa1bfb52cf1dea78` plus uncommitted work.
 Inspection exited; the reviewed Protocol layout is reopened for owner review.
@@ -565,7 +746,7 @@ zero violations; same reviewed size advisories) and whitespace pass.
 Native Dashboard (review image removed),
 narrow Dashboard (review image removed) and
 Protocol (review image removed) captures were
-inspected with the [review script](gui-dashboard-2026-10-01/dashboard-recordings-native-review.py),
+inspected with the review script (temporary artifact removed),
 using `--capture`, repository Python and temporary QSettings on the same source base
 plus current edits. Inspection exited and Dashboard was reopened for review. Managed
 integration and Windows/rig acceptance remain pending.
@@ -582,7 +763,7 @@ inventory and fixtures. No dependencies or backend semantics changed.
 Native Protocol (review image removed),
 narrow Protocol (review image removed) and
 Devices (review image removed) captures were inspected
-using the [capture/reopen script](gui-dashboard-2026-10-01/protocol-four-projectors-native-review.py)
+using the capture/reopen script (temporary artifact removed)
 with `--capture`, repository Python and isolated temporary QSettings. The script
 uses the built-in three-epoch/60-second sample and exits after inspection; omit the
 flag to leave Protocol open. Source is the same base revision plus current uncommitted
@@ -595,7 +776,7 @@ Native batch edit (review image removed),
 reference composition (review image removed),
 creation options (review image removed) and
 narrow layout (review image removed) were captured and
-inspected with the [review script](gui-dashboard-2026-10-01/protocol-batch-planner-native-review.py).
+inspected with the review script (temporary artifact removed).
 Fixtures use temporary prepared assets and explicitly labeled sample Left/Right
 assignments, without saving device configuration or sending hardware commands.
 Inspection exited and the final sample GUI reopened (Visible: True). Earlier

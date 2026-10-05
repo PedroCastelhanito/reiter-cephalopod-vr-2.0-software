@@ -63,6 +63,42 @@ A broader configuration test reproduces the existing loader rejection of
 `presentation.pacing_refresh_hz`, whose managed adoption remains listed in TODO.
 No renderer, pacing implementation or physical acceptance changed in this increment.
 
+The 2026-10-05 GUI advanced update follows [G01 revision 93](../docs/architecture/gui.md#g01)
+and V07: new authoring instances default to reset false, while imported resets and
+assignments remain explicit. Advanced settings now use one card; the opacity editor
+is removed, and fixed-duration fades encode ordinary V05 opacity keyframes without
+a new renderer mechanism. Imported custom curves remain preserved. + Control is
+a separate dialog launched below Advanced settings (action hidden during its draft), restricted to closed-loop Texture/Looming
+with the three Tracking channels; imported mappings and arena axis controls remain. Body-relative input mapping to 2D screens awaits the local-axis versus
+rig/heading choice; no conversion is silently introduced. Explicit ranges still
+await the clamp-versus-extrapolation answer, with no change to V24 gain/offset behavior. [V02 revision 12](../docs/architecture/visual_stimulus.md#v02)
+records the confirmed clockwise Bottom direction (Right front→back, Left back→front)
+and subject-to-screen lever arms. Linked movement still awaits source/target feedback
+ownership; no motion-link schema,
+compiler or rendering behavior is claimed. GUI document guards now reuse the existing
+16 MiB engineering default; Setup limits and policy values are unchanged. Large
+200-epoch multi-layer round-trips and cached trial switching are locally verified.
+A separate planning preview now reuses canonical expansion/V07 state for enabled
+screens from either side in a rotatable 3D rig view using Devices geometry, with cached per-face
+compositions, on-demand assets and bounded approximate arena rendering. Unset
+tank/plane geometry prompts configuration rather than guessing dimensions. It applies
+the GUI screen scale/offset/inversion calibration using the same mapping as export,
+with assigned-resolution pixel normalization. Blank corrections share export defaults;
+invalid corrections report errors. It applies no live Tracking, arbitrary runtime
+warp/photometric profiles or physical output; actual video codec
+playback remains unverified locally. Variation captions match stimulus columns and
+ordered values materialize independent epochs, including video end modes and arena
+gains, without runtime schema changes. Authoring Random samples a bounded numeric
+range at a positive precision step, using batch Repetitions for the count; mixed
+fixed lists repeat in order with a fresh draw per resulting epoch. Cached choices
+remain stable until range/precision/count changes.
+Concrete epoch values are saved; no runtime random rule or Setup-seed change.
+Final commit cleanup retains the owning GUI tests, removes temporary review harnesses
+and duplicate results, and verifies 183 GUI/client-state/compiler checks. The existing
+pacing-default loader rejection remains open; no Windows/physical-output acceptance
+is claimed. Current GUI/compiler checks and limits
+are in [frontend evidence](runtime.md#dashboard-frontend-implementation).
+
 ## Output participation
 
 [V15 revision 10](../docs/architecture/visual_stimulus.md#v15) and

@@ -1517,15 +1517,21 @@ def test_epoch_clock_duration_retains_fractional_precision() -> None:
 
 
 def test_batch_variation_sweep_is_bounded(app: QApplication) -> None:
-    from cephvr.gui.batch_create import BatchVariationRow
+    from cephvr.gui.batch_variation import BatchVariationRow
 
     row = BatchVariationRow([("Left · Texture", (0,), 0, "texture")])
     row.method.setCurrentIndex(1)
     row.values.setText("0, 1, 0.25")
-    assert row.read().values == (0.0, 0.25, 0.5, 0.75, 1.0)
+    assert tuple(float(v) for v in row.read_rules()[0].values) == (
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0,
+    )
     row.values.setText("0, 1000, 0.1")
     with pytest.raises(ValueError, match="512"):
-        row.read()
+        row.read_rules()
     row.deleteLater()
 
 
@@ -1935,12 +1941,12 @@ def test_stimulus_parameter_edit_invalid_guard_and_media_root(
     editor = window.protocol.editor
     editor.select_node(1)
     parameters = editor.parameters
-    opacity = parameters.forms[1].children_by_key["opacity"]
-    value = opacity.variant.children_by_key["value"].variant.control
+    value = parameters.fades.fade_in
     value.setText("0.4")
+    parameters.fades.mark_changed()
     parameters.mark_changed()
     assert parameters.apply()
-    assert editor.program.sequence[1].settings[0].opacity.value == 0.4
+    assert editor.program.sequence[1].settings[0].opacity.kind == "keyframes"
     value.setText("-1")
     parameters.mark_changed()
     before = editor.program
@@ -1949,6 +1955,7 @@ def test_stimulus_parameter_edit_invalid_guard_and_media_root(
     assert editor.program == before
     assert parameters.dirty
     value.setText("0.9")
+    parameters.fades.mark_changed()
     editor.select_node(2)
     assert editor.node_index == 2
     editor.set_program(blank_program())
@@ -1974,18 +1981,14 @@ def test_stimulus_animation_variants_reset_and_remove(window: DashboardWindow) -
     editor.set_program(blank_program())
     editor.add_stimulus("Image")
     parameters = editor.parameters
-    opacity = parameters.forms[1].children_by_key["opacity"]
-    opacity.control.setCurrentText("Ramp")
-    fields = opacity.variant.children_by_key
-    fields["initial"].variant.control.setText("0.1")
-    fields["slope_per_s"].variant.control.setText("0.001")
+    parameters.fades.fade_in.setText("2")
+    parameters.fades.fade_out.setText("3")
+    parameters.fades.mark_changed()
     assert parameters.apply()
     setting = editor.program.sequence[0].settings[0]
-    assert setting.opacity.kind == "ramp"
-    assert setting.opacity.initial == 0.1
-    assert setting.opacity.slope_per_s == 0.001
-    fields["initial"].variant.control.setText("bad")
-    parameters.mark_changed()
+    assert setting.opacity.kind == "keyframes"
+    parameters.fades.fade_in.setText("bad")
+    parameters.fades.mark_changed()
     assert not parameters.apply()
     parameters.reset()
     assert not parameters.dirty
@@ -2795,12 +2798,15 @@ def test_batch_create_variations_preview_insert_and_reload(
     create.rows[0].method.setCurrentIndex(0)
     create.rows[0].values.setText("10, 20, 40")
     create.add_variation()
-    create.rows[1].parameter.setCurrentText("Direction")
+    create.rows[1].parameter.setCurrentIndex(
+        create.rows[1].parameter.findData("Direction")
+    )
     create.rows[1].values.setText("0, 180")
     create.refresh_preview()
     assert not create.add_button.isEnabled()
     assert editor.program == original
-    create.combine.setCurrentIndex(1)
+    create.rows[0].values.setText("10, 10, 20, 20, 40, 40")
+    create.rows[1].values.setText("0, 180, 0, 180, 0, 180")
     create.repetitions.setText("2")
     create.refresh_preview()
     assert create.add_button.isEnabled(), create.summary.text()
@@ -2948,7 +2954,9 @@ def test_trial_overview_selects_ranges_and_sources_across_groups(
     timeline.choose(4, Qt.KeyboardModifier.ControlModifier)
     assert set(editor.selected_paths) == {(0,), (1, 0)}
     assert editor.program == program
-    assert not editor.timeline_card.findChildren(QPushButton)
+    assert editor.timeline_card.findChildren(QPushButton) == [
+        editor.output_preview_button
+    ]
     assert editor.settings_card.isAncestorOf(editor.epoch_button)
     window.apply_view(review_view(Phase.RUNNING))
     before = editor.program
@@ -3382,7 +3390,7 @@ def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
     composer.remove_layer("Left")
     app.processEvents()
     assert left.stimulus.currentText() == "None"
-    assert left.actions_button.isHidden()
+    assert not left.actions_button.isHidden()
 
 
 def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
@@ -3557,7 +3565,7 @@ def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
     assert "Stimulus" not in row.signature
     assert (
         composer.mode.mapTo(composer, QPoint()).y()
-        < composer.duration.mapTo(composer, QPoint()).y()
+        == composer.duration.mapTo(composer, QPoint()).y()
     )
     assert (
         composer.duration.mapTo(composer, QPoint()).y()
@@ -3962,17 +3970,14 @@ def test_visible_layer_selector_and_opacity_preserve_prepared_placement(
     assert row.stimulus.currentText() == "Texture"
     before = composer.program.sequence[0].settings[0].model_dump(mode="json")
     assert not hasattr(row.parameters, "tabs")
-    opacity = next(
-        f
+    assert not any(
+        isinstance(f, ValueEditor) and "opacity" in f.children_by_key
         for f in row.parameters.forms
-        if isinstance(f, ValueEditor) and "opacity" in f.children_by_key
     )
-    opacity.children_by_key["opacity"].variant.children_by_key[
-        "value"
-    ].variant.control.setText("0.4")
+    row.parameters.retain.setChecked(False)
     assert row.parameters.apply()
     after = composer.program.sequence[0].settings[0].model_dump(mode="json")
-    assert after["opacity"]["value"] == 0.4
+    assert after["opacity"] == before["opacity"]
     assert all(
         after[key] == before[key] for key in ("space", "initial", "width", "height")
     )
@@ -4203,8 +4208,8 @@ def test_unified_feedback_input_mapping_and_retain_state(window, app):
     parameters = editor.parameters
     parameters.more.setChecked(True)
     assert not hasattr(parameters, "tabs")
-    margins = parameters.extra_body.contentsMargins()
-    assert margins.left() >= 20 and margins.top() >= 12
+    margins = parameters.advanced_layout.contentsMargins()
+    assert margins.left() == 0 and margins.top() >= 12
     data = editor.program.model_dump(mode="json")
     data["sequence"][0]["settings"][0]["assignments"] = [
         {"target": "phase_x", "value": 0.25}
@@ -4216,13 +4221,15 @@ def test_unified_feedback_input_mapping_and_retain_state(window, app):
     assert not editor.program.sequence[0].settings[0].reset
     assert editor.program.sequence[0].settings[0].assignments == original.assignments
     feedback = parameters.feedback
-    definition = feedback.definition
-    definition.name.setText("speed")
-    definition.source.setText("external")
-    definition.coordinates.setText("screen")
-    definition.measurement.setCurrentIndex(2)
-    definition.units.setCurrentText("mm/s")
-    definition.submit()
+    feedback.add_input(
+        {
+            "channel_id": "speed",
+            "stream_id": "external",
+            "frame_id": "screen",
+            "value_kind": "interval_average_rate",
+            "unit": "mm/s",
+        }
+    )
     row = feedback.entries[0]
     row.target.setCurrentIndex(row.target.findData("phase_x"))
     row.gain.setText("2")
@@ -4307,11 +4314,1036 @@ def test_arena_feedback_and_axis_editors_stay_synchronized(window, tmp_path):
     assert not axes.read()["feedback"]
 
 
-def test_stimulus_mode_matches_duration_width(window, app):
+def test_stimulus_mode_and_duration_use_proportional_header_widths(window, app):
     window.page_buttons[1].click()
     batch = window.protocol.editor.create_batch
     for width in (1350, 720):
         window.resize(width, 900)
         window.protocol.editor.modes.setCurrentIndex(0)
         app.processEvents()
-        assert batch.composer.mode.width() == batch.composer.duration.width()
+        if width == 1350:
+            assert batch.composer.mode.width() > batch.composer.duration.width()
+        assert batch.composer.mode.width() > 0 and batch.composer.duration.width() > 0
+        assert (
+            batch.composer.mode.mapTo(batch, QPoint()).y()
+            == batch.composer.duration.mapTo(batch, QPoint()).y()
+        )
+
+
+def test_new_stimuli_retain_state_without_changing_imported_reset(window, app):
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import PRESETS, add_stimulus
+
+    for preset in PRESETS:
+        program = add_stimulus(blank_program(), 0, preset, ("Front",))
+        assert not program.sequence[0].settings[0].reset
+    editor = window.protocol.editor
+    program = add_stimulus(blank_program(), 0, "Texture", ("Front",))
+    epoch = program.sequence[0]
+    setting = epoch.settings[0].model_copy(update={"reset": True})
+    imported = program.model_copy(
+        update={"sequence": (epoch.model_copy(update={"settings": (setting,)}),)}
+    )
+    editor.set_program(imported)
+    assert not editor.parameters.retain.isChecked()
+    assert editor.program.sequence[0].settings[0].reset
+
+
+def test_reference_advanced_controls_align_to_layer_and_retain_first(window, app):
+    from cephvr.gui.protocol_document import blank_program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(blank_program())
+    composer = editor.create_batch.composer
+    composer.set_screens(("Front", "Bottom"))
+    composer.change_type("Front", "Texture")
+    editor.modes.setCurrentIndex(0)
+    row = composer.rows["Front"]
+    row.advanced.setChecked(True)
+    for width in (1350, 720):
+        window.resize(width, 900)
+        app.processEvents()
+        row.align_advanced()
+        QTest.qWait(10)
+        app.processEvents()
+        params = row.parameters
+        assert params.extra_body.itemAt(1).widget() is params.retain
+        appearance = params.extra_body.itemAt(2).widget()
+        assert appearance is not None
+        assert params.fades is not None
+        for control in (params.fades.fade_in, params.fades.fade_out):
+            bottom = control.mapTo(appearance, QPoint(0, control.height())).y()
+            assert bottom <= appearance.height()
+        assert (
+            params.advanced_card.mapTo(row, QPoint()).x()
+            == row.layer.mapTo(row, QPoint()).x()
+        )
+        assert (
+            params.retain.mapTo(row, QPoint()).y()
+            < params.feedback.mapTo(row, QPoint()).y()
+        )
+        assert (
+            params.feedback.mapTo(row, QPoint()).x()
+            == params.retain.mapTo(row, QPoint()).x()
+        )
+
+
+def test_control_dialog_does_not_expand_projector_row_and_cancels(window, app):
+    from cephvr.gui.protocol_document import blank_program
+
+    editor = window.protocol.editor
+    editor.set_program(blank_program())
+    editor.add_stimulus("Texture")
+    params = editor.parameters
+    controls = params.feedback
+    assert controls.add.isHidden()
+    window.protocol.session_mode.setCurrentText("Closed-loop")
+    assert not controls.add.isHidden()
+    original = editor.program
+    controls.add.click()
+    app.processEvents()
+    assert controls.dialog.isVisible()
+    assert controls.add.isHidden()
+    assert not controls.entries
+    assert controls.layout().indexOf(controls.add) >= 0
+    assert params.advanced_card.isAncestorOf(controls.add)
+    assert not params.advanced_card.isAncestorOf(controls.editor)
+    draft = controls.editor
+    assert [draft.input.itemData(i) for i in range(draft.input.count())] == [
+        "forward_drive",
+        "sideways_drive",
+        "turn_drive",
+    ]
+    assert not draft.save.isEnabled()  # V24's 2D conversion is still unresolved.
+    draft.cancel.click()
+    assert not controls.dialog.isVisible() and editor.program == original
+    assert not controls.add.isHidden()
+    assert not controls.entries
+    controls.add.click()
+    window.protocol.session_mode.setCurrentText("Open-loop")
+    assert not controls.dialog.isVisible() and controls.add.isHidden()
+    assert editor.program == original
+
+
+def test_control_action_is_limited_to_closed_loop_texture_and_looming(window):
+    from cephvr.gui.protocol_document import blank_program
+
+    editor = window.protocol.editor
+    window.protocol.session_mode.setCurrentText("Closed-loop")
+    for kind in ("Texture", "Looming image", "Image", "Video", "3D arena"):
+        editor.set_program(blank_program())
+        editor.add_stimulus(kind)
+        assert editor.parameters.feedback.add.isHidden() == (
+            kind not in ("Texture", "Looming image")
+        )
+
+
+def test_fades_render_and_retime_without_changing_motion(window):
+    from cephvr.gui.epoch_batch import apply_batch
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.visual_stimulus.rendering.motion import evaluate_function
+
+    editor = window.protocol.editor
+    editor.set_program(blank_program())
+    editor.add_stimulus("Texture")
+    params = editor.parameters
+    before = editor.program.sequence[0].settings[0]
+    params.fades.fade_in.setText("2")
+    params.fades.fade_out.setText("3")
+    params.fades.mark_changed()
+    assert params.apply()
+    setting = editor.program.sequence[0].settings[0]
+    assert setting.motion == before.motion and setting.reset == before.reset
+    duration = editor.program.sequence[0].duration.duration.ns()
+    assert evaluate_function(setting.opacity, 0) == 0
+    assert evaluate_function(setting.opacity, 1_000_000_000) == 0.5
+    assert evaluate_function(setting.opacity, 2_000_000_000) == 1
+    assert evaluate_function(setting.opacity, duration - 1_500_000_000) == 0.5
+    assert evaluate_function(setting.opacity, duration) == 0
+    changed = apply_batch(editor.program, ((0,),), None, {"Duration": "120"})
+    opacity = changed.sequence[0].settings[0].opacity
+    assert evaluate_function(opacity, 118_500_000_000) == 0.5
+    original = editor.program
+    params.fades.fade_out.setText("1000")
+    params.fades.mark_changed()
+    assert not params.apply() and editor.program == original
+
+
+def test_reference_fades_follow_batch_duration_and_new_rows(window, tmp_path):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.visual_stimulus.rendering.motion import evaluate_function
+
+    editor = window.protocol.editor
+    editor.set_program(blank_program())
+    composer = editor.create_batch.composer
+    composer.set_screens(("Front",))
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    path = tmp_path / "tile.png"
+    assert image.save(str(path))
+    composer.set_asset_root(str(tmp_path))
+    composer.add_file("Texture", str(path), "Front")
+    parameters = composer.rows["Front"].parameters
+    parameters.fades.fade_in.setText("1")
+    parameters.fades.fade_out.setText("2")
+    parameters.fades.mark_changed()
+    assert parameters.apply()
+    composer.duration.setText("00:00:30")
+    composer.update_duration()
+    assert not composer.message.text()
+    setting = composer.program.sequence[0].settings[0]
+    assert evaluate_function(setting.opacity, 29_000_000_000) == 0.5
+    composer.set_screens(("Front", "Bottom"))
+    composer.change_type("Bottom", "Texture")
+    assert composer.rows["Bottom"].parameters.fades.duration_ns == 30_000_000_000
+    before = composer.program
+    composer.duration.setText("00:00:02")
+    composer.update_duration()
+    assert "fit within" in composer.message.text() and composer.program == before
+
+
+def test_imported_opacity_curve_is_preserved_and_not_editable(window):
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.protocol_document import blank_program
+
+    editor = window.protocol.editor
+    editor.set_program(blank_program())
+    editor.add_stimulus("Texture")
+    data = editor.program.model_dump(mode="json")
+    curve = {"kind": "ramp", "initial": 0.1, "slope_per_s": 0.001}
+    data["sequence"][0]["settings"][0]["opacity"] = curve
+    editor.set_program(validate(data))
+    parameters = editor.parameters
+    assert not parameters.fades.fade_in.isEnabled()
+    parameters.retain.setChecked(False)
+    assert parameters.apply()
+    assert (
+        editor.program.sequence[0].settings[0].opacity.model_dump(mode="json") == curve
+    )
+
+
+def test_blank_layer_then_family_keeps_each_projector_layer_configuration(
+    window, app, tmp_path
+):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.epoch_motion import EpochMotion
+    from cephvr.gui.looming_size import LoomingSize
+    from cephvr.gui.protocol_groups import motion_numbers
+
+    composer = window.protocol.editor.create_batch.composer
+    composer.set_screens(("Front", "Right"))
+    composer.set_asset_root(str(tmp_path))
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    path = tmp_path / "tile.png"
+    assert image.save(str(path))
+    row = composer.rows["Front"]
+    before = composer.program
+    row.add.trigger()
+    assert row.layer.currentText() == "1 · Empty"
+    assert row.stimulus.currentText() == "None"
+    assert composer.program is before and composer.picker.dialog is None
+    row.stimulus.setCurrentText("Texture")
+    parameters = row.parameters
+    identity = next(iter(parameters.asset_forms))
+    parameters.set_media_path(identity, str(path))
+    motion = next(f for f in row.parameters.forms if isinstance(f, EpochMotion))
+    motion.speed.setText("17")
+    motion.direction.setText("90")
+    motion.edited = True
+    row.parameters.mark_changed()
+    assert row.parameters.apply()
+    first = (
+        composer.program.sequence[0].settings[row.parameters.layer_index].instance_id
+    )
+    row.add.trigger()
+    assert row.layer.currentText() == "2 · Empty"
+    row.stimulus.setCurrentText("Looming")
+    row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
+    looming = next(f for f in row.parameters.forms if isinstance(f, LoomingSize))
+    looming.end.setText("77")
+    looming.edited = True
+    row.parameters.mark_changed()
+    assert row.parameters.apply()
+    second = (
+        composer.program.sequence[0].settings[row.parameters.layer_index].instance_id
+    )
+    composer.add_file("Texture", str(path), "Right")
+    row.layer.setCurrentIndex(row.layer.findData(first))
+    assert motion_numbers(
+        composer.program.sequence[0]
+        .settings[row.parameters.layer_index]
+        .model_dump(mode="json")
+    )[:2] == pytest.approx((17, 90))
+    row.layer.setCurrentIndex(row.layer.findData(second))
+    assert (
+        composer.program.sequence[0]
+        .settings[row.parameters.layer_index]
+        .width.knots[-1]
+        .value
+        == 77
+    )
+    assert composer.rows["Right"].parameters.program is composer.program
+    row.add.trigger()
+    row.remove.trigger()
+    assert not row.slots.blanks and row.layer.count() == 2
+
+
+def test_first_source_epoch_fade_does_not_change_rest_of_batch(window):
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.protocol_document import blank_program
+
+    editor = window.protocol.editor
+    editor.set_program(blank_program())
+    editor.add_stimulus("Texture")
+    data = editor.program.model_dump(mode="json")
+    source = data["sequence"][0]
+    data["sequence"] = [
+        {
+            **source,
+            "epoch_id": f"Epoch_{i}",
+            "duration": {"kind": "fixed", "duration": {"seconds": "20"}},
+        }
+        for i in range(3)
+    ]
+    editor.set_program(validate(data))
+    editor.select_epochs(((0,),))
+    editor.open_details("", 0)
+    parameters = editor.parameters
+    parameters.more.setChecked(True)
+    parameters.fades.fade_in.setText("2")
+    parameters.fades.mark_changed()
+    assert parameters.apply()
+    epochs = editor.program.sequence
+    assert epochs[0].settings[0].opacity.kind == "keyframes"
+    assert all(e.settings[0].opacity.kind == "constant" for e in epochs[1:])
+
+
+def test_200_epoch_timeline_reuses_views_and_metadata_noop(window, monkeypatch):
+    from cephvr.gui import timeline_views
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.protocol_nodes import edit_epoch_metadata
+
+    calls = []
+    expand = timeline_views.expand_program
+
+    def counted(program, **kwargs):
+        calls.append(program)
+        return expand(program, **kwargs)
+
+    monkeypatch.setattr(timeline_views, "expand_program", counted)
+    base = review_program()
+    program = base.model_copy(
+        update={
+            "sequence": tuple(
+                base.sequence[i % len(base.sequence)].model_copy(
+                    update={"epoch_id": f"Epoch_{i}"}
+                )
+                for i in range(200)
+            )
+        }
+    )
+    timeline = window.protocol.editor.timeline
+    timeline.set_program(program)
+    nodes = timeline.nodes
+    for index in (1, 20, 100, 199):
+        timeline.set_program(program, index)
+        assert timeline.nodes is nodes and timeline.paths[timeline.index] == (index,)
+    assert len(calls) == 1
+    first = program.sequence[0]
+    assert (
+        edit_epoch_metadata(program, 0, first.epoch_id, first.duration.duration.seconds)
+        is program
+    )
+    changed = edit_epoch_metadata(
+        program, 0, "Changed", first.duration.duration.seconds
+    )
+    timeline.set_program(changed)
+    assert len(calls) == 2 and timeline.nodes[0].epoch_id == "Changed"
+    timeline.set_program(program)
+    assert len(calls) == 2 and timeline.nodes is nodes
+    for i in range(5):
+        timeline.set_program(
+            edit_epoch_metadata(
+                program, 0, f"Version_{i}", first.duration.duration.seconds
+            )
+        )
+    assert len(timeline.views.entries) == 4
+
+
+def test_200_epoch_eight_layer_protocol_round_trip_exceeds_old_gui_limit(
+    window, tmp_path
+):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_file_stimulus
+    from cephvr.visual_stimulus.config.models.schema_common import (
+        DEFAULT_DOCUMENT_BYTES,
+    )
+
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    asset = tmp_path / "tile.png"
+    assert image.save(str(asset))
+    base = blank_program()
+    for face in ("Front", "Left", "Right", "Bottom"):
+        for kind in ("Texture", "Looming image"):
+            base = add_file_stimulus(base, 0, kind, (face,), str(tmp_path), str(asset))
+    program = base.model_copy(
+        update={
+            "sequence": tuple(
+                base.sequence[0].model_copy(update={"epoch_id": f"Epoch_{i}"})
+                for i in range(200)
+            )
+        }
+    )
+    path = tmp_path / "large.json"
+    raw = program.model_dump_json(indent=2)
+    assert 1_048_576 < len(raw.encode()) < DEFAULT_DOCUMENT_BYTES
+    path.write_text(raw)
+    window.protocol.load_program(str(path))
+    assert window.protocol.editor.program == program
+    assert len(window.protocol.editor.timeline.nodes) == 200
+    saved = tmp_path / "saved.json"
+    window.protocol.save_program(str(saved))
+    window.protocol.load_program(str(saved))
+    assert window.protocol.editor.program == program
+
+
+def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
+    window, app, tmp_path
+):
+    from PyQt6.QtGui import QImage
+
+    window.page_buttons[1].click()
+    window.protocol.session_mode.setCurrentText("Closed-loop")
+    editor = window.protocol.editor
+    editor.modes.setCurrentIndex(0)
+    composer = editor.create_batch.composer
+    composer.set_screens(("Front", "Right"))
+    composer.set_asset_root(str(tmp_path))
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    path = tmp_path / "a_prepared_texture_with_a_long_filename.png"
+    assert image.save(str(path))
+    composer.add_file("Texture", str(path), "Front")
+    composer.rows["Front"].advanced.setChecked(True)
+    editor.create_batch.vary.setChecked(True)
+    editor.create_batch.add_variation()
+    window.resize(720, 900)
+    QTest.qWait(30)
+    app.processEvents()
+    assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+
+
+def test_batch_variations_target_projectors_and_local_layer_ordinals(
+    window, app, tmp_path
+):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.components import Card
+    from cephvr.gui.protocol_groups import motion_numbers
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+
+    window.page_buttons[1].click()
+    create = window.protocol.editor.create_batch
+    create.composer.set_screens(("Left", "Right"))
+    create.composer.set_asset_root(str(tmp_path))
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    path = tmp_path / "tile.png"
+    assert image.save(str(path))
+    for face in ("Left", "Right"):
+        for _ in range(2):
+            create.composer.add_file("Texture", str(path), face)
+    create.vary.setChecked(True)
+    create.add_variation()
+    row = create.rows[0]
+    assert isinstance(create.variation_host, Card)
+    assert not hasattr(create, "combine")
+    row.target.setCurrentIndex(row.target.findText("All projectors"))
+    row.layer.setCurrentIndex(row.layer.findData(1))
+    row.values.setText("10, 20")
+    epochs = expand_program(
+        create.candidate(), seed_decimal="0", max_expanded_epochs=2000
+    )
+    assert len(epochs) == 2
+    for epoch, speed in zip(epochs, (10, 20), strict=True):
+        for index in row.target_indices():
+            assert (
+                motion_numbers(epoch.settings[index].model_dump(mode="json"))[0]
+                == speed
+            )
+        for index in (0, 2):
+            assert motion_numbers(epoch.settings[index].model_dump(mode="json"))[0] == 0
+    row.target.setCurrentIndex(row.target.findText("Right"))
+    row.layer.setCurrentIndex(row.layer.findData(-1))
+    assert row.target_indices() == [2, 3]
+    for width in (1350, 720):
+        window.resize(width, 900)
+        window.protocol.editor.modes.setCurrentIndex(0)
+        app.processEvents()
+        assert (
+            row.remove.mapTo(row, QPoint()).y()
+            == row.parameter.mapTo(row, QPoint()).y()
+        )
+        assert row.remove.height() == row.parameter.height()
+    create.composer.remove_layer("Right")
+    with pytest.raises(ValueError, match="varied layer changed"):
+        create.candidate()
+
+
+def test_layer_actions_offer_up_down_and_preserve_projector_values(
+    window, app, tmp_path
+):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.projector_layers import layers_for
+
+    window.page_buttons[1].click()
+    composer = window.protocol.editor.create_batch.composer
+    composer.set_screens(("Left", "Right"))
+    composer.set_asset_root(str(tmp_path))
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    path = tmp_path / "tile.png"
+    assert image.save(str(path))
+    for face in ("Left", "Left", "Right"):
+        composer.add_file("Texture", str(path), face)
+    left = composer.rows["Left"]
+    assert [
+        a.text() for a in left.actions_button.menu().actions() if not a.isSeparator()
+    ] == ["Add layer", "Remove layer", "Move layer", "Advanced settings"]
+    assert [a.text() for a in left.move_menu.actions()] == ["Move up", "Move down"]
+    assert left.advanced.isCheckable()
+    original = composer.program
+    right = tuple(s for s in original.sequence[0].settings if "right" in str(s.space))
+    left.select_layer(0)
+    assert not left.backward.isEnabled() and left.forward.isEnabled()
+    left.forward.trigger()
+    epoch = composer.program.sequence[0]
+    ids = [
+        epoch.settings[i].instance_id
+        for i in layers_for(composer.program, epoch, "Left")
+    ]
+    assert ids == [
+        original.sequence[0].settings[1].instance_id,
+        original.sequence[0].settings[0].instance_id,
+    ]
+    assert left.backward.isEnabled() and not left.forward.isEnabled()
+    left.backward.trigger()
+    assert composer.program.sequence[0].settings[-1] == right[0]
+    assert [a.text() for a in left.move_menu.actions()] == ["Move up", "Move down"]
+
+
+def test_variations_use_stimulus_columns_and_materialize_looming_and_video(
+    app, tmp_path
+):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.batch_create import BatchCreate
+    from cephvr.gui.batch_values import ValueRule, materialize_values
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_columns import stimulus_columns
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    path = tmp_path / "tile.png"
+    assert image.save(str(path))
+    create = BatchCreate()
+    create.composer.set_asset_root(str(tmp_path))
+    create.composer.set_screens(("Left",))
+    create.composer.add_file("Looming image", str(path), "Left")
+    create.vary.setChecked(True)
+    create.add_variation()
+    row = create.rows[0]
+    columns = stimulus_columns(create.composer.program.sequence[0].settings[0])
+    assert [row.parameter.itemText(i) for i in range(row.parameter.count())] == [
+        label for label, _ in columns
+    ]
+    row.parameter.setCurrentIndex(row.parameter.findData("End size"))
+    row.values.setText("10, 20, 30")
+    program = create.candidate()
+    assert [epoch.settings[0].width.knots[-1].value for epoch in program.sequence] == [
+        10,
+        20,
+        30,
+    ]
+    assert [epoch.settings[0].height.knots[-1].value for epoch in program.sequence] == [
+        10,
+        20,
+        30,
+    ]
+    assert not any(
+        row.parameter.findData(name) >= 0
+        for name in ("Width", "Height", "Opacity", "Angular speed")
+    )
+    video = add_stimulus(blank_program(), 0, "Video", ("Left",))
+    varied = materialize_values(
+        video,
+        (
+            ValueRule((0,), 0, "Playback start", ("0", "2")),
+            ValueRule((0,), 0, "At end", ("loop", "hold final frame")),
+        ),
+    )
+    assert [e.settings[0].initial_playback.ns() for e in varied.sequence] == [
+        0,
+        2_000_000_000,
+    ]
+    assert [e.settings[0].end_behavior for e in varied.sequence] == [
+        "loop",
+        "hold_final_frame",
+    ]
+    create.deleteLater()
+
+
+def test_preview_uses_retained_motion_and_backward_scrubbing(app):
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.config.models.program_model import Rate, Time
+
+    program = add_stimulus(blank_program(), 0, "Image", ("Left",))
+    epoch = program.sequence[0]
+    setting = epoch.settings[0]
+    motion = setting.motion.model_copy(
+        update={
+            "x": Rate.model_validate(
+                {"kind": "rate", "function": {"kind": "constant", "value": 2}}
+            )
+        }
+    )
+    setting = setting.model_copy(update={"motion": motion, "reset": False})
+    epoch = epoch.model_copy(
+        update={
+            "settings": (setting,),
+            "duration": epoch.duration.model_copy(
+                update={"duration": Time(seconds="2")}
+            ),
+        }
+    )
+    program = program.model_copy(
+        update={"sequence": (epoch, epoch.model_copy(update={"epoch_id": "second"}))}
+    )
+    plan = PreviewPlan(program)
+    initial = float(setting.initial.x)
+    assert plan.seek(3_000_000_000)[0].values["x"] == initial + 6
+    assert plan.seek(1_000_000_000)[0].values["x"] == initial + 2
+    assert plan.seek(3_000_000_000)[0].values["x"] == initial + 6
+    assert program.sequence[0].settings[0].initial.x == initial
+
+
+def test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up(
+    window, app, tmp_path
+):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_file_stimulus
+
+    image = QImage(16, 16, QImage.Format.Format_RGB32)
+    image.fill(0xFFFFFFFF)
+    path = tmp_path / "tile.png"
+    assert image.save(str(path))
+    program = add_file_stimulus(
+        blank_program(), 0, "Texture", ("Left",), str(tmp_path), str(path)
+    )
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.timeline.set_screens(("Left", "Right"))
+    editor.set_program(program)
+    window.protocol.assets.folders["root"].editor.setText(str(tmp_path))
+    editor.output_preview_button.click()
+    app.processEvents()
+    preview = window.trial_preview
+    assert preview is not None and preview.isVisible()
+    assert tuple(preview.canvases) == ("Left", "Right")
+    assert preview.rig_view.enabled_faces == ("Left", "Right")
+    assert preview.rig_view.snapshot.rig is None
+    preview.grab()
+    assert len(preview.media.images) == 1
+    preview.slider.setValue(5000)
+    assert preview.time_ns == preview.plan.total_ns // 2
+    preview.play.click()
+    assert preview.playing and preview.play.text() == "Pause"
+    preview.play.click()
+    assert not preview.playing and preview.play.text() == "Play"
+    assert editor.program == program
+    preview.close()
+    from PyQt6.sip import isdeleted
+
+    assert isdeleted(preview.timer) or not preview.timer.isActive()
+    assert not preview.media.images and not preview.media.videos
+    app.processEvents()
+    assert window.trial_preview is None
+
+
+def test_preview_rejects_setup_resolved_durations_without_mutating_program(app):
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.trial_preview_plan import PreviewPlan
+    from cephvr.visual_stimulus.config.models.program_model import Random
+
+    original = review_program()
+    source = original.sequence[0]
+    program = original.model_copy(
+        update={
+            "sequence": (source.model_copy(update={"duration": Random(kind="random")}),)
+        }
+    )
+    with pytest.raises(ValueError, match="fixed epoch durations"):
+        PreviewPlan(program)
+    assert original.sequence[0].duration.kind == "fixed"
+
+
+def test_planning_arena_draws_a_bounded_glb_on_a_configured_surface(app, tmp_path):
+    import json
+    import struct
+
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_file_stimulus
+    from cephvr.gui.trial_preview import TrialPreview
+    from cephvr.gui.trial_preview_surfaces import PreviewGeometry, PreviewSurface
+
+    binary = struct.pack("<9f3H", -20, -150, -20, 20, -150, -20, 0, -150, 20, 0, 1, 2)
+    document = {
+        "asset": {"version": "2.0"},
+        "buffers": [{"byteLength": len(binary)}],
+        "bufferViews": [
+            {"buffer": 0, "byteOffset": 0, "byteLength": 36},
+            {"buffer": 0, "byteOffset": 36, "byteLength": 6},
+        ],
+        "accessors": [
+            {"bufferView": 0, "componentType": 5126, "type": "VEC3", "count": 3},
+            {"bufferView": 1, "componentType": 5123, "type": "SCALAR", "count": 3},
+        ],
+        "meshes": [{"primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
+        "nodes": [{"mesh": 0}],
+        "scenes": [{"nodes": [0]}],
+        "scene": 0,
+    }
+    raw = json.dumps(document).encode()
+    raw += b" " * (-len(raw) % 4)
+    binary += b"\x00" * (-len(binary) % 4)
+    chunks = (
+        struct.pack("<II", len(raw), 0x4E4F534A)
+        + raw
+        + struct.pack("<II", len(binary), 0x004E4942)
+        + binary
+    )
+    path = tmp_path / "arena.glb"
+    path.write_bytes(struct.pack("<4sII", b"glTF", 2, 12 + len(chunks)) + chunks)
+    program = add_file_stimulus(
+        blank_program(), 0, "3D arena", (), str(tmp_path), str(path)
+    )
+    epoch = program.sequence[0]
+    setting = epoch.settings[0].model_copy(update={"fixed_height_mm": 0.0})
+    program = program.model_copy(
+        update={"sequence": (epoch.model_copy(update={"settings": (setting,)}),)}
+    )
+    geometry = PreviewGeometry(
+        {
+            "Front": PreviewSurface(
+                100,
+                100,
+                ((50, -100, -50), (-50, -100, -50), (-50, -100, 50), (50, -100, 50)),
+            )
+        },
+        (0, 0, 0),
+    )
+    parent = QWidget()
+    preview = TrialPreview(program, ("Front",), str(tmp_path), geometry, parent)
+    preview.show()
+    app.processEvents()
+    image = preview.canvases["Front"].grab().toImage()
+    assert image.pixelColor(image.width() // 2, image.height() // 2).red() > 200
+    assert len(preview.media.arenas.scenes) == 1
+    preview.close()
+    app.processEvents()
+    parent.deleteLater()
+
+
+def test_arena_variations_change_axis_gains_without_changing_other_axes(app):
+    from cephvr.gui.batch_values import ValueRule, materialize_values
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    program = add_stimulus(blank_program(), 0, "3D arena", ())
+    result = materialize_values(
+        program, (ValueRule((0,), 0, "Longitudinal", ("0.5", "1")),)
+    )
+    assert len(result.sequence) == 2
+    for epoch, gain in zip(result.sequence, (0.5, 1), strict=True):
+        binding = epoch.settings[0].feedback[0]
+        assert binding.gain.value == gain
+        assert binding.sideways_gain.value == 0
+    assert {c.channel_id for c in result.input_channels} == {
+        "forward_drive",
+        "sideways_drive",
+    }
+    assert not program.sequence[0].settings[0].feedback
+
+
+def test_planning_preview_uses_rig_planes_and_only_enabled_projector_frames(
+    app, tmp_path
+):
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.gui.projector_geometry import RigDimensions
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+    from cephvr.gui.trial_preview import TrialPreview
+    from cephvr.gui.trial_preview_surfaces import PreviewGeometry
+
+    rig = RigDimensions(200, 300, 150, (100, 150, 75))
+    drafts = {
+        face: {"width": "200", "height": "150", "subject_distance": "150"}
+        for face in ("Front", "Left", "Right", "Bottom")
+    }
+    geometry = PreviewGeometry.from_drafts(rig, drafts)
+    parent = QWidget()
+    preview = TrialPreview(
+        add_stimulus(blank_program(), 0, "Texture", ("Front",)),
+        ("Front", "Bottom"),
+        str(tmp_path),
+        geometry,
+        parent,
+    )
+    preview.show()
+    app.processEvents()
+    view = preview.rig_view
+    assert view.rig == rig
+    assert view.azimuth == 25.0
+    view.grab()
+    assert view.face_labels["Left · Off"].x() < view.face_labels["Right · Off"].x()
+    assert max(p[0] for p in view.screen_planes()["Left"]) < rig.subject[0]
+    assert min(p[0] for p in view.screen_planes()["Right"]) > rig.subject[0]
+    assert set(view.screen_planes()) == {"Front", "Left", "Right", "Bottom"}
+    assert view.screen_planes()["Front"] == list(geometry.surfaces["Front"].corners)
+    view.grab()
+    assert set(view.frames) == {"Front", "Bottom"}
+    # Both camera hemispheres paint the enabled screen, not just its inward face.
+    from PyQt6.QtCore import QPointF
+    from PyQt6.QtGui import QColor, QImage, QPainter, QPolygonF
+
+    original_frame = view.frames["Front"]
+    white = QImage(16, 16, QImage.Format.Format_RGB32)
+    white.fill(QColor("white"))
+    view.frames["Front"] = white
+    for azimuth, elevation in ((45, 25), (155, 25), (225, -25), (315, -25)):
+        view.azimuth, view.elevation = azimuth, elevation
+        target = QImage(100, 100, QImage.Format.Format_RGB32)
+        target.fill(QColor("black"))
+        painter = QPainter(target)
+        view.draw_screen(
+            painter,
+            "Front",
+            QPolygonF(
+                [QPointF(10, 90), QPointF(90, 90), QPointF(90, 10), QPointF(10, 10)]
+            ),
+        )
+        painter.end()
+        assert target.pixelColor(50, 50) == QColor("white")
+        assert "Front" in view.face_labels
+    view.frames["Front"] = original_frame
+    cached = view.frames["Front"].cacheKey()
+    view.azimuth += 40
+    view.grab()
+    assert view.frames["Front"].cacheKey() == cached
+    preview.slider.setValue(1000)
+    view.grab()
+    assert view.frames["Front"].cacheKey() != cached
+    assert all(
+        max(image.width(), image.height()) <= 512 for image in view.frames.values()
+    )
+    preview.close()
+    app.processEvents()
+    parent.deleteLater()
+
+
+def test_preview_calibration_matches_export_and_uses_display_pixels(app):
+    from PyQt6.QtGui import QColor, QImage
+
+    from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.trial_preview_canvas import PreviewCanvas
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_surfaces import (
+        PreviewCorrection,
+        PreviewGeometry,
+        PreviewSurface,
+    )
+
+    draft = {
+        "scale_u": "0.5",
+        "scale_v": "0.5",
+        "offset_x": "10",
+        "offset_y": "20",
+        "flip_x": "True",
+        "flip_y": "False",
+    }
+    correction = PreviewCorrection.from_draft("Front", draft, (100, 100))
+    assert not correction.error
+    values = {
+        f"screens.Front.{key}": value.lower() == "true"
+        if key.startswith("flip")
+        else float(value)
+        for key, value in draft.items()
+    }
+    vertices, _ = face_mapping(
+        {"values": values}, "Front", MonitorBinding("", 0, 0, 100, 100, 60, 8)
+    )
+    assert correction.corners == tuple(vertices[i]["xy"] for i in (0, 1, 3, 2))
+    media = PreviewMedia(blank_program(), "", None)
+    canvas = PreviewCanvas(
+        "Front",
+        media,
+        PreviewGeometry(
+            {"Front": PreviewSurface(100, 100, correction=correction)}, (0, 0, 0)
+        ),
+    )
+    image = QImage(100, 100, QImage.Format.Format_RGB32)
+    image.fill(QColor("red"))
+    for x in range(50, 100):
+        for y in range(100):
+            image.setPixelColor(x, y, QColor("blue"))
+    output = canvas.correct_frame(image)
+    assert output.pixelColor(40, 30) == QColor("blue")
+    assert output.pixelColor(80, 30) == QColor("red")
+    assert output.pixelColor(20, 30) == QColor("black")
+    assert output.pixelColor(50, 80) == QColor("black")
+    # The same pixel offset becomes a smaller normalized shift on a larger display.
+    larger = PreviewCorrection.from_draft("Front", draft, (200, 200))
+    assert larger.corners[0][0] == pytest.approx(correction.corners[0][0] - 0.05)
+    assert larger.corners[0][1] == pytest.approx(correction.corners[0][1] - 0.1)
+    vertical = PreviewCorrection.from_draft("Front", {"flip_y": "True"}, (100, 100))
+    canvas.rig_geometry = PreviewGeometry(
+        {"Front": PreviewSurface(100, 100, correction=vertical)}, (0, 0, 0)
+    )
+    image.fill(QColor("red"))
+    for y in range(50, 100):
+        for x in range(100):
+            image.setPixelColor(x, y, QColor("blue"))
+    flipped = canvas.correct_frame(image)
+    assert flipped.pixelColor(25, 25) == QColor("blue")
+    assert flipped.pixelColor(25, 75) == QColor("red")
+    media.close()
+    canvas.deleteLater()
+
+
+def test_preview_rejects_invalid_corrections_and_unresolved_pixel_offsets():
+    from cephvr.gui.trial_preview_surfaces import PreviewCorrection
+
+    assert (
+        "Assign a display"
+        in PreviewCorrection.from_draft("Front", {"offset_x": "10"}, None).error
+    )
+    assert (
+        "positive"
+        in PreviewCorrection.from_draft("Front", {"scale_u": "0"}, (1920, 1080)).error
+    )
+    assert (
+        "beyond"
+        in PreviewCorrection.from_draft("Front", {"scale_u": "2"}, (1920, 1080)).error
+    )
+    identity = PreviewCorrection.from_draft("Front", {}, None)
+    assert not identity.error
+    assert identity.corners == ((0, 0), (1, 0), (1, 1), (0, 1))
+
+
+def test_random_variations_respect_bounds_precision_and_size():
+    from decimal import Decimal
+    from random import Random
+
+    from cephvr.gui.batch_random import random_values
+
+    values = random_values("-1.03", "2.04", "0.1", "100", Random(42).randrange)
+    assert len(values) == 100
+    assert len(set(values)) > 10
+    assert all(Decimal("-1.03") <= Decimal(v) <= Decimal("2.04") for v in values)
+    assert all(Decimal(v) % Decimal("0.1") == 0 for v in values)
+    assert random_values("1", "1", "0.1", "3", Random(42).randrange) == ("1.0",) * 3
+    for fields in (
+        ("0", "1", "0", "100"),
+        ("2", "1", "1", "100"),
+        ("0", "1", "1", "2001"),
+        ("0.01", "0.09", "1", "100"),
+        ("nan", "1", "1", "100"),
+        ("0", "1", "1e-99999", "100"),
+    ):
+        with pytest.raises(ValueError):
+            random_values(*fields, Random(42).randrange)
+
+
+def test_random_batch_values_stay_fixed_across_preview_and_save(window, app, tmp_path):
+    from cephvr.gui.protocol_groups import motion_numbers
+    from cephvr.visual_stimulus.config.models.program_model import Program
+
+    window.page_buttons[1].click()
+    create = window.protocol.editor.create_batch
+    from PyQt6.QtGui import QImage
+
+    create.composer.set_screens(("Front",))
+    create.composer.set_asset_root(str(tmp_path))
+    image = QImage(8, 8, QImage.Format.Format_RGB32)
+    image.fill(0)
+    path = tmp_path / "tile.png"
+    assert image.save(str(path))
+    create.composer.add_file("Texture", str(path), "Front")
+    create.vary.setChecked(True)
+    create.add_variation()
+    row = create.rows[0]
+    row.random.seed(42)
+    row.method.setCurrentText("Random")
+    for key, value in {
+        "minimum": "1",
+        "maximum": "5",
+        "precision": "0.1",
+    }.items():
+        row.random_fields[key].setText(value)
+    assert set(row.random_fields) == {"minimum", "maximum", "precision"}
+    create.repetitions.setText("100")
+    first = create.candidate()
+    assert len(first.sequence) == 100
+    assert create.candidate() == first
+    row.random_fields["precision"].setText("0.2")
+    second = create.candidate()
+    assert second != first
+    assert len(second.sequence) == 100
+    assert create.candidate() == second
+    values = [
+        motion_numbers(epoch.settings[0].model_dump(mode="json"))[0]
+        for epoch in second.sequence
+    ]
+    assert all(1 <= value <= 5 for value in values)
+    assert len(set(values)) > 10
+    assert Program.model_validate_json(second.model_dump_json()) == second
+    create.repetitions.setText("10")
+    shorter = create.candidate()
+    assert len(shorter.sequence) == 10
+    assert create.candidate() == shorter
+    create.repetitions.setText("999")
+    assert len(create.candidate().sequence) == 999
+    create.repetitions.setText("3")
+    create.add_variation()
+    fixed = create.rows[1]
+    fixed.parameter.setCurrentIndex(fixed.parameter.findData("Direction"))
+    fixed.values.setText("0, 90")
+    mixed = create.candidate()
+    assert len(mixed.sequence) == 6
+    assert [
+        motion_numbers(epoch.settings[0].model_dump(mode="json"))[1]
+        for epoch in mixed.sequence
+    ] == [0, 90, 0, 90, 0, 90]
+    assert create.candidate() == mixed
+    for width in (1350, 720):
+        window.resize(width, 900)
+        app.processEvents()
+        assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0

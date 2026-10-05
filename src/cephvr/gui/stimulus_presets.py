@@ -10,6 +10,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Program,
     parse_program_json,
 )
+from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
 FILE_TYPES = ("Texture", "Image", "Looming image", "Video", "3D arena")
 
@@ -41,6 +42,7 @@ def add_stimulus(
         number += 1
     identity = f"stimulus_{number}"
     source = review_program().model_dump(mode="json")["sequence"][1]["settings"][0]
+    source["reset"] = False
     source["instance_id"] = identity
     source["space"]["surfaces"] = [name.lower() for name in screens] or ["front"]
     family = "texture"
@@ -103,7 +105,7 @@ def add_stimulus(
             fixed_pitch_deg=0.0,
             fixed_roll_deg=0.0,
             motion={key: {"kind": "hold"} for key in ("x", "y", "yaw")},
-            reset=True,
+            reset=False,
             assignments=[],
             feedback=[],
         )
@@ -164,7 +166,7 @@ def add_stimulus(
         )
     node["scene_id"] = scene_id
     node["settings"].append(source)
-    return parse_program_json(json.dumps(data), max_bytes=1_048_576)
+    return parse_program_json(json.dumps(data), max_bytes=DEFAULT_DOCUMENT_BYTES)
 
 
 def remove_stimulus(program: Program, index: NodePath, layer: int) -> Program:
@@ -189,7 +191,7 @@ def remove_stimulus(program: Program, index: NodePath, layer: int) -> Program:
     ]
     data["scenes"].append(scene)
     epoch["scene_id"] = scene_id
-    return parse_program_json(json.dumps(data), max_bytes=1_048_576)
+    return parse_program_json(json.dumps(data), max_bytes=DEFAULT_DOCUMENT_BYTES)
 
 
 def add_file_stimulus(
@@ -222,4 +224,4 @@ def add_file_stimulus(
             "kind": "constant",
             "value": selected.tile_height_mm,
         }
-    return parse_program_json(json.dumps(candidate), max_bytes=1_048_576)
+    return parse_program_json(json.dumps(candidate), max_bytes=DEFAULT_DOCUMENT_BYTES)

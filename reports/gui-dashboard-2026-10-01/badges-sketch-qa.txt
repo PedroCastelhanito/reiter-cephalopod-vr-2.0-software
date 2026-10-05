@@ -1,7 +1,0 @@
-Transcribed from successful isolated Chrome/Playwright tool output on 2026-10-01; exit 0.
-Three layouts fit at 1100px
-Three layouts fit at 1024px
-Three layouts fit at 736px
-Three layouts fit at 390px
-Three layouts fit at 320px
-Preview toggles, local state, cancellation, log filter and subject disclosure passed; no page errors.

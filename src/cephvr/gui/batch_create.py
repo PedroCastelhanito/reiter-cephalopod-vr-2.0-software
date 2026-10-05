@@ -1,6 +1,6 @@
 """Reference composition and optional canonical variation generation."""
 
-from decimal import Decimal, InvalidOperation
+from dataclasses import replace
 
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtGui import QResizeEvent
@@ -15,13 +15,14 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.batch_insertion import Insertion
-from cephvr.gui.components import button, combo, field, label
+from cephvr.gui.batch_values import materialize_values
+from cephvr.gui.batch_variation import BatchVariationRow
+from cephvr.gui.components import Card, button, combo, field, label
 from cephvr.gui.epoch_batch import epoch_paths
 from cephvr.gui.epoch_composer import EpochComposer
-from cephvr.gui.group_dialog import VariationRow
-from cephvr.gui.program_editing import node_at, unique_id, validate
-from cephvr.gui.projector_layers import layer_title
-from cephvr.gui.protocol_groups import Variation, make_group
+from cephvr.gui.program_editing import node_at
+from cephvr.gui.projector_layers import layer_title, layers_for
+from cephvr.gui.protocol_groups import make_group
 from cephvr.gui.stimulus_scope import surfaces
 from cephvr.visual_stimulus.compiler.expansion import expand_program
 from cephvr.visual_stimulus.config.models.program_model import (
@@ -30,49 +31,6 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Node,
     Program,
 )
-
-
-class BatchVariationRow(VariationRow):
-    """A reference-layer rule with explicit values or a bounded numeric sweep."""
-
-    def __init__(self, targets: list[tuple[str, tuple[int, ...], int, str]]) -> None:
-        super().__init__(targets)
-        self.method = combo(("Values", "Sweep (min, max, step)"))
-        layout = self.layout()
-        assert isinstance(layout, QHBoxLayout)
-        layout.insertWidget(2, field("Method", self.method), 1)
-        self.method.currentIndexChanged.connect(self.update_hint)
-
-    def update_hint(self) -> None:
-        self.values.setPlaceholderText(
-            "0, 10, 2" if self.method.currentIndex() else "10, 20, 30"
-        )
-
-    def read(self) -> Variation:
-        rule = super().read()
-        if self.method.currentIndex() == 0:
-            return rule
-        try:
-            start, stop, step = (
-                Decimal(part.strip()) for part in self.values.text().split(",")
-            )
-        except (InvalidOperation, ValueError) as error:
-            raise ValueError("Sweep needs min, max, step") from error
-        if (
-            not all(value.is_finite() for value in (start, stop, step))
-            or step <= 0
-            or stop < start
-        ):
-            raise ValueError("Sweep needs finite min ≤ max and positive step")
-        count = int((stop - start) // step) + 1
-        if count > 512:
-            raise ValueError("Sweep exceeds 512 values")
-        return Variation(
-            rule.path,
-            rule.layer,
-            rule.parameter,
-            tuple(float(start + i * step) for i in range(count)),
-        )
 
 
 class BatchCreate(QWidget):
@@ -84,20 +42,20 @@ class BatchCreate(QWidget):
         body.setContentsMargins(0, 0, 0, 0)
         self.composer = EpochComposer()
         body.addWidget(self.composer)
-        self.vary = QCheckBox("Variation rules")
-        body.addWidget(self.vary)
-        self.variation_host = QWidget()
-        self.variation_body = QVBoxLayout(self.variation_host)
+        self.vary = QCheckBox("Enable")
+        self.variation_host = Card("Variation rules", compact=True)
+        self.variation_host.body.addWidget(self.vary)
+        self.variation_content = QWidget()
+        self.variation_body = QVBoxLayout(self.variation_content)
         self.variation_body.setContentsMargins(0, 0, 0, 0)
+        self.variation_host.body.addWidget(self.variation_content)
         self.rows: list[BatchVariationRow] = []
         self.rule_ids: dict[BatchVariationRow, list[str]] = {}
         self.add_rule = button("+ Add variation rule")
         self.add_rule.clicked.connect(self.add_variation)
         self.variation_body.addWidget(self.add_rule)
-        self.combine = combo(("Pair values by position", "All combinations"))
-        self.variation_body.addWidget(field("Combine", self.combine))
-        self.variation_host.hide()
-        self.vary.toggled.connect(self.variation_host.setVisible)
+        self.variation_content.hide()
+        self.vary.toggled.connect(self.variation_content.setVisible)
         self.vary.toggled.connect(self.queue_preview)
         body.addWidget(self.variation_host)
         self.generation_controls = QWidget()
@@ -159,7 +117,6 @@ class BatchCreate(QWidget):
         self.composer.changed.connect(self.queue_preview)
         self.composer.batch_label.textChanged.connect(self.queue_preview)
         self.repetitions.textChanged.connect(self.queue_preview)
-        self.combine.currentIndexChanged.connect(self.queue_preview)
         self.preview_timer = QTimer(self)
         self.preview_timer.setSingleShot(True)
         self.preview_timer.setInterval(120)
@@ -249,13 +206,18 @@ class BatchCreate(QWidget):
             )
             for i, s in enumerate(node.settings)
         ]
-        row = BatchVariationRow(targets)
+        projectors = (
+            {"Rig-wide": list(range(len(node.settings)))}
+            if any(s.kind == "arena" for s in node.settings)
+            else {
+                face: layers_for(reference, node, face)
+                for face in self.composer.screens
+            }
+        )
+        row = BatchVariationRow(targets, projectors, node.settings)
         self.rule_ids[row] = [s.instance_id for s in node.settings]
         row.remove.clicked.connect(lambda: self.remove_variation(row))
-        row.values.textChanged.connect(self.queue_preview)
-        row.method.currentIndexChanged.connect(self.queue_preview)
-        row.target.currentIndexChanged.connect(self.queue_preview)
-        row.parameter.currentIndexChanged.connect(self.queue_preview)
+        row.changed.connect(self.queue_preview)
         self.rows.append(row)
         self.variation_body.insertWidget(len(self.rows) - 1, row)
         self.queue_preview()
@@ -272,37 +234,50 @@ class BatchCreate(QWidget):
         repetitions = int(self.repetitions.text())
         if not 1 <= repetitions <= 999:
             raise ValueError("Use 1–999 repetitions in the authoring editor")
-        rules = tuple(row.read() for row in self.rows) if self.vary.isChecked() else ()
+        active_rows = self.rows if self.vary.isChecked() else []
+        random_rows = [row for row in active_rows if row.method.currentIndex() == 2]
+        rules = tuple(
+            rule
+            for row in active_rows
+            if row not in random_rows
+            for rule in row.read_rules()
+        )
+        if random_rows:
+            counts = {len(rule.values) for rule in rules}
+            if len(counts) > 1 or 0 in counts:
+                raise ValueError(
+                    "Paired variations require equally long, nonempty value lists"
+                )
+            count = next(iter(counts), 1) * repetitions
+            if count > 2000:
+                raise ValueError(
+                    "The authoring editor supports at most 2000 expanded epochs"
+                )
+            # Sample each repeated epoch once; fixed lists retain their batch order.
+            rules = tuple(
+                replace(rule, values=rule.values * repetitions) for rule in rules
+            )
+            rules += tuple(
+                rule for row in random_rows for rule in row.read_rules(count)
+            )
         # Reject stale targets rather than varying a replacement layer by accident.
         node = program.sequence[0]
         assert isinstance(node, Epoch)
-        for row, rule in zip(self.rows if rules else (), rules, strict=True):
-            original = self.rule_ids[row][row.target.currentIndex()]
-            if (
-                rule.layer >= len(node.settings)
-                or node.settings[rule.layer].instance_id != original
-            ):
-                raise ValueError(
-                    "A varied layer changed; remove and recreate its variation rule"
-                )
+        for row in active_rows:
+            for index in row.target_indices():
+                layer = row.targets[index][2]
+                if (
+                    layer >= len(node.settings)
+                    or node.settings[layer].instance_id != self.rule_ids[row][index]
+                ):
+                    raise ValueError(
+                        "A varied layer changed; remove and recreate its variation rule"
+                    )
         if rules:
-            program, _ = make_group(
-                program, (), 0, 0, 1, False, rules, self.combine.currentIndex() == 1
+            program = materialize_values(
+                program, rules, max_variations=2000 if random_rows else 512
             )
-            expanded = expand_program(
-                program, seed_decimal="0", max_expanded_epochs=2000
-            )
-            data = program.model_dump(mode="json")
-            data["sequence"] = []
-            for occurrence in expanded:
-                epoch = occurrence.source.model_dump(mode="json")
-                epoch["epoch_id"] = unique_id(data, "Epoch")
-                epoch["settings"] = [
-                    setting.model_dump(mode="json") for setting in occurrence.settings
-                ]
-                data["sequence"].append(epoch)
-            program = validate(data)
-        if repetitions != 1:
+        if repetitions != 1 and not random_rows:
             program, _ = make_group(
                 program,
                 (),

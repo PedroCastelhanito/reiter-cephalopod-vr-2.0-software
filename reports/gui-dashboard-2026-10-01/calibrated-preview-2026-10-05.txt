@@ -1,0 +1,105 @@
+2026-10-05 calibration-aware rig planning preview
+Source: base 3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree, hashes below.
+Governing: G01 revision 86, ARCH-002; V15 runtime behavior unchanged.
+
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig'
+168 passed in 68.17s.
+Final explicit Y-inversion addition: two focused calibration tests passed in 1.33s.
+Ruff check src/cephvr/gui tests/gui: pass.
+Ruff format --check: 86 files formatted.
+Windows-target mypy src/cephvr/gui: 85 source files pass.
+check_backend_boundaries.py: 538 modules, zero violations, retained cohesion warnings.
+git diff --check: pass.
+
+Native harness: illustrative 120x166x110 mm tank with explicit subject/screen distances,
+four simulated assigned displays, prepared textures and three 10s epochs. Front:
+scale .8/.8, offsets 20/10px, invert X. Right: scale .7/.8. Uses real GUI controls;
+preview receives the assigned display rectangle sizes. Captured view inspected,
+inspection closed exit0, temporary screenshots deleted. Reopened for review.
+Calibration values are illustrative; not physical measurements or saved rig acceptance.
+
+Mapping shares existing export face_mapping. Positive pixel Y uses bottom-origin
+coordinates converted to Qt image origin; actual pixel tests cover X/Y inversion,
+scaling and offsets. Invalid correction shows error instead of an uncorrected frame.
+Corrected images remain <=512px and are cached for rotation. Geometry is immutable
+snapshot of configured planes and observer; reopen after editing settings.
+Limits: no live Tracking/device commands, arbitrary runtime meshes/masks/photometric
+profiles or optical equivalence; bounded arena remains approximate. Actual video
+codec acceptance not established. Earlier combined client/compiler evidence remains
+historical; no runtime schema/policy or physical output changed.
+
+SHA256:
+6c3fed373938f4b22359aa6cffb0ad3c9ac6b4023e0f3ddc457b0a9f9ef28511  src/cephvr/gui/calibration_profile.py
+456648a334d11bea2bcef3b902feb2f111e9bde729879ece7152d6c7890f9008  src/cephvr/gui/trial_preview_surfaces.py
+17fb14afa7ae9847e89f9ec69bdb3629fddf0eedd275c64bacbeac5ff3555b48  src/cephvr/gui/trial_preview_canvas.py
+0de18d0b1764040ab114ce08adc1c4f9cbe7d9dd51870fd6aa8763fbb6428be3  src/cephvr/gui/trial_preview.py
+2cd854d0a80315a588dd0b8dfa24a0885e6cd6facba1fcd0179718d7948c73d3  src/cephvr/gui/window.py
+1919540fcb9374c492d3c1d5a0ffd540993b053b15552e0f6808ba5eb24e0d91  tests/gui/test_dashboard.py
+
+Native harness:
+from pathlib import Path
+import sys
+from PyQt6.QtCore import QSettings,QTimer
+from PyQt6.QtWidgets import QApplication,QScrollArea
+from cephvr.gui.theme import apply_theme
+from cephvr.gui.window import DashboardWindow
+from cephvr.gui.review import ReviewControls
+from cephvr.gui.layouts import fit_window_to_screen
+app=QApplication([]);apply_theme(app)
+w=DashboardWindow(sample=True,settings=QSettings('/private/tmp/cephvr-timeline-preview-review.ini',QSettings.Format.IniFormat))
+r=ReviewControls(w,simulate_projectors=True)
+w.page_buttons[1].click();w.protocol.session_mode.setCurrentText('Closed-loop')
+root='/private/tmp/cephvr-file-review-assets';w.protocol.assets.folders['root'].editor.setText(root)
+e=w.protocol.editor;e.modes.setCurrentIndex(0);batch=e.create_batch;c=batch.composer
+for face,kind,file in [('Front','Texture','example.texture.json'),('Right','Texture','checker.png'),('Bottom','Texture','example.png'),('Left','Texture','checker.png')]:c.add_file(kind,root+'/'+file,face)
+c.duration.setText('00:00:10');front=c.rows['Front'];front.layer.setCurrentIndex(0);front.advanced.setChecked(True)
+batch.vary.setChecked(True);batch.add_variation();batch.rows[0].values.setText('0, 10, 20')
+e.set_program(batch.candidate());e.modes.setCurrentIndex(0)
+p=w.devices.projectors
+for key,value in {'width':120,'depth':166,'height':110,'subject_x':60,'subject_y':83,'subject_z':55}.items():p.rig_editor.fields[key].setText(str(value))
+for face in ('Front','Left','Right','Bottom'):
+ for key,value in {'width':120 if face in ('Front','Bottom') else 166,'height':166 if face=='Bottom' else 110}.items():p.screen_editor.fields[face,key].setText(str(value))
+for face,value in {'Left':60,'Front':83,'Bottom':55}.items():p.rig_editor.screen_distances[face].setText(str(value))
+for (face,key),value in {('Front','scale_u'):'0.8',('Front','scale_v'):'0.8',('Front','offset_x'):'20',('Front','offset_y'):'10',('Right','scale_u'):'0.7',('Right','scale_v'):'0.8'}.items():p.calibration.controls[face,key].setText(value)
+p.calibration.controls['Front','flip_x'].setChecked(True)
+fit_window_to_screen(w);w.show();w.raise_();w.activateWindow()
+def scroll():
+ parent=front.parentWidget()
+ while parent is not None:
+  if isinstance(parent,QScrollArea):parent.ensureWidgetVisible(batch.variation_host)
+  parent=parent.parentWidget()
+ app.processEvents()
+def open_preview():
+ e.output_preview_button.click()
+ if w.trial_preview:w.trial_preview.slider.setValue(4500)
+ print('Visible:',w.isVisible(),'Preview:',bool(w.trial_preview and w.trial_preview.isVisible()),flush=True)
+def capture():
+ scroll();w.grab().save('/private/tmp/cephvr-calibrated-main.png');open_preview();QTimer.singleShot(450,preview_capture)
+def preview_capture():
+ w.trial_preview.grab().save('/private/tmp/cephvr-calibrated-preview.png');w.trial_preview.close();w.resize(720,900);QTimer.singleShot(350,narrow)
+def narrow():
+ scroll();w.grab().save('/private/tmp/cephvr-calibrated-narrow.png');w.close();app.quit();print('Inspection closed',flush=True)
+close_flag=Path('/private/tmp/cephvr-calibrated-preview-close.flag');close_flag.unlink(missing_ok=True)
+timer=QTimer();timer.timeout.connect(lambda:w.close() if close_flag.exists() else None);timer.start(250)
+if '--capture' in sys.argv:QTimer.singleShot(650,capture)
+else:QTimer.singleShot(650,lambda:(scroll(),open_preview()))
+app.exec()
+
+244 local links resolve; G01 register matches revision 86.
+
+2026-10-05 G01 revision87 display cleanup: planning note, enabled-projector
+text and subject marker removed; observer retained for math. Four focused tests
+passed in1.30s; Ruff/format86, mypy85, boundaries538/zero violations pass.
+Native calibrated preview inspected and closed exit0; screenshots deleted.
+d3056c904bd10c030e45b843b756802c0691b660213a3253b3a0b12ebc51f179  src/cephvr/gui/trial_preview.py
+bce1f668bc8472caa60d61aa0b30117acd7e7cb4b492b6a0db9f37d9dd39a8ab  src/cephvr/gui/trial_preview_rig.py
+
+2026-10-05 G01 revision88 orientation/overlap refinement:
+Configured planes: Left low-X, Right high-X. Previous155deg home angle reversed
+image sides; home/reset now25deg. Shared TankDiagram ascending view-depth screen
+sort fixes near/far overlap. Native calibrated texture view inspected and closed
+exit0; temporary screenshots deleted. Six focused preview/calibration/tank checks
+passed1.65s; Ruff/format86, mypy85, boundaries538/zero violations pass.
+117531747244cec2ca9e97c72b318ecb310c2de051e8dc8fa7c7fb6dbbea9ba7  src/cephvr/gui/trial_preview_rig.py
+1902650070d6fe18744d9c3c2d83576b0ca070c1266306b69c6f5aa9029e362e  src/cephvr/gui/tank_diagram.py
+7f39a63230cdf4fa4bbdafa6a5b7a7e40bf17d486bebec7daeab154950d7c1e9  tests/gui/test_dashboard.py

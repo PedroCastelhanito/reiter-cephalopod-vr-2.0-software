@@ -1,3 +1,0 @@
-src/cephvr/gui/dashboard.py:179: error: "QObject" has no attribute "setEnabled"  [attr-defined]
-src/cephvr/gui/dashboard.py:185: error: "QObject" has no attribute "setToolTip"  [attr-defined]
-Found 2 errors in 1 file (checked 9 source files)

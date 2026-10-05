@@ -1,24 +1,19 @@
 """Declared feedback inputs and compatible targets, using the canonical unit rules."""
 
-import json
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QGridLayout, QLineEdit, QWidget
-
-from cephvr.gui.components import button, combo, field, label
 from cephvr.tracking.config.pipeline import CHANNELS
 from cephvr.visual_stimulus.config.models.parameter_catalogue import (
     DIRECT_GAIN_UNITS,
     MOVEMENT_GAIN_UNITS,
     parameter_units,
 )
-from cephvr.visual_stimulus.config.models.program_model import InputChannel, Settings
+from cephvr.visual_stimulus.config.models.program_model import Settings
 
 NAMES = {
-    "forward_drive": "Tracking · Longitudinal",
-    "sideways_drive": "Tracking · Lateral",
-    "turn_drive": "Tracking · Turning",
+    "forward_drive": "Longitudinal velocity",
+    "sideways_drive": "Lateral velocity",
+    "turn_drive": "Angular velocity",
 }
 TARGETS = {
     "x": "Position X",
@@ -77,71 +72,3 @@ def targets(setting: Settings, signal: dict[str, Any]) -> dict[str, str]:
             and (signal["value_kind"], signal["unit"], unit) in MOVEMENT_GAIN_UNITS
         )
     }
-
-
-class SignalDefinition(QWidget):
-    """Explicit custom input declaration, only opened from the feedback section."""
-
-    created = pyqtSignal(object)
-
-    def __init__(self) -> None:
-        super().__init__()
-        grid = QGridLayout(self)
-        grid.setContentsMargins(0, 0, 0, 0)
-        self.name = QLineEdit()
-        self.source = QLineEdit()
-        self.coordinates = QLineEdit()
-        self.name.setPlaceholderText("e.g. forward_speed")
-        self.source.setPlaceholderText("Stream name")
-        self.coordinates.setPlaceholderText("e.g. world")
-        self.measurement = combo(("Value / position", "Change per sample", "Velocity"))
-        self.units = combo(())
-        self.measurement.currentIndexChanged.connect(self.refresh_units)
-        self.refresh_units()
-        for i, (name, control) in enumerate(
-            (
-                ("Signal name", self.name),
-                ("Source", self.source),
-                ("Measurement", self.measurement),
-                ("Units", self.units),
-                ("Coordinates", self.coordinates),
-            )
-        ):
-            control.setMinimumWidth(0)
-            grid.addWidget(field(name, control), i // 3, i % 3)
-        self.save = button("Add input")
-        self.save.clicked.connect(self.submit)
-        grid.addWidget(self.save, 1, 2)
-        self.message = label("", wrap=True)
-        grid.addWidget(self.message, 2, 0, 1, 3)
-
-    def refresh_units(self) -> None:
-        self.units.clear()
-        self.units.addItems(
-            ("1/s", "mm/s", "deg/s", "cycle/s", "px/s")
-            if self.measurement.currentIndex() == 2
-            else ("1", "mm", "deg", "cycle", "px")
-        )
-
-    def submit(self) -> None:
-        try:
-            channel = InputChannel.model_validate_json(
-                json.dumps(
-                    {
-                        "channel_id": self.name.text().strip(),
-                        "stream_id": self.source.text().strip(),
-                        "frame_id": self.coordinates.text().strip(),
-                        "value_kind": (
-                            "absolute",
-                            "displacement",
-                            "interval_average_rate",
-                        )[self.measurement.currentIndex()],
-                        "unit": self.units.currentText(),
-                    }
-                )
-            )
-        except ValueError:
-            self.message.setText("Enter a signal name, source and coordinate system.")
-            return
-        self.message.clear()
-        self.created.emit(channel.model_dump(mode="json"))

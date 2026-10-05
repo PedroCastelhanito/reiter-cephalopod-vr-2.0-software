@@ -18,12 +18,15 @@ from cephvr.visual_stimulus.config.models.program_model import (
     TrialArenaBoundaries,
     parse_program_json,
 )
-from cephvr.visual_stimulus.config.models.schema_common import parse_json
+from cephvr.visual_stimulus.config.models.schema_common import (
+    DEFAULT_DOCUMENT_BYTES,
+    parse_json,
+)
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
 _POLICY_VERSION = 7
 _CONTRACT_VERSION = 1
-_MAX_DOCUMENT_BYTES = 16_777_216
+_MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
 _POLICY_SHA256 = "52e8307df79be66861ed29964d67e43b64a36a06b04f7dfd1cbee9129dcf55be"
 _CONFIG_KEYS = frozenset(

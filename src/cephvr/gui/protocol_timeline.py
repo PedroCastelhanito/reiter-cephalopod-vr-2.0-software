@@ -6,8 +6,6 @@ from PyQt6.QtCore import QRectF, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QKeyEvent, QMouseEvent, QPainter, QPaintEvent, QPen
 from PyQt6.QtWidgets import QWidget
 
-from cephvr.gui.epoch_batch import epoch_paths
-from cephvr.gui.program_editing import node_at
 from cephvr.gui.projector_layers import layers_for
 from cephvr.gui.protocol_document import duration
 from cephvr.gui.theme import COLORS
@@ -15,9 +13,8 @@ from cephvr.gui.timeline_details import (
     epoch_heading,
     layer_description,
     stimulus_color,
-    stimulus_key,
 )
-from cephvr.visual_stimulus.compiler.expansion import expand_program
+from cephvr.gui.timeline_views import TimelineViews
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Explicit, Program
 
 
@@ -28,6 +25,7 @@ class ProgramTimeline(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.program: Program | None = None
+        self.views = TimelineViews()
         self.index = 0
         self.screens: tuple[str, ...] = ()
         self.paths: tuple[tuple[int, ...], ...] = ()
@@ -57,21 +55,14 @@ class ProgramTimeline(QWidget):
         layer: int = -1,
     ) -> None:
         self.program = program
-        paths = epoch_paths(program)
-        by_id = {node_at(program, path).epoch_id: path for path in paths}  # type: ignore[union-attr]
-        self.error = ""
-        try:
-            expanded = expand_program(
-                program, seed_decimal="0", max_expanded_epochs=2000
-            )
-            self.nodes = tuple(
-                e.source.model_copy(update={"settings": e.settings}) for e in expanded
-            )
-            self.paths = tuple(by_id[e.source.epoch_id] for e in expanded)
-        except ValueError as error:
-            self.nodes, self.paths = (), ()
-            self.error = str(error)
-        self.type_keys = tuple(stimulus_key(program, node) for node in self.nodes)
+        view = self.views.get(program)
+        paths = view.sources
+        self.nodes, self.paths, self.type_keys, self.error = (
+            view.nodes,
+            view.paths,
+            view.keys,
+            view.error,
+        )
         selected = (*scope, index)
         self.selection = tuple(
             p for p in paths if p == selected or p[: len(selected)] == selected

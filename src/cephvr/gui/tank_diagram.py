@@ -204,6 +204,11 @@ class TankDiagram(QWidget):
         else:
             super().mouseDoubleClickEvent(event)
 
+    def draw_screen(self, painter: QPainter, face: str, polygon: QPolygonF) -> None:
+        painter.setBrush(QColor(33, 91, 133, 25))
+        painter.setPen(QColor(COLORS.accent))
+        painter.drawPolygon(polygon)
+
     def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -274,14 +279,10 @@ class TankDiagram(QWidget):
         if self.visible_elements["tank"]:
             for corners in tank:
                 painter.drawPolygon(QPolygonF([point(p) for p in corners]))
-        for face in sorted(
-            faces, key=lambda f: sum(raw(p)[2] for p in faces[f]), reverse=True
-        ):
+        for face in sorted(faces, key=lambda f: sum(raw(p)[2] for p in faces[f])):
             corners = faces[face]
-            painter.setBrush(QColor(33, 91, 133, 25))
-            painter.setPen(QColor(COLORS.accent))
             if self.visible_elements["screens"]:
-                painter.drawPolygon(QPolygonF([point(p) for p in corners]))
+                self.draw_screen(painter, face, QPolygonF([point(p) for p in corners]))
         for projection in projections.values():
             if not self.visible_elements["projection"]:
                 continue

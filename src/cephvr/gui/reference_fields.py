@@ -6,6 +6,7 @@ from cephvr.gui.arena_movement import ArenaMovement
 from cephvr.gui.components import equal_row_height, label
 from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.looming_size import LoomingSize
+from cephvr.gui.stimulus_columns import stimulus_columns
 from cephvr.gui.stimulus_form import ValueEditor
 from cephvr.gui.stimulus_parameters import StimulusParameters
 
@@ -92,6 +93,21 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
             motion.custom.toggled.connect(control.setDisabled)
     else:
         result.extend(("", label("—")) for _ in range(3))
+    program = editor.program
+    if program is not None and editor.layer_index >= 0:
+        from cephvr.gui.program_editing import node_at
+        from cephvr.visual_stimulus.config.models.program_model import Epoch
+
+        node = node_at(program, editor.node_index)
+        assert isinstance(node, Epoch)
+        captions = stimulus_columns(node.settings[editor.layer_index])
+        result = [
+            result[0],
+            *[
+                (captions[i][0] if i < len(captions) else title, control)
+                for i, (title, control) in enumerate(result[1:])
+            ],
+        ]
     for title, control in result:
         control.setMinimumWidth(0)
         if title != "Asset":

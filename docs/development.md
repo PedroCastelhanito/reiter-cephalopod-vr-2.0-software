@@ -144,11 +144,12 @@ python -m cephvr.gui.review --review
 ```
 
 The script selects the repository's `.venv` Python on Windows/macOS/Linux and works
-from any working directory when called by its full path. Local review currently loads
-four simulated 1920 × 1080 projector displays (2–5), assigned Front/Left/Right/Bottom.
-Their Devices checkboxes drive the Protocol lanes, and Refresh retains this sample
-inventory and its local choices. These are authoring fixtures, not hardware discovery;
-`--read-only` does not load them.
+from any working directory when called by its full path. Review mode discovers local
+cameras, secondary displays and COM ports; it does not launch the managed experiment.
+Use `python -m cephvr.gui.review --review --simulated-devices` for isolated sample
+cameras and four projector displays (2–5), assigned Front/Left/Right/Bottom.
+Projector checkboxes drive the Protocol lanes. Simulated inventory is an authoring
+fixture; verify real Windows display indices and physical assignments on the rig.
 
 The design review is identified in the window title and permits local subject edits.
 Phase/observer inspection lives in the View menu. Session buttons report local intent
@@ -166,13 +167,15 @@ CephVR/Frontend GUI preferences and fit the compact selector to its current rows
 labeled local visibility fixtures; it does not open runtime viewers or call devices. Close inspection windows
 after checking changes, then reopen the reviewed GUI for the owner to inspect.
 Devices has icon subtabs for Cameras, Microcontroller, Projectors and SpikeGLX with local
-draft fields and review-only check actions. Visual Stimulus and Tracking remain placeholders. Omitting `--review` shows a disconnected,
+draft fields and check actions. Protocol provides batch creation/editing, per-projector
+layers, ordered or random variations and separate geometry/calibration-aware planning
+playback. Tracking remains a placeholder. Omitting `--review` shows a disconnected,
 read-only frontend. Neither mode is the managed GUI bootstrap or an experiment mode;
 controller transport, control leases and runtime viewers remain unfinished.
 
-Camera frontend review uses two labelled sample devices with per-device drafts and
-experiment checkboxes. The View → Review active backends menu exercises protocol
-preview gating until Protocol integration exists. Disabled sources remain dimmed.
+Camera review discovers attached devices; simulated mode supplies two sample devices.
+Per-device drafts and experiment checkboxes drive availability. Disabled preview
+sources remain dimmed; camera capture/viewer ownership still needs managed integration.
 Camera configuration sits below the inventory: role, trigger source, requested
 Microcontroller trigger frequency and PFS path/Browse. Configure detailed parameters in
 PylonViewer. Browse reads FrameStart trigger hints to update the dropdown, but never
@@ -184,8 +187,9 @@ fixed rising-edge input and active-high Trial state; camera rates stay in Camera
 assignment table and desktop-layout diagram; Windows display indices are unavailable
 on other systems and still need rig verification. These remain unsaved drafts;
 trigger tests report not tested.
-All pages
-and subtabs share a fitted HUD above an expanding Activity log in the right column.
+Dashboard and ordinary device subtabs share a fitted HUD above an expanding Activity
+log. Protocol uses the full authoring area; Projectors uses the right column for
+Displays layout and the rotatable rig plot.
 
 Dashboard output paths have an existing-folder picker and compact unfocused display
 with full-path tooltips. Activity logs preserve the retained entry being read and

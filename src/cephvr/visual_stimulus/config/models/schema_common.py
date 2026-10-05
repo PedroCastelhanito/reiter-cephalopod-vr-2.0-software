@@ -12,6 +12,8 @@ from typing import Annotated, Any, Literal, NoReturn, TypeVar
 
 from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field
 
+DEFAULT_DOCUMENT_BYTES = 16_777_216
+
 
 class Model(BaseModel):
     model_config = ConfigDict(

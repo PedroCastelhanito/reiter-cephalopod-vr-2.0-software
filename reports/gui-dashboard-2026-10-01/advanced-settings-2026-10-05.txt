@@ -1,0 +1,12 @@
+2026-10-05 Asia/Tokyo; HEAD 3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree.
+Method: native DashboardWindow(sample=True), temporary QSettings, four simulated outputs; Front Texture reference advanced opened, wide/narrow captures inspected, inspection closed, captures deleted. Asset placeholder is uncommitted. Reopen has Front advanced visible; no capture/device command.
+Command: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q -m "not windows and not rig"
+Result: 160 passed in 59.46s; 147 GUI tests.
+Static: Ruff/format 71 files pass; mypy --platform win32 70 GUI files pass; boundaries 523 modules, zero violations, existing cohesion advisories.
+Limits: Linked to pending scientific direction and writer-ownership choices. No backend link schema/compiler/runtime, rig output or managed connection tested.
+Source hashes:
+50fbce5ad7e41672873b9a2d8d6096d48a25ad2502621c1938535201d6c2c009  src/cephvr/gui/stimulus_parameters.py
+1ebbf858e8f04de373aa735654bc12c917483069b361a84f95bee9a55d3c49d9  src/cephvr/gui/projector_reference.py
+cbd93e9e20a00ed0b8b5411a0f72e03e1d608f36218f1b14f1db8c2cf0952289  src/cephvr/gui/feedback_mappings.py
+5a81bd621e625389c40291e83df274813a2201115d1167153e1fe6a91331ee8e  src/cephvr/gui/stimulus_presets.py
+5f38c1587335a04d8f0117545f0741b5bc58034d55b75113a77e2b613b903942  tests/gui/test_dashboard.py

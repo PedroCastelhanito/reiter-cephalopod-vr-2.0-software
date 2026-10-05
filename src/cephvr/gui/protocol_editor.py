@@ -41,6 +41,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
 
 class ProtocolEditor(PlannerControls):
     changed = pyqtSignal()
+    output_preview_requested = pyqtSignal()
 
     def __init__(self, *, sample: bool = False) -> None:
         super().__init__()
@@ -86,6 +87,7 @@ class ProtocolEditor(PlannerControls):
         self.back_button.clicked.connect(self.leave_group)
         self.group_button.clicked.connect(self.open_group_dialog)
         self.preview_button.clicked.connect(self.open_preview)
+        self.output_preview_button.clicked.connect(self.request_output_preview)
         self.install_menus()
         self.selection_menu.aboutToShow.connect(
             lambda: self.selection_menu.populate(
@@ -620,3 +622,7 @@ class ProtocolEditor(PlannerControls):
     def open_preview(self) -> None:
         if self.flush_parameters():
             self.popups.open_preview(self.program)
+
+    def request_output_preview(self) -> None:
+        if self.isEnabled() and self.flush_parameters():
+            self.output_preview_requested.emit()

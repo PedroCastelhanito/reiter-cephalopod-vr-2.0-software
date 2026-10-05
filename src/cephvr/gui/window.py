@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QMainWindow,
+    QMessageBox,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -18,6 +19,8 @@ from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.protocol import ProtocolPage
 from cephvr.gui.recordings import RecordingsCard
 from cephvr.gui.theme import SIZES
+from cephvr.gui.trial_preview import TrialPreview
+from cephvr.gui.trial_preview_surfaces import PreviewGeometry
 from cephvr.gui.view import DashboardView
 
 PAGES = ("Dashboard", "Protocol", "Devices", "Tracking")
@@ -83,6 +86,8 @@ class DashboardWindow(QMainWindow):
         assert isinstance(dashboard_controls, QVBoxLayout)
         dashboard_controls.insertWidget(2, self.recordings)
         self.protocol = ProtocolPage(self.recordings, sample=sample)
+        self.trial_preview: TrialPreview | None = None
+        self.protocol.editor.output_preview_requested.connect(self.open_trial_preview)
         self.protocol.assets.folders["root"].editor.textChanged.connect(
             lambda path: setattr(self.devices.projectors, "asset_root", path)
         )
@@ -138,3 +143,40 @@ class DashboardWindow(QMainWindow):
         self.devices.apply_view(view)
         self.recordings.apply_view(view)
         self.protocol.apply_view(view)
+        if not self.protocol.can_edit and self.trial_preview is not None:
+            self.trial_preview.close()
+
+    def open_trial_preview(self) -> None:
+        if self.trial_preview is not None:
+            self.trial_preview.raise_()
+            self.trial_preview.activateWindow()
+            return
+        editor = self.protocol.editor
+        projectors = self.devices.projectors
+        geometry = PreviewGeometry.from_drafts(
+            projectors.rig_editor.dimensions(),
+            projectors.screen_editor.drafts,
+            {
+                projectors.assignments[key]: (rect.width(), rect.height())
+                for key, (_, rect) in zip(
+                    projectors.keys, projectors.diagram.outputs, strict=True
+                )
+                if projectors.assignments.get(key) in editor.timeline.screens
+            },
+        )
+        try:
+            self.trial_preview = TrialPreview(
+                editor.program,
+                editor.timeline.screens,
+                self.protocol.assets.folders["root"].editor.text(),
+                geometry,
+                editor,
+                editor.timeline.index,
+            )
+        except (ValueError, OSError) as error:
+            QMessageBox.information(self, "Trial preview", str(error))
+            return
+        self.trial_preview.finished.connect(
+            lambda: setattr(self, "trial_preview", None)
+        )
+        self.trial_preview.show()

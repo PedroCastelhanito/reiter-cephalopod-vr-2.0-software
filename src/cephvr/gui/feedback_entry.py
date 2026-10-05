@@ -33,8 +33,8 @@ class FeedbackEntry(QWidget):
         self.gain = QLineEdit()
         self.offset = QLineEdit()
         self.sideways = QLineEdit()
-        self.remove = button("×", "icon", hint="Remove feedback mapping")
-        self.remove.setAccessibleName("Remove feedback mapping")
+        self.remove = button("×", "icon", hint="Remove control")
+        self.remove.setAccessibleName("Remove control")
         self.remove.clicked.connect(self.removed)
         self.controls = [
             field("Input signal", self.signal),
@@ -66,7 +66,11 @@ class FeedbackEntry(QWidget):
         self.signal.blockSignals(True)
         self.signal.clear()
         for channel in self.channels:
-            if targets(self.setting, channel):
+            if channel["channel_id"] in (
+                "forward_drive",
+                "sideways_drive",
+                "turn_drive",
+            ) and targets(self.setting, channel):
                 self.signal.addItem(
                     NAMES.get(channel["channel_id"], channel["channel_id"])
                     + f" ({channel['unit']})",

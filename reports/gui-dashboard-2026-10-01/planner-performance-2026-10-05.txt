@@ -1,0 +1,34 @@
+2026-10-05 planner controls/layers/performance local evidence
+Base HEAD: 3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree; G01 revision 81.
++Control header action opens separate dialog, only closed-loop Texture/Looming. Three Tracking signals; committing 2D mappings remains disabled pending coordinate choice. Linking ownership and range clipping remain pending.
+Plain Add layer creates local empty slot; family chosen afterward. Canonical settings retained per layer/projector, empty slots excluded from generated programs.
+First independent source fade test leaves other generated source epochs unchanged. Repeat group occurrences share source settings; separate intro source required for first occurrence only.
+Performance: skip unchanged metadata validation; painted timeline reuses expanded paths/content keys for four immutable program views maximum. No asset/image/widget allocated per epoch. Existing 2000-expanded-epoch preview cap retained.
+GUI shared JSON guard now existing backend engineering default 16,777,216 bytes. Earlier 1MiB GUI read failed real 200-epoch 4-projector 2-layer size; load/save/reload now tested. No backend policy/default value change or capacity guarantee.
+Full check: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q -m "not windows and not rig"
+Outcome: 170 passed in 68.02s, including 157 GUI tests.
+Focused final narrow/dialog/layer check: 6 passed,151 deselected in5.58s.
+Configuration check excluding known default/pacing loader failure:4 passed,1 deselected in0.34s; existing pacing-key loader follow-up remains open.
+Ruff check and format pass (78 files); mypy --platform win32 GUI plus two touched VisualStimulus config files passes77files.
+Boundaries528modules,0violations; existing cohesion warnings (including unchanged camera505/protocol_editor622 owners). Focused new responsibilities extracted; those owners not extended this increment.
+Local links/anchors and git diff --check pass.
+Benchmark commands: QT_QPA_PLATFORM=offscreen .venv/bin/python /private/tmp/cephvr-planner-benchmark.py and /private/tmp/cephvr-heavy-benchmark.py; historical harnesses were removed during owner-requested commit cleanup; measurements and source hashes retained.
+Simple before:20epoch parse1.53ms/UI1.43ms/switch3.41ms;200epoch parse13.62ms/UI12.12ms/switch29.42ms. Profile106223calls64ms,metadata38ms/timeline24ms.
+Simple after:20epoch parse5.49ms/UI7.41ms/switch1.12ms;200epoch parse32.18ms/UI22.71ms/switch1.78ms. Profile6495calls9ms. Separate process/concurrent checks affect parse timings; not a controlled speedup claim. Simple trial drafts reference same program.
+Heavy final:200epochs,4projectors,2layers each;1,269,921compactbytes/3,202,179prettybytes. Median3 parses463.26ms;median3initial UI binds333.45ms. Two distinct immutable trials warmed,medianlast6of8switches12.63ms. Offscreen processEvents included; native painting, physical output, runtime asset decoding not measured.
+Native harness /private/tmp/cephvr-planner-review.py --capture: wide/narrow/Control inspected; narrow variations clipping fixed with horizontal Ignored sizing. Second inspection exit0. All3temporary captures deleted afterward. Updated harness reopened withoutcapture; Visible: True Protocol / test assets / variation controls; left open.
+Assets root /private/tmp/cephvr-file-review-assets contains example.texture.json plus functional example.png/checker.png test textures (kept as requested, not review screenshots). No persistent default Assets path modified.
+Limits: development-machine-only local results; no managed Tracking delivery, link runtime, physical display output or Windows/full-workload acceptance.
+SHA256 final implementation:
+6e974aee193a75b0c571e8846f261ab4ca675d21418d751b807ef3902298fbbc src/cephvr/gui/reference_layers.py
+5b1ecdebcd3ca70c5239fb16ba4cfee839898e391873f891ff309e1bf225dc4a src/cephvr/gui/timeline_views.py
+946e14450a4708958d71390f7e5e66d9ef42305c1c9e67f8e34cab19b63d4804 src/cephvr/gui/epoch_composer.py
+bd156ff9768e42007476ce3ec8588c016ef76999e79f2934bdbc12eb4f1293f6 src/cephvr/gui/projector_reference.py
+643c090f05c3d140084b95a59853978bfdef31a9526c2a157121597d39dc7596 src/cephvr/gui/protocol_nodes.py
+457efb8569ec1854a329dc45d9e45ceec738d6938a5316ae21a7575b787df30b src/cephvr/gui/feedback_mappings.py
+85fbb31771a54b3d472d3f4a4c0af884f5319d4f7567feab2f7655e17328b002 src/cephvr/gui/stimulus_parameters.py
+c7f8dff4caa90b18c3050fb7e45b021d585ded3d3c434fa44d52d65baa3f1515 src/cephvr/gui/batch_create.py
+8f77ad6e54ad47d0a9341bc7b64bd7cd23c3edbdee6f05c73b48405d4da63c1c src/cephvr/gui/group_dialog.py
+729d24a6db4abd484a2e847d18bfeee2cfc9c37047238d160c3c0fc6c076c1a2 src/cephvr/gui/protocol.py
+195f97cde83c2af2489bacc62774ecb2bcec40cd787020f2650efa48df971736 src/cephvr/visual_stimulus/config/models/schema_common.py
+471812915d44e24f189fcf1b98bd594db429b6a123c252f8a6bc446e58a3d63f tests/gui/test_dashboard.py

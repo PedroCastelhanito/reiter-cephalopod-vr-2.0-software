@@ -15,14 +15,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from cephvr.gui.advanced_appearance import AdvancedAppearance
 from cephvr.gui.arena_movement import ArenaMovement
-from cephvr.gui.components import button, equal_row_height, label
+from cephvr.gui.components import Card, button, equal_row_height, label
 from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.feedback_mappings import FeedbackMappings
 from cephvr.gui.looming_size import LoomingSize
 from cephvr.gui.paths import PathEdit
 from cephvr.gui.program_editing import NodePath, data_node, node_at
 from cephvr.gui.projector_layers import projector_edit
+from cephvr.gui.stimulus_fades import StimulusFades
 from cephvr.gui.stimulus_files import (
     apply_texture_dimensions,
     resolve_stimulus_file,
@@ -32,14 +34,15 @@ from cephvr.gui.stimulus_form import ValueEditor
 from cephvr.visual_stimulus.config.models.parameter_catalogue import parameter_units
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
+    Fixed,
     Program,
     Settings,
     parse_program_json,
 )
+from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
 SECTIONS = (
     ("Motion", ("motion", "phase_x", "phase_y")),
-    ("Opacity", ("opacity",)),
     ("Playback", ("initial_playback", "end_behavior")),
 )
 
@@ -59,6 +62,7 @@ class StimulusParameters(QWidget):
         self.file_dialog: QFileDialog | None = None
         self.node_index: NodePath = 0
         self.layer_index = 0
+        self.duration_override: Fixed | None = None
         self.projector = ""
         self.forms: list[ValueEditor | EpochMotion | LoomingSize | ArenaMovement] = []
         self.asset_forms: dict[str, PathEdit] = {}
@@ -80,9 +84,14 @@ class StimulusParameters(QWidget):
         self.more.toggled.connect(self.show_more)
         self.body.addWidget(self.more)
         self.advanced = QWidget()
-        self.extra_body = QVBoxLayout(self.advanced)
-        self.extra_body.setContentsMargins(24, 16, 0, 12)
+        self.advanced_layout = QVBoxLayout(self.advanced)
+        self.advanced_layout.setContentsMargins(0, 16, 0, 12)
+        self.advanced_card = Card("Advanced settings", compact=True)
+        self.advanced_layout.addWidget(self.advanced_card)
+        self.extra_body = self.advanced_card.body
         self.extra_body.setSpacing(18)
+        self.closed_loop = False
+        self.fades: StimulusFades | None = None
         self.body.addWidget(self.advanced)
         row = QHBoxLayout()
         self.message = label("", wrap=True)
@@ -99,6 +108,11 @@ class StimulusParameters(QWidget):
         app = QApplication.instance()
         if isinstance(app, QApplication):
             app.focusChanged.connect(self.finish_edit)
+
+    def set_closed_loop(self, closed: bool) -> None:
+        self.closed_loop = closed
+        if self.feedback is not None:
+            self.feedback.set_closed_loop(closed)
 
     def show_more(self, checked: bool) -> None:
         self.advanced.setVisible(checked)
@@ -144,13 +158,15 @@ class StimulusParameters(QWidget):
     ) -> None:
         self.projector = projector
         self.close_file_dialog()
+        if self.feedback is not None:
+            self.feedback.dialog.reject()
         for control in self.external_controls:
             control.hide()
             control.deleteLater()
         self.external_controls.clear()
         for layout in (self.primary, self.extra_body):
-            while layout.count():
-                item = layout.takeAt(0)
+            while layout.count() > (1 if layout is self.extra_body else 0):
+                item = layout.takeAt(1 if layout is self.extra_body else 0)
                 if item is not None and (widget := item.widget()) is not None:
                     widget.deleteLater()
         self.dirty = False
@@ -220,8 +236,6 @@ class StimulusParameters(QWidget):
                     form.hide()
             elif name == "Playback":
                 self.primary.addWidget(form)
-            else:
-                self.extra_body.addWidget(form)
         if values["kind"] == "arena":
             movement = ArenaMovement(values)
             movement.changed.connect(self.mark_changed)
@@ -240,9 +254,19 @@ class StimulusParameters(QWidget):
         self.retain.setChecked(not values["reset"])
         self.retain.toggled.connect(self.mark_changed)
         self.extra_body.addWidget(self.retain)
+        self.fades = None
+        if "opacity" in values:
+            appearance = AdvancedAppearance(
+                program, node, setting, self.duration_override or node.duration
+            )
+            self.linked_to, self.fades = appearance.linked_to, appearance.fades
+            self.fades.changed.connect(self.mark_changed)
+            self.extra_body.addWidget(appearance)
         self.feedback = FeedbackMappings(
-            setting, program.model_dump(mode="json")["input_channels"]
+            setting,
+            [channel.model_dump(mode="json") for channel in program.input_channels],
         )
+        self.feedback.set_closed_loop(self.closed_loop)
         self.feedback.changed.connect(self.mark_changed)
         self.extra_body.addWidget(self.feedback)
         assets = (
@@ -326,6 +350,8 @@ class StimulusParameters(QWidget):
                     path,
                     profile,
                 )
+        if self.fades is not None:
+            setting["opacity"] = self.fades.read()
         setting["reset"] = not self.retain.isChecked()
         for form in self.forms:
             if isinstance(form, ArenaMovement):
@@ -339,7 +365,9 @@ class StimulusParameters(QWidget):
             return False
         try:
             candidate = self.candidate()
-            program = parse_program_json(json.dumps(candidate), max_bytes=1_048_576)
+            program = parse_program_json(
+                json.dumps(candidate), max_bytes=DEFAULT_DOCUMENT_BYTES
+            )
             program, selected = projector_edit(
                 self.program, program, self.node_index, self.layer_index, self.projector
             )
@@ -363,7 +391,7 @@ class StimulusParameters(QWidget):
         if isinstance(node, Epoch) and self.feedback is not None:
             self.feedback.accept(
                 node.settings[self.layer_index],
-                program.model_dump(mode="json")["input_channels"],
+                [channel.model_dump(mode="json") for channel in program.input_channels],
             )
         self.message.clear()
         self.message.setVisible(not self.compact)
@@ -430,7 +458,9 @@ class StimulusParameters(QWidget):
                     selected.path,
                     selected.profile,
                 )
-                program = parse_program_json(json.dumps(candidate), max_bytes=1_048_576)
+                program = parse_program_json(
+                    json.dumps(candidate), max_bytes=DEFAULT_DOCUMENT_BYTES
+                )
                 program, self.layer_index = projector_edit(
                     self.program,
                     program,

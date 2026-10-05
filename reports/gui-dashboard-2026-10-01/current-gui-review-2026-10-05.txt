@@ -1,0 +1,63 @@
+Date: 2026-10-05 Asia/Tokyo
+Source: 3af4289814927c1c3fdc4251731ef894a49a1489, clean source tree at review start.
+Diff reference: ff694b1; G01 revision 77.
+Method: native macOS DashboardWindow(sample=True), temporary QSettings, ReviewControls(simulate_projectors=True), fit_window_to_screen; inspected Dashboard, Protocol, Projectors; closed inspection. Three temporary Qt grabs deleted after inspection.
+GUI tests: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m "not windows and not rig"
+Result: 143 passed, 2 failed in 70.48s.
+Failure 1: test_arena_axis_gains_roundtrip_and_editor_spacing, line 3558: old assertion mode.y < duration.y; actual 20 == 20.
+Failure 2: test_stimulus_mode_matches_duration_width, line 4317: old assertion equal widths; actual 272 versus 181.
+Assessment: assertions conflict with current G01 shared-row/value-proportional layout; no tests changed.
+Static: Ruff check pass; format 71 files already formatted; mypy --platform win32 70 GUI files pass; boundaries 523 modules, 0 violations with existing cohesion advisories.
+Reopen: .venv/bin/python -m cephvr.gui.review --review --simulated-devices; process remains running.
+Limits: local sample views only, no rig configuration import or camera/projector output; managed integrations remain pending.
+
+2026-10-05 final commit cleanup (current evidence; earlier entries historical):
+Base HEAD 3af4289814927c1c3fdc4251731ef894a49a1489 plus authorized dirty working tree.
+Python 3.11.15; PyQt 6.11.0; Qt 6.11.0; macOS local portable/native GUI checks only.
+Final command: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q -m "not windows and not rig"
+183 passed69.28s exit0, including all170GUI tests.
+Broader command additionally included tests/visual_stimulus/test_configuration.py:187pass/1failure81.46s. Existing typed-default test rejects presentation.pacing_refresh_hz; no assertion weakened.
+Ruff check/format GUI/tests/launcher and affected VisualStimulus config sources:90formattedfiles pass. Windows-target mypy88sources pass. Boundary check539modules/zero violations; unchanged cohesion advisories.433local file links/anchors and diff whitespace pass.
+Removed173temporary repository harness/duplicate-result files and75local temporary scripts/settings/flags/captures. Preserved meaningful source hashes, native/performance results, functional textures and GUI regression suite.
+Trim: canonical variation reader only, shared sizing once, concise state/cache docs. Batch IDs reuse one reserved set;1000cached allocations match uncached IDs including Epoch_1/Epoch_3 collisions.
+Native final Cocoa inspection found and fixed advanced linking/fade reflow height clipping; Layer alignment149/149 confirmed; final screenshot inspected then deleted. 23focused advanced/control/fade/reference checks pass14.94s; extended containment1pass2.10s.
+GUI reopened and visible for owner review. No Windows, physical calibration, live Tracking/control ownership or workload acceptance claimed; launch/rig handoff lives in development guide and rig-verification.
+Final source SHA256:
+800e7a2b7f29c50bf81e2c7e25226de29c5a2dfe80a51ac3024c198c8c715530  src/cephvr/gui/advanced_appearance.py
+34ba531cde854c20f829688fcaa969d099572605738b8869795e3719d26969ce  src/cephvr/gui/batch_create.py
+399ee84e5db93842a7ecdaf09847daab16a220f9778099b2514221972038b25e  src/cephvr/gui/batch_random.py
+1373feee4f6c0958043a62c6363ce2d69fd1bf78bf7a821abd4d21aed6bc6e61  src/cephvr/gui/batch_values.py
+834b3b105c17fc5e8f1c4e5b2c6dadc5e8d168a4fd77e4982f0810071164db20  src/cephvr/gui/batch_variation.py
+6c3fed373938f4b22359aa6cffb0ad3c9ac6b4023e0f3ddc457b0a9f9ef28511  src/cephvr/gui/calibration_profile.py
+c5556b48daf290f4275894200f26c4182f4e1bca545427cb684197fa32044d1f  src/cephvr/gui/control_editor.py
+74dd8df1db8529b06661148e74b85173ac3e22c852eac5976f59fde6ce42d9bd  src/cephvr/gui/epoch_batch.py
+02aaef771631c3cfcbfdf8c90b205257f1772849c4f799b304c08b56f1adfb63  src/cephvr/gui/epoch_composer.py
+5d616f6118e1d2058da3d7da4bc93d525f0af0da94223bed70b95da462080821  src/cephvr/gui/feedback_entry.py
+c34274b2e28d6ed5059efe00edc48c4bb0bcc1d3d4a7aa3a466fd129073a212d  src/cephvr/gui/feedback_mappings.py
+57bc4c8df8ab9add25d946b3411c71e8de2127363131f3fa4f493e4a999b7269  src/cephvr/gui/feedback_signals.py
+88586317420d66e3d25a1d97be7389c19313b96fde9afeb423fd67bba118288f  src/cephvr/gui/group_dialog.py
+c89e1e51b4b33bff235f51e17b47cb10a589093b008fa347d0111ebeb135d816  src/cephvr/gui/program_editing.py
+3e50b633f8808b1d0d78e950d8b7c5aa84b5902e00a454da366cc111a1323b67  src/cephvr/gui/projector_reference.py
+729d24a6db4abd484a2e847d18bfeee2cfc9c37047238d160c3c0fc6c076c1a2  src/cephvr/gui/protocol.py
+52136d4cd20401125a8001103602ccfd5b4c32be3974ca8c000e9c805bcd4f62  src/cephvr/gui/protocol_controls.py
+8d54568529563171b1543b03759eba83529c7b7f9b0c52b0762ad2036af9aa21  src/cephvr/gui/protocol_editor.py
+643c090f05c3d140084b95a59853978bfdef31a9526c2a157121597d39dc7596  src/cephvr/gui/protocol_nodes.py
+7ccf78e987896d766171bc5f228c31a4f3a8ad2eeade13695b7a0bac4400edb5  src/cephvr/gui/protocol_timeline.py
+e85bd32284227c8067e74958c7a1eabc6e3b52a8a55e04af358e5de002d503c1  src/cephvr/gui/reference_fields.py
+1bc750b136a22be08de21eb112a1bb52d1c66b3340fd728b80128b6de0b2f49f  src/cephvr/gui/reference_layers.py
+f7b76a4c10f587aa82771afdc6346a191ef04c6a99ddea90c148ca8734019f29  src/cephvr/gui/stimulus_columns.py
+60cd8d5489ab6c510d1920d2bfa563973a4c6d2ff9d4231caf8e4df5aafc78df  src/cephvr/gui/stimulus_fades.py
+99ac0a3bd2cc01f67e5d73f0b538eff8f2c854f9c1cbfc1b8c7768f6f7979e1d  src/cephvr/gui/stimulus_parameters.py
+2e506d12eb49e8dd65e22138f5948dd1bae7fa4a82d4a1d38e9d6c33b33920df  src/cephvr/gui/stimulus_presets.py
+1902650070d6fe18744d9c3c2d83576b0ca070c1266306b69c6f5aa9029e362e  src/cephvr/gui/tank_diagram.py
+78c035d140a229132336135884b8712d7de664ebd5d816071dbd12632dc53257  src/cephvr/gui/timeline_views.py
+d3056c904bd10c030e45b843b756802c0691b660213a3253b3a0b12ebc51f179  src/cephvr/gui/trial_preview.py
+68ef5bfbab8e647e1940cd9c5630e88b49ae4107230f311c1a22169408364a18  src/cephvr/gui/trial_preview_arena.py
+17fb14afa7ae9847e89f9ec69bdb3629fddf0eedd275c64bacbeac5ff3555b48  src/cephvr/gui/trial_preview_canvas.py
+d4eb0b76f6a457b7c6605e693f5c5e5947c7cd20c8f8d7b2609f46f843d9e30d  src/cephvr/gui/trial_preview_media.py
+151696285d49b64d51939df7dedc6656c9e0acaaa2c458cb55cee03d302e2190  src/cephvr/gui/trial_preview_plan.py
+117531747244cec2ca9e97c72b318ecb310c2de051e8dc8fa7c7fb6dbbea9ba7  src/cephvr/gui/trial_preview_rig.py
+456648a334d11bea2bcef3b902feb2f111e9bde729879ece7152d6c7890f9008  src/cephvr/gui/trial_preview_surfaces.py
+2cd854d0a80315a588dd0b8dfa24a0885e6cd6facba1fcd0179718d7948c73d3  src/cephvr/gui/window.py
+195f97cde83c2af2489bacc62774ecb2bcec40cd787020f2650efa48df971736  src/cephvr/visual_stimulus/config/models/schema_common.py
+1917b7f930bef14caac98cd83275a482240a406fd32bb7d990a279be54c27fc4  src/cephvr/visual_stimulus/configuration.py

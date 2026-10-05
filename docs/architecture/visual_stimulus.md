@@ -71,7 +71,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 11
+**Status:** Accepted · **Revision:** 12
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -99,6 +99,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   frameworks or feature-parity requirements. Define units, coordinate frames and
   conversions explicitly; angular frequency, physical texture period and
   texture-coordinate motion are not interchangeable aliases.
+- Accepted linked-motion geometry convention: when both side stimuli follow Bottom,
+  clockwise Bottom rotation about the subject drives Right front→back and Left
+  back→front; reversing rotation reverses both. Linear speeds use the respective
+  perpendicular subject-to-screen distances (angular rate in rad/s × distance),
+  not half the source texture/screen width. Common longitudinal translation has
+  the same physical front/back direction on both sides despite opposite local
+  screen axes. Target appearances remain independent. Source/target feedback
+  writer ownership is still Open; this convention alone does not define a complete
+  link schema/preparation/runtime contract or imply implementation.
 - Prepare the resolved program under E07 and execute it locally under V01. Closed-loop
   input may change declared stimulus parameters; adaptive trial progression remains
   deferred under E01. V24 owns feedback bindings/application-time attribution, V25

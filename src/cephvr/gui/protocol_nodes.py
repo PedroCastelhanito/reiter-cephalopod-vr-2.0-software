@@ -13,7 +13,13 @@ from cephvr.gui.program_editing import (
     validate,
 )
 from cephvr.gui.protocol_document import blank_program
-from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
+from cephvr.gui.stimulus_fades import retime_fades
+from cephvr.visual_stimulus.config.models.program_model import (
+    Epoch,
+    Fixed,
+    Program,
+    Time,
+)
 
 
 def edit_epoch(
@@ -89,9 +95,21 @@ def edit_epoch_metadata(
     node = node_at(program, path)
     if not isinstance(node, Epoch):
         return program
+    identity = name.strip().replace(" ", "_")
+    unchanged_duration = (
+        not isinstance(node.duration, Fixed)
+        or node.duration.duration.seconds == duration.strip()
+    )
+    if node.epoch_id == identity and unchanged_duration:
+        return program
     data = program.model_dump(mode="json")
     target = data_node(data, path)
-    target["epoch_id"] = name.strip().replace(" ", "_")
+    target["epoch_id"] = identity
     if isinstance(node.duration, Fixed):
+        retime_fades(
+            target["settings"],
+            node.duration.duration.ns(),
+            Time(seconds=duration.strip()).ns(),
+        )
         target["duration"]["duration"]["seconds"] = duration.strip()
     return validate(data)

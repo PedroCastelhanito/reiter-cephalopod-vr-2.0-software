@@ -91,7 +91,7 @@ def _diagnostic_limits(
     return shortest / 100, longest * 2, extent * 1e-6, 1e-6
 
 
-def _face_mapping(
+def face_mapping(
     calibration: dict[str, object], face: str, monitor: MonitorBinding
 ) -> tuple[tuple[dict[str, tuple[float, float]], ...], bool]:
     """Apply per-face scale, pixel shift and inversion to the diagnostic grid."""
@@ -193,7 +193,7 @@ def diagnostic_display_profile(
                 geometric_profile=dict(logical_path=logical_path),
             )
         )
-        vertices, mirrored = _face_mapping(calibration, face, monitor)
+        vertices, mirrored = face_mapping(calibration, face, monitor)
         corners = tuple(vertices[index]["xy"] for index in (0, 1, 3, 2))
         if mirrored:
             corners = tuple(reversed(corners))

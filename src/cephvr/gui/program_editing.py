@@ -10,6 +10,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Program,
     parse_program_json,
 )
+from cephvr.visual_stimulus.config.models.schema_common import DEFAULT_DOCUMENT_BYTES
 
 NodePath = int | tuple[int, ...]
 
@@ -48,10 +49,13 @@ def data_node(data: dict[str, Any], path: NodePath) -> dict[str, Any]:
 
 
 def validate(data: dict[str, Any]) -> Program:
-    return parse_program_json(json.dumps(data, allow_nan=False), max_bytes=1_048_576)
+    return parse_program_json(
+        json.dumps(data, allow_nan=False), max_bytes=DEFAULT_DOCUMENT_BYTES
+    )
 
 
-def unique_id(data: object, prefix: str) -> str:
+def document_ids(data: object) -> set[str]:
+    """Collect identifiers once when an edit allocates many new nodes."""
     taken: set[str] = set()
 
     def walk(value: object) -> None:
@@ -65,10 +69,19 @@ def unique_id(data: object, prefix: str) -> str:
                 walk(item)
 
     walk(data)
+    return taken
+
+
+def unique_id(data: object, prefix: str, *, taken: set[str] | None = None) -> str:
+    """Allocate an ID, reserving it in an optional edit-local identifier set."""
+    if taken is None:
+        taken = document_ids(data)
     index = 1
     while f"{prefix}_{index}" in taken:
         index += 1
-    return f"{prefix}_{index}"
+    identity = f"{prefix}_{index}"
+    taken.add(identity)
+    return identity
 
 
 def private_scene(data: dict[str, Any], epoch: dict[str, Any]) -> dict[str, Any]:

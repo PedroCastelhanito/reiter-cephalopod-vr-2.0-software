@@ -2,7 +2,14 @@
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QStandardItemModel
-from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLineEdit,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 from cephvr.gui.components import button, combo, field, label
 from cephvr.gui.program_editing import nodes_at
@@ -23,9 +30,7 @@ class VariationRow(QWidget):
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
         self.target = combo(tuple(t[0] for t in targets))
-        self.parameter = combo(
-            ("Speed", "Direction", "Angular speed", "Width", "Height", "Opacity")
-        )
+        self.parameter = combo(("Speed", "Direction", "Rotation"))
         self.values = QLineEdit()
         self.values.setPlaceholderText("10, 20, 30")
         for caption, control in (
@@ -34,6 +39,7 @@ class VariationRow(QWidget):
             ("Values", self.values),
         ):
             control.setMinimumWidth(0)
+            control.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
             row.addWidget(field(caption, control), 1)
         self.remove = button("×", hint="Remove variation")
         row.addWidget(self.remove)
@@ -61,7 +67,9 @@ class VariationRow(QWidget):
         return Variation(
             path,
             layer,
-            self.parameter.currentText(),
+            "Angular speed"
+            if self.parameter.currentText() == "Rotation"
+            else self.parameter.currentText(),
             tuple(float(v.strip()) for v in self.values.text().split(",")),
         )
 

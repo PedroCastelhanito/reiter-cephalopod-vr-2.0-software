@@ -62,7 +62,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
 | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 18 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 77 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 93 |
 | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 23 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
@@ -91,7 +91,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 50 |
 | <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 35 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 13 |
-| <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 11 |
+| <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 12 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 9 |
 | <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 10 |
 | <a id="v05"></a>[V05](docs/architecture/visual_stimulus.md#v05) | Declarative parameter animation | Accepted | 6 |

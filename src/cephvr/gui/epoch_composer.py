@@ -1,15 +1,19 @@
 """One reference epoch with independent, visible per-projector editors."""
 
+import json
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
 from cephvr.gui.components import combo, label
 from cephvr.gui.formatting import parse_clock_duration
 from cephvr.gui.prepared_file_picker import PreparedFilePicker
+from cephvr.gui.program_editing import validate
 from cephvr.gui.projector_layers import reorder_projector_layer
 from cephvr.gui.projector_reference import ProjectorReference
 from cephvr.gui.protocol_document import blank_program
 from cephvr.gui.reference_draft import reference_mode, replace_reference
+from cephvr.gui.stimulus_fades import retime_fades
 from cephvr.gui.stimulus_presets import add_file_stimulus, remove_stimulus
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
 
@@ -23,8 +27,10 @@ class EpochComposer(QWidget):
         self.screens: tuple[str, ...] = ()
         self.rows: dict[str, ProjectorReference] = {}
         self.asset_root = ""
+        self.closed_loop = False
         self.pending_assets: set[str] = set()
         self.active_mode = 0
+        self.reference_duration_ns = 60_000_000_000
         self.picker_face = ""
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(0, 0, 0, 0)
@@ -56,19 +62,27 @@ class EpochComposer(QWidget):
     def add_row(self, face: str) -> None:
         reference = ProjectorReference(face)
         reference.parameters.asset_root = self.asset_root
+        reference.parameters.duration_override = self.duration_value()
+        reference.parameters.set_closed_loop(self.closed_loop)
         reference.parameters.committed.connect(
             lambda program: self.accept(program, reference)
         )
         reference.type_requested.connect(lambda kind: self.change_type(face, kind))
         reference.parameters.media_selected.connect(lambda: self.asset_ready(face))
         reference.parameters.bound.connect(lambda: self.clear_pending_path(face))
-        reference.add_requested.connect(lambda kind: self.choose(kind, face))
+        reference.add_requested.connect(lambda: self.add_empty_layer(face))
         reference.remove_requested.connect(lambda: self.remove_layer(face))
         reference.forward_requested.connect(lambda: self.reorder(face, 1))
+        reference.backward_requested.connect(lambda: self.reorder(face, -1))
         self.rows[face] = reference
         reference.layout_changed.connect(self.update_headers)
         self.references.addWidget(reference)
         reference.bind(self.program)
+
+    def set_closed_loop(self, closed: bool) -> None:
+        self.closed_loop = closed
+        for row in self.rows.values():
+            row.parameters.set_closed_loop(closed)
 
     def set_asset_root(self, path: str) -> None:
         self.asset_root = path
@@ -142,7 +156,27 @@ class EpochComposer(QWidget):
 
     def update_duration(self) -> None:
         try:
-            self.duration_value()
+            duration = self.duration_value()
+            epoch = self.program.sequence[0]
+            assert isinstance(epoch, Epoch)
+            if self.reference_duration_ns != duration.duration.ns():
+                settings = [s.model_dump(mode="json") for s in epoch.settings]
+                retime_fades(
+                    settings, self.reference_duration_ns, duration.duration.ns()
+                )
+                changed = Epoch.model_validate_json(
+                    json.dumps(
+                        {
+                            **epoch.model_dump(mode="json"),
+                            "settings": settings,
+                        }
+                    )
+                )
+                self.reference_duration_ns = duration.duration.ns()
+                for row in self.rows.values():
+                    row.parameters.duration_override = duration
+                self.program = self.program.model_copy(update={"sequence": (changed,)})
+                self.refresh_rows()
             self.message.clear()
             self.changed.emit()
         except ValueError as error:
@@ -165,7 +199,9 @@ class EpochComposer(QWidget):
                 raise ValueError(
                     f"Correct the {face or 'rig-wide'} reference parameters"
                 )
-        self.duration_value()
+        self.update_duration()
+        if self.message.text():
+            raise ValueError(self.message.text())
         return self.program
 
     def value(self) -> Program:
@@ -206,6 +242,27 @@ class EpochComposer(QWidget):
             old = row.parameters.layer_index
             old_id = epoch.settings[old].instance_id if old >= 0 else ""
             self.program, selected = replace_reference(original, old, kind, face)
+            if selected >= 0:
+                epoch = self.program.sequence[0]
+                assert isinstance(epoch, Epoch)
+                row.slots.fill(epoch.settings[selected].instance_id, old_id)
+                data = self.program.model_dump(mode="json")
+                scene = next(
+                    s for s in data["scenes"] if s["scene_id"] == epoch.scene_id
+                )
+                if face:
+                    ordered = [
+                        key for key in row.slots.order if key not in row.slots.blanks
+                    ]
+                    # Preserve other projectors' positions while ordering this row's layers.
+                    positions = [
+                        i
+                        for i, key in enumerate(scene["layer_instance_ids"])
+                        if key in ordered
+                    ]
+                    for position, identity in zip(positions, ordered, strict=True):
+                        scene["layer_instance_ids"][position] = identity
+                self.program = validate(data)
             self.pending_assets.discard(old_id)
             if selected >= 0:
                 epoch = self.program.sequence[0]
@@ -244,6 +301,17 @@ class EpochComposer(QWidget):
         self.show_rows()
         self.changed.emit()
 
+    def add_empty_layer(self, face: str) -> None:
+        if not self.isEnabled() or (face and face not in self.screens):
+            return
+        row = self.rows[face]
+        if row.parameters.dirty and not row.parameters.apply():
+            return
+        row.slots.add()
+        row.bind(self.program)
+        self.show_rows()
+        self.changed.emit()
+
     def choose(self, kind: str, face: str) -> None:
         if self.picker.dialog is not None:
             self.picker.dialog.raise_()
@@ -277,6 +345,10 @@ class EpochComposer(QWidget):
 
     def remove_layer(self, face: str) -> None:
         row = self.rows[face]
+        if row.slots.remove_blank():
+            row.bind(self.program)
+            self.changed.emit()
+            return
         if row.parameters.layer_index < 0:
             return
         try:

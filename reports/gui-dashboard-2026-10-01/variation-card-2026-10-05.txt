@@ -1,0 +1,15 @@
+2026-10-05 Variation card / Advanced action local evidence
+Base HEAD 3af4289814927c1c3fdc4251731ef894a49a1489 plus working tree; G01 revision82.
+Advanced body +Control hides during separate draft; Cancel/commit restores eligible action, entries appear after Add control. Closed-loop Texture/Looming eligibility unchanged; 2D Save remains disabled pending coordinates.
+Variation card has Enable in header; no Combine in Batch generate. Lists pair by position, equal lengths required. Projectors selector one/all enabled reference screens; Layer local ordinal or All layers. Shared targets deduplicated, canonical snapshot IDs reject stale targets atomically. Separate group authoring/imported conditions unchanged.
+Full command: QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/client/test_state_views.py tests/visual_stimulus/test_compilation.py -q -m "not windows and not rig"
+171 passed in67.60s (158 GUI tests). Final header-only adjustment followed by focused test_dashboard -k 'batch_variation or variation_controls_fit or control_dialog or control_action or batch_create_variations_preview':6passed,152deselected in4.68s.
+Ruff check/format GUI/tests77files; Windows-target mypy GUI76files pass. Boundaries529modules,0violations, existing cohesion advisories (camera505/protocol_editor622 owners not changed). Whitespace/link/anchor checks pass.
+Native /private/tmp/cephvr-variation-review.py --capture: final wide/narrow variation card and Control dialog inspected; exit0. All3temporary captures deleted. Reopened withoutcapture, Visible:True Protocol/test assets/variation controls. All four simulated projector references use functional prepared textures; no physical output/managed backend tested.
+Initial focused failure: default empty projector selection and removal offset corrected. Earlier Combine scenario now exercises explicit paired lists, preserving equivalent expected generated values/repetitions/load roundtrip.
+SHA256 final files:
+d94c97d831cdbbe638b2b74b8507ad6c7a797da2d5b8bfaaba0cf40c520c47e8 src/cephvr/gui/batch_variation.py
+d742b964ec292ffb9064cee4728b156edccd820e891fe6ddd6e61259e4cad252 src/cephvr/gui/batch_create.py
+c34274b2e28d6ed5059efe00edc48c4bb0bcc1d3d4a7aa3a466fd129073a212d src/cephvr/gui/feedback_mappings.py
+99ac0a3bd2cc01f67e5d73f0b538eff8f2c854f9c1cbfc1b8c7768f6f7979e1d src/cephvr/gui/stimulus_parameters.py
+626a639a6c260d1f93b939fbb8b05c9284004d2ae701b8da1c0ea5e8772bbf4b tests/gui/test_dashboard.py

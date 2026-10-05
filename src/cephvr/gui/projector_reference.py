@@ -1,6 +1,6 @@
 """Compact reference row; advanced controls and layer actions stay out of the grid."""
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QPoint, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import (
     QGridLayout,
@@ -14,16 +14,18 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.components import button, combo, equal_row_height, label
 from cephvr.gui.projector_layers import layer_title, layers_for
 from cephvr.gui.reference_fields import reference_fields
+from cephvr.gui.reference_layers import ReferenceLayers
 from cephvr.gui.stimulus_parameters import StimulusParameters
 from cephvr.gui.stimulus_presets import FILE_TYPES
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
 
 
 class ProjectorReference(QWidget):
-    add_requested = pyqtSignal(str)
+    add_requested = pyqtSignal()
     type_requested = pyqtSignal(str)
     remove_requested = pyqtSignal()
     forward_requested = pyqtSignal()
+    backward_requested = pyqtSignal()
     layout_changed = pyqtSignal()
 
     def __init__(self, face: str) -> None:
@@ -31,6 +33,7 @@ class ProjectorReference(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self.face = face
         self.indices: list[int] = []
+        self.slots = ReferenceLayers()
         self.columns: list[tuple[str, QWidget]] = []
         self.headings: list[QLabel] = []
         self.show_header = True
@@ -49,6 +52,7 @@ class ProjectorReference(QWidget):
         self.caption.setWordWrap(True)
         self.layer = combo(())
         self.layer.setMinimumWidth(0)
+        self.layer.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.layer.setAccessibleName(f"{face or 'Rig-wide'} layer")
         self.layer.currentIndexChanged.connect(
             lambda: self.select_layer(self.layer.currentData())
@@ -63,23 +67,21 @@ class ProjectorReference(QWidget):
         )
         self.actions_button.setAccessibleName(f"{face or 'Rig-wide'} stimulus actions")
         menu = QMenu(self.actions_button)
-        add_menu = menu.addMenu("Add layer")
-        assert add_menu is not None
-        self.add = add_menu
-        for kind in FILE_TYPES:
-            if (kind == "3D arena") != (not face):
-                continue
-            action = self.add.addAction(kind.replace("Looming image", "Looming") + "…")
-            assert action is not None
-            action.triggered.connect(
-                lambda checked=False, preset=kind: self.add_requested.emit(preset)
-            )
+        add_action = menu.addAction("Add layer")
+        assert add_action is not None
+        self.add = add_action
+        self.add.triggered.connect(self.add_requested)
         remove = menu.addAction("Remove layer")
-        forward = menu.addAction("Move layer forward")
-        assert remove is not None and forward is not None
-        self.remove, self.forward = remove, forward
+        move = menu.addMenu("Move layer")
+        assert move is not None
+        self.move_menu = move
+        backward = move.addAction("Move up")
+        forward = move.addAction("Move down")
+        assert remove is not None and forward is not None and backward is not None
+        self.remove, self.forward, self.backward = remove, forward, backward
         self.remove.triggered.connect(self.remove_requested)
         self.forward.triggered.connect(self.forward_requested)
+        self.backward.triggered.connect(self.backward_requested)
         menu.addSeparator()
         advanced = menu.addAction("Advanced settings")
         assert advanced is not None
@@ -174,20 +176,38 @@ class ProjectorReference(QWidget):
             for col in range(asset_column + 1, len(self.columns) - 1):
                 self.grid.setColumnMinimumWidth(col, 95)
                 self.grid.setColumnStretch(col, 1)
-        empty = not self.indices
+        empty = self.parameters.layer_index < 0
 
         self.advanced.setEnabled(not empty)
-        self.actions_button.setVisible(not empty)
+        self.actions_button.setVisible(bool(self.face) or not empty)
         self.parameters.more.hide()
         if not self.narrow:
             controls = [control for _, control in self.columns[1:]]
             equal_row_height(*controls)
         self.grid.setAlignment(Qt.AlignmentFlag.AlignTop)
+        QTimer.singleShot(0, self.align_advanced)
+
+    def align_advanced(self) -> None:
+        body = self.layout()
+        if body is not None:
+            body.activate()
+        self.grid.activate()
+        anchor = self.layer if self.face else self.columns[1][1]
+        inset = max(
+            0,
+            anchor.mapTo(self, QPoint()).x()
+            - self.parameters.mapTo(self, QPoint()).x(),
+        )
+        margins = self.parameters.advanced_layout.contentsMargins()
+        self.parameters.advanced_layout.setContentsMargins(
+            inset, margins.top(), margins.right(), margins.bottom()
+        )
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
         super().resizeEvent(event)
         if (self.width() < 900) != self.narrow:
             self.arrange()
+        QTimer.singleShot(0, self.align_advanced)
 
     def bind(self, program: Program, preferred: int | None = None) -> None:
         epoch = program.sequence[0]
@@ -215,16 +235,37 @@ class ProjectorReference(QWidget):
             for i in layers_for(program, epoch, self.face)
             if (epoch.settings[i].kind == "arena") == (not self.face)
         ]
-        selected = old if old in self.indices else next(iter(self.indices), -1)
+        identities = [epoch.settings[i].instance_id for i in self.indices]
+        self.slots.sync(identities)
+        if preferred is not None and preferred in self.indices:
+            self.slots.selected = epoch.settings[preferred].instance_id
+        elif self.slots.selected not in self.slots.blanks and old in self.indices:
+            self.slots.selected = epoch.settings[old].instance_id
+        selected = next(
+            (
+                i
+                for i in self.indices
+                if epoch.settings[i].instance_id == self.slots.selected
+            ),
+            -1,
+        )
         self.layer.blockSignals(True)
         self.layer.clear()
-        for position, index in enumerate(self.indices):
-            title = layer_title(program, epoch.settings[index]).split(" · ")[0]
-            self.layer.addItem(f"{position + 1} · {title}", index)
-        if not self.indices:
-            self.layer.addItem("—", -1)
-        self.layer.setCurrentIndex(max(0, self.layer.findData(selected)))
-        self.layer.setEnabled(len(self.indices) > 1)
+        for position, identity in enumerate(self.slots.order):
+            index = next(
+                (i for i in self.indices if epoch.settings[i].instance_id == identity),
+                -1,
+            )
+            title = (
+                layer_title(program, epoch.settings[index]).split(" · ")[0]
+                if index >= 0
+                else "Empty"
+            )
+            self.layer.addItem(f"{position + 1} · {title}", identity)
+        if not self.slots.order:
+            self.layer.addItem("—", "")
+        self.layer.setCurrentIndex(max(0, self.layer.findData(self.slots.selected)))
+        self.layer.setEnabled(len(self.slots.order) > 1)
         self.layer.blockSignals(False)
         kind = (
             layer_title(program, epoch.settings[selected]).split(" · ")[0]
@@ -238,21 +279,44 @@ class ProjectorReference(QWidget):
         self.stimulus.setCurrentIndex(max(0, self.stimulus.findData(kind)))
         self.stimulus.blockSignals(False)
         self.parameters.bind(program, 0, selected, self.face)
-        self.remove.setEnabled(selected >= 0)
-        self.forward.setEnabled(bool(self.face) and len(self.indices) > 1)
+        self.remove.setEnabled(
+            selected >= 0 or self.slots.selected in self.slots.blanks
+        )
+        position = self.indices.index(selected) if selected in self.indices else -1
+        self.backward.setEnabled(bool(self.face) and position > 0)
+        self.forward.setEnabled(
+            bool(self.face) and 0 <= position < len(self.indices) - 1
+        )
+        self.move_menu.setEnabled(self.backward.isEnabled() or self.forward.isEnabled())
         self.add.setEnabled(bool(self.face) or not self.indices)
 
     def change_type(self) -> None:
         self.type_requested.emit(self.stimulus.currentData())
 
-    def select_layer(self, index: int | None) -> None:
-        if index is None or index < 0:
+    def select_layer(self, identity: str | int | None) -> None:
+        if isinstance(identity, int):
+            program = self.parameters.program
+            if program is None or identity not in self.indices:
+                return
+            epoch = program.sequence[0]
+            assert isinstance(epoch, Epoch)
+            identity = epoch.settings[identity].instance_id
+        if not identity:
             return
         if self.parameters.dirty and not self.parameters.apply():
             self.layer.blockSignals(True)
-            self.layer.setCurrentIndex(self.layer.findData(self.parameters.layer_index))
+            self.layer.setCurrentIndex(self.layer.findData(self.slots.selected))
             self.layer.blockSignals(False)
             return
         program = self.parameters.program
         if program is not None:
-            self.bind(program, index)
+            self.slots.selected = identity
+            if identity not in self.slots.blanks:
+                epoch = program.sequence[0]
+                assert isinstance(epoch, Epoch)
+                index = next(
+                    i for i in self.indices if epoch.settings[i].instance_id == identity
+                )
+                self.bind(program, index)
+            else:
+                self.bind(program)

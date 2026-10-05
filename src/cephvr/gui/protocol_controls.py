@@ -66,6 +66,8 @@ class PlannerControls(QWidget):
             QAction("Redo", self),
         )
         self.timeline_card = Card("Trial timeline")
+        self.output_preview_button = button("Preview")
+        self.timeline_card.header.addWidget(self.output_preview_button)
         self.add_epoch_button = button("+ Add epoch")
         self.epoch_button = button("Actions…")
         navigation = QHBoxLayout()

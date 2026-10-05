@@ -9,6 +9,7 @@ from cephvr.gui.epoch_motion import constant_rate
 from cephvr.gui.program_editing import data_node, node_at, unique_id, validate
 from cephvr.gui.projector_layers import detach_layer, layers_for
 from cephvr.gui.protocol_groups import assign_ref, motion_numbers, varied_fields
+from cephvr.gui.stimulus_fades import retime_fades
 from cephvr.gui.stimulus_files import (
     apply_texture_dimensions,
     resolve_stimulus_file,
@@ -19,6 +20,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Group,
     Node,
     Program,
+    Time,
 )
 
 
@@ -169,6 +171,13 @@ def apply_batch(
         data = result.model_dump(mode="json")
         node = data_node(data, path)
         if "Duration" in changes:
+            old = node["duration"]
+            if old["kind"] == "fixed":
+                retime_fades(
+                    node["settings"],
+                    Time.model_validate(old["duration"]).ns(),
+                    Time(seconds=changes["Duration"]).ns(),
+                )
             node["duration"] = dict(
                 kind="fixed", duration={"seconds": changes["Duration"]}
             )
