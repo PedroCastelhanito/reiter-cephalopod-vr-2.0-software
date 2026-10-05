@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from pathlib import Path
 from typing import Literal
 
 import grpc
@@ -17,6 +18,7 @@ from cephvr.controller.transport.admission import CommandAdmissionGate
 from cephvr.controller.transport.auth import ClientAuthentication
 from cephvr.controller.transport.ingress import BoundedReportIngress
 from cephvr.shared.auth import AuthenticationError, require_authenticated_peer
+from cephvr.synchronization.diagnostic import SpikeGLXDiagnostic
 
 
 class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
@@ -32,10 +34,12 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
         max_pending_payload_bytes: int = 67_108_864,
         max_message_bytes: int = 16_777_216,
         command_retention_ns: int = 300_000_000_000,
+        spikeglx_diagnostic: SpikeGLXDiagnostic | None = None,
     ) -> None:
         self.runtime = runtime
         self.client_authentication = client_authentication
         self.peer_tokens = dict(peer_tokens)
+        self.spikeglx_diagnostic = spikeglx_diagnostic
         self._commands = CommandAdmissionGate(
             runtime,
             max_pending_events=max_pending_events,
@@ -357,6 +361,29 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             lambda: self.runtime.execute_camera_command(request),
         )
 
+    async def ExecuteMicrocontrollerCommand(
+        self,
+        request: svc.MicrocontrollerCommandRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "ExecuteMicrocontrollerCommand",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.execute_microcontroller_command(request),
+        )
+
+    async def CheckSpikeGLXConnection(
+        self,
+        request: svc.SpikeGLXConnectionQuery,
+        context: grpc.aio.ServicerContext,
+    ) -> svc.SpikeGLXConnectionResult:
+        await self._client(context, request.client_id)
+        if self.spikeglx_diagnostic is None:
+            return svc.SpikeGLXConnectionResult(error="SpikeGLX diagnostic unavailable")
+        return await self.spikeglx_diagnostic.check()
+
     async def GetPreviewAttachment(
         self, request: svc.PreviewAttachmentQuery, context: grpc.aio.ServicerContext
     ) -> svc.PreviewAttachmentResult:
@@ -424,6 +451,7 @@ async def start_controller_server(
     max_pending_events: int = 1024,
     max_pending_payload_bytes: int = 67_108_864,
     command_retention_ns: int = 300_000_000_000,
+    software_root: Path | None = None,
 ) -> grpc.aio.Server:
     if not 0 < port <= 65535 or max_message_bytes <= 0:
         raise ValueError("invalid controller endpoint settings")
@@ -441,6 +469,9 @@ async def start_controller_server(
         max_pending_payload_bytes=max_pending_payload_bytes,
         max_message_bytes=max_message_bytes,
         command_retention_ns=command_retention_ns,
+        spikeglx_diagnostic=SpikeGLXDiagnostic(software_root)
+        if software_root is not None
+        else None,
     )
     rpc.add_ExperimentControllerServiceServicer_to_server(servicer, server)  # type: ignore[no-untyped-call]
     bound4 = server.add_insecure_port(f"127.0.0.1:{port}")

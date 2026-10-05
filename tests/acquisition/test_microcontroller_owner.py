@@ -11,6 +11,7 @@ import pytest
 
 from cephvr.acquisition.microcontroller import SerialOwner, SerialOwnerBridge
 from cephvr.acquisition.microcontroller.channel import ChannelDeadline
+from cephvr.acquisition.microcontroller.owner import SerialOwnerError
 from cephvr.acquisition.v1 import microcontroller_pb2, runtime_pb2
 from cephvr.shared.clock import host_time_ns
 
@@ -139,6 +140,62 @@ def test_reconnect_explicitly_stops_running_outputs_and_reads_back_status() -> N
     assert observation.state.tracking.running is False
 
 
+def test_expired_close_still_releases_serial_handle_without_claiming_timely_stop() -> (
+    None
+):
+    clock = _Clock(10)
+    port = _ScriptedPort(statuses=[_status()])
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    owner.connect(deadline_ns=10_000)
+
+    with pytest.raises(SerialOwnerError, match="completion was late"):
+        owner.close(deadline_ns=9)
+
+    assert port.closed
+
+
+def test_expired_startup_failure_still_releases_serial_handle() -> None:
+    clock = _Clock(10)
+    port = _ScriptedPort(statuses=[])
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    owner._channel.open(10_000)
+
+    with pytest.raises(SerialOwnerError, match="closed the port after"):
+        owner._close_after_startup_failure(deadline_ns=9)
+
+    assert port.closed
+
+
+def test_bounded_trial_output_diagnostic_uses_one_serial_owner() -> None:
+    clock = _Clock(10)
+    port = _ScriptedPort(statuses=[_status()])
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    owner.connect(deadline_ns=10_000)
+
+    assert owner.diagnostic_start("trial_state", "D2", 10_000) == (
+        True,
+        "trial_state",
+        "D2",
+        0,
+    )
+    assert owner.diagnostic_status(10_000)[0]
+    assert owner.diagnostic_stop(10_000) == (False, "trial_state", "D2", 0)
+    assert port.verbs == ["CAPS", "STATUS", "DIAG_START", "DIAG_STATUS", "DIAG_STOP"]
+    assert port.fields[2] == {"kind": "trial_state", "pin": "D2", "duration_ms": "2000"}
+
+
+def test_flip_input_requires_firmware_advertised_interrupt_pin() -> None:
+    clock = _Clock(10)
+    port = _ScriptedPort(statuses=[_status()])
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    owner.connect(deadline_ns=10_000)
+
+    with pytest.raises(ValueError, match="rising-edge input"):
+        owner.diagnostic_start("projector_flip", "D4", 10_000)
+
+    assert port.verbs == ["CAPS", "STATUS"]
+
+
 def test_reserved_off_blocks_routine_status_and_dispatches_with_original_deadline() -> (
     None
 ):
@@ -216,6 +273,7 @@ class _ScriptedPort:
         self._incoming: deque[int] = deque()
         self.verbs: list[str] = []
         self.fields: list[dict[str, str]] = []
+        self.closed = False
 
     def set_timeouts(self, *, read_seconds: float, write_seconds: float) -> None:
         del read_seconds, write_seconds
@@ -229,13 +287,17 @@ class _ScriptedPort:
         self.fields.append(fields)
         if verb == "CAPS":
             body = (
-                "protocol=1 firmware=board pins=D2 min_hz=0.1 max_hz=60.0 "
+                "protocol=2 firmware=board pins=D2,D4 input_pins=D2 min_hz=0.1 max_hz=60.0 "
                 "watchdog_min_ms=100 watchdog_max_ms=10000"
             )
         elif verb == "STATUS":
             body = self._statuses.popleft().decode("ascii")
         elif verb == "OFF":
             body = "watchdog_stopped=0 behavioral_running=0 tracking_running=0"
+        elif verb.startswith("DIAG_"):
+            body = (
+                "active=0" if verb == "DIAG_STOP" else "active=1"
+            ) + " kind=trial_state pin=D2 edges=0"
         else:
             raise AssertionError(f"unexpected command {verb}")
         line = f"OK id={request_id} {body}\n".encode("ascii")
@@ -255,4 +317,4 @@ class _ScriptedPort:
         return None
 
     def close(self) -> None:
-        return None
+        self.closed = True

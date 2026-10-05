@@ -206,6 +206,7 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
     )
     server = await start_controller_server(
         runtime,
+        software_root=software_root,
         port=controller_port,
         max_message_bytes=settings.max_message_bytes,
         client_authentication=credential_store_authentication(store),

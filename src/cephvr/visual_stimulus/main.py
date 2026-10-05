@@ -8,11 +8,12 @@ import sys
 from uuid import uuid4
 
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.platform.windows.bootstrap import close_handle, read_bootstrap
+from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.shared.auth import Principal
 from cephvr.shared.backend_bootstrap import BackendBootstrap, decode_backend_bootstrap
+from cephvr.shared.backend_registration import register_backend_endpoint
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 from cephvr.visual_stimulus.coordinator.state import Identity
@@ -89,6 +90,7 @@ async def run(bootstrap: BackendBootstrap) -> None:
     launch = None
     watch = None
     try:
+        await register_backend_endpoint(bootstrap)
         launch = await launch_renderer(
             bootstrap,
             supervisor,
@@ -169,12 +171,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="cephvr-visual-stimulus")
     parser.add_argument("--bootstrap-handle", type=int, required=True)
     args = parser.parse_args()
-    try:
-        bootstrap = decode_backend_bootstrap(
-            read_bootstrap(args.bootstrap_handle), expected_role="visual_stimulus"
-        )
-    finally:
-        close_handle(args.bootstrap_handle)
+    bootstrap = decode_backend_bootstrap(
+        read_bootstrap(args.bootstrap_handle), expected_role="visual_stimulus"
+    )
     with SingleInstanceGuard("visual_stimulus"):
         asyncio.run(run(bootstrap))
 

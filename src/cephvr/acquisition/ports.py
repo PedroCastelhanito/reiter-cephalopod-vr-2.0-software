@@ -33,6 +33,15 @@ class SerialOwnerPort(Protocol):
     async def keepalive(
         self, *, deadline_ns: int
     ) -> microcontroller_pb2.MicrocontrollerState: ...
+    async def diagnostic_start(
+        self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
+    ) -> tuple[bool, str, str, int]: ...
+    async def diagnostic_status(
+        self, *, deadline_ns: int
+    ) -> tuple[bool, str, str, int]: ...
+    async def diagnostic_stop(
+        self, *, deadline_ns: int
+    ) -> tuple[bool, str, str, int]: ...
     async def on(
         self,
         selected_roles: tuple[int | str, ...],

@@ -6,8 +6,9 @@ Authority: [E12/E09](../docs/architecture/synchronization.md),
 [E06/E08](../docs/architecture/system-contracts.md). Wire types:
 [spikeglx.proto](cephvr/synchronization/v1/spikeglx.proto); client boundary:
 [spikeglx_client.pyi](spikeglx_client.pyi); reference native keys/codes:
-[spikeglx_mapping_reference.json](spikeglx_mapping_reference.json). Declarations only;
-no client is implemented or rig-verified.
+[spikeglx_mapping_reference.json](spikeglx_mapping_reference.json). A read-only
+controller connection diagnostic is implemented; the session lifecycle client
+remains unimplemented and unverified.
 
 ## Owner, transport and security
 
@@ -23,6 +24,13 @@ server listens only on the dedicated-link interface, and the ephys Windows firew
 admits its port only from the rig's link address. The rig's `synchronization_config.toml`
 holds `[spikeglx] address` (required, no default) and `port` (default 4142, SpikeGLX's
 standard command-server port; confirm on the rig).
+
+The managed GUI's Test connection sends an authenticated, read-only controller RPC.
+The controller uses the saved endpoint and official SDK wrapper/DLL from the local
+SDK package, with at most one outstanding diagnostic and a five-second response
+bound. It reports version, running/saving state, run name when validated and data
+directory. A timed-out native call remains in flight and blocks another diagnostic
+until it finishes. This check neither mutates SpikeGLX nor establishes Setup readiness.
 
 Every mutating call (setRunName, startRun, stopRun) has one absolute deadline from
 `native_call_timeout_s`. A timeout means unknown execution: query isRunning/getRunName

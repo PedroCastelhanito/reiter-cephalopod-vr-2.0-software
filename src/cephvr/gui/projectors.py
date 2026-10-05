@@ -209,6 +209,10 @@ class ProjectorsPanel(DevicePanel):
         if name != "Refresh displays":
             super().request(name)
             return
+        self.discover_displays()
+
+    def discover_displays(self) -> None:
+        """Inventory OS displays without assigning or opening projector outputs."""
         current = (
             self.keys[self.table.currentRow()]
             if 0 <= self.table.currentRow() < len(self.keys)
@@ -329,6 +333,10 @@ class ProjectorsPanel(DevicePanel):
             self.console.appendPlainText(
                 "Assigned displays unavailable: " + ", ".join(missing)
             )
+        for control in self.enable_controls.values():
+            control.setEnabled(self.can_review)
+        for editor in self.projectors.values():
+            editor.setEnabled(self.can_review)
 
     def set_participation(self, key: str, enabled: bool) -> None:
         if not self.can_review or key not in self.keys:

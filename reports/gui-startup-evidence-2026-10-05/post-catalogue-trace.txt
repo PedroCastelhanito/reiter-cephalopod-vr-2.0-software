@@ -1,0 +1,6 @@
+WORKER_HEARTBEAT send t=429740360991300 pre_ms=1.2
+COORD_HEARTBEAT forward t=429740363411600 deadline=429745363404400
+COORD_HEARTBEAT accepted t=429740365711200
+WORKER_HEARTBEAT accepted t=429740366083200
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

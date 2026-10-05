@@ -185,3 +185,19 @@ def test_operator_credentials_are_generation_scoped_and_owner_only(
         first.remove_client(type(principal)("cli", principal.generation, "wrong"))
     first.remove_client(principal)
     assert first.lookup(principal.generation) is None
+
+
+def test_managed_gui_credential_uses_exact_process_generation(tmp_path: Path) -> None:
+    store = CredentialStore(tmp_path / "runtime", _id())
+    generation = _id()
+    principal = store.provision_client(
+        "gui", generation=generation, token="launch-token"
+    )
+    assert principal.generation == generation
+    assert store.lookup(generation) == principal
+    with pytest.raises(CredentialError, match="already exists"):
+        store.provision_client("gui", generation=generation, token="different-token")
+    with pytest.raises(CredentialError, match="only a managed GUI"):
+        store.provision_client("cli", generation=_id(), token="launch-token")
+    store.remove_client(principal)
+    assert store.lookup(generation) is None

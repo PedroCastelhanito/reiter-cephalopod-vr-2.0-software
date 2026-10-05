@@ -1,10 +1,22 @@
 # Visual Stimulus status
 
-Updated: 2026-10-04. The complete Visual Stimulus implementation is selected under
+Updated: 2026-10-05. The complete Visual Stimulus implementation is selected under
 [ARCH-001](../architecture.md#arch-001). This report describes the uncommitted working
 tree, preserving the existing controller, supervisor and acquisition work.
 [V01–V28/E13](../docs/architecture/visual_stimulus.md) and [E05–E08/E14–E15](../docs/architecture/system-contracts.md)
 remain authoritative; implementation does not mean experiment or rig acceptance.
+
+The 2026-10-05 managed rig launcher reached the renderer after correcting consumed
+bootstrap-handle closure and confirming the coordinator's existing supervisor launch
+record before planning its worker. The renderer then missed an original
+`ReportWorkerHeartbeat` peer deadline and triggered safety shutdown; its cleanup
+reported an unknown command and an async admission conflict. The deadline was not
+relaxed. The exact delay between worker heartbeat construction, coordinator receipt
+and supervisor forwarding remains open in `visual-renderer-startup-deadline` (TODO).
+The emergency error is retained under `reports/emergency-*.json`; no projection or
+camera command was issued. The Visual Stimulus/supervisor behavioral run passed 242
+cases with one previously known pacing-key loader failure. See the
+[runtime report](runtime.md#dashboard-frontend-implementation) for startup details.
 
 ## Calibration arena asset
 

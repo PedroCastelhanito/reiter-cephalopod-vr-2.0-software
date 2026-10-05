@@ -146,7 +146,9 @@ PAGE_READWRITE = 0x04
 SECTION_MAP_READ = 0x0004
 SECTION_MAP_WRITE = 0x0002
 SECTION_QUERY = 0x0001
-SECTION_ACCESS = SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_QUERY
+# CPython SharedMemory attaches through mmap(tagname=...), which requests all
+# non-execute file-mapping rights even when the caller only reads/writes pixels.
+SECTION_ACCESS = 0xF001F
 ERROR_ALREADY_EXISTS = 183
 
 

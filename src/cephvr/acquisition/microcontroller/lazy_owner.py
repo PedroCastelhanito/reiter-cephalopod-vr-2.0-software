@@ -27,6 +27,7 @@ class LazySerialOwner(SerialOwnerPort):
         self.on_create = on_create
         self.bridge: SerialOwnerBridge | None = None
         self.port: str | None = None
+        self.connected = False
 
     def _ensure(self, requested_port: str | None = None) -> SerialOwnerBridge:
         if self.bridge is not None:
@@ -52,7 +53,12 @@ class LazySerialOwner(SerialOwnerPort):
         return self.bridge
 
     async def connect(self, *, deadline_ns: int) -> mcu.MicrocontrollerObservation:
-        return await self._ensure().connect(deadline_ns=deadline_ns)
+        bridge = self._ensure()
+        if self.connected:
+            return await bridge.status(deadline_ns=deadline_ns)
+        observation = await bridge.connect(deadline_ns=deadline_ns)
+        self.connected = True
+        return observation
 
     async def configure(
         self,
@@ -66,6 +72,7 @@ class LazySerialOwner(SerialOwnerPort):
             await self.bridge.close(deadline_ns=deadline_ns)
             self.bridge = None
             self.port = None
+            self.connected = False
         return await self._ensure(selected_port).configure(
             requested, active_roles=active_roles, deadline_ns=deadline_ns
         )
@@ -75,6 +82,21 @@ class LazySerialOwner(SerialOwnerPort):
 
     async def keepalive(self, *, deadline_ns: int) -> mcu.MicrocontrollerState:
         return await self._ensure().keepalive(deadline_ns=deadline_ns)
+
+    async def diagnostic_start(
+        self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
+    ) -> tuple[bool, str, str, int]:
+        return await self._ensure().diagnostic_start(
+            kind, pin, frequency_hz=frequency_hz, deadline_ns=deadline_ns
+        )
+
+    async def diagnostic_status(
+        self, *, deadline_ns: int
+    ) -> tuple[bool, str, str, int]:
+        return await self._ensure().diagnostic_status(deadline_ns=deadline_ns)
+
+    async def diagnostic_stop(self, *, deadline_ns: int) -> tuple[bool, str, str, int]:
+        return await self._ensure().diagnostic_stop(deadline_ns=deadline_ns)
 
     async def on(
         self,
@@ -133,3 +155,4 @@ class LazySerialOwner(SerialOwnerPort):
             await self.bridge.close(deadline_ns=deadline_ns)
             self.bridge = None
             self.port = None
+            self.connected = False

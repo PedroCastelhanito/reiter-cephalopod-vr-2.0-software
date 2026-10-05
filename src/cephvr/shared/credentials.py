@@ -98,15 +98,31 @@ class CredentialStore:
     def _path(self, client_id: str) -> Path:
         return self.generation_dir / f"{require_uuid4(client_id)}.json"
 
-    def provision_client(self, role: Literal["cli", "gui"]) -> Principal:
-        """Allocate a fresh client ID/token and publish once with exclusive creation."""
+    def provision_client(
+        self,
+        role: Literal["cli", "gui"],
+        *,
+        generation: str | None = None,
+        token: str | None = None,
+    ) -> Principal:
+        """Publish one fresh client or the exact supervisor-launched GUI identity."""
         if role not in ("cli", "gui"):
             raise CredentialError("unsupported local operator role")
+        if (generation is None) != (token is None):
+            raise CredentialError(
+                "managed client identity and token must be supplied together"
+            )
+        if generation is not None:
+            if role != "gui" or not token:
+                raise CredentialError("only a managed GUI may use a supplied identity")
+            generation = require_uuid4(generation)
         _check_private(self.runtime_root, directory=True)
         _check_private(self.generation_dir, directory=True)
-        for _ in range(3):
-            client_id = str(uuid4())
-            principal = Principal(role, client_id, secrets.token_urlsafe(32))
+        for _ in range(1 if generation is not None else 3):
+            client_id = generation or str(uuid4())
+            if generation is not None and self._path(client_id).exists():
+                raise CredentialError("managed GUI credential already exists")
+            principal = Principal(role, client_id, token or secrets.token_urlsafe(32))
             raw = json.dumps(
                 {
                     "controller_generation": self.controller_generation,
@@ -124,6 +140,10 @@ class CredentialStore:
                 try:
                     security.create_owner_only(self._path(client_id), raw)  # type: ignore[attr-defined]
                 except FileExistsError:
+                    if generation is not None:
+                        raise CredentialError(
+                            "managed GUI credential already exists"
+                        ) from None
                     continue
                 _check_private(self._path(client_id), directory=False)
                 return principal
@@ -133,6 +153,10 @@ class CredentialStore:
             try:
                 descriptor = os.open(self._path(client_id), flags, 0o600)
             except FileExistsError:
+                if generation is not None:
+                    raise CredentialError(
+                        "managed GUI credential already exists"
+                    ) from None
                 continue
             except OSError as exc:
                 raise CredentialError("cannot create client credential") from exc

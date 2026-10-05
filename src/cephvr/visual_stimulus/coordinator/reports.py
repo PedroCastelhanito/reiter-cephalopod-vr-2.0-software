@@ -104,8 +104,18 @@ class Reports:
             workers=report.workers,
             continuing_functions=report.continuing_functions,
             cleanup_resources=resources,
-            cleanup_resources_revision=revision,
         )
+        if state.setup is not None:
+            aggregate.cleanup_resources_revision = revision
+        elif resources:
+            raise ValueError("renderer resources precede registered session catalogue")
+        lifecycle = report.WhichOneof("lifecycle")
+        if lifecycle == "session_phase":
+            aggregate.session_phase = report.session_phase
+        elif lifecycle == "trial_phase":
+            aggregate.trial_phase = report.trial_phase
+        else:
+            raise ValueError("worker heartbeat lifecycle is missing")
         if report.HasField("active_error"):
             aggregate.active_error.CopyFrom(report.active_error)
         deadline = self.clock() + (

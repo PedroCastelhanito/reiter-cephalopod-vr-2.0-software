@@ -20,7 +20,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 
 - Architecture and implementation-contract review is complete for every backend.
   [ARCH-001](#arch-001) selects GUI as the current implementation stage, following
-  Tracking implementation/review, with SpikeGLX integration last. Firmware is deferred;
+  Tracking implementation/review. The owner has authorized bounded SpikeGLX
+  controller connection and GUI diagnostics within the GUI stage. Firmware is deferred;
   analysis software is much later. The [acquisition review](reports/acquisition.md)
   records source review and pending rig verification; the [controller/supervisor review](reports/runtime.md)
   retains dated local results and pending E15 rig acceptance. Current Visual Stimulus and tracking
@@ -60,9 +61,9 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [SYS-003](#sys-003) | Backend language and environment | Accepted | 2 |
 | [SYS-004](#sys-004) | Scientific synchronization authority | Accepted | 3 |
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
-| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 18 |
+| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 21 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 93 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 96 |
 | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 23 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
@@ -89,7 +90,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 48 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 12 |
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 50 |
-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 35 |
+| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 36 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 13 |
 | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 12 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 9 |
@@ -321,14 +322,20 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="arch-001"></a>
 ### ARCH-001 — Backend process boundaries and build order
 
-**Status:** Undecided · **Revision:** 18
+**Status:** Undecided · **Revision:** 21
 
 - The owner has authorized GUI implementation following Tracking implementation
   and review. GUI is the current stage, beginning with reference review and operator
   workflow/layout design. Existing controller, supervisor, acquisition host, Visual
   Stimulus and Tracking work remains in scope for required integration and shared helpers.
-- SpikeGLX integration comes last in this sequence, after Tracking and GUI.
-  Acquisition firmware/flashing is deferred to a later stage. Analysis software,
+- The owner has authorized controller-owned SpikeGLX connection/client wiring for
+  testing from the managed runtime GUI during the GUI stage. E12 session lifecycle
+  integration and rig acceptance remain open.
+  The owner authorized COM8 Arduino Uno firmware development for managed MCU
+  connection and I/O diagnostics within the GUI stage; the owner separately
+  authorized one manual upload to COM8, performed on 2026-10-05. Automatic flashing
+  remains deferred. Other acquisition firmware work stays deferred.
+  Analysis software,
   including V13 offline replay/export, is deferred much later; the experiment
   backend must continue recording the inputs that analysis requires.
 - Code organization follows [ARCH-002](#arch-002). Local implementation/communication

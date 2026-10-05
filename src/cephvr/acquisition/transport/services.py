@@ -371,6 +371,21 @@ class AcquisitionConfigurationService(
             ),
         )
 
+    async def ExecuteMicrocontrollerCommand(
+        self,
+        request: wire.AcquisitionMicrocontrollerCommand,
+        context: grpc.aio.ServicerContext,
+    ) -> control.CommandAdmission:
+        return await self._dispatch(
+            context,
+            request,
+            request.command,
+            "ExecuteMicrocontrollerCommand",
+            lambda deadline: self.operations.execute_microcontroller_command(
+                request, deadline_ns=deadline
+            ),
+        )
+
     async def ConfirmConfiguration(
         self,
         request: wire.AcquisitionConfigurationConfirmation,

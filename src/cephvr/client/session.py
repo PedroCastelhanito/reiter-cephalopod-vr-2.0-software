@@ -71,6 +71,7 @@ class HeadlessClient:
         principal: Principal,
         *,
         rpc_timeout_s: float = 5.0,
+        on_snapshot: Callable[[pb.Snapshot], None] | None = None,
     ) -> None:
         stub_factory = cast(
             Callable[[Any], Any], transport.ExperimentControllerServiceStub
@@ -78,6 +79,7 @@ class HeadlessClient:
         self.stub = stub_factory(channel)
         self.principal = principal
         self.rpc_timeout_s = rpc_timeout_s
+        self.on_snapshot = on_snapshot
         self.views = StateViews()
         self.watch_id = ""
         self._changed = asyncio.Condition()
@@ -107,6 +109,8 @@ class HeadlessClient:
             async for view in self._watch:
                 async with self._changed:
                     self.views.install(view)
+                    if self.on_snapshot is not None and self.views.current is not None:
+                        self.on_snapshot(self.views.current)
                     self._changed.notify_all()
             raise ClientError("WatchState closed before completion was confirmed.")
         except asyncio.CancelledError:
@@ -183,7 +187,7 @@ class HeadlessClient:
         return command
 
     @asynccontextmanager
-    async def control(self, *, takeover: bool = False) -> AsyncIterator[None]:
+    async def observe(self) -> AsyncIterator[None]:
         self.views = StateViews()
         self._failure = None
         self.release_failure = None
@@ -195,33 +199,12 @@ class HeadlessClient:
             metadata=self.principal.metadata(),
         )
         self._reader = asyncio.create_task(self._read())
-        acquired = False
         try:
             await asyncio.wait_for(self._wait(lambda _: True), self.rpc_timeout_s)
-            state = self.snapshot
-            claim = rpc.ControlClaim(
-                client_id=self.principal.generation,
-                command_id=str(uuid4()),
-                controller_generation=state.controller_generation,
-                synchronized_state_revision=state.state_revision,
-                watch_id=self.watch_id,
-            )
-            if state.session.context.session_id:
-                claim.session_id = state.session.context.session_id
-            await self._admit(
-                "TakeOverControl" if takeover else "AcquireControl", claim
-            )
-            await asyncio.wait_for(
-                self._wait(
-                    lambda s: s.control.holder_client_id == self.principal.generation
-                ),
-                self.rpc_timeout_s,
-            )
-            acquired = True
             yield
         finally:
             try:
-                if acquired and self._failure is None:
+                if self._failure is None and self.views.current is not None:
                     if (
                         self.snapshot.control.holder_client_id
                         == self.principal.generation
@@ -240,6 +223,31 @@ class HeadlessClient:
                     await self._reader
                 except asyncio.CancelledError:
                     pass
+
+    async def claim_control(self, *, takeover: bool = False) -> None:
+        state = self.snapshot
+        claim = rpc.ControlClaim(
+            client_id=self.principal.generation,
+            command_id=str(uuid4()),
+            controller_generation=state.controller_generation,
+            synchronized_state_revision=state.state_revision,
+            watch_id=self.watch_id,
+        )
+        if state.session.context.session_id:
+            claim.session_id = state.session.context.session_id
+        await self._admit("TakeOverControl" if takeover else "AcquireControl", claim)
+        await asyncio.wait_for(
+            self._wait(
+                lambda s: s.control.holder_client_id == self.principal.generation
+            ),
+            self.rpc_timeout_s,
+        )
+
+    @asynccontextmanager
+    async def control(self, *, takeover: bool = False) -> AsyncIterator[None]:
+        async with self.observe():
+            await self.claim_control(takeover=takeover)
+            yield
 
     async def execute(
         self, method: str, request: Any | None = None, *, wait: bool = True

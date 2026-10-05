@@ -12,7 +12,7 @@ import grpc
 
 from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.platform.windows.bootstrap import close_handle, read_bootstrap
+from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
@@ -241,10 +241,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="cephvr-visual-stimulus-worker")
     parser.add_argument("--bootstrap-handle", type=int, required=True)
     args = parser.parse_args()
-    try:
-        bootstrap = decode(read_bootstrap(args.bootstrap_handle))
-    finally:
-        close_handle(args.bootstrap_handle)
+    bootstrap = decode(read_bootstrap(args.bootstrap_handle))
     asyncio.run(run(bootstrap))
 
 

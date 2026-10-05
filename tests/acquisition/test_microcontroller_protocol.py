@@ -13,26 +13,55 @@ from cephvr.acquisition.microcontroller.channel import (
     SerialChannel,
 )
 from cephvr.acquisition.microcontroller.protocol import (
+    ProtocolError,
     parse_capabilities,
+    parse_diagnostic,
     parse_reply,
 )
 from cephvr.acquisition.microcontroller.pulses import PulseExecutor
 from cephvr.acquisition.v1 import microcontroller_pb2
 
 
-def test_v1_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
+def test_v2_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
     reply = parse_reply(
-        b"OK   id=run-1   protocol=1 firmware=board pins=D2,D3 min_hz=0.1 "
+        b"OK   id=run-1   protocol=2 firmware=board pins=D2,D3 input_pins=D2,D3 min_hz=0.1 "
         b"max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
     )
 
-    version, firmware, pins, minimum, maximum, watchdog_min, watchdog_max = (
-        parse_capabilities(reply)
-    )
-    assert (version, firmware, pins) == (1, "board", ("D2", "D3"))
+    (
+        version,
+        firmware,
+        pins,
+        input_pins,
+        minimum,
+        maximum,
+        watchdog_min,
+        watchdog_max,
+    ) = parse_capabilities(reply)
+    assert (version, firmware, pins) == (2, "board", ("D2", "D3"))
+    assert input_pins == ("D2", "D3")
     assert minimum == 0.1
     assert maximum == 60.0
     assert (watchdog_min, watchdog_max) == (100, 10000)
+
+
+def test_caps_rejects_input_pin_outside_advertised_pins() -> None:
+    reply = parse_reply(
+        b"OK id=run-1 protocol=2 firmware=board pins=D2,D3 input_pins=D4 "
+        b"min_hz=0.1 max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
+    )
+    with pytest.raises(ProtocolError, match="input_pins"):
+        parse_capabilities(reply)
+
+
+def test_diagnostic_reply_requires_exact_kind_pin_and_edge_shape() -> None:
+    assert parse_diagnostic(
+        parse_reply(b"OK id=run-2 active=1 kind=projector_flip pin=D2 edges=3\n")
+    ) == (True, "projector_flip", "D2", 3)
+    with pytest.raises(ProtocolError, match="output diagnostic"):
+        parse_diagnostic(
+            parse_reply(b"OK id=run-3 active=0 kind=trial_state pin=D9 edges=1\n")
+        )
 
 
 def test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies() -> None:
@@ -220,12 +249,13 @@ class _FakePort:
         return self.on_write(payload)
 
     def read(self, size: int = 1) -> bytes:
-        del size
         if self.cancel_callback is not None:
             callback = self.cancel_callback
             self.cancel_callback = None
             callback()
-        return bytes((self.incoming.popleft(),)) if self.incoming else b""
+        return bytes(
+            self.incoming.popleft() for _ in range(min(size, len(self.incoming)))
+        )
 
     def feed(self, payload: bytes) -> None:
         self.incoming.extend(payload)

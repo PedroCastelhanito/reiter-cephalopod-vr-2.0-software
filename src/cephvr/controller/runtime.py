@@ -166,6 +166,7 @@ class ControllerRuntime:
         self.metadata = components.metadata
         self.display = components.display
         self.camera = components.camera
+        self.microcontroller = components.microcontroller
         self.camera_readback = components.camera_readback
         self.device_views = components.device_views
         self.camera_status_retention = components.camera_status_retention
@@ -340,6 +341,11 @@ class ControllerRuntime:
         self, request: svc.CameraCommandRequest
     ) -> pb.CommandAdmission:
         return await self.camera.execute_camera_command(request)
+
+    async def execute_microcontroller_command(
+        self, request: svc.MicrocontrollerCommandRequest
+    ) -> pb.CommandAdmission:
+        return await self.microcontroller.execute(request)
 
     async def setup(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
         return await self.setup_admission.setup(command)

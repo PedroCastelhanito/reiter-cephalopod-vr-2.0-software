@@ -28,18 +28,56 @@ from cephvr.shared.config import ConfigurationError
 _ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_defaults_preserve_unset_hardware_values() -> None:
+def test_defaults_bind_owner_assigned_mcu_pins() -> None:
     settings = load_defaults(_ROOT)
 
     assert settings.behavioral.enabled is True
     assert settings.tracking.enabled is False
     assert settings.HasField("pulses")
-    assert not settings.pulses.HasField("port")
+    assert settings.pulses.port == "COM8"
     assert settings.pulses.behavioral.HasField("requested_frequency_hz")
-    assert not settings.pulses.behavioral.HasField("pin")
+    assert settings.pulses.behavioral.pin == "D10"
+    assert settings.pulses.tracking.pin == "D11"
+    assert settings.pulses.trial_state_pin == "D9"
+    assert settings.pulses.trial_state_enabled
+    assert settings.pulses.projector_flip_pin == "D2"
+    assert settings.pulses.projector_flip_enabled
     assert not settings.behavioral.device.settings.HasField("trigger_source")
     assert not settings.behavioral.device.settings.HasField("exposure_us")
     assert not settings.behavioral.device.settings.HasField("roi")
+
+
+def test_microcontroller_io_pin_validation_keeps_disabled_drafts() -> None:
+    candidate = types_pb2.ExperimentConfiguration()
+    backend = candidate.backends.add(backend_name="acquisition", enabled=True)
+    backend.acquisition.CopyFrom(load_defaults(_ROOT))
+    backend.acquisition.behavioral.enabled = False
+    pulses = backend.acquisition.pulses
+    pulses.trial_state_pin = "D9"
+    pulses.trial_state_enabled = False
+    pulses.projector_flip_pin = "D9"
+    pulses.projector_flip_enabled = True
+    assert validate_configuration(candidate).valid
+
+    pulses.trial_state_enabled = True
+    result = validate_configuration(candidate)
+    assert not result.valid
+    assert any(issue.failure.code == "DUPLICATE_PIN" for issue in result.issues)
+
+    pulses.ClearField("projector_flip_pin")
+    result = validate_configuration(candidate)
+    assert not result.valid
+    assert any(issue.failure.code == "PIN_REQUIRED" for issue in result.issues)
+
+
+def test_disabled_acquisition_retains_future_camera_values_without_hardware() -> None:
+    candidate = types_pb2.ExperimentConfiguration()
+    backend = candidate.backends.add(backend_name="acquisition", enabled=False)
+    backend.acquisition.CopyFrom(load_defaults(_ROOT))
+    backend.acquisition.pulses.trial_state_pin = "D9"
+    backend.acquisition.pulses.trial_state_enabled = True
+
+    assert validate_configuration(candidate).valid
 
 
 def test_operator_trigger_source_is_loaded_only_when_present(tmp_path: Path) -> None:
@@ -95,7 +133,7 @@ def test_file_policies_resolve_exact_units_and_preserve_deferred_margin() -> Non
 
 def test_validation_rejects_duplicate_active_pin_and_empty_encoder_list() -> None:
     experiment = types_pb2.ExperimentConfiguration()
-    backend = experiment.backends.add(backend_name="acquisition")
+    backend = experiment.backends.add(backend_name="acquisition", enabled=True)
     settings = backend.acquisition
     settings.behavioral.enabled = True
     settings.behavioral.save_video = True
@@ -120,7 +158,7 @@ def test_validation_rejects_duplicate_active_pin_and_empty_encoder_list() -> Non
 
 def test_missing_required_device_ids_do_not_report_a_duplicate() -> None:
     experiment = types_pb2.ExperimentConfiguration()
-    backend = experiment.backends.add(backend_name="acquisition")
+    backend = experiment.backends.add(backend_name="acquisition", enabled=True)
     backend.acquisition.behavioral.enabled = True
 
     result = validate_configuration(experiment)

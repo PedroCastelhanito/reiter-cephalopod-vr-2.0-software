@@ -273,6 +273,7 @@ class LifecycleDriver:
                 source=self.worker,
                 work=work,
                 sent_monotonic_ns=self.clock(),
+                session_phase=pb.SESSION_PHASE_SETTING_UP,
                 cleanup_resources_revision=self.state.catalogue_revision,
                 cleanup_resources=list(self.state.resources.values()),
             )

@@ -1,4 +1,4 @@
-"""Serial inventory and local pin drafts; never open ports or drive outputs."""
+"""Serial inventory and pin intents; managed actions use the controller."""
 
 import re
 from dataclasses import dataclass
@@ -32,6 +32,9 @@ class CameraTrigger:
 
 class MicrocontrollerPanel(DevicePanel):
     camera_enable_requested = pyqtSignal(str, bool)
+    connection_requested = pyqtSignal()
+    save_requested = pyqtSignal(str, str, bool, str, bool, object, object)
+    pin_test_requested = pyqtSignal(str, bool)
 
     def __init__(self) -> None:
         super().__init__(
@@ -51,6 +54,12 @@ class MicrocontrollerPanel(DevicePanel):
         self.pins: dict[str, str] = {}
         self.pin_editors: dict[str, QLineEdit] = {}
         self.can_test = False
+        self.managed = False
+        self.live_review = False
+        self.simulated_inventory = False
+        self.managed_test_key = ""
+        self.pending_test_key = ""
+        self.connection_pending = False
         self.review_tests: set[str] = set()
         self.test_buttons: dict[str, QPushButton] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
@@ -61,15 +70,20 @@ class MicrocontrollerPanel(DevicePanel):
             self.trigger_grid, 0, "trial-state", "Trial state"
         )
         self.trial_pin.setToolTip("Trial state output is always active-high")
+        self.trial_pin.setPlaceholderText("D2–D13")
         self.io = Card("Inputs", compact=True)
         flip = QGridLayout()
         self.flip_pin = self.add_pin_row(flip, 0, "projector-flip", "Projector flip")
         self.flip_pin.setToolTip("Projector flip input always detects rising edges")
+        self.flip_pin.setPlaceholderText("D2 or D3")
         self.io.body.addLayout(flip)
         layout = self.columns[0].layout()
         assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(1, self.io)
         layout.insertWidget(2, self.triggers)
+        self.save_button = button("Save pins", "secondary")
+        self.save_button.clicked.connect(self.save_pins)
+        self.configuration.body.addWidget(self.save_button)
         self.port.currentIndexChanged.connect(self.port_changed)
 
     def add_pin_row(
@@ -124,34 +138,127 @@ class MicrocontrollerPanel(DevicePanel):
         if not self.can_review:
             return
         if name == "Scan ports":
-            self.stop_review_tests()
-            current = self.port.currentData()
-            self.port.clear()
-            seen = set()
-            for port in QSerialPortInfo.availablePorts():
-                name = port.portName().upper()
-                if not re.fullmatch(r"COM[1-9][0-9]*", name) or name in seen:
-                    continue
-                seen.add(name)
-                description = port.description().strip()
-                label = (
-                    f"{name} — {description}"
-                    if description and description != name
-                    else name
+            self.scan_ports()
+            return
+        if (self.managed or self.live_review) and name == "Test connection":
+            if not self.port.currentData():
+                self.console.appendPlainText(
+                    "Select a COM port before testing connection."
                 )
-                self.port.addItem(
-                    label,
-                    port.systemLocation(),
-                )
-            self.port.setCurrentIndex(self.port.findData(current) if current else -1)
-            self.port.setPlaceholderText(
-                "Select a port" if self.port.count() else "No COM ports found"
-            )
-            self.console.appendPlainText(
-                f"{self.port.count()} COM ports discovered; no hardware command sent."
-            )
+                return
+            self.console.appendPlainText(f"Connecting to {self.port.currentData()}…")
+            if self.live_review:
+                self.connection_pending = True
+                self.refresh_tests()
+            self.connection_requested.emit()
             return
         super().request(name)
+
+    def scan_ports(self) -> None:
+        """List ports without opening them; managed startup may call this directly."""
+        self.stop_review_tests()
+        current = self.port.currentData()
+        self.port.clear()
+        if self.simulated_inventory:
+            self.port.addItem("Simulated Arduino Uno", "SIM-UNO")
+            self.port.setCurrentIndex(0)
+            self.console.appendPlainText(
+                "Simulated microcontroller available; no hardware command sent."
+            )
+            self.refresh_tests()
+            return
+        seen = set()
+        for port in QSerialPortInfo.availablePorts():
+            name = port.portName().upper()
+            if not re.fullmatch(r"COM[1-9][0-9]*", name) or name in seen:
+                continue
+            seen.add(name)
+            description = port.description().strip()
+            label = (
+                f"{name} — {description}"
+                if description and description != name
+                else name
+            )
+            self.port.addItem(label, name)
+        self.port.setCurrentIndex(self.port.findData(current) if current else -1)
+        self.port.setPlaceholderText(
+            "Select a port" if self.port.count() else "No COM ports found"
+        )
+        self.console.appendPlainText(
+            f"{self.port.count()} COM ports discovered; no hardware command sent."
+        )
+        self.refresh_tests()
+
+    def save_pins(self) -> None:
+        if not self.managed or not self.can_review:
+            return
+        port = str(self.port.currentData() or "")
+        if not port:
+            self.console.appendPlainText("Select the COM port before saving pins.")
+            return
+        camera_pins = {
+            camera.role: self.pin_editors[camera.key].text().strip()
+            for camera in self.camera_rows
+            if camera.key in self.pin_editors
+        }
+        self.save_requested.emit(
+            port,
+            self.trial_pin.text().strip(),
+            self.enable_controls["trial-state"].isChecked(),
+            self.flip_pin.text().strip(),
+            self.enable_controls["projector-flip"].isChecked(),
+            camera_pins.get("Behavior cam"),
+            camera_pins.get("Tracking cam"),
+        )
+
+    def set_saved_pins(
+        self,
+        port: str,
+        trial_pin: str,
+        trial_enabled: bool,
+        flip_pin: str,
+        flip_enabled: bool,
+    ) -> None:
+        if port and self.port.findData(port) < 0:
+            self.port.addItem(port, port)
+        self.port.setCurrentIndex(self.port.findData(port) if port else -1)
+        for key, editor, pin, enabled in (
+            ("trial-state", self.trial_pin, trial_pin, trial_enabled),
+            ("projector-flip", self.flip_pin, flip_pin, flip_enabled),
+        ):
+            editor.setText(pin)
+            control = self.enable_controls[key]
+            control.blockSignals(True)
+            control.setChecked(enabled)
+            control.blockSignals(False)
+        self.refresh_tests()
+
+    def set_diagnostic(self, key: str, active: bool, edges: int) -> None:
+        previous = self.managed_test_key
+        self.pending_test_key = ""
+        self.managed_test_key = key if active else ""
+        for changed in {previous, key}:
+            if changed in self.test_buttons:
+                self.update_test_button(changed)
+        if key:
+            self.console.appendPlainText(
+                f"{key}: {'running' if active else 'stopped'}, {edges} rising edges reported."
+            )
+            lines = [
+                line
+                for line in self.status_column.hud.toPlainText().splitlines()
+                if not line.startswith("TRIGGER TEST")
+            ]
+            lines.append(
+                f"TRIGGER TEST {key}: {'running' if active else f'{edges} edges, stopped'}"
+            )
+            self.status_column.hud.setPlainText("\n".join(lines))
+        self.refresh_tests()
+
+    def set_test_failure(self, key: str, message: str) -> None:
+        self.pending_test_key = ""
+        self.console.appendPlainText(f"{key}: {message}")
+        self.refresh_tests()
 
     def set_cameras(self, cameras: tuple[CameraTrigger, ...]) -> None:
         if cameras == self.camera_rows:
@@ -184,9 +291,21 @@ class MicrocontrollerPanel(DevicePanel):
     def refresh_tests(self) -> None:
         if not hasattr(self, "flip_pin"):
             return
-        active = bool(self.review_tests)
+        active = bool(
+            self.review_tests
+            or self.managed_test_key
+            or self.pending_test_key
+            or self.connection_pending
+        )
+        exclusive_active = bool(
+            self.managed_test_key or self.pending_test_key or self.connection_pending
+        )
         self.port.setEnabled(self.can_review and not active)
         self.action_buttons[0].setEnabled(self.can_review and not active)
+        self.action_buttons[1].setEnabled(
+            self.can_review and not active and bool(self.port.currentData())
+        )
+        self.save_button.setEnabled(self.managed and self.can_review and not active)
         for control in self.enable_controls.values():
             control.setEnabled(self.can_review)
         for key, editor in (
@@ -198,6 +317,7 @@ class MicrocontrollerPanel(DevicePanel):
             self.test_buttons[key].setEnabled(
                 self.can_test
                 and enabled
+                and (not exclusive_active or key == self.managed_test_key)
                 and bool(self.port.currentData())
                 and bool(editor.text().strip())
             )
@@ -210,6 +330,7 @@ class MicrocontrollerPanel(DevicePanel):
             self.test_buttons[camera.key].setEnabled(
                 self.can_test
                 and external
+                and (not exclusive_active or camera.key == self.managed_test_key)
                 and bool(self.port.currentData())
                 and bool(editor.text().strip())
             )
@@ -219,6 +340,9 @@ class MicrocontrollerPanel(DevicePanel):
         self.refresh_tests()
 
     def stop_review_tests(self, keys: set[str] | None = None) -> None:
+        live_key = self.managed_test_key or self.pending_test_key
+        if self.live_review and live_key and (keys is None or live_key in keys):
+            self.pin_test_requested.emit(live_key, False)
         for key in tuple(
             self.review_tests if keys is None else self.review_tests & keys
         ):
@@ -230,7 +354,7 @@ class MicrocontrollerPanel(DevicePanel):
 
     def update_test_button(self, key: str) -> None:
         control = self.test_buttons[key]
-        running = key in self.review_tests
+        running = key in self.review_tests or key == self.managed_test_key
         control.setText("Stop" if running else "Test")
         control.setAccessibleName(f"{control.text()} {control.property('signal_name')}")
         control.setProperty("role", "compact-stop" if running else "compact")
@@ -241,6 +365,9 @@ class MicrocontrollerPanel(DevicePanel):
         control.update()
 
     def test_pin(self, key: str) -> None:
+        if (self.managed or self.live_review) and key == self.managed_test_key:
+            self.pin_test_requested.emit(key, False)
+            return
         if key in self.review_tests:
             self.stop_review_tests({key})
             self.refresh_tests()
@@ -270,7 +397,11 @@ class MicrocontrollerPanel(DevicePanel):
         pin = configured.get(key, "")
         if not pin:
             return
-        if any(other != key and value == pin for other, value in configured.items()):
+        normalized_pin = pin.upper().removeprefix("D")
+        if any(
+            other != key and value.upper().removeprefix("D") == normalized_pin
+            for other, value in configured.items()
+        ):
             self.console.appendPlainText(
                 "Pin test: resolve duplicate camera / I/O pins."
             )
@@ -294,6 +425,14 @@ class MicrocontrollerPanel(DevicePanel):
             description = f"Trial state: pin {pin}, active-high output test"
         else:
             description = f"Projector flip: pin {pin}, rising-edge input observation"
+        if self.managed or self.live_review:
+            if self.live_review:
+                self.pending_test_key = key
+                self.refresh_tests()
+            self.pin_test_requested.emit(key, True)
+            route = "controller" if self.managed else "COM port"
+            self.console.appendPlainText(f"Requested {description} through {route}.")
+            return
         self.review_tests.add(key)
         self.update_test_button(key)
         self.refresh_tests()
@@ -303,6 +442,12 @@ class MicrocontrollerPanel(DevicePanel):
 
     def apply_view(self, view: DashboardView) -> None:
         super().apply_view(view)
+        if self.managed:
+            self.can_review = (
+                view.connected
+                and view.has_control
+                and view.phase == Phase.CONFIGURATION
+            )
         self.can_test = self.can_review and view.phase == Phase.CONFIGURATION
         if not self.can_test:
             self.stop_review_tests()

@@ -8,11 +8,12 @@ import sys
 from uuid import uuid4
 
 from cephvr.control.v1 import services_pb2 as wire
-from cephvr.platform.windows.bootstrap import close_handle, read_bootstrap
+from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.shared.auth import Principal
 from cephvr.shared.backend_bootstrap import BackendBootstrap, decode_backend_bootstrap
+from cephvr.shared.backend_registration import register_backend_endpoint
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 from cephvr.tracking.coordinator.state import Identity
@@ -72,6 +73,7 @@ async def run(bootstrap: BackendBootstrap) -> None:
     )
     watch = asyncio.create_task(watch_authorities(bootstrap, native, runtime))
     try:
+        await register_backend_endpoint(bootstrap)
         await runtime.shutdown_requested.wait()
     finally:
         watch.cancel()
@@ -143,12 +145,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="cephvr-tracking")
     parser.add_argument("--bootstrap-handle", type=int, required=True)
     args = parser.parse_args()
-    try:
-        bootstrap = decode_backend_bootstrap(
-            read_bootstrap(args.bootstrap_handle), expected_role="tracking"
-        )
-    finally:
-        close_handle(args.bootstrap_handle)
+    bootstrap = decode_backend_bootstrap(
+        read_bootstrap(args.bootstrap_handle), expected_role="tracking"
+    )
     with SingleInstanceGuard("tracking"):
         asyncio.run(run(bootstrap))
 

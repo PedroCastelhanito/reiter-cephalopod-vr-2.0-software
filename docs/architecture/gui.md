@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 93
+**Status:** Accepted · **Revision:** 96
 
 - Main navigation orders **Dashboard, Protocol, Devices, Tracking**. Protocol owns
   session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
@@ -44,11 +44,20 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   nested-scope timeline replaces the full-trial overview. No trial table, HUD/log,
   draft badge or standalone Validate action. Configuration content scrolls within
   the fixed navigation shell.
-- Rig review startup discovers attached Basler cameras, secondary Windows displays
-  and COM ports without assigning surfaces or claiming Setup readiness. Camera
+- The design-review launcher uses simulated cameras, projector displays and a
+  microcontroller inventory; review actions send no device commands. The managed
+  runtime launcher starts the controller-backed GUI and discovers attached Basler
+  cameras, secondary Windows displays and COM ports without assigning surfaces or
+  claiming Setup readiness. Camera
   refresh preserves drafts by serial; Test enabled opens, identifies and closes each
   enabled camera. Display refresh preserves local assignments/participation. Explicit
   test fixtures may still supply simulated displays for isolated frontend checks.
+- Local design review saves its editable draft state atomically on normal close and
+  restores it after inventory discovery on the next review launch. Match camera and
+  display drafts by stable identity; an absent device stays unavailable. A failed
+  save offers Retry or Close without saving; an unreadable previous draft is warned
+  and preserved unless the operator explicitly replaces it. This local review draft
+  never becomes the controller's E07 accepted configuration or authorizes Setup.
 - Epoch editor has **Batch generate** and **Batch edit** tabs within the card;
   wheel gestures do not switch tabs.
   Forms use the existing configuration scroller. Switching tabs preserves local
@@ -267,19 +276,22 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   retain disabled rows for re-enabling and preserve their pins. Fixed input/output
   enablement is local draft configuration. Disabled signals have dimmed pin/test
   controls, cannot start tests and do not participate in pin-conflict checks.
-  Disabling a signal ends its local review test; editing authority gates enablement.
-  In local review, Test enters labelled review state and Stop exits it; no pulse is
-  claimed. Lock port/scan and pin editing during review tests. Reset affected camera
-  tests when their configuration changes, and reset all review tests on port or
-  phase/control loss. Live start/stop acknowledgements remain integration work.
+  Disabling a signal stops its active diagnostic; editing authority gates enablement.
+  In the explicit local real-device diagnostic mode, Test connection and per-pin
+  Test/Stop use A11's exclusive
+  serial owner and firmware-bounded diagnostics. Display matched connection, start,
+  stop and edge-count evidence or the actual failure; a command request alone is not
+  a pass. Input tests listen without driving. Lock port/scan and pin editing during
+  a diagnostic, stop on phase/control loss and close the port on window closure.
+  Isolated frontend fixtures retain labelled, command-free review tests.
   Fixed active-high Trial state and
   rising-edge Projector flip behavior belongs to A11; no level/edge selectors remain.
   Camera test rates are read from Cameras rather than duplicated here. Output tests
   target one pin for observation in SpikeGLX; the input test observes rising edges,
   never drives the input pin. Test requests require Configuration/control, a COM port,
   a nonempty pin and no target-pin conflict; camera requests additionally require an
-  enabled external-trigger role and valid retained rate. Until managed diagnostics
-  are integrated, report requests as not tested/no command sent, never as pulse evidence.
+  enabled external-trigger role and valid retained rate. Managed diagnostics retain
+  controller ownership; report requests without matched results as unconfirmed.
 - Projectors uses a compact table of Display index, Projector assignment, Resolution
   in pixels, plus a scaled Displays layout diagram. Its indices are GUI-owned,
   assigned to secondary displays by desktop position and shared with the diagram.

@@ -104,6 +104,38 @@ def validate_pulse_port(
         )
 
 
+def validate_pulse_io(
+    settings: types_pb2.AcquisitionSettings,
+    result: types_pb2.ValidationResult,
+    active_pins: dict[str, str],
+) -> None:
+    """Keep disabled drafts while rejecting active pin conflicts."""
+    pulses = settings.pulses
+    for role in ("trial_state", "projector_flip"):
+        pin_field = f"{role}_pin"
+        enabled_field = f"{role}_enabled"
+        enabled = pulses.HasField(enabled_field) and getattr(pulses, enabled_field)
+        present = pulses.HasField(pin_field)
+        pin = getattr(pulses, pin_field)
+        path = f"backends.acquisition.pulses.{pin_field}"
+        if present and not firmware_token(pin):
+            issue(result, path, "INVALID_PIN", "pin must be a printable firmware token")
+        if enabled and not present:
+            issue(
+                result,
+                path,
+                "PIN_REQUIRED",
+                "enabled I/O requires an explicit firmware pin",
+            )
+        if enabled and present and firmware_token(pin):
+            prior = active_pins.get(pin)
+            if prior is not None:
+                issue(
+                    result, path, "DUPLICATE_PIN", f"pin is already assigned to {prior}"
+                )
+            active_pins[pin] = role
+
+
 def _rate_issue(result: types_pb2.ValidationResult, role: str) -> None:
     issue(
         result,

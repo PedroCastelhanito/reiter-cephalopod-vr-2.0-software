@@ -15,10 +15,12 @@ from .channel import (
     SerialChannel,
 )
 from .protocol import (
+    PROTOCOL_VERSION,
     ROLES,
     frequency_text,
     parse_capabilities,
     parse_compact_state,
+    parse_diagnostic,
     parse_state,
 )
 from .pulses import BoundaryReservation, PulseExecutor, normalize_roles
@@ -76,6 +78,7 @@ class SerialOwner:
         )
         self._capabilities_time_ns: int | None = None
         self._state: microcontroller_pb2.MicrocontrollerState | None = None
+        self._diagnostic: tuple[str, str] | None = None
 
     @property
     def connection_id(self) -> str:
@@ -118,17 +121,18 @@ class SerialOwner:
                 raise SerialOwnerError(
                     "CAPS startup probe did not return a matched reply"
                 )
-            version, firmware, pins, minimum, maximum, wd_min, wd_max = (
+            version, firmware, pins, input_pins, minimum, maximum, wd_min, wd_max = (
                 parse_capabilities(caps_exchange.reply)
             )
-            if version != 1:
+            if version != PROTOCOL_VERSION:
                 raise SerialOwnerError(
-                    f"incompatible MCU protocol version {version}; required 1"
+                    f"incompatible MCU protocol version {version}; required {PROTOCOL_VERSION}"
                 )
             self._capabilities = microcontroller_pb2.MicrocontrollerCapabilities(
                 protocol_version=version,
                 firmware=firmware,
                 pins=pins,
+                rising_edge_input_pins=input_pins,
                 minimum_requested_hz=minimum,
                 maximum_requested_hz=maximum,
                 minimum_watchdog_ms=wd_min,
@@ -172,8 +176,13 @@ class SerialOwner:
                 state,
                 observed_ns=status_exchange.completed_ns or self._clock(),
             )
-        except Exception:
-            self._close_after_startup_failure(deadline_ns)
+        except Exception as exc:
+            try:
+                self._close_after_startup_failure(deadline_ns)
+            except SerialOwnerError as cleanup_error:
+                raise SerialOwnerError(
+                    f"MCU startup failed: {exc}; cleanup: {cleanup_error}"
+                ) from exc
             raise
 
     def configure(
@@ -279,6 +288,73 @@ class SerialOwner:
         self._state = state
         return state
 
+    def diagnostic_start(
+        self,
+        kind: str,
+        pin: str,
+        deadline_ns: int,
+        *,
+        frequency_hz: float | None = None,
+    ) -> tuple[bool, str, str, int]:
+        """Start one firmware-bounded diagnostic on an otherwise stopped MCU."""
+        self._require_connected()
+        if self._diagnostic is not None:
+            raise SerialOwnerError("another pin diagnostic is active")
+        if kind not in {"trial_state", "projector_flip", *ROLES}:
+            raise ValueError("unknown pin diagnostic kind")
+        if pin not in self._require_capabilities().pins:
+            raise ValueError("pin is absent from current firmware capabilities")
+        if (
+            kind == "projector_flip"
+            and pin not in self._require_capabilities().rising_edge_input_pins
+        ):
+            raise ValueError("pin does not support rising-edge input capture")
+        assert self._state is not None
+        if any(getattr(self._state, role).running for role in ROLES):
+            raise SerialOwnerError("pin diagnostics require stopped camera outputs")
+        fields = {"kind": kind, "pin": pin, "duration_ms": "2000"}
+        if kind in ROLES:
+            if frequency_hz is None:
+                raise ValueError("camera pin diagnostic requires its requested rate")
+            fields["hz"] = frequency_text(frequency_hz)
+        elif frequency_hz is not None:
+            raise ValueError("fixed I/O diagnostic does not accept a camera rate")
+        exchange = self._exchange("DIAG_START", fields, deadline_ns, routine=True)
+        if exchange.reply is None:
+            raise SerialOwnerError("diagnostic start has no matched reply")
+        result = parse_diagnostic(exchange.reply)
+        if result[:3] != (True, kind, pin):
+            raise SerialOwnerError("diagnostic start reply differs from request")
+        self._diagnostic = (kind, pin)
+        return result
+
+    def diagnostic_status(self, deadline_ns: int) -> tuple[bool, str, str, int]:
+        self._require_connected()
+        if self._diagnostic is None:
+            raise SerialOwnerError("no pin diagnostic is active")
+        exchange = self._exchange("DIAG_STATUS", {}, deadline_ns, routine=True)
+        if exchange.reply is None:
+            raise SerialOwnerError("diagnostic status has no matched reply")
+        result = parse_diagnostic(exchange.reply)
+        if result[1:3] != self._diagnostic:
+            raise SerialOwnerError("diagnostic identity changed")
+        if not result[0]:
+            self._diagnostic = None
+        return result
+
+    def diagnostic_stop(self, deadline_ns: int) -> tuple[bool, str, str, int]:
+        self._require_connected()
+        if self._diagnostic is None:
+            raise SerialOwnerError("no pin diagnostic is active")
+        exchange = self._exchange("DIAG_STOP", {}, deadline_ns, routine=False)
+        if exchange.reply is None:
+            raise SerialOwnerError("diagnostic stop has no matched reply")
+        result = parse_diagnostic(exchange.reply)
+        if result[0] or result[1:3] != self._diagnostic:
+            raise SerialOwnerError("diagnostic stop was not confirmed")
+        self._diagnostic = None
+        return result
+
     def on(
         self,
         selected_roles: Iterable[int | str],
@@ -331,10 +407,6 @@ class SerialOwner:
         """Close immediately; an OS close error remains an unresolved owner blocker."""
         self._assert_owner_thread()
         started_ns = self._clock()
-        if started_ns >= deadline_ns:
-            raise SerialOwnerError(
-                "close deadline expired before port close; port remains a cleanup blocker"
-            )
         try:
             self._channel.close()
         except Exception as exc:
@@ -347,7 +419,7 @@ class SerialOwner:
         self._capabilities_time_ns = None
         self._pulses.clear()
         self._closed = True
-        if self._clock() >= deadline_ns:
+        if started_ns >= deadline_ns or self._clock() >= deadline_ns:
             raise SerialOwnerError(
                 "port close returned after the original deadline; completion was late"
             )
@@ -441,10 +513,7 @@ class SerialOwner:
         return self._capabilities
 
     def _close_after_startup_failure(self, deadline_ns: int) -> None:
-        if self._clock() >= deadline_ns:
-            raise SerialOwnerError(
-                "startup failed after deadline; open port remains a cleanup blocker"
-            )
+        expired = self._clock() >= deadline_ns
         try:
             self._channel.close()
         except Exception as exc:
@@ -456,7 +525,7 @@ class SerialOwner:
         self._state = None
         self._capabilities = None
         self._capabilities_time_ns = None
-        if self._clock() >= deadline_ns:
+        if expired or self._clock() >= deadline_ns:
             self._closed = True
             raise SerialOwnerError(
                 "startup failure cleanup closed the port after its original deadline"

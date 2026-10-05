@@ -135,8 +135,16 @@ class ConfigurationCommands:
                 command_id, error=f"configuration validation unavailable: {exc}"
             )
         if any(not result.completed or not result.valid for result in results):
+            first_issue = next(
+                (issue for result in results for issue in result.issues), None
+            )
+            detail = (
+                f": {first_issue.field_path}: {first_issue.failure.message}"
+                if first_issue is not None
+                else ""
+            )
             return self.control_operations.admission(
-                command_id, error="configuration validation failed"
+                command_id, error=f"configuration validation failed{detail}"
             )
         async with self.lifecycle.lock:
             error = self.control_operations.authorized(request.command)

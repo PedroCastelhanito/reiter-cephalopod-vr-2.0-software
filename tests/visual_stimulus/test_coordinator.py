@@ -17,6 +17,7 @@ from cephvr.visual_stimulus.coordinator.state import Identity, Prepared, State
 from cephvr.visual_stimulus.main import command_ledger
 from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+from cephvr.visual_stimulus.worker.reporting import ReportBridge
 
 from .support import Clock, make_prepared_trial
 
@@ -35,6 +36,49 @@ class Peer:
     async def receipt(self, method, request, *, deadline_ns):
         self.reports.append((method, request, deadline_ns))
         return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+
+@pytest.mark.asyncio
+async def test_idle_renderer_heartbeat_carries_lifecycle_to_supervisor():
+    clock = Clock()
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    supervisor = Peer()
+    reports = Reports(
+        identity,
+        State(),
+        command_ledger(identity.process.generation, 10**12, 1_000_000),
+        Peer(),
+        supervisor,
+        clock,
+    )
+    bridge = ReportBridge(
+        asyncio.get_running_loop(),
+        Peer(),
+        supervisor,
+        failed=lambda error: pytest.fail(str(error)),
+        maximum_bytes=1024,
+    )
+    assert bridge.catalogue.session_phase == pb.SESSION_PHASE_CONFIGURATION
+    heartbeat = pb.HeartbeatReport.FromString(bridge.catalogue.SerializeToString())
+    heartbeat.source.CopyFrom(identity.worker)
+    heartbeat.sent_monotonic_ns = clock()
+    await reports.heartbeat(heartbeat, clock())
+    method, accepted, _ = supervisor.reports[-1]
+    assert method == "ReportHeartbeat"
+    assert accepted.source == identity.process
+    assert accepted.sent_monotonic_ns > 0
+    assert accepted.session_phase == pb.SESSION_PHASE_CONFIGURATION
+    assert not accepted.HasField("cleanup_resources_revision")
 
 
 async def recipe_fixture(tmp_path):

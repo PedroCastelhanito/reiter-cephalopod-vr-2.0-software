@@ -67,6 +67,9 @@ class BackendPort(Protocol):
     async def execute_camera_command(
         self, request: svc.AcquisitionCameraCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission: ...
+    async def execute_microcontroller_command(
+        self, request: svc.AcquisitionMicrocontrollerCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission: ...
 
 
 class SupervisorPort(Protocol):

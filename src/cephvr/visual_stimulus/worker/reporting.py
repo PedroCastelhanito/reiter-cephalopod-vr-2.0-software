@@ -37,7 +37,10 @@ class ReportBridge:
         self.observe_display: Callable[[pb.VisualStimulusDisplayView], None] | None = (
             None
         )
-        self.catalogue = pb.HeartbeatReport(cleanup_resources_revision=0)
+        self.catalogue = pb.HeartbeatReport(
+            cleanup_resources_revision=0,
+            session_phase=pb.SESSION_PHASE_CONFIGURATION,
+        )
 
     async def _deliver(self, method: str, message: Message, deadline_ns: int) -> None:
         if (

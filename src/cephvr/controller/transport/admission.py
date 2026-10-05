@@ -139,7 +139,8 @@ class CommandAdmissionGate:
         work_key = (
             command_id
             if synchronous
-            or name in {"Setup", "ExecuteCameraCommand"}
+            or name
+            in {"Setup", "ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"}
             or current_work is None
             else current_work
         )
@@ -204,6 +205,8 @@ class CommandAdmissionGate:
                 if current_work is not None:
                     self._session_work_key = current_work
             elif name == "ExecuteCameraCommand":
+                self._camera_work_keys.add(work_key)
+            elif name == "ExecuteMicrocontrollerCommand":
                 self._camera_work_keys.add(work_key)
             else:
                 current_work = self._work.current_work_key()

@@ -95,6 +95,7 @@ class RecipeOwner:
                 source=self.identity.process,
                 work=setup.command.work,
                 sent_monotonic_ns=self.clock(),
+                session_phase=pb.SESSION_PHASE_SETTING_UP,
                 cleanup_resources=resources,
                 cleanup_resources_revision=revision,
             ),

@@ -9,7 +9,8 @@ Scientific alignment is external post hoc work under
 [SYS-004](../../architecture.md#sys-004). Camera-trigger microcontroller control
 belongs to [acquisition](acquisition.md#a10). The
 [SpikeGLX control contract](../../contracts/spikeglx-control.md) binds calls, records
-and failure handling; no client is implemented or rig-verified.
+and failure handling; a read-only controller diagnostic is implemented, while the
+session lifecycle client and full rig verification remain open.
 
 Configuration:
 [synchronization_config.toml](../../config/backends/synchronization_config.toml).

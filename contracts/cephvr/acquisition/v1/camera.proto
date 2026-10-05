@@ -208,5 +208,9 @@ message CameraPulseConfiguration {
   optional string port = 1;
   CameraPulseSettings behavioral = 2;
   CameraPulseSettings tracking = 3;
+  optional string trial_state_pin = 4;
+  optional string projector_flip_pin = 5;
+  optional bool trial_state_enabled = 6;
+  optional bool projector_flip_enabled = 7;
   // Actual firmware timing is evidence; never silently replaces requested frequency.
 }

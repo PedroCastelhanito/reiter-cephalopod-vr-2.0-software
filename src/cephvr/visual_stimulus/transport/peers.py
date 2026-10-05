@@ -45,7 +45,9 @@ class Peer:
     ) -> Message:
         timeout = remaining_seconds(deadline_ns)
         if timeout <= 0:
-            raise TimeoutError("original Visual Stimulus peer deadline expired")
+            raise TimeoutError(
+                f"{method}: original Visual Stimulus peer deadline expired"
+            )
         return cast(
             Message,
             await getattr(self.stub, method)(

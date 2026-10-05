@@ -21,6 +21,8 @@ service ExperimentControllerService {
   rpc WatchState(WatchRequest) returns (stream Snapshot);
   rpc UpdateConfiguration(UpdateConfigurationRequest) returns (CommandAdmission);
   rpc ExecuteCameraCommand(CameraCommandRequest) returns (CommandAdmission);
+  rpc ExecuteMicrocontrollerCommand(MicrocontrollerCommandRequest) returns (CommandAdmission);
+  rpc CheckSpikeGLXConnection(SpikeGLXConnectionQuery) returns (SpikeGLXConnectionResult);
   rpc GetPreviewAttachment(PreviewAttachmentQuery) returns (PreviewAttachmentResult);
   rpc ReportPreviewAttachment(PreviewAttachmentReport) returns (ReportReceipt);
   rpc ReportPreviewConsumerState(PreviewConsumerReport) returns (ReportReceipt);
@@ -107,6 +109,7 @@ service AcquisitionConfigurationService {
   rpc ApplyPulseConfiguration(AcquisitionPulseCommand) returns (CommandAdmission);
   rpc ReportPreviewConsumerState(PreviewConsumerReport) returns (ReportReceipt);
   rpc ExecuteCameraCommand(AcquisitionCameraCommand) returns (CommandAdmission);
+  rpc ExecuteMicrocontrollerCommand(AcquisitionMicrocontrollerCommand) returns (CommandAdmission);
   rpc ConfirmConfiguration(AcquisitionConfigurationConfirmation) returns (CommandAdmission);
 }
 enum CameraCommandKind {
@@ -117,6 +120,41 @@ enum CameraCommandKind {
   CAMERA_COMMAND_KIND_EXPORT_PFS = 4;
   CAMERA_COMMAND_KIND_FINISH_EDITING = 5;
   CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER = 6;
+}
+enum MicrocontrollerCommandKind {
+  MICROCONTROLLER_COMMAND_KIND_UNSPECIFIED = 0;
+  MICROCONTROLLER_COMMAND_KIND_CONNECT = 1;
+  MICROCONTROLLER_COMMAND_KIND_START = 2;
+  MICROCONTROLLER_COMMAND_KIND_STATUS = 3;
+  MICROCONTROLLER_COMMAND_KIND_STOP = 4;
+}
+message MicrocontrollerCommandRequest {
+  OperatorCommand command = 1;
+  optional uint64 expected_configuration_revision = 2;
+  MicrocontrollerCommandKind kind = 3;
+  MicrocontrollerSignalKind signal = 4; // START only; pin/rate come from current configuration.
+}
+// E12/G01: authenticated, read-only controller diagnostic; no Setup or run mutation.
+message SpikeGLXConnectionQuery {
+  string client_id = 1;
+}
+message SpikeGLXConnectionResult {
+  bool connected = 1;
+  string address = 2;
+  uint32 port = 3;
+  string version = 4;
+  bool running = 5;
+  bool saving = 6;
+  string run_name = 7;
+  string data_directory = 8;
+  string error = 9;
+}
+message AcquisitionMicrocontrollerCommand {
+  BackendCommand command = 1;
+  optional uint64 configuration_revision = 2;
+  MicrocontrollerCommandKind kind = 3;
+  MicrocontrollerSignalKind signal = 4;
+  cephvr.acquisition.v1.CameraPulseConfiguration requested = 5;
 }
 message CameraCommandRequest {
   OperatorCommand command = 1;

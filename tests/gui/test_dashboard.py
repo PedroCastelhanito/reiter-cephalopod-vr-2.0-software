@@ -1,9 +1,12 @@
 """Native frontend behavior and ownership; no controller or rig execution."""
 
+import sys
+import time
 from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 
@@ -61,6 +64,133 @@ def test_offline_frontend_cannot_request_commands(app: QApplication) -> None:
     window.close()
     window.deleteLater()
     app.processEvents()
+
+
+def test_managed_spikeglx_connection_emits_read_only_intent(app: QApplication) -> None:
+    from cephvr.gui.spikeglx import SpikeGLXPanel
+
+    panel = SpikeGLXPanel()
+    requested: list[bool] = []
+    panel.connection_requested.connect(lambda: requested.append(True))
+    panel.apply_view(DashboardView(connected=True))
+    assert panel.action_buttons[0].isEnabled()
+    assert not panel.editors[0].isEnabled()
+    panel.action_buttons[0].click()
+    assert requested == [True]
+    panel.close()
+    panel.deleteLater()
+    app.processEvents()
+
+
+def test_managed_camera_controls_emit_intent_without_changing_local_device_state(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.cameras import CameraDraft, CamerasPanel
+
+    panel = CamerasPanel()
+    panel.managed = True
+    panel.drafts = [CameraDraft("camera-1", "Behavior cam", "123", "Basler")]
+    panel.populate_inventory()
+    panel.table.selectRow(0)
+    panel.apply_view(
+        DashboardView(
+            connected=True,
+            has_control=True,
+            previews=(
+                PreviewView("camera-1", "Behavior cam", active=True, available=True),
+            ),
+        )
+    )
+    intents: list[tuple[str, bool]] = []
+    panel.connection_requested.connect(lambda key, start: intents.append((key, start)))
+    panel.connect_button.click()
+    assert intents == [("camera-1", True)]
+    assert not panel.drafts[0].connected
+    panel.close()
+    panel.deleteLater()
+    app.processEvents()
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="named preview rings require Windows"
+)
+def test_native_latest_frame_viewer_reads_and_releases_ring(app: QApplication) -> None:
+    pytest.importorskip("pypylon")
+    from cephvr.acquisition.buffers.layout import allocation_size
+    from cephvr.acquisition.buffers.records import FrameRecord
+    from cephvr.acquisition.buffers.ring import SharedRing
+    from cephvr.acquisition.camera.native_formats import pylon_pixel_format
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.camera_viewer import PreviewReader
+    from cephvr.shared.pixels.types import PixelLayout
+
+    allocation, run_id = uuid4(), uuid4()
+    owner = pb.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    producer = pb.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation=str(uuid4())
+    )
+    consumer = pb.ProcessIdentity(role="gui", generation=str(uuid4()))
+    layout = PixelLayout(2, 2, pylon_pixel_format("Mono8"), 2, 4)
+    descriptor = acq.FrameBufferDescriptor(
+        allocation_id=str(allocation),
+        owner=owner,
+        producer=producer,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        kind=acq.FRAME_BUFFER_KIND_PREVIEW,
+        layout_version=2,
+        capacity_frames=1,
+        shared_memory_name=f"Local\\cephvr-{allocation}-frames",
+        configuration_revision=1,
+        allocation_bytes=allocation_size(1, 4),
+    )
+    descriptor.preview.acquisition_run_id = str(run_id)
+    descriptor.image.width = 2
+    descriptor.image.height = 2
+    descriptor.image.pixel_format = "Mono8"
+    descriptor.image.row_stride_bytes = 2
+    descriptor.image.image_payload_bytes = 4
+    attachment = acq.FrameBufferAttachment(buffer=descriptor)
+    attachment.sync.transfer_id = str(uuid4())
+    attachment.sync.target.CopyFrom(owner)
+    attachment.sync.event_name = f"Local\\cephvr-{allocation}-event"
+    ring = SharedRing.create(attachment, layout, owner)
+    producer_ring = None
+    reader = None
+    try:
+        ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+        attachment.sync.target.CopyFrom(producer)
+        producer_ring = SharedRing.attach(attachment, layout, producer)
+        producer_ring.open_admission(run_id)
+        attachment.sync.target.CopyFrom(consumer)
+        reader = PreviewReader(attachment, run_id=str(run_id))
+        errors: list[str] = []
+        reader.failed.connect(errors.append)
+        reader.start()
+        producer_ring.publish(
+            FrameRecord(1, 1, None, None, True, None), memoryview(b"\x00\x40\x80\xff")
+        )
+        producer_ring.publish(
+            FrameRecord(2, 2, None, None, True, None), memoryview(b"\xff\x80\x40\x00")
+        )
+        deadline = time.monotonic() + 3
+        latest = None
+        while time.monotonic() < deadline and latest is None:
+            app.processEvents()
+            latest = reader.take_latest()
+            time.sleep(0.01)
+        assert latest is not None, errors
+        assert latest[0] == b"\xff\x80\x40\x00"
+        assert latest[1:3] == (2, 2)
+    finally:
+        if reader is not None:
+            reader.stop()
+            assert reader.wait(2000)
+        if producer_ring is not None:
+            producer_ring.close()
+        ring.close()
 
 
 def test_devices_draft_icons_local_edits_and_command_gates(
@@ -950,6 +1080,10 @@ def test_microcontroller_camera_rows_and_discovery(
     assert panel.port.count() == 1
     assert panel.port.itemText(0) == "COM7 — Test board"
     assert panel.port.itemData(0) == "COM7"
+    panel.can_review = False
+    panel.scan_ports()  # Managed startup inventories before control is acquired.
+    assert panel.port.itemData(0) == "COM7"
+    panel.can_review = True
     panel.port.setCurrentIndex(0)
     camera = window.devices.cameras
     camera.trigger_source.setCurrentText("External controller")
@@ -1022,6 +1156,8 @@ def test_projector_refresh_preserves_assignment(
     assert panel.projectors[key].currentText() == "Front"
     window.apply_view(review_view(Phase.RUNNING))
     assert not panel.enable_controls[key].isEnabled()
+    panel.discover_displays()  # Runtime startup inventories while edits are locked.
+    assert panel.keys and not panel.enable_controls[key].isEnabled()
     assert "×" in panel.table.item(0, 2).text()
     assert panel.diagram.outputs
 
@@ -1063,6 +1199,598 @@ def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) 
     panel.test_pin("trial-state")
     panel.test_pin("projector-flip")
     assert panel.console.toPlainText() == before
+
+
+def test_live_review_microcontroller_routes_bounded_tests(
+    window: DashboardWindow,
+) -> None:
+    panel = window.devices.microcontroller
+    panel.live_review = True
+    panel.port.addItem("COM8", "COM8")
+    panel.port.setCurrentIndex(0)
+    panel.trial_pin.setText("9")
+    panel.flip_pin.setText("2")
+    connections: list[bool] = []
+    tests: list[tuple[str, bool]] = []
+    panel.connection_requested.connect(lambda: connections.append(True))
+    panel.pin_test_requested.connect(lambda key, start: tests.append((key, start)))
+
+    panel.action_buttons[1].click()
+    assert connections == [True]
+    assert not panel.port.isEnabled()
+    panel.connection_pending = False  # Simulate the worker's matched connection result.
+    panel.refresh_tests()
+    panel.test_buttons["projector-flip"].click()
+    assert tests == [("projector-flip", True)]
+    assert not panel.port.isEnabled()
+    panel.set_diagnostic("projector-flip", True, 0)
+    panel.test_buttons["projector-flip"].click()
+    assert tests[-1] == ("projector-flip", False)
+    panel.set_diagnostic("projector-flip", False, 3)
+    assert panel.port.isEnabled()
+    assert "3 rising edges reported" in panel.console.toPlainText()
+
+
+def test_simulated_review_inventory_does_not_enumerate_com_ports(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.gui import microcontroller
+
+    def unexpected_inventory():
+        raise AssertionError("review mode must not enumerate physical COM ports")
+
+    monkeypatch.setattr(
+        microcontroller.QSerialPortInfo, "availablePorts", unexpected_inventory
+    )
+    reviewed = DashboardWindow(sample=True)
+    ReviewControls(reviewed, simulate_projectors=True)
+    panel = reviewed.devices.microcontroller
+    assert panel.simulated_inventory
+    assert panel.port.currentData() == "SIM-UNO"
+    assert len(reviewed.devices.projectors.review_displays or ()) == 4
+    assert {camera.serial for camera in reviewed.devices.cameras.drafts} == {
+        "REVIEW-001",
+        "REVIEW-002",
+    }
+    panel.request("Scan ports")
+    assert panel.port.count() == 1
+    reviewed.close()
+    reviewed.deleteLater()
+    app.processEvents()
+
+
+def test_managed_microcontroller_emits_controller_intents(
+    window: DashboardWindow,
+) -> None:
+    panel = window.devices.microcontroller
+    panel.managed = True
+    connections: list[bool] = []
+    saves: list[tuple[str, str, bool, str, bool, str | None, str | None]] = []
+    pin_tests: list[tuple[str, bool]] = []
+    panel.connection_requested.connect(lambda: connections.append(True))
+    panel.save_requested.connect(lambda *values: saves.append(values))
+    panel.pin_test_requested.connect(lambda key, start: pin_tests.append((key, start)))
+    window.apply_view(
+        DashboardView(
+            connected=True,
+            has_control=True,
+            configuration_wired=False,
+            phase=Phase.CONFIGURATION,
+        )
+    )
+    panel.set_saved_pins("COM8", "D9", True, "D2", True)
+    panel.pin_editors["camera-1"].setText("D10")
+    panel.pin_editors["camera-2"].setText("D11")
+    panel.save_button.click()
+    panel.action_buttons[1].click()
+    panel.test_buttons["trial-state"].click()
+    panel.set_diagnostic("trial-state", True, 0)
+    panel.test_buttons["trial-state"].click()
+
+    assert saves == [("COM8", "D9", True, "D2", True, "D10", "D11")]
+    assert connections == [True]
+    assert pin_tests == [("trial-state", True), ("trial-state", False)]
+    assert "no command sent" not in panel.console.toPlainText().splitlines()[-1]
+
+
+def test_managed_camera_enable_waits_for_controller_confirmation(
+    window: DashboardWindow,
+) -> None:
+    panel = window.devices.cameras
+    panel.managed = True
+    requests: list[tuple[str, bool]] = []
+    panel.enable_requested.connect(
+        lambda serial, enabled: requests.append((serial, enabled))
+    )
+    panel.drafts[0].enabled = False
+    panel.apply_view(
+        DashboardView(
+            connected=True,
+            has_control=True,
+            configuration_wired=False,
+            phase=Phase.CONFIGURATION,
+        )
+    )
+    assert panel.enable_controls[0].isEnabled()
+    panel.enable_controls[0].click()
+    assert requests == [("REVIEW-001", True)]
+    assert not panel.drafts[0].enabled
+    assert panel.enable_controls[0].isChecked()
+    assert not panel.enable_controls[0].isEnabled()
+    panel.pending_enable.clear()
+    panel.refresh_controls()
+    assert not panel.enable_controls[0].isChecked()
+
+
+def test_managed_camera_enable_explains_missing_external_input(
+    window: DashboardWindow,
+) -> None:
+    panel = window.devices.cameras
+    panel.managed = True
+    panel.drafts[0].enabled = False
+    panel.drafts[0].values["trigger_clock"] = "External controller"
+    requests: list[tuple[str, bool]] = []
+    panel.enable_requested.connect(
+        lambda serial, enabled: requests.append((serial, enabled))
+    )
+    panel.apply_view(
+        DashboardView(connected=True, has_control=True, configuration_wired=False)
+    )
+    panel.enable_controls[0].click()
+    assert requests == []
+    assert not panel.enable_controls[0].isChecked()
+    assert "FrameStart line source" in panel.console.toPlainText()
+
+
+def test_managed_dashboard_exposes_explicit_control_acquisition(
+    window: DashboardWindow,
+) -> None:
+    requested: list[bool] = []
+    window.dashboard.control_requested.connect(lambda: requested.append(True))
+    window.apply_view(
+        DashboardView(connected=True, has_control=False, configuration_wired=False)
+    )
+    assert window.dashboard.control_button.isVisible()
+    assert window.dashboard.control_button.isEnabled()
+    assert "take control" in window.dashboard.control_hint.text().lower()
+    window.dashboard.control_button.click()
+    assert requested == [True]
+    window.apply_view(
+        DashboardView(connected=True, has_control=True, configuration_wired=False)
+    )
+    assert not window.dashboard.control_button.isEnabled()
+    assert "control held" in window.dashboard.control_hint.text().lower()
+
+
+def test_managed_camera_settings_submit_pfs_source_and_rate(
+    window: DashboardWindow,
+) -> None:
+    panel = window.devices.cameras
+    panel.managed = True
+    submissions: list[tuple[str, str, str, str, str]] = []
+    panel.settings_requested.connect(lambda *values: submissions.append(values))
+    panel.apply_view(
+        DashboardView(connected=True, has_control=True, configuration_wired=False)
+    )
+    assert panel.preset_field.isEnabled()
+    assert panel.trigger_source.isEnabled()
+    assert not panel.role.isEnabled()
+    panel.selected.values.update(
+        {
+            "trigger_clock": "External controller",
+            "trigger_source": "Line1",
+            "preset": "C:/camera/behavior.pfs",
+            "trigger_frequency_hz": "30.0",
+        }
+    )
+    panel.save_settings_button.click()
+    assert submissions == [
+        (
+            "REVIEW-001",
+            "External controller",
+            "Line1",
+            "C:/camera/behavior.pfs",
+            "30.0",
+        )
+    ]
+
+
+@pytest.mark.asyncio
+async def test_managed_camera_enable_updates_only_assigned_camera() -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot()
+    state.configuration.revision = 4
+    acquisition = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=False
+    )
+    acquisition.acquisition.behavioral.device.device_id = "40065509"
+    acquisition.acquisition.tracking.device.device_id = "40747103"
+    acquisition.acquisition.tracking.enabled = False
+    requests = []
+
+    async def execute(method: str, request: object) -> SimpleNamespace:
+        requests.append((method, request))
+        return SimpleNamespace(succeeded=True)
+
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    client = SimpleNamespace(
+        snapshot=state,
+        operator_command=lambda: rpc.OperatorCommand(),
+        execute=execute,
+    )
+    await bridge._dispatch(
+        client, "set_camera_enabled", {"serial": "40065509", "enabled": True}
+    )
+    assert len(requests) == 1
+    method, request = requests[0]
+    assert method == "UpdateConfiguration"
+    assert request.expected_revision == 4
+    updated = request.proposed.backends[0]
+    assert updated.enabled
+    assert updated.acquisition.behavioral.enabled
+    assert not updated.acquisition.tracking.enabled
+    assert not state.configuration_values.current.backends[0].enabled
+
+
+@pytest.mark.asyncio
+async def test_managed_camera_settings_supply_missing_trigger_source() -> None:
+    from cephvr.acquisition.v1 import camera_pb2 as camera
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot()
+    state.configuration.revision = 6
+    acquisition = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=False
+    ).acquisition
+    acquisition.behavioral.device.device_id = "40065509"
+    acquisition.tracking.device.device_id = "40747103"
+    requests = []
+
+    async def execute(method: str, request: object) -> SimpleNamespace:
+        requests.append((method, request))
+        return SimpleNamespace(succeeded=True)
+
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    client = SimpleNamespace(
+        snapshot=state,
+        operator_command=lambda: rpc.OperatorCommand(),
+        execute=execute,
+    )
+    await bridge._dispatch(
+        client,
+        "save_camera_settings",
+        {
+            "serial": "40065509",
+            "clock": "External controller",
+            "source": "Line1",
+            "preset": "C:/camera/behavior.pfs",
+            "rate": "30.0",
+        },
+    )
+    method, request = requests[0]
+    assert method == "UpdateConfiguration"
+    assert request.expected_revision == 6
+    changed = request.proposed.backends[0].acquisition
+    assert (
+        changed.behavioral.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    )
+    assert changed.behavioral.device.settings.trigger_source == "Line1"
+    assert changed.behavioral.device.pfs_source_filename == "C:/camera/behavior.pfs"
+    assert changed.pulses.behavioral.requested_frequency_hz == 30.0
+    assert (
+        state.configuration_values.current.backends[
+            0
+        ].acquisition.behavioral.device.settings.trigger_source
+        == ""
+    )
+
+
+@pytest.mark.asyncio
+async def test_managed_mcu_save_includes_camera_output_pins() -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot()
+    state.configuration.revision = 3
+    acquisition = state.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition
+    acquisition.pulses.tracking.pin = "D11"
+    requests = []
+
+    async def execute(method: str, request: object) -> SimpleNamespace:
+        requests.append((method, request))
+        return SimpleNamespace(succeeded=True)
+
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    client = SimpleNamespace(
+        snapshot=state,
+        operator_command=lambda: rpc.OperatorCommand(),
+        execute=execute,
+    )
+    await bridge._dispatch(
+        client,
+        "save_mcu_pins",
+        {
+            "port": "COM8",
+            "trial_pin": "D9",
+            "trial_enabled": True,
+            "flip_pin": "D2",
+            "flip_enabled": True,
+            "behavioral_pin": "D10",
+            "tracking_pin": None,
+        },
+    )
+    method, request = requests[0]
+    assert method == "UpdateConfiguration"
+    pulses = request.proposed.backends[0].acquisition.pulses
+    assert pulses.behavioral.pin == "D10"
+    assert pulses.tracking.pin == "D11"
+    assert (
+        state.configuration_values.current.backends[0].acquisition.pulses.behavioral.pin
+        == ""
+    )
+
+
+def test_managed_microcontroller_forwards_only_saved_pin(
+    window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui import managed_mcu
+
+    panel = window.devices.microcontroller
+    panel.managed = True
+    panel.set_saved_pins("COM8", "D9", True, "D2", True)
+    window.apply_view(
+        DashboardView(
+            connected=True,
+            has_control=True,
+            configuration_wired=False,
+            phase=Phase.CONFIGURATION,
+        )
+    )
+    snapshot = pb.Snapshot()
+    acquisition = snapshot.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition
+    acquisition.pulses.port = "COM8"
+    acquisition.pulses.trial_state_pin = "D9"
+    acquisition.pulses.projector_flip_pin = "D2"
+    requests: list[tuple[str, dict[str, object]]] = []
+    bridge = SimpleNamespace(
+        request=lambda action, **options: requests.append((action, options))
+    )
+    monkeypatch.setattr(managed_mcu.QTimer, "singleShot", lambda *_: None)
+    binding = managed_mcu.ManagedMcu(panel, bridge, lambda: snapshot)
+
+    binding.test_connection()
+    binding.test_pin("trial-state", True)
+    panel.trial_pin.setText("D8")
+    binding.test_pin("trial-state", True)
+
+    assert requests == [
+        ("mcu", {"kind": rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT}),
+        (
+            "mcu",
+            {
+                "kind": rpc.MICROCONTROLLER_COMMAND_KIND_START,
+                "signal": pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+            },
+        ),
+    ]
+    assert "Save this pin assignment" in panel.console.toPlainText()
+
+
+def test_managed_camera_pin_test_uses_saved_role_signal(
+    window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui import managed_mcu
+    from cephvr.gui.microcontroller import CameraTrigger
+
+    panel = window.devices.microcontroller
+    panel.managed = True
+    panel.set_cameras(
+        (CameraTrigger("camera-1", "Behavior cam", "External controller", "30", True),)
+    )
+    panel.pin_editors["camera-1"].setText("D10")
+    state = pb.Snapshot()
+    state.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition.pulses.behavioral.pin = "D10"
+    requests: list[tuple[str, dict[str, object]]] = []
+    bridge = SimpleNamespace(
+        request=lambda action, **options: requests.append((action, options))
+    )
+    monkeypatch.setattr(managed_mcu.QTimer, "singleShot", lambda *_: None)
+    binding = managed_mcu.ManagedMcu(panel, bridge, lambda: state)
+    binding.test_pin("camera-1", True)
+    assert requests == [
+        (
+            "mcu",
+            {
+                "kind": rpc.MICROCONTROLLER_COMMAND_KIND_START,
+                "signal": pb.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL,
+            },
+        )
+    ]
+    panel.pin_editors["camera-1"].setText("D12")
+    binding.test_pin("camera-1", True)
+    assert len(requests) == 1
+    assert "Save this pin assignment" in panel.console.toPlainText()
+
+
+def test_managed_window_waits_for_history_save_before_closing(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+
+    managed = ManagedDashboardWindow(sample=True)
+    requests: list[bool] = []
+    managed.close_requested.connect(lambda: requests.append(True))
+    managed.show()
+    app.processEvents()
+
+    managed.close()
+    assert requests == [True]
+    assert managed.isVisible()
+
+    managed.finish_close()
+    assert not managed.isVisible()
+    managed.deleteLater()
+    app.processEvents()
+
+
+def test_managed_close_finishes_only_after_controller_save_result(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+
+    requests: list[str] = []
+    closed: list[bool] = []
+    manager = SimpleNamespace(
+        close_pending=False,
+        state=pb.Snapshot(),
+        bridge=SimpleNamespace(request=lambda action: requests.append(action) or True),
+        window=SimpleNamespace(
+            dashboard=window.dashboard,
+            devices=window.devices,
+            finish_close=lambda: closed.append(True),
+        ),
+    )
+
+    ManagedGui.request_close(manager)
+    assert manager.close_pending and not closed
+    assert requests == ["save_configuration_history"]
+
+    ManagedGui.command_finished(manager, "save_configuration_history", True, "Saved")
+    assert not manager.close_pending
+    assert closed == [True]
+
+
+@pytest.mark.asyncio
+async def test_managed_bridge_claims_free_control_for_history_save() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    bridge = ControllerBridge(
+        Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+    )
+    calls: list[str] = []
+    state = pb.Snapshot()
+
+    async def claim_control() -> None:
+        calls.append("claim")
+        state.control.holder_client_id = "gui-generation"
+
+    async def execute(method: str) -> SimpleNamespace:
+        calls.append(method)
+        return SimpleNamespace(succeeded=True)
+
+    client = SimpleNamespace(
+        snapshot=state, claim_control=claim_control, execute=execute
+    )
+    await bridge._dispatch(client, "save_configuration_history", {})
+
+    assert calls == ["claim", "SaveConfigurationHistory"]
+
+
+def test_review_draft_restores_local_configuration(
+    app: QApplication, tmp_path: Path
+) -> None:
+    from cephvr.gui.review_draft import load_review_draft, save_review_draft
+
+    path = tmp_path / "review_draft.json"
+    first = DashboardWindow(sample=True)
+    ReviewControls(first)
+    first.dashboard.subject_id.setText("LAST-SUBJECT")
+    first.devices.cameras.drafts[0].values["trigger_frequency_hz"] = "30"
+    first.devices.microcontroller.set_saved_pins("COM8", "D9", True, "D2", True)
+    first.devices.microcontroller.pins[first.devices.cameras.drafts[0].key] = "D10"
+    first.protocol.editor.drafts[0].name = "Last trial"
+    first.devices.projectors.rig_editor.fields["width"].setText("250")
+    first.devices.spikeglx.editors[0].setText("10.0.0.2")  # type: ignore[attr-defined]
+    save_review_draft(first, path)
+
+    second = DashboardWindow(sample=True)
+    ReviewControls(second)
+    assert load_review_draft(second, path)
+    assert second.dashboard.subject_id.text() == "LAST-SUBJECT"
+    assert second.devices.cameras.drafts[0].values["trigger_frequency_hz"] == "30"
+    assert second.devices.microcontroller.trial_pin.text() == "D9"
+    assert second.devices.microcontroller.flip_pin.text() == "D2"
+    assert (
+        second.devices.microcontroller.pins[second.devices.cameras.drafts[0].key]
+        == "D10"
+    )
+    assert second.protocol.editor.drafts[0].name == "Last trial"
+    assert second.devices.projectors.rig_editor.fields["width"].text() == "250"
+    assert second.devices.spikeglx.editors[0].text() == "10.0.0.2"  # type: ignore[attr-defined]
+    for item in (first, second):
+        item.close()
+        item.deleteLater()
+    app.processEvents()
+
+
+def test_review_window_saves_draft_on_close(
+    app: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.gui import review
+    from cephvr.gui.review_draft import load_review_draft
+
+    path = tmp_path / "review_draft.json"
+    monkeypatch.setattr(review, "draft_path", lambda: path)
+    first = review.ReviewDashboardWindow(sample=True)
+    review.ReviewControls(first)
+    first.dashboard.subject_id.setText("CLOSE-SUBJECT")
+    first.show()
+    app.processEvents()
+    first.close()
+
+    second = DashboardWindow(sample=True)
+    review.ReviewControls(second)
+    assert load_review_draft(second, path)
+    assert second.dashboard.subject_id.text() == "CLOSE-SUBJECT"
+    for item in (first, second):
+        item.close()
+        item.deleteLater()
+    app.processEvents()
+
+
+def test_invalid_review_draft_is_not_replaced_during_load(
+    app: QApplication, tmp_path: Path
+) -> None:
+    from cephvr.gui.review_draft import load_review_draft
+
+    path = tmp_path / "review_draft.json"
+    path.write_bytes(b"{bad json")
+    window = DashboardWindow(sample=True)
+    ReviewControls(window)
+    with pytest.raises(ValueError):
+        load_review_draft(window, path)
+    assert path.read_bytes() == b"{bad json"
+    window.close()
+    window.deleteLater()
+    app.processEvents()
 
 
 def test_pin_test_stop_toggle_and_invalidation(

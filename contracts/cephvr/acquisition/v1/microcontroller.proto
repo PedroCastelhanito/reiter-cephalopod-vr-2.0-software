@@ -51,6 +51,7 @@ message MicrocontrollerCapabilities {
   optional double maximum_requested_hz = 5;
   optional uint32 minimum_watchdog_ms = 6;
   optional uint32 maximum_watchdog_ms = 7;
+  repeated string rising_edge_input_pins = 8; // Firmware-interrupt capable input pins.
   // Broad request limits, not proof of every pin/rate combination; CONFIGURE
   // validates the full combination. No host timer solving or board profiles.
 }

@@ -10,12 +10,69 @@ pending on the rig. This is not experiment-readiness approval.
 [contracts](../contracts/acquisition/README.md) own behavior. The previous
 [controller/supervisor review](runtime.md) remains separate.
 
-GUI-requested per-pin diagnostics (2026-10-02) are recorded under
+GUI-requested per-pin diagnostics are recorded under
 [A11](../docs/architecture/acquisition.md#a11). Fixed trial-state polarity and
-projector-flip input edge are accepted; firmware commands, bounded test duration,
-input-observation evidence and managed diagnostic transport remain unimplemented.
-The frontend logs unsent requests and does not exercise hardware. See the
-[frontend report](runtime.md#dashboard-frontend-implementation).
+projector-flip rising-edge input are accepted. Protocol-v2 host parsing, a bounded
+diagnostic serial-owner API and matching [Uno firmware source](../firmware/uno/README.md)
+now exist. Controller/acquisition diagnostic RPCs, typed Trial state and
+Projector flip pin settings, and GUI status projection are implemented. Focused
+tests pass, but the complete managed GUI path and physical pin behavior remain
+unverified. See the [frontend report](runtime.md#dashboard-frontend-implementation).
+
+On 2026-10-05 the owner authorized MCU protocol/firmware work for the COM8 Arduino
+Uno before camera pin testing. Initial read-only COM enumeration identified that
+board; an isolated CephVR2 `CAPS`/`STATUS` probe missed its deadline, while a
+legacy read-only PING yielded `OK READY dual_camera_projector_sync`, matching
+the CephVR1.0 sketch. Its diagnostic process exited, releasing the port.
+The owner then authorized a manual upload. The exact old flash readback and
+verified new image are in [dated rig evidence](mcu-evidence-2026-10-05/README.md).
+The new firmware returned matched protocol-v2 CAPS/STATUS through the real
+SerialOwner on COM8 with both camera outputs stopped and no malformed replies.
+No pin was driven by a test; managed GUI and physical I/O diagnostics remain open
+in TODO. The new command path uses the controller's Configuration phase and
+operator authority, an exact configuration revision, and the existing acquisition
+serial owner. The backend reports exact device status through the controller. The
+COM8 and the owner-assigned D9 Trial state, D2 Projector flip, D10 behavioral
+camera and D11 tracking camera pins are saved as defaults. Destination channels
+and electrical compatibility remain unverified.
+
+The firmware source compiles with Arduino AVR core 1.8.8 for Uno (10,920 flash
+bytes, 1,112 global SRAM bytes). It advertises D2–D13 and interrupt-capable
+input pins D2/D3, uses Timer1 for bounded camera output diagnostics, counts flip
+edges through external interrupts, and forces tested outputs LOW at the two-second
+limit. Generated protocol sources were refreshed from the owning proto. Focused
+MCU/configuration tests pass 28/28; Windows-target mypy passes 9 source files,
+Ruff and boundary checks pass with zero boundary violations. The owner module's
+585 lines were reviewed: command scheduling, wire calls and evidence projection
+remain together around its single serial state; further GUI/controller code should
+not be added there. Compilation, fake-port tests and the successful COM8 handshake
+do not prove physical voltage, edge capture or managed host command routing. No
+output command or pin test has been performed. The Windows serial adapter now uses
+fixed 10 ms native polls and bounded chunk reads: changing two pySerial timeout
+properties on this rig consumed roughly 63 ms per request, leaving too little
+of A11's 100 ms acknowledgement budget. The corrected owner completed the
+read-only handshake; original deadlines still govern success.
+
+The focused acquisition/controller/client MCU suites pass (52 cases), and the
+six focused offscreen MCU GUI tests pass. A combined GUI suite still crashes in
+Qt fixture teardown on this Windows rig; it does not establish a managed launch
+pass. The controller/acquisition command path and saved-pin update were not
+exercised through a full live GUI session. Trial state output level, Projector
+flip edge capture, camera outputs, and preview are unverified.
+
+After the owner supplied the four pin numbers, the default loader bound and
+validated the distinct `D9`/`D2`/`D10`/`D11` tokens. A direct live COM8 input
+diagnostic on D2 returned active then inactive after the two-second firmware
+limit, with zero rising edges. This verifies the bounded input command, not a
+projector flip event or the physical voltage. The owner confirmed the projector
+was off, so zero edges were expected in that window. The Trial state and camera
+outputs were not driven; downstream voltage tolerance remains to be confirmed.
+
+A later 2026-10-05 local review worker test on the same COM8 firmware confirmed
+CAPS/STATUS with outputs stopped, followed by D2 diagnostic active at zero edges
+and inactive after the firmware limit with 120 rising edges. The source of those
+transitions was not independently observed. GUI pin requests now reach the A11
+serial owner; output channels D9/D10/D11 still have no physical test evidence.
 
 ## Ownership and review
 

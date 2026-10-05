@@ -186,13 +186,14 @@ async def launch_role(
         ),
         "software_root": str(inputs.software_root),
     }
-    if role in {"acquisition", "visual_stimulus"}:
+    if role in {"acquisition", "visual_stimulus", "tracking"}:
         policy_descriptor = inputs.bootstrap.get("control_policies")
         if not isinstance(policy_descriptor, str) or not policy_descriptor:
             raise WindowsLaunchError(
-                "resolved ControlPolicies are missing from acquisition startup"
+                "resolved ControlPolicies are missing from backend startup"
             )
         role_descriptor["control_policies"] = policy_descriptor
+    if role == "acquisition":
         # Tracking's exact process generation is created and owned by this
         # supervisor launch plan. Acquisition needs only this identity to set the
         # TRACKING ring consumer; no token or second lookup authority is needed.

@@ -176,6 +176,27 @@ def _update_request(
     )
 
 
+async def test_rejected_edit_reports_first_validation_field(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = _runtime()
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    result = pb.ValidationResult(completed=True, valid=False)
+    result.issues.add(
+        field_path="backends.acquisition.behavioral.device.settings.trigger_source",
+        failure=pb.Failure(
+            code="TRIGGER_SOURCE_REQUIRED",
+            message="external trigger input must be explicit",
+        ),
+    )
+    runtime.configuration_commands.validators = {"acquisition": lambda _: result}
+    admission = await runtime.update_configuration(_update_request(runtime, "subject"))
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    assert "trigger_source: external trigger input must be explicit" in (
+        admission.failure.message
+    )
+
+
 def _racing_runtime(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

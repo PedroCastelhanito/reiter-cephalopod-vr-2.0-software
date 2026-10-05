@@ -193,7 +193,7 @@ class SerialChannel:
             remaining = max(0, command_deadline - self.clock()) / 1e9
             self.port.set_timeouts(read_seconds=remaining, write_seconds=remaining)
             try:
-                byte = self.port.read(1)
+                chunk = self.port.read(512)
             except Exception as exc:
                 raise ChannelTransportFailure(f"serial read failed: {exc}") from exc
             received_ns = self.clock()
@@ -201,42 +201,40 @@ class SerialChannel:
                 raise ChannelCancelled(
                     "request cancellation completed after serial read returned"
                 )
-            if not byte:
+            if not chunk:
                 if received_ns >= command_deadline:
                     break
                 continue
             if received_ns >= command_deadline:
                 break
-            if byte == b"\n":
-                if too_long:
-                    self.malformed_replies += 1
+            for byte in chunk:
+                if byte == 10:
+                    if too_long:
+                        self.malformed_replies += 1
+                        line.clear()
+                        too_long = False
+                        continue
+                    line.append(byte)
+                    try:
+                        reply = parse_reply(bytes(line))
+                    except ProtocolError:
+                        self.malformed_replies += 1
+                        line.clear()
+                        continue
                     line.clear()
-                    too_long = False
-                    continue
-                line.append(byte[0])
-                try:
-                    reply = parse_reply(bytes(line))
-                except ProtocolError:
-                    self.malformed_replies += 1
-                    line.clear()
-                    continue
-                line.clear()
-                if reply.request_id != request_id:
-                    self.unmatched_replies += 1
-                    continue
-                completed = received_ns
-                if completed >= command_deadline:
-                    break
-                exchange = Exchange(reply, request_id, dispatched, completed)
-                self.last_exchange = exchange
-                if not reply.ok:
-                    raise FirmwareRejected(reply.error_code or "UNKNOWN_ERROR")
-                self.last_valid_reply_ns = completed
-                return exchange
-            if len(line) + 1 > 512:
-                too_long = True
-            elif not too_long:
-                line.append(byte[0])
+                    if reply.request_id != request_id:
+                        self.unmatched_replies += 1
+                        continue
+                    exchange = Exchange(reply, request_id, dispatched, received_ns)
+                    self.last_exchange = exchange
+                    if not reply.ok:
+                        raise FirmwareRejected(reply.error_code or "UNKNOWN_ERROR")
+                    self.last_valid_reply_ns = received_ns
+                    return exchange
+                if len(line) + 1 > 512:
+                    too_long = True
+                elif not too_long:
+                    line.append(byte)
         if read_only:
             exchange = Exchange(None, request_id, dispatched, None)
             self.last_exchange = exchange

@@ -8,16 +8,19 @@ from uuid import uuid4
 from cephvr.acquisition.coordinator.manual_device_status import (
     ManualDeviceStatusReporter,
 )
+from cephvr.acquisition.coordinator.manual_pulses import ManualPulses
 from cephvr.acquisition.coordinator.manual_session_access import (
     manual_configuration_available,
 )
 from cephvr.acquisition.state import (
+    ConfigurationRecord,
     CoordinatorIdentity,
     PulseRecord,
     SessionRecord,
     SessionSlot,
 )
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+from cephvr.acquisition.v1 import runtime_pb2
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.commands import CommandLedger
@@ -148,3 +151,98 @@ def test_manual_configuration_requires_local_cleanup_proof_not_delivery_receipt(
     session.cleanup_complete = True
     assert manual_configuration_available(slot)
     assert slot.current is session
+
+
+async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> None:
+    generation = _id()
+    identity = CoordinatorIdentity(
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=generation
+        ),
+        process=control.ProcessIdentity(role="acquisition", generation=generation),
+        controller=control.ProcessIdentity(role="controller", generation=_id()),
+        supervisor=control.ProcessIdentity(role="supervisor", generation=_id()),
+        tracking=control.ProcessIdentity(role="tracking", generation=_id()),
+    )
+    settings = control.AcquisitionSettings()
+    settings.pulses.port = "COM8"
+    owner = object.__new__(ManualPulses)
+    owner.identity = identity
+    owner.configuration = ConfigurationRecord(
+        settings=settings,
+        file_policies=runtime_pb2.AcquisitionFilePolicies(),
+        revision=1,
+    )
+    owner.session_slot = SessionSlot()
+    owner.pulse = PulseRecord()
+    owner.workers = {}
+    owner.worker_registry = object()  # No completed session to retire.
+    owner.clock = lambda: 100
+    calls: list[object] = []
+
+    class Serial:
+        async def connect(self, *, deadline_ns: int) -> mcu.MicrocontrollerObservation:
+            calls.append(("connect", deadline_ns))
+            return mcu.MicrocontrollerObservation(port="COM8")
+
+        async def diagnostic_start(
+            self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
+        ) -> tuple[bool, str, str, int]:
+            calls.append((kind, pin, frequency_hz, deadline_ns))
+            return True, kind, pin, 0
+
+    class Status:
+        def reserve(self, command: wire.BackendCommand) -> None:
+            calls.append(("reserve", command.command_id))
+
+        def clear_diagnostic(self) -> None:
+            calls.append("clear")
+
+        def set_diagnostic(
+            self, signal: int, pin: str, active: bool, edges: int
+        ) -> None:
+            calls.append(("diagnostic", signal, pin, active, edges))
+
+        async def report(
+            self, command: wire.BackendCommand, **kwargs: object
+        ) -> control.ReportReceipt:
+            calls.append(("report", command.command_id, kwargs["succeeded"]))
+            return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+        def finalize_command(self, command_id: str) -> None:
+            calls.append(("finalize", command_id))
+
+    owner.serial = Serial()  # type: ignore[assignment]
+    owner.device_status = Status()  # type: ignore[assignment]
+
+    def request(kind: int, signal: int = 0) -> wire.AcquisitionMicrocontrollerCommand:
+        value = wire.AcquisitionMicrocontrollerCommand(
+            configuration_revision=2,
+            kind=kind,
+            signal=signal,
+        )
+        value.requested.port = "COM8"
+        value.requested.trial_state_pin = "D9"
+        value.requested.trial_state_enabled = True
+        value.command.command_id = _id()
+        value.command.issuer.CopyFrom(identity.controller)
+        value.command.target.CopyFrom(identity.backend)
+        value.command.parent_operation.command_id = _id()
+        return value
+
+    connected = await owner.execute_diagnostic(
+        request(wire.MICROCONTROLLER_COMMAND_KIND_CONNECT), deadline_ns=1000
+    )
+    started = await owner.execute_diagnostic(
+        request(
+            wire.MICROCONTROLLER_COMMAND_KIND_START,
+            control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+        ),
+        deadline_ns=1000,
+    )
+
+    assert connected.result == control.COMMAND_RESULT_ACCEPTED
+    assert started.result == control.COMMAND_RESULT_ACCEPTED
+    assert ("connect", 1000) in calls
+    assert ("trial_state", "D9", None, 1000) in calls
+    assert owner.pulse.observation is not None

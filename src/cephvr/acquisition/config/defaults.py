@@ -151,6 +151,21 @@ def load_defaults(root: Path) -> types_pb2.AcquisitionSettings:
     mc = config.get("microcontroller", {})
     if "port" in mc:
         result.pulses.port = _token(mc["port"], "microcontroller.port")
+    for role in ("trial_state", "projector_flip"):
+        pin_key = f"{role}_pin"
+        enabled_key = f"{role}_enabled"
+        if pin_key in mc:
+            setattr(
+                result.pulses,
+                pin_key,
+                _token(mc[pin_key], f"microcontroller.{pin_key}"),
+            )
+        if enabled_key in mc:
+            setattr(
+                result.pulses,
+                enabled_key,
+                _bool(mc[enabled_key], f"microcontroller.{enabled_key}"),
+            )
     buffers = config.get("buffers", {})
     result.tracking_ring_frames = _positive_int(
         _required(buffers, "tracking_ring_frames", "buffers.tracking_ring_frames"),

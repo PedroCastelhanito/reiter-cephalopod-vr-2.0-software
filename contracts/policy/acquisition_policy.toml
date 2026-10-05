@@ -2,7 +2,7 @@
 # Source rules: Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/acquisition_config.toml. The loader rejects a version mismatch.
-policy_version = 11
+policy_version = 12
 
 [platform]
 target_os = "windows"
@@ -79,7 +79,7 @@ stop_behavior = "immediate_inactive"
 pulse_polarity = "active_high"
 inactive_level = "low"
 protocol_compatibility = "exact_version"
-protocol_version = 1
+protocol_version = 2
 capability_source = "firmware"
 capability_query = "CAPS"
 capability_reply = "single_bounded_reply"

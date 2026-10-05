@@ -796,6 +796,21 @@ message AcquisitionDeviceViews {
   CameraDeviceView tracking = 5;
   cephvr.acquisition.v1.MicrocontrollerObservation pulses = 6;
   TrialPulseEvidence trial_pulses = 7;
+  MicrocontrollerDiagnosticView diagnostic = 8;
+}
+message MicrocontrollerDiagnosticView {
+  optional bool active = 1;
+  MicrocontrollerSignalKind signal = 2;
+  string pin = 3;
+  optional uint32 rising_edges = 4;
+  optional int64 observed_monotonic_ns = 5;
+}
+enum MicrocontrollerSignalKind {
+  MICROCONTROLLER_SIGNAL_KIND_UNSPECIFIED = 0;
+  MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE = 1;
+  MICROCONTROLLER_SIGNAL_KIND_PROJECTOR_FLIP = 2;
+  MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL = 3;
+  MICROCONTROLLER_SIGNAL_KIND_TRACKING = 4;
 }
 message TrialPulseEvidence {
   WorkContext work = 1; // Exact original trial; never relabel historical observations.

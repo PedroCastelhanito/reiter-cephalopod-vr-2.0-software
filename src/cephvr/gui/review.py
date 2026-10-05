@@ -4,15 +4,69 @@ import argparse
 import sys
 from dataclasses import replace
 
-from PyQt6.QtCore import QObject, QRect, QSettings
-from PyQt6.QtGui import QAction, QActionGroup
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QObject, QRect, QSettings, pyqtSignal
+from PyQt6.QtGui import QAction, QActionGroup, QCloseEvent
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from cephvr.gui.layouts import fit_window_to_screen
 from cephvr.gui.projectors import DisplayInfo
+from cephvr.gui.review_draft import draft_path, load_review_draft, save_review_draft
+from cephvr.gui.review_mcu import ReviewMcu
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
+
+
+class ReviewDashboardWindow(DashboardWindow):
+    """Keep local review drafts across normal review-window closure."""
+
+    closing = pyqtSignal()
+
+    def __init__(
+        self, *, sample: bool = False, settings: QSettings | None = None
+    ) -> None:
+        super().__init__(sample=sample, settings=settings)
+        self._restore_failed = False
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        if event is None:
+            return
+        if getattr(self, "_restore_failed", False):
+            dialog = QMessageBox(self)
+            dialog.setIcon(QMessageBox.Icon.Warning)
+            dialog.setWindowTitle("Previous review draft is unreadable")
+            dialog.setText("Saving now would replace the unreadable draft.")
+            replace = dialog.addButton(
+                "Replace with current draft", QMessageBox.ButtonRole.AcceptRole
+            )
+            dialog.addButton(
+                "Close and preserve old draft", QMessageBox.ButtonRole.DestructiveRole
+            )
+            dialog.exec()
+            if dialog.clickedButton() is not replace:
+                self.closing.emit()
+                super().closeEvent(event)
+                return
+            self._restore_failed = False
+        while True:
+            try:
+                save_review_draft(self, draft_path())
+                break
+            except (OSError, TypeError, ValueError) as exc:
+                dialog = QMessageBox(self)
+                dialog.setIcon(QMessageBox.Icon.Warning)
+                dialog.setWindowTitle("Review draft not saved")
+                dialog.setText("The last review configuration could not be saved.")
+                dialog.setInformativeText(str(exc))
+                retry = dialog.addButton("Retry", QMessageBox.ButtonRole.AcceptRole)
+                dialog.addButton(
+                    "Close without saving", QMessageBox.ButtonRole.DestructiveRole
+                )
+                dialog.exec()
+                if dialog.clickedButton() is not retry:
+                    break
+        self.closing.emit()
+        super().closeEvent(event)
 
 
 class ReviewControls(QObject):
@@ -51,6 +105,19 @@ class ReviewControls(QObject):
         self.observer.toggled.connect(lambda checked: self.set_phase(self.phase))
         self.phase_actions[self.phase].setChecked(True)
         self.window = window
+        self.review_mcu: ReviewMcu | None = None
+        if real_devices:
+            panel = window.devices.microcontroller
+            panel.live_review = True
+            self.review_mcu = ReviewMcu()
+            self.review_mcu.connection_result.connect(self.mcu_connection_result)
+            self.review_mcu.diagnostic_result.connect(panel.set_diagnostic)
+            self.review_mcu.command_failed.connect(panel.set_test_failure)
+            panel.connection_requested.connect(self.test_mcu_connection)
+            panel.pin_test_requested.connect(self.test_mcu_pin)
+            if isinstance(window, ReviewDashboardWindow):
+                window.closing.connect(self.review_mcu.shutdown)
+            self.review_mcu.start()
         window.dashboard.action_requested.connect(
             lambda action: window.dashboard.log_console.appendPlainText(
                 f"LOCAL REVIEW · {action} selected; no command sent."
@@ -60,6 +127,9 @@ class ReviewControls(QObject):
         cameras = window.devices.cameras
         cameras.real_devices = real_devices
         if real_devices:
+            cameras.console.setPlainText(
+                "Discovering attached cameras; no camera opened."
+            )
             cameras.drafts = []
             cameras.populate_inventory()
             cameras.load_selected()
@@ -87,6 +157,8 @@ class ReviewControls(QObject):
         window.apply_view(review_view(self.phase))
         self.refresh_preview_sources()
         if simulate_projectors:
+            window.devices.microcontroller.simulated_inventory = True
+            window.devices.microcontroller.request("Scan ports")
             projectors = window.devices.projectors
             faces = ("Front", "Left", "Right", "Bottom")
             projectors.review_displays = tuple(
@@ -112,6 +184,53 @@ class ReviewControls(QObject):
         window.dashboard.log_console.setPlainText(
             "Sample subject loaded.\nNo controller connection."
         )
+
+    def test_mcu_connection(self) -> None:
+        if self.review_mcu is not None:
+            self.review_mcu.request(
+                "connect",
+                port=str(self.window.devices.microcontroller.port.currentData()),
+            )
+
+    def test_mcu_pin(self, key: str, start: bool) -> None:
+        if self.review_mcu is None:
+            return
+        if not start:
+            self.review_mcu.request("stop", key=key)
+            return
+        panel = self.window.devices.microcontroller
+        camera = next((item for item in panel.camera_rows if item.key == key), None)
+        editor = (
+            panel.trial_pin
+            if key == "trial-state"
+            else panel.flip_pin
+            if key == "projector-flip"
+            else panel.pin_editors[key]
+        )
+        self.review_mcu.request(
+            "start",
+            key=key,
+            port=str(panel.port.currentData()),
+            pin=editor.text().strip(),
+            role=camera.role if camera is not None else "",
+            frequency_hz=float(camera.frequency) if camera is not None else None,
+        )
+
+    def mcu_connection_result(self, success: bool, message: str) -> None:
+        panel = self.window.devices.microcontroller
+        panel.connection_pending = False
+        panel.refresh_tests()
+        panel.console.appendPlainText(message)
+        if success:
+            port = str(panel.port.currentData())
+            panel.status_column.hud.setPlainText(
+                f"CONNECTION  Connected\nPORT        {port}\n{message}\n"
+                "TRIGGER TEST Awaiting pin test"
+            )
+        else:
+            panel.status_column.hud.setPlainText(
+                f"CONNECTION  Failed\n{message}\nTRIGGER TEST Not tested"
+            )
 
     def set_phase(self, phase: Phase) -> None:
         self.phase = phase
@@ -191,21 +310,50 @@ def main() -> None:
     parser.add_argument(
         "--simulated-devices",
         action="store_true",
-        help="Use isolated frontend camera and projector fixtures instead of attached devices.",
+        help="Use isolated device fixtures (the review default).",
+    )
+    parser.add_argument(
+        "--real-devices",
+        action="store_true",
+        help="Explicitly inspect attached local devices without a managed controller.",
     )
     args = parser.parse_args()
+    if args.simulated_devices and args.real_devices:
+        parser.error("Select either simulated or real devices")
     app = QApplication(sys.argv[:1])
     app.setApplicationName("CephVR2.0 Dashboard")
     apply_theme(app)
-    window = DashboardWindow(
-        sample=args.review, settings=QSettings("CephVR", "Frontend")
-    )
+    window_class = ReviewDashboardWindow if args.review else DashboardWindow
+    window = window_class(sample=args.review, settings=QSettings("CephVR", "Frontend"))
     if args.review:
         ReviewControls(
             window,
-            simulate_projectors=args.simulated_devices,
-            real_devices=not args.simulated_devices,
+            simulate_projectors=not args.real_devices,
+            real_devices=args.real_devices,
         )
+        try:
+            if load_review_draft(window, draft_path()):
+                window.dashboard.log_console.appendPlainText(
+                    "Local review draft restored; no controller configuration applied."
+                )
+            if not args.real_devices:
+                window.devices.microcontroller.request("Scan ports")
+        except (
+            OSError,
+            UnicodeError,
+            TypeError,
+            ValueError,
+            KeyError,
+            IndexError,
+            AttributeError,
+        ) as exc:
+            if isinstance(window, ReviewDashboardWindow):
+                window._restore_failed = True
+            QMessageBox.warning(
+                window,
+                "Review draft not restored",
+                f"The saved review draft was preserved but could not be restored: {exc}",
+            )
     fit_window_to_screen(window)
     window.show()
     window.raise_()

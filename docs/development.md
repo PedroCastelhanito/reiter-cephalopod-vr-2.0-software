@@ -127,6 +127,16 @@ install `.[dev,acquisition]` in the project environment. The pypylon, NumPy and
 pySerial pins come from rig inventory; pinning them does not establish compatibility
 or performance. FFmpeg remains an external PATH prerequisite under A08.
 
+The managed SpikeGLX connection check uses the official
+[SpikeGLX SDK](https://github.com/billkarsh/SpikeGLX-CPP-SDK) Python wrapper and
+Windows DLL. On the rig, clone that SDK to `.local-spikeglx-sdk` in this checkout,
+then copy `Windows/API/SglxApi.dll` into
+`.local-spikeglx-sdk/Windows/Python/sglx_pkg/` beside `sglx.py`. Keep that SDK
+folder local; it is ignored by Git. Alternatively, set
+`CEPHVR_SPIKEGLX_SDK_DIR` to an installed `sglx_pkg` directory containing both
+files before starting the managed runtime. The diagnostic reads the saved endpoint
+from `config/backends/synchronization_config.toml`; it does not start recording.
+
 ## Dashboard frontend review
 
 The native Dashboard uses the [shared GUI formatting rules](architecture/gui.md#g02).
@@ -135,19 +145,46 @@ For an existing macOS source environment, install its declared PyQt6 version dir
 the complete package's native DLLs are intentionally restricted to AMD64 Windows.
 
 ```sh
-# Existing repository Python environment; no controller or devices are launched.
+# Simulated design-review GUI; no device inventory or command touches the rig.
 python scripts/start_gui.py
-# Optional disconnected view, without local review controls:
-python scripts/start_gui.py --read-only
-# Equivalent module entry for review:
-python -m cephvr.gui.review --review
+# Windows managed runtime: launcher, controller, backends and GUI.
+python scripts/start_runtime_gui.py
 ```
 
-The script selects the repository's `.venv` Python on Windows/macOS/Linux and works
-from any working directory when called by its full path. Review mode discovers local
-cameras, secondary displays and COM ports; it does not launch the managed experiment.
-Use `python -m cephvr.gui.review --review --simulated-devices` for isolated sample
-cameras and four projector displays (2–5), assigned Front/Left/Right/Bottom.
+In VS Code, open **Run and Debug** and choose **CephVR: Review GUI (simulated)**
+or **CephVR: Runtime GUI (managed)**, then press F5. The checked-in
+`.vscode/launch.json` selects the repository `.venv` and an integrated terminal
+for each script. It avoids debugger attachment to the managed child processes,
+which have bounded startup deadlines. The managed profile starts the full Windows launcher, so its
+availability also depends on supervisor and backend startup.
+
+Both scripts select the repository's `.venv` Python and work from any working
+directory when called by full path. `start_gui.py` opens two sample cameras, four
+projector displays and a simulated Arduino inventory without detecting physical
+devices. `start_runtime_gui.py` uses the Windows application launcher so the
+controller-backed GUI can discover attached cameras, secondary displays and COM
+ports and send supported managed commands.
+In the managed window, use **Take control** on Dashboard before changing camera
+participation or running MCU diagnostics. For an externally triggered camera,
+choose its PFS file in Devices > Cameras and save the detected FrameStart line
+source with **Save camera settings** before selecting **Use**. The controller
+validates each update and reports failures in the camera log. Devices >
+Microcontroller **Save pins** retains the camera output pins as well as Trial state
+and Projector flip; Test uses the saved values. These controls do not establish
+physical trigger wiring or live preview until checked on the rig.
+Closing the managed GUI leaves the application launcher and backends running under
+[E08](architecture/system-contracts.md#e08). Starting the full runtime a second
+time while they remain active reports `application instance already running`;
+the application must be shut down through its controller command before starting
+a new generation. A missing GUI relaunch path for an already running generation is
+still pending.
+On normal review-window close, it saves local subject, device, recording, projector
+and trial-program drafts to ignored `config/review_draft.json` and restores them on
+the next review launch. This draft is separate from the controller-owned
+`config/last_configuration.json` and does not make a session ready.
+The review module also accepts `python -m cephvr.gui.review --review` for the same
+isolated sample cameras, Arduino and four projector displays (2–5), assigned
+Front/Left/Right/Bottom.
 Projector checkboxes drive the Protocol lanes. Simulated inventory is an authoring
 fixture; verify real Windows display indices and physical assignments on the rig.
 
@@ -170,8 +207,8 @@ Devices has icon subtabs for Cameras, Microcontroller, Projectors and SpikeGLX w
 draft fields and check actions. Protocol provides batch creation/editing, per-projector
 layers, ordered or random variations and separate geometry/calibration-aware planning
 playback. Tracking remains a placeholder. Omitting `--review` shows a disconnected,
-read-only frontend. Neither mode is the managed GUI bootstrap or an experiment mode;
-controller transport, control leases and runtime viewers remain unfinished.
+read-only frontend. The runtime script is the managed application entry point;
+its available commands still depend on the connected controller and backend state.
 
 Camera review discovers attached devices; simulated mode supplies two sample devices.
 Per-device drafts and experiment checkboxes drive availability. Disabled preview

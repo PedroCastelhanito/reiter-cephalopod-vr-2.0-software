@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from cephvr.acquisition.ports import ControllerPort
 from cephvr.acquisition.state import CoordinatorIdentity, PulseRecord
@@ -34,6 +35,7 @@ class ManualDeviceStatusReporter:
         self.clock = clock
         self._revision = 0
         self._views: dict[int, control.CameraDeviceView] = {}
+        self._diagnostic: control.MicrocontrollerDiagnosticView | None = None
         self._reports: dict[str, tuple[bytes, wire.AcquisitionDeviceStatusReport]] = {}
 
     def reserve(self, command: wire.BackendCommand) -> None:
@@ -108,6 +110,18 @@ class ManualDeviceStatusReporter:
         else:
             view.ClearField("preview_run_id")
 
+    def set_diagnostic(self, signal: int, pin: str, active: bool, edges: int) -> None:
+        self._diagnostic = control.MicrocontrollerDiagnosticView(
+            active=active,
+            signal=cast(control.MicrocontrollerSignalKind, signal),
+            pin=pin,
+            rising_edges=edges,
+            observed_monotonic_ns=self.clock(),
+        )
+
+    def clear_diagnostic(self) -> None:
+        self._diagnostic = None
+
     async def report(
         self,
         command: wire.BackendCommand,
@@ -169,6 +183,8 @@ class ManualDeviceStatusReporter:
             target.CopyFrom(retained_view)
         if self.pulse.observation is not None:
             views.pulses.CopyFrom(self.pulse.observation)
+        if self._diagnostic is not None:
+            views.diagnostic.CopyFrom(self._diagnostic)
         status = wire.AcquisitionDeviceStatusReport(
             views=views,
             work=command.work,

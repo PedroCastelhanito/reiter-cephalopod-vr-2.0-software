@@ -6,7 +6,11 @@ from cephvr.control.v1 import types_pb2
 
 from .validation_buffers import validate_shared_options
 from .validation_camera import validate_camera_role
-from .validation_pulse import validate_pulse_port, validate_pulse_role
+from .validation_pulse import (
+    validate_pulse_io,
+    validate_pulse_port,
+    validate_pulse_role,
+)
 from .validation_values import issue
 
 
@@ -48,6 +52,10 @@ def validate_configuration(
     settings = backend.acquisition
     active_ids: dict[str, str] = {}
     active_pins: dict[str, str] = {}
+    if not backend.enabled:
+        validate_pulse_io(settings, result, active_pins)
+        validate_pulse_port(settings, result, ())
+        return result
     external_roles: list[str] = []
     for role in ("behavioral", "tracking"):
         device_id = validate_camera_role(settings, role, result)
@@ -55,6 +63,7 @@ def validate_configuration(
             active_ids[device_id] = role
         if validate_pulse_role(settings, role, result, active_pins):
             external_roles.append(role)
+    validate_pulse_io(settings, result, active_pins)
     validate_pulse_port(settings, result, tuple(external_roles))
     validate_shared_options(settings, result, active_ids)
     return result

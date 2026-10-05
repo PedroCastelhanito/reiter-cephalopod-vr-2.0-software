@@ -213,6 +213,108 @@ class ManualPulses:
                 pass
             return _rejected(command.command_id, "PULSE_EDIT_FAILED", str(exc))
 
+    async def execute_diagnostic(
+        self, request: wire.AcquisitionMicrocontrollerCommand, *, deadline_ns: int
+    ) -> control.CommandAdmission:
+        command = request.command
+        if (
+            self.clock() >= deadline_ns
+            or not command.command_id
+            or command.issuer != self.identity.controller
+            or command.target != self.identity.backend
+            or not command.HasField("parent_operation")
+            or not command.parent_operation.command_id
+            or command.work.WhichOneof("work") is not None
+            or not request.HasField("configuration_revision")
+            or request.configuration_revision < self.configuration.revision
+            or not manual_configuration_available(self.session_slot)
+            or not request.requested.HasField("port")
+            or request.requested.port != self.configuration.settings.pulses.port
+            or any(
+                worker.preview and worker.preview.started
+                for worker in self.workers.values()
+            )
+            or request.kind
+            not in {
+                wire.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+                wire.MICROCONTROLLER_COMMAND_KIND_START,
+                wire.MICROCONTROLLER_COMMAND_KIND_STATUS,
+                wire.MICROCONTROLLER_COMMAND_KIND_STOP,
+            }
+        ):
+            return _rejected(
+                command.command_id,
+                "MCU_UNAVAILABLE",
+                "MCU diagnostic is stale or unavailable",
+            )
+        if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_START:
+            selection = _selected_diagnostic(request.signal, request.requested)
+            if selection is None:
+                return _rejected(
+                    command.command_id,
+                    "MCU_PIN",
+                    "signal has no enabled pin assignment",
+                )
+        elif request.signal != control.MICROCONTROLLER_SIGNAL_KIND_UNSPECIFIED:
+            return _rejected(
+                command.command_id, "MCU_SIGNAL", "only Start selects a signal"
+            )
+        try:
+            self.device_status.reserve(command)
+            await retire_completed_manual_session(
+                self.session_slot, self.worker_registry, deadline_ns=deadline_ns
+            )
+            if (
+                request.kind == wire.MICROCONTROLLER_COMMAND_KIND_CONNECT
+                or self.pulse.observation is None
+            ):
+                self.pulse.observation = await self.serial.connect(
+                    deadline_ns=deadline_ns
+                )
+            if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_CONNECT:
+                self.device_status.clear_diagnostic()
+            elif request.kind == wire.MICROCONTROLLER_COMMAND_KIND_START:
+                assert selection is not None
+                kind, pin, frequency = selection
+                active, _, _, edges = await self.serial.diagnostic_start(
+                    kind, pin, frequency_hz=frequency, deadline_ns=deadline_ns
+                )
+                self.device_status.set_diagnostic(request.signal, pin, active, edges)
+            else:
+                active, kind, pin, edges = (
+                    await self.serial.diagnostic_status(deadline_ns=deadline_ns)
+                    if request.kind == wire.MICROCONTROLLER_COMMAND_KIND_STATUS
+                    else await self.serial.diagnostic_stop(deadline_ns=deadline_ns)
+                )
+                signal = _signal_for_kind(kind)
+                self.device_status.set_diagnostic(signal, pin, active, edges)
+            receipt = await self.device_status.report(
+                command,
+                command_name="execute_microcontroller_command",
+                succeeded=True,
+                deadline_ns=deadline_ns,
+            )
+            if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                return _rejected(
+                    command.command_id, "MCU_STATUS", "controller rejected MCU status"
+                )
+            self.device_status.finalize_command(command.command_id)
+            return control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+                command_id=command.command_id,
+            )
+        except (RuntimeError, TimeoutError, ValueError) as exc:
+            try:
+                await self.results.report_failure(
+                    command,
+                    command_name="execute_microcontroller_command",
+                    deadline_ns=deadline_ns,
+                    failure=str(exc),
+                )
+            except (RuntimeError, TimeoutError, ValueError):
+                pass
+            return _rejected(command.command_id, "MCU_COMMAND_FAILED", str(exc))
+
     def _project_live_previews(self) -> None:
         for role, worker in self.workers.items():
             preview = worker.preview
@@ -248,6 +350,41 @@ def _active_external_previews(
         ):
             selected.append(role)
     return tuple(selected)
+
+
+def _selected_diagnostic(
+    signal: int, requested: camera.CameraPulseConfiguration
+) -> tuple[str, str, float | None] | None:
+    fixed = {
+        int(control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE): "trial_state",
+        int(control.MICROCONTROLLER_SIGNAL_KIND_PROJECTOR_FLIP): "projector_flip",
+    }
+    if signal in fixed:
+        kind = fixed[signal]
+        if not getattr(requested, f"{kind}_enabled") or not requested.HasField(
+            f"{kind}_pin"
+        ):
+            return None
+        return kind, getattr(requested, f"{kind}_pin"), None
+    role = {
+        int(control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL): "behavioral",
+        int(control.MICROCONTROLLER_SIGNAL_KIND_TRACKING): "tracking",
+    }.get(signal)
+    if role is None:
+        return None
+    pulse = getattr(requested, role)
+    if not pulse.HasField("pin") or not pulse.HasField("requested_frequency_hz"):
+        return None
+    return role, pulse.pin, pulse.requested_frequency_hz
+
+
+def _signal_for_kind(kind: str) -> int:
+    return {
+        "trial_state": control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+        "projector_flip": control.MICROCONTROLLER_SIGNAL_KIND_PROJECTOR_FLIP,
+        "behavioral": control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL,
+        "tracking": control.MICROCONTROLLER_SIGNAL_KIND_TRACKING,
+    }[kind]
 
 
 def _rejected(command_id: str, code: str, message: str) -> control.CommandAdmission:

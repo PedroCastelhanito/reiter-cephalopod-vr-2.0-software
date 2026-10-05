@@ -815,20 +815,20 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 35
+**Status:** Accepted · **Revision:** 36
 
 **Board and firmware**
 
-- Target the rig's specific microcontroller first, primarily Arduino boards, with a
-  board-independent host serial protocol; add board implementations when needed, with
-  no initial multi-board firmware framework. Exact board/timer mapping is unresolved;
-  Arduino branding alone establishes neither supported pins nor timing.
+- Target the rig's COM8 Arduino Uno first, with a board-independent host serial
+  protocol; add board implementations when needed, with no initial multi-board
+  firmware framework. Firmware-reported pins and actual timer behavior require
+  validation on this board.
 - Firmware is installed/updated manually. Setup verifies protocol/capabilities and
   blocks incompatible firmware with an actionable explanation.
 - **Deferred:** CephVR-assisted flashing of the appropriate board firmware/sketch;
   board/image selection, upload tooling and update workflow need future design. No
   automatic flashing or installation is enabled.
-- Serial protocol version is integer **1**, separate from firmware release, and must
+- Serial protocol version is integer **2**, separate from firmware release, and must
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
 
@@ -848,7 +848,8 @@ hardware information and later implementation; no new deferral is implied.
 
 **Wire format**
 
-- Newline-terminated ASCII `CONFIGURE`, `ON`, `OFF`, `STATUS`, `PING`, `CAPS` with
+- Newline-terminated ASCII `CONFIGURE`, `ON`, `OFF`, `STATUS`, `PING`, `CAPS` and
+  bounded `DIAG_START`, `DIAG_STATUS`, `DIAG_STOP` with
   OK/ERR. Space-separated named fields hold tokens/numbers; no quoting/escaping/debug
   prints. Per-output keys use lowercase `behavioral_` / `tracking_`, not numeric maps.
 - Every complete line, including newline, is at most **512 bytes**; no additional
@@ -945,9 +946,13 @@ hardware information and later implementation; no new deferral is implied.
   Their pin assignments belong to Microcontroller. Per-output test intent targets
   one assigned pin for external observation in SpikeGLX; camera tests use the rate
   already configured in Cameras. Input diagnostics observe edges rather than drive
-  the input. Firmware/transport support, bounded test duration and diagnostic evidence
-  remain unimplemented; these requests do not add opcodes to protocol version 1,
-  lift firmware deferral or establish physical verification.
+  the input. Acquisition owns one diagnostic on its serial connection in
+  Configuration with control authority; it rejects session/preview activity and
+  conflicting or unsupported pins. Firmware ends every diagnostic within two
+  seconds and leaves tested outputs LOW; explicit Stop, control loss, transport
+  failure and shutdown request earlier stop. Return matched state and input edge
+  counts as diagnostic evidence, never as physical pulse or SpikeGLX proof.
+  Installing/flashing the new firmware remains manual.
 
 **Status and capabilities**
 

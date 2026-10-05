@@ -101,6 +101,7 @@ class CameraOperation:
     status_reservation_key: str = ""
     status_work_key: str = ""
     internal_retention: bool = False
+    is_microcontroller: bool = False
 
 
 @dataclass

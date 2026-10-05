@@ -32,10 +32,11 @@ E04 reservation guards preserve exclusive ownership while Windows closes the byt
 lock for quarantine, including failure; default-path recovery persistence passes.
 Fixtures now respect Windows sharing/permissions and await actual async outcomes.
 
-Full managed launch remains gated by the unfinished managed GUI client. Automatic approval
-review rejected the earlier proposed launcher invocation for potential managed
-service/hardware effects; it was not executed. Focused checks do not establish
-full E04/E08 application/device/workload acceptance. Capacity bypass was not
+An earlier proposed launcher invocation was rejected by automatic approval review
+for potential managed service/hardware effects and was not executed at that time.
+The later 2026-10-05 owner-authorized managed launch and its Visual Stimulus failure
+are recorded in the frontend section. Focused checks do not establish full E04/E08
+application/device/workload acceptance. Capacity bypass was not
 established; authorization checks the same capacity under the lifecycle lock.
 ARCH-002 review keeps the 502-line reservation owner cohesive around namespace
 ownership; native tests remain one platform-fixture module rather than per-fix files.
@@ -199,6 +200,225 @@ external backend viewer geometry integration remains pending. Shared round indic
 windows already reuse useful reference patterns with smaller focused components.
 
 ### Dashboard frontend implementation
+
+The SpikeGLX managed Devices panel now sends a read-only authenticated controller
+connection query. It reports the saved endpoint, SpikeGLX version, running/saving
+state, run name and data directory via the official SDK. The local SDK readback and
+focused GUI/RPC checks pass. A later managed launch displayed a connected
+Dashboard after concurrent renderer startup fixes, but it exited before the
+button could be clicked. The agent's UI tool could read but could not click the
+window. A retry ended with `JOB_INSPECTION_FAILED`; the exact SpikeGLX button
+response remains unverified.
+The separate E12 session lifecycle port is still unavailable, so pairing is not
+claimed ready. See [E12](../docs/architecture/synchronization.md#e12) and the
+[rig worklist](rig-verification.md).
+
+2026-10-05 Windows rig review, current `main` checkout: PyQt6 constructed the review
+Dashboard at 1280×800 with real discovery. Both expected Basler serials appeared in
+Cameras; `Test enabled` opened, identified and closed 40065509 (`acA4112-30uc`) and
+40747103 (`a2A2464-77umPRO`) without capture or settings writes. Dashboard,
+Protocol, Cameras, Microcontroller, Projectors, SpikeGLX and the Tracking placeholder
+were visually inspected from transient Qt grabs; cards, controls and text fit at that
+size, with lower editor content available through the page scrollers. The GUI
+discovered two COM ports without opening either. The current Qt session reported
+one 1920×1080 Dell operator display
+and no secondary projectors, so physical output assignment cannot be checked from
+this session. The reviewed PNGs were deleted after inspection.
+
+The focused Windows `test_devices_draft_reflows_without_horizontal_clipping[720]`
+fails: the Devices scroller has horizontal overflow (48px in the test, and a direct
+probe found 28px Cameras / 164px Projectors). This is an observed narrow-layout
+defect, tracked in TODO. The first broad GUI run also emitted Qt access violations
+and temporary-directory errors; the offscreen rerun encountered many setup/errors
+and could not finish because pytest was denied access to its generated basetemp.
+Focused camera/controller and authenticated-client runs also encountered
+temporary-directory permission failures; no backend suite pass is claimed.
+These runs provide no passing GUI-suite claim. Scoped Ruff/format pass (87 files),
+Windows-target mypy passes (86 GUI files), and the boundary checker reports 539
+modules with zero violations and existing cohesion advisories. The real-camera
+review console now identifies discovery accurately instead of claiming sample input.
+Two focused camera-review behavior tests pass after that change.
+
+Managed camera wiring under [G01](../docs/architecture/gui.md#g01),
+[E03](../docs/architecture/gui.md#e03),
+[A03/A10](../docs/architecture/acquisition.md#a03) and the
+[preview contract](../contracts/acquisition/preview-control.md) now has a separate
+`cephvr.gui.main` entry point, exact GUI credential, observer WatchState stream,
+explicit control claim/release, current-revision camera Start/Stop/Attach RPCs,
+attachment query and release reports. The GUI preview reader waits on the A03 event,
+copies the newest slot, converts it off the Qt event thread and coalesces delivery to
+one pending image. The managed window leaves unrelated configuration editors disabled
+until their controller submissions are implemented. Existing saved acquisition settings
+must enable the backend and assign a camera before Start capture is available; the
+current default leaves acquisition disabled; COM8 and D10/D11 outputs are now
+assigned, while camera trigger input and other camera settings remain incomplete.
+The GUI still lacks a separate editing-only Connect operation,
+camera/PFS config submission and broader backend controls. No actual camera frame or
+full managed launch has been verified in this increment.
+
+Managed normal window closure now requests the controller's existing E07
+`SaveConfigurationHistory` RPC before exiting. An observer acquires control only
+when the lease is free; another holder causes an explicit save failure. The UI
+offers Retry or Close without saving on failure/disconnection. Controller restart
+already loads `config/last_configuration.json`, preserves accepted disabled-backend
+settings and fills missing defaults. A focused GUI close-flow test and authenticated
+loopback save-to-disk test pass. This applies to the controller-accepted reusable
+configuration; review-only local drafts are not controller settings. The full
+managed close/restart sequence remains unverified on the rig. The renderer startup
+heartbeat defect below is corrected, but the bounded startup probe did not exercise
+a controller configuration save or explicit E08 application shutdown.
+
+The `scripts/start_gui.py` design-review window now atomically saves its local
+editable drafts to ignored `config/review_draft.json` on close and restores them
+after camera/display inventory on its next launch. It retains subject, device,
+recording, projector and canonical trial-program drafts without claiming backend
+application. A damaged prior file is preserved and warned; close-time save errors
+offer Retry or Close without saving. The focused managed/review GUI and
+authenticated controller persistence run passed 10 cases, with one additional
+malformed-draft read check; Ruff, Windows-target
+mypy on five affected sources, backend boundaries (546 modules, zero violations)
+and diff whitespace checks passed. The controller's E07 history remains the
+only accepted reusable experiment configuration.
+
+2026-10-05 local rig-review MCU correction under [G01](../docs/architecture/gui.md#g01)
+and [A11](../docs/architecture/acquisition.md#a11): the COM Test connection and
+per-pin Test/Stop controls now use an exclusive acquisition serial owner on a Qt
+worker thread. Numeric GUI pins map to Uno D pins; camera rows use their retained
+requested rate. Firmware bounds each diagnostic to two seconds, and the GUI shows
+matched active/inactive edge counts or command failures. Close requests an explicit
+stop before port release. Isolated sample fixtures retain command-free behavior.
+The focused MCU/review GUI and acquisition serial subset passed 56 cases after
+a fixture-state correction;
+the initial sandbox pytest run could not access its Windows temp directory. A live
+COM8 test through the new worker confirmed firmware `cephvr2_uno_1`, protocol 2,
+stopped outputs, then D2 active with zero edges and inactive with 120 rising edges
+after 2.2 seconds. This confirms the input diagnostic path and observed D2
+transitions, not the projector as their source. D9/D10/D11 outputs and receiving
+channels remain untested. The managed GUI still uses its controller-owned route.
+
+The standard entry points are now separate under [G01](../docs/architecture/gui.md#g01)
+revision 96: `scripts/start_gui.py` always opens fixture cameras, four simulated
+projector displays and one simulated Arduino entry, without OS camera/display/COM
+inventory. `scripts/start_runtime_gui.py` enters through the Windows application
+launcher and its managed GUI. The managed Devices page inventories real Basler
+cameras, secondary OS displays and COM ports at startup even before a control lease;
+these display/port scans are read-only. Focused GUI tests passed 41 cases, including
+fixture isolation and managed pre-control inventory. Script-command smoke checks
+confirmed the selected modules and required launcher arguments without starting
+the runtime. A later bounded managed launch is described below. Physical display/MCU
+checks remain separate.
+
+2026-10-05 VS Code runtime launch follow-up: added explicit review and managed
+Run and Debug profiles using the repository `.venv`. A real managed launch initially
+failed because the user-profile CephVR runtime directory had an inherited Windows
+DACL; the exact directory was repaired with the repository owner-only helper and
+verified. The first renderer heartbeat lacked an E08 lifecycle phase, and after
+that was repaired the idle coordinator aggregate declared a cleanup catalogue
+revision before session registration. The worker now provides an initial
+configuration phase and a setting-up phase with its resource catalogue; the
+coordinator forwards the phase and omits the idle revision. A bounded managed
+launch kept every role and the real Dashboard window open beyond 25 seconds, with
+repeated accepted renderer heartbeats. The VS Code profiles use the repository
+`.venv` without debugger attachment to child processes, preserving startup
+deadlines. An offscreen managed GUI construction check inventoried two cameras and
+two COM ports. The speculative heartbeat timestamp adjustment and diagnostic
+instrumentation were reverted. No Setup, preview capture, pin output or projector
+presentation occurred. GUI closure intentionally leaves the application running
+under E08; the diagnostic launcher remained active and was later found to hold the
+single-instance mutex. Its exact process identity and ancestry were verified
+before it was stopped; the mutex was then confirmed available. Explicit E08
+application shutdown and same-generation GUI relaunch remain unverified or
+unimplemented, respectively. Earlier intermittent native process-inspection access error
+and later lifecycle phases remain unverified. [Dated startup evidence](gui-startup-evidence-2026-10-05/README.md)
+contains raw traces and limits.
+
+2026-10-05 managed control audit under [G01](../docs/architecture/gui.md#g01),
+[E03](../docs/architecture/gui.md#e03), [E07](../docs/architecture/experiment.md#e07),
+[A10](../docs/architecture/acquisition.md#a10) and
+[A11](../docs/architecture/acquisition.md#a11): the Dashboard now exposes Take
+control, including explicit takeover confirmation when another operator holds it.
+The Cameras Use checkbox submits an E07 update by assigned serial and waits for the
+authoritative snapshot; rejection restores the previous state and is logged.
+Camera config now submits its PFS path, FrameStart line source, timing selection and
+requested pulse rate through the same revision-checked route. Managed Microcontroller
+Save pins includes both camera outputs as well as Trial state and Projector flip;
+camera Test/Stop uses the saved behavioral/tracking signal identity. A pure validation
+probe against the current rig defaults found that enabling the behavior camera is
+rejected until `device.settings.trigger_source` is set; with an explicit `Line1`
+source the acquisition validator returned valid. This probe is schema validation,
+not proof that Line1 is wired or present on the physical camera. No camera or MCU
+command was sent in this increment.
+
+A later read-only query of the owner's live controller generation at 17:10 JST
+confirmed Configuration phase, a GUI-held lease, both Basler serials discoverable,
+acquisition disabled, and the enabled behavioral camera lacking `trigger_source`.
+The owner's observed `REJECTED: configuration validation failed` is consistent
+with the acquisition validator's `TRIGGER_SOURCE_REQUIRED` issue. The controller
+now includes the first field issue in edit rejection text, and the GUI explains
+the missing FrameStart line before sending the enable request. Focused GUI
+enable tests passed 3; controller configuration transactions passed 17 with
+1 skip outside the sandbox after Windows temp access denied the sandboxed run.
+Ruff, Windows-target mypy, backend boundaries and diff whitespace passed. These
+changes require a new application generation; the owner's running GUI and
+controller were left untouched. The archived 2026-09-29 behavior PFS records
+FrameStart `TriggerMode Off` with `TriggerSource Line1`; its Line1 entry alone
+does not establish a currently active external-trigger configuration or wiring.
+
+The remaining runtime controls are not yet all functional: Dashboard subject and
+recording forms, Protocol editing, projector configuration/calibration, SpikeGLX
+pairing/channel mapping and Tracking remain review-only or placeholders. Camera role
+editing and managed Test enabled also lack controller routes. Existing managed
+Start/Stop/Attach preview, MCU diagnostics and SpikeGLX connection tests require
+separate rig execution; the audit did not prove them from a live click. Focused
+managed camera/control/MCU Qt tests passed 10 cases; related controller configuration
+transaction tests passed 26 with one skip. The broad GUI suite reached
+two failures before a Qt access violation stopped collection; the first expects an
+older SpikeGLX review log message, and the second compares Qt forward-slash paths
+with Windows backslash paths. Neither assertion covers this increment. This is
+not a suite pass. Ruff lint, Windows-target mypy on 93 GUI source
+files, backend boundaries and diff whitespace checks are recorded in LOG. The
+585-line camera panel and 564-line managed entry prompted ARCH-002 cohesion review:
+the panel still owns one camera UI state, while the entry coordinates distinct
+transport/views; further backend binding should be extracted before extending them.
+
+2026-10-05 Windows in-memory native preview check: the first 2×2 A03 ring attach
+failed because CPython's shared-memory attach requested more mapping rights than the
+owner-only DACL granted. Giving the same owner all non-execute mapping rights fixed
+that attach without widening principal access. The next run exposed that the rig's
+pypylon marks inactive converter controls read-only and copies a memoryview source.
+Setting only the active truncate-mode shift and accepting that private SDK copy made
+the ring-to-8-bit-GUI-reader check pass, including reader closure. This is an actual
+Windows ring/converter test, not a Basler capture, frame-rate or optical pass.
+The older CephVR1.0 `FrameStreamWorker` emits one Qt signal per frame; the new reader
+retains only one replaceable pending image to avoid a render backlog. Rig throughput
+for that improvement has not been measured. The focused authenticated-client,
+credential, native-mapping, manual-preview and GUI checks pass (11 selected); 30
+controller-camera/ring checks pass separately. Ruff, Windows-target mypy and backend
+boundaries pass with existing cohesion advisories. Owner-assigned trigger wiring or
+an explicit temporary unaligned free-running test is needed before live capture.
+
+2026-10-05 managed launcher check: an inherited user-profile runtime DACL rejected
+GUI credential provisioning, so the launch was repeated with an isolated owner-only
+runtime under the workspace; that temporary credential directory was removed after
+the launcher exited. Startup then exposed stale bootstrap-handle closure in the
+acquisition, Visual Stimulus, renderer and Tracking entries, and a missing Tracking
+policy descriptor. Correcting those and confirming each backend's existing supervisor
+launch record let startup reach the renderer. The renderer subsequently reported
+`VISUAL_STIMULUS_WORKER_FAILURE: original Visual Stimulus peer deadline expired`;
+the supervisor performed safety shutdown and an emergency report records the error.
+Its cleanup also logged `VISUAL_STIMULUS_EVIDENCE: cleanup command unknown` and an
+async admission conflict during shutdown. One further launch with method-specific
+deadline text identified `ReportWorkerHeartbeat` as the expiring peer call; whether
+it is delayed before submission or in the coordinator still needs isolation. The
+5-second registration policy was not changed. No camera command or
+Setup was issued. The real user-profile ACL was not altered. Emergency outputs from
+these launches remain under `reports/emergency-*.json` as E04 runtime artifacts.
+Two current managed GUI tests pass, including native latest-of-two-frame ring read;
+authenticated client/shared credentials pass 12. Visual Stimulus and supervisor
+behavioral tests pass 242 with the previously tracked
+`presentation.pacing_refresh_hz` loader failure. Scoped Ruff, Windows-target mypy
+(102 source files), boundary checks (542 modules, zero violations) and diff whitespace
+pass. These tests do not close full launcher or physical camera acceptance.
 
 2026-10-05 planner/layer/performance update at base commit
 `3af4289814927c1c3fdc4251731ef894a49a1489` plus working tree follows
@@ -934,9 +1154,15 @@ Small Inputs/Outputs cards use shared compact density and a four-column row help
 centered enable checkboxes, wrapped signal names, equal-width pin and action controls.
 Name, pin and action columns now share width equally, widening pin/Test controls.
 Both cards share column proportions and spacing; other cards keep their spacing.
-Buttons currently log unsent requests only: protocol
-v1 has no arbitrary trial-state test or projector-edge observation command, and
-bounded diagnostics/managed transport remain unimplemented under A11. ARCH-002
+The managed GUI now submits COM8 connection, saved Trial state/Projector flip
+pins, and bounded Test/Stop requests through the controller to acquisition's
+serial owner. Firmware protocol v2 implements the two diagnostics and their
+device status is projected back to the panel. The owner-assigned D10/D11 camera
+trigger pins and saved rates are projected to their matching camera rows. MCU
+commands were extracted from the managed GUI entry into a focused binding under
+ARCH-002. Focused MCU GUI tests pass (6),
+while the full managed path and physical pins remain unverified; the broad GUI
+suite still terminates with a Qt fixture teardown access violation. ARCH-002
 review reuses one small row helper and removes the obsolete aggregate test path.
 Projectors replaces its HUD with Displays layout, a tank/screen schematic and the
 activity log. Screen calibration/Synchronization/Rig geometry sections beneath inventory

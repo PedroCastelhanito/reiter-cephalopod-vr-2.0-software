@@ -21,6 +21,10 @@ __pycache__/
 
 # Mutable local history and recordings, not operator defaults or evidence reports.
 /config/last_configuration.json
+/config/review_draft.json
 /cephvr-data/
+/.local-spikeglx-sdk/
+/.local-spikeglx-pytest/
+/.local-spikeglx-rpc-*/
 
 .DS_Store

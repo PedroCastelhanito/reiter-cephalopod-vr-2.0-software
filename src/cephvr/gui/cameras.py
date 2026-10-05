@@ -44,6 +44,9 @@ class CamerasPanel(ResponsiveColumns):
     participation_changed = pyqtSignal()
     drafts_changed = pyqtSignal()
     preview_requested = pyqtSignal(str, bool)
+    connection_requested = pyqtSignal(str, bool)
+    enable_requested = pyqtSignal(str, bool)
+    settings_requested = pyqtSignal(str, str, str, str, str)
 
     def __init__(self, *, sample: bool = False) -> None:
         left, left_layout = column()
@@ -70,6 +73,8 @@ class CamerasPanel(ResponsiveColumns):
         )
         self.view = DashboardView()
         self.real_devices = False
+        self.managed = False
+        self.pending_enable: dict[str, bool] = {}
         self.loading = False
         inventory = Card("Available devices")
         self.table = QTableWidget(len(self.drafts), 4)
@@ -186,6 +191,9 @@ class CamerasPanel(ResponsiveColumns):
         self.preset.editingFinished.connect(self.inspect_preset)
         self.preset_field.path_selected.connect(lambda _: self.inspect_preset())
         self.configuration.body.addWidget(field("PARAMETER FILE", self.preset_field))
+        self.save_settings_button = button("Save camera settings", "secondary")
+        self.save_settings_button.clicked.connect(self.save_settings)
+        self.configuration.body.addWidget(self.save_settings_button)
         left_layout.addWidget(self.configuration)
         left_layout.addStretch()
         self.table.currentCellChanged.connect(lambda *_: self.load_selected())
@@ -194,7 +202,7 @@ class CamerasPanel(ResponsiveColumns):
         self.refresh_controls()
 
     def refresh_inventory(self) -> None:
-        if not self.can_operate:
+        if not self.can_operate and not self.managed:
             return
         if not self.real_devices:
             self.report("Refresh inventory")
@@ -265,11 +273,20 @@ class CamerasPanel(ResponsiveColumns):
 
     @property
     def can_edit(self) -> bool:
-        return self.view.sample and self.view.can_edit
+        return self.view.can_edit
 
     @property
     def can_operate(self) -> bool:
-        return self.can_edit and self.view.phase == Phase.CONFIGURATION
+        return self.view.phase == Phase.CONFIGURATION and (
+            self.can_edit
+            or self.managed
+            and self.view.connected
+            and self.view.has_control
+        )
+
+    @property
+    def can_edit_camera_settings(self) -> bool:
+        return self.can_edit or self.managed and self.can_operate
 
     def load_selected(self) -> None:
         draft = self.selected
@@ -289,7 +306,11 @@ class CamerasPanel(ResponsiveColumns):
         self.refresh_controls()
 
     def edit(self, key: str, value: str) -> None:
-        if not self.loading and self.can_edit and (draft := self.selected):
+        if (
+            not self.loading
+            and self.can_edit_camera_settings
+            and (draft := self.selected)
+        ):
             draft.values[key] = value
             if key == "preset":
                 draft.values.pop("trigger_clock", None)
@@ -302,7 +323,7 @@ class CamerasPanel(ResponsiveColumns):
 
     def inspect_preset(self) -> None:
         draft = self.selected
-        if not self.can_edit or not draft:
+        if not self.can_edit_camera_settings or not draft:
             return
         try:
             clock, source = trigger_hint(self.preset.text())
@@ -323,9 +344,44 @@ class CamerasPanel(ResponsiveColumns):
         self.refresh_controls()
         self.drafts_changed.emit()
 
+    def save_settings(self) -> None:
+        draft = self.selected
+        if not self.managed or not self.can_operate or draft is None:
+            return
+        if draft.role == "Unassigned":
+            self.console.appendPlainText("Assign this camera before saving settings.")
+            return
+        self.settings_requested.emit(
+            draft.serial,
+            draft.values.get("trigger_clock", ""),
+            draft.values.get("trigger_source", ""),
+            draft.values.get("preset", ""),
+            draft.values.get("trigger_frequency_hz", ""),
+        )
+        self.console.appendPlainText(
+            f"Requested {draft.role} settings save; awaiting controller confirmation."
+        )
+
     def set_participation(self, row: int, enabled: bool) -> None:
         draft = self.drafts[row]
-        if self.can_edit:
+        if self.managed and self.can_operate and draft.role != "Unassigned":
+            if (
+                enabled
+                and draft.values.get("trigger_clock") == "External controller"
+                and not draft.values.get("trigger_source")
+            ):
+                self.console.appendPlainText(
+                    f"{draft.role} cannot be enabled: select a PFS file with an explicit "
+                    "FrameStart line source, then Save camera settings."
+                )
+                self.refresh_controls()
+                return
+            self.pending_enable[draft.serial] = enabled
+            self.enable_requested.emit(draft.serial, enabled)
+            self.console.appendPlainText(
+                f"Requested {draft.role} {'enable' if enabled else 'disable'}; awaiting controller confirmation."
+            )
+        elif self.can_edit:
             draft.enabled = enabled
             self.participation_changed.emit()
             self.drafts_changed.emit()
@@ -355,12 +411,15 @@ class CamerasPanel(ResponsiveColumns):
 
     def toggle_connection(self) -> None:
         if self.can_operate and (draft := self.selected):
+            if self.managed:
+                self.connection_requested.emit(draft.key, not draft.connected)
+                return
             draft.connected = not draft.connected
             self.report("Connect" if draft.connected else "Disconnect")
             self.refresh_controls()
 
     def test_enabled(self) -> None:
-        if not self.can_operate:
+        if not self.can_operate or self.managed:
             return
         for draft in self.drafts:
             if draft.enabled:
@@ -417,16 +476,26 @@ class CamerasPanel(ResponsiveColumns):
 
     def refresh_controls(self) -> None:
         draft = self.selected
-        self.refresh_button.setEnabled(self.can_operate)
+        self.refresh_button.setEnabled(self.can_operate or self.managed)
         self.test_button.setEnabled(
-            self.can_operate and any(c.enabled for c in self.drafts)
-        )
-        self.connect_button.setEnabled(self.can_operate and draft is not None)
-        self.connect_button.setText(
-            "Disconnect" if draft and draft.connected else "Connect"
+            self.can_operate
+            and not self.managed
+            and any(c.enabled for c in self.drafts)
         )
         preview = next(
             (p for p in self.view.previews if draft and p.key == draft.key), None
+        )
+        self.connect_button.setEnabled(
+            self.can_operate
+            and draft is not None
+            and (not self.managed or bool(preview and preview.active))
+        )
+        self.connect_button.setText(
+            ("Stop capture" if draft and draft.connected else "Start capture")
+            if self.managed
+            else "Disconnect"
+            if draft and draft.connected
+            else "Connect"
         )
         self.preview_button.setText(
             "Hide preview" if preview and preview.visible else "Preview"
@@ -451,20 +520,36 @@ class CamerasPanel(ResponsiveColumns):
             else "Show the external camera preview"
         )
         for index, control in enumerate(self.enable_controls):
+            camera = self.drafts[index]
             control.blockSignals(True)
-            control.setChecked(self.drafts[index].enabled)
+            control.setChecked(self.pending_enable.get(camera.serial, camera.enabled))
             control.blockSignals(False)
-            control.setAccessibleName(
-                f"Enable {self.drafts[index].role} for experiment"
+            control.setAccessibleName(f"Enable {camera.role} for experiment")
+            control.setEnabled(
+                not self.pending_enable
+                and (
+                    self.can_edit
+                    or self.managed
+                    and self.can_operate
+                    and camera.role != "Unassigned"
+                )
             )
-            control.setEnabled(self.can_edit)
-        for editor in (
-            *self.fields.values(),
-            self.preset_field,
-            self.role,
-            self.trigger_source,
-        ):
-            editor.setEnabled(self.can_edit and draft is not None)
+            control.setToolTip(
+                "Awaiting controller confirmation"
+                if camera.serial in self.pending_enable
+                else "Assign this camera in controller configuration before enabling it"
+                if self.managed and camera.role == "Unassigned"
+                else "Enable for experiment"
+            )
+        for editor in (*self.fields.values(), self.preset_field, self.trigger_source):
+            editor.setEnabled(self.can_edit_camera_settings and draft is not None)
+        self.role.setEnabled(self.can_edit and draft is not None)
+        self.save_settings_button.setEnabled(
+            self.managed
+            and self.can_operate
+            and draft is not None
+            and draft.role != "Unassigned"
+        )
         self.status_column.hud.setPlainText(
             metrics_text(
                 (
@@ -476,13 +561,19 @@ class CamerasPanel(ResponsiveColumns):
                     ),
                     (
                         "CONNECTION",
-                        "Connected · review"
+                        "Open"
+                        if self.managed and draft and draft.connected
+                        else "Connected · review"
                         if draft and draft.connected
                         else "Not connected",
                     ),
                     (
                         "PREVIEW",
-                        "Visible · review" if preview and preview.visible else "Hidden",
+                        "Visible"
+                        if self.managed and preview and preview.visible
+                        else "Visible · review"
+                        if preview and preview.visible
+                        else "Hidden",
                     ),
                     (
                         "TRIGGER",

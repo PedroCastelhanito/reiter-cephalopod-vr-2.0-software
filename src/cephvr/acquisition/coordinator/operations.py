@@ -77,6 +77,9 @@ class CoordinatorOperations(Protocol):
     async def execute_camera_command(
         self, request: wire.AcquisitionCameraCommand, *, deadline_ns: int
     ) -> control.CommandAdmission: ...
+    async def execute_microcontroller_command(
+        self, request: wire.AcquisitionMicrocontrollerCommand, *, deadline_ns: int
+    ) -> control.CommandAdmission: ...
     async def confirm_configuration(
         self, request: wire.AcquisitionConfigurationConfirmation, *, deadline_ns: int
     ) -> control.CommandAdmission: ...

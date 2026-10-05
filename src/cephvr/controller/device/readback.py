@@ -177,6 +177,30 @@ class CameraReadback:
             and not operation.confirmed
         ):
             return
+        if operation.is_microcontroller:
+            diagnostic = status.views.diagnostic
+            success = bool(status.result.succeeded)
+            if operation.kind == svc.MICROCONTROLLER_COMMAND_KIND_CONNECT:
+                success = (
+                    success
+                    and status.views.pulses.capabilities.protocol_version == 2
+                    and not status.views.pulses.state.behavioral.running
+                    and not status.views.pulses.state.tracking.running
+                )
+            else:
+                success = success and diagnostic.HasField("active")
+                if operation.kind == svc.MICROCONTROLLER_COMMAND_KIND_START:
+                    success = success and diagnostic.active
+                if operation.kind == svc.MICROCONTROLLER_COMMAND_KIND_STOP:
+                    success = success and not diagnostic.active
+            self.hooks.complete_operation(
+                operation.operator_id,
+                success=success,
+                progress="MCU command confirmed" if success else "MCU command failed",
+                error="required MCU result evidence incomplete" if not success else "",
+            )
+            self.status_retention.retire_operation(operation)
+            return
         view = camera_view(operation.camera, status.views)
         success = bool(status.result.succeeded)
         if operation.kind == svc.CAMERA_COMMAND_KIND_START_PREVIEW:

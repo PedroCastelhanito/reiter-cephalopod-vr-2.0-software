@@ -19,6 +19,7 @@ from cephvr.controller.control.prompts import OperatorPrompts
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.device.camera import CameraCommands
 from cephvr.controller.device.display import DisplayInitialization
+from cephvr.controller.device.microcontroller import MicrocontrollerCommands
 from cephvr.controller.device.owner_cleanup import ManualControlCleanup
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.preview import PreviewHandling
@@ -107,6 +108,7 @@ class ControllerComponents:
     metadata: MetadataCoordinator
     display: DisplayInitialization
     camera: CameraCommands
+    microcontroller: MicrocontrollerCommands
     camera_readback: CameraReadback
     device_views: DeviceViews
     camera_status_retention: CameraStatusRetention
@@ -203,6 +205,17 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         backends=i.backends,
         projections=i.projections,
         file_policy_loader=i.file_policy_loader,
+        generation=i.generation,
+        limits=i.limit_state,
+        clock=i.clock,
+        hooks=device_hooks,
+        status_retention=camera_status_retention,
+    )
+    microcontroller = MicrocontrollerCommands(
+        lifecycle=i.lifecycle,
+        configuration=i.configuration_state,
+        device=i.device_state,
+        backends=i.backends,
         generation=i.generation,
         limits=i.limit_state,
         clock=i.clock,
@@ -498,6 +511,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         metadata=metadata,
         display=display,
         camera=camera,
+        microcontroller=microcontroller,
         camera_readback=camera_readback,
         device_views=device_views,
         camera_status_retention=camera_status_retention,

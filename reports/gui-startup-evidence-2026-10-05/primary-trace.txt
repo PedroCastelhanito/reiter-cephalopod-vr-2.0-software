@@ -1,0 +1,23 @@
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 367, in <module>
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 359, in main
+    run_launcher(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\main.py", line 308, in run_launcher
+    members = native.inspect_launch_job(application_job)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\jobs.py", line 436, in inspect_launch_job
+    previous = self._enumerate_job(name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\jobs.py", line 474, in _enumerate_job
+    member = self._member(handle, pid)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\jobs.py", line 487, in _member
+    self._check(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\jobs.py", line 232, in _check
+    raise WindowsLaunchError(f"{label} failed: WinError {self._last_error()}")
+cephvr.platform.windows.jobs.WindowsLaunchError: QueryFullProcessImageNameW failed: WinError 5

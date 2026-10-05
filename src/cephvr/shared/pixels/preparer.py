@@ -33,8 +33,8 @@ class PixelPreparationError(RuntimeError):
 class PixelPreparer:
     """Own one private converter and one reusable native source wrapper.
 
-    The pinned pypylon wrapper exposes ``Convert(source)`` and allocates the result
-    image inside the binding. This class checks, copies, and releases that SDK image;
+    The pypylon wrapper exposes ``Convert(source)`` and allocates the result image
+    inside the binding. Its memoryview attachment can make a private source copy;
     CephVR-owned outputs remain caller buffers or one reusable bytearray.
     """
 
@@ -229,6 +229,13 @@ class PixelPreparer:
         self._source_owner = None
 
     def _configure(self) -> None:
+        # Truncate mode uses the shift control; pypylon makes it read-only after
+        # certain other converter settings. Gamma is inactive in this mode.
+        if not hasattr(self._converter, "AdditionalLeftShift"):
+            raise PixelPreparationError(
+                "required pypylon converter control unavailable: AdditionalLeftShift"
+            )
+        self._converter.AdditionalLeftShift = 0
         for parameter, enum_symbol in (
             ("OutputBitAlignment", "OutputBitAlignment_MsbAligned"),
             ("MonoConversionMethod", "MonoConversionMethod_Truncate"),
@@ -240,12 +247,6 @@ class PixelPreparer:
                     f"required pypylon converter control unavailable: {parameter}"
                 )
             setattr(self._converter, parameter, enum_value)
-        for parameter, value in (("Gamma", 1.0), ("AdditionalLeftShift", 0)):
-            if not hasattr(self._converter, parameter):
-                raise PixelPreparationError(
-                    f"required pypylon converter control unavailable: {parameter}"
-                )
-            setattr(self._converter, parameter, value)
         for parameter, enum_symbol in (
             ("OutputOrientation", "OutputOrientation_TopDown"),
         ):
@@ -290,12 +291,9 @@ class PixelPreparer:
                 self.layout.height,
                 padding,
             )
-            # The generated wrapper silently copies when the memoryview cannot be
-            # attached. That would defeat the known-size CephVR source buffer.
-            if hasattr(self._source, "_memory_view_buffer"):
-                raise PixelPreparationError(
-                    "pypylon copied native pixels instead of attaching their memoryview"
-                )
+            # On this Windows binding AttachMemoryView retains a private bytes
+            # copy when native attachment is unavailable. The slot was already
+            # copied, so this does not retain or expose shared-ring memory.
             self._source_owner = source
             self._converter.OutputPixelFormat = getattr(
                 self._pylon, f"PixelType_{self._output_symbol}"

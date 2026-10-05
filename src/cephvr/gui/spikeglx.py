@@ -1,5 +1,6 @@
 """Local pulse-inventory drafts; remote saved-channel validation belongs to E12."""
 
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGridLayout,
@@ -15,6 +16,8 @@ from cephvr.gui.view import DashboardView
 
 
 class SpikeGLXPanel(DevicePanel):
+    connection_requested = pyqtSignal()
+
     def __init__(self) -> None:
         super().__init__(
             "SpikeGLX connection",
@@ -134,5 +137,12 @@ class SpikeGLXPanel(DevicePanel):
 
     def apply_view(self, view: DashboardView) -> None:
         super().apply_view(view)
+        self.action_buttons[0].setEnabled(view.connected and not view.sample)
         self.pairing.setEnabled(self.can_review)
         self.refresh_controls()
+
+    def request(self, name: str) -> None:
+        if self.can_review:
+            super().request(name)
+        elif name == "Test connection":
+            self.connection_requested.emit()

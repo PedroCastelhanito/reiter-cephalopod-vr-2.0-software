@@ -34,6 +34,7 @@ class DashboardView:
     connected: bool = False
     has_control: bool = False
     sample: bool = False
+    configuration_wired: bool = True
     trial_index: int = 0
     trial_count: int = 0
     elapsed_s: float | None = None
@@ -50,6 +51,7 @@ class DashboardView:
     def can_edit(self) -> bool:
         return (
             (self.sample or self.connected)
+            and self.configuration_wired
             and self.has_control
             and self.phase
             in {

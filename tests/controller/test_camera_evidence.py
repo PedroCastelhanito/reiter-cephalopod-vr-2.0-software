@@ -54,6 +54,49 @@ def _start(runtime: Any, parent: str, child: str, kind: int, readback: bool) -> 
     runtime.device_state.camera_operation = operation
 
 
+async def test_microcontroller_status_completes_exact_operator_operation(
+    tmp_path: Path,
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    ledger = runtime.camera_status_retention.ledger
+    assert ledger is not None
+    ledger.admit(parent, b"mcu-command", 1, work_key=parent)
+    runtime.control_operations.operation(parent, "ExecuteMicrocontrollerCommand")
+    operation = CameraOperation(
+        parent,
+        child,
+        1,
+        0,
+        svc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+        pb.WorkContext(),
+        999,
+        False,
+        is_microcontroller=True,
+    )
+    runtime.camera_status_retention.reserve(operation)
+    runtime.device_state.camera_operation = operation
+    status = svc.AcquisitionDeviceStatusReport()
+    status.views.source.CopyFrom(backend)
+    status.views.state_revision = 1
+    status.views.observed_monotonic_ns = 100
+    status.views.pulses.capabilities.protocol_version = 2
+    status.views.pulses.state.behavioral.running = False
+    status.views.pulses.state.tracking.running = False
+    status.operation.command_id = child
+    status.result.context.command_id = child
+    status.result.complete = True
+    status.result.succeeded = True
+
+    receipt = await runtime.report_projection("devices", status, ingress_ns=900)
+
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.control.operations[parent].succeeded
+    assert runtime.device_state.camera_operation is None
+    assert runtime.projections.devices.pulses.capabilities.protocol_version == 2
+
+
 @pytest.mark.parametrize("internal", [False, True])
 @pytest.mark.parametrize("succeeded", [False, True])
 async def test_terminal_camera_report_retires_slot_but_retains_exact_evidence(

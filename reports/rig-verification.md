@@ -9,15 +9,16 @@ and native broad-DACL rejection remains covered. The earlier Medium-token
 default-temp snapshot (755 passed, 6 skipped) is historical. Native ring binding,
 executing-interpreter identity and reservation/recovery repairs pass focused
 regressions. These are bounded evidence, not full-workload acceptance. Encoder
-compatibility item 5 remains owner-deferred and unchanged. GUI/SpikeGLX remain
-unimplemented under ARCH-001; deferred scientific inputs remain unset. No camera
+compatibility item 5 remains owner-deferred and unchanged. The bounded GUI/SpikeGLX
+diagnostic below is later evidence; full session integration remains open. Deferred scientific inputs remain unset. No camera
 settings, projection, wiring or firmware changed.
 
 Latest development handoff:
 [hardware evidence and implementation constraints](rig-handoff-2026-09-29/README.md).
 Camera roles/rates are now owner-confirmed (behavioral 40065509 at 30 Hz; tracking
-40747103 at 60 Hz). Final ROI/depth, surface mapping and SpikeGLX address remain
-explicitly deferred. The 2080 Ti format checks and current camera rate limits in
+40747103 at 60 Hz). Final ROI/depth and surface mapping remain deferred; the
+SpikeGLX command-server address was saved after the 2026-10-05 SDK readback.
+The 2080 Ti format checks and current camera rate limits in
 that handoff do not close the full-workload checks below.
 
 Status: rig access established on 2026-09-29. Start with the later
@@ -40,6 +41,36 @@ This is a verification worklist, not another decision log. Governing rules are
 [E15](../docs/architecture/system-contracts.md#e15). These checks are explicitly
 tracked separately from installation discovery and dependency smoke checks.
 
+2026-10-05 SpikeGLX preflight: after the ephys machine came online, the rig's
+`169.254.91.196` interface discovered `169.254.240.108`. Port 4142 accepted a
+TCP connection, and the official SDK connected and read SpikeGLX
+`v20251218 api v4.1.3`, `isRunning=false`, `isSaving=false` and data directory
+`C:/SGL_DATA`. `getRunName` returned "Run parameters never validated." No
+mutation or recording was attempted. The observed address and port are now in
+the operator synchronization config; the local GUI draft is independent. The checked-in mapping reference is for
+`v20260901`, so E12 Setup and start/stop acceptance remain open. See the
+[dated connection evidence](spikeglx-evidence-2026-10-05/README.md).
+
+Later 2026-10-05 SDK preflight read validated settings, an idle run,
+Immediate gate/trigger modes and one OneBox stream with 14 saved channels.
+After the operator enabled recording at run start, an SDK smoke test started
+`CephVR_Test_20261005_163039`, observed saving and increasing samples, and
+called stopRun with exact run/data-directory identity. stopRun returned
+success, but isRunning stayed true through about two seconds of immediate
+checks; a fresh connection then confirmed running/saving false. The precise
+stop-confirmation latency, full installed-version mapping, saved-channel
+roles and E12 controller lifecycle remain open. See the dated evidence.
+
+Later the controller-owned, read-only SDK diagnostic returned the same server
+version, idle/not-saving state, run name and data directory from the saved endpoint.
+The managed GUI Test connection action now forwards an authenticated controller
+RPC. Its GUI intent and controller RPC authorization tests pass. A later managed
+launch displayed a connected Dashboard after concurrent renderer startup fixes,
+then exited before the button could be clicked. The agent's UI tool could read
+but could not click that window. A retry ended with `JOB_INSPECTION_FAILED`;
+the intermittent native process-inspection error remains open. The exact GUI
+button response remains unverified. No E12 Setup or recording command was issued.
+
 | Check | Evidence required |
 | --- | --- |
 | Final camera operating points | Under A10, choose the owner-deferred ROI/source/recording precision, then re-read payload, chunks, transport limits and applicable resulting-rate nodes. Resolve behavioral 30 Hz's saved 368,640,000 B/s payload demand versus 360,000,000 B/s limit explicitly; no guessed higher limit or lower cadence. Verify simultaneous externally triggered 30/60 Hz capture with native counters and saved pulse evidence. Different USB host controllers and tracking's 71.803 Hz estimate do not prove sustained rates. |
@@ -53,11 +84,12 @@ tracked separately from installation discovery and dependency smoke checks.
 | Visual Stimulus linear color and measured tables | Under V04/V21/V23, verify source transfer/range/channels and 8/16-bit preservation, float32 composition/premultiplied alpha/filtering, named clipping flags, curve interpolation and one-time correction. Measure each output's response and actual code precision; check manual/driver/projector conditions, no double gamma, Idle/marker consistency and distinct marker light levels. Independent channel tables alone do not prove cross-projector color matching or spatial uniformity. |
 | Visual Stimulus output precision and custom encoding | Under V20/E13, verify requested versus actual RGB8/RGB10 buffers, final code preservation, calibration matching and the real driver/cable/projector path. Exercise the single composite lossy argument validation, actual encoder compatibility at the composite resolution, explicit review conversion and encoder load/failure while preserving live rendering and required state evidence. Under SYS-002, confirm the now-operational RTX 2080 Ti sustains three concurrent NVENC sessions (two cameras plus one Visual Stimulus composite) at planned rates while the RTX 5060 Ti renders/tracks and AMD integrated graphics serves the operator display/GUI. Verify actual adapter identities, explicit FFmpeg device selection and host-transfer costs; the earlier RTX 5060 Ti encoder probes do not validate this placement. Normal runtime still performs no file-content validation. |
 | SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; startRun-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; stopRun completion; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge; controller-loss emergency warning naming the run for manual stopping. Acknowledgements are not pulse timing. |
+
 | Visual Stimulus scene composition and geometric correction | Under V02/V15, exercise one arena plus ordered alpha overlays, overlay independence from arena depth, covered-instance continuity and invalid composition rejection. Verify imported mesh coverage/orientation/fold rejection, masks and weighted overlaps, immutable session mappings, photodiode stage order and final-output recording/replay. Establish calibration accuracy through the actual optical path and resource cost on all outputs; no automatic calibration or optical-model guarantee is selected. |
 | Visual Stimulus review video and fragmented MP4 | Under E13, verify the constant-rate raw stdin input at the pacing output's nominal refresh sustains the composite resolution, video frame n maps to the n-th admitted render group in the evidence, tile placement/scale matches the recorded layout and admission drops shorten playback without duplicated frames. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
 | Empty Visual Stimulus review video and explicit depth conversion | Under V12/E13, exercise an all-dropped composite with complete required records, warnings, truthful artifact presence and successful cleanup. Reject empty-input encoder errors, missing-created artifacts and unknown results as normal completion. Verify explicit RGB10-to-8-bit review conversion and rejection of silent negotiation while live output/replay retain their selected precision. Normal runtime does not inspect completed-file contents. |
 | Visual Stimulus capture and durability | Verify per-group composite admission, compositing/PBO readback cost on the render thread, recording-thread and FFmpeg throughput within the renderer's process/GIL, ScheduleTrial FFmpeg launch with no frames before T and pre-T cancellation cleanup, required state/metadata retention and failures under V12/V13/V28; test periodic sync, sync failure, an incomplete final JSON line and replay labelled "partial, up to render group N". Preserve Unconfirmed crashed-video outcomes. |
-| Acquisition electrical/serial behavior | Verify trigger levels/edges, MCU board/pin capabilities, OFF/watchdog behavior, serial latency and DTR/RTS reconnect/reset under A10/A11; do not infer pulse-to-frame edge mapping from host receipts. |
+| Acquisition electrical/serial behavior | COM8 Uno protocol-v2 CAPS/STATUS passed after the manual upload. Owner assigned D9 Trial state, D2 Projector flip input, D10 behavioral trigger and D11 tracking trigger; the initial D2 test counted zero edges while the projector was off, and a later local GUI-worker test counted 120 rising edges without independent source observation. Confirm actual destinations, 5 V compatibility and shared signal ground before output tests. Run bounded GUI Test/Stop with physical level/edge observation and repeat D2 with independently observed projector flips. Then verify camera trigger levels/edges, OFF/watchdog behavior, serial latency and DTR/RTS reconnect/reset under A10/A11; do not infer pulse-to-frame edge mapping from host receipts. |
 | Acquisition platform bindings | Verify frame-log flush/OS sync on the selected filesystem and SDK/native conversion under A07/A10, and the A03 seqlock slots plus Win32 named event adapter across spawned and independently launched consumers, including torn/lapped-read skips under load and a killed producer. |
 | Visual Stimulus feedback freshness | Tune and validate the 350 ms engineering default maximum under [V26](../docs/architecture/visual_stimulus.md#v26) with the full rig workload. Measure host-receipt-to-application age separately from optical latency; verify local stale-result rejection, fresh-result resumption within the same generation, producer-marker generation exclusion and logged hold/resumption. No passing evidence is supplied. |
 | FFmpeg raw input path | Verify raw stdin input (`-f rawvideo`, resolved pixel format/size, nominal `-framerate`) for the selected native pixel/conversion paths sustains the planned rates. Confirm video frame count equals non-dropped frame lines, no duplicated/padded frames and a final frame of one nominal period. Record exact tested versions, arguments and camera formats. |

@@ -11,9 +11,9 @@ from typing import Any
 
 from cephvr.shared.config import ConfigurationError, LoadedPair, load_pair
 
-POLICY_VERSION = 11
+POLICY_VERSION = 12
 CONTRACT_VERSION = 1
-_POLICY_SHA256 = "912f0daa25b278df03b5e59ad06fdb86eeaa512515b0a7b6415b483a39caa342"
+_POLICY_SHA256 = "08f6484488bd33ddcd0cb407ce7164aeb41c243479b94884777e3d8b74f80bb3"
 
 _CONFIG_KEYS = frozenset(
     """
@@ -30,6 +30,8 @@ _CONFIG_KEYS = frozenset(
     cameras.*.roi.width cameras.*.roi.height cameras.*.roi.offset_x cameras.*.roi.offset_y
     cameras.*.transport.*
     microcontroller.port microcontroller.baud_rate microcontroller.ack_timeout_ms
+    microcontroller.trial_state_pin microcontroller.trial_state_enabled
+    microcontroller.projector_flip_pin microcontroller.projector_flip_enabled
     microcontroller.stop_completion_margin_ms microcontroller.keepalive_interval_s
     microcontroller.communication_timeout_s
     buffers.tracking_ring_frames buffers.recording_queue_frames
@@ -154,7 +156,7 @@ _POLICY_KEYS = frozenset(
 )
 
 _FIXED_POLICY: dict[str, object] = {
-    "microcontroller.protocol_version": 1,
+    "microcontroller.protocol_version": 2,
     "microcontroller.max_outstanding_requests": 1,
     "microcontroller.max_line_bytes": 512,
     "microcontroller.frequency_resolution_hz": Decimal("0.1"),
@@ -195,7 +197,7 @@ def _load_pair(root: Path) -> LoadedPair:
     ).encode("utf-8")
     if hashlib.sha256(encoded).hexdigest() != _POLICY_SHA256:
         raise ConfigurationError(
-            "acquisition fixed-policy declarations differ from policy version 11"
+            "acquisition fixed-policy declarations differ from policy version 12"
         )
     _validate_operator_structure(pair.config)
     return pair

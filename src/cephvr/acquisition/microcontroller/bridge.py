@@ -76,6 +76,28 @@ class SerialOwnerBridge:
             lambda: self._get_owner().keepalive(deadline_ns), deadline_ns
         )
 
+    async def diagnostic_start(
+        self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
+    ) -> tuple[bool, str, str, int]:
+        return await self._call(
+            lambda: self._get_owner().diagnostic_start(
+                kind, pin, deadline_ns, frequency_hz=frequency_hz
+            ),
+            deadline_ns,
+        )
+
+    async def diagnostic_status(
+        self, *, deadline_ns: int
+    ) -> tuple[bool, str, str, int]:
+        return await self._call(
+            lambda: self._get_owner().diagnostic_status(deadline_ns), deadline_ns
+        )
+
+    async def diagnostic_stop(self, *, deadline_ns: int) -> tuple[bool, str, str, int]:
+        return await self._call(
+            lambda: self._get_owner().diagnostic_stop(deadline_ns), deadline_ns
+        )
+
     async def on(
         self,
         selected_roles: tuple[int | str, ...],

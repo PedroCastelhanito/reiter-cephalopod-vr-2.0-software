@@ -33,8 +33,8 @@ class PySerialPort:
             self._serial = serial.Serial(
                 port=port,
                 baudrate=baud_rate,
-                timeout=0,
-                write_timeout=0,
+                timeout=0.01,
+                write_timeout=0.01,
             )
         except (OSError, serial.SerialException) as exc:
             raise OSError(
@@ -42,13 +42,17 @@ class PySerialPort:
             ) from exc
 
     def set_timeouts(self, *, read_seconds: float, write_seconds: float) -> None:
-        self._serial.timeout = max(0.0, read_seconds)
-        self._serial.write_timeout = max(0.0, write_seconds)
+        # Windows reconfigures COM on every timeout assignment. That takes much
+        # of A11's 100 ms acknowledgement budget even when no byte is read.
+        # Fixed short native polls stay bounded by the channel's host deadline.
+        del read_seconds, write_seconds
 
     def write(self, payload: bytes) -> int:
         return int(self._serial.write(payload))
 
     def read(self, size: int = 1) -> bytes:
+        if size > 1:
+            return bytes(self._serial.read_until(b"\n", size))
         return bytes(self._serial.read(size))
 
     def cancel_read(self) -> None:

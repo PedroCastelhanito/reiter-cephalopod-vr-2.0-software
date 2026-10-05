@@ -35,12 +35,13 @@ from cephvr.acquisition.transport.server import (
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.worker_launcher import WindowsWorkerBootstrapPort
 from cephvr.control.v1 import types_pb2 as control
-from cephvr.platform.windows.bootstrap import close_handle, read_bootstrap
+from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.platform.windows.python_runtime import resolve_python_executable
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.auth import Principal
+from cephvr.shared.backend_registration import register_backend_endpoint
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
@@ -163,6 +164,7 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
     )
     health_watch = asyncio.create_task(_supervise_health(runtime_instance))
     try:
+        await register_backend_endpoint(bootstrap)
         await runtime_instance.shutdown_requested.wait()
     finally:
         authority_watch.cancel()
@@ -339,7 +341,6 @@ def main() -> None:
     parser.add_argument("--bootstrap-handle", type=int, required=True)
     args = parser.parse_args()
     descriptor = read_bootstrap(args.bootstrap_handle)
-    close_handle(args.bootstrap_handle)
     bootstrap = decode_acquisition_bootstrap(descriptor)
     with SingleInstanceGuard("acquisition"):
         asyncio.run(run_acquisition(bootstrap))

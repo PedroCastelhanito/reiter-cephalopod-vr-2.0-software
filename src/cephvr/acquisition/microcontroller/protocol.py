@@ -1,4 +1,4 @@
-"""Strict bounded ASCII protocol-v1 parsing for the pulse microcontroller (A11)."""
+"""Strict bounded ASCII protocol-v2 parsing for the pulse microcontroller (A11)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
 MAX_LINE_BYTES = 512
-PROTOCOL_VERSION = 1
+PROTOCOL_VERSION = 2
 FREQUENCY_STEP = Decimal("0.1")
 _TOKEN = re.compile(r"^[!-~]+$")
 _UINT = re.compile(r"^[0-9]+$")
@@ -20,7 +20,7 @@ ROLES = ("behavioral", "tracking")
 
 
 class ProtocolError(ValueError):
-    """The complete serial line is malformed or incompatible with protocol v1."""
+    """The complete serial line is malformed or incompatible with protocol v2."""
 
 
 @dataclass(frozen=True)
@@ -92,13 +92,14 @@ def parse_reply(line: bytes) -> Reply:
 
 def parse_capabilities(
     reply: Reply,
-) -> tuple[int, str, tuple[str, ...], float, float, int, int]:
+) -> tuple[int, str, tuple[str, ...], tuple[str, ...], float, float, int, int]:
     _require_ok(
         reply,
         {
             "protocol",
             "firmware",
             "pins",
+            "input_pins",
             "min_hz",
             "max_hz",
             "watchdog_min_ms",
@@ -115,13 +116,30 @@ def parse_capabilities(
         or len(set(pins)) != len(pins)
     ):
         raise ProtocolError("CAPS pins must be a unique comma-separated token list")
+    input_pins_text = reply.fields["input_pins"]
+    input_pins = tuple(input_pins_text.split(","))
+    if (
+        not input_pins_text
+        or len(set(input_pins)) != len(input_pins)
+        or any(pin not in pins for pin in input_pins)
+    ):
+        raise ProtocolError("CAPS input_pins must be a unique subset of pins")
     minimum = _request_frequency(reply.fields["min_hz"], "min_hz")
     maximum = _request_frequency(reply.fields["max_hz"], "max_hz")
     watchdog_min = _uint(reply.fields["watchdog_min_ms"], 32, "watchdog_min_ms")
     watchdog_max = _uint(reply.fields["watchdog_max_ms"], 32, "watchdog_max_ms")
     if minimum > maximum or watchdog_min > watchdog_max:
         raise ProtocolError("CAPS minimum exceeds maximum")
-    return version, firmware, pins, minimum, maximum, watchdog_min, watchdog_max
+    return (
+        version,
+        firmware,
+        pins,
+        input_pins,
+        minimum,
+        maximum,
+        watchdog_min,
+        watchdog_max,
+    )
 
 
 def parse_state(reply: Reply, *, configured: bool) -> dict[str, object]:
@@ -173,6 +191,20 @@ def parse_compact_state(reply: Reply) -> dict[str, bool]:
     return {key: _bool(reply.fields[key], key) for key in expected}
 
 
+def parse_diagnostic(reply: Reply) -> tuple[bool, str, str, int]:
+    """Parse one firmware-owned bounded pin diagnostic observation."""
+    _require_ok(reply, {"active", "kind", "pin", "edges"})
+    active = _bool(reply.fields["active"], "active")
+    kind = reply.fields["kind"]
+    if kind not in {"trial_state", "projector_flip", "behavioral", "tracking"}:
+        raise ProtocolError("diagnostic kind is unsupported")
+    pin = _required_token(reply.fields["pin"], "pin")
+    edges = _uint(reply.fields["edges"], 32, "edges")
+    if kind != "projector_flip" and edges:
+        raise ProtocolError("output diagnostic cannot report input edges")
+    return active, kind, pin, edges
+
+
 def frequency_text(value: float) -> str:
     if not math.isfinite(value) or value <= 0:
         raise ProtocolError("requested frequency must be finite and positive")
@@ -196,7 +228,7 @@ def _require_ok(
     missing = required - reply.fields.keys()
     if unknown or missing:
         raise ProtocolError(
-            f"reply fields differ from protocol v1; missing={sorted(missing)}, unknown={sorted(unknown)}"
+            f"reply fields differ from protocol v2; missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 
