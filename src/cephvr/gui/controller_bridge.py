@@ -12,6 +12,11 @@ from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.client.session import ClientError, HeadlessClient, loopback_channel
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.device_requests import (
+    assign_camera_role,
+    import_camera_preset,
+    test_camera_connections,
+)
 from cephvr.shared.auth import Principal
 
 
@@ -38,12 +43,14 @@ class ControllerBridge(QThread):
         self._loop: asyncio.AbstractEventLoop | None = None
         self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
         self._stopping = False
+        self._connected = False
 
     def request(self, action: str, **kwargs: Any) -> bool:
         loop, queue = self._loop, self._queue
         if (
             loop is not None
             and queue is not None
+            and (self._connected or action == "quit")
             and (not self._stopping or action == "quit")
         ):
             loop.call_soon_threadsafe(queue.put_nowait, (action, kwargs))
@@ -79,12 +86,23 @@ class ControllerBridge(QThread):
                         ),
                     )
                     async with client.observe():
+                        self._connected = True
                         self.connection_changed.emit(True, "")
                         attempt = 0
                         await self._commands(client)
             except Exception as exc:
+                self._connected = False
+                while self._queue is not None and not self._queue.empty():
+                    action, _ = self._queue.get_nowait()
+                    if action != "quit":
+                        self.command_finished.emit(
+                            action,
+                            False,
+                            "Controller connection lost; command discarded.",
+                        )
                 self.connection_changed.emit(False, str(exc))
                 attempt += 1
+        self._connected = False
         self._loop = None
         self._queue = None
 
@@ -186,6 +204,10 @@ class ControllerBridge(QThread):
                     raise ClientError(
                         outcome.failure or "Camera operation did not succeed."
                     )
+        elif action == "test_cameras":
+            success, message = await test_camera_connections(client, options["cameras"])
+            self.command_finished.emit(action, success, message)
+            return
         elif action == "mcu":
             state = client.snapshot
             mcu_request = rpc.MicrocontrollerCommandRequest(
@@ -256,6 +278,8 @@ class ControllerBridge(QThread):
             outcome = await client.execute("UpdateConfiguration", update_request)
             if not outcome.succeeded:
                 raise ClientError(outcome.failure or "MCU pin settings were rejected.")
+        elif action == "assign_camera_role":
+            await assign_camera_role(client, options)
         elif action == "set_camera_enabled":
             state = client.snapshot
             proposed = type(state.configuration_values.current)()
@@ -281,7 +305,9 @@ class ControllerBridge(QThread):
             state = client.snapshot
             proposed = type(state.configuration_values.current)()
             proposed.CopyFrom(state.configuration_values.current)
-            _, selected, pulse = _assigned_camera(proposed, str(options["serial"]))
+            acquisition_entry, selected, pulse = _assigned_camera(
+                proposed, str(options["serial"])
+            )
             clock = str(options["clock"])
             if clock == "External controller":
                 source = str(options["source"]).strip()
@@ -299,7 +325,21 @@ class ControllerBridge(QThread):
             else:
                 raise ClientError("Select a camera trigger source before saving.")
             preset = str(options["preset"]).strip()
+            import_preset = bool(
+                preset
+                and (
+                    options.get("import_preset", False)
+                    or preset != selected.device.pfs_source_filename
+                    or not selected.device.HasField("pfs_baseline")
+                )
+            )
             if preset:
+                if import_preset:
+                    if not acquisition_entry.enabled:
+                        acquisition_entry.acquisition.behavioral.enabled = False
+                        acquisition_entry.acquisition.tracking.enabled = False
+                    acquisition_entry.enabled = True
+                    selected.device.ClearField("pfs_baseline")
                 selected.device.pfs_source_filename = preset
             else:
                 selected.device.ClearField("pfs_source_filename")
@@ -328,6 +368,14 @@ class ControllerBridge(QThread):
             )
             if not outcome.succeeded:
                 raise ClientError(outcome.failure or "Camera settings were rejected.")
+            if import_preset:
+                role = (
+                    1
+                    if acquisition_entry.acquisition.behavioral.device.device_id
+                    == str(options["serial"])
+                    else 2
+                )
+                await import_camera_preset(client, role, preset)
         elif action == "viewer_state":
             attachment = options["attachment"]
             descriptor = attachment.buffer

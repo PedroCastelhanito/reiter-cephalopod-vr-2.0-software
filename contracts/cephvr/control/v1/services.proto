@@ -120,6 +120,7 @@ enum CameraCommandKind {
   CAMERA_COMMAND_KIND_EXPORT_PFS = 4;
   CAMERA_COMMAND_KIND_FINISH_EDITING = 5;
   CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER = 6;
+  CAMERA_COMMAND_KIND_TEST_CONNECTION = 7; // Open/identify/close only; no capture or pulses.
 }
 enum MicrocontrollerCommandKind {
   MICROCONTROLLER_COMMAND_KIND_UNSPECIFIED = 0;
@@ -155,6 +156,7 @@ message AcquisitionMicrocontrollerCommand {
   MicrocontrollerCommandKind kind = 3;
   MicrocontrollerSignalKind signal = 4;
   cephvr.acquisition.v1.CameraPulseConfiguration requested = 5;
+  AcquisitionSettings settings = 6; // Complete controller-accepted Configuration draft.
 }
 message CameraCommandRequest {
   OperatorCommand command = 1;
@@ -177,6 +179,7 @@ message AcquisitionCameraCommand {
   ProcessIdentity preview_consumer = 9; // Attach only; capture never requires a viewer.
   cephvr.acquisition.v1.AcquisitionFilePolicies file_policies = 10;
   optional uint32 preview_output_bit_depth = 11;
+  AcquisitionSettings settings = 12; // Complete controller-accepted Configuration draft.
   // Supplied transport must equal this role's file policy; no alternative source.
   // Full controller-selected device settings, not an operator-to-device bypass.
 }

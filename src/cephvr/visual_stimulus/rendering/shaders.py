@@ -37,10 +37,22 @@ void mark_alpha(float coverage, vec3 premultiplied_rgb) {
 }
 void main() {
     float signal = 0.0;
-    if (mode == 0 || mode == 4) {
-        vec4 sample_value = texture(image_tex, uv);
+    if (mode == 0 || mode == 4 || mode == 5 || mode == 6) {
+        vec2 image_uv = uv;
+        if (mode == 5 || mode == 6) {
+            vec2 size = vec2(textureSize(image_tex, 0));
+            float ratio = (period.x / period.y) / (size.x / size.y);
+            vec2 scale = mode == 5
+                ? vec2(max(1.0, ratio), max(1.0, 1.0 / ratio))
+                : vec2(min(1.0, ratio), min(1.0, 1.0 / ratio));
+            image_uv = (uv - 0.5) * scale + 0.5;
+            if (any(lessThan(image_uv, vec2(0.0))) || any(greaterThan(image_uv, vec2(1.0)))) {
+                color = vec4(0.0); return;
+            }
+        }
+        vec4 sample_value = texture(image_tex, image_uv);
         mark_alpha(sample_value.a, sample_value.rgb);
-        if (mode == 0) {
+        if (mode != 4) {
             vec3 straight_sample = sample_value.a > 0.0
                 ? sample_value.rgb / sample_value.a : vec3(0.0);
             float coverage_raw = sample_value.a * opacity;

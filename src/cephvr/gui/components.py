@@ -38,6 +38,23 @@ def label(text: str, role: str = "hint", *, wrap: bool = False) -> QLabel:
     return result
 
 
+class InlineMessage(QLabel):
+    """Show validation text without reserving space for an empty message."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setProperty("role", "hint")
+        self.setWordWrap(True)
+        self.hide()
+
+    def setText(self, text: str | None) -> None:  # noqa: N802
+        super().setText(text)
+        self.setVisible(bool(text))
+
+    def clear(self) -> None:
+        self.setText("")
+
+
 def button(text: str, role: str = "secondary", *, hint: str = "") -> QPushButton:
     result = QPushButton(text)
     result.setProperty("role", role)

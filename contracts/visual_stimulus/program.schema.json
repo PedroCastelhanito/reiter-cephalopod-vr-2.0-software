@@ -1294,6 +1294,16 @@
           ],
           "title": "Sampling",
           "type": "string"
+        },
+        "fit": {
+          "default": "stretch",
+          "enum": [
+            "contain",
+            "cover",
+            "stretch"
+          ],
+          "title": "Fit",
+          "type": "string"
         }
       },
       "required": [

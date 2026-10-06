@@ -246,3 +246,86 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> N
     assert ("connect", 1000) in calls
     assert ("trial_state", "D9", None, 1000) in calls
     assert owner.pulse.observation is not None
+
+
+def test_connection_check_retains_unknown_cleanup_until_worker_confirms() -> None:
+    from cephvr.acquisition.v1 import camera_pb2 as camera
+
+    reporter = ManualDeviceStatusReporter(
+        identity=CoordinatorIdentity(
+            backend=control.BackendContext(),
+            process=control.ProcessIdentity(),
+            controller=control.ProcessIdentity(),
+            supervisor=control.ProcessIdentity(),
+            tracking=control.ProcessIdentity(),
+        ),
+        controller=_Controller(),
+        commands=CommandLedger(
+            _id(),
+            10_000,
+            max_records=8,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        ),
+        pulse=PulseRecord(),
+        clock=lambda: 10,
+    )
+    role = camera.CAMERA_ROLE_BEHAVIORAL
+    prior = reporter.begin_device_access(role, "CAM-1")
+    assert not prior.device_open
+    assert reporter._views[role].cleanup_pending
+    # A failed worker operation leaves this flag in the reported device view.
+    reporter.complete_connection_test(role, prior)
+    assert not reporter._views[role].cleanup_pending
+    assert not reporter._views[role].device_open
+
+
+def test_manual_command_installs_current_draft_but_rejects_stale_or_owned_changes() -> (
+    None
+):
+    from types import SimpleNamespace
+
+    from cephvr.acquisition.coordinator.manual_configuration import ManualConfiguration
+
+    identity = CoordinatorIdentity(
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        ),
+        process=control.ProcessIdentity(),
+        controller=control.ProcessIdentity(role="controller", generation=_id()),
+        supervisor=control.ProcessIdentity(),
+        tracking=control.ProcessIdentity(),
+    )
+    configuration = ConfigurationRecord(
+        control.AcquisitionSettings(), runtime_pb2.AcquisitionFilePolicies(), revision=1
+    )
+    configuration.settings.pulses.port = "COM8"
+    owned = [False]
+    owner = ManualConfiguration(
+        configuration,
+        identity,
+        SessionSlot(),
+        SimpleNamespace(owns_hardware=lambda: owned[0]),
+        lambda: 10,
+    )
+    request = wire.AcquisitionMicrocontrollerCommand(
+        configuration_revision=2, kind=wire.MICROCONTROLLER_COMMAND_KIND_CONNECT
+    )
+    request.command.command_id = _id()
+    request.command.parent_operation.command_id = _id()
+    request.command.issuer.CopyFrom(identity.controller)
+    request.command.target.CopyFrom(identity.backend)
+    request.settings.pulses.port = "COM9"
+    request.requested.CopyFrom(request.settings.pulses)
+    assert owner.install(request, 100) is None
+    assert configuration.revision == 2 and configuration.settings.pulses.port == "COM9"
+    request.configuration_revision = 1
+    request.settings.pulses.port = "COM7"
+    assert owner.install(request, 100).result == control.COMMAND_RESULT_REJECTED
+    request.configuration_revision = 3
+    owned[0] = True
+    assert owner.install(request, 100).result == control.COMMAND_RESULT_REJECTED
+    assert configuration.settings.pulses.port == "COM9"
+    request.settings.CopyFrom(configuration.settings)
+    assert owner.install(request, 100) is None  # unrelated controller revision
+    assert configuration.revision == 3

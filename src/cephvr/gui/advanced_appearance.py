@@ -12,7 +12,13 @@ from cephvr.visual_stimulus.config.models.program_model import Epoch, Program, S
 
 class AdvancedAppearance(QWidget):
     def __init__(
-        self, program: Program, epoch: Epoch, setting: Settings, duration: object
+        self,
+        program: Program,
+        epoch: Epoch,
+        setting: Settings,
+        duration: object,
+        *,
+        allow_link: bool = True,
     ) -> None:
         super().__init__()
         self.linked_to = combo(("Independent",))
@@ -34,6 +40,9 @@ class AdvancedAppearance(QWidget):
             "Linked movement awaits the source/target Tracking control ownership choice; no link is applied yet."
         )
         self.link_field = field("Linked to", self.linked_to)
+        self.link_field.setParent(self)
+        self.allow_link = allow_link
+        self.link_field.setVisible(allow_link)
         self.fades = StimulusFades(setting.model_dump(mode="json")["opacity"], duration)
         self.grid = QGridLayout(self)
         self.grid.setContentsMargins(0, 0, 0, 0)
@@ -44,9 +53,14 @@ class AdvancedAppearance(QWidget):
         narrow = self.width() < 600
         self.grid.removeWidget(self.link_field)
         self.grid.removeWidget(self.fades)
-        self.grid.addWidget(self.link_field, 0, 0, 1, 2 if narrow else 1)
+        if self.allow_link:
+            self.grid.addWidget(self.link_field, 0, 0, 1, 2 if narrow else 1)
         self.grid.addWidget(
-            self.fades, 1 if narrow else 0, 0 if narrow else 1, 1, 2 if narrow else 1
+            self.fades,
+            1 if narrow and self.allow_link else 0,
+            1 if self.allow_link and not narrow else 0,
+            1,
+            1 if self.allow_link and not narrow else 2,
         )
         self.grid.setColumnStretch(0, 1)
         self.grid.setColumnStretch(1, 0 if narrow else 2)

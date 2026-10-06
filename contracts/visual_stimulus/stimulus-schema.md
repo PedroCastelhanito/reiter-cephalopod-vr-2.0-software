@@ -10,8 +10,13 @@ Do not claim structural parsing alone is full program validation or Ready.
 
 ## Required family settings and coordinates
 
-All fields in each selected settings variant are required under V02. Empty feedback
+All required fields in each selected settings variant follow V02. Empty feedback
 and assignments explicitly mean none; `hold` explicitly means no programmed writer.
+A plain image may specify `fit: contain|cover|stretch` under V04. Omitted legacy
+values preserve Stretch; new GUI Images write Contain explicitly. Fit acts within
+the authored width/height rectangle before projection, with transparent margins
+for Contain and a centered source crop for Cover. Looming remains an image with
+size animation and keeps its existing default Stretch behavior.
 A numeric condition reference is legal at a Number position only. AssetChoice also
 permits a typed asset_id column. Other structural enums, spaces, counts and scene
 membership are literal. Resolve all reachable row combinations at Setup; reject

@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.batch_insertion import Insertion
 from cephvr.gui.batch_values import materialize_values
 from cephvr.gui.batch_variation import BatchVariationRow
-from cephvr.gui.components import Card, button, combo, field, label
+from cephvr.gui.components import Card, button, combo, equal_row_height, field, label
 from cephvr.gui.epoch_batch import epoch_paths
 from cephvr.gui.epoch_composer import EpochComposer
 from cephvr.gui.program_editing import node_at
@@ -40,6 +40,7 @@ class BatchCreate(QWidget):
         super().__init__()
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(16)
         self.composer = EpochComposer()
         body.addWidget(self.composer)
         self.vary = QCheckBox("Enable")
@@ -66,6 +67,8 @@ class BatchCreate(QWidget):
         generation.setContentsMargins(0, 0, 0, 0)
         self.generation_grid = QGridLayout()
         self.generation_grid.setContentsMargins(0, 0, 0, 0)
+        self.generation_grid.setHorizontalSpacing(12)
+        self.generation_grid.setVerticalSpacing(12)
         self.parameter_fields: list[QWidget] = []
         self.repetitions = QLineEdit("1")
         self.repetitions.setMaxLength(3)
@@ -99,7 +102,18 @@ class BatchCreate(QWidget):
             ("Insert", self.insert),
         ):
             control.setMinimumWidth(0)
-            self.parameter_fields.append(field(caption, control))
+            widget = field(caption, control)
+            widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
+            self.parameter_fields.append(widget)
+        equal_row_height(
+            self.composer.mode,
+            self.composer.duration,
+            self.repetitions,
+            self.composer.batch_label,
+            self.insert,
+            self.target_label,
+            self.stride,
+        )
         generation.addLayout(self.generation_grid)
         self.arrange_fields()
         self.insertion_hint = label("", wrap=True)
@@ -135,7 +149,7 @@ class BatchCreate(QWidget):
             if mode == "label"
             else "Insert one generated block per interval; append any remaining blocks. Groups count as one block."
             if mode == "stride"
-            else "Replace all epochs in the current trial. Undo is available in Actions."
+            else "Replace all epochs in the current trial. Use Ctrl+Z to undo."
             if mode == "replace"
             else "An epoch inside a group selects its whole top-level group for insertion."
         )

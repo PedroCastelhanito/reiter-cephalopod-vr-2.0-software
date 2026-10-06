@@ -21,6 +21,7 @@ from cephvr.visual_stimulus.config.models.program_model import Epoch, Explicit, 
 class ProgramTimeline(QWidget):
     epochs_selected = pyqtSignal(object)
     screens_changed = pyqtSignal()
+    height_changed = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -36,6 +37,7 @@ class ProgramTimeline(QWidget):
         self.error = ""
         self.type_keys: tuple[str, ...] = ()
         self.hover_text: list[tuple[QRectF, str]] = []
+        self._height_scope: tuple[int, tuple[str, ...]] | None = None
         self.setMouseTracking(True)
         self.setMinimumWidth(0)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -93,7 +95,6 @@ class ProgramTimeline(QWidget):
             self.index = next(
                 (i for i, path in enumerate(self.paths) if path in paths), 0
             )
-        self.fit_lanes()
         self.update()
 
     def set_screens(self, screens: tuple[str, ...]) -> None:
@@ -125,8 +126,29 @@ class ProgramTimeline(QWidget):
         return [max(38, 12 + 25 * len(layers)) for _, layers in self.detail_rows()]
 
     def fit_lanes(self) -> None:
-        self.setMinimumHeight(120 + sum(self.lane_heights()))
+        scope = (id(self.program), self.screens)
+        if scope == self._height_scope:
+            return
+        # Reserve the largest epoch, so selection never resizes the trial card.
+        height = (
+            120
+            + max(
+                (
+                    sum(
+                        max(38, 12 + 25 * len(layers_for(self.program, node, face)))
+                        for face in self.screens or ("",)
+                    )
+                    for node in self.nodes
+                ),
+                default=38,
+            )
+            if self.program is not None
+            else 158
+        )
+        self.setFixedHeight(height)
         self.updateGeometry()
+        self._height_scope = scope
+        self.height_changed.emit()
 
     def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         painter = QPainter(self)

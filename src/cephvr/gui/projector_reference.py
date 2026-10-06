@@ -135,6 +135,10 @@ class ProjectorReference(QWidget):
             zip(self.columns, self.headings, strict=True)
         ):
             slot = index if self.face or index == 0 else index + 2
+            if self.narrow and self.parameters.layer_index < 0 and 3 <= slot < 7:
+                heading.hide()
+                control.hide()
+                continue
             visible = self.identity_header if slot < 4 else self.show_header
             heading.setText(self.columns[index][0] if visible or self.narrow else "")
             heading.setFixedHeight(header_height)
@@ -188,6 +192,8 @@ class ProjectorReference(QWidget):
         QTimer.singleShot(0, self.align_advanced)
 
     def align_advanced(self) -> None:
+        if self.parameters.layer_index < 0:
+            return
         body = self.layout()
         if body is not None:
             body.activate()

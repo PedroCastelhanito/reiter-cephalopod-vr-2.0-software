@@ -473,3 +473,24 @@ def test_stopped_preview_is_not_released_while_camera_remains_open() -> None:
 
     view.preview_run_id = ""
     assert _release_was_confirmed(operation)
+
+
+@pytest.mark.parametrize("cleanup_pending", [False, True])
+async def test_connection_check_requires_confirmed_cleanup(
+    tmp_path: Path,
+    cleanup_pending: bool,
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    ledger = runtime.camera_status_retention.ledger
+    assert ledger is not None
+    ledger.admit(parent, b"connection-check", 1, work_key=parent)
+    _start(runtime, parent, child, svc.CAMERA_COMMAND_KIND_TEST_CONNECTION, False)
+    status = _status(backend, child, succeeded=True)
+    status.views.behavioral.Clear()
+    status.views.behavioral.device_open = False
+    status.views.behavioral.cleanup_pending = cleanup_pending
+    receipt = await runtime.report_projection("devices", status, ingress_ns=900)
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.control.operations[parent].succeeded is not cleanup_pending

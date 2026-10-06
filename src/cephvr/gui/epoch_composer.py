@@ -5,7 +5,7 @@ import json
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
-from cephvr.gui.components import combo, label
+from cephvr.gui.components import InlineMessage, combo
 from cephvr.gui.formatting import parse_clock_duration
 from cephvr.gui.prepared_file_picker import PreparedFilePicker
 from cephvr.gui.program_editing import validate
@@ -48,7 +48,7 @@ class EpochComposer(QWidget):
         self.picker.selected.connect(
             lambda preset, path, fresh: self.add_file(preset, path, self.picker_face)
         )
-        self.message = label("", wrap=True)
+        self.message = InlineMessage()
         self.body.addWidget(self.message)
         self.duration.editingFinished.connect(self.update_duration)
         self.add_row("")

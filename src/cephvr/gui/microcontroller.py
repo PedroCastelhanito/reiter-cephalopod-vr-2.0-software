@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSignal
 from PyQt6.QtSerialPort import QSerialPortInfo
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -81,9 +81,6 @@ class MicrocontrollerPanel(DevicePanel):
         assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(1, self.io)
         layout.insertWidget(2, self.triggers)
-        self.save_button = button("Save pins", "secondary")
-        self.save_button.clicked.connect(self.save_pins)
-        self.configuration.body.addWidget(self.save_button)
         self.port.currentIndexChanged.connect(self.port_changed)
 
     def add_pin_row(
@@ -104,6 +101,7 @@ class MicrocontrollerPanel(DevicePanel):
         )
         test.clicked.connect(lambda: self.test_pin(key))
         pin.textChanged.connect(self.refresh_tests)
+        pin.editingFinished.connect(self.save_pins)
         self.test_buttons[key] = test
         enabled = QCheckBox()
         enabled.setChecked(True)
@@ -132,6 +130,8 @@ class MicrocontrollerPanel(DevicePanel):
             self.stop_review_tests({key})
         if any(camera.key == key for camera in self.camera_rows):
             self.camera_enable_requested.emit(key, enabled)
+        else:
+            self.save_pins()
         self.refresh_tests()
 
     def request(self, name: str) -> None:
@@ -156,6 +156,10 @@ class MicrocontrollerPanel(DevicePanel):
 
     def scan_ports(self) -> None:
         """List ports without opening them; managed startup may call this directly."""
+        with QSignalBlocker(self.port):
+            self._scan_ports()
+
+    def _scan_ports(self) -> None:
         self.stop_review_tests()
         current = self.port.currentData()
         self.port.clear()
@@ -190,11 +194,16 @@ class MicrocontrollerPanel(DevicePanel):
         self.refresh_tests()
 
     def save_pins(self) -> None:
-        if not self.managed or not self.can_review:
+        if (
+            not self.managed
+            or not self.can_review
+            or self.managed_test_key
+            or self.pending_test_key
+            or self.connection_pending
+        ):
             return
         port = str(self.port.currentData() or "")
         if not port:
-            self.console.appendPlainText("Select the COM port before saving pins.")
             return
         camera_pins = {
             camera.role: self.pin_editors[camera.key].text().strip()
@@ -219,9 +228,10 @@ class MicrocontrollerPanel(DevicePanel):
         flip_pin: str,
         flip_enabled: bool,
     ) -> None:
-        if port and self.port.findData(port) < 0:
-            self.port.addItem(port, port)
-        self.port.setCurrentIndex(self.port.findData(port) if port else -1)
+        with QSignalBlocker(self.port):
+            if port and self.port.findData(port) < 0:
+                self.port.addItem(port, port)
+            self.port.setCurrentIndex(self.port.findData(port) if port else -1)
         for key, editor, pin, enabled in (
             ("trial-state", self.trial_pin, trial_pin, trial_enabled),
             ("projector-flip", self.flip_pin, flip_pin, flip_enabled),
@@ -305,9 +315,8 @@ class MicrocontrollerPanel(DevicePanel):
         self.action_buttons[1].setEnabled(
             self.can_review and not active and bool(self.port.currentData())
         )
-        self.save_button.setEnabled(self.managed and self.can_review and not active)
         for control in self.enable_controls.values():
-            control.setEnabled(self.can_review)
+            control.setEnabled(self.can_review and (not self.managed or not active))
         for key, editor in (
             ("trial-state", self.trial_pin),
             ("projector-flip", self.flip_pin),
@@ -317,6 +326,7 @@ class MicrocontrollerPanel(DevicePanel):
             self.test_buttons[key].setEnabled(
                 self.can_test
                 and enabled
+                and not self.connection_pending
                 and (not exclusive_active or key == self.managed_test_key)
                 and bool(self.port.currentData())
                 and bool(editor.text().strip())
@@ -330,6 +340,7 @@ class MicrocontrollerPanel(DevicePanel):
             self.test_buttons[camera.key].setEnabled(
                 self.can_test
                 and external
+                and not self.connection_pending
                 and (not exclusive_active or camera.key == self.managed_test_key)
                 and bool(self.port.currentData())
                 and bool(editor.text().strip())
@@ -338,6 +349,7 @@ class MicrocontrollerPanel(DevicePanel):
     def port_changed(self) -> None:
         self.stop_review_tests()
         self.refresh_tests()
+        self.save_pins()
 
     def stop_review_tests(self, keys: set[str] | None = None) -> None:
         live_key = self.managed_test_key or self.pending_test_key

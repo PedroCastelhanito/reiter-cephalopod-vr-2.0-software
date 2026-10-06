@@ -12,6 +12,7 @@ from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
 PARAMETERS = (
     "Duration",
     "Asset",
+    "Fit",
     "Speed",
     "Direction",
     "Angular speed",
@@ -24,6 +25,8 @@ PARAMETERS = (
 
 
 def supports(family_name: str, parameter: str) -> bool:
+    if parameter == "Fit":
+        return family_name == "Image"
     if parameter in ("Asset", "Angular speed"):
         return True
     if parameter in ("Speed", "Direction"):
@@ -63,6 +66,10 @@ class ProjectorEditRow(QWidget):
         self.value.setMinimumWidth(0)
         self.value.textEdited.connect(self.mark_changed)
         layout.addWidget(self.value, 3)
+        self.fit = combo(("Contain", "Cover", "Stretch"))
+        self.fit.hide()
+        self.fit.currentTextChanged.connect(self.set_fit)
+        layout.addWidget(self.fit, 3)
         self.browse = button("…", hint="Choose prepared asset")
         self.browse.clicked.connect(lambda: self.browse_requested.emit(self))
         layout.addWidget(self.browse)
@@ -111,6 +118,12 @@ class ProjectorEditRow(QWidget):
         self.value.clear()
         self.value.setPlaceholderText("Unavailable")
         self.value.setEnabled(target is not None)
+        self.value.setVisible(self.parameter != "Fit")
+        self.fit.setVisible(self.parameter == "Fit")
+        self.fit.setEnabled(target is not None)
+        self.fit.blockSignals(True)
+        self.fit.setCurrentIndex(-1)
+        self.fit.blockSignals(False)
         if self.program is None or target is None:
             return
         values: list[str] = []
@@ -164,12 +177,20 @@ class ProjectorEditRow(QWidget):
                 "Mixed" if len(set(values)) > 1 else values[0] if values else ""
             )
         unit = next(iter(units)) if len(units) == 1 else ""
+        if self.parameter == "Fit":
+            self.fit.blockSignals(True)
+            self.fit.setCurrentIndex(self.fit.findText(self.value.text().title()))
+            self.fit.blockSignals(False)
         self.value.setAccessibleName(
             f"{self.face or '3D arena'} {self.parameter}"
             + (f" ({unit})" if unit else "")
         )
 
     def mark_changed(self, _text: str) -> None:
+        self.dirty = True
+
+    def set_fit(self, text: str) -> None:
+        self.value.setText(text.lower())
         self.dirty = True
 
     def set_asset(self, path: str) -> None:

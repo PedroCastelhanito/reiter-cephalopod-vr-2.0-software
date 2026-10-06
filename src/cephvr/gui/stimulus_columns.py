@@ -19,6 +19,12 @@ def stimulus_columns(setting: Settings) -> tuple[tuple[str, str], ...]:
         )
     if setting.kind == "video":
         return (("Start (s)", "Playback start"), ("At end", "At end"))
+    if setting.kind == "image":
+        return (
+            ("Fit", "Fit"),
+            (f"Move speed ({unit}/s)", "Speed"),
+            ("Direction (°)", "Direction"),
+        )
     return (
         (f"Speed ({unit}/s)", "Speed"),
         ("Direction (°)", "Direction"),

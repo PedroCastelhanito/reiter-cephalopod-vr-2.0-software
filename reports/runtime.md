@@ -201,6 +201,167 @@ windows already reuse useful reference patterns with smaller focused components.
 
 ### Dashboard frontend implementation
 
+The 2026-10-06 runtime synchronization check confirms the managed launcher imports
+`cephvr.gui.main`, whose ManagedDashboardWindow inherits the same DashboardWindow
+and screen components used by review. Current Protocol/Devices layouts therefore
+already apply to runtime; no duplicate frontend or build step was needed. A local
+probe instantiated the actual ManagedGui/ManagedDashboardWindow with discovery and
+transport substituted, installed authoritative-shaped protobuf snapshots, and checked
+camera/rate and MCU/pin field completion reaches the existing bridge requests.
+Snapshot installation emits no update requests; control loss disables editing.
+Removed buttons/Stream controls are absent or hidden in the managed window, and the
+unwired calibration presenter remains disabled. This verifies client wiring, not
+authenticated transport, Windows startup or physical device execution.
+
+Current GUI checks: **202 passed, 11 deselected (118.39s)** for the GUI/launcher
+selection command (the selector included all portable GUI tests and excluded the
+launcher cases). Ruff lint/format (97 files), Windows-target GUI mypy (96 source
+files), boundaries (551 modules, zero violations) and whitespace pass. Updated the
+runtime guide's obsolete Save-button instructions and calibration preparation wording.
+No new source change or architecture amendment was required; G01/G02 already govern
+the shared frontend. The existing main/camera/Protocol cohesion advisories were not
+extended. The temporary managed probe and QSettings were removed. Windows runtime
+startup and pending Protocol/projector/SpikeGLX configuration and calibration-output
+bindings remain in the existing worklist.
+
+The 2026-10-06 SpikeGLX refinement under [G01 revision 106](../docs/architecture/gui.md#g01)
+removes the Stream header/selector from Input channels, leaving Use, Signal, Index,
+Channel and the custom-input remove action. Existing stream identities remain in
+retained mapping metadata so review-draft load/save does not discard them. Source
+refresh cannot reveal the hidden stream controls. No managed acquisition behavior
+changed. Existing SpikeGLX, draft-restoration and device-reflow checks: **6 passed,
+197 deselected (3.97s)**. Scoped Ruff lint/format, Windows-target mypy (1 source file),
+boundaries (551 modules, zero violations) and whitespace pass. Native inspection
+checked the compact mapping rows, including a custom input; inspection closed and
+the isolated GUI reopened on SpikeGLX. Temporary inspection artifacts were removed.
+
+The 2026-10-06 Devices refinement under [G01 revision 103](../docs/architecture/gui.md#g01)
+removes Save camera settings and Save pins. Managed clients submit completed fields,
+camera trigger/PFS selections, COM selections and fixed I/O enable changes through
+their existing controller requests; loading snapshots and refreshing ports stay
+silent. Unfinished/invalid camera hints remain drafts, and pin tests require the
+controller-confirmed configuration. Managed enable/pin edits lock during diagnostics.
+Isolated review still sends no hardware commands. Under G01 revision 104, the separate
+Prepare calibration files button/signal are removed; Launch prepares the diagnostic
+GLB/display profiles and requests output only on success. Managed calibration
+presentation remains unfinished. The focused calibration run passes **5 checks**
+(198 deselected, 3.80s), including automatic preparation, preparation-failure gating
+and confirmed Launch/Close state. Scoped Ruff lint/format (3 files), Windows-target
+mypy (2 source files), boundaries (551 modules, zero violations) and whitespace pass.
+Native Projectors inspection checked the simplified Screen calibration card and closed
+before reopening the isolated review GUI.
+
+Local affected GUI checks: **19 passed, 184 deselected (12.78s)**, then **2 passed,
+201 deselected (3.65s)** after extending scan/snapshot silence coverage. Scoped Ruff
+lint/format (4 files), Windows-target mypy (3 source files), boundaries (551 modules,
+zero violations) and whitespace pass. Native Cameras/Microcontroller inspection at
+1280px and narrow Microcontroller inspection at 720px were closed after review.
+ARCH-002 review retains the cohesive camera panel's widget/draft/intent owner
+(602 lines); transport and device execution remain in separate existing modules.
+No new dependency or backend policy. Native Windows and physical controller/device
+acceptance remain in the rig checklist; local review is not evidence of that pass.
+
+G01's family-specific editor now gives Images Fit (Contain/Cover/Stretch), Move
+speed and Direction, with initial position and whole-image rotation in Advanced
+settings. Fit has a Batch edit dropdown and is excluded from numeric variation.
+New Images use Contain; omitted legacy values preserve Stretch under
+[V04](../docs/architecture/visual_stimulus.md#v04). Video hides Retain state/Linked
+to and preserves loaded reset values during other edits; Looming hides Linked to.
+Image motion uses the existing 2D state, with no texture phase conversion. Fades
+and existing closed-loop availability remain in their owning forms.
+
+Local checks for this increment: GUI suite **195 passed, 1 deselected**;
+the final family/legacy/Batch-fit subset **5 passed, 192 deselected** after adding
+the last compatibility scenario. Rendering, compilation and contract checks:
+**68 passed, 79 subtests passed**. Scoped Ruff lint/format (16 files), Windows-target
+mypy (14 affected files; an earlier broader pass covered 124 source files), schema
+generation/check (11 schemas; Program/PreparedTrial regenerated), boundaries
+(550 modules, zero violations), and whitespace pass. Native Qt inspection checked
+mixed Image/Texture/Video/Looming rows and advanced cards at wide and settled 720px
+layouts; inspection windows were closed and captures removed. The comparison review
+window subsequently exited normally; the standard isolated GUI was reopened for review.
+The 504-line StimulusParameters remains the binding/atomic-commit owner; image
+fields and fitting math are separate focused modules. The existing canonical model
+and renderer composition remain cohesive. GPU shader compilation and physical
+Windows projection are not established by these portable checks; the existing rig
+worklist remains authoritative.
+
+[G01 revision 105](../docs/architecture/gui.md#g01) gives a single Timeline
+selection the shared full Batch generate form: duration, stimulus mode, batch
+label and each projector/layer's stimulus parameters. Delete/Duplicate sit beside
+the scope selector and are absent from the timeline. Target epochs retains
+parameter-at-a-time batch controls with All epochs, Epoch label and Epoch index
+filters. Labels refresh from the current trial; a one-based index selects a source
+epoch, including nested groups without expanding repeated occurrences. Invalid or
+out-of-range input warns inline and blocks Apply, including a direct apply call.
+Changing filters with unapplied edits restores the accepted filter. Epochs,
+Filter and any label/index choice share one row; Parameter and the duration or
+per-projector values share the row below. Fixed matching durations retain their
+clock value; mixed/variable durations show hh:mm:ss, without staging a patch.
+Targeting and epoch identity fields share equal grid columns, matching control
+heights and explicit 12px gutters. Timeline selection keeps its larger section gap.
+One permanent action bar above targeting controls keeps Discard/Apply in the same
+top-right position across selection modes; Apply has primary emphasis. The shared
+pair dispatches to the full selected-source form or the target patch, without a
+second pair in the form. Shared InlineMessage collapses empty validation space. Empty narrow projector rows omit unused asset/numeric placeholders.
+Batch generate aligns field heights and uses consistent horizontal/vertical gaps. Multiple
+Timeline selections retain
+batch patches for mixed settings, with structural actions disabled. Returning to
+Timeline selection restores the previous targets. Pending form edits block a scope
+switch until applied or discarded. Apply preserves source epoch identity, isolates
+shared projector layers and copies changed scenes without altering sibling epochs.
+
+Keyboard-only undo/redo, Ctrl+D duplication and Backspace deletion remain guarded;
+text editing and multiple-selection protection are covered. The timeline has no
+internal scroller, fits the largest enabled-screen layer stack across the trial,
+and caches sizing by immutable program/screen identity. Trials matches its height;
+the Protocol configuration section remains scrollable.
+
+Final fresh GUI suite: **202 passed, 1 deselected** (119.62s). Final focused
+selection/clock-format/targeting/fixed-action/reflow checks: **10 passed,
+193 deselected** (13.98s). Scoped Ruff lint/format (4 files), Windows-target
+GUI mypy (96 source files), boundaries (551 modules, zero violations), and
+whitespace pass. The first full run had two tests manipulating hidden patch
+controls in single Timeline selection; those scenarios now explicitly target
+source index 1, preserving their intended batch-patch isolation/history coverage.
+Native review checked Timeline selection and all/label/index targeting at 1280px
+and 720px, including exact action positions and matching field heights. Explicit
+gutter columns fixed a Qt grid gap lost beside hidden spanning controls. All
+inspection GUIs were closed; the updated isolated Protocol GUI remains open for
+review. Temporary helpers/captures/results were removed after assessment.
+ARCH-002 cohesion review keeps BatchEdit (506 lines) as the focused patch-binding
+and apply-dispatch owner; EpochTargets and EpochSelection own filtering and form
+composition, while ProtocolEditor owns document/history. No new dependency or
+runtime back-reference was introduced. Concurrent Devices and Image/Video/Looming
+work was preserved. These checks do not establish managed runtime or physical rig
+acceptance.
+
+2026-10-06 portable update review of `c0120e9`: inspected the managed/review launcher
+split, controller bridge, camera viewer, MCU wiring, draft persistence and renderer
+startup amendments under G01/A03/E08. Refreshed the ignored generated bindings from
+the 19 authoritative Protobuf sources; stale local bindings caused the initial
+missing-field test/type errors. No hand-written implementation was changed.
+The initially failing SpikeGLX review-action expectation was reconciled with the
+intentionally disabled sample-mode connection button during the following authorized
+layout increment; managed connection-query wiring is unchanged.
+The existing Windows 720px horizontal-overflow finding below remains open; the
+corresponding portable test passes on this macOS checkout.
+
+The eight affected acquisition/controller/shared/Visual Stimulus test modules
+report **82 passed**. Authenticated client RPC tests report **6 passed** after a
+permitted loopback rerun (the sandbox attempt had five socket-binding errors).
+GUI Ruff lint/format (96 files), Windows-target mypy (93 source files), and backend
+boundaries (547 modules, zero violations) pass. Cohesion warnings remain review
+prompts, not acceptance failures. These checks do not establish Windows runtime,
+physical camera/MCU/SpikeGLX behavior or full rig acceptance.
+
+Native simulated review inspected Dashboard, Protocol and all four Devices subtabs
+at the wide layout and Cameras at 720px. The inspection window was closed, temporary
+captures removed, and the standard isolated review GUI reopened for layout work.
+The current commit also tracks 81 `.local-*` test-output files, including generated
+locks, fixture images and review drafts; they are housekeeping leftovers, separate
+from the dated rig evidence that must be preserved.
+
 The SpikeGLX managed Devices panel now sends a read-only authenticated controller
 connection query. It reports the saved endpoint, SpikeGLX version, running/saving
 state, run name and data directory via the official SDK. The local SDK readback and
@@ -341,7 +502,7 @@ The Cameras Use checkbox submits an E07 update by assigned serial and waits for 
 authoritative snapshot; rejection restores the previous state and is logged.
 Camera config now submits its PFS path, FrameStart line source, timing selection and
 requested pulse rate through the same revision-checked route. Managed Microcontroller
-Save pins includes both camera outputs as well as Trial state and Projector flip;
+configuration submission includes both camera outputs as well as Trial state and Projector flip;
 camera Test/Stop uses the saved behavioral/tracking signal identity. A pure validation
 probe against the current rig defaults found that enabling the behavior camera is
 rejected until `device.settings.trigger_source` is set; with an explicit `Line1`
@@ -1114,8 +1275,8 @@ switches to Disconnect and back for the selected review connection.
 The proposed Test enabled action logs one explicitly untested request per enabled
 camera, preserving selection and connection state; no hardware result is fabricated.
 Tests cover disabled-camera exclusion, empty selection of enabled devices, phase
-gates, real tab clicks, full-width tabs and their border alignment. Batch hardware
-checking remains unimplemented. Owner review of the presentation remains pending.
+gates, real tab clicks, full-width tabs and their border alignment. Managed connection-only batch checks are now implemented through the controller and
+camera worker; their physical rig acceptance remains pending.
 The camera inventory is titled Available devices. A shared dim selection palette
 separates selected rows from headers and applies to navigation/subtabs/text selection.
 Shared 12-pixel horizontal cell/header padding is included in content-sized columns,
@@ -1154,15 +1315,48 @@ Small Inputs/Outputs cards use shared compact density and a four-column row help
 centered enable checkboxes, wrapped signal names, equal-width pin and action controls.
 Name, pin and action columns now share width equally, widening pin/Test controls.
 Both cards share column proportions and spacing; other cards keep their spacing.
+The 2026-10-06 managed-camera binding adds controller-confirmed role assignment,
+connection-only Test enabled, capture-versus-editing state, pending-command locks,
+and external viewer attachment/close refresh. G01/A10 distinguish open/identify/close
+from Start capture's frame/trigger evidence. Controller disconnect discards queued
+operator intents. ARCH-002 moved camera projection/intents and request construction
+out of the GUI entry point; MCU projection lives with its focused binding, and
+serial-keyed discovery records moved out of the Cameras widget. The remaining
+Cameras widget remains cohesive presentation/signal wiring; the Basler adapter's
+small ownership property remains with its sole SDK owner. No new
+dependency or direct GUI hardware ownership was added. Camera/pulse edits while
+owned remain blocked by the current E07 controller guard; `owned-camera-edits`
+tracks live-edit adoption. The final source trace found that accepted drafts previously never reached manual
+acquisition commands and GUI PFS selection only changed provenance. Commands now
+carry the accepted acquisition draft/revision, with ownership/staleness gates;
+selected PFS files use actual SDK import/readback and explicit editing completion.
+COM changes close the previous serial owner before connecting the new port. These
+fixes are portable-test verified; native launcher/hardware acceptance remains in the
+[rig guide](rig-verification.md#managed-device-gui).
+
+Validation (2026-10-06): full portable GUI suite 206 passed/1 deselected;
+subsequent focused managed/PFS/inventory checks 25 passed and MCU gates 5 passed.
+Complete portable acquisition/controller suites: 390 passed/5 skipped; authenticated
+controller RPC suite: 6 passed. Ruff lint/format (360 files), Windows-target mypy
+(355 sources), regenerated Protobuf, boundary checks (555 modules, zero violations)
+and whitespace pass. A temporary actual ManagedGui snapshot/layout probe passed
+with discovery/transport replaced; both device pages were visually inspected, then
+closed and temporary images removed. The native design-review window was reopened
+on Cameras. No native managed launch, camera SDK frame, MCU waveform or rig pass is
+claimed. Acquisition runtime remains composition/delegation; its new draft-adoption
+logic lives in a focused owner instead of extending the runtime body.
+
 The managed GUI now submits COM8 connection, saved Trial state/Projector flip
 pins, and bounded Test/Stop requests through the controller to acquisition's
 serial owner. Firmware protocol v2 implements the two diagnostics and their
 device status is projected back to the panel. The owner-assigned D10/D11 camera
 trigger pins and saved rates are projected to their matching camera rows. MCU
 commands were extracted from the managed GUI entry into a focused binding under
-ARCH-002. Focused MCU GUI tests pass (6),
-while the full managed path and physical pins remain unverified; the broad GUI
-suite still terminates with a Qt fixture teardown access violation. ARCH-002
+ARCH-002. The 2026-10-06 increment adds pending/failure locks, confirmation-based
+final-status queries and current camera-pin projection. GUI/portable owner checks
+are recorded in LOG; the full managed Windows path and physical pins remain unverified.
+The earlier Qt teardown failure is historical; the subsequent full offscreen GUI
+suite passed. ARCH-002
 review reuses one small row helper and removes the obsolete aggregate test path.
 Projectors replaces its HUD with Displays layout, a tank/screen schematic and the
 activity log. Screen calibration/Synchronization/Rig geometry sections beneath inventory
@@ -1180,7 +1374,7 @@ Stimulus renderer for CephVR2.0. The saved rig JSON now feeds an offline GLB exp
 the resulting asset is under ignored `cephvr-data/calibration`. The owner rejected
 the timed 60-second trial program; calibration is to remain visible until manually
 closed through a distinct V01 diagnostic state.
-Screen calibration now has Prepare calibration files: it reads the current four
+Screen calibration Launch prepares files automatically: it reads the current four
 enabled face assignments and native monitor identities, computes bounded diagnostic
 projection limits from the rig dimensions and writes a V15 display profile plus four
 diagnostic geometric profiles into Protocol Assets. This is a local export, with no

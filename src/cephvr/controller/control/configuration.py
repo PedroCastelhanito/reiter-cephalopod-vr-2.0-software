@@ -38,8 +38,11 @@ def manual_camera_owned(projections: ProjectionStore, device: DeviceState) -> bo
     if device.camera_operation is not None:
         return True
     views = projections.devices
-    return views is not None and any(
-        manual_state_open(camera) for camera in (views.behavioral, views.tracking)
+    return views is not None and (
+        views.diagnostic.active
+        or any(
+            manual_state_open(camera) for camera in (views.behavioral, views.tracking)
+        )
     )
 
 

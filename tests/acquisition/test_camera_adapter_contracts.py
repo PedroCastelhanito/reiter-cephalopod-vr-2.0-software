@@ -211,3 +211,84 @@ def test_native_color_result_uses_pylon_registry_not_device_symbol_registry() ->
     result = native_pixel_format(pylon, 42)
     assert result == pylon_pixel_format("BGR10packed")
     assert result.sdk_name == "BGR10packed"
+
+
+@pytest.mark.parametrize("already_open", [False, True])
+@pytest.mark.parametrize("serial", ["CAM-1", "wrong"])
+def test_connection_check_verifies_identity_and_preserves_existing_owner(
+    already_open: bool,
+    serial: str,
+) -> None:
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker.camera_configuration import WorkerCameraConfiguration
+
+    calls: list[str] = []
+    adapter = SimpleNamespace(
+        device_open=already_open,
+        open=lambda device: calls.append(f"open:{device}"),
+        read_device_identity=lambda: SimpleNamespace(physical_id=serial),
+        release_device=lambda: calls.append("close"),
+    )
+    owner = WorkerCameraConfiguration(adapter, SimpleNamespace(), lambda: False)
+    request = acq.WorkerEditCamera(kind=acq.CAMERA_EDIT_KIND_TEST_CONNECTION)
+    request.requested.device_id = "CAM-1"
+    if serial == "wrong":
+        with pytest.raises(RuntimeError, match="identity differs"):
+            owner.edit(request, acq.WorkerOperationReport())
+    else:
+        owner.edit(request, acq.WorkerOperationReport())
+    assert calls == ["open:CAM-1"] + ([] if already_open else ["close"])
+
+
+def test_connection_check_never_reports_success_after_release_failure() -> None:
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker.camera_configuration import WorkerCameraConfiguration
+
+    def failed_close() -> None:
+        raise RuntimeError("native close failed")
+
+    owner = WorkerCameraConfiguration(
+        SimpleNamespace(
+            device_open=False,
+            open=lambda _: None,
+            read_device_identity=lambda: SimpleNamespace(physical_id="CAM-1"),
+            release_device=failed_close,
+        ),
+        SimpleNamespace(),
+        lambda: False,
+    )
+    request = acq.WorkerEditCamera(kind=acq.CAMERA_EDIT_KIND_TEST_CONNECTION)
+    request.requested.device_id = "CAM-1"
+    with pytest.raises(RuntimeError, match="native close failed"):
+        owner.edit(request, acq.WorkerOperationReport())
+
+
+def test_first_pfs_import_opens_assigned_camera_and_retains_sdk_readback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.acquisition.v1 import camera_pb2 as camera
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker import camera_configuration as module
+
+    calls = []
+    adapter = SimpleNamespace(
+        open=lambda serial: calls.append(("open", serial)),
+        import_pfs=lambda path: calls.append(("import", path)),
+    )
+    resolved = camera.CameraResolvedState(configuration_revision=4)
+    resolved.applied.device_id = "CAM-1"
+    resolved.applied.pfs_baseline.text = "SDK snapshot"
+    monkeypatch.setattr(
+        module, "resolve_imported_camera", lambda adapter, requested, revision: resolved
+    )
+    owner = module.WorkerCameraConfiguration(adapter, SimpleNamespace(), lambda: False)
+    request = acq.WorkerEditCamera(
+        kind=acq.CAMERA_EDIT_KIND_IMPORT_PFS,
+        path="preset.pfs",
+        configuration_revision=4,
+    )
+    request.requested.device_id = "CAM-1"
+    report = acq.WorkerOperationReport()
+    owner.edit(request, report)
+    assert calls == [("open", "CAM-1"), ("import", "preset.pfs")]
+    assert report.resolved_camera.applied.pfs_baseline.text == "SDK snapshot"

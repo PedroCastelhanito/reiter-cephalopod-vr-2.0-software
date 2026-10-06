@@ -598,7 +598,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 50
+**Status:** Accepted · **Revision:** 51
 
 **Capture lifetime**
 
@@ -631,6 +631,20 @@ stamping/filtering and the mappings still need runtime implementation.
   at host receipt before queues; invalid images do not reset the timer. Intentional
   gaps need suitable configured timeouts. Not applied after stop; recording drops are
   not missing camera frames.
+
+**Connection diagnostic**
+
+- Manual camera/MCU commands carry the controller-accepted complete acquisition
+  draft and revision. Install newer drafts only with exact controller/backend/parent
+  identity and no conflicting device/diagnostic ownership; this is not SDK readback.
+  Unchanged drafts may advance an unrelated revision. A11 serial ownership closes
+  the old port before opening a newly selected one, under the original deadline.
+- An explicit controller-authorized Configuration check opens the assigned serial,
+  verifies its identity, and closes only a device opened by that check. The camera
+  worker remains the sole SDK owner; no PFS/settings, capture, pulses or recording
+  are started. Existing preview is not interrupted. Retain cleanup as unconfirmed
+  on failure until normal device-release evidence resolves it. This check is not
+  frame-delivery, trigger or Setup-readiness evidence.
 
 **Preview**
 

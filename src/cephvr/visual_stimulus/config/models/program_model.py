@@ -247,6 +247,8 @@ class ImageSettings(LayerBase):
     kind: Literal["image"]
     asset_id: AssetChoice
     sampling: Literal["nearest", "linear"]
+    # Preserve the appearance of programs authored before image fitting existed.
+    fit: Literal["contain", "cover", "stretch"] = "stretch"
 
 
 class VideoSettings(LayerBase):

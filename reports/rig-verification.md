@@ -71,6 +71,39 @@ but could not click that window. A retry ended with `JOB_INSPECTION_FAILED`;
 the intermittent native process-inspection error remains open. The exact GUI
 button response remains unverified. No E12 Setup or recording command was issued.
 
+<a id="managed-device-gui"></a>
+### Managed MCU and camera GUI verification
+
+Implementation update: 2026-10-06; physical acceptance remains open under A10/A11/E15.
+Use `.venv\Scripts\python.exe tools/generate_contracts.py`, then
+`.venv\Scripts\python.exe scripts/start_runtime_gui.py` on the rig. Do not launch a
+second application generation while the previous launcher/backends remain active.
+
+1. Take control. In Devices/Microcontroller, scan and select the actual COM port,
+   set enabled I/O pins, complete edits with Enter, and wait for controller confirmation.
+   Test connection must report the actual firmware/protocol with outputs stopped.
+2. Test one enabled output at a time, observing its configured SpikeGLX receiver
+   under the existing wiring/voltage checks. Verify Test→Stop→Test, explicit Stop,
+   firmware's bounded termination and truthful final edge counts. Projector flip
+   observes input edges; it must not drive that pin. A software response is not
+   physical waveform proof.
+3. In Cameras, refresh, assign Behavior/Tracking roles, select each PFS and confirm
+   the detected trigger source. Set requested external rates; configure matching
+   MCU pins. Wait for accepted settings, then enable Use. Missing source/rate/pin
+   errors must remain explicit; no free-running fallback is permitted.
+4. Test enabled: verify separate connection/identity results, no capture or trigger
+   pulses, preserved selection, and reported failure for an unavailable camera.
+5. Start capture on each camera; confirm usable frames and MCU pulse state. Open
+   Preview from Cameras and the Dashboard selector. Close/reopen the viewer while
+   capture continues, then Stop capture and verify camera/buffer/pulse release.
+   Repeat with both enabled. Settings remain locked while a camera is owned.
+6. Exercise loss of control/controller connection during tests/capture, failed PFS,
+   missing trigger input and device unplug. Verify stale actions are not replayed,
+   incomplete cleanup stays visible, and no false successful result appears.
+
+Retain source revision, logs and receiver evidence with the dated rig results.
+Existing operating-point/throughput deferrals below remain separate.
+
 | Check | Evidence required |
 | --- | --- |
 | Final camera operating points | Under A10, choose the owner-deferred ROI/source/recording precision, then re-read payload, chunks, transport limits and applicable resulting-rate nodes. Resolve behavioral 30 Hz's saved 368,640,000 B/s payload demand versus 360,000,000 B/s limit explicitly; no guessed higher limit or lower cadence. Verify simultaneous externally triggered 30/60 Hz capture with native counters and saved pulse evidence. Different USB host controllers and tracking's 71.803 Hz estimate do not prove sustained rates. |

@@ -77,6 +77,8 @@ def add_stimulus(
             source.update(
                 initial_playback={"seconds": "0"}, end_behavior="hold_final_frame"
             )
+        if preset == "Image":
+            source["fit"] = "contain"
         if preset == "Looming image":
             curve = {
                 "kind": "keyframes",

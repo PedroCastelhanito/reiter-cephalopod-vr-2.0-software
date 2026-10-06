@@ -6,6 +6,29 @@ Derived from [A02/A03/A09/A10](../../docs/architecture/acquisition.md),
 [frame buffers](frame-buffers.md) owns native layout and handle/release rules.
 These are interface declarations, not a running preview implementation.
 
+## Manual configuration handoff
+
+Manual camera and MCU commands carry the complete controller-accepted acquisition
+settings with their exact configuration revision. The coordinator installs newer
+drafts before dispatch, rejecting stale/missing payloads and changes while camera
+or diagnostic ownership is active. This does not apply settings to hardware or
+replace SDK/MCU readback and controller adoption. Release/attachment of existing
+session work does not install a new draft. PFS imports carry the assigned requested
+device into the worker, so the first import can open that device before SDK import.
+The GUI completes its import editing operation with Finish Editing.
+
+## Connection-only diagnostic
+
+`ExecuteCameraCommand(TEST_CONNECTION)` is a Configuration/control-holder command
+with the current configuration revision and assigned camera role, and no path,
+preview run or consumer. Acquisition forwards one retained `WorkerEditCamera`
+`TEST_CONNECTION` child under the original deadline. The worker checks the exact
+serial and closes only a device it opened. No settings/PFS or capture operation is
+performed. Active preview is rejected; the GUI skips that camera without stopping it.
+A successful matched completion requires confirmed device ownership/cleanup state;
+failure retains cleanup as unknown until Finish Editing or owner cleanup confirms it.
+No frame, trigger or recording readiness is inferred.
+
 ## Capture owns the slot
 
 Prepare one capacity-1 PREVIEW slot for each explicitly started manual preview in

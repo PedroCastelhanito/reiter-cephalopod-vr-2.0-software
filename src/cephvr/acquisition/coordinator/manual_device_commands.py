@@ -1,4 +1,4 @@
-"""PFS import/export and finish-editing workflow for manual cameras (A10/E07)."""
+"""Connection checks and PFS/editing workflows for manual cameras (A10/E07)."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ class ManualDeviceCommands:
         *,
         deadline_ns: int,
     ) -> control.CommandAdmission:
-        """Run one explicit Import/Export/Finish operation on an owned device.
+        """Run one explicit connection check or Import/Export/Finish operation.
 
         Start/Stop and viewer attachment belong to ManualPreview. Import first loads
         the chosen PFS, then resolves actual values through the same adoption barrier.
@@ -103,6 +103,7 @@ class ManualDeviceCommands:
             wire.CAMERA_COMMAND_KIND_IMPORT_PFS,
             wire.CAMERA_COMMAND_KIND_EXPORT_PFS,
             wire.CAMERA_COMMAND_KIND_FINISH_EDITING,
+            wire.CAMERA_COMMAND_KIND_TEST_CONNECTION,
         ):
             return _rejected(
                 command.command_id,
@@ -141,6 +142,7 @@ class ManualDeviceCommands:
             in (
                 wire.CAMERA_COMMAND_KIND_IMPORT_PFS,
                 wire.CAMERA_COMMAND_KIND_EXPORT_PFS,
+                wire.CAMERA_COMMAND_KIND_TEST_CONNECTION,
             )
             and worker is None
         ):
@@ -167,6 +169,17 @@ class ManualDeviceCommands:
                 "PREVIEW_ACTIVE",
                 "pause and reconcile preview before editing",
             )
+        prior_connection = (
+            self.device_status.begin_device_access(
+                int(request.camera), self._device_id(request.camera)
+            )
+            if request.kind
+            in {
+                wire.CAMERA_COMMAND_KIND_TEST_CONNECTION,
+                wire.CAMERA_COMMAND_KIND_IMPORT_PFS,
+            }
+            else None
+        )
         revision = request.configuration_revision
         assert revision is not None
         if request.kind == wire.CAMERA_COMMAND_KIND_EXPORT_PFS:
@@ -201,6 +214,8 @@ class ManualDeviceCommands:
                     if request.kind == wire.CAMERA_COMMAND_KIND_IMPORT_PFS
                     else "export_pfs"
                     if request.kind == wire.CAMERA_COMMAND_KIND_EXPORT_PFS
+                    else "test_connection"
+                    if request.kind == wire.CAMERA_COMMAND_KIND_TEST_CONNECTION
                     else "finish_editing"
                 ),
                 deadline_ns=deadline_ns,
@@ -212,8 +227,12 @@ class ManualDeviceCommands:
             if request.kind == wire.CAMERA_COMMAND_KIND_IMPORT_PFS:
                 edit.kind = acq.CAMERA_EDIT_KIND_IMPORT_PFS
                 edit.path = request.path
+                edit.requested.CopyFrom(request.requested)
             elif request.kind == wire.CAMERA_COMMAND_KIND_FINISH_EDITING:
                 edit.kind = acq.CAMERA_EDIT_KIND_FINISH_EDITING
+            elif request.kind == wire.CAMERA_COMMAND_KIND_TEST_CONNECTION:
+                edit.kind = acq.CAMERA_EDIT_KIND_TEST_CONNECTION
+                edit.requested.device_id = self._device_id(request.camera)
             else:
                 if not request.HasField("path"):
                     raise ValueError("export path is absent")
@@ -230,6 +249,13 @@ class ManualDeviceCommands:
                     completed.failure.message
                     if completed.HasField("failure")
                     else "camera edit failed"
+                )
+            if (
+                prior_connection is not None
+                and request.kind == wire.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ):
+                self.device_status.complete_connection_test(
+                    int(request.camera), prior_connection
                 )
             if (
                 request.kind == wire.CAMERA_COMMAND_KIND_EXPORT_PFS

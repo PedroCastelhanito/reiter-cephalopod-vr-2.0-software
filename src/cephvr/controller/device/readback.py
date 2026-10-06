@@ -228,6 +228,10 @@ class CameraReadback:
                 and status.HasField("exported_pfs_path")
                 and status.exported_pfs_path == operation.path
             )
+        elif operation.kind == svc.CAMERA_COMMAND_KIND_TEST_CONNECTION:
+            success = (
+                success and view.HasField("device_open") and not view.cleanup_pending
+            )
         elif operation.kind == svc.CAMERA_COMMAND_KIND_FINISH_EDITING:
             success = success and finish_editing_confirmed(view, require_closed=False)
         self.hooks.complete_operation(

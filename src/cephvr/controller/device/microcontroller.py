@@ -106,6 +106,7 @@ class MicrocontrollerCommands:
                 kind=request.kind,
                 signal=request.signal,
                 requested=settings.pulses,
+                settings=settings,
             )
             child.command.command_id = child_id
             child.command.issuer.CopyFrom(

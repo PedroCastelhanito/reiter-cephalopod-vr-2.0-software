@@ -167,7 +167,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 10
+**Status:** Accepted · **Revision:** 11
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -190,6 +190,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - Display geometry/calibration stays separate from V02's authored content. V15 owns
   off-axis surface projection, V14 coordinate spaces, V20 pacing and V21 output
   range. Projector assignments and measured calibration values remain rig inputs.
+- Images fit centrally within their authored 2D bounds before V15 projection:
+  Contain preserves proportions with transparent margins, Cover preserves
+  proportions with a centered crop, and Stretch fills the bounds. New GUI Images
+  choose Contain; legacy omitted `fit` means Stretch. Texture tiling, Video playback
+  and default Looming size animation keep their existing semantics.
 - The existing Visual Stimulus implementation (GLB arenas, shader textures, observer/projection
   transforms) is a capability reference only; its code, defaults, timing/fallback
   policies and resource handling are not automatically accepted.

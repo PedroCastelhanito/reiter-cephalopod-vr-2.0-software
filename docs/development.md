@@ -164,14 +164,33 @@ projector displays and a simulated Arduino inventory without detecting physical
 devices. `start_runtime_gui.py` uses the Windows application launcher so the
 controller-backed GUI can discover attached cameras, secondary displays and COM
 ports and send supported managed commands.
+Both launchers use the same Dashboard and device/editor components. Layout changes
+therefore apply to the runtime GUI directly; there is no separate frontend build or
+layout copy to update. The runtime uses controller-owned settings and command gates,
+while the review launcher restores its separate local drafts.
 In the managed window, use **Take control** on Dashboard before changing camera
-participation or running MCU diagnostics. For an externally triggered camera,
-choose its PFS file in Devices > Cameras and save the detected FrameStart line
-source with **Save camera settings** before selecting **Use**. The controller
-validates each update and reports failures in the camera log. Devices >
-Microcontroller **Save pins** retains the camera output pins as well as Trial state
-and Projector flip; Test uses the saved values. These controls do not establish
-physical trigger wiring or live preview until checked on the rig.
+participation or running MCU diagnostics. Assign a discovered camera's Role first;
+a new assignment stays disabled until you explicitly select Use. For an externally triggered camera,
+choose its PFS file in Devices > Cameras; successful parsing submits the detected
+FrameStart line source, then performs controller-owned SDK import/readback and
+releases the editing connection. Wait for controller confirmation before
+selecting **Use**. Trigger selections submit immediately; complete rate and pin edits
+with Enter or by leaving the field. Devices > Microcontroller also submits COM and
+fixed I/O enable changes automatically. The controller validates each update and
+reports failures in the relevant device log. Pin updates retain camera outputs,
+Trial state and Projector flip; Test uses controller-confirmed values. These controls do not establish
+physical trigger wiring or live preview until checked on the rig. Test enabled checks
+connection/identity only, skips existing captures and lists per-camera results.
+Start capture exercises actual PFS readback, frame delivery and configured triggers;
+Preview opens its external image window. Closing the viewer leaves capture running;
+Stop capture releases it. Stop all captures before editing camera/pulse settings.
+After pulling changed contracts, run `.venv\Scripts\python.exe tools/generate_contracts.py`
+before launching (or reinstall the project, whose build generates contracts).
+See the [managed device rig procedure](../reports/rig-verification.md#managed-device-gui).
+Projector calibration Launch prepares its files automatically before requesting
+output, but its managed renderer connection remains unfinished. Protocol, projector
+configuration and SpikeGLX mapping adoption also remain pending; their latest shared
+layouts do not imply controller configuration support.
 Closing the managed GUI leaves the application launcher and backends running under
 [E08](architecture/system-contracts.md#e08). Starting the full runtime a second
 time while they remain active reports `application instance already running`;

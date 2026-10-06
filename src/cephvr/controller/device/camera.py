@@ -36,6 +36,7 @@ NO_PATH = frozenset(
         svc.CAMERA_COMMAND_KIND_START_PREVIEW,
         svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
         svc.CAMERA_COMMAND_KIND_FINISH_EDITING,
+        svc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
         svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
     }
 )
@@ -358,6 +359,13 @@ class CameraCommands:
             camera=request.camera,
             kind=request.kind,
             configuration_revision=revision,
+        )
+        command.settings.CopyFrom(
+            next(
+                item.acquisition
+                for item in self.configuration.current.backends
+                if item.backend_name == "acquisition"
+            )
         )
         command.command.command_id = child_id
         command.command.issuer.CopyFrom(

@@ -73,6 +73,8 @@ def matching_layer(program: Program, path: tuple[int, ...], target: LayerTarget)
 
 
 def parameter_value(setting: dict[str, Any], name: str) -> object:
+    if name == "Fit":
+        return setting.get("fit", "stretch")
     if name == "Angular speed":
         value = constant_rate(
             setting["motion"]["yaw" if setting["kind"] == "arena" else "rotation"]
@@ -109,6 +111,11 @@ def parameter_value(setting: dict[str, Any], name: str) -> object:
 
 
 def patch_setting(setting: dict[str, Any], changes: dict[str, str]) -> None:
+    if "Fit" in changes:
+        fit_choice = changes["Fit"].lower()
+        if fit_choice not in {"contain", "cover", "stretch"}:
+            raise ValueError("Choose Contain, Cover or Stretch")
+        setting["fit"] = fit_choice
     numeric = {
         k: float(v)
         for k, v in changes.items()

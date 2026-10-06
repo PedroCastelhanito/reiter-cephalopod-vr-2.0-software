@@ -315,6 +315,7 @@ class ManualControlCleanup:
         policy = camera_policy(policies, role)
         command_id = str(uuid.uuid4())
         command = svc.AcquisitionCameraCommand(
+            settings=settings,
             camera=role,
             kind=kind,
             configuration_revision=self.configuration.revision,

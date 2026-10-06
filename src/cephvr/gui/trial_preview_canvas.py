@@ -19,6 +19,7 @@ from cephvr.gui.trial_preview_media import PreviewMedia
 from cephvr.gui.trial_preview_plan import PreviewLayer
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
 from cephvr.visual_stimulus.rendering.color import linear_to_srgb
+from cephvr.visual_stimulus.rendering.image_fit import fitted_uv_scale
 from cephvr.visual_stimulus.rendering.layer_projection import (
     angular_corners,
     physical_corners,
@@ -40,6 +41,39 @@ def image_quad(image: QImage, points: list[QPointF], painter: QPainter) -> None:
     if QTransform.quadToQuad(source, QPolygonF(points), transform):
         painter.setTransform(transform, True)
         painter.drawImage(QPointF(), image)
+
+
+def fitted_image(image: QImage, fit: str, width: float, height: float) -> QImage:
+    """Preview the shader's centered fit within the authored image rectangle."""
+    sx, sy = fitted_uv_scale(fit, image.width() / image.height(), width / height)
+    if (sx, sy) == (1.0, 1.0):
+        return image
+    aspect = width / height
+    output = QImage(
+        max(1, round(512 * min(1.0, aspect))),
+        max(1, round(512 * min(1.0, 1.0 / aspect))),
+        QImage.Format.Format_ARGB32_Premultiplied,
+    )
+    output.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(output)
+    if fit == "contain":
+        target = QRectF(
+            output.width() * (1.0 - 1.0 / sx) / 2,
+            output.height() * (1.0 - 1.0 / sy) / 2,
+            output.width() / sx,
+            output.height() / sy,
+        )
+        painter.drawImage(target, image, QRectF(image.rect()))
+    else:
+        source = QRectF(
+            image.width() * (1.0 - sx) / 2,
+            image.height() * (1.0 - sy) / 2,
+            image.width() * sx,
+            image.height() * sy,
+        )
+        painter.drawImage(QRectF(output.rect()), image, source)
+    painter.end()
+    return output
 
 
 class PreviewCanvas(QWidget):
@@ -186,6 +220,8 @@ class PreviewCanvas(QWidget):
         width, height = values["width"], values["height"]
         if min(width, height) <= 0:
             return
+        if setting.kind == "image":
+            image = fitted_image(image, setting.fit, width, height)
         if setting.kind == "texture":
             assert setting.pattern.kind == "image_tile"
             # Fixed resolution independent of epoch count; brush tiling never creates per-tile widgets.

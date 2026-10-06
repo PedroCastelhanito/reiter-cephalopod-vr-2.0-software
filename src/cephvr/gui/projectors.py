@@ -116,7 +116,6 @@ class ProjectorsPanel(DevicePanel):
             )
         self.timing = ProjectorTiming()
         self.calibration = CalibrationTable(self.screen_editor.drafts)
-        self.calibration.prepare_requested.connect(self.prepare_calibration)
         self.calibration.launch_requested.connect(self.launch_calibration)
         self.calibration.close_requested.connect(self.calibration_close_requested.emit)
         calibration_fields: dict[str, QLineEdit | QCheckBox] = {

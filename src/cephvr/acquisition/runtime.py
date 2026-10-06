@@ -15,6 +15,7 @@ from cephvr.acquisition.coordinator.configuration_resolution import (
 from cephvr.acquisition.coordinator.evidence import WorkerEvidenceCoordinator
 from cephvr.acquisition.coordinator.health import AcquisitionHealth
 from cephvr.acquisition.coordinator.incidents import IncidentScopeOwner
+from cephvr.acquisition.coordinator.manual_configuration import ManualConfiguration
 from cephvr.acquisition.coordinator.manual_device_status import (
     ManualDeviceStatusReporter,
 )
@@ -108,6 +109,9 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             commands=commands,
             pulse=self.state.pulse,
             clock=clock,
+        )
+        self.manual_configuration = ManualConfiguration(
+            configuration, identity, self.state.session_slot, self.device_status, clock
         )
         self.queries = CoordinatorQueries(
             identity=identity,
@@ -422,6 +426,9 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
     async def execute_camera_command(
         self, request: wire.AcquisitionCameraCommand, *, deadline_ns: int
     ) -> control.CommandAdmission:
+        rejected = self.manual_configuration.install(request, deadline_ns)
+        if rejected is not None:
+            return rejected
         if request.kind in {
             wire.CAMERA_COMMAND_KIND_START_PREVIEW,
             wire.CAMERA_COMMAND_KIND_STOP_PREVIEW,
@@ -433,6 +440,9 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
     async def execute_microcontroller_command(
         self, request: wire.AcquisitionMicrocontrollerCommand, *, deadline_ns: int
     ) -> control.CommandAdmission:
+        rejected = self.manual_configuration.install(request, deadline_ns)
+        if rejected is not None:
+            return rejected
         return await self.manual_pulses.execute_diagnostic(
             request, deadline_ns=deadline_ns
         )

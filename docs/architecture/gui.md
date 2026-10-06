@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 96
+**Status:** Accepted · **Revision:** 107
 
 - Main navigation orders **Dashboard, Protocol, Devices, Tracking**. Protocol owns
   session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
@@ -27,8 +27,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   of optional video recording. Device controls stay in Devices.
 - Protocol uses a widened Trials column beside Trial timeline, with a full-width Epoch
   editor below at all widths. Trials provides a selectable list and compact Add/Delete
-  controls. Trials and timeline cards keep a fixed height; extra trials/layers scroll
-  internally, without a resize grip. Center the timeline count/duration summary.
+  controls. The timeline has no internal scroller: reserve the height needed for
+  the largest enabled-projector layer stack in the trial and keep it fixed across
+  epoch selection. Trials matches that height and scrolls its list internally.
+  Configuration continues to scroll in the page shell. Center the timeline count/duration summary.
   Align the overview's left edge with the projector labels and its right edge with
   the projector rows; leave a clear vertical gap before current-epoch details.
   A single duration-proportional overview bar shows all epochs; matching ordered
@@ -49,8 +51,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   runtime launcher starts the controller-backed GUI and discovers attached Basler
   cameras, secondary Windows displays and COM ports without assigning surfaces or
   claiming Setup readiness. Camera
-  refresh preserves drafts by serial; Test enabled opens, identifies and closes each
-  enabled camera. Display refresh preserves local assignments/participation. Explicit
+  refresh preserves drafts by serial. Managed Test enabled sends sequential A10
+  connection-only checks for enabled, assigned cameras; a running capture is reported
+  as skipped. It does not start pulses or capture and preserves existing ownership. Display refresh preserves local assignments/participation. Explicit
   test fixtures may still supply simulated displays for isolated frontend checks.
 - Local design review saves its editable draft state atomically on normal close and
   restores it after inventory discovery on the next review launch. Match camera and
@@ -62,9 +65,31 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   wheel gestures do not switch tabs.
   Forms use the existing configuration scroller. Switching tabs preserves local
   drafts without committing; explicit Add/Apply commits, and Discard changes resets
-  pending edit patches. Invalid input stays visible. Loss of editing authority closes
+  pending edit patches. The edit actions use concise Apply/Discard labels.
+  In Target epochs, Epochs, Filter and any label/index selector share one row;
+  Parameter and its duration field or projector/layer values share the next row.
+  Matching fixed durations show their actual hh:mm:ss value (including fractions);
+  mixed/variable durations show the hh:mm:ss entry format without staging a change.
+  Targeting and epoch identity fields share equal grid columns and control heights.
+  Timeline selection leaves extra space before the full form. One permanent
+  Apply/Discard action bar sits above targeting controls in every Batch edit mode;
+  the same buttons dispatch to the selected-source form or the target patch.
+  Empty validation messages collapse; nonempty messages remain inline. Narrow
+  projector rows omit asset/numeric placeholders for empty layers.
+  Invalid input stays visible. Loss of editing authority closes
   file pickers and disables forms. All parameters opens the complete single-source
   inspector in the card.
+  In Timeline selection, one selected source epoch uses the shared Batch generate
+  projector/layer form, populated with its authored settings, duration and batch label.
+  Apply epoch updates only that source; shared scene composition uses copy-on-write,
+  preserving sibling epochs and unaffected projector layers. Target epochs keeps the
+  parameter-by-parameter patch controls and offers All epochs, Epoch label and Epoch
+  index filters. Label selection lists the current trial's authored labels; index
+  selects one source epoch in one-based trial order, including nested groups but not
+  duplicating repeated occurrences. Invalid or out-of-range indices show an inline
+  warning and block Apply without changing the document. Returning to Timeline
+  selection restores its previous targets. Multiple timeline targets keep batch
+  patch controls rather than inventing one reference for mixed settings.
   Batch generate owns a local reference
   epoch with prepared assets, independent projector layers, exact duration and complete
   family parameters. Show each enabled projector's reference layers and prepared
@@ -85,6 +110,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Reserve the advanced linking/fade row’s minimum height after narrow reflow.
   Keep canonical settings per instance/projector when switching layers. Empty slots
   are editor drafts, excluded from generated programs and runtime delivery.
+  Image rows expose Fit (Contain/Cover/Stretch), Move speed and Direction; zero
+  speed is still. Initial position and whole-image rotation sit in Advanced settings.
+  These edit existing 2D object motion, never texture phase. New Images use Contain;
+  omitted legacy fit keeps Stretch under V04. Batch edit offers a Fit dropdown;
+  numeric variation excludes Fit. Fitting precedes the existing geometry/calibration
+  pipeline in both the planning preview and renderer.
   Leave a clear gap below the batch tabs. Stimulus mode, Duration (hh:mm:ss),
   Repetitions (at most three digits), Batch label and Insert share one row at wide
   widths, with widths reflecting their values; narrow widths wrap. Leave extra
@@ -93,8 +124,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   imported programmed motion and custom feedback unchanged unless explicitly edited.
   Tracking channel conflicts reject the edit.
   Advanced settings occupy one shared-style card beneath the selected projector
-  row, with its left edge aligned to Layer. Retain state is first; Linked to and
-  fade-in/out durations follow, then control entries. New GUI-created stimuli retain
+  row, with its left edge aligned to Layer. Retain state is first when relevant;
+  Linked to and fade-in/out durations follow, then control entries. Video hides
+  Retain state and Linked to; Looming hides Linked to. Other edits preserve loaded
+  Video reset/continuation values, with playback continuity owned by V07/V09.
+  New GUI-created stimuli retain
   state by default (reset false); loaded explicit reset values and boundary
   assignments remain unchanged. No opacity editor: new stimuli use a constant base
   opacity; fades are ordinary V05 linear opacity keyframes, defaulting off. Preserve
@@ -211,7 +245,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   an Opacity override; preserve loaded placement/dimensions without exposing edits.
   Local field-completion edits there keep existing validation; untouched imported values are preserved.
 - All mutation controls belong to Epoch editor, including naming, duration, layer
-  management and structural Actions. A first projector-local edit detaches a shared
+  management and structural controls. A first projector-local edit detaches a shared
   2D instance while retaining other projectors' identities, settings, assets and stack
   order. All projectors supports shared edits; arena remains rig-wide under V02.
   Disabled targets retain content/geometry and are labeled inactive. No enabled
@@ -220,8 +254,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Existing repeat/condition groups remain editable after canonical JSON reload;
   preserve child-block versus condition-row semantics, complete settings and V07
   continuity. Structural rename/duplicate/reorder/remove act on one source epoch;
-  multiple-source changes use the explicit batch editor. Undo/Redo remain in Actions,
-  without toolbar buttons. Load/save validates canonical JSON and saves atomically
+  multiple-source changes use the explicit batch editor. Duplicate and Delete are
+  buttons within Batch edit, visible only for Timeline selection, with Ctrl+D and Backspace shortcuts that
+  respect the same selection/authority guards and preserve Backspace text editing;
+  rename/reorder/projector selection remain in
+  its context menu. Batch edit omits the selected-epoch count line. Undo/Redo use
+  Ctrl+Z/Ctrl+Y (with native macOS equivalents), without menu or toolbar entries.
+  Load/save validates canonical JSON and saves atomically
   per trial. Trial deletion confirms the named local draft, preserves saved files
   and leaves a blank draft if deleting the last. Trial drafts are local documents,
   not a session schedule. Expanded sequence inspection has an explicit Close action;
@@ -246,9 +285,14 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   The Devices footer has no draft-settings text; local fixtures remain identified
   in the review window title and activity messages.
   Inventory actions are ordered Test enabled, Connect, Preview. Test enabled
-  targets enabled cameras without changing selection or connection
-  state. Initial review only logs requested checks as not tested; actual backend
-  check semantics/integration remain unfinished and no Setup readiness is claimed.
+  targets enabled cameras without changing selection or connection state. Managed
+  role assignments commit through E07 and leave the newly assigned camera disabled.
+  Start capture/Stop capture use A10 manual preview; Preview attaches a separate
+  external viewer, whose closure leaves capture running. Disconnect releases an
+  editing/cleanup owner when no capture is running. Camera/pulse settings remain
+  locked while a camera is owned until E07 live-edit adoption is implemented.
+  Pending commands lock repeated submission; failures remain visible and queued
+  intents are discarded on controller disconnection. No Setup readiness is claimed.
   Camera config exposes role, an Internal clock / External controller dropdown, requested
   external trigger frequency and a PFS parameter-file path with Browse. Preserve
   per-camera drafts and unique roles; selection/connection never enables a camera.
@@ -263,7 +307,20 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   controller. Retain the exact source separately; missing, ambiguous or unsupported
   values leave the choice unset with an explanation. This offline hint does not
   apply or validate camera settings: A10's SDK import/readback remains authoritative.
-  Changing the path clears stale hints; later explicit dropdown edits remain drafts.
+  Changing the path clears stale hints. Omit Save camera settings: managed clients
+  submit completed rate edits, explicit trigger selections and successful PFS hints
+  through the controller configuration request. An explicitly selected PFS with a
+  usable hint additionally performs A10 SDK import/readback and signals editing
+  completion; retain the resulting baseline without reimporting on later rate edits.
+  A filename without an imported baseline cannot start capture from this GUI.
+  Import does not enable a camera for experiment. Snapshot loading is silent;
+  incomplete hints remain drafts. Require Configuration/control and controller
+  confirmation before treating any change as applied.
+- Managed MCU connection/pin tests use controller-confirmed COM/pin/rate values.
+  Pending commands lock edits and repeat tests. A11 diagnostic observations drive
+  Test/Stop state; a bounded follow-up status query begins after confirmed execution,
+  and control/connection loss cancels local timers. Firmware/edge reports do not prove
+  physical receiver wiring.
 - Microcontroller owns one selected COM port for all camera triggers; Cameras has
   no controller/port selector. Scan ports lists discovered COM-number names with
   the available device description, preserving the port identity separately and
@@ -274,8 +331,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Each row contains an enable checkbox/name, pin and a Test/Stop toggle with stable
   geometry. Camera enablement shares Cameras' experiment participation state;
   retain disabled rows for re-enabling and preserve their pins. Fixed input/output
-  enablement is local draft configuration. Disabled signals have dimmed pin/test
+  enablement is retained draft configuration in isolated review. Disabled signals have dimmed pin/test
   controls, cannot start tests and do not participate in pin-conflict checks.
+  Omit Save pins: managed clients submit completed pin edits, selected COM ports and
+  fixed I/O enable changes through the existing controller configuration request.
+  Inventory refresh and saved-state loading are silent. Lock managed edits during
+  diagnostics; connection/pin tests still require confirmed configuration.
   Disabling a signal stops its active diagnostic; editing authority gates enablement.
   In the explicit local real-device diagnostic mode, Test connection and per-pin
   Test/Stop use A11's exclusive
@@ -315,13 +376,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   authority and cancel pickers on authority loss. The JSON excludes discovered
   display/projector lists, output assignments and participation; load leaves these
   untouched. Loading is not backend preparation.
-  A separate Prepare calibration files action uses the current four enabled face
+  Launch prepares calibration files before requesting output; no separate preparation
+  button is shown. Preparation uses the current four enabled face
   assignments, current rig fields and native monitor identities to export a static
   arena asset, display profile and explicitly diagnostic geometric
   profiles into Protocol Assets. The exported mapping applies each face's scale,
   pixel offset and inverse-axis drafts, defaulting unset values to diagnostic
   identity; reject corrections extending outside the output. Reject missing or
   ambiguous monitor bindings.
+  Failed preparation does not send a launch request.
   These profiles are uncalibrated optical placeholders and do not set experiment
   defaults. Launch calibration targets all four assigned projectors together;
   after confirmed output activation the same control reads Close. It returns to
@@ -401,8 +464,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   does not disable its source camera or waive E12 required-channel validation.
   Additional named inputs may be added and removed with the row's remove action.
   Source-derived rows remain linked to their owning device and can be disabled
-  rather than independently removed. All edits/removals obey Configuration authority. Rows identify stream, stream index, saved
-  channel; no Bit editor is shown. Digital-bit metadata remains an E12 configuration
+  rather than independently removed. All edits/removals obey Configuration authority.
+  Rows show Use, Signal, Index and Channel; Stream and Bit editors are omitted.
+  Preserve loaded stream identity as mapping metadata. Digital-bit metadata remains an E12 configuration
   concern, not an inferred bit-zero default; camera triggers use OneBox under E12. Configuration
   authority gates edits. These drafts do not configure SpikeGLX acquisition, enumerate
   remote saved channels or prove physical recording; managed adoption/validation is pending.

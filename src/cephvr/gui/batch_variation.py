@@ -189,7 +189,8 @@ class BatchVariationRow(QWidget):
         self.parameter.blockSignals(True)
         self.parameter.clear()
         for caption, key in common:
-            self.parameter.addItem(caption, key)
+            if key != "Fit":
+                self.parameter.addItem(caption, key)
         self.parameter.setCurrentIndex(max(0, self.parameter.findData(previous)))
         self.parameter.blockSignals(False)
         self.update_hint()

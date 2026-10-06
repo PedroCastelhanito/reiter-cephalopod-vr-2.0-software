@@ -35,7 +35,7 @@ class SpikeGLXPanel(DevicePanel):
         self.mapping = Card("Input channels")
         self.mapping_grid = QGridLayout()
         self.mapping_grid.setHorizontalSpacing(8)
-        for col, text in enumerate(("USE", "SIGNAL", "STREAM", "INDEX", "CHANNEL", "")):
+        for col, text in enumerate(("USE", "SIGNAL", "INDEX", "CHANNEL", "")):
             self.mapping_grid.addWidget(label(text, "label"), 0, col)
         self.mapping_grid.setColumnStretch(1, 2)
         self.mapping_grid.setColumnStretch(2, 1)
@@ -55,11 +55,14 @@ class SpikeGLXPanel(DevicePanel):
     def add_row(self, key: str, name: str, *, custom: bool = False) -> None:
         signal = entry("Input name") if custom else label(name)
         stream = combo(("OneBox", "NI", "imec"))
+        # Retain saved stream identity without exposing another mapping column.
+        stream.setParent(self.mapping)
+        stream.hide()
         index, channel = entry("0"), entry("Channel")
         for editor in (index, channel):
             editor.setMinimumWidth(0)
             editor.setMaximumWidth(80)
-        channel.setToolTip("Saved channel index in the selected SpikeGLX stream")
+        channel.setToolTip("Saved SpikeGLX channel index")
         self.rows[key] = (signal, stream, index, channel)
         enabled = QCheckBox()
         enabled.setChecked(True)
@@ -73,12 +76,13 @@ class SpikeGLXPanel(DevicePanel):
             remove.setAccessibleName("Remove custom input")
             remove.clicked.connect(lambda: self.remove_custom(key))
             self.remove_buttons[key] = remove
-            self.mapping_grid.addWidget(remove, row, 5)
+            self.mapping_grid.addWidget(remove, row, 4)
         for col, control in enumerate(self.rows[key]):
             control.setAccessibleName(
                 f"{name} {('signal', 'stream', 'index', 'channel')[col]}"
             )
-            self.mapping_grid.addWidget(control, row, col + 1)
+        for col, control in enumerate((signal, index, channel), 1):
+            self.mapping_grid.addWidget(control, row, col)
         self.active[key] = True
 
     def add_custom(self) -> None:
@@ -119,7 +123,7 @@ class SpikeGLXPanel(DevicePanel):
                     stream.removeItem(1)
             self.active[key] = active
         for key, controls in self.rows.items():
-            for control in (*controls, self.enable_controls[key]):
+            for control in (controls[0], *controls[2:], self.enable_controls[key]):
                 control.setVisible(key in visible or key.startswith("custom:"))
         self.refresh_controls()
 

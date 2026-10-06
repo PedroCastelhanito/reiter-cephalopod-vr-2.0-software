@@ -4,6 +4,24 @@ Status: host implementation, source review and lightweight local verification ar
 recorded below (2026-10-01). Bounded native checks pass; device and full-workload acceptance remain
 pending on the rig. This is not experiment-readiness approval.
 
+The 2026-10-06 G01/A10 increment wires managed GUI role/configuration controls,
+connection-only camera checks and MCU pending/final-status handling. The additive
+camera diagnostic uses the existing authenticated controller → acquisition → camera
+worker command path and original deadline; it never starts capture or pulses.
+Identity mismatch or failed release cannot succeed; cleanup remains unconfirmed
+until release evidence. Local behavioral checks cover these paths with hardware
+boundaries replaced. Manual commands now carry complete accepted settings/revision;
+stale/conflicting-owned changes are rejected before installation. First PFS import
+opens the assigned camera, retains actual SDK readback, and GUI completion releases
+its editing connection. Lazy serial connection closes the old COM owner before
+opening a changed selection. These fix concrete source gaps found in the final
+GUI-to-owner trace. Windows SDK/firmware/receiver acceptance remains pending in the
+[managed device rig procedure](rig-verification.md#managed-device-gui).
+Verification: 390 portable acquisition/controller tests passed, five skipped;
+GUI and authenticated RPC evidence is recorded in [runtime](runtime.md#dashboard-frontend-implementation).
+Regenerated contracts, scoped Ruff/mypy and backend boundaries pass. Hardware
+boundaries were replaced in the new unit tests; these are not physical acceptance.
+
 [ARCH-001](../architecture.md#arch-001) selects this stage;
 [ARCH-002](../architecture.md#arch-002) governs module boundaries. The
 [acquisition decisions](../docs/architecture/acquisition.md) and their

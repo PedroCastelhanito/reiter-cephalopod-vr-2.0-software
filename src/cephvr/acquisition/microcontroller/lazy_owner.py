@@ -53,6 +53,9 @@ class LazySerialOwner(SerialOwnerPort):
         return self.bridge
 
     async def connect(self, *, deadline_ns: int) -> mcu.MicrocontrollerObservation:
+        selected_port = self.settings.pulses.port
+        if self.bridge is not None and selected_port != self.port:
+            await self.close(deadline_ns=deadline_ns)
         bridge = self._ensure()
         if self.connected:
             return await bridge.status(deadline_ns=deadline_ns)

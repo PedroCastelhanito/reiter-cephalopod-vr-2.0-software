@@ -1,15 +1,13 @@
 """Responsive planner controls; program and history are owned by ProtocolEditor."""
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
-    QFrame,
     QGridLayout,
     QHBoxLayout,
     QLineEdit,
     QListWidget,
     QMenu,
-    QScrollArea,
     QTabBar,
     QVBoxLayout,
     QWidget,
@@ -65,25 +63,26 @@ class PlannerControls(QWidget):
             QAction("Undo", self),
             QAction("Redo", self),
         )
+        for action, shortcuts in (
+            (self.undo_action, ("Ctrl+Z", "Meta+Z")),
+            (self.redo_action, ("Ctrl+Y", "Meta+Shift+Z")),
+        ):
+            action.setShortcuts([QKeySequence(shortcut) for shortcut in shortcuts])
+            action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+            self.addAction(action)
         self.timeline_card = Card("Trial timeline")
         self.output_preview_button = button("Preview")
         self.timeline_card.header.addWidget(self.output_preview_button)
         self.add_epoch_button = button("+ Add epoch")
-        self.epoch_button = button("Actions…")
         navigation = QHBoxLayout()
         self.back_button = button("← Parent")
         self.breadcrumb = label("Trial", wrap=True)
         navigation.addWidget(self.back_button)
         navigation.addWidget(self.breadcrumb, 1)
         self.timeline = ProgramTimeline()
-        self.timeline_scroll = QScrollArea()
-        self.timeline_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.timeline_scroll.setWidgetResizable(True)
-        self.timeline_scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
-        self.timeline_scroll.setWidget(self.timeline)
-        self.timeline_card.body.addWidget(self.timeline_scroll, 1)
+        self._fitted_timeline_height = -1
+        self.timeline_card.body.addWidget(self.timeline)
+        self.timeline.height_changed.connect(self.fit_timeline_card)
         self.sequence_summary = label("")
         self.sequence_summary.setAlignment(Qt.AlignmentFlag.AlignCenter)
         actions = QHBoxLayout()
@@ -92,7 +91,6 @@ class PlannerControls(QWidget):
         self.preview_button = button("Expanded sequence…")
         self.timeline_card.body.addLayout(actions)
         self.settings_card = Card("Epoch editor")
-        self.settings_card.header.addWidget(self.epoch_button)
         self.modes = QTabBar()
         self.modes.addTab("Batch generate")
         self.modes.addTab("Batch edit")
@@ -102,6 +100,18 @@ class PlannerControls(QWidget):
         self.settings_card.body.addSpacing(8)
         self.create_batch = BatchCreate()
         self.batch_edit = BatchEdit()
+        self.duplicate_epoch_button = self.batch_edit.duplicate_epoch_button
+        self.remove_epoch_button = self.batch_edit.remove_epoch_button
+        self.batch_edit.epoch_action.connect(self.epoch_action.emit)
+        for control, keys in (
+            (self.duplicate_epoch_button, ("Ctrl+D", "Meta+D")),
+            (self.remove_epoch_button, ("Backspace",)),
+        ):
+            shortcut = QShortcut(self)
+            shortcut.setKeys([QKeySequence(key) for key in keys])
+            shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+            shortcut.setAutoRepeat(False)
+            shortcut.activated.connect(control.click)
         self.settings_card.body.addWidget(self.create_batch)
         self.settings_card.body.addWidget(self.batch_edit)
         self.advanced = QWidget()
@@ -151,8 +161,6 @@ class PlannerControls(QWidget):
         self.modes.setCurrentIndex(1)
         self.modes.currentChanged.connect(self.arrange_mode)
         self.arrange_mode()
-        self.trial_card.setFixedHeight(366)
-        self.timeline_card.setFixedHeight(366)
         self.grid.addWidget(self.trial_card, 0, 0)
         self.grid.addWidget(self.timeline_card, 0, 1)
         self.grid.addWidget(self.settings_card, 1, 0, 1, 2)
@@ -160,6 +168,18 @@ class PlannerControls(QWidget):
         self.grid.setRowStretch(2, 1)
         for editor in (self.name, self.duration):
             editor.setMinimumWidth(0)
+
+    def fit_timeline_card(self) -> None:
+        """Keep aligned cards tall enough for all trial projector/layer details."""
+        if self.timeline.height() == self._fitted_timeline_height:
+            return
+        self.timeline_card.ensurePolished()
+        self.sequence_summary.ensurePolished()
+        self.timeline_card.body.invalidate()
+        height = self.timeline_card.body.sizeHint().height()
+        self.timeline_card.setFixedHeight(height)
+        self.trial_card.setFixedHeight(height)
+        self._fitted_timeline_height = self.timeline.height()
 
     def bind_metadata(self, node: Node) -> None:
         self.name.setText(node_name(node).replace("_", " "))
@@ -187,7 +207,15 @@ class PlannerControls(QWidget):
                 )
             )
         self.add_epoch_button.setMenu(menu)
-        menu = QMenu(self.epoch_button)
+        menu = self.epoch_menu = QMenu(self.timeline)
+        self.timeline.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.timeline.customContextMenuRequested.connect(
+            lambda point, context_menu=menu: (
+                context_menu.popup(self.timeline.mapToGlobal(point))
+                if self.isEnabled()
+                else None
+            )
+        )
         rename = menu.addAction("Rename epoch")
         assert rename is not None
         self.rename_action = rename
@@ -195,20 +223,14 @@ class PlannerControls(QWidget):
         self.selection_menu = StimulusSelectionMenu(self)
         menu.addMenu(self.selection_menu)
         for caption, operation in (
-            ("Duplicate", "duplicate"),
             ("Move earlier", "earlier"),
             ("Move later", "later"),
-            ("Remove", "remove"),
         ):
             action = menu.addAction(caption)
             assert action is not None
             action.triggered.connect(
                 lambda checked=False, op=operation: self.epoch_action.emit(op)
             )
-        menu.addSeparator()
-        menu.addAction(self.undo_action)
-        menu.addAction(self.redo_action)
-        self.epoch_button.setMenu(menu)
         menu = self.layer_menu = QMenu(self.layer_button)
         self.layer_button.setMenu(menu)
         for preset in FILE_TYPES:

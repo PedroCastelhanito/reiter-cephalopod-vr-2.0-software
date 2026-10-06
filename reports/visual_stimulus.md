@@ -1,10 +1,20 @@
 # Visual Stimulus status
 
-Updated: 2026-10-05. The complete Visual Stimulus implementation is selected under
+Updated: 2026-10-06. The complete Visual Stimulus implementation is selected under
 [ARCH-001](../architecture.md#arch-001). This report describes the uncommitted working
 tree, preserving the existing controller, supervisor and acquisition work.
 [V01–V28/E13](../docs/architecture/visual_stimulus.md) and [E05–E08/E14–E15](../docs/architecture/system-contracts.md)
 remain authoritative; implementation does not mean experiment or rig acceptance.
+
+[V04](../docs/architecture/visual_stimulus.md#v04) image fitting is implemented in
+the source model, renderer shader and planning preview: centered Contain, Cover
+and Stretch within authored bounds, before geometry/calibration. Source/prepared
+schemas carry the fit choice; omitted legacy values retain Stretch. The shader
+uses the existing mode/period inputs and source texture dimensions; no render
+process, frame transport or scheduling change. Local rendering/compilation/contract
+checks report 68 passes and 79 passing subtests, with schema consistency and scoped
+static checks passing. GPU shader compilation and physical Windows output remain
+unverified. GUI details are in the [current runtime report](runtime.md#dashboard-frontend-implementation).
 
 The 2026-10-05 managed rig launcher reached the renderer after correcting consumed
 bootstrap-handle closure and confirming the coordinator's existing supervisor launch
@@ -30,8 +40,8 @@ ignored `cephvr-data/calibration`. The earlier timed trial program was removed w
 the owner selected manual open/close. The
 Visual Stimulus GLB reader parsed the 55,688-byte asset (806 triangles). This is
 source/format evidence, not a managed launch or optical check. The saved JSON has
-unset near/far/tolerance and correction values. The GUI's Prepare calibration files
-action computes bounded diagnostic projection limits and explicit uncalibrated
+unset near/far/tolerance and correction values. The GUI's Launch action prepares
+calibration files automatically, computing bounded diagnostic projection limits and explicit uncalibrated
 geometric meshes from the current four face assignments and native monitor identities;
 it exports the V15 display profile with the GLB into Protocol Assets.
 The profile builder and complete bundle pass focused tests, but the GUI still has no

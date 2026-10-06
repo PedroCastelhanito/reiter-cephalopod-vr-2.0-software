@@ -88,6 +88,32 @@ class ManualDeviceStatusReporter:
         view.capabilities.CopyFrom(resolved.capabilities)
         self._views[role] = view
 
+    def owns_hardware(self) -> bool:
+        return bool(self._diagnostic is not None and self._diagnostic.active) or any(
+            view.device_open or view.preview_running or view.cleanup_pending
+            for view in self._views.values()
+        )
+
+    def begin_device_access(self, role: int, serial: str) -> control.CameraDeviceView:
+        """Retain possible ownership until the worker confirms readback or release."""
+        prior = control.CameraDeviceView(device_open=False)
+        if role in self._views:
+            prior.CopyFrom(self._views[role])
+        else:
+            prior.device.configured_id = serial
+        pending = control.CameraDeviceView()
+        pending.CopyFrom(prior)
+        pending.cleanup_pending = True
+        self._views[role] = pending
+        return prior
+
+    def complete_connection_test(
+        self, role: int, prior: control.CameraDeviceView
+    ) -> None:
+        self._views[role] = control.CameraDeviceView.FromString(
+            prior.SerializeToString()
+        )
+
     def update_camera_state(
         self,
         role: int,

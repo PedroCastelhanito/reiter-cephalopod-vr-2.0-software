@@ -318,3 +318,36 @@ class _ScriptedPort:
 
     def close(self) -> None:
         self.closed = True
+
+
+async def test_lazy_connection_closes_previous_com_before_opening_new_selection(
+    monkeypatch,
+) -> None:
+    from cephvr.acquisition.microcontroller import lazy_owner as module
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+    from cephvr.acquisition.v1 import runtime_pb2
+    from cephvr.control.v1 import types_pb2 as pb
+
+    events = []
+
+    class Bridge:
+        def __init__(self, name):
+            self.name = name
+
+        async def close(self, *, deadline_ns):
+            events.append(("close", self.name, deadline_ns))
+
+        async def connect(self, *, deadline_ns):
+            events.append(("connect", self.name, deadline_ns))
+            return mcu.MicrocontrollerObservation(port=self.name)
+
+    settings = pb.AcquisitionSettings()
+    settings.pulses.port = "COM9"
+    owner = module.LazySerialOwner(
+        settings, runtime_pb2.AcquisitionFilePolicies(), lambda _: None
+    )
+    owner.bridge, owner.port, owner.connected = Bridge("COM8"), "COM8", True
+    monkeypatch.setattr(module, "SerialOwnerBridge", lambda _: Bridge("COM9"))
+    observed = await owner.connect(deadline_ns=123)
+    assert observed.port == "COM9"
+    assert events == [("close", "COM8", 123), ("connect", "COM9", 123)]

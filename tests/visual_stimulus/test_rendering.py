@@ -511,3 +511,16 @@ def test_native_failed_gpu_release_keeps_context_for_cleanup_retry():
         "visual_stimulus:window:screen",
         "visual_stimulus:glfw",
     } <= set(second.released)
+
+
+@pytest.mark.parametrize("source,target", [(2.0, 1.0), (1.0, 2.0), (1.0, 1.0)])
+def test_image_fit_uv_spans_preserve_aspect_and_center(source, target):
+    from cephvr.visual_stimulus.rendering.image_fit import fitted_uv_scale
+
+    contain = fitted_uv_scale("contain", source, target)
+    cover = fitted_uv_scale("cover", source, target)
+    assert min(contain) == 1.0 and max(contain) >= 1.0
+    assert max(cover) == 1.0 and min(cover) <= 1.0
+    assert target * contain[1] / contain[0] == pytest.approx(source)
+    assert target * cover[1] / cover[0] == pytest.approx(source)
+    assert fitted_uv_scale("stretch", source, target) == (1.0, 1.0)

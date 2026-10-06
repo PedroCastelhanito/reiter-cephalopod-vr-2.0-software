@@ -2,18 +2,34 @@
 
 from pathlib import Path
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 from cephvr.gui.batch_edit_rows import PARAMETERS, ProjectorEditRow, supports
-from cephvr.gui.components import button, combo, field, label
+from cephvr.gui.components import (
+    InlineMessage,
+    button,
+    combo,
+    equal_row_height,
+    field,
+    label,
+)
 from cephvr.gui.epoch_batch import (
     LayerTarget,
     apply_batch,
-    epoch_paths,
     family,
     matching_layer,
 )
+from cephvr.gui.epoch_selection import EpochSelection
+from cephvr.gui.epoch_targets import EpochTargets
 from cephvr.gui.formatting import clock_duration, parse_clock_duration
 from cephvr.gui.prepared_file_picker import PreparedFilePicker
 from cephvr.gui.program_editing import node_at
@@ -26,11 +42,13 @@ class BatchEdit(QWidget):
     committed = pyqtSignal(object)
     detail_requested = pyqtSignal(str, int)
     epochs_requested = pyqtSignal(object)
+    epoch_action = pyqtSignal(str)
 
     def __init__(self) -> None:
         super().__init__()
         self.program: Program | None = None
         self.paths: tuple[tuple[int, ...], ...] = ()
+        self._timeline_paths: tuple[tuple[int, ...], ...] = ()
         self.screens: tuple[str, ...] = ()
         self.faces: tuple[str, ...] = ()
         self.rows: dict[str, ProjectorEditRow] = {}
@@ -39,16 +57,26 @@ class BatchEdit(QWidget):
         self.picker_row: ProjectorEditRow | None = None
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
-        self.selection = label("", "label", wrap=True)
-        body.addWidget(self.selection)
-        selectors = QHBoxLayout()
+        body.setSpacing(16)
+        body.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.targets = EpochTargets()
+        selectors = self.targets.grid
         self.epoch_scope = combo(("Timeline selection",))
         self.epoch_scope.currentIndexChanged.connect(self.select_scope)
-        selectors.addWidget(field("Epochs", self.epoch_scope), 1)
+        self.scope_field = field("Epochs", self.epoch_scope)
+        self.scope_field.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum
+        )
+        selectors.addWidget(self.scope_field, 0, 0)
         self.parameter = combo(("Duration",))
         self.parameter.currentIndexChanged.connect(self.show_parameter)
-        selectors.addWidget(field("Parameter", self.parameter), 1)
-        body.addLayout(selectors)
+        self.parameter_field = field("Parameter", self.parameter)
+        body.addWidget(self.targets)
+        self.targets.changed.connect(self.select_targets)
+        body.addWidget(self.targets.message)
+        self.selection_form = EpochSelection()
+        self.selection_form.committed.connect(self.committed.emit)
+        body.addWidget(self.selection_form)
         self.duration_row = QWidget()
         duration_layout = QVBoxLayout(self.duration_row)
         duration_layout.setContentsMargins(0, 0, 0, 0)
@@ -61,7 +89,20 @@ class BatchEdit(QWidget):
         )
         duration_layout.addWidget(field("Value (hh:mm:ss)", self.duration))
         duration_layout.addWidget(self.duration_check)
-        body.addWidget(self.duration_row)
+        parameter_row = QGridLayout()
+        parameter_row.setHorizontalSpacing(0)
+        for column in (0, 2, 4):
+            parameter_row.setColumnStretch(column, 1)
+        for column in (1, 3):
+            parameter_row.setColumnMinimumWidth(column, 12)
+        parameter_row.addWidget(self.parameter_field, 0, 0, Qt.AlignmentFlag.AlignTop)
+        parameter_row.addWidget(
+            self.duration_row, 0, 2, 1, 3, Qt.AlignmentFlag.AlignTop
+        )
+        self.parameter_row = QWidget()
+        self.parameter_row.setLayout(parameter_row)
+        parameter_row.setContentsMargins(0, 0, 0, 0)
+        body.addWidget(self.parameter_row)
         self.projector_header = QWidget()
         headings = QHBoxLayout(self.projector_header)
         headings.setContentsMargins(0, 0, 0, 0)
@@ -71,32 +112,78 @@ class BatchEdit(QWidget):
         headings.addWidget(label("Layer", "label"), 2)
         headings.addWidget(label("Value", "label"), 3)
         headings.addSpacing(36)
-        body.addWidget(self.projector_header)
         self.projector_host = QWidget()
         self.projector_rows = QVBoxLayout(self.projector_host)
         self.projector_rows.setContentsMargins(0, 0, 0, 0)
-        body.addWidget(self.projector_host)
+        projector_values = QWidget()
+        values = QVBoxLayout(projector_values)
+        values.setContentsMargins(0, 0, 0, 0)
+        values.setSpacing(8)
+        values.addWidget(self.projector_header)
+        values.addWidget(self.projector_host)
+        self.projector_values = projector_values
+        parameter_row.addWidget(projector_values, 0, 2, 1, 3, Qt.AlignmentFlag.AlignTop)
         self.asset_picker = PreparedFilePicker(self)
         self.asset_picker.selected.connect(self.set_asset)
-        self.message = label("", wrap=True)
+        self.message = InlineMessage()
         body.addWidget(self.message)
+        self.epoch_actions = QWidget()
+        epoch_actions = QHBoxLayout(self.epoch_actions)
+        epoch_actions.setContentsMargins(0, 0, 0, 0)
+        epoch_actions.addStretch()
+        self.duplicate_epoch_button = button("Duplicate")
+        self.remove_epoch_button = button("Delete")
+        for control, operation, key in (
+            (self.duplicate_epoch_button, "duplicate", "Ctrl+D"),
+            (self.remove_epoch_button, "remove", "Backspace"),
+        ):
+            control.setToolTip(f"{control.text()} selected epoch ({key})")
+            control.clicked.connect(
+                lambda checked=False, op=operation: self.epoch_action.emit(op)
+            )
+            epoch_actions.addWidget(control)
+        equal_row_height(
+            self.epoch_scope,
+            self.parameter,
+            self.targets.filter,
+            self.targets.labels,
+            self.targets.index,
+            self.duplicate_epoch_button,
+            self.remove_epoch_button,
+        )
+        selectors.addWidget(
+            self.epoch_actions,
+            0,
+            2,
+            1,
+            3,
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom,
+        )
         actions = QHBoxLayout()
         self.details = button("All parameters…")
         self.details.clicked.connect(self.open_details)
         actions.addWidget(self.details)
         actions.addStretch()
-        self.reset = button("Discard changes")
+        self.reset = button("Discard")
         self.reset.clicked.connect(self.discard)
-        self.apply_button = button("Apply")
+        self.apply_button = button("Apply", "primary")
         self.apply_button.clicked.connect(self.apply)
         actions.addWidget(self.reset)
         actions.addWidget(self.apply_button)
-        body.addLayout(actions)
+        self.batch_actions = QWidget()
+        self.batch_actions.setLayout(actions)
+        body.insertWidget(0, self.batch_actions)
 
     @property
     def dirty(self) -> bool:
-        return self.duration_check.isChecked() or any(
-            row.dirty for row in self.rows.values()
+        return (
+            (
+                self.selection_form.dirty
+                if self.epoch_scope.currentData() == "timeline"
+                else False
+            )
+            or self.duration_check.isChecked()
+            or any(row.dirty for row in self.rows.values())
         )
 
     def bind(
@@ -111,6 +198,8 @@ class BatchEdit(QWidget):
         self.picker_row = None
         self.duration_check.setChecked(False)
         self.refresh_scopes()
+        if self.epoch_scope.currentData() == "timeline":
+            self._timeline_paths = paths
         discovered = set(screens)
         available: set[str] = set()
         arena = False
@@ -142,59 +231,86 @@ class BatchEdit(QWidget):
         )
         self.parameter.setCurrentIndex(max(0, self.parameter.findText(previous)))
         self.parameter.blockSignals(False)
-        self.selection.setText(
-            f"{len(paths)} epoch{'s' if len(paths) != 1 else ''} selected"
-            + (
-                " · changes also affect their repetitions"
-                if any(len(path) > 1 for path in paths)
-                else ""
-            )
-        )
-        self.apply_button.setText(
+        self.apply_button.setToolTip(
             f"Apply to {len(paths)} epoch{'s' if len(paths) != 1 else ''}"
         )
         self.details.setEnabled(len(paths) == 1)
         self.refresh_duration()
         self.rebuild_rows()
         self.show_parameter()
+        self.refresh_epoch_actions()
+        if self.epoch_scope.currentData() == "timeline" and len(paths) == 1:
+            self.selection_form.bind(program, paths[0], screens)
+
+    def refresh_epoch_actions(self) -> None:
+        timeline = self.epoch_scope.currentData() == "timeline"
+        self.epoch_actions.setVisible(timeline)
+        self.targets.set_timeline(timeline)
+        self.targets.message.setVisible(
+            not timeline and bool(self.targets.message.text())
+        )
+        single = timeline and len(self.paths) == 1
+        self.selection_form.setVisible(single)
+        self.parameter_field.setVisible(not single)
+        self.parameter_row.setVisible(not single)
+        self.details.setVisible(not single)
+        for control in (self.duplicate_epoch_button, self.remove_epoch_button):
+            control.setEnabled(timeline and len(self.paths) == 1)
 
     def discard(self) -> None:
         if self.program is not None:
+            self.selection_form.discard()
             self.bind(self.program, self.paths, self.screens)
             self.message.clear()
-
-    def scoped_paths(self, key: str) -> tuple[tuple[int, ...], ...]:
-        assert self.program is not None
-        return tuple(
-            path
-            for path in epoch_paths(self.program)
-            if key == "all"
-            or getattr(node_at(self.program, path), "batch_label", "")
-            == key.removeprefix("label:")
-        )
 
     def refresh_scopes(self) -> None:
         assert self.program is not None
         previous = self.epoch_scope.currentData() or "timeline"
-        labels: dict[str, int] = {}
-        for path in epoch_paths(self.program):
-            name = getattr(node_at(self.program, path), "batch_label", "")
-            if name:
-                labels[name] = labels.get(name, 0) + 1
+        self.targets.refresh(self.program)
+        if previous == "target":
+            try:
+                if self.targets.resolve(self.program) != self.paths:
+                    previous = "timeline"
+            except ValueError:
+                previous = "timeline"
         self.epoch_scope.blockSignals(True)
         self.epoch_scope.clear()
         self.epoch_scope.addItem("Timeline selection", "timeline")
-        self.epoch_scope.addItem("All epochs", "all")
-        for name, count in sorted(labels.items()):
-            self.epoch_scope.addItem(f"{name} ({count})", "label:" + name)
-        if previous != "timeline" and self.scoped_paths(previous) != self.paths:
-            previous = "timeline"
+        self.epoch_scope.addItem("Target epochs", "target")
         self.epoch_scope.setCurrentIndex(max(0, self.epoch_scope.findData(previous)))
         self.bound_scope = self.epoch_scope.currentIndex()
+        self.refresh_epoch_actions()
         self.epoch_scope.blockSignals(False)
+        self.apply_button.setEnabled(True)
+
+    def select_targets(self) -> None:
+        if self.program is None or self.epoch_scope.currentData() != "target":
+            return
+        if self.dirty:
+            self.targets.restore()
+            self.targets.message.setText(
+                "Apply or discard changes before changing epoch targets"
+            )
+            self.targets.message.show()
+            return
+        try:
+            paths = self.targets.resolve(self.program)
+        except ValueError as error:
+            self.targets.message.setText(str(error))
+            self.targets.message.show()
+            self.apply_button.setEnabled(False)
+            return
+        self.targets.accept()
+        self.targets.message.hide()
+        self.apply_button.setEnabled(True)
+        self.epochs_requested.emit(paths)
 
     def select_scope(self) -> None:
-        if self.dirty:
+        pending_selection = (
+            self.epoch_scope.itemData(self.bound_scope) == "timeline"
+            and self.selection_form.dirty
+        )
+        if self.dirty or pending_selection:
             self.epoch_scope.blockSignals(True)
             self.epoch_scope.setCurrentIndex(self.bound_scope)
             self.epoch_scope.blockSignals(False)
@@ -203,9 +319,13 @@ class BatchEdit(QWidget):
             )
             return
         key = self.epoch_scope.currentData()
-        if self.program is not None and key and key != "timeline":
-            self.epochs_requested.emit(self.scoped_paths(key))
+        if self.program is not None and key == "target":
+            self.select_targets()
+        elif self.program is not None and key == "timeline":
+            self.epochs_requested.emit(self._timeline_paths)
         self.bound_scope = self.epoch_scope.currentIndex()
+        self.refresh_epoch_actions()
+        self.show_parameter()
 
     def refresh_duration(self) -> None:
         assert self.program is not None
@@ -219,11 +339,16 @@ class BatchEdit(QWidget):
                 else "Variable"
             )
         self.duration.clear()
+        self.duration.setPlaceholderText("hh:mm:ss")
+        self.duration.setToolTip(
+            "Enter duration as hh:mm:ss; fractional seconds are allowed"
+        )
         if values and len(set(values)) == 1 and values[0] != "Variable":
             self.duration.setText(values[0])
         else:
-            self.duration.setPlaceholderText(
-                "Mixed" if len(set(values)) > 1 else values[0] if values else ""
+            self.duration.setToolTip(
+                ("Mixed durations" if len(set(values)) > 1 else "Variable duration")
+                + " — enter hh:mm:ss to replace the targeted durations"
             )
 
     def targets_for(self, face: str, parameter: str) -> list[LayerTarget]:
@@ -269,9 +394,11 @@ class BatchEdit(QWidget):
             self.asset_picker.dialog.reject()
             self.picker_row = None
         duration = parameter == "Duration"
-        self.duration_row.setVisible(duration)
-        self.projector_header.setVisible(not duration)
-        self.projector_host.setVisible(not duration)
+        single = self.epoch_scope.currentData() == "timeline" and len(self.paths) == 1
+        self.duration_row.setVisible(duration and not single)
+        self.projector_header.setVisible(not duration and not single)
+        self.projector_host.setVisible(not duration and not single)
+        self.projector_values.setVisible(not duration and not single)
         if self.program is not None and not duration:
             for face, row in self.rows.items():
                 row.bind(
@@ -306,7 +433,13 @@ class BatchEdit(QWidget):
     def apply(self) -> None:
         if not self.isEnabled() or self.program is None:
             return
+        if self.epoch_scope.currentData() == "timeline" and len(self.paths) == 1:
+            self.selection_form.apply()
+            return
         try:
+            if self.epoch_scope.currentData() == "target":
+                if self.targets.resolve(self.program) != self.paths:
+                    raise ValueError("Choose valid target epochs before applying")
             parameter = self.parameter.currentText()
             if parameter == "Duration":
                 if not self.duration_check.isChecked():

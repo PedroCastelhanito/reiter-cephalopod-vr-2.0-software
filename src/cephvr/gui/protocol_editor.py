@@ -71,6 +71,7 @@ class ProtocolEditor(PlannerControls):
         self.selected_paths: tuple[tuple[int, ...], ...] = ()
         self.timeline.epochs_selected.connect(self.select_epochs)
         self.batch_edit.committed.connect(self.commit_batch)
+        self.batch_edit.selection_form.changed.connect(self.refresh_history)
         self.batch_edit.detail_requested.connect(self.open_details)
         self.batch_edit.epochs_requested.connect(self.select_epochs)
         self.create_batch.generated.connect(self.insert_batch)
@@ -270,17 +271,24 @@ class ProtocolEditor(PlannerControls):
         self.timeline.set_selection(self.selected_paths)
         self.batch_edit.bind(program, self.selected_paths, self.timeline.screens)
         self.sequence_summary.setText(self.timeline.summary())
+        self.fit_timeline_card()
         self.changed.emit()
 
     def refresh_history(self) -> None:
         history = self.histories[self.index]
-        self.undo_action.setEnabled(bool(history.past) or self.parameters.dirty)
+        self.undo_action.setEnabled(
+            bool(history.past) or self.parameters.dirty or self.batch_edit.dirty
+        )
         self.redo_action.setEnabled(bool(history.future))
 
     def undo(self, redo: bool = False) -> None:
         if not self.isEnabled():
             return
         self.close_source_dialog()
+        if self.batch_edit.dirty:
+            self.batch_edit.discard()
+            self.refresh_history()
+            return
         node = node_at(self.program, self.path)
         pending = isinstance(node, Epoch) and (
             self.name.text().strip().replace(" ", "_") != node.epoch_id
@@ -417,6 +425,7 @@ class ProtocolEditor(PlannerControls):
         ]
         self.breadcrumb.setText("Trial" + (" / " + " / ".join(names) if names else ""))
         self.sequence_summary.setText(self.timeline.summary())
+        self.fit_timeline_card()
         self.feedback.hide()
         self.refresh_history()
 

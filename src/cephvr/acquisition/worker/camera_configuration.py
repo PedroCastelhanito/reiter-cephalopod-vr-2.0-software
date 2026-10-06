@@ -58,11 +58,19 @@ class WorkerCameraConfiguration:
             if not request.HasField("path"):
                 raise ValueError("PFS import requires a path")
             current = self._resolved
-            if current is None:
-                raise RuntimeError("PFS import requires an assigned resolved camera")
+            requested = (
+                request.requested
+                if request.HasField("requested")
+                else current.applied
+                if current is not None
+                else None
+            )
+            if requested is None or not requested.device_id:
+                raise RuntimeError("PFS import requires an assigned camera")
+            self.adapter.open(requested.device_id)
             self.adapter.import_pfs(request.path)
             imported = resolve_imported_camera(
-                self.adapter, current.applied, request.configuration_revision
+                self.adapter, requested, request.configuration_revision
             )
             report.resolved_camera.CopyFrom(imported)
             self._retain(imported)
@@ -71,6 +79,20 @@ class WorkerCameraConfiguration:
                 raise ValueError("PFS export requires a destination path")
             self.adapter.export_pfs(request.path)
             report.exported_pfs_path = request.path
+        elif kind == acq.CAMERA_EDIT_KIND_TEST_CONNECTION:
+            if self.manual_preview():
+                raise RuntimeError("Stop preview before testing the camera connection")
+            opened = self.adapter.device_open
+            try:
+                self.adapter.open(request.requested.device_id)
+                identity = self.adapter.read_device_identity()
+                if identity.physical_id != request.requested.device_id:
+                    raise RuntimeError(
+                        "Camera identity differs from the requested serial"
+                    )
+            finally:
+                if not opened:
+                    self.adapter.release_device()
         elif kind == acq.CAMERA_EDIT_KIND_FINISH_EDITING:
             if not self.manual_preview():
                 self.adapter.release_device()

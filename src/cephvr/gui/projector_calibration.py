@@ -9,7 +9,6 @@ from cephvr.gui.projector_geometry import FACES
 
 
 class CalibrationTable(Card):
-    prepare_requested = pyqtSignal()
     launch_requested = pyqtSignal()
     close_requested = pyqtSignal()
 
@@ -63,15 +62,9 @@ class CalibrationTable(Card):
         grid.setColumnStretch(2, 1)
         grid.setColumnStretch(3, 1)
         self.body.addLayout(grid)
-        self.prepare_button = button("Prepare calibration files")
-        self.prepare_button.setToolTip(
-            "Export the arena and diagnostic per-projector mappings to the Protocol Assets folder"
-        )
-        self.prepare_button.clicked.connect(lambda: self.prepare_requested.emit())
-        self.body.addWidget(self.prepare_button)
         self.presentation_button = button("Launch")
         self.presentation_button.setToolTip(
-            "Requires a connected managed Visual Stimulus renderer"
+            "Prepare calibration files and launch with a connected managed Visual Stimulus renderer"
         )
         self.presentation_button.setEnabled(False)
         self.presentation_button.clicked.connect(self.request_presentation)

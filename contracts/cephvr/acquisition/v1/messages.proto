@@ -32,6 +32,7 @@ enum CameraEditKind {
   CAMERA_EDIT_KIND_IMPORT_PFS = 2;
   CAMERA_EDIT_KIND_EXPORT_PFS = 3;
   CAMERA_EDIT_KIND_FINISH_EDITING = 4;
+  CAMERA_EDIT_KIND_TEST_CONNECTION = 5;
 }
 message WorkerEditCamera {
   WorkerCommand command = 1;

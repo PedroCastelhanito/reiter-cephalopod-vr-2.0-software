@@ -112,6 +112,11 @@ class BaslerCameraAdapter:
         except Exception as exc:
             raise _sdk_error("open", exc) from exc
 
+    @property
+    def device_open(self) -> bool:
+        """Whether this owner has successfully opened its retained device."""
+        return self._opened
+
     def read_device_identity(self) -> CameraDeviceIdentity:
         camera, info = self._require_open()
         try:

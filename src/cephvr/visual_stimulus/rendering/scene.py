@@ -333,6 +333,8 @@ class ModernGLSceneRenderer:
         mode = 0
         texture = None
         if settings.kind in ("image", "video"):
+            if settings.kind == "image":
+                mode = {"stretch": 0, "contain": 5, "cover": 6}[settings.fit]
             asset_id = settings.asset_id
             if settings.kind == "video":
                 asset_id = settings.asset_id

@@ -17,9 +17,10 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.advanced_appearance import AdvancedAppearance
 from cephvr.gui.arena_movement import ArenaMovement
-from cephvr.gui.components import Card, button, equal_row_height, label
+from cephvr.gui.components import Card, button, equal_row_height, field, label
 from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.feedback_mappings import FeedbackMappings
+from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.looming_size import LoomingSize
 from cephvr.gui.paths import PathEdit
 from cephvr.gui.program_editing import NodePath, data_node, node_at
@@ -64,7 +65,9 @@ class StimulusParameters(QWidget):
         self.layer_index = 0
         self.duration_override: Fixed | None = None
         self.projector = ""
-        self.forms: list[ValueEditor | EpochMotion | LoomingSize | ArenaMovement] = []
+        self.forms: list[
+            ValueEditor | EpochMotion | LoomingSize | ArenaMovement | ImageParameters
+        ] = []
         self.asset_forms: dict[str, PathEdit] = {}
         self.pending_profiles: dict[str, str] = {}
         self.feedback: FeedbackMappings | None = None
@@ -203,6 +206,8 @@ class StimulusParameters(QWidget):
             values[k]["kind"] == "keyframes" for k in ("width", "height")
         )
         for name, fields in SECTIONS:
+            if name == "Motion" and values["kind"] == "image" and not looming:
+                continue
             keys = [
                 key
                 for key in fields
@@ -254,14 +259,27 @@ class StimulusParameters(QWidget):
         self.retain.setChecked(not values["reset"])
         self.retain.toggled.connect(self.mark_changed)
         self.extra_body.addWidget(self.retain)
+        self.retain.setVisible(values["kind"] != "video")
         self.fades = None
         if "opacity" in values:
             appearance = AdvancedAppearance(
-                program, node, setting, self.duration_override or node.duration
+                program,
+                node,
+                setting,
+                self.duration_override or node.duration,
+                allow_link=not looming and values["kind"] != "video",
             )
             self.linked_to, self.fades = appearance.linked_to, appearance.fades
             self.fades.changed.connect(self.mark_changed)
             self.extra_body.addWidget(appearance)
+        if values["kind"] == "image" and not looming:
+            image = ImageParameters(values, schema, definitions)
+            image.changed.connect(self.mark_changed)
+            self.forms.append(image)
+            self.extra_body.addWidget(image)
+            if not self.compact:
+                self.primary.addWidget(field("Fit", image.fit))
+                self.primary.addWidget(image.motion.basic)
         self.feedback = FeedbackMappings(
             setting,
             [channel.model_dump(mode="json") for channel in program.input_channels],
@@ -352,7 +370,8 @@ class StimulusParameters(QWidget):
                 )
         if self.fades is not None:
             setting["opacity"] = self.fades.read()
-        setting["reset"] = not self.retain.isChecked()
+        if setting["kind"] != "video":
+            setting["reset"] = not self.retain.isChecked()
         for form in self.forms:
             if isinstance(form, ArenaMovement):
                 form.add_inputs(candidate)

@@ -267,6 +267,7 @@ class ManualPulses:
             if (
                 request.kind == wire.MICROCONTROLLER_COMMAND_KIND_CONNECT
                 or self.pulse.observation is None
+                or self.pulse.observation.port != request.requested.port
             ):
                 self.pulse.observation = await self.serial.connect(
                     deadline_ns=deadline_ns

@@ -12,17 +12,17 @@ from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
-from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.camera_viewer import CameraViewer, PreviewReader
 from cephvr.gui.controller_bridge import ControllerBridge
 from cephvr.gui.layouts import fit_window_to_screen
-from cephvr.gui.managed_mcu import ManagedMcu, signal_name
+from cephvr.gui.managed_cameras import ManagedCameras
+from cephvr.gui.managed_mcu import ManagedMcu
 from cephvr.gui.managed_window import ManagedDashboardWindow
 from cephvr.gui.theme import apply_theme
-from cephvr.gui.view import DashboardView, Phase, PreviewView
+from cephvr.gui.view import DashboardView, Phase
 from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.shared.credentials import CredentialStore, default_runtime_root
@@ -36,7 +36,6 @@ _PHASES = {
     pb.SESSION_PHASE_FINALIZING: Phase.FINALIZING,
     pb.SESSION_PHASE_ENDED: Phase.ENDED,
 }
-_CAMERAS = {"Behavior cam": 1, "Tracking cam": 2}
 
 
 class ManagedGui(QObject):
@@ -51,9 +50,6 @@ class ManagedGui(QObject):
         self.connected_once = False
         self.close_pending = False
         self.state: pb.Snapshot | None = None
-        self._mcu_revision = -1
-        self._camera_revision = -1
-        self._mcu_observed_ns = -1
         self.viewers: dict[
             int, tuple[CameraViewer, PreviewReader, acq.FrameBufferAttachment, str]
         ] = {}
@@ -75,9 +71,8 @@ class ManagedGui(QObject):
         cameras.managed = True
         cameras.real_devices = True
         cameras.refresh_inventory()
-        cameras.connection_requested.connect(self.camera_connection)
-        cameras.enable_requested.connect(self.set_camera_enabled)
-        cameras.settings_requested.connect(self.save_camera_settings)
+        self.cameras = ManagedCameras(cameras, bridge, self.viewer_state)
+        cameras.inventory_refreshed.connect(self.refresh_camera_state)
         cameras.preview_requested.connect(self.preview_visibility)
         mcu = window.devices.microcontroller
         mcu.managed = True
@@ -103,7 +98,8 @@ class ManagedGui(QObject):
             self.window.dashboard.log_console.appendPlainText("Controller connected.")
             return
         self.state = None
-        self.window.devices.cameras.pending_enable.clear()
+        self.mcu.disconnected()
+        self.cameras.disconnected()
         self.take.setEnabled(False)
         self.takeover.setEnabled(False)
         self.release.setEnabled(False)
@@ -129,139 +125,7 @@ class ManagedGui(QObject):
         self.take.setEnabled(not held and not state.control.holder_client_id)
         self.takeover.setEnabled(not held and bool(state.control.holder_client_id))
         self.release.setEnabled(held)
-        cameras = self.window.devices.cameras
-        current = state.configuration_values.current
-        mcu_settings = next(
-            (
-                entry.acquisition
-                for entry in current.backends
-                if entry.backend_name == "acquisition"
-            ),
-            None,
-        )
-        mcu_panel = self.window.devices.microcontroller
-        pins_changed = (
-            mcu_settings is not None
-            and state.configuration.revision != self._mcu_revision
-        )
-        if pins_changed:
-            assert mcu_settings is not None
-            pulses = mcu_settings.pulses
-            mcu_panel.set_saved_pins(
-                pulses.port if pulses.HasField("port") else "",
-                pulses.trial_state_pin if pulses.HasField("trial_state_pin") else "",
-                pulses.trial_state_enabled,
-                pulses.projector_flip_pin
-                if pulses.HasField("projector_flip_pin")
-                else "",
-                pulses.projector_flip_enabled,
-            )
-            self._mcu_revision = state.configuration.revision
-        camera_settings = next(
-            (
-                entry.acquisition
-                for entry in current.backends
-                if entry.backend_name == "acquisition" and entry.enabled
-            ),
-            None,
-        )
-        camera_config_changed = state.configuration.revision != self._camera_revision
-        if mcu_settings is not None:
-            assignments = {
-                mcu_settings.behavioral.device.device_id: "Behavior cam",
-                mcu_settings.tracking.device.device_id: "Tracking cam",
-            }
-            for draft in cameras.drafts:
-                expected_role = assignments.get(draft.serial, "Unassigned")
-                role_changed = draft.role != expected_role
-                if role_changed:
-                    draft.role = expected_role
-                    row = cameras.drafts.index(draft)
-                    item = cameras.table.item(row, 2)
-                    if item is not None:
-                        item.setText(expected_role)
-                if expected_role in _CAMERAS and (
-                    camera_config_changed
-                    or role_changed
-                    or draft.key not in mcu_panel.pins
-                ):
-                    assigned_camera = (
-                        mcu_settings.behavioral
-                        if expected_role == "Behavior cam"
-                        else mcu_settings.tracking
-                    )
-                    pulse = (
-                        mcu_settings.pulses.behavioral
-                        if expected_role == "Behavior cam"
-                        else mcu_settings.pulses.tracking
-                    )
-                    mcu_panel.pins[draft.key] = (
-                        pulse.pin if pulse.HasField("pin") else ""
-                    )
-                    timing = assigned_camera.device.frame_timing
-                    draft.values["trigger_clock"] = (
-                        "External controller"
-                        if timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
-                        else "Internal clock"
-                        if timing == camera.FRAME_TIMING_FREE_RUNNING
-                        else ""
-                    )
-                    draft.values["trigger_source"] = (
-                        assigned_camera.device.settings.trigger_source
-                        if assigned_camera.device.settings.HasField("trigger_source")
-                        else ""
-                    )
-                    draft.values["preset"] = (
-                        assigned_camera.device.pfs_source_filename
-                        if assigned_camera.device.HasField("pfs_source_filename")
-                        else ""
-                    )
-                    if pulse.HasField("requested_frequency_hz"):
-                        draft.values["trigger_frequency_hz"] = (
-                            f"{pulse.requested_frequency_hz:g}"
-                        )
-        self._camera_revision = state.configuration.revision
-        if camera_config_changed:
-            cameras.load_selected()
-        preview_views: list[PreviewView] = []
-        for draft in cameras.drafts:
-            role = _CAMERAS.get(draft.role)
-            if role is None:
-                continue
-            configured = (
-                (camera_settings.behavioral if role == 1 else camera_settings.tracking)
-                if camera_settings is not None
-                else None
-            )
-            assigned = bool(configured and configured.device.device_id == draft.serial)
-            draft.enabled = bool(assigned and configured and configured.enabled)
-            if cameras.pending_enable.get(draft.serial) == draft.enabled:
-                cameras.pending_enable.pop(draft.serial, None)
-            device = (
-                state.acquisition_devices.behavioral
-                if role == 1
-                else state.acquisition_devices.tracking
-            )
-            draft.connected = bool(assigned and device.device_open)
-            old = self.viewers.get(role)
-            visible = old is not None and old[0].isVisible()
-            if old is not None and (
-                not device.preview_running or device.preview_run_id != old[3]
-            ):
-                old[0].close()
-                visible = False
-            preview_views.append(
-                PreviewView(
-                    draft.key,
-                    draft.role,
-                    visible=visible,
-                    available=assigned and bool(device.preview_running),
-                    active=assigned and draft.enabled,
-                    reason="Assign this camera in controller configuration"
-                    if not assigned
-                    else "",
-                )
-            )
+        preview_views = self.cameras.install(state)
         self.window.devices.sync_cameras()
         phase = _PHASES.get(state.session.phase, Phase.CONFIGURATION)
         self.window.apply_view(
@@ -276,74 +140,7 @@ class ManagedGui(QObject):
                 previews=tuple(preview_views),
             )
         )
-        observation = state.acquisition_devices.pulses
-        if observation.HasField("capabilities"):
-            mcu_panel.status_column.hud.setPlainText(
-                f"CONNECTION  Verified\nPORT        {observation.port}\n"
-                f"FIRMWARE    {observation.capabilities.firmware}\n"
-                f"PROTOCOL    {observation.capabilities.protocol_version}\n"
-                f"OUTPUTS     {'Running' if observation.state.behavioral.running or observation.state.tracking.running else 'Stopped'}"
-            )
-        diagnostic = state.acquisition_devices.diagnostic
-        if (
-            diagnostic.HasField("observed_monotonic_ns")
-            and diagnostic.observed_monotonic_ns != self._mcu_observed_ns
-        ):
-            self._mcu_observed_ns = diagnostic.observed_monotonic_ns
-            diagnostic_key = signal_name(diagnostic.signal)
-            if diagnostic_key in {"behavioral", "tracking"}:
-                diagnostic_role = (
-                    "Behavior cam" if diagnostic_key == "behavioral" else "Tracking cam"
-                )
-                diagnostic_key = next(
-                    (
-                        draft.key
-                        for draft in cameras.drafts
-                        if draft.role == diagnostic_role
-                    ),
-                    "",
-                )
-            mcu_panel.set_diagnostic(
-                diagnostic_key, diagnostic.active, diagnostic.rising_edges
-            )
-
-    def camera_connection(self, key: str, start: bool) -> None:
-        role = self._role(key)
-        if role is None:
-            return
-        self.bridge.request(
-            "camera",
-            role=role,
-            kind=rpc.CAMERA_COMMAND_KIND_START_PREVIEW
-            if start
-            else rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
-        )
-
-    def set_camera_enabled(self, serial: str, enabled: bool) -> None:
-        if not self.bridge.request(
-            "set_camera_enabled", serial=serial, enabled=enabled
-        ):
-            cameras = self.window.devices.cameras
-            cameras.pending_enable.pop(serial, None)
-            cameras.refresh_controls()
-            cameras.console.appendPlainText(
-                "Camera setting was not sent; controller connection is unavailable."
-            )
-
-    def save_camera_settings(
-        self, serial: str, clock: str, source: str, preset: str, rate: str
-    ) -> None:
-        if not self.bridge.request(
-            "save_camera_settings",
-            serial=serial,
-            clock=clock,
-            source=source,
-            preset=preset,
-            rate=rate,
-        ):
-            self.window.devices.cameras.console.appendPlainText(
-                "Camera settings were not sent; controller connection is unavailable."
-            )
+        self.mcu.install(state, held)
 
     def confirm_takeover(self) -> None:
         if (
@@ -373,7 +170,7 @@ class ManagedGui(QObject):
             if role in self.viewers:
                 self.viewers[role][0].show()
             else:
-                self.bridge.request(
+                self.cameras.queue(
                     "camera",
                     role=role,
                     kind=rpc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
@@ -382,14 +179,20 @@ class ManagedGui(QObject):
             self.viewers[role][0].close()
 
     def _role(self, key: str) -> int | None:
-        return next(
-            (
-                _CAMERAS.get(draft.role)
-                for draft in self.window.devices.cameras.drafts
-                if draft.key == key
-            ),
-            None,
-        )
+        return self.cameras.role(key)
+
+    def viewer_state(self, role: int, running: bool, run_id: str) -> bool:
+        old = self.viewers.get(role)
+        if old is not None and (not running or run_id != old[3]):
+            old[0].close()
+            return False
+        return old is not None and old[0].isVisible()
+
+    def refresh_camera_state(self) -> None:
+        if self.state is not None:
+            self.cameras._camera_revision = -1
+            self.mcu.revision = -1
+            self.install_snapshot(self.state.SerializeToString())
 
     def attach_viewer(self, role: int, raw: bytes, release_only: bool) -> None:
         attachment = acq.FrameBufferAttachment.FromString(raw)
@@ -455,21 +258,38 @@ class ManagedGui(QObject):
                 result=rpc.PREVIEW_CONSUMER_RESULT_FAILED,
             )
         )
-        reader.finished.connect(lambda: self.viewers.pop(role, None))
+        reader.finished.connect(lambda: self.viewer_finished(role, reader))
         reader.start()
         viewer.show()
+
+    def viewer_finished(self, role: int, reader: PreviewReader) -> None:
+        current = self.viewers.get(role)
+        if current is not None and current[1] is reader:
+            self.viewers.pop(role)
+            self.refresh_camera_state()
 
     def command_finished(self, action: str, success: bool, message: str) -> None:
         rendered = f"{action}: {message}" if success else f"{action} failed: {message}"
         self.window.dashboard.log_console.appendPlainText(rendered)
         if action in {"mcu", "save_mcu_pins"}:
+            self.mcu.finished(action, success, message)
+            if action == "save_mcu_pins" and self.state is not None:
+                self.mcu.revision = -1
+                self.mcu.install(
+                    self.state,
+                    self.state.control.holder_client_id
+                    == self.bridge.principal.generation,
+                )
             self.window.devices.microcontroller.console.appendPlainText(rendered)
-        if action in {"set_camera_enabled", "save_camera_settings"}:
-            cameras = self.window.devices.cameras
-            if not success:
-                cameras.pending_enable.clear()
-                cameras.refresh_controls()
-            cameras.console.appendPlainText(rendered)
+        self.cameras.finished(action, success, message)
+        if action in {
+            "camera",
+            "test_cameras",
+            "save_camera_settings",
+            "set_camera_enabled",
+            "assign_camera_role",
+        }:
+            self.refresh_camera_state()
         if action == "spikeglx_connection":
             panel = self.window.devices.spikeglx
             panel.console.appendPlainText(rendered)

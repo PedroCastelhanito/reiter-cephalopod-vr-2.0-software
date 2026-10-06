@@ -78,6 +78,9 @@ class ProtocolPage(QWidget):
             self.editor.create_batch.composer.set_asset_root
         )
         self.assets.folders["root"].editor.textChanged.connect(
+            self.editor.batch_edit.selection_form.composer.set_asset_root
+        )
+        self.assets.folders["root"].editor.textChanged.connect(
             lambda path: setattr(self.editor.batch_edit, "asset_root", path)
         )
         self.session_mode.currentTextChanged.connect(self.update_control_mode)
@@ -90,6 +93,7 @@ class ProtocolPage(QWidget):
         closed = self.session_mode.currentText() == "Closed-loop"
         self.editor.parameters.set_closed_loop(closed)
         self.editor.create_batch.composer.set_closed_loop(closed)
+        self.editor.batch_edit.selection_form.composer.set_closed_loop(closed)
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
         super().resizeEvent(event)
@@ -192,6 +196,7 @@ class ProtocolPage(QWidget):
         if not self.can_edit:
             self.editor.parameters.close_file_dialog()
             self.editor.create_batch.composer.close_file_dialogs()
+            self.editor.batch_edit.selection_form.composer.close_file_dialogs()
             batch_picker = self.editor.batch_edit.asset_picker
             if batch_picker.dialog is not None:
                 batch_picker.dialog.reject()

@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 from cephvr.gui.arena_movement import ArenaMovement
 from cephvr.gui.components import equal_row_height, label
 from cephvr.gui.epoch_motion import EpochMotion
+from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.looming_size import LoomingSize
 from cephvr.gui.stimulus_columns import stimulus_columns
 from cephvr.gui.stimulus_form import ValueEditor
@@ -42,6 +43,7 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
     arena = next((f for f in editor.forms if isinstance(f, ArenaMovement)), None)
     looming = next((f for f in editor.forms if isinstance(f, LoomingSize)), None)
     motion = next((f for f in editor.forms if isinstance(f, EpochMotion)), None)
+    image = next((f for f in editor.forms if isinstance(f, ImageParameters)), None)
     playback = next(
         (
             f
@@ -50,7 +52,22 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
         ),
         None,
     )
-    if arena is not None:
+    if image is not None:
+        result.extend(
+            (
+                ("Fit", image.fit),
+                ("Move speed", image.motion.speed),
+                ("Direction", image.motion.direction),
+            )
+        )
+        for image_control in (
+            image.motion.speed,
+            image.motion.direction,
+            image.motion.angular,
+        ):
+            image_control.setEnabled(not image.motion.custom.isChecked())
+            image.motion.custom.toggled.connect(image_control.setDisabled)
+    elif arena is not None:
         result.extend(arena.cells)
     elif looming is not None:
         unit = "mm" if "mm" in editor.units.text() else "°"
