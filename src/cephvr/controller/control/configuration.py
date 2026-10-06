@@ -56,6 +56,36 @@ def _acquisition_settings(
     ]
 
 
+def camera_participation_only(
+    current: pb.ExperimentConfiguration, proposed: pb.ExperimentConfiguration
+) -> bool:
+    """Validate a flags-only edit without treating device settings as ready."""
+    expected = pb.ExperimentConfiguration()
+    expected.CopyFrom(current)
+    existing = [
+        item for item in expected.backends if item.backend_name == "acquisition"
+    ]
+    selected = [
+        item for item in proposed.backends if item.backend_name == "acquisition"
+    ]
+    if len(existing) != 1 or len(selected) != 1:
+        return False
+    before, after = existing[0], selected[0]
+    if not before.HasField("acquisition") or not after.HasField("acquisition"):
+        return False
+    before.enabled = after.enabled
+    for role in ("behavioral", "tracking"):
+        target, source = (
+            getattr(before.acquisition, role),
+            getattr(after.acquisition, role),
+        )
+        if source.HasField("enabled"):
+            target.enabled = source.enabled
+        elif target.HasField("enabled"):
+            target.ClearField("enabled")
+    return expected == proposed and expected != current
+
+
 class ConfigurationCommands:
     """Validate current settings and persist explicit history commands."""
 
@@ -118,8 +148,15 @@ class ConfigurationCommands:
                     error=error or "configuration revision or phase mismatch",
                 )
             revision = self.control.revision
-            validators = tuple(self.validators.values())
-            if not validators:
+            participation_only = camera_participation_only(
+                self.configuration_state.current, request.proposed
+            )
+            validators = tuple(
+                validator
+                for name, validator in self.validators.items()
+                if not (participation_only and name == "acquisition")
+            )
+            if not validators and not participation_only:
                 return self.control_operations.admission(
                     command_id, error="configuration validator unavailable"
                 )
@@ -133,6 +170,15 @@ class ConfigurationCommands:
                 ),
                 self.limit_state.current.validation_ns / 1e9,
             )
+            if participation_only:
+                results.append(
+                    pb.ValidationResult(
+                        completed=True,
+                        valid=True,
+                        component="acquisition",
+                        configuration_module_version="camera-participation-v1",
+                    )
+                )
         except Exception as exc:
             return self.control_operations.admission(
                 command_id, error=f"configuration validation unavailable: {exc}"

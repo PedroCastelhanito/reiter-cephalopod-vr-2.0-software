@@ -58,7 +58,6 @@ _TRIAL_METHODS = frozenset(
         "StopTrial",
     }
 )
-_LARGE_RESULT_METHODS = frozenset({"EditCamera", "ResolveCameraConfiguration"})
 _OWNER_TERMINAL_EVIDENCE_METHODS = frozenset({"RecordPulseEvidence"})
 
 
@@ -126,6 +125,15 @@ class AcquisitionWorkerService(rpc.AcquisitionWorkerServiceServicer):
                 "RESOURCE_EXHAUSTED",
                 "request exceeds the adopted worker message limit",
             )
+        large_result = name == "ResolveCameraConfiguration" or (
+            name == "EditCamera"
+            and isinstance(request, acq.WorkerEditCamera)
+            and request.kind
+            in (
+                acq.CAMERA_EDIT_KIND_APPLY_SETTINGS,
+                acq.CAMERA_EDIT_KIND_IMPORT_PFS,
+            )
+        )
         if not _same_worker(
             command.target,
             self.state.context,
@@ -184,7 +192,7 @@ class AcquisitionWorkerService(rpc.AcquisitionWorkerServiceServicer):
                         ),
                         result_reservation_bytes=(
                             limits.large_result_reservation_bytes
-                            if name in _LARGE_RESULT_METHODS
+                            if large_result
                             else None
                         ),
                     )
@@ -234,9 +242,7 @@ class AcquisitionWorkerService(rpc.AcquisitionWorkerServiceServicer):
                         or name in _OWNER_TERMINAL_EVIDENCE_METHODS
                     ),
                     result_reservation_bytes=(
-                        limits.large_result_reservation_bytes
-                        if name in _LARGE_RESULT_METHODS
-                        else None
+                        limits.large_result_reservation_bytes if large_result else None
                     ),
                 )
             except (ValueError, TypeError, RuntimeError) as exc:

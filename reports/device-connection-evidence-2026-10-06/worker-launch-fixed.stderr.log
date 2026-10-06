@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: PROCESS_INSPECTION_FAILED: planned job membership could not be verified: QueryFullProcessImageNameW for PID 18904 failed: WinError 5
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

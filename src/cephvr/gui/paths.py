@@ -85,7 +85,9 @@ class PathField(QWidget):
             dialog.setFileMode(QFileDialog.FileMode.Directory)
             dialog.setOption(QFileDialog.Option.ShowDirsOnly)
         dialog.setOption(QFileDialog.Option.ReadOnly)
-        dialog.setDirectory(str(current if current.is_dir() else Path.home()))
+        dialog.setDirectory(
+            str((current if current.is_dir() else Path.home()).resolve())
+        )
         dialog.fileSelected.connect(
             lambda path: self.select_path(path) if self.dialog is dialog else None
         )

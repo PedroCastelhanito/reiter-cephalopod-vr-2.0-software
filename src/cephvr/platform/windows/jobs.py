@@ -429,16 +429,24 @@ class WindowsJobs:
         """Members whose exact identity two consecutive enumerations agree on.
 
         A member can exit between PID enumeration and OpenProcess; that is absence,
-        not an inspection failure. Any other error is persistent and raises.
+        not an inspection failure. Retry transient query errors within the same
+        pass bound; an error on the final pass remains unconfirmed and raises.
         """
         if name not in self.jobs:
             raise WindowsLaunchError("unknown retained job")
-        previous = self._enumerate_job(name)
-        for _ in range(_INSPECTION_PASSES - 1):
-            current = self._enumerate_job(name)
+        previous: list[tuple[int, int, str]] | None = None
+        for attempt in range(_INSPECTION_PASSES):
+            try:
+                current = self._enumerate_job(name)
+            except WindowsLaunchError:
+                if attempt == _INSPECTION_PASSES - 1:
+                    raise
+                previous = None
+                continue
             if current == previous:
-                break
+                return current
             previous = current
+        assert previous is not None
         return previous
 
     def _enumerate_job(self, name: str) -> list[tuple[int, int, str]]:
@@ -488,7 +496,7 @@ class WindowsJobs:
                 self.api.QueryFullProcessImageNameW(
                     handle, 0, path_buf, ctypes.byref(path_size)
                 ),
-                "QueryFullProcessImageNameW",
+                f"QueryFullProcessImageNameW for PID {pid}",
             )
         except WindowsLaunchError:
             if self._exited(handle):

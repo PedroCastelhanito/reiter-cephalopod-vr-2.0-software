@@ -1,0 +1,5 @@
+Set-Acl: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\device-connection-evidence-2026-10-06\repair_runtime_namespace.ps1:54
+Line |
+  54 |  Set-Acl -LiteralPath $legacyRoot -AclObject $legacyAcl
+     |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The process does not possess the 'SeSecurityPrivilege' privilege which is required for this operation.

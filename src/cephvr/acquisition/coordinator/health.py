@@ -200,7 +200,10 @@ class AcquisitionHealth:
                         selected, deadline_ns=deadline
                     )
                     if receipt.result != control.COMMAND_RESULT_ACCEPTED:
-                        raise RuntimeError("supervisor rejected acquisition heartbeat")
+                        raise RuntimeError(
+                            f"supervisor rejected acquisition heartbeat: "
+                            f"{receipt.failure.code}: {receipt.failure.message}"
+                        )
                     if (
                         session is not None
                         and selected is not report
@@ -227,7 +230,23 @@ class AcquisitionHealth:
         last_observation_ns: int | None = None
         while not shutdown.is_set():
             observation = self.pulse.observation
-            if observation is None or not observation.connection_id:
+            if (
+                observation is None
+                or not observation.connection_id
+                or (
+                    observation.state.HasField("configuration_valid")
+                    and not observation.state.configuration_valid
+                    and observation.state.HasField("watchdog_ms")
+                    and observation.state.watchdog_ms == 0
+                    and all(
+                        observation.state.HasField(role)
+                        and getattr(observation.state, role).HasField("running")
+                        and not getattr(observation.state, role).running
+                        for role in ("behavioral", "tracking")
+                    )
+                )
+            ):
+                # A connection-only probe leaves the firmware watchdog unarmed.
                 due_ns = None
                 connection_id = None
                 last_valid_ns = None

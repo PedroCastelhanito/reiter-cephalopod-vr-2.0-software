@@ -9,12 +9,14 @@ from uuid import uuid4
 import pytest
 
 from cephvr.acquisition.coordinator import manual_preview_pulse as pulse_module
+from cephvr.acquisition.coordinator import manual_preview_start as start_module
 from cephvr.acquisition.coordinator.manual_device_status import (
     ManualDeviceStatusReporter,
 )
 from cephvr.acquisition.coordinator.manual_preview_pulse import (
     ManualPreviewPulseLifecycle,
 )
+from cephvr.acquisition.coordinator.manual_preview_setup import build_preview_payload
 from cephvr.acquisition.coordinator.manual_preview_start import ManualPreviewStart
 from cephvr.acquisition.coordinator.manual_preview_transfer import (
     ManualPreviewTransferOwner,
@@ -38,10 +40,34 @@ from cephvr.acquisition.state import (
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import runtime_pb2 as runtime
+from cephvr.acquisition.worker.function_scopes import validate_camera_function_scopes
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.commands import CommandLedger
+
+
+@pytest.mark.parametrize(
+    "role", [camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING]
+)
+def test_manual_preview_declares_exact_non_saving_capture_scope(role: int) -> None:
+    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    worker = control.ProcessIdentity(role="camera_worker", generation=str(uuid4()))
+    attachment = acq.FrameBufferAttachment(
+        buffer=acq.FrameBufferDescriptor(owner=owner, producer=worker, camera=role)
+    )
+    payload = build_preview_payload(
+        camera.CameraSessionSettings(sdk_buffer_count=10),
+        runtime.CameraFilePolicy(frame_silence_timeout_ns=1_000_000_000),
+        camera.CameraResolvedState(),
+        attachment,
+    )
+    scopes = validate_camera_function_scopes(
+        payload, acq.WorkerContext(owner=owner, worker=worker, camera=role)
+    )
+    assert len(scopes) == 1
+    assert not payload.HasField("recording")
+    assert tuple(scopes[0].affected_closure_resource_ids) == (scopes[0].resource_id,)
 
 
 class _TransferOwner:
@@ -54,6 +80,68 @@ class _TransferOwner:
 
     def close_retired_resource(self, preview: WorkerPreview) -> None:
         _ = preview
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("succeeded", [False, True])
+async def test_preview_resolution_preserves_sdk_failure_and_requires_evidence(
+    monkeypatch: pytest.MonkeyPatch, succeeded: bool
+) -> None:
+    class Status:
+        pending = False
+
+        def begin_device_access(self, role: int, serial: str) -> None:
+            self.pending = True
+
+    status = Status()
+
+    class Resolution:
+        async def begin(self, *args: object, **kwargs: object) -> None:
+            pass
+
+    class Port:
+        async def resolve_camera_configuration(
+            self, *args: object, **kwargs: object
+        ) -> control.CommandAdmission:
+            assert status.pending
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    child = ChildOperation(
+        command_id=str(uuid4()),
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        work=control.WorkContext(),
+        parent_operation=control.OperationContext(),
+        kind="resolve_camera",
+    )
+    monkeypatch.setattr(
+        start_module,
+        "retain_worker_command",
+        lambda *a, **k: (acq.WorkerCommand(), child, Port()),
+    )
+
+    async def completed(*args: object, **kwargs: object) -> control.OperationState:
+        result = control.OperationState(complete=True, succeeded=succeeded)
+        if not succeeded:
+            result.failure.message = "SDK ROI Width violates current limits"
+        return result
+
+    monkeypatch.setattr(start_module, "wait_child_operation", completed)
+    flow = object.__new__(ManualPreviewStart)
+    flow.resolution = cast(start_module.ConfigurationResolution, Resolution())
+    flow.device_status = cast(ManualDeviceStatusReporter, status)
+    flow.lock = asyncio.Lock()
+    flow.clock = lambda: 1
+    expected = "successful SDK evidence" if succeeded else "SDK ROI Width"
+    with pytest.raises(RuntimeError, match=expected):
+        await flow._resolve_camera_and_pulses(
+            wire.AcquisitionCameraCommand(configuration_revision=1),
+            cast(WorkerRecord, object()),
+            camera.CameraSessionSettings(),
+            runtime.CameraFilePolicy(),
+            (),
+            100,
+        )
+    assert status.pending
 
 
 class _Status:

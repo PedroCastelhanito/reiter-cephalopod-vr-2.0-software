@@ -84,7 +84,7 @@ class WorkerWarningLedger:
                 if len(view.warnings) >= _LIMIT:
                     raise RuntimeError("worker warning catalogue capacity exhausted")
                 warning = view.warnings.add(
-                    warning_id=uuid4().hex,
+                    warning_id=str(uuid4()),
                     component="acquisition_camera",
                 )
                 metadata = warning.acquisition_occurrence

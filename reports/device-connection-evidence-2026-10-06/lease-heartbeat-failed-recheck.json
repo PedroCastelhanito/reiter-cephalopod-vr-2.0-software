@@ -1,0 +1,12 @@
+{
+  "generation": "ed17d778-cc64-4c99-89bf-dc66a6517e10",
+  "checks": [],
+  "draft_restored": {
+    "command_id": "311a2e51-0d98-442a-bfe2-921a562c19ff",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "error": "ClientError: REJECTED: <AioRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAVAILABLE\n\tdetails = \"failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50053: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n\tdebug_error_string = \"UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50053: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n>; REJECTED: camera operation unavailable or another operation pending"
+}

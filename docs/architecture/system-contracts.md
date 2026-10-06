@@ -217,7 +217,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 160
+**Status:** Accepted · **Revision:** 161
 
 **Processes and startup**
 
@@ -278,6 +278,10 @@ design; runtime monitoring remains unimplemented.
 
 **Control transport and state**
 
+- Windows runtime credentials and recovery records use the version-specific
+  `%LOCALAPPDATA%/CephVR2/runtime` namespace, with existing owner-only protection.
+  CephVR2.0 never hardens the legacy `%LOCALAPPDATA%/CephVR/runtime` tree;
+  independent versions must not change each other's runtime-file access.
 - Rig services use gRPC/Protobuf on local loopback only. The only off-host
   connection is E12's controller-owned SpikeGLX client: an outbound SDK client to
   SpikeGLX's command server over the dedicated link, with no CephVR listener there

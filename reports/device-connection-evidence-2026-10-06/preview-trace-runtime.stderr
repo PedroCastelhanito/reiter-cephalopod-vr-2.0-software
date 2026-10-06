@@ -1,0 +1,5 @@
+preview diagnostic: resolve begin
+preview diagnostic: resolve admitted
+preview diagnostic: resolve completed
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

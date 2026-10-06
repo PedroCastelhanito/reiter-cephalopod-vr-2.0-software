@@ -114,6 +114,7 @@ class ControllerRuntime:
             max_entries=limits.max_retained_incidents,
             max_payload_bytes=max_preparation_bytes,
         )
+        self.projections.set_scope(pb.WorkContext(), self.configuration_state.revision)
         self.clock = clock
         self.lifecycle = LifecycleState(startup_blocker=initial_startup_blocker or "")
         self.control = ControlState()

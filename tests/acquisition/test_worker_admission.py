@@ -369,6 +369,62 @@ def _command(
     )
 
 
+async def test_repeated_connection_checks_leave_capacity_for_pfs_and_release() -> None:
+    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    context = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=str(uuid4())
+        ),
+        owner=owner,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+    )
+    limits = AcquisitionControlLimits.from_message_limit(16 * 1024 * 1024)
+    commands = CommandLedger(
+        context.worker.generation,
+        60_000_000_000,
+        max_records=limits.max_records,
+        max_bytes=limits.max_bytes,
+        result_reservation_bytes=limits.normal_result_reservation_bytes,
+        safety_reserve_records=limits.safety_reserve_records,
+        safety_reserve_bytes=limits.safety_reserve_bytes,
+    )
+    state = WorkerState(
+        context,
+        control.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        commands,
+        max_retained_views=limits.max_records,
+        limits=limits,
+        registered=True,
+    )
+    service = _AdmissionService(state, _QueueOwner(), {})
+    kinds = [acq.CAMERA_EDIT_KIND_TEST_CONNECTION] * 8 + [
+        acq.CAMERA_EDIT_KIND_IMPORT_PFS,
+        acq.CAMERA_EDIT_KIND_FINISH_EDITING,
+    ]
+    for kind in kinds:
+        command = _command(context, owner)
+        request = acq.WorkerEditCamera(command=command, kind=kind)
+        receipt = await service._admit(
+            "EditCamera", request, command, cast(grpc.aio.ServicerContext, object())
+        )
+        assert receipt.result == control.COMMAND_RESULT_ACCEPTED, (
+            receipt.failure.message
+        )
+        retained = commands.get(command.command_id)
+        assert retained is not None
+        assert retained.result_reservation_bytes == (
+            limits.large_result_reservation_bytes
+            if kind == acq.CAMERA_EDIT_KIND_IMPORT_PFS
+            else limits.normal_result_reservation_bytes
+        )
+        state.complete_operation(
+            command.command_id,
+            succeeded=True,
+            progress="complete",
+            now_ns=host_time_ns(),
+        )
+
+
 class _Ticket(WorkerOperationTicket):
     def __init__(self) -> None:
         self.committed = False

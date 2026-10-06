@@ -1,0 +1,109 @@
+{
+  "captured_at": "2026-10-06T12:58:48.257977+09:00",
+  "controller_generation": "50eb58af-d5ca-4317-b587-669ff3638d2c",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "configuration_revision": 1,
+  "initial_devices": {},
+  "MICROCONTROLLER_COMMAND_KIND_CONNECT": {
+    "command_id": "4bf10365-3405-43d1-bdc0-5a2671f51bf8",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "diagnostic_configuration": {
+    "command_id": "f8fc9866-55a0-471b-885a-8bed8776cc8d",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "40065509": {
+    "command_id": "46fb8baf-68f3-49ec-b933-fd22ca9ade62",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "40747103": {
+    "command_id": "f04459d8-1a63-40fa-a348-f4be2f50819c",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "final_devices": {
+    "source": {
+      "backend_name": "acquisition",
+      "backend_generation": "b5c42c28-854b-429a-9ae1-c62b3ea1e7c7"
+    },
+    "state_revision": "3",
+    "observed_monotonic_ns": "503111086425300",
+    "behavioral": {
+      "device_open": false,
+      "device": {
+        "configured_id": "40065509"
+      }
+    },
+    "tracking": {
+      "device_open": false,
+      "device": {
+        "configured_id": "40747103"
+      }
+    },
+    "pulses": {
+      "port": "COM8",
+      "connection_id": "66d98ed0-2eed-443f-8950-264fd76ce96c",
+      "request_id": "66d98ed0-2eed-443f-8950-264fd76ce96c-7",
+      "observed_monotonic_ns": "503109050764800",
+      "state": {
+        "configuration_valid": false,
+        "watchdog_stopped": false,
+        "watchdog_ms": 0,
+        "behavioral": {
+          "enabled": false,
+          "running": false
+        },
+        "tracking": {
+          "enabled": false,
+          "running": false
+        }
+      },
+      "capabilities": {
+        "protocol_version": 2,
+        "firmware": "cephvr2_uno_1",
+        "pins": [
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6",
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12",
+          "D13"
+        ],
+        "minimum_requested_hz": 0.1,
+        "maximum_requested_hz": 100.0,
+        "minimum_watchdog_ms": 500,
+        "maximum_watchdog_ms": 10000,
+        "rising_edge_input_pins": [
+          "D2",
+          "D3"
+        ]
+      },
+      "capabilities_observed_monotonic_ns": "503109030251900"
+    }
+  },
+  "restore_original_configuration": {
+    "command_id": "1a9bad87-27d4-4916-b05b-4853c19e055f",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "control_release_failure": null
+}

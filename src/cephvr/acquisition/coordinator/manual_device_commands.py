@@ -240,7 +240,11 @@ class ManualDeviceCommands:
                 edit.path = request.path
             receipt = await port.edit_camera(edit, deadline_ns=deadline_ns)
             if receipt.result != control.COMMAND_RESULT_ACCEPTED:
-                raise RuntimeError("camera edit command was rejected")
+                raise RuntimeError(
+                    f"{receipt.failure.code}: {receipt.failure.message}"
+                    if receipt.HasField("failure")
+                    else "camera edit command was rejected"
+                )
             completed = await wait_child_operation(
                 operation, deadline_ns, self.lock, self.clock
             )

@@ -5,6 +5,19 @@ authoritative Protobuf source. `build_backend.py` invokes the same generator bef
 editable installations and wheel builds, then delegates packaging to setuptools.
 These tools do not launch backend processes or change policy files.
 
+`python tools/build_pylon_wait.py` builds the Windows camera control-event bridge
+using SWIG 4.3.0, MSVC and the installed pylon 11 development headers/libraries.
+Use `--sdk <Development-directory>` for another SDK location. Rebuild with the
+repository Python 3.11 environment after changing that environment. Its generated
+Python proxy and AMD64 `.pyd` are installed in the camera package and included in
+Windows wheels; source distributions retain the bridge inputs and builder. The
+bridge uses the SDK's duplicating HANDLE constructor and SWIG's typed module
+interface, because stock pypylon 26.3.1 cannot accept an integer Windows handle.
+Missing builds fail camera preparation explicitly. Native wake/GIL and device
+checks are required after building; the tool does not start capture or pulses.
+The rig runner exposes the same build with `-BuildAcquisitionNative` after installing
+the development dependencies; use it when preparing or rebuilding camera support.
+
 `check_backend_boundaries.py` inspects controller, supervisor, acquisition and Visual Stimulus imports
 and flags whole-runtime dependencies. Its file-size warnings require a cohesion review;
 zero boundary errors alone do not establish maintainability or correct behavior.

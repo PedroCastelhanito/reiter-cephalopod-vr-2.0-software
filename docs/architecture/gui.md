@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 107
+**Status:** Accepted · **Revision:** 108
 
 - Main navigation orders **Dashboard, Protocol, Devices, Tracking**. Protocol owns
   session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
@@ -55,6 +55,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   connection-only checks for enabled, assigned cameras; a running capture is reported
   as skipped. It does not start pulses or capture and preserves existing ownership. Display refresh preserves local assignments/participation. Explicit
   test fixtures may still supply simulated displays for isolated frontend checks.
+- An assigned camera's Use flag may be enabled or disabled regardless of its
+  current device, trigger, PFS or recording settings. Commit participation-only
+  edits under E07 without applying hardware settings. Control/ownership and session
+  locking still apply; capture and Setup enforce their complete configuration gates.
 - Local design review saves its editable draft state atomically on normal close and
   restores it after inventory discovery on the next review launch. Match camera and
   display drafts by stable identity; an absent device stays unavailable. A failed

@@ -1,0 +1,6 @@
+preview diagnostic: resolve begin
+preview diagnostic: resolve admitted
+preview diagnostic: resolve completed success=True failure= remaining=68.238
+preview diagnostic: serial connect
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

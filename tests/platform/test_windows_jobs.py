@@ -29,6 +29,7 @@ class FakeApi:
         self.terminated: list[int] = []
         self.terminate_ok = True
         self.closed: list[int] = []
+        self.image_query_failures = 0
 
     def QueryInformationJobObject(self, job, kind, buf, size, _ret) -> bool:  # noqa: N802
         pids = self.passes[min(self.pass_index, len(self.passes) - 1)]
@@ -53,6 +54,10 @@ class FakeApi:
         return pid
 
     def QueryFullProcessImageNameW(self, handle, flags, path, size) -> bool:  # noqa: N802
+        if self.image_query_failures:
+            self.image_query_failures -= 1
+            self.last_error = 5
+            return False
         if handle in self.exited_after_open:
             return False
         path.value = "member.exe"
@@ -85,6 +90,25 @@ def test_member_exiting_between_enumeration_and_open_is_absent() -> None:
     api.gone = {11}
     members = make_jobs(api).inspect_launch_job("job")
     assert [(pid, created) for pid, created, _ in members] == [(10, 1010)]
+
+
+@pytest.mark.parametrize("failures", [1, 3])
+def test_image_query_retry_preserves_live_process_uncertainty(failures: int) -> None:
+    api = FakeApi([[10]])
+    api.image_query_failures = failures
+    jobs = make_jobs(api)
+    if failures == 1:
+        assert [
+            (pid, created) for pid, created, _ in jobs.inspect_launch_job("job")
+        ] == [(10, 1010)]
+    else:
+        with pytest.raises(
+            WindowsLaunchError,
+            match="QueryFullProcessImageNameW for PID 10 failed: WinError 5",
+        ):
+            jobs.inspect_launch_job("job")
+    assert api.pass_index == 3
+    assert api.closed == [10, 10, 10]
 
 
 def test_member_exiting_after_open_is_absent() -> None:

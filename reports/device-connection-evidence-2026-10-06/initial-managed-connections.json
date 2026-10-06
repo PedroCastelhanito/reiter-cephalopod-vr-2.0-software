@@ -1,0 +1,83 @@
+{
+  "captured_at": "2026-10-06T09:42:57.056414+09:00",
+  "controller_generation": "7dded6b1-d25e-449c-8b94-1fce6084e783",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "configuration_revision": 1,
+  "initial_devices": {},
+  "MICROCONTROLLER_COMMAND_KIND_CONNECT": {
+    "command_id": "fbbdf4f4-5fff-427b-a5d9-4ba7ebe11279",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "MICROCONTROLLER_COMMAND_KIND_STATUS": {
+    "command_id": "a09d8c7c-7331-44ef-8fc5-692e8fcabf47",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: required MCU result evidence incomplete"
+  },
+  "enabled_camera_tests": [
+    false,
+    "40065509: skipped; assignment or enablement changed"
+  ],
+  "40747103": {
+    "error": "REJECTED: acquisition settings unavailable"
+  },
+  "final_devices": {
+    "source": {
+      "backend_name": "acquisition",
+      "backend_generation": "a111bf37-cf77-41bc-807b-aec5c8886fc8"
+    },
+    "state_revision": "2",
+    "observed_monotonic_ns": "491357888048700",
+    "pulses": {
+      "port": "COM8",
+      "connection_id": "512de6c7-8652-4d05-81c0-d2765e55689f",
+      "request_id": "512de6c7-8652-4d05-81c0-d2765e55689f-7",
+      "observed_monotonic_ns": "491357882052700",
+      "state": {
+        "configuration_valid": false,
+        "watchdog_stopped": false,
+        "watchdog_ms": 0,
+        "behavioral": {
+          "enabled": false,
+          "running": false
+        },
+        "tracking": {
+          "enabled": false,
+          "running": false
+        }
+      },
+      "capabilities": {
+        "protocol_version": 2,
+        "firmware": "cephvr2_uno_1",
+        "pins": [
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6",
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12",
+          "D13"
+        ],
+        "minimum_requested_hz": 0.1,
+        "maximum_requested_hz": 100.0,
+        "minimum_watchdog_ms": 500,
+        "maximum_watchdog_ms": 10000,
+        "rising_edge_input_pins": [
+          "D2",
+          "D3"
+        ]
+      },
+      "capabilities_observed_monotonic_ns": "491357858313900"
+    }
+  },
+  "control_release_failure": null
+}

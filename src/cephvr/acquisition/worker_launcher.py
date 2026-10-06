@@ -137,13 +137,17 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
             command_id=spec.launch_command_id,
             owner=self.owner,
             child=context.worker,
-            work=context.work,
             parent_operation=spec.parent_operation,
             executable=str(self.python_executable),
             python_worker=True,
             stop_method=spec.stop_method,
         )
-        planned = await self.supervisor.plan_launch(plan, deadline_ns=deadline_ns)
+        if context.work.WhichOneof("work") is not None:
+            plan.work.CopyFrom(context.work)
+        worker_token = secrets.token_urlsafe(32)
+        planned = await self.supervisor.plan_launch(
+            plan, deadline_ns=deadline_ns, child_token=worker_token
+        )
         if planned.admission.result != control.COMMAND_RESULT_ACCEPTED:
             raise RuntimeError(_admission_failure(planned.admission))
         if (
@@ -204,6 +208,7 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
                 pid=child.pid,
                 creation_time_100ns=child.creation_time_100ns,
                 registration_deadline_ns=deadline_ns,
+                worker_token=worker_token,
             )
             self.register_peer(context.worker, worker_token)
             self.native.resume(child)
@@ -333,8 +338,8 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
         pid: int,
         creation_time_100ns: int,
         registration_deadline_ns: int,
+        worker_token: str,
     ) -> tuple[dict[str, object], str]:
-        worker_token = secrets.token_urlsafe(32)
         context = spec.context
         descriptor: dict[str, object] = {
             "role": context.worker.role,

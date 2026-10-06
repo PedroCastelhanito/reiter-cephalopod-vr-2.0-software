@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: CHILD_EXITED: registered acquisition PID 21700 exited; cleanup evidence remains required
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

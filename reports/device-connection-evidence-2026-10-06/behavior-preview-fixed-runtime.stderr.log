@@ -1,0 +1,4 @@
+CephVR acquisition shutdown: SUPERVISOR_HEARTBEAT_FAILED: acquisition heartbeat was not accepted: supervisor rejected acquisition heartbeat
+CephVR supervisor shutdown: CHILD_EXITED: registered acquisition PID 29136 exited; cleanup evidence remains required
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

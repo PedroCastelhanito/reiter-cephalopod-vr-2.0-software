@@ -11,7 +11,7 @@ from setuptools import Distribution, setup
 
 
 def _native_dlls() -> list[Path]:
-    return list(Path("src/cephvr").rglob("*.dll"))
+    return [*Path("src/cephvr").rglob("*.dll"), *Path("src/cephvr").rglob("*.pyd")]
 
 
 def _is_x64_pe(path: Path) -> bool:

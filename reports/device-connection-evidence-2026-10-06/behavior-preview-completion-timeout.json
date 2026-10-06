@@ -1,0 +1,42 @@
+{
+  "generation": "0faef98d-8221-4ab3-8dda-3553d2da899d",
+  "scope": "Behavior only: D10 to Line4",
+  "draft_restored": {
+    "command_id": "27a8bc9a-5f8c-493e-94d3-bf36f07030ad",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "start": {
+    "command_id": "0fc2fee6-5644-416a-8c2e-6a737a1b39d9",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: exact completion missing"
+  },
+  "after_start": {
+    "source": {
+      "backend_name": "acquisition",
+      "backend_generation": "d2a05666-0dac-4fa9-a8b3-3d92094b3f1d"
+    },
+    "state_revision": "1",
+    "observed_monotonic_ns": "506493972608200",
+    "behavioral": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": true,
+      "device": {
+        "configured_id": "40065509"
+      },
+      "preview_prepared": false
+    },
+    "tracking": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": false,
+      "preview_prepared": false
+    }
+  },
+  "error": "RuntimeError: OPERATION_FAILED: exact completion missing"
+}

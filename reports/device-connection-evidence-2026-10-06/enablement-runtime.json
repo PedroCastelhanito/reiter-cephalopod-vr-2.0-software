@@ -1,0 +1,29 @@
+{
+  "captured_at": "2026-10-06T12:59:27.338402+09:00",
+  "generation": "50eb58af-d5ca-4317-b587-669ff3638d2c",
+  "enable": {
+    "command_id": "5bb20b2b-dac6-4a7c-9c50-b2a3e051db20",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "alive_after_25_seconds": true,
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "camera_use": {
+    "behavioral": true,
+    "tracking": true
+  },
+  "trigger_source_present": {
+    "behavioral": false,
+    "tracking": false
+  },
+  "restore": {
+    "command_id": "e852d487-1849-4091-a1cc-752f48244a83",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "release_failure": null
+}

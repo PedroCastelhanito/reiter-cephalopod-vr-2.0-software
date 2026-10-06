@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from importlib import import_module
 from threading import Event
 from typing import Any, Literal
 
@@ -10,6 +11,18 @@ from cephvr.acquisition.camera.errors import CameraAdapterError
 from cephvr.platform.windows.events import ManualResetEvent
 
 WaitOutcome = Literal["frame", "control", "timeout"]
+
+
+def _control_wait(event: ManualResetEvent) -> Any:
+    """Use the typed SDK bridge; pypylon cannot convert an integer Win32 HANDLE."""
+    try:
+        binding = import_module("cephvr.acquisition.camera.pylon_wait_binding")
+    except ImportError as exc:
+        raise CameraAdapterError(
+            "SDK_UNAVAILABLE",
+            "pylon control-wait bridge unavailable; run tools/build_pylon_wait.py",
+        ) from exc
+    return binding.from_handle(event.native_handle)
 
 
 class PylonWaitGate:
@@ -47,7 +60,7 @@ class PylonWaitGate:
             # verifies the Python no-index overload with our private event and does
             # not interpret the inactive camera object's signal as a result.
             event.set()
-            control_wait = pylon.WaitObject(event.native_handle, True)
+            control_wait = _control_wait(event)
             waits.Add(camera_wait)
             waits.Add(control_wait)
             ready = waits.WaitForAny(0)
@@ -82,7 +95,7 @@ class PylonWaitGate:
         event = self._event
         self._pylon = pylon
         self._camera_wait = camera.GetGrabResultWaitObject()
-        self._control_wait = pylon.WaitObject(event.native_handle, True)
+        self._control_wait = _control_wait(event)
         if not self._camera_wait.IsValid() or not self._control_wait.IsValid():
             self.remove()
             raise CameraAdapterError(
@@ -136,7 +149,7 @@ class PylonWaitGate:
         event = ManualResetEvent.create()
         waits: Any | None = None
         try:
-            wait_object = self._pylon.WaitObject(event.native_handle, True)
+            wait_object = _control_wait(event)
             waits = self._pylon.WaitObjects()
             waits.Add(wait_object)
             acknowledgement = schedule_wake(event.set)

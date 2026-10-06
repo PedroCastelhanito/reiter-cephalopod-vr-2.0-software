@@ -20,6 +20,11 @@ def get_node(node_map: Any, name: str) -> Any | None:
     try:
         node = node_map.GetNode(name)
     except Exception as exc:
+        # pypylon raises for absent names instead of returning a null node.
+        if type(exc).__name__ == "LogicalErrorException" and str(exc).startswith(
+            "Node not existing"
+        ):
+            return None
         raise sdk_failure("feature_lookup", exc, field_path=name) from exc
     return node if node is not None and available(node) else None
 
@@ -182,6 +187,10 @@ def _finite_optional(node: Any, method: str) -> float | None:
     if not callable(getter):
         return None
     try:
+        if method == "GetInc":
+            has_increment = getattr(node, "HasInc", None)
+            if callable(has_increment) and not has_increment():
+                return None
         value = float(getter())
     except Exception as exc:
         raise sdk_failure("feature_range", exc) from exc

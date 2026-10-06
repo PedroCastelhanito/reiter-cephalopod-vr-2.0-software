@@ -1,6 +1,6 @@
 # Controller and supervisor status
 
-Updated: 2026-10-01. Implementation/source review is recorded for the controller,
+Updated: 2026-10-06. Implementation/source review is recorded for the controller,
 supervisor, launcher, headless client and shared/native helpers. Local results below
 have their original scope; Windows and full-workload acceptance remain pending.
 [ARCH-001/002](../architecture.md#arch-001) owns scope and structure;
@@ -9,6 +9,65 @@ have their original scope; Windows and full-workload acceptance remain pending.
 [E06/E08](../docs/architecture/system-contracts.md#e08) own behavior.
 
 ## Current scope and review
+
+Latest handoff, 2026-10-06: owner stopped the Behavior D10 → Line4 preview recheck.
+The direct receiver check yielded 41 frames in two seconds after verified upload
+of existing CephVR2 firmware; prior legacy flash is backed up. Managed ready/started
+evidence reaches acquisition, but operator completion still fails with
+`exact completion missing`; GUI viewer and managed Stop remain unaccepted.
+Capture-scope declaration, explicit closed preview identity, initial projection
+revision and canonical warning UUID repairs are retained under E06/E07/A10.
+See [current acquisition assessment](acquisition.md#preview-recheck-stopped-by-owner-2026-10-06).
+The authenticated shutdown of generation `2dd0392f-54f9-4c83-a733-3ea0549872ef`
+was followed by empty CephVR2 process inventory and successful application-guard
+acquire/release. Temporary tracing is removed; no replacement runtime was launched.
+These findings supersede older statements below about missing capture catalogue
+scope and a retained running runtime. One intervening launch failed independently
+with `VISUAL_STIMULUS_EVIDENCE` / invalid UUID; that defect remains uninvestigated.
+
+Requested development cleanup removed 42 preflighted directories, 6,640 files and
+201,368,736 bytes, including 81 tracked test artifacts and disposable SDK prototypes,
+build outputs and caches. Focused fixture ignore rules were added. Experiment data,
+configuration/PFS, production native bridge, dated evidence and firmware backup
+were preserved. Later checks recreated small temporary/cache directories; no
+further optional cleanup was performed after the stop. The
+[cleanup manifest](device-connection-evidence-2026-10-06/development-cleanup-manifest.json)
+records the completed removal.
+
+The 2026-10-06 manual-preview resolution failure was isolated to pypylon's
+unsupported Python-integer Win32 HANDLE constructor. The bounded typed native
+bridge and verification are recorded in [acquisition](acquisition.md) under
+A02/SYS-003. Preview failures now retain original worker evidence and possible
+ownership until release. Real settings resolution/native blocking wake and both
+managed connections pass. External preview testing stopped at the owner's request
+to use CephVR1.0; preparation still fails because its camera capture scope is
+missing from the function catalogue. Acquisition heartbeat rejection was isolated
+to reporting before endpoint registration; registration now precedes health
+reporting, with one subsequent native startup reaching preview preparation.
+Broader startup acceptance remains open.
+
+CephVR2.0 is closed on 2026-10-06: process inventory contains no 2.0 roles and
+the application guard can be acquired and released. CephVR1.0 startup was then
+reproduced with a bounded Python traceback: GUI construction retries opening
+`%LOCALAPPDATA%/CephVR/runtime/controller/controller.log` and receives WinError 5.
+Its legacy controller directory and log have empty inherited DACLs; the shared
+runtime root has a protected owner-only ACE without child inheritance. This is
+a runtime-path/security collision between versions, not camera connection proof.
+Resolved in the owner-authorized follow-up: E08 revision 161 assigns CephVR2.0
+`%LOCALAPPDATA%/CephVR2/runtime`. The one-time migration moved only canonical
+generation directories and the protected recovery folder after preflight checks;
+all moved entries retain their exact ACLs and file SHA256 hashes. Legacy runtime
+now grants inherited FullControl only to the current owner. The native repair
+changes DACL alone; PowerShell Set-Acl first requested unavailable
+SeSecurityPrivilege after migration, without completing the access repair.
+Windows PowerShell 5 also failed to load its security module before any mutation;
+the available PowerShell 7 completed the migration. No credentials were printed.
+The normal CephVR1.0 launcher now opens the fully rendered Experiment OS Dashboard
+and its controller. No CephVR2.0 runtime was started. Scoped invariant tests:
+10 passed, including native credential isolation and writable legacy log coverage;
+Ruff lint/format, Windows-target mypy and boundaries (556 modules, zero violations)
+pass. Existing cohesion warnings concern unchanged modules; the focused credential
+helper adds no dependency or new coordination under ARCH-002.
 
 Final Windows repair and one-time elevated follow-up (2026-10-01, baseline HEAD
 `826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): controller
@@ -200,6 +259,55 @@ external backend viewer geometry integration remains pending. Shared round indic
 windows already reuse useful reference patterns with smaller focused components.
 
 ### Dashboard frontend implementation
+
+The 2026-10-06 [live connection checks](device-connection-evidence-2026-10-06/README.md)
+confirm controller-backed COM8 Connect and both assigned Basler connection tests,
+including camera closure and successful original-draft restoration. Earlier
+timeouts were isolated to acquisition worker PlanLaunch credential/empty-work
+errors, now repaired in the existing launch/transport owners. Stale generated
+bindings were regenerated from authoritative schemas; the unarmed watchdog fix
+is recorded in [acquisition status](acquisition.md).
+
+G01 revision 108/E07 revision 58 allow flags-only camera participation edits
+without capture-ready settings. A real controller accepted both Use flags with
+missing trigger sources, stayed alive for 25 seconds, and restored the draft.
+Setup and settings edits keep full validation. Absolute native-picker directories
+address the relative file:. warning. Native job inspection retries errors within
+its existing three-pass bound; persistent unknown membership retains guards and
+containment deadlines during shutdown. Original WinError 5's underlying OS cause
+is not established; it recurred during the later authenticated shutdown for
+acquisition PID 18904. The launcher released its guard without the posted traceback.
+After the owner reported duplicate startup, native window inventory showed no GUI
+but a live controller. The retained test generation was shut down through the
+existing authenticated command; port 50051 is absent and the application guard
+can be acquired. No replacement runtime is left running. Failure
+diagnostics now retain role/PID/native cause and acquisition shutdown reason.
+Portable controller/supervisor/platform/launcher: 356 passed, 2 skipped;
+supervisor rerun: 106 passed; GUI selection: 4 passed; two real Windows containment
+checks passed. Scoped lint/format, Windows-target mypy and boundaries pass.
+ARCH-002 review retains cohesive native jobs/shutdown owners and introduces no
+dependency or policy. Capture, preview, electrical pulses and full rig acceptance
+remain in the existing checklist; no history save or pulse output occurred.
+
+The later Behavior-camera PFS error was reproduced and repaired in the focused
+GenApi helper: absent optional effective-exposure nodes and float Gain without
+an increment are valid device capabilities. Controller camera completion now
+retains the original failure text. Preserved the operator's current draft before
+an authenticated idle-runtime restart, restored it, and verified PFS import,
+readback adoption and Finish editing through the controller. The camera reports
+closed/no cleanup pending at adopted revision 3; control was released and the
+managed GUI remains running. Acquisition/controller checks: 406 passed, 2 skipped.
+The preceding discovery-only inventory messages were not proof of camera opening.
+The later command rejection was a lease-loss cleanup barrier: untouched Tracking
+was absent from acquisition status, despite a fresh coordinator owning no camera.
+Both roles now start with explicit closed/no-preview/no-cleanup facts; access still
+requires exact subsequent evidence. Controller cleanup remains strict. The final
+live PFS import/Finish editing, both camera tests, release/reclaim and both camera
+retests pass; both cleanup operations succeed. Worker small edits retain normal
+result reservations, avoiding unnecessary exhaustion of full-readback budgets;
+readback operations and all ceilings remain unchanged. Acquisition/controller:
+408 passed, 2 skipped; scoped static checks pass. A preceding attempt exited on
+SUPERVISOR_HEARTBEAT_FAILED, retained as an unresolved native startup finding.
 
 The 2026-10-06 runtime synchronization check confirms the managed launcher imports
 `cephvr.gui.main`, whose ManagedDashboardWindow inherits the same DashboardWindow

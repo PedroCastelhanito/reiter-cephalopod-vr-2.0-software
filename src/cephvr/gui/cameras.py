@@ -352,17 +352,6 @@ class CamerasPanel(ResponsiveColumns):
     def set_participation(self, row: int, enabled: bool) -> None:
         draft = self.drafts[row]
         if self.managed and self.can_operate and draft.role != "Unassigned":
-            if (
-                enabled
-                and draft.values.get("trigger_clock") == "External controller"
-                and not draft.values.get("trigger_source")
-            ):
-                self.console.appendPlainText(
-                    f"{draft.role} cannot be enabled: select a PFS file with an explicit "
-                    "FrameStart line source and wait for controller confirmation."
-                )
-                self.refresh_controls()
-                return
             self.pending_enable[draft.serial] = enabled
             self.enable_requested.emit(draft.serial, enabled)
             self.console.appendPlainText(

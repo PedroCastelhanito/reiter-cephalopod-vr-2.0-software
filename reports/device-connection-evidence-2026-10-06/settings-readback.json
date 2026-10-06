@@ -1,0 +1,47 @@
+{
+  "read_device_identity": {
+    "configured_id": "40065509",
+    "physical_id": "40065509",
+    "model": "acA4112-30uc",
+    "transport_interface": "usb3"
+  },
+  "read_settings": {
+    "exposure_us": 25000.0,
+    "gain": {
+      "value": 0.0,
+      "unit": "dB",
+      "selector": "All"
+    },
+    "frame_rate_hz": 30.00030000300003,
+    "roi": {
+      "width": 1760,
+      "height": 3000,
+      "offset_x": 396,
+      "offset_y": 4
+    },
+    "pixel_format": "BayerRG8",
+    "trigger_selector": "frame_start",
+    "trigger_source": "Line4",
+    "trigger_activation": "rising_edge",
+    "exposure_duration_mode": "timed"
+  },
+  "read_frame_timing": "free_running",
+  "capabilities": {
+    "error": "CameraAdapterError: Basler SDK feature_range failed (RuntimeException): node does not have an increment. : RuntimeException thrown in node 'Gain' while calling 'Gain.GetInc()' (file 'FloatT.h', line 443)"
+  },
+  "read_layout": {
+    "width": 1760,
+    "height": 3000,
+    "pixel_format": {
+      "sdk_name": "BayerRG8",
+      "sdk_value": 17301513,
+      "effective_bits": 8,
+      "channel_layout": "bayer_rg",
+      "packing": "byte",
+      "byte_order": "byte",
+      "alignment": "lsb"
+    },
+    "row_stride_bytes": 1760,
+    "image_payload_bytes": 5280000
+  }
+}

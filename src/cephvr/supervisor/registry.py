@@ -215,7 +215,8 @@ class LaunchRegistry:
                 self._block(
                     entry,
                     "CHILD_EXITED",
-                    "registered child exited; cleanup evidence remains required",
+                    f"registered {entry.plan.child.role} PID {entry.state.pid} exited; "
+                    "cleanup evidence remains required",
                 )
         if (
             entry.state.phase
@@ -427,7 +428,7 @@ class LaunchRegistry:
             raise self._block(
                 entry,
                 "JOB_INSPECTION_FAILED",
-                "planned job membership could not be verified",
+                f"planned job membership could not be verified: {exc}",
             ) from exc
 
     def _running(self, entry: _Entry) -> bool:

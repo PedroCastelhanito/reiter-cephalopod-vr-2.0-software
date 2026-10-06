@@ -11,6 +11,7 @@ from uuid import uuid4
 import pytest
 
 import cephvr.controller.device.readback as readback_module
+from cephvr.acquisition.configuration import validate_configuration
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.device.ports import DeviceHooks
@@ -67,6 +68,29 @@ class _Hooks:
 
     def publish(self) -> None:
         self.publishes += 1
+
+
+def test_camera_failure_retains_original_device_reason(tmp_path) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    hooks = _Hooks()
+    runtime.camera_readback.hooks = cast(Any, hooks)
+    operation = CameraOperation(
+        _id(),
+        _id(),
+        1,
+        1,
+        svc.CAMERA_COMMAND_KIND_IMPORT_PFS,
+        pb.WorkContext(),
+        10**12,
+        True,
+    )
+    operation.final_status = svc.AcquisitionDeviceStatusReport()
+    operation.final_status.result.succeeded = False
+    operation.final_status.result.failure.message = "Gain capability is unavailable"
+    runtime.device_state.camera_operation = operation
+    runtime.camera_readback.finish_camera_operation(operation)
+    assert hooks.failures == ["Gain capability is unavailable"]
+    assert runtime.device_state.camera_operation is None
 
 
 def test_exact_camera_status_after_deadline_is_retained_and_adopted_if_newer() -> None:
@@ -350,6 +374,47 @@ async def test_setup_not_blocked_by_camera_guard_when_closed(tmp_path: Path) -> 
     runtime = _runtime_with_validators(tmp_path)
     admission = await runtime.setup(operator_command(runtime))
     assert admission.failure.message != "stop camera preview/editing first"
+
+
+@pytest.mark.parametrize("extra_edit", ["", "settings", "experiment"])
+async def test_camera_participation_can_precede_settings_validation(
+    tmp_path: Path, extra_edit: str
+) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    runtime.configuration_commands.validators = {
+        "experiment": lambda _c: pb.ValidationResult(completed=True, valid=True),
+        "acquisition": validate_configuration,
+    }
+    runtime.setup_admission.validators = runtime.configuration_commands.validators
+    entry = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=False
+    )
+    entry.acquisition.behavioral.device.device_id = "40065509"
+    entry.acquisition.behavioral.enabled = False
+    request = _update(runtime)
+    proposed = request.proposed.backends[0]
+    proposed.enabled = True
+    proposed.acquisition.behavioral.enabled = True
+    if extra_edit == "settings":
+        proposed.acquisition.behavioral.device.settings.trigger_source = "Line4"
+    elif extra_edit == "experiment":
+        request.proposed.experiment = "new-experiment"
+
+    admission = await runtime.update_configuration(request)
+
+    if extra_edit:
+        assert admission.result == pb.COMMAND_RESULT_REJECTED
+        assert not runtime.configuration_state.current.backends[0].enabled
+        assert runtime.configuration_state.revision == 1
+    else:
+        assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+        assert runtime.configuration_state.current.backends[
+            0
+        ].acquisition.behavioral.enabled
+        assert runtime.configuration_state.revision == 2
+        assert not validate_configuration(runtime.configuration_state.current).valid
+        setup = await runtime.setup(operator_command(runtime))
+        assert setup.result == pb.COMMAND_RESULT_REJECTED
 
 
 def _update(

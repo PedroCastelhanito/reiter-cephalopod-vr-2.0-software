@@ -1,0 +1,107 @@
+{
+  "captured_at": "2026-10-06T09:49:09.939998+09:00",
+  "source_revision": "7b250de613c9d3568932eb648974d9e4964c2c35",
+  "health_source_sha256": "9ef335946ce013cb80188e1833668f1b65051845038fc8e81b2dde785ef2aa8f",
+  "ports": [
+    {
+      "port": "COM8",
+      "description": "Arduino Uno (COM8)",
+      "hardware_id": "USB VID:PID=2341:0043 SER=1344A474130351F057D6 LOCATION=1-10"
+    },
+    {
+      "port": "COM9",
+      "description": "PL2303HXA PHASED OUT SINCE 2012. PLEASE CONTACT YOUR SUPPLIER.",
+      "hardware_id": "USB VID:PID=067B:2303 SER= LOCATION=1-9.3"
+    }
+  ],
+  "pylon_version": "11.4.0.1134",
+  "cameras": [
+    {
+      "serial": "40065509",
+      "model": "acA4112-30uc",
+      "settings": {
+        "DeviceFirmwareVersion": "107417-11;U;acA4112_30uc;V1.4-4;1",
+        "Width": "1760",
+        "Height": "3000",
+        "PixelFormat": "BayerRG8",
+        "TriggerSelector": "FrameStart",
+        "TriggerMode": "Off",
+        "TriggerSource": "Line4",
+        "TriggerActivation": "RisingEdge",
+        "ExposureTime": "25000.0",
+        "DeviceLinkThroughputLimit": "360000000"
+      },
+      "opened": true,
+      "closed": true
+    },
+    {
+      "serial": "40747103",
+      "model": "a2A2464-77umPRO",
+      "settings": {
+        "DeviceFirmwareVersion": "p=vu3pc_og05c1m_pro/s=r/v=1.0.0/i=11311.8/h=e50a632bf",
+        "Width": "2448",
+        "Height": "2048",
+        "PixelFormat": "Mono8",
+        "TriggerSelector": "FrameStart",
+        "TriggerMode": "Off",
+        "TriggerSource": "Software",
+        "TriggerActivation": {
+          "unavailable": "Node is not readable : AccessException thrown in node 'TriggerActivation' while calling 'TriggerActivation.ToString()' (file 'ValueT.h', line 63)"
+        },
+        "ExposureTime": "5000.0",
+        "DeviceLinkThroughputLimit": "360000000"
+      },
+      "opened": true,
+      "closed": true
+    }
+  ],
+  "microcontroller": {
+    "port": "COM8",
+    "connection_id": "08e817f7-5d8a-4155-ba35-c362f18a1b54",
+    "request_id": "08e817f7-5d8a-4155-ba35-c362f18a1b54-7",
+    "observed_monotonic_ns": "491730765562100",
+    "state": {
+      "configuration_valid": false,
+      "watchdog_stopped": false,
+      "watchdog_ms": 0,
+      "behavioral": {
+        "enabled": false,
+        "running": false
+      },
+      "tracking": {
+        "enabled": false,
+        "running": false
+      }
+    },
+    "capabilities": {
+      "protocol_version": 2,
+      "firmware": "cephvr2_uno_1",
+      "pins": [
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13"
+      ],
+      "minimum_requested_hz": 0.1,
+      "maximum_requested_hz": 100.0,
+      "minimum_watchdog_ms": 500,
+      "maximum_watchdog_ms": 10000,
+      "rising_edge_input_pins": [
+        "D2",
+        "D3"
+      ]
+    },
+    "capabilities_observed_monotonic_ns": "491730744871100"
+  },
+  "malformed_replies": 0,
+  "unmatched_replies": 0,
+  "microcontroller_closed": true
+}

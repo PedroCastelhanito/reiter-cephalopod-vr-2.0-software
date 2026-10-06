@@ -30,7 +30,7 @@ def default_runtime_root() -> Path:
         appdata = os.environ.get("LOCALAPPDATA")
         if not appdata:
             raise CredentialError("LOCALAPPDATA is required for local credentials")
-        return Path(appdata) / "CephVR" / "runtime"
+        return Path(appdata) / "CephVR2" / "runtime"
     parent = os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
     return Path(parent) / f"cephvr-{os.getuid()}"
 

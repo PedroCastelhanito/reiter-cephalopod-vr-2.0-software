@@ -1,0 +1,212 @@
+[
+  {
+    "path": ".local-calibration-pytest",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".local-camera-controller-verify",
+    "files": 2,
+    "bytes": 152
+  },
+  {
+    "path": ".local-camera-enable-20261005",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".local-camera-enable-verify-20261005",
+    "files": 2,
+    "bytes": 152
+  },
+  {
+    "path": ".local-gui-split-20261005",
+    "files": 7,
+    "bytes": 7485
+  },
+  {
+    "path": ".local-gui-split-20261005b",
+    "files": 7,
+    "bytes": 7485
+  },
+  {
+    "path": ".local-gui-startup-tests-20261005",
+    "files": 18,
+    "bytes": 29482
+  },
+  {
+    "path": ".local-gui-startup-tests-20261005b",
+    "files": 1,
+    "bytes": 7714
+  },
+  {
+    "path": ".local-gui-startup-tests-20261005c",
+    "files": 1,
+    "bytes": 7714
+  },
+  {
+    "path": ".local-mcu-pytest-20261005",
+    "files": 7,
+    "bytes": 7485
+  },
+  {
+    "path": ".local-mcu-pytest-20261005b",
+    "files": 7,
+    "bytes": 7485
+  },
+  {
+    "path": ".local-mcu-pytest-20261005c",
+    "files": 7,
+    "bytes": 7485
+  },
+  {
+    "path": ".local-mcu-pytest-20261005d",
+    "files": 7,
+    "bytes": 7485
+  },
+  {
+    "path": ".local-mcu-pytest-20261005e",
+    "files": 7,
+    "bytes": 7485
+  },
+  {
+    "path": ".local-runtime-gui-audit-20261005",
+    "files": 7,
+    "bytes": 9029
+  },
+  {
+    "path": ".local-runtime-gui-two-failures",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".local-spikeglx-pytest",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".local-spikeglx-rpc-20261005",
+    "files": 1,
+    "bytes": 366
+  },
+  {
+    "path": ".local-spikeglx-rpc-20261005b",
+    "files": 1,
+    "bytes": 367
+  },
+  {
+    "path": ".local-spikeglx-rpc-20261005c",
+    "files": 1,
+    "bytes": 367
+  },
+  {
+    "path": ".local-startup-verify-20261005",
+    "files": 1,
+    "bytes": 7714
+  },
+  {
+    "path": ".mypy_cache",
+    "files": 18,
+    "bytes": 34521317
+  },
+  {
+    "path": ".pytest_cache",
+    "files": 5,
+    "bytes": 91533
+  },
+  {
+    "path": ".pytest-gui-current",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".ruff_cache",
+    "files": 13,
+    "bytes": 51354
+  },
+  {
+    "path": ".tlegacyfix06",
+    "files": 4,
+    "bytes": 352
+  },
+  {
+    "path": ".tmp-pylon-binding",
+    "files": 1,
+    "bytes": 110755338
+  },
+  {
+    "path": ".tmp-pylon-bridge",
+    "files": 878,
+    "bytes": 10552694
+  },
+  {
+    "path": ".tpend06",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".tpend061",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".tpend062",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".tpendall06",
+    "files": 1235,
+    "bytes": 8890931
+  },
+  {
+    "path": ".tpendfinal06",
+    "files": 1235,
+    "bytes": 8890947
+  },
+  {
+    "path": ".tpreview062",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": ".tpreviewall06",
+    "files": 1235,
+    "bytes": 8893755
+  },
+  {
+    "path": ".tpreviewfinal06",
+    "files": 1235,
+    "bytes": 8893771
+  },
+  {
+    "path": "build",
+    "files": 695,
+    "bytes": 7214378
+  },
+  {
+    "path": "dist",
+    "files": 2,
+    "bytes": 2496914
+  },
+  {
+    "path": "pytest-cache-files-2f893x23",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": "pytest-cache-files-sb3snl7l",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": "scratch-mcu-run1",
+    "files": 0,
+    "bytes": 0
+  },
+  {
+    "path": "scratch-mcu-temp",
+    "files": 0,
+    "bytes": 0
+  }
+]

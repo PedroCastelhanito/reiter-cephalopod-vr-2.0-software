@@ -1,0 +1,6 @@
+{
+  "method": "repeat selected PFS import and complete SDK resolution; no capture or pulses",
+  "path": "C:/Data/projects/reiter-cephalopod-vr/cephvr-assets/camera-configs/a2A1920-160ucPRO_40065509_BehavCam_HeadFixed.pfs",
+  "error": "CameraAdapterError: Basler SDK feature_lookup failed (LogicalErrorException): Node not existing (file 'genicam_wrap.cpp', line 16820)",
+  "device_closed": true
+}

@@ -1,0 +1,5 @@
+camera launch: planning
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR supervisor shutdown: CHILD_EXITED: registered acquisition PID 21256 exited; cleanup evidence remains required
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

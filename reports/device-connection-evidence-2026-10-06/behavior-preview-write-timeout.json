@@ -1,0 +1,42 @@
+{
+  "generation": "0e9a4300-6f5e-45ce-9251-f636d187f0db",
+  "scope": "Behavior only: D10 to Line4",
+  "draft_restored": {
+    "command_id": "dc779f98-6c7f-40e2-a73e-c77b67badce9",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "start": {
+    "command_id": "aa2ee317-3cdb-41fd-b9c3-82431e95cf4f",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: serial write failed: Write timeout"
+  },
+  "after_start": {
+    "source": {
+      "backend_name": "acquisition",
+      "backend_generation": "22944af3-78d8-40c0-a0c6-ee439953e47b"
+    },
+    "state_revision": "1",
+    "observed_monotonic_ns": "506249458727900",
+    "behavioral": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": true,
+      "device": {
+        "configured_id": "40065509"
+      },
+      "preview_prepared": false
+    },
+    "tracking": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": false,
+      "preview_prepared": false
+    }
+  },
+  "error": "RuntimeError: OPERATION_FAILED: serial write failed: Write timeout"
+}

@@ -305,21 +305,20 @@ def run_launcher(
                 ):
                     decisions.arm(now)
                 if decisions.shutdown_deadline_ns is not None:
-                    members = native.inspect_launch_job(application_job)
-                    if not members:
+                    try:
+                        shutdown_members = native.inspect_launch_job(application_job)
+                    except WindowsLaunchError:
+                        shutdown_members = None
+                    if shutdown_members == []:
                         return
                     if now >= decisions.shutdown_deadline_ns:
                         native.terminate_job(application_job)
-                        absence_deadline = host_time_ns() + 2_000_000_000
-                        while (
-                            native.inspect_launch_job(application_job)
-                            and host_time_ns() < absence_deadline
-                        ):
-                            time.sleep(0.05)
-                        if native.inspect_launch_job(application_job):
-                            raise WindowsLaunchError(
-                                "application job termination did not prove member absence"
-                            )
+                        _retain_until_empty(
+                            native,
+                            application_job,
+                            decisions.shutdown_deadline_ns,
+                            2_000_000_000,
+                        )
                         return
                 time.sleep(0.1)
         finally:

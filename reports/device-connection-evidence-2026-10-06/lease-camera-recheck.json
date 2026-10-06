@@ -1,0 +1,75 @@
+{
+  "generation": "3bb41ef6-9f23-43fe-98f9-ff63b422936e",
+  "checks": [
+    {
+      "cycle": 0,
+      "camera": 1,
+      "command_id": "2d0baae6-bf59-48be-a514-bf5f36395210",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    {
+      "cycle": 0,
+      "camera": 2,
+      "command_id": "d9ccd6aa-52f9-405b-89ae-797e5d60c527",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    {
+      "cycle": 1,
+      "camera": 1,
+      "command_id": "76164ee1-c75e-4813-82de-253ddc3ebbc6",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    {
+      "cycle": 1,
+      "camera": 2,
+      "command_id": "3696e15b-0fb5-43ef-b312-0cec2ffcc496",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  ],
+  "draft_restored": {
+    "command_id": "87b1f87d-2649-4eea-aa7d-8b01fe9d4fb5",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "pfs_import_and_finish": "passed",
+  "cycle_0_lease_released": true,
+  "cycle_1_lease_released": true,
+  "cleanup_operations": [
+    {
+      "complete": true,
+      "succeeded": true,
+      "failure": ""
+    },
+    {
+      "complete": true,
+      "succeeded": true,
+      "failure": ""
+    }
+  ],
+  "camera_state": {
+    "behavioral": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": false
+    },
+    "tracking": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": false
+    }
+  }
+}

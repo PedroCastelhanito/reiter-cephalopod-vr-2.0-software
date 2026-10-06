@@ -8,6 +8,7 @@ param(
     [switch]$Rig,
     [switch]$BuildWindowsNative,
     [switch]$BuildTrackingNative,
+    [switch]$BuildAcquisitionNative,
     [string]$NvofSdkRoot,
     [string]$OutputDirectory
 )
@@ -119,6 +120,11 @@ try {
 }
 if ($prerequisiteExit -ne 0) {
     throw "Virtual environment lacks CephVR, acquisition/Visual Stimulus/Tracking, or test dependencies; use -Install. See $output\prerequisites.log"
+}
+
+if ($BuildAcquisitionNative) {
+    & $python (Join-Path $repo 'tools/build_pylon_wait.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Acquisition native wait bridge compilation failed.' }
 }
 
 if ($BuildTrackingNative) {

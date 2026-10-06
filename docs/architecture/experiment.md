@@ -291,7 +291,7 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
 <a id="e07"></a>
 ### E07 — Configuration and protocol preparation
 
-**Status:** Accepted · **Revision:** 57
+**Status:** Accepted · **Revision:** 58
 
 #### Sources and loading
 
@@ -374,6 +374,11 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
   outside the controller state loop under one configurable 5-second total deadline,
   including queueing; it needs no validation RPC or live device. A stopped backend
   alone does not make its local pure validator unavailable.
+- A camera participation-only edit may change acquisition/backend and camera Use
+  flags while retaining every other configuration field exactly. The controller
+  validates that restricted edit without requiring complete acquisition settings;
+  enabling a camera is not readiness. Other edits retain normal pure validation,
+  and capture/Setup still validate the full enabled-camera configuration.
 - If a required pure validator is unavailable, incompatible or timed out, or
   rejects a value, reject the edit and preserve the current configuration,
   revision, saved history and existing Ready state. A confirmed rejection returns

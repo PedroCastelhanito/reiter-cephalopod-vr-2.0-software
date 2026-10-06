@@ -1,0 +1,12 @@
+{
+  "generation": "2c4713bb-3a29-43c5-9f74-4b6a98e9df88",
+  "scope": "Behavior only: D10 to Line4",
+  "draft_restored": {
+    "command_id": "c56c4209-3af7-4d59-a672-420655ba4f4c",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "error": "ClientError: State synchronization failed: <AioRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAVAILABLE\n\tdetails = \"Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\r\n -- 10054))\"\n\tdebug_error_string = \"UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\r\n -- 10054))\"\n>"
+}

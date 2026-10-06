@@ -1343,7 +1343,7 @@ def test_managed_camera_enable_waits_for_controller_confirmation(
     assert not panel.enable_controls[0].isChecked()
 
 
-def test_managed_camera_enable_explains_missing_external_input(
+def test_managed_camera_enable_accepts_missing_external_input(
     window: DashboardWindow,
 ) -> None:
     panel = window.devices.cameras
@@ -1358,9 +1358,10 @@ def test_managed_camera_enable_explains_missing_external_input(
         DashboardView(connected=True, has_control=True, configuration_wired=False)
     )
     panel.enable_controls[0].click()
-    assert requests == []
-    assert not panel.enable_controls[0].isChecked()
-    assert "FrameStart line source" in panel.console.toPlainText()
+    assert requests == [(panel.drafts[0].serial, True)]
+    assert panel.enable_controls[0].isChecked()
+    assert not panel.drafts[0].enabled
+    assert "awaiting controller confirmation" in panel.console.toPlainText()
 
 
 def test_managed_dashboard_exposes_explicit_control_acquisition(

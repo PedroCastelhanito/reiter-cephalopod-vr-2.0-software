@@ -189,16 +189,27 @@ class ManualPreviewStart:
             transport=policy.transport,
             configuration_revision=request.configuration_revision,
         )
+        self.device_status.begin_device_access(int(role), setting.device.device_id)
         receipt = await resolve_port.resolve_camera_configuration(
             resolve, deadline_ns=deadline_ns
         )
         if receipt.result != control.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError("camera resolution was not admitted")
+            raise RuntimeError(
+                f"{receipt.failure.code}: {receipt.failure.message}"
+                if receipt.HasField("failure")
+                else "camera resolution was not admitted"
+            )
         state = await wait_child_operation(
             resolve_child, deadline_ns, self.lock, self.clock
         )
         resolved = resolve_child.resolved_camera
-        if not state.succeeded or resolved is None:
+        if not state.succeeded:
+            raise RuntimeError(
+                state.failure.message
+                if state.failure.message
+                else "camera resolution failed"
+            )
+        if resolved is None:
             raise RuntimeError("camera resolution lacks successful SDK evidence")
         if external_roles:
             if self.pulse.observation is None:
@@ -218,10 +229,14 @@ class ManualPreviewStart:
                 tracking_active=(camera.CAMERA_ROLE_TRACKING in external_roles),
                 applied=observation,
             )
-            await self.resolution.set_pulse_resolution(
+            pulse_receipt = await self.resolution.set_pulse_resolution(
                 control.OperationContext(command_id=command.command_id),
                 pulse_resolution,
             )
+            if pulse_receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                raise RuntimeError(
+                    pulse_receipt.failure.message or "pulse/camera readback rejected"
+                )
         await self.resolution.wait_confirmed(
             control.OperationContext(command_id=command.command_id),
             deadline_ns=deadline_ns,
@@ -286,7 +301,9 @@ class ManualPreviewStart:
             prep_child, deadline_ns, self.lock, self.clock
         )
         if not state.succeeded:
-            raise RuntimeError("manual preview preparation failed")
+            raise RuntimeError(
+                state.failure.message or "manual preview preparation failed"
+            )
         self.device_status.update_camera_state(
             int(request.camera),
             device_open=True,
@@ -330,7 +347,7 @@ class ManualPreviewStart:
             start_child, deadline_ns, self.lock, self.clock
         )
         if not state.succeeded:
-            raise RuntimeError("manual preview start failed")
+            raise RuntimeError(state.failure.message or "manual preview start failed")
         if external_roles:
             evidence = await self.serial.on(
                 external_roles,

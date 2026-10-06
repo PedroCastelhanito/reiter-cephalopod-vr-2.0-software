@@ -1,8 +1,157 @@
 # Acquisition status
 
+## Preview recheck stopped by owner, 2026-10-06
+
+Owner paused further work. Behavior serial 40065509 received 41 SDK frames during
+the two-second direct COM8 D10 → Line4 check at a requested 30 Hz. MCU ON/OFF
+acknowledgements passed; the camera and serial owner closed. This verifies the
+receiver path, not sustained 30 fps, waveform timing, Tracking or GUI acceptance.
+The existing CephVR2.0 image was uploaded with verification after the owner
+confirmed CephVR1.0 firmware was installed. CAPS now reports protocol 2,
+`cephvr2_uno_1`; the prior flash is preserved alongside upload evidence.
+
+Managed preview remains unfinished: acquisition retained ready/started lifecycle
+evidence and received frames, but the final operator Start command failed with
+`OPERATION_FAILED: exact completion missing`. An earlier Start succeeded, followed
+by Stop failing on incomplete camera result evidence. No final managed Stop or
+GUI viewer acceptance is claimed. Resume at coordinator operation completion and
+controller device-result projection, then verify viewer and closure.
+
+Repairs apply existing [A03/A10/A11](../docs/architecture/acquisition.md),
+[E06](../docs/architecture/system-contracts.md#e06) and
+[E07](../docs/architecture/experiment.md#e07): preview payloads declare their
+existing non-saving capture scope; closed status carries an explicit empty preview
+run ID; initial controller projection revision matches loaded configuration;
+worker warning IDs use canonical UUIDs. Strict evidence validators and deadlines
+remain intact. ARCH-002 review reused focused owners and existing tests, with one
+composition initialization in controller runtime and no new dependencies.
+
+Focused preview/status/controller checks passed 32 tests before the final warning
+ledger regression revision. Earlier protected pytest temp ACL failures were
+environmental. Scoped preview Ruff and two-source Windows mypy passed earlier;
+the final warning-ledger test revision, full affected suite, expanded static checks
+and boundaries were not rerun before the owner's stop. Temporary tracing was
+removed. Authenticated shutdown completed sufficiently for no CephVR2 processes
+and a free application guard; full graceful cleanup acceptance remains open.
+See [dated evidence and firmware backup](device-connection-evidence-2026-10-06/README.md).
+
+2026-10-06 legacy CephVR1.0 FPS investigation (source review and saved-run analysis,
+not a 2.0 capture test): Behavior serial 40065509 acquisition CSVs from
+`SP0002-141843` measure 17.4408 and 17.7476 fps using camera timestamps, with
+matching host receipt rates and zero source-sequence/hardware-frame-ID gaps.
+The second CSV contains 17,961 rows over 1,011.966 seconds; 12,397 intervals are
+near 66.7 ms and 5,563 near 33.3 ms. This indicates missing acquisitions at trigger
+opportunities rather than lost already-numbered frames. Legacy HUD uses preview
+publication sequence/timestamps, so it is not independently authoritative, but
+these camera-origin timestamps corroborate the reported low rate.
+Saved integrity reports 12,406 duplicate and five padded video frames at 30 fps.
+Idle read-only SDK inspection finds 25 ms exposure, 17.184 ms sensor readout,
+frame-rate limiting enabled at 30.0003 and ResultingFrameRate 29.9994; throughput
+limit 360 MB/s versus reported demand about 90.6 MB/s. TriggerMode was Off at this
+idle inspection, so its readback does not prove exact triggered-run readiness.
+The frame limiter operating at the trigger rate is the leading hypothesis;
+electrical pulse arrival/readiness and a bounded limiter-disabled comparison
+remain unmeasured. Basler documents ignored triggers before readiness and automatic
+overlap for this model; summing exposure plus readout is not a supported diagnosis.
+No camera settings, pulse outputs or source code changed. See
+[dated analysis](device-connection-evidence-2026-10-06/legacy-camera-fps-assessment.json)
+and [Basler trigger documentation](https://docs.baslerweb.com/triggered-image-acquisition).
+
+Owner then requested stopping forced AcquisitionFrameRateEnable on legacy connect
+and file load. The installed editable `basler-vision-software` dependency passed
+readback `self.fps` into `BaslerCamera.start`, which invokes set_frame_rate and
+unconditionally enables the limiter. Stream startup now passes only an explicitly
+supplied config FPS; CephVR1.0's camera service supplies none, preserving the loaded
+camera/PFS enablement through start and file-load restart. Explicit FPS overrides
+retain their existing behavior. Existing dependency controller regressions cover
+both loaded enable states, repeated refresh/restart and an explicit override;
+controller/settings tests: 10 passed. Legacy connection/trigger tests: nine passed.
+No dependency upgrade, GUI override, PFS edit or hardware setting change. Existing
+changes in the dependency's Basler adapter/settings tests were preserved.
+Restart CephVR1.0 to import the correction; files explicitly storing enable=1 will
+still apply that value. A bounded real-trigger acceptance comparison remains open.
+
 Status: host implementation, source review and lightweight local verification are
 recorded below (2026-10-01). Bounded native checks pass; device and full-workload acceptance remain
 pending on the rig. This is not experiment-readiness approval.
+
+On 2026-10-06, real COM8 SerialOwner CAPS/STATUS and both Basler SDK
+open/identity/readback/close checks passed; see [dated connection evidence](device-connection-evidence-2026-10-06/README.md).
+The controller-backed MCU Connect also passed. A live defect in A11 keepalive
+scheduling treated connection-only firmware state (configuration invalid, zero
+watchdog, both outputs explicitly stopped) as an expired configured watchdog and
+shut down the application. The scheduler now waits in that proven unarmed state;
+running or missing output evidence still follows the existing failure path.
+This uses the existing observation and deadlines, without new state or policy.
+The camera diagnostic shutdown was isolated to missing protected child credentials
+and an empty work context in acquisition's PlanLaunch. The launcher now supplies
+the same credential to supervisor admission, coordinator peer registration and
+worker bootstrap, and omits absent session work. PlanLaunch transport rejection
+becomes an ordinary command-owner failure. Live authenticated COM8 and both camera
+connection commands now pass; both cameras report closed and the original draft
+was restored. Participation toggles also pass with missing trigger settings under
+[G01/E07](../docs/architecture/experiment.md#e07); Setup still validates readiness.
+The owner's Behavior-camera PFS failure was reproduced on real hardware:
+`BslEffectiveExposureTime` is absent, and float Gain has no constant increment.
+The focused GenApi helper now treats only the SDK's explicit missing-node result
+as absent, and calls float GetInc only when HasInc permits it. Required writes and
+other lookup/range failures remain strict. Controller completion retains the
+original acquisition failure message instead of replacing it with an evidence
+summary. These apply existing A10/E07 behavior; no policy/dependency changed.
+After preserving the operator draft and restarting the idle runtime, authenticated
+PFS import/adoption/Finish editing passed for serial 40065509, with Line4 external
+triggering, applied revision 3, device closed and no cleanup pending. Raw SDK and
+managed evidence are in the dated connection directory. Acquisition/controller
+tests: 408 passed, 2 skipped; scoped lint/format/mypy and boundaries pass.
+ARCH-002 review reused the cohesive feature/readback owners and existing tests.
+
+The subsequent pending-operation rejection was a manual lease-loss cleanup
+barrier: acquisition's snapshot omitted untouched Tracking while retaining closed
+Behavior. A fresh coordinator now explicitly records both roles closed/not
+previewing/no cleanup pending, before any access; begin access still marks the
+affected role pending until release/readback. No unknown evidence is coerced into
+closure. Real PFS/Finish editing and both camera checks succeed across two control
+leases; both cleanup operations succeed and both cameras finish closed. The
+existing worker ingress also uses the normal result reservation for connection,
+export and Finish editing results; settings/import readback retain the large
+reservation. Repeated small edits previously consumed that large budget. Fixed
+ceilings, safety reserve, result-size checks and deadlines are unchanged. Rejections
+now retain the worker admission reason. Focused regressions: 30 passed. Cohesion
+review retains the existing status and ingress owners; no policy or dependency.
+One bounded live attempt failed independently with SUPERVISOR_HEARTBEAT_FAILED;
+the later combined live check passes. That startup failure remains unisolated in
+the native runtime task. Operator draft restored; current GUI/runtime is running.
+The initial direct connection readback was FrameStart Off on both cameras;
+tracking's initial source was Software. No frames, pulse-output test, receiver
+observation or waveform proof was performed; full capture/preview acceptance is open.
+
+The subsequent manual-preview failure was reproduced after releasing managed
+ownership: stock pypylon 26.3.1 rejects the Win32 HANDLE passed to WaitObject.
+Under [A02/SYS-003](../docs/architecture/acquisition.md#a02), a small typed SWIG
+bridge now invokes the SDK duplicating constructor through the normal pylon type
+table, without manufacturing SDK pointers or changing capture ownership/waits.
+Full real-camera settings resolution succeeds and closes the device. Native
+duplicate lifetime and blocked-wait Python-thread wake checks pass (one native
+test); preview failure/missing-evidence checks pass and failed resolution retains
+cleanup pending until actual release. The original error reaches the controller.
+Affected portable acquisition/controller suite: 410 passed, 2 skipped, 1 native
+test deselected; later focused ownership checks: 29 passed. Windows wheel contains
+the generated proxy and AMD64 bridge. SDK/compiler/SWIG requirements and missing
+build failure are documented. Both managed connections pass after draft restoration
+and finish closed, with no cleanup pending. Behavior-only D10/Line4 preview is now
+authorized by the owner; frame-delivery verification stopped at the owner's request
+to close CephVR2.0 and use CephVR1.0.
+Its first attempt reached MCU setup but failed on a serial write timeout. The
+transport ignored the channel's remaining acknowledgement budget and fixed every
+write to 10 ms. Writes now use the original remaining budget at dispatch; reads
+keep short native polls without repeatedly reconfiguring COM. Expired writes are
+not dispatched; the channel still rejects late completion under A11's unchanged
+deadline. Owning serial/protocol tests: 19 passed. The final native recheck reaches
+SDK resolution, MCU configuration and confirmed readback, then fails preview
+preparation: the function catalogue omits the camera capture scope. No capture
+start or usable frame was verified. The serial repair updates only native COM
+write timeouts, avoiding PySerial's full port reconfiguration. All CephVR2.0
+processes have exited and the application guard is free; testing remains unfinished.
 
 The 2026-10-06 G01/A10 increment wires managed GUI role/configuration controls,
 connection-only camera checks and MCU pending/final-status handling. The additive

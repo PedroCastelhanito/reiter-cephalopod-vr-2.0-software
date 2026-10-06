@@ -1,0 +1,41 @@
+{
+  "generation": "0c7fa5ec-c634-4df8-b962-3bcd30af12e1",
+  "checks": [
+    {
+      "camera": 1,
+      "command_id": "ac12f143-98e2-4e06-98c8-988386b24437",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    {
+      "camera": 2,
+      "command_id": "c8172774-6abe-4a67-a578-0c3a771b5cfc",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  ],
+  "draft_restored": {
+    "command_id": "9f7da2f6-5d67-48b0-8afe-ef0bf46447a8",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "control_released": true,
+  "camera_state": {
+    "behavioral": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": false
+    },
+    "tracking": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": false
+    }
+  }
+}

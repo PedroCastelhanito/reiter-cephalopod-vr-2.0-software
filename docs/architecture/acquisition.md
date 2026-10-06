@@ -87,7 +87,7 @@ Remaining format mappings and integration are classified in the contract worklis
 <a id="a02"></a>
 ### A02 — Acquisition service and camera workers
 
-**Status:** Accepted · **Revision:** 29
+**Status:** Accepted · **Revision:** 30
 
 - One acquisition coordinator serves both camera roles through one external control
   endpoint; it aggregates readiness/closure and never relays pixels.
@@ -142,6 +142,9 @@ Remaining format mappings and integration are classified in the contract worklis
   [capture-wait binding](../../contracts/acquisition/capture-wait.md) owns wakeup,
   deadline and compatibility mechanics, including control priority after the joint
   wait; timeout alone is not frame-health failure.
+  The typed Windows HANDLE bridge is a bounded SYS-003 SDK exception for the
+  measured pypylon constructor limitation; it duplicates the existing event and
+  adds no owner, queue or capture loop. Missing/incompatible builds fail preparation.
 - Workers send heartbeats to their coordinator (aggregated into its supervisor
   heartbeat) and errors directly to the supervisor, under E08. Control/health threads
   stay separate from blocking data work; one data/lifecycle owner applies commands.

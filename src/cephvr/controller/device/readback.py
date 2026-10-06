@@ -238,6 +238,12 @@ class CameraReadback:
             operation.operator_id,
             success=success,
             progress="camera command confirmed" if success else "camera command failed",
-            error="required camera result evidence incomplete" if not success else "",
+            error=(
+                status.result.failure.message
+                if not status.result.succeeded and status.result.failure.message
+                else "required camera result evidence incomplete"
+            )
+            if not success
+            else "",
         )
         self.status_retention.retire_operation(operation)

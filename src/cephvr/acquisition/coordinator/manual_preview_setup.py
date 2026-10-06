@@ -6,6 +6,7 @@ from cephvr.acquisition.state import WorkerPreview
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import runtime_pb2 as runtime
+from cephvr.control.v1 import types_pb2 as control
 
 
 def build_preview_payload(
@@ -29,6 +30,22 @@ def build_preview_payload(
     )
     payload.capture.sdk_buffer_count = setting.sdk_buffer_count
     payload.capture.frame_silence_timeout_ns = policy.frame_silence_timeout_ns
+    role = {
+        camera.CAMERA_ROLE_BEHAVIORAL: "behavioral",
+        camera.CAMERA_ROLE_TRACKING: "tracking",
+    }.get(attachment.buffer.camera)
+    if role is None:
+        raise ValueError("manual preview requires an exact camera role")
+    capture_id = f"{role}.capture"
+    payload.owned_functions.add().CopyFrom(
+        control.PreparedFunctionScope(
+            resource_id=capture_id,
+            owner=attachment.buffer.owner,
+            authorized_reporters=[attachment.buffer.producer],
+            lifecycle_sources=[role],
+            affected_closure_resource_ids=[capture_id],
+        )
+    )
     return payload
 
 

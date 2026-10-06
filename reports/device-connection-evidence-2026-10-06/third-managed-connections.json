@@ -1,0 +1,11 @@
+{
+  "captured_at": "2026-10-06T09:46:21.016740+09:00",
+  "controller_generation": "854b11bc-e159-4d70-a56a-db568b11bc99",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "configuration_revision": 1,
+  "initial_devices": {},
+  "MICROCONTROLLER_COMMAND_KIND_CONNECT": {
+    "error": "REJECTED: <AioRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAVAILABLE\n\tdetails = \"failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50053: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n\tdebug_error_string = \"UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50053: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n>"
+  },
+  "error": "ClientError('REJECTED: stop camera preview/editing to edit camera or pulse settings')"
+}

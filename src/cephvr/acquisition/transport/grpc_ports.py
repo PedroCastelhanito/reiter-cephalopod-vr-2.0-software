@@ -214,11 +214,24 @@ class GrpcSupervisorPort(_AuthenticatedPort):
         )
 
     async def plan_launch(
-        self, request: wire.PlanLaunchRequest, *, deadline_ns: int
+        self, request: wire.PlanLaunchRequest, *, deadline_ns: int, child_token: str
     ) -> wire.LaunchReceipt:
-        return cast(
-            wire.LaunchReceipt, await self._request("PlanLaunch", request, deadline_ns)
-        )
+        try:
+            return cast(
+                wire.LaunchReceipt,
+                await self._stub.PlanLaunch(
+                    request,
+                    metadata=(
+                        *self._metadata(deadline_ns),
+                        ("x-cephvr-child-token", child_token),
+                    ),
+                    timeout=self._timeout(deadline_ns),
+                ),
+            )
+        except grpc.aio.AioRpcError as exc:
+            raise RuntimeError(
+                f"worker PlanLaunch failed: {exc.code().name}: {exc.details()}"
+            ) from exc
 
     async def confirm_launch(
         self, request: wire.ConfirmLaunchRequest, *, deadline_ns: int

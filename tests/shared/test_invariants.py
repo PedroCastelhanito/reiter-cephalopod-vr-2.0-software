@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import uuid
 from pathlib import Path
 
@@ -17,7 +18,11 @@ from cephvr.shared.clock import (
     validate_host_clock,
 )
 from cephvr.shared.config import ConfigurationError, load_pair
-from cephvr.shared.credentials import CredentialError, CredentialStore
+from cephvr.shared.credentials import (
+    CredentialError,
+    CredentialStore,
+    default_runtime_root,
+)
 from cephvr.shared.deadlines import Deadline, duration_ns
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.ingress import BoundedEventIngress, IngressOverload
@@ -31,6 +36,27 @@ from cephvr.shared.transport_deadlines import (
 
 def _id() -> str:
     return str(uuid.uuid4())
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(sys.platform != "win32", reason="native Windows credential ACLs")
+def test_windows_runtime_namespace_does_not_touch_legacy_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    legacy = tmp_path / "CephVR" / "runtime" / "controller"
+    legacy.mkdir(parents=True)
+    log = legacy / "controller.log"
+    log.write_text("legacy log", encoding="utf-8")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+
+    root = default_runtime_root()
+    assert root == tmp_path / "CephVR2" / "runtime"
+    store = CredentialStore(root, _id())
+    principal = store.provision_client("cli")
+    assert store.lookup(principal.generation) == principal
+    assert log.read_text(encoding="utf-8") == "legacy log"
+    with log.open("a", encoding="utf-8") as stream:
+        stream.write("\nstill writable")
 
 
 def test_clock_requires_matching_validated_domain() -> None:

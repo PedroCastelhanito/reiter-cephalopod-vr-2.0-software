@@ -1,0 +1,82 @@
+{
+  "captured_at": "2026-10-06T09:48:03.992092+09:00",
+  "controller_generation": "cefa0e65-3bd2-4aa8-82b9-e8de3e91c7c8",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "configuration_revision": 1,
+  "initial_devices": {},
+  "MICROCONTROLLER_COMMAND_KIND_CONNECT": {
+    "command_id": "bed769ac-5d8e-4d3a-8736-04b6ffc95236",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "diagnostic_configuration": {
+    "command_id": "68f5d83a-50ad-46af-917a-472f9d5fb77e",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "40065509": {
+    "error": ""
+  },
+  "40747103": {
+    "error": "REJECTED: camera operation unavailable or another operation pending"
+  },
+  "final_devices": {
+    "source": {
+      "backend_name": "acquisition",
+      "backend_generation": "c9f43442-079a-4190-a678-c7a20e677c03"
+    },
+    "state_revision": "1",
+    "observed_monotonic_ns": "491664804673900",
+    "pulses": {
+      "port": "COM8",
+      "connection_id": "3f8149fe-5ce1-4b7a-a87d-ef2ae1bbe490",
+      "request_id": "3f8149fe-5ce1-4b7a-a87d-ef2ae1bbe490-7",
+      "observed_monotonic_ns": "491664804039100",
+      "state": {
+        "configuration_valid": false,
+        "watchdog_stopped": false,
+        "watchdog_ms": 0,
+        "behavioral": {
+          "enabled": false,
+          "running": false
+        },
+        "tracking": {
+          "enabled": false,
+          "running": false
+        }
+      },
+      "capabilities": {
+        "protocol_version": 2,
+        "firmware": "cephvr2_uno_1",
+        "pins": [
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6",
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12",
+          "D13"
+        ],
+        "minimum_requested_hz": 0.1,
+        "maximum_requested_hz": 100.0,
+        "minimum_watchdog_ms": 500,
+        "maximum_watchdog_ms": 10000,
+        "rising_edge_input_pins": [
+          "D2",
+          "D3"
+        ]
+      },
+      "capabilities_observed_monotonic_ns": "491664782651800"
+    }
+  },
+  "error": "ClientError('REJECTED: stop camera preview/editing to edit camera or pulse settings')"
+}

@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-06",
+  "source_file": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-data\\20261006_ephys-pilot\\SP0002-141843\\protocol-data\\SP0002_0002_141954_behavior_acquisition.csv",
+  "camera_serial": "40065509",
+  "rows": 17961,
+  "source_duration_s": 1011.965964219009,
+  "source_fps": 17.747632464952257,
+  "frame_id_gaps": 0,
+  "intervals_near_33_ms": 5563,
+  "intervals_near_67_ms": 12397,
+  "assessment": "Camera-origin frame cadence is below 30; frame IDs remain consecutive. Ignored/missed trigger hypothesis, not post-capture loss. Exact electrical cause unmeasured."
+}

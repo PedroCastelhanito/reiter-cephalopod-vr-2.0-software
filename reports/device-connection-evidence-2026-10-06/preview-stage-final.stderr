@@ -1,0 +1,10 @@
+preview stage: SDK resolved
+preview stage: MCU configured
+preview stage: configuration confirmed
+preview stage: prepare dispatch
+preview stage: prepare completed
+preview stage: start dispatch
+preview stage: start completed
+preview stage: pulses ON
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -1,0 +1,82 @@
+{
+  "captured_at": "2026-10-06T09:44:26.693714+09:00",
+  "controller_generation": "ce42a927-9060-409b-9d38-1675d8e52b7c",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "configuration_revision": 1,
+  "initial_devices": {},
+  "MICROCONTROLLER_COMMAND_KIND_CONNECT": {
+    "command_id": "40a03a9d-8431-4bb1-9d4f-ecc8115c11a2",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "diagnostic_configuration": {
+    "command_id": "059c5d51-b2e9-46e7-b83c-c9f243533939",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "40065509": {
+    "error": "State synchronization failed: <AioRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAVAILABLE\n\tdetails = \"Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\r\n -- 10054))\"\n\tdebug_error_string = \"UNAVAILABLE:Stream removed (WSAGetOverlappedResult: Connection reset (An existing connection was forcibly closed by the remote host.\r\n -- 10054))\"\n>"
+  },
+  "40747103": {
+    "error": "Command admission is unconfirmed after transport failure; query the retained command ID before issuing replacement work."
+  },
+  "final_devices": {
+    "source": {
+      "backend_name": "acquisition",
+      "backend_generation": "ffd4b4c9-191f-44dd-ad64-e1d6c58ba3c1"
+    },
+    "state_revision": "1",
+    "observed_monotonic_ns": "491447509906600",
+    "pulses": {
+      "port": "COM8",
+      "connection_id": "946f44ba-d015-4219-821c-96a57bb651a8",
+      "request_id": "946f44ba-d015-4219-821c-96a57bb651a8-7",
+      "observed_monotonic_ns": "491447509430300",
+      "state": {
+        "configuration_valid": false,
+        "watchdog_stopped": false,
+        "watchdog_ms": 0,
+        "behavioral": {
+          "enabled": false,
+          "running": false
+        },
+        "tracking": {
+          "enabled": false,
+          "running": false
+        }
+      },
+      "capabilities": {
+        "protocol_version": 2,
+        "firmware": "cephvr2_uno_1",
+        "pins": [
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6",
+          "D7",
+          "D8",
+          "D9",
+          "D10",
+          "D11",
+          "D12",
+          "D13"
+        ],
+        "minimum_requested_hz": 0.1,
+        "maximum_requested_hz": 100.0,
+        "minimum_watchdog_ms": 500,
+        "maximum_watchdog_ms": 10000,
+        "rising_edge_input_pins": [
+          "D2",
+          "D3"
+        ]
+      },
+      "capabilities_observed_monotonic_ns": "491447485958400"
+    }
+  },
+  "error": "ClientError('Command admission is unconfirmed after transport failure; query the retained command ID before issuing replacement work.')"
+}

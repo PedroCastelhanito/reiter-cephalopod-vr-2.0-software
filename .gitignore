@@ -12,6 +12,8 @@ __pycache__/
 # Reproducible packaging outputs.
 /build/
 /dist/
+/src/cephvr/acquisition/camera/_pylon_wait_binding*.pyd
+/src/cephvr/acquisition/camera/pylon_wait_binding.py
 *.egg-info/
 
 # Generated bindings; source schemas remain in contracts/.
@@ -26,5 +28,20 @@ __pycache__/
 /.local-spikeglx-sdk/
 /.local-spikeglx-pytest/
 /.local-spikeglx-rpc-*/
+
+# Disposable rig-test fixtures and SDK/build investigations.
+/.local-calibration-pytest/
+/.local-camera-*/
+/.local-gui-*/
+/.local-mcu-*/
+/.local-runtime-*/
+/.local-startup-*/
+/.pytest-gui-*/
+/.tpend*/
+/.tpreview*/
+/.tlegacy*/
+/.tmp-pylon-*/
+/pytest-cache-files-*/
+/scratch-mcu-*/
 
 .DS_Store

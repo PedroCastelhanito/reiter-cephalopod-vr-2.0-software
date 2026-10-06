@@ -3,13 +3,60 @@
 from __future__ import annotations
 
 import asyncio
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
+import grpc
+import pytest
+
 from cephvr.acquisition.transport.admission import CommandAdmissionTransport
+from cephvr.acquisition.transport.grpc_ports import GrpcSupervisorPort
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+
+
+def test_worker_plan_transmits_the_protected_child_credential(monkeypatch) -> None:
+    from cephvr.acquisition.transport import grpc_ports
+
+    stub = Mock()
+    stub.PlanLaunch = AsyncMock(return_value=wire.LaunchReceipt())
+    monkeypatch.setattr(grpc_ports.control_rpc, "SupervisorServiceStub", lambda _: stub)
+    principal = Principal("acquisition", _id(), "owner-token")
+    port = GrpcSupervisorPort(Mock(), principal)
+    deadline = _deadline()
+    asyncio.run(
+        port.plan_launch(
+            wire.PlanLaunchRequest(), deadline_ns=deadline, child_token="child-token"
+        )
+    )
+    metadata = stub.PlanLaunch.call_args.kwargs["metadata"]
+    assert ("x-cephvr-child-token", "child-token") in metadata
+    assert all(item in metadata for item in principal.metadata())
+    assert stub.PlanLaunch.call_args.kwargs["timeout"] > 0
+
+
+def test_worker_plan_transport_rejection_reaches_the_command_owner(monkeypatch) -> None:
+    from cephvr.acquisition.transport import grpc_ports
+
+    stub = Mock()
+    stub.PlanLaunch = AsyncMock(
+        side_effect=grpc.aio.AioRpcError(
+            grpc.StatusCode.FAILED_PRECONDITION, (), (), "work context differs", ""
+        )
+    )
+    monkeypatch.setattr(grpc_ports.control_rpc, "SupervisorServiceStub", lambda _: stub)
+    port = GrpcSupervisorPort(Mock(), Principal("acquisition", _id(), "owner-token"))
+    with pytest.raises(RuntimeError, match="FAILED_PRECONDITION: work context differs"):
+        asyncio.run(
+            port.plan_launch(
+                wire.PlanLaunchRequest(),
+                deadline_ns=_deadline(),
+                child_token="child-token",
+            )
+        )
 
 
 def _id() -> str:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from uuid import uuid4
 
@@ -76,6 +77,9 @@ class CoordinatorAuthorityFailure:
             failure=failure,
         )
         self.retain_error(error)
+        sys.stderr.write(
+            f"CephVR acquisition shutdown: {failure.code}: {failure.message}\n"
+        )
         if role == "controller":
             await self._report_supervisor(error, deadline_ns)
         await self.shutdown.cleanup_after_failure(deadline_ns=deadline_ns)
@@ -120,6 +124,9 @@ class CoordinatorAuthorityFailure:
             failure=failure,
         )
         self.retain_error(error)
+        sys.stderr.write(
+            f"CephVR acquisition shutdown: {failure.code}: {failure.message}\n"
+        )
         await self._report_supervisor(error, deadline_ns)
         await self.shutdown.cleanup_after_failure(deadline_ns=deadline_ns)
 

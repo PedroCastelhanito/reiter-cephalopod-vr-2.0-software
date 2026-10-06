@@ -1,0 +1,16 @@
+
+avrdude.exe: AVR device initialized and ready to accept instructions
+
+Reading | ################################################## | 100% 0.00s
+
+avrdude.exe: Device signature = 0x1e950f (probably m328p)
+avrdude.exe: reading flash memory:
+
+Reading | ################################################## | 100% 4.19s
+
+avrdude.exe: writing output file "reports/device-connection-evidence-2026-10-06/pre-preview-legacy-com8-flash.hex"
+
+avrdude.exe: safemode: Fuses OK (E:00, H:00, L:00)
+
+avrdude.exe done.  Thank you.
+

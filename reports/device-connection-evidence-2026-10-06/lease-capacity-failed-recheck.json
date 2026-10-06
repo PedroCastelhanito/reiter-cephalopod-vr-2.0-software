@@ -1,0 +1,12 @@
+{
+  "generation": "985de467-e9b9-4966-93a6-b51994007f35",
+  "checks": [],
+  "draft_restored": {
+    "command_id": "eca8771a-f325-4631-b149-bd056f40b46e",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "error": "ClientError: OPERATION_FAILED: camera edit command was rejected"
+}

@@ -1,0 +1,274 @@
+{
+  "scope": "Behavior serial 40065509, COM8 D10 -> Line4, two seconds",
+  "settings": {
+    "trigger": "On",
+    "source": "Line4",
+    "width": 1760,
+    "height": 3000
+  },
+  "connect": {
+    "port": "COM8",
+    "connectionId": "9dd14a21-2e6b-4b40-8d6e-12e78b5e3459",
+    "requestId": "9dd14a21-2e6b-4b40-8d6e-12e78b5e3459-7",
+    "observedMonotonicNs": "520027812496600",
+    "state": {
+      "configurationValid": false,
+      "watchdogStopped": false,
+      "watchdogMs": 0,
+      "behavioral": {
+        "enabled": false,
+        "running": false
+      },
+      "tracking": {
+        "enabled": false,
+        "running": false
+      }
+    },
+    "capabilities": {
+      "protocolVersion": 2,
+      "firmware": "cephvr2_uno_1",
+      "pins": [
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13"
+      ],
+      "minimumRequestedHz": 0.1,
+      "maximumRequestedHz": 100.0,
+      "minimumWatchdogMs": 500,
+      "maximumWatchdogMs": 10000,
+      "risingEdgeInputPins": [
+        "D2",
+        "D3"
+      ]
+    },
+    "capabilitiesObservedMonotonicNs": "520027792034900"
+  },
+  "on": {
+    "connectionId": "9dd14a21-2e6b-4b40-8d6e-12e78b5e3459",
+    "requestId": "9dd14a21-2e6b-4b40-8d6e-12e78b5e3459-9",
+    "command": "PULSE_BOUNDARY_COMMAND_ON",
+    "behavioralSelected": true,
+    "trackingSelected": false,
+    "dispatchedMonotonicNs": "520027882562200",
+    "acknowledgedMonotonicNs": "520027902329700",
+    "applied": true,
+    "resultingState": {
+      "configurationValid": true,
+      "watchdogStopped": false,
+      "watchdogMs": 3000,
+      "behavioral": {
+        "enabled": true,
+        "running": true,
+        "pin": "D10",
+        "appliedFrequencyHz": 30.0
+      },
+      "tracking": {
+        "enabled": false,
+        "running": false
+      }
+    },
+    "outcome": "PULSE_COMMAND_OUTCOME_APPLIED"
+  },
+  "frames": [
+    {
+      "valid": true,
+      "id": 0
+    },
+    {
+      "valid": true,
+      "id": 1
+    },
+    {
+      "valid": true,
+      "id": 2
+    },
+    {
+      "valid": true,
+      "id": 3
+    },
+    {
+      "valid": true,
+      "id": 4
+    },
+    {
+      "valid": true,
+      "id": 5
+    },
+    {
+      "valid": true,
+      "id": 6
+    },
+    {
+      "valid": true,
+      "id": 7
+    },
+    {
+      "valid": true,
+      "id": 8
+    },
+    {
+      "valid": true,
+      "id": 9
+    },
+    {
+      "valid": true,
+      "id": 10
+    },
+    {
+      "valid": true,
+      "id": 11
+    },
+    {
+      "valid": true,
+      "id": 12
+    },
+    {
+      "valid": true,
+      "id": 13
+    },
+    {
+      "valid": true,
+      "id": 14
+    },
+    {
+      "valid": true,
+      "id": 15
+    },
+    {
+      "valid": true,
+      "id": 16
+    },
+    {
+      "valid": true,
+      "id": 17
+    },
+    {
+      "valid": true,
+      "id": 18
+    },
+    {
+      "valid": true,
+      "id": 19
+    },
+    {
+      "valid": true,
+      "id": 20
+    },
+    {
+      "valid": true,
+      "id": 21
+    },
+    {
+      "valid": true,
+      "id": 22
+    },
+    {
+      "valid": true,
+      "id": 23
+    },
+    {
+      "valid": true,
+      "id": 24
+    },
+    {
+      "valid": true,
+      "id": 25
+    },
+    {
+      "valid": true,
+      "id": 26
+    },
+    {
+      "valid": true,
+      "id": 27
+    },
+    {
+      "valid": true,
+      "id": 28
+    },
+    {
+      "valid": true,
+      "id": 29
+    },
+    {
+      "valid": true,
+      "id": 30
+    },
+    {
+      "valid": true,
+      "id": 31
+    },
+    {
+      "valid": true,
+      "id": 32
+    },
+    {
+      "valid": true,
+      "id": 33
+    },
+    {
+      "valid": true,
+      "id": 34
+    },
+    {
+      "valid": true,
+      "id": 35
+    },
+    {
+      "valid": true,
+      "id": 36
+    },
+    {
+      "valid": true,
+      "id": 37
+    },
+    {
+      "valid": true,
+      "id": 38
+    },
+    {
+      "valid": true,
+      "id": 39
+    },
+    {
+      "valid": true,
+      "id": 40
+    }
+  ],
+  "off": {
+    "connectionId": "9dd14a21-2e6b-4b40-8d6e-12e78b5e3459",
+    "requestId": "9dd14a21-2e6b-4b40-8d6e-12e78b5e3459-10",
+    "command": "PULSE_BOUNDARY_COMMAND_OFF",
+    "behavioralSelected": true,
+    "trackingSelected": false,
+    "dispatchedMonotonicNs": "520029946850800",
+    "acknowledgedMonotonicNs": "520029966987100",
+    "applied": true,
+    "resultingState": {
+      "configurationValid": true,
+      "watchdogStopped": false,
+      "watchdogMs": 3000,
+      "behavioral": {
+        "enabled": true,
+        "running": false,
+        "pin": "D10",
+        "appliedFrequencyHz": 30.0
+      },
+      "tracking": {
+        "enabled": false,
+        "running": false
+      }
+    },
+    "outcome": "PULSE_COMMAND_OUTCOME_APPLIED"
+  },
+  "closed": true
+}

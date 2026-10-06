@@ -19,6 +19,7 @@ from cephvr.acquisition.state import (
     SessionRecord,
     SessionSlot,
 )
+from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.v1 import runtime_pb2
 from cephvr.control.v1 import services_pb2 as wire
@@ -117,10 +118,37 @@ def test_device_status_retry_replays_original_report_and_is_queryable() -> None:
     assert controller.reports[0] == controller.reports[1]
     assert controller.reports[0].views.state_revision == 1
     assert controller.reports[0].views.observed_monotonic_ns == 10
+    for role in ("behavioral", "tracking"):
+        view = getattr(controller.reports[0].views, role)
+        for field in (
+            "device_open",
+            "preview_running",
+            "preview_prepared",
+            "cleanup_pending",
+        ):
+            assert view.HasField(field)
+            assert not getattr(view, field)
+    prior = reporter.begin_device_access(camera.CAMERA_ROLE_BEHAVIORAL, "serial")
+    assert prior.device.configured_id == "serial"
+    assert reporter._views[camera.CAMERA_ROLE_BEHAVIORAL].cleanup_pending
+    assert not reporter._views[camera.CAMERA_ROLE_TRACKING].cleanup_pending
+    reporter.complete_connection_test(camera.CAMERA_ROLE_BEHAVIORAL, prior)
+    assert not reporter._views[camera.CAMERA_ROLE_BEHAVIORAL].cleanup_pending
     assert controller.reports[0].views.pulses.state.behavioral.enabled
     assert controller.reports[0].views.pulses.state.behavioral.running
     retained = reporter.get_report(command_id)
     assert retained == controller.reports[0]
+
+    from cephvr.controller.device.release_evidence import stop_preview_confirmed
+
+    resolved = camera.CameraResolvedState()
+    resolved.device.configured_id = "serial"
+    resolved.applied.settings.SetInParent()
+    reporter.resolve_camera(camera.CAMERA_ROLE_BEHAVIORAL, resolved, device_open=False)
+    view = reporter._views[camera.CAMERA_ROLE_BEHAVIORAL]
+    assert stop_preview_confirmed(view, "finished-run")
+    reporter.update_camera_state(camera.CAMERA_ROLE_BEHAVIORAL, device_open=False)
+    assert stop_preview_confirmed(view, "finished-run")
 
 
 def _session() -> SessionRecord:

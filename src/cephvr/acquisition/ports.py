@@ -149,7 +149,11 @@ class SupervisorPort(Protocol):
     """Acquisition's authenticated supervisor RPC boundary."""
 
     async def plan_launch(
-        self, request: control_svc.PlanLaunchRequest, *, deadline_ns: int
+        self,
+        request: control_svc.PlanLaunchRequest,
+        *,
+        deadline_ns: int,
+        child_token: str,
     ) -> control_svc.LaunchReceipt: ...
     async def confirm_launch(
         self, request: control_svc.ConfirmLaunchRequest, *, deadline_ns: int

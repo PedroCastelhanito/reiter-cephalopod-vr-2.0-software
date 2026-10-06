@@ -9,6 +9,7 @@ import pytest
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.acquisition.camera.errors import CameraAdapterError
+from cephvr.acquisition.camera.features import capability, read_value, write_value
 from cephvr.acquisition.camera.native_formats import (
     device_pixel_format,
     native_pixel_format,
@@ -26,6 +27,54 @@ def test_adapter_construction_does_not_load_pypylon() -> None:
     adapter = BaslerCameraAdapter()
     assert adapter._pylon is None
     assert adapter._camera is None
+
+
+def test_absent_sdk_node_is_optional_only_for_readback() -> None:
+    class LogicalErrorException(Exception):
+        pass
+
+    def missing(_):
+        raise LogicalErrorException("Node not existing (file 'genicam_wrap.cpp')")
+
+    nodes = SimpleNamespace(GetNode=missing)
+    assert read_value(nodes, "BslEffectiveExposureTime") is None
+    with pytest.raises(CameraAdapterError, match="required mapped feature"):
+        write_value(nodes, "TriggerSource", "Line4")
+
+
+def test_other_sdk_lookup_failure_is_not_hidden() -> None:
+    class LogicalErrorException(Exception):
+        pass
+
+    def invalid(_):
+        raise LogicalErrorException("Device state is invalid")
+
+    with pytest.raises(CameraAdapterError, match="Device state is invalid"):
+        read_value(SimpleNamespace(GetNode=invalid), "Gain")
+
+
+@pytest.mark.parametrize("has_increment", [False, True])
+def test_float_capability_respects_optional_increment(
+    monkeypatch, has_increment
+) -> None:
+    def increment():
+        assert has_increment, "GetInc is invalid without a constant increment"
+        return 0.1
+
+    node = SimpleNamespace(
+        GetValue=lambda: 2.0,
+        GetMin=lambda: 0.0,
+        GetMax=lambda: 12.0,
+        HasInc=lambda: has_increment,
+        GetInc=increment,
+    )
+    monkeypatch.setattr("cephvr.acquisition.camera.features.available", lambda _: True)
+    monkeypatch.setattr("cephvr.acquisition.camera.features.readable", lambda _: True)
+    monkeypatch.setattr("cephvr.acquisition.camera.features.writable", lambda _: True)
+    result = capability(SimpleNamespace(GetNode=lambda _: node), "Gain", unit="dB")
+    assert result.increment == (0.1 if has_increment else None)
+    assert result.minimum == 0.0
+    assert result.maximum == 12.0
 
 
 def test_sdk_version_mismatch_is_explicit_and_does_not_import(

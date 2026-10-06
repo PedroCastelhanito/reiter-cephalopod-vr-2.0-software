@@ -162,14 +162,20 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
     authority_watch = asyncio.create_task(
         _watch_authorities(native, bootstrap, runtime_instance)
     )
-    health_watch = asyncio.create_task(_supervise_health(runtime_instance))
+    health_watch: asyncio.Task[None] | None = None
     try:
         await register_backend_endpoint(bootstrap)
+        health_watch = asyncio.create_task(_supervise_health(runtime_instance))
         await runtime_instance.shutdown_requested.wait()
     finally:
         authority_watch.cancel()
-        health_watch.cancel()
-        await asyncio.gather(authority_watch, health_watch, return_exceptions=True)
+        if health_watch is not None:
+            health_watch.cancel()
+        await asyncio.gather(
+            authority_watch,
+            *([health_watch] if health_watch is not None else []),
+            return_exceptions=True,
+        )
         deadline = host_time_ns() + bootstrap.policies.recovery_ns
         await _close(
             server,

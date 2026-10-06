@@ -34,7 +34,18 @@ class ManualDeviceStatusReporter:
         self.pulse = pulse
         self.clock = clock
         self._revision = 0
-        self._views: dict[int, control.CameraDeviceView] = {}
+        # A fresh coordinator owns no cameras. Preserve that fact for untouched
+        # roles so lease-loss cleanup can distinguish closed from unknown.
+        self._views: dict[int, control.CameraDeviceView] = {
+            role: control.CameraDeviceView(
+                device_open=False,
+                preview_running=False,
+                preview_prepared=False,
+                cleanup_pending=False,
+                preview_run_id="",
+            )
+            for role in (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING)
+        }
         self._diagnostic: control.MicrocontrollerDiagnosticView | None = None
         self._reports: dict[str, tuple[bytes, wire.AcquisitionDeviceStatusReport]] = {}
 
@@ -80,9 +91,8 @@ class ManualDeviceStatusReporter:
             preview_prepared=preview_prepared,
             device=resolved.device,
             applied_settings=resolved.applied.settings,
+            preview_run_id=preview_run_id,
         )
-        if preview_run_id:
-            view.preview_run_id = preview_run_id
         if configuration_revision is not None:
             view.applied_configuration_revision = configuration_revision
         view.capabilities.CopyFrom(resolved.capabilities)
@@ -99,7 +109,7 @@ class ManualDeviceStatusReporter:
         prior = control.CameraDeviceView(device_open=False)
         if role in self._views:
             prior.CopyFrom(self._views[role])
-        else:
+        if not prior.device.configured_id:
             prior.device.configured_id = serial
         pending = control.CameraDeviceView()
         pending.CopyFrom(prior)
@@ -131,10 +141,8 @@ class ManualDeviceStatusReporter:
         view.preview_prepared = preview_prepared
         view.preview_running = preview_running
         view.cleanup_pending = cleanup_pending
-        if preview_run_id:
-            view.preview_run_id = preview_run_id
-        else:
-            view.ClearField("preview_run_id")
+        # An explicit empty run confirms release; an absent field is unknown.
+        view.preview_run_id = preview_run_id
 
     def set_diagnostic(self, signal: int, pin: str, active: bool, edges: int) -> None:
         self._diagnostic = control.MicrocontrollerDiagnosticView(

@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: coordinator heartbeat receipt exceeded the configured silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

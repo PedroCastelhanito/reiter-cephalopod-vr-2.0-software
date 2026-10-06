@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -196,6 +197,9 @@ class ShutdownCoordinator:
         if triggering_error_id:
             report.triggering_error_id = triggering_error_id
         self.state.interruption = report
+        sys.stderr.write(
+            f"CephVR supervisor shutdown: {reason.code}: {reason.message}\n"
+        )
         self.retain_shutdown_deadlines(now)
         self.state.safety_task = asyncio.create_task(self.deliver_safety(report))
         self.changed()

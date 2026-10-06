@@ -45,6 +45,7 @@ acquisition = [
     "pyserial==3.5",
 ]
 dev = [
+    "swig==4.3.0; sys_platform == 'win32'",
     "build==1.6.1",
     "grpcio-tools==1.84.0",
     "mypy==2.3.1",
@@ -80,6 +81,7 @@ namespaces = false
 "*" = ["*.pyi"]
 "cephvr.tracking.native" = ["*.dll"]
 "cephvr.platform.windows" = ["*.dll"]
+"cephvr.acquisition.camera" = ["*.pyd"]
 
 [tool.ruff]
 target-version = "py311"

@@ -23,6 +23,14 @@ control event; control wins if both are signaled. No undocumented SWIG pointer
 conversion is required. Missing compatibility fails preparation explicitly; no silent
 fallback to 1 ms polling or a different capture topology.
 
+On Windows, the typed `native/acquisition` bridge constructs the SDK WaitObject
+from the native HANDLE with duplication enabled. Stock pypylon 26.3.1 rejects a
+Python integer for that constructor and omits WaitObjectEx. The bridge imports the
+SDK WaitObject type through SWIG's pylon type table; Python neither casts nor
+manufactures SDK pointers. The original event remains worker-owned and the SDK
+owns its duplicate. Build with `tools/build_pylon_wait.py`; missing/incompatible
+native bindings fail preparation. This bounded SDK exception follows SYS-003.
+
 The common adapter interface exposes wait_for_frame_or_control(timeout_ns) plus a
 thread-safe wake_control() signal; wait outcomes are frame, control or timeout.
 clear_control_wake() is called only by the lifecycle owner under the handoff lock

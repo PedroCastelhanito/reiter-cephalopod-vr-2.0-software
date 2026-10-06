@@ -54,6 +54,36 @@ def _start(runtime: Any, parent: str, child: str, kind: int, readback: bool) -> 
     runtime.device_state.camera_operation = operation
 
 
+def test_initial_camera_warning_scope_matches_loaded_configuration(
+    tmp_path: Path,
+) -> None:
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker.warnings import (
+        WarningOccurrence,
+        WorkerWarningLedger,
+    )
+    from cephvr.controller.projections import ProjectionError
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    report = svc.AcquisitionWarningReport(source=backend)
+    producer = acq.WorkerContext(
+        worker=pb.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=_id()
+        ),
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+    )
+    warnings = WorkerWarningLedger(producer)
+    warnings.begin_scope(
+        pb.WorkContext(), configuration_revision=runtime.configuration_state.revision
+    )
+    report.view.CopyFrom(warnings.observe(WarningOccurrence("INVALID_IMAGE", 1)))
+    assert runtime.projections.accept_warnings(report)
+    report.view.configuration_revision += 1
+    with pytest.raises(ProjectionError, match="scope/revision"):
+        runtime.projections.accept_warnings(report)
+
+
 async def test_microcontroller_status_completes_exact_operator_operation(
     tmp_path: Path,
 ) -> None:
@@ -359,6 +389,31 @@ def test_shared_release_predicates_require_a_closed_device() -> None:
     assert not finish_editing_confirmed(open_editing, require_closed=True)
     open_editing.cleanup_pending = True
     assert not finish_editing_confirmed(open_editing, require_closed=False)
+
+
+async def test_owner_cleanup_accepts_both_explicitly_closed_camera_roles(
+    tmp_path: Path,
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    views = pb.AcquisitionDeviceViews(source=backend)
+    for role in ("behavioral", "tracking"):
+        getattr(views, role).CopyFrom(
+            pb.CameraDeviceView(
+                device_open=False,
+                preview_running=False,
+                preview_prepared=False,
+                cleanup_pending=False,
+            )
+        )
+    runtime.projections.devices = views
+    runtime.device_state.manual_effects_admitted = True
+    runtime.lifecycle.manual_control_cleanup_pending = True
+    cleanup = cast(ManualControlCleanup, runtime.leases.owner_lost.__self__)
+    await cleanup.run()
+    assert not runtime.lifecycle.manual_control_cleanup_pending
+    assert not runtime.device_state.manual_effects_admitted
+    assert all(state.succeeded for state in runtime.control.operations.values())
 
 
 def test_camera_policy_must_be_unique() -> None:

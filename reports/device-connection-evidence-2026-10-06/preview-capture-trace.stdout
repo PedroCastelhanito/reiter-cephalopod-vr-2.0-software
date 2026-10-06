@@ -1,0 +1,5 @@
+capture wait outcome=control
+capture wait outcome=frame
+capture first usable callback
+capture wait outcome=frame
+capture wait outcome=frame

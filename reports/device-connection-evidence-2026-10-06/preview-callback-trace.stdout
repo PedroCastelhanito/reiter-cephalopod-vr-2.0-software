@@ -1,0 +1,8 @@
+preview lifecycle ready: retained=True started=False
+capture wait outcome=control
+capture wait outcome=frame
+capture first usable callback
+preview callback manual=True request=True record=True
+preview lifecycle started: retained=True started=True
+capture wait outcome=frame
+capture wait outcome=frame

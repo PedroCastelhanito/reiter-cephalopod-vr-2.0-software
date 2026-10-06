@@ -1,0 +1,221 @@
+{
+  "generation": "33959f56-7b26-4d51-81a4-a6a60b7391dd",
+  "restore_operator_draft": {
+    "command_id": "d55a7e2f-ea22-4a45-b719-56fc7d9b054c",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "managed_pfs_import_and_finish": "passed",
+  "devices": {
+    "source": {
+      "backend_name": "acquisition",
+      "backend_generation": "0609998d-74b9-419e-9042-565aaaab984e"
+    },
+    "state_revision": "2",
+    "observed_monotonic_ns": "503997859883000",
+    "behavioral": {
+      "device_open": false,
+      "preview_running": false,
+      "cleanup_pending": false,
+      "applied_configuration_revision": "3",
+      "capabilities": {
+        "exposure_us": {
+          "access": "FEATURE_ACCESS_READ_WRITE",
+          "minimum": 26.0,
+          "maximum": 10000000.0,
+          "increment": 1.0,
+          "unit": "us"
+        },
+        "gain": {
+          "decimal": {
+            "access": "FEATURE_ACCESS_READ_WRITE",
+            "minimum": 0.0,
+            "maximum": 36.0,
+            "unit": "dB"
+          },
+          "selector": {
+            "access": "FEATURE_ACCESS_READ_WRITE",
+            "choices": [
+              {
+                "value": "All",
+                "sdk_symbol": "All"
+              }
+            ]
+          }
+        },
+        "frame_rate_hz": {
+          "access": "FEATURE_ACCESS_READ_WRITE",
+          "minimum": 0.0062864274108552845,
+          "maximum": 1000000.0,
+          "unit": "Hz"
+        },
+        "roi": {
+          "width": {
+            "access": "FEATURE_ACCESS_READ_WRITE",
+            "minimum": "4",
+            "maximum": "3716",
+            "increment": "4",
+            "unit": "pixels"
+          },
+          "height": {
+            "access": "FEATURE_ACCESS_READ_WRITE",
+            "minimum": "2",
+            "maximum": "3004",
+            "increment": "2",
+            "unit": "pixels"
+          },
+          "offset_x": {
+            "access": "FEATURE_ACCESS_READ_WRITE",
+            "minimum": "0",
+            "maximum": "2352",
+            "increment": "4",
+            "unit": "coordinates"
+          },
+          "offset_y": {
+            "access": "FEATURE_ACCESS_READ_WRITE",
+            "minimum": "0",
+            "maximum": "8",
+            "increment": "2",
+            "unit": "coordinates"
+          }
+        },
+        "pixel_format": {
+          "access": "FEATURE_ACCESS_READ_WRITE",
+          "choices": [
+            {
+              "value": "Mono8",
+              "sdk_symbol": "Mono8"
+            },
+            {
+              "value": "BayerRG8",
+              "sdk_symbol": "BayerRG8"
+            },
+            {
+              "value": "BayerRG12",
+              "sdk_symbol": "BayerRG12"
+            },
+            {
+              "value": "BayerRG12p",
+              "sdk_symbol": "BayerRG12p"
+            },
+            {
+              "value": "RGB8",
+              "sdk_symbol": "RGB8"
+            },
+            {
+              "value": "BGR8",
+              "sdk_symbol": "BGR8"
+            }
+          ]
+        },
+        "trigger_selector": {
+          "access": "FEATURE_ACCESS_READ_WRITE",
+          "choices": [
+            {
+              "value": "FrameBurstStart",
+              "sdk_symbol": "FrameBurstStart"
+            },
+            {
+              "value": "frame_start",
+              "sdk_symbol": "FrameStart"
+            }
+          ]
+        },
+        "trigger_source": {
+          "access": "FEATURE_ACCESS_READ_WRITE",
+          "choices": [
+            {
+              "value": "Software",
+              "sdk_symbol": "Software"
+            },
+            {
+              "value": "Line1",
+              "sdk_symbol": "Line1"
+            },
+            {
+              "value": "Line3",
+              "sdk_symbol": "Line3"
+            },
+            {
+              "value": "Line4",
+              "sdk_symbol": "Line4"
+            },
+            {
+              "value": "SoftwareSignal1",
+              "sdk_symbol": "SoftwareSignal1"
+            },
+            {
+              "value": "SoftwareSignal2",
+              "sdk_symbol": "SoftwareSignal2"
+            },
+            {
+              "value": "SoftwareSignal3",
+              "sdk_symbol": "SoftwareSignal3"
+            }
+          ]
+        },
+        "trigger_activation": {
+          "access": "FEATURE_ACCESS_READ_WRITE",
+          "choices": [
+            {
+              "value": "rising_edge",
+              "sdk_symbol": "RisingEdge"
+            },
+            {
+              "value": "falling_edge",
+              "sdk_symbol": "FallingEdge"
+            }
+          ]
+        },
+        "exposure_duration_mode": {
+          "access": "FEATURE_ACCESS_READ_WRITE",
+          "choices": [
+            {
+              "value": "timed",
+              "sdk_symbol": "Timed"
+            },
+            {
+              "value": "TriggerWidth",
+              "sdk_symbol": "TriggerWidth"
+            }
+          ]
+        },
+        "trigger_rate_limit": {
+          "maximum_hz": 33.74502260916515,
+          "evidence": "connected SDK estimate from readable ResultingFrameRate (Hz)"
+        }
+      },
+      "applied_settings": {
+        "exposure_us": 25000.0,
+        "gain": {
+          "decimal_value": 0.0,
+          "unit": "dB",
+          "selector": "All"
+        },
+        "frame_rate_hz": 30.00030000300003,
+        "roi": {
+          "width": 1760,
+          "height": 3000,
+          "offset_x": 396,
+          "offset_y": 4
+        },
+        "pixel_format": "BayerRG8",
+        "trigger_selector": "frame_start",
+        "trigger_source": "Line4",
+        "trigger_activation": "rising_edge",
+        "exposure_duration_mode": "timed"
+      },
+      "device": {
+        "configured_id": "40065509",
+        "physical_id": "40065509",
+        "model": "acA4112-30uc",
+        "transport_interface": "usb3"
+      },
+      "preview_prepared": false
+    }
+  },
+  "configuration_revision": 3,
+  "lease_released": true
+}

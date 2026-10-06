@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 import threading
 from collections import deque
+from types import SimpleNamespace
 from typing import cast
 
 import pytest
@@ -12,8 +14,56 @@ import pytest
 from cephvr.acquisition.microcontroller import SerialOwner, SerialOwnerBridge
 from cephvr.acquisition.microcontroller.channel import ChannelDeadline
 from cephvr.acquisition.microcontroller.owner import SerialOwnerError
+from cephvr.acquisition.microcontroller.serial_port import PySerialPort
 from cephvr.acquisition.v1 import microcontroller_pb2, runtime_pb2
 from cephvr.shared.clock import host_time_ns
+
+
+def test_native_serial_write_uses_remaining_command_budget_without_read_reconfiguration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    writes: list[bytes] = []
+    budgets: list[tuple[int, float]] = []
+
+    class NativeSerial:
+        def __init__(self, **kwargs: object) -> None:
+            self._port_handle = 1234
+            self.timeout = kwargs["timeout"]
+            self.write_timeout = kwargs["write_timeout"]
+
+        def write(self, payload: bytes) -> int:
+            writes.append(payload)
+            assert self.write_timeout == 0.01
+            return len(payload)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "serial",
+        SimpleNamespace(Serial=NativeSerial, SerialException=OSError),
+    )
+    monkeypatch.setattr(
+        "cephvr.acquisition.microcontroller.serial_port.set_write_timeout",
+        lambda handle, seconds: budgets.append((handle, seconds)),
+    )
+    now = 1_000_000_000
+    monkeypatch.setattr(
+        "cephvr.acquisition.microcontroller.serial_port.host_time_ns", lambda: now
+    )
+    port = PySerialPort("COM8", 115200)
+    port.set_timeouts(read_seconds=0.1, write_seconds=0.1)
+    assert port._serial.timeout == 0.01
+    assert port._serial.write_timeout == 0.01
+    now += 20_000_000
+    payload = b"CONFIGURE " + b"x" * 300 + b"\n"
+    assert port.write(payload) == len(payload)
+    assert writes == [payload]
+    assert budgets == [(1234, pytest.approx(0.08))]
+    port.set_timeouts(read_seconds=0.01, write_seconds=0.01)
+    assert port._serial.write_timeout == 0.01
+    now += 11_000_000
+    with pytest.raises(TimeoutError, match="before dispatch"):
+        port.write(payload)
+    assert writes == [payload]
 
 
 def test_expired_owner_call_keeps_serial_gate_until_blocked_call_returns() -> None:

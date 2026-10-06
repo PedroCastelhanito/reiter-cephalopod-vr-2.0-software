@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-10-06T17:27:24.707920+09:00",
+  "scope": "COM8 read-only CAPS probe at CephVR2.0 baud; no pulses",
+  "ports": [
+    {
+      "port": "COM8",
+      "description": "Arduino Uno (COM8)"
+    },
+    {
+      "port": "COM9",
+      "description": "PL2303HXA PHASED OUT SINCE 2012. PLEASE CONTACT YOUR SUPPLIER."
+    }
+  ],
+  "boot": "OK READY dual_camera_projector_sync\r\n",
+  "response": "ERR Unknown command: CAPS\r\n",
+  "closed": true
+}

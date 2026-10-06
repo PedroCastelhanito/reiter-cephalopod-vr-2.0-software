@@ -63,7 +63,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
 | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 21 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 107 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 108 |
 | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 23 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
@@ -71,8 +71,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 87 |
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 76 |
-| <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 57 |
-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 160 |
+| <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 58 |
+| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 161 |
 | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
@@ -81,7 +81,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 206 |
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
 | <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 16 |
-| <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 29 |
+| <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 30 |
 | <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 31 |
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
 | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
