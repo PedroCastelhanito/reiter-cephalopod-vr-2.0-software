@@ -10,14 +10,13 @@ from uuid import uuid4
 
 import pytest
 
-from cephvr.control.v1 import types_pb2 as pb
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.emergency import write_emergency_report
 
 
 async def test_explicit_stop_uncertainty_and_byte_bound(tmp_path: Path) -> None:
-    supervisor = pb.ProcessIdentity(role="supervisor", generation=str(uuid4()))
-    controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+    supervisor = types.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+    controller = types.ProcessIdentity(role="controller", generation=str(uuid4()))
     path = await write_emergency_report(
         tmp_path,
         cause="CONTROLLER_LOST",
@@ -48,8 +47,8 @@ async def test_slow_disk_does_not_hold_event_loop_or_default_executor(
 ) -> None:
     import cephvr.shared.emergency as emergency
 
-    supervisor = pb.ProcessIdentity(role="supervisor", generation=str(uuid4()))
-    controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+    supervisor = types.ProcessIdentity(role="supervisor", generation=str(uuid4()))
+    controller = types.ProcessIdentity(role="controller", generation=str(uuid4()))
     entered = threading.Event()
     release = threading.Event()
     original_fsync = emergency.os.fsync

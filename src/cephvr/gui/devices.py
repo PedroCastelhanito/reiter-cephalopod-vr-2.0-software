@@ -1,6 +1,6 @@
 """Devices presentation draft; edits stay local and actions never call hardware."""
 
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSettings, QSize
 from PyQt6.QtWidgets import (
     QStackedWidget,
     QTabBar,
@@ -19,7 +19,9 @@ from cephvr.gui.view import DashboardView
 
 
 class DevicesPage(QWidget):
-    def __init__(self, *, sample: bool = False) -> None:
+    def __init__(
+        self, *, sample: bool = False, settings: QSettings | None = None
+    ) -> None:
         super().__init__()
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
@@ -34,7 +36,7 @@ class DevicesPage(QWidget):
         self.tabs.currentChanged.connect(self.tab_bar.setCurrentIndex)
         body.addWidget(self.tabs, 1)
         self.cameras = CamerasPanel(sample=sample)
-        self.microcontroller = MicrocontrollerPanel()
+        self.microcontroller = MicrocontrollerPanel(settings=settings)
         self.cameras.drafts_changed.connect(self.sync_cameras)
         self.microcontroller.camera_enable_requested.connect(self.set_camera_enabled)
         self.sync_cameras()

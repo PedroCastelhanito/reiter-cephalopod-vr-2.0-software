@@ -9,11 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO, Protocol
 
+from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.config.models.artifact_models import ResourceManifest
 from cephvr.visual_stimulus.config.models.evidence_model import UniformLayout
 from cephvr.visual_stimulus.config.models.program_model import Asset
 from cephvr.visual_stimulus.resources.budget import PreparationBudget
-from cephvr.visual_stimulus.resources.protected import ProtectedWindowsSource
 
 
 class ProtectedSource(Protocol):

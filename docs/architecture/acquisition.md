@@ -606,7 +606,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 54
+**Status:** Accepted · **Revision:** 55
 
 **Capture lifetime**
 
@@ -642,11 +642,12 @@ stamping/filtering and the mappings still need runtime implementation.
 
 **Connection diagnostic**
 
-- Manual camera/MCU commands carry the controller-accepted complete acquisition
+- Manual camera commands carry the controller-accepted complete acquisition
   draft and revision. Install newer drafts only with exact controller/backend/parent
   identity and no conflicting device/diagnostic ownership; this is not SDK readback.
-  Unchanged drafts may advance an unrelated revision. A11 serial ownership closes
-  the old port before opening a newly selected one, under the original deadline.
+  Unchanged drafts may advance an unrelated revision. Microcontroller commands use
+  controller-owned settings and the accepted revision under A11; its serial owner
+  closes the old port before opening a newly selected one, under the original deadline.
 - An explicit controller-authorized Configuration check opens the assigned serial,
   verifies its identity, and closes only a device opened by that check. The camera
   worker remains the sole SDK owner; no PFS/settings, capture, pulses or recording
@@ -721,10 +722,11 @@ stamping/filtering and the mappings still need runtime implementation.
 
 **Microcontroller pulses**
 
-- Acquisition owns one configured microcontroller connection with independently
+- Controller owns one configured microcontroller connection with independently
   configurable behavioral/tracking pins/rates. Validate distinct active pins;
   disabled/free-running roles need no pulses. Port, wiring and rig values stay
-  explicit.
+  explicit. Acquisition requests camera triggers through A11’s typed controller API
+  and records returned timing evidence; it never opens the COM port.
 - Firmware hardware timers generate pulses from the board's local clock,
   independently of serial parsing; Python sends configuration/ON/OFF, not a command
   per pulse. Validate board/pin support; no main-loop timer polling substitute.
@@ -855,7 +857,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 37
+**Status:** Accepted · **Revision:** 40
 
 **Board and firmware**
 
@@ -863,16 +865,45 @@ hardware information and later implementation; no new deferral is implied.
   protocol; add board implementations when needed, with no initial multi-board
   firmware framework. Firmware-reported pins and actual timer behavior require
   validation on this board.
-- Firmware is installed/updated manually. Setup verifies protocol/capabilities and
-  blocks incompatible firmware with an actionable explanation.
-- **Deferred:** CephVR-assisted flashing of the appropriate board firmware/sketch;
-  board/image selection, upload tooling and update workflow need future design. No
-  automatic flashing or installation is enabled.
+- Firmware may be installed manually or through explicit GUI Upload in Configuration.
+  Controller authorizes the operation; a focused controller Microcontroller module is the sole COM-port owner
+  and performs the handoff. Camera/device ownership, capture, diagnostics, another
+  operation or unresolved native cleanup block Upload. Select a compiled application
+  `.hex` or an Arduino `.ino` sketch. Controller digest-pins the image or complete
+  supported sketch source snapshot, compiles sketches with installed Arduino CLI for
+  Uno in private storage, confirms compiler cleanup and validates the application HEX
+  before serial release. Compile failure/cancellation leaves serial untouched. The same
+  installed CLI uploads with verification under the original operation deadline.
+  No automatic flashing, tool/core/library installation or board selection is added.
+- Controller closes serial, supervises the bounded Configuration helper under E08,
+  confirms each phase's exact job/process/pipes and private source/build/image cleanup,
+  then opens a fresh
+  protocol/capability connection and verifies outputs off. It never resumes capture
+  or pulses. Failed/uncertain upload reports failure; unresolved helper cleanup blocks
+  Setup and manual device access until exact cleanup succeeds. Setup still rejects
+  incompatible firmware. Native flashing and electrical acceptance remain E15 rig work.
 - Serial protocol version is integer **3**, separate from firmware release, and must
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
 
 **Connection**
+
+- Microcontroller connection, command arbitration, keepalive, diagnostics and firmware
+  helpers belong to the controller regardless of acquisition participation. Serial I/O
+  stays on its dedicated owner thread and tool work stays outside the lifecycle loop.
+  Acquisition is an authenticated trigger client: typed configure/reserve/ON/OFF/status
+  and release calls retain exact generation/claim, original deadlines and returned MCU
+  timing evidence. The final external manual preview releases its claim after confirmed
+  OFF and camera cutoff; remaining external previews retain it. Acquisition owns its logical device claim, never the physical COM handle.
+  Failed or uncertain release remains a cleanup blocker; no automatic pulse resumption.
+  The standalone review GUI opens no serial handle; physical tests use the managed
+  controller API. Serial timing reloads only with no owned port.
+- Pin tests and Upload require idle Configuration and no camera-trigger claim/device
+  activity. Control loss releases Configuration diagnostics; active experiment work
+  follows E06. Controller shutdown includes serial and native helper cleanup within
+  the original shutdown/authority-loss allowance and application backstop. Pending
+  release fences new execution while admitting camera safety cleanup. Firmware watchdog
+  remains independent.
 
 - One serial owner opens only the configured port. Boot/reset leaves outputs off and
   volatile configuration invalid. Reopen requires outputs-off verification, fresh
@@ -986,7 +1017,7 @@ hardware information and later implementation; no new deferral is implied.
   Their pin assignments belong to Microcontroller. Per-output test intent targets
   one assigned pin for external observation in SpikeGLX; camera tests use the rate
   already configured in Cameras. Input diagnostics observe edges rather than drive
-  the input. Acquisition owns one diagnostic on its serial connection in
+  the input. Controller owns one diagnostic on its serial connection in
   Configuration with control authority; it rejects session/preview activity and
   conflicting or unsupported pins. Firmware ends every diagnostic within two
   seconds and leaves tested outputs LOW; explicit Stop, control loss, transport
@@ -1000,7 +1031,7 @@ hardware information and later implementation; no new deferral is implied.
   STATUS/session outputs have no pulse counters. Generated counts do not prove
   electrical delivery, camera reception or SpikeGLX capture; label the GUI evidence
   accordingly and leave outputs LOW at stop.
-  Installing/flashing the new firmware remains manual.
+  Installing/flashing follows the explicit workflow above.
 
 **Status and capabilities**
 
@@ -1020,6 +1051,6 @@ hardware information and later implementation; no new deferral is implied.
 
 **Contract status:** the
 [MCU wire/error/readback and boundary scheduling](../../contracts/acquisition/microcontroller.md)
-contract is specified. Actual board/pin mapping awaits rig information; firmware
-implementation remains outside this host stage. Host implementation status belongs
-in the implementation review; serial and firmware behavior require rig verification.
+contract is implemented by the controller-owned device component and acquisition
+camera-trigger client. Pin/timing/native and physical behavior require rig verification;
+implementation evidence belongs in the owning reports.

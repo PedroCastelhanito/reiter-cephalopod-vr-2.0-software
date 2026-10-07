@@ -6,15 +6,18 @@ import asyncio
 from pathlib import Path
 from uuid import uuid4
 
+import grpc
 import pytest
 
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as wire
+from cephvr.control.v1 import services_pb2_grpc
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
 from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
+from cephvr.supervisor.outbound import GrpcOutbound
 from tests.supervisor.support import Outbound, make_runtime
 
 from .support import (
@@ -85,6 +88,12 @@ async def test_unreachable_live_owner_records_error_and_keeps_helper(
     )
     assert "GetState" in reconciler.helper_errors[helper.plan.command_id]
     assert _phase(runtime, helper) == wire.LAUNCH_PHASE_OPERATIONAL
+    # A persistent failure reaches the operator once per helper, not per tick.
+    await reconciler.reconcile_native_helper_exits(host_time_ns() + 5_000_000_000)
+    warnings = [w.message for w in runtime.status_state.warnings.values()]
+    assert len(warnings) == 1 and "GetState failed" in warnings[0]
+    reconciler._clear_helper_error(helper.plan.command_id)
+    assert runtime.status_state.warnings == {}
 
 
 def _closure_evidence(
@@ -212,3 +221,126 @@ async def test_prior_application_exit_requires_exact_private_receipt(
     assert not (await runtime.service.GetRecoveryState(other, caller)).HasField(
         "prior_application_exit"
     )
+
+
+def _tracking_release(runtime, *, work):  # type: ignore[no-untyped-def]
+    acquisition = types.BackendContext(
+        backend_name="acquisition", backend_generation=str(uuid4())
+    )
+    tracking = types.BackendContext(
+        backend_name="tracking", backend_generation=str(uuid4())
+    )
+    runtime.registration_state.context = wire.RegisteredContext(
+        controller=runtime.controller,
+        supervisor=runtime.identity,
+        work=work,
+        required_participants=[acquisition, tracking],
+    )
+    return types.CleanupReport(
+        source=types.ProcessIdentity(
+            role="tracking", generation=tracking.backend_generation
+        ),
+        operation=types.OperationContext(command_id=str(uuid4())),
+        work=work,
+    )
+
+
+async def test_tracking_release_retries_transport_failures_until_accepted(
+    tmp_path: Path,
+) -> None:
+    runtime, _, outbound, _ = make_runtime(tmp_path)
+    report = _tracking_release(runtime, work=WORK)
+    calls = 0
+
+    async def flaky(request, *, deadline_ns):  # type: ignore[no-untyped-def]
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            raise OSError("acquisition unavailable")
+        return types.CommandAdmission(
+            result=types.COMMAND_RESULT_ACCEPTED,
+            command_id=request.command.command_id,
+        )
+
+    outbound.confirm_tracking_cleanup = flaky  # type: ignore[method-assign]
+    receipt = await runtime.recovery._forward_tracking_release(
+        report, deadline_ns=host_time_ns() + 5_000_000_000
+    )
+    assert receipt.result == types.COMMAND_RESULT_ACCEPTED
+    assert calls == 3
+
+
+async def test_tracking_release_ends_unconfirmed_at_the_original_deadline(
+    tmp_path: Path,
+) -> None:
+    runtime, _, outbound, _ = make_runtime(tmp_path)
+    report = _tracking_release(runtime, work=WORK)
+
+    async def down(request, *, deadline_ns):  # type: ignore[no-untyped-def]
+        raise OSError("acquisition unavailable")
+
+    outbound.confirm_tracking_cleanup = down  # type: ignore[method-assign]
+    deadline = host_time_ns() + 150_000_000
+    receipt = await runtime.recovery._forward_tracking_release(
+        report, deadline_ns=deadline
+    )
+    assert receipt.failure.code == "TRACKING_RELEASE_UNCONFIRMED"
+    assert host_time_ns() >= deadline
+
+
+async def test_tracking_release_does_not_retry_a_rejection(tmp_path: Path) -> None:
+    runtime, _, outbound, _ = make_runtime(tmp_path)
+    report = _tracking_release(runtime, work=WORK)
+    calls = 0
+
+    async def rejected(request, *, deadline_ns):  # type: ignore[no-untyped-def]
+        nonlocal calls
+        calls += 1
+        return types.CommandAdmission(
+            result=types.COMMAND_RESULT_REJECTED,
+            command_id=request.command.command_id,
+            failure=types.Failure(code="NOT_OWNER", message="not the owner"),
+        )
+
+    outbound.confirm_tracking_cleanup = rejected  # type: ignore[method-assign]
+    receipt = await runtime.recovery._forward_tracking_release(
+        report, deadline_ns=host_time_ns() + 5_000_000_000
+    )
+    assert receipt.failure.code == "NOT_OWNER"
+    assert calls == 1
+
+
+async def test_grpc_failure_reaches_the_retry_loop_as_a_transport_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Stub:
+        def __init__(self, channel: object) -> None:
+            pass
+
+        async def ConfirmTrackingInput(self, request, **options):  # type: ignore[no-untyped-def]
+            raise grpc.aio.AioRpcError(
+                grpc.StatusCode.UNAVAILABLE, grpc.aio.Metadata(), grpc.aio.Metadata()
+            )
+
+    monkeypatch.setattr(services_pb2_grpc, "AcquisitionConfigurationServiceStub", Stub)
+    outbound = GrpcOutbound(
+        types.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        "token",
+        1,
+        0,
+        1_000_000,
+        {"acquisition": 1},
+    )
+    request = wire.TrackingInputConfirmation(
+        command=wire.BackendCommand(
+            command_id=str(uuid4()),
+            target=types.BackendContext(backend_name="acquisition"),
+        )
+    )
+    try:
+        with pytest.raises(OSError, match="UNAVAILABLE"):
+            await outbound.confirm_tracking_cleanup(
+                request, deadline_ns=host_time_ns() + 5_000_000_000
+            )
+    finally:
+        await outbound.close()

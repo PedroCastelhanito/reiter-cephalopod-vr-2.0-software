@@ -6,13 +6,13 @@ import hashlib
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.tracking.config.models.methods import (
     FileLimits,
     ModelManifest,
     ModelSettings,
     ResolvedAsset,
 )
-from cephvr.visual_stimulus.resources.protected import ProtectedWindowsSource
 
 
 class ModelAssets:

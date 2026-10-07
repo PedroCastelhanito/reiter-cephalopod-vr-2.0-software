@@ -45,6 +45,7 @@ class _Runtime:
         self.attempt = None
         self._lock = asyncio.Lock()
         self._warnings: list[pb.Warning] = []
+        self.cleanup_deadlines: list[int] = []
 
     def status(self) -> AuthorityStatus:
         return AuthorityStatus(
@@ -97,6 +98,7 @@ async def _run(runtime: _Runtime, native: _Native, path: Path) -> None:
             lose=runtime.lose,
             warn=runtime.warn,
             clock=runtime.clock,
+            bind_cleanup_deadline=runtime.cleanup_deadlines.append,
             limits=LimitsState(
                 ControllerLimits(
                     setup_ns=100,
@@ -148,6 +150,7 @@ async def test_shutdown_notifies_launcher_with_original_deadline(
     await asyncio.wait_for(_run(runtime, native, tmp_path), timeout=1)
     assert notices == [(1_500, "OPERATOR_SHUTDOWN")]
     assert native.terminated == []
+    assert runtime.cleanup_deadlines == [1_200]
 
 
 async def test_clean_controller_waits_for_shutdown_handoff_completion(

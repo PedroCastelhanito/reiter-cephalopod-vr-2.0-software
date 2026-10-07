@@ -42,18 +42,6 @@ def require_uuid4(value: str) -> str:
     return value
 
 
-def require_registered_process(
-    identity: ProcessIdentityLike, *, expected_role: str, expected_generation: str
-) -> None:
-    """Check claimed identity against a trusted registration, not just its syntax."""
-    require_uuid4(identity.generation)
-    require_uuid4(expected_generation)
-    if not expected_role or identity.role != expected_role:
-        raise ValueError("process role does not match registration")
-    if identity.generation != expected_generation:
-        raise ValueError("process generation does not match registration")
-
-
 def require_session_context(
     context: SessionContextLike, *, controller_generation: str, session_id: str
 ) -> None:
@@ -86,37 +74,3 @@ def require_trial_context(
         raise ValueError("trial context does not match registered work")
     if trial_number <= 0:
         raise ValueError("trial number must be positive")
-
-
-def require_work_context(
-    context: WorkContextLike,
-    *,
-    controller_generation: str,
-    session_id: str | None = None,
-    trial_id: str | None = None,
-    trial_number: int | None = None,
-) -> None:
-    """Check Protobuf oneof presence and the exact registered work identity."""
-    kind = context.WhichOneof("work")
-    if session_id is None:
-        if kind is not None or trial_id is not None or trial_number is not None:
-            raise ValueError("work context was not expected")
-        return
-    if trial_id is None:
-        if kind != "session" or trial_number is not None:
-            raise ValueError("required session context is missing")
-        require_session_context(
-            context.session,
-            controller_generation=controller_generation,
-            session_id=session_id,
-        )
-        return
-    if kind != "trial" or trial_number is None:
-        raise ValueError("required trial context is missing")
-    require_trial_context(
-        context.trial,
-        controller_generation=controller_generation,
-        session_id=session_id,
-        trial_id=trial_id,
-        trial_number=trial_number,
-    )

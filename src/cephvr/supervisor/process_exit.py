@@ -22,7 +22,8 @@ async def wait_while(
     condition: Callable[[], object], until_ns: int, poll_s: float = 0.05
 ) -> None:
     """Poll until ``until_ns`` or the condition clears; the deadline is checked first."""
-    while host_time_ns() < until_ns and condition():
+    # No event signals the condition clearing (OS job membership), so poll to the deadline.
+    while host_time_ns() < until_ns and condition():  # noqa: ASYNC110
         await asyncio.sleep(min(poll_s, max(0.0, (until_ns - host_time_ns()) / 1e9)))
 
 

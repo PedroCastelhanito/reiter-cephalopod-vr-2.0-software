@@ -24,7 +24,7 @@ def _unique_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 def display_document(display: runtime_pb2.DisplayConfiguration) -> dict[str, Any]:
     """Read bounded JSON while leaving full canonical validation to the controller."""
     if not display.profile_json:
-        raise ValueError("Import a display profile before configuring projectors")
+        raise ValueError("Load a projector configuration before configuring projectors")
     if len(display.profile_json.encode("utf-8")) > _MAX_PROFILE_BYTES:
         raise ValueError("Display profile exceeds the 16 MiB configuration limit")
 

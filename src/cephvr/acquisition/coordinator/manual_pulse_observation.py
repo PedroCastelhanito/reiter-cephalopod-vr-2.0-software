@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from cephvr.acquisition.state import PulseRecord
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+from cephvr.shared.microcontroller import SerialOwnerPort
 
 
 def retain_applied_pulse_state(
@@ -35,3 +36,19 @@ def retain_applied_pulse_state(
     )
     updated.state.CopyFrom(evidence.resulting_state)
     pulse.observation = updated
+
+
+async def release_idle_claim(
+    pulse: PulseRecord, serial: SerialOwnerPort, *, deadline_ns: int
+) -> None:
+    """Release the camera claim only after retained stopped-output proof."""
+    observation = pulse.observation
+    if observation is not None and not all(
+        observation.state.HasField(role)
+        and getattr(observation.state, role).HasField("running")
+        and not getattr(observation.state, role).running
+        for role in ("behavioral", "tracking")
+    ):
+        raise RuntimeError("Camera-trigger claim lacks stopped-output proof")
+    await serial.close(deadline_ns=deadline_ns)
+    pulse.observation = None

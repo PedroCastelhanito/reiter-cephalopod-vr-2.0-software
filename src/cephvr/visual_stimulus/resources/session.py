@@ -10,6 +10,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Protocol
 
+from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.compiler import CompileContext, compile_trial
 from cephvr.visual_stimulus.config.models.artifact_models import (
     PreparedTrial,
@@ -46,7 +47,6 @@ from cephvr.visual_stimulus.resources.display_calibration import (
     prepare_display_calibration_request,
 )
 from cephvr.visual_stimulus.resources.prepare import prepare_resources
-from cephvr.visual_stimulus.resources.protected import ProtectedWindowsSource
 from cephvr.visual_stimulus.resources.video import VideoPlayback
 from cephvr.visual_stimulus.resources.video_decoder import DecoderFactory
 from cephvr.visual_stimulus.resources.video_session import VideoSession

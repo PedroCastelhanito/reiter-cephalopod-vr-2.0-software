@@ -5,21 +5,21 @@ from collections.abc import Callable
 
 import pytest
 
-from cephvr.acquisition.microcontroller.channel import (
+from cephvr.acquisition.v1 import microcontroller_pb2
+from cephvr.controller.microcontroller.channel import (
     ChannelCancelled,
     ChannelTimeout,
     ChannelTransportFailure,
     Exchange,
     SerialChannel,
 )
-from cephvr.acquisition.microcontroller.protocol import (
+from cephvr.controller.microcontroller.protocol import (
     ProtocolError,
     parse_capabilities,
     parse_diagnostic,
     parse_reply,
 )
-from cephvr.acquisition.microcontroller.pulses import PulseExecutor
-from cephvr.acquisition.v1 import microcontroller_pb2
+from cephvr.controller.microcontroller.pulses import PulseExecutor
 
 
 def test_v3_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:

@@ -10,6 +10,7 @@ import asyncio
 import uuid
 from collections.abc import Awaitable, Callable, Coroutine, Mapping
 from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -24,6 +25,8 @@ from cephvr.controller.device.owner_cleanup import (
     record_manual_cleanup_warning,
 )
 from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+from cephvr.controller.microcontroller.lifecycle import MicrocontrollerLifecycle
 from cephvr.controller.ports import BackendPort, SpikeGLXPort, SupervisorPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
@@ -87,7 +90,9 @@ class ControllerRuntime:
         max_operation_records: int = 1024,
         health_silence_ns: int = 15_000_000_000,
         clock: Callable[[], int] = host_time_ns,
+        microcontroller_device: MicrocontrollerDevice | None = None,
     ) -> None:
+        self.microcontroller_device = microcontroller_device
         self.generation = generation
         effective = pb.ExperimentConfiguration()
         effective.CopyFrom(configuration)
@@ -132,6 +137,7 @@ class ControllerRuntime:
         components = assemble_controller(
             AssemblyInputs(
                 generation=self.generation,
+                microcontroller_device=microcontroller_device,
                 supervisor_generation=self.supervisor_generation,
                 configuration_state=self.configuration_state,
                 lifecycle=self.lifecycle,
@@ -201,6 +207,43 @@ class ControllerRuntime:
         self.publisher.observe_owner_loss(self.tracking_diagnostic.owner_lost)
         self.leases.observe_owner_loss(self.display_calibration.owner_lost)
         self.publisher.observe_owner_loss(self.display_calibration.owner_lost)
+        self.microcontroller_lifecycle = None
+        if microcontroller_device is not None:
+            microcontroller_device.changed = self.publisher.publish
+            self.publisher.microcontroller_view = microcontroller_device.snapshot_view
+            self.microcontroller_lifecycle = MicrocontrollerLifecycle(
+                microcontroller_device,
+                generation=self.generation,
+                lifecycle=self.lifecycle,
+                configuration=self.configuration_state,
+                device=self.device_state,
+                limits=self.limit_state,
+                clock=self.clock,
+                publish=self.publisher.publish,
+                warning=self.record_warning,
+                spawn=self._spawn,
+                interrupt=lambda attempt, reason, issued: self.interruption.interrupt(
+                    attempt, reason, issued_ns=issued
+                ),
+            )
+            self.leases.observe_owner_loss(self.microcontroller_lifecycle.owner_lost)
+            self.publisher.observe_owner_loss(self.microcontroller_lifecycle.owner_lost)
+
+    def start_microcontroller_health(self) -> asyncio.Task[Any] | None:
+        if self.microcontroller_lifecycle is None:
+            return None
+        return self._spawn(self.microcontroller_lifecycle.health().run(asyncio.Event()))
+
+    async def execute_microcontroller_io(
+        self, request: svc.MicrocontrollerIoRequest
+    ) -> svc.MicrocontrollerIoResult:
+        if self.microcontroller_lifecycle is None:
+            raise RuntimeError("Controller Microcontroller owner is unavailable")
+        return await self.microcontroller_lifecycle.execute(request)
+
+    def bind_microcontroller_shutdown_deadline(self, deadline_ns: int) -> None:
+        if self.microcontroller_lifecycle is not None:
+            self.microcontroller_lifecycle.bind_shutdown_deadline(deadline_ns)
 
     def current_work_key(self) -> str | None:
         attempt = self.lifecycle.attempt
@@ -241,9 +284,15 @@ class ControllerRuntime:
         return await self.session_commands.safety_precondition(request, kind)
 
     def authority_status(self) -> AuthorityStatus:
-        return AuthorityStatus.capture(
+        status = AuthorityStatus.capture(
             self.lifecycle, self.control, self.supervisor_state
         )
+        if (
+            self.microcontroller_device is not None
+            and not self.microcontroller_device.cleanup_complete
+        ):
+            status = replace(status, cleanup_confirmed=False)
+        return status
 
     async def record_warning(self, warning: pb.Warning) -> None:
         async with self.lifecycle.lock:
@@ -393,6 +442,19 @@ class ControllerRuntime:
         return await self.microcontroller.execute(request)
 
     async def setup(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
+        owner = self.microcontroller_device
+        if owner is not None and (
+            owner.busy
+            or owner.releasing
+            or owner.closing
+            or owner.closed
+            or owner.view.diagnostic.active
+            or owner.failure
+        ):
+            return self.control_operations.admission(
+                command.operator.command_id,
+                error="Stop Microcontroller diagnostics and confirm device/native cleanup before Setup",
+            )
         return await self.setup_admission.setup(command)
 
     async def begin_tracking_diagnostic(
@@ -451,7 +513,11 @@ class ControllerRuntime:
         return await self.lifecycle_reports.receive(report, ingress_ns)
 
     async def authority_loss(self, reason: str, issued_ns: int) -> None:
+        if self.microcontroller_lifecycle is not None:
+            self.microcontroller_lifecycle.prepare_authority_close(issued_ns)
         await self.interruption.authority_loss(reason, issued_ns)
+        if self.microcontroller_lifecycle is not None:
+            await self.microcontroller_lifecycle.close_authority(issued_ns)
 
     async def report_interruption(
         self, report: svc.InterruptionReport
@@ -475,7 +541,17 @@ class ControllerRuntime:
     async def shutdown_application(
         self, command: svc.OperatorCommand
     ) -> pb.CommandAdmission:
-        return await self.session_commands.shutdown_application(command)
+        admission = await self.session_commands.shutdown_application(command)
+        if (
+            admission.result == pb.COMMAND_RESULT_ACCEPTED
+            and self.microcontroller_lifecycle is not None
+        ):
+            self._spawn(
+                self.microcontroller_lifecycle.shutdown(
+                    self.lifecycle.shutdown_intent_ns
+                )
+            )
+        return admission
 
     async def supervisor_heartbeat(
         self, heartbeat: pb.HeartbeatReport, ingress_ns: int

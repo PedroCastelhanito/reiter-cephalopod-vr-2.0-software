@@ -912,6 +912,12 @@ async def test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial()
             "InitializeDisplay", initialize, deadline_ns=deadline
         )
         assert initialized.result == pb.COMMAND_RESULT_ACCEPTED
+        # The receipt is an admission boundary; the GL owner announces the display
+        # resource when it runs the retained command, which can be slightly later.
+        for _ in range(200):
+            if "display:projector/main" in driver.state.pending_resources:
+                break
+            await asyncio.sleep(0.01)
         assert "display:projector/main" in driver.state.pending_resources
         assert not any(
             method == "ReportWorkerHeartbeat" for method, _, _ in reports.records

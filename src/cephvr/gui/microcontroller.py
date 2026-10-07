@@ -4,20 +4,23 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
-from PyQt6.QtCore import QSignalBlocker, pyqtSignal
+from PyQt6.QtCore import QSettings, QSignalBlocker, pyqtSignal
 from PyQt6.QtSerialPort import QSerialPortInfo
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QHBoxLayout,
     QHeaderView,
     QLineEdit,
     QPushButton,
     QSizePolicy,
     QTableWidgetItem,
     QVBoxLayout,
+    QWidget,
 )
 
-from cephvr.gui.components import Card, button, combo, equal_row_height
+from cephvr.gui.components import Card, button, combo, equal_row_height, field
 from cephvr.gui.device_panel import DevicePanel, entry
+from cephvr.gui.paths import PathField
 from cephvr.gui.tables import DataTable
 from cephvr.gui.view import DashboardView, Phase
 
@@ -34,10 +37,11 @@ class CameraTrigger:
 class MicrocontrollerPanel(DevicePanel):
     camera_enable_requested = pyqtSignal(str, bool)
     connection_requested = pyqtSignal()
+    firmware_requested = pyqtSignal(str)
     save_requested = pyqtSignal(str, str, bool, str, bool, object, object)
     pin_test_requested = pyqtSignal(str, bool)
 
-    def __init__(self) -> None:
+    def __init__(self, *, settings: QSettings | None = None) -> None:
         super().__init__(
             "Microcontroller connection",
             "PORT        —\nFIRMWARE    —\nTRIGGER TEST Not tested",
@@ -51,12 +55,39 @@ class MicrocontrollerPanel(DevicePanel):
         port_field = port_item.widget()
         assert port_field is not None
         self.form.addWidget(port_field, 0, 0, 1, 2)
+        self.firmware = PathField(
+            title="Select Uno firmware sketch or image",
+            placeholder="Firmware .ino or .hex file",
+            file_filter="Uno firmware (*.ino *.hex)",
+        )
+        self.firmware.editor.filename_only = True
+        self.upload = button(
+            "Upload",
+            hint="Compile an Arduino sketch if needed, then upload and verify Uno firmware during Configuration",
+        )
+        self.upload_pending = False
+        self.upload_available = False
+        firmware_row = QWidget()
+        firmware_layout = QHBoxLayout(firmware_row)
+        firmware_layout.setContentsMargins(0, 0, 0, 0)
+        firmware_layout.addWidget(self.firmware, 1)
+        firmware_layout.addWidget(self.upload)
+        equal_row_height(self.firmware.editor, self.firmware.browse, self.upload)
+        self.form.addWidget(field("FIRMWARE", firmware_row), 1, 0, 1, 2)
+        self.upload.clicked.connect(self.request_upload)
+        if settings is not None:
+            self.firmware.editor.setText(
+                str(settings.value("microcontroller/firmware_path", ""))
+            )
+            self.firmware.editor.textChanged.connect(
+                lambda path: settings.setValue("microcontroller/firmware_path", path)
+            )
+        self.firmware.editor.textChanged.connect(self.refresh_tests)
         self.camera_rows: tuple[CameraTrigger, ...] = ()
         self.pins: dict[str, str] = {}
         self.pin_editors: dict[str, QLineEdit] = {}
         self.can_test = False
         self.managed = False
-        self.live_review = False
         self.simulated_inventory = False
         self.managed_test_key = ""
         self.pending_test_key = ""
@@ -85,6 +116,10 @@ class MicrocontrollerPanel(DevicePanel):
         layout.insertWidget(1, self.io)
         layout.insertWidget(2, self.triggers)
         self.port.currentIndexChanged.connect(self.port_changed)
+
+    def request_upload(self) -> None:
+        if self.upload.isEnabled():
+            self.firmware_requested.emit(self.firmware.editor.text().strip())
 
     @staticmethod
     def pin_table(direction: str) -> DataTable:
@@ -146,16 +181,13 @@ class MicrocontrollerPanel(DevicePanel):
         if name == "Scan ports":
             self.scan_ports()
             return
-        if (self.managed or self.live_review) and name == "Test connection":
+        if self.managed and name == "Test connection":
             if not self.port.currentData():
                 self.console.appendPlainText(
                     "Select a COM port before testing connection."
                 )
                 return
             self.console.appendPlainText(f"Connecting to {self.port.currentData()}…")
-            if self.live_review:
-                self.connection_pending = True
-                self.refresh_tests()
             self.connection_requested.emit()
             return
         super().request(name)
@@ -206,6 +238,7 @@ class MicrocontrollerPanel(DevicePanel):
             or self.managed_test_key
             or self.pending_test_key
             or self.connection_pending
+            or self.upload_pending
         ):
             return
         port = str(self.port.currentData() or "")
@@ -324,7 +357,25 @@ class MicrocontrollerPanel(DevicePanel):
             or self.connection_pending
         )
         exclusive_active = bool(
-            self.managed_test_key or self.pending_test_key or self.connection_pending
+            self.managed_test_key
+            or self.pending_test_key
+            or self.connection_pending
+            or self.upload_pending
+        )
+        self.firmware.setEnabled(self.can_review and not active)
+        self.upload.setText("Uploading…" if self.upload_pending else "Upload")
+        self.upload.setEnabled(
+            self.managed
+            and self.can_review
+            and self.upload_available
+            and not active
+            and bool(self.port.currentData())
+            and bool(self.firmware.editor.text().strip())
+        )
+        self.upload.setToolTip(
+            "Compile if needed, upload and verify Uno firmware"
+            if self.managed
+            else "Firmware upload requires the managed runtime"
         )
         self.port.setEnabled(self.can_review and not active)
         self.action_buttons[0].setEnabled(self.can_review and not active)
@@ -368,9 +419,6 @@ class MicrocontrollerPanel(DevicePanel):
         self.save_pins()
 
     def stop_review_tests(self, keys: set[str] | None = None) -> None:
-        live_key = self.managed_test_key or self.pending_test_key
-        if self.live_review and live_key and (keys is None or live_key in keys):
-            self.pin_test_requested.emit(live_key, False)
         for key in tuple(
             self.review_tests if keys is None else self.review_tests & keys
         ):
@@ -393,7 +441,7 @@ class MicrocontrollerPanel(DevicePanel):
         control.update()
 
     def test_pin(self, key: str) -> None:
-        if (self.managed or self.live_review) and key == self.managed_test_key:
+        if self.managed and key == self.managed_test_key:
             self.pin_test_requested.emit(key, False)
             return
         if key in self.review_tests:
@@ -453,19 +501,15 @@ class MicrocontrollerPanel(DevicePanel):
             description = f"Trial state: pin {pin}, active-high output test"
         else:
             description = f"Projector flip: pin {pin}, rising-edge input observation"
-        if self.managed or self.live_review:
-            if self.live_review:
-                self.pending_test_key = key
-                self.refresh_tests()
+        if self.managed:
             self.pin_test_requested.emit(key, True)
-            route = "controller" if self.managed else "COM port"
-            self.console.appendPlainText(f"Requested {description} through {route}.")
+            self.console.appendPlainText(f"Requested {description} through controller.")
             return
         self.review_tests.add(key)
         self.update_test_button(key)
         self.refresh_tests()
         self.console.appendPlainText(
-            f"Review · {description}; not tested — pin-test transport is not integrated, no command sent."
+            f"Review · {description}; not tested, no command sent. Use the managed runtime to test pins."
         )
 
     def apply_view(self, view: DashboardView) -> None:

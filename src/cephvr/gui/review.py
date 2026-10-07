@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from cephvr.gui.layouts import fit_window_to_screen
 from cephvr.gui.projectors import DisplayInfo
 from cephvr.gui.review_draft import draft_path, load_review_draft, save_review_draft
-from cephvr.gui.review_mcu import ReviewMcu
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
@@ -105,19 +104,6 @@ class ReviewControls(QObject):
         self.observer.toggled.connect(lambda checked: self.set_phase(self.phase))
         self.phase_actions[self.phase].setChecked(True)
         self.window = window
-        self.review_mcu: ReviewMcu | None = None
-        if real_devices:
-            panel = window.devices.microcontroller
-            panel.live_review = True
-            self.review_mcu = ReviewMcu()
-            self.review_mcu.connection_result.connect(self.mcu_connection_result)
-            self.review_mcu.diagnostic_result.connect(panel.set_diagnostic)
-            self.review_mcu.command_failed.connect(panel.set_test_failure)
-            panel.connection_requested.connect(self.test_mcu_connection)
-            panel.pin_test_requested.connect(self.test_mcu_pin)
-            if isinstance(window, ReviewDashboardWindow):
-                window.closing.connect(self.review_mcu.shutdown)
-            self.review_mcu.start()
         window.dashboard.action_requested.connect(
             lambda action: window.dashboard.log_console.appendPlainText(
                 f"LOCAL REVIEW · {action} selected; no command sent."
@@ -184,53 +170,6 @@ class ReviewControls(QObject):
         window.dashboard.log_console.setPlainText(
             "Sample subject loaded.\nNo controller connection."
         )
-
-    def test_mcu_connection(self) -> None:
-        if self.review_mcu is not None:
-            self.review_mcu.request(
-                "connect",
-                port=str(self.window.devices.microcontroller.port.currentData()),
-            )
-
-    def test_mcu_pin(self, key: str, start: bool) -> None:
-        if self.review_mcu is None:
-            return
-        if not start:
-            self.review_mcu.request("stop", key=key)
-            return
-        panel = self.window.devices.microcontroller
-        camera = next((item for item in panel.camera_rows if item.key == key), None)
-        editor = (
-            panel.trial_pin
-            if key == "trial-state"
-            else panel.flip_pin
-            if key == "projector-flip"
-            else panel.pin_editors[key]
-        )
-        self.review_mcu.request(
-            "start",
-            key=key,
-            port=str(panel.port.currentData()),
-            pin=editor.text().strip(),
-            role=camera.role if camera is not None else "",
-            frequency_hz=float(camera.frequency) if camera is not None else None,
-        )
-
-    def mcu_connection_result(self, success: bool, message: str) -> None:
-        panel = self.window.devices.microcontroller
-        panel.connection_pending = False
-        panel.refresh_tests()
-        panel.console.appendPlainText(message)
-        if success:
-            port = str(panel.port.currentData())
-            panel.status_column.hud.setPlainText(
-                f"CONNECTION  Connected\nPORT        {port}\n{message}\n"
-                "TRIGGER TEST Awaiting pin test"
-            )
-        else:
-            panel.status_column.hud.setPlainText(
-                f"CONNECTION  Failed\n{message}\nTRIGGER TEST Not tested"
-            )
 
     def set_phase(self, phase: Phase) -> None:
         self.phase = phase

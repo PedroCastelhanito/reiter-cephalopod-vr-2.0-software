@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import uuid
 from pathlib import Path
 
@@ -11,7 +12,7 @@ from cephvr.controller.metadata.types import StorageError
 
 
 def sync_directory(path: Path) -> None:
-    if os.name == "nt":
+    if sys.platform == "win32":
         raise StorageError("Windows directory durability helper unavailable")
     fd = os.open(path, os.O_RDONLY)
     try:
@@ -23,7 +24,7 @@ def sync_directory(path: Path) -> None:
 def atomic_json(path: Path, payload: bytes, *, replace: bool) -> None:
     temporary = path.with_name(f".cv-{uuid.uuid4().hex}.tmp")
     temporary_io = temporary
-    if os.name == "nt":
+    if sys.platform == "win32":
         from cephvr.platform.windows.paths import extended_path
 
         temporary_io = Path(extended_path(temporary))
@@ -32,7 +33,7 @@ def atomic_json(path: Path, payload: bytes, *, replace: bool) -> None:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
-        if os.name == "nt":
+        if sys.platform == "win32":
             from cephvr.platform.windows.durable import create_synced, replace_synced
 
             if replace:

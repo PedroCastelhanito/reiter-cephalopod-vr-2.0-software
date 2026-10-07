@@ -289,15 +289,10 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             workers=self.state.workers,
             commands=commands,
             session_slot=self.state.session_slot,
-            pulse=self.state.pulse,
             supervisor=supervisor,
-            serial=serial,
             heartbeat_interval_ns=workers.heartbeat_interval_ns,
             health_silence_ns=workers.health_silence_ns,
             recovery_ns=self.control_policies.recovery_ns,
-            serial_keepalive_interval_ns=configuration.file_policies.serial_keepalive_interval_ns,
-            serial_communication_timeout_ns=configuration.file_policies.serial_communication_timeout_ns,
-            serial_ack_timeout_ns=configuration.file_policies.serial_ack_timeout_ns,
             catalogue_lock=self.session.catalogue.catalogue_lock,
             failure_handler=self.authority_failure.health_failure,
             clock=clock,
@@ -465,11 +460,13 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
     async def execute_microcontroller_command(
         self, request: wire.AcquisitionMicrocontrollerCommand, *, deadline_ns: int
     ) -> control.CommandAdmission:
-        rejected = self.manual_configuration.install(request, deadline_ns)
-        if rejected is not None:
-            return rejected
-        return await self.manual_pulses.execute_diagnostic(
-            request, deadline_ns=deadline_ns
+        return control.CommandAdmission(
+            command_id=request.command.command_id,
+            result=control.COMMAND_RESULT_REJECTED,
+            failure=control.Failure(
+                code="MICROCONTROLLER_OWNER_MOVED",
+                message="Use controller Microcontroller commands",
+            ),
         )
 
     async def report_preview_consumer_state(

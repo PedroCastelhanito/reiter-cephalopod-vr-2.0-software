@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from decimal import Decimal, InvalidOperation
 from typing import Any, cast
 
@@ -9,6 +10,7 @@ from cephvr.acquisition.v1 import camera_pb2
 from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.microcontroller.firmware_source import read_firmware
 from cephvr.gui.device_requests import (
     assign_camera_role,
     import_camera_preset,
@@ -29,14 +31,28 @@ async def dispatch_device_action(
         return True, "Completed"
     if action == "test_cameras":
         return await test_camera_connections(client, options["cameras"])
-    if action == "mcu":
+    if action in {"mcu", "mcu_upload"}:
         state = client.snapshot
+        image = None
+        if action == "mcu_upload":
+            try:
+                image = await asyncio.to_thread(read_firmware, str(options["path"]))
+            except (OSError, UnicodeError, ValueError) as exc:
+                raise ClientError(str(exc)) from exc
         request = rpc.MicrocontrollerCommandRequest(
             command=client.operator_command(),
             expected_configuration_revision=state.configuration.revision,
-            kind=cast(Any, options["kind"]),
+            kind=cast(
+                Any,
+                rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE
+                if image
+                else options["kind"],
+            ),
             signal=cast(Any, options.get("signal", 0)),
         )
+        if image is not None:
+            request.firmware_path = str(image.path)
+            request.firmware_sha256 = image.digest
         outcome = await client.execute("ExecuteMicrocontrollerCommand", request)
         if not outcome.succeeded:
             raise ClientError(outcome.failure or "MCU operation did not succeed.")
@@ -145,6 +161,33 @@ async def _camera(
     outcome = await client.execute("ExecuteCameraCommand", request)
     if not outcome.succeeded:
         raise ClientError(outcome.failure or "Camera operation did not succeed.")
+    if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW and options.get("show_preview"):
+        # Completion's current view supplies the exact new run; Show never starts capture.
+        current = client.snapshot
+        device = (
+            current.acquisition_devices.behavioral
+            if role == 1
+            else current.acquisition_devices.tracking
+        )
+        if not device.preview_running or not device.preview_run_id:
+            raise ClientError(
+                "Capture completed without a confirmed preview run; refresh camera status."
+            )
+        show = rpc.CameraCommandRequest(
+            command=client.operator_command(),
+            expected_configuration_revision=current.configuration.revision,
+            camera=cast(Any, role),
+            kind=rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+            preview_run_id=device.preview_run_id,
+        )
+        if "placement" in options:
+            show.preview_placement.ParseFromString(options["placement"])
+        shown = await client.execute("ExecuteCameraCommand", show)
+        if not shown.succeeded:
+            raise ClientError(
+                f"Capture started; preview could not open: {shown.failure or 'unconfirmed presentation'}. "
+                "Disconnect to stop capture."
+            )
 
 
 async def _save_camera_settings(

@@ -6,7 +6,6 @@ import asyncio
 import uuid
 from collections.abc import Callable, Mapping
 
-from cephvr.acquisition.microcontroller.protocol import PROTOCOL_VERSION
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.device.ports import DeviceHooks
@@ -16,6 +15,7 @@ from cephvr.controller.device.release_evidence import (
     stop_preview_confirmed,
 )
 from cephvr.controller.device.status_retention import CameraStatusRetention
+from cephvr.controller.microcontroller.protocol import PROTOCOL_VERSION
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.resolution import resolved_configuration

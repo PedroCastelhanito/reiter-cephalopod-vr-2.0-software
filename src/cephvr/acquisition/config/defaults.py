@@ -7,6 +7,7 @@ from pathlib import Path
 
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2
+from cephvr.controller.microcontroller.config import load_microcontroller_pair
 from cephvr.shared.config import ConfigurationError
 
 from .policy import _load_pair
@@ -148,7 +149,7 @@ def load_defaults(root: Path) -> types_pb2.AcquisitionSettings:
         pulse = _role(config, role)
         if pulse.ListFields():
             getattr(result.pulses, role).CopyFrom(pulse)
-    mc = config.get("microcontroller", {})
+    mc = load_microcontroller_pair(Path(root)).config["microcontroller"]
     if "port" in mc:
         result.pulses.port = _token(mc["port"], "microcontroller.port")
     for role in ("trial_state", "projector_flip"):

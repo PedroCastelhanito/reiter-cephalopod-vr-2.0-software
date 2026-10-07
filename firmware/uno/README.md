@@ -1,6 +1,6 @@
 # CephVR2 Arduino Uno firmware
 
-`cephvr2_mcu/cephvr2_mcu.ino` implements the acquisition A11 serial protocol v3
+`cephvr2_mcu/cephvr2_mcu.ino` implements the controller-owned A11 serial protocol v3
 for the Arduino Uno. Owner-authorized manual uploads to COM8 ran on 2026-10-05
 and 2026-10-07. The current protocol-3 image, pre-upload flash backup, verified
 upload and matching board CAPS are recorded in
@@ -21,8 +21,19 @@ counts actual generated output rising transitions, including the initial HIGH;
 Trial state's held-HIGH test counts one. Camera counters increment at the timer's
 HIGH writes, not from requested rate or elapsed time. Input diagnostics count
 observed rising edges. Counts persist after Stop until a new test, with atomic
-readback and uint32 saturation. Protocol 3 requires a matching manual firmware
-update before the updated host can connect; the prior uploaded image was protocol 2.
+readback and uint32 saturation. Protocol 3 requires a matching firmware image
+before the updated host can connect; the prior uploaded image was protocol 2.
+The managed GUI provides explicit Configuration Upload for a selected `.ino` sketch
+or compiled application `.hex`. For `.ino`, controller snapshots the sketch and its
+companion sources, compiles for Uno with installed Arduino CLI, validates the generated
+application image, then uploads with verification. A compile failure leaves serial and
+the board untouched. The installed Uno AVR core and any used libraries must be
+present. Controller releases the configured COM port, owns the contained uploader, then verifies fresh
+CAPS/STATUS with outputs off. Stop camera capture/editing and pin diagnostics first.
+The GUI delegates compilation to controller; it does not invoke tools or serial itself.
+Automatic tool/core/library installation remains outside this workflow. Native GUI
+compile/upload acceptance is still pending on the rig. See
+[A11](../../docs/architecture/acquisition.md#a11) and [the upload contract](../../contracts/acquisition/microcontroller.md).
 The firmware
 leaves outputs LOW at boot, on diagnostic completion, after OFF and on watchdog
 stop. A successful protocol response confirms only firmware state; electrical
@@ -47,5 +58,5 @@ the flip line. The output test drives Trial state HIGH for at most two seconds;
 its displayed result is firmware evidence, so verify the physical level at the
 receiving input separately.
 
-Firmware installation remains manual under A11. Check connected wiring before
-any later replacement.
+Firmware replacement follows A11's explicit Configuration Upload or manual tooling.
+Check connected wiring before any replacement.

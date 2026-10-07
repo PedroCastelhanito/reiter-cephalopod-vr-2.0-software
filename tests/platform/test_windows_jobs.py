@@ -31,7 +31,7 @@ class FakeApi:
         self.closed: list[int] = []
         self.image_query_failures = 0
 
-    def QueryInformationJobObject(self, job, kind, buf, size, _ret) -> bool:  # noqa: N802
+    def QueryInformationJobObject(self, job, kind, buf, size, _ret) -> bool:
         pids = self.passes[min(self.pass_index, len(self.passes) - 1)]
         self.pass_index += 1
         word = ctypes.sizeof(ctypes.c_size_t)
@@ -44,7 +44,7 @@ class FakeApi:
             )
         return True
 
-    def OpenProcess(self, rights, inherit, pid) -> int:  # noqa: N802
+    def OpenProcess(self, rights, inherit, pid) -> int:
         if pid in self.gone:
             self.last_error = ERROR_INVALID_PARAMETER
             return 0
@@ -53,7 +53,7 @@ class FakeApi:
             return 0
         return pid
 
-    def QueryFullProcessImageNameW(self, handle, flags, path, size) -> bool:  # noqa: N802
+    def QueryFullProcessImageNameW(self, handle, flags, path, size) -> bool:
         if self.image_query_failures:
             self.image_query_failures -= 1
             self.last_error = 5
@@ -63,14 +63,14 @@ class FakeApi:
         path.value = "member.exe"
         return True
 
-    def WaitForSingleObject(self, handle, timeout) -> int:  # noqa: N802
+    def WaitForSingleObject(self, handle, timeout) -> int:
         return WAIT_OBJECT_0 if handle in self.exited_after_open else WAIT_TIMEOUT
 
-    def CloseHandle(self, handle) -> bool:  # noqa: N802
+    def CloseHandle(self, handle) -> bool:
         self.closed.append(handle)
         return True
 
-    def TerminateProcess(self, handle, code) -> bool:  # noqa: N802
+    def TerminateProcess(self, handle, code) -> bool:
         self.terminated.append(handle)
         return self.terminate_ok
 

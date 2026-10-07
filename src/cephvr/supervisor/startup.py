@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import importlib.util
 import os
 import secrets
 import sys
@@ -29,6 +28,7 @@ from cephvr.platform.windows.python_runtime import (
     resolve_python_executable,
 )
 from cephvr.shared.clock import HostClockDescriptor
+from cephvr.shared.managed_modules import REQUIRED_MODULES, missing_roles
 from cephvr.shared.transport_deadlines import remaining_seconds
 from cephvr.supervisor.outbound import GrpcOutbound
 from cephvr.supervisor.registry import LaunchRegistry
@@ -286,20 +286,7 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
         or not bootstrap["control_policies"]
     ):
         raise WindowsLaunchError("resolved control policies are missing")
-    required_modules = {
-        "acquisition": "cephvr.acquisition.main",
-        "visual_stimulus": "cephvr.visual_stimulus.main",
-        "tracking": "cephvr.tracking.main",
-        "gui": "cephvr.gui.main",
-    }
-    missing = []
-    for role, module in required_modules.items():
-        try:
-            present = importlib.util.find_spec(module) is not None
-        except ModuleNotFoundError:
-            present = False
-        if not present:
-            missing.append(role)
+    missing = missing_roles()
     if missing:
         raise WindowsLaunchError(
             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
@@ -307,7 +294,7 @@ def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
     bootstrap["interpreter"] = str(
         resolve_python_executable(Path(str(bootstrap["interpreter"])))
     )
-    return required_modules
+    return REQUIRED_MODULES
 
 
 async def run_supervisor(

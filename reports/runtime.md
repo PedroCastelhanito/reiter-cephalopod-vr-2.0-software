@@ -1,6 +1,6 @@
 # Controller and supervisor status
 
-Updated: 2026-10-07. Implementation/source review is recorded for the controller,
+Updated: 2026-10-08. Implementation/source review is recorded for the controller,
 supervisor, launcher, headless client and shared/native helpers. Local results below
 have their original scope; Windows and full-workload acceptance remain pending.
 [ARCH-001/002](../architecture.md#arch-001) owns scope and structure;
@@ -9,6 +9,124 @@ have their original scope; Windows and full-workload acceptance remain pending.
 [E06/E08](../docs/architecture/system-contracts.md#e08) own behavior.
 
 ## Current scope and review
+
+Controller Microcontroller ownership (2026-10-08) implements
+[A10 revision 55](../docs/architecture/acquisition.md#a10),
+[A11 revision 40](../docs/architecture/acquisition.md#a11),
+[E08 revision 166](../docs/architecture/system-contracts.md#e08) and
+[G01 revision 129](../docs/architecture/gui.md#g01). The controller owns the single
+serial thread, boundary/keepalive arbitration, Configuration pin tests and supervised
+`.ino` compilation / `.hex` upload. These operations work with acquisition disabled
+and no acquisition service. Acquisition is an authenticated camera-trigger client;
+its original deadlines, stop issuance and timing evidence survive the RPC hop.
+CONNECT creates an exact claim; stale-claim calls cannot alter a later connection.
+The final external manual preview releases its claim after OFF and camera cutoff;
+remaining external previews retain ownership. Independent Snapshot Microcontroller
+state prevents old camera reports from overwriting device/diagnostic state.
+
+Control-loss cleanup waits for the camera claim's original release allowance while
+fencing new execution and admitting OFF/release. Normal shutdown includes physical
+COM/native cleanup in its retained cleanup/recovery deadline, clamped by the
+application backstop. Failed closure remains visible and fenced. Serial timing reload
+requires a released port; a connected owner cannot silently change watchdog policy.
+The local review GUI now opens no COM handle, including real-inventory mode; device
+tests use the managed GUI. Microcontroller config/policy pair 1 owns generic defaults
+and fixed policy, with a canonical digest; acquisition pair 18 retains camera defaults
+and distributed compatibility fields. The existing pyserial 3.5 dependency now belongs
+to the base install, independent of acquisition extras.
+
+Final portable command covering acquisition/controller/supervisor/shared/client passes
+**812 tests / 5 platform skips / 3 marker exclusions** (12.21 s). Fifteen real authenticated
+loopback controller tests pass (1.14 s), including forged/stale peer rejection, exact
+metadata deadlines/replay, disabled-acquisition pin tests and `.ino`/`.hex` Upload,
+independent state, normal shutdown and control-loss claim ordering. Eleven offscreen
+GUI Microcontroller/firmware cases pass (6.94 s), including read-only review behavior,
+cleanup/failure gating and clearing retired diagnostic/connection state. These
+checks exercise mocked device/tool boundaries, not native board flashing or physical
+camera timing. Ruff check/format pass 491 files; Windows-target mypy passes 427
+sources. Boundaries inspect 616 modules with zero violations; existing size advisories
+retain their cohesion review. All 19 protobuf bindings regenerate. Five edited TOMLs
+parse; canonical acquisition 18/Microcontroller 1 load. Twelve documents / 490 local
+links and anchors pass, and whitespace is clean.
+
+ARCH-002 review keeps runtime/assembly/service as composition/transport and the
+rehomed serial owner as the existing single-connection state machine; its protocol,
+channel, pulse scheduling and serial adapter remain separate. Device, firmware source,
+image/tool/handoff, authenticated admission, lifecycle, health and bootstrap are focused
+modules with records/callbacks rather than whole-runtime references. Acquisition's
+old keepalive/firmware handling and the review GUI serial worker are removed.
+Manual Preview retains the single stop/cutoff/transfer/remaining-output coordination
+chain with focused helpers; its new claim-release operation lives in the existing pulse
+observation helper. Retained OFF proof allows an uncertain closing bridge to finish
+cleanup without attempting fresh commands on it. Cancellation uses the caller's
+original deadline rather than an invented transport allowance.
+
+The earlier selected-sketch increment passed 26 firmware/source cases, four offscreen
+GUI cases and 771 portable backend/shared cases before this ownership migration;
+those are historical development results at acquisition policy 17. Current raw board
+installation evidence keeps its original ownership/source scope. All results refer to
+the shared uncommitted tree at HEAD `e4c653c`, not an immutable rig revision. The
+AMD64-Windows native packaging guard blocks `python -m build --no-isolation` here on
+macOS; no packaging pass is claimed. No actual Arduino CLI compilation, flash,
+hardware command or GUI/runtime restart ran. Full restart with the new config/policy
+files is required before rig testing. Installed CLI, Uno AVR core and sketch libraries
+remain prerequisites; native/device/timing acceptance stays in the
+[single rig checklist](rig-verification.md#managed-mcu-and-camera-gui-verification).
+
+Projector identifier wording (2026-10-08), [G01 revision 127](../docs/architecture/gui.md#g01):
+shared review/runtime mapping table and related labels use Display ID. The existing
+inventory/layout check passes; numbering and physical mapping behavior are unchanged.
+
+
+Projector JSON update (2026-10-08), [G01 revision 126](../docs/architecture/gui.md#g01):
+one Load JSON / Save as row restores all Projectors experiment settings and reusable
+geometry/color profile references, preserving current physical assignments. Version 3
+restores pulse/participation by logical face; numeric versions 1/2 and legacy runtime
+profiles remain supported. Offscreen 1280×900 inspection confirms the compact shared
+page without the redundant import button; its temporary image/settings were removed.
+No hardware command or managed-runtime restart ran.
+
+The full portable GUI run records **313 passed / 2 failed in 251.47 s**: one new
+roundtrip test had an incomplete inventory fixture (corrected; the focused seven-case
+file/native-profile check passes); the untouched Protocol advanced-alignment check
+showed a 12 px displacement but passes on independent rerun. It remains an explicitly
+tracked intermittent follow-up, so this increment claims no blanket GUI-suite pass.
+The added native-rebinding test validates the submitted profile through the backend's
+JSON model, with measured-reference/shared-output preservation and current monitor
+properties. Ruff lint/format pass six affected files, Windows-target mypy passes five
+sources, and boundaries inspect 608 modules with zero violations. Final projector/tank/
+calibration selection passes **40 in 30.60 s**; three final install/roundtrip cases pass
+in 4.38 s after retaining the authoritative-state profile reset (empty/new state cannot
+reuse prior runtime references). Physical projector,
+Windows/DPI and optical acceptance remain pending under E15.
+
+
+Review/runtime layout parity follows [G01 revision 125](../docs/architecture/gui.md#g01)
+and [G02 revision 34](../docs/architecture/gui.md#g02): both actual window compositions
+retain shared DashboardWindow pages. Camera Connect starts capture and opens the
+confirmed run's backend-owned preview; Disconnect stops both. PFS/source/rate restore
+per camera, with filename-only PFS display. Device hover colors remain stable; Tracking
+places Load/Save beside Pipeline and diagnostics/annotation in a separate action row.
+Controller authorizes and owns explicit Configuration-only firmware Upload,
+serial handoff, the supervised native helper and fresh stopped-output verification
+under [A11](../docs/architecture/acquisition.md#a11)/[E08](../docs/architecture/system-contracts.md#e08).
+Details and rig limits are in [acquisition](acquisition.md); always-grid calibration
+asset changes are in [Visual Stimulus](visual_stimulus.md).
+
+Matched-state checks compare controls and card/header geometry at 1280/720 across
+navigation and all subtabs; offscreen render inspection confirms Cameras,
+Microcontroller and Tracking layouts at both widths. The older Tracking-crop draft
+migration fix preserves the annotation dictionary; the owner's saved file previously
+restored twice with unchanged hash, while invalid files remain preserved/reported.
+The final portable GUI command passes **309 tests in 226.30 s**. Acquisition/controller/
+supervisor/shared suites pass **748 in 12.01 s**, with five Win32-atomic ring skips
+and three marker exclusions; this shared-tree run includes concurrent runtime work.
+Ruff lint/format pass 525 files, Windows-target mypy passes 454 sources, and boundary
+checks cover 607 modules with zero violations. All 19
+Protobuf sources were regenerated from owning schemas. Native Upload, camera output,
+Windows/DPI clipping and optical calibration remain rig acceptance. The updated
+isolated review GUI is open after approved desktop launch; native visual inspection
+is not claimed and no hardware/controller command ran.
 
 The owner has reopened the runtime and reports incorrect preview placement. Native
 read-only bounds reproduce insufficient space for the default square and x=0
@@ -1935,6 +2053,10 @@ These are local presentation checks; owner review, Windows packaging and full
 application/device/workload acceptance remain pending. The earlier Mac packaging
 attempt failed at the existing AMD64 Windows DLL guard;
 [rig acceptance](rig-verification.md) remains the Windows verification boundary.
+
+### Backend review fixes (2026-10-08)
+
+Source review plus ruff/AST scans produced candidate findings; those confirmed in the code are fixed and tested, with evidence in [review-evidence-2026-10-08](review-evidence-2026-10-08/README.md). Fixed: supervisor shutdown replay, tracking-release gRPC retry, tolerant `source_registered`, concurrent worker cleanup, warnings for rejected participant Shutdown and persistent helper errors, launcher parser/reader resilience, client timeout messages and E02 Ctrl+C scope, shared policy digest ([E14](../docs/architecture/system-contracts.md#e14) revision 207), loopback/`contract_version` checks. Still open: `shutdown-health-checks` (controller-loss and fencing gaps), the TODO "For review" refactors, and coverage measurement. Local results do not close E15 rig checks.
 
 ## Cohesion and test organization
 

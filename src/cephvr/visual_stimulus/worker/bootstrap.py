@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.shared.backend_bootstrap import _decode_policies
+from cephvr.shared.backend_bootstrap import (
+    decode_control_policies,
+    require_loopback_endpoint,
+)
 from cephvr.shared.identity import require_uuid4
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
@@ -63,8 +66,7 @@ def decode(document: Mapping[str, object]) -> WorkerBootstrap:
     ):
         raise ValueError("renderer bootstrap identity mismatch")
     for endpoint in ("coordinator_endpoint", "supervisor_endpoint"):
-        if not text(endpoint).startswith("127.0.0.1:"):
-            raise ValueError("renderer peer must use loopback")
+        require_loopback_endpoint(text(endpoint), f"renderer {endpoint}")
     if number("heartbeat_interval_ns") >= number("health_silence_ns"):
         raise ValueError("invalid renderer health policy")
     return WorkerBootstrap(
@@ -88,7 +90,7 @@ def decode(document: Mapping[str, object]) -> WorkerBootstrap:
         number("heartbeat_interval_ns"),
         number("health_silence_ns"),
         Path(text("software_root")),
-        _decode_policies(text("control_policies")),
+        decode_control_policies(text("control_policies")),
         number("owner_pid"),
         number("owner_creation_time_100ns"),
         number("supervisor_pid"),

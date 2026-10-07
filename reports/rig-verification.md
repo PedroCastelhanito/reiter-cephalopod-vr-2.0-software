@@ -131,7 +131,7 @@ button response remains unverified. No E12 Setup or recording command was issued
 <a id="managed-device-gui"></a>
 ### Managed MCU and camera GUI verification
 
-Implementation update: 2026-10-06; physical acceptance remains open under A10/A11/E15.
+Implementation update: 2026-10-08; physical acceptance remains open under A10/A11/E15.
 Use `.venv\Scripts\python.exe tools/generate_contracts.py`, then
 `.venv\Scripts\python.exe scripts/start_runtime_gui.py` on the rig. Do not launch a
 second application generation while the previous launcher/backends remain active.
@@ -141,6 +141,25 @@ unchanged. Repeat with Y: the first launcher must verify an empty application jo
 and publish its exact exit receipt before the second generation starts. Do this
 outside an experiment; force replacement is not graceful recording closure.
 Older launchers without the replacement endpoint require one manual shutdown.
+
+For explicit firmware Upload, select the primary Arduino `.ino` (or compiled Uno
+application `.hex`) and verify the board/port before pressing Upload. Verify the installed
+CLI/Uno AVR core and required libraries. Confirm source/companion changes are detected,
+compiler errors leave serial untouched, the application image excludes bootloader data,
+and exact compiler/job/source/build cleanup precedes upload. During Configuration
+with camera/device ownership and diagnostics released, confirm controller authorization
+and sole serial ownership, serial release, contained CLI upload
+with verification, exact helper/pipe/private-source/build/image cleanup and fresh protocol-3
+CAPS/STATUS with all outputs off. Confirm tests/capture block Upload, malformed or
+changed images leave serial untouched, and failed/disconnected uploads never resume
+outputs. Only perform interruption/failure injection with an approved recoverable
+image and wiring; verify unresolved native cleanup blocks Setup and device access.
+Existing successful manual installations do not establish GUI upload acceptance.
+After a full restart with acquisition policy 18 and Microcontroller policy 1, test
+Microcontroller Connect/Test/Stop and Upload with acquisition disabled, then camera
+external-trigger Setup/preview/Start/Stop through the authenticated controller claim.
+Verify original boundary/stop timing and watchdog behavior under load, stale-claim
+rejection, and physical COM/native cleanup on normal shutdown and authority loss.
 
 1. Confirm the synchronized GUI automatically acquires unheld control. With a
    headless holder, it must remain observing until explicit confirmed takeover.
@@ -166,10 +185,10 @@ Older launchers without the replacement endpoint require one manual shutdown.
    errors must remain explicit; no free-running fallback is permitted.
 4. Test enabled: verify separate connection/identity results, no capture or trigger
    pulses, preserved selection, and reported failure for an unavailable camera.
-5. Start capture on each camera; confirm usable frames and MCU pulse state. Open
-   OpenCV Preview from Cameras and the Dashboard selector; confirm acquisition
-   owns the native windows. Close with X/Hide and verify backend visibility updates
-   both selectors while capture continues. Reopen, then Stop capture and verify
+5. Click Connect on each camera; confirm capture and its OpenCV window open together,
+   with usable frames and MCU pulse state. The Dashboard selector uses the same
+   acquisition-owned native windows. Close with X/Hide and verify backend visibility updates
+   the selector while capture continues. Reopen, then Disconnect and verify
    window/reader and camera/buffer/pulse release.
    After full restart for policy 15, verify initial GUI-right-edge placement, left
    fallback and work-area clamping on actual monitor/DPI arrangements. Confirm
@@ -421,7 +440,7 @@ to inspect coverage; it does not replace review of the complete rig results.
 | Ring overwrite, copy/recheck and retirement | `tests/acquisition/test_worker_ring_regressions.py` |
 | Encoder negotiation, cancellation and closure | `tests/acquisition/test_recording_negotiation.py`, `test_recording_cleanup.py`, `test_recording_paths.py`, `test_recording_capabilities.py` |
 | Retained recording faults and output scope | `tests/acquisition/test_recording_cleanup.py`, `test_worker_admission.py` |
-| Serial protocol, cancellation, scheduled budgets and observation provenance | `tests/acquisition/test_microcontroller_protocol.py`, `test_microcontroller_owner.py`, `test_pulse_evidence.py` |
+| Serial protocol, cancellation, scheduled budgets and observation provenance | `tests/controller/test_microcontroller_protocol.py`, `test_microcontroller_owner.py`; acquisition `test_pulse_evidence.py` |
 | Admission, partial launch and health | `tests/acquisition/test_transport_admission.py`, `test_coordinator.py` |
 | Stop/Interrupt independence and session handoff | `tests/acquisition/test_trial_lifecycle.py`, `test_session_preparation.py` |
 | Cleanup closure | `tests/acquisition/test_cleanup_aggregation.py`, `tests/shared/test_cleanup_outputs.py` |

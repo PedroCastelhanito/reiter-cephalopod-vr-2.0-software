@@ -7,67 +7,12 @@ from pathlib import Path
 from typing import Protocol
 
 from cephvr.acquisition.buffers.ring import SharedRing
-from cephvr.acquisition.v1 import camera_pb2, microcontroller_pb2, runtime_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.acquisition.v1 import runtime_pb2
 from cephvr.control.v1 import services_pb2 as control_svc
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.microcontroller import SerialOwnerPort as SerialOwnerPort
 from cephvr.shared.pixels.types import PixelLayout
-
-
-class SerialOwnerPort(Protocol):
-    """Async facade serializing sync owner operations on one dedicated thread."""
-
-    async def connect(
-        self, *, deadline_ns: int
-    ) -> microcontroller_pb2.MicrocontrollerObservation: ...
-    async def configure(
-        self,
-        requested: camera_pb2.CameraPulseConfiguration,
-        *,
-        active_roles: tuple[int | str, ...],
-        deadline_ns: int,
-    ) -> microcontroller_pb2.MicrocontrollerObservation: ...
-    async def status(
-        self, *, deadline_ns: int
-    ) -> microcontroller_pb2.MicrocontrollerObservation: ...
-    async def keepalive(
-        self, *, deadline_ns: int
-    ) -> microcontroller_pb2.MicrocontrollerState: ...
-    async def diagnostic_start(
-        self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
-    ) -> tuple[bool, str, str, int]: ...
-    async def diagnostic_status(
-        self, *, deadline_ns: int
-    ) -> tuple[bool, str, str, int]: ...
-    async def diagnostic_stop(
-        self, *, deadline_ns: int
-    ) -> tuple[bool, str, str, int]: ...
-    async def on(
-        self,
-        selected_roles: tuple[int | str, ...],
-        *,
-        scheduled_boundary_ns: int | None,
-        deadline_ns: int,
-    ) -> microcontroller_pb2.PulseCommandEvidence: ...
-    async def off(
-        self,
-        selected_roles: tuple[int | str, ...],
-        *,
-        scheduled_boundary_ns: int | None,
-        stop_issued_ns: int | None,
-        deadline_ns: int,
-    ) -> microcontroller_pb2.PulseCommandEvidence: ...
-    async def reserve_boundary(
-        self,
-        boundary_ns: int,
-        command: microcontroller_pb2.PulseBoundaryCommand,
-        *,
-        selected_roles: tuple[int | str, ...],
-        deadline_ns: int,
-    ) -> None: ...
-    async def cancel_on_reservations(self, *, deadline_ns: int) -> None: ...
-    async def cancel_active_request(self) -> bool: ...
-    async def close(self, *, deadline_ns: int) -> None: ...
 
 
 class WorkerPort(Protocol):

@@ -43,6 +43,7 @@ async def test_unconfirmed_preview_release_still_attempts_capture_and_pulse_clea
 ):
     owner = CoordinatorCleanup.__new__(CoordinatorCleanup)
     owner._active = False
+    owner.close_firmware = None
     owner.close_preview_windows = AsyncMock(
         side_effect=RuntimeError("viewer still owned")
     )

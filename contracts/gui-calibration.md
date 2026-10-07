@@ -1,19 +1,38 @@
 # GUI rig calibration JSON
 
-Owner: [G01](../docs/architecture/gui.md#g01). This is a portable local GUI draft,
-not a Visual Stimulus display profile, mesh calibration or Setup-ready artifact.
-Load replaces every calibration field together; Save as writes an atomic snapshot.
-Discovered display/projector lists, device/output assignments, output participation,
-photodiode settings and VSync mode are outside this calibration document; loading
-leaves them unchanged. Screen names identify physical calibration surfaces, not
-discovered devices. Subject distances retain the same JSON keys when their GUI
-editors move between cards.
+Owner: [G01](../docs/architecture/gui.md#g01). One portable projector configuration
+combines the GUI rig/calibration values, synchronization settings, screen participation
+and runtime screen-profile references. Load validates the entire file before replacing
+the draft; Save as writes atomically. Physical display inventory, device identities,
+resolution/refresh properties and display-to-projector assignments are excluded.
+Loading preserves the current assignments and applies participation/pulse selection by
+logical rig face, so changing the machine does not restore obsolete monitor bindings.
+This is a local draft, not backend preparation or optical calibration evidence.
 
-The root has exactly three keys:
+The root has exactly five keys:
 
-- `format`: `"cephvr-rig-calibration"`.
-- `version`: integer `2`.
-- `values`: an object with all keys below, no missing or additional keys.
+- `format`: `"cephvr-rig-calibration"` (retained for existing files).
+- `version`: integer `3`.
+- `values`: all numeric/boolean calibration keys below.
+- `settings`: `enabled_screens` (face → boolean), `photodiode_enabled` (boolean),
+  `pulse_screen` (Front/Left/Right/Bottom or null), `vsync_mode` (Selected display
+  VSync / All displays VSync), and `pulse_rect` (X/Y/Width/Height, integer pixels or null).
+  Rectangle origins are nonnegative; non-null dimensions are positive. Pulse-off
+  preserves the other settings and permits a disabled target face. An unassigned
+  physical pulse target must receive a logical projector role before saving.
+- `screen_profile`: null for an unfinished draft, or the retained runtime profile
+  without its physical `outputs` / `photodiode_output_id`. Surface mappings retain
+  calibration references and logical `projector_role` coverage; `output_settings`
+  retains requested RGB precision and color-calibration references by logical face,
+  excluding identity, output ID, resolution, refresh and participation. At submission,
+  bind these to the current explicit display choices/properties. Preserve shared-output
+  coverage; absent required roles fail rather than guessing a display. Pacing remains
+  owned by backend configuration, without a GUI editor.
+
+Numeric-only versions 1/2 remain loadable and leave synchronization, participation
+and screen-profile references untouched. Legacy runtime display profiles use the
+same Load JSON action: adopt their reusable profile/settings, retaining current
+numeric GUI values and physical assignments. Save always writes the merged version 3.
 
 Keys in `values` are dot-separated field identifiers:
 
@@ -33,7 +52,7 @@ Invalid/missing inputs leave derived geometry invalid.
 Version 1 imports may include that field: a non-null value must agree with the
 formula (1e-9 absolute/relative numeric tolerance), with all three inputs supplied.
 Otherwise reject the whole document without changing current values. Compatible
-version 1 values load into version 2; saving always writes version 2. Reversal fields are JSON
+version 1 values load into the current draft. Reversal fields are JSON
 booleans. Other fields are finite JSON numbers or `null` for an unset draft value.
 For Bottom, `distance` denotes the total optical path through the 45° mirror:
 projector-to-mirror plus mirror-to-screen. The operator diagram derives the fold
@@ -47,7 +66,7 @@ tolerance are dimensionless. Dimensions, distances, scales, throw ratio and proj
 limits must be positive when set. Subject coordinates and pixel offsets retain
 signed numeric values; backend geometry validation remains authoritative at preparation.
 
-A file is limited to 1 MiB. Invalid format/version, field inventory, types or numeric
+A file is limited to 1 MiB. Invalid format/version, duplicate members, field inventory, types or numeric
 values leave existing fields untouched and report an error in the activity log.
 Nulls preserve unfinished work; a successful import does not establish valid geometry
 or hardware readiness. Calibration actions obey GUI editing authority, and a file

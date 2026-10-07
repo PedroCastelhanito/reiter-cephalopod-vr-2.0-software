@@ -191,6 +191,7 @@ class SupervisorRuntime:
             silence_timeout_ns=self.silence_timeout_ns,
             tasks=self.tasks,
             changed=status.changed,
+            helper_warning=status.keyed_warning,
         )
         self.registry.on_release(self._retire_released_worker)
         self.registration = registration

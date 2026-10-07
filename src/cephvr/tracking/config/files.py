@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-import hashlib
 from pathlib import Path
 
-from cephvr.shared.config import ConfigurationError, LoadedPair, load_pair
+from cephvr.shared.config import (
+    ConfigurationError,
+    LoadedPair,
+    load_pair,
+    policy_digest,
+)
 
 _POLICY_VERSION = 42
-_POLICY_SHA256 = "2a2cd2f44b24e2a520ef3c0bb573e81c1b2c9b7cbac7a27a8a80fbf15cb1da52"
+_POLICY_SHA256 = "d8ffd4e4277bac977e83e119ca1337fdf5b0092ca82c143313236d8ab60f67e7"
 _CONFIG_KEYS = frozenset(
     """
 backend.enabled
@@ -268,6 +272,6 @@ def load_files(root: Path) -> LoadedPair:
     )
     if pair.policy_version != _POLICY_VERSION:
         raise ConfigurationError(f"Tracking policy_version must be {_POLICY_VERSION}")
-    if hashlib.sha256(policy_path.read_bytes()).hexdigest() != _POLICY_SHA256:
+    if policy_digest(pair.policy) != _POLICY_SHA256:
         raise ConfigurationError("Tracking policy differs from its implementation")
     return pair

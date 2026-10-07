@@ -668,3 +668,78 @@ async def test_owner_loss_dispatches_exact_close_while_open_receipt_is_pending(
     assert (await opening).result == pb.COMMAND_RESULT_ACCEPTED
     for task in env.spawned:
         task.close()
+
+
+@pytest.mark.parametrize("blocked", ["", "camera", "diagnostic", "phase", "digest"])
+async def test_controller_authorizes_firmware_only_in_idle_configuration(blocked):
+    from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+
+    env = _Env()
+    env.lifecycle.session.phase = (
+        pb.SESSION_PHASE_SETTING_UP
+        if blocked == "phase"
+        else pb.SESSION_PHASE_CONFIGURATION
+    )
+    settings = env.configuration.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition
+    settings.pulses.port = "COM8"
+    views = pb.AcquisitionDeviceViews()
+    views.behavioral.device_open = blocked == "camera"
+    views.diagnostic.active = blocked == "diagnostic"
+    commands = []
+
+    from types import SimpleNamespace
+
+    class LocalOwner:
+        acquisition_claimed = False
+        view = pb.MicrocontrollerDeviceView()
+        firmware = SimpleNamespace(busy=False)
+
+        def ensure_idle(self):
+            pass
+
+        async def execute(self, request, pulses, deadline_ns):
+            commands.append((request, pulses))
+            assert deadline_ns == env.device.camera_operation.deadline_ns
+
+    local = LocalOwner()
+    local.view.diagnostic.active = blocked == "diagnostic"
+    owner = MicrocontrollerCommands(
+        lifecycle=env.lifecycle,
+        configuration=env.configuration,
+        device=env.device,
+        owner=local,
+        limits=_limits(),
+        clock=lambda: env.now,
+        hooks=env.hooks,
+        device_views=lambda: views,
+    )
+    request = svc.MicrocontrollerCommandRequest(
+        expected_configuration_revision=env.configuration.revision,
+        kind=svc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+        firmware_path=r"C:\firmware\uno.hex",
+        firmware_sha256="" if blocked == "digest" else "a" * 64,
+    )
+    request.command.operator.command_id = _id()
+    try:
+        result = await owner.execute(request)
+        assert (result.result == pb.COMMAND_RESULT_ACCEPTED) == (not blocked)
+        if not blocked:
+            for coroutine in env.spawned:
+                await coroutine
+            env.spawned.clear()
+            assert commands[0][0].firmware_path == request.firmware_path
+            assert commands[0][0].firmware_sha256 == request.firmware_sha256
+            assert (
+                commands[0][0].command.operator.command_id
+                == request.command.operator.command_id
+            )
+            assert commands[0][1].port == "COM8"
+            assert env.device.camera_operation is None
+            assert env.control.operations[request.command.operator.command_id].succeeded
+        else:
+            assert not commands and env.device.camera_operation is None
+    finally:
+        for coroutine in env.spawned:
+            coroutine.close()

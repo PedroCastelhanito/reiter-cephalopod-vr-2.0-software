@@ -4,14 +4,21 @@ import json
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QIODevice, QSaveFile, pyqtSignal
+from PyQt6.QtCore import QIODevice, QSaveFile, Qt, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QStackedWidget, QTabBar
 
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.cameras import CamerasPanel
-from cephvr.gui.components import Card, StatusColumn, button, combo, field
+from cephvr.gui.components import (
+    Card,
+    StatusColumn,
+    button,
+    combo,
+    equal_row_height,
+    field,
+)
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.tracking_annotation import TrackingAnnotation
@@ -48,11 +55,10 @@ class TrackingPage(ResponsiveColumns):
         self.source_description = "Tracking cam · not assigned"
         self.pipeline = combo(("Water flow", "Fin flow"))
         row.addWidget(field("Pipeline", self.pipeline), 1)
-        self.configuration.body.addLayout(row)
         actions = QHBoxLayout()
         self.load_button = button("Load")
         self.save_button = button("Save as")
-        self.preview_button = button("Preview")
+        self.preview_button = button("Annotate")
         self.preview_button.setToolTip(
             "Open the local reference-frame annotation window."
         )
@@ -62,12 +68,19 @@ class TrackingPage(ResponsiveColumns):
         self.diagnostic_button.setToolTip(
             "Run selected Tracking diagnostics over the assigned camera preview."
         )
-        actions.addWidget(self.load_button)
-        actions.addWidget(self.save_button)
-        actions.addStretch()
-        actions.addWidget(self.diagnostic_button)
-        actions.addWidget(self.diagnostic_viewer_button)
-        actions.addWidget(self.preview_button)
+        row.addWidget(self.load_button, 0, Qt.AlignmentFlag.AlignBottom)
+        row.addWidget(self.save_button, 0, Qt.AlignmentFlag.AlignBottom)
+        equal_row_height(self.pipeline, self.load_button, self.save_button)
+        self.configuration.body.addLayout(row)
+        for control in (
+            self.diagnostic_button,
+            self.diagnostic_viewer_button,
+            self.preview_button,
+        ):
+            actions.addWidget(control, 1)
+        equal_row_height(
+            self.diagnostic_button, self.diagnostic_viewer_button, self.preview_button
+        )
         self.configuration.body.addLayout(actions)
         layout.addWidget(self.configuration)
         self.tabs = QTabBar()

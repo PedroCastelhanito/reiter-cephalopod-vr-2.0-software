@@ -43,6 +43,7 @@ application operations. They do not reach into private runtime state.
 | `control/` | Client control, retained operation outcomes and current views |
 | `lifecycle/` | Setup, handoffs, evidence waits, trials, interruption and cleanup |
 | `device/` | Camera commands/readback, previews and display initialization |
+| `microcontroller/` | Sole serial ownership, watchdog/boundary arbitration, diagnostics and supervised compile/upload |
 | `incident/` | Incident admission, bounded retention/operator choices and confirmed scope changes |
 | `metadata/` | Reservations, durable file publication, bounded writer, completion tracking and trial logs |
 | `transport/` | Authentication, bounded command replay and priority report admission |
@@ -64,7 +65,7 @@ Acquisition navigation:
 | `camera/` | Exact-device SDK access, settings, capabilities, native metadata and joint waits |
 | `buffers/` | Native layouts, shared rings, private pixel pools and bounded recording accounting |
 | `recording/`, `recording_schema.py` | Encoder validation/launch, frame logs, output identity and durable closure |
-| `microcontroller/` | Bounded protocol parsing, serial ownership and pulse evidence |
+| `microcontroller_client.py` | Authenticated controller camera-trigger requests with original deadlines and timing evidence |
 | `transport/` | Authentication, original deadlines, command retention and outbound RPC adapters |
 | `shared/pixels/` | Reusable conversion with consumer-owned buffers and converter state |
 | `platform/windows/` | Native mappings/events, atomic slots, cancellable streams and exact-file synchronization |

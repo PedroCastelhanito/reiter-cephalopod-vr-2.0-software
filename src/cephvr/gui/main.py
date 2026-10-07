@@ -126,7 +126,10 @@ class ManagedGui(QObject):
             lambda: preview_window_placement(window).SerializeToString(),
         )
         self.cameras = ManagedCameras(
-            cameras, bridge, self.preview_viewers.viewer_state
+            cameras,
+            bridge,
+            self.preview_viewers.viewer_state,
+            lambda: preview_window_placement(window).SerializeToString(),
         )
         cameras.inventory_refreshed.connect(self.refresh_camera_state)
         cameras.preview_requested.connect(self.preview_viewers.preview_visibility)
@@ -567,7 +570,7 @@ class ManagedGui(QObject):
     def command_finished(self, action: str, success: bool, message: str) -> None:
         rendered = f"{action}: {message}" if success else f"{action} failed: {message}"
         self.window.dashboard.log_console.appendPlainText(rendered)
-        if action in {"mcu", "save_mcu_pins"}:
+        if action in {"mcu", "mcu_upload", "save_mcu_pins"}:
             self.mcu.finished(action, success, message)
             if action == "save_mcu_pins" and self.state is not None:
                 self.mcu.revision = -1

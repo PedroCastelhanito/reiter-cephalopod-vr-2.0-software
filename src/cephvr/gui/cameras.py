@@ -102,12 +102,12 @@ class CamerasPanel(ResponsiveColumns):
             "Test enabled", hint="Check connections for cameras enabled for experiment"
         )
         self.test_button.clicked.connect(self.test_enabled)
-        self.connect_button = button("Connect", "primary")
-        self.preview_button = button("Preview")
+        self.connect_button = button(
+            "Connect", "primary", hint="Start capture and open the external preview"
+        )
         self.refresh_button.clicked.connect(self.refresh_inventory)
         self.connect_button.clicked.connect(self.toggle_connection)
-        self.preview_button.clicked.connect(self.toggle_preview)
-        for control in (self.test_button, self.connect_button, self.preview_button):
+        for control in (self.test_button, self.connect_button):
             actions.addWidget(control)
         inventory.body.addLayout(actions)
         left_layout.addWidget(inventory)
@@ -394,8 +394,10 @@ class CamerasPanel(ResponsiveColumns):
                 self.connection_requested.emit(draft.key, not draft.connected)
                 return
             draft.connected = not draft.connected
+            draft.capture_running = draft.connected
             self.report("Connect" if draft.connected else "Disconnect")
             self.refresh_controls()
+            self.preview_requested.emit(draft.key, draft.connected)
 
     def test_enabled(self) -> None:
         if not self.can_operate:
@@ -430,25 +432,12 @@ class CamerasPanel(ResponsiveColumns):
                     "not tested — hardware checks are not integrated."
                 )
 
-    def toggle_preview(self) -> None:
-        draft = self.selected
-        if (
-            not self.can_operate
-            or not draft
-            or not draft.connected
-            or not draft.enabled
-        ):
-            return
-        preview = next((p for p in self.view.previews if p.key == draft.key), None)
-        if preview and preview.active and preview.available and not preview.pending:
-            self.preview_requested.emit(draft.key, not preview.visible)
-
     def report(self, action: str) -> None:
         draft = self.selected
         if not self.can_operate:
             return
         if action != "Refresh inventory" and (not draft or not draft.connected):
-            if action != "Disconnect":
+            if action not in {"Disconnect", "Stop capture"}:
                 return
         self.console.appendPlainText(f"Review · {action}; no hardware command sent.")
 
@@ -478,39 +467,12 @@ class CamerasPanel(ResponsiveColumns):
             and (not self.managed or bool(preview and preview.active))
         )
         self.connect_button.setText(
-            (
-                "Stop capture"
-                if draft and draft.capture_running
-                else "Disconnect"
-                if draft and draft.connected
-                else "Start capture"
-            )
-            if self.managed
-            else "Disconnect"
+            "Disconnect" if draft and draft.connected else "Connect"
+        )
+        self.connect_button.setToolTip(
+            "Stop capture and close the external preview"
             if draft and draft.connected
-            else "Connect"
-        )
-        self.preview_button.setText(
-            "Hide preview" if preview and preview.visible else "Preview"
-        )
-        self.preview_button.setEnabled(
-            bool(
-                self.can_operate
-                and draft
-                and draft.connected
-                and draft.enabled
-                and preview
-                and preview.active
-                and preview.available
-                and not preview.pending
-            )
-        )
-        self.preview_button.setToolTip(
-            "Inactive for experiment"
-            if draft and not draft.enabled
-            else "Connect the selected camera first"
-            if draft and not draft.connected
-            else "Show the external camera preview"
+            else "Start capture and open the external preview"
         )
         for index, control in enumerate(self.enable_controls):
             camera = self.drafts[index]

@@ -22,11 +22,13 @@ class ManagedCameras(QObject):
         panel: CamerasPanel,
         bridge: ControllerBridge,
         viewer_state: Callable[[int, bool, str], bool],
+        preview_placement: Callable[[], bytes] | None = None,
     ) -> None:
         super().__init__(panel)
         self.panel = panel
         self.bridge = bridge
         self.viewer_state = viewer_state
+        self.preview_placement = preview_placement
         self._camera_revision = -1
         self.pending = ""
         self.configured_tests: list[tuple[int, str]] = []
@@ -169,6 +171,8 @@ class ManagedCameras(QObject):
                         draft.values["trigger_frequency_hz"] = (
                             f"{pulse.requested_frequency_hz:g}"
                         )
+                    else:
+                        draft.values.pop("trigger_frequency_hz", None)
         self._camera_revision = state.configuration.revision
         if camera_config_changed:
             cameras.load_selected()
@@ -226,6 +230,17 @@ class ManagedCameras(QObject):
                 "Select the PFS file to import it through the camera SDK before starting capture."
             )
             return
+        options: dict[str, object] = {}
+        if start:
+            options["show_preview"] = True
+            if self.preview_placement is not None:
+                try:
+                    options["placement"] = self.preview_placement()
+                except Exception as exc:
+                    self.panel.console.appendPlainText(
+                        f"Preview placement unavailable: {exc}"
+                    )
+                    return
         self.queue(
             "camera",
             role=role,
@@ -237,6 +252,7 @@ class ManagedCameras(QObject):
                 for draft in self.panel.drafts
             )
             else rpc.CAMERA_COMMAND_KIND_FINISH_EDITING,
+            **options,
         )
 
     def set_camera_enabled(self, serial: str, enabled: bool) -> None:

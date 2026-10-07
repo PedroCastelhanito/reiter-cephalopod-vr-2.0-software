@@ -430,3 +430,63 @@ def test_registered_child_remains_valid_with_nested_descendant() -> None:
     )
     with pytest.raises(LaunchError, match="still contains"):
         registry.release(request.command_id, obligations_met=True)
+
+
+@pytest.mark.parametrize("confirmed", [False, True])
+def test_firmware_cleanup_is_exact_owner_scoped_and_requires_empty_job(
+    confirmed,
+) -> None:
+    from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
+
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    owner, child = _identity("controller"), _identity(FIRMWARE_UPLOAD_ROLE)
+    plan = wire.PlanLaunchRequest(
+        command_id=str(uuid4()),
+        owner=owner,
+        child=child,
+        executable=EXE,
+        stop_method="owner_job_terminate",
+        parent_operation=types.OperationContext(command_id=str(uuid4())),
+    )
+    state = registry.plan(plan)
+    receipt = wire.ConfirmLaunchRequest(
+        command_id=str(uuid4()),
+        launch_command_id=plan.command_id,
+        owner=owner,
+        child=child,
+        native_cleanup_complete=True,
+    )
+    if confirmed:
+        native.jobs[state.containment_job_name] = [(42, 142, EXE)]
+        registry.confirm(
+            wire.ConfirmLaunchRequest(
+                command_id=str(uuid4()),
+                launch_command_id=plan.command_id,
+                owner=owner,
+                child=child,
+                pid=42,
+                creation_time_100ns=142,
+            ),
+            describe_host_clock(),
+        )
+        receipt.pid, receipt.creation_time_100ns = 42, 142
+    else:
+        native.jobs[state.containment_job_name] = [(42, 142, EXE)]
+    with pytest.raises(LaunchError, match="job still contains"):
+        registry.confirm(receipt, describe_host_clock())
+    if confirmed:
+        wrong = wire.ConfirmLaunchRequest.FromString(receipt.SerializeToString())
+        wrong.creation_time_100ns = 143
+        with pytest.raises(LaunchError, match="exact child"):
+            registry.confirm(wrong, describe_host_clock())
+    native.jobs[state.containment_job_name] = []
+    assert registry.refresh(plan.command_id).phase != wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+    result = registry.confirm(receipt, describe_host_clock())
+    assert result.phase == wire.LAUNCH_PHASE_RELEASED
+    assert registry.confirm(receipt, describe_host_clock()) == result
+    invalid = wire.PlanLaunchRequest.FromString(plan.SerializeToString())
+    invalid.command_id = str(uuid4())
+    invalid.owner.CopyFrom(_identity("acquisition"))
+    with pytest.raises(LaunchError, match="Configuration owner"):
+        registry.plan(invalid)

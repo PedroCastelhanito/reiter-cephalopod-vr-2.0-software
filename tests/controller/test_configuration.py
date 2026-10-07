@@ -49,6 +49,8 @@ def _copy_pairs(root: Path) -> None:
         "contracts/policy/supervisor_policy.toml",
         "config/backends/acquisition_config.toml",
         "contracts/policy/acquisition_policy.toml",
+        "config/backends/microcontroller_config.toml",
+        "contracts/policy/microcontroller_policy.toml",
     ):
         destination = root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)

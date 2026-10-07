@@ -1,4 +1,4 @@
-"""Schedule-scoped FFmpeg launch under supervisor registration and Windows Job Object."""
+"""Registered native media/helper launch with exact Windows process/pipe ownership."""
 
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ class _LaunchAttempt:
 
 
 class SupervisedEncoderLauncher:
-    """One-shot launch adapter configured from the accepted ScheduleTrial command."""
+    """Launch adapter bound to one accepted operation and its optional work context."""
 
     def __init__(
         self,
@@ -70,6 +70,8 @@ class SupervisedEncoderLauncher:
         diagnostic_tail_max_lines: int = 100,
         diagnostic_tail_max_bytes: int = 64 * 1024,
         clock_ns: Callable[[], int] = time.perf_counter_ns,
+        registered_plan: Callable[[wire.PlanLaunchRequest], None] | None = None,
+        stop_method: str = "owner_stdin_eof",
     ) -> None:
         if (
             owner.role != owner_identity.role
@@ -93,6 +95,8 @@ class SupervisedEncoderLauncher:
         self.tail_lines = diagnostic_tail_max_lines
         self.tail_bytes = diagnostic_tail_max_bytes
         self.clock_ns = clock_ns
+        self.registered_plan = registered_plan
+        self.stop_method = stop_method
         self._work: types.WorkContext | None = None
         self._parent_operation: types.OperationContext | None = None
         self._partial: list[_LaunchAttempt] = []
@@ -106,10 +110,19 @@ class SupervisedEncoderLauncher:
             schedule.command.target.work, schedule.command.parent_operation
         )
 
+    @property
+    def pending_plans(self) -> tuple[wire.PlanLaunchRequest, ...]:
+        """Return exact partial launch identities without exposing credentials."""
+        return tuple(
+            wire.PlanLaunchRequest.FromString(item.request.SerializeToString())
+            for item in self._partial
+            if item.plan_requested
+        )
+
     def bind_operation(
         self, work: types.WorkContext, parent_operation: types.OperationContext
     ) -> None:
-        """Bind an exact Setup or trial operation before contained child launch."""
+        """Bind the owning operation and optional session/trial before contained launch."""
         self._work = types.WorkContext.FromString(work.SerializeToString())
         self._parent_operation = types.OperationContext.FromString(
             parent_operation.SerializeToString()
@@ -156,12 +169,13 @@ class SupervisedEncoderLauncher:
             command_id=launch_id,
             owner=self.owner_identity,
             child=child,
-            work=self._work,
             parent_operation=self._parent_operation,
             executable=argv[0],
             python_worker=False,
-            stop_method="owner_stdin_eof",
+            stop_method=self.stop_method,
         )
+        if self._work.WhichOneof("work") is not None:
+            request.work.CopyFrom(self._work)
         metadata = (
             *self.owner.metadata(),
             deadline_metadata(deadline_ns),
@@ -196,6 +210,10 @@ class SupervisedEncoderLauncher:
             raise EncoderLaunchError(
                 "supervisor did not retain a fresh planned FFmpeg job"
             )
+        if self.registered_plan is not None:
+            self.registered_plan(
+                wire.PlanLaunchRequest.FromString(request.SerializeToString())
+            )
         job_name = state.containment_job_name
         attempt.job_name = job_name
         self.windows_jobs.open_launch_job(job_name)
@@ -220,11 +238,15 @@ class SupervisedEncoderLauncher:
                 f"contained FFmpeg creation failed: {exc}"
             ) from exc
         attempt.process = process
-        confirmed = self._confirm_os(request, launch_id, process, metadata, deadline_ns)
+        confirmed = self._confirm_phase(
+            request, launch_id, process, deadline_ns, wire.LAUNCH_PHASE_OS_CONFIRMED
+        )
         if not confirmed:
             # The exact child/job/pipe ownership remains retained for cleanup; no resume.
             raise EncoderLaunchError("supervisor OS confirmation is unconfirmed")
-        if not self._confirm_operational(request, launch_id, process, deadline_ns):
+        if not self._confirm_phase(
+            request, launch_id, process, deadline_ns, wire.LAUNCH_PHASE_OPERATIONAL
+        ):
             raise EncoderLaunchError(
                 "supervisor native-child operational confirmation is unconfirmed"
             )
@@ -331,7 +353,7 @@ class SupervisedEncoderLauncher:
         try:
             attempt.pipe_owner.retry_cleanup(deadline_ns=deadline_ns)
         except BaseException:
-            pass
+            pass  # The owner retains blockers; the caller checks cleanup_blocked.
         remaining: list[InheritedEndpoint] = []
         for endpoint in attempt.endpoints:
             try:
@@ -385,14 +407,15 @@ class SupervisedEncoderLauncher:
                 ) from exc
             return cast(wire.LaunchState, state)
 
-    def _confirm_os(
+    def _confirm_phase(
         self,
         request: wire.PlanLaunchRequest,
         launch_id: str,
         child: SuspendedProcess,
-        metadata: tuple[tuple[str, str], ...],
         deadline_ns: int,
+        phase: int,
     ) -> bool:
+        """Confirm the exact child at ``phase``; after an RPC failure query that state."""
         confirm = wire.ConfirmLaunchRequest(
             command_id=str(uuid4()),
             launch_command_id=launch_id,
@@ -409,7 +432,7 @@ class SupervisedEncoderLauncher:
             )
             return bool(
                 receipt.admission.result == types.COMMAND_RESULT_ACCEPTED
-                and receipt.state.phase == wire.LAUNCH_PHASE_OS_CONFIRMED
+                and receipt.state.phase == phase
                 and receipt.state.pid == child.pid
                 and receipt.state.creation_time_100ns == child.creation_time_100ns
             )
@@ -425,7 +448,7 @@ class SupervisedEncoderLauncher:
             except Exception:
                 return False
             return bool(
-                state.phase == wire.LAUNCH_PHASE_OS_CONFIRMED
+                state.phase == phase
                 and state.pid == child.pid
                 and state.creation_time_100ns == child.creation_time_100ns
             )
@@ -453,50 +476,6 @@ class SupervisedEncoderLauncher:
         except Exception:
             # Preserve the supervisor's planned job as a cleanup obligation.
             return False
-
-    def _confirm_operational(
-        self,
-        request: wire.PlanLaunchRequest,
-        launch_id: str,
-        child: SuspendedProcess,
-        deadline_ns: int,
-    ) -> bool:
-        confirm = wire.ConfirmLaunchRequest(
-            command_id=str(uuid4()),
-            launch_command_id=launch_id,
-            owner=self.owner_identity,
-            child=request.child,
-            pid=child.pid,
-            creation_time_100ns=child.creation_time_100ns,
-        )
-        try:
-            receipt = self.supervisor.ConfirmLaunch(
-                confirm,
-                metadata=(*self.owner.metadata(), deadline_metadata(deadline_ns)),
-                timeout=_remaining(self.clock_ns, deadline_ns),
-            )
-            return bool(
-                receipt.admission.result == types.COMMAND_RESULT_ACCEPTED
-                and receipt.state.phase == wire.LAUNCH_PHASE_OPERATIONAL
-                and receipt.state.pid == child.pid
-                and receipt.state.creation_time_100ns == child.creation_time_100ns
-            )
-        except Exception:
-            try:
-                state = self.supervisor.GetLaunchState(
-                    wire.LaunchQuery(
-                        requester=self.owner_identity, launch_command_id=launch_id
-                    ),
-                    metadata=(*self.owner.metadata(), deadline_metadata(deadline_ns)),
-                    timeout=_remaining(self.clock_ns, deadline_ns),
-                )
-            except Exception:
-                return False
-            return bool(
-                state.phase == wire.LAUNCH_PHASE_OPERATIONAL
-                and state.pid == child.pid
-                and state.creation_time_100ns == child.creation_time_100ns
-            )
 
     def retry_storage_cleanup(self) -> None:
         """Reconcile retained native storage handles for this worker."""

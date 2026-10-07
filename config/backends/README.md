@@ -4,11 +4,13 @@ These operator files contain only settings you may change, with their defaults.
 Fixed architecture policy lives in the matching versioned
 [`contracts/policy/<backend>_policy.toml`](../../contracts/policy/) file, which is not
 edited here. [E14](../../docs/architecture/system-contracts.md#e14) defines the split,
-the file-to-decision map and maintenance rules; runtime loading is not implemented yet.
+the file-to-decision map and maintenance rules. Owning runtime loaders validate
+operator values and fixed policy bindings; file presence does not enable a backend.
 
 Files: `experiment_config.toml`, `supervisor_config.toml`, `acquisition_config.toml`,
 `visual_stimulus_config.toml`, `gui_config.toml`, `tracking_config.toml`,
-`synchronization_config.toml`. Each starts with `format_version` and a `policy_version`
+`synchronization_config.toml`, and the controller-owned `microcontroller_config.toml`.
+Each starts with `format_version` and a `policy_version`
 that must equal its policy file's.
 
 ## Editing
@@ -31,7 +33,9 @@ that must equal its policy file's.
   Control reconnection has no grace timer; a fresh synchronized GUI subscription
   automatically claims an unheld lease after warning acknowledgement under E03.
   Replacing another holder requires explicit takeover. Old removed keys are rejected, not silently ignored.
-- Each setting has one owner. For example, change heartbeat policy only in
+- Each setting has one owner. Microcontroller COM, general I/O defaults and serial
+  timing belong to `microcontroller_config.toml`; camera-specific trigger pins/rates
+  remain in the camera defaults. For example, change heartbeat policy only in
   `supervisor_config.toml`. Its resolved values are shared with every process that needs
   them, including controller-loss fallback; all processes read/validate health at
   startup and changes require an application restart. No session-policy duplicate.

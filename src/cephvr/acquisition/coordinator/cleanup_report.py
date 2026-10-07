@@ -54,9 +54,11 @@ class CleanupReportBuilder:
         releases: list[control.ResourceRelease] = []
         for obligation in session.cleanup_resources:
             resource_id = obligation.resource
-            if resource_id.startswith("serial-port:"):
+            if resource_id.startswith("microcontroller-claim:"):
                 if not serial_released:
-                    raise ValueError("serial port lacks OFF and owner-close proof")
+                    raise ValueError(
+                        "Microcontroller claim lacks OFF and controller-release proof"
+                    )
             elif obligation.owner in (
                 item.launch.worker for item in self.workers.values()
             ):

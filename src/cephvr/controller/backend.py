@@ -229,15 +229,6 @@ class GrpcBackendPort:
             self.acquisition.ExecuteCameraCommand, request, deadline_ns
         )
 
-    async def execute_microcontroller_command(
-        self, request: svc.AcquisitionMicrocontrollerCommand, *, deadline_ns: int
-    ) -> pb.CommandAdmission:
-        if self.acquisition is None:
-            raise RuntimeError("acquisition configuration endpoint unavailable")
-        return await self._admission(
-            self.acquisition.ExecuteMicrocontrollerCommand, request, deadline_ns
-        )
-
     async def attach_tracking_diagnostic_input(
         self,
         request: svc.AcquisitionTrackingDiagnosticAttachmentCommand,

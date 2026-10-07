@@ -82,8 +82,11 @@ async def _run(args: argparse.Namespace) -> int:
     config_path = args.software_root / "config/backends/experiment_config.toml"
     with config_path.open("rb") as stream:
         settings = tomllib.load(stream)
-    port = settings["rpc"]["port"]
-    limit = settings["rpc"]["max_message_bytes"]
+    rpc_settings = settings.get("rpc")
+    if not isinstance(rpc_settings, dict):
+        raise ClientError("Controller config has no [rpc] table.")
+    port = rpc_settings.get("port")
+    limit = rpc_settings.get("max_message_bytes")
     if type(port) is not int or type(limit) is not int:
         raise ClientError("Controller RPC port and message limit must be integers.")
     store = CredentialStore(default_runtime_root(), args.controller_generation)
@@ -184,7 +187,12 @@ async def _run(args: argparse.Namespace) -> int:
                     )
                 return 1 if outcome.succeeded is False else 0
     finally:
-        store.remove_client(principal)
+        try:
+            store.remove_client(principal)
+        except CredentialError as exc:
+            # The command outcome is already printed; a leftover credential must
+            # not replace it (E02), so report it as a warning only.
+            print(f"Warning: client credential not removed: {exc}", file=sys.stderr)
 
 
 def main() -> int:

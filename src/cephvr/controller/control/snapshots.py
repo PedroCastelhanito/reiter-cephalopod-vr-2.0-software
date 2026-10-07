@@ -38,6 +38,9 @@ class SnapshotPublisher:
         limits: LimitsState,
         owner_lost: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
+        self.microcontroller_view: Callable[[], pb.MicrocontrollerDeviceView] | None = (
+            None
+        )
         self.generation = generation
         self.clock = clock
         self.configuration_state = configuration
@@ -120,6 +123,8 @@ class SnapshotPublisher:
         ):
             view.runtime_incidents.extend(self.lifecycle.attempt.incidents.snapshot())
         self.projections.install_public(view)
+        if self.microcontroller_view is not None:
+            view.microcontroller.CopyFrom(self.microcontroller_view())
         if self.lifecycle.attempt is not None:
             if self.lifecycle.attempt.paired:
                 view.spikeglx_recording.CopyFrom(

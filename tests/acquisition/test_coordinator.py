@@ -13,7 +13,6 @@ import pytest
 from cephvr.acquisition.coordinator.health import AcquisitionHealth
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.ports import (
-    SerialOwnerPort,
     SupervisorPort,
     WorkerBootstrapPort,
     WorkerLaunchResult,
@@ -23,13 +22,12 @@ from cephvr.acquisition.startup import decode_acquisition_bootstrap
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
     LaunchRecord,
-    PulseRecord,
     SessionRecord,
     SessionSlot,
     TrialRecord,
     WorkerRecord,
 )
-from cephvr.acquisition.v1 import camera_pb2, microcontroller_pb2, runtime_pb2
+from cephvr.acquisition.v1 import camera_pb2, runtime_pb2
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
@@ -99,15 +97,10 @@ async def test_trial_heartbeat_sets_only_trial_lifecycle_oneof() -> None:
             result_reservation_bytes=64 * 1024,
         ),
         session_slot=SessionSlot(current=session),
-        pulse=PulseRecord(),
         supervisor=cast(SupervisorPort, supervisor),
-        serial=cast(SerialOwnerPort, object()),
         heartbeat_interval_ns=10,
         health_silence_ns=100,
         recovery_ns=100,
-        serial_keepalive_interval_ns=10,
-        serial_communication_timeout_ns=20,
-        serial_ack_timeout_ns=1,
         catalogue_lock=asyncio.Lock(),
         failure_handler=_unexpected_health_failure,
         clock=lambda: 1,
@@ -128,73 +121,6 @@ async def _unexpected_health_failure(
     _deadline_ns: int,
 ) -> None:
     raise AssertionError("heartbeat success must not invoke the failure handler")
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("running", [False, True, None])
-async def test_connection_only_keepalive_requires_proven_stopped_outputs(
-    monkeypatch: pytest.MonkeyPatch, running: bool | None
-) -> None:
-    shutdown = asyncio.Event()
-    observation = microcontroller_pb2.MicrocontrollerObservation(
-        connection_id=_id(), observed_monotonic_ns=1
-    )
-    observation.state.configuration_valid = False
-    observation.state.watchdog_ms = 0
-    if running is not None:
-        observation.state.behavioral.running = running
-        observation.state.tracking.running = False
-    failures = []
-    waits = []
-
-    async def wait(_shutdown: asyncio.Event, delay: int) -> None:
-        waits.append(delay)
-        shutdown.set()
-
-    async def fail(source, work, failure, deadline) -> None:
-        failures.append(failure.code)
-        shutdown.set()
-
-    monkeypatch.setattr("cephvr.acquisition.coordinator.health._wait", wait)
-    health = AcquisitionHealth(
-        identity=CoordinatorIdentity(
-            backend=control.BackendContext(
-                backend_name="acquisition", backend_generation=_id()
-            ),
-            process=control.ProcessIdentity(role="acquisition", generation=_id()),
-            controller=control.ProcessIdentity(role="controller", generation=_id()),
-            supervisor=control.ProcessIdentity(role="supervisor", generation=_id()),
-            tracking=control.ProcessIdentity(role="tracking", generation=_id()),
-        ),
-        workers={},
-        commands=CommandLedger(
-            _id(),
-            300_000_000_000,
-            max_records=32,
-            max_bytes=2 * 1024 * 1024,
-            result_reservation_bytes=64 * 1024,
-        ),
-        session_slot=SessionSlot(),
-        pulse=PulseRecord(observation=observation),
-        supervisor=cast(SupervisorPort, object()),
-        serial=cast(SerialOwnerPort, object()),
-        heartbeat_interval_ns=10,
-        health_silence_ns=100,
-        recovery_ns=100,
-        serial_keepalive_interval_ns=10,
-        serial_communication_timeout_ns=20,
-        serial_ack_timeout_ns=1,
-        catalogue_lock=asyncio.Lock(),
-        failure_handler=fail,
-        clock=lambda: 100,
-    )
-
-    await health._keepalive_loop(shutdown)
-
-    assert failures == (
-        [] if running is False else ["MICROCONTROLLER_KEEPALIVE_WINDOW_EXHAUSTED"]
-    )
-    assert bool(waits) is (running is False)
 
 
 def _id() -> str:

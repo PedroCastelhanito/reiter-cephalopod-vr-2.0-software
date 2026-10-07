@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from cephvr.acquisition.microcontroller.bridge import SerialOwnerBridge
-from cephvr.acquisition.microcontroller.owner import SerialOwner
-from cephvr.acquisition.microcontroller.serial_port import PySerialPort
-from cephvr.acquisition.ports import SerialOwnerPort
 from cephvr.acquisition.v1 import camera_pb2, runtime_pb2
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.controller.microcontroller.bridge import SerialOwnerBridge
+from cephvr.controller.microcontroller.owner import SerialOwner
+from cephvr.controller.microcontroller.serial_port import PySerialPort
+from cephvr.shared.microcontroller import SerialOwnerPort
 
 
 class LazySerialOwner(SerialOwnerPort):
@@ -148,9 +148,11 @@ class LazySerialOwner(SerialOwnerPort):
         if self.bridge is not None:
             await self.bridge.cancel_on_reservations(deadline_ns=deadline_ns)
 
-    async def cancel_active_request(self) -> bool:
+    async def cancel_active_request(self, *, deadline_ns: int) -> bool:
         return (
-            False if self.bridge is None else await self.bridge.cancel_active_request()
+            False
+            if self.bridge is None
+            else await self.bridge.cancel_active_request(deadline_ns=deadline_ns)
         )
 
     async def close(self, *, deadline_ns: int) -> None:

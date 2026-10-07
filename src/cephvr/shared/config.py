@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import tomllib
 from collections.abc import Collection, Mapping
 from dataclasses import dataclass
@@ -19,6 +21,23 @@ class LoadedPair:
     config: Mapping[str, Any]
     policy: Mapping[str, Any]
     policy_version: int
+
+
+def policy_digest(policy: Mapping[str, Any]) -> str:
+    """SHA-256 of the canonical parsed policy, without ``policy_version`` (E14).
+
+    Content changes fail startup; comment and whitespace edits do not.
+    """
+    content = {key: value for key, value in policy.items() if key != "policy_version"}
+    encoded = json.dumps(
+        content,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=lambda item: (
+            format(item, "f") if isinstance(item, Decimal) else str(item)
+        ),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _read_toml(path: Path, *, max_file_bytes: int) -> dict[str, Any]:

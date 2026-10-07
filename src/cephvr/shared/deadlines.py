@@ -26,15 +26,6 @@ def duration_ns(value: int | float | Decimal, unit: Literal["s", "ms", "ns"]) ->
     return int(ns)
 
 
-def earliest_deadline(*values: int) -> int:
-    """Carry the earliest applicable absolute cutoff through nested work."""
-    if not values:
-        raise ValueError("at least one deadline is required")
-    for value in values:
-        require_int64_ns(value)
-    return min(values)
-
-
 @dataclass(frozen=True)
 class Deadline:
     absolute_ns: int

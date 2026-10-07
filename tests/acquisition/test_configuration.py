@@ -195,7 +195,7 @@ def test_loader_rejects_unknown_camera_roles_and_missing_required_limits(
         load_defaults(root)
 
     root = _copy_configuration(tmp_path / "missing-limit")
-    config_path = root / "config/backends/acquisition_config.toml"
+    config_path = root / "config/backends/microcontroller_config.toml"
     config_path.write_text(
         config_path.read_text(encoding="utf-8").replace("baud_rate = 115200\n", "", 1),
         encoding="utf-8",
@@ -208,7 +208,7 @@ def test_file_policy_rejects_invalid_watchdog_relationship_and_resolution(
     tmp_path: Path,
 ) -> None:
     root = _copy_configuration(tmp_path)
-    config_path = root / "config/backends/acquisition_config.toml"
+    config_path = root / "config/backends/microcontroller_config.toml"
     original = config_path.read_text(encoding="utf-8")
     config_path.write_text(
         original.replace("keepalive_interval_s = 1", "keepalive_interval_s = 3", 1),

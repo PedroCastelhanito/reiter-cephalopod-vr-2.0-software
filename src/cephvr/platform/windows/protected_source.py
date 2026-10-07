@@ -1,4 +1,5 @@
-"""Protected Windows asset reads; never silently fall back to pathname reads."""
+"""Protected Windows asset reads for Visual Stimulus and Tracking; never silently
+fall back to pathname reads."""
 
 from __future__ import annotations
 

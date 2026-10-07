@@ -232,18 +232,6 @@ def _validate_manifest(scripts: Path) -> tuple[dict[str, Any], Path]:
     return manifest, wrapper
 
 
-def validate_python_runtime(scripts: Path) -> Path:
-    """Return the prepared executable only when all provenance hashes still match."""
-    if (
-        sys.platform != "win32"
-        or struct.calcsize("P") != 8
-        or sysconfig.get_platform() != "win-amd64"
-        or sys.version_info[:2] != (3, 11)
-    ):
-        raise PythonRuntimeError("CephVR managed Python requires 64-bit Windows")
-    return _validate_manifest(scripts.resolve())[1]
-
-
 def resolve_python_runtime(
     requested: Path | None = None,
 ) -> tuple[Path, tuple[str, ...]]:

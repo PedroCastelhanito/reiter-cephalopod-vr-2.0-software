@@ -7,6 +7,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Literal
 
+from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.program_model import Program
 from cephvr.visual_stimulus.resources.arena import prepare_arena
@@ -19,7 +20,6 @@ from cephvr.visual_stimulus.resources.assets import (
 from cephvr.visual_stimulus.resources.budget import PreparationBudget, arena_mesh_bytes
 from cephvr.visual_stimulus.resources.calibration import prepare_calibration
 from cephvr.visual_stimulus.resources.media import decode_image
-from cephvr.visual_stimulus.resources.protected import ProtectedWindowsSource
 from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
 from cephvr.visual_stimulus.resources.video_index import index_video
 

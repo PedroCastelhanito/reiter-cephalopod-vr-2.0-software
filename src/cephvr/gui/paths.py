@@ -27,7 +27,7 @@ class PathEdit(QLineEdit):
         self.textChanged.connect(self.setToolTip)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
-        if self.hasFocus() or not self.text():
+        if (self.hasFocus() and not self.isReadOnly()) or not self.text():
             super().paintEvent(event)
             return
         option = QStyleOptionFrame()
@@ -119,3 +119,5 @@ class PresetField(PathField):
             placeholder="Select a Pylon parameter file (.pfs)",
             file_filter="Pylon parameter files (*.pfs)",
         )
+        self.editor.filename_only = True
+        self.editor.setReadOnly(True)

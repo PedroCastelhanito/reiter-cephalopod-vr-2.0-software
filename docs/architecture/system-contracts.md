@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 163
+**Status:** Accepted · **Revision:** 166
 
 **Processes and startup**
 
@@ -245,6 +245,17 @@ design; runtime monitoring remains unimplemented.
   its handle; launcher failure also triggers kill-on-close. The
   [Windows launch contract](../../contracts/windows-launch.md) binds creation-time
   containment, job mechanics, partial-child identification and typed registration.
+- A11's controller-owned Arduino CLI uses sequential one-shot native Configuration
+  helpers for compilation and upload under the same original operation/deadline,
+  planned with an exact parent operation and no session/trial work. Reuse registered
+  suspended creation and containment before resume; no Ready/heartbeat is required.
+  Normal exit remains retained until controller confirms native process/job/pipe
+  and private source/build/image cleanup before starting the next phase. Only this role
+  accepts an authenticated exact-owner
+  cleanup confirmation; supervisor independently requires its exact job empty before
+  release. Partial launches remain blockers until reconciled. Cancellation/deadline
+  terminates the exact job, including compiler/uploader descendants, without extending the
+  original operation budget.
 - Acquisition, Visual Stimulus and tracking reuse the small
   [native transport helpers](../../contracts/native-transport.md) for bounded
   message-mode pipes, mapping attachment, cancellation and resource ownership.
@@ -509,7 +520,7 @@ and rig validation remain later work under E15.
 <a id="e14"></a>
 ### E14 — Backend configuration files
 
-**Status:** Accepted · **Revision:** 206
+**Status:** Accepted · **Revision:** 207
 
 - **Operator files contain only settings.** Human-readable `<backend>_config.toml`
   files under [config/backends/](../../config/backends/README.md) hold only values an
@@ -519,7 +530,9 @@ and rig validation remain later work under E15.
   libraries and algorithms, supported-option lists) lives in operator-read-only
   [`contracts/policy/<backend>_policy.toml`](../../contracts/policy/). Each pair
   carries the same `policy_version`; the loader rejects a mismatch, and
-  implementation constants are checked against the policy file. Changing a policy
+  implementation constants are checked against the policy file by one shared rule:
+  the SHA-256 of the canonical parsed policy, excluding `policy_version`, so a value
+  change fails startup but a comment or whitespace edit does not. Changing a policy
   value needs its governing decision plus a `policy_version` bump. Every new key is
   classified by this rule; unsupported values are invalid.
 - One file owns each shared setting. The controller resolves/distributes session
@@ -546,7 +559,8 @@ and rig validation remain later work under E15.
 | --- | --- |
 | `experiment_config.toml` / `experiment_policy.toml` | SYS-002/E01/E03/E05–E08/E11 |
 | `supervisor_config.toml` / `supervisor_policy.toml` | E03–E06/E08 |
-| `acquisition_config.toml` / `acquisition_policy.toml` | A01–A11 |
+| `acquisition_config.toml` / `acquisition_policy.toml` | A01–A10; A11 camera-trigger consumers |
+| `microcontroller_config.toml` / `microcontroller_policy.toml` | A11/E08; controller device owner |
 | `gui_config.toml` / `gui_policy.toml` | E03/A10 |
 | `visual_stimulus_config.toml` / `visual_stimulus_policy.toml` | V01–V28/E13/A06 |
 | `tracking_config.toml` / `tracking_policy.toml` | E10/A04–A06/T01–T12/T14–T45 |

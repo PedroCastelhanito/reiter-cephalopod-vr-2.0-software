@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 from typing import Any
 
 
@@ -97,51 +96,3 @@ def integrate_function(function: Any, start_ns: int, end_ns: int) -> float:
             )
         return total
     raise ValueError(f"unsupported function kind {kind!r}")
-
-
-@dataclass(slots=True)
-class ScalarMotion:
-    value: float
-    anchor_ns: int
-    function: Any
-    epoch_start_ns: int
-    active: bool = True
-
-    def advance(self, now_ns: int) -> float:
-        if not self.active:
-            return self.value
-        old_local = max(0, self.anchor_ns - self.epoch_start_ns)
-        new_local = max(0, now_ns - self.epoch_start_ns)
-        self.value += integrate_function(self.function, old_local, new_local)
-        self.anchor_ns = now_ns
-        return self.value
-
-    def rebind(self, *, now_ns: int, function: Any) -> None:
-        self.advance(now_ns)
-        self.function = function
-
-    def add(self, increment: float, now_ns: int) -> None:
-        if not math.isfinite(increment):
-            raise ValueError("motion increment must be finite")
-        self.advance(now_ns)
-        self.value += increment
-        self.anchor_ns = now_ns
-
-    def pause(self, now_ns: int) -> None:
-        self.advance(now_ns)
-        self.active = False
-
-    def resume(self, now_ns: int, function: Any) -> None:
-        self.active = True
-        self.anchor_ns = now_ns
-        self.function = function
-
-    def reset(self, value: float, now_ns: int, function: Any) -> None:
-        if not math.isfinite(value):
-            raise ValueError("initial motion state must be finite")
-        self.value, self.anchor_ns, self.function, self.active = (
-            value,
-            now_ns,
-            function,
-            True,
-        )

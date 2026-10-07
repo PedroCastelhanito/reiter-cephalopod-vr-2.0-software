@@ -120,6 +120,17 @@ owned Python descendants use the same preparation and retain the executing PID/i
 Native encoders/helpers use the same launch/containment helper without Python
 bootstrap or CephVR heartbeat requirements; their owners monitor actual progress.
 
+A11's `controller_firmware_upload` is planned by controller with an exact parent
+operation and no work scope for each sequential compile/upload phase. Compiler closure
+must be confirmed before upload is planned. Its fixed stop method is `owner_job_terminate`; Arduino
+CLI/compiler/avrdude do not promise stdin-EOF shutdown. The owner kills only this exact job
+on cancellation/deadline and confirms process/pipe/private source/build/image closure with
+`ConfirmLaunch.native_cleanup_complete`. Supervisor matches the retained owner,
+child generation and any confirmed PID/creation time, then independently requires
+the exact job empty. No other helper accepts this cleanup flag. No-PID partial
+creation may be released only after owner cleanup and verified empty containment;
+uncertain cleanup remains a blocker.
+
 Owner `ConfirmLaunch` submits exact process evidence. Supervisor verifies membership,
 executable and retained identity, and observes children through its existing process
 monitor/job enumeration. A partial child discovered in the dedicated planned job

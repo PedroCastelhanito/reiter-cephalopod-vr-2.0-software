@@ -4,26 +4,19 @@ from __future__ import annotations
 
 import argparse
 import base64
-import importlib.util
 import os
 import queue
 import secrets
 import sys
 import threading
 import time
-import tomllib
 from contextlib import ExitStack
 from pathlib import Path
 from uuid import uuid4
 
 from cephvr.control.v1 import types_pb2 as control_types
 from cephvr.controller.configuration import load_controller_configuration
-from cephvr.launcher.decisions import (
-    LOST_KEY,
-    MAX_LINE_BYTES,
-    LauncherDecisions,
-    parse_notification_line,
-)
+from cephvr.launcher.decisions import LOST_KEY, LauncherDecisions
 from cephvr.launcher.gui_relaunch import (
     GuiLaunchRegistration,
     GuiRelaunchCoordinator,
@@ -33,6 +26,8 @@ from cephvr.launcher.gui_relaunch import (
     reconcile_relaunch,
     request_relaunch,
 )
+from cephvr.launcher.notification_reader import read_notifications
+from cephvr.launcher.preflight import read_backend_port, require_distinct_ports
 from cephvr.launcher.replacement import (
     ReplacementDeclined,
     ReplacementEndpoint,
@@ -52,41 +47,8 @@ from cephvr.platform.windows.python_runtime import (
 )
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.credentials import default_runtime_root
+from cephvr.shared.managed_modules import missing_roles
 from cephvr.shared.recovery import ApplicationExitReceipt, RecoveryStore
-
-
-def _read_notifications(
-    handle: int, output: queue.Queue[dict[str, object]], channel: str
-) -> None:
-    """Forward notifications; any EOF or protocol violation retires the channel."""
-    import msvcrt
-
-    def emit(notification: dict[str, object]) -> bool:
-        notification["_channel"] = channel
-        try:
-            output.put_nowait(notification)
-        except queue.Full:
-            return False
-        return True
-
-    def lost(reason: str) -> None:
-        marker: dict[str, object] = {"kind": "channel_lost", LOST_KEY: reason}
-        while not emit(marker):
-            try:
-                output.get_nowait()  # The loss marker outranks any queued note.
-            except queue.Empty:
-                pass
-
-    fd = msvcrt.open_osfhandle(handle, os.O_RDONLY)
-    with os.fdopen(fd, "rb", buffering=0) as stream:
-        while True:
-            parsed = parse_notification_line(stream.readline(MAX_LINE_BYTES + 1))
-            if isinstance(parsed, str):
-                lost(parsed)
-                return
-            if not emit(parsed):
-                lost("notification queue overflow")
-                return
 
 
 def _retain_until_empty(
@@ -122,20 +84,7 @@ def run_launcher(
 ) -> None:
     if sys.platform != "win32":
         raise WindowsLaunchError("CephVR managed launch requires Windows")
-    required_modules = {
-        "acquisition": "cephvr.acquisition.main",
-        "visual_stimulus": "cephvr.visual_stimulus.main",
-        "tracking": "cephvr.tracking.main",
-        "gui": "cephvr.gui.main",
-    }
-    missing = []
-    for role, module in required_modules.items():
-        try:
-            present = importlib.util.find_spec(module) is not None
-        except ModuleNotFoundError:
-            present = False
-        if not present:
-            missing.append(role)
+    missing = missing_roles()
     if missing:
         raise WindowsLaunchError(
             "required managed bootstrap modules are unavailable: " + ", ".join(missing)
@@ -148,31 +97,17 @@ def run_launcher(
         raise ValueError("supervisor config must belong to the selected software root")
     resolved = load_controller_configuration(software_root)
     policy_root = supervisor_config.parents[2] / "contracts" / "policy"
-    backend_ports: dict[str, int] = {}
-    for role in ("acquisition", "visual_stimulus", "tracking"):
-        with (supervisor_config.parent / f"{role}_config.toml").open("rb") as stream:
-            backend_config = tomllib.load(stream)
-        with (policy_root / f"{role}_policy.toml").open("rb") as stream:
-            backend_policy = tomllib.load(stream)
-        if type(backend_config.get("policy_version")) is not int or backend_config[
-            "policy_version"
-        ] != backend_policy.get("policy_version"):
-            raise ValueError(f"{role} config/policy version mismatch")
-        backend_port = backend_config["rpc"]["port"]
-        if type(backend_port) is not int or not 1 <= backend_port <= 65535:
-            raise ValueError(f"{role} rpc.port must be an integer in 1..65535")
-        backend_ports[role] = backend_port
-    if (
-        len(
-            {
-                resolved.controller_port,
-                resolved.supervisor_startup.port,
-                *backend_ports.values(),
-            }
+    backend_ports = {
+        role: read_backend_port(supervisor_config.parent, policy_root, role)
+        for role in ("acquisition", "visual_stimulus", "tracking")
+    }
+    require_distinct_ports(
+        (
+            resolved.controller_port,
+            resolved.supervisor_startup.port,
+            *backend_ports.values(),
         )
-        != 5
-    ):
-        raise ValueError("backend/controller/supervisor service ports collide")
+    )
     startup = resolved.supervisor_startup
     backstop_ns = startup.application_backstop_ns
     port = startup.port
@@ -285,12 +220,12 @@ def run_launcher(
             ).start()
             notifications: queue.Queue[dict[str, object]] = queue.Queue(maxsize=64)
             threading.Thread(
-                target=_read_notifications,
+                target=read_notifications,
                 args=(control_read, notifications, "supervisor"),
                 daemon=True,
             ).start()
             threading.Thread(
-                target=_read_notifications,
+                target=read_notifications,
                 args=(controller_control_read, notifications, "controller"),
                 daemon=True,
             ).start()
@@ -367,6 +302,10 @@ def run_launcher(
                 if not bootstrap_seen and bootstrap_done.is_set():
                     bootstrap_seen = True
                     decisions.bootstrap_finished(now, ok=not bootstrap_error)
+                    if bootstrap_error:
+                        sys.stderr.write(
+                            f"CephVR launcher bootstrap write failed: {bootstrap_error[0]!r}\n"
+                        )
                 decisions.tick(now)
                 for _ in range(64):
                     try:
@@ -456,7 +395,7 @@ def run_launcher(
                             native,
                             application_job,
                             decisions.shutdown_deadline_ns,
-                            2_000_000_000,
+                            startup.terminate_exit_ns,
                         )
                         return
                 time.sleep(0.1)

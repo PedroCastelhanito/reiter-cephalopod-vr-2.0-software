@@ -30,7 +30,7 @@ class PySerialPort:
             import serial  # type: ignore[import-untyped]
         except ImportError as exc:
             raise RuntimeError(
-                "pyserial is required for acquisition microcontroller control"
+                "pyserial is required for Microcontroller device control"
             ) from exc
         try:
             self._serial = serial.Serial(

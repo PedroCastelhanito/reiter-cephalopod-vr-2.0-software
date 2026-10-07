@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-import struct
 from collections.abc import Sequence
 
 
@@ -34,32 +33,6 @@ def linear_to_srgb(channel: float) -> float:
         raise ValueError("linear channel must be finite")
     c = min(1.0, max(0.0, channel))
     return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
-
-
-def linearize_rgba(
-    rgba: Sequence[float], *, transfer: str, alpha: float | None = None
-) -> tuple[float, float, float, float]:
-    """Decode the declared transfer, then return linear premultiplied float32 RGBA."""
-    values = require_finite_rgba(rgba)
-    a = values[3] if alpha is None else alpha
-    if not math.isfinite(a):
-        raise ValueError("alpha must be finite")
-    a = min(1.0, max(0.0, a))
-    if transfer == "srgb":
-        rgb = tuple(srgb_to_linear(c) for c in values[:3])
-    elif transfer in ("linear", "bt709"):
-        if transfer == "bt709":
-
-            def decode(c: float) -> float:
-                c = min(1.0, max(0.0, c))
-                return c / 4.5 if c < 0.081 else ((c + 0.099) / 1.099) ** (1 / 0.45)
-
-            rgb = tuple(decode(c) for c in values[:3])
-        else:
-            rgb = values[:3]
-    else:
-        raise ValueError(f"unsupported transfer function {transfer!r}")
-    return tuple(struct.unpack("=f", struct.pack("=f", c * a))[0] for c in rgb) + (a,)
 
 
 def source_over(

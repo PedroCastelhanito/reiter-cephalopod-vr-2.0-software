@@ -91,6 +91,16 @@ class StatusPublisher:
         )
         self.changed()
 
+    def keyed_warning(self, key: str, reason: str | None) -> None:
+        """Set a per-subject supervisor warning, or clear it when ``reason`` is None."""
+        if reason is not None:
+            self.unavailable_component("supervisor", reason, key=key)
+            return
+        warning_id = self.keyed_warnings.pop(key, None)
+        if warning_id is not None and warning_id in self.state.warnings:
+            del self.state.warnings[warning_id]
+            self.changed()
+
     async def send_status(self) -> None:
         while True:
             revision = self.state.revision

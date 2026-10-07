@@ -10,6 +10,7 @@ from cephvr.acquisition.identity import camera_for_process_role
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import runtime_pb2
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.backend_bootstrap import require_loopback_endpoint
 from cephvr.shared.identity import require_uuid4
 
 from .state import WorkerBootstrap
@@ -53,6 +54,8 @@ def decode_worker_bootstrap(document: Mapping[str, object]) -> WorkerBootstrap:
     strings = {
         key: _string(document, key) for key in _FIELDS - _INTEGER_FIELDS - _BYTES_FIELDS
     }
+    for endpoint in ("supervisor_endpoint", "coordinator_endpoint"):
+        require_loopback_endpoint(strings[endpoint], f"worker {endpoint}")
     if strings["role"] not in {
         "acquisition_behavioral_worker",
         "acquisition_tracking_worker",

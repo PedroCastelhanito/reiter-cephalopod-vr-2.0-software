@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from cephvr.visual_stimulus.resources.protected import (
+from cephvr.platform.windows.protected_source import (
     ProtectedSourceError,
     ProtectedWindowsSource,
 )

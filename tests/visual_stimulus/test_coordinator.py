@@ -10,10 +10,12 @@ import pytest
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.visual_stimulus.compiler import prepared_digest
+from cephvr.visual_stimulus.coordinator.commands import validate
 from cephvr.visual_stimulus.coordinator.obligations import output_plans
 from cephvr.visual_stimulus.coordinator.recipes import RecipeOwner
 from cephvr.visual_stimulus.coordinator.reports import Reports
 from cephvr.visual_stimulus.coordinator.state import Identity, Prepared, State
+from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.main import command_ledger
 from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
@@ -267,3 +269,54 @@ async def test_missing_release_execution_receipt_keeps_recipe_outcome_unknown(tm
     assert state.interrupted and not list(tmp_path.iterdir())
     assert supervisor.reports[-1][0] == "ReportError"
     assert supervisor.reports[-1][1].failure.code == "RELEASE_UNCONFIRMED"
+
+
+def _setup_with_policy_version(
+    identity: Identity, version: int
+) -> wire.SetupSessionRequest:
+    session = pb.SessionContext(
+        controller_generation=identity.controller.generation, session_id=str(uuid4())
+    )
+    request = wire.SetupSessionRequest(
+        command=wire.BackendCommand(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            work=pb.WorkContext(session=session),
+        )
+    )
+    request.plan.context.CopyFrom(session)
+    request.settings.backend_name = "visual_stimulus"
+    request.settings.visual_stimulus.SetInParent()
+    request.visual_stimulus_policies.contract_version = version
+    return request
+
+
+@pytest.mark.parametrize("version", [0, CONTRACT_VERSION + 1])
+def test_setup_with_the_wrong_file_policy_contract_version_is_rejected(
+    version: int,
+) -> None:
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    validate(
+        identity,
+        State(),
+        "SetupSession",
+        _setup_with_policy_version(identity, CONTRACT_VERSION),
+    )
+    with pytest.raises(ValueError, match="file policy version"):
+        validate(
+            identity,
+            State(),
+            "SetupSession",
+            _setup_with_policy_version(identity, version),
+        )

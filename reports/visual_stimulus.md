@@ -1,5 +1,31 @@
 # Visual Stimulus status
 
+Projector configuration JSON (2026-10-08) under [G01](../docs/architecture/gui.md#g01)
+now combines all Projectors GUI experiment settings with reusable runtime profile
+references. Physical inventory/mappings remain current; participation and pulse target
+restore by logical face. Submission preserves geometry/color references and shared-output
+coverage while rebinding current native properties. Numeric-only and legacy runtime
+files remain supported through one Load JSON / Save as row. Full backend preparation
+validation remains authoritative; no physical output is driven by loading a file.
+ARCH-002 review extracts portable profile/native rebinding and file settings into focused
+helpers; the Projectors panel remains the shared UI composition/selection owner. No new
+dependency, backend process or policy choice is added. Validation results follow in the
+[current runtime assessment](runtime.md#current-scope-and-review); Windows/optical
+acceptance stays on the existing rig checklist.
+
+Calibration authoring update (2026-10-08) under
+[G01](../docs/architecture/gui.md#g01)/[V01](../docs/architecture/visual_stimulus.md#v01):
+Launch always exports the grid using saved rig planes and display corrections.
+CephVR1.0 `914ecbc` supplies world-phase colored solid/dashed grid, full-face center
+cross, physical face dimensions and 50 mm ruler strategy. Guide geometry is built
+once in a focused helper; narrow faces omit a ruler that would not fit, and labels
+stay inside the face with dark backgrounds. Local tests verify world phase through
+reversed U axes, midpoint spans, physical reference length and backend GLB parsing;
+the sample asset is 316,004 bytes. Two focused cases pass after final guide formatting.
+[Current local suite](runtime.md#current-scope-and-review) passes; actual corrected
+output and optical measurements remain in the existing rig checklist. No projector
+was driven in this local increment.
+
 Current Windows check (2026-10-07, `08d146d`): managed coordinator/renderer startup
 and long idle process liveness pass; normal authenticated application shutdown
 confirms exact process absence. Inventory finds four projector outputs at 60 Hz.
@@ -12,7 +38,7 @@ teardown crash prevent blanket rig acceptance. See the
 [dated raw evidence](rig-wiring-evidence-2026-10-07/README.md). E15 and the existing
 encoder/scientific deferrals are unchanged.
 
-Updated: 2026-10-07. The complete Visual Stimulus implementation is selected under
+Updated: 2026-10-08. The complete Visual Stimulus implementation is selected under
 [ARCH-001](../architecture.md#arch-001). This report describes the uncommitted working
 tree, preserving the existing controller, supervisor and acquisition work.
 [V01–V28/E13](../docs/architecture/visual_stimulus.md) and [E05–E08/E14–E15](../docs/architecture/system-contracts.md)

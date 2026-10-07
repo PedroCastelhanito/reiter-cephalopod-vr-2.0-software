@@ -1,4 +1,4 @@
-"""Typed host owner for the A11 pulse-microcontroller serial protocol."""
+"""Controller host owner for the A11 pulse-microcontroller serial protocol."""
 
 from .bridge import SerialOwnerBridge
 from .owner import SerialOwner, SerialOwnerError

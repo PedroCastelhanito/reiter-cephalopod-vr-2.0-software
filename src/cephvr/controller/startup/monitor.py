@@ -87,6 +87,20 @@ async def authority_loop(
             await asyncio.sleep(0.1)
             now = control.clock()
             observed = control.status()
+            if observed.shutdown_intent_ns:
+                allowance = (
+                    control.limits.current.finished_ns
+                    if observed.activated
+                    else control.limits.current.setup_cancel_ns
+                )
+                control.bind_cleanup_deadline(
+                    min(
+                        observed.shutdown_intent_ns + startup.application_backstop_ns,
+                        observed.shutdown_intent_ns
+                        + allowance
+                        + control.limits.current.recovery_ns,
+                    )
+                )
             if observed.shutdown_intent_ns and not launcher_attempted:
                 launcher_attempted = True
                 deadline = observed.shutdown_intent_ns + startup.application_backstop_ns
@@ -139,7 +153,8 @@ async def authority_loop(
                     deadline = (
                         observed.shutdown_intent_ns + startup.application_backstop_ns
                     )
-                    while control.clock() < deadline:
+                    # Deadline poll against the injectable clock; no event marks this deadline.
+                    while control.clock() < deadline:  # noqa: ASYNC110
                         await asyncio.sleep(
                             max(0, min(0.1, (deadline - control.clock()) / 1e9))
                         )

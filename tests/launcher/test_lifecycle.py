@@ -140,6 +140,10 @@ def test_parse_reports_each_violation_and_strips_reserved_key() -> None:
     assert isinstance(parse_notification_line(b'{"a":1}'), str)  # unterminated
     assert isinstance(parse_notification_line(b"not json\n"), str)
     assert isinstance(parse_notification_line(b"[1]\n"), str)
+    # Nesting inside the byte limit exhausts the recursion limit, not the parser.
+    assert (
+        parse_notification_line(b"[" * 4000 + b"]" * 4000 + b"\n") == "malformed JSON"
+    )
     parsed = parse_notification_line(b'{"kind":"x","' + LOST_KEY.encode() + b'":"y"}\n')
     assert parsed == {"kind": "x"}
 

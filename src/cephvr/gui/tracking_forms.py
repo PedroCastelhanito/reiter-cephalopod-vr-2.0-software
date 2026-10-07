@@ -185,7 +185,7 @@ class TrackingForms:
                 key,
                 title,
                 value or "Required",
-                index // 2 + 1,
+                index // 2,
                 index % 2,
                 default=bool(value),
             )

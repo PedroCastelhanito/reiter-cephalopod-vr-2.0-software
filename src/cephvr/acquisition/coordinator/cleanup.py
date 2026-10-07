@@ -378,7 +378,7 @@ class CoordinatorCleanup:
         port_resources = [
             item
             for item in session.cleanup_resources
-            if item.resource.startswith("serial-port:")
+            if item.resource.startswith("microcontroller-claim:")
         ]
         if not port_resources:
             return True

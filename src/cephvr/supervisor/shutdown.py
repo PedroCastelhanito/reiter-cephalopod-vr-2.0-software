@@ -53,6 +53,7 @@ class ShutdownCoordinator:
         silence_timeout_ns: int,
         tasks: SupervisorTasks,
         changed: Callable[[], None],
+        helper_warning: Callable[[str, str | None], None] | None = None,
     ) -> None:
         self.state = state
         self.registration = registration
@@ -70,6 +71,7 @@ class ShutdownCoordinator:
             issuer=identity,
             interrupt_commands=state.worker_interrupt_commands,
             cleanup_commands=state.worker_cleanup_commands,
+            helper_warning=helper_warning,
         )
         self.visual_stimulus_worker_control = VisualStimulusWorkerControl(
             registration=registration,
@@ -139,13 +141,15 @@ class ShutdownCoordinator:
                 self.state.shutdown_request = payload
                 issued = min(host_time_ns(), request.issued_monotonic_ns)
                 shutdown_deadline = self.retain_shutdown_deadlines(issued)
-                self.recovery.state.operations[request.command_id] = (
+                # A replay must not reset progress or a recorded outcome.
+                self.recovery.state.operations.setdefault(
+                    request.command_id,
                     types.OperationState(
                         context=types.OperationContext(command_id=request.command_id),
                         command="ShutdownApplication",
                         work=request.work,
                         progress="intent retained",
-                    )
+                    ),
                 )
             self.tasks.spawn(
                 "launcher shutdown notification",
@@ -412,9 +416,20 @@ class ShutdownCoordinator:
                 self.tasks.report_failure(f"{worker.worker.role} cleanup", result)
         return True
 
+    async def _cleanup_acquisition_workers(self, cleanup_deadline: int) -> None:
+        if await self._cleanup_workers(
+            self.acquisition_worker_control, cleanup_deadline
+        ):
+            # Only acquisition workers own EOF-stopped native helpers, so the
+            # helper reconcile follows their cleanup and only when it ran.
+            await self.acquisition_worker_control.reconcile_native_helper_exits(
+                cleanup_deadline
+            )
+
     async def _request_participant_shutdown(self, cleanup_deadline: int) -> None:
         context = self._registered_context()
-        requests = []
+        deadline = self._outer_deadline(cleanup_deadline)
+        requests: dict[asyncio.Task[Any], str] = {}
         for target in context.required_participants:
             command = wire.BackendCommand(
                 command_id=str(uuid4()),
@@ -422,27 +437,19 @@ class ShutdownCoordinator:
                 target=target,
                 work=context.work,
             )
-            requests.append(
-                self.outbound.shutdown_backend(
-                    target,
-                    command,
-                    deadline_ns=self._outer_deadline(cleanup_deadline),
-                )
+            task = asyncio.create_task(
+                self.outbound.shutdown_backend(target, command, deadline_ns=deadline)
             )
+            requests[task] = f"{target.backend_name} shutdown request"
         for control in self.worker_controls:
             for launch, worker in control.registered_workers(context.work):
-                requests.append(
-                    control.shutdown_worker(
-                        launch, worker, self._outer_deadline(cleanup_deadline)
-                    )
+                task = asyncio.create_task(
+                    control.shutdown_worker(launch, worker, deadline)
                 )
-        if requests:
-            try:
-                await asyncio.wait_for(
-                    asyncio.gather(*requests, return_exceptions=True), timeout=5
-                )
-            except TimeoutError:
-                pass
+                requests[task] = f"{worker.worker.role} shutdown request"
+        # Rejected or timed-out requests surface as warnings; exit evidence, not
+        # the reply, still decides the shutdown outcome.
+        await self._wait_for_deliveries(requests)
 
     def _record_shutdown_outcome(self, exits: ProcessExitEvidence) -> None:
         if not self.state.shutdown_request:
@@ -483,17 +490,20 @@ class ShutdownCoordinator:
             recovery_ns = max(0, self._registered_context().policies.recovery_ns)
             initial_deadline = max(host_time_ns(), cleanup_deadline - recovery_ns)
             await self._wait_for_cleanup_blockers(initial_deadline)
-            if await self._cleanup_workers(
-                self.acquisition_worker_control, cleanup_deadline
-            ):
-                # Only acquisition workers own EOF-stopped native helpers, so the
-                # helper reconcile follows their cleanup and only when it ran.
-                await self.acquisition_worker_control.reconcile_native_helper_exits(
-                    cleanup_deadline
-                )
-            await self._cleanup_workers(
-                self.visual_stimulus_worker_control, cleanup_deadline
+            # Concurrent: one backend running to the deadline must not leave the
+            # other's outputs unattempted.
+            branches = await asyncio.gather(
+                self._cleanup_acquisition_workers(cleanup_deadline),
+                self._cleanup_workers(
+                    self.visual_stimulus_worker_control, cleanup_deadline
+                ),
+                return_exceptions=True,
             )
+            for name, branch in zip(
+                ("acquisition", "visual stimulus"), branches, strict=True
+            ):
+                if isinstance(branch, Exception):
+                    self.tasks.report_failure(f"{name} worker cleanup", branch)
             await self._wait_for_cleanup_blockers(cleanup_deadline)
             await self.interrupt_if_controller_lost()
             await self._request_participant_shutdown(cleanup_deadline)

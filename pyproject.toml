@@ -15,6 +15,7 @@ dependencies = [
     "tzdata>=2026.4",
     "tzlocal>=5.4.4,<6",
     "pydantic>=2.10,<3",
+    "pyserial==3.5",
 ]
 
 [project.optional-dependencies]
@@ -43,11 +44,11 @@ acquisition = [
     "opencv-python==4.13.0.92",
     "pypylon==26.3.1",
     "numpy==2.4.4",
-    "pyserial==3.5",
 ]
 dev = [
     "swig==4.3.0; sys_platform == 'win32'",
     "build==1.6.1",
+    "coverage==7.16.2",
     "grpcio-tools==1.84.0",
     "mypy==2.3.1",
     "pytest==9.1.1",
@@ -99,7 +100,13 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC", "RUF006", "RUF100"]
+
+[tool.ruff.lint.per-file-ignores]
+# Test helpers poll with bounded sleeps and read fixtures directly.
+"tests/**" = ["ASYNC"]
+# The GUI package is in active development; its stale noqa comments are not swept yet.
+"src/cephvr/gui/**" = ["RUF100"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -85,7 +85,7 @@ class WorkerHealthReporter:
         try:
             self._dispatch(reporter.report_error(request, deadline_ns=deadline_ns))
         except BaseException:
-            return
+            return  # The fault is already in the local snapshot; no second channel exists.
 
     def recording_isolated(
         self,
@@ -168,7 +168,7 @@ class WorkerHealthReporter:
             try:
                 self._dispatch(reporter.report_error(error, deadline_ns=deadline_ns))
             except BaseException:
-                pass
+                pass  # The fault is already in the local snapshot (update_fault_snapshot).
 
     def warning_occurrence(self, occurrence: WarningOccurrence) -> None:
         warnings = self.state.warnings

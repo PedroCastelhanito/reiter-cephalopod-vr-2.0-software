@@ -80,13 +80,3 @@ def atomic_store_u64(
     """Store only if the caller's single-writer snapshot is still current."""
     if not atomic_compare_exchange_u64(buffer, offset, expected, value):
         raise NativeAtomicError("single-writer atomic value changed unexpectedly")
-
-
-def atomic_increment_u64(buffer: memoryview, offset: int) -> int:
-    """Increment a single-writer word with one bounded CAS."""
-    observed = atomic_load_u64(buffer, offset)
-    if observed >= 0x7FFFFFFFFFFFFFFF:
-        raise NativeAtomicError("native atomic counter exhausted")
-    replacement = observed + 1
-    atomic_store_u64(buffer, offset, observed, replacement)
-    return replacement

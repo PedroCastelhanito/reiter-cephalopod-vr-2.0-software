@@ -5,13 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from cephvr.acquisition.v1 import camera_pb2, runtime_pb2
-from cephvr.shared.config import ConfigurationError
+from cephvr.controller.microcontroller.config import load_serial_policies
 
 from .policy import CONTRACT_VERSION, _load_pair
 from .values import (
     _duration_ns,
     _load_transport,
-    _positive_int,
     _required,
 )
 
@@ -41,46 +40,10 @@ def load_file_policies(root: Path) -> runtime_pb2.AcquisitionFilePolicies:
             )
         transport = values.get("transport", {})
         _load_transport(policy.transport, transport, role)
-    mc = config.get("microcontroller", {})
-    result.serial_baud_rate = _positive_int(
-        _required(mc, "baud_rate", "microcontroller.baud_rate"),
-        "microcontroller.baud_rate",
-    )
-    result.serial_ack_timeout_ns = _duration_ns(
-        _required(mc, "ack_timeout_ms", "microcontroller.ack_timeout_ms"),
-        "microcontroller.ack_timeout_ms",
-        1_000_000,
-    )
-    result.serial_keepalive_interval_ns = _duration_ns(
-        _required(mc, "keepalive_interval_s", "microcontroller.keepalive_interval_s"),
-        "microcontroller.keepalive_interval_s",
-        1_000_000_000,
-    )
-    result.serial_communication_timeout_ns = _duration_ns(
-        _required(
-            mc, "communication_timeout_s", "microcontroller.communication_timeout_s"
-        ),
-        "microcontroller.communication_timeout_s",
-        1_000_000_000,
-    )
-    if result.serial_keepalive_interval_ns >= result.serial_communication_timeout_ns:
-        raise ConfigurationError(
-            "microcontroller keepalive must be shorter than communication timeout"
-        )
-    if (
-        result.serial_communication_timeout_ns % 1_000_000 != 0
-        or result.serial_communication_timeout_ns // 1_000_000 >= 1 << 32
-    ):
-        raise ConfigurationError(
-            "microcontroller communication timeout must be an exact uint32 millisecond value"
-        )
-    result.serial_stop_completion_margin_ns = _duration_ns(
-        _required(
-            mc, "stop_completion_margin_ms", "microcontroller.stop_completion_margin_ms"
-        ),
-        "microcontroller.stop_completion_margin_ms",
-        1_000_000,
-    )
+    serial = load_serial_policies(Path(root))
+    for field, value in serial.ListFields():
+        if field.name.startswith("serial_"):
+            setattr(result, field.name, value)
     recording = config.get("recording", {})
     result.frame_log_sync_interval_ns = _duration_ns(
         _required(recording, "sync_interval_s", "recording.sync_interval_s"),

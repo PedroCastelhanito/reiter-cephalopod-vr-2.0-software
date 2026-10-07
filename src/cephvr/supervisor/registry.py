@@ -13,6 +13,7 @@ from cephvr.acquisition.identity import ACQUISITION_WORKER_ROLES
 from cephvr.acquisition.identity import FFMPEG_ROLES as ACQ_FFMPEG_ROLES
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
+from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
 from cephvr.shared.clock import (
     HostClockDescriptor,
     descriptor_from_wire,
@@ -117,7 +118,10 @@ class LaunchRegistry:
             raise LaunchError(
                 "INVALID_EXECUTABLE", "launch executable must be an absolute path"
             )
-        if request.stop_method not in {"grpc_shutdown", "owner_stdin_eof"}:
+        if request.stop_method not in {"grpc_shutdown", "owner_stdin_eof"} and not (
+            request.child.role == FIRMWARE_UPLOAD_ROLE
+            and request.stop_method == "owner_job_terminate"
+        ):
             raise LaunchError("INVALID_STOP_METHOD", "unsupported child stop method")
         if request.python_worker and request.stop_method != "grpc_shutdown":
             raise LaunchError(
@@ -125,6 +129,19 @@ class LaunchRegistry:
             )
         if request.child.role == "supervisor":
             raise LaunchError("INVALID_CHILD", "launcher alone creates supervisor")
+        if request.child.role == FIRMWARE_UPLOAD_ROLE and (
+            request.owner.role != "controller"
+            or request.python_worker
+            or request.stop_method != "owner_job_terminate"
+            or request.HasField("work")
+            or not request.parent_operation.command_id
+        ):
+            raise LaunchError(
+                "INVALID_OWNER",
+                "firmware upload requires its controller Configuration owner and operation",
+            )
+        if request.child.role == FIRMWARE_UPLOAD_ROLE:
+            require_uuid4(request.parent_operation.command_id)
         if request.child.role in VISUAL_STIMULUS_FFMPEG_ROLES:
             if request.owner.role != "visual_stimulus_renderer" or not request.HasField(
                 "work"
@@ -207,10 +224,10 @@ class LaunchRegistry:
                 if (
                     entry.plan.stop_method == "owner_stdin_eof"
                     and entry.plan.owner.role in ACQUISITION_WORKER_ROLES
+                    or entry.plan.child.role == FIRMWARE_UPLOAD_ROLE
                 ):
-                    # A camera-owned encoder normally exits at EOF. Its exact
-                    # worker must retain output closure before this launch can
-                    # be released; process exit alone is not a helper failure.
+                    # Normal helper exit still requires its owning backend
+                    # to confirm exact native/resource closure before release.
                     return _snapshot(entry)
                 self._block(
                     entry,
@@ -261,12 +278,34 @@ class LaunchRegistry:
             raise self._block(
                 entry, "LAUNCH_TIMEOUT", "launch registration deadline expired"
             )
-        if entry.state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED:
+        if (
+            entry.state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+            and not request.native_cleanup_complete
+        ):
             if previous_confirmation is not None:
                 return _snapshot(entry)
             raise LaunchError(
                 "CLEANUP_REQUIRED", "planned child requires reconciliation"
             )
+        if request.native_cleanup_complete:
+            if (
+                entry.plan.child.role != FIRMWARE_UPLOAD_ROLE
+                or request.HasField("pid") != entry.state.HasField("pid")
+                or request.HasField("creation_time_100ns")
+                != entry.state.HasField("creation_time_100ns")
+                or request.pid != entry.state.pid
+                or request.creation_time_100ns != entry.state.creation_time_100ns
+                or request.HasField("endpoint")
+                or request.HasField("host_clock")
+                or request.creation_failed_without_child
+            ):
+                raise LaunchError(
+                    "INVALID_NATIVE_RELEASE",
+                    "firmware cleanup must match the retained exact child",
+                )
+            released = self.release(request.launch_command_id, obligations_met=True)
+            entry.confirmations[request.command_id] = canonical
+            return released
         members = self._members(entry)
         if (
             request.HasField("creation_failed_without_child")

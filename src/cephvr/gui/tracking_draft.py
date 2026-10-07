@@ -146,15 +146,15 @@ def validated_draft(
                 raise ValueError("Annotation lies outside its reference image.")
     preprocessing = data.get("preprocessing")
     if isinstance(preprocessing, dict) and "region" not in preprocessing:
-        points = data.get("annotations", {}).get("Input crop", [])
+        crop_points = points["Input crop"]
         preprocessing["region"] = (
             [
-                points[0][0],
-                points[0][1],
-                points[1][0] - points[0][0],
-                points[1][1] - points[0][1],
+                crop_points[0][0],
+                crop_points[0][1],
+                crop_points[1][0] - crop_points[0][0],
+                crop_points[1][1] - crop_points[0][1],
             ]
-            if len(points) == 2
+            if len(crop_points) == 2
             else [0, 0, 0, 0]
         )
     if (

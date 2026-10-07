@@ -149,6 +149,77 @@ async def test_lost_controller_with_active_session_interrupts_before_shutdown(
     assert not (tmp_path / "reports").exists()
 
 
+class _CleanupControl:
+    """Worker control whose cleanup optionally runs to the original deadline."""
+
+    def __init__(self, name: str, events: list[str], *, hang: bool) -> None:
+        self.name = name
+        self.events = events
+        self.hang = hang
+
+    def registered_workers(self, work):  # type: ignore[no-untyped-def]
+        return [(wire.LaunchState(), SimpleNamespace(worker=_worker(self.name)))]
+
+    async def cleanup_worker(self, launch, worker, deadline_ns):  # type: ignore[no-untyped-def]
+        self.events.append(f"{self.name}:cleanup")
+        if self.hang:
+            await asyncio.sleep(max(0.0, (deadline_ns - host_time_ns()) / 1e9))
+
+    async def reconcile_native_helper_exits(self, deadline_ns):  # type: ignore[no-untyped-def]
+        self.events.append(f"{self.name}:reconcile")
+        return []
+
+    async def interrupt_worker(self, *args):  # type: ignore[no-untyped-def]
+        pass
+
+    async def shutdown_worker(self, *args):  # type: ignore[no-untyped-def]
+        pass
+
+
+def _worker(role: str) -> types.ProcessIdentity:
+    return types.ProcessIdentity(role=role, generation=str(uuid4()))
+
+
+async def test_stalled_acquisition_cleanup_does_not_starve_visual_stimulus(
+    tmp_path: Path,
+) -> None:
+    runtime, _, _, _ = await _registered_visual_stimulus(tmp_path)
+    events: list[str] = []
+    runtime.shutdown.acquisition_worker_control = _CleanupControl(  # type: ignore[assignment]
+        "acquisition", events, hang=True
+    )
+    runtime.shutdown.visual_stimulus_worker_control = _CleanupControl(  # type: ignore[assignment]
+        "visual_stimulus", events, hang=False
+    )
+    # No outstanding participant cleanup, so the run reaches worker cleanup at once.
+    runtime.recovery.cleanup_blockers = lambda: []  # type: ignore[method-assign]
+    runtime.shutdown_state.shutdown_deadline_ns = host_time_ns() + 3 * 10**8
+    runtime.shutdown_state.cleanup_deadline_ns = host_time_ns() + 3 * 10**8
+    runtime.shutdown.graceful_exit_ns = 1
+    runtime.shutdown.terminate_exit_ns = 1
+    await runtime.shutdown.shutdown_owned()
+    assert events.index("visual_stimulus:cleanup") < events.index(
+        "acquisition:reconcile"
+    )
+    assert {"acquisition:cleanup", "visual_stimulus:cleanup"} <= set(events)
+
+
+async def test_rejected_participant_shutdown_request_is_reported(
+    tmp_path: Path,
+) -> None:
+    runtime, _, outbound, _ = await _registered_visual_stimulus(tmp_path)
+
+    async def reject(target, request, *, deadline_ns) -> None:  # type: ignore[no-untyped-def]
+        raise RuntimeError("backend visual_stimulus rejected shutdown: BUSY")
+
+    outbound.shutdown_backend = reject  # type: ignore[attr-defined]
+    await runtime.shutdown._request_participant_shutdown(host_time_ns() + 10**9)
+    messages = [w.message for w in runtime.status_state.warnings.values()]
+    assert any(
+        "visual_stimulus shutdown request" in m and "BUSY" in m for m in messages
+    )
+
+
 async def test_lost_controller_without_active_session_is_not_interrupted(
     tmp_path: Path,
 ) -> None:
@@ -228,9 +299,20 @@ async def test_explicit_shutdown_progresses_without_waiting_for_controller_exit(
     assert runtime.shutdown_state.shutdown_task is not None
     await runtime.shutdown_state.shutdown_task
     assert runtime.shutdown_state.shutdown_complete.is_set()
+    operation = runtime.recovery.state.operations[command_id]
+    assert operation.complete
+    outcome = operation.SerializeToString(deterministic=True)
     assert (
         await runtime.service.RequestApplicationShutdown(request, caller)
     ) == receipt
+    # The replay must not reset the recorded outcome to "intent retained".
+    assert runtime.recovery.state.operations[command_id].complete
+    assert (
+        runtime.recovery.state.operations[command_id].SerializeToString(
+            deterministic=True
+        )
+        == outcome
+    )
 
 
 @pytest.mark.parametrize("failure", ["error", "timeout"])

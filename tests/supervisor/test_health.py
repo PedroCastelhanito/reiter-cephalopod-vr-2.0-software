@@ -43,6 +43,26 @@ def error(source: types.ProcessIdentity, code: str) -> types.ErrorReport:
     )
 
 
+async def test_unreadable_job_does_not_fail_another_sources_heartbeat(
+    tmp_path: Path,
+) -> None:
+    runtime, native, _, _ = make_runtime(tmp_path)
+    healthy = types.ProcessIdentity(role="visual_stimulus", generation=str(uuid4()))
+    blocked = types.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    launch(runtime, native, runtime.identity, healthy, 51)
+    launch(runtime, native, runtime.identity, blocked, 52)
+    job = next(
+        state.containment_job_name
+        for state in runtime.registry.states()
+        if state.plan.child == blocked
+    )
+    del native.jobs[job]  # inspection of this one job now fails
+    ok = await runtime.health.report_heartbeat(heartbeat(healthy), host_time_ns())
+    assert ok.result == types.COMMAND_RESULT_ACCEPTED
+    rejected = await runtime.health.report_heartbeat(heartbeat(blocked), host_time_ns())
+    assert rejected.failure.code == "WRONG_CONTEXT"
+
+
 async def test_worker_heartbeat_rejected_coordinator_heartbeat_accepted(
     tmp_path: Path,
 ) -> None:
@@ -167,7 +187,8 @@ async def test_unclassified_error_fences_safety(tmp_path: Path) -> None:
         supervisor=runtime.identity,
         work=work,
         paired_spikeglx=True,
-        policies=types.ControlPolicies(recovery_ns=1_000_000),
+        # Long enough that machine load cannot expire it before the first assertion.
+        policies=types.ControlPolicies(recovery_ns=200_000_000),
     )
     report = types.ErrorReport(
         error_id=str(uuid4()),

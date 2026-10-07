@@ -155,7 +155,7 @@ class DisplayCalibrationOwner:
                     try:
                         self._report(job.cleanup_command, cleanup_deadline)
                     except Exception:
-                        pass
+                        pass  # Evidence state below carries the outcome; report is best effort.
                 if not job.completion.done():
                     job.completion.set_exception(exc)
                 self.job = None
@@ -429,7 +429,7 @@ class DisplayCalibrationOwner:
             try:
                 self._report(command, deadline_ns, display=display)
             except Exception:
-                pass
+                pass  # Failure is already in the evidence record; the report is best effort.
         return False
 
     def _report(
@@ -470,7 +470,7 @@ class DisplayCalibrationOwner:
             try:
                 self._report(job.request.command, job.deadline_ns)
             except Exception:
-                pass
+                pass  # The open failure is retained in the evidence record.
             job.failure_reported = True
 
     def _safe_release_sources(self, prepared: object) -> bool:

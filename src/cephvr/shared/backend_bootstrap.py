@@ -73,7 +73,7 @@ def decode_backend_bootstrap(
         value = _positive_integer(document, field)
         if value > 65535:
             raise ValueError(f"bootstrap {field} exceeds TCP port range")
-    policies = _decode_policies(_string(document, "control_policies"))
+    policies = decode_control_policies(_string(document, "control_policies"))
     return BackendBootstrap(
         software_root=Path(_string(document, "software_root")).resolve(),
         identity=control.ProcessIdentity(role=role, generation=generation),
@@ -106,7 +106,15 @@ def decode_backend_bootstrap(
     )
 
 
-def _decode_policies(encoded: str) -> control.ControlPolicies:
+def require_loopback_endpoint(endpoint: str, name: str) -> str:
+    """E08: workers dial only explicit IPv4 loopback; reject anything else early."""
+    host, _, port = endpoint.partition(":")
+    if host != "127.0.0.1" or not port.isdecimal():
+        raise ValueError(f"{name} must be an IPv4 loopback endpoint")
+    return endpoint
+
+
+def decode_control_policies(encoded: str) -> control.ControlPolicies:
     try:
         payload = base64.b64decode(encoded, validate=True)
     except (binascii.Error, ValueError) as exc:

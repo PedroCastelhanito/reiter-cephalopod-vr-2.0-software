@@ -21,7 +21,8 @@ def parse_notification_line(line: bytes) -> dict[str, object] | str:
         return "oversized or unterminated line"
     try:
         notification = json.loads(line)
-    except (UnicodeError, json.JSONDecodeError):
+    except (UnicodeError, json.JSONDecodeError, RecursionError):
+        # Deep nesting inside the byte limit raises RecursionError, not a decode error.
         return "malformed JSON"
     if not isinstance(notification, dict):
         return "notification is not an object"

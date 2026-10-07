@@ -91,15 +91,3 @@ def projection_matrix(
         -2 * far * near / (far - near),
         0,
     )
-
-
-def apply_surface_map(
-    matrix: Sequence[Sequence[float]], x_mm: float, y_mm: float
-) -> tuple[float, float]:
-    if len(matrix) != 2 or any(len(row) != 3 for row in matrix):
-        raise ValueError("surface map must be 2x3 affine")
-    if not all(math.isfinite(v) for row in matrix for v in row) or not all(
-        math.isfinite(v) for v in (x_mm, y_mm)
-    ):
-        raise ValueError("finite coordinates and map required")
-    return tuple(row[0] * x_mm + row[1] * y_mm + row[2] for row in matrix)  # type: ignore[return-value]

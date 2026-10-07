@@ -431,7 +431,7 @@ class BaslerCameraAdapter:
                 if result is not None and not wrapper_owns_release:
                     result.Release()
             except Exception:
-                pass
+                pass  # Best effort: the retrieve failure below is the reported error.
             raise _sdk_error("retrieve", exc) from exc
 
     def stop_capture(

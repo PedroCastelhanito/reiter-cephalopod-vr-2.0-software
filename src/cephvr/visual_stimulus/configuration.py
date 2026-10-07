@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-import hashlib
 from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 from cephvr.control.v1 import types_pb2
-from cephvr.shared.config import ConfigurationError, LoadedPair, load_pair
+from cephvr.shared.config import (
+    ConfigurationError,
+    LoadedPair,
+    load_pair,
+    policy_digest,
+)
 from cephvr.visual_stimulus.compiler import validate_program_semantics
 from cephvr.visual_stimulus.config.models.display_profile import (
     parse_display_json,
@@ -29,13 +33,13 @@ from cephvr.visual_stimulus.config.pacing import (
     apply_pacing_settings,
     resolve_pacing_profile,
 )
+from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
 _POLICY_VERSION = 7
-_CONTRACT_VERSION = 1
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "52e8307df79be66861ed29964d67e43b64a36a06b04f7dfd1cbee9129dcf55be"
+_POLICY_SHA256 = "1c13b18107ee4044918433d7e3b4e5264fbaa61eab3aebf0a91b0d0999db90ab"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -154,7 +158,7 @@ def _load_pair(root: Path) -> LoadedPair:
         raise ConfigurationError(
             f"Visual Stimulus policy_version must be {_POLICY_VERSION}"
         )
-    if hashlib.sha256(policy_path.read_bytes()).hexdigest() != _POLICY_SHA256:
+    if policy_digest(pair.policy) != _POLICY_SHA256:
         raise ConfigurationError(
             "Visual Stimulus fixed policy content differs from implementation"
         )
@@ -183,11 +187,6 @@ def _duration_ns(value: object, path: str, scale: int) -> int:
             f"{path} must be an exact positive int64 nanosecond value"
         )
     return int(ns)
-
-
-def load_pacing_settings(root: Path) -> tuple[float | None, str | None]:
-    """Load V20's file-only target and optional configured output identity."""
-    return _pacing_settings(_load_pair(Path(root)).config)
 
 
 def _pacing_settings(config: Mapping[str, Any]) -> tuple[float | None, str | None]:
@@ -235,7 +234,7 @@ def load_defaults(root: Path) -> types_pb2.VisualStimulusSettings:
 def load_file_policies(root: Path) -> runtime_pb2.VisualStimulusFilePolicies:
     """Resolve versioned file-only resource and timing policies."""
     pair = _load_pair(Path(root))
-    result = runtime_pb2.VisualStimulusFilePolicies(contract_version=_CONTRACT_VERSION)
+    result = runtime_pb2.VisualStimulusFilePolicies(contract_version=CONTRACT_VERSION)
     refresh, output_id = _pacing_settings(pair.config)
     if refresh is not None:
         result.pacing_refresh_hz = refresh

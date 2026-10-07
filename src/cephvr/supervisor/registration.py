@@ -135,7 +135,8 @@ class RegistrationCoordinator:
             return True
         if not allow_worker and source.role not in BACKEND_ROLES:
             return False
-        for state in self.registry.states():
+        # Tolerant: one unreadable job must not fail every other source's report.
+        for state in self.registry.states(tolerant=True):
             if (
                 state.plan.child == source
                 and state.phase == wire.LAUNCH_PHASE_OPERATIONAL

@@ -208,7 +208,12 @@ class HeadlessClient:
         )
         self._reader = asyncio.create_task(self._read())
         try:
-            await asyncio.wait_for(self._wait(lambda _: True), self.rpc_timeout_s)
+            try:
+                await asyncio.wait_for(self._wait(lambda _: True), self.rpc_timeout_s)
+            except TimeoutError:
+                raise ClientError(
+                    "Controller state did not synchronize before the RPC timeout."
+                ) from None
             yield
         finally:
             try:
@@ -244,12 +249,18 @@ class HeadlessClient:
         if state.session.context.session_id:
             claim.session_id = state.session.context.session_id
         await self._admit("TakeOverControl" if takeover else "AcquireControl", claim)
-        await asyncio.wait_for(
-            self._wait(
-                lambda s: s.control.holder_client_id == self.principal.generation
-            ),
-            self.rpc_timeout_s,
-        )
+        try:
+            await asyncio.wait_for(
+                self._wait(
+                    lambda s: s.control.holder_client_id == self.principal.generation
+                ),
+                self.rpc_timeout_s,
+            )
+        except TimeoutError:
+            raise ClientError(
+                "Control ownership was not confirmed before the RPC timeout.",
+                command_id=claim.command_id,
+            ) from None
 
     @asynccontextmanager
     async def control(self, *, takeover: bool = False) -> AsyncIterator[None]:
@@ -293,14 +304,11 @@ class HeadlessClient:
         return CommandOutcome(command_id, False, None, needs_input=True)
 
     async def cancel_current_work(self) -> CommandOutcome:
+        # E02: Cancel Setup during SettingUp, Abort now during Starting or a session.
         phase = self.snapshot.session.phase
-        if phase in (pb.SESSION_PHASE_SETTING_UP, pb.SESSION_PHASE_READY):
+        if phase == pb.SESSION_PHASE_SETTING_UP:
             return await self.execute("CancelSetup")
-        if phase in (
-            pb.SESSION_PHASE_STARTING,
-            pb.SESSION_PHASE_RUNNING,
-            pb.SESSION_PHASE_FINALIZING,
-        ):
+        if phase in (pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING):
             return await self.execute("AbortNow")
         raise ClientError("Current state has no cancellable Setup or active session.")
 

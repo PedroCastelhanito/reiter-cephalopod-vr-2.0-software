@@ -7,6 +7,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
+from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.config.models.artifact_models import (
     Fingerprint,
     GeometricProfile,
@@ -19,7 +20,6 @@ from cephvr.visual_stimulus.config.models.photometric_profile import (
 from cephvr.visual_stimulus.config.models.schema_common import parse_json
 from cephvr.visual_stimulus.resources.assets import PreparedAsset, ProtectedSource
 from cephvr.visual_stimulus.resources.budget import PreparationBudget
-from cephvr.visual_stimulus.resources.protected import ProtectedWindowsSource
 
 
 @dataclass(frozen=True, slots=True)
@@ -274,7 +274,7 @@ def prepare_calibration(
             try:
                 asset.source.close_after_consumers()
             except Exception:
-                pass
+                pass  # Unwinding a failed preparation; the original error propagates.
         for asset in assets:
             budget.release(owner=f"{owner_prefix}:calibration:{asset.asset_id}")
         raise

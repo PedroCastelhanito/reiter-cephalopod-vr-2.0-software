@@ -83,12 +83,18 @@ class GrpcOutbound(GrpcWorkerOutbound):
         target = request.command.target
         channel = self._backend_channel(target.backend_name)
         stub = services_pb2_grpc.AcquisitionConfigurationServiceStub(channel)  # type: ignore[no-untyped-call]
-        receipt = cast(
-            types.CommandAdmission,
-            await stub.ConfirmTrackingInput(
-                request, **self._backend_call_options(deadline_ns)
-            ),
-        )
+        try:
+            receipt = cast(
+                types.CommandAdmission,
+                await stub.ConfirmTrackingInput(
+                    request, **self._backend_call_options(deadline_ns)
+                ),
+            )
+        except grpc.aio.AioRpcError as exc:
+            # The caller retries OSError until the original deadline.
+            raise OSError(
+                f"acquisition ConfirmTrackingInput failed: {exc.code().name}"
+            ) from exc
         return receipt
 
     async def report_status(self, report: wire.SupervisorStatusReport) -> None:

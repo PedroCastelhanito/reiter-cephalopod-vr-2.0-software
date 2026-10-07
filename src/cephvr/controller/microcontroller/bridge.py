@@ -152,7 +152,9 @@ class SerialOwnerBridge:
             lambda: self._get_owner().cancel_on_reservations(), deadline_ns
         )
 
-    async def cancel_active_request(self) -> bool:
+    async def cancel_active_request(self, *, deadline_ns: int) -> bool:
+        if self._clock() >= deadline_ns:
+            raise TimeoutError("Original serial cancellation deadline expired")
         owner = self._owner
         return False if owner is None else owner.cancel_active_request()
 

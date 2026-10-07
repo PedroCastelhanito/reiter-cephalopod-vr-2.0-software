@@ -162,19 +162,14 @@ class CommandLedger:
                 raise ValueError("completion predates admission")
             if len(result) > old.result_reservation_bytes:
                 raise CommandCapacityError("result exceeds its admission reservation")
-            updated = CommandRecord(
-                old.command_id,
-                old.work_key,
-                old.canonical_request,
-                old.accepted_ns,
-                result,
-                now_ns,
+            updated = replace(
+                old,
+                result=result,
+                completed_ns=now_ns,
                 # A result arriving after its scope was retired starts its own window.
-                now_ns if old.work_key in self._finalized_work else old.finalized_ns,
-                old.result_reservation_bytes,
-                old.deadline_ns,
-                old.priority,
-                old.executor_result,
+                finalized_ns=(
+                    now_ns if old.work_key in self._finalized_work else old.finalized_ns
+                ),
             )
             self._records[command_id] = updated
             return updated
@@ -214,19 +209,7 @@ class CommandLedger:
                 raise CommandCapacityError(
                     "executor result exceeds its admission reservation"
                 )
-            updated = CommandRecord(
-                old.command_id,
-                old.work_key,
-                old.canonical_request,
-                old.accepted_ns,
-                old.result,
-                old.completed_ns,
-                old.finalized_ns,
-                old.result_reservation_bytes,
-                old.deadline_ns,
-                old.priority,
-                result,
-            )
+            updated = replace(old, executor_result=result)
             self._records[command_id] = updated
             return updated
 

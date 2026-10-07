@@ -8,27 +8,10 @@ import struct
 from collections.abc import Mapping
 from pathlib import Path
 
+from cephvr.gui.calibration_guides import add_face_guides
 from cephvr.gui.projector_geometry import FACES, RigDimensions, screen_corners
 
 Point = tuple[float, float, float]
-
-# Five-column glyphs stay readable without a font dependency in the GLB asset.
-GLYPHS = {
-    "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
-    "B": ("11110", "10001", "10001", "11110", "10001", "10001", "11110"),
-    "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
-    "F": ("11111", "10000", "10000", "11110", "10000", "10000", "10000"),
-    "G": ("01111", "10000", "10000", "10111", "10001", "10001", "01111"),
-    "H": ("10001", "10001", "10001", "11111", "10001", "10001", "10001"),
-    "I": ("11111", "00100", "00100", "00100", "00100", "00100", "11111"),
-    "L": ("10000", "10000", "10000", "10000", "10000", "10000", "11111"),
-    "M": ("10001", "11011", "10101", "10101", "10001", "10001", "10001"),
-    "N": ("10001", "11001", "10101", "10011", "10001", "10001", "10001"),
-    "O": ("01110", "10001", "10001", "10001", "10001", "10001", "01110"),
-    "R": ("11110", "10001", "10001", "11110", "10100", "10010", "10001"),
-    "T": ("11111", "00100", "00100", "00100", "00100", "00100", "00100"),
-    "U": ("10001", "10001", "10001", "10001", "10001", "10001", "01110"),
-}
 
 
 def _number(values: Mapping[str, object], key: str, *, positive: bool) -> float:
@@ -163,9 +146,6 @@ def make_calibration_glb(
         raise ValueError("Grid spacing must be finite and positive")
     mesh = _Mesh()
     dark = (0.025, 0.035, 0.055, 1.0)
-    grid = (0.23, 0.54, 0.75, 1.0)
-    center = (1.0, 0.86, 0.12, 1.0)
-    white = (1.0, 1.0, 1.0, 1.0)
     outline = (0.4, 0.42, 0.46, 1.0)
     for face in FACES:
         corners = screens[face]
@@ -199,53 +179,7 @@ def make_calibration_glb(
             )
 
         mesh.quad(tuple(corners), dark)  # type: ignore[arg-type]
-        nx, ny = int(width / spacing_mm), int(height / spacing_mm)
-        if nx + ny > 1000:
-            raise ValueError(f"{face} grid exceeds 1000 lines; increase spacing")
-        line_width = min(1.0, spacing_mm / 8)
-        for index in range(1, nx + 1):
-            x = index * spacing_mm
-            if x < width - line_width:
-                mesh.line(at(x, 0, 0.02), at(x, height, 0.02), line_width, normal, grid)
-        for index in range(1, ny + 1):
-            y = index * spacing_mm
-            if y < height - line_width:
-                mesh.line(at(0, y, 0.02), at(width, y, 0.02), line_width, normal, grid)
-        arm = min(width, height) * 0.09
-        stroke = max(1.5, min(width, height) * 0.008)
-        mesh.line(
-            at(width / 2 - arm, height / 2, 0.04),
-            at(width / 2 + arm, height / 2, 0.04),
-            stroke,
-            normal,
-            center,
-        )
-        mesh.line(
-            at(width / 2, height / 2 - arm, 0.04),
-            at(width / 2, height / 2 + arm, 0.04),
-            stroke,
-            normal,
-            center,
-        )
-        letter = min(width / (len(face) * 6 + 2), height / 24)
-        text_width = (len(face) * 6 - 1) * letter
-        start_x = (width - text_width) / 2
-        start_y = height * 0.72
-        for glyph_index, char in enumerate(face.upper()):
-            for row, bits in enumerate(GLYPHS[char]):
-                for col, bit in enumerate(bits):
-                    if bit == "1":
-                        x = start_x + (glyph_index * 6 + col) * letter
-                        y = start_y + (6 - row) * letter
-                        mesh.quad(
-                            (
-                                at(x, y, 0.06),
-                                at(x + letter * 0.85, y, 0.06),
-                                at(x + letter * 0.85, y + letter * 0.85, 0.06),
-                                at(x, y + letter * 0.85, 0.06),
-                            ),
-                            white,
-                        )
+        add_face_guides(mesh, face, at, origin, u, v, normal, width, height, spacing_mm)
 
     # The tank outline is a spatial reference; screens remain the calibration surfaces.
     for x in (0.0, rig.width):

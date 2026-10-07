@@ -46,6 +46,7 @@ from cephvr.controller.lifecycle.trials import TrialExecution
 from cephvr.controller.lifecycle_reports import LifecycleReports, ReportHooks
 from cephvr.controller.metadata.coordination import MetadataCoordinator
 from cephvr.controller.metadata.trial_logs import TrialLogs
+from cephvr.controller.microcontroller.device import MicrocontrollerDevice
 from cephvr.controller.ports import BackendPort, SpikeGLXPort, SupervisorPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
@@ -103,6 +104,7 @@ class AssemblyInputs:
     spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]]
     display_pacing_resolver: Callable[[str, Message], str] | None = None
     software_root: Path | None = None
+    microcontroller_device: MicrocontrollerDevice | None = None
 
 
 @dataclass(frozen=True)
@@ -238,17 +240,18 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         hooks=device_hooks,
         status_retention=camera_status_retention,
     )
+    acquisition_views = i.projections
     microcontroller = MicrocontrollerCommands(
         lifecycle=i.lifecycle,
         configuration=i.configuration_state,
         device=i.device_state,
-        backends=i.backends,
-        generation=i.generation,
+        owner=i.microcontroller_device,
         limits=i.limit_state,
         clock=i.clock,
         hooks=device_hooks,
-        status_retention=camera_status_retention,
+        device_views=lambda: acquisition_views.devices,
     )
+
     owner_cleanup = ManualControlCleanup(
         lifecycle=i.lifecycle,
         configuration=i.configuration_state,
@@ -326,6 +329,13 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         configuration_history_path=i.configuration_history_path,
         clock=i.clock,
         spawn=i.spawn,
+        microcontroller_active=lambda: (
+            i.microcontroller_device is not None
+            and (
+                i.microcontroller_device.view.diagnostic.active
+                or i.microcontroller_device.closing
+            )
+        ),
     )
 
     def warn_controller(message: str) -> None:

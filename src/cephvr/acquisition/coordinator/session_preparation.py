@@ -95,7 +95,7 @@ class SessionPreparation:
         await self.catalogue.declare_resource(
             session,
             self.identity.process,
-            f"serial-port:{settings.pulses.port}",
+            f"microcontroller-claim:{settings.pulses.port}",
             deadline_ns=deadline_ns,
         )
         observation = await self.serial.connect(deadline_ns=deadline_ns)

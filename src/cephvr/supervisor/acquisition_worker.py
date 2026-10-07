@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from typing import TypeVar
 from uuid import uuid4
 
@@ -57,6 +57,7 @@ class AcquisitionWorkerControl:
         issuer: types.ProcessIdentity,
         interrupt_commands: dict[tuple[str, str], str],
         cleanup_commands: dict[tuple[str, str], str],
+        helper_warning: Callable[[str, str | None], None] | None = None,
     ) -> None:
         self.registration = registration
         self.registry = registry
@@ -67,8 +68,23 @@ class AcquisitionWorkerControl:
         self.interrupt_commands = interrupt_commands
         self.cleanup_commands = cleanup_commands
         self._reconcile_lock = asyncio.Lock()
-        # Last failure per helper launch command ID; cleared on release.
+        # Last failure per helper launch command ID; cleared on release. Each is
+        # also a keyed warning so a persistent failure reaches the operator.
         self.helper_errors: dict[str, str] = {}
+        self._helper_warning = helper_warning
+
+    def _record_helper_error(self, command_id: str, message: str) -> None:
+        self.helper_errors[command_id] = message
+        if self._helper_warning is not None:
+            self._helper_warning(
+                f"helper:{command_id}", f"helper unconfirmed: {message}"
+            )
+
+    def _clear_helper_error(self, command_id: str) -> None:
+        if self.helper_errors.pop(command_id, None) is not None and (
+            self._helper_warning is not None
+        ):
+            self._helper_warning(f"helper:{command_id}", None)
 
     def registered_workers(
         self, work: types.WorkContext
@@ -278,8 +294,8 @@ class AcquisitionWorkerControl:
                 ]
                 failure = task.exception()
                 if failure is not None:
-                    self.helper_errors[plan.command_id] = (
-                        f"GetState failed: {failure!r}"
+                    self._record_helper_error(
+                        plan.command_id, f"GetState failed: {failure!r}"
                     )
                 else:
                     try:
@@ -287,8 +303,8 @@ class AcquisitionWorkerControl:
                             helper, owner, task.result(), deadline_ns
                         )
                     except Exception as exc:
-                        self.helper_errors[plan.command_id] = (
-                            f"retained result failed: {exc!r}"
+                        self._record_helper_error(
+                            plan.command_id, f"retained result failed: {exc!r}"
                         )
             if confirmed:
                 self._release(helper)
@@ -319,9 +335,9 @@ class AcquisitionWorkerControl:
             self.registry.release(command_id, obligations_met=True)
         except LaunchError as exc:
             if not (quiet_running and exc.code == "PROCESS_STILL_RUNNING"):
-                self.helper_errors[command_id] = f"release failed: {exc.code}"
+                self._record_helper_error(command_id, f"release failed: {exc.code}")
             return False
-        self.helper_errors.pop(command_id, None)
+        self._clear_helper_error(command_id)
         return True
 
     async def _helper_closure_proven(

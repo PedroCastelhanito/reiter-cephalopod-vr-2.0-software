@@ -1309,3 +1309,136 @@ async def test_tracking_attach_reserves_release_receipt_before_reporting_transfe
     assert owner.resource_ledger.released == [
         (allocation_id, tracking.generation, attachment.sync.transfer_id)
     ]
+
+
+@pytest.mark.parametrize("remaining_external", [False, True])
+async def test_preview_disconnect_releases_only_last_external_camera_claim(
+    monkeypatch, remaining_external
+):
+    from unittest.mock import MagicMock
+
+    from cephvr.acquisition.coordinator import manual_preview as module
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+
+    stopped, cleanup = asyncio.Event(), asyncio.Event()
+    stopped.set()
+    cleanup.set()
+    preview = SimpleNamespace(
+        run_id="run",
+        started=True,
+        stopping=False,
+        configuration_revision=1,
+        stop_operation=None,
+        stopped_event=stopped,
+        cleanup_event=cleanup,
+        resolved_camera=camera.CameraResolvedState(),
+        viewer=None,
+        tracking_viewer=None,
+        allocation_id="released",
+        tracking_allocation_id=None,
+    )
+    worker = SimpleNamespace(preview=preview)
+    pulse = PulseRecord(
+        observation=mcu.MicrocontrollerObservation(connection_id="connection")
+    )
+    pulse.observation.state.behavioral.running = True
+    pulse.observation.state.tracking.running = remaining_external
+    result_state = mcu.MicrocontrollerState()
+    result_state.behavioral.running = False
+    result_state.tracking.running = False
+    evidence = mcu.PulseCommandEvidence(
+        connection_id="connection",
+        request_id="connection-1",
+        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+        applied=True,
+        dispatched_monotonic_ns=10,
+        acknowledged_monotonic_ns=20,
+        resulting_state=result_state,
+    )
+    serial = AsyncMock()
+    serial.off.return_value = evidence
+    serial.on.return_value = mcu.PulseCommandEvidence.FromString(
+        evidence.SerializeToString()
+    )
+    serial.on.return_value.resulting_state.tracking.running = True
+    events = []
+
+    async def worker_done(*args):
+        events.append("camera stopped")
+        preview.started = False
+        return control.OperationState(succeeded=True)
+
+    async def close_claim(**kwargs):
+        events.append("claim released")
+        assert kwargs["deadline_ns"] == 1000
+
+    serial.close.side_effect = close_claim
+    port = AsyncMock()
+    port.stop_preview.return_value = control.CommandAdmission(
+        result=control.COMMAND_RESULT_ACCEPTED
+    )
+    monkeypatch.setattr(
+        module,
+        "retain_worker_command",
+        lambda *args, **kwargs: (
+            acq.WorkerCommand(),
+            SimpleNamespace(command_id="stop"),
+            port,
+        ),
+    )
+    monkeypatch.setattr(module, "wait_child_operation", worker_done)
+    flow = SimpleNamespace(
+        workers=SimpleNamespace(workers={1: worker}),
+        _external_roles=lambda _: (1, 2) if remaining_external else (1,),
+        serial=serial,
+        pulse=pulse,
+        clock=lambda: 1,
+        lock=asyncio.Lock(),
+        windows=SimpleNamespace(close=AsyncMock()),
+        device_status=SimpleNamespace(resolve_camera=MagicMock()),
+        transfers=SimpleNamespace(
+            retire=MagicMock(), close_retired_resource=MagicMock()
+        ),
+        resources={},
+        results=SimpleNamespace(
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED
+                )
+            )
+        ),
+    )
+    request = wire.AcquisitionCameraCommand(
+        camera=1, preview_run_id="run", command=wire.BackendCommand(command_id="stop")
+    )
+    result = await ManualPreview._stop(flow, request, 1000)
+    assert result.result == control.COMMAND_RESULT_ACCEPTED
+    assert serial.close.await_count == (0 if remaining_external else 1)
+    assert serial.on.await_count == (1 if remaining_external else 0)
+    assert (pulse.observation is None) == (not remaining_external)
+    assert events == (
+        ["camera stopped"]
+        if remaining_external
+        else ["camera stopped", "claim released"]
+    )
+
+
+async def test_failed_idle_claim_release_retains_camera_cleanup_evidence():
+    from cephvr.acquisition.coordinator.manual_pulse_observation import (
+        release_idle_claim,
+    )
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+
+    serial = AsyncMock()
+    serial.close.side_effect = RuntimeError("controller release unconfirmed")
+    pulse = PulseRecord(
+        observation=mcu.MicrocontrollerObservation(connection_id="connection")
+    )
+    pulse.observation.state.behavioral.running = False
+    pulse.observation.state.tracking.running = False
+    with pytest.raises(RuntimeError, match="unconfirmed"):
+        await release_idle_claim(pulse, serial, deadline_ns=1000)
+    assert (
+        pulse.observation is not None
+        and pulse.observation.connection_id == "connection"
+    )

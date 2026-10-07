@@ -10,6 +10,7 @@ from google.protobuf.message import Message
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.identity import require_uuid4
+from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.transport.messages import backend_command
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_runtime
@@ -299,6 +300,10 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
             or request.settings.WhichOneof("settings") != "visual_stimulus"
         ):
             raise ValueError("typed Visual Stimulus settings required")
+        if request.visual_stimulus_policies.contract_version != CONTRACT_VERSION:
+            raise ValueError(
+                "Visual Stimulus file policy version differs from the loaded policy"
+            )
         closed = request.plan.configuration.mode == pb.SESSION_MODE_CLOSED_LOOP
         if closed != request.HasField("feedback_attachment"):
             raise ValueError("feedback attachment must match session mode")

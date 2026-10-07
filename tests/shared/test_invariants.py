@@ -213,6 +213,23 @@ def test_operator_credentials_are_generation_scoped_and_owner_only(
     assert first.lookup(principal.generation) is None
 
 
+def test_removing_a_credential_a_concurrent_remover_already_deleted_succeeds(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = CredentialStore(tmp_path / "runtime", _id())
+    principal = store.provision_client("cli")
+    real_unlink = Path.unlink
+
+    def raced(self: Path, *args: object, **kwargs: object) -> None:
+        real_unlink(self)
+        raise FileNotFoundError(str(self))
+
+    monkeypatch.setattr(Path, "unlink", raced)
+    store.remove_client(principal)
+    monkeypatch.undo()
+    assert store.lookup(principal.generation) is None
+
+
 def test_managed_gui_credential_uses_exact_process_generation(tmp_path: Path) -> None:
     store = CredentialStore(tmp_path / "runtime", _id())
     generation = _id()

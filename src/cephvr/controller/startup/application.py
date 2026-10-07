@@ -27,6 +27,7 @@ from cephvr.controller.configuration import (
     controller_validators,
     load_controller_configuration,
 )
+from cephvr.controller.microcontroller.bootstrap import create_microcontroller
 from cephvr.controller.planning import (
     plan_outputs,
 )
@@ -178,8 +179,17 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
         )
 
     spikeglx = _installed_spikeglx(software_root, controller_generation)
+    microcontroller, firmware_channel = create_microcontroller(
+        software_root,
+        principal,
+        native,
+        f"127.0.0.1:{supervisor_port}",
+        settings.max_message_bytes,
+        settings.configuration,
+    )
     runtime = ControllerRuntime(
         generation=controller_generation,
+        microcontroller_device=microcontroller,
         configuration=settings.configuration,
         policies=settings.policies,
         configuration_history_path=software_root / "config/last_configuration.json",
@@ -255,6 +265,7 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
             or receipt.state.phase != svc.LAUNCH_PHASE_OPERATIONAL
         ):
             raise RuntimeError("supervisor did not confirm operational endpoint")
+        runtime.start_microcontroller_health()
         display = asyncio.create_task(runtime.initialize_display())
 
         recovery_task = asyncio.create_task(
@@ -276,6 +287,7 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
                     warn=runtime.record_warning,
                     clock=runtime.clock,
                     limits=runtime.limit_state,
+                    bind_cleanup_deadline=runtime.bind_microcontroller_shutdown_deadline,
                 ),
                 stub,
                 principal,
@@ -296,7 +308,15 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
         await server.stop(grace=0)
         # The original graceful deadline has ended. Prevent new work before
         # relinquishing recovery locks or the native shutdown authority.
+        try:
+            await microcontroller.close(
+                deadline_ns=microcontroller.shutdown_deadline_ns
+                or runtime.clock() + runtime.limits.recovery_ns
+            )
+        except Exception as exc:
+            print(f"Microcontroller cleanup unconfirmed: {exc}", file=sys.stderr)
         await runtime.cancel_background_tasks()
+        firmware_channel.close()
         try:
             startup_recovery.close()
         except OSError as exc:

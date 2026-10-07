@@ -30,6 +30,8 @@ service ExperimentControllerService {
   rpc GetTrackingDiagnosticState(TrackingDiagnosticQuery) returns (TrackingDiagnosticState);
   rpc ExecuteCameraCommand(CameraCommandRequest) returns (CommandAdmission);
   rpc ExecuteMicrocontrollerCommand(MicrocontrollerCommandRequest) returns (CommandAdmission);
+  // Acquisition camera-trigger client; exact authenticated generation, original deadline.
+  rpc ExecuteMicrocontrollerIo(MicrocontrollerIoRequest) returns (MicrocontrollerIoResult);
   rpc CheckSpikeGLXConnection(SpikeGLXConnectionQuery) returns (SpikeGLXConnectionResult);
   rpc GetPreviewAttachment(PreviewAttachmentQuery) returns (PreviewAttachmentResult);
   rpc ReportPreviewAttachment(PreviewAttachmentReport) returns (ReportReceipt);
@@ -226,12 +228,15 @@ enum MicrocontrollerCommandKind {
   MICROCONTROLLER_COMMAND_KIND_START = 2;
   MICROCONTROLLER_COMMAND_KIND_STATUS = 3;
   MICROCONTROLLER_COMMAND_KIND_STOP = 4;
+  MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE = 5; // Explicit Configuration-only Uno update.
 }
 message MicrocontrollerCommandRequest {
   OperatorCommand command = 1;
   optional uint64 expected_configuration_revision = 2;
   MicrocontrollerCommandKind kind = 3;
   MicrocontrollerSignalKind signal = 4; // START only; pin/rate come from current configuration.
+  string firmware_path = 5; // UPLOAD only; Arduino sketch (.ino) or compiled Uno image (.hex).
+  string firmware_sha256 = 6; // Pins complete sketch snapshot or compiled image bytes.
 }
 // E12/G01: authenticated, read-only controller diagnostic; no Setup or run mutation.
 message SpikeGLXConnectionQuery {
@@ -255,6 +260,8 @@ message AcquisitionMicrocontrollerCommand {
   MicrocontrollerSignalKind signal = 4;
   cephvr.acquisition.v1.CameraPulseConfiguration requested = 5;
   AcquisitionSettings settings = 6; // Complete controller-accepted Configuration draft.
+  string firmware_path = 7;
+  string firmware_sha256 = 8;
 }
 message PreviewWindowPlacement {
   sint32 x = 1; // Physical desktop pixels; initial visible-frame position only.
@@ -704,6 +711,7 @@ message ConfirmLaunchRequest {
   optional bool creation_failed_without_child = 8;
   Failure failure = 9;
   HostClockDescriptor host_clock = 10; // Required on Python endpoint confirmation.
+  bool native_cleanup_complete = 11; // A11 uploader only: exact child/job exit plus owner pipe/image closure.
   // OS evidence precedes resume; endpoint and matching clock precede operational work.
 }
 message LaunchQuery {
@@ -752,5 +760,43 @@ message TrackingInputConfirmation {
   oneof evidence {
     DataPreparationReport tracking_evidence = 3; // Exact validated tracking report; no reconstructed acknowledgment.
     CleanupReport tracking_cleanup = 4; // Exact accepted tracking cleanup proof for release of the bound input transfer.
+  }
+}
+
+// Narrow typed device operations; never raw serial text or firmware access for peers.
+enum MicrocontrollerIoKind {
+  MICROCONTROLLER_IO_KIND_UNSPECIFIED = 0;
+  MICROCONTROLLER_IO_KIND_CONNECT = 1;
+  MICROCONTROLLER_IO_KIND_CONFIGURE = 2;
+  MICROCONTROLLER_IO_KIND_STATUS = 3;
+  MICROCONTROLLER_IO_KIND_ON = 4;
+  MICROCONTROLLER_IO_KIND_OFF = 5;
+  MICROCONTROLLER_IO_KIND_RESERVE = 6;
+  MICROCONTROLLER_IO_KIND_CANCEL_ON = 7;
+  MICROCONTROLLER_IO_KIND_CANCEL_ACTIVE = 8;
+  MICROCONTROLLER_IO_KIND_CLOSE = 9;
+}
+message MicrocontrollerIoRequest {
+  string command_id = 1;
+  ProcessIdentity requester = 2;
+  string controller_generation = 3;
+  int64 deadline_monotonic_ns = 4;
+  MicrocontrollerIoKind kind = 5;
+  cephvr.acquisition.v1.CameraPulseConfiguration requested = 6;
+  repeated cephvr.acquisition.v1.CameraRole roles = 7;
+  optional int64 boundary_monotonic_ns = 8;
+  optional int64 stop_issued_monotonic_ns = 9;
+  cephvr.acquisition.v1.PulseBoundaryCommand boundary_command = 10;
+  // CONNECT command ID; later operations belong to this exact live claim.
+  string claim_id = 11;
+}
+message MicrocontrollerIoResult {
+  string command_id = 1;
+  bool succeeded = 2;
+  string failure = 3;
+  oneof result {
+    cephvr.acquisition.v1.MicrocontrollerObservation observation = 4;
+    cephvr.acquisition.v1.PulseCommandEvidence evidence = 5;
+    bool cancelled = 6;
   }
 }

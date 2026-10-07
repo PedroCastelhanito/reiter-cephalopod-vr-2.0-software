@@ -1,16 +1,13 @@
-"""Controller-owned operator MCU diagnostics through acquisition (A11/E08)."""
+"""Controller admission and retained completion for general-purpose MCU commands."""
 
-from __future__ import annotations
+from collections.abc import Callable
+from uuid import uuid4
 
-import asyncio
-import uuid
-from collections.abc import Callable, Mapping
-
+from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.device.ports import DeviceHooks
-from cephvr.controller.device.status_retention import CameraStatusRetention
-from cephvr.controller.ports import BackendPort
+from cephvr.controller.microcontroller.device import MicrocontrollerDevice
 from cephvr.controller.state import (
     CameraOperation,
     ConfigurationState,
@@ -21,30 +18,26 @@ from cephvr.controller.state import (
 
 
 class MicrocontrollerCommands:
-    """Admit one bounded device operation with retained exact status evidence."""
-
     def __init__(
         self,
         *,
         lifecycle: LifecycleState,
         configuration: ConfigurationState,
         device: DeviceState,
-        backends: Mapping[str, BackendPort],
-        generation: str,
+        owner: MicrocontrollerDevice | None,
         limits: LimitsState,
         clock: Callable[[], int],
         hooks: DeviceHooks,
-        status_retention: CameraStatusRetention,
+        device_views: Callable[[], pb.AcquisitionDeviceViews | None],
     ) -> None:
         self.lifecycle = lifecycle
         self.configuration = configuration
         self.device = device
-        self.backends = backends
-        self.generation = generation
+        self.owner = owner
         self.limits = limits
         self.clock = clock
         self.hooks = hooks
-        self.status_retention = status_retention
+        self.device_views = device_views
 
     async def execute(
         self, request: svc.MicrocontrollerCommandRequest
@@ -52,10 +45,9 @@ class MicrocontrollerCommands:
         operator_id = request.command.operator.command_id
         async with self.lifecycle.lock:
             error = self.hooks.authorized(request.command)
-            backend = self.backends.get("acquisition")
             if (
                 error
-                or backend is None
+                or self.owner is None
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
                 or self.lifecycle.startup_blocker
                 or self.lifecycle.manual_control_cleanup_pending
@@ -71,16 +63,33 @@ class MicrocontrollerCommands:
                     svc.MICROCONTROLLER_COMMAND_KIND_START,
                     svc.MICROCONTROLLER_COMMAND_KIND_STATUS,
                     svc.MICROCONTROLLER_COMMAND_KIND_STOP,
+                    svc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
                 }
             ):
                 return self.hooks.admission(
                     operator_id, error=error or "microcontroller command unavailable"
                 )
             if (request.kind == svc.MICROCONTROLLER_COMMAND_KIND_START) != (
-                request.signal != pb.MICROCONTROLLER_SIGNAL_KIND_UNSPECIFIED
+                request.signal != 0
             ):
                 return self.hooks.admission(
                     operator_id, error="invalid MCU signal selection"
+                )
+            upload = request.kind == svc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE
+            if upload != bool(request.firmware_path and request.firmware_sha256) or (
+                not upload and (request.firmware_path or request.firmware_sha256)
+            ):
+                return self.hooks.admission(
+                    operator_id, error="invalid firmware source/image selection"
+                )
+            views = self.device_views()
+            if views is not None and any(
+                camera.device_open or camera.preview_running or camera.cleanup_pending
+                for camera in (views.behavioral, views.tracking)
+            ):
+                return self.hooks.admission(
+                    operator_id,
+                    error="Stop capture and release cameras before Microcontroller diagnostics or Upload",
                 )
             settings = next(
                 (
@@ -95,28 +104,24 @@ class MicrocontrollerCommands:
                 return self.hooks.admission(
                     operator_id, error="MCU port is not configured"
                 )
-            child_id = str(uuid.uuid4())
+            try:
+                self.owner.ensure_idle()
+                if self.owner.acquisition_claimed or (
+                    upload and self.owner.view.diagnostic.active
+                ):
+                    raise RuntimeError(
+                        "Release camera triggers and stop diagnostics before firmware upload"
+                    )
+            except RuntimeError as exc:
+                return self.hooks.admission(operator_id, error=str(exc))
             deadline_ns = (
                 self.clock()
                 + self.limits.current.setup_ns
                 + self.limits.current.recovery_ns
             )
-            child = svc.AcquisitionMicrocontrollerCommand(
-                configuration_revision=self.configuration.revision,
-                kind=request.kind,
-                signal=request.signal,
-                requested=settings.pulses,
-                settings=settings,
-            )
-            child.command.command_id = child_id
-            child.command.issuer.CopyFrom(
-                pb.ProcessIdentity(role="controller", generation=self.generation)
-            )
-            child.command.target.CopyFrom(backend.context)
-            child.command.parent_operation.command_id = operator_id
             operation = CameraOperation(
                 operator_id,
-                child_id,
+                str(uuid4()),
                 self.configuration.revision,
                 0,
                 request.kind,
@@ -125,56 +130,49 @@ class MicrocontrollerCommands:
                 False,
                 is_microcontroller=True,
             )
-            try:
-                self.status_retention.reserve(operation)
-            except (RuntimeError, ValueError) as exc:
-                return self.hooks.admission(operator_id, error=str(exc))
             self.device.camera_operation = operation
             self.device.camera_operation_changed.clear()
-            self.device.manual_effects_admitted = True
             self.hooks.operation(
                 operator_id,
                 "ExecuteMicrocontrollerCommand",
-                progress="acquisition MCU command pending",
+                progress="controller Microcontroller command pending",
             )
+            frozen = type(request).FromString(request.SerializeToString())
+            pulses = type(settings.pulses).FromString(
+                settings.pulses.SerializeToString()
+            )
+            self.hooks.spawn(self._perform(frozen, pulses, operation))
             self.hooks.publish()
-        try:
-            response = await asyncio.wait_for(
-                backend.execute_microcontroller_command(child, deadline_ns=deadline_ns),
-                max(0, (deadline_ns - self.clock()) / 1e9),
-            )
-        except Exception as exc:
-            self.hooks.spawn(self._timeout(child_id, deadline_ns))
-            return self.hooks.admission(operator_id, error=str(exc))
-        if response.result != pb.COMMAND_RESULT_ACCEPTED:
-            async with self.lifecycle.lock:
-                if self.device.camera_operation is operation:
-                    self.hooks.complete_operation(
-                        operator_id,
-                        success=False,
-                        progress="MCU command rejected",
-                        error=response.failure.message,
-                    )
-                    self.status_retention.release_unstarted(operation)
-                    self.device.camera_operation = None
-                    self.device.camera_operation_changed.set()
-                    self.hooks.publish()
-            return self.hooks.admission(operator_id, error=response.failure.message)
-        self.hooks.spawn(self._timeout(child_id, deadline_ns))
         return self.hooks.admission(operator_id)
 
-    async def _timeout(self, child_id: str, deadline_ns: int) -> None:
-        await asyncio.sleep(max(0, (deadline_ns - self.clock()) / 1e9))
+    async def _perform(
+        self,
+        request: svc.MicrocontrollerCommandRequest,
+        pulses: camera_pb2.CameraPulseConfiguration,
+        operation: CameraOperation,
+    ) -> None:
+        assert self.owner is not None
+        failure = ""
+        try:
+            await self.owner.execute(request, pulses, operation.deadline_ns)
+            if self.clock() >= operation.deadline_ns:
+                raise TimeoutError(
+                    "Microcontroller completion missed its original deadline"
+                )
+        except Exception as exc:
+            failure = str(exc)
         async with self.lifecycle.lock:
-            operation = self.device.camera_operation
-            if operation is None or operation.child_id != child_id:
-                return
-            operation.timed_out = True
             self.hooks.complete_operation(
                 operation.operator_id,
-                success=False,
-                progress="MCU command evidence timed out",
-                error="exact completion missing",
+                success=not failure,
+                progress="Microcontroller command failed"
+                if failure
+                else "Microcontroller command completed",
+                error=failure,
             )
-            self.status_retention.retire_operation(operation)
+            if self.owner.firmware.busy:
+                operation.timed_out = True
+            elif self.device.camera_operation is operation:
+                self.device.camera_operation = None
+                self.device.camera_operation_changed.set()
             self.hooks.publish()

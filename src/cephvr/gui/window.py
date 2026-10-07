@@ -82,7 +82,7 @@ class DashboardWindow(QMainWindow):
         self.dashboard = Dashboard(sample=sample, settings=settings)
         self.dashboard_scroll = self.dashboard.scrollers[0]
         self.stack.addWidget(self.dashboard)
-        self.devices = DevicesPage(sample=sample)
+        self.devices = DevicesPage(sample=sample, settings=settings)
         self.recordings = RecordingsCard(self.devices.cameras)
         dashboard_controls = self.dashboard.columns[0].layout()
         assert isinstance(dashboard_controls, QVBoxLayout)

@@ -107,6 +107,7 @@ class ConfigurationCommands:
         configuration_history_path: Path | None,
         clock: Callable[[], int],
         spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
+        microcontroller_active: Callable[[], bool] = lambda: False,
     ) -> None:
         self.lifecycle = lifecycle
         self.configuration_state = configuration
@@ -121,6 +122,7 @@ class ConfigurationCommands:
         self.configuration_history_path = configuration_history_path
         self.clock = clock
         self.spawn = spawn
+        self.microcontroller_active = microcontroller_active
         # C11: saves run one at a time; a timed-out writer thread that has not
         # started replacing the file skips once a newer save was issued.
         self._history_lock = asyncio.Lock()
@@ -226,14 +228,19 @@ class ConfigurationCommands:
                 )
                 self.publisher.publish()
                 return self.control_operations.admission(command_id)
-            if manual_camera_owned(
-                self.projections, self.device_state
+            if (
+                manual_camera_owned(self.projections, self.device_state)
+                or self.microcontroller_active()
             ) and _acquisition_settings(request.proposed) != _acquisition_settings(
                 self.configuration_state.current
             ):
                 return self.control_operations.admission(
                     command_id,
-                    error="stop camera preview/editing to edit camera or pulse settings",
+                    error=(
+                        "stop Microcontroller diagnostics to edit camera or pulse settings"
+                        if self.microcontroller_active()
+                        else "stop camera preview/editing to edit camera or pulse settings"
+                    ),
                 )
             if (
                 self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION

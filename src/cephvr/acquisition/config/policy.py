@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from collections.abc import Mapping
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from cephvr.shared.config import ConfigurationError, LoadedPair, load_pair
+from cephvr.shared.config import (
+    ConfigurationError,
+    LoadedPair,
+    load_pair,
+    policy_digest,
+)
 
-POLICY_VERSION = 15
+POLICY_VERSION = 18
 CONTRACT_VERSION = 1
-_POLICY_SHA256 = "f15eabd26e6b14033a42c0e92b7b11984bfd54196c7503c62a2ccc21743e51dc"
+_POLICY_SHA256 = "5b6aa1580afb36b063153376ce35ca125a0cbddd7685dc2ec16646613e4eac7b"
 
 _CONFIG_KEYS = frozenset(
     """
@@ -29,11 +31,6 @@ _CONFIG_KEYS = frozenset(
     cameras.*.frame_rate_hz cameras.*.pixel_format
     cameras.*.roi.width cameras.*.roi.height cameras.*.roi.offset_x cameras.*.roi.offset_y
     cameras.*.transport.*
-    microcontroller.port microcontroller.baud_rate microcontroller.ack_timeout_ms
-    microcontroller.trial_state_pin microcontroller.trial_state_enabled
-    microcontroller.projector_flip_pin microcontroller.projector_flip_enabled
-    microcontroller.stop_completion_margin_ms microcontroller.keepalive_interval_s
-    microcontroller.communication_timeout_s
     buffers.tracking_ring_frames buffers.recording_queue_frames
     buffers.recording_startup_allowance_ms
     recording.pending_records_capacity recording.sync_interval_s
@@ -66,35 +63,6 @@ _POLICY_KEYS = frozenset(
     cameras.unknown_trigger_rate_limit cameras.acquisition_mode
     cameras.external_trigger_preparation cameras.stale_buffer_cleanup
     cameras.post_cutoff_retrieval cameras.exposure_mode cameras.gain_mode
-    microcontroller.firmware_target_scope microcontroller.firmware_installation
-    microcontroller.boot_behavior microcontroller.command_format
-    microcontroller.acknowledgement microcontroller.argument_style
-    microcontroller.output_field_names microcontroller.text_field_limits
-    microcontroller.field_values microcontroller.request_ids
-    microcontroller.request_id_format microcontroller.error_code_format
-    microcontroller.unmatched_reply microcontroller.port_resolution
-    microcontroller.reconnect_preparation microcontroller.startup_readiness
-    microcontroller.connection_reset microcontroller.stop_priority
-    microcontroller.boundary_scheduling microcontroller.trial_boundary_timing
-    microcontroller.stop_budget_validation microcontroller.trial_boundary_commands
-    microcontroller.first_pulse microcontroller.stop_behavior microcontroller.pulse_polarity
-    microcontroller.inactive_level microcontroller.protocol_compatibility
-    microcontroller.protocol_version microcontroller.capability_source
-    microcontroller.capability_query microcontroller.capability_reply
-    microcontroller.capability_refresh microcontroller.pin_identifier_format
-    microcontroller.unknown_command_fields microcontroller.max_outstanding_requests
-    microcontroller.serial_channel microcontroller.max_line_bytes
-    microcontroller.frequency_format microcontroller.frequency_resolution_hz
-    microcontroller.configuration_handshake microcontroller.configuration_record_owner
-    microcontroller.frequency_quantization microcontroller.frequency_adjustment
-    microcontroller.frequency_readback_precision microcontroller.configuration_update
-    microcontroller.disabled_output_fields microcontroller.configuration_while_running
-    microcontroller.keepalive_reply microcontroller.status_reply
-    microcontroller.pulse_counters microcontroller.diagnostic_edge_counts microcontroller.watchdog_status_clear
-    microcontroller.command_timeout_action microcontroller.pulse_generation
-    microcontroller.pulse_scheduler microcontroller.clock_source
-    microcontroller.duty_cycle microcontroller.communication_loss_action
-    microcontroller.output_mapping
     basler.preset_format basler.preset_required basler.advanced_settings
     basler.session_preset_storage basler.preset_import_compatibility
     basler.preset_device_access basler.preset_connection_open
@@ -157,16 +125,6 @@ _POLICY_KEYS = frozenset(
 )
 
 _FIXED_POLICY: dict[str, object] = {
-    "microcontroller.protocol_version": 3,
-    "microcontroller.diagnostic_edge_counts": "input_observed_output_generated",
-    "microcontroller.max_outstanding_requests": 1,
-    "microcontroller.max_line_bytes": 512,
-    "microcontroller.frequency_resolution_hz": Decimal("0.1"),
-    "microcontroller.trial_boundary_timing": "host_dispatch_at_trial_boundaries",
-    "microcontroller.stop_budget_validation": "outstanding_request_off_camera_and_report",
-    "microcontroller.command_timeout_action": "report_without_retry",
-    "microcontroller.pulse_generation": "microcontroller",
-    "microcontroller.output_mapping": "per_camera",
     "cameras.prepared_high_depth_alignment": "msb",
     "cameras.post_cutoff_retrieval": "terminal_off_then_bounded_drain",
     "workers.capture_wait": "frame_command_or_deadline",
@@ -187,17 +145,7 @@ def _load_pair(root: Path) -> LoadedPair:
         raise ConfigurationError(
             f"acquisition policy_version must be {POLICY_VERSION}, got {pair.policy_version}"
         )
-    policy = dict(pair.policy)
-    policy.pop("policy_version", None)
-    encoded = json.dumps(
-        policy,
-        sort_keys=True,
-        separators=(",", ":"),
-        default=lambda item: (
-            format(item, "f") if isinstance(item, Decimal) else str(item)
-        ),
-    ).encode("utf-8")
-    if hashlib.sha256(encoded).hexdigest() != _POLICY_SHA256:
+    if policy_digest(pair.policy) != _POLICY_SHA256:
         raise ConfigurationError(
             f"acquisition fixed-policy declarations differ from policy version {POLICY_VERSION}"
         )

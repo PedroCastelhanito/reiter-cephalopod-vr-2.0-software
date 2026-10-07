@@ -1,5 +1,28 @@
 # Acquisition status
 
+Microcontroller ownership update (2026-10-08) follows
+[A10 revision 55](../docs/architecture/acquisition.md#a10) and
+[A11 revision 40](../docs/architecture/acquisition.md#a11): serial, watchdog/keepalive,
+diagnostics and firmware source/image/tool/handoff now belong to the controller.
+Acquisition calls its authenticated typed camera-trigger API with the original absolute
+deadline, exact claim and existing boundary/stop evidence. It never opens COM or
+runs firmware tools. Acquisition cleanup confirms only the camera claim release after
+OFF; controller separately owns physical COM/native closure. Last external manual
+Disconnect releases the claim after camera cutoff; remaining external previews retain
+it. Unconfirmed release keeps evidence and cleanup pending. Sessionless pulse edits
+with no external previews also release their verified-stopped claim.
+
+Microcontroller config/policy 1 is the sole generic serial/I/O/defaults owner; acquisition
+config/policy 18 retains camera pins/rates and distributes the resolved serial timing
+compatibility fields. New replay/identity/cleanup, idle-policy and preview-release cases
+extend the existing owning test modules; the existing core owner/protocol and firmware
+cases moved intact to controller. Portable acquisition/controller/supervisor/shared/client
+passes 812 with five platform skips and three marker exclusions. Current integration,
+static results and limits are in the [runtime assessment](runtime.md#current-scope-and-review).
+Actual Windows camera-trigger timing, watchdog behavior and GUI/native `.ino`/`.hex`
+Upload remain in the [single rig checklist](rig-verification.md#managed-mcu-and-camera-gui-verification).
+No runtime restart or physical command was performed for this migration.
+
 Current development integration: [A03](../docs/architecture/acquisition.md#a03) and
 [A10](../docs/architecture/acquisition.md#a10) authorize the acquisition-owned ordered
 Tracking ring in exact Configuration diagnostic preview scope. Sol accepted the
@@ -12,6 +35,20 @@ and Tracking consumer confirms release. [Tracking evidence](tracking.md) records
 results. Final managed GUI/development integration is accepted; native/rig acceptance
 and the current camera/MCU findings below remain. See the
 [managed wiring assessment](runtime.md#current-scope-and-review).
+
+Current GUI camera integration (2026-10-08) follows
+[A10](../docs/architecture/acquisition.md#a10). Camera Connect uses existing Start then
+Show operations for the exact confirmed run; Disconnect uses existing stop/release.
+Controller firmware compilation extends the previously implemented verified-image
+upload with the same sole serial owner. Keepalive suspension while firmware work is
+busy retains ordinary health failure handling. Existing manual installation evidence does
+not establish native GUI compile/upload acceptance.
+
+ARCH-002 cohesion review keeps coordinator runtime/assembly as composition and cleanup
+as the single camera proof join. Controller firmware image validation, tool ownership
+and serial handoff are focused modules; camera/Microcontroller panels retain only presentation/intents,
+with managed dispatch separate. The shared native launcher adds a focused registered-plan
+callback and stop-method binding, retaining existing encoder defaults and deadlines.
 
 ## Current Windows wiring checks
 

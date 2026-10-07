@@ -227,5 +227,7 @@ class CredentialStore:
             raise CredentialError("client credential ownership mismatch")
         try:
             self._path(principal.generation).unlink()
+        except FileNotFoundError:
+            pass  # A concurrent remover already reached the goal state.
         except OSError as exc:
             raise CredentialError("cannot remove client credential") from exc

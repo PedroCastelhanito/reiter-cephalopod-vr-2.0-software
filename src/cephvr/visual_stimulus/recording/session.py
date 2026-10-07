@@ -9,7 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from cephvr.shared.encoder_io import WindowsEncoderInputAdapter  # noqa: F401
+from cephvr.shared.encoder_io import WindowsEncoderInputAdapter
 from cephvr.visual_stimulus.config.models.evidence_model import (
     ArtifactRef,
     EvidenceRecord,
@@ -328,10 +328,10 @@ class RecordingSession:
                 try:
                     self.failure_cleanup()
                 except BaseException:
-                    pass
+                    pass  # The original recording failure is what gets reported.
             try:
                 self.evidence.close(sync=True)
             except BaseException:
-                pass
+                pass  # Same: the recording failure is reported, not the cleanup's.
             self._error = exc
             self._done = True

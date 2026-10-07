@@ -153,7 +153,7 @@ def stylesheet() -> str:
                     border-radius: 8px; padding: 9px 5px; margin-right: 4px; }}
     QTabBar::tab:last {{ margin-right: 0; }}
     QTabBar::tab:selected {{ color: {c.coral}; background: {c.selection}; border-color: {c.accent}; }}
-    QTabBar::tab:hover {{ color: {c.text}; border-color: {c.focus}; }}
+    QTabBar::tab:hover {{ border-color: {c.focus}; }}
     QWidget#PreviewSources {{ background: {c.card}; border: 1px solid {c.border};
                              border-radius: {s.field_radius}px; }}
     QLabel[role='selector-heading'] {{ color: {c.accent}; font-size: {s.label_font}px;

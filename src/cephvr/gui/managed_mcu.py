@@ -43,6 +43,34 @@ class ManagedMcu(QObject):
         panel.connection_requested.connect(self.test_connection)
         panel.save_requested.connect(self.save_pins)
         panel.pin_test_requested.connect(self.test_pin)
+        panel.firmware_requested.connect(self.upload_firmware)
+
+    def upload_firmware(self, path: str) -> None:
+        state = self.snapshot()
+        if state is None or self.pending or not self.panel.upload.isEnabled():
+            return
+        settings = next(
+            (
+                item.acquisition
+                for item in state.configuration_values.current.backends
+                if item.backend_name == "acquisition"
+            ),
+            None,
+        )
+        if settings is None or self.panel.port.currentData() != settings.pulses.port:
+            self.panel.console.appendPlainText(
+                "Await confirmation of the selected COM port before uploading."
+            )
+            return
+        if self.bridge.request("mcu_upload", path=path):
+            self.pending = True
+            self.panel.upload_pending = True
+            self.panel.connection_pending = True
+            self.panel.refresh_tests()
+        else:
+            self.panel.console.appendPlainText(
+                "Upload was not sent: controller unavailable."
+            )
 
     def test_connection(self) -> None:
         state = self.snapshot()
@@ -209,9 +237,10 @@ class ManagedMcu(QObject):
             self.send(rpc.MICROCONTROLLER_COMMAND_KIND_STATUS)
 
     def finished(self, action: str, success: bool, message: str) -> None:
-        if action not in {"mcu", "save_mcu_pins"}:
+        if action not in {"mcu", "mcu_upload", "save_mcu_pins"}:
             return
         self.pending = False
+        self.panel.upload_pending = False
         self.panel.connection_pending = False
         self.panel.pending_test_key = ""
         if not success:
@@ -226,6 +255,7 @@ class ManagedMcu(QObject):
         self.settle.stop()
         self.pending = False
         self.revision = self.observed_ns = -1
+        self.panel.upload_pending = False
         self.panel.connection_pending = False
         self.panel.pending_test_key = ""
         self.panel.set_diagnostic("", False, 0)
@@ -257,16 +287,41 @@ class ManagedMcu(QObject):
                 if row.key in panel.pin_editors:
                     panel.pin_editors[row.key].setText(pulse.pin)
             self.revision = state.configuration.revision
-        observation = state.acquisition_devices.pulses
-        if observation.HasField("capabilities"):
+        panel.upload_available = (
+            held
+            and state.session.phase == pb.SESSION_PHASE_CONFIGURATION
+            and not state.microcontroller.diagnostic.active
+            and not state.microcontroller.cleanup_pending
+            and not state.microcontroller.failure
+            and not any(
+                view.device_open or view.preview_running or view.cleanup_pending
+                for view in (
+                    state.acquisition_devices.behavioral,
+                    state.acquisition_devices.tracking,
+                )
+            )
+        )
+        panel.refresh_tests()
+        observation = state.microcontroller.observation
+        if state.microcontroller.failure:
+            panel.status_column.hud.setPlainText(
+                f"CONNECTION  Fault\n{state.microcontroller.failure}"
+            )
+        elif not observation.HasField("capabilities"):
+            panel.status_column.hud.setPlainText("CONNECTION  Not connected")
+        else:
             panel.status_column.hud.setPlainText(
                 f"CONNECTION  Verified\nPORT        {observation.port}\n"
                 f"FIRMWARE    {observation.capabilities.firmware}\n"
                 f"PROTOCOL    {observation.capabilities.protocol_version}\n"
                 f"OUTPUTS     {'Running' if observation.state.behavioral.running or observation.state.tracking.running else 'Stopped'}"
             )
-        diagnostic = state.acquisition_devices.diagnostic
-        if (
+        diagnostic = state.microcontroller.diagnostic
+        if not state.microcontroller.HasField("diagnostic"):
+            self.observed_ns = -1
+            self.settle.stop()
+            panel.set_diagnostic("", False, 0)
+        elif (
             diagnostic.HasField("observed_monotonic_ns")
             and diagnostic.observed_monotonic_ns != self.observed_ns
         ):
@@ -278,15 +333,20 @@ class ManagedMcu(QObject):
                     (row.key for row in panel.camera_rows if row.role == role), ""
                 )
             panel.set_diagnostic(key, diagnostic.active, diagnostic.rising_edges)
-            if diagnostic.active and held:
+            if diagnostic.active and held and not state.microcontroller.cleanup_pending:
                 self.settle.start()
             else:
                 self.settle.stop()
         if not held or state.session.phase != pb.SESSION_PHASE_CONFIGURATION:
             self.settle.stop()
-        elif diagnostic.active and not self.pending and not self.settle.isActive():
+        elif (
+            diagnostic.active
+            and not state.microcontroller.cleanup_pending
+            and not self.pending
+            and not self.settle.isActive()
+        ):
             self.settle.start()
-        if any(
+        if state.microcontroller.cleanup_pending or any(
             view.device_open or view.preview_running or view.cleanup_pending
             for view in (
                 state.acquisition_devices.behavioral,

@@ -36,6 +36,7 @@ class AuthorityControl:
     warn: Callable[[pb.Warning], Awaitable[None]]
     clock: Callable[[], int]
     limits: LimitsState
+    bind_cleanup_deadline: Callable[[int], None] = lambda _deadline: None
 
 
 @dataclass(frozen=True)
@@ -204,6 +205,7 @@ async def handle_authority_loss(
     ) + control.limits.current.recovery_ns
     cleanup_deadline = min(outer_deadline, issued_ns + cleanup_budget)
     failures: list[str] = []
+    control.bind_cleanup_deadline(cleanup_deadline)
     # Start fencing immediately; pipe delivery cannot delay the safety handler.
     cleanup = asyncio.create_task(control.lose(cause, issued_ns))
     try:

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 def _sync(path: Path) -> None:
-    if os.name != "nt":
+    if sys.platform != "win32":
         sync_directory(path)
 
 

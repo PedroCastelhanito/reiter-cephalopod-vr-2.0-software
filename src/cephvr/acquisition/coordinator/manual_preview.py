@@ -28,6 +28,7 @@ from cephvr.acquisition.coordinator.manual_preview_window import (
     execute_preview_window,
 )
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    release_idle_claim,
     retain_applied_pulse_state,
 )
 from cephvr.acquisition.coordinator.manual_session_access import (
@@ -445,6 +446,10 @@ class ManualPreview:
                     deadline_ns=deadline_ns,
                 )
                 retain_applied_pulse_state(self.pulse, on, deadline_ns=deadline_ns)
+            elif self.pulse.observation is not None:
+                await release_idle_claim(
+                    self.pulse, self.serial, deadline_ns=deadline_ns
+                )
             return await self.results.complete(
                 request.command,
                 command_name="stop_preview",

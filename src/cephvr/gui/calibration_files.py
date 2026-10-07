@@ -10,6 +10,15 @@ from PyQt6.QtWidgets import QCheckBox, QFileDialog, QHBoxLayout, QLineEdit, QWid
 from cephvr.gui.components import button
 
 
+def _unique_members(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    values: dict[str, object] = {}
+    for key, value in pairs:
+        if key in values:
+            raise ValueError(f"Duplicate configuration key: {key}")
+        values[key] = value
+    return values
+
+
 class CalibrationFiles(QWidget):
     message = pyqtSignal(str)
     loaded = pyqtSignal()
@@ -104,6 +113,15 @@ class CalibrationFiles(QWidget):
                     raise ValueError(f"{key}: must be positive")
         return values
 
+    def apply_snapshot(self, payload: object) -> None:
+        values = self.validate(payload)
+        for key, value in values.items():
+            editor = self.fields[key]
+            if isinstance(editor, QCheckBox):
+                editor.setChecked(bool(value))
+            else:
+                editor.setText("" if value is None else str(value))
+
     def load_path(self, path: str) -> None:
         if not self.isEnabled():
             return
@@ -111,17 +129,11 @@ class CalibrationFiles(QWidget):
             with Path(path).open("rb") as stream:
                 data = stream.read(1_048_577)
             if len(data) > 1_048_576:
-                raise ValueError("Calibration JSON exceeds 1 MiB")
-            values = self.validate(json.loads(data))
+                raise ValueError("Projector configuration JSON exceeds 1 MiB")
             # Validate the complete document before changing any draft.
-            for key, value in values.items():
-                editor = self.fields[key]
-                if isinstance(editor, QCheckBox):
-                    editor.setChecked(bool(value))
-                else:
-                    editor.setText("" if value is None else str(value))
+            self.apply_snapshot(json.loads(data, object_pairs_hook=_unique_members))
             self.loaded.emit()
-            self.message.emit(f"Loaded all-screen calibration: {path}")
+            self.message.emit(f"Loaded projector configuration: {path}")
         except (
             OSError,
             ValueError,
@@ -129,7 +141,7 @@ class CalibrationFiles(QWidget):
             RecursionError,
             OverflowError,
         ) as exc:
-            self.message.emit(f"Calibration load failed: {exc}")
+            self.message.emit(f"Configuration load failed: {exc}")
 
     def save_path(self, path: str) -> None:
         if not self.isEnabled():
@@ -138,6 +150,8 @@ class CalibrationFiles(QWidget):
             data = (
                 json.dumps(self.snapshot(), indent=2, allow_nan=False) + "\n"
             ).encode()
+            if len(data) > 1_048_576:
+                raise ValueError("Projector configuration JSON exceeds 1 MiB")
             output = QSaveFile(path)
             if not output.open(QIODevice.OpenModeFlag.WriteOnly):
                 raise OSError(output.errorString())
@@ -146,9 +160,9 @@ class CalibrationFiles(QWidget):
                 raise OSError(output.errorString())
             if not output.commit():
                 raise OSError(output.errorString())
-            self.message.emit(f"Saved all-screen calibration: {path}")
+            self.message.emit(f"Saved projector configuration: {path}")
         except (OSError, ValueError, OverflowError) as exc:
-            self.message.emit(f"Calibration save failed: {exc}")
+            self.message.emit(f"Configuration save failed: {exc}")
 
     def choose(self, *, save: bool) -> None:
         if not self.isEnabled():
@@ -157,9 +171,10 @@ class CalibrationFiles(QWidget):
             self.dialog.raise_()
             return
         dialog = QFileDialog(
-            self, "Save rig calibration" if save else "Load rig calibration"
+            self,
+            "Save projector configuration" if save else "Load projector configuration",
         )
-        dialog.setNameFilter("CephVR calibration (*.json)")
+        dialog.setNameFilter("CephVR projector configuration (*.json)")
         dialog.setDefaultSuffix("json")
         dialog.setAcceptMode(
             QFileDialog.AcceptMode.AcceptSave

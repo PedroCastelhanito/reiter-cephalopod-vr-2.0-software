@@ -7,6 +7,7 @@ import os
 import queue
 import re
 import stat
+import sys
 import threading
 from collections.abc import Callable
 from concurrent.futures import Future
@@ -274,7 +275,7 @@ class MetadataWriter:
                 handle_info.st_ino,
             ):
                 raise StorageError("session log path changed during append")
-            if first and os.name != "nt":
+            if first and sys.platform != "win32":
                 sync_directory(write.path.parent)
         except Exception as exc:
             self._log_poison = str(exc) or type(exc).__name__

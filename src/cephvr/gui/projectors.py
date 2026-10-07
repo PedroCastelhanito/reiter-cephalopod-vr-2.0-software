@@ -1,5 +1,6 @@
 """Compact display assignments and desktop geometry; no rendering ownership."""
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,7 +10,6 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QComboBox,
-    QFileDialog,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
@@ -21,7 +21,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.calibration_files import CalibrationFiles
 from cephvr.gui.calibration_profile import (
     AssignedDisplay,
     MonitorBinding,
@@ -33,11 +32,13 @@ from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.display_layout import DisplayLayout
 from cephvr.gui.projector_calibration import CalibrationTable
 from cephvr.gui.projector_codec import display_document, merge_projector_draft
+from cephvr.gui.projector_files import ProjectorFiles
 from cephvr.gui.projector_geometry import (
     RigGeometryEditor,
     ScreenGeometryEditor,
     resolved_screens,
 )
+from cephvr.gui.projector_profile import bind_profile, current_outputs, portable_profile
 from cephvr.gui.projector_timing import ProjectorTiming
 from cephvr.gui.tables import DataTable
 from cephvr.gui.tank_diagram import TankDiagram
@@ -102,7 +103,7 @@ class ProjectorsPanel(DevicePanel):
         )
         self.table = DataTable(0, 4)
         self.table.setHorizontalHeaderLabels(
-            ["CephVR ID", "Projector", "Resolution (px)", "Use"]
+            ["Display ID", "Projector", "Resolution (px)", "Use"]
         )
         vertical = self.table.verticalHeader()
         header = self.table.horizontalHeader()
@@ -119,9 +120,6 @@ class ProjectorsPanel(DevicePanel):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table.setFixedHeight(180)
         self.configuration.body.insertWidget(1, self.table)
-        self.import_profile = button("Import display profile…", "secondary")
-        self.import_profile.clicked.connect(self.load_display_profile)
-        self.configuration.body.insertWidget(2, self.import_profile)
         self.assignments: dict[str, str] = {}
         self.participation: dict[str, bool] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
@@ -131,10 +129,11 @@ class ProjectorsPanel(DevicePanel):
         self.loading = False
         self.review_displays: tuple[DisplayInfo, ...] | None = None
         self.asset_root = ""
-        self._imported_profile: visual_stimulus_pb.DisplayConfiguration | None = None
+        self._profile_outputs: list[dict[str, object]] = []
+        self._pulse_face: str | None = None
         self._configuration_error = ""
         self._geometry_dirty = False
-        self.layout_card = Card("Displays layout · CephVR IDs")
+        self.layout_card = Card("Displays layout · Display IDs")
         self.diagram = DisplayLayout()
         self.layout_card.body.addWidget(self.diagram)
         layout = self.columns[0].layout()
@@ -173,9 +172,16 @@ class ProjectorsPanel(DevicePanel):
         for (face, key), editor in self.calibration.controls.items():
             assert isinstance(editor, (QLineEdit, QCheckBox))
             calibration_fields[f"screens.{face}.{key}"] = editor
-        self.calibration_files = CalibrationFiles(calibration_fields)
+        self.calibration_files = ProjectorFiles(
+            calibration_fields,
+            self.timing,
+            self.face_participation,
+            self.apply_face_participation,
+            self.pulse_face,
+            self.select_pulse_face,
+        )
         self.calibration_files.message.connect(self.console.appendPlainText)
-        self.calibration_files.loaded.connect(self.update_geometry)
+        self.calibration_files.loaded.connect(self.configuration_loaded)
         layout.insertWidget(1, self.calibration_files)
         self.rig_page = QWidget()
         rig_layout = QVBoxLayout(self.rig_page)
@@ -248,7 +254,9 @@ class ProjectorsPanel(DevicePanel):
     ) -> None:
         """Install a bounded draft; controller validation uses its file policy."""
         del pacing_output_id  # Pacing remains file-owned and absent from this draft.
-        self._imported_profile = None
+        self.calibration_files.profile = None
+        self._profile_outputs = []
+        self._pulse_face = None
         self._configuration_error = ""
         try:
             profile = display_document(display)
@@ -261,10 +269,13 @@ class ProjectorsPanel(DevicePanel):
                 for item in outputs
                 if isinstance(item, dict) and isinstance(item.get("output_id"), str)
             }
+            portable = portable_profile(profile)
         except (ValueError, TypeError) as exc:
             self._configuration_error = str(exc)
             self.calibration.setToolTip(self._configuration_error)
             return
+        self._profile_outputs = outputs
+        self.calibration_files.profile = portable
         self.assignments = {}
         for mapping in mappings:
             if not isinstance(mapping, dict):
@@ -335,66 +346,76 @@ class ProjectorsPanel(DevicePanel):
         )
         self.update_participation()
 
-    def load_display_profile(self) -> None:
-        """Import one complete profile into the local draft without controller I/O."""
-        if not self.can_review:
-            return
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import display profile", self.asset_root, "Display profile (*.json)"
-        )
-        if not path:
-            return
-        self.import_display_profile(path)
+    def configuration_loaded(self) -> None:
+        if self._configuration_error.startswith("Load a projector configuration"):
+            self._configuration_error = ""
+        self.update_geometry()
+        self.outputs_changed.emit()
 
-    def import_display_profile(self, path: str) -> None:
-        """Validate a selected profile before replacing the local draft."""
-        if not self.can_review:
-            return
-        try:
-            source = Path(path)
-            if source.stat().st_size > 16_777_216:
-                raise ValueError(
-                    "Display profile exceeds the 16 MiB configuration limit"
-                )
-            imported = visual_stimulus_pb.DisplayConfiguration(
-                profile_json=source.read_text(encoding="utf-8")
+    def face_participation(self) -> dict[str, bool]:
+        return {
+            face: self.participation.get(key, True)
+            for key, face in self.assignments.items()
+            if face in ("Front", "Left", "Right", "Bottom")
+        }
+
+    def apply_face_participation(self, enabled: dict[str, bool]) -> None:
+        for key, face in self.assignments.items():
+            if face in enabled:
+                self.participation[key] = enabled[face]
+                if key in self.enable_controls:
+                    self.enable_controls[key].setChecked(enabled[face])
+        self.update_participation()
+
+    def pulse_face(self) -> str | None:
+        face = self.assignments.get(self.timing.target.currentData())
+        if face in ("Front", "Left", "Right", "Bottom"):
+            return face
+        if self.timing.target.currentData() is not None:
+            raise ValueError(
+                "Assign a projector role to the selected pulse display before saving"
             )
-            profile = display_document(imported)
-            outputs, mappings = profile.get("outputs"), profile.get("mappings")
-            if not isinstance(outputs, list) or not isinstance(mappings, list):
-                raise ValueError("Display profile requires output and mapping arrays")
-            if any(
-                not isinstance(item, dict)
-                or not isinstance(item.get("device_identity"), str)
-                or not isinstance(item.get("output_id"), str)
-                for item in outputs
-            ):
-                raise ValueError(
-                    "Each display output needs a stable identity and output ID"
-                )
-            self.install_configuration(imported)
-            if self._configuration_error:
-                raise ValueError(self._configuration_error)
-            self._imported_profile = imported
-            self.outputs_changed.emit()
-            self.console.appendPlainText(f"Imported local display profile: {source}")
-        except (OSError, UnicodeError, ValueError, TypeError) as error:
-            self.console.appendPlainText(f"Display profile import failed: {error}")
+        return self._pulse_face
+
+    def select_pulse_face(self, face: str | None) -> None:
+        self._pulse_face = face
+        identity = next(
+            (key for key, value in self.assignments.items() if value == face), None
+        )
+        self.timing.target.setCurrentIndex(
+            self.timing.target.findData(identity) if identity is not None else -1
+        )
 
     def configuration_for_submit(
         self, base_display: visual_stimulus_pb.DisplayConfiguration
     ) -> visual_stimulus_pb.DisplayConfiguration:
         """Collect projector-owned fields while retaining calibrated profile data."""
         if self._configuration_error and not (
-            self._configuration_error.startswith("Import a display profile")
+            self._configuration_error.startswith("Load a projector configuration")
             and base_display.profile_json
         ):
             raise ValueError(self._configuration_error)
         source_display = base_display
-        if not source_display.profile_json and self._imported_profile is not None:
-            source_display = self._imported_profile
+        if base_display.profile_json:
+            self._profile_outputs = display_document(base_display).get("outputs", [])
+        if self.calibration_files.profile is not None:
+            document = bind_profile(
+                self.calibration_files.profile,
+                current_outputs(
+                    self._profile_outputs,
+                    self.assignments,
+                    self.participation,
+                    native=self.review_displays is None,
+                ),
+                self.assignments,
+            )
+            source_display = visual_stimulus_pb.DisplayConfiguration(
+                profile_json=json.dumps(document, allow_nan=False)
+            )
         if not source_display.profile_json:
-            raise ValueError("Import a display profile before configuring projectors")
+            raise ValueError(
+                "Load a projector configuration with screen-profile references first"
+            )
         pulse_output_identity = self.timing.target.currentData()
         pulse_patch: dict[str, object] | None = None
         values = [
@@ -481,7 +502,7 @@ class ProjectorsPanel(DevicePanel):
             displays = display_rows
             if native_bindings:
                 issue = (
-                    "CephVR IDs use native stable display identities. Compare "
+                    "Display IDs use native stable display identities. Compare "
                     "the layout with Windows Settings; numbers are independent."
                 )
         else:
@@ -612,7 +633,7 @@ class ProjectorsPanel(DevicePanel):
             )
             path = write_diagnostic_bundle(
                 Path(self.asset_root),
-                self.calibration_files.snapshot(),
+                self.calibration_files.calibration_snapshot(),
                 rows,
                 active_monitor_bindings(),
             )
@@ -653,6 +674,8 @@ class ProjectorsPanel(DevicePanel):
                 for row, key in enumerate(self.keys)
             ]
         )
+        if self._pulse_face is not None and self.timing.target.currentIndex() < 0:
+            self.select_pulse_face(self._pulse_face)
         self.update_geometry()
         self.outputs_changed.emit()
 
@@ -701,12 +724,11 @@ class ProjectorsPanel(DevicePanel):
         key = self.keys[row] if 0 <= row < len(self.keys) else ""
         item = self.table.item(row, 0)
         self.status_column.hud.setPlainText(
-            f"CEPHVR ID  {item.text() if item else '—'}\nPROJECTOR  {self.assignments.get(key, 'Unassigned')}\nOUTPUT     Not tested"
+            f"DISPLAY ID  {item.text() if item else '—'}\nPROJECTOR  {self.assignments.get(key, 'Unassigned')}\nOUTPUT     Not tested"
         )
 
     def apply_view(self, view: DashboardView) -> None:
         super().apply_view(view)
-        self.import_profile.setEnabled(self.can_review)
         self.calibration_files.setEnabled(self.can_review)
         self.calibration.setEnabled(self.can_review)
         self.rig_editor.setEnabled(self.can_review)

@@ -1,15 +1,13 @@
-"""Drive acquisition heartbeat and serial watchdog keepalive obligations (E08/A11)."""
+"""Drive acquisition heartbeat and worker progress obligations (E08)."""
 
 from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from cephvr.acquisition.microcontroller.channel import ChannelDeadline
-from cephvr.acquisition.ports import SerialOwnerPort, SupervisorPort
+from cephvr.acquisition.ports import SupervisorPort
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
-    PulseRecord,
     SessionRecord,
     SessionSlot,
     TrialRecord,
@@ -26,7 +24,7 @@ FailureHandler = Callable[
 
 
 class AcquisitionHealth:
-    """Send registered-process health and keep the configured MCU watchdog alive."""
+    """Send registered-process health and monitor camera-worker progress."""
 
     def __init__(
         self,
@@ -35,15 +33,10 @@ class AcquisitionHealth:
         workers: dict[int, WorkerRecord],
         commands: CommandLedger,
         session_slot: SessionSlot,
-        pulse: PulseRecord,
         supervisor: SupervisorPort,
-        serial: SerialOwnerPort,
         heartbeat_interval_ns: int,
         health_silence_ns: int,
         recovery_ns: int,
-        serial_keepalive_interval_ns: int,
-        serial_communication_timeout_ns: int,
-        serial_ack_timeout_ns: int,
         catalogue_lock: asyncio.Lock,
         failure_handler: FailureHandler,
         clock: Callable[[], int] = host_time_ns,
@@ -54,25 +47,14 @@ class AcquisitionHealth:
             or recovery_ns <= 0
         ):
             raise ValueError("acquisition heartbeat cadence exceeds its silence bound")
-        if (
-            serial_keepalive_interval_ns <= 0
-            or serial_communication_timeout_ns <= serial_keepalive_interval_ns
-            or serial_ack_timeout_ns <= 0
-        ):
-            raise ValueError("serial watchdog timing policies are inconsistent")
         self.identity = identity
         self.workers = workers
         self.commands = commands
         self.session_slot = session_slot
-        self.pulse = pulse
         self.supervisor = supervisor
-        self.serial = serial
         self.heartbeat_interval_ns = heartbeat_interval_ns
         self.health_silence_ns = health_silence_ns
         self.recovery_ns = recovery_ns
-        self.serial_keepalive_interval_ns = serial_keepalive_interval_ns
-        self.serial_communication_timeout_ns = serial_communication_timeout_ns
-        self.serial_ack_timeout_ns = serial_ack_timeout_ns
         self.catalogue_lock = catalogue_lock
         self.failure_handler = failure_handler
         self.clock = clock
@@ -80,10 +62,9 @@ class AcquisitionHealth:
         self._silent_generations: set[str] = set()
 
     async def run(self, shutdown: asyncio.Event) -> None:
-        """Run three bounded duties independently so serial work cannot stall health."""
+        """Run process heartbeat and worker-silence monitoring independently."""
         async with asyncio.TaskGroup() as tasks:
             tasks.create_task(self._heartbeat_loop(shutdown))
-            tasks.create_task(self._keepalive_loop(shutdown))
             tasks.create_task(self._worker_silence_loop(shutdown))
 
     async def _heartbeat_loop(self, shutdown: asyncio.Event) -> None:
@@ -223,134 +204,6 @@ class AcquisitionHealth:
                 return
             next_due = now + self.heartbeat_interval_ns
 
-    async def _keepalive_loop(self, shutdown: asyncio.Event) -> None:
-        due_ns: int | None = None
-        connection_id: str | None = None
-        last_valid_ns: int | None = None
-        last_observation_ns: int | None = None
-        while not shutdown.is_set():
-            observation = self.pulse.observation
-            if (
-                observation is None
-                or not observation.connection_id
-                or (
-                    observation.state.HasField("configuration_valid")
-                    and not observation.state.configuration_valid
-                    and observation.state.HasField("watchdog_ms")
-                    and observation.state.watchdog_ms == 0
-                    and all(
-                        observation.state.HasField(role)
-                        and getattr(observation.state, role).HasField("running")
-                        and not getattr(observation.state, role).running
-                        for role in ("behavioral", "tracking")
-                    )
-                )
-            ):
-                # A connection-only probe leaves the firmware watchdog unarmed.
-                due_ns = None
-                connection_id = None
-                last_valid_ns = None
-                last_observation_ns = None
-                await _wait(
-                    shutdown, min(self.serial_keepalive_interval_ns, 100_000_000)
-                )
-                continue
-            now = self.clock()
-            if connection_id != observation.connection_id:
-                connection_id = observation.connection_id
-                observed_ns = (
-                    observation.observed_monotonic_ns
-                    if observation.HasField("observed_monotonic_ns")
-                    else now
-                )
-                last_observation_ns = observed_ns
-                last_valid_ns = observed_ns
-                due_ns = observed_ns + self.serial_keepalive_interval_ns
-            elif (
-                observation.HasField("observed_monotonic_ns")
-                and observation.observed_monotonic_ns > (last_observation_ns or 0)
-                and observation.state.HasField("configuration_valid")
-                and observation.state.configuration_valid
-                and observation.state.HasField("watchdog_stopped")
-                and not observation.state.watchdog_stopped
-                and observation.state.HasField("watchdog_ms")
-                and observation.state.watchdog_ms > 0
-            ):
-                last_observation_ns = observation.observed_monotonic_ns
-                last_valid_ns = observation.observed_monotonic_ns
-                due_ns = (
-                    observation.observed_monotonic_ns
-                    + self.serial_keepalive_interval_ns
-                )
-            if due_ns is None:
-                last_valid_ns = now
-                due_ns = now + self.serial_keepalive_interval_ns
-            if now < due_ns:
-                await _wait(shutdown, due_ns - now)
-                continue
-            watchdog_ms = (
-                observation.state.watchdog_ms
-                if observation.state.HasField("watchdog_ms")
-                else 0
-            )
-            watchdog_deadline = (
-                (last_valid_ns or now)
-                + watchdog_ms * 1_000_000
-                - self.serial_ack_timeout_ns
-            )
-            if watchdog_ms <= 0 or now >= watchdog_deadline:
-                await self._fail(
-                    self.identity.process,
-                    _current_work(self.session_slot),
-                    control.Failure(
-                        code="MICROCONTROLLER_KEEPALIVE_WINDOW_EXHAUSTED",
-                        message="no bounded keepalive window remains before the configured watchdog expires",
-                    ),
-                )
-                return
-            boundary = _next_pulse_boundary(self.session_slot, now)
-            if boundary is not None and now + self.serial_ack_timeout_ns >= boundary:
-                due_ns = boundary + self.serial_ack_timeout_ns
-                continue
-            deadline = min(
-                now + self.serial_communication_timeout_ns,
-                watchdog_deadline,
-            )
-            try:
-                state = await self.serial.keepalive(deadline_ns=deadline)
-            except ChannelDeadline:
-                # The owner deferred routine traffic to protect a reserved ON/OFF.
-                retry_at = (
-                    boundary + self.serial_ack_timeout_ns
-                    if boundary is not None
-                    else now + self.serial_ack_timeout_ns
-                )
-                due_ns = min(retry_at, watchdog_deadline)
-                continue
-            except Exception as exc:
-                await self._fail(
-                    self.identity.process,
-                    _current_work(self.session_slot),
-                    control.Failure(
-                        code="MICROCONTROLLER_KEEPALIVE_FAILED",
-                        message=f"serial watchdog keepalive failed: {exc}"[:2048],
-                    ),
-                )
-                return
-            if not state.HasField("watchdog_stopped") or state.watchdog_stopped:
-                await self._fail(
-                    self.identity.process,
-                    _current_work(self.session_slot),
-                    control.Failure(
-                        code="MICROCONTROLLER_WATCHDOG_STOPPED",
-                        message="MCU keepalive did not prove a running watchdog state",
-                    ),
-                )
-                return
-            observation.state.CopyFrom(state)
-            last_valid_ns = self.clock()
-            due_ns = last_valid_ns + self.serial_keepalive_interval_ns
-
     async def _worker_silence_loop(self, shutdown: asyncio.Event) -> None:
         interval = min(self.heartbeat_interval_ns, 1_000_000_000)
         while not shutdown.is_set():
@@ -405,19 +258,6 @@ def _current_work(slot: SessionSlot) -> control.WorkContext:
     else:
         work.CopyFrom(session.work)
     return work
-
-
-def _next_pulse_boundary(slot: SessionSlot, now_ns: int) -> int | None:
-    session = slot.current
-    trial = session.trial if session is not None else None
-    if trial is None:
-        return None
-    values = [
-        value
-        for value in (trial.start_monotonic_ns, trial.end_monotonic_ns)
-        if value is not None and value > now_ns
-    ]
-    return min(values) if values else None
 
 
 def _session_phase(session: SessionRecord) -> control.SessionPhase:

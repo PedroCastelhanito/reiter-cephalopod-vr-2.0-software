@@ -103,7 +103,7 @@ async def controller(
     service = ExperimentControllerService(
         runtime,
         client_authentication=authenticate,
-        peer_tokens={},
+        peer_tokens={"acquisition": (generation, "camera-trigger-token")},
         spikeglx_diagnostic=cast(SpikeGLXDiagnostic, Diagnostic()),
     )
     wire.add_ExperimentControllerServiceServicer_to_server(service, server)
@@ -484,4 +484,345 @@ async def test_pending_setup_cancel_and_prompt_response_are_independent_loopback
             recovery_gate.set()
             assert bridge.request("quit")
             await asyncio.wait_for(command_task, 2)
+    store.remove_client(principal)
+
+
+def _install_microcontroller(runtime: ControllerRuntime, *, uploader=None):
+    from unittest.mock import AsyncMock
+
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+    from cephvr.acquisition.v1 import runtime_pb2 as acquisition
+    from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+    from cephvr.controller.microcontroller.lifecycle import MicrocontrollerLifecycle
+
+    settings = pb.AcquisitionSettings()
+    settings.pulses.port = "COM8"
+    settings.pulses.trial_state_enabled = True
+    settings.pulses.trial_state_pin = "D9"
+    runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=False, acquisition=settings
+    )
+    serial = AsyncMock()
+    observation = mcu.MicrocontrollerObservation(
+        port="COM8", connection_id="connection"
+    )
+    observation.state.behavioral.running = False
+    observation.state.tracking.running = False
+    serial.connect.return_value = observation
+    serial.configure.return_value = observation
+    serial.status.return_value = observation
+    serial.diagnostic_start.return_value = (True, "trial_state", "D9", 1)
+    serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
+    serial.off.return_value = mcu.PulseCommandEvidence(
+        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=observation.state
+    )
+    owner = MicrocontrollerDevice(
+        serial, settings, acquisition.AcquisitionFilePolicies(), runtime.clock, uploader
+    )
+    runtime.microcontroller_device = owner
+    runtime.microcontroller.owner = owner
+    runtime.publisher.microcontroller_view = owner.snapshot_view
+    owner.changed = runtime.publisher.publish
+    runtime.microcontroller_lifecycle = MicrocontrollerLifecycle(
+        owner,
+        generation=runtime.generation,
+        lifecycle=runtime.lifecycle,
+        configuration=runtime.configuration_state,
+        device=runtime.device_state,
+        limits=runtime.limit_state,
+        clock=runtime.clock,
+        publish=runtime.publisher.publish,
+        warning=runtime.record_warning,
+        spawn=runtime._spawn,
+        interrupt=lambda attempt, reason, issued: runtime.interruption.interrupt(
+            attempt, reason, issued_ns=issued
+        ),
+    )
+    return owner, serial
+
+
+async def test_camera_trigger_rpc_authenticates_exact_peer_and_original_deadline(
+    controller,
+):
+    from cephvr.acquisition.microcontroller_client import (
+        ControllerMicrocontrollerClient,
+    )
+    from cephvr.shared.transport_deadlines import deadline_metadata
+
+    port, _store, runtime = controller
+    owner, serial = _install_microcontroller(runtime)
+    principal = Principal("acquisition", runtime.generation, "camera-trigger-token")
+    deadline = runtime.clock() + 5_000_000_000
+    request = rpc.MicrocontrollerIoRequest(
+        command_id=str(uuid4()),
+        requester=pb.ProcessIdentity(role="acquisition", generation=runtime.generation),
+        controller_generation=runtime.generation,
+        deadline_monotonic_ns=deadline,
+        kind=rpc.MICROCONTROLLER_IO_KIND_CONNECT,
+        requested=owner.settings.pulses,
+    )
+    request.claim_id = request.command_id
+    async with loopback_channel(port, 16_777_216) as channel:
+        stub = wire.ExperimentControllerServiceStub(channel)
+        for credential in [
+            Principal("acquisition", runtime.generation, "forged"),
+            Principal("acquisition", str(uuid4()), principal.token),
+        ]:
+            with pytest.raises(grpc.aio.AioRpcError) as caught:
+                await stub.ExecuteMicrocontrollerIo(
+                    request,
+                    metadata=(*credential.metadata(), deadline_metadata(deadline)),
+                    timeout=2,
+                )
+            assert caught.value.code() == grpc.StatusCode.UNAUTHENTICATED
+        with pytest.raises(grpc.aio.AioRpcError) as mismatch:
+            await stub.ExecuteMicrocontrollerIo(
+                request,
+                metadata=(*principal.metadata(), deadline_metadata(deadline - 1)),
+                timeout=2,
+            )
+        assert mismatch.value.code() == grpc.StatusCode.INVALID_ARGUMENT
+        assert serial.connect.await_count == 0
+        result = await stub.ExecuteMicrocontrollerIo(
+            request,
+            metadata=(*principal.metadata(), deadline_metadata(deadline)),
+            timeout=2,
+        )
+        assert result.succeeded and result.observation.port == "COM8"
+        replay = await stub.ExecuteMicrocontrollerIo(
+            request,
+            metadata=(*principal.metadata(), deadline_metadata(deadline)),
+            timeout=2,
+        )
+        assert replay == result and serial.connect.await_count == 1
+        client = ControllerMicrocontrollerClient(
+            stub, principal, runtime.generation, lambda: owner.settings.pulses
+        )
+        client.claim_id = request.claim_id
+        boundary, issued = runtime.clock() + 1_000_000, runtime.clock()
+        await client.off(
+            ("behavioral",),
+            scheduled_boundary_ns=boundary,
+            stop_issued_ns=issued,
+            deadline_ns=deadline,
+        )
+        call = serial.off.await_args
+        assert call.args == ((1,),)
+        assert call.kwargs == {
+            "scheduled_boundary_ns": boundary,
+            "stop_issued_ns": issued,
+            "deadline_ns": deadline,
+        }
+        bad = rpc.MicrocontrollerIoRequest.FromString(request.SerializeToString())
+        bad.command_id = str(uuid4())
+        bad.kind = rpc.MICROCONTROLLER_IO_KIND_STATUS
+        bad.claim_id = str(uuid4())
+        rejected = await stub.ExecuteMicrocontrollerIo(
+            bad,
+            metadata=(*principal.metadata(), deadline_metadata(deadline)),
+            timeout=2,
+        )
+        assert not rejected.succeeded and "claim" in rejected.failure
+        await client.close(deadline_ns=deadline)
+        assert not owner.acquisition_claimed and owner.cleanup_complete
+
+
+@pytest.mark.parametrize("source_kind", ["hex", "ino"])
+async def test_general_microcontroller_commands_and_upload_work_without_acquisition_backend(
+    controller, tmp_path, source_kind
+):
+    from cephvr.controller.microcontroller.firmware import read_uno_image
+    from cephvr.controller.microcontroller.firmware_source import read_firmware
+
+    port, store, runtime = controller
+    events = []
+    image_path = tmp_path / "compiled.hex"
+    image_path.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+    image = read_uno_image(str(image_path))
+    path = tmp_path / f"source.{source_kind}"
+    path.write_bytes(
+        b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+    )
+
+    class Uploader:
+        cleanup_complete = True
+
+        def reset_cancel(self):
+            pass
+
+        def compile(self, selected, operation, *, deadline_ns):
+            events.append(("compile", operation.command_id, deadline_ns))
+            return image
+
+        def prepare(self, selected):
+            assert selected.payload == image.payload
+
+        def upload(self, port, operation, *, deadline_ns):
+            assert port == "COM8"
+            events.append(("upload", operation.command_id, deadline_ns))
+
+        def close(self, *, deadline_ns):
+            self.cleanup_complete = True
+
+        def cancel(self):
+            pass
+
+    owner, serial = _install_microcontroller(runtime, uploader=Uploader())
+    assert runtime.microcontroller.device_views() is None
+    assert not runtime.configuration_state.current.backends[-1].enabled
+    principal = store.provision_client("gui")
+    async with loopback_channel(port, 16_777_216) as channel:
+        client = HeadlessClient(channel, principal)
+        stub = wire.ExperimentControllerServiceStub(channel)
+        async with client.observe():
+            await client.claim_control()
+            for kind in [
+                rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+                rpc.MICROCONTROLLER_COMMAND_KIND_START,
+                rpc.MICROCONTROLLER_COMMAND_KIND_STOP,
+                rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+            ]:
+                request = rpc.MicrocontrollerCommandRequest(
+                    command=client.operator_command(),
+                    expected_configuration_revision=runtime.configuration_state.revision,
+                    kind=kind,
+                )
+                if kind == rpc.MICROCONTROLLER_COMMAND_KIND_START:
+                    request.signal = pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE
+                if kind == rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE:
+                    request.firmware_path = str(path)
+                    request.firmware_sha256 = read_firmware(str(path)).digest
+                admission = await stub.ExecuteMicrocontrollerCommand(
+                    request, metadata=principal.metadata(), timeout=2
+                )
+                assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+                for _ in range(200):
+                    operation = runtime.control.operations[
+                        request.command.operator.command_id
+                    ]
+                    if operation.complete:
+                        break
+                    await asyncio.sleep(0.005)
+                assert operation.complete and operation.succeeded, operation.failure
+                snapshot = await client.get_snapshot()
+                assert snapshot.microcontroller.observation.port == "COM8"
+                assert snapshot.microcontroller.diagnostic.active == (
+                    kind == rpc.MICROCONTROLLER_COMMAND_KIND_START
+                )
+            assert [phase for phase, _, _ in events] == (
+                ["compile", "upload"] if source_kind == "ino" else ["upload"]
+            )
+            assert (
+                len({(operation, deadline) for _, operation, deadline in events}) == 1
+            )
+            assert serial.close.await_count == 1
+            assert not runtime.authority_status().cleanup_confirmed
+            deadline = runtime.clock() + 1_000_000_000
+            await owner.close(deadline_ns=deadline, permanent=False)
+            assert (
+                owner.cleanup_complete
+                and not (await client.get_snapshot()).microcontroller.cleanup_pending
+            )
+    store.remove_client(principal)
+
+
+async def test_normal_shutdown_releases_controller_owned_microcontroller(controller):
+    port, store, runtime = controller
+    owner, serial = _install_microcontroller(runtime)
+    owner.port_owned = True
+    owner.view.observation.CopyFrom(serial.connect.return_value)
+    runtime.lifecycle.session.cleanup_confirmed = True
+    principal = store.provision_client("gui")
+    async with loopback_channel(port, 16_777_216) as channel:
+        client = HeadlessClient(channel, principal)
+        async with client.observe():
+            await client.claim_control()
+            request = client.operator_command()
+            admission = await runtime.shutdown_application(request)
+            assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+            for _ in range(100):
+                if owner.cleanup_complete:
+                    break
+                await asyncio.sleep(0.005)
+            assert owner.cleanup_complete
+            assert runtime.authority_status().cleanup_confirmed
+            assert (
+                owner.shutdown_deadline_ns
+                == runtime.lifecycle.shutdown_intent_ns
+                + runtime.limits.setup_cancel_ns
+                + runtime.limits.recovery_ns
+            )
+            assert (
+                serial.close.await_args.kwargs["deadline_ns"]
+                == owner.shutdown_deadline_ns
+            )
+    await runtime.cancel_background_tasks()
+    store.remove_client(principal)
+
+
+async def test_old_camera_projection_cannot_replace_controller_microcontroller_state(
+    controller,
+):
+    _port, _store, runtime = controller
+    owner, serial = _install_microcontroller(runtime)
+    owner.view.observation.CopyFrom(serial.connect.return_value)
+    owner.view.diagnostic.active = True
+    stale = pb.AcquisitionDeviceViews()
+    stale.pulses.port = "COM9"
+    stale.diagnostic.active = False
+    runtime.projections.devices = stale
+    snapshot = runtime.publisher.build_snapshot()
+    assert snapshot.microcontroller.observation.port == "COM8"
+    assert snapshot.microcontroller.diagnostic.active
+    assert snapshot.acquisition_devices.pulses.port == "COM9"
+
+
+@pytest.mark.parametrize("cause", ["control_loss", "shutdown"])
+async def test_controller_cleanup_waits_for_camera_off_and_claim_release(
+    controller, cause
+):
+    from cephvr.acquisition.microcontroller_client import (
+        ControllerMicrocontrollerClient,
+    )
+
+    port, store, runtime = controller
+    owner, serial = _install_microcontroller(runtime)
+    principal = store.provision_client("gui")
+    peer = Principal("acquisition", runtime.generation, "camera-trigger-token")
+    async with loopback_channel(port, 16_777_216) as channel:
+        client = HeadlessClient(channel, principal)
+        camera = ControllerMicrocontrollerClient(
+            wire.ExperimentControllerServiceStub(channel),
+            peer,
+            runtime.generation,
+            lambda: owner.settings.pulses,
+        )
+        async with client.observe():
+            await client.claim_control()
+            deadline = runtime.clock() + 5_000_000_000
+            await camera.connect(deadline_ns=deadline)
+            if cause == "control_loss":
+                await runtime.microcontroller_lifecycle.owner_lost()
+                assert owner.snapshot_view().cleanup_pending
+            else:
+                admission = await runtime.shutdown_application(
+                    client.operator_command()
+                )
+                assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+            await asyncio.sleep(0)
+            serial.close.assert_not_awaited()
+            await camera.off(
+                ("behavioral",),
+                scheduled_boundary_ns=None,
+                stop_issued_ns=runtime.clock(),
+                deadline_ns=deadline,
+            )
+            await camera.close(deadline_ns=deadline)
+            for _ in range(100):
+                if owner.cleanup_complete:
+                    break
+                await asyncio.sleep(0.005)
+            assert owner.cleanup_complete
+            assert serial.off.await_count == 1
+    await runtime.cancel_background_tasks()
     store.remove_client(principal)

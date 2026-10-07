@@ -13,7 +13,7 @@ from cephvr.acquisition.buffers.resource_port import WindowsResourcePort
 from cephvr.acquisition.configuration import load_defaults, load_file_policies
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.executables import PythonWorkerExecutables
-from cephvr.acquisition.microcontroller.lazy_owner import LazySerialOwner
+from cephvr.acquisition.microcontroller_client import ControllerMicrocontrollerClient
 from cephvr.acquisition.runtime import AcquisitionCoordinatorRuntime
 from cephvr.acquisition.startup import (
     AcquisitionBootstrap,
@@ -35,6 +35,7 @@ from cephvr.acquisition.transport.server import (
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.worker_launcher import WindowsWorkerBootstrapPort
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.control.v1.services_pb2_grpc import ExperimentControllerServiceStub
 from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs
@@ -135,8 +136,11 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
         supervisor=supervisor,
         cleanup_complete=_worker_cleanup_complete,
     )
-    lazy_serial = LazySerialOwner(
-        configuration.settings, configuration.file_policies, lambda _bridge: None
+    lazy_serial = ControllerMicrocontrollerClient(
+        ExperimentControllerServiceStub(controller_channel),  # type: ignore[no-untyped-call]
+        principal,
+        bootstrap.controller.generation,
+        lambda: configuration.settings.pulses,
     )
     runtime_instance = AcquisitionCoordinatorRuntime(
         identity=identity,

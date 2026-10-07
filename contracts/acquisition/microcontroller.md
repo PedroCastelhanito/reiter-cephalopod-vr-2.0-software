@@ -71,7 +71,7 @@ diagnostic output pins return LOW on Stop, timeout, connection loss, reset or fa
 the host reports an unconfirmed stop if the acknowledgement is missing. Successful
 serial replies prove firmware state and edge count only, not physical voltage,
 camera frames or SpikeGLX recording. The GUI requires Configuration and control,
-rejects duplicate active assignments, and uses acquisition as the sole serial owner.
+rejects duplicate active assignments, and uses the controller Microcontroller module as the sole serial owner.
 
 Each new diagnostic resets its counter. Output tests count the actual HIGH writes:
 one immediate rise for Trial state; the first immediate HIGH and every subsequent
@@ -83,7 +83,7 @@ controller's existing `rising_edges` field carries this count, distinguished by 
 GUI output labels explicitly say generated transitions. Protocol 2 output-zero replies
 are incompatible and rejected at connection rather than treated as measured zero.
 
-`protocol` is uint32 and must equal 2; watchdog values are uint32. Applied Hz is
+`protocol` is uint32 and must equal 3; watchdog values are uint32. Applied Hz is
 positive and finite decimal text (ordinary or exponent notation), parsed into the
 host's binary64 `applied_frequency_hz`. It is not restricted to the 0.1-Hz request grid.
 Firmware emits sufficient significant digits to preserve its computed rate on a
@@ -178,8 +178,39 @@ and configuration confirmation. Setup refreshes CAPS; between trials use retaine
 capabilities plus required current-state verification. Locked-session drift fails,
 without applying/adopting a new timing configuration or resuming Interrupted work.
 
-Firmware installation remains manual; automatic flashing stays deferred. Board-specific
-resolution, parser/serial implementation and hardware verification remain outstanding.
+Firmware installation supports manual tooling and explicit Configuration Upload
+under [A11](../../docs/architecture/acquisition.md#a11). Automatic flashing stays
+deferred. `MicrocontrollerCommandRequest` carries
+`UPLOAD_FIRMWARE`, an absolute `.ino` or `.hex` path and SHA-256. Only upload accepts
+those fields and it carries no diagnostic signal. For HEX, pin the selected bytes.
+For a sketch, pin its selected entry-point name and sorted relative-name/length/byte
+snapshot: root `.ino`/`.pde`/C/C++/header/assembly companions plus recursive `src`
+content, excluding hidden entries and unrelated root files/directories. Length-prefix
+UTF-8 entry names and each source filename/payload with unsigned 8-byte big-endian
+lengths before hashing; selected-name framing precedes file framing. Sources are bounded
+by the fixed Microcontroller policy (8 MiB total / 256 scanned entries); links/reparse points,
+empty/missing entry points and changed snapshots fail before serial handoff.
+
+Controller stages owner-only pinned source and runs installed Arduino CLI
+`compile --fqbn arduino:avr:uno --clean --build-path <private> --output-dir <private> <sketch>`.
+Preserve the selected entry point's basename in its private project directory. Validate
+only `<entry>.ino.hex` as application HEX; never choose the with-bootloader artifact.
+Confirm compiler/process/job/pipes and source/build cleanup, retaining validated image
+bytes in memory. Compilation failures/cancellation do not release serial or flash.
+No tools, cores, libraries or sketch profiles are installed automatically.
+
+Recheck/validate Intel HEX checksums/application bounds before serial release, stage
+an owner-only immutable image copy, then use installed CLI with
+`--fqbn arduino:avr:uno --input-file <copy> --verify`. Camera/device ownership,
+active diagnostics or unresolved native cleanup block upload. Controller uses its
+existing Configuration command budget; the final two seconds are reserved for
+contained helper closure, without extending the original deadline. Native cleanup
+follows [E08](../../docs/architecture/system-contracts.md#e08) and the
+[launch contract](../windows-launch.md). Fresh CAPS/STATUS and stopped-output
+verification precede successful status; no camera or pulse activity resumes. The host
+parser/serial implementation is present; board-specific timing and hardware acceptance
+remain in the rig checklist. The former acquisition upload RPC rejects ownership-moved
+requests and is retained only for compatibility.
 
 ## Scheduled serial boundaries (A11)
 
@@ -248,7 +279,7 @@ For each dispatched command, its reply deadline is the earliest of dispatch plus
 the existing acknowledgement timeout and the applicable lifecycle/operation deadline.
 Complete Started/Stopped report delivery still must fit E05's original bounds; an
 ACK at the last instant grants no extra delivery allowance. Command acceptance or
-ON OK alone never proves camera activity. Acquisition Started also needs its actual
+ON OK alone never proves camera activity. Controller Started also needs its actual
 camera/worker evidence; Stopped needs camera activity ended and the selected MCU
 outputs confirmed off. Bounded buffered-result drain/accounting is separately governed
 by recording-lifecycle.md; it cannot postpone Stopped or turn admission sealing into
@@ -298,3 +329,36 @@ deadline stays invalid and makes finalization incomplete under E06. Late evidenc
 in existing retained failure views; never rewrite a closed file or reset deadlines.
 No new process, serial channel or scientific file. Physical edge/exposure matching
 remains synchronization/rig work.
+
+## Controller ownership and camera clients
+
+The controller owns one connection, its dedicated serial thread, keepalive, diagnostics
+and native firmware helpers. Devices/Microcontroller works without an acquisition peer.
+`microcontroller_config.toml` / `microcontroller_policy.toml` are the single owning
+settings/policy pair. Existing AcquisitionSettings/FilePolicies serial fields remain
+compatibility/distribution containers; they do not grant acquisition device ownership.
+The existing acquisition wire namespace for MCU observations/timing remains stable.
+`Snapshot.microcontroller` carries the current controller-owned observation, diagnostic
+and cleanup/failure view, independent of camera device reports.
+
+Acquisition calls `ExperimentControllerService.ExecuteMicrocontrollerIo` on the existing
+loopback endpoint. The server verifies the exact acquisition credential/generation,
+controller generation and equality of the request's absolute deadline with authenticated
+metadata before admission. The narrow enum permits connection, complete trigger
+configuration, status, boundary reservation, ON/OFF, cancellation and claim release;
+there is no serial text, diagnostics or firmware operation for peers. Exact requests and
+results share the controller's bounded command ledger; changed replay is rejected and
+accepted operations are never retransmitted by the client. CONNECT establishes its
+command ID as `claim_id`; every subsequent camera operation must match this live claim.
+A released claim cannot change a later connection. Connection/configuration requests
+must match the controller's current requested pulse settings; diagnostics remain local. The owner returns existing
+observation/PulseCommandEvidence with actual host dispatch and ACK timestamps.
+Transport time consumes the original budget; it never becomes a new acknowledgement
+budget. Acquisition cleanup records only `microcontroller-claim:<port>` release after
+confirmed OFF and owner response. Controller separately confirms physical COM/native
+closure under A11/E08. Configuration diagnostics and firmware work exclude camera
+claims; Start/Setup excludes unfinished device/native cleanup and active pin tests.
+Shutdown waits for acquisition's original claim-release allowance, then confirms the
+controller-owned serial/device closure within the retained cleanup/recovery deadline,
+clamped by the application backstop. A failed close stays fenced and visible.
+Serial timing reloads only with no owned port; changing an active connection's timing requires release and cannot silently alter the watchdog budget.

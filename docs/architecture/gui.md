@@ -16,8 +16,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 123
+**Status:** Accepted · **Revision:** 129
 
+- Review and managed runtime use the same DashboardWindow page construction,
+  shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
+  supplies local fixtures or authoritative state and command availability; it never
+  adds a separate page layout. Review-only inspection menus and runtime authority
+  actions retain their distinct purpose. Older saved review drafts migrate through
+  the owning validators without discarding valid settings or changing source files
+  during load; genuine invalid drafts remain preserved and explicitly reported.
 - Tracking derives its input from the unique camera assigned the Tracking role in
   Devices; no second source selector or discovery-order fallback. Its pipeline card
   precedes Preprocessing, Calibration, Pose and Motion subtabs, with the shared
@@ -96,7 +103,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   draft badge or standalone Validate action. Configuration content scrolls within
   the fixed navigation shell.
 - The design-review launcher uses simulated cameras, projector displays and a
-  microcontroller inventory; review actions send no device commands. The managed
+  microcontroller inventory; review actions send no device commands. Its optional
+  real-device inventory mode opens no COM port; physical pin tests and firmware
+  operations use the managed controller API. The managed
   runtime launcher starts the controller-backed GUI and discovers attached Basler
   cameras, secondary Windows displays and COM ports without assigning surfaces or
   claiming Setup readiness. Camera
@@ -346,16 +355,19 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Cameras stacks Available devices above Camera config in the left column, with
   its HUD/log column at the right. The inventory provides experiment enablement,
   stable identity, role, selection, refresh, connect/disconnect and external preview.
-  Refresh is an icon action in the inventory header's upper-right corner; Connect
-  toggles to Disconnect for the selected editing connection. Camera config omits
+  Selection restores each camera's saved PFS, timing source and rate; the PFS field
+  shows a filename with its full path in the tooltip.
+  Refresh is an icon action in the inventory header's upper-right corner. The shared
+  capture action reads Connect when closed and Disconnect while capture or an
+  editing connection is retained. Review simulates these states locally. Camera config omits
   the redundant selected-camera caption; identity remains in the inventory/HUD.
   The Devices footer has no draft-settings text; local fixtures remain identified
   in the review window title and activity messages.
-  Inventory actions are ordered Test enabled, Connect, Preview. Test enabled
+  Inventory actions are ordered Test enabled, Connect/Disconnect. Test enabled
   targets enabled cameras without changing selection or connection state. Managed
   role assignments commit through E07 and leave the newly assigned camera disabled.
-  Start capture/Stop capture use A10 manual preview; Preview sends Show/Hide for an
-  acquisition-owned OpenCV window. Native X closure leaves capture running; backend
+  Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
+  window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
   visibility evidence updates the GUI selector. Show snaps the visible preview frame
   outside the GUI's top-right edge, shrinking the square to available right-hand
   space before using the left edge; clamp to the current monitor work area when
@@ -427,7 +439,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   a nonempty pin and no target-pin conflict; camera requests additionally require an
   enabled external-trigger role and valid retained rate. Managed diagnostics retain
   controller ownership; report requests without matched results as unconfirmed.
-- Projectors uses a compact table of Display index, Projector assignment, Resolution
+- Projectors uses a compact table of Display ID, Projector assignment, Resolution
   in pixels, plus a scaled Displays layout diagram. Its indices are GUI-owned,
   assigned to secondary displays by desktop position and shared with the diagram.
   A Use checkbox per display
@@ -443,13 +455,18 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   projector distance and throw ratio, with an unlabeled row-name column and wrapped
   headers. Clip/tolerance settings remain in Rig geometry without an Advanced
   subtitle. One Load JSON / Save as action row handles the complete rig, projection
-  limits and all-screen correction/dimension values under the
+  limits, all-screen correction/dimension values, synchronization and participation
+  plus reusable runtime profile references under the
   [GUI calibration contract](../../contracts/gui-calibration.md), replacing the
   per-screen profile picker. Validate the complete bounded document before applying;
   invalid files preserve drafts. Save atomically, retain unset values, respect editing
-  authority and cancel pickers on authority loss. The JSON excludes discovered
-  display/projector lists, output assignments and participation; load leaves these
-  untouched. Loading is not backend preparation.
+  authority and cancel pickers on authority loss. Version 3 merges the former runtime
+  display-profile import into this row. Exclude physical inventory and output assignments;
+  load preserves current display mappings, restores participation and pulse selection
+  by logical rig face, and retains geometry/color calibration references and shared-output
+  coverage. Rebind references using current output properties at submission; missing roles
+  fail without guessing. Numeric-only versions 1/2 preserve other settings, and legacy
+  runtime profiles remain loadable through the same action. Loading is not backend preparation.
   Launch prepares calibration files before requesting output; no separate preparation
   button is shown. Preparation uses the current four enabled face
   assignments, current rig fields and native monitor identities to export a static
@@ -544,11 +561,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   concern, not an inferred bit-zero default; camera triggers use OneBox under E12. Configuration
   authority gates edits. These drafts do not configure SpikeGLX acquisition, enumerate
   remote saved channels or prove physical recording; managed adoption/validation is pending.
-- Page grouping preserves E02/E08's backend ownership: acquisition owns cameras and
-  microcontroller I/O, Visual Stimulus owns display output, and E12's controller client
+- Page grouping preserves E02/E08's backend ownership: acquisition owns cameras;
+  the controller owns Microcontroller I/O, Visual Stimulus owns display output, and
+  E12's controller client
   owns SpikeGLX. Connection checks do not establish E05 Setup readiness or E15 physical
   verification. New diagnostic operations require defined backend behavior; navigation
-  does not lift ARCH-001's integration order or A11's firmware/flashing deferral.
+  follows ARCH-001's integration order and A11's explicit Configuration upload rule.
 - Dashboard keeps compact runtime readiness above session actions, then subject/session
   details in the left column, with a runtime HUD and activity console in the right.
   The Session config card places Subject ID and Experiment in the first field row,
@@ -608,7 +626,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   unfinished under E03/E08/E15 and owning backend preview rules.
 - Output directory has an asynchronous existing-folder picker beside the editable
   path. Cancellation preserves the draft; selection rechecks editing availability.
-  Camera Preview and the Dashboard selector target the same source identity and
+  Camera Connect and the Dashboard selector target the same source identity and
   visibility state, with one backend-owned external viewer per source. The local
   review updates visibility fixtures only and creates no image window.
   Path display is compact when unfocused, with the full path in its tooltip and
@@ -617,10 +635,23 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   falling back to the oldest retained entry if it is evicted. These GUI conveniences
   do not reserve output, validate experiment storage or change backend state.
 
+- Devices/Microcontroller provides a firmware path and explicit Upload governed by
+  A11. Select `.ino` for compile-then-flash or `.hex` for direct upload. Controller owns
+  compilation/validation/serial handoff; the GUI never invokes compiler or serial tooling.
+  The path is an operator preference; review mode presents the same controls without
+  flashing. In managed mode Upload is available only in idle Configuration.
+- Calibration Launch always prepares the geometry grid using saved corrections:
+  world-phase colored solid/dashed lines, full-face center crosses, face dimensions
+  and a 50 mm ruler where it fits. Existing physical screen planes and offsets remain
+  authoritative; no separate placement-only/no-grid mode is offered.
+
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 33
+**Status:** Accepted · **Revision:** 34
+
+- Device subtabs preserve their text color on hover. Tracking places Load/Save beside
+  Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
 
 - Use the current CephVR1.0 Dashboard as the visual template: dark blue/black
   surfaces, subtle bordered cards, blue primary actions, muted red stopping actions,

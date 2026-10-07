@@ -12,12 +12,14 @@ import grpc
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.microcontroller.admission import MicrocontrollerIoAdmission
 from cephvr.controller.receipts import rejected_admission, rejected_receipt
 from cephvr.controller.runtime import ControllerRuntime
 from cephvr.controller.transport.admission import CommandAdmissionGate
 from cephvr.controller.transport.auth import ClientAuthentication
 from cephvr.controller.transport.ingress import BoundedReportIngress
 from cephvr.shared.auth import AuthenticationError, require_authenticated_peer
+from cephvr.shared.transport_deadlines import parse_deadline_metadata
 from cephvr.synchronization.diagnostic import SpikeGLXDiagnostic
 from cephvr.synchronization.sdk_io import SpikeGLXIOOwner
 
@@ -47,6 +49,11 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             max_pending_payload_bytes=max_pending_payload_bytes,
             command_retention_ns=command_retention_ns,
         )
+        self.microcontroller_io = MicrocontrollerIoAdmission(
+            self._commands.retention_ledger,
+            runtime.clock,
+            runtime.execute_microcontroller_io,
+        )
         runtime.bind_camera_status_retention(self._commands.retention_ledger)
         self._reports = BoundedReportIngress(
             runtime,
@@ -54,11 +61,17 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             max_pending_payload_bytes=max_pending_payload_bytes,
             max_message_bytes=max_message_bytes,
         )
+        # Held so the event loop's weak task reference cannot drop the closer early.
+        self.close_after_stop: asyncio.Task[None] | None = None
 
     async def aclose(self) -> None:
         self._commands.stop_accepting()
         self._reports.stop_accepting()
-        await asyncio.gather(self._reports.aclose(), self._commands.aclose())
+        await asyncio.gather(
+            self._reports.aclose(),
+            self._commands.aclose(),
+            self.microcontroller_io.close(),
+        )
 
     async def _client(self, context: grpc.aio.ServicerContext, client_id: str) -> None:
         if not client_id:
@@ -437,6 +450,25 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             lambda: self.runtime.execute_microcontroller_command(request),
         )
 
+    async def ExecuteMicrocontrollerIo(
+        self, request: svc.MicrocontrollerIoRequest, context: grpc.aio.ServicerContext
+    ) -> svc.MicrocontrollerIoResult:
+        if request.requester.role != "acquisition":
+            await context.abort(
+                grpc.StatusCode.PERMISSION_DENIED,
+                "Only the camera-trigger client may use this API",
+            )
+        await self._peer(context, request.requester.role, request.requester.generation)
+        try:
+            deadline = parse_deadline_metadata(context.invocation_metadata())
+            if deadline != request.deadline_monotonic_ns:
+                raise ValueError(
+                    "Microcontroller deadline differs from authenticated original budget"
+                )
+        except ValueError as exc:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(exc))
+        return await self.microcontroller_io.execute(request)
+
     async def CheckSpikeGLXConnection(
         self,
         request: svc.SpikeGLXConnectionQuery,
@@ -584,5 +616,5 @@ async def start_controller_server(
         finally:
             await servicer.aclose()
 
-    asyncio.create_task(close_after_stop())
+    servicer.close_after_stop = asyncio.create_task(close_after_stop())
     return server

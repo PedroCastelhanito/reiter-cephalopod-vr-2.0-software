@@ -23,20 +23,6 @@ class ProbeProcess(Protocol):
     def terminate(self, *, deadline_ns: int) -> None: ...
 
 
-class ProbeLauncher(Protocol):
-    def bind_operation(self, work: object, parent_operation: object) -> None: ...
-    def launch(
-        self,
-        argv: Sequence[str],
-        *,
-        deadline_ns: int,
-        role: str,
-        output_path: None,
-        capture_stdout: bool,
-    ) -> ProbeProcess: ...
-    def terminate_unconfirmed(self, *, deadline_ns: int) -> None: ...
-
-
 class RegisteredCapabilityProbe:
     """Run bounded help commands as children of the retained supervisor plan."""
 
