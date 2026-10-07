@@ -3,13 +3,21 @@ package cephvr.tracking.v1;
 import "cephvr/control/v1/types.proto";
 import "cephvr/control/v1/services.proto";
 import "cephvr/acquisition/v1/messages.proto";
+import "cephvr/acquisition/v1/camera.proto";
 import "cephvr/tracking/v1/preparation.proto";
+import "cephvr/tracking/v1/methods.proto";
 
 // Hosted on the existing tracking endpoint alongside BackendService.
 // Data attachment is control metadata, never image data.
 service TrackingPreparationService {
   rpc BindData(TrackingDataBinding) returns (cephvr.control.v1.CommandAdmission);
   rpc GetPreparation(TrackingPreparationQuery) returns (TrackingPreparationState);
+}
+service TrackingDiagnosticService {
+  rpc BeginDiagnostic(TrackingDiagnosticCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc CloseDiagnostic(CloseTrackingDiagnosticCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc GetDiagnosticState(TrackingDiagnosticQuery) returns (TrackingDiagnosticState);
+  rpc GetLatestDiagnosticFrame(TrackingDiagnosticQuery) returns (TrackingDiagnosticFrame);
 }
 message TrackingDataBinding {
   cephvr.control.v1.BackendCommand command = 1;
@@ -19,4 +27,116 @@ message TrackingDataBinding {
 }
 message TrackingPreparationQuery {
   cephvr.control.v1.BackendCommand command = 1;
+}
+enum TrackingDiagnosticStage {
+  TRACKING_DIAGNOSTIC_STAGE_UNSPECIFIED = 0;
+  TRACKING_DIAGNOSTIC_STAGE_POSE = 1;
+  TRACKING_DIAGNOSTIC_STAGE_SAMPLING_REGION = 2;
+  TRACKING_DIAGNOSTIC_STAGE_OPTICAL_FLOW = 3;
+  TRACKING_DIAGNOSTIC_STAGE_FLOW_QUALITY = 4;
+  TRACKING_DIAGNOSTIC_STAGE_LOCOMOTION = 5;
+}
+enum TrackingDiagnosticStageState {
+  TRACKING_DIAGNOSTIC_STAGE_STATE_UNSPECIFIED = 0;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_AVAILABLE = 1;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_RUNNING = 2;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_UNAVAILABLE = 3;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_FAILED = 4;
+}
+message TrackingDiagnosticCommand {
+  cephvr.control.v1.BackendCommand command = 1;
+  uint64 configuration_revision = 2;
+  string diagnostic_id = 3;
+  repeated TrackingDiagnosticStage selected_stages = 4;
+  cephvr.acquisition.v1.FrameBufferAttachment frames = 5;
+  uint64 maximum_frame_bytes = 6; // Controller-resolved fixed bound; never GUI-selected.
+  cephvr.control.v1.TrackingSettings settings = 7; // Exact accepted revision; diagnostic-only.
+  TrackingFilePolicies file_policies = 8; // Exact controller-resolved policy snapshot.
+  optional string asset_root = 9; // Accepted root used to resolve selected stage assets.
+  string source_camera_serial = 10; // Controller-resolved assigned Tracking camera identity.
+  uint32 maximum_overlay_items = 11; // Controller-resolved fixed bound.
+  cephvr.control.v1.ProcessIdentity authorized_gui_viewer = 12;
+  uint64 deadline_monotonic_ns = 13;
+}
+message CloseTrackingDiagnosticCommand {
+  cephvr.control.v1.BackendCommand command = 1;
+  uint64 configuration_revision = 2;
+  string diagnostic_id = 3;
+  string preview_run_id = 4;
+  uint64 deadline_monotonic_ns = 5;
+}
+message TrackingDiagnosticQuery {
+  string client_id = 1;
+  cephvr.control.v1.ProcessIdentity viewer = 2;
+  string controller_generation = 3;
+  uint64 configuration_revision = 4;
+  string diagnostic_id = 5;
+  string preview_run_id = 6;
+}
+message TrackingDiagnosticStageStatus {
+  TrackingDiagnosticStage stage = 1;
+  TrackingDiagnosticStageState state = 2;
+  optional string reason = 3;
+}
+message TrackingDiagnosticState {
+  string diagnostic_id = 1;
+  uint64 configuration_revision = 2;
+  string preview_run_id = 3;
+  string acquisition_run_id = 4;
+  cephvr.acquisition.v1.CameraRole camera_role = 5;
+  cephvr.acquisition.v1.AttachedResource tracking_frames = 6;
+  bool active = 7;
+  bool close_confirmed = 8;
+  repeated TrackingDiagnosticStageStatus stages = 9;
+  uint64 input_frames = 10;
+  uint64 evaluated_frames = 11;
+  uint64 lapped_frames = 12;
+  optional uint64 last_processing_duration_ns = 13;
+  optional uint64 max_processing_duration_ns = 14;
+  optional string failure_code = 15;
+  optional string failure_message = 16;
+}
+message TrackingDiagnosticPoint {
+  TrackingDiagnosticStage stage = 1;
+  string label = 2;
+  double x_px = 3;
+  double y_px = 4;
+}
+message TrackingDiagnosticRect {
+  TrackingDiagnosticStage stage = 1;
+  string label = 2;
+  double x_px = 3;
+  double y_px = 4;
+  double width_px = 5;
+  double height_px = 6;
+}
+message TrackingDiagnosticVector {
+  TrackingDiagnosticStage stage = 1;
+  string label = 2;
+  double start_x_px = 3;
+  double start_y_px = 4;
+  double end_x_px = 5;
+  double end_y_px = 6;
+}
+message TrackingDiagnosticLabel {
+  TrackingDiagnosticStage stage = 1;
+  string text = 2;
+}
+message TrackingDiagnosticFrame {
+  string diagnostic_id = 1;
+  uint64 configuration_revision = 2;
+  string preview_run_id = 3;
+  optional uint64 source_frame_id = 4; // Zero is valid when present.
+  optional int64 source_host_receipt_ns = 5;
+  optional int64 produced_monotonic_ns = 6;
+  cephvr.acquisition.v1.CameraImageLayout image = 7;
+  bytes image_bytes = 8; // One bounded latest source-frame copy; never retained as history.
+  optional bool available = 9;
+  optional string unavailable_reason = 10; // Includes exact bound/oversize reason.
+  repeated TrackingDiagnosticPoint points = 11;
+  repeated TrackingDiagnosticRect rectangles = 12;
+  repeated TrackingDiagnosticVector vectors = 13;
+  repeated TrackingDiagnosticLabel labels = 14;
+  bool overlays_truncated = 15;
+  // Image and overlays always describe the same source frame; no session/trial output.
 }

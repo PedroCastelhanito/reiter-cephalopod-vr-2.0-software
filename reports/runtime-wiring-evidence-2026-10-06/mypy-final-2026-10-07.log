@@ -1,0 +1,2 @@
+src/cephvr/controller/device/spikeglx_inventory.py:12: error: Module "cephvr.synchronization.client" does not explicitly export attribute "_required_inventory_roles"  [attr-defined]
+Found 1 error in 1 file (checked 683 source files)

@@ -45,10 +45,10 @@ class DriverState:
     artifacts: dict[str, TrialArtifact] = field(default_factory=dict)
     trial: Trial | None = None
     resources: dict[str, pb.ResourceObligation] = field(default_factory=dict)
+    pending_resources: dict[str, pb.ResourceObligation] = field(default_factory=dict)
     catalogue_revision: int = 0
     interrupted: bool = False
     ready: bool = False
-    display_ready: bool = False
     cleaned: bool = False
     failure_deadline_ns: int | None = None
     released_threads: set[str] = field(default_factory=set)

@@ -13,9 +13,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.batch_edit_rows import PARAMETERS, ProjectorEditRow, supports
+from cephvr.gui.batch_edit_rows import ProjectorEditRow
 from cephvr.gui.components import (
-    InlineMessage,
     button,
     combo,
     equal_row_height,
@@ -26,21 +25,21 @@ from cephvr.gui.epoch_batch import (
     LayerTarget,
     apply_batch,
     family,
-    matching_layer,
 )
 from cephvr.gui.epoch_selection import EpochSelection
 from cephvr.gui.epoch_targets import EpochTargets
 from cephvr.gui.formatting import clock_duration, parse_clock_duration
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.prepared_file_picker import PreparedFilePicker
 from cephvr.gui.program_editing import node_at
 from cephvr.gui.projector_layers import layers_for
+from cephvr.gui.stimulus_columns import editable_parameters
 from cephvr.gui.stimulus_scope import surfaces
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Program
 
 
 class BatchEdit(QWidget):
     committed = pyqtSignal(object)
-    detail_requested = pyqtSignal(str, int)
     epochs_requested = pyqtSignal(object)
     epoch_action = pyqtSignal(str)
 
@@ -106,9 +105,7 @@ class BatchEdit(QWidget):
         self.projector_header = QWidget()
         headings = QHBoxLayout(self.projector_header)
         headings.setContentsMargins(0, 0, 0, 0)
-        face_heading = label("Projector", "label")
-        face_heading.setMinimumWidth(84)
-        headings.addWidget(face_heading)
+        headings.addSpacing(84)
         headings.addWidget(label("Layer", "label"), 2)
         headings.addWidget(label("Value", "label"), 3)
         headings.addSpacing(36)
@@ -125,7 +122,7 @@ class BatchEdit(QWidget):
         parameter_row.addWidget(projector_values, 0, 2, 1, 3, Qt.AlignmentFlag.AlignTop)
         self.asset_picker = PreparedFilePicker(self)
         self.asset_picker.selected.connect(self.set_asset)
-        self.message = InlineMessage()
+        self.message = FormNotice()
         body.addWidget(self.message)
         self.epoch_actions = QWidget()
         epoch_actions = QHBoxLayout(self.epoch_actions)
@@ -151,18 +148,8 @@ class BatchEdit(QWidget):
             self.duplicate_epoch_button,
             self.remove_epoch_button,
         )
-        selectors.addWidget(
-            self.epoch_actions,
-            0,
-            2,
-            1,
-            3,
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom,
-        )
         actions = QHBoxLayout()
-        self.details = button("All parameters…")
-        self.details.clicked.connect(self.open_details)
-        actions.addWidget(self.details)
+        actions.setContentsMargins(0, 0, 0, 0)
         actions.addStretch()
         self.reset = button("Discard")
         self.reset.clicked.connect(self.discard)
@@ -172,7 +159,6 @@ class BatchEdit(QWidget):
         actions.addWidget(self.apply_button)
         self.batch_actions = QWidget()
         self.batch_actions.setLayout(actions)
-        body.insertWidget(0, self.batch_actions)
 
     @property
     def dirty(self) -> bool:
@@ -201,7 +187,7 @@ class BatchEdit(QWidget):
         if self.epoch_scope.currentData() == "timeline":
             self._timeline_paths = paths
         discovered = set(screens)
-        available: set[str] = set()
+        available: dict[str, None] = {}
         arena = False
         for path in paths:
             epoch = node_at(program, path)
@@ -215,26 +201,22 @@ class BatchEdit(QWidget):
                         face.title()
                         for face in surfaces(setting.model_dump(mode="json"))
                     )
-                available.update(
-                    name for name in PARAMETERS[1:] if supports(family(setting), name)
-                )
+                available.update(dict.fromkeys(editable_parameters(setting)))
         self.faces = tuple(
             dict.fromkeys((*screens, *sorted(discovered - set(screens))))
         )
         if arena:
             self.faces += ("",)
-        previous = self.parameter.currentText()
+        previous = self.parameter.currentData()
         self.parameter.blockSignals(True)
         self.parameter.clear()
-        self.parameter.addItems(
-            ["Duration", *(p for p in PARAMETERS[1:] if p in available)]
-        )
-        self.parameter.setCurrentIndex(max(0, self.parameter.findText(previous)))
+        for key in ("Duration", *available):
+            self.parameter.addItem("Rotation" if key == "Angular speed" else key, key)
+        self.parameter.setCurrentIndex(max(0, self.parameter.findData(previous)))
         self.parameter.blockSignals(False)
         self.apply_button.setToolTip(
             f"Apply to {len(paths)} epoch{'s' if len(paths) != 1 else ''}"
         )
-        self.details.setEnabled(len(paths) == 1)
         self.refresh_duration()
         self.rebuild_rows()
         self.show_parameter()
@@ -253,7 +235,6 @@ class BatchEdit(QWidget):
         self.selection_form.setVisible(single)
         self.parameter_field.setVisible(not single)
         self.parameter_row.setVisible(not single)
-        self.details.setVisible(not single)
         for control in (self.duplicate_epoch_button, self.remove_epoch_button):
             control.setEnabled(timeline and len(self.paths) == 1)
 
@@ -295,10 +276,9 @@ class BatchEdit(QWidget):
             return
         try:
             paths = self.targets.resolve(self.program)
-        except ValueError as error:
-            self.targets.message.setText(str(error))
-            self.targets.message.show()
-            self.apply_button.setEnabled(False)
+        except ValueError:
+            self.targets.message.clear()
+            self.apply_button.setEnabled(True)
             return
         self.targets.accept()
         self.targets.message.hide()
@@ -365,7 +345,7 @@ class BatchEdit(QWidget):
                     continue
                 ordinal = counts.get(kind, 0)
                 counts[kind] = ordinal + 1
-                if supports(kind, parameter):
+                if parameter in editable_parameters(epoch.settings[index]):
                     keys.add((kind, ordinal))
         return [LayerTarget(face, kind, ordinal) for kind, ordinal in sorted(keys)]
 
@@ -389,7 +369,7 @@ class BatchEdit(QWidget):
             self.parameter.blockSignals(False)
             self.message.setText("Apply or discard changes before changing parameter")
             return
-        parameter = self.parameter.currentText()
+        parameter = self.parameter.currentData()
         if self.asset_picker.dialog is not None:
             self.asset_picker.dialog.reject()
             self.picker_row = None
@@ -424,7 +404,7 @@ class BatchEdit(QWidget):
             self.picker_row = row
             self.asset_picker.open(row.target.family, self.asset_root, False)
         except ValueError as error:
-            self.message.setText(str(error))
+            self.message.warn(str(error))
 
     def set_asset(self, _kind: str, path: str, _fresh: bool) -> None:
         if self.picker_row is not None and self.isEnabled():
@@ -440,7 +420,7 @@ class BatchEdit(QWidget):
             if self.epoch_scope.currentData() == "target":
                 if self.targets.resolve(self.program) != self.paths:
                     raise ValueError("Choose valid target epochs before applying")
-            parameter = self.parameter.currentText()
+            parameter = self.parameter.currentData()
             if parameter == "Duration":
                 if not self.duration_check.isChecked():
                     raise ValueError("Enter a duration to apply")
@@ -474,33 +454,6 @@ class BatchEdit(QWidget):
                         self.asset_root,
                     )
         except (ValueError, TypeError, IndexError, OSError) as error:
-            self.message.setText(str(error))
+            self.message.warn(str(error))
             return
         self.committed.emit(program)
-
-    def open_details(self) -> None:
-        if self.dirty:
-            self.message.setText(
-                "Apply or discard changes before opening all parameters"
-            )
-            return
-        if self.program is None or len(self.paths) != 1:
-            return
-        target = next(
-            (row.target for row in self.rows.values() if row.target is not None), None
-        )
-        if target is None:
-            target = next(
-                (
-                    candidate
-                    for face in self.faces
-                    for candidate in self.targets_for(face, "Asset")
-                ),
-                None,
-            )
-        if target is not None:
-            try:
-                layer = matching_layer(self.program, self.paths[0], target)
-                self.detail_requested.emit(target.face, layer)
-            except ValueError as error:
-                self.message.setText(str(error))

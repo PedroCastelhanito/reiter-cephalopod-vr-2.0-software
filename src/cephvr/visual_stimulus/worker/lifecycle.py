@@ -11,21 +11,13 @@ from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
-from cephvr.visual_stimulus.config.models.display_profile import (
-    DisplayProfile,
-    parse_display_json,
-)
 from cephvr.visual_stimulus.config.models.program_model import Program
-from cephvr.visual_stimulus.rendering.types import DisplayInitialization
+from cephvr.visual_stimulus.configuration import resolve_pacing_profile
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
-from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
 from .cleanup import cleanup_resources
-from .display_initialization import (
-    DisplayPreparationJob,
-    begin_display_preparation,
-    complete_display_preparation,
-)
+from .display_calibration import DisplayCalibrationOwner
+from .display_owner import DisplayOwner
 from .ports import EnginePort, FeedbackPort, PreparationPort, RecordingPort, ReportPort
 from .preparation import PreparationJob, begin
 from .state import DriverState, TrialArtifact
@@ -107,11 +99,34 @@ class LifecycleDriver:
         self.command: visual_stimulus.WorkerCommand | None = None
         self.deadline_ns = 0
         self.preparation_job: PreparationJob | None = None
-        self.display_job: DisplayPreparationJob | None = None
         self.catalogue_lock = threading.RLock()
         self.pending_cleanup: list[
             tuple[visual_stimulus.WorkerCommand, int, bool, Future[None]]
         ] = []
+        self.display_owner = DisplayOwner(
+            worker=worker,
+            controller=controller,
+            backend=self.backend,
+            engine=engine,
+            preparation=preparation,
+            reports=reports,
+            announce=self.announce_for,
+            release_resource=self.state.released_threads.add,
+            clock=clock,
+        )
+        self.display_calibration = DisplayCalibrationOwner(
+            worker=worker,
+            controller=controller,
+            backend=self.backend,
+            engine=engine,
+            preparation=preparation,
+            reports=reports,
+            display_profile=lambda: self.display_owner.profile,
+            set_display_profile=lambda profile: setattr(
+                self.display_owner, "profile", profile
+            ),
+            clock=clock,
+        )
 
     def execute(
         self, method: str, request: Message, deadline_ns: int
@@ -122,6 +137,12 @@ class LifecycleDriver:
         self.deadline_ns = deadline_ns
         if isinstance(request, visual_stimulus.InitializeDisplay):
             return self.initialize(request)
+        elif isinstance(request, visual_stimulus.OpenDisplayCalibrationCommand):
+            if self.state.setup is not None or self.state.trial is not None:
+                raise RuntimeError("display calibration cannot overlap a trial")
+            return self.display_calibration.open(request, deadline_ns)
+        elif isinstance(request, visual_stimulus.CloseDisplayCalibrationCommand):
+            return self.display_calibration.close(request, deadline_ns)
         elif isinstance(request, visual_stimulus.WorkerSetup):
             return self.setup(request)
         elif isinstance(request, visual_stimulus.WorkerPrepareTrial):
@@ -139,10 +160,13 @@ class LifecycleDriver:
         elif method in {"CancelSetup", "Cleanup", "Shutdown"}:
             self.state.interrupted = True
             self.trials.stop(self.clock(), self.command)
+            if self.display_calibration.job is not None:
+                self.display_calibration.request_cleanup(self.command, deadline_ns)
             if (
                 self.preparation_job is not None
                 or (self.state.trial is not None and not self.state.trial.finished)
-                or self.display_job is not None
+                or self.display_owner.job is not None
+                or self.display_calibration.job is not None
             ):
                 future: Future[None] = Future()
                 self.pending_cleanup.append(
@@ -186,64 +210,7 @@ class LifecycleDriver:
         self.recording.publication(request)
 
     def initialize(self, request: visual_stimulus.InitializeDisplay) -> Future[None]:
-        if self.display_job is not None or self.state.display_ready:
-            raise RuntimeError("display initialization is already pending or complete")
-        display = parse_display_json(
-            request.display.profile_json, max_bytes=request.limits.max_document_bytes
-        )
-        for output in display.active_outputs:
-            self.announce("display:" + output.output_id, None)
-        command = visual_stimulus.WorkerCommand.FromString(
-            request.command.SerializeToString()
-        )
-        deadline_ns = self.deadline_ns
-        self.display_job = begin_display_preparation(
-            request,
-            display,
-            self.preparation,
-            lambda key, path: self.announce_for(command, deadline_ns, key, path),
-            deadline_ns,
-        )
-        return self.display_job.completion
-
-    def _report_display(
-        self,
-        request: visual_stimulus.InitializeDisplay,
-        display: DisplayProfile,
-        observed: DisplayInitialization,
-        deadline_ns: int,
-    ) -> None:
-        activities = {x.output_id: x for x in observed.idle_activity}
-        bits = {x[0]: x[1:] for x in observed.observed_rgb_bits}
-        intervals = dict(observed.requested_swap_intervals)
-        if set(activities) != {x.output_id for x in display.active_outputs} or any(
-            x.error or x.swap_return_ns < x.swap_entry_ns for x in activities.values()
-        ):
-            raise RuntimeError("Idle submission missing for required display output")
-        view = pb.VisualStimulusDisplayView(
-            source=self.worker,
-            backend=self.backend,
-            controller=self.controller,
-            command_id=request.command.command_id,
-            requested_revision=request.command.target.configuration_revision,
-            applied_revision=request.command.target.configuration_revision,
-            observed_monotonic_ns=self.clock(),
-            complete=True,
-        )
-        for output in display.active_outputs:
-            observed_output = activities[output.output_id]
-            view.outputs.add(
-                output_id=output.output_id,
-                resources_ready=True,
-                requested_rgb_bits=output.rgb_bits_per_channel,
-                observed_rgb_bits=bits[output.output_id],
-                requested_swap_interval=intervals[output.output_id],
-                idle_swap_entry_ns=observed_output.swap_entry_ns,
-                idle_swap_return_ns=observed_output.swap_return_ns,
-                idle_submission=vp.SUBMISSION_OUTCOME_RETURNED,
-            )
-        self.state.display_ready = True
-        self.reports.send("ReportDisplay", view, deadline_ns)
+        return self.display_owner.initialize(request, self.deadline_ns)
 
     def announce(self, key: str, path: str | None) -> None:
         self.announce_for(self.command, self.deadline_ns, key, path)
@@ -261,6 +228,12 @@ class LifecycleDriver:
             obligation = pb.ResourceObligation(owner=self.worker, resource=key)
             if path is not None:
                 obligation.path = path
+            if self.state.setup is None:
+                previous = self.state.pending_resources.get(key)
+                if previous is not None and previous != obligation:
+                    raise ValueError("native resource identity changed")
+                self.state.pending_resources[key] = obligation
+                return
             previous = self.state.resources.get(key)
             if previous is not None:
                 if previous != obligation:
@@ -284,6 +257,11 @@ class LifecycleDriver:
 
         if self.state.setup is not None:
             raise RuntimeError("previous renderer session not cleaned")
+        if (
+            self.display_calibration.evidence.state not in {0, 4}
+            or self.display_calibration.job is not None
+        ):
+            raise RuntimeError("display calibration is not confirmed Idle")
         if self.state.cleaned:
             self.state.resources.clear()
             self.state.released_threads.clear()
@@ -295,6 +273,7 @@ class LifecycleDriver:
         self.state.interrupted = False
         self.state.failure_deadline_ns = None
         self.state.setup = request
+        self._promote_pending_resources(request.command, self.deadline_ns)
         self.state.outputs = {
             output.output_key: pb.OutputResult(
                 output_key=output.output_key,
@@ -308,17 +287,28 @@ class LifecycleDriver:
             )
             if output.output_tag != "stimulus_LOG"
         }
-        display = parse_display_json(
+        display = resolve_pacing_profile(
             request.settings.display.profile_json,
             max_bytes=request.policies.limits.max_document_bytes,
+            refresh_hz=(
+                request.policies.pacing_refresh_hz
+                if request.policies.HasField("pacing_refresh_hz")
+                else None
+            ),
+            output_id=(
+                request.policies.pacing_output_id
+                if request.policies.HasField("pacing_output_id")
+                else None
+            ),
         )
+        request.settings.display.profile_json = display.model_dump_json()
         display.require_trial_marker()
         for output in display.active_outputs:
             self.announce("display:" + output.output_id, None)
         # Keep the previous, validated Idle visible while Setup loads and
         # validates the adopted calibration on its CPU worker. prepare_graphics
         # replaces the display only after that protected preparation succeeds.
-        self.state.display_ready = False
+        self.display_owner.invalidate_for_setup()
         self.recording.configure(request, self.announce, self.deadline_ns)
         command = visual_stimulus.WorkerCommand.FromString(
             request.command.SerializeToString()
@@ -344,8 +334,8 @@ class LifecycleDriver:
         if self.cancelled.is_set() or self.state.interrupted:
             raise InterruptedError("Setup cancelled before graphics preparation")
         self.preparation.prepare_graphics(tuple(record.artifact for record in records))
-        if not self.state.display_ready:
-            self.state.display_ready = True
+        if not self.display_owner.ready:
+            self.display_owner.mark_ready()
         has_feedback = any(
             _program_has_feedback(record.artifact.source) for record in records
         )
@@ -433,30 +423,17 @@ class LifecycleDriver:
         self.admissions.release(request)
 
     def advance(self, now_ns: int) -> int | None:
-        windows_active = self.engine.service_display()
-        display_job = self.display_job
-        if display_job is not None:
-            try:
-                done = complete_display_preparation(
-                    display_job,
-                    self.preparation,
-                    now_ns=now_ns,
-                    report=lambda display, observed: self._report_display(
-                        display_job.request,
-                        display,
-                        observed,
-                        display_job.deadline_ns,
-                    ),
-                )
-                if not done:
-                    return now_ns + 1_000_000
-                self.state.released_threads.add(display_job.resource_key)
-                self.display_job = None
-            except BaseException as exc:
-                if display_job.thread is None or not display_job.thread.is_alive():
-                    self.state.released_threads.add(display_job.resource_key)
-                self.display_job = None
-                self.fail(exc)
+        try:
+            windows_active, display_due = self.display_owner.advance(now_ns)
+            calibration_due = self.display_calibration.advance(now_ns)
+            pending_display = [
+                due for due in (display_due, calibration_due) if due is not None
+            ]
+            if pending_display:
+                return min(pending_display)
+        except BaseException as exc:
+            self.fail(exc)
+            windows_active = False
         job = self.preparation_job
         if job is not None:
             if not job.result.done() or (
@@ -478,19 +455,36 @@ class LifecycleDriver:
                 return now_ns + 1_000_000
         if self.pending_cleanup:
             pending, self.pending_cleanup = self.pending_cleanup, []
+            deferred_cleanup: list[
+                tuple[visual_stimulus.WorkerCommand, int, bool, Future[None]]
+            ] = []
             for command, deadline, shutdown, future in pending:
+                if self.display_calibration.job is not None:
+                    if now_ns >= deadline and not future.done():
+                        error = TimeoutError(
+                            "cleanup missed its retained deadline while preparation remained in flight"
+                        )
+                        future.set_exception(error)
+                        self.fail(error)
+                    deferred_cleanup.append((command, deadline, shutdown, future))
+                    continue
                 try:
                     self.deadline_ns = min(deadline, self.deadline_ns)
                     if now_ns >= deadline:
                         raise TimeoutError("cleanup missed its retained deadline")
                     self.cleanup(command)
-                    future.set_result(None)
+                    if not future.done():
+                        future.set_result(None)
                     if shutdown:
                         self.shutdown()
                 except BaseException as exc:
                     future.set_exception(exc)
                     self.fail(exc)
+            self.pending_cleanup.extend(deferred_cleanup)
         due = self.trials.advance(now_ns)
+        calibration_due = self.display_calibration.advance(now_ns)
+        if calibration_due is not None:
+            due = min(due, calibration_due) if due is not None else calibration_due
         if windows_active:
             return (
                 min(due, now_ns + 10_000_000)
@@ -500,6 +494,29 @@ class LifecycleDriver:
         return due
 
     def cleanup(self, command: visual_stimulus.WorkerCommand) -> None:
+        self.display_calibration.close_for_cleanup(command, self.deadline_ns)
+        self.display_owner.cleanup_confirmed_or_unknown()
+        if self.state.setup is None:
+            for key, obligation in self.state.pending_resources.items():
+                previous = self.state.resources.get(key)
+                if previous is not None and previous != obligation:
+                    raise RuntimeError("unregistered cleanup identity changed")
+                self.state.resources[key] = obligation
+            cleanup_resources(
+                self.state,
+                command,
+                worker=self.worker,
+                deadline_ns=self.deadline_ns,
+                clock=self.clock,
+                recording=self.recording,
+                preparation=self.preparation,
+                engine=self.engine,
+                feedback=self.feedback,
+                emit=None,
+            )
+            self.state.resources.clear()
+            self.state.pending_resources.clear()
+            return
         cleanup_resources(
             self.state,
             command,
@@ -512,6 +529,15 @@ class LifecycleDriver:
             feedback=self.feedback,
             emit=self.lifecycle,
         )
+
+    def _promote_pending_resources(
+        self, command: visual_stimulus.WorkerCommand, deadline_ns: int
+    ) -> None:
+        pending = tuple(self.state.pending_resources.values())
+        for obligation in pending:
+            path = obligation.path if obligation.HasField("path") else None
+            self.announce_for(command, deadline_ns, obligation.resource, path)
+        self.state.pending_resources.clear()
 
     def context(self, command: visual_stimulus.WorkerCommand) -> pb.ReportContext:
         return pb.ReportContext(

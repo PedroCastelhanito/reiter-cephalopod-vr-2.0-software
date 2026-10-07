@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import threading
+from types import SimpleNamespace
 from uuid import uuid4
 
 import grpc
 import numpy as np
 import pytest
 
+from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import (
     services_pb2 as wire,
@@ -24,10 +26,15 @@ from cephvr.platform.windows.nvidia_device import NvidiaDevice
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.credentials import CredentialStore
 from cephvr.shared.transport_deadlines import deadline_metadata
+from cephvr.tracking import diagnostic as diagnostic_module
 from cephvr.tracking.config.models.records import SourceFrame
 from cephvr.tracking.configuration import load_file_policies
 from cephvr.tracking.coordinator.state import Identity
+from cephvr.tracking.diagnostic import TrackingDiagnostic
+from cephvr.tracking.processing.diagnostic_output import diagnostic_frame
+from cephvr.tracking.processing.diagnostics import DiagnosticPipeline, _status
 from cephvr.tracking.processing.frames import FramePool
 from cephvr.tracking.runtime import TrackingRuntime
 from cephvr.tracking.transport.server import serve
@@ -62,11 +69,13 @@ class Clock:
 
 
 class CameraBoundary:
-    def __init__(self, frames, identity, maximum):
-        self.layout = ImageLayout(
+    def __init__(self, frames, identity, maximum, preprocessing=None):
+        self.source_layout = ImageLayout(
             100, 100, 100, "gray", "uint8", 8, "lsb", 0, 255, "camera"
         )
-        self.pool = FramePool(self.layout, 4, maximum)
+        self.transform = None
+        self.layout = self.source_layout
+        self.pool = FramePool(self.layout, 4, maximum, self.transform)
         self.frames = []
         self.lock = threading.Lock()
 
@@ -102,7 +111,9 @@ class CameraBoundary:
 
 
 class FlowBoundary:
-    def prepare(self, settings, layout, maximum):
+    def prepare(self, settings, layout, maximum, transform=None):
+        from cephvr.tracking.methods.flow_buffers import grid_mapping
+
         self.data = np.zeros(
             (
                 (layout.height + settings.output_grid_px - 1)
@@ -112,6 +123,12 @@ class FlowBoundary:
             ),
             dtype="<i2",
         )
+        self.mapping = grid_mapping(
+            layout.width, layout.height, settings.output_grid_px
+        )
+
+    def grid_mapping(self):
+        return self.mapping
 
     def upload(self, image, *, baseline):
         pass
@@ -138,7 +155,7 @@ async def until(predicate):
 
 
 @pytest.fixture
-async def rig_boundary(monkeypatch):
+async def rig_boundary(monkeypatch, tmp_path):
     from cephvr.tracking.methods import nvidia
     from cephvr.tracking.processing import session
 
@@ -167,7 +184,15 @@ async def rig_boundary(monkeypatch):
         safety_reserve_records=8,
         safety_reserve_bytes=1024 * 1024,
     )
-    runtime = TrackingRuntime(identity, peer, peer, ledger, clock=clock)
+    runtime = TrackingRuntime(
+        identity, peer, peer, ledger, clock=clock, recovery_ns=10_000_000_000
+    )
+    viewer_credentials = CredentialStore(
+        tmp_path / "viewer-credentials", identity.controller.generation
+    )
+    viewer_credentials.provision_client(
+        "gui", generation=str(uuid4()), token="viewer-token"
+    )
     # Inject time only at the processing clock boundary; preserve timing rules.
     monkeypatch.setattr(session, "host_time_ns", clock)
     original = session.Movement
@@ -179,8 +204,10 @@ async def rig_boundary(monkeypatch):
             ("supervisor", identity.supervisor.generation): "safety",
         },
         ledger,
+        diagnostic=runtime.diagnostic,
         port=0,
         max_message_bytes=4 * 1024 * 1024,
+        viewer_credentials=viewer_credentials,
         testing=True,
     )
     channel = grpc.aio.insecure_channel(f"127.0.0.1:{listener.port}")
@@ -214,6 +241,417 @@ def command(runtime, work, parent=""):
         target=runtime.identity.backend,
         work=work,
         parent_operation=pb.OperationContext(command_id=parent),
+    )
+
+
+def test_diagnostic_dependency_status_marks_disabled_pose_prerequisites_unavailable():
+    request = tracking.TrackingDiagnosticCommand(
+        selected_stages=[
+            tracking.TRACKING_DIAGNOSTIC_STAGE_SAMPLING_REGION,
+            tracking.TRACKING_DIAGNOSTIC_STAGE_OPTICAL_FLOW,
+            tracking.TRACKING_DIAGNOSTIC_STAGE_FLOW_QUALITY,
+            tracking.TRACKING_DIAGNOSTIC_STAGE_LOCOMOTION,
+        ]
+    )
+    states = {item.stage: item for item in _status(request)}
+    assert (
+        states[tracking.TRACKING_DIAGNOSTIC_STAGE_SAMPLING_REGION].state
+        == tracking.TRACKING_DIAGNOSTIC_STAGE_STATE_UNAVAILABLE
+    )
+    assert (
+        states[tracking.TRACKING_DIAGNOSTIC_STAGE_OPTICAL_FLOW].state
+        == tracking.TRACKING_DIAGNOSTIC_STAGE_STATE_AVAILABLE
+    )
+    assert (
+        states[tracking.TRACKING_DIAGNOSTIC_STAGE_LOCOMOTION].state
+        == tracking.TRACKING_DIAGNOSTIC_STAGE_STATE_UNAVAILABLE
+    )
+
+
+def test_diagnostic_latest_frame_enforces_total_serialized_response_bound():
+    request = tracking.TrackingDiagnosticCommand(
+        diagnostic_id=str(uuid4()),
+        configuration_revision=4,
+        maximum_overlay_items=4,
+    )
+    frame = SimpleNamespace(
+        source=SimpleNamespace(frame_id=22, host_receipt_ns=100),
+    )
+    result = diagnostic_frame(
+        request,
+        frame,
+        b"x" * 4096,
+        ([], [], [], []),
+        clock=lambda: 200,
+        maximum_bytes=1024,
+    )
+    assert not result.available
+    assert result.image_bytes == b""
+    assert result.source_frame_id == 22
+    assert "byte bound" in result.unavailable_reason
+    assert result.ByteSize() <= 1024
+
+
+def test_diagnostic_disabled_flow_does_not_invoke_flow_owner():
+    pipeline = DiagnosticPipeline.__new__(DiagnosticPipeline)
+    pipeline.request = tracking.TrackingDiagnosticCommand(maximum_overlay_items=8)
+    pipeline.region_enabled = False
+    pipeline.flow_enabled = False
+    pipeline.quality_enabled = False
+    pipeline.locomotion_enabled = False
+    pipeline.baseline = None
+    calls: list[str] = []
+    pipeline._pose = lambda *_args: (None, None, None)
+    pipeline._flow = lambda *_args: calls.append("flow")  # type: ignore[method-assign]
+    session = SimpleNamespace(source=SimpleNamespace(pool=object()))
+    frame = SimpleNamespace(transform=None)
+
+    pipeline._evaluate(session, frame, 0)
+
+    assert calls == []
+
+
+def test_empty_diagnostic_mask_prepares_source_without_native_method_initialization(
+    monkeypatch,
+):
+    from cephvr.tracking.processing import session as session_module
+    from cephvr.tracking.processing.gate import TrialGate
+    from cephvr.tracking.processing.session import NativeSession, SessionSpec
+    from cephvr.tracking.types import ImageLayout
+
+    settings = pb.TrackingSettings(input_camera_role=camera_pb2.CAMERA_ROLE_TRACKING)
+    layout = ImageLayout(100, 100, 200, "gray", "uint16", 12, "msb", 0, 4095, "raw")
+
+    class Source:
+        def __init__(self, *_args):
+            self.layout = layout
+            self.source_layout = layout
+            self.transform = object()
+
+        def open(self, _identity):
+            pass
+
+    class Flow:
+        prepared = False
+
+        def prepare(self, *_args):
+            self.prepared = True
+
+    monkeypatch.setattr(session_module, "RingSource", Source)
+    monkeypatch.setattr(session_module, "NvidiaFlow", Flow)
+    policies = load_file_policies(ROOT)
+    process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
+    frame = acq.FrameBufferAttachment(
+        buffer=acq.FrameBufferDescriptor(allocation_id=str(uuid4()))
+    )
+    spec = SessionSpec(
+        settings=settings,
+        policies=policies,
+        identity=process,
+        preparation=str(uuid4()),
+        revision=1,
+        asset_root="",
+        deadline=1,
+        first=lambda *_args: None,
+        diagnostic_stages=frozenset(),
+    )
+    session = NativeSession(spec, TrialGate(lambda _item: True), None)
+    prepared = session.prepare(frame)
+
+    assert session.flow.prepared is False
+    assert session.diagnostic_resolution is not None
+    assert session.diagnostic_resolution.status == ()
+    assert prepared.stages == ()
+
+
+def test_diagnostic_failure_releases_flow_and_geometry_leases(monkeypatch):
+    pipeline = DiagnosticPipeline.__new__(DiagnosticPipeline)
+    pipeline.request = tracking.TrackingDiagnosticCommand(maximum_overlay_items=8)
+    pipeline.region_enabled = False
+    pipeline.flow_enabled = True
+    pipeline.quality_enabled = False
+    pipeline.locomotion_enabled = False
+    pipeline.baseline = None
+    released: list[str] = []
+    geometry = object()
+    lease = object()
+    geometry_owner = SimpleNamespace(release=lambda _value: released.append("geometry"))
+    flow_owner = SimpleNamespace(release=lambda _value: released.append("flow"))
+    pipeline._pose = lambda *_args: (None, geometry, None)
+    pipeline._flow = lambda *_args: (lease, object())  # type: ignore[method-assign]
+
+    def fail(*_args):
+        raise RuntimeError("host read failed")
+
+    monkeypatch.setattr("cephvr.tracking.processing.diagnostics.host_arrays", fail)
+    session = SimpleNamespace(
+        source=SimpleNamespace(pool=object()),
+        flow=flow_owner,
+        pose_geometry=geometry_owner,
+    )
+    frame = SimpleNamespace(transform=None)
+
+    with pytest.raises(RuntimeError, match="host read failed"):
+        pipeline._evaluate(session, frame, 0)
+    assert released == ["flow", "geometry"]
+
+
+def test_diagnostic_empty_ring_read_preserves_aggregate_counters():
+    run_id = str(uuid4())
+    pipeline = DiagnosticPipeline.__new__(DiagnosticPipeline)
+    pipeline.request = tracking.TrackingDiagnosticCommand(
+        diagnostic_id=str(uuid4()),
+        frames=acq.FrameBufferAttachment(
+            buffer=acq.FrameBufferDescriptor(
+                preview=acq.PreviewBufferContext(acquisition_run_id=run_id)
+            )
+        ),
+    )
+    pipeline.clock = lambda: 100
+    pipeline.resolved = SimpleNamespace(
+        source=SimpleNamespace(
+            read_run=lambda *_args, **_kwargs: (None, False, None),
+        )
+    )
+    pipeline.input_frames = 7
+    pipeline.evaluated_frames = 4
+    pipeline.lapped_frames = 2
+
+    assert pipeline.next_frame() == (None, 7, 4, 2)
+
+
+def test_automatic_pose_only_diagnostic_runs_without_geometry_owner(monkeypatch):
+    from cephvr.tracking.types import PoseCandidate
+
+    pipeline = DiagnosticPipeline.__new__(DiagnosticPipeline)
+    pipeline.pose_enabled = True
+    pipeline.region_enabled = False
+    pipeline.locomotion_enabled = False
+    pipeline.clock = lambda: 100
+    pipeline.request = tracking.TrackingDiagnosticCommand(
+        settings=pb.TrackingSettings(
+            pose_mode=pb.TRACKING_POSE_MODE_AUTOMATIC, pose_max_age_ms=10
+        )
+    )
+    candidate = PoseCandidate(
+        1,
+        0.9,
+        ((10.0, 10.0), (30.0, 20.0), (30.0, 40.0)),
+    )
+    monkeypatch.setattr(
+        "cephvr.tracking.processing.diagnostics._source_candidates",
+        lambda *_args: (candidate,),
+    )
+    pipeline.pose_settings = SimpleNamespace()
+    session = SimpleNamespace(
+        pose_method=SimpleNamespace(compute=lambda _frame: object()),
+        pose_geometry=None,
+        source=SimpleNamespace(
+            transform=None,
+            source_layout=ImageLayout(
+                100, 100, 200, "gray", "uint16", 12, "msb", 0, 4095, "source"
+            ),
+        ),
+    )
+    frame = SimpleNamespace(source=SourceFrame(frame_id=1, host_receipt_ns=90))
+    points = []
+
+    result = pipeline._pose(session, frame, points)
+
+    assert result[0] == candidate
+    assert result[1] is None
+    assert len(points) == 3
+
+
+def test_latest_diagnostic_frame_requires_exact_viewer_and_run_scope():
+    process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
+    viewer = pb.ProcessIdentity(role="gui", generation=str(uuid4()))
+    controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+    run_id, diagnostic_id = str(uuid4()), str(uuid4())
+    request = tracking.TrackingDiagnosticCommand(
+        diagnostic_id=diagnostic_id,
+        configuration_revision=9,
+        authorized_gui_viewer=viewer,
+        frames=acq.FrameBufferAttachment(
+            buffer=acq.FrameBufferDescriptor(
+                preview=acq.PreviewBufferContext(
+                    acquisition_run_id=run_id,
+                    controller=controller,
+                )
+            )
+        ),
+    )
+    diagnostic = TrackingDiagnostic(process, recovery_ns=1_000_000_000)
+    diagnostic.command = request
+    diagnostic.active = True
+    diagnostic.latest = tracking.TrackingDiagnosticFrame(diagnostic_id=diagnostic_id)
+    query = tracking.TrackingDiagnosticQuery(
+        client_id=viewer.generation,
+        viewer=viewer,
+        controller_generation=controller.generation,
+        configuration_revision=9,
+        diagnostic_id=diagnostic_id,
+        preview_run_id=run_id,
+    )
+    assert diagnostic.latest_frame(query).diagnostic_id == diagnostic_id
+    query.viewer.generation = str(uuid4())
+    with pytest.raises(ValueError, match="authorized diagnostic scope"):
+        diagnostic.latest_frame(query)
+
+
+@pytest.mark.asyncio
+async def test_diagnostic_source_failure_uses_fresh_recovery_after_begin_deadline():
+    process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
+    diagnostic = TrackingDiagnostic(process, recovery_ns=1_000_000_000)
+    diagnostic.command = tracking.TrackingDiagnosticCommand(
+        diagnostic_id=str(uuid4()), deadline_monotonic_ns=host_time_ns() - 1
+    )
+    diagnostic.active = True
+    closed_with: list[int] = []
+
+    class Pipeline:
+        def next_frame(self):
+            raise RuntimeError("source retired")
+
+        def close(self, deadline_ns: int) -> bool:
+            closed_with.append(deadline_ns)
+            return True
+
+    diagnostic.pipeline = Pipeline()
+    await diagnostic._run()
+    try:
+        assert not diagnostic.active
+        assert diagnostic.close_confirmed
+        assert diagnostic.pipeline is None
+        assert closed_with[0] > diagnostic.command.deadline_monotonic_ns
+    finally:
+        diagnostic._executor.shutdown(wait=True)
+
+
+@pytest.mark.asyncio
+async def test_backend_begin_accepts_empty_diagnostic_stage_mask(monkeypatch):
+    process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
+    controller = pb.ProcessIdentity(role="controller", generation=str(uuid4()))
+    run_id = str(uuid4())
+    prepared_deadlines: list[int] = []
+
+    class Pipeline:
+        status = []
+
+        def __init__(self, request, _identity):
+            prepared_deadlines.append(request.deadline_monotonic_ns)
+
+        def prepare(self):
+            pass
+
+        def next_frame(self):
+            return None, 0, 0, 0
+
+        def close(self, _deadline_ns):
+            return True
+
+    monkeypatch.setattr(diagnostic_module, "DiagnosticPipeline", Pipeline)
+    request_deadline = host_time_ns() + 5_000_000_000
+    request = tracking.TrackingDiagnosticCommand(
+        deadline_monotonic_ns=request_deadline,
+        diagnostic_id=str(uuid4()),
+        configuration_revision=4,
+        source_camera_serial="tracking-camera",
+        maximum_frame_bytes=4096,
+        maximum_overlay_items=8,
+        settings=pb.TrackingSettings(input_camera_role=camera_pb2.CAMERA_ROLE_TRACKING),
+        file_policies=load_file_policies(ROOT),
+        frames=acq.FrameBufferAttachment(
+            buffer=acq.FrameBufferDescriptor(
+                allocation_id=str(uuid4()),
+                camera=camera_pb2.CAMERA_ROLE_TRACKING,
+                consumer=process,
+                kind=acq.FRAME_BUFFER_KIND_TRACKING,
+                configuration_revision=4,
+                preview=acq.PreviewBufferContext(
+                    controller=controller, acquisition_run_id=run_id
+                ),
+            ),
+            sync=acq.RingSyncNames(transfer_id=str(uuid4()), target=process),
+        ),
+    )
+    diagnostic = TrackingDiagnostic(process, recovery_ns=1_000_000_000)
+    try:
+        await diagnostic.begin(request, deadline_ns=request_deadline)
+        assert diagnostic.active
+        assert prepared_deadlines == [request_deadline]
+        assert diagnostic.state().stages == []
+        assert await diagnostic.close(
+            request.diagnostic_id, run_id, deadline_ns=request_deadline
+        )
+    finally:
+        diagnostic._executor.shutdown(wait=True)
+
+
+def test_native_diagnostic_resolves_selected_unavailable_stage_with_original_deadline(
+    monkeypatch,
+):
+    from cephvr.tracking.processing import session as session_module
+
+    source_layout = ImageLayout(
+        100, 100, 200, "gray", "uint16", 12, "msb", 0, 4095, "raw"
+    )
+
+    class Source:
+        def __init__(self, *_args):
+            self.layout = source_layout
+            self.source_layout = source_layout
+            self.transform = object()
+
+        def open(self, _identity):
+            pass
+
+    class Flow:
+        prepared = False
+
+        def prepare(self, *_args):
+            self.prepared = True
+
+    monkeypatch.setattr(session_module, "RingSource", Source)
+    monkeypatch.setattr(session_module, "NvidiaFlow", Flow)
+    deadline = host_time_ns() + 6_000_000_000
+    run_id = str(uuid4())
+    process = pb.ProcessIdentity(role="tracking", generation=str(uuid4()))
+    request = tracking.TrackingDiagnosticCommand(
+        deadline_monotonic_ns=deadline,
+        diagnostic_id=str(uuid4()),
+        configuration_revision=3,
+        settings=pb.TrackingSettings(input_camera_role=camera_pb2.CAMERA_ROLE_TRACKING),
+        file_policies=load_file_policies(ROOT),
+        selected_stages=[tracking.TRACKING_DIAGNOSTIC_STAGE_SAMPLING_REGION],
+        frames=acq.FrameBufferAttachment(
+            buffer=acq.FrameBufferDescriptor(
+                allocation_id=str(uuid4()),
+                camera=camera_pb2.CAMERA_ROLE_TRACKING,
+                kind=acq.FRAME_BUFFER_KIND_TRACKING,
+                image=camera_pb2.CameraImageLayout(
+                    width=100,
+                    height=100,
+                    row_stride_bytes=200,
+                    image_payload_bytes=20_000,
+                ),
+                preview=acq.PreviewBufferContext(acquisition_run_id=run_id),
+            )
+        ),
+    )
+    pipeline = DiagnosticPipeline(request, process)
+
+    pipeline.prepare()
+
+    assert pipeline.resolved is not None
+    assert pipeline.resolved.spec.deadline == deadline
+    assert not pipeline.resolved.flow.prepared
+    assert len(pipeline.status) == 1
+    assert (
+        pipeline.status[0].stage == tracking.TRACKING_DIAGNOSTIC_STAGE_SAMPLING_REGION
+    )
+    assert (
+        pipeline.status[0].state == tracking.TRACKING_DIAGNOSTIC_STAGE_STATE_UNAVAILABLE
     )
 
 

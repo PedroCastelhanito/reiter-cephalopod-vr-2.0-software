@@ -15,6 +15,17 @@ A01 supplies grayscale or RGB with original precision; keep this prepared image 
 from each algorithm's declared tensor/byte feature representation. Do not widen an
 8-bit-reduced image and call it native-depth. No preview dependency or camera SDK owner.
 
+Optional T01 preprocessing first crops the configured acquired-pixel rectangle, then
+uses OpenCV `INTER_AREA` into a preallocated private array with unchanged dtype.
+Output dimensions are `max(1, (crop_dimension * scale_percent + 50) // 100)` for the
+integer 10–100 percent selection. Retain the actual independent x/y scales after
+rounding; pixel centres invert as `source = crop_origin + (processed + 0.5) / scale - 0.5`.
+Normalize pose, flow positions and vectors back to acquired-image coordinates before
+source-coordinate geometry and locomotion estimation. Source annotations retain their
+original dimensions and source lineage. Crop/scale changes invalidate temporal
+baselines; native/shared/recorded camera pixels remain unchanged. This transform does
+not apply image-plane millimetres to T35/T38 output units.
+
 ## Threshold/contour adapter
 
 T18 threshold/polarity operate on full-precision grayscale within T16's search rectangle.

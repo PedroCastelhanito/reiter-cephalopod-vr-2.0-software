@@ -5,12 +5,15 @@ from __future__ import annotations
 import time
 from uuid import uuid4
 
+import numpy as np
+
 from cephvr.platform.windows.nvidia_device import verify_tracking_device
 from cephvr.shared.clock import host_time_ns
 from cephvr.tracking.config.models.methods import FileLimits, FlowSettings
 from cephvr.tracking.methods.flow_buffers import grid_mapping
 from cephvr.tracking.methods.images import GrayPreparation
 from cephvr.tracking.native.nvof import NativeFlow
+from cephvr.tracking.processing.preprocessing import ImageTransform
 from cephvr.tracking.types import (
     FlowGridMapping,
     FlowLease,
@@ -31,13 +34,19 @@ class NvidiaFlow:
         self.prepared = False
 
     def prepare(
-        self, settings: FlowSettings, layout: ImageLayout, limits: FileLimits
+        self,
+        settings: FlowSettings,
+        layout: ImageLayout,
+        limits: FileLimits,
+        transform: ImageTransform | None = None,
     ) -> None:
         self.device = verify_tracking_device(settings.device_ordinal)
         self.settings = settings
-        self.mapping = grid_mapping(
-            layout.width, layout.height, settings.output_grid_px
+        self.mapping = _source_mapping(
+            grid_mapping(layout.width, layout.height, settings.output_grid_px),
+            transform,
         )
+        self.transform = transform
         host_bytes = layout.width * layout.height * 9 + (
             self.mapping.grid_width * self.mapping.grid_height * 48
         )
@@ -190,4 +199,33 @@ def _identity(frame: PrivateFrame) -> tuple[bytes, str, str, int, int, str]:
         frame.source.frame_id,
         frame.source.host_receipt_ns,
         frame.lease_id,
+    )
+
+
+def _source_mapping(
+    mapping: FlowGridMapping, transform: ImageTransform | None
+) -> FlowGridMapping:
+    if transform is None:
+        return mapping
+    positions = np.asarray(mapping.sample_xy_px).copy()
+    footprints = np.asarray(mapping.footprint_xyxy_px).copy()
+    positions[..., 0] = (
+        transform.crop_x + (positions[..., 0] + 0.5) / transform.scale_x - 0.5
+    )
+    positions[..., 1] = (
+        transform.crop_y + (positions[..., 1] + 0.5) / transform.scale_y - 0.5
+    )
+    footprints[..., (0, 2)] = (
+        transform.crop_x + (footprints[..., (0, 2)] + 0.5) / transform.scale_x - 0.5
+    )
+    footprints[..., (1, 3)] = (
+        transform.crop_y + (footprints[..., (1, 3)] + 0.5) / transform.scale_y - 0.5
+    )
+    positions.flags.writeable = footprints.flags.writeable = False
+    return FlowGridMapping(
+        mapping.mapping_id,
+        mapping.grid_width,
+        mapping.grid_height,
+        memoryview(positions.data),
+        memoryview(footprints.data),
     )

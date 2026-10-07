@@ -107,7 +107,14 @@ class Boundary:
             if self.worker
             else (
                 request
-                if isinstance(request, wire.VisualStimulusDisplayInitializationRequest)
+                if isinstance(
+                    request,
+                    (
+                        wire.VisualStimulusDisplayInitializationRequest,
+                        wire.VisualStimulusDisplayCalibrationOpenRequest,
+                        wire.VisualStimulusDisplayCalibrationCloseRequest,
+                    ),
+                )
                 else backend_command(request)
             )
         )
@@ -123,6 +130,8 @@ class Boundary:
                 (
                     visual_stimulus.WorkerCommand,
                     wire.VisualStimulusDisplayInitializationRequest,
+                    wire.VisualStimulusDisplayCalibrationOpenRequest,
+                    wire.VisualStimulusDisplayCalibrationCloseRequest,
                 ),
             ):
                 if native.deadline_monotonic_ns <= 0:
@@ -147,7 +156,14 @@ class Boundary:
                 work=native.target.work,
                 parent_operation=native.parent_operation,
             )
-        elif isinstance(native, wire.VisualStimulusDisplayInitializationRequest):
+        elif isinstance(
+            native,
+            (
+                wire.VisualStimulusDisplayInitializationRequest,
+                wire.VisualStimulusDisplayCalibrationOpenRequest,
+                wire.VisualStimulusDisplayCalibrationCloseRequest,
+            ),
+        ):
             command = wire.BackendCommand(
                 command_id=native.command_id, issuer=native.issuer, target=native.target
             )

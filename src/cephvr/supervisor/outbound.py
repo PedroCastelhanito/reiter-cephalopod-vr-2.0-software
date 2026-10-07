@@ -186,6 +186,25 @@ class GrpcOutbound(GrpcWorkerOutbound):
             }
         )
 
+    async def register_gui_launch(
+        self,
+        child: types.ProcessIdentity,
+        launch_command_id: str,
+        pid: int,
+        creation_time_100ns: int,
+    ) -> None:
+        """Give the persistent application owner exact initial GUI absence identity."""
+        await self._notify(
+            {
+                "kind": "register_gui_launch",
+                "supervisor_generation": self.identity.generation,
+                "child_generation": child.generation,
+                "launch_command_id": launch_command_id,
+                "pid": pid,
+                "creation_time_100ns": creation_time_100ns,
+            }
+        )
+
     async def _notify(self, document: dict[str, object]) -> None:
         encoded = json.dumps(document, separators=(",", ":")).encode() + b"\n"
         if len(encoded) > 8192:

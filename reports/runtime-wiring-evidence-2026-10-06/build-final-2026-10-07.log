@@ -1,0 +1,75 @@
+* Getting build dependencies for sdist...
+running egg_info
+creating src/cephvr.egg-info
+writing src/cephvr.egg-info/PKG-INFO
+writing dependency_links to src/cephvr.egg-info/dependency_links.txt
+writing entry points to src/cephvr.egg-info/entry_points.txt
+writing requirements to src/cephvr.egg-info/requires.txt
+writing top-level names to src/cephvr.egg-info/top_level.txt
+writing manifest file 'src/cephvr.egg-info/SOURCES.txt'
+Traceback (most recent call last):
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pyproject_hooks/_in_process/_in_process.py", line 406, in <module>
+    main()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pyproject_hooks/_in_process/_in_process.py", line 381, in main
+    json_out["return_val"] = hook(**hook_input["kwargs"])
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/pyproject_hooks/_in_process/_in_process.py", line 323, in get_requires_for_build_sdist
+    return hook(config_settings)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/build_meta.py", line 338, in get_requires_for_build_sdist
+    return self._get_build_requires(config_settings, requirements=[])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/build_meta.py", line 301, in _get_build_requires
+    self.run_setup()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/build_meta.py", line 317, in run_setup
+    exec(code, locals())
+  File "<string>", line 50, in <module>
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/__init__.py", line 117, in setup
+    return distutils.core.setup(**attrs)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/core.py", line 186, in setup
+    return run_commands(dist)
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/core.py", line 202, in run_commands
+    dist.run_commands()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/dist.py", line 1000, in run_commands
+    self.run_command(cmd)
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/dist.py", line 1107, in run_command
+    super().run_command(command)
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/dist.py", line 1019, in run_command
+    cmd_obj.run()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/command/egg_info.py", line 312, in run
+    self.find_sources()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/command/egg_info.py", line 320, in find_sources
+    mm.run()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/command/egg_info.py", line 542, in run
+    self.add_defaults()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/command/egg_info.py", line 580, in add_defaults
+    sdist.add_defaults(self)
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/command/sdist.py", line 110, in add_defaults
+    super().add_defaults()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/command/sdist.py", line 243, in add_defaults
+    self._add_defaults_python()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/command/sdist.py", line 121, in _add_defaults_python
+    build_py = self.get_finalized_command('build_py')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/cmd.py", line 318, in get_finalized_command
+    cmd_obj.ensure_finalized()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/cmd.py", line 119, in ensure_finalized
+    self.finalize_options()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/command/build_py.py", line 47, in finalize_options
+    orig.build_py.finalize_options(self)
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/command/build_py.py", line 47, in finalize_options
+    self.set_undefined_options(
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/cmd.py", line 304, in set_undefined_options
+    src_cmd_obj.ensure_finalized()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/cmd.py", line 119, in ensure_finalized
+    self.finalize_options()
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/setuptools/_distutils/command/build.py", line 104, in finalize_options
+    if self.distribution.has_ext_modules():
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 38, in has_ext_modules
+RuntimeError: native CephVR DLLs can only be packaged for AMD64 Windows
+
+TIP pass --env-dir and --sdist-extract-dir to keep the build environment and sources, then see https://build.pypa.io/en/stable/how-to/troubleshooting.html#debug-a-failed-build for help debugging a failed build
+ERROR Backend subprocess exited when trying to invoke get_requires_for_build_sdist

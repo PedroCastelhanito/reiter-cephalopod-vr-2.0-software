@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, cast
 
@@ -12,7 +12,10 @@ from cephvr.visual_stimulus.config.models.artifact_models import (
     Grid,
     PreparedTrial,
 )
-from cephvr.visual_stimulus.config.models.display_profile import PixelRect
+from cephvr.visual_stimulus.config.models.display_profile import (
+    DisplayProfile,
+    PixelRect,
+)
 from cephvr.visual_stimulus.config.models.photometric_profile import PhotometricProfile
 from cephvr.visual_stimulus.config.models.program_model import VideoSettings
 from cephvr.visual_stimulus.rendering.arena_draw import ArenaOutputDrawer
@@ -26,6 +29,7 @@ from cephvr.visual_stimulus.rendering.shaders import (
 )
 from cephvr.visual_stimulus.rendering.upload import upload_linear_image
 from cephvr.visual_stimulus.resources.assets import PreparedResourceBundle
+from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
 from cephvr.visual_stimulus.resources.video_index import VideoIndex
 
 
@@ -68,6 +72,32 @@ class PreparedSceneOutput:
     lut_texture: Any
 
 
+@dataclass(slots=True)
+class PreparedCalibrationOutput:
+    """V15 calibrated surface/output targets used by sessionless arena presentation."""
+
+    context: Any
+    width: int
+    height: int
+    activate: Callable[[], None]
+    owned_resources: list[Any]
+    diagnostic_flags: Any
+    surface_textures: dict[str, Any]
+    surface_fbos: dict[str, Any]
+    output_texture: Any
+    output_fbo: Any
+    device_fbo: Any
+    quad_buffer: Any
+    output_quad_array: Any
+    warp_program: Any
+    output_program: Any
+    arena_drawer: ArenaOutputDrawer
+    warp_arrays: dict[str, Any]
+    warp_mask_textures: dict[str, Any]
+    warp_weight_textures: dict[str, Any]
+    lut_texture: Any
+
+
 class SceneOutputBuilder:
     """Prepare per-output shader, warp and video resources with cleanup owners first."""
 
@@ -75,6 +105,7 @@ class SceneOutputBuilder:
         self.partial_allocations: dict[
             tuple[str, str], tuple[Callable[[], None], list[Any]]
         ] = {}
+        self.calibration_outputs: dict[str, PreparedCalibrationOutput] = {}
 
     def prepare_trial(
         self,
@@ -244,6 +275,161 @@ class SceneOutputBuilder:
             del self.partial_allocations[(trial_id, output_id)]
         return scoped_gpu_resources
 
+    def prepare_display_calibration(
+        self,
+        display: DisplayProfile,
+        calibration: PreparedCalibration,
+        outputs: Mapping[str, SceneOutput],
+        arena_gpu: dict[str, Any],
+    ) -> dict[str, PreparedCalibrationOutput]:
+        """Prepare sessionless targets with the same V15 surface/output pipeline."""
+        if self.calibration_outputs:
+            raise RuntimeError("display calibration targets are already retained")
+        frames = self.calibration_outputs
+        for output_id, output in outputs.items():
+            output.activate()
+            owned: list[Any] = []
+            key = ("display-calibration", output_id)
+            self.partial_allocations[key] = (output.activate, owned)
+
+            def track(resource: Any, owner: list[Any] = owned) -> Any:
+                owner.append(resource)
+                return resource
+
+            context = output.context
+            mappings = [
+                item for item in display.active_mappings if item.output_id == output_id
+            ]
+            surface_textures: dict[str, Any] = {}
+            surface_fbos: dict[str, Any] = {}
+            warp_arrays: dict[str, Any] = {}
+            warp_mask_textures: dict[str, Any] = {}
+            warp_weight_textures: dict[str, Any] = {}
+            warp_program = track(
+                context.program(
+                    vertex_shader=self._warp_vertex(), fragment_shader=_WARP_FRAGMENT
+                )
+            )
+            output_program = track(
+                context.program(
+                    vertex_shader=_QUAD_VERTEX, fragment_shader=_OUTPUT_FRAGMENT
+                )
+            )
+            arena_drawer = ArenaOutputDrawer(
+                context, output_id, arena_gpu, retain=track
+            )
+            diagnostic_flags = track(context.buffer(reserve=16))
+            quad_buffer = track(context.buffer(self._quad_bytes()))
+            output_quad_array = track(
+                context.vertex_array(
+                    output_program,
+                    [(quad_buffer, "2f 2f", "in_position", "in_uv")],
+                )
+            )
+            for mapping in mappings:
+                viewport = mapping.viewport
+                texture = track(
+                    context.texture((viewport.width, viewport.height), 4, dtype="f4")
+                )
+                depth = track(
+                    context.depth_renderbuffer((viewport.width, viewport.height))
+                )
+                framebuffer = track(
+                    context.framebuffer(
+                        color_attachments=(texture,), depth_attachment=depth
+                    )
+                )
+                surface_textures[mapping.mapping_id] = texture
+                surface_fbos[mapping.mapping_id] = framebuffer
+                profile = cast(
+                    GeometricProfile, calibration.content[mapping.mapping_id]
+                )
+                warp_arrays[mapping.mapping_id] = self._make_warp_array(
+                    context,
+                    warp_program,
+                    profile,
+                    mapping.viewport,
+                    output.width,
+                    output.height,
+                    track,
+                )
+                warp_mask_textures[mapping.mapping_id] = self._make_grid_texture(
+                    context, profile.mask, track
+                )
+                warp_weight_textures[mapping.mapping_id] = self._make_grid_texture(
+                    context, profile.weight, track
+                )
+            output_texture = track(
+                context.texture((output.width, output.height), 4, dtype="f4")
+            )
+            output_fbo = track(context.framebuffer(color_attachments=(output_texture,)))
+            device_texture = track(
+                context.texture((output.width, output.height), 4, dtype="f4")
+            )
+            device_fbo = track(context.framebuffer(color_attachments=(device_texture,)))
+            photometric = cast(
+                PhotometricProfile | None, calibration.content.get(output_id)
+            )
+            if display.photometric_mode == "calibrated" and photometric is None:
+                raise ValueError(f"calibrated output {output_id} has no prepared LUT")
+            lut_texture = (
+                self._make_lut_texture(context, photometric, track)
+                if photometric is not None
+                else track(context.texture((2, 1), 3, bytes(24), dtype="f4"))
+            )
+            frames[output_id] = PreparedCalibrationOutput(
+                context,
+                output.width,
+                output.height,
+                output.activate,
+                owned,
+                diagnostic_flags,
+                surface_textures,
+                surface_fbos,
+                output_texture,
+                output_fbo,
+                device_fbo,
+                quad_buffer,
+                output_quad_array,
+                warp_program,
+                output_program,
+                arena_drawer,
+                warp_arrays,
+                warp_mask_textures,
+                warp_weight_textures,
+                lut_texture,
+            )
+            del self.partial_allocations[key]
+        return frames
+
+    def release_display_calibration(
+        self, frames: dict[str, PreparedCalibrationOutput] | None = None
+    ) -> tuple[str, ...]:
+        """Release calibration targets on each owning output context."""
+        selected = self.calibration_outputs if frames is None else frames
+        failures: list[str] = []
+        for output_id, frame in tuple(selected.items()):
+            try:
+                frame.activate()
+            except Exception as exc:
+                failures.append(f"{output_id}:context:{exc}")
+                continue
+            failures.extend(_release_owned(frame.owned_resources, output_id))
+            if not frame.owned_resources:
+                del selected[output_id]
+        for key, (activate, resources) in tuple(self.partial_allocations.items()):
+            if key[0] != "display-calibration":
+                continue
+            try:
+                activate()
+            except Exception as exc:
+                failures.append(f"{key[1]}:context:{exc}")
+                continue
+            failures.extend(_release_owned(resources, key[1]))
+            if not resources:
+                del self.partial_allocations[key]
+        return tuple(failures)
+
     @staticmethod
     def _warp_vertex() -> str:
         return """#version 430
@@ -334,3 +520,17 @@ void main() { uv = in_source; gl_Position = vec4(in_position,0.0,1.0); }
         texture.repeat_x = False
         texture.repeat_y = False
         return texture
+
+
+def _release_owned(resources: list[Any], owner: str) -> list[str]:
+    failures = []
+    for resource in reversed(tuple(resources)):
+        try:
+            resource.release()
+            for index in range(len(resources) - 1, -1, -1):
+                if resources[index] is resource:
+                    del resources[index]
+                    break
+        except Exception as exc:
+            failures.append(f"{owner}:{exc}")
+    return failures

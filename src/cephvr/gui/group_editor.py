@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import button, combo, field, label
 from cephvr.gui.condition_values import ConditionValues
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.program_editing import NodePath, node_at
 from cephvr.gui.protocol_groups import motion_numbers, update_group
 from cephvr.visual_stimulus.compiler.expansion import expand_program
@@ -50,7 +51,7 @@ class GroupEditor(QWidget):
         self.more.setCheckable(True)
         self.more.toggled.connect(self.show_conditions)
         self.body.addWidget(self.more)
-        self.message = label("", wrap=True)
+        self.message = FormNotice()
         self.body.addWidget(self.message)
         self.apply_button = button("Apply group changes")
         self.apply_button.clicked.connect(self.apply)
@@ -113,13 +114,13 @@ class GroupEditor(QWidget):
                 self.conditions.read() if self.conditions else None,
             )
         except (ValueError, TypeError) as error:
-            self.message.setText(str(error))
+            self.message.warn(str(error))
             return False
         self.program, self.dirty = program, False
         node = node_at(program, self.path)
         assert isinstance(node, Group)
         self.refresh_summary(node)
-        self.message.setText("Draft updated")
+        self.message.status("Draft updated")
         self.committed.emit(program)
         return True
 

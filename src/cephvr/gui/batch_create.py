@@ -20,10 +20,12 @@ from cephvr.gui.batch_variation import BatchVariationRow
 from cephvr.gui.components import Card, button, combo, equal_row_height, field, label
 from cephvr.gui.epoch_batch import epoch_paths
 from cephvr.gui.epoch_composer import EpochComposer
+from cephvr.gui.notices import FormNotice, passive_validation
 from cephvr.gui.program_editing import node_at
 from cephvr.gui.projector_layers import layer_title, layers_for
 from cephvr.gui.protocol_groups import make_group
 from cephvr.gui.stimulus_scope import surfaces
+from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.compiler.expansion import expand_program
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
@@ -48,7 +50,7 @@ class BatchCreate(QWidget):
         self.variation_host.body.addWidget(self.vary)
         self.variation_content = QWidget()
         self.variation_body = QVBoxLayout(self.variation_content)
-        self.variation_body.setContentsMargins(0, 0, 0, 0)
+        self.variation_body.setContentsMargins(0, SIZES.section_toggle_gap, 0, 0)
         self.variation_host.body.addWidget(self.variation_content)
         self.rows: list[BatchVariationRow] = []
         self.rule_ids: dict[BatchVariationRow, list[str]] = {}
@@ -120,6 +122,8 @@ class BatchCreate(QWidget):
         self.insertion_hint.hide()
         generation.addWidget(self.insertion_hint)
         self.composer.set_generation_controls(self.generation_controls)
+        self.notice = FormNotice()
+        body.addWidget(self.notice)
         self.summary = label("", wrap=True)
         self.summary.setToolTip("Generated epochs retain their listed order")
         actions = QHBoxLayout()
@@ -203,7 +207,7 @@ class BatchCreate(QWidget):
         try:
             reference = self.composer.value()
         except ValueError as error:
-            self.summary.setText(str(error))
+            self.notice.setText(str(error))
             return
         node = reference.sequence[0]
         assert isinstance(node, Epoch)
@@ -322,9 +326,10 @@ class BatchCreate(QWidget):
 
     def refresh_preview(self) -> None:
         try:
-            epochs = expand_program(
-                self.candidate(), seed_decimal="0", max_expanded_epochs=2000
-            )
+            with passive_validation():
+                epochs = expand_program(
+                    self.candidate(), seed_decimal="0", max_expanded_epochs=2000
+                )
             fixed = all(isinstance(e.source.duration, Fixed) for e in epochs)
             total = sum(
                 e.source.duration.duration.ns()
@@ -338,8 +343,9 @@ class BatchCreate(QWidget):
             )
             self.add_button.setEnabled(True)
         except (ValueError, TypeError, IndexError) as error:
-            self.summary.setText(str(error))
-            self.add_button.setEnabled(False)
+            self.notice.setText(str(error))
+            self.summary.clear()
+            self.add_button.setEnabled(True)
 
     def generate(self) -> None:
         if not self.isEnabled():
@@ -347,7 +353,7 @@ class BatchCreate(QWidget):
         try:
             program = self.candidate()
         except (ValueError, TypeError, IndexError) as error:
-            self.summary.setText(str(error))
+            self.notice.warn(error)
             return
         try:
             stride = (
@@ -356,7 +362,7 @@ class BatchCreate(QWidget):
             if not 1 <= stride <= 2000:
                 raise ValueError("Use an insertion interval between 1 and 2000 blocks")
         except ValueError as error:
-            self.summary.setText(str(error))
+            self.notice.warn(error)
             return
         self.generated.emit(
             program,

@@ -100,6 +100,87 @@ class ArenaOutputDrawer:
         self.program["view_projection"].write(
             _matrix_bytes(off_axis_view_projection(artifact.display, surface))
         )
+        self._draw_primitives(
+            context=context,
+            moderngl=moderngl,
+            gpu_set=gpu_set,
+            output_buffers=output_buffers,
+            resource_id=key,
+        )
+
+    def draw_calibration(
+        self,
+        *,
+        context: Any,
+        moderngl: Any,
+        display: object,
+        output_id: str,
+        surface_id: str,
+        resource_id: str,
+        gpu_resources: dict[str, Any],
+    ) -> None:
+        """Draw a static protected arena without constructing trial artifacts."""
+        from types import SimpleNamespace
+
+        from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+
+        if self.program is None or not isinstance(display, DisplayProfile):
+            raise RuntimeError("calibration display or arena program is unavailable")
+        gpu_set = gpu_resources.get(resource_id)
+        if not isinstance(gpu_set, ArenaGPUSet):
+            raise RuntimeError(
+                "protected calibration arena GPU resources are unavailable"
+            )
+        output_buffers = gpu_set.outputs.get(output_id)
+        if output_buffers is None:
+            raise RuntimeError(f"calibration arena has no buffers for {output_id}")
+        surface = next(
+            (
+                item
+                for item in display.geometry.surfaces
+                if item.surface_id == surface_id
+            ),
+            None,
+        )
+        if surface is None:
+            raise RuntimeError(f"physical surface {surface_id} is unavailable")
+        identity = (
+            (1.0, 0.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0, 0.0),
+            (0.0, 0.0, 1.0, 0.0),
+            (0.0, 0.0, 0.0, 1.0),
+        )
+        pose = SimpleNamespace(
+            asset_to_world=identity,
+            fixed_height_mm=0.0,
+            fixed_pitch_deg=0.0,
+            fixed_roll_deg=0.0,
+        )
+        self.program["model"].write(
+            _matrix_bytes(arena_model_matrix(pose, {"x": 0.0, "y": 0.0, "yaw": 0.0}))
+        )
+        self.program["view_projection"].write(
+            _matrix_bytes(off_axis_view_projection(display, surface))
+        )
+        self._draw_primitives(
+            context=context,
+            moderngl=moderngl,
+            gpu_set=gpu_set,
+            output_buffers=output_buffers,
+            resource_id=resource_id,
+        )
+
+    def _draw_primitives(
+        self,
+        *,
+        context: Any,
+        moderngl: Any,
+        gpu_set: ArenaGPUSet,
+        output_buffers: Any,
+        resource_id: str,
+    ) -> None:
+        if self.program is None:
+            raise RuntimeError("arena output drawer has been released")
         self.program["base_color_tex"].value = 0
         context.enable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
         context.depth_func = "<="
@@ -140,7 +221,7 @@ class ArenaOutputDrawer:
                     context.disable(moderngl.CULL_FACE)
                 else:
                     context.enable(moderngl.CULL_FACE)
-                self.arrays[(key, index)].render(mode=moderngl.TRIANGLES)
+                self.arrays[(resource_id, index)].render(mode=moderngl.TRIANGLES)
         finally:
             context.disable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
 

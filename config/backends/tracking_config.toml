@@ -41,8 +41,8 @@ name = "water_flow"
 # camera_role = <selected camera role>
 
 [pose]
-# T05: manual or automatic. Default automatic; no runtime fallback between modes.
-mode = "automatic"
+# T05: manual or automatic. Default manual; no runtime fallback between modes.
+mode = "manual"
 # T06: keypoint_model or threshold_contour. Default threshold_contour (as current
 # CephVR); it still requires the rig-specific [pose.threshold] and [pose.contour] values.
 automatic_method = "threshold_contour"

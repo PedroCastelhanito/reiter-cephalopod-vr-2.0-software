@@ -3,18 +3,11 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any
 
-from cephvr.gui.epoch_batch import patch_setting
-from cephvr.gui.feedback_signals import tracking_signals
+from cephvr.gui.arena_movement import patch_arena
+from cephvr.gui.epoch_batch import END_BEHAVIORS, patch_setting
 from cephvr.gui.program_editing import document_ids, unique_id, validate
 from cephvr.visual_stimulus.config.models.program_model import Program
-
-END_BEHAVIORS = {
-    "loop": "loop",
-    "hold": "hold_final_frame",
-    "hold final frame": "hold_final_frame",
-}
 
 
 @dataclass(frozen=True)
@@ -23,74 +16,6 @@ class ValueRule:
     layer: int
     parameter: str
     values: tuple[str, ...]
-
-
-def patch_arena(
-    setting: dict[str, Any], changes: dict[str, str], document: dict[str, Any]
-) -> None:
-    for name, value in changes.items():
-        if name not in ("Longitudinal", "Lateral", "Angular"):
-            continue
-        gain = float(value)
-        if not isfinite(gain):
-            raise ValueError("Movement gains must be finite")
-        operation = (
-            "movement_integration"
-            if name == "Angular"
-            else "heading_relative_planar_integration"
-        )
-        binding = next(
-            (
-                b
-                for b in setting["feedback"]
-                if b["operation"] == operation
-                and (name != "Angular" or b.get("target") == "yaw")
-            ),
-            None,
-        )
-        if binding is None:
-            binding = dict(
-                binding_id=unique_id(setting["feedback"], "arena_variation"),
-                operation=operation,
-                gain=dict(kind="constant", value=0),
-            )
-            if name == "Angular":
-                binding.update(
-                    source_channel="turn_drive",
-                    target="yaw",
-                    offset=dict(kind="constant", value=0),
-                )
-            else:
-                binding.update(
-                    forward_channel="forward_drive",
-                    sideways_channel="sideways_drive",
-                    sideways_gain=dict(kind="constant", value=0),
-                )
-            setting["feedback"].append(binding)
-        key = "sideways_gain" if name == "Lateral" else "gain"
-        if binding[key]["kind"] != "constant":
-            raise ValueError("Custom movement gains cannot be replaced by a variation")
-        binding[key] = dict(kind="constant", value=gain)
-        needed = {
-            binding.get(k)
-            for k in ("source_channel", "forward_channel", "sideways_channel")
-        }
-        existing = {c["channel_id"]: c for c in document["input_channels"]}
-        streams = {existing[key]["stream_id"] for key in needed if key in existing}
-        if len(streams) > 1:
-            raise ValueError("Arena movement axes must use the same Tracking stream")
-        stream = next(iter(streams), "tracking")
-        for channel in tracking_signals():
-            channel = {**channel, "stream_id": stream}
-            identity = channel["channel_id"]
-            if identity not in needed:
-                continue
-            if identity in existing and existing[identity] != channel:
-                raise ValueError(
-                    f"{identity} conflicts with the Tracking movement channel"
-                )
-            if identity not in existing:
-                document["input_channels"].append(deepcopy(channel))
 
 
 def materialize_values(

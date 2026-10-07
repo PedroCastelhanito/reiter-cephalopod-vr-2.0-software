@@ -83,6 +83,21 @@ enum SessionOutcome {
   SESSION_OUTCOME_STOPPED = 2;
   SESSION_OUTCOME_INTERRUPTED = 3;
 }
+enum TrackingDiagnosticStage {
+  TRACKING_DIAGNOSTIC_STAGE_UNSPECIFIED = 0;
+  TRACKING_DIAGNOSTIC_STAGE_POSE = 1;
+  TRACKING_DIAGNOSTIC_STAGE_SAMPLING_REGION = 2;
+  TRACKING_DIAGNOSTIC_STAGE_OPTICAL_FLOW = 3;
+  TRACKING_DIAGNOSTIC_STAGE_FLOW_QUALITY = 4;
+  TRACKING_DIAGNOSTIC_STAGE_LOCOMOTION = 5;
+}
+enum TrackingDiagnosticStageState {
+  TRACKING_DIAGNOSTIC_STAGE_STATE_UNSPECIFIED = 0;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_AVAILABLE = 1;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_RUNNING = 2;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_UNAVAILABLE = 3;
+  TRACKING_DIAGNOSTIC_STAGE_STATE_FAILED = 4;
+}
 enum TrialOutcome {
   TRIAL_OUTCOME_UNSPECIFIED = 0;
   TRIAL_OUTCOME_COMPLETED = 1;
@@ -183,6 +198,7 @@ message VisualStimulusDisplayView {
   int64 observed_monotonic_ns = 10;
   optional bool complete = 11;
   optional uint64 last_successful_applied_revision = 12;
+  cephvr.visual_stimulus.v1.DisplayCalibrationEvidence calibration = 13;
   // Previous success is historical, not proof its resources remain valid.
 }
 enum TrackingPoseMode {
@@ -207,6 +223,8 @@ message TrackingSettings {
   reserved 4, 10, 13, 14, 15;
   reserved "automatic_pose_method", "threshold_segmentation", "model_pose", "contour_pose", "image_flow";
   repeated cephvr.tracking.v1.StageConfiguration stages = 16;
+  cephvr.tracking.v1.TrackingPreprocessingSettings preprocessing = 17;
+  cephvr.tracking.v1.TrackingImageScale image_scale = 18;
   // Exact required stages/implementations come from the installed pipeline catalogue.
   // Manual mode executes no automatic pose stage. Unknown/incompatible selections fail.
   // Selections alone are not a complete prepared tracking configuration or Ready.
@@ -264,6 +282,29 @@ message BackendSettings {
     SynchronizationSettings synchronization = 6;
   }
 }
+message TrackingDiagnosticStageStatus {
+  TrackingDiagnosticStage stage = 1;
+  TrackingDiagnosticStageState state = 2;
+  string reason = 3;
+}
+message TrackingDiagnosticState {
+  string diagnostic_id = 1;
+  uint64 configuration_revision = 2;
+  string preview_run_id = 3;
+  string acquisition_run_id = 4;
+  optional string source_camera_serial = 5;
+  repeated TrackingDiagnosticStageStatus stages = 6;
+  bool active = 7;
+  bool closed = 8;
+  uint64 input_frames = 9;
+  uint64 evaluated_frames = 10;
+  uint64 lapped_frames = 11;
+  uint64 last_duration_ns = 12;
+  uint64 maximum_duration_ns = 13;
+  string failure = 14;
+  optional string tracking_endpoint = 15; // Registered direct viewer endpoint.
+  ProcessIdentity tracking_process = 16;
+}
 message TrialDefinition {
   uint32 trial_number = 1;
   reserved 2;
@@ -283,7 +324,15 @@ message ExperimentConfiguration {
   repeated TrialDefinition trials = 6;
   repeated IntertrialGap gaps = 7;
   repeated BackendSettings backends = 8;
+  SubjectMetadata subject_metadata = 9;
   // No operator-set timeout/port/control-policy overrides (E14).
+}
+message SubjectMetadata {
+  optional string species = 1;
+  optional string sex = 2;
+  optional double age_dph = 3;
+  optional double size_mm = 4;
+  optional string condition = 5;
 }
 message WaitPolicy {
   int64 initial_ns = 1;
@@ -851,6 +900,7 @@ message Snapshot {
   // no separate history RPC. Bounded by [control].max_retained_incidents.
   optional int64 retained_since_monotonic_ns = 23; // Oldest retained entry for the current Setup/session.
   bool retained_truncated = 24; // Older resolved entries were evicted at the bound.
+  TrackingDiagnosticState tracking_diagnostic = 25; // Coalesced status only; no image or overlay bytes.
 }
 
 message OutputReservationState {

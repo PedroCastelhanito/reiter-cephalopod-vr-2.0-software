@@ -34,6 +34,7 @@ class PreviewTransfer:
     consumer: pb.ProcessIdentity
     run_id: str
     camera: int
+    kind: int = acquisition.FRAME_BUFFER_KIND_PREVIEW
     attachment: acquisition.FrameBufferAttachment | None = None
     retired: bool = False
     result: rpc.PreviewConsumerReport | None = None
@@ -135,7 +136,12 @@ class ProjectionStore:
         ):
             raise ProjectionError("device status revision/time/work differs")
         for device in (view.behavioral, view.tracking):
-            if device.HasField("preview_run_id"):
+            # An explicit empty ID confirms a released run; active runs need a UUID.
+            if (
+                device.preview_run_id
+                or device.preview_running
+                or device.preview_prepared
+            ):
                 require_uuid4(device.preview_run_id)
             if device.preview_running and not device.device_open:
                 raise ProjectionError("running preview has no open device")
@@ -271,15 +277,31 @@ class ProjectionStore:
         return True
 
     def expect_preview(
-        self, operation: str, consumer: pb.ProcessIdentity, run_id: str, camera: int
+        self,
+        operation: str,
+        consumer: pb.ProcessIdentity,
+        run_id: str,
+        camera: int,
+        *,
+        kind: int = acquisition.FRAME_BUFFER_KIND_PREVIEW,
     ) -> None:
         for identity in (operation, consumer.generation, run_id):
             require_uuid4(identity)
-        if consumer.role not in {"gui", "cli"} or camera not in (1, 2):
+        roles = (
+            {"tracking"}
+            if kind == acquisition.FRAME_BUFFER_KIND_TRACKING
+            else {"gui", "cli"}
+        )
+        if consumer.role not in roles or camera not in (1, 2):
             raise ProjectionError("preview target/camera is invalid")
         old = self.transfers.get(operation)
         if old is not None:
-            if (old.consumer, old.run_id, old.camera) != (consumer, run_id, camera):
+            if (old.consumer, old.run_id, old.camera, old.kind) != (
+                consumer,
+                run_id,
+                camera,
+                kind,
+            ):
                 raise ProjectionError("preview operation identity changed")
             return
         for transfer in self.transfers.values():
@@ -287,7 +309,7 @@ class ProjectionStore:
                 transfer.result is not None
                 and transfer.result.result == rpc.PREVIEW_CONSUMER_RESULT_RELEASED
             )
-            if transfer.run_id == run_id and not released:
+            if transfer.run_id == run_id and transfer.kind == kind and not released:
                 raise ProjectionError(
                     "preview already has an outstanding viewer transfer"
                 )
@@ -310,6 +332,7 @@ class ProjectionStore:
             pb.ProcessIdentity.FromString(consumer.SerializeToString()),
             run_id,
             camera,
+            kind,
         )
 
     def retire_preview(self, run_id: str) -> None:
@@ -336,11 +359,21 @@ class ProjectionStore:
         require_uuid4(sync.transfer_id)
         if transfer is None or (
             sync.target != transfer.consumer
-            or buffer.kind != acquisition.FRAME_BUFFER_KIND_PREVIEW
+            or buffer.kind != transfer.kind
             or buffer.camera != transfer.camera
             or buffer.owner.role != "acquisition"
             or buffer.owner.generation != report.source.backend_generation
-            or buffer.HasField("consumer")
+            or (
+                transfer.kind == acquisition.FRAME_BUFFER_KIND_PREVIEW
+                and buffer.HasField("consumer")
+            )
+            or (
+                transfer.kind == acquisition.FRAME_BUFFER_KIND_TRACKING
+                and (
+                    not buffer.HasField("consumer")
+                    or buffer.consumer != transfer.consumer
+                )
+            )
             or not buffer.shared_memory_name
             or not sync.event_name
         ):

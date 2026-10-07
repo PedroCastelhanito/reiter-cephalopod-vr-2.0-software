@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import threading
+from pathlib import Path
 from typing import Any, cast
+from uuid import uuid4
+
+import pytest
 
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.control.v1 import services_pb2 as svc
@@ -15,6 +21,7 @@ from cephvr.controller.device.camera import (
     CameraSelection,
 )
 from cephvr.controller.device.display import DisplayInitialization
+from cephvr.controller.device.display_calibration import DisplayCalibrationController
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.status_retention import CameraStatusRetention
 from cephvr.controller.ports import BackendPort
@@ -25,9 +32,11 @@ from cephvr.controller.state import (
     DeviceState,
     LifecycleState,
     LimitsState,
+    Watch,
 )
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
-from tests.controller.support_components import _id, default_limits
+from tests.controller.support_components import _id, _runtime, default_limits
+from tests.visual_stimulus.support import valid_display_json
 
 
 def _limits() -> LimitsState:
@@ -232,3 +241,430 @@ async def test_display_initialization_still_dispatches_with_capacity() -> None:
     for task in env.spawned:
         task.close()
     assert asyncio.get_running_loop() is not None
+
+
+async def test_display_calibration_open_adopts_a_profile_before_display_initialization(
+    tmp_path: Any,
+) -> None:
+    env = _Env()
+    asset_root = tmp_path / "assets"
+    asset_root.mkdir()
+    profile_json = valid_display_json()
+    profile = asset_root / "calibration" / "diagnostic_display_profile.json"
+    profile.parent.mkdir()
+    profile.write_text(profile_json)
+    arena = asset_root / "calibration" / "arena.glb"
+    arena.write_bytes(b"protected arena")
+    accepted = pb.ExperimentConfiguration(asset_root=str(asset_root))
+    setting = pb.BackendSettings(backend_name="visual_stimulus", enabled=True)
+    setting.visual_stimulus.display.profile_json = '{"saved": "different"}'
+    accepted.backends.append(setting)
+    env.configuration.current.CopyFrom(accepted)
+    policy = visual_stimulus_pb.VisualStimulusFilePolicies(contract_version=1)
+    policy.limits.max_document_bytes = 1_000_000
+    policy.limits.max_asset_cpu_bytes = 1_000_000
+    policy.limits.max_asset_gpu_bytes = 1_000_000
+    output_ids = frozenset({"projector/main"})
+    sent: list[Any] = []
+    projections = type("Projection", (), {"display": None})()
+    projections.expect_display = lambda command_id, revision: None  # type: ignore[attr-defined]
+
+    class Backend:
+        context = pb.BackendContext(
+            backend_name="visual_stimulus", backend_generation=_id()
+        )
+
+        async def open_display_calibration(self, request: Any, *, deadline_ns: int):
+            sent.append(request)
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    controller = DisplayCalibrationController(
+        lifecycle=env.lifecycle,
+        configuration=env.configuration,
+        control=env.control,
+        device=env.device,
+        backends={"visual_stimulus": cast(BackendPort, Backend())},
+        projections=cast(Any, projections),
+        file_policy_loader=lambda names: {"visual_stimulus": policy},
+        display_validator=lambda document: output_ids,
+        display_pacing_resolver=None,
+        generation=_id(),
+        limits=_limits(),
+        hooks=env.hooks,
+        maximum_asset_bytes=1_000_000,
+        clock=lambda: env.now,
+    )
+    request = svc.OpenDisplayCalibrationRequest(
+        expected_configuration_revision=env.configuration.revision,
+        diagnostic_id=str(uuid4()),
+        profile_asset_reference="calibration/diagnostic_display_profile.json",
+        arena_asset_reference="calibration/arena.glb",
+        expected_profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+        expected_arena_sha256=hashlib.sha256(arena.read_bytes()).hexdigest(),
+    )
+    request.command.operator.command_id = _id()
+    result = await controller.open(request)
+
+    assert result.result == pb.COMMAND_RESULT_ACCEPTED
+    assert sent[0].profile_json != setting.visual_stimulus.display.profile_json
+    assert sent[0].policies.limits.max_asset_cpu_bytes == 1_000_000
+    assert sent[0].arena_size_bytes == len(b"protected arena")
+    assert env.device.calibration_blocked
+    for task in env.spawned:
+        task.close()
+
+
+async def test_display_calibration_validation_reserves_and_rechecks_authority(
+    tmp_path: Any,
+) -> None:
+    env = _Env()
+    asset_root = tmp_path / "assets"
+    (asset_root / "calibration").mkdir(parents=True)
+    profile_json = valid_display_json()
+    profile_path = asset_root / "calibration/profile.json"
+    profile_path.write_text(profile_json)
+    arena_path = asset_root / "calibration/arena.glb"
+    arena_path.write_bytes(b"arena")
+    setting = pb.BackendSettings(backend_name="visual_stimulus", enabled=True)
+    setting.visual_stimulus.display.profile_json = profile_json
+    env.configuration.current.asset_root = str(asset_root)
+    env.configuration.current.backends.append(setting)
+    policy = visual_stimulus_pb.VisualStimulusFilePolicies(contract_version=1)
+    policy.limits.max_document_bytes = 1_000_000
+    policy.limits.max_asset_cpu_bytes = 1_000_000
+    policy.limits.max_asset_gpu_bytes = 1_000_000
+    entered = threading.Event()
+    release = threading.Event()
+    sent: list[Any] = []
+
+    def loader(names: frozenset[str]) -> dict[str, Any]:
+        entered.set()
+        release.wait(timeout=2)
+        return {"visual_stimulus": policy}
+
+    class Backend:
+        context = pb.BackendContext(
+            backend_name="visual_stimulus", backend_generation=_id()
+        )
+
+        async def open_display_calibration(self, request: Any, *, deadline_ns: int):
+            sent.append(request)
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    backend = Backend()
+    projections = type("Projection", (), {"display": None})()
+    projections.expect_display = lambda command_id, revision: None  # type: ignore[attr-defined]
+    controller = DisplayCalibrationController(
+        lifecycle=env.lifecycle,
+        configuration=env.configuration,
+        control=env.control,
+        device=env.device,
+        backends={"visual_stimulus": cast(BackendPort, backend)},
+        projections=cast(Any, projections),
+        file_policy_loader=loader,
+        display_validator=lambda _: frozenset({"projector/main"}),
+        display_pacing_resolver=None,
+        generation=_id(),
+        limits=_limits(),
+        hooks=env.hooks,
+        maximum_asset_bytes=1_000_000,
+        clock=lambda: env.now,
+    )
+
+    def request() -> svc.OpenDisplayCalibrationRequest:
+        value = svc.OpenDisplayCalibrationRequest(
+            expected_configuration_revision=env.configuration.revision,
+            diagnostic_id=str(uuid4()),
+            profile_asset_reference="calibration/profile.json",
+            arena_asset_reference="calibration/arena.glb",
+            expected_profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+            expected_arena_sha256=hashlib.sha256(arena_path.read_bytes()).hexdigest(),
+        )
+        value.command.operator.command_id = _id()
+        return value
+
+    first = request()
+    task = asyncio.create_task(controller.open(first))
+    assert await asyncio.to_thread(entered.wait, 1)
+    second = request()
+    rejected = await controller.open(second)
+    assert rejected.result == pb.COMMAND_RESULT_REJECTED
+    env.lifecycle.authority_lost = True
+    release.set()
+    result = await task
+
+    assert result.result == pb.COMMAND_RESULT_REJECTED
+    assert "authority" in result.failure.message
+    assert not sent
+    assert env.device.calibration_pending is None
+    assert not env.device.calibration_blocked
+
+    env.lifecycle.authority_lost = False
+    entered.clear()
+    release.clear()
+    cancelled_open = request()
+    cancelled_task = asyncio.create_task(controller.open(cancelled_open))
+    assert await asyncio.to_thread(entered.wait, 1)
+    cancelled_task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await cancelled_task
+    release.set()
+    await asyncio.sleep(0)
+    assert not sent
+    assert env.device.calibration_pending is None
+    assert not env.device.calibration_blocked
+    await controller.owner_lost()
+    assert not sent
+
+
+@pytest.mark.parametrize("loss_path", ["release", "watch"])
+@pytest.mark.parametrize("uncertain_open", [False, True])
+async def test_assembled_owner_loss_closes_exact_display_calibration(
+    tmp_path: Path, loss_path: str, uncertain_open: bool
+) -> None:
+    renderer_generation = _id()
+    backend_context = pb.BackendContext(
+        backend_name="visual_stimulus", backend_generation=_id()
+    )
+    runtime = _runtime(tmp_path, backend_context)
+    diagnostic_id = _id()
+    revision = runtime.configuration_state.revision
+    output_ids = frozenset({"projector/main"})
+    closes: list[Any] = []
+    report_errors: list[str] = []
+    report_receipts: list[pb.ReportReceipt] = []
+
+    class Backend:
+        context = backend_context
+
+        async def close_display_calibration(self, request: Any, *, deadline_ns: int):
+            closes.append((request, deadline_ns))
+            report = pb.VisualStimulusDisplayView(
+                source=pb.ProcessIdentity(
+                    role="visual_stimulus",
+                    generation=backend_context.backend_generation,
+                ),
+                backend=backend_context,
+                controller=pb.ProcessIdentity(
+                    role="controller", generation=runtime.generation
+                ),
+                command_id=request.command_id,
+                requested_revision=request.configuration_revision,
+                applied_revision=request.configuration_revision,
+                observed_monotonic_ns=runtime.clock(),
+                complete=True,
+            )
+            report.outputs.add(output_id="projector/main")
+            report.calibration.CopyFrom(
+                visual_stimulus_pb.DisplayCalibrationEvidence(
+                    diagnostic_id=diagnostic_id,
+                    controller_generation=runtime.generation,
+                    renderer_generation=renderer_generation,
+                    configuration_revision=revision,
+                    state=visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_IDLE,
+                    observed_monotonic_ns=runtime.clock(),
+                    presented=False,
+                    idle=True,
+                    resources_closed=True,
+                )
+            )
+            try:
+                report_receipts.append(
+                    await runtime.report_projection("display", report)
+                )
+            except Exception as exc:
+                report_errors.append(str(exc))
+                raise
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    backend = Backend()
+    runtime.display_calibration.backends["visual_stimulus"] = cast(BackendPort, backend)
+    calibration = runtime.display_calibration
+    calibration._active_backend = cast(BackendPort, backend)
+    calibration._active_backend_context = pb.BackendContext.FromString(
+        backend_context.SerializeToString()
+    )
+    runtime.device_state.calibration_blocked = True
+    if uncertain_open:
+        runtime.device_state.calibration_pending = (
+            _id(),
+            revision,
+            runtime.clock() + runtime.limits.recovery_ns,
+            diagnostic_id,
+            visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE,
+            output_ids,
+        )
+    else:
+        display = pb.VisualStimulusDisplayView(
+            source=pb.ProcessIdentity(
+                role="visual_stimulus", generation=backend_context.backend_generation
+            ),
+            backend=backend_context,
+            controller=pb.ProcessIdentity(
+                role="controller", generation=runtime.generation
+            ),
+        )
+        display.outputs.add(output_id="projector/main")
+        display.calibration.CopyFrom(
+            visual_stimulus_pb.DisplayCalibrationEvidence(
+                diagnostic_id=diagnostic_id,
+                controller_generation=runtime.generation,
+                renderer_generation=renderer_generation,
+                configuration_revision=revision,
+                state=visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE,
+                observed_monotonic_ns=runtime.clock(),
+                presented=True,
+                idle=False,
+                resources_closed=False,
+            )
+        )
+        runtime.projections.display = display
+
+    client_id, watch_id, control_generation = _id(), _id(), _id()
+    watch = Watch(
+        client_id, watch_id, asyncio.Queue(maxsize=1), runtime.control.revision
+    )
+    runtime.control.watches[(client_id, watch_id)] = watch
+    runtime.control.owner = (client_id, watch_id, control_generation)
+    if loss_path == "release":
+        command = svc.OperatorCommand(
+            controller_generation=runtime.generation,
+        )
+        command.operator.client_id = client_id
+        command.operator.control_generation = control_generation
+        command.operator.command_id = _id()
+        await runtime.release_control(command)
+    else:
+        await runtime.close_watch(watch)
+
+    assert len(closes) == 1
+    close_request, close_deadline = closes[0]
+    assert close_request.diagnostic_id == diagnostic_id
+    assert close_request.configuration_revision == revision
+    assert close_deadline > runtime.clock()
+    assert not report_errors, report_errors
+    assert report_receipts[0].result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.device_state.calibration_pending is None
+    assert not runtime.device_state.calibration_blocked
+    assert runtime.projections.display.calibration.resources_closed
+
+
+async def test_owner_loss_dispatches_exact_close_while_open_receipt_is_pending(
+    tmp_path: Path,
+) -> None:
+    env = _Env()
+    asset_root = tmp_path / "assets"
+    (asset_root / "calibration").mkdir(parents=True)
+    profile_json = valid_display_json()
+    profile_path = asset_root / "calibration/profile.json"
+    profile_path.write_text(profile_json)
+    arena_path = asset_root / "calibration/arena.glb"
+    arena_path.write_bytes(b"arena")
+    env.configuration.current.asset_root = str(asset_root)
+    setting = pb.BackendSettings(backend_name="visual_stimulus", enabled=True)
+    setting.visual_stimulus.display.profile_json = profile_json
+    env.configuration.current.backends.append(setting)
+    policy = visual_stimulus_pb.VisualStimulusFilePolicies(contract_version=1)
+    policy.limits.max_document_bytes = 1_000_000
+    policy.limits.max_asset_cpu_bytes = 1_000_000
+    policy.limits.max_asset_gpu_bytes = 1_000_000
+    entered_open = asyncio.Event()
+    release_open = asyncio.Event()
+    open_requests: list[Any] = []
+    close_requests: list[Any] = []
+
+    class Projections:
+        display = None
+
+        def expect_display(self, command_id: str, revision: int) -> None:
+            pass
+
+    projections = Projections()
+
+    class Backend:
+        context = pb.BackendContext(
+            backend_name="visual_stimulus", backend_generation=_id()
+        )
+
+        async def open_display_calibration(self, request: Any, *, deadline_ns: int):
+            open_requests.append((request, deadline_ns))
+            entered_open.set()
+            await release_open.wait()
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+        async def close_display_calibration(self, request: Any, *, deadline_ns: int):
+            close_requests.append((request, deadline_ns))
+            report = pb.VisualStimulusDisplayView(
+                source=pb.ProcessIdentity(
+                    role="visual_stimulus", generation=self.context.backend_generation
+                ),
+                backend=self.context,
+                controller=pb.ProcessIdentity(
+                    role="controller", generation=controller.generation
+                ),
+                command_id=request.command_id,
+                requested_revision=request.configuration_revision,
+                applied_revision=request.configuration_revision,
+                observed_monotonic_ns=env.now,
+                complete=True,
+            )
+            report.outputs.add(output_id="projector/main")
+            report.calibration.CopyFrom(
+                visual_stimulus_pb.DisplayCalibrationEvidence(
+                    diagnostic_id=request.diagnostic_id,
+                    controller_generation=controller.generation,
+                    renderer_generation="renderer-generation",
+                    configuration_revision=request.configuration_revision,
+                    state=visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_IDLE,
+                    observed_monotonic_ns=env.now,
+                    presented=False,
+                    idle=True,
+                    resources_closed=True,
+                )
+            )
+            projections.display = report
+            controller.device.calibration_pending = None
+            controller.device.calibration_blocked = False
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    backend = Backend()
+    controller = DisplayCalibrationController(
+        lifecycle=env.lifecycle,
+        configuration=env.configuration,
+        control=env.control,
+        device=env.device,
+        backends={"visual_stimulus": cast(BackendPort, backend)},
+        projections=cast(Any, projections),
+        file_policy_loader=lambda _names: {"visual_stimulus": policy},
+        display_validator=lambda _document: frozenset({"projector/main"}),
+        display_pacing_resolver=None,
+        generation=_id(),
+        limits=_limits(),
+        hooks=env.hooks,
+        maximum_asset_bytes=1_000_000,
+        clock=lambda: env.now,
+    )
+    diagnostic_id = str(uuid4())
+    request = svc.OpenDisplayCalibrationRequest(
+        expected_configuration_revision=env.configuration.revision,
+        diagnostic_id=diagnostic_id,
+        profile_asset_reference="calibration/profile.json",
+        arena_asset_reference="calibration/arena.glb",
+        expected_profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+        expected_arena_sha256=hashlib.sha256(arena_path.read_bytes()).hexdigest(),
+    )
+    request.command.operator.command_id = _id()
+    opening = asyncio.create_task(controller.open(request))
+    try:
+        assert await asyncio.wait_for(entered_open.wait(), 1)
+        await controller.owner_lost()
+        assert len(close_requests) == 1
+        assert close_requests[0][0].diagnostic_id == diagnostic_id
+        assert not release_open.is_set()
+        assert controller.device.calibration_pending is None
+        assert not controller.device.calibration_blocked
+    finally:
+        release_open.set()
+    assert (await opening).result == pb.COMMAND_RESULT_ACCEPTED
+    for task in env.spawned:
+        task.close()

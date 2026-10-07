@@ -6,10 +6,11 @@ from typing import Any
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QWidget
 
-from cephvr.gui.components import button, label
+from cephvr.gui.components import button
 from cephvr.gui.control_editor import ControlEditor
 from cephvr.gui.feedback_entry import FeedbackEntry
 from cephvr.gui.feedback_signals import targets, tracking_signals
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.program_editing import unique_id
 from cephvr.visual_stimulus.config.models.program_model import Settings
 
@@ -52,7 +53,7 @@ class FeedbackMappings(QWidget):
         self.rows.setSpacing(14)
         body.addLayout(self.rows)
         body.addWidget(self.add)
-        self.message = label("", wrap=True)
+        self.message = FormNotice()
         self.message.hide()
         body.addWidget(self.message)
         for binding in setting.feedback:
@@ -84,12 +85,12 @@ class FeedbackMappings(QWidget):
         identity = channel["channel_id"]
         previous = next((c for c in self.channels if c["channel_id"] == identity), None)
         if previous is not None and previous != channel:
-            self.editor.message.setText("That input already has a different definition")
+            self.editor.message.warn("That input already has a different definition")
             return
         if response.get("target", "planar") not in self.editor.compatible_targets(
             channel
         ):
-            self.editor.message.setText("Choose a compatible parameter")
+            self.editor.message.warn("Choose a compatible parameter")
             return
         if response["operation"] == "heading_relative_planar_integration":
             for declared in tracking_signals()[:2]:
@@ -102,7 +103,7 @@ class FeedbackMappings(QWidget):
                     None,
                 )
                 if existing is not None and existing != declared:
-                    self.editor.message.setText(
+                    self.editor.message.warn(
                         "That Tracking input already has a different definition"
                     )
                     return
@@ -161,9 +162,7 @@ class FeedbackMappings(QWidget):
         )
         if channel is None:
             self.open_editor()
-            self.message.setText(
-                "Define a compatible input signal to create a mapping."
-            )
+            self.message.warn("Define a compatible input signal to create a mapping.")
             self.message.show()
             return
         bindings = [e.binding for e in self.entries] + [
@@ -188,10 +187,10 @@ class FeedbackMappings(QWidget):
         identity = channel["channel_id"]
         old = next((c for c in self.channels if c["channel_id"] == identity), None)
         if old is not None and old != channel:
-            self.message.setText("That signal name already has a different definition.")
+            self.message.warn("That signal name already has a different definition.")
             return
         if not targets(self.setting, channel):
-            self.message.setText(
+            self.message.warn(
                 "This signal cannot control a parameter of this stimulus."
             )
             return

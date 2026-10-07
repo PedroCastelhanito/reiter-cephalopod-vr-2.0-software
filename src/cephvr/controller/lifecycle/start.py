@@ -10,6 +10,7 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.snapshots import SnapshotPublisher
+from cephvr.controller.device.spikeglx_monitor import SpikeGLXProgressMonitor
 from cephvr.controller.lifecycle.interruption import InterruptionWorkflow
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.lifecycle.trials import TrialExecution
@@ -41,6 +42,7 @@ class StartActivation:
         interruption: InterruptionWorkflow,
         supervisor: SupervisorPort | None,
         spikeglx: SpikeGLXPort | None,
+        spikeglx_monitor: SpikeGLXProgressMonitor | None,
         schema_factory: Callable[[pb.PreparedSession], dict[str, object]] | None,
         output_planner: Callable[
             [pb.PreparedSession, Mapping[str, pb.ReadyReport]], list[pb.OutputPlan]
@@ -61,6 +63,7 @@ class StartActivation:
         self.interruption = interruption
         self.supervisor = supervisor
         self.spikeglx = spikeglx
+        self.spikeglx_monitor = spikeglx_monitor
         self.schema_factory = schema_factory
         self.output_planner = output_planner
         self.generation = generation
@@ -185,11 +188,11 @@ class StartActivation:
                 if (
                     self.spikeglx is None
                     or not await asyncio.wait_for(
-                        self.spikeglx.verify_before_start(),
+                        self.spikeglx.verify_before_start(start_deadline_ns),
                         max(0, (start_deadline_ns - self.clock()) / 1e9),
                     )
                     or not await asyncio.wait_for(
-                        self.spikeglx.start_and_verify_writing(),
+                        self.spikeglx.start_and_verify_writing(start_deadline_ns),
                         max(0, (start_deadline_ns - self.clock()) / 1e9),
                     )
                 ):
@@ -211,6 +214,8 @@ class StartActivation:
                     command_id, success=True, progress="session activated"
                 )
                 self.publisher.publish()
+            if attempt.paired and self.spikeglx_monitor is not None:
+                self.spawn(self.spikeglx_monitor.run(attempt))
             attempt.trial_task = self.spawn(self.trials.run_trials(attempt))
         except Exception as exc:
             async with self.lifecycle.lock:

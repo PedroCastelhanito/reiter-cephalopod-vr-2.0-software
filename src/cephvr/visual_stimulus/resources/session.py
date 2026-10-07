@@ -41,6 +41,10 @@ from cephvr.visual_stimulus.resources.calibration import (
     PreparedCalibration,
     prepare_calibration,
 )
+from cephvr.visual_stimulus.resources.display_calibration import (
+    PreparedDisplayCalibration,
+    prepare_display_calibration_request,
+)
 from cephvr.visual_stimulus.resources.prepare import prepare_resources
 from cephvr.visual_stimulus.resources.protected import ProtectedWindowsSource
 from cephvr.visual_stimulus.resources.video import VideoPlayback
@@ -99,6 +103,10 @@ class NativePreparation:
         )
         self._display_calibration: PreparedCalibration | None = None
         self._display_budget: BoundedBudget | None = None
+        self._display_asset_root: Path | None = None
+        self._display_asset_limit = 0
+        self._display_document_limit = 0
+        self._display_profile: DisplayProfile | None = None
         self.video_playback: VideoPlayback | None = None
         self.video_session: VideoSession | None = None
 
@@ -147,6 +155,9 @@ class NativePreparation:
             deadline_ns=deadline_ns,
             clock_ns=self.clock_ns,
         )
+        self._display_asset_root = Path(request.asset_root).resolve(strict=True)
+        self._display_asset_limit = request.limits.max_asset_cpu_bytes
+        self._display_document_limit = request.limits.max_document_bytes
         calibration = prepare_calibration(
             display,
             Path(request.asset_root),
@@ -156,9 +167,88 @@ class NativePreparation:
             owner_prefix="visual_stimulus:display",
             source_factory=self.source_factory,
         )
+        self._display_profile = display
         self._display_calibration = calibration
         self._display_budget = display_budget
         return display, calibration
+
+    def prepare_display_calibration(
+        self,
+        request: visual_stimulus_messages.OpenDisplayCalibrationCommand,
+        announce: Callable[[str, str | None], None],
+        deadline_ns: int,
+    ) -> PreparedDisplayCalibration:
+        resource_key_start = len(self._resource_keys)
+        prepared = prepare_display_calibration_request(
+            request,
+            self._registered_announce(announce, "visual_stimulus:calibration"),
+            deadline_ns,
+            check_deadline=self._check,
+            clock_ns=self.clock_ns,
+            cancelled=self.cancelled,
+            source_factory=self.source_factory,
+            previous_display=self._display_profile,
+            previous_calibration=self._display_calibration,
+        )
+        prepared.resource_keys = tuple(self._resource_keys[resource_key_start:])
+        return prepared
+
+    def release_display_calibration(self, prepared: PreparedDisplayCalibration) -> bool:
+        released = prepared.close_sources()
+        closed = prepared.closed_source_ids
+        if closed:
+            self._protected_sources = [
+                item for item in self._protected_sources if id(item[0]) not in closed
+            ]
+        if released:
+            keys = set(prepared.resource_keys)
+            self._resource_keys = [
+                key for key in self._resource_keys if key not in keys
+            ]
+            self._pathless_resource_keys = [
+                key for key in self._pathless_resource_keys if key not in keys
+            ]
+            self._announced_paths = {
+                path: key
+                for path, key in self._announced_paths.items()
+                if key not in keys
+            }
+        return released
+
+    def retry_incomplete_display_calibration(self, deadline_ns: int) -> bool:
+        """Retry only calibration inputs retained by a failed preparation."""
+        if self.clock_ns() >= deadline_ns:
+            return False
+        retained: list[tuple[ProtectedSource, str]] = []
+        failed = False
+        for source, label in reversed(self._protected_sources):
+            if not label.startswith("visual_stimulus:calibration:"):
+                retained.append((source, label))
+                continue
+            try:
+                source.close_after_consumers()
+            except Exception:
+                failed = True
+                retained.append((source, label))
+        self._protected_sources = list(reversed(retained))
+        if failed or self.clock_ns() >= deadline_ns:
+            return False
+        self._resource_keys = [
+            key
+            for key in self._resource_keys
+            if not key.startswith("visual_stimulus:calibration:")
+        ]
+        self._pathless_resource_keys = [
+            key
+            for key in self._pathless_resource_keys
+            if not key.startswith("visual_stimulus:calibration:")
+        ]
+        self._announced_paths = {
+            path: key
+            for path, key in self._announced_paths.items()
+            if not key.startswith("visual_stimulus:calibration:")
+        }
+        return True
 
     def initialize_display(
         self, display: DisplayProfile, calibration: PreparedCalibration

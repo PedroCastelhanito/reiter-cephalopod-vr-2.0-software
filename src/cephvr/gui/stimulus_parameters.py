@@ -22,6 +22,7 @@ from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.feedback_mappings import FeedbackMappings
 from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.looming_size import LoomingSize
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.paths import PathEdit
 from cephvr.gui.program_editing import NodePath, data_node, node_at
 from cephvr.gui.projector_layers import projector_edit
@@ -97,7 +98,7 @@ class StimulusParameters(QWidget):
         self.fades: StimulusFades | None = None
         self.body.addWidget(self.advanced)
         row = QHBoxLayout()
-        self.message = label("", wrap=True)
+        self.message = FormNotice()
         row.addWidget(self.message, 1)
         self.reset_button = button("Reset")
         self.reset_button.clicked.connect(self.reset)
@@ -122,7 +123,7 @@ class StimulusParameters(QWidget):
 
     def mark_changed(self) -> None:
         self.dirty = True
-        self.message.setText("Editing…")
+        self.message.clear()
         self.message.show()
         QTimer.singleShot(0, self.auto_apply)
 
@@ -259,7 +260,7 @@ class StimulusParameters(QWidget):
         self.retain.setChecked(not values["reset"])
         self.retain.toggled.connect(self.mark_changed)
         self.extra_body.addWidget(self.retain)
-        self.retain.setVisible(values["kind"] != "video")
+        self.retain.setVisible(values["kind"] not in ("video", "arena"))
         self.fades = None
         if "opacity" in values:
             appearance = AdvancedAppearance(
@@ -370,7 +371,7 @@ class StimulusParameters(QWidget):
                 )
         if self.fades is not None:
             setting["opacity"] = self.fades.read()
-        if setting["kind"] != "video":
+        if setting["kind"] not in ("video", "arena"):
             setting["reset"] = not self.retain.isChecked()
         for form in self.forms:
             if isinstance(form, ArenaMovement):
@@ -391,7 +392,8 @@ class StimulusParameters(QWidget):
                 self.program, program, self.node_index, self.layer_index, self.projector
             )
         except (ValueError, TypeError, OSError) as error:
-            self.message.setText(f"Cannot update · {error}")
+            # Focus/layer changes also call this; the epoch Add/Apply owns warnings.
+            self.message.setText(str(error))
             self.message.show()
             self.reset_button.setText("Discard invalid edit")
             self.reset_button.show()
@@ -434,7 +436,7 @@ class StimulusParameters(QWidget):
         if not self.isEnabled():
             return
         if not self.asset_root or not Path(self.asset_root).is_dir():
-            self.message.setText("Choose the asset root folder first")
+            self.message.warn("Choose the asset root folder first")
             self.message.show()
             return
         if self.file_dialog is not None:
@@ -492,7 +494,7 @@ class StimulusParameters(QWidget):
                 self.media_selected.emit()
                 return
         except (OSError, ValueError, TypeError) as error:
-            self.message.setText("Cannot select stimulus file · see details")
+            self.message.warn(f"Cannot select stimulus file · {error}")
             self.message.show()
             self.message.setToolTip(str(error))
             return

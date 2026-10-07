@@ -9,6 +9,7 @@ from typing import Any
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.snapshots import SnapshotPublisher
+from cephvr.controller.device.spikeglx_stop import SpikeGLXStopScheduler
 from cephvr.controller.incident.registry import IncidentCapacityError
 from cephvr.controller.lifecycle.cleanup import CleanupWorkflow
 from cephvr.controller.metadata.coordination import MetadataCoordinator
@@ -25,6 +26,7 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
+from cephvr.synchronization.v1 import spikeglx_pb2 as spikeglx_pb
 
 
 class InterruptionWorkflow:
@@ -62,6 +64,13 @@ class InterruptionWorkflow:
         self.supervisor_generation = supervisor_generation
         self.clock = clock
         self.spawn = spawn
+        self.spikeglx_stop = SpikeGLXStopScheduler(
+            lifecycle=lifecycle,
+            spikeglx=spikeglx,
+            clock=clock,
+            spawn=spawn,
+            stop=self._stop_spikeglx,
+        )
 
     async def interrupt(
         self, attempt: Attempt, reason: str, *, issued_ns: int | None = None
@@ -91,6 +100,26 @@ class InterruptionWorkflow:
         if joined is not None:
             await self._join(joined)
             return
+        if attempt.paired:
+            stop_base_ns, immediate = _spikeglx_stop_base_ns(
+                attempt,
+                self._stop_deadline(attempt),
+                self.clock(),
+                trial_active=not attempt.trial_log_finished
+                and self.lifecycle.trial.phase
+                in {
+                    pb.TRIAL_PHASE_STARTING,
+                    pb.TRIAL_PHASE_RUNNING,
+                    pb.TRIAL_PHASE_FINALIZING,
+                },
+            )
+            self.arm_spikeglx_stop(
+                attempt,
+                stopped_deadline_ns=stop_base_ns,
+                final_trial=True,
+                interruption=True,
+                immediate=immediate,
+            )
         trial_metadata_clean = False
         try:
             trial_metadata_clean = await self._stop_backends_and_trial(attempt, reason)
@@ -359,7 +388,9 @@ class InterruptionWorkflow:
                 )
             cleanup_deadline = attempt.finalization_deadline_ns
         clean = metadata_clean
-        if attempt.paired and not await self._stop_spikeglx(attempt, cleanup_deadline):
+        if attempt.paired and not await self._finish_spikeglx_stop(
+            attempt, cleanup_deadline
+        ):
             clean = False
         clean = (
             await self.metadata.finish_session(
@@ -386,21 +417,76 @@ class InterruptionWorkflow:
 
     async def _stop_spikeglx(self, attempt: Attempt, cleanup_deadline: int) -> bool:
         """Stop the paired SpikeGLX run; True only when stopped and logged."""
+        if attempt.spikeglx_stopped:
+            return True
+        attempt.spikeglx_monitor_stop.set()
+        async with self.lifecycle.lock:
+            attempt.spikeglx_recording.phase = (
+                spikeglx_pb.SPIKEGLX_RECORDING_PHASE_STOPPING
+            )
+            self.publisher.publish()
         try:
-            if self.spikeglx is None or not await asyncio.wait_for(
-                self.spikeglx.stop_expected_run(),
-                max(0, (cleanup_deadline - self.clock()) / 1e9),
-            ):
+            if self.spikeglx is None:
+                confirmed = False
+            else:
+                confirmed = await asyncio.wait_for(
+                    self.spikeglx.stop_expected_run(cleanup_deadline),
+                    max(0, (cleanup_deadline - self.clock()) / 1e9),
+                )
+            if not confirmed:
+                async with self.lifecycle.lock:
+                    attempt.spikeglx_recording.phase = (
+                        spikeglx_pb.SPIKEGLX_RECORDING_PHASE_UNKNOWN
+                    )
+                    attempt.spikeglx_recording.failure_code = "STOP_UNCONFIRMED"
+                    self.publisher.publish()
                 return False
             attempt.spikeglx_stopped = True
+            async with self.lifecycle.lock:
+                attempt.spikeglx_recording.phase = (
+                    spikeglx_pb.SPIKEGLX_RECORDING_PHASE_STOPPED
+                )
+                attempt.spikeglx_recording.ClearField("failure_code")
+                self.publisher.publish()
             await self.metadata.log_event(
                 attempt,
                 "spikeglx_stopped",
                 details={"run_name": attempt.prepared.spikeglx.run_name},
             )
         except Exception:
+            async with self.lifecycle.lock:
+                attempt.spikeglx_recording.phase = (
+                    spikeglx_pb.SPIKEGLX_RECORDING_PHASE_UNKNOWN
+                )
+                attempt.spikeglx_recording.failure_code = "STOP_UNCONFIRMED"
+                self.publisher.publish()
             return False
         return True
+
+    def arm_spikeglx_stop(
+        self,
+        attempt: Attempt,
+        *,
+        stopped_deadline_ns: int,
+        final_trial: bool,
+        interruption: bool = False,
+        immediate: bool = False,
+    ) -> None:
+        self.spikeglx_stop.arm(
+            attempt,
+            stopped_deadline_ns=stopped_deadline_ns,
+            final_trial=final_trial,
+            interruption=interruption,
+            immediate=immediate,
+        )
+
+    def cancel_spikeglx_stop(self, attempt: Attempt) -> None:
+        self.spikeglx_stop.withdraw(attempt)
+
+    async def _finish_spikeglx_stop(
+        self, attempt: Attempt, cleanup_deadline: int
+    ) -> bool:
+        return await self.spikeglx_stop.finish(attempt, cleanup_deadline)
 
     async def _complete_reservation(
         self, attempt: Attempt, cleanup_deadline: int
@@ -442,3 +528,22 @@ class InterruptionWorkflow:
         attempt.closure.clean = clean
         self.cleanup.settle_operations(attempt)
         self.publisher.publish()
+
+
+def _spikeglx_stop_base_ns(
+    attempt: Attempt,
+    stopped_deadline_ns: int,
+    now_ns: int,
+    *,
+    trial_active: bool = True,
+    trial_log_finished: bool = False,
+) -> tuple[int, bool]:
+    """Keep the local Stopped bound only while the current trial can be active."""
+    if (
+        trial_active
+        and not trial_log_finished
+        and not attempt.trial_log_finished
+        and (attempt.started or attempt.trial_closure.released)
+    ):
+        return stopped_deadline_ns, False
+    return now_ns, True

@@ -19,12 +19,16 @@ from cephvr.controller.control.prompts import OperatorPrompts
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.device.camera import CameraCommands
 from cephvr.controller.device.display import DisplayInitialization
+from cephvr.controller.device.display_calibration import DisplayCalibrationController
 from cephvr.controller.device.microcontroller import MicrocontrollerCommands
 from cephvr.controller.device.owner_cleanup import ManualControlCleanup
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.preview import PreviewHandling
 from cephvr.controller.device.readback import CameraReadback
+from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+from cephvr.controller.device.spikeglx_monitor import SpikeGLXProgressMonitor
 from cephvr.controller.device.status_retention import CameraStatusRetention
+from cephvr.controller.device.tracking_diagnostic import TrackingDiagnosticController
 from cephvr.controller.device.views import DeviceViews
 from cephvr.controller.incident.coordination import IncidentCoordinator
 from cephvr.controller.lifecycle.acquisition_resolution import AcquisitionResolution
@@ -97,6 +101,8 @@ class AssemblyInputs:
     health_silence_ns: int
     clock: Callable[[], int]
     spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]]
+    display_pacing_resolver: Callable[[str, Message], str] | None = None
+    software_root: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -107,6 +113,7 @@ class ControllerComponents:
     leases: ControlLeases
     metadata: MetadataCoordinator
     display: DisplayInitialization
+    display_calibration: DisplayCalibrationController
     camera: CameraCommands
     microcontroller: MicrocontrollerCommands
     camera_readback: CameraReadback
@@ -128,6 +135,9 @@ class ControllerComponents:
     setup_execution: SetupExecution
     setup_admission: SetupAdmission
     acquisition_resolution: AcquisitionResolution
+    tracking_diagnostic: TrackingDiagnosticController
+    spikeglx_monitor: SpikeGLXProgressMonitor | None
+    spikeglx_inventory: SpikeGLXInventory | None
 
 
 def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
@@ -192,11 +202,28 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         projections=i.projections,
         file_policy_loader=i.file_policy_loader,
         display_validator=i.display_validator,
+        display_pacing_resolver=i.display_pacing_resolver,
         generation=i.generation,
         limits=i.limit_state,
         max_operation_records=i.max_operation_records,
         clock=i.clock,
         hooks=device_hooks,
+    )
+    display_calibration = DisplayCalibrationController(
+        lifecycle=i.lifecycle,
+        configuration=i.configuration_state,
+        control=i.control,
+        device=i.device_state,
+        backends=i.backends,
+        projections=i.projections,
+        file_policy_loader=i.file_policy_loader,
+        display_validator=i.display_validator,
+        display_pacing_resolver=i.display_pacing_resolver,
+        generation=i.generation,
+        limits=i.limit_state,
+        hooks=device_hooks,
+        maximum_asset_bytes=i.max_preparation_bytes,
+        clock=i.clock,
     )
     camera = CameraCommands(
         lifecycle=i.lifecycle,
@@ -399,6 +426,31 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         generation=i.generation,
         supervisor_generation=i.supervisor_generation,
     )
+    spikeglx_monitor = (
+        SpikeGLXProgressMonitor(
+            lifecycle=i.lifecycle,
+            spikeglx=i.spikeglx,
+            incidents=incidents,
+            publisher=publisher,
+            generation=i.generation,
+            clock=i.clock,
+        )
+        if i.spikeglx is not None
+        else None
+    )
+    spikeglx_inventory = (
+        SpikeGLXInventory(
+            software_root=i.software_root,
+            lifecycle=i.lifecycle,
+            configuration=i.configuration_state,
+            operations=control_operations,
+            limits=i.limit_state,
+            publish=publisher.publish,
+            clock=i.clock,
+        )
+        if i.software_root is not None
+        else None
+    )
     prompts = OperatorPrompts(
         lifecycle=i.lifecycle,
         incidents=i.incident_state,
@@ -435,6 +487,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         interruption=interruption,
         supervisor=i.supervisor,
         spikeglx=i.spikeglx,
+        spikeglx_monitor=spikeglx_monitor,
         schema_factory=i.schema_factory,
         output_planner=i.output_planner,
         generation=i.generation,
@@ -503,6 +556,22 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         clock=i.clock,
         spawn=i.spawn,
     )
+    tracking_diagnostic = TrackingDiagnosticController(
+        generation=i.generation,
+        lifecycle=i.lifecycle,
+        configuration=i.configuration_state,
+        control=i.control,
+        device=i.device_state,
+        supervisor=i.supervisor_state,
+        limits=i.limit_state,
+        backends=i.backends,
+        supervisor_peer=i.supervisor,
+        projections=i.projections,
+        file_policy_loader=i.file_policy_loader,
+        publish=publisher.publish,
+        clock=i.clock,
+        maximum_frame_bytes=i.max_preparation_bytes,
+    )
     return ControllerComponents(
         control_operations=control_operations,
         preparation_context=preparation_context,
@@ -510,6 +579,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         leases=leases,
         metadata=metadata,
         display=display,
+        display_calibration=display_calibration,
         camera=camera,
         microcontroller=microcontroller,
         camera_readback=camera_readback,
@@ -531,4 +601,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         setup_execution=setup_execution,
         setup_admission=setup_admission,
         acquisition_resolution=acquisition_resolution,
+        tracking_diagnostic=tracking_diagnostic,
+        spikeglx_monitor=spikeglx_monitor,
+        spikeglx_inventory=spikeglx_inventory,
     )

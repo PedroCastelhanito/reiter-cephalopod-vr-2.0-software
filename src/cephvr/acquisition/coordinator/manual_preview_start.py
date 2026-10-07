@@ -18,6 +18,7 @@ from cephvr.acquisition.coordinator.manual_device_status import (
 )
 from cephvr.acquisition.coordinator.manual_preview_resources import (
     allocate_manual_preview_slot,
+    allocate_manual_tracking_slot,
 )
 from cephvr.acquisition.coordinator.manual_preview_setup import (
     build_preview_payload,
@@ -268,12 +269,35 @@ class ManualPreviewStart:
             ledger=self.resource_ledger,
             resource_port=self.resource_port,
         )
+        tracking_attachment = None
+        tracking_worker_attachment = None
+        if request.camera == camera.CAMERA_ROLE_TRACKING:
+            capacity = self.configuration.settings.tracking_ring_frames
+            if capacity <= 0:
+                raise ValueError("tracking ring capacity must be positive")
+            (
+                tracking_worker_attachment,
+                tracking_attachment,
+            ) = await allocate_manual_tracking_slot(
+                worker=worker,
+                resolved=resolved,
+                controller=self.identity.controller,
+                tracking_consumer=self.identity.tracking,
+                run_id=run_id,
+                configuration_revision=configuration_revision,
+                capacity_frames=capacity,
+                resources=self.resources,
+                ledger=self.resource_ledger,
+                resource_port=self.resource_port,
+            )
         preview = new_worker_preview(
             run_id,
             configuration_revision,
             attachment,
             resolved,
             request.preview_output_bit_depth,
+            tracking_attachment=tracking_attachment,
+            tracking_worker_attachment=tracking_worker_attachment,
         )
         worker.preview = preview
         command = request.command
@@ -287,7 +311,13 @@ class ManualPreviewStart:
             requested_device_id=setting.device.device_id,
         )
         preview.preparation = control.OperationContext(command_id=prep_child.command_id)
-        payload = build_preview_payload(setting, policy, resolved, attachment)
+        payload = build_preview_payload(
+            setting,
+            policy,
+            resolved,
+            attachment,
+            tracking_attachment=tracking_worker_attachment,
+        )
         prepare = acq.WorkerPreparePreview(
             command=prep_command,
             configuration_revision=configuration_revision,

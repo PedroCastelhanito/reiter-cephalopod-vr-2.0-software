@@ -74,6 +74,13 @@ class StageRegistry:
             )
         self._entries[key] = spec
 
+    def declaration(self, stage_id: str, implementation_id: str) -> StageSpec:
+        """Return one registered declaration without parsing its full settings."""
+        try:
+            return self._entries[(stage_id, implementation_id)]
+        except KeyError as exc:
+            raise ValueError("unregistered stage implementation") from exc
+
     def resolve(
         self, selection: StageConfiguration, *, max_bytes: int
     ) -> tuple[StageSpec, Model]:

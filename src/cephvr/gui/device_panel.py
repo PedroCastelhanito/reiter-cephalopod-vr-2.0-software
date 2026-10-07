@@ -57,6 +57,6 @@ class DevicePanel(ResponsiveColumns):
             )
 
     def apply_view(self, view: DashboardView) -> None:
-        self.can_review = view.sample and view.can_edit
+        self.can_review = view.can_edit
         for control in (*self.editors, *self.action_buttons):
             control.setEnabled(self.can_review)

@@ -9,7 +9,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from google.protobuf.message import Message
@@ -35,6 +35,7 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
 @dataclass(frozen=True)
@@ -160,6 +161,9 @@ class SetupAdmission:
                 return self.control_operations.admission(
                     command_id, error="manual camera cleanup is still reconciling"
                 )
+            blocker = self._owner_readiness_blocker()
+            if blocker:
+                return self.control_operations.admission(command_id, error=blocker)
             if manual_camera_owned(self.projections, self.device_state):
                 return self.control_operations.admission(
                     command_id, error=_CAMERA_OPEN_MESSAGE
@@ -211,11 +215,41 @@ class SetupAdmission:
                     command_id, error=f"controller settings unavailable: {exc}"
                 )
         try:
+            file_policies = (
+                dict(
+                    await asyncio.wait_for(
+                        asyncio.to_thread(self.file_policy_loader, active_names),
+                        self.limit_state.current.validation_ns / 1e9,
+                    )
+                )
+                if self.file_policy_loader is not None
+                else {}
+            )
+        except Exception as exc:
+            return self.control_operations.admission(
+                command_id, error=f"backend file policies unavailable: {exc}"
+            )
+
+        def validate(
+            name: str, validator: Callable[..., pb.ValidationResult]
+        ) -> pb.ValidationResult:
+            policy_validator = cast(
+                Callable[
+                    [pb.ExperimentConfiguration, Message | None], pb.ValidationResult
+                ]
+                | None,
+                getattr(validator, "validate_with_file_policy", None),
+            )
+            if callable(policy_validator):
+                return policy_validator(proposal, file_policies.get(name))
+            return validator(proposal)
+
+        try:
             validation = await asyncio.wait_for(
                 asyncio.gather(
                     *(
-                        asyncio.to_thread(validator, proposal)
-                        for validator in self.validators.values()
+                        asyncio.to_thread(validate, name, validator)
+                        for name, validator in self.validators.items()
                     )
                 ),
                 self.limit_state.current.validation_ns / 1e9,
@@ -234,21 +268,6 @@ class SetupAdmission:
                 "configuration invalid",
             )
             return self.control_operations.admission(command_id, error=reason)
-        try:
-            file_policies = (
-                dict(
-                    await asyncio.wait_for(
-                        asyncio.to_thread(self.file_policy_loader, active_names),
-                        self.limit_state.current.validation_ns / 1e9,
-                    )
-                )
-                if self.file_policy_loader is not None
-                else {}
-            )
-        except Exception as exc:
-            return self.control_operations.admission(
-                command_id, error=f"backend file policies unavailable: {exc}"
-            )
         return SetupCandidate(
             loaded_settings, candidate_limits, file_policies, tuple(validation)
         )
@@ -280,6 +299,9 @@ class SetupAdmission:
                     or self.lifecycle.startup_blocker
                     or "Setup unavailable in current phase or blocked cleanup",
                 )
+            blocker = self._owner_readiness_blocker()
+            if blocker:
+                return self.control_operations.admission(command_id, error=blocker)
             if manual_camera_owned(self.projections, self.device_state):
                 return self.control_operations.admission(
                     command_id, error=_CAMERA_OPEN_MESSAGE
@@ -412,3 +434,31 @@ class SetupAdmission:
                 )
             )
             return self.control_operations.admission(command_id)
+
+    def _owner_readiness_blocker(self) -> str:
+        if self.lifecycle.inventory_update_pending:
+            return "SpikeGLX inventory persistence is still unresolved"
+        if (
+            self.control.tracking_diagnostic.active
+            or not self.control.tracking_diagnostic.closed
+        ):
+            return "Tracking diagnostic must confirm closure before Setup"
+        calibration = self.projections.display
+        if (
+            self.device_state.calibration_blocked
+            or self.device_state.calibration_pending is not None
+            or (
+                calibration is not None
+                and calibration.HasField("calibration")
+                and (
+                    calibration.calibration.state
+                    != visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_IDLE
+                    or not calibration.calibration.HasField("idle")
+                    or not calibration.calibration.idle
+                    or not calibration.calibration.HasField("resources_closed")
+                    or not calibration.calibration.resources_closed
+                )
+            )
+        ):
+            return "Display calibration must confirm Idle and resource closure before Setup"
+        return ""

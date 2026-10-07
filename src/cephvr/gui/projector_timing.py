@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QCheckBox, QGridLayout, QLineEdit, QWidget
 
 from cephvr.gui.components import Card, combo, field
 from cephvr.gui.device_panel import entry
+from cephvr.gui.theme import SIZES
 
 
 class ProjectorTiming(Card):
@@ -17,7 +18,7 @@ class ProjectorTiming(Card):
         self.fields: dict[str, QLineEdit] = {}
         self.options = QWidget()
         grid = QGridLayout(self.options)
-        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setContentsMargins(0, SIZES.section_toggle_gap, 0, 0)
         grid.addWidget(field("PULSE DISPLAY", self.target), 0, 0)
         grid.addWidget(field("VSYNC MODE", self.mode), 0, 1)
         for i, name in enumerate(("X", "Y", "Width", "Height")):

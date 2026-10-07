@@ -147,6 +147,18 @@ class PreparationContext:
         )
         request.context.session_directory = str(attempt.reservation.session_directory)
         request.context.paired_spikeglx = attempt.paired
+        if attempt.paired:
+            # The remote recorder is controlled by this registered controller,
+            # not by an invented backend process or worker identity.
+            request.context.prepared_functions.add(
+                resource_id="spikeglx_recording",
+                owner=request.context.controller,
+                affected_closure_resource_ids=["spikeglx_recording"],
+                essential_to_stimulus_control=False,
+                feedback_hold_required_on_loss=False,
+                authorized_reporters=[request.context.controller],
+                bounded_uncertainty_supported=True,
+            )
         request.context.outputs.extend(attempt.prepared.outputs)
         request.context.policies.CopyFrom(self.configuration_state.policies)
         worker_owners = self.worker_owners(attempt)

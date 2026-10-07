@@ -36,7 +36,7 @@ Configuration:
 <a id="e12"></a>
 ### E12 — Remote SpikeGLX control
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 20
 
 - **Owner and transport:** the controller owns the only SpikeGLX client (no
   supervisor fallback), using the official SDK Python wrapper against SpikeGLX's
@@ -61,14 +61,19 @@ Configuration:
 - **Pulse inventory:** `synchronization_config.toml` `[pulse_inventory]` maps each
   alignment role (behavioral/tracking camera triggers, photodiode) to stream, stream
   index, saved channel and optional digital bit; camera roles use OneBox. The
-  operator reassigns roles by editing that table; it is reread at each Setup without
-  restart. Required roles are every enabled externally triggered camera plus the
+  operator reassigns roles by editing that table, directly or through a controller-
+  serialized Configuration GUI update checked against the original file digest and
+  current control lease. Update only pulse_inventory atomically, preserving unrelated
+  values/comments; endpoint, SDK and monitor settings stay host-file-only. The table
+  is reread at each Setup without restart. Required roles are every enabled externally triggered camera plus the
   photodiode when pulse generation is enabled (V22); a disabled photodiode retains
   its mapping without requiring a saved channel. An unmapped required role, wrong
   stream or unsaved channel blocks Ready. An
   unpaired session records a Setup warning in the session log, with no prompt, that
   CephVR cannot verify pulse recording. The check proves saved-channel configuration,
-  not wiring or recorded pulses.
+  not wiring or recorded pulses. Optional trial-state, projector-flip and custom
+  inputs are supplemental saved-channel metadata, never SpikeGLX acquisition-setting
+  commands; preserve stream identity and absent digital bit separately from bit zero.
 - **Start:** after `session_started` is synchronized, call startRun. Release the first
   trial only after isSaving, a matching run name and increasing sample counts on every
   saved stream within the configured writing-start bound; failure interrupts the
@@ -79,6 +84,10 @@ Configuration:
   counter reset opens/updates E06's incident prompt. An unreachable server counts as
   no confirmed advance (no separate unknown state). Stop automatically only if
   coordinated local execution cannot continue. Never restart/adopt the remote run.
+  Register this controller-owned recording capability in the exact prepared incident
+  scope; it has no fabricated backend/worker and is not essential to local continuation.
+  Resolve the current incident only when every saved stream advances again; retain its
+  history and never reverse an already selected Abort or automatic interruption.
   Setup, first-start/writing and stop retain their own absolute bounds.
 - **Stop:** on session end involving an active/ending trial, issue stopRun at E05's
   local Stopped deadline plus `stop_margin_s` (default **1 s**, configurable; extra

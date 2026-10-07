@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 import numpy as np
 
-from cephvr.tracking.config.models.methods import FinFlowSettings, WaterFlowSettings
 from cephvr.tracking.methods.outline import project_sections
 from cephvr.tracking.types import FlowGridMapping, ImageLayout, SamplingGeometry
+
+
+class SamplingSettings(Protocol):
+    sections: Any
 
 
 @dataclass(frozen=True)
@@ -24,7 +27,7 @@ def associate(
     geometry: SamplingGeometry,
     mapping: FlowGridMapping,
     layout: ImageLayout,
-    settings: WaterFlowSettings,
+    settings: SamplingSettings,
     maximum: int,
 ) -> Association:
     count = settings.sections.count
@@ -43,12 +46,13 @@ def associate(
         np.asarray(geometry.outline_xy_px) - np.array(geometry.centre_xy_px)
     ) @ basis
     labels = project_sections(body, curve, count, min(maximum // 8, 1024 * 1024))
-    if isinstance(settings, FinFlowSettings) and settings.fin_region.span_degrees < 360:
+    fin_region = getattr(settings, "fin_region", None)
+    if fin_region is not None and fin_region.span_degrees < 360:
         angle = np.degrees(np.arctan2(body[:, 1], body[:, 0]))
-        delta = (angle - settings.fin_region.offset_degrees + 180) % 360 - 180
+        delta = (angle - fin_region.offset_degrees + 180) % 360 - 180
         selected = (
-            (delta >= -settings.fin_region.span_degrees / 2)
-            & (delta < settings.fin_region.span_degrees / 2)
+            (delta >= -fin_region.span_degrees / 2)
+            & (delta < fin_region.span_degrees / 2)
             & np.any(body != 0, axis=1)
         )
         points, labels = points[selected], labels[selected]

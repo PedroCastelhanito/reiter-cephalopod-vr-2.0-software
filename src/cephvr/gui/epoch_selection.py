@@ -3,9 +3,10 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QGridLayout, QSizePolicy, QVBoxLayout, QWidget
 
-from cephvr.gui.components import InlineMessage, equal_row_height, field
+from cephvr.gui.components import equal_row_height, field
 from cephvr.gui.epoch_composer import EpochComposer
 from cephvr.gui.formatting import clock_duration
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.program_editing import data_node, node_at, unique_id, validate
 from cephvr.gui.projector_layers import detach_layer
 from cephvr.gui.protocol_document import blank_program
@@ -81,7 +82,7 @@ class EpochSelection(QWidget):
             self.identity_fields.append(field(caption, editor))
         self.composer.set_generation_controls(identity)
         body.addWidget(self.composer)
-        self.message = InlineMessage()
+        self.message = FormNotice()
         body.addWidget(self.message)
         equal_row_height(
             self.composer.mode, self.composer.duration, self.composer.batch_label
@@ -200,6 +201,6 @@ class EpochSelection(QWidget):
             data_node(data, self.path).update(epoch)
             result = validate(data)
         except (ValueError, TypeError, IndexError, OSError) as exc:
-            self.message.setText(str(exc))
+            self.message.warn(str(exc))
             return
         self.committed.emit(result)

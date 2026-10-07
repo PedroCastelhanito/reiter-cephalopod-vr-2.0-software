@@ -16,8 +16,57 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 108
+**Status:** Accepted · **Revision:** 120
 
+- Tracking derives its input from the unique camera assigned the Tracking role in
+  Devices; no second source selector or discovery-order fallback. Its pipeline card
+  precedes Preprocessing, Calibration, Pose and Motion subtabs, with the shared
+  fixed HUD/log column and independently scrollable settings. Preprocessing drafts
+  input crop then isotropic downscale; Calibration owns the image-plane distance
+  reference after T20 anatomical points; Pose places T16 search region before
+  T05/T06 controls and sampling geometry; Motion owns optical-flow, estimator and
+  always-expanded flow quality controls. Fresh drafts default to Water flow and
+  Manual pose; show the fixed NVIDIA OF method explicitly.
+  Show only applicable method fields and retain separate water/fin analysis drafts.
+  Camera settings, recording and stimulus gains keep their existing owners.
+- The local Tracking frontend supports draft Load/Save as and a detached reference
+  image annotation tool. Input crop and pose-search rectangles support synchronized
+  integer X/Y/Width/Height fields in original camera pixels. Keep overlay visibility
+  separate from these configuration controls; no Draw region buttons.
+  Distance endpoints, anatomical references and manual landmarks have named, editable
+  source-pixel X/Y rows synchronized with drawing; incomplete coordinate edits retain
+  the committed annotation. Two distance endpoints and a positive known length derive
+  source-image px/mm and mm/px independently of downscale; this is not physical swimming-speed calibration
+  or a change to T35/T38 output units. Source/image changes invalidate annotations;
+  missing/ambiguous/disabled Tracking assignments remain visible in the HUD.
+  Subject reference places Set points and Clear together on the left; Clear removes
+  only anatomical references. Local documents migrate older draft formats without
+  inventing calibration. Hide uncalibrated scale and output-size captions. Manual
+  pose uses a content-sized form with Set landmarks aligned left above the shared
+  coordinate table; method switching retains each method's settings.
+- Tracking stage switches apply only to pre-experiment configuration, preview and
+  diagnostics. Label them Enable. Pose, sampling region, optical flow, flow quality
+  and locomotion default enabled; disabling a stage retains its parameters.
+  Preprocessing has only its existing Enable crop and downscale controls, without
+  an additional stage switch. Store diagnostic-stage choices separately from
+  experiment settings. Experiments requiring Tracking run
+  every required stage of the selected T02 pipeline regardless of diagnostic switches;
+  optional crop/downscale and method settings retain their meaning. Older drafts
+  migrate with all diagnostic stages enabled; discard the obsolete preprocessing
+  diagnostic flag while retaining crop/downscale settings. T08 owns selected-stage
+  availability and the image/preprocessing-only empty-mask path for first annotation.
+- Tracking edits follow authority/session locking; no new participation toggle.
+  Diagnostic Begin sends a separate bounded typed local draft against the accepted
+  camera/configuration revision without publishing experiment settings. Encode only
+  runnable selected inputs; retain dormant incomplete fields locally. Changes to
+  active diagnostic settings require confirmed Close and fresh Begin. Ordinary
+  experiment submission remains strict under E07; annotations stay local until
+  accepted. Preserve T01/T20 acquired-image lineage and coordinates.
+- Managed session submission retains optional species, sex, age in dph, size in mm
+  and condition beside subject/experiment identifiers. Absent values remain absent;
+  numeric age is finite and nonnegative and size is finite and positive. E07 owns
+  validation, stale-revision rejection and persistence; incomplete local drafts never
+  authorize Setup with different accepted settings.
 - Main navigation orders **Dashboard, Protocol, Devices, Tracking**. Protocol owns
   session mode and V02/V03 stimulus programming. Protocol type with Load/Save as sits
   left of one Assets folder (E07 root); narrow windows stack the pair. Dashboard owns
@@ -75,14 +124,22 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Matching fixed durations show their actual hh:mm:ss value (including fractions);
   mixed/variable durations show the hh:mm:ss entry format without staging a change.
   Targeting and epoch identity fields share equal grid columns and control heights.
-  Timeline selection leaves extra space before the full form. One permanent
-  Apply/Discard action bar sits above targeting controls in every Batch edit mode;
-  the same buttons dispatch to the selected-source form or the target patch.
-  Empty validation messages collapse; nonempty messages remain inline. Narrow
+  Timeline selection leaves extra space before the full form. Apply/Discard sit
+  at the card's top right, opposite the Batch generate/edit tabs, in every Batch
+  edit mode; the same buttons dispatch to the selected-source form or target patch.
+  Parameter-by-parameter editing omits the Projector column heading. Its choices
+  derive from the same per-stimulus generation columns, plus Duration and Asset;
+  exclude Opacity and unsupported family fields. Rotation keeps its canonical
+  angular-rate key. Video At end uses Loop/Hold final frame choices; arena edits
+  use the same longitudinal/lateral/angular movement gains as generation.
+  Validation follows G02 action-time warnings, without inline error text. Epoch
+  parameter warnings appear only on Add epochs or Apply edits; focus changes,
+  layer/type navigation and reference/variation preparation remain quiet and retain
+  invalid drafts. Rejected navigation preserves the current edit. Narrow
   projector rows omit asset/numeric placeholders for empty layers.
   Invalid input stays visible. Loss of editing authority closes
-  file pickers and disables forms. All parameters opens the complete single-source
-  inspector in the card.
+  file pickers and disables forms. The full Timeline-selection form replaces the
+  redundant All parameters shortcut.
   In Timeline selection, one selected source epoch uses the shared Batch generate
   projector/layer form, populated with its authored settings, duration and batch label.
   Apply epoch updates only that source; shared scene composition uses copy-on-write,
@@ -90,8 +147,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   parameter-by-parameter patch controls and offers All epochs, Epoch label and Epoch
   index filters. Label selection lists the current trial's authored labels; index
   selects one source epoch in one-based trial order, including nested groups but not
-  duplicating repeated occurrences. Invalid or out-of-range indices show an inline
-  warning and block Apply without changing the document. Returning to Timeline
+  duplicating repeated occurrences. Invalid indices or missing label matches remain
+  quiet until Apply; its warning rejects the edit without changing the document. Returning to Timeline
   selection restores its previous targets. Multiple timeline targets keep batch
   patch controls rather than inventing one reference for mixed settings.
   Batch generate owns a local reference
@@ -130,8 +187,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Advanced settings occupy one shared-style card beneath the selected projector
   row, with its left edge aligned to Layer. Retain state is first when relevant;
   Linked to and fade-in/out durations follow, then control entries. Video hides
-  Retain state and Linked to; Looming hides Linked to. Other edits preserve loaded
-  Video reset/continuation values, with playback continuity owned by V07/V09.
+  Retain state and Linked to; 3D arena hides Retain state; Looming hides Linked to.
+  Other edits preserve loaded Video/arena reset values, with Video playback
+  continuity owned by V07/V09.
   New GUI-created stimuli retain
   state by default (reset false); loaded explicit reset values and boundary
   assignments remain unchanged. No opacity editor: new stimuli use a constant base
@@ -259,7 +317,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   preserve child-block versus condition-row semantics, complete settings and V07
   continuity. Structural rename/duplicate/reorder/remove act on one source epoch;
   multiple-source changes use the explicit batch editor. Duplicate and Delete are
-  buttons within Batch edit, visible only for Timeline selection, with Ctrl+D and Backspace shortcuts that
+  buttons immediately before Preview in the timeline header, visible only for
+  Timeline selection. At narrow widths their row sits below the title to avoid
+  clipping. Ctrl+D and Backspace shortcuts
   respect the same selection/authority guards and preserve Backspace text editing;
   rename/reorder/projector selection remain in
   its context menu. Batch edit omits the selected-epoch count line. Undo/Redo use
@@ -267,7 +327,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Load/save validates canonical JSON and saves atomically
   per trial. Trial deletion confirms the named local draft, preserves saved files
   and leaves a blank draft if deleting the last. Trial drafts are local documents,
-  not a session schedule. Expanded sequence inspection has an explicit Close action;
+  not an accepted session schedule until managed submission. The managed Trials list
+  submits the explicit ordered session schedule under E01, preserving canonical
+  program sources and optional seeds; gaps bind after their trial with no final gap.
+  Expanded sequence inspection has an explicit Close action;
   Setup retains the final seed/order. Invalid mutations preserve the last valid program.
 - CephVR1 texture designs resolve an existing exported PNG plus declared tile dimensions
   into canonical V03; missing/invalid companions fail without synthesizing appearance.
@@ -521,8 +584,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   requests and unavailable viewers disable their controls with explanatory status.
   Preview rows are ordered Behavior cam, Tracking cam, any further configured camera
   roles, Tracking, Visual stimulus. Retain inactive sources as dimmed, disabled rows:
-  a camera must be enabled for the experiment; tracking requires an active protocol
-  pipeline; Visual stimulus requires protocol participation. Check active state again
+  a camera must be enabled for the experiment; experiment Tracking requires an active
+  protocol pipeline; Visual stimulus requires protocol participation. Explicit T08
+  Configuration diagnostics instead require the accepted enabled Tracking-camera
+  preview and their selected diagnostic pipeline, independently of experiment Tracking
+  participation. Check active state again
   when requesting visibility. The Devices preview button uses the same participation
   restriction and additionally requires the selected editing connection. GUI restrictions
   do not expand A10's manual-preview phase or backend authority. Visibility never changes
@@ -547,12 +613,20 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 23
+**Status:** Accepted · **Revision:** 33
 
 - Use the current CephVR1.0 Dashboard as the visual template: dark blue/black
   surfaces, subtle bordered cards, blue primary actions, muted red stopping actions,
-  Segoe UI control text and pink monospace HUD/log panels. Embedded stimulus plots
+  Segoe UI control text and pink monospace HUD/log panels. Use the shared coral
+  accent for page headings, selected sidebar labels and active subtab text; keep
+  form labels neutral, use bright blue coordinate headers and retain blue action/focus treatments. Embedded stimulus plots
   are excluded from the initial Dashboard increment.
+- Form errors never occupy inline labels. Keep editing and passive validation quiet;
+  when an explicit action requires missing/invalid values, show a window-modal
+  warning and preserve the draft/document. Leave validation actions callable so
+  users can obtain the reason. Reuse one warning per form, close it when editing
+  authority is lost, and route routine status messages to the activity log.
+  Semantic device state and authored-content/count displays remain normal UI data.
 - One GUI-owned theme defines palette, typography, spacing, radii and sizing tokens.
   Small shared components, layout helpers and value formatters apply those tokens;
   pages compose them using focused data and callbacks under ARCH-002. Do not copy
@@ -571,6 +645,19 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   content-sized columns include that padding rather than ending at their text width.
   Header sections round their outer top corners with transparent header backgrounds
   so native header fills do not protrude beyond the table outline.
+- All tabular inventories and forms reuse the Cameras native Qt header, blue header
+  band, padding and rounded border through one shared table helper, including device
+  I/O, signal mappings, projection calibration, screen dimensions and point editors.
+  Persistent controls fit their styled height plus cell insets; content-sized columns
+  include control width and padding. Coordinate tables retain 2:1:1 name/X/Y columns and
+  centered numeric headers/values. Fit single-line rows to their content; use no
+  separate coordinate-header/divider theme. Cells remain directly editable with
+  hover/focus affordances and dash placeholders. Preserve descriptive names,
+  keyboard editing and existing validation.
+- Section-level enable controls have an extra shared 8 px of space before their
+  dependent fields, in addition to normal layout spacing. Apply the margin to the
+  dependent section so hidden sections leave no empty gap; preserve compact
+  same-row/table checkboxes beside their associated values.
 - Keep page alignment, fixed card gaps, labeled fields, natural button heights,
   content-measured table columns, semantic status labels and inherited dialog styling
   consistent across pages. Same-row controls share their tallest natural height
@@ -608,7 +695,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="e03"></a>
 ### E03 — GUI disconnection and control lease
 
-**Status:** Accepted · **Revision:** 28
+**Status:** Accepted · **Revision:** 29
 
 - **Closure and loss:** intentional GUI closure is allowed. GUI connection loss or
   crash never pauses, stops, restarts, or resumes the experiment. Unexpected
@@ -635,11 +722,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   not yet admitted recheck authority. Manual preview and retained camera editing
   connections follow A10's [control-loss cleanup rules](acquisition.md#a10).
 - **Take control:** every new/reconnected/reopened GUI subscription starts as an
-  observer. Install current state/configuration, acknowledge existing reconnect
-  warnings, then require explicit **Take control** to acquire or replace the lease.
-  This atomic action may replace the old lease at any time and invalidates its
-  generation. No recovery tokens, replacement credentials, grace timer or automatic
-  lease restoration.
+  observer. After installing current state/configuration and acknowledging existing
+  reconnect warnings, try once to acquire an unheld lease automatically through
+  AcquireControl. A concurrent holder or rejected claim leaves the GUI observing;
+  replacing another holder requires explicit confirmed Take over control. Manual
+  release does not trigger reacquisition within the same subscription. Reconnection
+  uses a fresh claim, never restores an old lease generation or credentials.
 - **State views:** `WatchState` sends one consistent current control-state view on
   connection and whenever that state changes. Clients replace their control view
   atomically; reconnecting starts from fresh state, without replaying events or

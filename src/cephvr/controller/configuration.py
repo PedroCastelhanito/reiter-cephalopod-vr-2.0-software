@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable, Mapping
+import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,10 +14,10 @@ from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.configuration_files import load_control_files
+from cephvr.controller.validator_gate import BackendValidator, gate_backend_validators
 from cephvr.shared.config import ConfigurationError
 from cephvr.shared.deadlines import duration_ns
 
-BackendValidator = Callable[[pb.ExperimentConfiguration], pb.ValidationResult]
 _BACKENDS = frozenset({"acquisition", "visual_stimulus", "tracking", "synchronization"})
 
 
@@ -387,6 +388,16 @@ def validate_experiment_candidate(
             issue(field, "name must contain an ASCII letter or digit")
     if candidate.asset_root and not candidate.asset_root.strip():
         issue("asset_root", "asset root cannot be whitespace")
+    if candidate.HasField("subject_metadata"):
+        metadata = candidate.subject_metadata
+        if metadata.HasField("age_dph") and (
+            not math.isfinite(metadata.age_dph) or metadata.age_dph < 0
+        ):
+            issue("subject_metadata.age_dph", "age must be finite and nonnegative")
+        if metadata.HasField("size_mm") and (
+            not math.isfinite(metadata.size_mm) or metadata.size_mm <= 0
+        ):
+            issue("subject_metadata.size_mm", "size must be finite and positive")
     seen_backends: set[str] = set()
     for index, backend in enumerate(candidate.backends):
         if backend.backend_name not in _BACKENDS:
@@ -436,42 +447,6 @@ def controller_validators(
     available_backend_validators: Mapping[str, BackendValidator] | None = None,
 ) -> dict[str, BackendValidator]:
     """Do not imply that missing backend modules can validate enabled settings."""
-    available = dict(available_backend_validators or {})
-    unknown = set(available) - _BACKENDS
-    if unknown:
-        raise ValueError(f"unknown backend validator names: {sorted(unknown)}")
-
-    def for_backend(name: str) -> BackendValidator:
-        def validate(candidate: pb.ExperimentConfiguration) -> pb.ValidationResult:
-            enabled = any(
-                item.backend_name == name and item.enabled
-                for item in candidate.backends
-            )
-            if not enabled:
-                return pb.ValidationResult(
-                    completed=True,
-                    valid=True,
-                    component=name,
-                    configuration_module_version="inactive",
-                )
-            provider = available.get(name)
-            if provider is None:
-                return pb.ValidationResult(
-                    completed=False,
-                    valid=False,
-                    component=name,
-                    unavailable_reason=pb.Failure(
-                        code="VALIDATOR_UNAVAILABLE",
-                        message=f"{name} configuration validator is not installed",
-                    ),
-                )
-            result = provider(candidate)
-            if result.component != name or not result.configuration_module_version:
-                raise ConfigurationError(f"{name} validator identity/version mismatch")
-            return result
-
-        return validate
-
-    return {"experiment": validate_experiment_candidate} | {
-        name: for_backend(name) for name in sorted(_BACKENDS)
-    }
+    return gate_backend_validators(
+        available_backend_validators or {}, validate_experiment_candidate
+    )

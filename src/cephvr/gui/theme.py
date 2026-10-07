@@ -19,6 +19,7 @@ class Palette:
     muted: str = "#8ea3b8"
     label: str = "#9bb0c3"
     accent: str = "#8ec7ff"
+    coral: str = "#ff8b82"
     projection: str = "#d9ac65"
     footprint: str = "#c09bf3"
     mirror: str = "#86cfc7"
@@ -32,7 +33,7 @@ class Palette:
     danger: str = "#402224"
     danger_border: str = "#b36c66"
     console: str = "#08121a"
-    console_text: str = "#ff8b82"
+    console_text: str = coral
     ready: str = "#61c554"
     waiting: str = "#f4bf4f"
     error: str = "#ff6a6a"
@@ -52,6 +53,7 @@ class Metrics:
     table_cell_padding: int = 12
     field_x_gap: int = 10
     field_y_gap: int = 8
+    section_toggle_gap: int = 8
     card_radius: int = 16
     button_radius: int = 12
     field_radius: int = 10
@@ -81,12 +83,24 @@ def stylesheet() -> str:
     QLabel {{ background: transparent; }}
     QLabel[role='brand'] {{ font-size: 22px; font-weight: 700; }}
     QLabel[role='title'] {{ font-size: {s.title_font}px; font-weight: 700; }}
-    QLabel[role='eyebrow'] {{ color: {c.accent}; font-size: {s.title_font}px;
+    QLabel[role='eyebrow'] {{ color: {c.coral}; font-size: {s.title_font}px;
                             font-weight: 700; letter-spacing: 1.2px; }}
     QLabel[role='label'] {{ color: {c.label}; font-size: {s.label_font}px;
                           font-weight: 700; letter-spacing: 0.8px; }}
     QLabel[role='muted'] {{ color: {c.muted}; font-size: {s.label_font}px; }}
     QLabel[role='hint'] {{ color: {c.muted}; }}
+    QMenuBar {{ background: {c.sidebar}; color: {c.text};
+                border-bottom: 1px solid {c.border}; spacing: 4px; }}
+    QMenuBar::item {{ background: transparent; color: {c.text}; padding: 6px 10px; }}
+    QMenuBar::item:selected {{ background: {c.selection}; color: {c.text}; }}
+    QMenuBar::item:pressed {{ background: {c.active}; color: {c.text}; }}
+    QMenuBar::item:disabled {{ color: {c.disabled}; }}
+    QMenu {{ background: {c.card}; color: {c.text};
+             border: 1px solid {c.border}; padding: 4px; }}
+    QMenu::item {{ background: transparent; color: {c.text}; padding: 6px 24px; }}
+    QMenu::item:selected {{ background: {c.selection}; color: {c.text}; }}
+    QMenu::item:disabled {{ color: {c.disabled}; }}
+    QMenu::separator {{ height: 1px; background: {c.border}; margin: 4px 8px; }}
     QFrame[role='card'] {{ background: transparent; border: none; }}
     QFrame[role='banner'] {{ background: {c.active}; border: 1px solid {c.input_border};
                             border-radius: {s.field_radius}px; }}
@@ -108,7 +122,7 @@ def stylesheet() -> str:
     QPushButton[role='navigation'] {{ background: transparent; color: {c.muted};
                                      text-align: left; padding: 14px 12px; }}
     QPushButton[role='navigation']:checked {{ background: {c.selection};
-                                             color: {c.text}; border-color: {c.accent}; }}
+                                             color: {c.coral}; border-color: {c.accent}; }}
     QPushButton:disabled {{ background: {c.window}; color: {c.disabled};
                            border-color: {c.border}; }}
     QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
@@ -119,6 +133,11 @@ def stylesheet() -> str:
         border-color: {c.focus}; }}
     QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
         color: {c.muted}; background: {c.window}; }}
+    QLineEdit[role='point-coordinate'] {{ background: transparent; border-color: transparent;
+                                        border-radius: 6px; padding: 7px 4px; }}
+    QLineEdit[role='point-coordinate']:hover {{ background: {c.hover}; }}
+    QLineEdit[role='point-coordinate']:focus {{ background: {c.card}; border-color: {c.focus}; }}
+    QLineEdit[role='point-coordinate']:disabled {{ background: transparent; color: {c.disabled}; }}
     QComboBox::drop-down {{ border: none; width: 22px; }}
     QComboBox[chevron="true"]::down-arrow {{ image: none; }}
     QComboBox QAbstractItemView {{ background: {c.input}; color: {c.text};
@@ -133,7 +152,7 @@ def stylesheet() -> str:
     QTabBar::tab {{ background: {c.card}; color: {c.muted}; border: 1px solid {c.border};
                     border-radius: 8px; padding: 9px 5px; margin-right: 4px; }}
     QTabBar::tab:last {{ margin-right: 0; }}
-    QTabBar::tab:selected {{ color: {c.text}; background: {c.selection}; border-color: {c.accent}; }}
+    QTabBar::tab:selected {{ color: {c.coral}; background: {c.selection}; border-color: {c.accent}; }}
     QTabBar::tab:hover {{ color: {c.text}; border-color: {c.focus}; }}
     QWidget#PreviewSources {{ background: {c.card}; border: 1px solid {c.border};
                              border-radius: {s.field_radius}px; }}

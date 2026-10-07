@@ -41,6 +41,8 @@ class CommandLink:
     parent: wire.BackendCommand
     child: visual_stimulus.WorkerCommand
     deadline_ns: int
+    diagnostic_id: str = ""
+    output_ids: frozenset[str] = frozenset()
 
 
 @dataclass

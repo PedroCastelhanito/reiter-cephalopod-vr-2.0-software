@@ -20,6 +20,7 @@ from cephvr.tracking.config.models.records import (
     TrackingRecord,
     Triplet,
 )
+from cephvr.tracking.processing.preprocessing import ImageTransform
 from cephvr.tracking.v1.pose_pb2 import PoseSearchRegion, SubjectReferenceSettings
 from cephvr.visual_stimulus.config.models.schema_common import Model
 
@@ -48,6 +49,9 @@ class PrivateFrame:
     layout: ImageLayout
     pixels: memoryview  # Read-only private CPU copy, not an acquisition slot.
     lease_id: str
+    transform: ImageTransform | None = (
+        None  # None means the acquired image is unchanged.
+    )
 
 
 @dataclass(frozen=True)
@@ -268,6 +272,9 @@ class FlowProxyInput:
     mapping: FlowGridMapping
     pose: PoseUse
     geometry: SamplingGeometry | None  # None on missing/invalid/stale pose.
+    transform: ImageTransform | None = (
+        None  # Native-pixel inverse for transformed input flow.
+    )
 
 
 class FlowProxyMethod(Protocol[SettingsT]):

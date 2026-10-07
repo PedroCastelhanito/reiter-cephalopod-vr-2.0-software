@@ -1,8 +1,21 @@
 # Acquisition status
 
+Current development integration: [A03](../docs/architecture/acquisition.md#a03) and
+[A10](../docs/architecture/acquisition.md#a10) authorize the acquisition-owned ordered
+Tracking ring in exact Configuration diagnostic preview scope. Sol accepted the
+allocation, actual manual capture publication, source/transfer identity and confirmed
+release repairs. The affected acquisition worker/manual-preview, controller diagnostic
+and full Tracking selection passed 99 tests with one deselected, independently repeated
+by Sol. Actual capture_once coverage verifies native pixels, frame IDs and discontinuity
+publication without a recording window; retired resources remain held until both GUI
+and Tracking consumers release. [Tracking evidence](tracking.md) records scope and raw
+results. Final managed GUI/development integration is accepted; native/rig acceptance
+and the paused camera/MCU findings below remain. See the
+[managed wiring assessment](runtime.md#current-scope-and-review).
+
 ## Preview recheck stopped by owner, 2026-10-06
 
-Owner paused further work. Behavior serial 40065509 received 41 SDK frames during
+Rig work was paused; the owner subsequently authorized development-machine diagnosis. Behavior serial 40065509 received 41 SDK frames during
 the two-second direct COM8 D10 → Line4 check at a requested 30 Hz. MCU ON/OFF
 acknowledgements passed; the camera and serial owner closed. This verifies the
 receiver path, not sustained 30 fps, waveform timing, Tracking or GUI acceptance.
@@ -14,8 +27,25 @@ Managed preview remains unfinished: acquisition retained ready/started lifecycle
 evidence and received frames, but the final operator Start command failed with
 `OPERATION_FAILED: exact completion missing`. An earlier Start succeeded, followed
 by Stop failing on incomplete camera result evidence. No final managed Stop or
-GUI viewer acceptance is claimed. Resume at coordinator operation completion and
-controller device-result projection, then verify viewer and closure.
+GUI viewer acceptance is claimed. Development-machine regression now reproduces a
+concrete completion blocker: the status reporter explicitly includes an empty
+preview run ID for idle/closed cameras, while controller projection validation
+required every present ID to be a UUID. Thus untouched Tracking rejects Behavior
+Start, and released runs reject Stop. The controller now accepts empty inactive
+IDs and still requires valid IDs for prepared/running previews and all nonempty
+IDs. Real reporter-to-controller tests failed with `invalid UUID` before the fix
+and now complete both Start and Stop. This establishes the local defect, not that
+it was the only cause of the saved rig timeout. Repeat viewer and closure checks
+in the [managed rig checklist](rig-verification.md#managed-device-gui).
+
+Development-machine validation after this correction: acquisition/controller
+pytest (`-m "not windows and not rig"`): 417 passed, five skipped, one deselected;
+Ruff check and format check pass for both owners/tests; Windows-target mypy passes
+256 source files; boundaries check 555 modules with zero violations. Existing size
+advisories affect unchanged source owners. ARCH-002 review keeps the correction
+in the focused projection validator and extends the existing evidence tests; no
+new dependency, protocol, timeout or ownership policy. Existing late-result and
+missing-evidence tests remain passing. No Windows/device acceptance was rerun.
 
 Repairs apply existing [A03/A10/A11](../docs/architecture/acquisition.md),
 [E06](../docs/architecture/system-contracts.md#e06) and

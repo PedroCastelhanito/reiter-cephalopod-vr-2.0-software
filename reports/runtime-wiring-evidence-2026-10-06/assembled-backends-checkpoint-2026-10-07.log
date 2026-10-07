@@ -1,0 +1,27 @@
+
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/client/test_controller_rpc.py _____________
+.venv/lib/python3.11/site-packages/_pytest/python.py:508: in importtestmodule
+    mod = import_path(
+.venv/lib/python3.11/site-packages/_pytest/pathlib.py:572: in import_path
+    mod = _import_module_using_spec(module_name, path, insert_modules=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/_pytest/pathlib.py:716: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+tests/client/test_controller_rpc.py:26: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src/cephvr/controller/runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src/cephvr/controller/assembly.py:22: in <module>
+    from cephvr.controller.device.display_calibration import DisplayCalibrationController
+E     File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/src/cephvr/controller/device/display_calibration.py", line 262
+E       error
+E       ^^^^^^
+E   SyntaxError: invalid syntax. Perhaps you forgot a comma?
+=========================== short test summary info ============================
+ERROR tests/client/test_controller_rpc.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 skipped, 3 deselected, 1 error in 1.42s

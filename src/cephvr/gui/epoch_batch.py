@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+from cephvr.gui.arena_movement import patch_arena
 from cephvr.gui.epoch_motion import constant_rate
 from cephvr.gui.program_editing import data_node, node_at, unique_id, validate
 from cephvr.gui.projector_layers import detach_layer, layers_for
@@ -22,6 +23,13 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Program,
     Time,
 )
+
+END_BEHAVIORS = {
+    "loop": "loop",
+    "hold": "hold_final_frame",
+    "hold final frame": "hold_final_frame",
+    "hold_final_frame": "hold_final_frame",
+}
 
 
 def epoch_paths(program: Program) -> tuple[tuple[int, ...], ...]:
@@ -73,6 +81,28 @@ def matching_layer(program: Program, path: tuple[int, ...], target: LayerTarget)
 
 
 def parameter_value(setting: dict[str, Any], name: str) -> object:
+    if name == "At end":
+        return setting["end_behavior"]
+    if name in ("Longitudinal", "Lateral", "Angular"):
+        binding = next(
+            (
+                b
+                for b in setting["feedback"]
+                if (
+                    b["operation"] == "movement_integration"
+                    and b.get("target") == "yaw"
+                    if name == "Angular"
+                    else b["operation"] == "heading_relative_planar_integration"
+                )
+            ),
+            None,
+        )
+        if binding is None:
+            return 0
+        value = binding["sideways_gain" if name == "Lateral" else "gain"]
+        if value["kind"] != "constant":
+            raise ValueError("Custom movement gain")
+        return value["value"]
     if name == "Fit":
         return setting.get("fit", "stretch")
     if name == "Angular speed":
@@ -111,6 +141,11 @@ def parameter_value(setting: dict[str, Any], name: str) -> object:
 
 
 def patch_setting(setting: dict[str, Any], changes: dict[str, str]) -> None:
+    if "At end" in changes:
+        choice = END_BEHAVIORS.get(changes["At end"].lower())
+        if choice is None:
+            raise ValueError("Choose Loop or Hold final frame")
+        setting["end_behavior"] = choice
     if "Fit" in changes:
         fit_choice = changes["Fit"].lower()
         if fit_choice not in {"contain", "cover", "stretch"}:
@@ -190,6 +225,8 @@ def apply_batch(
             )
         if setting_changes:
             setting = node["settings"][layer]
+            if setting["kind"] == "arena":
+                patch_arena(setting, setting_changes, data)
             patch_setting(
                 setting, {k: v for k, v in setting_changes.items() if k != "Asset"}
             )

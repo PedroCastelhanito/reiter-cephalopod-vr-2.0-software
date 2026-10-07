@@ -176,7 +176,11 @@ class IncidentTopology:
             if not key or key in functions or owner not in sources:
                 raise IncidentEvidenceError("prepared function identity/owner mismatch")
             backend = owning_backend(owner)
-            if backend is None:
+            controller_owned = owner == (
+                context.controller.role,
+                context.controller.generation,
+            )
+            if backend is None and not controller_owned:
                 raise IncidentEvidenceError(
                     "prepared function owner has no backend ancestry"
                 )
@@ -199,6 +203,14 @@ class IncidentTopology:
             if len(lifecycle) != len(set(lifecycle)):
                 raise IncidentEvidenceError("prepared lifecycle source is repeated")
             if lifecycle:
+                if controller_owned:
+                    raise IncidentEvidenceError(
+                        "controller-owned function cannot declare backend lifecycle sources"
+                    )
+                if backend is None:
+                    raise IncidentEvidenceError(
+                        "prepared lifecycle function has no backend owner"
+                    )
                 allowed_sources = _LIFECYCLE_SOURCES.get(backend)
                 if allowed_sources is None or not set(lifecycle) <= allowed_sources:
                     raise IncidentEvidenceError(

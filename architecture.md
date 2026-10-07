@@ -61,37 +61,37 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [SYS-003](#sys-003) | Backend language and environment | Accepted | 2 |
 | [SYS-004](#sys-004) | Scientific synchronization authority | Accepted | 3 |
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
-| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 21 |
+| [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 22 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 108 |
-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 23 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 120 |
+| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 33 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
-| <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 28 |
+| <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 29 |
 | <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 87 |
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
-| <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 76 |
-| <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 58 |
-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 161 |
+| <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 77 |
+| <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 59 |
+| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 162 |
 | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
-| <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 18 |
+| <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 20 |
 | <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 18 |
 | <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 206 |
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
 | <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 16 |
 | <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 30 |
-| <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 31 |
+| <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 32 |
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
 | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
 | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
 | <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 57 |
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 48 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 12 |
-| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 51 |
+| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 52 |
 | <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 36 |
-| <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 13 |
+| <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 14 |
 | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 12 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 9 |
 | <a id="v04"></a>[V04](docs/architecture/visual_stimulus.md#v04) | Rendering stack and required stimulus scope | Accepted | 11 |
@@ -119,14 +119,14 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="v26"></a>[V26](docs/architecture/visual_stimulus.md#v26) | Feedback freshness guard with local hold | Accepted | 8 |
 | <a id="v27"></a>[V27](docs/architecture/visual_stimulus.md#v27) | Additive motion on retained stimulus state | Accepted | 2 |
 | <a id="v28"></a>[V28](docs/architecture/visual_stimulus.md#v28) | Visual Stimulus evidence file and crash behavior | Accepted | 4 |
-| <a id="t01"></a>[T01](docs/architecture/tracking.md#t01) | Tracking image representation | Accepted | 3 |
+| <a id="t01"></a>[T01](docs/architecture/tracking.md#t01) | Tracking image representation | Accepted | 4 |
 | <a id="t02"></a>[T02](docs/architecture/tracking.md#t02) | Named tracking pipelines with shared stages | Accepted | 4 |
 | <a id="t03"></a>[T03](docs/architecture/tracking.md#t03) | One selected tracking camera per session | Accepted | 1 |
 | <a id="t04"></a>[T04](docs/architecture/tracking.md#t04) | Water-flow and fin-flow pipeline options | Accepted | 6 |
-| <a id="t05"></a>[T05](docs/architecture/tracking.md#t05) | Explicit manual or automatic pose mode | Accepted | 2 |
+| <a id="t05"></a>[T05](docs/architecture/tracking.md#t05) | Explicit manual or automatic pose mode | Accepted | 3 |
 | <a id="t06"></a>[T06](docs/architecture/tracking.md#t06) | Selectable keypoint-model or threshold/contour pose | Accepted | 5 |
 | <a id="t07"></a>[T07](docs/architecture/tracking.md#t07) | NVIDIA Optical Flow with need-driven extensions | Accepted | 7 |
-| <a id="t08"></a>[T08](docs/architecture/tracking.md#t08) | One tracking process with internal workers | Accepted | 6 |
+| <a id="t08"></a>[T08](docs/architecture/tracking.md#t08) | One tracking process with internal workers | Accepted | 8 |
 | <a id="t09"></a>[T09](docs/architecture/tracking.md#t09) | Independent automatic pose and ordered movement | Accepted | 4 |
 | <a id="t10"></a>[T10](docs/architecture/tracking.md#t10) | Shared three-landmark pose | Accepted | 4 |
 | <a id="t11"></a>[T11](docs/architecture/tracking.md#t11) | ONNX pose models with ONNX Runtime CUDA | Accepted | 4 |
@@ -138,7 +138,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="t17"></a>[T17](docs/architecture/tracking.md#t17) | Highest-scoring eligible pose candidate | Accepted | 2 |
 | <a id="t18"></a>[T18](docs/architecture/tracking.md#t18) | Fixed brightness threshold for contour pose | Accepted | 4 |
 | <a id="t19"></a>[T19](docs/architecture/tracking.md#t19) | Tracking record file | Accepted | 3 |
-| <a id="t20"></a>[T20](docs/architecture/tracking.md#t20) | Four labelled subject-reference points in Configuration | Accepted | 6 |
+| <a id="t20"></a>[T20](docs/architecture/tracking.md#t20) | Four labelled subject-reference points in Configuration | Accepted | 7 |
 | <a id="t21"></a>[T21](docs/architecture/tracking.md#t21) | Anatomical mantle-tip landmarks | Accepted | 2 |
 | <a id="t22"></a>[T22](docs/architecture/tracking.md#t22) | Pose-derived position, orientation and dimensions | Accepted | 2 |
 | <a id="t23"></a>[T23](docs/architecture/tracking.md#t23) | Three-landmark reference ellipse | Accepted | 2 |
@@ -322,12 +322,16 @@ Accepted design does not imply implemented or rig-validated behavior.
 <a id="arch-001"></a>
 ### ARCH-001 — Backend process boundaries and build order
 
-**Status:** Undecided · **Revision:** 21
+**Status:** Undecided · **Revision:** 22
 
 - The owner has authorized GUI implementation following Tracking implementation
   and review. GUI is the current stage, beginning with reference review and operator
   workflow/layout design. Existing controller, supervisor, acquisition host, Visual
   Stimulus and Tracking work remains in scope for required integration and shared helpers.
+- The owner has authorized completing managed GUI/backend configuration, commands,
+  diagnostics and development checks against the shared review layout. Reuse existing
+  backend ownership and lifecycle mechanisms; E15 native/device/scientific/full-load
+  acceptance remains separate rig work. Explicit scientific and encoder deferrals remain.
 - The owner has authorized controller-owned SpikeGLX connection/client wiring for
   testing from the managed runtime GUI during the GUI stage. E12 session lifecycle
   integration and rig acceptance remain open.

@@ -29,9 +29,13 @@ class ControlLeases:
         self.publisher = publisher
         self.generation = generation
         self.owner_lost = owner_lost
+        self.owner_loss_observers: list[Callable[[], Awaitable[None]]] = []
 
     def bind_owner_loss(self, handler: Callable[[], Awaitable[None]]) -> None:
         self.owner_lost = handler
+
+    def observe_owner_loss(self, handler: Callable[[], Awaitable[None]]) -> None:
+        self.owner_loss_observers.append(handler)
 
     async def claim(
         self, claim: svc.ControlClaim, *, takeover: bool = False
@@ -86,6 +90,9 @@ class ControlLeases:
                 self.lifecycle.manual_control_cleanup_pending = True
             self.publisher.publish()
             admission = self.control_operations.admission(command.operator.command_id)
-        if released and self.owner_lost is not None:
-            await self.owner_lost()
+        if released:
+            for observer in tuple(self.owner_loss_observers):
+                await observer()
+            if self.owner_lost is not None:
+                await self.owner_lost()
         return admission

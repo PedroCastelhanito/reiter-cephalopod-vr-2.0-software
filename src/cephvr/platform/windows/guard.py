@@ -9,6 +9,10 @@ from ctypes import wintypes
 from cephvr.platform.windows.jobs import WindowsLaunchError
 
 
+class InstanceAlreadyRunning(WindowsLaunchError):
+    """The requested role's existing OS guard is held."""
+
+
 class SingleInstanceGuard:
     def __init__(self, role: str) -> None:
         if sys.platform != "win32":
@@ -30,7 +34,7 @@ class SingleInstanceGuard:
         if ctypes.get_last_error() == 183:
             self.api.CloseHandle(self.handle)
             self.handle = None
-            raise WindowsLaunchError(f"{role} instance already running")
+            raise InstanceAlreadyRunning(f"{role} instance already running")
 
     def close(self) -> None:
         if self.handle:

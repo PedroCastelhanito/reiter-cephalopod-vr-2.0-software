@@ -63,14 +63,39 @@ class VisualStimulusWorkerRuntime:
             else (self.context.owner,)
         ):
             raise ValueError("renderer caller is not an authorized owner")
-        if self.interrupted and method not in SAFETY | {
-            "SetupSession",
-            "InitializeDisplay",
-            "ConfirmRecipePublication",
-        }:
+        recoverable_calibration = (
+            method
+            in {
+                "OpenDisplayCalibration",
+                "CloseDisplayCalibration",
+            }
+            and self.context.work.WhichOneof("work") is None
+        )
+        sessionless_diagnostic_safety = (
+            method in {"Cleanup", "Shutdown", "InterruptSession", "CancelSetup"}
+            and self.context.work.WhichOneof("work") is None
+        )
+        if (
+            self.interrupted
+            and method
+            not in SAFETY
+            | {
+                "SetupSession",
+                "InitializeDisplay",
+                "ConfirmRecipePublication",
+            }
+            and not recoverable_calibration
+        ):
             raise ValueError("renderer session is permanently fenced")
         if (
-            method not in {"InitializeDisplay", "SetupSession", "Shutdown"}
+            method
+            not in {
+                "InitializeDisplay",
+                "SetupSession",
+                "Shutdown",
+                "OpenDisplayCalibration",
+                "CloseDisplayCalibration",
+            }
             and command.target.work != self.context.work
         ):
             work = command.target.work
@@ -80,8 +105,16 @@ class VisualStimulusWorkerRuntime:
             ):
                 raise ValueError("renderer command targets another session")
         if (
-            method not in {"InitializeDisplay", "SetupSession", "Shutdown"}
+            method
+            not in {
+                "InitializeDisplay",
+                "SetupSession",
+                "Shutdown",
+                "OpenDisplayCalibration",
+                "CloseDisplayCalibration",
+            }
             and not (command.issuer == self.supervisor and method in SAFETY)
+            and not sessionless_diagnostic_safety
             and command.target.configuration_revision
             != self.context.configuration_revision
         ):
@@ -102,6 +135,9 @@ class VisualStimulusWorkerRuntime:
         if method in {"InitializeDisplay", "SetupSession"}:
             self.context.CopyFrom(command.target)
             self.interrupted = False
+        elif method in {"OpenDisplayCalibration", "CloseDisplayCalibration"}:
+            self.interrupted = False
+            self.owner.cancelled.clear()
         try:
             await self.owner.submit(method, request, deadline_ns)
             outcome = pb.OperationState(

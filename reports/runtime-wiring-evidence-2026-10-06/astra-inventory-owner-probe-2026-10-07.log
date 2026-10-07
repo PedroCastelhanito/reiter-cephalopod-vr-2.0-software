@@ -1,0 +1,2 @@
+lock responsive; admission COMMAND_RESULT_ACCEPTED pending True complete False progress deadline exceeded; persistence outcome unconfirmed
+settled True True inventory committed after deadline pending False

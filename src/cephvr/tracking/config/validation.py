@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import math
+
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.deadlines import duration_ns
-from cephvr.tracking.config.annotations import manual, reference, search
+from cephvr.tracking.config.annotations import manual, point, reference, search
 from cephvr.tracking.config.models.methods import StageConfiguration
 from cephvr.tracking.config.pipeline import ResolvedPipeline, resolve_pipeline
 from cephvr.tracking.config.stages import builtin_registry
@@ -49,6 +51,7 @@ def validate_settings(
             or settings.pose_history_capacity <= 0
         ):
             raise ValueError("pose_history_capacity must be positive")
+    _validate_spatial_settings(settings)
     return resolve_pipeline(
         settings.pipeline_id,
         modes[settings.pose_mode],
@@ -64,6 +67,67 @@ def validate_settings(
         builtin_registry(),
         max_bytes=max_bytes,
     )
+
+
+def _validate_spatial_settings(settings: pb.TrackingSettings) -> None:
+    if settings.HasField("preprocessing"):
+        preprocessing = settings.preprocessing
+        if not preprocessing.HasField("crop_enabled") or not preprocessing.HasField(
+            "scale_percent"
+        ):
+            raise ValueError("preprocessing requires explicit crop and scale values")
+        if not 10 <= preprocessing.scale_percent <= 100:
+            raise ValueError("preprocessing scale_percent must be within 10..100")
+        if preprocessing.crop_enabled and not preprocessing.HasField("crop_region"):
+            raise ValueError("enabled preprocessing crop requires crop_region")
+        if preprocessing.HasField("crop_region"):
+            region = preprocessing.crop_region
+            if (
+                any(
+                    not region.HasField(name)
+                    for name in ("x_px", "y_px", "width_px", "height_px")
+                )
+                or region.width_px <= 0
+                or region.height_px <= 0
+            ):
+                raise ValueError(
+                    "preprocessing crop must be a positive pixel rectangle"
+                )
+    if not settings.HasField("image_scale"):
+        return
+    image_scale = settings.image_scale
+    required = (
+        "image_width_px",
+        "image_height_px",
+        "distance_start",
+        "distance_end",
+        "distance_mm",
+        "pixels_per_mm",
+    )
+    if any(not image_scale.HasField(name) for name in required):
+        raise ValueError("image scale requires dimensions, endpoints, length and scale")
+    width, height = image_scale.image_width_px, image_scale.image_height_px
+    if width <= 0 or height <= 0:
+        raise ValueError("image scale requires positive acquired-image dimensions")
+    if settings.HasField("subject_reference") and reference(
+        settings.subject_reference
+    ) != (width, height):
+        raise ValueError("image scale and subject reference dimensions differ")
+    start = point(image_scale.distance_start, width, height)
+    end = point(image_scale.distance_end, width, height)
+    if not math.isfinite(image_scale.distance_mm) or image_scale.distance_mm <= 0:
+        raise ValueError("image scale distance_mm must be finite and positive")
+    expected = math.dist(start, end) / image_scale.distance_mm
+    if not math.isfinite(expected) or expected <= 0:
+        raise ValueError("image scale endpoints must be distinct")
+    if (
+        not math.isfinite(image_scale.pixels_per_mm)
+        or image_scale.pixels_per_mm <= 0
+        or not math.isclose(
+            image_scale.pixels_per_mm, expected, rel_tol=1e-9, abs_tol=1e-12
+        )
+    ):
+        raise ValueError("pixels_per_mm does not match its endpoints and known length")
 
 
 def validate_configuration(

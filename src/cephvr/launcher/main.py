@@ -12,9 +12,11 @@ import sys
 import threading
 import time
 import tomllib
+from contextlib import ExitStack
 from pathlib import Path
 from uuid import uuid4
 
+from cephvr.control.v1 import types_pb2 as control_types
 from cephvr.controller.configuration import load_controller_configuration
 from cephvr.launcher.decisions import (
     LOST_KEY,
@@ -22,13 +24,27 @@ from cephvr.launcher.decisions import (
     LauncherDecisions,
     parse_notification_line,
 )
+from cephvr.launcher.gui_relaunch import (
+    GuiLaunchRegistration,
+    GuiRelaunchCoordinator,
+    GuiRelaunchDispatcher,
+    GuiRelaunchReleased,
+    GuiRelaunchWork,
+    reconcile_relaunch,
+    request_relaunch,
+)
+from cephvr.launcher.replacement import (
+    ReplacementDeclined,
+    ReplacementEndpoint,
+    acquire_application_guard,
+    request_gui_relaunch,
+)
 from cephvr.platform.windows.bootstrap import (
     close_handle,
     create_bootstrap_pipe,
     create_control_pipe,
     write_bootstrap,
 )
-from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs, WindowsLaunchError
 from cephvr.platform.windows.python_runtime import (
     module_arguments,
@@ -165,10 +181,18 @@ def run_launcher(
     supervisor_token = secrets.token_urlsafe(48)
     controller_token = secrets.token_urlsafe(48)
     native = WindowsJobs()
-    with SingleInstanceGuard("application"):
+    with acquire_application_guard(default_runtime_root()), ExitStack() as resources:
         application_job = native.create_application_job()
         decisions: LauncherDecisions | None = None
         try:
+            replacement = resources.enter_context(
+                ReplacementEndpoint(
+                    default_runtime_root(),
+                    controller_generation,
+                    supervisor_generation,
+                    backstop_ns + startup.terminate_exit_ns,
+                )
+            )
             bootstrap_read, bootstrap_write = create_bootstrap_pipe()
             control_read, control_write = create_control_pipe()
             controller_control_read, controller_control_write = create_control_pipe()
@@ -241,6 +265,7 @@ def run_launcher(
             bootstrap_done = threading.Event()
             bootstrap_seen = False
             bootstrap_error: list[BaseException] = []
+            gui_relaunch = GuiRelaunchCoordinator()
 
             def send_bootstrap() -> None:
                 try:
@@ -264,8 +289,76 @@ def run_launcher(
                 args=(controller_control_read, notifications, "controller"),
                 daemon=True,
             ).start()
+
+            def perform_gui_relaunch(
+                work: GuiRelaunchWork,
+            ) -> GuiLaunchRegistration | GuiRelaunchReleased | None:
+                identity = control_types.ProcessIdentity(
+                    role="supervisor", generation=supervisor_generation
+                )
+                if work.reconcile_only:
+                    return reconcile_relaunch(
+                        supervisor_port=port,
+                        supervisor=identity,
+                        supervisor_token=supervisor_token,
+                        attempt=work.attempt,
+                    )
+                return request_relaunch(
+                    supervisor_port=port,
+                    supervisor=identity,
+                    supervisor_token=supervisor_token,
+                    interpreter=str(interpreter),
+                    attempt=work.attempt,
+                )
+
+            gui_relaunch_dispatcher = GuiRelaunchDispatcher(
+                gui_relaunch, perform_gui_relaunch
+            )
+
             while True:
                 now = host_time_ns()
+                for result in gui_relaunch_dispatcher.poll():
+                    if (
+                        result.registration is not None
+                        and gui_relaunch.current == result.registration
+                    ):
+                        sys.stderr.write(
+                            "A fresh GUI was launched in the existing application generation.\n"
+                        )
+                    elif result.terminal_released:
+                        sys.stderr.write(
+                            "The exact attempted GUI launch is confirmed released; a later explicit request may create a new attempt.\n"
+                        )
+                    elif result.error and (
+                        gui_relaunch.attempt == result.work.attempt
+                        or result.definite_failure
+                    ):
+                        if result.definite_failure:
+                            sys.stderr.write(
+                                "GUI relaunch did not reach PlanLaunch; a later explicit request may create a new attempt: "
+                                f"{result.error}\n"
+                            )
+                        else:
+                            sys.stderr.write(
+                                "GUI relaunch outcome is not yet confirmed; retaining its exact identity: "
+                                f"{result.error}\n"
+                            )
+                    elif (
+                        result.registration is None
+                        and gui_relaunch.attempt == result.work.attempt
+                    ):
+                        sys.stderr.write(
+                            "GUI relaunch remains unconfirmed; a later explicit request will query the same launch identity.\n"
+                        )
+                if decisions.shutdown_deadline_ns is not None:
+                    gui_relaunch_dispatcher.shutdown()
+                if replacement.requested():
+                    sys.stderr.write(
+                        "Operator confirmed runtime replacement; terminating application job.\n"
+                    )
+                    native.terminate_job(application_job)
+                    return
+                relaunch_requested = replacement.gui_relaunch_requested()
                 if not bootstrap_seen and bootstrap_done.is_set():
                     bootstrap_seen = True
                     decisions.bootstrap_finished(now, ok=not bootstrap_error)
@@ -288,6 +381,22 @@ def run_launcher(
                             os.write(ack_fd, b"A")
                             os.close(ack_fd)
                             ack_write = 0
+                    elif kind == "register_gui_launch":
+                        try:
+                            registered = GuiLaunchRegistration.from_notification(note)
+                        except WindowsLaunchError as exc:
+                            sys.stderr.write(
+                                f"Ignoring invalid GUI registration: {exc}\n"
+                            )
+                        else:
+                            if (
+                                registered.supervisor_generation
+                                == supervisor_generation
+                            ):
+                                if not gui_relaunch.registered(registered):
+                                    sys.stderr.write(
+                                        "Ignoring GUI registration that does not match the active or pending exact identity.\n"
+                                    )
                     elif kind == "channel_lost":
                         channel = str(note.get("_channel"))
                         reason = str(note.get(LOST_KEY))
@@ -298,6 +407,31 @@ def run_launcher(
                         )
                     elif kind == "shutdown":
                         decisions.on_shutdown(now, note)
+                if relaunch_requested:
+                    if decisions.shutdown_deadline_ns is not None:
+                        sys.stderr.write(
+                            "GUI relaunch ignored after application shutdown began.\n"
+                        )
+                    elif gui_relaunch.current is None:
+                        sys.stderr.write(
+                            "GUI relaunch ignored: the supervisor has not registered a GUI process yet.\n"
+                        )
+                    else:
+                        deadline_ns = min(
+                            now + 10_000_000_000,
+                            decisions.shutdown_deadline_ns
+                            if decisions.shutdown_deadline_ns is not None
+                            else now + 10_000_000_000,
+                        )
+                        work = gui_relaunch_dispatcher.request(
+                            deadline_ns=deadline_ns, now_ns=now
+                        )
+                        if work is None:
+                            sys.stderr.write(
+                                "GUI relaunch request is already being reconciled or unavailable.\n"
+                            )
+                        else:
+                            pass
                 if not native.process_running(child.pid, child.creation_time_100ns):
                     decisions.arm(now)
                 if decisions.controller is not None and not native.process_running(
@@ -351,15 +485,34 @@ def run_launcher(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="CephVR Windows application launcher")
-    parser.add_argument("--software-root", type=Path, required=True)
-    parser.add_argument("--supervisor-config", type=Path, required=True)
+    parser.add_argument("--software-root", type=Path, default=Path.cwd())
+    parser.add_argument("--supervisor-config", type=Path)
     parser.add_argument("--python", type=Path, default=Path(sys.executable))
-    args = parser.parse_args()
-    run_launcher(
-        software_root=args.software_root.resolve(),
-        supervisor_config=args.supervisor_config.resolve(),
-        interpreter=args.python.resolve(),
+    parser.add_argument(
+        "--reopen-gui",
+        action="store_true",
+        help="open a fresh GUI in the running application generation",
     )
+    args = parser.parse_args()
+    if args.reopen_gui:
+        if sys.platform != "win32":
+            parser.error("managed GUI relaunch requires Windows")
+        try:
+            request_gui_relaunch(default_runtime_root())
+        except WindowsLaunchError as exc:
+            parser.error(str(exc))
+        return
+    supervisor_config = args.supervisor_config or (
+        args.software_root / "config/backends/supervisor_config.toml"
+    )
+    try:
+        run_launcher(
+            software_root=args.software_root.resolve(),
+            supervisor_config=supervisor_config.resolve(),
+            interpreter=args.python.resolve(),
+        )
+    except ReplacementDeclined as exc:
+        print(exc)
 
 
 if __name__ == "__main__":

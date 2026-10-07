@@ -41,7 +41,7 @@ Selection/validation binding: [tracking contracts](../../contracts/tracking/READ
 <a id="t01"></a>
 ### T01 — Tracking image representation
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 4
 
 - Receive native camera pixels through A03's tracking ring; apply A01's common
   conversion and pixel-processing methods to private copies, preserving source effective
@@ -49,6 +49,13 @@ Selection/validation binding: [tracking contracts](../../contracts/tracking/READ
 - The selected method declares RGB or grayscale input; color-to-grayscale conversion is
   method-dependent. No preview display scaling or silent precision reduction to fit a
   method. Validate compatibility before Ready.
+- Optional configured crop then isotropic downscale operates only on private
+  representations. Retain acquired dimensions and the actual invertible pixel-centre
+  transform; source annotations and published pose, geometry, flow positions/vectors
+  and locomotion units remain in acquired-image coordinates. Normalize processed
+  results before geometry/estimation, preserve source precision and reset temporal
+  baselines after source/transform changes. Fixed resampling belongs in the method
+  contract, not an operator algorithm menu.
 - Representation preparation is separate from algorithm-specific normalization/features;
   A01 owns the shared native conversion provider/binding. The
   [method contract](../../contracts/tracking/method-bindings.md) binds ONNX
@@ -123,11 +130,11 @@ Selection/validation binding: [tracking contracts](../../contracts/tracking/READ
 <a id="t05"></a>
 ### T05 — Explicit manual or automatic pose mode
 
-**Status:** Accepted · **Revision:** 2
+**Status:** Accepted · **Revision:** 3
 
 - Before Setup, select fixed manual landmarks/analysis geometry or image-based automatic
   pose estimation; both are in scope and each pipeline validates its required geometry.
-  New configurations default to automatic.
+  New configurations default to manual; explicit saved selections are retained.
 - Manual landmarks stay fixed for the session; deriving prepared geometry runs no
   automatic estimator. Automatic mode uses the selected method, with no silent fallback,
   mode switching or fabricated manual geometry on failure.
@@ -192,7 +199,7 @@ completed-buffer identity/layout/availability).
 <a id="t08"></a>
 ### T08 — One tracking process with internal workers
 
-**Status:** Accepted · **Revision:** 6
+**Status:** Accepted · **Revision:** 8
 
 - One Python tracking backend process owns control, preparation, source attachments,
   estimator state and result publication, with internal worker threads; no separate
@@ -214,6 +221,26 @@ completed-buffer identity/layout/availability).
   publish A06's direct result stream; scientific data does not cross the controller.
   Closed-loop Setup carries the exact registered renderer identity through the
   controller-owned preparation handoff; missing or ambiguous identity fails Setup.
+- Configuration diagnostics reuse this process with a separate diagnostic identity,
+  exact accepted acquisition preview/consumer binding and independently selected
+  stage mask. Begin freezes a bounded typed diagnostic draft against the accepted
+  configuration revision; it does not require experiment Tracking participation or
+  change E07 configuration/history. The controller supplies the accepted asset root
+  and file policies. Settings or mask changes require confirmed Close and a fresh Begin.
+  No experiment
+  recording, trial context or Visual Stimulus feedback is produced. Use acquisition
+  ordered input and a bounded latest-only direct viewer path; the controller carries
+  coalesced status/timing only. Authority/source loss closes diagnostic ownership
+  under original deadlines; Setup requires confirmed closure. Viewer detachment
+  alone does not claim processing stopped. T02 experiment stages remain mandatory.
+- Resolve diagnostic stage availability before validating or preparing runnable
+  stage inputs, reusing the owning typed components without whole-experiment
+  validation. Missing/disabled prerequisites make dependent outputs unavailable;
+  malformed consumed annotations, source-dimension mismatch or invalid selected
+  method settings reject explicitly. Independent flow requires no pose; an empty
+  mask provides image/preprocessing-only annotation with no native algorithm/GPU
+  preparation. Never invent missing scientific inputs. Common source/crop/downscale
+  bounds remain mandatory; optional image-plane scale is not a processing prerequisite.
 - Control/health responsiveness is distinct from computation progress. Blocking native
   calls run outside control handling; cancellation requests do not prove completion or
   release. Retain resources until consumers finish, report blocked cleanup under E06,
@@ -451,7 +478,7 @@ schemas).
 <a id="t20"></a>
 ### T20 — Four labelled subject-reference points in Configuration
 
-**Status:** Accepted · **Revision:** 6
+**Status:** Accepted · **Revision:** 7
 
 - The operator supplies anterior, posterior, medial-left and medial-right subject
   coordinates in Configuration on the selected camera's manual preview; Setup validates
@@ -463,6 +490,10 @@ schemas).
   same Configuration preview/overlay workflow, converting display to acquired-image
   coordinates. Camera/layout changes require revalidation, not silent reuse. Headless
   clients supply the same typed values before Setup, without GUI interaction.
+- Optional two-endpoint distance calibration retains exact acquired-image dimensions,
+  endpoints and positive known millimetres; derived image-plane scale is metadata
+  independent of downscale. It does not calibrate swimming speed or change T35/T38
+  output units. Source changes require revalidation, never silently reused scale.
 - The points set the initial anatomical direction and lateral reference for pose
   interpretation, locked under E07 and retained with tracking setup metadata. They are a
   setup reference, not a claim that the moving mantle stays there, a continuous

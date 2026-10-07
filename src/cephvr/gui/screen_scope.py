@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QGridLayout, QVBoxLayout, QWidget
 
 from cephvr.gui.components import button, label
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.program_editing import NodePath, node_at
 from cephvr.gui.stimulus_scope import FACES, change_scope, split_screens, surfaces
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
@@ -28,7 +29,7 @@ class ScreenScope(QWidget):
         self.split = button("Per-screen settings…")
         self.split.clicked.connect(self.separate)
         body.addWidget(self.split, alignment=Qt.AlignmentFlag.AlignLeft)
-        self.message = label("", wrap=True)
+        self.message = FormNotice()
         body.addWidget(self.message)
         self.program: Program | None = None
         self.path: NodePath = 0
@@ -63,7 +64,7 @@ class ScreenScope(QWidget):
             check.setText(face.title() + ("" if active else " (inactive)"))
             check.setEnabled(not arena and (active or face in faces))
         self.split.setVisible(not arena and len(faces) > 1)
-        self.message.setText(
+        self.message.status(
             "Arena uses enabled rig screens."
             if arena
             else "Inactive targets are retained."
@@ -84,7 +85,7 @@ class ScreenScope(QWidget):
             )
         except ValueError as error:
             self.bind(self.program, self.path, self.layer, self.enabled_screens)
-            self.message.setText(str(error))
+            self.message.warn(str(error))
             self.message.show()
             return
         self.committed.emit(result)
@@ -94,4 +95,4 @@ class ScreenScope(QWidget):
             try:
                 self.committed.emit(split_screens(self.program, self.path, self.layer))
             except ValueError as error:
-                self.message.setText(str(error))
+                self.message.warn(str(error))

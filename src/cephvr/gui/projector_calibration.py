@@ -1,11 +1,19 @@
 """Compact per-face correction table, sharing the rig's retained drafts."""
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QCheckBox, QGridLayout, QHBoxLayout, QLineEdit, QWidget
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLineEdit,
+    QTableWidgetItem,
+    QWidget,
+)
 
-from cephvr.gui.components import Card, button, label
+from cephvr.gui.components import Card, button
 from cephvr.gui.device_panel import entry
 from cephvr.gui.projector_geometry import FACES
+from cephvr.gui.tables import DataTable
 
 
 class CalibrationTable(Card):
@@ -16,15 +24,16 @@ class CalibrationTable(Card):
         super().__init__("Screen calibration")
         self.drafts = drafts
         self.controls: dict[tuple[str, str], QWidget] = {}
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(12)
-        grid.setVerticalSpacing(10)
-        for col, title in enumerate(
-            ("SCREEN", "INVERSE", "SCALE X / Y", "OFFSET X / Y (px)")
-        ):
-            grid.addWidget(label(title, "label", wrap=True), 0, col)
-        for row, face in enumerate(FACES, 1):
-            grid.addWidget(label(face), row, 0)
+        self.table = DataTable(len(FACES), 4)
+        self.table.setHorizontalHeaderLabels(
+            ["Screen", "Inverse", "Scale X / Y", "Offset X / Y (px)"]
+        )
+        header = self.table.horizontalHeader()
+        assert header is not None
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        for row, face in enumerate(FACES):
+            self.table.setItem(row, 0, QTableWidgetItem(face))
             for col, keys in enumerate(
                 (
                     ("flip_x", "flip_y"),
@@ -58,10 +67,9 @@ class CalibrationTable(Card):
                     control.setAccessibleName(f"{face} {key}")
                     self.controls[face, key] = control
                     layout.addWidget(control)
-                grid.addWidget(cell, row, col)
-        grid.setColumnStretch(2, 1)
-        grid.setColumnStretch(3, 1)
-        self.body.addLayout(grid)
+                self.table.set_control(row, col, cell)
+        self.table.fit_rows()
+        self.body.addWidget(self.table)
         self.presentation_button = button("Launch")
         self.presentation_button.setToolTip(
             "Prepare calibration files and launch with a connected managed Visual Stimulus renderer"

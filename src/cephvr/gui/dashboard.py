@@ -253,7 +253,18 @@ class Dashboard(ResponsiveColumns):
         self.control_hint.setVisible(not view.sample)
         rows = (
             ("PHASE", view.phase.value),
-            ("CONTROL", "Local review" if view.sample else "Observer"),
+            (
+                "CONTROL",
+                "Local review"
+                if view.sample and view.has_control
+                else "Review observer"
+                if view.sample
+                else "Control held"
+                if view.connected and view.has_control
+                else "Observer"
+                if view.connected
+                else "Disconnected",
+            ),
             (
                 "TRIAL",
                 f"{view.trial_index}/{view.trial_count}" if view.trial_count else "—",
@@ -262,7 +273,8 @@ class Dashboard(ResponsiveColumns):
             ("OUTCOME", view.outcome),
         )
         output_rows = (
-            ("RECORDING", view.output_status),
+            ("OUTPUTS", view.output_status),
+            ("RESERVATION", view.reservation_status),
             ("METADATA", view.metadata_status),
         )
         self.runtime_console.setPlainText(

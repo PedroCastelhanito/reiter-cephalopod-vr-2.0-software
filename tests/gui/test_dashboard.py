@@ -23,6 +23,12 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.layouts import tool_window_position
+from cephvr.gui.managed_status import (
+    dashboard_view,
+    has_retained_review,
+    retained_ack_required_for,
+    retained_summary,
+)
 from cephvr.gui.review import ReviewControls
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import DashboardView, Phase, PreviewView, review_view
@@ -66,6 +72,589 @@ def test_offline_frontend_cannot_request_commands(app: QApplication) -> None:
     app.processEvents()
 
 
+def test_managed_subject_metadata_preserves_absence_and_numeric_zero(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.managed_config import subject_metadata_from_fields
+
+    dashboard = DashboardWindow().dashboard
+    dashboard.subject_id.setText("S-1")
+    dashboard.age.setText("0")
+    dashboard.subject_size.setText("12.5")
+    draft = subject_metadata_from_fields(dashboard)
+    assert draft.HasField("age_dph") and draft.age_dph == 0
+    assert draft.HasField("size_mm") and draft.size_mm == 12.5
+    assert not draft.HasField("sex")
+    assert not draft.HasField("species")
+    dashboard.window().close()
+    dashboard.window().deleteLater()
+    app.processEvents()
+
+
+def test_managed_subject_metadata_preserves_unknown_sex_value(
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+    from cephvr.gui.managed_config import install_subject_metadata
+
+    dashboard = DashboardWindow(sample=False).dashboard
+    config = control_pb.ExperimentConfiguration()
+    config.subject_metadata.sex = "Intersex"
+    install_subject_metadata(dashboard, config)
+    assert dashboard.sex.currentText() == "Intersex"
+    assert "Intersex" in [
+        dashboard.sex.itemText(index) for index in range(dashboard.sex.count())
+    ]
+    assert dashboard.sex.currentText()
+    dashboard.window().close()
+    dashboard.window().deleteLater()
+    app.processEvents()
+
+
+def test_managed_runtime_editors_are_enabled_without_review_samples(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+
+    managed = ManagedDashboardWindow(sample=False)
+    view = DashboardView(
+        phase=Phase.CONFIGURATION,
+        connected=True,
+        has_control=True,
+        configuration_wired=True,
+    )
+    assert view.can_edit
+    managed.apply_view(view)
+    assert managed.protocol.can_edit
+    assert managed.protocol.editor.isEnabled()
+    assert managed.recordings.velocities.isEnabled()
+    assert managed.tracking.can_edit
+    assert managed.tracking.pipeline.isEnabled()
+    assert managed.protocol.assets.folders["root"].isEnabled()
+    assert managed.devices.projectors.can_review
+    assert managed.devices.projectors.calibration.isEnabled()
+    assert managed.devices.spikeglx.can_review
+    assert not managed.devices.spikeglx.pairing.isEnabled()
+    assert managed.devices.spikeglx.address.isReadOnly()
+    assert managed.devices.spikeglx.command_port.isReadOnly()
+    managed.close()
+    managed.deleteLater()
+    app.processEvents()
+
+
+def test_dashboard_control_status_matches_connection_and_authority(
+    app: QApplication,
+) -> None:
+    dashboard = DashboardWindow(sample=False).dashboard
+    cases = (
+        (DashboardView(connected=True, has_control=True), "Control held"),
+        (DashboardView(connected=True, has_control=False), "Observer"),
+        (DashboardView(connected=False, has_control=False), "Disconnected"),
+        (DashboardView(sample=True, has_control=True), "Local review"),
+        (DashboardView(sample=True, has_control=False), "Review observer"),
+    )
+    for view, expected in cases:
+        dashboard.apply_view(view)
+        assert f"CONTROL  {expected}" in dashboard.runtime_console.toPlainText()
+    dashboard.window().close()
+    dashboard.window().deleteLater()
+    app.processEvents()
+
+
+def test_shared_theme_styles_menu_bar_and_menu_states(app: QApplication) -> None:
+    from cephvr.gui.theme import COLORS, stylesheet
+
+    current = stylesheet()
+    assert f"QMenuBar {{ background: {COLORS.sidebar}; color: {COLORS.text};" in current
+    assert "QMenuBar::item:selected" in current
+    assert "QMenuBar::item:disabled" in current
+    assert f"QMenu {{ background: {COLORS.card}; color: {COLORS.text};" in current
+    assert "QMenu::item:selected" in current
+    assert "QMenu::item:disabled" in current
+
+
+def test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking(
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+    from cephvr.gui.camera_inventory import CameraDraft
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+
+    managed = ManagedDashboardWindow(sample=False)
+    managed.apply_view(
+        DashboardView(
+            phase=Phase.CONFIGURATION,
+            connected=True,
+            has_control=True,
+            configuration_wired=True,
+        )
+    )
+    camera = CameraDraft("tracking-1", "Tracking cam", "SERIAL-1", "Basler")
+    managed.devices.cameras.drafts = [camera]
+    managed.devices.cameras.populate_inventory()
+    managed.devices.cameras.drafts_changed.emit()
+    generation = str(uuid4())
+    state = control_pb.Snapshot(controller_generation=generation)
+    state.session.phase = control_pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 1
+    state.configuration_values.revision = 1
+    state.configuration_values.current.mode = control_pb.SESSION_MODE_CLOSED_LOOP
+    backend = state.configuration_values.current.backends.add(backend_name="tracking")
+    backend.tracking.SetInParent()
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            managed.dashboard,
+            managed.protocol,
+            managed.recordings,
+            managed.devices.cameras,
+            managed.devices.projectors,
+            managed.tracking,
+        )
+    )
+    assert manager.install(state)
+    assert manager.revision == 1
+    assert managed.tracking.source_serial == "SERIAL-1"
+    assert managed.protocol.editor.parameters.closed_loop
+    assert managed.protocol.editor.create_batch.composer.closed_loop
+    assert managed.protocol.editor.batch_edit.selection_form.composer.closed_loop
+    managed.tracking.forms.preprocessing.scale.setValue(95)
+    assert manager.dirty and manager.tracking_dirty
+    manager.dirty = False
+    manager.tracking_dirty = False
+    managed.tracking.annotation.changed.emit()
+    assert manager.dirty and manager.tracking_dirty
+    manager.dirty = False
+    manager.tracking_dirty = False
+    managed.protocol.editor.add_button.click()
+    from tests.visual_stimulus.support import valid_display_json
+
+    with pytest.raises(ValueError, match="Import a display profile"):
+        manager.collect(state.configuration_values.current)
+    complete_base = control_pb.ExperimentConfiguration()
+    complete_base.CopyFrom(state.configuration_values.current)
+    visual_backend = complete_base.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    visual_backend.visual_stimulus.display.profile_json = valid_display_json()
+    managed.devices.projectors.timing.mode.setCurrentText("Selected display VSync")
+    candidate = manager.collect(complete_base)
+    by_name = {item.backend_name: item for item in candidate.backends}
+    assert by_name["visual_stimulus"].enabled
+    assert by_name["visual_stimulus"].HasField("visual_stimulus")
+    assert by_name["tracking"].enabled
+    assert by_name["tracking"].HasField("tracking")
+    from cephvr.acquisition.v1 import camera_pb2
+
+    assert (
+        by_name["tracking"].tracking.input_camera_role
+        == camera_pb2.CAMERA_ROLE_TRACKING
+    )
+    import json
+
+    assert (
+        json.loads(by_name["visual_stimulus"].visual_stimulus.display.profile_json)[
+            "presentation_mode"
+        ]
+        == "photodiode_only_vsync"
+    )
+    managed.protocol.session_mode.setCurrentText("Open-loop")
+    open_loop = manager.collect(complete_base)
+    open_tracking = next(
+        item for item in open_loop.backends if item.backend_name == "tracking"
+    )
+    assert not open_tracking.enabled
+    assert not open_tracking.tracking.HasField("input_camera_role")
+    assert not open_tracking.tracking.stages
+    managed.recordings.velocities.click()
+    recording_candidate = manager.collect(complete_base)
+    recording_tracking = next(
+        item for item in recording_candidate.backends if item.backend_name == "tracking"
+    )
+    assert recording_tracking.enabled
+    assert recording_tracking.tracking.save_tracking_data
+    managed.close()
+    managed.deleteLater()
+    app.processEvents()
+
+
+def test_managed_status_uses_readiness_and_output_closure_evidence() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+
+    state = pb.Snapshot()
+    state.configuration.revision = 7
+    state.session.phase = pb.SESSION_PHASE_READY
+    participant = state.participants.add()
+    participant.process.role = "tracking"
+    participant.connected = True
+    participant.health = "Connected"
+    participant.ready.configuration_revision = 6
+    participant.ready.required_checks_passed = True
+    participant.outputs.add(closure=pb.OUTPUT_CLOSURE_CLOSED)
+    state.reservation.ready_for_outputs = True
+    view = dashboard_view(state, "gui-1", ())
+    assert view.tracking_status == "Connected"
+    assert view.output_status == "Last reported outputs closed"
+    assert view.reservation_status == "Reserved"
+    participant.process_running = True
+    participant.ready.configuration_revision = 7
+    assert dashboard_view(state, "gui-1", ()).tracking_status == "Ready"
+
+
+def test_retained_summary_keeps_incidents_ahead_of_completed_operation_history() -> (
+    None
+):
+    from cephvr.control.v1 import types_pb2 as pb
+
+    state = pb.Snapshot()
+    for index in range(45):
+        operation = state.operations.add(command="Setup", complete=True, succeeded=True)
+        operation.context.command_id = f"id-{index}"
+    state.errors.add(
+        error_id="retained-error",
+        failure=pb.Failure(message="camera cleanup failed"),
+    )
+    state.warnings.add(message="output recovery needs review")
+    rendered = retained_summary(state)
+    assert "retained-error" in rendered
+    assert "camera cleanup failed" in rendered
+    assert "output recovery needs review" in rendered
+    assert "5 additional retained operation entries omitted" in rendered
+    assert has_retained_review(state)
+    assert retained_ack_required_for(state, (3, "controller-1"), None)
+    assert not retained_ack_required_for(
+        state, (3, "controller-1"), (3, "controller-1")
+    )
+
+
+def test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot(
+    app: QApplication,
+) -> None:
+    from PyQt6.QtWidgets import QPushButton
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    responses: list[tuple[bytes, str]] = []
+
+    def queue_response(encoded: bytes, choice: str) -> bool:
+        responses.append((encoded, choice))
+        return True
+
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=queue_response,
+        acknowledged=lambda _epoch, _generation: None,
+        log=lambda _message: None,
+    )
+    state = pb.Snapshot()
+    prompt = state.prompts.add(
+        prompt_id="prompt-1",
+        explanation="Choose a response",
+        permitted_choices=["continue_session", "abort_session"],
+    )
+    prompts.update(state, require_acknowledgement=False, can_respond=False)
+    app.processEvents()
+    dialog = prompts.prompt_dialog
+    assert dialog is not None and dialog.isVisible()
+    choices = dialog.findChildren(QPushButton)
+    assert all(not item.isEnabled() for item in choices if item.text() != "Close")
+
+    prompts.update(state, require_acknowledgement=False, can_respond=True)
+    app.processEvents()
+    assert prompts.prompt_dialog is dialog
+    button = next(
+        item
+        for item in dialog.findChildren(QPushButton)
+        if item.text() == "continue_session" and item.isVisible()
+    )
+    button.click()
+    assert responses == [(prompt.SerializeToString(), "continue_session")]
+
+    prompts.operation_finished("respond_prompt")
+    prompt.runtime_incident.revision = 4
+    prompts.update(state, require_acknowledgement=False, can_respond=True)
+    app.processEvents()
+    button = next(
+        item
+        for item in dialog.findChildren(QPushButton)
+        if item.text() == "abort_session" and item.isVisible()
+    )
+    button.click()
+    assert responses[-1] == (prompt.SerializeToString(), "abort_session")
+    parent.close()
+    parent.deleteLater()
+    app.processEvents()
+
+
+def test_prompt_completion_preserves_current_lease_authority(app: QApplication) -> None:
+    from PyQt6.QtWidgets import QPushButton
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, _choice: True,
+        acknowledged=lambda _epoch, _generation: None,
+        log=lambda _message: None,
+    )
+    state = pb.Snapshot(controller_generation="controller-1")
+    state.prompts.add(prompt_id="p1", permitted_choices=["continue"])
+    prompts.update(state, require_acknowledgement=False, can_respond=True)
+    prompts.update(state, require_acknowledgement=False, can_respond=False)
+    prompts.queued_prompt_id = "p1"
+    prompts.pending_prompt_ids.add("p1")
+    prompts.operation_finished("respond_prompt")
+    app.processEvents()
+    assert prompts.prompt_dialog is not None
+    choices = [
+        item
+        for item in prompts.prompt_dialog.findChildren(QPushButton)
+        if item.text() == "continue" and item.isVisible()
+    ]
+    assert choices and all(not item.isEnabled() for item in choices)
+    prompts.hide_prompt()
+    prompts.operation_finished("respond_prompt")
+    assert not prompts.prompt_dialog.isVisible()
+    parent.close()
+    parent.deleteLater()
+    app.processEvents()
+
+
+def test_managed_retained_summary_uses_one_acknowledgement_window(
+    app: QApplication,
+) -> None:
+    from PyQt6.QtWidgets import QMessageBox
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    acknowledgements: list[tuple[int, str]] = []
+
+    def acknowledge(epoch: int, generation: str) -> None:
+        acknowledgements.append((epoch, generation))
+
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, _choice: False,
+        acknowledged=acknowledge,
+        log=lambda _message: None,
+    )
+    state = pb.Snapshot(retained_truncated=True, controller_generation="controller-1")
+    prompts.update(
+        state,
+        require_acknowledgement=True,
+        can_respond=False,
+        connection_epoch=1,
+    )
+    app.processEvents()
+    dialog = prompts.retained_dialog
+    assert dialog is not None and dialog.isVisible()
+    prompts.update(
+        state,
+        require_acknowledgement=True,
+        can_respond=False,
+        connection_epoch=1,
+    )
+    assert prompts.retained_dialog is dialog
+    button = dialog.button(QMessageBox.StandardButton.Ok)
+    assert button is not None
+    button.click()
+    app.processEvents()
+    assert acknowledgements == [(1, "controller-1")]
+    parent.close()
+    parent.deleteLater()
+    app.processEvents()
+
+
+def test_old_retained_dialog_cannot_acknowledge_a_new_connection(
+    app: QApplication,
+) -> None:
+    from PyQt6.QtWidgets import QMessageBox
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    acknowledgements: list[tuple[int, str]] = []
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, _choice: False,
+        acknowledged=lambda epoch, generation: acknowledgements.append(
+            (epoch, generation)
+        ),
+        log=lambda _message: None,
+    )
+    first = pb.Snapshot(retained_truncated=True, controller_generation="controller-1")
+    prompts.update(
+        first,
+        require_acknowledgement=True,
+        can_respond=False,
+        connection_epoch=4,
+    )
+    app.processEvents()
+    old_dialog = prompts.retained_dialog
+    assert old_dialog is not None
+    prompts.invalidate_retained_summary()
+    second = pb.Snapshot(retained_truncated=True, controller_generation="controller-1")
+    prompts.update(
+        second,
+        require_acknowledgement=True,
+        can_respond=False,
+        connection_epoch=5,
+    )
+    app.processEvents()
+    new_dialog = prompts.retained_dialog
+    assert new_dialog is not None and new_dialog is not old_dialog
+    old_button = old_dialog.button(QMessageBox.StandardButton.Ok)
+    assert old_button is not None
+    old_button.click()
+    app.processEvents()
+    assert acknowledgements == []
+    new_button = new_dialog.button(QMessageBox.StandardButton.Ok)
+    assert new_button is not None
+    new_button.click()
+    app.processEvents()
+    assert acknowledgements == [(5, "controller-1")]
+    parent.close()
+    parent.deleteLater()
+    app.processEvents()
+
+
+def test_retained_summary_includes_exact_command_and_prompt_ids() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+
+    state = pb.Snapshot()
+    operation = state.operations.add(command="Setup")
+    operation.context.command_id = "cmd-123"
+    operation.progress = "waiting for device readiness"
+    prompt = state.prompts.add(prompt_id="prompt-456", explanation="Continue?")
+    prompt.permitted_choices.append("cancel")
+    rendered = retained_summary(state)
+    assert "cmd-123" in rendered
+    assert "waiting for device readiness" in rendered
+    assert "prompt-456" in rendered
+
+
+def test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch() -> None:
+    import asyncio
+
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    bridge = ControllerBridge(Principal("gui", "gui-1", "token"), 50051, 1024, (0,))
+    bridge._queue = asyncio.PriorityQueue(maxsize=33)
+    bridge._connection_epoch = 4
+    bridge._controller_generation = "controller-1"
+    bridge._pending_count = 2
+    bridge._queue_request("ordinary", {}, 1, False, 4, "controller-1")
+    bridge._queue_request("Abort now", {}, 2, True, 4, "controller-1")
+    assert bridge._queue.get_nowait()[4] == "Abort now"
+    assert ControllerBridge._is_safety_request(
+        "viewer_state", {"result": rpc.PREVIEW_CONSUMER_RESULT_RELEASED}
+    )
+
+    bridge._pending_count = 1
+    bridge._queue_request("Start", {}, 3, False, 3, "controller-0")
+    assert bridge._queue.qsize() == 1
+    assert bridge._pending_count == 0
+
+    class ImmediateLoop:
+        @staticmethod
+        def call_soon_threadsafe(callback: object, *args: object) -> None:
+            callback(*args)  # type: ignore[operator]
+
+    bridge._loop = ImmediateLoop()  # type: ignore[assignment]
+    bridge._connected = True
+    bridge._pending_count = bridge._ORDINARY_PENDING
+    assert not bridge.request("Start")
+    assert bridge.request("Abort now")
+    for _ in range(bridge._MAX_PENDING - bridge._ORDINARY_PENDING - 1):
+        assert bridge.request("Cancel Setup")
+    assert bridge._pending_count == bridge._MAX_PENDING
+    assert not bridge.request("respond_prompt", prompt=b"", choice="cancel")
+
+
+@pytest.mark.asyncio
+async def test_prompt_completion_wait_failure_retains_admitted_id_as_unconfirmed() -> (
+    None
+):
+    from cephvr.client.session import ClientError
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    principal = Principal("gui", "gui-1", "token")
+    bridge = ControllerBridge(principal, 50051, 1024, (0,))
+    outcomes: list[tuple[str, str, str, str]] = []
+    bridge.operation_finished.connect(
+        lambda action, command_id, status, message: outcomes.append(
+            (action, command_id, status, message)
+        )
+    )
+    state = pb.Snapshot(controller_generation="controller-1")
+    state.control.holder_client_id = principal.generation
+    state.prompts.add(
+        prompt_id="prompt-1",
+        permitted_choices=["continue"],
+    )
+    command = rpc.OperatorCommand(
+        operator=pb.OperatorContext(
+            client_id=principal.generation,
+            control_generation=state.control.control_generation,
+            command_id="admitted-command",
+        ),
+        controller_generation=state.controller_generation,
+    )
+
+    class Client:
+        snapshot = state
+
+        @staticmethod
+        def operator_command() -> rpc.OperatorCommand:
+            return command
+
+        @staticmethod
+        async def _admit(
+            _method: str, _request: rpc.PromptResponse
+        ) -> pb.CommandAdmission:
+            return pb.CommandAdmission(
+                command_id="admitted-command",
+                result=pb.COMMAND_RESULT_ACCEPTED,
+            )
+
+        @staticmethod
+        async def wait_result(_command_id: str) -> object:
+            raise ClientError("retained completion state is unavailable")
+
+    client = Client()
+    await bridge._dispatch(
+        client,  # type: ignore[arg-type]
+        "respond_prompt",
+        {
+            "prompt": state.prompts[0].SerializeToString(),
+            "choice": "continue",
+        },
+    )
+    assert outcomes == [
+        (
+            "respond_prompt",
+            "admitted-command",
+            "unconfirmed",
+            "retained completion state is unavailable",
+        )
+    ]
+
+
 def test_managed_spikeglx_connection_emits_read_only_intent(app: QApplication) -> None:
     from cephvr.gui.spikeglx import SpikeGLXPanel
 
@@ -77,6 +666,80 @@ def test_managed_spikeglx_connection_emits_read_only_intent(app: QApplication) -
     assert not panel.editors[0].isEnabled()
     panel.action_buttons[0].click()
     assert requested == [True]
+    panel.close()
+    panel.deleteLater()
+    app.processEvents()
+
+
+def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.spikeglx import SpikeGLXPanel
+    from cephvr.synchronization.v1 import spikeglx_pb2 as sync_pb
+
+    panel = SpikeGLXPanel()
+    panel.can_review = True
+    panel.set_sources(
+        (
+            ("behavior-camera", "Behavioral camera", True),
+            ("tracking-camera", "Tracking camera", True),
+            ("photodiode", "Photodiode", True),
+        ),
+        frozenset({"behavior-camera", "tracking-camera"}),
+    )
+    saved = (
+        sync_pb.PulseChannel(
+            role=sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA,
+            family=sync_pb.STREAM_FAMILY_ONEBOX,
+            stream_index=0,
+            channel_index=1,
+            bit=0,
+        ),
+        sync_pb.PulseChannel(
+            role=sync_pb.PULSE_ROLE_TRACKING_CAMERA,
+            family=sync_pb.STREAM_FAMILY_ONEBOX,
+            stream_index=0,
+            channel_index=2,
+        ),
+        sync_pb.PulseChannel(
+            role=sync_pb.PULSE_ROLE_PHOTODIODE,
+            family=sync_pb.STREAM_FAMILY_NI,
+            stream_index=0,
+            channel_index=3,
+        ),
+        sync_pb.PulseChannel(
+            role=sync_pb.PULSE_ROLE_TRIAL_STATE,
+            family=sync_pb.STREAM_FAMILY_NI,
+            stream_index=0,
+            channel_index=4,
+        ),
+        sync_pb.PulseChannel(
+            role=sync_pb.PULSE_ROLE_CUSTOM,
+            family=sync_pb.STREAM_FAMILY_NI,
+            stream_index=0,
+            channel_index=5,
+            source_id="sync-input",
+        ),
+    )
+    panel.install_inventory(
+        saved,
+        "f" * 64,
+        required_roles=frozenset(
+            {
+                sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA,
+                sync_pb.PULSE_ROLE_TRACKING_CAMERA,
+            }
+        ),
+    )
+    assert not panel.enable_controls[
+        panel.inventory_rows[sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA]
+    ].isEnabled()
+    collected = {item.role: item for item in panel.inventory_for_submit()}
+    assert collected[sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA].HasField("bit")
+    assert collected[sync_pb.PULSE_ROLE_BEHAVIORAL_CAMERA].bit == 0
+    assert not collected[sync_pb.PULSE_ROLE_TRACKING_CAMERA].HasField("bit")
+    assert collected[sync_pb.PULSE_ROLE_TRIAL_STATE].channel_index == 4
+    assert collected[sync_pb.PULSE_ROLE_CUSTOM].source_id == "sync-input"
     panel.close()
     panel.deleteLater()
     app.processEvents()
@@ -1444,6 +2107,1456 @@ def test_managed_camera_settings_submit_pfs_source_and_rate(
 
 
 @pytest.mark.asyncio
+async def test_bridge_submits_configuration_and_waits_for_exact_version() -> None:
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    current = pb.Snapshot(controller_generation=generation)
+    current.configuration.revision = 8
+    current.configuration_values.revision = 8
+    current.configuration_values.current.subject = "subject"
+    accepted = pb.Snapshot(controller_generation=generation)
+    accepted.configuration.revision = 9
+    accepted.configuration_values.revision = 9
+    accepted.configuration_values.current.subject = "updated subject"
+    proposal = pb.ExperimentConfiguration()
+    proposal.CopyFrom(accepted.configuration_values.current)
+    requests: list[tuple[str, object]] = []
+    command_id = str(uuid4())
+
+    class Client:
+        snapshot = current
+        rpc_timeout_s = 1
+
+        def operator_command(self) -> rpc.OperatorCommand:
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(command_id=command_id),
+                controller_generation=generation,
+            )
+
+        async def _admit(self, method: str, request: object) -> pb.CommandAdmission:
+            requests.append((method, request))
+            return pb.CommandAdmission(
+                command_id=command_id, result=pb.COMMAND_RESULT_ACCEPTED
+            )
+
+        async def wait_result(self, _command_id: str) -> CommandOutcome:
+            return CommandOutcome(command_id, True, True)
+
+        async def _wait(self, _predicate: object) -> pb.Snapshot:
+            return accepted
+
+    bridge = ControllerBridge(Principal("gui", generation, "token"), 50051, 1024, (0,))
+    bridge._controller_generation = generation
+    accepted_versions: list[int] = []
+    finished: list[tuple[str, str, str, str]] = []
+    bridge.configuration_accepted.connect(
+        lambda revision, _edit_serial: accepted_versions.append(revision)
+    )
+    bridge.operation_finished.connect(lambda *args: finished.append(args))
+    assert await bridge._submit_configuration(
+        Client(),
+        {
+            "base_revision": 8,
+            "proposal": proposal.SerializeToString(deterministic=True),
+        },
+    )
+    assert len(requests) == 1
+    method, request = requests[0]
+    assert method == "UpdateConfiguration"
+    assert request.expected_revision == 8
+    assert request.proposed.subject == "updated subject"
+    assert accepted_versions == [9]
+    assert finished[-1][2] == "completed"
+
+
+@pytest.mark.asyncio
+async def test_bridge_accepts_unchanged_configuration_at_same_revision() -> None:
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 8
+    state.configuration_values.revision = 8
+    state.configuration_values.current.subject = "unchanged"
+    proposal = pb.ExperimentConfiguration()
+    proposal.CopyFrom(state.configuration_values.current)
+    command_id = str(uuid4())
+
+    class Client:
+        snapshot = state
+        rpc_timeout_s = 1
+
+        def operator_command(self) -> rpc.OperatorCommand:
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(command_id=command_id),
+                controller_generation=generation,
+            )
+
+        async def _admit(self, method: str, _request: object) -> pb.CommandAdmission:
+            assert method == "UpdateConfiguration"
+            return pb.CommandAdmission(
+                command_id=command_id, result=pb.COMMAND_RESULT_ACCEPTED
+            )
+
+        async def wait_result(self, _command_id: str) -> CommandOutcome:
+            return CommandOutcome(command_id, True, True)
+
+        async def _wait(self, predicate: object) -> pb.Snapshot:
+            assert callable(predicate) and predicate(state)
+            return state
+
+    bridge = ControllerBridge(Principal("gui", generation, "token"), 50051, 1024, (0,))
+    bridge._controller_generation = generation
+    accepted: list[int] = []
+    finished: list[tuple[str, str, str, str]] = []
+    bridge.configuration_accepted.connect(
+        lambda revision, _edit_serial: accepted.append(revision)
+    )
+    bridge.operation_finished.connect(lambda *args: finished.append(args))
+    assert await bridge._submit_configuration(
+        Client(),
+        {"base_revision": 8, "proposal": proposal.SerializeToString()},
+    )
+    assert accepted == [8]
+    assert finished[-1][2] == "completed"
+
+
+def test_managed_configuration_action_plan_preserves_edits_outside_editable_phases() -> (
+    None
+):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_configuration_transport import configuration_update_plan
+
+    current = pb.ExperimentConfiguration(subject="accepted")
+    unchanged = pb.ExperimentConfiguration(subject="accepted")
+    changed = pb.ExperimentConfiguration(subject="local draft")
+    assert (
+        configuration_update_plan(unchanged, current, pb.SESSION_PHASE_ENDED, "Setup")
+        == "direct"
+    )
+    assert (
+        configuration_update_plan(
+            changed, current, pb.SESSION_PHASE_ENDED, "New session"
+        )
+        == "direct_preserve"
+    )
+    assert (
+        configuration_update_plan(
+            changed, current, pb.SESSION_PHASE_RUNNING, "save_configuration_history"
+        )
+        == "preserve"
+    )
+    assert (
+        configuration_update_plan(changed, current, pb.SESSION_PHASE_READY, "Setup")
+        == "submit"
+    )
+
+
+@pytest.mark.asyncio
+async def test_managed_gui_setup_captures_exact_accepted_configuration_for_bridge(
+    window: DashboardWindow,
+) -> None:
+    import asyncio
+
+    from PyQt6.QtCore import QObject
+
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.gui.main import ManagedGui
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 2
+    state.configuration_values.revision = 2
+    state.configuration_values.current.subject = "accepted"
+    client_id = str(uuid4())
+    manager = SimpleNamespace(
+        stale=False,
+        revision=2,
+        edit_serial=11,
+        collect=lambda base: pb.ExperimentConfiguration.FromString(
+            base.SerializeToString()
+        ),
+    )
+    gui = ManagedGui.__new__(ManagedGui)
+    QObject.__init__(gui)
+    gui.state = state
+    gui.configuration = manager
+    gui._connection_epoch = 3
+    bridge = ControllerBridge(Principal("gui", client_id, "token"), 50051, 1024, (0,))
+    bridge._loop = asyncio.get_running_loop()
+    bridge._queue = asyncio.PriorityQueue(maxsize=bridge._MAX_PENDING + 1)
+    bridge._connected = True
+    bridge._connection_epoch = 3
+    bridge._controller_generation = generation
+    bridge._configuration_lock = asyncio.Lock()
+    gui.bridge = bridge
+    gui.window = window
+    gui.confirm_discard_local_draft = lambda: True
+
+    gui.request_dashboard_action("Setup")
+    await asyncio.sleep(0)
+    _, _, epoch, queued_generation, action, options = bridge._queue.get_nowait()
+    assert action == "Setup"
+    assert epoch == 3 and queued_generation == generation
+    assert options["expected_revision"] == 2
+    assert options[
+        "expected_configuration"
+    ] == state.configuration_values.current.SerializeToString(deterministic=True)
+
+    command_id = str(uuid4())
+    calls: list[str] = []
+
+    class Client:
+        snapshot = state
+
+        def operator_command(self):
+            from cephvr.control.v1 import services_pb2 as rpc
+
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(command_id=command_id),
+                controller_generation=generation,
+            )
+
+        async def execute(self, method, *_args, **_kwargs):
+            calls.append(method)
+            return CommandOutcome(command_id, True, True)
+
+        async def wait_result(self, _command):
+            return CommandOutcome(command_id, True, True)
+
+    await bridge._dispatch_guarded(Client(), action, options, epoch, queued_generation)
+    assert calls == ["Setup"]
+
+
+def test_managed_gui_immutable_phase_actions_bypass_invalid_collection(
+    window: DashboardWindow,
+) -> None:
+    from unittest.mock import Mock
+
+    from PyQt6.QtCore import QObject
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.session.phase = pb.SESSION_PHASE_ENDED
+    state.configuration.revision = 7
+    state.configuration_values.revision = 7
+    state.configuration_values.current.subject = "accepted"
+    requests: list[str] = []
+    collect = Mock(side_effect=ValueError("unfinished epoch duration"))
+    manager = SimpleNamespace(
+        stale=True,
+        dirty=True,
+        revision=6,
+        collect=collect,
+    )
+    gui = ManagedGui.__new__(ManagedGui)
+    QObject.__init__(gui)
+    gui.state = state
+    gui.configuration = manager
+    gui.close_pending = False
+    gui.bridge = SimpleNamespace(
+        request=lambda action, **_kwargs: requests.append(action) or True
+    )
+    gui.window = window
+    gui.confirm_discard_local_draft = lambda: True
+
+    gui.request_dashboard_action("New session")
+    assert requests == ["New session"]
+    assert collect.call_count == 0
+    gui.request_close()
+    assert requests == ["New session", "save_configuration_history"]
+    assert gui.close_pending
+    assert collect.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_controller_bridge_setup_validates_captured_version_under_dispatch_lock() -> (
+    None
+):
+    import asyncio
+
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 4
+    state.configuration_values.revision = 4
+    state.configuration_values.current.subject = "accepted"
+    command_id = str(uuid4())
+    requests: list[str] = []
+
+    class Client:
+        snapshot = state
+
+        def operator_command(self) -> rpc.OperatorCommand:
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(command_id=command_id),
+                controller_generation=generation,
+            )
+
+        async def execute(
+            self, method: str, *_args: object, **_kwargs: object
+        ) -> CommandOutcome:
+            requests.append(method)
+            return CommandOutcome(command_id, True, True)
+
+        async def wait_result(self, _command_id: str) -> CommandOutcome:
+            return CommandOutcome(command_id, True, True)
+
+    bridge = ControllerBridge(Principal("gui", generation, "token"), 50051, 1024, (0,))
+    bridge._connection_epoch = 1
+    bridge._controller_generation = generation
+    bridge._configuration_lock = asyncio.Lock()
+    failures: list[tuple[str, bool, str]] = []
+    bridge.command_finished.connect(lambda *args: failures.append(args))
+    await bridge._dispatch_guarded(
+        Client(),
+        "Setup",
+        {
+            "expected_revision": 3,
+            "expected_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+        },
+        1,
+        generation,
+    )
+    assert requests == []
+    assert failures and "captured configuration version changed" in failures[-1][2]
+    await bridge._dispatch_guarded(
+        Client(),
+        "Setup",
+        {
+            "expected_revision": 4,
+            "expected_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+        },
+        1,
+        generation,
+    )
+    assert requests == ["Setup"]
+
+
+@pytest.mark.asyncio
+async def test_controller_bridge_submits_then_setup_uses_exact_accepted_version() -> (
+    None
+):
+    import asyncio
+
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    before = pb.Snapshot(controller_generation=generation)
+    before.configuration.revision = 4
+    before.configuration_values.revision = 4
+    before.configuration_values.current.subject = "before"
+    after = pb.Snapshot(controller_generation=generation)
+    after.configuration.revision = 5
+    after.configuration_values.revision = 5
+    after.configuration_values.current.subject = "accepted proposal"
+    command_id = str(uuid4())
+    calls: list[str] = []
+
+    class Client:
+        snapshot = before
+        rpc_timeout_s = 1
+
+        def operator_command(self) -> rpc.OperatorCommand:
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(command_id=command_id),
+                controller_generation=generation,
+            )
+
+        async def _admit(self, method: str, _request: object) -> pb.CommandAdmission:
+            calls.append(method)
+            return pb.CommandAdmission(
+                command_id=command_id, result=pb.COMMAND_RESULT_ACCEPTED
+            )
+
+        async def wait_result(self, _command_id: str) -> CommandOutcome:
+            return CommandOutcome(command_id, True, True)
+
+        async def _wait(self, predicate: object) -> pb.Snapshot:
+            assert callable(predicate) and predicate(after)
+            self.snapshot = after
+            return after
+
+        async def execute(
+            self, method: str, *_args: object, **_kwargs: object
+        ) -> CommandOutcome:
+            calls.append(method)
+            return CommandOutcome(str(uuid4()), True, True)
+
+    proposal = pb.ExperimentConfiguration(subject="accepted proposal")
+    client = Client()
+    bridge = ControllerBridge(Principal("gui", generation, "token"), 50051, 1024, (0,))
+    bridge._connection_epoch = 1
+    bridge._controller_generation = generation
+    bridge._configuration_lock = asyncio.Lock()
+    accepted: list[tuple[int, int]] = []
+    bridge.configuration_accepted.connect(lambda *args: accepted.append(args))
+    await bridge._dispatch_guarded(
+        client,
+        "submit_configuration",
+        {
+            "base_revision": 4,
+            "proposal": proposal.SerializeToString(deterministic=True),
+            "edit_serial": 19,
+            "after_action": "Setup",
+        },
+        1,
+        generation,
+    )
+    assert calls == ["UpdateConfiguration", "Setup"]
+    assert accepted == [(5, 19)]
+
+
+def test_managed_display_calibration_requests_use_accepted_relative_assets(
+    tmp_path: Path,
+) -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_display_operations import (
+        capture_display_calibration_intent,
+        close_display_calibration_request,
+        open_display_calibration_request,
+    )
+
+    generation = str(uuid4())
+    client_id = str(uuid4())
+    root = tmp_path / "accepted-assets"
+    calibration = root / "calibration"
+    calibration.mkdir(parents=True)
+    profile = calibration / "diagnostic_display_profile.json"
+    arena = calibration / "rig_geometry_grid.glb"
+    profile.write_text("{}", encoding="utf-8")
+    arena.write_bytes(b"glb")
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 9
+    state.configuration_values.revision = 9
+    state.configuration_values.current.asset_root = str(root)
+    state.control.holder_client_id = client_id
+    state.control.control_generation = "lease-1"
+
+    class Client:
+        snapshot = state
+
+        def operator_command(self) -> rpc.OperatorCommand:
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(
+                    client_id=client_id,
+                    control_generation="lease-1",
+                    command_id=str(uuid4()),
+                ),
+                controller_generation=generation,
+            )
+
+    intent = capture_display_calibration_intent(state, arena_path=str(arena))
+    request = open_display_calibration_request(Client(), **intent)
+    assert request.expected_configuration_revision == 9
+    assert (
+        request.profile_asset_reference == "calibration/diagnostic_display_profile.json"
+    )
+    assert request.arena_asset_reference == "calibration/rig_geometry_grid.glb"
+    assert request.command.controller_generation == generation
+    assert request.expected_profile_sha256
+    assert request.expected_arena_sha256
+
+    state.visual_stimulus_display.calibration.diagnostic_id = "diag-1"
+    state.visual_stimulus_display.calibration.controller_generation = generation
+    state.visual_stimulus_display.calibration.configuration_revision = 9
+    close = close_display_calibration_request(
+        Client(), expected_revision=9, diagnostic_id="diag-1"
+    )
+    assert close.expected_configuration_revision == 9
+    assert close.diagnostic_id == "diag-1"
+
+    outside = tmp_path / "outside.glb"
+    outside.write_bytes(b"outside")
+    with pytest.raises(ValueError, match="outside the accepted asset root"):
+        capture_display_calibration_intent(state, arena_path=str(outside))
+
+
+def test_projector_first_run_profile_import_is_reachable_and_collectable(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    import json
+
+    from cephvr.gui.projector_codec import display_document
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_pb
+
+    panel = window.devices.projectors
+    panel.can_review = True
+    path = tmp_path / "display-profile.json"
+    path.write_text(
+        json.dumps(
+            {
+                "outputs": [
+                    {
+                        "output_id": "front-output",
+                        "device_identity": "monitor-front",
+                        "width_px": 1920,
+                        "height_px": 1080,
+                        "refresh_numerator": 60,
+                        "refresh_denominator": 1,
+                        "rgb_bits_per_channel": 8,
+                    }
+                ],
+                "mappings": [{"surface_id": "front", "output_id": "front-output"}],
+                "presentation_mode": "all_outputs_vsync",
+                "photodiode_enabled": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    panel.import_display_profile(str(path))
+    submitted = panel.configuration_for_submit(visual_pb.DisplayConfiguration())
+    document = display_document(submitted)
+    assert document["outputs"][0]["device_identity"] == "monitor-front"
+    assert document["mappings"][0]["surface_id"] == "front"
+    assert document["photodiode_enabled"] is False
+    assert panel._imported_profile is not None
+
+
+@pytest.mark.asyncio
+async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() -> None:
+    import asyncio
+
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+    from cephvr.synchronization.v1 import spikeglx_pb2
+
+    generation = str(uuid4())
+    client_id = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 6
+    state.configuration_values.revision = 6
+    state.control.holder_client_id = client_id
+    state.control.control_generation = "lease-1"
+    command_id = str(uuid4())
+    get_requests: list[rpc.SpikeGLXInventoryRequest] = []
+    update_requests: list[rpc.SpikeGLXInventoryUpdateRequest] = []
+
+    class Stub:
+        async def GetSpikeGLXInventory(self, request: object, **_kwargs: object):
+            assert isinstance(request, rpc.SpikeGLXInventoryRequest)
+            get_requests.append(request)
+            return rpc.SpikeGLXInventorySnapshot(
+                configuration_revision=6,
+                file_sha256="digest",
+                backend_enabled=True,
+                address="127.0.0.1",
+                command_port=4142,
+            )
+
+    class Client:
+        snapshot = state
+        stub = Stub()
+        principal = Principal("gui", client_id, "token")
+        rpc_timeout_s = 1
+
+        def operator_command(self) -> rpc.OperatorCommand:
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(
+                    client_id=client_id,
+                    control_generation="lease-1",
+                    command_id=command_id,
+                ),
+                controller_generation=generation,
+            )
+
+        async def execute(
+            self, method: str, request: object, *, wait: bool
+        ) -> CommandOutcome:
+            assert method == "UpdateSpikeGLXInventory" and not wait
+            assert isinstance(request, rpc.SpikeGLXInventoryUpdateRequest)
+            update_requests.append(request)
+            return CommandOutcome(command_id, False, None)
+
+        async def wait_result(self, _command_id: str) -> CommandOutcome:
+            return CommandOutcome(command_id, True, True)
+
+    bridge = ControllerBridge(Client.principal, 50051, 1024, (0,))
+    bridge._connection_epoch = 3
+    bridge._controller_generation = generation
+    bridge._configuration_lock = asyncio.Lock()
+    received: list[tuple[int, str, bytes]] = []
+    bridge.spikeglx_inventory_received.connect(lambda *args: received.append(args))
+    await bridge._dispatch(
+        Client(),
+        "get_spikeglx_inventory",
+        {"expected_revision": 6, "dispatch_identity": (3, generation)},
+    )
+    assert len(get_requests) == 1
+    assert get_requests[0].expected_configuration_revision == 6
+    assert received[0][:2] == (3, generation)
+    assert (
+        rpc.SpikeGLXInventorySnapshot.FromString(received[0][2]).file_sha256 == "digest"
+    )
+
+    channel = spikeglx_pb2.PulseChannel(role=spikeglx_pb2.PULSE_ROLE_CUSTOM)
+    channel.source_id = "custom-trigger"
+    admitted: list[tuple[str, str]] = []
+    finished: list[tuple[str, str, str, str]] = []
+    bridge.command_admitted.connect(lambda *args: admitted.append(args))
+    bridge.operation_finished.connect(lambda *args: finished.append(args))
+    await bridge._dispatch(
+        Client(),
+        "spikeglx_inventory_update",
+        {
+            "expected_revision": 6,
+            "expected_file_sha256": "digest",
+            "pulse_channels": (channel.SerializeToString(deterministic=True),),
+        },
+    )
+    assert len(update_requests) == 1
+    assert update_requests[0].expected_configuration_revision == 6
+    assert update_requests[0].pulse_channels[0].source_id == "custom-trigger"
+    assert admitted == [("spikeglx_inventory_update", command_id)]
+    assert finished[-1][2] == "completed"
+
+
+def test_managed_spikeglx_inventory_installs_read_only_host_settings(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_display import ManagedDisplayOperations
+    from cephvr.gui.view import DashboardView, Phase, review_view
+
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 3
+    state.configuration_values.revision = 3
+    state.configuration_values.current.backends.add(
+        backend_name="synchronization", enabled=True
+    )
+    current = SimpleNamespace(state=state, identity=(9, generation))
+    operations = ManagedDisplayOperations(
+        window.devices.projectors,
+        window.devices.spikeglx,
+        snapshot=lambda: current.state,
+        connection_identity=lambda: current.identity,
+        send=lambda *_args, **_kwargs: True,
+    )
+
+    response = rpc.SpikeGLXInventorySnapshot(
+        configuration_revision=3,
+        file_sha256="saved-inventory-digest",
+        backend_enabled=True,
+        address="169.254.240.108",
+        command_port=4142,
+    )
+    operations.install_inventory(9, generation, response.SerializeToString())
+
+    panel = window.devices.spikeglx
+    panel.apply_view(DashboardView(connected=True, has_control=True))
+    assert panel.pairing.isChecked()
+    assert not panel.pairing.isEnabled()
+    assert panel.address.text() == "169.254.240.108"
+    assert panel.address.isReadOnly()
+    assert panel.command_port.text() == "4142"
+    assert panel.command_port.isReadOnly()
+    assert "synchronization_config.toml" in panel.host_settings_note.text()
+    previous_digest = panel.inventory_file_sha256
+    current.state.configuration.revision = 4
+    operations.install_inventory(9, generation, response.SerializeToString())
+    assert panel.inventory_file_sha256 == previous_digest
+    assert "does not match" in panel.console.toPlainText()
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    assert panel.pairing.isEnabled()
+
+
+@pytest.mark.asyncio
+async def test_queued_calibration_rejects_revision_and_asset_drift() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 9
+    state.configuration_values.revision = 9
+    state.configuration_values.current.asset_root = "/unused"
+
+    class Client:
+        snapshot = state
+
+    bridge = ControllerBridge(
+        Principal("gui", str(uuid4()), "token"), 50051, 1024, (0,)
+    )
+    bridge._connection_epoch = 4
+    bridge._controller_generation = generation
+    finished: list[tuple[str, bool, str]] = []
+    bridge.command_finished.connect(
+        lambda action, ok, message: finished.append((action, ok, message))
+    )
+
+    await bridge._dispatch_guarded(
+        Client(),
+        "open_display_calibration",
+        {
+            "arena_path": "/outside/arena.glb",
+            "expected_revision": 8,
+            "expected_profile_sha256": "profile-digest",
+            "expected_arena_sha256": "arena-digest",
+        },
+        4,
+        generation,
+    )
+    assert finished and finished[-1][0] == "open_display_calibration"
+    assert not finished[-1][1]
+    assert "older configuration" in finished[-1][2]
+
+
+@pytest.mark.asyncio
+async def test_queued_calibration_close_rejects_changed_diagnostic_identity() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 9
+    state.configuration_values.revision = 9
+    evidence = state.visual_stimulus_display.calibration
+    evidence.controller_generation = generation
+    evidence.configuration_revision = 9
+    evidence.diagnostic_id = "current-diagnostic"
+
+    class Client:
+        snapshot = state
+
+    bridge = ControllerBridge(
+        Principal("gui", str(uuid4()), "token"), 50051, 1024, (0,)
+    )
+    bridge._connection_epoch = 4
+    bridge._controller_generation = generation
+    finished: list[tuple[str, bool, str]] = []
+    bridge.command_finished.connect(
+        lambda action, ok, message: finished.append((action, ok, message))
+    )
+
+    await bridge._dispatch_guarded(
+        Client(),
+        "close_display_calibration",
+        {"expected_revision": 9, "diagnostic_id": "clicked-diagnostic"},
+        4,
+        generation,
+    )
+    assert finished and finished[-1][0] == "close_display_calibration"
+    assert not finished[-1][1]
+    assert "stale" in finished[-1][2]
+
+
+def test_inventory_required_roles_follow_the_accepted_active_configuration() -> None:
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_display_operations import required_inventory_roles
+    from cephvr.synchronization.v1 import spikeglx_pb2
+
+    configuration = pb.ExperimentConfiguration()
+    acquisition = configuration.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    acquisition.behavioral.enabled = True
+    acquisition.behavioral.device.frame_timing = (
+        camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+    )
+    acquisition.tracking.enabled = True
+    acquisition.tracking.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
+    vs = configuration.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    ).visual_stimulus
+    vs.display.profile_json = '{"photodiode_enabled":true}'
+
+    assert required_inventory_roles(configuration) == frozenset(
+        {
+            spikeglx_pb2.PULSE_ROLE_BEHAVIORAL_CAMERA,
+            spikeglx_pb2.PULSE_ROLE_PHOTODIODE,
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_tracking_diagnostic_requests_keep_preview_and_draft_identity() -> None:
+    from cephvr.client.session import CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    generation = str(uuid4())
+    client_id = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 11
+    state.configuration_values.revision = 11
+    state.acquisition_devices.tracking.preview_running = True
+    state.acquisition_devices.tracking.preview_run_id = "preview-11"
+    state.acquisition_devices.tracking.applied_configuration_revision = 11
+    requests: list[tuple[str, object]] = []
+    command_id = str(uuid4())
+
+    class Client:
+        snapshot = state
+        principal = Principal("gui", client_id, "token")
+
+        def operator_command(self) -> rpc.OperatorCommand:
+            return rpc.OperatorCommand(
+                operator=pb.OperatorContext(
+                    client_id=client_id,
+                    control_generation="lease-1",
+                    command_id=command_id,
+                ),
+                controller_generation=generation,
+            )
+
+        async def execute(self, method: str, request: object, *, wait: bool):
+            assert not wait
+            requests.append((method, request))
+            return CommandOutcome(command_id, False, None)
+
+        async def wait_result(self, _command_id: str):
+            return CommandOutcome(command_id, True, True)
+
+    bridge = ControllerBridge(Client.principal, 50051, 1024, (0,))
+    bridge._controller_generation = generation
+    bridge._connection_epoch = 6
+    finished: list[tuple[str, str, str, str]] = []
+    bridge.operation_finished.connect(lambda *args: finished.append(args))
+    settings = pb.TrackingSettings(input_camera_role=2)
+    await bridge._dispatch(
+        Client(),
+        "begin_tracking_diagnostic",
+        {
+            "expected_revision": 11,
+            "preview_run_id": "preview-11",
+            "selected_stages": (1, 3),
+            "diagnostic_settings": settings.SerializeToString(deterministic=True),
+        },
+    )
+    assert requests[0][0] == "BeginTrackingDiagnostic"
+    begin = requests[0][1]
+    assert isinstance(begin, rpc.BeginTrackingDiagnosticRequest)
+    assert begin.expected_configuration_revision == 11
+    assert begin.preview_run_id == "preview-11"
+    assert tuple(begin.selected_stages) == (1, 3)
+    assert begin.diagnostic_settings.input_camera_role == 2
+    assert finished[-1][2] == "completed"
+
+    await bridge._dispatch(
+        Client(),
+        "close_tracking_diagnostic",
+        {
+            "expected_revision": 11,
+            "diagnostic_id": "diagnostic-1",
+            "preview_run_id": "preview-11",
+        },
+    )
+    assert requests[1][0] == "CloseTrackingDiagnostic"
+    close = requests[1][1]
+    assert isinstance(close, rpc.CloseTrackingDiagnosticRequest)
+    assert close.diagnostic_id == "diagnostic-1"
+    assert close.preview_run_id == "preview-11"
+
+
+@pytest.mark.asyncio
+async def test_tracking_viewer_rpc_uses_frozen_authorized_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui import tracking_frame_transport as transport_module
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+    from cephvr.tracking.v1 import services_pb2 as tracking_rpc
+
+    generation = str(uuid4())
+    viewer_id = str(uuid4())
+    backend_generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 12
+    diagnostic = state.tracking_diagnostic
+    diagnostic.diagnostic_id = "diagnostic-active"
+    diagnostic.configuration_revision = 12
+    diagnostic.preview_run_id = "preview-active"
+    diagnostic.active = True
+    diagnostic.tracking_endpoint = "127.0.0.1:51234"
+    diagnostic.tracking_process.role = "tracking"
+    diagnostic.tracking_process.generation = backend_generation
+    gui_principal = Principal("gui", viewer_id, "gui-token")
+
+    class Client:
+        snapshot = state
+        principal = gui_principal
+        rpc_timeout_s = 3.0
+
+    frame = tracking_rpc.TrackingDiagnosticFrame(
+        diagnostic_id="diagnostic-active",
+        configuration_revision=12,
+        preview_run_id="preview-active",
+        available=False,
+        unavailable_reason="No frame yet",
+    )
+    calls: list[tuple[object, object, object]] = []
+
+    class Channel:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class Stub:
+        async def GetLatestDiagnosticFrame(self, request, *, metadata, timeout):
+            calls.append((request, metadata, timeout))
+            return frame
+
+    monkeypatch.setattr(
+        transport_module.grpc.aio, "insecure_channel", lambda *_a, **_k: Channel()
+    )
+    monkeypatch.setattr(
+        transport_module.tracking_transport,
+        "TrackingDiagnosticServiceStub",
+        lambda _channel: Stub(),
+    )
+    bridge = ControllerBridge(gui_principal, 50051, 1_000_000, (0,))
+    bridge._connection_epoch = 8
+    bridge._controller_generation = generation
+    received: list[tuple[int, str, bytes]] = []
+    bridge.tracking_frame_received.connect(lambda *args: received.append(args))
+
+    await bridge._dispatch(
+        Client(),
+        "tracking_diagnostic_frame",
+        {
+            "expected_revision": 12,
+            "diagnostic_id": "diagnostic-active",
+            "preview_run_id": "preview-active",
+            "tracking_endpoint": "127.0.0.1:51234",
+            "tracking_generation": backend_generation,
+        },
+    )
+    query, metadata, timeout = calls[0]
+    from cephvr.control.v1 import services_pb2 as rpc
+
+    assert isinstance(query, rpc.TrackingDiagnosticQuery)
+    assert query.viewer.role == "gui" and query.viewer.generation == viewer_id
+    assert query.controller_generation == generation
+    assert query.configuration_revision == 12
+    assert query.diagnostic_id == "diagnostic-active"
+    assert query.preview_run_id == "preview-active"
+    assert metadata == gui_principal.metadata()
+    assert timeout == 2.0
+    assert received[0][:2] == (8, generation)
+    assert tracking_rpc.TrackingDiagnosticFrame.FromString(received[0][2]) == frame
+
+
+def test_tracking_viewer_detach_stays_detached_until_explicit_reopen(
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.cameras import CamerasPanel
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
+    from cephvr.gui.tracking import TrackingPage
+    from cephvr.gui.view import DashboardView
+    from cephvr.shared.auth import Principal
+
+    page = TrackingPage(CamerasPanel(sample=False))
+    page.apply_view(DashboardView(connected=True, has_control=True))
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 4
+    diagnostic = state.tracking_diagnostic
+    diagnostic.diagnostic_id = "diag-viewer"
+    diagnostic.configuration_revision = 4
+    diagnostic.preview_run_id = "preview-viewer"
+    diagnostic.source_camera_serial = "SERIAL-1"
+    diagnostic.active = True
+    diagnostic.tracking_endpoint = "127.0.0.1:59999"
+    diagnostic.tracking_process.role = "tracking"
+    diagnostic.tracking_process.generation = str(uuid4())
+    bridge = ControllerBridge(
+        Principal("gui", str(uuid4()), "token"), 50051, 1024, (0,)
+    )
+    owner = ManagedTrackingDiagnostics(
+        page, bridge, page, lambda: state, lambda: "", lambda: True
+    )
+
+    owner.install_snapshot(state)
+    assert owner.viewer is not None and owner.viewer.isVisible()
+    owner.viewer.close()
+    app.processEvents()
+    assert not owner._viewer_open
+    assert owner.viewer is not None and not owner.viewer.isVisible()
+
+    owner.install_snapshot(state)
+    assert owner.viewer is not None and not owner.viewer.isVisible()
+    assert page.diagnostic_viewer_button.isEnabled()
+    assert page.diagnostic_button.isEnabled()
+    page.diagnostic_viewer_button.click()
+    app.processEvents()
+    assert owner.viewer is not None and owner.viewer.isVisible()
+    assert page.diagnostic_button.text() == "Stop diagnostic"
+    owner.timer.stop()
+    owner.viewer.close()
+    page.close()
+
+
+def test_tracking_viewer_frame_freezes_only_on_explicit_exact_source_action(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from PyQt6.QtGui import QImage
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui import managed_tracking_diagnostics as diagnostics_module
+    from cephvr.gui.camera_inventory import CameraDraft
+    from cephvr.gui.cameras import CamerasPanel
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
+    from cephvr.gui.tracking import TrackingPage
+    from cephvr.gui.tracking_live import TrackingDiagnosticPresentation
+    from cephvr.gui.view import DashboardView
+    from cephvr.shared.auth import Principal
+    from cephvr.tracking.v1 import services_pb2 as tracking_rpc
+
+    page = TrackingPage(CamerasPanel(sample=False))
+    page.apply_view(DashboardView(connected=True, has_control=True))
+    page.cameras.drafts = [
+        CameraDraft("tracking-1", "Tracking cam", "SERIAL-1", "Basler")
+    ]
+    page.cameras.populate_inventory()
+    page.cameras.drafts_changed.emit()
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 9
+    diagnostic = state.tracking_diagnostic
+    diagnostic.diagnostic_id = str(uuid4())
+    diagnostic.configuration_revision = 9
+    diagnostic.preview_run_id = str(uuid4())
+    diagnostic.source_camera_serial = "SERIAL-1"
+    diagnostic.active = True
+    diagnostic.tracking_endpoint = "127.0.0.1:59999"
+    diagnostic.tracking_process.role = "tracking"
+    diagnostic.tracking_process.generation = str(uuid4())
+    bridge = ControllerBridge(
+        Principal("gui", str(uuid4()), "token"), 50051, 1024, (0,)
+    )
+    managed_requests: list[tuple[str, dict[str, object]]] = []
+    bridge.request = lambda action, **options: (
+        managed_requests.append((action, options)) or True
+    )
+    owner = ManagedTrackingDiagnostics(
+        page, bridge, page, lambda: state, lambda: "", lambda: True
+    )
+    image = QImage(2, 1, QImage.Format.Format_Grayscale8)
+    image.fill(100)
+    presentation = TrackingDiagnosticPresentation(
+        image=image.copy(),
+        diagnostic_id=diagnostic.diagnostic_id,
+        configuration_revision=9,
+        preview_run_id=diagnostic.preview_run_id,
+        source_frame_id=0,
+        source_host_receipt_ns=123,
+        produced_monotonic_ns=456,
+        points=(),
+        rectangles=(),
+        vectors=(),
+        labels=(),
+        overlays_truncated=False,
+    )
+    monkeypatch.setattr(
+        diagnostics_module,
+        "tracking_diagnostic_presentation",
+        lambda *_args, **_kwargs: presentation,
+    )
+    owner.install_snapshot(state)
+    frame = tracking_rpc.TrackingDiagnosticFrame(available=True)
+    owner.install_frame(
+        bridge.connection_epoch,
+        generation,
+        frame.SerializeToString(),
+    )
+    assert page.annotation.canvas.image.isNull()
+    assert owner.viewer is not None and owner.viewer.use_frame.isEnabled()
+
+    state.configuration.revision = 10
+    owner.viewer.use_frame.click()
+    assert page.annotation.canvas.image.isNull()
+    state.configuration.revision = 9
+    original_run_id = diagnostic.preview_run_id
+    diagnostic.preview_run_id = str(uuid4())
+    owner.viewer.use_frame.click()
+    assert page.annotation.canvas.image.isNull()
+    diagnostic.preview_run_id = original_run_id
+    diagnostic.source_camera_serial = "OTHER-SERIAL"
+    owner.viewer.use_frame.click()
+    assert page.annotation.canvas.image.isNull()
+    diagnostic.source_camera_serial = "SERIAL-1"
+    bridge._connection_epoch += 1
+    owner.viewer.use_frame.click()
+    assert page.annotation.canvas.image.isNull()
+    bridge._connection_epoch -= 1
+    owner.viewer.use_frame.click()
+    assert not page.annotation.canvas.image.isNull()
+    assert page.annotation.canvas.image.size() == image.size()
+    assert page.annotation.source_lineage == {
+        "camera_serial": "SERIAL-1",
+        "configuration_revision": 9,
+        "preview_run_id": diagnostic.preview_run_id,
+        "source_frame_id": 0,
+        "source_host_receipt_ns": 123,
+    }
+    assert page.snapshot()["annotation_source"] == page.annotation.source_lineage
+    assert managed_requests == []
+
+    diagnostic.active = False
+    diagnostic.closed = True
+    owner.install_snapshot(state)
+    assert not page.annotation.canvas.image.isNull()
+    assert page.annotation.isEnabled()
+    owner.timer.stop()
+    if owner.viewer is not None:
+        owner.viewer.close()
+    page.close()
+
+
+def test_tracking_diagnostic_close_waits_for_closed_evidence(
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.cameras import CamerasPanel
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
+    from cephvr.gui.tracking import TrackingPage
+    from cephvr.gui.view import DashboardView
+    from cephvr.shared.auth import Principal
+
+    page = TrackingPage(CamerasPanel(sample=False))
+    page.apply_view(DashboardView(connected=True, has_control=True))
+    generation = str(uuid4())
+    state = pb.Snapshot(controller_generation=generation)
+    state.configuration.revision = 4
+    diagnostic = state.tracking_diagnostic
+    diagnostic.diagnostic_id = "diag-closing"
+    diagnostic.configuration_revision = 4
+    diagnostic.preview_run_id = "preview-closing"
+    diagnostic.source_camera_serial = "SERIAL-1"
+    diagnostic.active = True
+    diagnostic.tracking_endpoint = "127.0.0.1:59999"
+    diagnostic.tracking_process.role = "tracking"
+    diagnostic.tracking_process.generation = str(uuid4())
+    state.control.holder_client_id = "gui-current"
+    bridge = ControllerBridge(
+        Principal("gui", "gui-current", "token"), 50051, 1024, (0,)
+    )
+    owner = ManagedTrackingDiagnostics(
+        page, bridge, page, lambda: state, lambda: "", lambda: True
+    )
+    owner.install_snapshot(state)
+    assert page.diagnostic_button.isEnabled()
+
+    owner._close_requested = ("diag-closing", 4, "preview-closing")
+    owner.install_snapshot(state)
+    assert page.diagnostic_button.text() == "Stopping diagnostic…"
+    assert not page.diagnostic_button.isEnabled()
+    assert page.diagnostic_viewer_button.isEnabled()
+
+    diagnostic.active = False
+    diagnostic.closed = True
+    owner.install_snapshot(state)
+    assert page.diagnostic_button.isEnabled()
+    assert page.diagnostic_button.text() == "Live diagnostic"
+    owner.timer.stop()
+    if owner.viewer is not None:
+        owner.viewer.close()
+    page.close()
+
+
+def test_managed_snapshot_keeps_diagnostic_close_pending_and_status_visible(
+    app: QApplication,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.gui.main import ManagedGui
+    from cephvr.gui.managed_window import ManagedDashboardWindow
+    from cephvr.shared.auth import Principal
+    from cephvr.tracking.v1 import services_pb2 as tracking_rpc
+
+    client_id = str(uuid4())
+    generation = str(uuid4())
+    bridge = ControllerBridge(Principal("gui", client_id, "token"), 50051, 1024, (0,))
+    bridge.start = lambda: None
+    bridge.stop = lambda: None
+    requests: list[tuple[str, dict[str, object]]] = []
+    bridge.request = lambda action, **options: (
+        requests.append((action, options)) or True
+    )
+
+    window = ManagedDashboardWindow(sample=False)
+    window.devices.cameras.refresh_inventory = lambda: None
+    window.devices.microcontroller.scan_ports = lambda: None
+    window.devices.projectors.discover_displays = lambda: None
+    manager = ManagedGui(window, bridge)
+    manager.configuration = SimpleNamespace(install=lambda _state: True, stale=False)
+    manager.cameras = SimpleNamespace(install=lambda _state: [])
+    manager.mcu = SimpleNamespace(install=lambda *_args: None)
+    manager._inventory_identity = (generation, 4)
+    manager.control_ready = True
+    manager.auto_control_attempted = True
+    manager._retained_ack_required = False
+
+    state = pb.Snapshot(controller_generation=generation)
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 4
+    state.configuration_values.revision = 4
+    state.control.holder_client_id = client_id
+    diagnostic = state.tracking_diagnostic
+    diagnostic.diagnostic_id = str(uuid4())
+    diagnostic.configuration_revision = 4
+    diagnostic.preview_run_id = str(uuid4())
+    diagnostic.active = True
+    diagnostic.tracking_endpoint = "127.0.0.1:59999"
+    diagnostic.tracking_process.role = "tracking"
+    diagnostic.tracking_process.generation = str(uuid4())
+    diagnostic.last_duration_ns = 12_000_000
+    diagnostic.maximum_duration_ns = 20_000_000
+    stage = diagnostic.stages.add(
+        stage=tracking_rpc.TRACKING_DIAGNOSTIC_STAGE_POSE,
+        state=tracking_rpc.TRACKING_DIAGNOSTIC_STAGE_STATE_RUNNING,
+    )
+    stage.reason = "current source"
+    manager.install_snapshot(1, generation, state.SerializeToString())
+    page = window.tracking
+    assert page.diagnostic_button.text() == "Stop diagnostic"
+    page.diagnostic_button.click()
+    assert requests[-1][0] == "close_tracking_diagnostic"
+    manager.install_snapshot(1, generation, state.SerializeToString())
+    assert page.diagnostic_button.text() == "Stopping diagnostic…"
+    assert not page.diagnostic_button.isEnabled()
+    assert page._diagnostic_locked
+    assert "pose: running (current source)" in page.status.hud.toPlainText()
+    assert "LAST      12.00 ms" in page.status.hud.toPlainText()
+    assert "MAX       20.00 ms" in page.status.hud.toPlainText()
+    page.diagnostic_button.click()
+    assert not any(action == "begin_tracking_diagnostic" for action, _ in requests)
+
+    diagnostic.failure = "close outcome unknown"
+    diagnostic.active = False
+    diagnostic.closed = False
+    manager.install_snapshot(1, generation, state.SerializeToString())
+    assert not page.diagnostic_button.isEnabled()
+    assert page._diagnostic_locked
+    assert "close outcome unknown" in page.status.hud.toPlainText()
+    assert not any(action == "begin_tracking_diagnostic" for action, _ in requests)
+
+    manager.tracking_diagnostics.timer.stop()
+    if manager.tracking_diagnostics.viewer is not None:
+        manager.tracking_diagnostics.viewer.close()
+    manager.bridge.stop()
+    window._close_after_save = True
+    window.close()
+    window.deleteLater()
+    app.processEvents()
+
+
+def test_managed_close_requires_explicit_discard_choice(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from PyQt6.QtWidgets import QMessageBox
+
+    from cephvr.gui.main import ManagedGui
+
+    selected: list[str] = []
+    monkeypatch.setattr(
+        QMessageBox, "exec", lambda self: selected.append(self.text()) or 0
+    )
+    monkeypatch.setattr(
+        QMessageBox,
+        "clickedButton",
+        lambda self: next(
+            button
+            for button in self.buttons()
+            if button.text() == "Close and discard draft"
+        ),
+    )
+    accepted = ManagedGui.confirm_discard_local_draft(SimpleNamespace(window=QWidget()))
+    assert accepted
+    assert selected[0] == "Closing now discards the local configuration draft."
+
+
+@pytest.mark.parametrize(
+    ("selection", "expected"),
+    ((None, []), ("Retry", ["retry"]), ("Close without saving", ["close"])),
+)
+def test_save_failure_dismissal_never_discards_draft(
+    app: QApplication,
+    monkeypatch: pytest.MonkeyPatch,
+    selection: str | None,
+    expected: list[str],
+) -> None:
+
+    from PyQt6.QtWidgets import QMessageBox
+
+    from cephvr.gui.main import ManagedGui
+
+    actions: list[str] = []
+    monkeypatch.setattr(QMessageBox, "exec", lambda _self: 0)
+    monkeypatch.setattr(
+        QMessageBox,
+        "clickedButton",
+        lambda self: next(
+            (button for button in self.buttons() if button.text() == selection), None
+        ),
+    )
+
+    class Window(QWidget):
+        def finish_close(self) -> None:
+            actions.append("close")
+
+    manager = type(
+        "Manager",
+        (),
+        {
+            "window": Window(),
+            "request_close": lambda _self: actions.append("retry"),
+        },
+    )()
+    ManagedGui._save_failed(manager, "history save failed")
+    assert actions == expected
+    manager.window.close()
+
+
+def test_tracking_empty_diagnostic_mask_does_not_require_experiment_settings(
+    app: QApplication,
+) -> None:
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.cameras import CamerasPanel
+    from cephvr.gui.tracking import TrackingPage
+
+    page = TrackingPage(CamerasPanel(sample=False))
+    for stage in page.forms.stages.values():
+        stage.setChecked(False)
+    current = pb.TrackingSettings()
+    settings, selected = page.diagnostic_configuration(current)
+    assert selected == ()
+    assert settings.input_camera_role == camera_pb2.CAMERA_ROLE_TRACKING
+    assert settings.preprocessing.scale_percent == 100
+    assert not settings.HasField("subject_reference")
+    assert not settings.HasField("pose_search_region")
+    assert not settings.stages
+    page.close()
+
+
+def test_tracking_flow_diagnostic_ignores_dormant_pose_and_estimator_drafts(
+    app: QApplication,
+) -> None:
+    import json
+
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.cameras import CamerasPanel
+    from cephvr.gui.tracking import TrackingPage
+    from cephvr.tracking.v1 import services_pb2 as tracking_rpc
+
+    page = TrackingPage(CamerasPanel(sample=False))
+    for stage in page.forms.stages.values():
+        stage.setChecked(False)
+    page.forms.stages["optical_flow"].setChecked(True)
+    base = pb.TrackingSettings(
+        input_camera_role=camera_pb2.CAMERA_ROLE_TRACKING,
+        pipeline_id="water_flow",
+    )
+    base.stages.add(
+        stage_id="image_flow",
+        implementation_id="nvidia_optical_flow",
+        settings_schema_id="tracking.flow-settings.v1",
+        settings_json=json.dumps(
+            {
+                "schema_version": 1,
+                "adapter": "nvof_cuda_v1",
+                "device_ordinal": 0,
+                "output_grid_px": 4,
+                "preset": "slow",
+                "temporal_hints": False,
+                "output_cost": False,
+                "input_mapping": "declared_full_range_gray8_v1",
+            }
+        ),
+    )
+
+    settings, selected = page.diagnostic_configuration(base)
+    assert selected == (tracking_rpc.TRACKING_DIAGNOSTIC_STAGE_OPTICAL_FLOW,)
+    assert len(settings.stages) == 1
+    document = json.loads(settings.stages[0].settings_json)
+    assert document["adapter"] == "nvof_cuda_v1"
+    assert document["input_mapping"] == "declared_full_range_gray8_v1"
+    assert document["output_grid_px"] == 4
+    page.close()
+
+
+@pytest.mark.asyncio
+async def test_bridge_rejects_stale_configuration_base_without_admission() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.configuration.revision = 3
+    bridge = ControllerBridge(
+        Principal("gui", str(uuid4()), "token"), 50051, 1024, (0,)
+    )
+    bridge._controller_generation = state.controller_generation
+
+    class Client:
+        snapshot = state
+
+    from cephvr.client.session import ClientError
+
+    with pytest.raises(ClientError, match="base changed"):
+        await bridge._submit_configuration(
+            Client(),
+            {
+                "base_revision": 2,
+                "proposal": pb.ExperimentConfiguration().SerializeToString(),
+            },
+        )
+
+
+@pytest.mark.asyncio
 async def test_managed_camera_enable_updates_only_assigned_camera() -> None:
     from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.control.v1 import types_pb2 as pb
@@ -1735,8 +3848,17 @@ def test_managed_close_finishes_only_after_controller_save_result(
     closed: list[bool] = []
     manager = SimpleNamespace(
         close_pending=False,
+        confirm_discard_local_draft=lambda: False,
         state=pb.Snapshot(),
-        bridge=SimpleNamespace(request=lambda action: requests.append(action) or True),
+        configuration=SimpleNamespace(
+            stale=False,
+            dirty=False,
+            revision=0,
+            collect=lambda _base: pb.ExperimentConfiguration(),
+        ),
+        bridge=SimpleNamespace(
+            request=lambda action, **_kwargs: requests.append(action) or True
+        ),
         window=SimpleNamespace(
             dashboard=window.dashboard,
             devices=window.devices,
@@ -1745,6 +3867,7 @@ def test_managed_close_finishes_only_after_controller_save_result(
     )
 
     manager.cameras = SimpleNamespace(finished=lambda *_: None)
+    manager.prompts = SimpleNamespace(operation_finished=lambda _action: None)
     ManagedGui.request_close(manager)
     assert manager.close_pending and not closed
     assert requests == ["save_configuration_history"]
@@ -1797,6 +3920,8 @@ def test_review_draft_restores_local_configuration(
     first.protocol.editor.drafts[0].name = "Last trial"
     first.devices.projectors.rig_editor.fields["width"].setText("250")
     first.devices.spikeglx.editors[0].setText("10.0.0.2")  # type: ignore[attr-defined]
+    first.devices.spikeglx.rows[first.devices.cameras.drafts[0].key][4].setText("0")
+    first.devices.spikeglx.add_input.click()
     save_review_draft(first, path)
 
     second = DashboardWindow(sample=True)
@@ -1813,6 +3938,13 @@ def test_review_draft_restores_local_configuration(
     assert second.protocol.editor.drafts[0].name == "Last trial"
     assert second.devices.projectors.rig_editor.fields["width"].text() == "250"
     assert second.devices.spikeglx.editors[0].text() == "10.0.0.2"  # type: ignore[attr-defined]
+    assert (
+        second.devices.spikeglx.rows[second.devices.cameras.drafts[0].key][4].text()
+        == "0"
+    )
+    assert second.devices.spikeglx.rows["custom:custom-1"][4].text() == ""
+    second.devices.spikeglx.add_input.click()
+    assert "custom:custom-2" in second.devices.spikeglx.rows
     for item in (first, second):
         item.close()
         item.deleteLater()
@@ -2006,6 +4138,9 @@ def test_microcontroller_row_heights_match(
     assert panel.flip_pin.height() == panel.test_buttons["projector-flip"].height()
     for key, pin in panel.pin_editors.items():
         assert pin.height() == panel.test_buttons[key].height()
+        for control in (pin, panel.test_buttons[key]):
+            assert control.parentWidget().rect().contains(control.geometry())
+            assert control.height() >= control.sizeHint().height()
 
 
 def test_projector_geometry_and_pulse_drafts_are_independent(window: DashboardWindow):
@@ -2091,9 +4226,11 @@ def test_spikeglx_sources_preserve_maps_and_follow_enablement(window: DashboardW
     panel = devices.spikeglx
     camera = devices.cameras.drafts[0]
     panel.rows[camera.key][3].setText("3")
-    devices.cameras.set_participation(0, False)
+    camera.enabled = False
+    devices.cameras.drafts_changed.emit()
     assert not panel.rows[camera.key][3].isEnabled()
-    devices.cameras.set_participation(0, True)
+    camera.enabled = True
+    devices.cameras.drafts_changed.emit()
     assert panel.rows[camera.key][3].text() == "3"
     assert panel.rows[camera.key][3].isEnabled()
     devices.projectors.timing.pulse.setChecked(True)
@@ -2103,9 +4240,9 @@ def test_spikeglx_sources_preserve_maps_and_follow_enablement(window: DashboardW
     devices.projectors.timing.pulse.setChecked(True)
     assert panel.rows["photodiode"][3].text() == "7"
     panel.add_input.click()
-    assert "custom:1" in panel.rows
+    assert "custom:custom-1" in panel.rows
     window.apply_view(review_view(Phase.RUNNING))
-    assert not panel.rows["custom:1"][3].isEnabled()
+    assert not panel.rows["custom:custom-1"][3].isEnabled()
     assert not panel.add_input.isEnabled()
 
 
@@ -2186,7 +4323,7 @@ def test_hidden_scrollbar_preserves_wheel_scrolling(
     )
     QApplication.sendEvent(scroll.viewport(), event)
     assert scroll.verticalScrollBar().value() > 0
-    assert all(len(row) == 4 for row in window.devices.spikeglx.rows.values())
+    assert all(len(row) == 5 for row in window.devices.spikeglx.rows.values())
 
 
 def test_all_screen_calibration_json_roundtrip_and_rejection(
@@ -2390,12 +4527,12 @@ def test_spikeglx_disable_restore_and_remove_custom(window: DashboardWindow):
     assert panel.rows[key][3].isEnabled() and panel.rows[key][3].text() == "4"
     assert key not in panel.remove_buttons
     panel.add_input.click()
-    panel.remove_buttons["custom:1"].click()
-    assert "custom:1" not in panel.rows
+    panel.remove_buttons["custom:custom-1"].click()
+    assert "custom:custom-1" not in panel.rows
     panel.add_input.click()
     window.apply_view(review_view(Phase.RUNNING))
-    panel.remove_custom("custom:2")
-    assert "custom:2" in panel.rows
+    panel.remove_custom("custom:custom-2")
+    assert "custom:custom-2" in panel.rows
 
 
 def test_right_screen_is_derived_and_legacy_asymmetry_rejected(
@@ -2439,6 +4576,252 @@ def test_right_screen_is_derived_and_legacy_asymmetry_rejected(
     assert panel.tank.screens["Right"]["subject_distance"] == "150.0"
     rig.screen_distances["Left"].clear()
     assert panel.tank.screens["Right"]["subject_distance"] == ""
+
+
+def test_managed_protocol_roundtrips_ordered_trials_seed_and_gap(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+    from cephvr.gui.protocol_document import blank_program
+
+    config = control_pb.ExperimentConfiguration(
+        mode=control_pb.SESSION_MODE_CLOSED_LOOP, asset_root="/assets"
+    )
+    for number, label_text in enumerate(("first", "second"), start=1):
+        trial = config.trials.add(trial_number=number)
+        trial.stimulus.program.program_json = blank_program().model_dump_json()
+        trial.stimulus.program.logical_source_reference = f"programs/{label_text}.json"
+    config.trials[0].stimulus.stimulus_seed_decimal = "0"
+    config.gaps.add(after_trial_number=1, minimum_duration_ns=1_250_000_000)
+
+    page = window.protocol
+    page.install_configuration(config)
+    assert page.session_mode.currentText() == "Closed-loop"
+    assert page.assets.folders["root"].editor.text() == "/assets"
+    assert page.editor.drafts[0].stimulus_seed_decimal == "0"
+    assert page.editor.drafts[0].gap_after_seconds == "1.25"
+    assert page.editor.drafts[1].path == "programs/second.json"
+
+    roundtrip = control_pb.ExperimentConfiguration()
+    page.apply_schedule(roundtrip)
+    assert [item.trial_number for item in roundtrip.trials] == [1, 2]
+    assert [
+        item.stimulus.program.logical_source_reference for item in roundtrip.trials
+    ] == [
+        "programs/first.json",
+        "programs/second.json",
+    ]
+    assert roundtrip.trials[0].stimulus.stimulus_seed_decimal == "0"
+    assert roundtrip.gaps[0].after_trial_number == 1
+    assert roundtrip.gaps[0].minimum_duration_ns == 1_250_000_000
+
+
+def test_managed_protocol_rejects_partial_restore_without_mutating_pages(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+
+    page = window.protocol
+    old_program = page.editor.program.model_dump_json()
+    old_root = page.assets.folders["root"].editor.text()
+    old_mode = page.session_mode.currentText()
+    config = control_pb.ExperimentConfiguration(
+        mode=control_pb.SESSION_MODE_CLOSED_LOOP, asset_root="/new-root"
+    )
+    valid = config.trials.add(trial_number=1)
+    valid.stimulus.program.program_json = page.editor.program.model_dump_json()
+    invalid = config.trials.add(trial_number=2)
+    invalid.stimulus.program.program_json = "not a valid program"
+    with pytest.raises(ValueError):
+        page.install_configuration(config)
+    assert page.editor.program.model_dump_json() == old_program
+    assert page.assets.folders["root"].editor.text() == old_root
+    assert page.session_mode.currentText() == old_mode
+
+
+def test_empty_managed_schedule_is_not_replaced_by_review_trial(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+
+    page = window.protocol
+    page.install_configuration(
+        control_pb.ExperimentConfiguration(mode=control_pb.SESSION_MODE_OPEN_LOOP)
+    )
+    candidate = control_pb.ExperimentConfiguration()
+    with pytest.raises(ValueError, match="Add a managed trial"):
+        page.apply_schedule(candidate)
+    assert not candidate.trials
+
+
+def test_managed_configuration_preserves_incomplete_draft_on_new_revision(
+    window: DashboardWindow,
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    generation = str(uuid4())
+
+    def snapshot(revision: int) -> control_pb.Snapshot:
+        state = control_pb.Snapshot(
+            controller_generation=generation, state_revision=revision
+        )
+        state.configuration.revision = revision
+        state.configuration_values.revision = revision
+        state.configuration_values.current.subject = "authoritative"
+        return state
+
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+        )
+    )
+    assert manager.install(snapshot(1))
+    window.dashboard.subject_id.setFocus()
+    QTest.keyClick(
+        window.dashboard.subject_id, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier
+    )
+    QTest.keyClicks(window.dashboard.subject_id, "local draft")
+    window.protocol.seed_editor.setFocus()
+    QTest.keyClicks(window.protocol.seed_editor, "0")
+    assert manager.dirty
+    original_program = window.protocol.editor.program.model_dump_json()
+
+    assert not manager.install(snapshot(2))
+    assert manager.stale
+    assert window.dashboard.subject_id.text() == "local draft"
+    assert window.protocol.seed_editor.text() == "0"
+    assert window.protocol.editor.program.model_dump_json() == original_program
+
+
+def test_empty_schedule_first_add_becomes_the_first_trial(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+
+    page = window.protocol
+    page.install_configuration(
+        control_pb.ExperimentConfiguration(mode=control_pb.SESSION_MODE_OPEN_LOOP)
+    )
+    page.editor.add_button.click()
+    assert len(page.editor.drafts) == 1
+    assert page.editor.drafts[0].name == "Trial 1"
+    proposal = control_pb.ExperimentConfiguration()
+    page.apply_schedule(proposal)
+    assert len(proposal.trials) == 1
+
+
+def test_managed_configuration_keeps_post_submit_edits_on_ack(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    generation = str(uuid4())
+    initial = control_pb.Snapshot(controller_generation=generation)
+    initial.configuration.revision = 4
+    initial.configuration_values.revision = 4
+    initial.configuration_values.current.mode = control_pb.SESSION_MODE_OPEN_LOOP
+    from tests.visual_stimulus.support import valid_display_json
+
+    visual = initial.configuration_values.current.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    visual.visual_stimulus.display.profile_json = valid_display_json()
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+        )
+    )
+    assert manager.install(initial)
+    window.protocol.editor.add_button.click()
+    submitted = manager.collect(initial.configuration_values.current)
+    submitted_edit_serial = manager.edit_serial
+    acknowledged = control_pb.Snapshot(controller_generation=generation)
+    acknowledged.configuration.revision = 5
+    acknowledged.configuration_values.revision = 5
+    acknowledged.configuration_values.current.CopyFrom(submitted)
+
+    editor = window.dashboard.subject_id
+    editor.setFocus()
+    QTest.keyClick(editor, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    QTest.keyClicks(editor, "changed after submission")
+    manager.note_installed_revision(
+        acknowledged, submitted_edit_serial=submitted_edit_serial
+    )
+    assert manager.stale
+    assert "newer local edits" in manager.last_error
+    assert editor.text() == "changed after submission"
+
+
+def test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as control_pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    generation = str(uuid4())
+    initial = control_pb.Snapshot(controller_generation=generation)
+    initial.configuration.revision = 4
+    initial.configuration_values.revision = 4
+    initial.configuration_values.current.mode = control_pb.SESSION_MODE_OPEN_LOOP
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+        )
+    )
+    assert manager.install(initial)
+    submitted_serial = manager.edit_serial
+    gap = window.protocol.gap_editor
+    gap.setFocus()
+    QTest.keyClick(gap, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    QTest.keyClicks(gap, "not a duration")
+    assert manager.dirty and manager.edit_serial > submitted_serial
+
+    acknowledged = control_pb.Snapshot(controller_generation=generation)
+    acknowledged.configuration.revision = 5
+    acknowledged.configuration_values.revision = 5
+    acknowledged.configuration_values.current.CopyFrom(
+        initial.configuration_values.current
+    )
+    manager.note_installed_revision(
+        acknowledged, submitted_edit_serial=submitted_serial
+    )
+    assert manager.dirty and manager.stale
+    assert gap.text() == "not a duration"
+
+    newer = control_pb.Snapshot(controller_generation=generation)
+    newer.configuration.revision = 6
+    newer.configuration_values.revision = 6
+    newer.configuration_values.current.subject = "new controller value"
+    assert not manager.install(newer)
+    assert gap.text() == "not a duration"
 
 
 def test_protocol_participation_and_asset_pages(window: DashboardWindow) -> None:
@@ -2568,7 +4951,9 @@ def test_protocol_timeline_edits_preserve_trials_and_imported_groups(
     editor.duration.setText("not a duration")
     editor.edit_duration()
     assert editor.program == edited
-    assert editor.feedback.isVisible()
+    assert editor.feedback.isHidden()
+    assert editor.feedback.dialog is not None
+    editor.feedback.dialog.accept()
     editor.duration.setText("21.000000001")
     editor.add_button.click()
     assert editor.index == 1
@@ -3599,7 +5984,9 @@ def test_batch_create_variations_preview_insert_and_reload(
     )
     create.rows[1].values.setText("0, 180")
     create.refresh_preview()
-    assert not create.add_button.isEnabled()
+    assert create.add_button.isEnabled()
+    assert create.notice.text()
+    assert create.notice.dialog is None
     assert editor.program == original
     create.rows[0].values.setText("10, 10, 20, 20, 40, 40")
     create.rows[1].values.setText("0, 180, 0, 180, 0, 180")
@@ -3753,11 +6140,12 @@ def test_trial_overview_selects_ranges_and_sources_across_groups(
     timeline.choose(4, Qt.KeyboardModifier.ControlModifier)
     assert set(editor.selected_paths) == {(0,), (1, 0)}
     assert editor.program == program
-    assert editor.timeline_card.findChildren(QPushButton) == [
-        editor.output_preview_button,
-    ]
-    assert editor.batch_edit.isAncestorOf(editor.duplicate_epoch_button)
-    assert editor.batch_edit.isAncestorOf(editor.remove_epoch_button)
+    assert editor.timeline_card.isAncestorOf(editor.duplicate_epoch_button)
+    assert editor.timeline_card.isAncestorOf(editor.remove_epoch_button)
+    actions = editor.timeline_actions.layout()
+    assert actions.indexOf(editor.batch_edit.epoch_actions) < (
+        actions.indexOf(editor.output_preview_button)
+    )
     assert not any(
         control.text() == "Actions…"
         for control in editor.settings_card.findChildren(QPushButton)
@@ -3988,7 +6376,14 @@ def test_batch_tabs_preserve_drafts_apply_and_phase_lock(
     check, value = editor.batch_edit.fields["Duration"]
     check.setChecked(True)
     value.setText("-1")
+    panel.parameter.setCurrentIndex(1)
+    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("timeline"))
+    assert panel.parameter.currentData() == "Duration"
+    assert panel.epoch_scope.currentData() == "target"
+    assert panel.message.dialog is None
     editor.batch_edit.apply_button.click()
+    assert panel.message.dialog is not None
+    panel.message.clear()
     assert editor.batch_edit.isVisible() and editor.program == original
     value.setText("00:00:12")
     editor.batch_edit.apply_button.click()
@@ -4000,6 +6395,72 @@ def test_batch_tabs_preserve_drafts_apply_and_phase_lock(
     window.apply_view(review_view(Phase.CONFIGURATION))
     editor.modes.setCurrentIndex(0)
     assert editor.create_batch.isVisible() and editor.create_batch.isEnabled()
+
+
+@pytest.mark.parametrize("mode", ["generate", "selection"])
+def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mode):
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.notices import FormNotice
+    from cephvr.gui.protocol_document import review_program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(review_program())
+    if mode == "generate":
+        editor.modes.setCurrentIndex(0)
+        owner = editor.create_batch
+        composer = owner.composer
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        submit, notice = owner.add_button, owner.notice
+    else:
+        editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+        editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
+        owner = editor.batch_edit.selection_form
+        composer = owner.composer
+        submit, notice = editor.batch_edit.apply_button, owner.message
+    app.processEvents()
+    row = next(row for row in composer.rows.values() if row.indices)
+    parameters = row.parameters
+    assert parameters.fades is not None
+    parameters.more.setChecked(True)
+    original, reference = editor.program, composer.program
+    fade = parameters.fades.fade_in
+    fade.setFocus()
+    fade.selectAll()
+    QTest.keyClicks(fade, "-1")
+    composer.duration.setFocus()
+    app.processEvents()
+    parameters.auto_apply()
+    parameters.finish_edit(fade, composer.duration)
+    composer.change_mode(1 - composer.active_mode)
+    composer.change_type(row.face, "Image")
+    composer.add_empty_layer(row.face)
+    if mode == "generate":
+        owner.add_variation()
+        owner.refresh_preview()
+    assert parameters.dirty and fade.text() == "-1"
+    assert editor.program == original and composer.program == reference
+    assert all(n.dialog is None for n in editor.findChildren(FormNotice))
+    submit.click()
+    app.processEvents()
+    assert notice.dialog is not None
+    assert "fade" in notice.text().lower()
+    assert sum(n.dialog is not None for n in editor.findChildren(FormNotice)) == 1
+    assert editor.program == original
+    notice.clear()
+    fade.setText("1")
+    parameters.fades.mark_changed()
+    submit.click()
+    app.processEvents()
+    assert editor.program != original
+    assert all(n.dialog is None for n in editor.findChildren(FormNotice))
 
 
 def test_batch_reference_projector_parameters_and_layers(
@@ -4093,7 +6554,9 @@ def test_batch_reference_projector_parameters_and_layers(
     restored.edited = True
     row.parameters.dirty = True
     editor.create_batch.refresh_preview()
-    assert not editor.create_batch.add_button.isEnabled()
+    assert editor.create_batch.add_button.isEnabled()
+    assert editor.create_batch.notice.text()
+    assert editor.create_batch.notice.dialog is None
     assert editor.program == before
 
 
@@ -4262,7 +6725,9 @@ def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
     # Another type change clears the file again, even though an asset existed.
     row.stimulus.setCurrentText("Video")
     editor.create_batch.refresh_preview()
-    assert not editor.create_batch.add_button.isEnabled()
+    assert editor.create_batch.add_button.isEnabled()
+    assert editor.create_batch.notice.text()
+    assert editor.create_batch.notice.dialog is None
     assert all(not f.text() for f in row.parameters.asset_forms.values())
     row.stimulus.setCurrentText("None")
     assert len(composer.value().sequence[0].settings) == 1
@@ -4803,8 +7268,8 @@ def test_visible_layer_selector_and_opacity_preserve_prepared_placement(
     from PyQt6.QtWidgets import QScrollArea
 
     window.resize(720, 800)
-    app.processEvents()
-    app.processEvents()
+    for _ in range(4):
+        app.processEvents()
     scroll = next(
         s for s in window.findChildren(QScrollArea) if s.isAncestorOf(composer)
     )
@@ -4876,6 +7341,110 @@ def test_projection_group_replaces_individual_visibility_controls(
     assert not panel.tank.visible_elements["projection"]
     assert panel.tank.visible_elements["screens"]
     assert panel.enabled_screens == ()
+
+
+def test_projector_codec_preserves_file_pacing_and_imported_calibration():
+    import json
+
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.gui.projector_codec import merge_projector_draft
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
+
+    profile = json.loads(valid_display_json())
+    source_output = profile["outputs"][0]
+    source_mapping = profile["mappings"][0]
+    faces = ("front", "left", "right", "bottom")
+    outputs = []
+    mappings = []
+    for face in faces:
+        output_id = f"projector/{face}"
+        outputs.append(
+            {
+                **source_output,
+                "output_id": output_id,
+                "device_identity": f"edid:{face}",
+                "photometric_profile": {"logical_path": f"measured/{face}.json"},
+            }
+        )
+        mappings.append(
+            {
+                **source_mapping,
+                "mapping_id": f"map-{face}",
+                "surface_id": face,
+                "output_id": output_id,
+                "geometric_profile": {"logical_path": f"measured/geometry-{face}.json"},
+            }
+        )
+    profile["outputs"] = outputs
+    profile["mappings"] = mappings
+    profile["photometric_mode"] = "calibrated"
+    profile["presentation_mode"] = "photodiode_only_vsync"
+    profile["photodiode_enabled"] = False
+    profile["photodiode_output_id"] = "projector/front"
+    profile["photodiode_patch"] = {
+        "rect": {"x": 1, "y": 2, "width": 3, "height": 4},
+        "high_linear_rgb": [0.8, 0.7, 0.6],
+        "low_linear_rgb": [0.1, 0.2, 0.3],
+    }
+    assert "pacing_output_id" not in profile
+    base = visual_stimulus_pb.DisplayConfiguration(profile_json=json.dumps(profile))
+
+    updated = merge_projector_draft(
+        base,
+        assignments={f"edid:{face}": face.title() for face in faces},
+        participation={"edid:left": False},
+        pulse_enabled=False,
+        pulse_output_identity="edid:bottom",
+        presentation_mode="photodiode_only_vsync",
+        pulse_patch={"rect": {"x": 0, "y": 0, "width": 3, "height": 4}},
+        geometry=None,
+    )
+    result = json.loads(updated.profile_json)
+
+    assert "pacing_output_id" not in result
+    assert result["outputs"][1]["enabled"] is False
+    assert result["photodiode_enabled"] is False
+    assert result["photodiode_output_id"] == "projector/bottom"
+    assert result["photodiode_patch"]["rect"]["x"] == 0
+    assert result["photodiode_patch"]["rect"]["y"] == 0
+    assert result["photodiode_patch"]["high_linear_rgb"] == [0.8, 0.7, 0.6]
+    assert result["photometric_mode"] == "calibrated"
+    assert (
+        result["outputs"][0]["photometric_profile"]["logical_path"]
+        == "measured/front.json"
+    )
+    assert (
+        result["mappings"][0]["geometric_profile"]["logical_path"]
+        == "measured/geometry-front.json"
+    )
+
+
+def test_projectors_page_install_collect_keeps_file_owned_pacing_absent(
+    window: DashboardWindow,
+):
+    import json
+
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
+
+    source = json.loads(valid_display_json())
+    source["presentation_mode"] = "photodiode_only_vsync"
+    source["photodiode_enabled"] = False
+    source["photodiode_output_id"] = None
+    source.pop("pacing_output_id", None)
+    display = visual_stimulus_pb.DisplayConfiguration(profile_json=json.dumps(source))
+    panel = window.devices.projectors
+
+    panel.install_configuration(display)
+    result = panel.configuration_for_submit(display)
+    profile = json.loads(result.profile_json)
+
+    assert profile["photodiode_enabled"] is False
+    assert "pacing_output_id" not in profile
+    assert profile["geometry"] == source["geometry"]
+    assert profile["mappings"] == source["mappings"]
 
 
 def test_calibration_arena_uses_saved_screen_planes_and_backend_glb_profile():
@@ -5029,6 +7598,77 @@ def test_calibration_button_reflects_confirmed_managed_output(
     table.presentation_button.click()
     assert prepared == [True, True]
     assert output_requests == [str(arena)]  # Failed preparation never requests output.
+
+
+def test_managed_first_use_calibration_launches_before_display_initialization(
+    window: DashboardWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from types import SimpleNamespace
+
+    from PyQt6.QtCore import QObject
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+    from cephvr.gui.managed_display import ManagedDisplayOperations
+    from cephvr.shared.auth import Principal
+
+    client_id = str(uuid4())
+    generation = str(uuid4())
+    manager = ManagedGui.__new__(ManagedGui)
+    QObject.__init__(manager)
+    manager.window = window
+    manager.bridge = SimpleNamespace(principal=Principal("gui", client_id, "token"))
+    manager.control_ready = True
+    manager.close_pending = False
+    manager._retained_ack_required = False
+    state = pb.Snapshot(controller_generation=generation)
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 4
+    state.configuration_values.revision = 4
+    state.control.holder_client_id = client_id
+    state.configuration_values.current.asset_root = str(tmp_path)
+    calibration_dir = tmp_path / "calibration"
+    calibration_dir.mkdir()
+    (calibration_dir / "diagnostic_display_profile.json").write_text("{}")
+    backend = state.configuration_values.current.backends.add(
+        backend_name="visual_stimulus", enabled=True
+    )
+    backend.visual_stimulus.SetInParent()  # First-use: display is absent/incomplete.
+
+    panel = window.devices.projectors
+    arena = tmp_path / "rig_geometry_grid.glb"
+    arena.write_bytes(b"arena")
+    monkeypatch.setattr(panel, "prepare_calibration", lambda: arena)
+    output_requests: list[str] = []
+    panel.calibration_launch_requested.connect(output_requests.append)
+    operations = ManagedDisplayOperations(
+        panel,
+        window.devices.spikeglx,
+        snapshot=lambda: state,
+        connection_identity=lambda: None,
+        send=lambda action, **_kwargs: output_requests.append(action) or True,
+    )
+    operations.install_calibration_state(
+        state, launch_eligible=ManagedGui._calibration_launch_eligible(manager, state)
+    )
+    panel.calibration_launch_requested.disconnect(output_requests.append)
+    panel.calibration_launch_requested.connect(operations.open_calibration)
+
+    assert panel.calibration.presentation_button.isEnabled()
+    panel.calibration.presentation_button.click()
+    assert output_requests == ["open_display_calibration"]
+
+    manager.close_pending = True
+    operations.install_calibration_state(
+        state, launch_eligible=ManagedGui._calibration_launch_eligible(manager, state)
+    )
+    assert not panel.calibration.presentation_button.isEnabled()
+    manager.close_pending = False
+    state.session.phase = pb.SESSION_PHASE_ENDED
+    operations.install_calibration_state(
+        state, launch_eligible=ManagedGui._calibration_launch_eligible(manager, state)
+    )
+    assert not panel.calibration.presentation_button.isEnabled()
 
 
 def test_unified_feedback_input_mapping_and_retain_state(window, app):
@@ -6258,15 +8898,16 @@ def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
     assert "phase_x" not in setting.model_dump()
 
 
-@pytest.mark.parametrize("preset", ["Video", "Looming image"])
-def test_family_advanced_controls_preserve_hidden_state(window, app, preset):
+@pytest.mark.parametrize("preset", ["Video", "Looming image", "3D arena"])
+@pytest.mark.parametrize("reset", [True, False])
+def test_family_advanced_controls_preserve_hidden_state(window, app, preset, reset):
     from cephvr.gui.advanced_appearance import AdvancedAppearance
     from cephvr.gui.protocol_document import blank_program
     from cephvr.gui.stimulus_presets import add_stimulus
 
     program = add_stimulus(blank_program(), 0, preset, ("Front",))
     epoch = program.sequence[0]
-    imported = epoch.settings[0].model_copy(update={"reset": True})
+    imported = epoch.settings[0].model_copy(update={"reset": reset})
     program = program.model_copy(
         update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
     )
@@ -6276,12 +8917,32 @@ def test_family_advanced_controls_preserve_hidden_state(window, app, preset):
     parameters.more.setChecked(True)
     app.processEvents()
     appearance = parameters.advanced_card.findChild(AdvancedAppearance)
-    assert appearance is not None and appearance.link_field.isHidden()
-    assert parameters.retain.isHidden() == (preset == "Video")
-    parameters.fades.fade_in.setText("1")
-    parameters.fades.mark_changed()
+    if preset == "3D arena":
+        from cephvr.gui.arena_movement import ArenaMovement
+
+        assert appearance is None
+        movement = next(
+            form for form in parameters.forms if isinstance(form, ArenaMovement)
+        )
+        movement.axes[0].setChecked(True)
+        movement.gains[0].setText("0.5")
+        movement.mark_edited()
+    else:
+        assert appearance is not None and appearance.link_field.isHidden()
+        parameters.fades.fade_in.setText("1")
+        parameters.fades.mark_changed()
+    hidden = preset in ("Video", "3D arena")
+    assert parameters.retain.isHidden() == hidden
+    if hidden:
+        parameters.retain.setChecked(reset)
     assert parameters.apply()
-    assert editor.program.sequence[0].settings[0].reset
+    assert editor.program.sequence[0].settings[0].reset == reset
+    if preset == "3D arena":
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        row = editor.batch_edit.selection_form.composer.rows[""]
+        assert row.parameters.retain.isHidden()
+        editor.create_batch.composer.mode.setCurrentIndex(1)
+        assert editor.create_batch.composer.rows[""].parameters.retain.isHidden()
 
 
 def test_image_fit_preview_contains_crops_and_stretches(app):
@@ -6430,7 +9091,7 @@ def test_target_epoch_filters_and_invalid_index(window, app):
     assert targets.label_field.isHidden() and targets.index_field.isHidden()
     targets.filter.setCurrentIndex(2)
     assert targets.index_field.isVisible() and targets.label_field.isHidden()
-    assert not panel.apply_button.isEnabled()
+    assert panel.apply_button.isEnabled()
     targets.index.setText("2")
     targets.index.textEdited.emit("2")
     assert editor.selected_paths == ((1,),)
@@ -6446,9 +9107,13 @@ def test_target_epoch_filters_and_invalid_index(window, app):
     for invalid in ("4", "0", "-1", "1.5", "abc", ""):
         targets.index.setText(invalid)
         targets.index.textEdited.emit(invalid)
-        assert targets.message.text()
-        assert not panel.apply_button.isEnabled()
-        panel.apply()
+        assert not targets.message.text()
+        assert panel.apply_button.isEnabled()
+        assert panel.message.dialog is None
+        panel.apply_button.click()
+        assert panel.message.dialog is not None
+        assert panel.message.dialog.text()
+        panel.message.dialog.accept()
         assert editor.program == current
     targets.index.setText("3")
     targets.index.textEdited.emit("3")
@@ -6492,8 +9157,14 @@ def test_target_epoch_labels_refresh_and_preserve_other_epochs(window):
     editor.set_program(review_program())
     assert targets.labels.count() == 0
     panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    assert "No epochs" in targets.message.text()
-    assert not panel.apply_button.isEnabled()
+    assert not targets.message.text()
+    assert targets.message.isHidden()
+    assert panel.message.dialog is None
+    assert panel.apply_button.isEnabled()
+    panel.apply_button.click()
+    assert panel.message.dialog is not None
+    assert "No epochs" in panel.message.dialog.text()
+    panel.message.dialog.accept()
 
 
 def test_epoch_edit_rows_duration_format_and_action_placement(window, app):
@@ -6510,8 +9181,8 @@ def test_epoch_edit_rows_duration_format_and_action_placement(window, app):
     app.processEvents()
     assert panel.apply_button.text() == "Apply"
     assert panel.reset.text() == "Discard"
-    assert panel.apply_button.mapTo(panel, QPoint(0, 0)).y() < (
-        form.composer.rows["Front"].mapTo(panel, QPoint(0, 0)).y()
+    assert panel.apply_button.mapTo(editor.settings_card, QPoint()).y() < (
+        form.composer.rows["Front"].mapTo(editor.settings_card, QPoint()).y()
     )
     panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
     panel.targets.filter.setCurrentIndex(2)
@@ -6557,8 +9228,24 @@ def test_epoch_actions_stay_fixed_and_fields_align_across_modes(window, app):
         editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
         app.processEvents()
         panel = editor.batch_edit
-        position = panel.apply_button.mapTo(panel, QPoint(0, 0))
-        reset_position = panel.reset.mapTo(panel, QPoint(0, 0))
+        assert panel.batch_actions.parentWidget() is editor.settings_card
+        assert (
+            abs(
+                panel.apply_button.mapTo(editor.settings_card, QPoint()).y()
+                - editor.modes.mapTo(editor.settings_card, QPoint()).y()
+            )
+            <= 2
+        )
+        assert not any(
+            button.text() == "All parameters…"
+            for button in panel.findChildren(QPushButton)
+        )
+        assert not any(
+            label.text() == "Projector"
+            for label in panel.projector_header.findChildren(QLabel)
+        )
+        position = panel.apply_button.mapTo(editor.settings_card, QPoint(0, 0))
+        reset_position = panel.reset.mapTo(editor.settings_card, QPoint(0, 0))
         for mode in (0, 1, 2):
             panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
             panel.targets.filter.setCurrentIndex(mode)
@@ -6566,8 +9253,12 @@ def test_epoch_actions_stay_fixed_and_fields_align_across_modes(window, app):
                 panel.targets.index.setText("2")
                 panel.targets.index.textEdited.emit("2")
             app.processEvents()
-            assert panel.apply_button.mapTo(panel, QPoint(0, 0)) == position
-            assert panel.reset.mapTo(panel, QPoint(0, 0)) == reset_position
+            assert (
+                panel.apply_button.mapTo(editor.settings_card, QPoint(0, 0)) == position
+            )
+            assert (
+                panel.reset.mapTo(editor.settings_card, QPoint(0, 0)) == reset_position
+            )
             if mode:
                 choice = panel.targets.labels if mode == 1 else panel.targets.index
                 assert panel.epoch_scope.height() == choice.height()
@@ -6585,8 +9276,8 @@ def test_epoch_actions_stay_fixed_and_fields_align_across_modes(window, app):
         panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("timeline"))
         app.processEvents()
         form = panel.selection_form
-        assert panel.apply_button.mapTo(panel, QPoint(0, 0)) == position
-        assert panel.reset.mapTo(panel, QPoint(0, 0)) == reset_position
+        assert panel.apply_button.mapTo(editor.settings_card, QPoint(0, 0)) == position
+        assert panel.reset.mapTo(editor.settings_card, QPoint(0, 0)) == reset_position
         assert form.composer.batch_label.height() == panel.epoch_scope.height()
         assert form.composer.mode.mapTo(panel, QPoint(0, 0)).x() == (
             panel.epoch_scope.mapTo(panel, QPoint(0, 0)).x()
@@ -6796,3 +9487,548 @@ def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
     panel.connect_button.click()
     assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
     binding.disconnected()
+
+
+@pytest.mark.parametrize(
+    ("preset", "expected"),
+    (
+        ("Texture", {"Duration", "Asset", "Speed", "Direction", "Rotation"}),
+        ("Image", {"Duration", "Asset", "Fit", "Speed", "Direction"}),
+        (
+            "Looming image",
+            {"Duration", "Asset", "Start size", "End size", "Growth duration"},
+        ),
+        ("Video", {"Duration", "Asset", "Playback start", "At end"}),
+        ("3D arena", {"Duration", "Asset", "Longitudinal", "Lateral", "Angular"}),
+    ),
+)
+def test_batch_edit_parameters_match_generation_and_apply_family_options(
+    window, app, preset, expected
+):
+    from cephvr.gui.epoch_batch import parameter_value
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_nodes import edit_epoch
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    program = add_stimulus(
+        blank_program(), 0, preset, () if preset == "3D arena" else ("Left",)
+    )
+    program, _ = edit_epoch(program, 0, "duplicate")
+    editor.set_program(program)
+    panel = editor.batch_edit
+    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
+    panel.targets.filter.setCurrentIndex(2)
+    panel.targets.index.setText("1")
+    panel.targets.index.textEdited.emit("1")
+    assert {
+        panel.parameter.itemText(i) for i in range(panel.parameter.count())
+    } == expected
+    assert panel.parameter.findText("Opacity") < 0
+    assert panel.parameter.findText("Angular speed") < 0
+    if preset == "Video":
+        panel.parameter.setCurrentText("At end")
+        row = panel.rows["Left"]
+        assert row.fit.isVisible() and row.value.isHidden()
+        row.fit.setCurrentText("Hold final frame")
+        panel.apply_button.click()
+        assert editor.program.sequence[0].settings[0].end_behavior == "hold_final_frame"
+        assert editor.program.sequence[1] == program.sequence[1]
+    elif preset == "3D arena":
+        for name, gain in (
+            ("Longitudinal", "0.5"),
+            ("Lateral", "0.25"),
+            ("Angular", "2"),
+        ):
+            panel.parameter.setCurrentText(name)
+            row = panel.rows[""]
+            row.value.setText(gain)
+            row.value.textEdited.emit(gain)
+            panel.apply_button.click()
+            assert not panel.message.text()
+            assert parameter_value(
+                editor.program.sequence[0].settings[0].model_dump(mode="json"), name
+            ) == float(gain)
+            assert editor.program.sequence[1] == program.sequence[1]
+        assert {c.channel_id for c in editor.program.input_channels} == {
+            "forward_drive",
+            "sideways_drive",
+            "turn_drive",
+        }
+
+
+@pytest.mark.parametrize("holder", ["", "other-client", "this-gui"])
+def test_managed_gui_auto_claims_only_unheld_control_once(holder: str) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+
+    requests = []
+    state = pb.Snapshot()
+    state.control.holder_client_id = holder
+    manager = SimpleNamespace(
+        control_ready=True,
+        state=state,
+        _retained_ack_required=False,
+        auto_control_attempted=False,
+        bridge=SimpleNamespace(request=lambda action: requests.append(action)),
+    )
+    ManagedGui.claim_unheld_control(manager)
+    assert requests == (["take_control"] if not holder else [])
+    # Manual release or another holder relinquishing does not cause automatic takeover.
+    state.control.holder_client_id = ""
+    ManagedGui.claim_unheld_control(manager)
+    assert len(requests) == (1 if not holder else 0)
+
+
+def test_managed_gui_waits_for_synchronization_and_warning_acknowledgement() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+
+    requests = []
+    manager = SimpleNamespace(
+        control_ready=False,
+        state=pb.Snapshot(),
+        _retained_ack_required=True,
+        auto_control_attempted=False,
+        bridge=SimpleNamespace(request=lambda action: requests.append(action)),
+    )
+    ManagedGui.claim_unheld_control(manager)
+    assert not requests and not manager.auto_control_attempted
+    manager.control_ready = True
+    manager.state = None
+    ManagedGui.claim_unheld_control(manager)
+    assert not requests and not manager.auto_control_attempted
+    manager.state = pb.Snapshot()
+    ManagedGui.claim_unheld_control(manager)
+    assert not requests
+    manager._retained_ack_required = False
+    ManagedGui.claim_unheld_control(manager)
+    assert requests == ["take_control"]
+
+
+def test_retained_acknowledgement_cannot_clear_guard_without_current_snapshot() -> None:
+    from cephvr.gui.main import ManagedGui
+
+    manager = SimpleNamespace(
+        _retained_ack_required=True,
+        state=None,
+        _connection_identity=None,
+        _retained_ack_identity=(4, "controller-1"),
+    )
+    ManagedGui.retained_state_acknowledged(manager, 4, "controller-1")
+    assert manager._retained_ack_required
+
+
+def test_initial_and_reopened_retained_warnings_gate_auto_claim() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+
+    class Action:
+        def __init__(self) -> None:
+            self.enabled = False
+
+        def setEnabled(self, enabled: bool) -> None:
+            self.enabled = enabled
+
+    requests: list[str] = []
+    prompt_updates: list[tuple[bool, int]] = []
+
+    def install_prompts(
+        _state: pb.Snapshot,
+        *,
+        require_acknowledgement: bool,
+        can_respond: bool,
+        connection_epoch: int,
+    ) -> None:
+        assert not can_respond
+        prompt_updates.append((require_acknowledgement, connection_epoch))
+
+    manager = SimpleNamespace(
+        _retained_ack_required=False,
+        _retained_ack_identity=None,
+        _acknowledged_identity=None,
+        _awaiting_reconnect_review=False,
+        _connection_epoch=1,
+        _connection_identity=None,
+        state=None,
+        configuration=SimpleNamespace(
+            install=lambda _state: True,
+            stale=False,
+            last_error="",
+            _installing=False,
+        ),
+        bridge=SimpleNamespace(
+            principal=SimpleNamespace(generation="gui-1"),
+            request=lambda action: requests.append(action),
+        ),
+        cameras=SimpleNamespace(install=lambda _state: []),
+        window=SimpleNamespace(
+            devices=SimpleNamespace(sync_cameras=lambda: None),
+            apply_view=lambda _view: None,
+        ),
+        display_operations=SimpleNamespace(
+            install_calibration_state=lambda _state, *, launch_eligible: None
+        ),
+        _calibration_launch_eligible=lambda _state: False,
+        mcu=SimpleNamespace(install=lambda _state, _held: None),
+        prompts=SimpleNamespace(update=install_prompts),
+        tracking_diagnostics=SimpleNamespace(install_snapshot=lambda _state: None),
+        review_retained=Action(),
+        take=Action(),
+        takeover=Action(),
+        release=Action(),
+        review_prompt=Action(),
+        reload_configuration=Action(),
+        control_ready=True,
+        auto_control_attempted=False,
+    )
+    manager.claim_unheld_control = lambda: ManagedGui.claim_unheld_control(manager)
+    initial = pb.Snapshot(controller_generation="controller-1")
+    initial.warnings.add(message="retained device warning")
+    ManagedGui.install_snapshot(manager, 1, "controller-1", initial.SerializeToString())
+    assert manager._retained_ack_required
+    assert prompt_updates[-1] == (True, 1)
+    assert not requests
+
+    manager.state = None
+    manager._awaiting_reconnect_review = True
+    manager._retained_ack_identity = (1, "controller-1")
+    manager.auto_control_attempted = False
+    reopened = pb.Snapshot(controller_generation="controller-1")
+    ManagedGui.install_snapshot(
+        manager, 2, "controller-1", reopened.SerializeToString()
+    )
+    assert manager._retained_ack_required
+    assert manager._retained_ack_identity == (2, "controller-1")
+    assert prompt_updates[-1] == (True, 2)
+    assert not requests
+
+    manager.state = SimpleNamespace(controller_generation="controller-1")
+    manager._connection_identity = (5, "controller-1")
+    ManagedGui.retained_state_acknowledged(manager, 4, "controller-1")
+    assert manager._retained_ack_required
+
+
+def test_shared_notices_warn_on_action_and_send_status_to_log(window, app):
+    from PyQt6.QtWidgets import QMessageBox
+
+    from cephvr.gui.notices import FormNotice, passive_validation
+
+    notice = FormNotice()
+    window.protocol.program_card.body.addWidget(notice)
+    notice.setText("Unfinished value")
+    notice.show()
+    assert notice.isHidden() and notice.dialog is None
+    with passive_validation():
+        notice.warn("Incomplete value")
+    assert notice.dialog is None
+    notice.warn("Choose a valid value")
+    dialog = notice.dialog
+    assert dialog is not None and dialog.icon() == QMessageBox.Icon.Warning
+    assert dialog.text() == "Choose a valid value"
+    notice.warn("Correct the value")
+    assert notice.dialog is dialog and dialog.text() == "Correct the value"
+    notice.clear()
+    assert notice.dialog is None
+    notice.status("Trial saved")
+    assert "Trial saved" in window.dashboard.log_console.toPlainText()
+    assert notice.isHidden() and not notice.text()
+    notice.warn("Action failed")
+    notice.setEnabled(False)
+    assert notice.dialog is None
+
+
+def test_tracking_methods_preserve_fields_and_hide_unrelated_controls(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    page = window.tracking
+    window.select_page(3)
+    assert page.pipeline.currentText() == "Water flow"
+    assert page.forms.method.currentText() == "Manual"
+    assert page.forms.flow_method.text() == "NVIDIA OF"
+    assert page.forms.flow_method.isReadOnly()
+    assert not page.forms.advanced_body.isHidden()
+    calibration = page.forms.calibration.layout()
+    assert calibration.indexOf(page.forms.reference) < calibration.indexOf(
+        page.forms.distance_calibration
+    )
+    pose = page.forms.subject.layout()
+    assert pose.indexOf(page.forms.search) < pose.indexOf(page.forms.pose)
+    page.forms.fields["threshold"].setText("120")
+    page.forms.method.setCurrentText("Manual")
+    app.processEvents()
+    assert page.forms.search.isHidden()
+    assert not page.forms.method_pages[2].isHidden()
+    page.forms.method.setCurrentText("Keypoint model")
+    assert not page.forms.method_pages[1].isHidden()
+    page.forms.method.setCurrentText("Threshold + contour")
+    assert page.forms.fields["threshold"].text() == "120"
+    assert not page.forms.search.isHidden()
+    page.forms.fields["coverage"].setText("0.4")
+    page.pipeline.setCurrentText("Fin flow")
+    assert page.forms.fields["coverage"].text() == "0.25"
+    assert not page.forms.fin.isHidden()
+    page.forms.fields["fin_span"].setText("90")
+    page.pipeline.setCurrentText("Water flow")
+    assert page.forms.fields["coverage"].text() == "0.4"
+    assert page.forms.fin.isHidden()
+    page.pipeline.setCurrentText("Fin flow")
+    assert page.forms.fields["fin_span"].text() == "90"
+    page.tabs.setCurrentIndex(2)
+    for width in (1280, 720):
+        window.resize(width, 950)
+        page.forms.method.setCurrentText("Manual")
+        app.processEvents()
+        manual = page.forms.method_pages[2]
+        points = page.forms.manual_points
+        assert manual.rect().contains(points.geometry())
+        assert page.forms.pose_pages.rect().contains(manual.geometry())
+        assert page.forms.set_manual.x() == points.x()
+        assert all(toggle.text() == "Enable" for toggle in page.forms.stages.values())
+        assert not any(
+            button.text() == "Draw region" for button in page.findChildren(QPushButton)
+        )
+        page.forms.method.setCurrentText("Threshold + contour")
+
+
+def test_tracking_draft_roundtrip_and_invalid_load_is_atomic(
+    window: DashboardWindow,
+) -> None:
+    import copy
+
+    page = window.tracking
+    page.forms.fields["threshold"].setText("123")
+    page.annotation.image_size = [640, 480]
+    page.annotation.canvas.points["Reference points"] = [[100, 200]]
+    draft = page.snapshot()
+    page.forms.fields["threshold"].setText("80")
+    page.restore(draft)
+    assert page.snapshot() == draft
+    invalid = copy.deepcopy(draft)
+    invalid["annotations"]["Reference points"] = [[900, 20]]
+    with pytest.raises(ValueError, match="outside"):
+        page.restore(invalid)
+    assert page.snapshot() == draft
+
+
+def test_tracking_camera_changes_invalidate_reference_and_lock_closes_tool(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    page = window.tracking
+    cameras = window.devices.cameras
+    cameras.set_participation(0, True)
+    assert page.source_serial == cameras.drafts[1].serial
+    page.annotation.image_size = [640, 480]
+    page.annotation.canvas.points["Reference points"] = [[20, 30]]
+    cameras.drafts[1].role = "Unassigned"
+    cameras.drafts[0].role = "Tracking cam"
+    cameras.drafts_changed.emit()
+    assert page.source_serial == cameras.drafts[0].serial
+    assert page.annotation.canvas.points["Reference points"] == []
+    page.open_annotation("Manual pose")
+    assert page.annotation.isVisible()
+    page.apply_view(review_view(Phase.RUNNING))
+    assert not page.annotation.isVisible()
+    assert not page.configuration.isEnabled()
+    page.apply_view(
+        DashboardView(
+            connected=True,
+            has_control=True,
+            configuration_wired=False,
+        )
+    )
+    assert not page.configuration.isEnabled()
+    app.processEvents()
+
+
+def test_tracking_annotation_maps_letterboxed_image_to_source_pixels(
+    app: QApplication,
+) -> None:
+    from PyQt6.QtCore import QPointF
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.tracking_annotation import AnnotationCanvas
+
+    canvas = AnnotationCanvas()
+    canvas.resize(800, 400)
+    canvas.image = QImage(200, 200, QImage.Format.Format_RGB32)
+    assert canvas.coordinate(QPointF(10, 200)) is None
+    point = canvas.coordinate(canvas.image_rect().center())
+    assert point == QPointF(100, 100)
+    canvas.show()
+    QTest.mouseClick(
+        canvas, Qt.MouseButton.LeftButton, pos=canvas.image_rect().center().toPoint()
+    )
+    assert canvas.points["Reference points"] == [[100.0, 100.0]]
+    canvas.close()
+
+
+def test_tracking_distance_and_regions_use_original_pixels(
+    window: DashboardWindow,
+) -> None:
+    page = window.tracking
+    page.annotation.image_size = [640, 480]
+    distance = page.forms.distance_calibration
+    assert distance.summary.isHidden()
+    for editor, value in zip(distance.coordinates, (10, 20, 310, 420), strict=True):
+        editor.setText(str(value))
+    distance.distance.setText("10")
+    page.distance_edited()
+    assert not distance.summary.isHidden()
+    assert distance.summary.text() == "50 px/mm   ·   0.02 mm/px"
+    crop = page.forms.preprocessing
+    crop.enabled.setChecked(True)
+    crop.region.set_values([10, 20, 400, 200])
+    page.region_edited("Input crop")
+    crop.scale.setValue(50)
+    assert crop.scale.value() == 50
+    assert distance.summary.text() == "50 px/mm   ·   0.02 mm/px"
+    assert page.annotation.canvas.points["Input crop"] == [[10, 20], [410, 220]]
+    page.annotation.canvas.points["Search region"] = [[50, 60], [250, 160]]
+    page.update_annotations()
+    assert page.forms.search_region.values() == [50, 60, 200, 100]
+    draft = page.snapshot()
+    page.restore(draft)
+    assert page.snapshot() == draft
+    assert distance.summary.text() == "50 px/mm   ·   0.02 mm/px"
+
+
+def test_tracking_v1_draft_migrates_without_inventing_calibration(
+    window: DashboardWindow,
+) -> None:
+    page = window.tracking
+    draft = page.snapshot()
+    draft["version"] = 1
+    draft.pop("diagnostics")
+    draft.pop("preprocessing")
+    draft.pop("distance_mm")
+    draft["annotations"].pop("Input crop")
+    draft["annotations"].pop("Distance reference")
+    page.restore(draft)
+    assert page.snapshot()["version"] == 4
+    assert all(page.snapshot()["diagnostics"].values())
+    assert not page.forms.preprocessing.enabled.isChecked()
+    assert page.forms.preprocessing.scale.value() == 100
+    assert page.forms.distance_calibration.distance.text() == ""
+
+
+def test_tracking_preview_stages_retain_settings_and_clear_only_subject_reference(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    import copy
+
+    page = window.tracking
+    window.page_buttons[3].click()
+    page.annotation.image_size = [640, 480]
+    page.annotation.canvas.points["Reference points"] = [[20, 30]]
+    page.annotation.canvas.points["Manual pose"] = [[40, 50]]
+    page.annotation.canvas.points["Distance reference"] = [[0, 0], [100, 0]]
+    page.forms.distance_calibration.distance.setText("10")
+    page.update_annotations()
+    page.forms.clear_reference.click()
+    assert page.annotation.canvas.points["Reference points"] == []
+    assert page.forms.reference_points.points() == []
+    assert page.annotation.canvas.points["Manual pose"] == [[40, 50]]
+    assert page.forms.distance_calibration.summary.text() == "10 px/mm   ·   0.1 mm/px"
+    page.forms.fields["coverage"].setText("0.42")
+    page.forms.preprocessing.scale.setValue(50)
+    page.open_annotation("Manual pose")
+    # Stage switches start off for first-use diagnostics; toggle one on so this
+    # assertion exercises the changed-draft path rather than a no-op setChecked.
+    next(iter(page.forms.stages.values())).setChecked(True)
+    for toggle in page.forms.stages.values():
+        toggle.setChecked(False)
+    assert not page.annotation.isVisible()
+    assert not page.forms.fields["coverage"].isEnabled()
+    assert page.forms.preprocessing.scale.isEnabled()
+    draft = page.snapshot()
+    invalid = copy.deepcopy(draft)
+    invalid["diagnostics"]["pose"] = "false"
+    with pytest.raises(ValueError, match="diagnostic"):
+        page.restore(invalid)
+    assert page.snapshot() == draft
+    for toggle in page.forms.stages.values():
+        toggle.setChecked(True)
+    page.restore(draft)
+    assert not any(page.snapshot()["diagnostics"].values())
+    page.apply_view(review_view(Phase.RUNNING))
+    assert all(not toggle.isEnabled() for toggle in page.forms.stages.values())
+    page.apply_view(review_view(Phase.CONFIGURATION))
+    for toggle in page.forms.stages.values():
+        toggle.setChecked(True)
+    assert page.forms.fields["coverage"].text() == "0.42"
+    assert page.forms.fields["coverage"].isEnabled()
+    assert page.forms.preprocessing.scale.value() == 50
+    old = page.snapshot()
+    old["version"] = 2
+    old.pop("diagnostics")
+    page.restore(old)
+    assert all(page.snapshot()["diagnostics"].values())
+    old = page.snapshot()
+    old["version"] = 3
+    old["diagnostics"]["preprocessing"] = False
+    old["diagnostics"]["pose"] = False
+    page.restore(old)
+    assert "preprocessing" not in page.snapshot()["diagnostics"]
+    assert not page.forms.pose.enabled.isChecked()
+    assert page.forms.preprocessing.scale.value() == 50
+    assert page.forms.preprocessing.scale.isEnabled()
+
+
+def test_tracking_region_bounds_and_full_frame_are_validated(
+    window: DashboardWindow,
+) -> None:
+    import copy
+
+    page = window.tracking
+    page.annotation.image_size = [640, 480]
+    page.forms.preprocessing.region.set_values([0, 0, 640, 480])
+    page.region_edited("Input crop")
+    draft = page.snapshot()
+    page.restore(draft)
+    assert page.forms.preprocessing.region.values() == [0, 0, 640, 480]
+    invalid = copy.deepcopy(draft)
+    invalid["annotations"]["Input crop"][1][0] = 641
+    with pytest.raises(ValueError, match="outside"):
+        page.restore(invalid)
+    assert page.snapshot() == draft
+
+
+@pytest.mark.parametrize(
+    "mode", ["Reference points", "Manual pose", "Distance reference"]
+)
+def test_tracking_coordinate_corrections_sync_annotations_and_preserve_incomplete_edits(
+    window: DashboardWindow, mode: str
+) -> None:
+    page = window.tracking
+    page.annotation.image_size = [640, 480]
+    editor = {
+        "Reference points": page.forms.reference_points,
+        "Manual pose": page.forms.manual_points,
+        "Distance reference": page.forms.distance_calibration.point_editor,
+    }[mode]
+    points = [[20.0 + i * 10, 30.0] for i in range(len(editor.coordinates) // 2)]
+    page.annotation.canvas.points[mode] = points
+    page.update_annotations()
+    assert editor.points() == points
+    editor.coordinates[0].setText("22.5")
+    editor.coordinates[0].editingFinished.emit()
+    expected = [[22.5, 30.0], *points[1:]]
+    assert page.annotation.canvas.points[mode] == expected
+    editor.coordinates[1].clear()
+    editor.coordinates[1].editingFinished.emit()
+    assert page.annotation.canvas.points[mode] == expected
+    editor.coordinates[1].setText("35.25")
+    editor.coordinates[1].editingFinished.emit()
+    expected[0][1] = 35.25
+    assert page.annotation.canvas.points[mode] == expected
+    draft = page.snapshot()
+    page.restore(draft)
+    assert editor.points() == expected
+    # Drawing and clearing remain reflected in the numeric rows.
+    page.annotation.canvas.points[mode] = [[50, 60]]
+    page.update_annotations()
+    assert editor.points() == [[50, 60]]
+    page.annotation.reset()
+    assert all(not coordinate.text() for coordinate in editor.coordinates)

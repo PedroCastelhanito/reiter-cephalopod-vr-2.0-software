@@ -30,3 +30,8 @@ def stimulus_columns(setting: Settings) -> tuple[tuple[str, str], ...]:
         ("Direction (°)", "Direction"),
         ("Rotation (°/s)", "Angular speed"),
     )
+
+
+def editable_parameters(setting: Settings) -> tuple[str, ...]:
+    """Batch edits expose the same prepared asset and columns as generation."""
+    return ("Asset", *(key for _, key in stimulus_columns(setting)))

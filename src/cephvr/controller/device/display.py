@@ -36,6 +36,7 @@ class DisplayInitialization:
         projections: ProjectionStore,
         file_policy_loader: Callable[[frozenset[str]], Mapping[str, Message]] | None,
         display_validator: Callable[[str], frozenset[str]] | None,
+        display_pacing_resolver: Callable[[str, Message], str] | None = None,
         generation: str,
         limits: LimitsState,
         max_operation_records: int,
@@ -50,6 +51,7 @@ class DisplayInitialization:
         self.projections = projections
         self.file_policy_loader = file_policy_loader
         self.display_validator = display_validator
+        self.display_pacing_resolver = display_pacing_resolver
         self.generation = generation
         self.limits = limits
         self.max_operation_records = max_operation_records
@@ -77,6 +79,7 @@ class DisplayInitialization:
                 or self.lifecycle.session.shutdown_requested
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
                 or self.device.display_pending is not None
+                or self.device.calibration_pending is not None
             ):
                 return self.hooks.admission(
                     command_id,
@@ -110,19 +113,12 @@ class DisplayInitialization:
             revision = self.configuration.revision
             display = deepcopy(setting.visual_stimulus.display)
         try:
-            output_ids, loaded = await asyncio.wait_for(
-                asyncio.gather(
-                    asyncio.to_thread(self.display_validator, display.profile_json),
-                    asyncio.to_thread(
-                        self.file_policy_loader, frozenset({"visual_stimulus"})
-                    ),
+            loaded = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self.file_policy_loader, frozenset({"visual_stimulus"})
                 ),
                 self.limits.current.validation_ns / 1e9,
             )
-            if not output_ids or len(output_ids) > 64:
-                raise ValueError(
-                    "display validator returned no bounded required output identities"
-                )
             policy = loaded.get("visual_stimulus")
             if (
                 policy is None
@@ -140,6 +136,23 @@ class DisplayInitialization:
                 or not visual_stimulus_policy.limits.ListFields()
             ):
                 raise ValueError("Visual Stimulus resource limits unresolved")
+            if self.display_pacing_resolver is not None:
+                display.profile_json = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        self.display_pacing_resolver,
+                        display.profile_json,
+                        visual_stimulus_policy,
+                    ),
+                    self.limits.current.validation_ns / 1e9,
+                )
+            output_ids = await asyncio.wait_for(
+                asyncio.to_thread(self.display_validator, display.profile_json),
+                self.limits.current.validation_ns / 1e9,
+            )
+            if not output_ids or len(output_ids) > 64:
+                raise ValueError(
+                    "display validator returned no bounded required output identities"
+                )
         except Exception as exc:
             async with self.lifecycle.lock:
                 self.control.add_warning(
@@ -176,6 +189,10 @@ class DisplayInitialization:
                 policies=self.configuration.policies,
                 deadline_monotonic_ns=deadline_ns,
             )
+            if visual_stimulus_policy.HasField("pacing_refresh_hz"):
+                request.pacing_refresh_hz = visual_stimulus_policy.pacing_refresh_hz
+            if visual_stimulus_policy.HasField("pacing_output_id"):
+                request.pacing_output_id = visual_stimulus_policy.pacing_output_id
             if self.configuration.current.HasField("asset_root"):
                 request.asset_root = self.configuration.current.asset_root
             try:

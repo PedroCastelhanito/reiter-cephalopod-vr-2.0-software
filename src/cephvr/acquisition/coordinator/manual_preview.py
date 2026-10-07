@@ -185,6 +185,44 @@ class ManualPreview:
         _ = deadline_ns
         return self.transfers.report_consumer(request)
 
+    async def attach_tracking_diagnostic_input(
+        self,
+        request: wire.AcquisitionTrackingDiagnosticAttachmentCommand,
+        *,
+        deadline_ns: int,
+    ) -> control.CommandAdmission:
+        command = request.command
+        preview = self._find_preview(request.preview_run_id)
+        if (
+            self.clock() >= deadline_ns
+            or command.issuer != self.identity.controller
+            or command.target != self.identity.backend
+            or command.work.WhichOneof("work") is not None
+            or request.configuration_revision != self.configuration.revision
+            or request.tracking_consumer != self.identity.tracking
+            or preview is None
+            or not preview.started
+            or preview.configuration_revision != request.configuration_revision
+            or preview.tracking_allocation_id is None
+        ):
+            return _rejected(
+                command.command_id,
+                "TRACKING_DIAGNOSTIC_SOURCE",
+                "diagnostic attachment does not match the exact active tracking preview",
+            )
+        try:
+            await self.transfers.attach_tracking(
+                request, preview, deadline_ns=deadline_ns
+            )
+        except (RuntimeError, TimeoutError, ValueError) as exc:
+            return _rejected(
+                command.command_id, "TRACKING_DIAGNOSTIC_TRANSFER", str(exc)
+            )
+        return control.CommandAdmission(
+            result=control.COMMAND_RESULT_ACCEPTED,
+            command_id=command.command_id,
+        )
+
     async def _start(
         self, request: wire.AcquisitionCameraCommand, deadline_ns: int
     ) -> control.CommandAdmission:
@@ -337,16 +375,24 @@ class ManualPreview:
             )
             self.transfers.retire(preview)
             viewer_was_attached = preview.viewer is not None
+            tracking_consumer_attached = preview.tracking_viewer is not None
             preview.stopping = False
             worker.preview = None
             if viewer_was_attached:
                 await _wait_preview_event(
                     preview.viewer_released_event, deadline_ns, self.clock
                 )
+            if tracking_consumer_attached:
+                await _wait_preview_event(
+                    preview.tracking_viewer_released_event, deadline_ns, self.clock
+                )
             self.transfers.close_retired_resource(preview)
-            if preview.allocation_id in self.resources:
+            if preview.allocation_id in self.resources or (
+                preview.tracking_allocation_id is not None
+                and preview.tracking_allocation_id in self.resources
+            ):
                 raise RuntimeError(
-                    "manual preview ring ownership is not fully released"
+                    "manual preview or Tracking diagnostic ring ownership is not fully released"
                 )
             if resume_roles:
                 on = await self.serial.on(

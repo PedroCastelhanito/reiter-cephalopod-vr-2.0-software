@@ -33,6 +33,9 @@ from cephvr.visual_stimulus.rendering.types import (
 )
 from cephvr.visual_stimulus.resources.assets import PreparedResourceBundle
 from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
+from cephvr.visual_stimulus.resources.display_calibration import (
+    PreparedDisplayCalibration,
+)
 from cephvr.visual_stimulus.resources.glb import GLBScene
 from cephvr.visual_stimulus.resources.media import ImagePixels
 
@@ -89,6 +92,7 @@ class ModernGLPort:
         self._display: DisplayProfile | None = None
         self._display_calibration: PreparedCalibration | None = None
         self._resources: dict[str, object] = {}
+        self._calibration_owner: Any | None = None
         self._idle_activities: list[OutputActivity] = []
         self._idle_linear = (0.0, 0.0, 0.0)
         self._released: list[str] = []
@@ -451,6 +455,64 @@ class ModernGLPort:
             )
         return tuple(activities)
 
+    def present_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[OutputActivity, ...]:
+        """Present a protected arena through V15 surface and output calibration."""
+        self._assert_owner()
+        if self._display != display or not self._outputs:
+            raise NativeRenderingError("active outputs are unavailable for calibration")
+        from cephvr.visual_stimulus.rendering.display_calibration import (
+            DisplayCalibrationRenderer,
+        )
+
+        if self._calibration_owner is None:
+            self._calibration_owner = DisplayCalibrationRenderer(
+                self._outputs,
+                self._moderngl,
+                self.announce,
+                self._upload_one_image,
+            )
+        self._calibration_owner.present(display, prepared)
+        activities: list[OutputActivity] = []
+        order = [
+            key for key in self._outputs if key != display.selected_pacing_output_id
+        ]
+        if display.selected_pacing_output_id is not None:
+            order.append(display.selected_pacing_output_id)
+        for output_id in order:
+            output = self._outputs[output_id]
+            entry = self.clock_ns()
+            error = None
+            try:
+                output.activate()
+                entry = self.clock_ns()
+                self._glfw.swap_buffers(output.window)
+            except Exception as exc:
+                error = f"CALIBRATION_SWAP:{str(exc)[:512]}"
+            returned = self.clock_ns()
+            activities.append(
+                OutputActivity(output_id, entry, returned, output.swap_interval, error)
+            )
+        return tuple(activities)
+
+    def close_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[tuple[OutputActivity, ...], bool]:
+        self._assert_owner()
+        activities = self.show_idle(display)
+        failures: list[str] = [
+            f"idle:{item.output_id}:{item.error}"
+            for item in activities
+            if item.error is not None
+        ]
+        if self._calibration_owner is not None:
+            failures.extend(self._calibration_owner.release())
+            if not failures:
+                self._calibration_owner = None
+                self._released.append("visual_stimulus:gpu:display-calibration:arena")
+        return activities, not failures
+
     def capture_review_composite(
         self, slot: object, outputs: tuple[RenderedOutput, ...], encoding: object
     ) -> object:
@@ -543,6 +605,13 @@ class ModernGLPort:
         if self.scene_renderer is None:
             self._released.extend(self._scene_keys)
             self._scene_keys.clear()
+        if self._calibration_owner is not None:
+            failures = self._calibration_owner.release()
+            if failures:
+                outstanding.extend(f"calibration:{item}" for item in failures)
+            else:
+                self._calibration_owner = None
+                self._released.append("visual_stimulus:gpu:display-calibration:arena")
         for key, resource in tuple(self._resources.items()):
             try:
                 self._release_resource(resource)

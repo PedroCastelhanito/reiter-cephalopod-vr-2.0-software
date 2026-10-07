@@ -437,6 +437,16 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             return await self.manual_preview.execute(request, deadline_ns=deadline_ns)
         return await self.manual_devices.execute(request, deadline_ns=deadline_ns)
 
+    async def attach_tracking_diagnostic_input(
+        self,
+        request: wire.AcquisitionTrackingDiagnosticAttachmentCommand,
+        *,
+        deadline_ns: int,
+    ) -> control.CommandAdmission:
+        return await self.manual_preview.attach_tracking_diagnostic_input(
+            request, deadline_ns=deadline_ns
+        )
+
     async def execute_microcontroller_command(
         self, request: wire.AcquisitionMicrocontrollerCommand, *, deadline_ns: int
     ) -> control.CommandAdmission:

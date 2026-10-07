@@ -5,8 +5,9 @@ import json
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
 
-from cephvr.gui.components import InlineMessage, combo
+from cephvr.gui.components import combo
 from cephvr.gui.formatting import parse_clock_duration
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.prepared_file_picker import PreparedFilePicker
 from cephvr.gui.program_editing import validate
 from cephvr.gui.projector_layers import reorder_projector_layer
@@ -48,7 +49,7 @@ class EpochComposer(QWidget):
         self.picker.selected.connect(
             lambda preset, path, fresh: self.add_file(preset, path, self.picker_face)
         )
-        self.message = InlineMessage()
+        self.message = FormNotice()
         self.body.addWidget(self.message)
         self.duration.editingFinished.connect(self.update_duration)
         self.add_row("")
@@ -117,7 +118,7 @@ class EpochComposer(QWidget):
                 row.add.setEnabled(active)
                 row.stimulus.setEnabled(active)
         self.update_headers()
-        self.message.setText(
+        self.message.status(
             "Enable projectors in Devices to add 2D stimuli"
             if not self.screens and not self.active_mode
             else ""
@@ -197,7 +198,7 @@ class EpochComposer(QWidget):
         for face, row in self.rows.items():
             if row.parameters.dirty and not row.parameters.apply():
                 raise ValueError(
-                    f"Correct the {face or 'rig-wide'} reference parameters"
+                    f"{face or 'Rig-wide'} · {row.parameters.message.text()}"
                 )
         self.update_duration()
         if self.message.text():
@@ -320,16 +321,21 @@ class EpochComposer(QWidget):
             self.picker_face = face
             self.picker.open(kind, self.asset_root, False)
         except ValueError as error:
-            self.message.setText(str(error))
+            self.message.warn(error)
 
     def add_file(self, kind: str, path: str, face: str) -> None:
         if not self.isEnabled():
             return
         try:
+            reference = self.reference_value()
+        except ValueError as error:
+            self.message.setText(str(error))
+            return
+        try:
             if kind != "3D arena" and face not in self.screens:
                 raise ValueError("Choose an enabled projector")
             self.program = add_file_stimulus(
-                self.reference_value(),
+                reference,
                 0,
                 kind,
                 (face,) if face else self.screens,
@@ -341,7 +347,7 @@ class EpochComposer(QWidget):
             self.refresh_rows(face, len(epoch.settings) - 1)
             self.changed.emit()
         except (ValueError, OSError) as error:
-            self.message.setText(str(error))
+            self.message.warn(error)
 
     def remove_layer(self, face: str) -> None:
         row = self.rows[face]

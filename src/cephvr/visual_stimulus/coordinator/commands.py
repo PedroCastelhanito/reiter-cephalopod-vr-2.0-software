@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from uuid import uuid4
 
 from google.protobuf.message import Message
@@ -11,6 +12,7 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.identity import require_uuid4
 from cephvr.visual_stimulus.transport.messages import backend_command
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_runtime
 
 from .state import CommandLink, Identity, State
 
@@ -18,7 +20,14 @@ from .state import CommandLink, Identity, State
 def bind_command(
     identity: Identity, state: State, method: str, request: Message, deadline_ns: int
 ) -> tuple[Message, CommandLink]:
-    if isinstance(request, wire.VisualStimulusDisplayInitializationRequest):
+    if isinstance(
+        request,
+        (
+            wire.VisualStimulusDisplayInitializationRequest,
+            wire.VisualStimulusDisplayCalibrationOpenRequest,
+            wire.VisualStimulusDisplayCalibrationCloseRequest,
+        ),
+    ):
         parent = wire.BackendCommand(
             command_id=request.command_id, issuer=request.issuer, target=request.target
         )
@@ -28,7 +37,18 @@ def bind_command(
         revision = (
             request.plan.configuration_revision
             if isinstance(request, wire.SetupSessionRequest)
-            else (state.setup.plan.configuration_revision if state.setup else 0)
+            else (
+                state.setup.plan.configuration_revision
+                if state.setup
+                else (
+                    state.display.calibration.configuration_revision
+                    if state.display is not None
+                    and state.display.HasField("calibration")
+                    and method
+                    in {"Cleanup", "Shutdown", "InterruptSession", "CancelSetup"}
+                    else 0
+                )
+            )
         )
     child = visual_stimulus.WorkerCommand(
         command_id=str(uuid4()),
@@ -47,7 +67,24 @@ def bind_command(
         wire.BackendCommand.FromString(parent.SerializeToString()),
         child,
         deadline_ns,
+        (
+            request.diagnostic_id
+            if isinstance(
+                request,
+                (
+                    wire.VisualStimulusDisplayCalibrationOpenRequest,
+                    wire.VisualStimulusDisplayCalibrationCloseRequest,
+                ),
+            )
+            else ""
+        ),
     )
+    if (
+        method in {"Cleanup", "Shutdown", "InterruptSession", "CancelSetup"}
+        and state.setup is None
+        and state.display is not None
+    ):
+        link.output_ids = frozenset(item.output_id for item in state.display.outputs)
     if isinstance(request, wire.VisualStimulusDisplayInitializationRequest):
         initialization = visual_stimulus.InitializeDisplay(
             command=child,
@@ -57,7 +94,75 @@ def bind_command(
         )
         if request.HasField("asset_root"):
             initialization.asset_root = request.asset_root
+        if request.HasField("pacing_refresh_hz"):
+            initialization.pacing_refresh_hz = request.pacing_refresh_hz
+        if request.HasField("pacing_output_id"):
+            initialization.pacing_output_id = request.pacing_output_id
         return initialization, link
+    if isinstance(request, wire.VisualStimulusDisplayCalibrationOpenRequest):
+        if state.setup is not None:
+            raise ValueError("display calibration is unavailable during a session")
+        if (
+            state.display is not None
+            and state.display.HasField("calibration")
+            and state.display.calibration.state
+            != visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_IDLE
+        ):
+            raise ValueError("previous display calibration is not confirmed Idle")
+        if (
+            not request.policies.HasField("limits")
+            or not request.policies.limits.HasField("max_document_bytes")
+            or request.policies.limits.max_document_bytes == 0
+            or not request.profile_json
+            or len(request.profile_json.encode("utf-8"))
+            > request.policies.limits.max_document_bytes
+            or hashlib.sha256(request.profile_json.encode("utf-8")).hexdigest()
+            != request.profile_sha256
+        ):
+            raise ValueError("calibration profile identity or limit is invalid")
+        from cephvr.visual_stimulus.config.models.display_profile import (
+            parse_display_json,
+        )
+
+        profile = parse_display_json(
+            request.profile_json,
+            max_bytes=request.policies.limits.max_document_bytes,
+        )
+        link.output_ids = frozenset(item.output_id for item in profile.active_outputs)
+        return visual_stimulus.OpenDisplayCalibrationCommand(
+            command=child,
+            diagnostic_id=request.diagnostic_id,
+            profile_json=request.profile_json,
+            profile_sha256=request.profile_sha256,
+            asset_root=request.asset_root,
+            arena_relative_path=request.arena_relative_path,
+            arena_size_bytes=request.arena_size_bytes,
+            arena_sha256=request.arena_sha256,
+            policies=request.policies,
+        ), link
+    if isinstance(request, wire.VisualStimulusDisplayCalibrationCloseRequest):
+        if state.setup is not None:
+            raise ValueError("display calibration cannot close during a session")
+        pending_open = next(
+            (
+                existing
+                for existing in reversed(tuple(state.links.values()))
+                if existing.method == "OpenDisplayCalibration"
+                and existing.diagnostic_id == request.diagnostic_id
+            ),
+            None,
+        )
+        if pending_open is not None:
+            link.output_ids = pending_open.output_ids
+        elif state.display is not None:
+            link.output_ids = frozenset(
+                item.output_id for item in state.display.outputs
+            )
+        if not link.output_ids:
+            raise ValueError("calibration output identities are unavailable")
+        return visual_stimulus.CloseDisplayCalibrationCommand(
+            command=child, diagnostic_id=request.diagnostic_id
+        ), link
     if isinstance(request, wire.SetupSessionRequest):
         return visual_stimulus.WorkerSetup(
             command=child,
@@ -143,16 +248,29 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
     )
     if command.issuer not in expected:
         raise ValueError("wrong Visual Stimulus authority generation")
-    if state.interrupted and method not in {
-        "Cleanup",
-        "Shutdown",
-        "InterruptSession",
-        "CancelSetup",
-        "StopTrial",
-        "AbortTrial",
-        "SetupSession",
-        "InitializeDisplay",
-    }:
+    recoverable_calibration = (
+        method
+        in {
+            "OpenDisplayCalibration",
+            "CloseDisplayCalibration",
+        }
+        and state.setup is None
+    )
+    if (
+        state.interrupted
+        and method
+        not in {
+            "Cleanup",
+            "Shutdown",
+            "InterruptSession",
+            "CancelSetup",
+            "StopTrial",
+            "AbortTrial",
+            "SetupSession",
+            "InitializeDisplay",
+        }
+        and not recoverable_calibration
+    ):
         raise ValueError("interrupted Visual Stimulus session is permanently fenced")
     if isinstance(request, wire.SetupSessionRequest):
         if state.setup is not None and (
@@ -189,6 +307,63 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
             raise ValueError(
                 "display initialization forbidden during session preparation"
             )
+    elif isinstance(request, wire.VisualStimulusDisplayCalibrationOpenRequest):
+        if state.setup is not None:
+            raise ValueError("display calibration unavailable during a session")
+        if (
+            state.display is not None
+            and state.display.HasField("calibration")
+            and state.display.calibration.state
+            != visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_IDLE
+        ):
+            raise ValueError("previous display calibration is not confirmed Idle")
+    elif isinstance(request, wire.VisualStimulusDisplayCalibrationCloseRequest):
+        if state.setup is not None:
+            raise ValueError("display calibration close unavailable during a session")
+        evidence = (
+            state.display.calibration
+            if state.display is not None and state.display.HasField("calibration")
+            else None
+        )
+        matching_open = any(
+            link.method == "OpenDisplayCalibration"
+            and link.diagnostic_id == request.diagnostic_id
+            and bool(link.output_ids)
+            for link in state.links.values()
+        )
+        projected_active = (
+            evidence is not None
+            and evidence.diagnostic_id == request.diagnostic_id
+            and evidence.state
+            in {
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE,
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+            }
+        )
+        if (
+            evidence is not None
+            and evidence.diagnostic_id == request.diagnostic_id
+            and evidence.state == visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_IDLE
+        ):
+            matching_open = False
+        if not (projected_active or matching_open):
+            raise ValueError("display calibration identity is not current")
+    elif (
+        method in {"Cleanup", "Shutdown", "InterruptSession", "CancelSetup"}
+        and state.setup is None
+    ):
+        calibration = (
+            state.display.calibration
+            if (state.display is not None and state.display.HasField("calibration"))
+            else None
+        )
+        if calibration is None or calibration.state not in {
+            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_PREPARING,
+            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE,
+            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_CLOSING,
+            visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+        }:
+            raise ValueError("sessionless safety command has no open calibration")
     elif method not in {"Shutdown"}:
         if state.setup is None:
             raise ValueError("Visual Stimulus session is not prepared")

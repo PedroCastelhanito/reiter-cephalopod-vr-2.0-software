@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLineEdit,
-    QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -23,6 +22,7 @@ from cephvr.gui.icons import device_icon
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import PresetField
 from cephvr.gui.presets import trigger_hint
+from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
 
@@ -70,7 +70,7 @@ class CamerasPanel(ResponsiveColumns):
         self.pending_enable: dict[str, bool] = {}
         self.loading = False
         inventory = Card("Available devices")
-        self.table = QTableWidget(len(self.drafts), 4)
+        self.table = DataTable(len(self.drafts), 4)
         self.refresh_button = button("", "icon", hint="Refresh available cameras")
         self.refresh_button.setAccessibleName("Refresh available cameras")
         self.refresh_button.setIcon(device_icon("refresh"))

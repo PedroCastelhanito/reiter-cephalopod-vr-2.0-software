@@ -98,6 +98,20 @@ class ConfigurationService(rpc.VisualStimulusConfigurationServiceServicer):
     ) -> pb.CommandAdmission:
         return await self.boundary.command("InitializeDisplay", request, context)
 
+    async def OpenDisplayCalibration(
+        self,
+        request: wire.VisualStimulusDisplayCalibrationOpenRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("OpenDisplayCalibration", request, context)
+
+    async def CloseDisplayCalibration(
+        self,
+        request: wire.VisualStimulusDisplayCalibrationCloseRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("CloseDisplayCalibration", request, context)
+
 
 class WorkerService(visual_stimulus_rpc.VisualStimulusWorkerServiceServicer):
     async def ConfirmRecipePublication(
@@ -116,6 +130,20 @@ class WorkerService(visual_stimulus_rpc.VisualStimulusWorkerServiceServicer):
         context: grpc.aio.ServicerContext,
     ) -> pb.CommandAdmission:
         return await self.boundary.command("InitializeDisplay", request, context)
+
+    async def OpenDisplayCalibration(
+        self,
+        request: visual_stimulus.OpenDisplayCalibrationCommand,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("OpenDisplayCalibration", request, context)
+
+    async def CloseDisplayCalibration(
+        self,
+        request: visual_stimulus.CloseDisplayCalibrationCommand,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("CloseDisplayCalibration", request, context)
 
     async def SetupSession(
         self, request: visual_stimulus.WorkerSetup, context: grpc.aio.ServicerContext

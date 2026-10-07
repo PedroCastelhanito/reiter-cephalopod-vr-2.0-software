@@ -5,7 +5,7 @@
 # GUI/headless session values and trial protocols cannot override them.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/supervisor_policy.toml; versions must match.
-policy_version = 7
+policy_version = 8
 
 [rpc]
 # E08: fixed supervisor service port; bind only to loopback interfaces.

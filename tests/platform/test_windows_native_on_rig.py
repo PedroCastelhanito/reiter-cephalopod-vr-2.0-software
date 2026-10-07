@@ -690,6 +690,25 @@ def test_role_guard_rejects_second_owner_and_releases() -> None:
         pass
 
 
+def test_replacement_endpoint_native_event_is_exact_and_private(tmp_path: Path) -> None:
+    from uuid import UUID
+
+    from cephvr.launcher.replacement import ReplacementEndpoint, _existing_endpoint
+    from cephvr.platform.windows.events import AutoResetEvent, event_name
+
+    root = tmp_path / "replacement-runtime"
+    with ReplacementEndpoint(root, str(uuid4()), str(uuid4()), 1_000_000_000) as owner:
+        record = _existing_endpoint(root)
+        allocation = UUID(record.event_id)
+        with AutoResetEvent.open(event_name(allocation), allocation) as requester:
+            assert not owner.requested()
+            requester.set()
+            assert owner.requested()
+            assert not owner.requested()
+        assert record == owner.record
+    assert not (root / "launcher.json").exists()
+
+
 if __name__ == "__main__" and "--managed-runtime-probe" in sys.argv:
     handle_index = sys.argv.index("--bootstrap-handle") + 1
     descriptor = read_bootstrap(int(sys.argv[handle_index]))

@@ -342,7 +342,7 @@ class ConfigDefaultTests(unittest.TestCase):
         policy=tomllib.loads((root/'contracts/policy/tracking_policy.toml').read_text())
         self.assertEqual(cfg['policy_version'],policy['policy_version'])
         self.assertEqual((cfg['pipeline']['name'],cfg['pose']['mode'],cfg['pose']['automatic_method'],
-                          cfg['pose']['max_age_ms']),('water_flow','automatic','threshold_contour',500))
+                          cfg['pose']['max_age_ms']),('water_flow','manual','threshold_contour',500))
         est=cfg['estimator']
         settings=dict(schema_version=1,sections=dict(schema_version=1,**est['sections']),
             quality=dict(schema_version=1,maximum_native_cost=None,**est['quality']),
@@ -353,8 +353,7 @@ class ConfigDefaultTests(unittest.TestCase):
         contour=dict(schema_version=2,minimum_axis_anisotropy=.1,threshold_level=100.,foreground_polarity='dark',
             minimum_area_px2=20,maximum_area_px2=100,
             geometry_quality=dict(minimum_axis_px=1.,minimum_base_width_px=1.,minimum_triangle_area_px2=1.))
-        rows=(('pose','threshold_contour','contour-settings',2,contour),
-              ('image_flow','nvidia_optical_flow','flow-settings',1,flow),
+        rows=(('image_flow','nvidia_optical_flow','flow-settings',1,flow),
               ('geometry','three_point_ellipse','ellipse-settings',2,geometry),
               ('estimator','water_flow_proxy','water-flow-settings',1,settings))
         selections=tuple(StageConfiguration(stage_id=r,implementation_id=i,settings_schema_id=f'tracking.{n}.v{v}',

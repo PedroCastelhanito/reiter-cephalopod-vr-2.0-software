@@ -50,3 +50,20 @@ message SubjectReferenceSettings {
   ImagePoint medial_left = 5; // Toward animal-left, not screen-left.
   ImagePoint medial_right = 6; // Toward animal-right, not screen-right.
 }
+
+// T29: optional acquired-image preprocessing; preserve source pixel coordinates.
+message TrackingPreprocessingSettings {
+  optional bool crop_enabled = 1;
+  PoseSearchRegion crop_region = 2;
+  optional uint32 scale_percent = 3; // 100 means no downscale.
+}
+
+// T29: calibration evidence for the selected source image, independent of downscale.
+message TrackingImageScale {
+  optional uint32 image_width_px = 1;
+  optional uint32 image_height_px = 2;
+  ImagePoint distance_start = 3;
+  ImagePoint distance_end = 4;
+  optional double distance_mm = 5;
+  optional double pixels_per_mm = 6;
+}

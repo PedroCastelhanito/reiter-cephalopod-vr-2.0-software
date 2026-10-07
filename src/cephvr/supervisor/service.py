@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 
 import grpc
 
@@ -55,6 +56,13 @@ class SupervisorService(services_pb2_grpc.SupervisorServiceServicer):
         self.lock = lock
         self.clock = clock
         self.max_message_bytes = max_message_bytes
+        self.gui_launch_handler: (
+            Callable[
+                [wire.PlanLaunchRequest, wire.LaunchState, str, int],
+                Awaitable[wire.LaunchState],
+            ]
+            | None
+        ) = None
 
     async def _authenticate(
         self, context: grpc.aio.ServicerContext, source: types.ProcessIdentity
@@ -119,12 +127,18 @@ class SupervisorService(services_pb2_grpc.SupervisorServiceServicer):
             )
         try:
             # Helper release is the health monitor's job, never a launch-path wait.
-            if parse_deadline_metadata(context.invocation_metadata()) <= host_time_ns():
+            deadline_ns = parse_deadline_metadata(context.invocation_metadata())
+            if deadline_ns <= host_time_ns():
                 raise LaunchError("EXPIRED", "PlanLaunch arrived after its deadline")
             async with self.lock:
                 state = self.registry.plan(request)
                 if known is None:
                     self.credentials[child_key] = child_tokens[0]
+            if request.child.role == "gui" and self.gui_launch_handler is not None:
+                token = known or child_tokens[0]
+                state = await self.gui_launch_handler(
+                    request, state, token, deadline_ns
+                )
             self.status.changed()
             return wire.LaunchReceipt(
                 admission=accepted(request.command_id), state=state
@@ -182,15 +196,19 @@ class SupervisorService(services_pb2_grpc.SupervisorServiceServicer):
     ) -> wire.LaunchState:
         await self._authenticate(context, request.requester)
         try:
-            state = self.registry.refresh(request.launch_command_id)
-            if request.requester not in (
-                state.plan.owner,
-                self.controller,
-                self.identity,
-            ):
+            plan = self.registry.planned_request(request.launch_command_id)
+            if request.requester not in (plan.owner, self.controller, self.identity):
                 await context.abort(
                     grpc.StatusCode.PERMISSION_DENIED, "not launch owner"
                 )
+            state = self.registry.refresh(request.launch_command_id)
+            if (
+                request.requester == self.identity
+                and state.plan.child.role == "gui"
+                and state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+            ):
+                state = self.registry.release_gui_if_empty(request.launch_command_id)
+                self.status.changed()
             return state
         except LaunchError as exc:
             await self._reject(context, exc)

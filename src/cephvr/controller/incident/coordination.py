@@ -100,7 +100,7 @@ class IncidentCoordinator:
                 attempt, f"incident bookkeeping persistence failed: {exc}"
             )
 
-    async def observe_runtime_error(self, error: pb.ErrorReport) -> None:
+    async def observe_runtime_error(self, error: pb.ErrorReport) -> str | None:
         async with self.lifecycle.lock:
             attempt = self.lifecycle.attempt
             if (
@@ -110,7 +110,7 @@ class IncidentCoordinator:
                 or self.lifecycle.session.phase
                 not in (pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING)
             ):
-                return
+                return None
             now = self.clock()
             episode_id = (
                 error.incident_episode_id
@@ -163,7 +163,7 @@ class IncidentCoordinator:
                 self.spawn(
                     self.interrupt(attempt, f"incident accounting invalid: {exc}")
                 )
-                return
+                return None
             attempt.incident_errors[error.error_id] = deepcopy(error)
             attempt.episode_deadlines[episode_key] = deadline
             attempt.incident_deadlines[error.error_id] = deadline
@@ -237,6 +237,78 @@ class IncidentCoordinator:
                         },
                     )
                 )
+            return incident.incident_id
+
+    async def resolve_recovered_incident(
+        self,
+        attempt: Attempt,
+        incident_id: str,
+        recovered_monotonic_ns: int,
+    ) -> bool:
+        """Resolve one exact confirmed incident when its source function recovers."""
+        if not incident_id:
+            return False
+        async with self.lifecycle.lock:
+            if (
+                self.lifecycle.attempt is not attempt
+                or attempt.interrupted
+                or attempt.incidents is None
+                or incident_id not in attempt.confirmed_incidents
+                or self.lifecycle.session.phase
+                not in (pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING)
+            ):
+                return False
+            current = next(
+                (
+                    item
+                    for item in attempt.incidents.snapshot()
+                    if item.incident_id == incident_id
+                ),
+                None,
+            )
+            if current is None:
+                return False
+            try:
+                resolved = attempt.incidents.resolve_after_recovery(
+                    incident_id,
+                    current.revision,
+                    session_active=True,
+                    recovered_monotonic_ns=recovered_monotonic_ns,
+                )
+            except ValueError:
+                return False
+            attempt.confirmed_incidents[incident_id] = deepcopy(resolved)
+            for plan in attempt.prepared.trials:
+                retained = [
+                    item
+                    for item in plan.continuation_incidents
+                    if item.incident_id != incident_id
+                ]
+                plan.ClearField("continuation_incidents")
+                plan.continuation_incidents.extend(retained)
+            for prompt_id, (prompt, owner) in list(
+                self.incident_state.incident_prompts.items()
+            ):
+                if (
+                    owner is attempt
+                    and prompt.runtime_incident.incident_id == incident_id
+                ):
+                    del self.incident_state.incident_prompts[prompt_id]
+            self.publisher.publish()
+        if attempt.writer is not None:
+            self.spawn(
+                self.log_incident(
+                    attempt,
+                    "recovery",
+                    {
+                        "incident_id": incident_id,
+                        "resolved_by": "spikeglx_progress",
+                        "recovered_monotonic_ns": recovered_monotonic_ns,
+                    },
+                    at_ns=recovered_monotonic_ns,
+                )
+            )
+        return True
 
     async def incident_deadline(
         self, attempt: Attempt, error_id: str, deadline_ns: int

@@ -39,6 +39,7 @@ from cephvr.controller.service import (
 from cephvr.controller.startup.bootstrap import _backend_descriptors, _bootstrap_value
 from cephvr.controller.startup.monitor import authority_loop
 from cephvr.controller.startup.providers import (
+    _installed_display_pacing_resolver,
     _installed_display_validator,
     _installed_file_policies,
     _installed_spikeglx,
@@ -176,6 +177,7 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
             clear, timeout_s=settings.limits_kwargs["metadata_ns"] / 1e9
         )
 
+    spikeglx = _installed_spikeglx(software_root, controller_generation)
     runtime = ControllerRuntime(
         generation=controller_generation,
         configuration=settings.configuration,
@@ -183,14 +185,16 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
         configuration_history_path=software_root / "config/last_configuration.json",
         history_warning=settings.history_warning,
         limits=ControllerLimits(**settings.limits_kwargs),
-        validators=controller_validators(_installed_validators()),
+        validators=controller_validators(_installed_validators(software_root)),
         display_validator=_installed_display_validator(),
+        display_pacing_resolver=_installed_display_pacing_resolver(),
         settings_loader=lambda: load_controller_configuration(software_root),
         startup_settings=settings,
+        software_root=software_root,
         backends=backend_ports,
         supervisor=GrpcSupervisorPort(stub, principal),
         supervisor_generation=supervisor_generation,
-        spikeglx=_installed_spikeglx(software_root, controller_generation),
+        spikeglx=spikeglx,
         output_planner=plan_outputs,
         schema_factory=_writer_schema,
         file_policy_loader=lambda names: _installed_file_policies(software_root, names),
@@ -218,6 +222,7 @@ async def run_controller(bootstrap: Mapping[str, object]) -> None:
         max_pending_events=settings.max_pending_events,
         max_pending_payload_bytes=settings.max_pending_payload_bytes,
         command_retention_ns=settings.policies.command_retention_after_finalization_ns,
+        spikeglx_io_owner=getattr(spikeglx, "io_owner", None),
     )
     try:
         clock = describe_host_clock()

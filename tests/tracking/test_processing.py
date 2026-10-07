@@ -33,6 +33,122 @@ def test_private_frame_is_not_reused_while_pose_holds_it():
     assert pool.idle()
 
 
+def test_preprocessing_keeps_native_precision_and_inverts_pixel_centres():
+    import numpy as np
+
+    from cephvr.tracking.processing.preprocessing import resolve_transform
+
+    transform = resolve_transform(
+        5, 3, crop_enabled=True, crop=(1, 0, 3, 3), scale_percent=50
+    )
+    assert (transform.output_width, transform.output_height) == (2, 2)
+    assert transform.source_to_output((2.0, 1.0)) == (0.5, 0.5)
+    assert transform.output_to_source((0.5, 0.5)) == (2.0, 1.0)
+    source = np.arange(15, dtype=np.uint16).reshape(3, 5) * 256
+    original = source.copy()
+    output = np.empty((2, 2), dtype=np.uint16)
+    transform.apply(source, output)
+    assert output.dtype == source.dtype
+    assert np.array_equal(source, original)
+    assert np.all(output <= source.max())
+    with pytest.raises(ValueError, match="exceeds the acquired image"):
+        resolve_transform(5, 3, crop_enabled=True, crop=(4, 0, 3, 3))
+
+
+def test_downscaled_flow_grid_rejects_insufficient_setup_neighbours():
+    from types import SimpleNamespace
+
+    from cephvr.tracking.processing.session import _validate_flow_grid
+
+    flow = SimpleNamespace(output_grid_px=4)
+    estimator = SimpleNamespace(quality=SimpleNamespace(minimum_neighbors=4))
+    with pytest.raises(ValueError, match="too small for the selected flow grid"):
+        _validate_flow_grid(
+            ImageLayout(8, 8, 8, "gray", "uint8", 8, "lsb", 0, 255, "small"),
+            flow,
+            estimator,
+        )
+
+
+def test_automatic_reference_dimensions_match_acquired_source_before_transform():
+    from cephvr.tracking.processing.session import _validate_source_reference
+    from cephvr.tracking.v1 import pose_pb2
+
+    source_layout = ImageLayout(
+        200, 200, 200, "gray", "uint8", 8, "lsb", 0, 255, "acquired"
+    )
+    reference = pose_pb2.SubjectReferenceSettings(
+        image_width_px=100,
+        image_height_px=100,
+        anterior=pose_pb2.ImagePoint(x_px=90, y_px=50),
+        posterior=pose_pb2.ImagePoint(x_px=10, y_px=50),
+        medial_left=pose_pb2.ImagePoint(x_px=50, y_px=30),
+        medial_right=pose_pb2.ImagePoint(x_px=50, y_px=70),
+    )
+    with pytest.raises(ValueError, match="differ from the acquired source"):
+        _validate_source_reference(reference, source_layout)
+
+
+def test_ring_source_publishes_transformed_private_frame_without_source_mutation():
+    from types import SimpleNamespace
+    from uuid import UUID, uuid4
+
+    import cv2
+    import numpy as np
+
+    from cephvr.tracking.processing.preprocessing import resolve_transform
+    from cephvr.tracking.processing.source import RingSource
+
+    source_pixels = (np.arange(15, dtype="<u2").reshape(3, 5) * 256).copy()
+    transform = resolve_transform(
+        5, 3, crop_enabled=True, crop=(1, 0, 3, 3), scale_percent=50
+    )
+    processed_layout = ImageLayout(
+        2, 2, 4, "gray", "uint16", 12, "msb", 0, 4095, "transformed"
+    )
+    source_layout = ImageLayout(
+        5, 3, 10, "gray", "uint16", 12, "msb", 0, 4095, "source"
+    )
+    work = WorkContext()
+    work.trial.trial_id = str(uuid4())
+
+    class FakeRing:
+        def read_into(self, sequence, target, *, expected_run_id):
+            assert sequence == 0 and expected_run_id == UUID(work.trial.trial_id)
+            target[:] = source_pixels.tobytes()
+            return SimpleNamespace(
+                status="frame",
+                sequence=0,
+                record=SimpleNamespace(frame_id=12, acquisition_time_ns=90),
+                discontinuity_epoch=0,
+            )
+
+    class FakeConverter:
+        def prepare_source_depth_into(self, source, destination):
+            destination[:] = source
+
+    source = object.__new__(RingSource)
+    source.pool = FramePool(processed_layout, 1, 8, transform)
+    source.ring = FakeRing()
+    source.converter = FakeConverter()
+    source.sequence = source.epoch = 0
+    source.scratch = bytearray(source_pixels.nbytes)
+    source.native_scratch = bytearray(source_pixels.nbytes)
+    source.source_layout = source_layout
+    source.layout = processed_layout
+    source.transform = transform
+
+    frame, gap = source.read(work, "generation")
+
+    assert not gap and frame is not None
+    assert frame.source.frame_id == 12 and frame.transform is transform
+    actual = np.frombuffer(frame.pixels, dtype="<u2").reshape(2, 2)
+    expected = cv2.resize(source_pixels[:, 1:4], (2, 2), interpolation=cv2.INTER_AREA)
+    assert np.array_equal(actual, expected)
+    assert np.array_equal(source_pixels, np.arange(15, dtype="<u2").reshape(3, 5) * 256)
+    source.pool.release(frame)
+
+
 def observation(work, frame, timestamp):
     return PoseGeometryObservation(
         work,

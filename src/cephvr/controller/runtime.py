@@ -23,6 +23,7 @@ from cephvr.controller.device.owner_cleanup import (
     MANUAL_CLEANUP_TASK_NAME,
     record_manual_cleanup_warning,
 )
+from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
 from cephvr.controller.ports import BackendPort, SpikeGLXPort, SupervisorPort
 from cephvr.controller.projections import ProjectionStore
 from cephvr.controller.state import (
@@ -79,6 +80,8 @@ class ControllerRuntime:
         reservation_released: Callable[[Attempt], Awaitable[None]] | None = None,
         initial_startup_blocker: str | None = None,
         display_validator: Callable[[str], frozenset[str]] | None = None,
+        display_pacing_resolver: Callable[[str, Message], str] | None = None,
+        software_root: Path | None = None,
         max_preparation_bytes: int = 16_777_216,
         max_incident_bytes: int = 1_048_576,
         max_operation_records: int = 1024,
@@ -145,6 +148,8 @@ class ControllerRuntime:
                 validators=validation_ports,
                 file_policy_loader=file_policy_loader,
                 display_validator=display_validator,
+                display_pacing_resolver=display_pacing_resolver,
+                software_root=software_root,
                 output_planner=output_planner,
                 schema_factory=schema_factory,
                 settings_loader=settings_loader,
@@ -166,6 +171,7 @@ class ControllerRuntime:
         self.leases = components.leases
         self.metadata = components.metadata
         self.display = components.display
+        self.display_calibration = components.display_calibration
         self.camera = components.camera
         self.microcontroller = components.microcontroller
         self.camera_readback = components.camera_readback
@@ -187,6 +193,14 @@ class ControllerRuntime:
         self.setup_execution = components.setup_execution
         self.setup_admission = components.setup_admission
         self.acquisition_resolution = components.acquisition_resolution
+        self.tracking_diagnostic = components.tracking_diagnostic
+        self.spikeglx_inventory: SpikeGLXInventory | None = (
+            components.spikeglx_inventory
+        )
+        self.leases.observe_owner_loss(self.tracking_diagnostic.owner_lost)
+        self.publisher.observe_owner_loss(self.tracking_diagnostic.owner_lost)
+        self.leases.observe_owner_loss(self.display_calibration.owner_lost)
+        self.publisher.observe_owner_loss(self.display_calibration.owner_lost)
 
     def current_work_key(self) -> str | None:
         attempt = self.lifecycle.attempt
@@ -330,6 +344,26 @@ class ControllerRuntime:
     ) -> pb.CommandAdmission:
         return await self.configuration_commands.update_configuration(request)
 
+    async def get_spikeglx_inventory(
+        self, request: svc.SpikeGLXInventoryRequest
+    ) -> tuple[svc.SpikeGLXInventorySnapshot | None, str]:
+        if self.spikeglx_inventory is None:
+            return None, "SpikeGLX inventory service unavailable"
+        return await self.spikeglx_inventory.read(request)
+
+    async def update_spikeglx_inventory(
+        self, request: svc.SpikeGLXInventoryUpdateRequest
+    ) -> pb.CommandAdmission:
+        if self.spikeglx_inventory is None:
+            return pb.CommandAdmission(
+                result=pb.COMMAND_RESULT_REJECTED,
+                command_id=request.command.operator.command_id,
+                failure=pb.Failure(
+                    code="UNAVAILABLE", message="SpikeGLX inventory service unavailable"
+                ),
+            )
+        return await self.spikeglx_inventory.update(request)
+
     async def save_configuration_history(
         self, command: svc.OperatorCommand
     ) -> pb.CommandAdmission:
@@ -337,6 +371,16 @@ class ControllerRuntime:
 
     async def initialize_display(self) -> pb.CommandAdmission:
         return await self.display.initialize_display()
+
+    async def open_display_calibration(
+        self, request: svc.OpenDisplayCalibrationRequest
+    ) -> pb.CommandAdmission:
+        return await self.display_calibration.open(request)
+
+    async def close_display_calibration(
+        self, request: svc.CloseDisplayCalibrationRequest
+    ) -> pb.CommandAdmission:
+        return await self.display_calibration.close(request)
 
     async def execute_camera_command(
         self, request: svc.CameraCommandRequest
@@ -350,6 +394,21 @@ class ControllerRuntime:
 
     async def setup(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
         return await self.setup_admission.setup(command)
+
+    async def begin_tracking_diagnostic(
+        self, request: svc.BeginTrackingDiagnosticRequest
+    ) -> pb.CommandAdmission:
+        return await self.tracking_diagnostic.begin(request)
+
+    async def close_tracking_diagnostic(
+        self, request: svc.CloseTrackingDiagnosticRequest
+    ) -> pb.CommandAdmission:
+        return await self.tracking_diagnostic.close(request)
+
+    async def get_tracking_diagnostic_state(
+        self, request: svc.TrackingDiagnosticQuery
+    ) -> pb.TrackingDiagnosticState:
+        return await self.tracking_diagnostic.query(request)
 
     async def cancel_setup(self, command: svc.OperatorCommand) -> pb.CommandAdmission:
         return await self.cleanup.cancel_setup(command)

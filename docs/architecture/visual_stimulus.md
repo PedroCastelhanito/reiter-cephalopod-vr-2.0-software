@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 13
+**Status:** Accepted · **Revision:** 14
 
 - The backend is named **Visual Stimulus**, with `visual_stimulus` as its canonical
   configuration, registration, package and protocol identifier. Use
@@ -48,6 +48,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   submits Idle and confirms cleanup. Setup requires it closed. Control-authority
   loss, renderer failure or application shutdown ends the diagnostic through E06/E08
   cleanup, retaining truthful output evidence rather than assuming a blank screen.
+  Commands bind the diagnostic identity, accepted configuration revision, exact
+  coordinator/renderer generations and original deadline. Protected profile/arena
+  content is fingerprinted; asset-root-relative references carry bounded size and
+  digest. Active requires actual presentation, and Closed requires confirmed Idle
+  and resource closure; uncertain cleanup blocks Setup.
 - Prepare the renderer's required plan/resources before Ready. After valid schedule
   and release, execute prepared stimulus timing locally against the trial clock; the
   coordinator sends no per-frame commands and relays no rendered pixels. Setup hands

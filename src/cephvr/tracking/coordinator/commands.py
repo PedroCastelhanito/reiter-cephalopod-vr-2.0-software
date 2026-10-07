@@ -28,6 +28,26 @@ def validate(
         )
     if command.issuer == identity.supervisor and method not in SAFETY:
         raise ValueError("supervisor can issue only safety commands")
+    if method == "BeginDiagnostic" and isinstance(
+        request, tracking.TrackingDiagnosticCommand
+    ):
+        if (
+            command.issuer != identity.controller
+            or request.configuration_revision == 0
+            or request.frames.buffer.configuration_revision
+            != request.configuration_revision
+            or request.frames.buffer.preview.controller != identity.controller
+            or request.authorized_gui_viewer.role != "gui"
+            or not request.authorized_gui_viewer.generation
+        ):
+            raise ValueError("diagnostic command scope or viewer authorization differs")
+        return
+    if method == "CloseDiagnostic" and isinstance(
+        request, tracking.CloseTrackingDiagnosticCommand
+    ):
+        if command.issuer != identity.controller:
+            raise ValueError("only controller can close a diagnostic")
+        return
     if method == "SetupSession" and isinstance(request, wire.SetupSessionRequest):
         if state.setup is not None and (
             state.cleanup is None

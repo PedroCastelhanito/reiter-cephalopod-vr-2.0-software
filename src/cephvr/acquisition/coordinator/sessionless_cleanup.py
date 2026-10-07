@@ -92,6 +92,8 @@ class SessionlessCleanup:
                 if preview is not None and preview.allocation_id is not None:
                     try:
                         self._close_ring(preview.allocation_id)
+                        if preview.tracking_allocation_id is not None:
+                            self._close_ring(preview.tracking_allocation_id)
                     except (KeyError, RuntimeError, ValueError) as exc:
                         failures.append(
                             f"{record.launch.worker.role} preview ring remains owned: {exc}"

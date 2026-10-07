@@ -99,6 +99,62 @@ class ManualPreviewTransferOwner:
             raise RuntimeError("controller rejected viewer transfer")
         return attachment
 
+    async def attach_tracking(
+        self,
+        request: wire.AcquisitionTrackingDiagnosticAttachmentCommand,
+        preview: WorkerPreview,
+        *,
+        deadline_ns: int,
+    ) -> acq.FrameBufferAttachment:
+        allocation_id = preview.tracking_allocation_id
+        if allocation_id is None or preview.tracking_attachment is None:
+            raise ValueError("ordered Tracking diagnostic source is unavailable")
+        if preview.tracking_viewer is not None:
+            if preview.tracking_viewer != request.tracking_consumer:
+                raise ValueError("another diagnostic consumer owns this preview run")
+            raise ValueError("diagnostic source transfer is already active")
+        resource = self.resources.get(allocation_id)
+        command_record = self.commands.get(request.command.command_id)
+        if resource is None or command_record is None:
+            raise ValueError("diagnostic source or command is not retained")
+        attachment = acq.FrameBufferAttachment.FromString(
+            resource.attachment.SerializeToString(deterministic=True)
+        )
+        attachment.sync.transfer_id = str(uuid4())
+        attachment.sync.target.CopyFrom(request.tracking_consumer)
+        receipt_key = (
+            preview.run_id,
+            allocation_id,
+            attachment.sync.transfer_id,
+            request.tracking_consumer.generation,
+        )
+        self._reserve_release_receipt(receipt_key)
+        self.resource_ledger.expect_attachment(
+            resource.ledger_key,
+            peer_instance_id=request.tracking_consumer.generation,
+            transfer_id=attachment.sync.transfer_id,
+        )
+        preview.tracking_viewer = control.ProcessIdentity.FromString(
+            request.tracking_consumer.SerializeToString(deterministic=True)
+        )
+        preview.tracking_viewer_transfer_id = attachment.sync.transfer_id
+        preview.tracking_viewer_released_event.clear()
+        receipt = await self.controller.report_preview_attachment(
+            wire.PreviewAttachmentReport(
+                source=self.identity.backend,
+                operation=control.OperationContext(
+                    command_id=request.command.command_id
+                ),
+                attachment=attachment,
+            ),
+            deadline_ns=deadline_ns,
+        )
+        if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+            preview.tracking_viewer = None
+            preview.tracking_viewer_transfer_id = None
+            raise RuntimeError("controller rejected ordered Tracking transfer")
+        return attachment
+
     def retain_attachment(
         self,
         preview: WorkerPreview,
@@ -135,13 +191,23 @@ class ManualPreviewTransferOwner:
         preview = self.find_preview(request.preview_run_id) or self._retired.get(
             request.preview_run_id
         )
+        tracking_transfer = (
+            preview is not None
+            and preview.tracking_viewer == request.consumer
+            and preview.tracking_viewer_transfer_id == request.transfer_id
+            and preview.tracking_allocation_id == request.allocation_id
+        )
+        viewer_transfer = (
+            preview is not None
+            and preview.viewer == request.consumer
+            and preview.viewer_transfer_id == request.transfer_id
+            and preview.allocation_id == request.allocation_id
+        )
         if (
             preview is None
             or request.controller_generation != self.identity.controller.generation
             or request.client_id != request.consumer.generation
-            or preview.viewer != request.consumer
-            or preview.viewer_transfer_id != request.transfer_id
-            or preview.allocation_id != request.allocation_id
+            or not (tracking_transfer or viewer_transfer)
             or request.result
             not in {
                 wire.PREVIEW_CONSUMER_RESULT_ATTACHED,
@@ -177,10 +243,17 @@ class ManualPreviewTransferOwner:
                     peer_instance_id=peer,
                     transfer_id=request.transfer_id,
                 )
-                self.close_retired_resource(preview)
-                preview.viewer = None
-                preview.viewer_transfer_id = None
-                preview.viewer_released_event.set()
+                if tracking_transfer:
+                    preview.tracking_viewer = None
+                    preview.tracking_viewer_transfer_id = None
+                    preview.tracking_viewer_released_event.set()
+                    self._close_tracking_resource(preview)
+                    self.close_retired_resource(preview)
+                else:
+                    preview.viewer = None
+                    preview.viewer_transfer_id = None
+                    preview.viewer_released_event.set()
+                    self.close_retired_resource(preview)
                 self._retain_release_receipt(receipt_key, serialized)
             else:
                 self.resource_ledger.retire(
@@ -208,8 +281,21 @@ class ManualPreviewTransferOwner:
         self.resource_ledger.retire(
             resource.ledger_key, reason="manual preview stopped"
         )
+        tracking_id = preview.tracking_allocation_id
+        tracking = None if tracking_id is None else self.resources.get(tracking_id)
+        if tracking is not None:
+            if tracking.ring is not None:
+                tracking.ring.retire("manual tracking diagnostic source stopped")
+            self.resource_ledger.retire(
+                tracking.ledger_key,
+                reason="manual tracking diagnostic source stopped",
+            )
+        self._close_tracking_resource(preview)
 
     def close_retired_resource(self, preview: WorkerPreview) -> None:
+        tracking_id = preview.tracking_allocation_id
+        if tracking_id is not None and tracking_id in self.resources:
+            return
         allocation_id = preview.allocation_id
         if allocation_id is None:
             return
@@ -224,6 +310,20 @@ class ManualPreviewTransferOwner:
         self.resource_ledger.remove_completed_resource(resource.ledger_key)
         self.resources.pop(allocation_id, None)
         self._retired.pop(preview.run_id, None)
+
+    def _close_tracking_resource(self, preview: WorkerPreview) -> None:
+        allocation_id = preview.tracking_allocation_id
+        if allocation_id is None:
+            return
+        resource = self.resources.get(allocation_id)
+        if resource is None or not self.resource_ledger.may_close_owner(
+            resource.ledger_key
+        ):
+            return
+        self.resource_port.release_ring(allocation_id)
+        self.resource_ledger.confirm_owner_release(resource.ledger_key)
+        self.resource_ledger.remove_completed_resource(resource.ledger_key)
+        self.resources.pop(allocation_id, None)
 
     def _retain_release_receipt(
         self, key: tuple[str, str, str, str], serialized: bytes

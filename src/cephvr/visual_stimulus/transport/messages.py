@@ -16,6 +16,18 @@ def backend_command(request: Message) -> wire.BackendCommand:
     if isinstance(
         request,
         (
+            wire.VisualStimulusDisplayCalibrationOpenRequest,
+            wire.VisualStimulusDisplayCalibrationCloseRequest,
+        ),
+    ):
+        return wire.BackendCommand(
+            command_id=request.command_id,
+            issuer=request.issuer,
+            target=request.target,
+        )
+    if isinstance(
+        request,
+        (
             wire.SetupSessionRequest,
             wire.PrepareTrialRequest,
             wire.ScheduleTrialRequest,
@@ -42,6 +54,8 @@ def worker_command(request: Message) -> visual_stimulus.WorkerCommand:
             visual_stimulus.WorkerRelease,
             visual_stimulus.WorkerStop,
             visual_stimulus.WorkerRecipePublication,
+            visual_stimulus.OpenDisplayCalibrationCommand,
+            visual_stimulus.CloseDisplayCalibrationCommand,
         ),
     ):
         return request.command

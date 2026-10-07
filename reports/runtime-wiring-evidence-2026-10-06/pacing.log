@@ -1,0 +1,92 @@
+F....                                                                    [100%]
+=================================== FAILURES ===================================
+_ VisualStimulusConfigurationTests.test_default_and_file_policy_values_are_typed _
+
+self = <tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests testMethod=test_default_and_file_policy_values_are_typed>
+
+    def test_default_and_file_policy_values_are_typed(self) -> None:
+>       defaults = load_defaults(_ROOT)
+                   ^^^^^^^^^^^^^^^^^^^^
+
+tests/visual_stimulus/test_configuration.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/configuration.py:181: in load_defaults
+    pair = _load_pair(Path(root))
+           ^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/configuration.py:124: in _load_pair
+    pair = load_pair(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_path = PosixPath('/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/config/backends/visual_stimulus_config.toml')
+policy_path = PosixPath('/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/contracts/policy/visual_stimulus_policy.toml')
+allowed_config_keys = frozenset({'feedback.max_result_age_ms', 'recording.ffmpeg_args', 'recording.save_visual_stimulus_data', 'recording_runtime.encoder_stall_timeout_s', 'recording_runtime.fragment_target_s', 'recording_runtime.record_stall_timeout_s', ...})
+allowed_policy_keys = frozenset({'arena.boundary_response', 'arena.boundary_source', 'arena.movement_modes', 'arena.shading', 'arena.source_policy', 'assets.arena_profile', ...})
+allowed_empty_tables = {'assets', 'color', 'idle', 'photodiode', 'photometric_calibration', 'presentation', ...}
+expected_policy = {'runtime.process_layout': 'coordinator_and_render_worker_with_recording_thread_when_saving'}
+max_file_bytes = 1048576
+
+    def load_pair(
+        config_path: str | Path,
+        policy_path: str | Path,
+        *,
+        allowed_config_keys: Collection[str],
+        allowed_policy_keys: Collection[str],
+        allowed_empty_tables: Collection[str] = (),
+        expected_policy: Mapping[str, object] | None = None,
+        max_file_bytes: int = 1_048_576,
+    ) -> LoadedPair:
+        """Load only recognized keys and matching policy versions.
+    
+        Allowed keys are dotted leaf paths; use ``*`` for one array-table segment.
+        The caller supplies its owned schema and any implementation constants.
+        """
+        if max_file_bytes <= 0:
+            raise ValueError("TOML byte limit must be positive")
+        config = _read_toml(Path(config_path), max_file_bytes=max_file_bytes)
+        policy = _read_toml(Path(policy_path), max_file_bytes=max_file_bytes)
+        config_version = config.get("policy_version")
+        policy_version = policy.get("policy_version")
+        if type(config.get("format_version")) is not int or config["format_version"] != 1:
+            raise ConfigurationError("unsupported or missing config format_version")
+        if (
+            type(config_version) is not int
+            or type(policy_version) is not int
+            or config_version <= 0
+            or config_version != policy_version
+        ):
+            raise ConfigurationError("config/policy policy_version mismatch")
+        config_keys = _leaf_paths(config)
+        policy_keys = _leaf_paths(policy)
+        unknown_config = config_keys - {"format_version", "policy_version"}
+        unknown_policy = policy_keys - {"policy_version"}
+        bad_config = sorted(
+            p for p in unknown_config if not _allowed(p, allowed_config_keys)
+        )
+        bad_policy = sorted(
+            p for p in unknown_policy if not _allowed(p, allowed_policy_keys)
+        )
+        bad_config.extend(
+            sorted(
+                p
+                for p in _empty_table_paths(config)
+                if not _allowed_table(p, allowed_config_keys)
+                and p not in allowed_empty_tables
+            )
+        )
+        bad_policy.extend(
+            sorted(
+                p
+                for p in _empty_table_paths(policy)
+                if not _allowed_table(p, allowed_policy_keys)
+            )
+        )
+        if bad_config or bad_policy:
+>           raise ConfigurationError(
+                f"unknown config keys {bad_config}; unknown policy keys {bad_policy}"
+            )
+E           cephvr.shared.config.ConfigurationError: unknown config keys ['presentation.pacing_refresh_hz']; unknown policy keys []
+
+src/cephvr/shared/config.py:143: ConfigurationError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_default_and_file_policy_values_are_typed
+1 failed, 4 passed in 0.50s

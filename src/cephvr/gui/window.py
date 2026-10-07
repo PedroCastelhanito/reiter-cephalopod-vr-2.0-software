@@ -1,6 +1,7 @@
 """Frontend shell with shared status columns and local configuration pages."""
 
-from PyQt6.QtCore import QSettings
+from PyQt6.QtCore import QEvent, QSettings
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -12,13 +13,14 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, StatusColumn, button, label
+from cephvr.gui.components import button, label
 from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.devices import DevicesPage
-from cephvr.gui.layouts import ResponsiveColumns, column
+from cephvr.gui.notices import StatusEvent
 from cephvr.gui.protocol import ProtocolPage
 from cephvr.gui.recordings import RecordingsCard
 from cephvr.gui.theme import SIZES
+from cephvr.gui.tracking import TrackingPage
 from cephvr.gui.trial_preview import TrialPreview
 from cephvr.gui.trial_preview_surfaces import PreviewGeometry
 from cephvr.gui.view import DashboardView
@@ -104,19 +106,8 @@ class DashboardWindow(QMainWindow):
         )
         self.stack.addWidget(self.protocol)
         self.stack.addWidget(self.devices)
-        for name in PAGES[3:]:
-            controls, controls_layout = column()
-            card = Card(name)
-            card.body.addWidget(
-                label("This page is planned for a later frontend increment.", wrap=True)
-            )
-            controls_layout.addWidget(card)
-            controls_layout.addStretch()
-            status = StatusColumn()
-            status.hud.setPlainText("BACKEND  " + name + "\nSTATUS   Not integrated")
-            status.console.setPlainText("No backend activity received.")
-            placeholder = ResponsiveColumns(controls, status)
-            self.stack.addWidget(placeholder)
+        self.tracking = TrackingPage(self.devices.cameras)
+        self.stack.addWidget(self.tracking)
         header.addStretch()
         header.addWidget(self.dashboard.preview_button)
         header_controls = (
@@ -133,6 +124,16 @@ class DashboardWindow(QMainWindow):
         self.navigation.idClicked.connect(self.select_page)
         self.apply_view(DashboardView())
 
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        self.tracking.annotation.close()
+        super().closeEvent(event)
+
+    def customEvent(self, event: QEvent | None) -> None:  # noqa: N802
+        if isinstance(event, StatusEvent):
+            self.dashboard.log_console.appendPlainText(event.text)
+        else:
+            super().customEvent(event)
+
     def select_page(self, index: int) -> None:
         self.stack.setCurrentIndex(index)
         self.page_title.setText(PAGES[index].upper())
@@ -143,6 +144,7 @@ class DashboardWindow(QMainWindow):
         self.devices.apply_view(view)
         self.recordings.apply_view(view)
         self.protocol.apply_view(view)
+        self.tracking.apply_view(view)
         if not self.protocol.can_edit and self.trial_preview is not None:
             self.trial_preview.close()
 

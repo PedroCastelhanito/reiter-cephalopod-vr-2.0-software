@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
 
 from cephvr.gui.components import button, combo, field, label
 from cephvr.gui.feedback_signals import NAMES, targets, tracking_signals
+from cephvr.gui.notices import FormNotice
 from cephvr.visual_stimulus.config.models.program_model import Settings
 
 
@@ -44,7 +45,7 @@ class ControlEditor(QWidget):
         actions.addWidget(self.cancel)
         actions.addStretch()
         body.addLayout(actions)
-        self.message = label("", wrap=True)
+        self.message = FormNotice()
         body.addWidget(self.message)
         self.input.currentIndexChanged.connect(self.refresh_targets)
         self.reset(setting)
@@ -103,7 +104,7 @@ class ControlEditor(QWidget):
             if not all(isfinite(v) for v in (gain, offset)):
                 raise ValueError("Control coefficients must be finite")
         except (ValueError, StopIteration) as error:
-            self.message.setText(f"Cannot add control · {error}")
+            self.message.warn(f"Cannot add control · {error}")
             return
         if target == "planar":
             previous = next(

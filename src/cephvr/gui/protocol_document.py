@@ -29,6 +29,9 @@ class TrialDraft:
     name: str
     program: Program
     path: str = ""
+    stimulus_seed_decimal: str = ""
+    gap_after_seconds: str = ""
+    arena_boundaries_json: str = ""
 
 
 def blank_program() -> Program:

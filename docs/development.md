@@ -78,12 +78,11 @@ Within `worker/`, the serialized operation coordinator delegates capture, previe
 trial stop, recording completion, warnings and report delivery. These components
 share the owning state records; extraction must not create another source of truth.
 
-The current stage implements acquisition host code, following the controller/supervisor
-refactor. See the [acquisition implementation review](../reports/acquisition.md)
-for its current acceptance and verification status. Visual Stimulus, tracking, synchronization and
-GUI runtimes remain separate stages. Generated message bindings alone do not implement
-those components. Managed
-application startup reports missing required modules and exits; there is no replacement
+The current stage connects the managed GUI to controller, acquisition, Visual Stimulus,
+Tracking and synchronization operations. See the [current wiring assessment](../reports/runtime.md#current-scope-and-review)
+and owning backend reports for implementation and verification status. Generated
+message bindings alone do not establish runtime behavior. Managed application
+startup reports missing required modules and exits; there is no replacement
 backend or fabricated Ready state. The application is not ready for experiments until
 its required components and Windows/rig checks are complete.
 
@@ -149,6 +148,8 @@ the complete package's native DLLs are intentionally restricted to AMD64 Windows
 python scripts/start_gui.py
 # Windows managed runtime: launcher, controller, backends and GUI.
 python scripts/start_runtime_gui.py
+# Reopen only the GUI after closing it in the still-running application.
+python scripts/start_runtime_gui.py --reopen-gui
 ```
 
 In VS Code, open **Run and Debug** and choose **CephVR: Review GUI (simulated)**
@@ -168,8 +169,9 @@ Both launchers use the same Dashboard and device/editor components. Layout chang
 therefore apply to the runtime GUI directly; there is no separate frontend build or
 layout copy to update. The runtime uses controller-owned settings and command gates,
 while the review launcher restores its separate local drafts.
-In the managed window, use **Take control** on Dashboard before changing camera
-participation or running MCU diagnostics. Assign a discovered camera's Role first;
+The managed window automatically requests an unheld control lease after synchronization
+and required warning acknowledgement. **Take control** requests explicit takeover when
+another client holds control. Assign a discovered camera's Role first;
 a new assignment stays disabled until you explicitly select Use. For an externally triggered camera,
 choose its PFS file in Devices > Cameras; successful parsing submits the detected
 FrameStart line source, then performs controller-owned SDK import/readback and
@@ -187,16 +189,28 @@ Stop capture releases it. Stop all captures before editing camera/pulse settings
 After pulling changed contracts, run `.venv\Scripts\python.exe tools/generate_contracts.py`
 before launching (or reinstall the project, whose build generates contracts).
 See the [managed device rig procedure](../reports/rig-verification.md#managed-device-gui).
-Projector calibration Launch prepares its files automatically before requesting
-output, but its managed renderer connection remains unfinished. Protocol, projector
-configuration and SpikeGLX mapping adoption also remain pending; their latest shared
-layouts do not imply controller configuration support.
+Protocol, projector and Tracking settings participate in the controller's
+whole-configuration proposal. Wait for confirmation of the exact revision before Setup;
+invalid or stale local edits remain visible and require correction. Accepted controller
+history is separate from unsent drafts. Managed close offers discard/cancel when drafts
+would be lost. For untimed projector calibration, accept the Protocol Assets folder, set the actual
+output assignments and use **Launch** in Projectors. The exported profile/arena are
+captured for that configuration revision; wait for confirmed Active. **Close** must
+confirm Idle and released resources before Setup or another diagnostic. This can run
+before experiment display initialization; diagnostic projection defaults do not fill
+scientific experiment settings. Verification status is tracked in the
+[wiring assessment](../reports/runtime.md#current-scope-and-review).
+SpikeGLX **Save pulse mapping** uses a controller-serialized update of
+`synchronization_config.toml`, checked against its original digest and current control
+lease. Endpoint, SDK and monitor settings remain host-file settings under
+[E12](architecture/synchronization.md#e12); **Test connection** uses the saved endpoint.
 Closing the managed GUI leaves the application launcher and backends running under
-[E08](architecture/system-contracts.md#e08). Starting the full runtime a second
-time while they remain active reports `application instance already running`;
-the application must be shut down through its controller command before starting
-a new generation. A missing GUI relaunch path for an already running generation is
-still pending.
+[E08](architecture/system-contracts.md#e08). Use `--reopen-gui` to request a fresh GUI
+in that same application generation after the supervisor confirms the previous GUI
+process has exited. This preserves the controller/session and resynchronizes its
+retained warnings before control acquisition. A normal second full launch offers
+explicit application replacement in an interactive terminal; use the reopen flag
+when only the GUI is needed. Missing release evidence blocks reopening.
 On normal review-window close, it saves local subject, device, recording, projector
 and trial-program drafts to ignored `config/review_draft.json` and restores them on
 the next review launch. This draft is separate from the controller-owned
@@ -219,19 +233,23 @@ Camera experiment enablement lives in Devices. Dashboard has a two-column Record
 card below Session config for camera/stimulus video and Tracking velocities, and no
 trial-plan editor or separate progress card. The top-right Previews button toggles a modeless selector; no open-window count is shown. First opening uses the
 12-pixel gap/top alignment; later openings restore saved position from local
-CephVR/Frontend GUI preferences and fit the compact selector to its current rows. The selector uses
-labeled local visibility fixtures; it does not open runtime viewers or call devices. Close inspection windows
+CephVR/Frontend GUI preferences and fit the compact selector to its current rows. In design-review mode,
+the selector uses labeled local visibility fixtures; managed mode opens the corresponding runtime viewers. Close inspection windows
 after checking changes, then reopen the reviewed GUI for the owner to inspect.
 Devices has icon subtabs for Cameras, Microcontroller, Projectors and SpikeGLX with local
 draft fields and check actions. Protocol provides batch creation/editing, per-projector
 layers, ordered or random variations and separate geometry/calibration-aware planning
-playback. Tracking remains a placeholder. Omitting `--review` shows a disconnected,
+playback. Tracking provides spatial annotation, processing settings, stage selection
+and a diagnostic viewer. Managed diagnostics use the current configured Tracking camera
+capture; they do not require experiment Tracking participation. An empty stage selection
+shows the source image for annotation. Change diagnostic settings only after confirmed
+Close, then start a fresh diagnostic. Omitting `--review` shows a disconnected,
 read-only frontend. The runtime script is the managed application entry point;
 its available commands still depend on the connected controller and backend state.
 
 Camera review discovers attached devices; simulated mode supplies two sample devices.
 Per-device drafts and experiment checkboxes drive availability. Disabled preview
-sources remain dimmed; camera capture/viewer ownership still needs managed integration.
+sources remain dimmed; managed capture/viewer ownership follows controller-confirmed state.
 Camera configuration sits below the inventory: role, trigger source, requested
 Microcontroller trigger frequency and PFS path/Browse. Configure detailed parameters in
 PylonViewer. Browse reads FrameStart trigger hints to update the dropdown, but never
@@ -258,14 +276,14 @@ screenshots do not establish Windows integration or full-workload rig acceptance
 ## Checks
 
 ```sh
-python -m ruff check src tests tools
-python -m ruff format --check src tests tools
+python -m ruff check src tests tools scripts
+python -m ruff format --check src tests tools scripts
 python tools/check_backend_boundaries.py
 python -m mypy --platform win32
 python -m build
 ```
 
-Apply formatting with `python -m ruff format src tests tools`. The Windows target is
+Apply formatting with `python -m ruff format src tests tools scripts`. The Windows target is
 explicit for static checking of native API declarations; it does not execute Windows
 code. Generated bindings are excluded from handwritten-code checks. Existing contract
 checks remain separate and follow the [contract index](../contracts/README.md).

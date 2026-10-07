@@ -3,8 +3,9 @@
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QGridLayout, QLineEdit, QSizePolicy, QWidget
 
-from cephvr.gui.components import InlineMessage, combo, equal_row_height, field
+from cephvr.gui.components import combo, equal_row_height, field
 from cephvr.gui.epoch_batch import epoch_paths
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.program_editing import node_at
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
 
@@ -41,7 +42,7 @@ class EpochTargets(QWidget):
         for widget in (self.filter_field, self.label_field, self.index_field):
             widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
         equal_row_height(self.filter, self.labels, self.index)
-        self.message = InlineMessage()
+        self.message = FormNotice()
         self._accepted = (0, "", "")
         self.filter.currentIndexChanged.connect(self.update_filter)
         self.labels.currentIndexChanged.connect(self.changed.emit)

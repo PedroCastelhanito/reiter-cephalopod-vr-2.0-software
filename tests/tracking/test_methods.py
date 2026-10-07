@@ -13,9 +13,11 @@ from cephvr.tracking.methods.contour import ContourPose
 from cephvr.tracking.methods.flow_buffers import grid_mapping, host_arrays
 from cephvr.tracking.methods.geometry import EllipseGeometry
 from cephvr.tracking.methods.images import GrayPreparation
+from cephvr.tracking.methods.nvidia import _source_mapping
 from cephvr.tracking.methods.outline import outline, project_sections
 from cephvr.tracking.methods.proxy import FlowProxy
 from cephvr.tracking.methods.screening import screen
+from cephvr.tracking.processing.preprocessing import ImageTransform
 from cephvr.tracking.types import (
     FlowLease,
     FlowProxyInput,
@@ -99,7 +101,7 @@ def geometry(tip_x=18):
     return owner, value
 
 
-def sample(value, mapping, dx=1, dy=0, index=2):
+def sample(value, mapping, dx=1, dy=0, index=2, transform=None):
     data = np.empty((mapping.grid_height, mapping.grid_width, 2), dtype="<i2")
     data[:] = (dx * 32, dy * 32)
     lease = FlowLease(
@@ -143,6 +145,68 @@ def sample(value, mapping, dx=1, dy=0, index=2):
         mapping,
         use,
         value,
+        transform,
+    )
+
+
+def test_flow_vectors_return_to_acquired_pixel_units_after_nonuniform_downscale():
+    _, value = geometry()
+    transform = ImageTransform(48, 48, 0, 0, 48, 48, 24, 12)
+    processed_mapping = _source_mapping(grid_mapping(24, 12, 1), transform)
+    proxy = FlowProxy()
+    proxy.prepare(settings(), layout(), processed_mapping, limits())
+    source_pixel_flow = proxy.compute(sample(value, processed_mapping, dx=1, dy=1))
+    transformed_pixel_flow = proxy.compute(
+        sample(value, processed_mapping, dx=0.5, dy=0.25, transform=transform)
+    )
+    assert transformed_pixel_flow.validity == source_pixel_flow.validity
+    assert transformed_pixel_flow.raw == source_pixel_flow.raw
+
+
+def test_transformed_contour_reference_can_extend_outside_cropped_work_image():
+    from cephvr.tracking.processing.preprocessing import resolve_transform
+    from cephvr.tracking.processing.session import _reference_for_transform
+
+    transform = resolve_transform(
+        100, 100, crop_enabled=True, crop=(20, 20, 60, 60), scale_percent=50
+    )
+    reference = pose.SubjectReferenceSettings(
+        image_width_px=100,
+        image_height_px=100,
+        anterior=pose.ImagePoint(x_px=0, y_px=50),
+        posterior=pose.ImagePoint(x_px=20, y_px=50),
+        medial_left=pose.ImagePoint(x_px=40, y_px=40),
+        medial_right=pose.ImagePoint(x_px=40, y_px=60),
+    )
+    transformed = _reference_for_transform(reference, transform)
+    assert transformed.anterior.x_px == -10.25
+    assert transformed.posterior.x_px == -0.25
+    contour = ContourPose()
+    contour.prepare(
+        m.ContourSettings(
+            schema_version=2,
+            minimum_axis_anisotropy=0.2,
+            threshold_level=10,
+            foreground_polarity="dark",
+            minimum_area_px2=1,
+            maximum_area_px2=900,
+            geometry_quality=m.LandmarkQuality(
+                minimum_axis_px=1,
+                minimum_base_width_px=1,
+                minimum_triangle_area_px2=1,
+            ),
+        ),
+        layout(transform.output_width, transform.output_height),
+        pose.PoseSearchRegion(
+            x_px=0,
+            y_px=0,
+            width_px=transform.output_width,
+            height_px=transform.output_height,
+        ),
+        transformed,
+        "",
+        limits(),
+        reference_is_transformed=True,
     )
 
 

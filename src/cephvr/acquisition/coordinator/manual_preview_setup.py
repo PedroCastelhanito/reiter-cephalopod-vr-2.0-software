@@ -14,6 +14,7 @@ def build_preview_payload(
     policy: runtime.CameraFilePolicy,
     resolved: camera.CameraResolvedState,
     attachment: acq.FrameBufferAttachment,
+    tracking_attachment: acq.FrameBufferAttachment | None = None,
 ) -> acq.CameraWorkerSetupPayload:
     if not setting.HasField("sdk_buffer_count"):
         raise ValueError("manual preview requires a resolved SDK buffer count")
@@ -23,7 +24,8 @@ def build_preview_payload(
         device=resolved.applied,
         transport=resolved.transport,
         layout=resolved.layout,
-        outputs=[attachment],
+        outputs=[attachment]
+        + ([] if tracking_attachment is None else [tracking_attachment]),
         native_timestamp_available=resolved.native_timestamp_available,
         native_counter_available=resolved.native_counter_available,
         camera_clock=resolved.camera_clock,
@@ -55,7 +57,13 @@ def new_worker_preview(
     attachment: acq.FrameBufferAttachment,
     resolved: camera.CameraResolvedState,
     output_bits: int,
+    tracking_attachment: acq.FrameBufferAttachment | None = None,
+    tracking_worker_attachment: acq.FrameBufferAttachment | None = None,
 ) -> WorkerPreview:
+    if (tracking_attachment is None) != (tracking_worker_attachment is None):
+        raise ValueError(
+            "Tracking ring producer and consumer attachments must be paired"
+        )
     return WorkerPreview(
         run_id=run_id,
         configuration_revision=revision,
@@ -69,5 +77,24 @@ def new_worker_preview(
         ),
         attachment=acq.FrameBufferAttachment.FromString(
             attachment.SerializeToString(deterministic=True)
+        ),
+        tracking_allocation_id=(
+            None
+            if tracking_attachment is None
+            else tracking_attachment.buffer.allocation_id
+        ),
+        tracking_attachment=(
+            None
+            if tracking_attachment is None
+            else acq.FrameBufferAttachment.FromString(
+                tracking_attachment.SerializeToString(deterministic=True)
+            )
+        ),
+        tracking_worker_attachment=(
+            None
+            if tracking_worker_attachment is None
+            else acq.FrameBufferAttachment.FromString(
+                tracking_worker_attachment.SerializeToString(deterministic=True)
+            )
         ),
     )

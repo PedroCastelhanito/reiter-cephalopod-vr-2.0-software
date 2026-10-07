@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,9 @@ from typing import Any
 from cephvr.control.v1 import types_pb2
 from cephvr.shared.config import ConfigurationError, LoadedPair, load_pair
 from cephvr.visual_stimulus.compiler import validate_program_semantics
-from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+from cephvr.visual_stimulus.config.models.display_profile import (
+    parse_display_json,
+)
 from cephvr.visual_stimulus.config.models.program_model import (
     Epoch,
     Group,
@@ -21,6 +24,10 @@ from cephvr.visual_stimulus.config.models.program_model import (
 from cephvr.visual_stimulus.config.models.schema_common import (
     DEFAULT_DOCUMENT_BYTES,
     parse_json,
+)
+from cephvr.visual_stimulus.config.pacing import (
+    apply_pacing_settings,
+    resolve_pacing_profile,
 )
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
@@ -43,9 +50,11 @@ _CONFIG_KEYS = frozenset(
     recording_runtime.record_sync_interval_s recording_runtime.video_sync_interval_s
     recording_runtime.fragment_target_s recording_runtime.encoder_stall_timeout_s
     recording_runtime.record_stall_timeout_s feedback.max_result_age_ms
+    presentation.pacing_refresh_hz presentation.pacing_output_id
     recording.save_visual_stimulus_data recording.ffmpeg_args
     """.split()
 )
+__all__ = ["apply_pacing_settings", "resolve_pacing_profile"]
 _POLICY_KEYS = frozenset(
     """
     runtime.process_layout runtime.rendering_library runtime.window_library
@@ -176,6 +185,32 @@ def _duration_ns(value: object, path: str, scale: int) -> int:
     return int(ns)
 
 
+def load_pacing_settings(root: Path) -> tuple[float | None, str | None]:
+    """Load V20's file-only target and optional configured output identity."""
+    return _pacing_settings(_load_pair(Path(root)).config)
+
+
+def _pacing_settings(config: Mapping[str, Any]) -> tuple[float | None, str | None]:
+    presentation = config.get("presentation", {})
+    refresh = presentation.get("pacing_refresh_hz")
+    output_id = presentation.get("pacing_output_id")
+    if refresh is not None:
+        if type(refresh) not in (int, float, Decimal):
+            raise ConfigurationError("presentation.pacing_refresh_hz must be positive")
+        refresh = float(refresh)
+        if not (refresh > 0 and refresh < float("inf")):
+            raise ConfigurationError(
+                "presentation.pacing_refresh_hz must be finite and positive"
+            )
+    if output_id is not None and (
+        not isinstance(output_id, str) or not output_id.strip()
+    ):
+        raise ConfigurationError(
+            "presentation.pacing_output_id must be a nonempty output identity"
+        )
+    return refresh, output_id
+
+
 def load_defaults(root: Path) -> types_pb2.VisualStimulusSettings:
     """Load operator-owned session defaults while preserving optional presence."""
     pair = _load_pair(Path(root))
@@ -201,6 +236,11 @@ def load_file_policies(root: Path) -> runtime_pb2.VisualStimulusFilePolicies:
     """Resolve versioned file-only resource and timing policies."""
     pair = _load_pair(Path(root))
     result = runtime_pb2.VisualStimulusFilePolicies(contract_version=_CONTRACT_VERSION)
+    refresh, output_id = _pacing_settings(pair.config)
+    if refresh is not None:
+        result.pacing_refresh_hz = refresh
+    if output_id is not None:
+        result.pacing_output_id = output_id
     limits = pair.config.get("resources", {})
     for field in _LIMIT_FIELDS:
         setattr(

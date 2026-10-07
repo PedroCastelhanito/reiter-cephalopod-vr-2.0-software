@@ -21,12 +21,13 @@ class RecordingsCard(Card):
         self.body.addLayout(self.source_grid)
         self.record: dict[str, QCheckBox] = {}
         self.source_labels: dict[str, QLabel] = {}
+        self.touched: set[str] = set()
         self.add_recording("stimulus", "Visual stimulus video")
         self.velocities = QCheckBox()
         self.velocities.setAccessibleName("Tracking velocities")
         self.velocity_label = label("Tracking velocities", wrap=True)
         self.velocities.setChecked(False)
-        self.velocities.toggled.connect(self.recording_changed)
+        self.velocities.toggled.connect(lambda _checked: self._touch("velocities"))
         cameras.drafts_changed.connect(self.sync_cameras)
         self.sync_cameras()
 
@@ -38,7 +39,29 @@ class RecordingsCard(Card):
             f"Record {name}" if name.endswith(" video") else f"Record {name} video"
         )
         record.setChecked(True)
+        record.toggled.connect(lambda _checked, field=key: self._touch(field))
         self.record[key] = record
+
+    def _touch(self, key: str) -> None:
+        self.touched.add(key)
+        self.recording_changed()
+
+    def install_values(self, values: dict[str, bool | None]) -> None:
+        """Install saved choices while keeping absence distinct from false."""
+        self.touched.clear()
+        for key, control in self.record.items():
+            control.blockSignals(True)
+            control.setChecked(
+                bool(values.get(key)) if values.get(key) is not None else False
+            )
+            control.blockSignals(False)
+        self.velocities.blockSignals(True)
+        self.velocities.setChecked(
+            bool(values.get("velocities"))
+            if values.get("velocities") is not None
+            else False
+        )
+        self.velocities.blockSignals(False)
 
     def sync_cameras(self) -> None:
         for camera in self.cameras.drafts:
@@ -77,5 +100,5 @@ class RecordingsCard(Card):
             control.setEnabled(self.can_edit and active.get(key, False))
 
     def apply_view(self, view: DashboardView) -> None:
-        self.can_edit = view.sample and view.can_edit
+        self.can_edit = view.can_edit
         self.refresh_controls()

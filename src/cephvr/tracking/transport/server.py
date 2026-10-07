@@ -10,11 +10,13 @@ import grpc
 from cephvr.control.v1 import services_pb2_grpc as rpc
 from cephvr.shared.admission import CommandAdmissionTransport
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.credentials import CredentialStore
 from cephvr.shared.transport_deadlines import remaining_seconds
+from cephvr.tracking.diagnostic import TrackingDiagnostic
 from cephvr.tracking.v1 import services_pb2_grpc as tracking_rpc
 
 from .boundary import Boundary, Operations
-from .services import BackendService, PreparationService
+from .services import BackendService, DiagnosticService, PreparationService
 
 
 @dataclass
@@ -35,8 +37,10 @@ async def serve(
     credentials: MutableMapping[tuple[str, str], str],
     ledger: CommandLedger,
     *,
+    diagnostic: TrackingDiagnostic,
     port: int,
     max_message_bytes: int,
+    viewer_credentials: CredentialStore,
     testing: bool = False,
 ) -> Listener:
     if not 0 <= port <= 65535 or port == 0 and not testing or max_message_bytes <= 0:
@@ -55,6 +59,9 @@ async def serve(
     rpc.add_BackendServiceServicer_to_server(BackendService(boundary), server)  # type: ignore[no-untyped-call]
     tracking_rpc.add_TrackingPreparationServiceServicer_to_server(
         PreparationService(boundary), server
+    )  # type: ignore[no-untyped-call]
+    tracking_rpc.add_TrackingDiagnosticServiceServicer_to_server(
+        DiagnosticService(boundary, diagnostic, viewer_credentials), server
     )  # type: ignore[no-untyped-call]
     bound = server.add_insecure_port(f"127.0.0.1:{port}")
     if not bound or port and bound != port:

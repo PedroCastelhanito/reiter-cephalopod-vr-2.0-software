@@ -51,6 +51,7 @@ class ProtocolEditor(PlannerControls):
                 review_program() if sample else blank_program(),
             )
         ]
+        self.configuration_schedule_empty = False
         self.histories = [EditHistory()]
         self.index = self.node_index = 0
         self.scope: tuple[int, ...] = ()
@@ -66,13 +67,14 @@ class ProtocolEditor(PlannerControls):
         self.trials.currentRowChanged.connect(self.select_trial)
         self.add_button.clicked.connect(self.add_trial)
         self.delete_trial_button.clicked.connect(self.delete_trial)
+        self.move_trial_up_button.clicked.connect(lambda: self.move_trial(-1))
+        self.move_trial_down_button.clicked.connect(lambda: self.move_trial(1))
         self.undo_action.triggered.connect(lambda: self.undo(False))
         self.redo_action.triggered.connect(lambda: self.undo(True))
         self.selected_paths: tuple[tuple[int, ...], ...] = ()
         self.timeline.epochs_selected.connect(self.select_epochs)
         self.batch_edit.committed.connect(self.commit_batch)
         self.batch_edit.selection_form.changed.connect(self.refresh_history)
-        self.batch_edit.detail_requested.connect(self.open_details)
         self.batch_edit.epochs_requested.connect(self.select_epochs)
         self.create_batch.generated.connect(self.insert_batch)
         self.timeline.screens_changed.connect(self.refresh_projectors)
@@ -142,7 +144,7 @@ class ProtocolEditor(PlannerControls):
             self.select_epochs(paths)
             self.modes.setCurrentIndex(1)
         except ValueError as error:
-            self.create_batch.summary.setText(str(error))
+            self.feedback.warn(error)
 
     def open_details(self, face: str, layer: int) -> None:
         self.modes.setCurrentIndex(1)
@@ -235,7 +237,7 @@ class ProtocolEditor(PlannerControls):
         )
 
     def error(self, error: object) -> None:
-        self.feedback.setText(str(error))
+        self.feedback.warn(error)
         self.feedback.show()
 
     def commit(
@@ -334,6 +336,14 @@ class ProtocolEditor(PlannerControls):
     def add_trial(self) -> None:
         if not self.isEnabled() or not self.flush_parameters():
             return
+        if self.configuration_schedule_empty and len(self.drafts) == 1:
+            self.drafts[0].name = "Trial 1"
+            item = self.trials.item(0)
+            if item is not None:
+                item.setText("Trial 1")
+            self.configuration_schedule_empty = False
+            self.changed.emit()
+            return
         number = 1
         while f"Trial {number}" in {draft.name for draft in self.drafts}:
             number += 1
@@ -342,6 +352,32 @@ class ProtocolEditor(PlannerControls):
         self.histories.append(EditHistory())
         self.trials.addItem(name)
         self.trials.setCurrentRow(len(self.drafts) - 1)
+
+    def move_trial(self, offset: int) -> None:
+        """Move the selected schedule item without changing its program/history."""
+        if not self.isEnabled() or not self.flush_parameters():
+            return
+        destination = self.index + offset
+        if destination < 0 or destination >= len(self.drafts):
+            return
+        if (
+            destination == len(self.drafts) - 1
+            and self.drafts[self.index].gap_after_seconds.strip()
+        ):
+            self.feedback.warn(
+                "Clear this trial's gap before moving it to the final position."
+            )
+            return
+        selected = self.index
+        self.drafts.insert(destination, self.drafts.pop(selected))
+        self.histories.insert(destination, self.histories.pop(selected))
+        self.trials.blockSignals(True)
+        self.trials.takeItem(selected)
+        self.trials.insertItem(destination, self.drafts[destination].name)
+        self.trials.setCurrentRow(destination)
+        self.trials.blockSignals(False)
+        self.index = destination
+        self.changed.emit()
 
     def select_node(self, index: int) -> None:
         self.close_source_dialog()

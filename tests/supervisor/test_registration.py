@@ -69,6 +69,132 @@ async def test_plan_launch_rejects_expired_deadline_and_never_reconciles(
     assert calls == []
 
 
+async def test_supervisor_gui_plan_uses_authenticated_launch_handler(
+    tmp_path: Path,
+) -> None:
+    runtime, _, _, _ = make_runtime(tmp_path)
+    runtime.credentials[("supervisor", runtime.identity.generation)] = (
+        "supervisor-secret"
+    )
+    seen: list[tuple[str, str, int]] = []
+
+    async def launch_gui(
+        request: wire.PlanLaunchRequest,
+        state: wire.LaunchState,
+        token: str,
+        deadline_ns: int,
+    ) -> wire.LaunchState:
+        seen.append((request.command_id, token, deadline_ns))
+        return state
+
+    runtime.service.gui_launch_handler = launch_gui
+    request = wire.PlanLaunchRequest(
+        command_id=str(uuid4()),
+        owner=runtime.identity,
+        child=types.ProcessIdentity(role="gui", generation=str(uuid4())),
+        executable=EXE,
+        python_worker=True,
+        stop_method="grpc_shutdown",
+    )
+    context = Context("supervisor", runtime.identity.generation, "supervisor-secret")
+    deadline_ns = host_time_ns() + 10_000_000_000
+    context.metadata += (
+        ("x-cephvr-child-token", "fresh-child-token"),
+        deadline_metadata(deadline_ns),
+    )
+    receipt = await runtime.service.PlanLaunch(request, context)  # type: ignore[arg-type]
+    assert receipt.admission.result == types.COMMAND_RESULT_ACCEPTED
+    assert seen == [(request.command_id, "fresh-child-token", deadline_ns)]
+
+
+async def test_supervisor_state_query_releases_only_exact_empty_gui_job(
+    tmp_path: Path,
+) -> None:
+    runtime, native, _, _ = make_runtime(tmp_path)
+    runtime.credentials[("supervisor", runtime.identity.generation)] = (
+        "supervisor-secret"
+    )
+    gui = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+    plan = wire.PlanLaunchRequest(
+        command_id=str(uuid4()),
+        owner=runtime.identity,
+        child=gui,
+        executable=EXE,
+        python_worker=True,
+        stop_method="grpc_shutdown",
+    )
+    state = runtime.registry.plan(plan)
+    native.jobs[state.containment_job_name] = [(71, 171, EXE)]
+    runtime.registry.confirm(
+        wire.ConfirmLaunchRequest(
+            command_id=str(uuid4()),
+            launch_command_id=plan.command_id,
+            owner=runtime.identity,
+            child=gui,
+            pid=71,
+            creation_time_100ns=171,
+        ),
+        runtime.clock,
+    )
+    context = Context("supervisor", runtime.identity.generation, "supervisor-secret")
+    request = wire.LaunchQuery(
+        requester=runtime.identity, launch_command_id=plan.command_id
+    )
+
+    live = await runtime.service.GetLaunchState(request, context)  # type: ignore[arg-type]
+    assert live.phase == wire.LAUNCH_PHASE_OS_CONFIRMED
+
+    native.jobs[state.containment_job_name] = []
+    released = await runtime.service.GetLaunchState(request, context)  # type: ignore[arg-type]
+    repeated = await runtime.service.GetLaunchState(request, context)  # type: ignore[arg-type]
+    assert released.phase == repeated.phase == wire.LAUNCH_PHASE_RELEASED
+
+
+async def test_supervisor_gui_release_query_preserves_unknown_job_state(
+    tmp_path: Path,
+) -> None:
+    runtime, native, _, _ = make_runtime(tmp_path)
+    runtime.credentials[("supervisor", runtime.identity.generation)] = (
+        "supervisor-secret"
+    )
+    gui = types.ProcessIdentity(role="gui", generation=str(uuid4()))
+    plan = wire.PlanLaunchRequest(
+        command_id=str(uuid4()),
+        owner=runtime.identity,
+        child=gui,
+        executable=EXE,
+        python_worker=True,
+        stop_method="grpc_shutdown",
+    )
+    state = runtime.registry.plan(plan)
+    native.jobs[state.containment_job_name] = [(72, 172, EXE)]
+    runtime.registry.confirm(
+        wire.ConfirmLaunchRequest(
+            command_id=str(uuid4()),
+            launch_command_id=plan.command_id,
+            owner=runtime.identity,
+            child=gui,
+            pid=72,
+            creation_time_100ns=172,
+        ),
+        runtime.clock,
+    )
+    del native.jobs[state.containment_job_name]
+    context = Context("supervisor", runtime.identity.generation, "supervisor-secret")
+    with pytest.raises(PermissionError, match="could not be verified"):
+        await runtime.service.GetLaunchState(
+            wire.LaunchQuery(
+                requester=runtime.identity, launch_command_id=plan.command_id
+            ),
+            context,
+        )  # type: ignore[arg-type]
+    assert runtime.registry.planned_request(plan.command_id).child == gui
+    assert (
+        runtime.registry._entries[plan.command_id].state.phase
+        != wire.LAUNCH_PHASE_RELEASED
+    )
+
+
 # Failed controller registration cancels role launches.
 
 
@@ -483,7 +609,9 @@ async def test_worker_incident_ancestry_uses_exact_launch_owner_chain(
     )
 
 
-def test_controller_cannot_claim_backend_prepared_function(tmp_path: Path) -> None:
+def test_controller_capability_cannot_claim_backend_lifecycle_sources(
+    tmp_path: Path,
+) -> None:
     runtime, _, _, _ = make_runtime(tmp_path)
     visual_stimulus = types.ProcessIdentity(
         role="visual_stimulus", generation=str(uuid4())
@@ -516,5 +644,55 @@ def test_controller_cannot_claim_backend_prepared_function(tmp_path: Path) -> No
             ),
         ],
     )
-    with pytest.raises(IncidentEvidenceError, match="no backend ancestry"):
+    with pytest.raises(
+        IncidentEvidenceError,
+        match="controller-owned function cannot declare backend lifecycle sources",
+    ):
         IncidentTopology.from_registered(runtime.registration_state.context)
+
+
+def test_controller_capability_can_declare_non_lifecycle_function(
+    tmp_path: Path,
+) -> None:
+    runtime, _, _, _ = make_runtime(tmp_path)
+    work = types.WorkContext(
+        session=types.SessionContext(
+            controller_generation=runtime.controller.generation, session_id=str(uuid4())
+        )
+    )
+    visual_stimulus = types.ProcessIdentity(
+        role="visual_stimulus", generation=str(uuid4())
+    )
+    context = wire.RegisteredContext(
+        controller=runtime.controller,
+        supervisor=runtime.identity,
+        work=work,
+        required_participants=[
+            types.BackendContext(
+                backend_name="visual_stimulus",
+                backend_generation=visual_stimulus.generation,
+            )
+        ],
+        policies=types.ControlPolicies(recovery_ns=100_000_000),
+        prepared_functions=[
+            types.PreparedFunctionScope(
+                resource_id="controller-watchdog",
+                owner=runtime.controller,
+                affected_closure_resource_ids=["controller-watchdog"],
+                essential_to_stimulus_control=True,
+                feedback_hold_required_on_loss=False,
+                bounded_uncertainty_supported=False,
+            ),
+            types.PreparedFunctionScope(
+                resource_id="renderer",
+                owner=visual_stimulus,
+                affected_closure_resource_ids=["renderer"],
+                essential_to_stimulus_control=True,
+                feedback_hold_required_on_loss=False,
+                bounded_uncertainty_supported=False,
+                lifecycle_sources=["renderer"],
+            ),
+        ],
+    )
+    topology = IncidentTopology.from_registered(context)
+    assert topology.functions["controller-watchdog"].owner == runtime.controller

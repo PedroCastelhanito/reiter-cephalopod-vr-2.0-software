@@ -1,5 +1,52 @@
 # Tracking status
 
+Updated: 2026-10-07. Current frontend, configuration and diagnostic scope is owned by
+[G01](../docs/architecture/gui.md#g01), [T08](../docs/architecture/tracking.md#t08),
+[T01/T20](../docs/architecture/tracking.md#t20) and
+[A03/A10](../docs/architecture/acquisition.md#a03). Scientific settings and native/full-load
+acceptance retain their existing deferrals; image scale is not physical swimming velocity.
+
+The managed configuration codecs and private crop/downscale implementation passed
+Sol review. Acquired-image coordinates, original reference dimensions, actual-axis
+transforms, native precision/cost bounds and asset-relative paths are preserved.
+Strict E07 experiment validation remains separate from diagnostic-only drafts.
+All 48 pure contract checks pass. Final combined runtime/static checks are accepted
+in the [wiring assessment](runtime.md#current-scope-and-review).
+
+The diagnostic backend slice is accepted by Sol for development. Empty-mask image-only,
+flow-only, pose-only and partial quality paths resolve selected runnable stages without
+inventing unrelated scientific settings. Manual capture publishes native frames and
+discontinuities to the ordered preview-scoped Tracking ring. Original Begin/Close and
+recovery deadlines, exact source/status identity and both release receipts govern
+closure; unused attachments before any attempted Begin are cancelled truthfully.
+DiagnosticService receives its focused owner. No trial, scientific file or Visual
+Stimulus feedback is fabricated for diagnostics.
+
+Luna and Sol independently passed 99 affected acquisition worker/manual-preview,
+controller diagnostic and Tracking tests, with one deselected and loopback permitted.
+Sol's authenticated gateway probe passed empty-mask Begin through the actual pipeline,
+returned frame 17 with 10,000 image bytes and confirmed exact Close without extending
+the original deadline; only the Windows ring boundary was adapted. Scoped Ruff/format,
+Windows-target mypy and boundary checks pass. [Raw repair output](runtime-wiring-evidence-2026-10-06/luna-tracking-diagnostics-sol-repairs-2026-10-07.log)
+and [command/provenance metadata](runtime-wiring-evidence-2026-10-06/baseline-context.json)
+retain the evidence. Prior defects and intermediate failures remain in LOG.
+
+Sol and Astra accept the assembled GUI binding and focused transport/codec extraction.
+Astra's partial Fin quality finding is repaired and verified through the production
+resolver: current wedge edits are honored and Water clears inherited Fin support.
+The binding uses the controller's exact registered Tracking endpoint, E08 owner-private
+GUI credentials, bounded same-frame image/overlays, coalesced timing and explicit viewer
+detachment/reopening. Acquired-frame annotation copies exact source identity/dimensions;
+no draft changes automatically or crosses source identity. Pending or unconfirmed Close
+keeps Begin/editing locked. Configuration and Setup atomic commits now recheck unclosed
+diagnostic ownership so revision changes cannot strand its Close identity.
+
+Local managed wide/narrow visual inspection is complete. Final combined development checks pass. Windows/native throughput and scientific
+accuracy remain distinct; current results are in
+the [wiring assessment](runtime.md#current-scope-and-review), with all outstanding rig
+work in the [single checklist](rig-verification.md). Existing scientific/full-load
+deferrals remain unchanged.
+
 Final Windows repair snapshot (2026-10-01, baseline HEAD
 `826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs): 43 passed,
 including the native NVIDIA same-image lease smoke built with
@@ -28,11 +75,11 @@ The fin-undulation method contract and policy/settings were removed. Old IDs rem
 superseded anchors only. The undeployed family ID is now `fin_flow`; `fin_undulation`
 is not an alias and its old method settings are not silently migrated.
 
-GUI integration note (2026-10-03): [E10](../docs/architecture/experiment.md#e10)
+GUI integration status (2026-10-07): [E10](../docs/architecture/experiment.md#e10)
 and [T14](../docs/architecture/tracking.md#t14) now derive participation from
-closed-loop or Record velocities. The local GUI draft and preview gate implement
-that derivation; managed configuration/default resolution and runtime adoption remain
-pending. The review fixture explicitly selects saving Off; T14's persisted/default
+closed-loop or Record velocities. The local draft, preview gate and managed
+configuration codec now implement that derivation, verified in the accepted wiring
+review. The review fixture explicitly selects saving Off; T14's persisted/default
 settings are not overwritten. [Frontend evidence](runtime.md#dashboard-frontend-implementation).
 
 ## Implementation and local validation

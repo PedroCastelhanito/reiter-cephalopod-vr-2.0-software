@@ -49,9 +49,13 @@ class SnapshotPublisher:
         self.projections = projections
         self.limits = limits
         self.owner_lost = owner_lost
+        self.owner_loss_observers: list[Callable[[], Awaitable[None]]] = []
 
     def bind_owner_loss(self, handler: Callable[[], Awaitable[None]]) -> None:
         self.owner_lost = handler
+
+    def observe_owner_loss(self, handler: Callable[[], Awaitable[None]]) -> None:
+        self.owner_loss_observers.append(handler)
 
     def build_snapshot(self, *, include_configuration: bool = True) -> pb.Snapshot:
         view = pb.Snapshot(
@@ -80,6 +84,7 @@ class SnapshotPublisher:
             view.configuration_values.revision = self.configuration_state.revision
         view.session.CopyFrom(self.lifecycle.session)
         view.trial.CopyFrom(self.lifecycle.trial)
+        view.tracking_diagnostic.CopyFrom(self.control.tracking_diagnostic)
         if self.control.owner is not None:
             view.control.holder_client_id = self.control.owner[0]
             view.control.control_generation = self.control.owner[2]
@@ -116,6 +121,10 @@ class SnapshotPublisher:
             view.runtime_incidents.extend(self.lifecycle.attempt.incidents.snapshot())
         self.projections.install_public(view)
         if self.lifecycle.attempt is not None:
+            if self.lifecycle.attempt.paired:
+                view.spikeglx_recording.CopyFrom(
+                    self.lifecycle.attempt.spikeglx_recording
+                )
             view.reservation.session.CopyFrom(self.lifecycle.attempt.context)
             view.reservation.session_directory = str(
                 self.lifecycle.attempt.reservation.session_directory
@@ -190,8 +199,11 @@ class SnapshotPublisher:
                 if self.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION:
                     self.lifecycle.manual_control_cleanup_pending = True
                 self.publish()
-        if released and self.owner_lost is not None:
-            await self.owner_lost()
+        if released:
+            for observer in tuple(self.owner_loss_observers):
+                await observer()
+            if self.owner_lost is not None:
+                await self.owner_lost()
 
     def publish(self) -> None:
         self.control.revision += 1

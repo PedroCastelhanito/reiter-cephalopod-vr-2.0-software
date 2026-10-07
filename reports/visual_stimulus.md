@@ -1,10 +1,37 @@
 # Visual Stimulus status
 
-Updated: 2026-10-06. The complete Visual Stimulus implementation is selected under
+Updated: 2026-10-07. The complete Visual Stimulus implementation is selected under
 [ARCH-001](../architecture.md#arch-001). This report describes the uncommitted working
 tree, preserving the existing controller, supervisor and acquisition work.
 [V01–V28/E13](../docs/architecture/visual_stimulus.md) and [E05–E08/E14–E15](../docs/architecture/system-contracts.md)
 remain authoritative; implementation does not mean experiment or rig acceptance.
+
+Current managed-wiring increment: V20 file-only pacing propagation includes canonical
+startup profile adoption, nominal-60 handling of 60000/1001 timebases, and resolution
+of file-only output identity before pulse-disabled profile validation. Sol reproduced
+three initial defects; the worker repairs passed re-review with 43 focused tests.
+Installed validation and startup resolve pacing before strict profile validation.
+Sol then reproduced lost policy-aware dispatch in the actual controller wrapper:
+Setup rereads TOML instead of using its held policy. The focused wrapper repair and policy-drift regression now pass through actual
+application assembly. Independent permitted-loopback controller/lifecycle tests pass
+34 cases (1.16 s). Sol accepted the wrapper with no actionable findings and 43
+controller/Visual Stimulus configuration checks passing separately. Earlier raw-provider passes did not
+establish exact policy retention. Managed projector configuration and
+renderer-owned V01 calibration/cleanup are active. Additive contracts are generated.
+Sol accepted the repaired native leaf and final controller/coordinator/worker wiring.
+Calibration uses the V15 correction/material pipeline, exact output contexts and
+retryable partial resource closure. Focused helpers preserve one display and source
+owner. The pre-Setup catalogue retains exact resources locally until Setup accepts
+session context; no fake session evidence is published. Actual authenticated tests
+cover first-use/repeated calibration, uncertain-close recovery, active Shutdown,
+owner loss, late preparation cleanup and Close while preparation remains blocked.
+The latter waits for exact worker Close application before releasing preparation and
+asserts no late presentation. Cancellation before dispatch clears only the local
+reservation; uncertain dispatched ownership remains retained. Setup rechecks all
+diagnostic ownership after asynchronous validation. Sol and Astra have no remaining
+source findings; final combined checks pass and evidence is tracked in the
+[current wiring assessment](runtime.md#current-scope-and-review).
+Hardware GL and optical presentation remain rig checks.
 
 [V04](../docs/architecture/visual_stimulus.md#v04) image fitting is implemented in
 the source model, renderer shader and planning preview: centered Contain, Cover
@@ -44,12 +71,11 @@ unset near/far/tolerance and correction values. The GUI's Launch action prepares
 calibration files automatically, computing bounded diagnostic projection limits and explicit uncalibrated
 geometric meshes from the current four face assignments and native monitor identities;
 it exports the V15 display profile with the GLB into Protocol Assets.
-The profile builder and complete bundle pass focused tests, but the GUI still has no
-managed untimed diagnostic launch/close command or optical rig verification; see
-`projector-calibration-launch` in TODO.
-The GUI has a tested confirmed-state Launch/Close button interface, but its local
-review entry point has no controller transport, so the button remains disabled and
-no renderer command has been sent.
+The managed GUI now sends typed untimed Launch/Close requests with captured revision
+and asset fingerprints before Setup. Active requires renderer presentation evidence;
+Close requires Idle and confirmed release, restoring the prior display or known
+uninitialized state. Its local review entry point has no controller transport.
+Optical/native verification remains in `projector-calibration-launch` in TODO.
 The four exported geometric profiles now carry per-face scale, pixel offsets and
 axis inversion when entered; unset fields produce identity mappings. A focused test
 checks adjustment, mirroring and rejection of corrections beyond the output.
@@ -290,6 +316,13 @@ pre-session renderer launch shape and reconciles exact retained executor complet
 admission is not treated as cleanup success.
 
 ## ARCH-002 implementation review
+
+The 2026-10-07 V01 review keeps GL-thread output/Idle restoration in the native port
+and engine, and one protected-source promotion/release registry in NativePreparation.
+Calibration drawing and asset preparation now have focused helpers. Sol accepts these
+cohesive state owners; their size warnings do not justify duplicating closure state.
+The dedicated calibration behavior module uses distinct fake-GL context, protected-file,
+restoration and partial-release fixtures. Hardware GL remains unexecuted locally.
 
 Each increment used focused state and operations. Shared command admission and compatible
 FFmpeg argument/capability/I/O mechanisms are reused; acquisition policy remains separate

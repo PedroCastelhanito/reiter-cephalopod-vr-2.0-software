@@ -52,6 +52,9 @@ class VisualStimulusConfigurationTests(unittest.TestCase):
         self.assertEqual(policies.limits.max_expanded_epochs, 100_000)
         self.assertEqual(policies.max_result_age_ns, 350_000_000)
         self.assertEqual(policies.record_sync_interval_ns, 1_000_000_000)
+        self.assertTrue(policies.HasField("pacing_refresh_hz"))
+        self.assertEqual(policies.pacing_refresh_hz, 60.0)
+        self.assertFalse(policies.HasField("pacing_output_id"))
 
     def test_display_validation_returns_exact_output_ids(self) -> None:
         surface = {
@@ -201,3 +204,59 @@ def test_photodiode_visibility_is_independent_of_pacing_and_disabled_target():
     source["pacing_output_id"] = "projector/off"
     with pytest.raises(ValueError, match="pacing output"):
         DisplayProfile.model_validate_json(json.dumps(source))
+
+
+def test_file_pacing_overlays_stable_output_and_checks_native_rate():
+    import pytest
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+    from cephvr.visual_stimulus.configuration import resolve_pacing_profile
+
+    source = json.loads(valid_display_json())
+    source["pacing_output_id"] = None
+    display = DisplayProfile.model_validate_json(json.dumps(source))
+    resolved = resolve_pacing_profile(
+        json.dumps(source),
+        max_bytes=1_000_000,
+        refresh_hz=60.0,
+        output_id="projector/main",
+    )
+    assert resolved.selected_pacing_output_id == "projector/main"
+    assert display.pacing_output_id is None
+    assert resolved.pacing_output_id == "projector/main"
+    source["outputs"][0]["refresh_numerator"] = 60_000
+    source["outputs"][0]["refresh_denominator"] = 1_001
+    fractional = resolve_pacing_profile(
+        json.dumps(source),
+        max_bytes=1_000_000,
+        refresh_hz=60.0,
+        output_id="projector/main",
+    )
+    assert fractional.outputs[0].refresh_numerator == 60_000
+    assert fractional.outputs[0].refresh_denominator == 1_001
+    source["photodiode_enabled"] = False
+    source["photodiode_output_id"] = None
+    source.pop("pacing_output_id", None)
+    disabled_marker = resolve_pacing_profile(
+        json.dumps(source),
+        max_bytes=1_000_000,
+        refresh_hz=60.0,
+        output_id="projector/main",
+    )
+    assert disabled_marker.marker_output_id is None
+    assert disabled_marker.selected_pacing_output_id == "projector/main"
+    with pytest.raises(ValueError, match="does not match configured target"):
+        resolve_pacing_profile(
+            json.dumps(source),
+            max_bytes=1_000_000,
+            refresh_hz=75.0,
+            output_id="projector/main",
+        )
+    with pytest.raises(ValueError, match="pacing output"):
+        resolve_pacing_profile(
+            json.dumps(source),
+            max_bytes=1_000_000,
+            refresh_hz=60.0,
+            output_id="projector/missing",
+        )

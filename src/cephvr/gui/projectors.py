@@ -4,18 +4,18 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PyQt6.QtCore import QRect, Qt, pyqtSignal
-from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtGui import QGuiApplication, QScreen
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QComboBox,
+    QFileDialog,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
     QLineEdit,
     QStackedWidget,
     QTabBar,
-    QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.calibration_files import CalibrationFiles
 from cephvr.gui.calibration_profile import (
     AssignedDisplay,
+    MonitorBinding,
     active_monitor_bindings,
     write_diagnostic_bundle,
 )
@@ -31,15 +32,18 @@ from cephvr.gui.components import Card, button, combo
 from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.display_layout import DisplayLayout
 from cephvr.gui.projector_calibration import CalibrationTable
+from cephvr.gui.projector_codec import display_document, merge_projector_draft
 from cephvr.gui.projector_geometry import (
     RigGeometryEditor,
     ScreenGeometryEditor,
     resolved_screens,
 )
 from cephvr.gui.projector_timing import ProjectorTiming
+from cephvr.gui.tables import DataTable
 from cephvr.gui.tank_diagram import TankDiagram
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
 @dataclass(frozen=True)
@@ -49,6 +53,29 @@ class DisplayInfo:
     index: str
     geometry: QRect
     pixel_ratio: float = 1.0
+
+
+def _stable_display_identity(
+    screen: QScreen, bindings: tuple[MonitorBinding, ...]
+) -> str:
+    geometry = screen.geometry()
+    ratio = screen.devicePixelRatio()
+    matches = [
+        binding
+        for binding in bindings
+        if (binding.x, binding.y, binding.width, binding.height)
+        == (
+            geometry.x(),
+            geometry.y(),
+            round(geometry.width() * ratio),
+            round(geometry.height() * ratio),
+        )
+    ]
+    if len(matches) == 1 and matches[0].interface:
+        return matches[0].interface
+    return "|".join(
+        (screen.name(), screen.manufacturer(), screen.model(), screen.serialNumber())
+    )
 
 
 class ProjectorsPanel(DevicePanel):
@@ -73,7 +100,7 @@ class ProjectorsPanel(DevicePanel):
             "DISPLAY     —\nPROJECTOR   Unassigned\nOUTPUT      Not tested",
             ("Refresh displays",),
         )
-        self.table = QTableWidget(0, 4)
+        self.table = DataTable(0, 4)
         self.table.setHorizontalHeaderLabels(
             ["CephVR ID", "Projector", "Resolution (px)", "Use"]
         )
@@ -92,6 +119,9 @@ class ProjectorsPanel(DevicePanel):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table.setFixedHeight(180)
         self.configuration.body.insertWidget(1, self.table)
+        self.import_profile = button("Import display profile…", "secondary")
+        self.import_profile.clicked.connect(self.load_display_profile)
+        self.configuration.body.insertWidget(2, self.import_profile)
         self.assignments: dict[str, str] = {}
         self.participation: dict[str, bool] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
@@ -101,6 +131,9 @@ class ProjectorsPanel(DevicePanel):
         self.loading = False
         self.review_displays: tuple[DisplayInfo, ...] | None = None
         self.asset_root = ""
+        self._imported_profile: visual_stimulus_pb.DisplayConfiguration | None = None
+        self._configuration_error = ""
+        self._geometry_dirty = False
         self.layout_card = Card("Displays layout · CephVR IDs")
         self.diagram = DisplayLayout()
         self.layout_card.body.addWidget(self.diagram)
@@ -108,6 +141,8 @@ class ProjectorsPanel(DevicePanel):
         assert isinstance(layout, QVBoxLayout)
         self.rig_editor = RigGeometryEditor()
         self.screen_editor = ScreenGeometryEditor()
+        self.rig_editor.changed.connect(self._mark_geometry_dirty)
+        self.screen_editor.changed.connect(self._mark_geometry_dirty)
         for face, distance_editor in self.rig_editor.screen_distances.items():
             distance_editor.textChanged.connect(
                 lambda value, f=face: self.screen_editor.save_value(
@@ -202,6 +237,197 @@ class ProjectorsPanel(DevicePanel):
         self.screen_editor.changed.connect(self.update_geometry)
         self.table.currentCellChanged.connect(lambda *_: self.show_selected())
 
+    def _mark_geometry_dirty(self) -> None:
+        self._geometry_dirty = True
+
+    def install_configuration(
+        self,
+        display: visual_stimulus_pb.DisplayConfiguration,
+        *,
+        pacing_output_id: str | None = None,
+    ) -> None:
+        """Install a bounded draft; controller validation uses its file policy."""
+        del pacing_output_id  # Pacing remains file-owned and absent from this draft.
+        self._imported_profile = None
+        self._configuration_error = ""
+        try:
+            profile = display_document(display)
+            outputs = profile.get("outputs")
+            mappings = profile.get("mappings")
+            if not isinstance(outputs, list) or not isinstance(mappings, list):
+                raise ValueError("Display profile requires output and mapping arrays")
+            output_by_id = {
+                item["output_id"]: item
+                for item in outputs
+                if isinstance(item, dict) and isinstance(item.get("output_id"), str)
+            }
+        except (ValueError, TypeError) as exc:
+            self._configuration_error = str(exc)
+            self.calibration.setToolTip(self._configuration_error)
+            return
+        self.assignments = {}
+        for mapping in mappings:
+            if not isinstance(mapping, dict):
+                continue
+            output = output_by_id.get(mapping.get("output_id"))
+            face = mapping.get("surface_id")
+            identity = output.get("device_identity") if output else None
+            if isinstance(identity, str) and face in {
+                "front",
+                "left",
+                "right",
+                "bottom",
+            }:
+                self.assignments.setdefault(identity, face.title())
+        self.participation = {
+            item["device_identity"]: item.get("enabled", True)
+            for item in outputs
+            if isinstance(item, dict)
+            and isinstance(item.get("device_identity"), str)
+            and type(item.get("enabled", True)) is bool
+        }
+        self.loading = True
+        self.timing.pulse.setChecked(profile.get("photodiode_enabled", True) is True)
+        self.timing.mode.setCurrentText(
+            "All displays VSync"
+            if profile.get("presentation_mode") == "all_outputs_vsync"
+            else "Selected display VSync"
+        )
+        output_by_identity = {
+            item["device_identity"]: item
+            for item in outputs
+            if isinstance(item, dict) and isinstance(item.get("device_identity"), str)
+        }
+        photodiode_output_id = profile.get("photodiode_output_id")
+        target_identity = next(
+            (
+                identity
+                for identity, output in output_by_identity.items()
+                if output.get("output_id") == photodiode_output_id
+            ),
+            None,
+        )
+        target_index = (
+            self.timing.target.findData(target_identity)
+            if target_identity is not None
+            else -1
+        )
+        if target_identity is not None and target_index < 0:
+            self.timing.target.addItem(
+                f"Saved display {target_identity} (not connected)", target_identity
+            )
+            target_index = self.timing.target.findData(target_identity)
+        self.timing.target.setCurrentIndex(target_index)
+        patch = profile.get("photodiode_patch")
+        if isinstance(patch, dict) and isinstance(patch.get("rect"), dict):
+            rect = patch["rect"]
+            for key, value in zip(
+                ("X", "Y", "Width", "Height"),
+                (rect.get("x"), rect.get("y"), rect.get("width"), rect.get("height")),
+                strict=True,
+            ):
+                if type(value) is int:
+                    self.timing.fields[key].setText(str(value))
+        self.loading = False
+        self._geometry_dirty = False
+        self.calibration.setToolTip(
+            "Imported geometric and photometric profile references are preserved."
+        )
+        self.update_participation()
+
+    def load_display_profile(self) -> None:
+        """Import one complete profile into the local draft without controller I/O."""
+        if not self.can_review:
+            return
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import display profile", self.asset_root, "Display profile (*.json)"
+        )
+        if not path:
+            return
+        self.import_display_profile(path)
+
+    def import_display_profile(self, path: str) -> None:
+        """Validate a selected profile before replacing the local draft."""
+        if not self.can_review:
+            return
+        try:
+            source = Path(path)
+            if source.stat().st_size > 16_777_216:
+                raise ValueError(
+                    "Display profile exceeds the 16 MiB configuration limit"
+                )
+            imported = visual_stimulus_pb.DisplayConfiguration(
+                profile_json=source.read_text(encoding="utf-8")
+            )
+            profile = display_document(imported)
+            outputs, mappings = profile.get("outputs"), profile.get("mappings")
+            if not isinstance(outputs, list) or not isinstance(mappings, list):
+                raise ValueError("Display profile requires output and mapping arrays")
+            if any(
+                not isinstance(item, dict)
+                or not isinstance(item.get("device_identity"), str)
+                or not isinstance(item.get("output_id"), str)
+                for item in outputs
+            ):
+                raise ValueError(
+                    "Each display output needs a stable identity and output ID"
+                )
+            self.install_configuration(imported)
+            if self._configuration_error:
+                raise ValueError(self._configuration_error)
+            self._imported_profile = imported
+            self.outputs_changed.emit()
+            self.console.appendPlainText(f"Imported local display profile: {source}")
+        except (OSError, UnicodeError, ValueError, TypeError) as error:
+            self.console.appendPlainText(f"Display profile import failed: {error}")
+
+    def configuration_for_submit(
+        self, base_display: visual_stimulus_pb.DisplayConfiguration
+    ) -> visual_stimulus_pb.DisplayConfiguration:
+        """Collect projector-owned fields while retaining calibrated profile data."""
+        if self._configuration_error and not (
+            self._configuration_error.startswith("Import a display profile")
+            and base_display.profile_json
+        ):
+            raise ValueError(self._configuration_error)
+        source_display = base_display
+        if not source_display.profile_json and self._imported_profile is not None:
+            source_display = self._imported_profile
+        if not source_display.profile_json:
+            raise ValueError("Import a display profile before configuring projectors")
+        pulse_output_identity = self.timing.target.currentData()
+        pulse_patch: dict[str, object] | None = None
+        values = [
+            self.timing.fields[key].text().strip()
+            for key in ("X", "Y", "Width", "Height")
+        ]
+        if any(values):
+            if not all(value.isdecimal() for value in values):
+                raise ValueError("Photodiode rectangle requires integer pixel values")
+            x, y, width, height = (int(value) for value in values)
+            pulse_patch = {"rect": {"x": x, "y": y, "width": width, "height": height}}
+        geometry = None
+        if self._geometry_dirty:
+            geometry = self.rig_editor.geometry_payload(self.screen_editor.drafts)
+        return merge_projector_draft(
+            source_display,
+            assignments=self.assignments,
+            participation=self.participation,
+            pulse_enabled=self.timing.pulse.isChecked(),
+            pulse_output_identity=(
+                str(pulse_output_identity)
+                if pulse_output_identity is not None
+                else None
+            ),
+            presentation_mode=(
+                "all_outputs_vsync"
+                if self.timing.mode.currentText() == "All displays VSync"
+                else "photodiode_only_vsync"
+            ),
+            pulse_patch=pulse_patch,
+            geometry=geometry,
+        )
+
     def request(self, name: str) -> None:
         if not self.can_review:
             return
@@ -228,9 +454,23 @@ class ProjectorsPanel(DevicePanel):
                     screen.serialNumber(),
                 ),
             )
-            displays = tuple(
+            native_bindings: tuple[MonitorBinding, ...] = ()
+            issue = (
+                "Stable native display identities are unavailable; assignments "
+                "cannot be submitted until refreshed. CephVR numbers are independent "
+                "of Windows Settings."
+            )
+            try:
+                native_bindings = active_monitor_bindings()
+            except (AttributeError, ImportError, OSError, RuntimeError, ValueError):
+                issue = (
+                    "Stable native display identities are unavailable; "
+                    "assignments cannot be submitted until refreshed. CephVR numbers "
+                    "are independent of Windows Settings."
+                )
+            display_rows = tuple(
                 DisplayInfo(
-                    f"{screen.name()}|{screen.manufacturer()}|{screen.model()}|{screen.serialNumber()}",
+                    _stable_display_identity(screen, native_bindings),
                     screen.name(),
                     str(index),
                     screen.geometry(),
@@ -238,10 +478,12 @@ class ProjectorsPanel(DevicePanel):
                 )
                 for index, screen in enumerate(secondary, 1)
             )
-            issue = (
-                "CephVR IDs follow desktop position. Compare this layout with "
-                "Windows Settings; the numbers are independent."
-            )
+            displays = display_rows
+            if native_bindings:
+                issue = (
+                    "CephVR IDs use native stable display identities. Compare "
+                    "the layout with Windows Settings; numbers are independent."
+                )
         else:
             displays = self.review_displays
             issue = "LOCAL REVIEW · Simulated displays; no hardware connected."
@@ -464,6 +706,7 @@ class ProjectorsPanel(DevicePanel):
 
     def apply_view(self, view: DashboardView) -> None:
         super().apply_view(view)
+        self.import_profile.setEnabled(self.can_review)
         self.calibration_files.setEnabled(self.can_review)
         self.calibration.setEnabled(self.can_review)
         self.rig_editor.setEnabled(self.can_review)

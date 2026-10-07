@@ -58,6 +58,26 @@ unsupported hosts fail startup rather than run uncontained. Semantics follow
 [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects)
 and [nested jobs](https://learn.microsoft.com/en-us/windows/win32/procthread/nested-jobs).
 
+## Operator-confirmed application replacement
+
+An interactive duplicate launch offers Y/N in its terminal. N, EOF or absence of
+an interactive terminal leaves the current runtime running. The guarded launcher
+publishes one bounded owner-private `launcher.json` in the runtime root, containing
+controller/supervisor generations, a fresh event allocation identity and its startup
+shutdown budget. The event uses the existing owner-only native event helper; no
+service or session authority is added. A requester opens that exact event before
+asking, so an answer cannot target a later launcher generation.
+
+Y asks the old containment owner to terminate its application job immediately.
+It retains the sole job handle and guard until empty membership is verified, then
+writes the existing generation-bound application-exit receipt. The requester waits
+within that owner's budget for the matching controller/supervisor receipt and
+reacquires the application guard before launching. Old versions without an endpoint,
+missing proof, OS failures, timeout and concurrent launches fail without guessing
+process identity or killing by executable name. Force replacement is explicit and
+may lose unfinished output; process absence never proves graceful file closure.
+The requester never duplicates the application Job handle or terminates SpikeGLX.
+
 ## Launch registration and partial children
 
 Supervisor `PlanLaunch` retains command ID, owner/child generations, executable,

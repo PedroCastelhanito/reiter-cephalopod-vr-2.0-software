@@ -116,6 +116,10 @@ async def test_expired_session_closure_cancels_recovery_without_claiming_seal(
 
 def test_session_config_excludes_dormant_settings_and_pfs_payload() -> None:
     config = pb.ExperimentConfiguration()
+    config.subject_metadata.sex = "Female"
+    config.subject_metadata.age_dph = 0
+    config.subject_metadata.size_mm = 12.5
+    config.subject_metadata.condition = "fasted"
     active = config.backends.add(backend_name="acquisition", enabled=True)
     active.acquisition.behavioral.enabled = True
     active.acquisition.behavioral.device.device_id = "camera-1"
@@ -128,6 +132,12 @@ def test_session_config_excludes_dormant_settings_and_pfs_payload() -> None:
 
     document = active_configuration_document(config)
     text = str(document)
+    assert document["subject_metadata"] == {
+        "sex": "Female",
+        "age_dph": 0.0,
+        "size_mm": 12.5,
+        "condition": "fasted",
+    }
     assert "camera-1" in text
     assert "SDK SECRET SNAPSHOT" not in text
     assert "dormant-camera" not in text

@@ -21,7 +21,7 @@ def cleanup_resources(
     preparation: PreparationPort,
     engine: EnginePort,
     feedback: FeedbackPort | None,
-    emit: Callable[[pb.LifecycleReport, int], None],
+    emit: Callable[[pb.LifecycleReport, int], None] | None,
 ) -> None:
     keys: set[str] = set(state.released_threads)
     failures: list[str] = []
@@ -83,10 +83,14 @@ def cleanup_resources(
         if resource.HasField("path"):
             item.path = resource.path
     cleanup.outputs.extend(state.outputs.values())
-    emit(pb.LifecycleReport(cleanup=cleanup), deadline_ns)
+    if emit is not None:
+        emit(pb.LifecycleReport(cleanup=cleanup), deadline_ns)
+    elif state.setup is not None:
+        raise RuntimeError("registered renderer cleanup requires lifecycle evidence")
     if keys == set(state.resources) and not failures:
         state.setup = None
         state.ready = False
         state.cleaned = True
     else:
-        raise RuntimeError("renderer native cleanup remains unconfirmed")
+        details = "; ".join(failures) or "resource release set is incomplete"
+        raise RuntimeError(f"renderer native cleanup remains unconfirmed: {details}")

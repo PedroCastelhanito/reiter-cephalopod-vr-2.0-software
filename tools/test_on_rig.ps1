@@ -58,7 +58,7 @@ if ($Install) {
     $before = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $venvPython -m pip install --editable '.[dev,acquisition,visual_stimulus,tracking]' 2>&1 |
+        & $venvPython -m pip install --editable '.[dev,acquisition,visual_stimulus,tracking,gui]' 2>&1 |
             Tee-Object -FilePath (Join-Path $output 'install.log') | Out-Host
         $installExit = $LASTEXITCODE
     } finally {
@@ -112,7 +112,7 @@ if (-not (Test-Path $atomicsDll)) {
 $before = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
 try {
-    & $python -c 'import grpc, google.protobuf, pytest, pytest_asyncio, pydantic, setuptools, numpy, serial, pypylon, cv2, onnx, onnxruntime; import cephvr.control.v1.services_pb2; import cephvr.visual_stimulus.v1.services_pb2; import moderngl, glfw, av, imagecodecs, tifffile, OpenGL.GL' 2>&1 |
+    & $python -c 'import grpc, google.protobuf, pytest, pytest_asyncio, pydantic, setuptools, numpy, serial, pypylon, cv2, onnx, onnxruntime; from PyQt6 import QtCore, QtWidgets; import cephvr.control.v1.services_pb2; import cephvr.visual_stimulus.v1.services_pb2; import moderngl, glfw, av, imagecodecs, tifffile, OpenGL.GL' 2>&1 |
         Tee-Object -FilePath (Join-Path $output 'prerequisites.log') | Out-Host
     $prerequisiteExit = $LASTEXITCODE
 } finally {
@@ -204,8 +204,8 @@ if ($Rig) {
 }
 
 [void](Invoke-Logged 'syntax' @('-m', 'compileall', '-q', 'src', 'tests'))
-[void](Invoke-Logged 'ruff' @('-m', 'ruff', 'check', 'src', 'tests', 'tools'))
-[void](Invoke-Logged 'format' @('-m', 'ruff', 'format', '--check', 'src', 'tests', 'tools'))
+[void](Invoke-Logged 'ruff' @('-m', 'ruff', 'check', 'src', 'tests', 'tools', 'scripts'))
+[void](Invoke-Logged 'format' @('-m', 'ruff', 'format', '--check', 'src', 'tests', 'tools', 'scripts'))
 [void](Invoke-Logged 'module-boundaries' @('tools/check_backend_boundaries.py'))
 [void](Invoke-Logged 'mypy-win32' @('-m', 'mypy', '--platform', 'win32', 'src/cephvr'))
 [void](Invoke-Logged 'contracts-tracking' @('-m', 'unittest', 'discover', '-s', 'contracts/tracking', '-p', 'test_*.py'))

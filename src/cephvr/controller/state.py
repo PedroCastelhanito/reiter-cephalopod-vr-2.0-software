@@ -20,6 +20,7 @@ from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.preparation import PreparationHandoff
 from cephvr.shared.incidents import IncidentTopology
+from cephvr.synchronization.v1 import spikeglx_pb2 as spikeglx_pb
 
 # Retained display/report lists (warnings, errors, recoveries) keep this many newest items.
 RETAINED_LIMIT = 256
@@ -149,6 +150,9 @@ class LifecycleState:
     manual_control_cleanup_task: asyncio.Task[None] | None = None
     # Set by runtime shutdown: the cleanup retry chain must not respawn.
     manual_control_cleanup_stopping: bool = False
+    # A file-backed inventory replace may outlive its RPC bound. Safety and
+    # health handlers remain live while Setup/config edits wait for settlement.
+    inventory_update_pending: bool = False
 
 
 @dataclass
@@ -162,6 +166,9 @@ class ControlState:
     operation_finished_ns: dict[str, int] = field(default_factory=dict)
     errors: list[pb.ErrorReport] = field(default_factory=list)
     warnings: list[pb.Warning] = field(default_factory=list)
+    tracking_diagnostic: pb.TrackingDiagnosticState = field(
+        default_factory=lambda: pb.TrackingDiagnosticState(closed=True)
+    )
 
     def add_warning(self, component: str, message: str) -> None:
         """Retain a fresh warning; the caller publishes under its own lock."""
@@ -221,6 +228,8 @@ class DeviceState:
     """Pending display and camera commands."""
 
     display_pending: tuple[str, int, int, frozenset[str]] | None = None
+    calibration_pending: tuple[str, int, int, str, int, frozenset[str]] | None = None
+    calibration_blocked: bool = False
     camera_operation: CameraOperation | None = None
     # One exact terminal camera operation prevents late retries from becoming
     # current device projections after the active operation slot is cleared.
@@ -339,6 +348,19 @@ class Attempt:
     cancelling: bool = False
     writer_closed: bool = False
     spikeglx_stopped: bool = False
+    spikeglx_stop_task: asyncio.Task[bool] | None = None
+    spikeglx_stop_due_ns: int = 0
+    spikeglx_stop_started: bool = False
+    spikeglx_stop_trial_operation: str = ""
+    spikeglx_stop_trial_index: int = -1
+    spikeglx_stop_trial_end_ns: int = 0
+    spikeglx_stop_final_trial: bool = False
+    spikeglx_recording: spikeglx_pb.SpikeGLXRecordingView = field(
+        default_factory=lambda: spikeglx_pb.SpikeGLXRecordingView(
+            phase=spikeglx_pb.SPIKEGLX_RECORDING_PHASE_NOT_STARTED
+        )
+    )
+    spikeglx_monitor_stop: asyncio.Event = field(default_factory=asyncio.Event)
     handoff: PreparationHandoff | None = None
     file_policies: dict[str, Message] = field(default_factory=dict)
     registered_context: svc.RegisteredContext | None = None

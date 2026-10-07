@@ -1,0 +1,196 @@
+........................................................................ [  5%]
+........................................................................ [ 11%]
+...........................................................sssss........ [ 17%]
+........................................................................ [ 23%]
+........................................................................ [ 29%]
+........................................................................ [ 35%]
+....................................................F................... [ 40%]
+........................................................................ [ 46%]
+........................................................................ [ 52%]
+........................................................................ [ 58%]
+....................................F................................... [ 64%]
+........................................................................ [ 70%]
+........................................................................ [ 75%]
+........................................................................ [ 81%]
+........................................................................ [ 87%]
+........................................................................ [ 93%]
+.................................................s...................... [ 99%]
+.........                                                                [100%]
+=================================== FAILURES ===================================
+_______ test_managed_runtime_editors_are_enabled_without_review_samples ________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x111686290>
+
+    def test_managed_runtime_editors_are_enabled_without_review_samples(
+        app: QApplication,
+    ) -> None:
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+    
+        managed = ManagedDashboardWindow(sample=False)
+        view = DashboardView(
+            phase=Phase.CONFIGURATION,
+            connected=True,
+            has_control=True,
+            configuration_wired=True,
+        )
+        assert view.can_edit
+        managed.apply_view(view)
+        assert managed.protocol.can_edit
+        assert managed.protocol.editor.isEnabled()
+        assert managed.recordings.velocities.isEnabled()
+        assert managed.tracking.can_edit
+        assert managed.tracking.pipeline.isEnabled()
+        assert managed.protocol.assets.folders["root"].isEnabled()
+        assert managed.devices.projectors.can_review
+        assert managed.devices.projectors.calibration.isEnabled()
+        assert managed.devices.spikeglx.can_review
+>       assert managed.devices.spikeglx.pairing.isEnabled()
+E       assert False
+E        +  where False = <built-in method isEnabled of QCheckBox object at 0x137609870>()
+E        +    where <built-in method isEnabled of QCheckBox object at 0x137609870> = <PyQt6.QtWidgets.QCheckBox object at 0x137609870>.isEnabled
+E        +      where <PyQt6.QtWidgets.QCheckBox object at 0x137609870> = <cephvr.gui.spikeglx.SpikeGLXPanel object at 0x1401d4040>.pairing
+E        +        where <cephvr.gui.spikeglx.SpikeGLXPanel object at 0x1401d4040> = <cephvr.gui.devices.DevicesPage object at 0x1401e0550>.spikeglx
+E        +          where <cephvr.gui.devices.DevicesPage object at 0x1401e0550> = <cephvr.gui.managed_window.ManagedDashboardWindow object at 0x137637640>.devices
+
+tests/gui/test_dashboard.py:137: AssertionError
+_________ test_initial_and_reopened_retained_warnings_gate_auto_claim __________
+
+    
+    
+    def test_initial_and_reopened_retained_warnings_gate_auto_claim() -> None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.main import ManagedGui
+    
+        class Action:
+            def __init__(self) -> None:
+                self.enabled = False
+    
+            def setEnabled(self, enabled: bool) -> None:
+                self.enabled = enabled
+    
+        requests: list[str] = []
+        prompt_updates: list[tuple[bool, int]] = []
+    
+        def install_prompts(
+            _state: pb.Snapshot,
+            *,
+            require_acknowledgement: bool,
+            can_respond: bool,
+            connection_epoch: int,
+        ) -> None:
+            assert not can_respond
+            prompt_updates.append((require_acknowledgement, connection_epoch))
+    
+        manager = SimpleNamespace(
+            _retained_ack_required=False,
+            _retained_ack_identity=None,
+            _acknowledged_identity=None,
+            _awaiting_reconnect_review=False,
+            _connection_epoch=1,
+            _connection_identity=None,
+            state=None,
+            configuration=SimpleNamespace(
+                install=lambda _state: True,
+                stale=False,
+                last_error="",
+                _installing=False,
+            ),
+            bridge=SimpleNamespace(
+                principal=SimpleNamespace(generation="gui-1"),
+                request=lambda action: requests.append(action),
+            ),
+            cameras=SimpleNamespace(install=lambda _state: []),
+            window=SimpleNamespace(
+                devices=SimpleNamespace(sync_cameras=lambda: None),
+                apply_view=lambda _view: None,
+            ),
+            display_operations=SimpleNamespace(
+                install_calibration_state=lambda _state, *, launch_eligible: None
+            ),
+            mcu=SimpleNamespace(install=lambda _state, _held: None),
+            prompts=SimpleNamespace(update=install_prompts),
+            tracking_diagnostics=SimpleNamespace(install_snapshot=lambda _state: None),
+            review_retained=Action(),
+            take=Action(),
+            takeover=Action(),
+            release=Action(),
+            review_prompt=Action(),
+            reload_configuration=Action(),
+            control_ready=True,
+            auto_control_attempted=False,
+        )
+        manager.claim_unheld_control = lambda: ManagedGui.claim_unheld_control(manager)
+>       initial = pb.Snapshot(controller_generation="controller-1")
+
+tests/gui/test_dashboard.py:9686: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(_retained_ack_required=True, _retained_ack_identity=(1, 'controller-1'), _acknowledged_identity=None, _await...unheld_control=<function test_initial_and_reopened_retained_warnings_gate_auto_claim.<locals>.<lambda> at 0x3ea63b1a0>)
+epoch = 1, generation = 'controller-1'
+raw = b'\n\x0ccontroller-1Z\x19\x1a\x17retained device warning'
+
+    def install_snapshot(self, epoch: int, generation: str, raw: bytes) -> None:
+        state = pb.Snapshot.FromString(raw)
+        if generation != state.controller_generation:
+            return
+        identity = (epoch, generation)
+        self._connection_epoch = epoch
+        self._connection_identity = identity
+        if self._awaiting_reconnect_review or (
+            self._retained_ack_required and self._retained_ack_identity != identity
+        ):
+            self._retained_ack_required = True
+            self._retained_ack_identity = identity
+            self._awaiting_reconnect_review = False
+        if retained_ack_required_for(state, identity, self._acknowledged_identity):
+            self._retained_ack_required = True
+            self._retained_ack_identity = identity
+        self.state = state
+        held = state.control.holder_client_id == self.bridge.principal.generation
+        permitted = not self._retained_ack_required
+        self.review_retained.setEnabled(self._retained_ack_required)
+        self.take.setEnabled(
+            permitted and not held and not state.control.holder_client_id
+        )
+        self.takeover.setEnabled(
+            permitted and not held and bool(state.control.holder_client_id)
+        )
+        self.release.setEnabled(held)
+        preview_views = self.cameras.install(state)
+        self.window.devices.sync_cameras()
+        try:
+            configuration_wired = self.configuration.install(state)
+        except (ValueError, TypeError, AttributeError) as error:
+            configuration_wired = False
+            self.configuration.last_error = str(error)
+            self.configuration._installing = False
+        self.reload_configuration.setEnabled(permitted and self.configuration.stale)
+        view = dashboard_view(
+            state,
+            self.bridge.principal.generation,
+            tuple(preview_views),
+            configuration_wired=configuration_wired,
+        )
+        if not permitted:
+            view = replace(view, has_control=False)
+        self.window.apply_view(view)
+        self.tracking_diagnostics.install_snapshot(state)
+        self.mcu.install(state, held and permitted)
+        self.display_operations.install_calibration_state(
+>           state, launch_eligible=self._calibration_launch_eligible(state)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute '_calibration_launch_eligible'
+
+src/cephvr/gui/main.py:278: AttributeError
+=========================== short test summary info ============================
+SKIPPED [1] tests/platform/test_windows_native_on_rig.py:27: native Windows process/resource checks require Windows
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:120: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:147: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:176: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:206: ring tests require documented Win32 atomics
+SKIPPED [1] tests/acquisition/test_worker_ring_regressions.py:240: ring tests require documented Win32 atomics
+SKIPPED [1] tests/visual_stimulus/test_resources.py:49: could not import 'tifffile': No module named 'tifffile'
+FAILED tests/gui/test_dashboard.py::test_managed_runtime_editors_are_enabled_without_review_samples
+FAILED tests/gui/test_dashboard.py::test_initial_and_reopened_retained_warnings_gate_auto_claim
+2 failed, 1225 passed, 7 skipped, 5 deselected in 131.46s (0:02:11)

@@ -291,12 +291,15 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
 <a id="e07"></a>
 ### E07 — Configuration and protocol preparation
 
-**Status:** Accepted · **Revision:** 58
+**Status:** Accepted · **Revision:** 59
 
 #### Sources and loading
 
 - Experimental settings and the protocol become immutable when Start is accepted
   and stay fixed for the session; changing them requires a new session.
+- T08's separate diagnostic draft never enters the current experiment configuration
+  or its history; selected-stage diagnostic validation does not relax E07 submission
+  or Setup validation.
 - Initialize a new configuration from the last-used values when history exists,
   otherwise from defaults. Defaults fill missing settings without replacing saved
   values. Config-file-only control policies come from their owning TOML files

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import json
 import os
 import shutil
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
@@ -14,10 +16,15 @@ import pytest
 
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.configuration import controller_validators
 from cephvr.controller.control import configuration as configuration_module
 from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.runtime import ControllerRuntime
+from cephvr.controller.startup.providers import (
+    _installed_file_policies,
+    _installed_validators,
+)
 from cephvr.controller.state import Attempt
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 from tests.controller.support_components import (
@@ -27,6 +34,7 @@ from tests.controller.support_components import (
     default_limits,
 )
 from tests.controller.support_components import _runtime as component_runtime
+from tests.visual_stimulus.support import valid_display_json
 
 
 def _runtime(backend: pb.BackendContext | None = None) -> ControllerRuntime:
@@ -176,6 +184,165 @@ def _update_request(
     )
 
 
+@pytest.mark.parametrize(
+    "blocker", ["manual_cleanup", "failed_cleanup", "tracking", "inventory"]
+)
+async def test_update_configuration_preserves_unresolved_owner_revision(
+    monkeypatch: pytest.MonkeyPatch, blocker: str
+) -> None:
+    runtime = _runtime()
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    runtime.configuration_commands.validators = {
+        "test": lambda _configuration: pb.ValidationResult(completed=True, valid=True)
+    }
+    if blocker == "manual_cleanup":
+        runtime.lifecycle.manual_control_cleanup_pending = True
+    elif blocker == "inventory":
+        runtime.lifecycle.inventory_update_pending = True
+    elif blocker == "failed_cleanup":
+        session = pb.SessionContext(
+            controller_generation=runtime.generation, session_id=_id()
+        )
+        attempt = Attempt(
+            session,
+            pb.PreparedSession(context=session),
+            None,  # type: ignore[arg-type]
+            {},
+            {},
+        )
+        attempt.closure.done = True
+        attempt.closure.clean = False
+        runtime.lifecycle.attempt = attempt
+        runtime.lifecycle.session.cleanup_confirmed = False
+    else:
+        runtime.control.tracking_diagnostic.diagnostic_id = _id()
+        runtime.control.tracking_diagnostic.active = True
+        runtime.control.tracking_diagnostic.closed = False
+        runtime.control.tracking_diagnostic.configuration_revision = (
+            runtime.configuration_state.revision
+        )
+    revision = runtime.configuration_state.revision
+    admission = await runtime.update_configuration(_update_request(runtime, "changed"))
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    expected = {
+        "manual_cleanup": "manual device cleanup",
+        "inventory": "inventory persistence",
+        "failed_cleanup": "session cleanup is unresolved",
+        "tracking": "Tracking diagnostic must confirm closure",
+    }[blocker]
+    assert expected in admission.failure.message
+    assert runtime.configuration_state.revision == revision
+    assert runtime.configuration_state.current.subject == ""
+
+
+async def test_update_configuration_rechecks_owner_cleanup_after_validation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = _runtime()
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    started, release = threading.Event(), threading.Event()
+
+    def validate(_configuration: pb.ExperimentConfiguration) -> pb.ValidationResult:
+        started.set()
+        assert release.wait(2)
+        return pb.ValidationResult(completed=True, valid=True)
+
+    runtime.configuration_commands.validators = {"test": validate}
+    update = asyncio.create_task(
+        runtime.update_configuration(_update_request(runtime, "changed"))
+    )
+    assert await asyncio.to_thread(started.wait, 2)
+    runtime.lifecycle.manual_control_cleanup_pending = True
+    release.set()
+    admission = await update
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    assert runtime.configuration_state.revision == 1
+
+
+async def test_ready_configuration_edit_without_unresolved_owner_remains_allowed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = _runtime()
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_READY
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    runtime.configuration_commands.validators = {
+        "test": lambda _configuration: pb.ValidationResult(completed=True, valid=True)
+    }
+    session = pb.SessionContext(
+        controller_generation=runtime.generation, session_id=_id()
+    )
+    runtime.lifecycle.attempt = Attempt(
+        session,
+        pb.PreparedSession(context=session),
+        None,  # type: ignore[arg-type]
+        {},
+        {},
+    )
+    cleanup_calls = []
+
+    async def cancel_attempt(_attempt: Attempt) -> None:
+        cleanup_calls.append(True)
+
+    monkeypatch.setattr(runtime.cleanup, "cancel_attempt", cancel_attempt)
+    tasks = TaskCapture(runtime.configuration_commands.spawn)
+    runtime.configuration_commands.spawn = tasks.spawn
+    admission = await runtime.update_configuration(_update_request(runtime, "changed"))
+    await tasks.drain()
+    assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.configuration_state.current.subject == "changed"
+    assert cleanup_calls == [True]
+
+
+async def test_setup_waits_for_inventory_persistence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recording_root = tmp_path / "recordings"
+    recording_root.mkdir()
+    runtime, _tasks = _setup_ready_runtime(monkeypatch, str(recording_root))
+    runtime.lifecycle.inventory_update_pending = True
+    admission = await runtime.setup(_command())
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    assert "inventory persistence" in admission.failure.message
+
+
+@pytest.mark.parametrize("blocker", ["inventory", "tracking", "calibration"])
+async def test_setup_rechecks_owner_readiness_after_validation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, blocker: str
+) -> None:
+    recording_root = tmp_path / "recordings"
+    recording_root.mkdir()
+    runtime, tasks = _setup_ready_runtime(monkeypatch, str(recording_root))
+    started, release = threading.Event(), threading.Event()
+
+    def validate(_configuration: pb.ExperimentConfiguration) -> pb.ValidationResult:
+        started.set()
+        assert release.wait(2)
+        return pb.ValidationResult(completed=True, valid=True)
+
+    runtime.setup_admission.validators = {"structural": validate}
+    setup = asyncio.create_task(runtime.setup(_command()))
+    assert await asyncio.to_thread(started.wait, 2)
+    async with runtime.lifecycle.lock:
+        if blocker == "inventory":
+            runtime.lifecycle.inventory_update_pending = True
+        elif blocker == "tracking":
+            runtime.control.tracking_diagnostic.active = True
+            runtime.control.tracking_diagnostic.closed = False
+        else:
+            runtime.device_state.calibration_blocked = True
+    release.set()
+    admission = await setup
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    assert {
+        "inventory": "inventory persistence",
+        "tracking": "Tracking diagnostic must confirm closure",
+        "calibration": "Display calibration must confirm Idle",
+    }[blocker] in admission.failure.message
+    assert runtime.lifecycle.attempt is None
+    assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
+    await tasks.drain()
+
+
 async def test_rejected_edit_reports_first_validation_field(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -195,6 +362,98 @@ async def test_rejected_edit_reports_first_validation_field(
     assert "trigger_source: external trigger input must be explicit" in (
         admission.failure.message
     )
+
+
+async def test_update_configuration_admission_rejects_setting_up(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = _runtime()
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    revision = runtime.configuration_state.revision
+    result = await runtime.update_configuration(_update_request(runtime, "new"))
+    assert result.result == pb.COMMAND_RESULT_REJECTED
+    assert runtime.configuration_state.current.subject == ""
+    assert runtime.configuration_state.revision == revision
+
+
+async def test_installed_visual_stimulus_policy_is_shared_by_edit_and_setup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = Path(__file__).resolve().parents[2]
+    for relative in (
+        "config/backends/visual_stimulus_config.toml",
+        "contracts/policy/visual_stimulus_policy.toml",
+    ):
+        destination = tmp_path / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(repository / relative, destination)
+    config_path = tmp_path / "config/backends/visual_stimulus_config.toml"
+    config_path.write_text(
+        config_path.read_text().replace(
+            '# pacing_output_id = "<configured output ID>"',
+            'pacing_output_id = "projector/main"',
+        )
+    )
+
+    profile = json.loads(valid_display_json())
+    profile["presentation_mode"] = "photodiode_only_vsync"
+    profile["photodiode_enabled"] = False
+    profile["photodiode_output_id"] = None
+    profile.pop("pacing_output_id", None)
+    proposed = pb.ExperimentConfiguration()
+    backend = proposed.backends.add(backend_name="visual_stimulus", enabled=True)
+    backend.visual_stimulus.display.profile_json = json.dumps(profile)
+
+    runtime = _runtime()
+    validators = controller_validators(_installed_validators(tmp_path))
+    runtime.configuration_commands.validators = validators
+    runtime.setup_admission.validators = validators
+    policy_loads = 0
+
+    def load_policy_after_commit(active: frozenset[str]) -> dict[str, object]:
+        nonlocal policy_loads
+        policy_loads += 1
+        policies = _installed_file_policies(tmp_path, active)
+        # Setup must validate against the exact file policy it captured even if
+        # the host file changes before the validator runs.
+        config_path.write_text(
+            config_path.read_text().replace(
+                'pacing_output_id = "projector/main"',
+                'pacing_output_id = "projector/changed"',
+            )
+        )
+        return policies
+
+    runtime.setup_admission.file_policy_loader = load_policy_after_commit
+    monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+    initial_revision = runtime.configuration_state.revision
+    request = svc.UpdateConfigurationRequest(
+        command=svc.OperatorCommand(operator=pb.OperatorContext(command_id=_id())),
+        expected_revision=runtime.configuration_state.revision,
+        proposed=proposed,
+    )
+
+    admission = await runtime.update_configuration(request)
+
+    assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+    assert runtime.configuration_state.revision == initial_revision + 1
+    saved_profile = runtime.configuration_state.current.backends[
+        0
+    ].visual_stimulus.display.profile_json
+    assert (
+        saved_profile
+        == request.proposed.backends[0].visual_stimulus.display.profile_json
+    )
+    assert "pacing_output_id" not in json.loads(saved_profile)
+    candidate = await runtime.setup_admission._load_candidate(
+        _id(), runtime.configuration_state.current
+    )
+    assert policy_loads == 1
+    assert not isinstance(candidate, pb.CommandAdmission)
+    policy = candidate.file_policies["visual_stimulus"]
+    assert policy.pacing_output_id == "projector/main"
+    assert candidate.validation[0].completed and candidate.validation[0].valid
 
 
 def _racing_runtime(
@@ -239,17 +498,25 @@ def _racing_runtime(
     return runtime, attempt, tasks
 
 
-@pytest.mark.parametrize("phase", [pb.SESSION_PHASE_SETTING_UP, pb.SESSION_PHASE_READY])
-async def test_commit_racing_setup_or_ready_commits_and_cancels_setup(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phase: pb.SessionPhase.ValueType
+@pytest.mark.parametrize(
+    ("phase", "accepted"),
+    [(pb.SESSION_PHASE_SETTING_UP, False), (pb.SESSION_PHASE_READY, True)],
+)
+async def test_commit_racing_setup_or_ready_checks_phase_again(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    phase: pb.SessionPhase.ValueType,
+    accepted: bool,
 ) -> None:
     runtime, attempt, tasks = _racing_runtime(tmp_path, monkeypatch, phase)
     result = await runtime.update_configuration(_update_request(runtime, "new"))
-    assert result.result == pb.COMMAND_RESULT_ACCEPTED
-    assert runtime.configuration_state.current.subject == "new"
-    assert attempt.cancel_requested
+    assert result.result == (
+        pb.COMMAND_RESULT_ACCEPTED if accepted else pb.COMMAND_RESULT_REJECTED
+    )
+    assert (runtime.configuration_state.current.subject == "new") is accepted
+    assert attempt.cancel_requested is accepted
     await tasks.drain()
-    assert tasks.cancelled == [attempt]  # type: ignore[attr-defined]
+    assert tasks.cancelled == ([attempt] if accepted else [])  # type: ignore[attr-defined]
 
 
 @pytest.mark.parametrize("phase", [pb.SESSION_PHASE_STARTING, pb.SESSION_PHASE_RUNNING])

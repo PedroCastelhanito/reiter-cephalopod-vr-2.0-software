@@ -16,6 +16,7 @@ from cephvr.shared.backend_bootstrap import BackendBootstrap, decode_backend_boo
 from cephvr.shared.backend_registration import register_backend_endpoint
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.credentials import CredentialStore, default_runtime_root
 from cephvr.tracking.coordinator.state import Identity
 from cephvr.tracking.runtime import TrackingRuntime
 from cephvr.tracking.transport.peers import Peer
@@ -53,6 +54,7 @@ async def run(bootstrap: BackendBootstrap) -> None:
         controller,
         supervisor,
         ledger,
+        recovery_ns=bootstrap.policies.recovery_ns,
     )
     credentials = {
         (
@@ -68,8 +70,12 @@ async def run(bootstrap: BackendBootstrap) -> None:
         runtime,
         credentials,
         ledger,
+        diagnostic=runtime.diagnostic,
         port=bootstrap.endpoint_port,
         max_message_bytes=bootstrap.max_message_bytes,
+        viewer_credentials=CredentialStore(
+            default_runtime_root(), bootstrap.controller.generation
+        ),
     )
     watch = asyncio.create_task(watch_authorities(bootstrap, native, runtime))
     try:

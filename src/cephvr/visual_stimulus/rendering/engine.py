@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cephvr.visual_stimulus.config.models.program_model import VideoSettings
 from cephvr.visual_stimulus.rendering.state import InstanceState, TrialState
@@ -15,6 +15,7 @@ from cephvr.visual_stimulus.rendering.types import (
     EvidenceStateSnapshot,
     FeedbackEvidenceSnapshot,
     InstanceSnapshot,
+    OutputActivity,
     RenderGroup,
     RenderPassResult,
     RenderPort,
@@ -22,6 +23,12 @@ from cephvr.visual_stimulus.rendering.types import (
     ResourceReleaseReport,
     SubmissionSnapshot,
 )
+
+if TYPE_CHECKING:
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+    from cephvr.visual_stimulus.resources.display_calibration import (
+        PreparedDisplayCalibration,
+    )
 
 
 class RendererStateError(RuntimeError):
@@ -150,6 +157,101 @@ class RendererEngine:
     def service_display(self) -> bool:
         self._assert_owner()
         return self._port.service_display()
+
+    def present_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[OutputActivity, ...]:
+        self._assert_owner()
+        if self._trial_id is not None:
+            raise RendererStateError("display calibration cannot run during a trial")
+        if prepared.display != display:
+            raise RendererStateError(
+                "calibration display differs from its prepared owner"
+            )
+        present = getattr(self._port, "present_display_calibration", None)
+        if present is None:
+            raise RendererStateError("render port has no display-calibration path")
+        if self._display != display:
+            calibration = prepared.display_calibration
+            previous = prepared.previous_display
+            if self._display is None:
+                install = getattr(self._port, "install_display_calibration", None)
+                if install is None:
+                    raise RendererStateError(
+                        "render port cannot install display calibration"
+                    )
+                install(calibration)
+                self.initialize_display(display)
+            elif self._display == previous:
+                self.replace_display(display, calibration)
+            else:
+                raise RendererStateError(
+                    "renderer display differs from the accepted calibration owner"
+                )
+        return tuple(present(display, prepared))
+
+    def close_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[tuple[OutputActivity, ...], bool]:
+        self._assert_owner()
+        if prepared.display != display:
+            raise RendererStateError(
+                "calibration display differs from its prepared owner"
+            )
+        if self._trial_id is not None or (
+            self._display != display and not prepared.renderer_idle_confirmed
+        ):
+            raise RendererStateError(
+                "calibration close requires the initialized Idle display"
+            )
+        if not prepared.renderer_idle_confirmed:
+            close = getattr(self._port, "close_display_calibration", None)
+            if close is None:
+                raise RendererStateError(
+                    "render port has no display-calibration closure path"
+                )
+            activities, released = close(display, prepared)
+            if not released or not self._idle_attempts_confirmed(display, activities):
+                return tuple(activities), False
+            prepared.renderer_idle_confirmed = True
+            prepared.renderer_idle_activities = tuple(activities)
+
+        activities = prepared.renderer_idle_activities
+        previous = prepared.previous_display
+        if previous is None:
+            report = self.cleanup()
+            return activities, not report.outstanding
+        calibration = prepared.previous_calibration
+        if calibration is None:
+            return activities, False
+        try:
+            if self._display != previous:
+                initialization = self.replace_display(previous, calibration)
+                restored_idle = tuple(initialization.idle_activity)
+            else:
+                idle = getattr(self._port, "show_idle", None)
+                if idle is None:
+                    return activities, False
+                restored_idle = tuple(idle(previous))
+        except Exception:
+            return activities, False
+        return activities + restored_idle, self._idle_attempts_confirmed(
+            previous, restored_idle
+        )
+
+    @staticmethod
+    def _idle_attempts_confirmed(
+        display: DisplayProfile, activities: tuple[OutputActivity, ...]
+    ) -> bool:
+        expected = {item.output_id for item in display.active_outputs}
+        return (
+            len(activities) == len(expected)
+            and {item.output_id for item in activities} == expected
+            and all(
+                item.error is None and item.swap_return_ns >= item.swap_entry_ns
+                for item in activities
+            )
+        )
 
     def poll_diagnostics(self) -> tuple[DiagnosticSnapshot, ...]:
         self._assert_owner()

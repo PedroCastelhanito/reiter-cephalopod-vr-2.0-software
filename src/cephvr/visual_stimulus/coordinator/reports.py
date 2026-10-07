@@ -387,13 +387,102 @@ class Reports:
         link = self.state.links.get(report.command_id)
         if (
             link is None
-            or link.method != "InitializeDisplay"
+            or link.method
+            not in {
+                "InitializeDisplay",
+                "OpenDisplayCalibration",
+                "CloseDisplayCalibration",
+                "Cleanup",
+                "Shutdown",
+                "InterruptSession",
+                "CancelSetup",
+            }
             or report.source != self.identity.worker
             or report.backend != self.identity.backend
             or report.controller != self.identity.controller
             or report.requested_revision != link.child.target.configuration_revision
         ):
             raise ValueError("display evidence identity/revision mismatch")
+        if link.method in {"OpenDisplayCalibration", "CloseDisplayCalibration"}:
+            evidence = report.calibration
+            outputs = {item.output_id for item in report.outputs}
+            active_evidence = self.state.display
+            expected_diagnostic = link.diagnostic_id
+            if (
+                not expected_diagnostic
+                and active_evidence is not None
+                and active_evidence.HasField("calibration")
+            ):
+                expected_diagnostic = active_evidence.calibration.diagnostic_id
+            if (
+                not report.HasField("calibration")
+                or evidence.diagnostic_id != expected_diagnostic
+                or evidence.controller_generation != self.identity.controller.generation
+                or evidence.renderer_generation != self.identity.worker.generation
+                or evidence.configuration_revision
+                != link.child.target.configuration_revision
+                or outputs != link.output_ids
+                or len(report.outputs) != len(outputs)
+            ):
+                raise ValueError(
+                    "calibration evidence identity differs from its command"
+                )
+            if link.method == "OpenDisplayCalibration" and (
+                evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+                and (not evidence.HasField("presented") or not evidence.presented)
+            ):
+                raise ValueError("Active calibration lacks presentation evidence")
+            if link.method == "CloseDisplayCalibration" and (
+                evidence.state == vp.DISPLAY_CALIBRATION_STATE_IDLE
+                and (
+                    not evidence.HasField("idle")
+                    or not evidence.idle
+                    or not evidence.HasField("resources_closed")
+                    or not evidence.resources_closed
+                )
+            ):
+                raise ValueError("Idle calibration lacks resource-closure evidence")
+            if evidence.state not in {
+                vp.DISPLAY_CALIBRATION_STATE_ACTIVE,
+                vp.DISPLAY_CALIBRATION_STATE_IDLE,
+                vp.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+            }:
+                raise ValueError(
+                    "calibration evidence is not a terminal diagnostic state"
+                )
+        elif link.method in {
+            "Cleanup",
+            "Shutdown",
+            "InterruptSession",
+            "CancelSetup",
+        } and report.HasField("calibration"):
+            evidence = report.calibration
+            outputs = {item.output_id for item in report.outputs}
+            prior = self.state.display
+            if (
+                prior is None
+                or not prior.HasField("calibration")
+                or evidence.diagnostic_id != prior.calibration.diagnostic_id
+                or evidence.controller_generation != self.identity.controller.generation
+                or evidence.renderer_generation != self.identity.worker.generation
+                or evidence.configuration_revision
+                != link.child.target.configuration_revision
+                or outputs != link.output_ids
+                or len(report.outputs) != len(outputs)
+                or evidence.state
+                not in {
+                    vp.DISPLAY_CALIBRATION_STATE_IDLE,
+                    vp.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+                }
+            ):
+                raise ValueError("safety-close calibration evidence is not exact")
+            if evidence.state == vp.DISPLAY_CALIBRATION_STATE_IDLE and (
+                not evidence.HasField("idle")
+                or not evidence.idle
+                or not evidence.HasField("resources_closed")
+                or not evidence.resources_closed
+            ):
+                raise ValueError("safety-close Idle lacks resource-closure evidence")
         forwarded = pb.VisualStimulusDisplayView.FromString(report.SerializeToString())
         forwarded.command_id = link.parent.command_id
         forwarded.source.CopyFrom(self.identity.process)

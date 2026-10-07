@@ -2,7 +2,7 @@
 # Source rules: GUI client defaults. See architecture.md: E03, E08, E14, A03, A10.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/gui_config.toml. The loader rejects a version mismatch.
-policy_version = 4
+policy_version = 5
 
 [controller_reconnect]
 repeat_last_delay = true
@@ -17,7 +17,7 @@ dismissal = "not_a_decision"
 
 [control_lease]
 new_subscription = "observer"
-acquisition = "explicit_take_control_after_synchronization"
+acquisition = "automatic_unheld_after_synchronization_explicit_takeover"
 
 [recovery]
 supervisor_completion_report = false

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import cv2
@@ -25,14 +26,19 @@ class ContourPose:
         reference: SubjectReferenceSettings,
         asset_root: str,
         limits: FileLimits,
+        *,
+        reference_is_transformed: bool = False,
     ) -> None:
         validate_search(search, layout.width, layout.height)
-        validate_reference(reference)
         if (reference.image_width_px, reference.image_height_px) != (
             layout.width,
             layout.height,
         ):
-            raise ValueError("reference dimensions differ from source")
+            raise ValueError("reference dimensions differ from prepared image")
+        if reference_is_transformed:
+            _validate_transformed_reference(reference)
+        else:
+            validate_reference(reference)
         if not 0 <= settings.threshold_level <= layout.maximum_code:
             raise ValueError("threshold outside native intensity range")
         if layout.width * layout.height * 40 > limits.max_native_bytes:
@@ -165,3 +171,17 @@ class ContourPose:
 
     def close(self, deadline_host_ns: int) -> bool:
         return True
+
+
+def _validate_transformed_reference(reference: SubjectReferenceSettings) -> None:
+    coordinates = []
+    for name in ("anterior", "posterior", "medial_left", "medial_right"):
+        point = getattr(reference, name)
+        if not point.HasField("x_px") or not point.HasField("y_px"):
+            raise ValueError("transformed subject reference requires complete points")
+        coordinates.append((point.x_px, point.y_px))
+    if not all(math.isfinite(value) for point in coordinates for value in point):
+        raise ValueError("transformed subject reference points must be finite")
+    anterior, posterior, medial_left, medial_right = coordinates
+    if anterior == posterior or medial_left == medial_right:
+        raise ValueError("transformed subject reference directions must be nonzero")

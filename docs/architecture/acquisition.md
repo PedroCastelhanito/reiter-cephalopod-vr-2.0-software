@@ -160,7 +160,7 @@ and verification remain in the
 <a id="a03"></a>
 ### A03 — Frame transfer between processes
 
-**Status:** Accepted · **Revision:** 31
+**Status:** Accepted · **Revision:** 32
 
 - Pixels reach other processes (tracking, preview viewers) through coordinator-owned
   host shared memory, never control gRPC. Inside a camera worker, capture hands frames
@@ -174,6 +174,11 @@ and verification remain in the
   reset; release on session cleanup or failed/cancelled Setup. Each allocation gets a
   fresh unique name; descriptors bind allocation, role, layout and
   session/configuration.
+- T08 Configuration diagnostics may additionally allocate an ordered TRACKING ring
+  in exact manual-preview scope after confirmed camera layout, separate from the
+  latest-frame GUI ring. Acquisition retains allocation and transfer ownership,
+  exact registered Tracking consumer identity and release obligations. This is not
+  a session/trial binding; both scopes preserve native pixels and A04 reset rules.
 - The tracking ring and the in-process recording queue each default to **10 frames**
   (`[buffers] tracking_ring_frames`, `recording_queue_frames`), configurable before
   Setup. Create only what is needed; never grow at runtime. When the optional
@@ -601,7 +606,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 51
+**Status:** Accepted · **Revision:** 52
 
 **Capture lifetime**
 
@@ -655,6 +660,10 @@ stamping/filtering and the mappings still need runtime implementation.
   before Setup. An optional low-rate session preview (A03, `session_preview_max_hz`,
   default 10, configurable, 0 = off) shows in-trial frames only and never changes
   capture or pulses.
+- Controller-authorized T08 diagnostics may consume the selected manual preview
+  through A03's distinct ordered ring without another camera/SDK owner. Exact
+  diagnostic/preview identities and confirmed attachment/release bind the consumer;
+  stop diagnostics and confirm release before Setup or source replacement.
 - Display newly arriving frames without a software FPS cap, always the newest
   available, skipping superseded images if rendering falls behind. No display backlog
   or busy polling. Camera rate is unchanged and not every acquired frame is guaranteed

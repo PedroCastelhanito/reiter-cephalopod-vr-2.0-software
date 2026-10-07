@@ -29,6 +29,7 @@ from cephvr.platform.windows.python_runtime import (
     resolve_python_executable,
 )
 from cephvr.shared.clock import HostClockDescriptor
+from cephvr.shared.transport_deadlines import remaining_seconds
 from cephvr.supervisor.outbound import GrpcOutbound
 from cephvr.supervisor.registry import LaunchRegistry
 from cephvr.supervisor.runtime import SupervisorRuntime
@@ -133,14 +134,27 @@ async def launch_controller(
     return child
 
 
-async def launch_role(
-    inputs: LaunchInputs, role: str, module: str, controller_child: SuspendedProcess
-) -> None:
-    """Start one preplanned role in its existing containment job."""
-    generation, token = inputs.role_bootstrap[role]
+async def _launch_role_plan(
+    inputs: LaunchInputs,
+    role: str,
+    module: str,
+    controller_child: SuspendedProcess,
+    generation: str,
+    token: str,
+    role_plan: wire.PlanLaunchRequest,
+    state: wire.LaunchState,
+    deadline_ns: int | None = None,
+) -> SuspendedProcess:
+    """Launch one exact supervisor-owned plan and release its one-use bootstrap."""
+
+    def timeout() -> float:
+        value = 15.0 if deadline_ns is None else remaining_seconds(deadline_ns)
+        if value <= 0:
+            raise TimeoutError("GUI relaunch deadline expired")
+        return value
+
+    timeout()
     child_identity = types.ProcessIdentity(role=role, generation=generation)
-    role_plan = inputs.role_plans[role]
-    state = inputs.role_states[role]
     role_read, role_write = create_bootstrap_pipe()
     role_child = inputs.native.launch_suspended(
         str(inputs.bootstrap["interpreter"]),
@@ -148,6 +162,13 @@ async def launch_role(
         [state.containment_job_name],
         (role_read,),
     )
+    try:
+        timeout()
+    except TimeoutError:
+        inputs.native.terminate_exact(role_child.pid, role_child.creation_time_100ns)
+        close_handle(role_read)
+        close_handle(role_write)
+        raise
     inputs.registry.confirm(
         wire.ConfirmLaunchRequest(
             command_id=str(uuid4()),
@@ -164,9 +185,6 @@ async def launch_role(
     role_descriptor = {
         "role": role,
         "generation": generation,
-        "token": token,
-        "controller_token": str(inputs.bootstrap["controller_token"]),
-        "supervisor_token": str(inputs.bootstrap["supervisor_token"]),
         "controller_generation": inputs.controller.generation,
         "supervisor_generation": inputs.identity.generation,
         "controller_port": int(str(inputs.bootstrap["controller_port"])),
@@ -186,6 +204,10 @@ async def launch_role(
         ),
         "software_root": str(inputs.software_root),
     }
+    if role != "gui":
+        role_descriptor["token"] = token
+        role_descriptor["controller_token"] = str(inputs.bootstrap["controller_token"])
+        role_descriptor["supervisor_token"] = str(inputs.bootstrap["supervisor_token"])
     if role in {"acquisition", "visual_stimulus", "tracking"}:
         policy_descriptor = inputs.bootstrap.get("control_policies")
         if not isinstance(policy_descriptor, str) or not policy_descriptor:
@@ -200,8 +222,35 @@ async def launch_role(
         role_descriptor["tracking_generation"] = inputs.role_bootstrap["tracking"][0]
     await run_pipe_io_daemon(
         lambda: write_bootstrap(role_write, role_descriptor),
-        timeout_s=15,
+        timeout_s=timeout(),
     )
+    return role_child
+
+
+async def launch_role(
+    inputs: LaunchInputs, role: str, module: str, controller_child: SuspendedProcess
+) -> None:
+    """Start one preplanned role in its existing containment job."""
+    generation, token = inputs.role_bootstrap[role]
+    role_plan = inputs.role_plans[role]
+    state = inputs.role_states[role]
+    role_child = await _launch_role_plan(
+        inputs,
+        role,
+        module,
+        controller_child,
+        generation,
+        token,
+        role_plan,
+        state,
+    )
+    if role == "gui":
+        await inputs.outbound.register_gui_launch(
+            types.ProcessIdentity(role=role, generation=generation),
+            role_plan.command_id,
+            role_child.pid,
+            role_child.creation_time_100ns,
+        )
 
 
 def validate_bootstrap(bootstrap: dict[str, object]) -> dict[str, str]:
@@ -368,6 +417,57 @@ async def run_supervisor(
             raise WindowsLaunchError("launcher did not retain exact controller handle")
         runtime.acknowledge_controller_registration()
         await role_launches
+
+        active_gui_command = {"command_id": role_plans["gui"].command_id}
+        gui_launch_lock = asyncio.Lock()
+
+        async def relaunch_gui(
+            request: wire.PlanLaunchRequest,
+            planned: wire.LaunchState,
+            token: str,
+            deadline_ns: int,
+        ) -> wire.LaunchState:
+            async with gui_launch_lock:
+                if (
+                    request.owner != identity
+                    or request.child.role != "gui"
+                    or request.executable != str(bootstrap["interpreter"])
+                    or not request.python_worker
+                    or request.stop_method != "grpc_shutdown"
+                    or request.HasField("work")
+                    or request.HasField("parent_operation")
+                ):
+                    raise WindowsLaunchError(
+                        "GUI relaunch plan is outside launcher policy"
+                    )
+                if request.command_id == active_gui_command["command_id"]:
+                    return runtime.registry.refresh(request.command_id)
+                previous = runtime.registry.refresh(active_gui_command["command_id"])
+                if previous.phase != wire.LAUNCH_PHASE_RELEASED:
+                    raise WindowsLaunchError(
+                        "prior GUI launch is not confirmed released"
+                    )
+                active_gui_command["command_id"] = request.command_id
+                role_child = await _launch_role_plan(
+                    inputs,
+                    "gui",
+                    "cephvr.gui.main",
+                    child,
+                    request.child.generation,
+                    token,
+                    request,
+                    planned,
+                    deadline_ns,
+                )
+                await outbound.register_gui_launch(
+                    request.child,
+                    request.command_id,
+                    role_child.pid,
+                    role_child.creation_time_100ns,
+                )
+                return runtime.registry.refresh(request.command_id)
+
+        runtime.service.gui_launch_handler = relaunch_gui
         await runtime.wait_until_shutdown()
     finally:
         if role_launches is not None and not role_launches.done():

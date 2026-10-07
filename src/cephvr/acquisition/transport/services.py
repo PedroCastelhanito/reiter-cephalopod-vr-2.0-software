@@ -401,6 +401,21 @@ class AcquisitionConfigurationService(
             ),
         )
 
+    async def AttachTrackingDiagnosticInput(
+        self,
+        request: wire.AcquisitionTrackingDiagnosticAttachmentCommand,
+        context: grpc.aio.ServicerContext,
+    ) -> control.CommandAdmission:
+        return await self._dispatch(
+            context,
+            request,
+            request.command,
+            "AttachTrackingDiagnosticInput",
+            lambda deadline: self.operations.attach_tracking_diagnostic_input(
+                request, deadline_ns=deadline
+            ),
+        )
+
 
 class AcquisitionCoordinatorService(
     _ServiceBase, acq_rpc.AcquisitionCoordinatorServiceServicer

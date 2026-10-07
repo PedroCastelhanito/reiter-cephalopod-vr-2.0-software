@@ -345,10 +345,16 @@ class TrialExecution:
             self.lifecycle.trial.phase = pb.TRIAL_PHASE_FINALIZING
             attempt.finished_deadline_ns = end + self.limit_state.current.finished_ns
             self.publisher.publish()
+        stopped_deadline_ns = end + self.limit_state.current.stop_evidence_ns
         await self.evidence_waiter.wait_evidence(
             lambda: active_backends <= attempt.stopped.keys(),
-            end + self.limit_state.current.stop_evidence_ns,
+            stopped_deadline_ns,
             attempt,
+        )
+        self.interruption.arm_spikeglx_stop(
+            attempt,
+            stopped_deadline_ns=stopped_deadline_ns,
+            final_trial=attempt.trial_index == len(attempt.prepared.trials) - 1,
         )
         await self.evidence_waiter.wait_lifecycle_with_recovery(
             attempt,

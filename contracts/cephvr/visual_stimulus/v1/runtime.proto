@@ -39,7 +39,32 @@ message VisualStimulusFilePolicies {
   optional int64 encoder_stall_timeout_ns = 6;
   optional int64 record_stall_timeout_ns = 7;
   optional int64 max_result_age_ns = 8; // V26: positive; visual_stimulus_config default 350 ms; closed loop.
+  optional double pacing_refresh_hz = 9; // V20 file-only positive finite target.
+  optional string pacing_output_id = 10; // V20 configured output identity.
   // Lifecycle/recovery use shared ControlPolicies; health comes from startup policy.
+}
+enum DisplayCalibrationState {
+  DISPLAY_CALIBRATION_STATE_UNSPECIFIED = 0;
+  DISPLAY_CALIBRATION_STATE_PREPARING = 1;
+  DISPLAY_CALIBRATION_STATE_ACTIVE = 2;
+  DISPLAY_CALIBRATION_STATE_CLOSING = 3;
+  DISPLAY_CALIBRATION_STATE_IDLE = 4;
+  DISPLAY_CALIBRATION_STATE_UNKNOWN = 5;
+}
+message DisplayCalibrationEvidence {
+  string diagnostic_id = 1;
+  string controller_generation = 2;
+  string renderer_generation = 3;
+  uint64 configuration_revision = 4;
+  DisplayCalibrationState state = 5;
+  int64 observed_monotonic_ns = 6;
+  string profile_sha256 = 7;
+  string arena_sha256 = 8;
+  optional bool presented = 9;
+  optional bool idle = 10;
+  optional bool resources_closed = 11;
+  optional string failure_code = 12;
+  optional string failure_message = 13;
 }
 // Compact software observations, not a scientific per-frame control stream.
 enum SubmissionOutcome {

@@ -549,3 +549,93 @@ async def test_connection_check_requires_confirmed_cleanup(
     receipt = await runtime.report_projection("devices", status, ingress_ns=900)
     assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
     assert runtime.control.operations[parent].succeeded is not cleanup_pending
+
+
+@pytest.mark.parametrize("stop", [False, True])
+async def test_acquisition_reporter_completes_preview_with_idle_other_camera(
+    tmp_path: Path, stop: bool
+) -> None:
+    from cephvr.acquisition.coordinator.manual_device_status import (
+        ManualDeviceStatusReporter,
+    )
+    from cephvr.acquisition.ports import ControllerPort
+    from cephvr.acquisition.state import CoordinatorIdentity, PulseRecord
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child, run = _id(), _id(), _id()
+    ledger = runtime.camera_status_retention.ledger
+    assert ledger is not None
+    ledger.admit(parent, b"preview", 1, work_key=parent)
+    _start(
+        runtime,
+        parent,
+        child,
+        svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+        if stop
+        else svc.CAMERA_COMMAND_KIND_START_PREVIEW,
+        False,
+    )
+    operation = runtime.device_state.camera_operation
+    operation.preview_run_id = run
+
+    class Controller:
+        async def report_acquisition_device_status(
+            self, report: svc.AcquisitionDeviceStatusReport, *, deadline_ns: int
+        ) -> pb.ReportReceipt:
+            return await runtime.report_projection("devices", report, ingress_ns=900)
+
+    commands = CommandLedger(
+        _id(),
+        10_000,
+        max_records=16,
+        max_bytes=1_000_000,
+        result_reservation_bytes=4096,
+    )
+    commands.admit(child, b"preview", 1, work_key=child)
+    reporter = ManualDeviceStatusReporter(
+        identity=CoordinatorIdentity(
+            backend,
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+        ),
+        controller=cast(ControllerPort, Controller()),
+        commands=commands,
+        pulse=PulseRecord(),
+        clock=lambda: 100,
+    )
+    reporter.update_camera_state(
+        camera.CAMERA_ROLE_BEHAVIORAL,
+        device_open=not stop,
+        preview_prepared=not stop,
+        preview_running=not stop,
+        preview_run_id="" if stop else run,
+    )
+    receipt = await reporter.report(
+        svc.BackendCommand(command_id=child),
+        command_name="stop_preview" if stop else "start_preview",
+        succeeded=True,
+        deadline_ns=999,
+    )
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED, receipt.failure.message
+    assert runtime.control.operations[parent].succeeded
+    assert runtime.device_state.camera_operation is None
+    assert runtime.projections.devices.tracking.HasField("preview_run_id")
+    assert runtime.projections.devices.tracking.preview_run_id == ""
+
+
+@pytest.mark.parametrize("run_id", ["", "invalid"])
+@pytest.mark.parametrize("prepared", [False, True])
+def test_active_preview_requires_valid_run_identity(
+    tmp_path: Path, run_id: str, prepared: bool
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    status = _status(backend, _id(), succeeded=True)
+    status.views.behavioral.preview_running = not prepared
+    status.views.behavioral.preview_prepared = prepared
+    status.views.behavioral.preview_run_id = run_id
+    with pytest.raises(ValueError):
+        runtime.projections.validate_devices(status)

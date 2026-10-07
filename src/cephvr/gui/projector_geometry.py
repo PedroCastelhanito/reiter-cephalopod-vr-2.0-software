@@ -4,10 +4,11 @@ import math
 from dataclasses import dataclass
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QGridLayout, QLineEdit
+from PyQt6.QtWidgets import QGridLayout, QHeaderView, QLineEdit, QTableWidgetItem
 
-from cephvr.gui.components import Card, field, label
+from cephvr.gui.components import Card, field
 from cephvr.gui.device_panel import entry
+from cephvr.gui.tables import DataTable
 
 FACES = ("Front", "Left", "Right", "Bottom")
 
@@ -214,20 +215,19 @@ class ScreenGeometryEditor(Card):
         super().__init__("Screen dimensions")
         self.fields: dict[tuple[str, str], QLineEdit] = {}
         self.drafts: dict[str, dict[str, str]] = {face: {} for face in FACES}
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(8)
-        grid.setVerticalSpacing(10)
+        self.table = DataTable(len(FACES), 5)
         entries = (
             ("width", "WIDTH\n(mm)"),
             ("height", "HEIGHT\n(mm)"),
             ("distance", "PROJ. DIST.\n(mm)"),
             ("throw", "THROW\nRATIO"),
         )
-        for col, (_key, title) in enumerate(entries, 1):
-            grid.addWidget(label(title, "label", wrap=True), 0, col)
-            grid.setColumnStretch(col, 1)
-        for row, face in enumerate(FACES, 1):
-            grid.addWidget(label(face), row, 0)
+        self.table.setHorizontalHeaderLabels(["", *(title for _, title in entries)])
+        header = self.table.horizontalHeader()
+        assert header is not None
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        for row, face in enumerate(FACES):
+            self.table.setItem(row, 0, QTableWidgetItem(face))
             for col, (key, title) in enumerate(entries, 1):
                 edit = entry("—")
                 edit.setMinimumWidth(0)
@@ -242,8 +242,9 @@ class ScreenGeometryEditor(Card):
                     lambda value, f=face, k=key: self.save_value(f, k, value)
                 )
                 self.fields[face, key] = edit
-                grid.addWidget(edit, row, col)
-        self.body.addLayout(grid)
+                self.table.set_control(row, col, edit)
+        self.table.fit_rows()
+        self.body.addWidget(self.table)
 
     def save_value(self, face: str, key: str, value: str) -> None:
         self.drafts[face][key] = value

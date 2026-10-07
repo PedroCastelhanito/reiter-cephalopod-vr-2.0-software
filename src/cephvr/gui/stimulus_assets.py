@@ -18,7 +18,7 @@ class StimulusAssetsCard(Card):
         self.body.addWidget(picker)
 
     def apply_view(self, view: DashboardView) -> None:
-        editable = view.sample and view.can_edit
+        editable = view.can_edit
         picker = self.folders["root"]
         if not editable and picker.dialog is not None:
             picker.dialog.reject()

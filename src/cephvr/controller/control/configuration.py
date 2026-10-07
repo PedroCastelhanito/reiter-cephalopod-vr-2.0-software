@@ -25,10 +25,10 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 _EDITABLE_PHASES = (
     pb.SESSION_PHASE_CONFIGURATION,
-    pb.SESSION_PHASE_SETTING_UP,
     pb.SESSION_PHASE_READY,
 )
 
@@ -147,6 +147,9 @@ class ConfigurationCommands:
                     command_id,
                     error=error or "configuration revision or phase mismatch",
                 )
+            blocker = self._ownership_blocker()
+            if blocker:
+                return self.control_operations.admission(command_id, error=blocker)
             revision = self.control.revision
             participation_only = camera_participation_only(
                 self.configuration_state.current, request.proposed
@@ -209,6 +212,9 @@ class ConfigurationCommands:
                     or "configuration changes were not applied: "
                     "configuration or session phase changed during validation",
                 )
+            blocker = self._ownership_blocker()
+            if blocker:
+                return self.control_operations.admission(command_id, error=blocker)
             if request.proposed == self.configuration_state.current:
                 self.configuration_state.retain_validation(results)
                 self.control_operations.operation(
@@ -263,6 +269,53 @@ class ConfigurationCommands:
                 self.projections.expected_display = None
             self.publisher.publish()
             return self.control_operations.admission(command_id)
+
+    def _ownership_blocker(self) -> str:
+        """Keep accepted revisions stable while an owner still holds resources."""
+        if self.lifecycle.inventory_update_pending:
+            return "SpikeGLX inventory persistence is still unresolved"
+        if self.lifecycle.manual_control_cleanup_pending:
+            return "manual device cleanup is still reconciling"
+        attempt = self.lifecycle.attempt
+        if (
+            attempt is not None
+            and self.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
+            and attempt.closure.done
+            and not attempt.closure.clean
+            and not self.lifecycle.session.cleanup_confirmed
+        ):
+            return "session cleanup is unresolved; configuration cannot change"
+        if (
+            self.control.tracking_diagnostic.active
+            or not self.control.tracking_diagnostic.closed
+        ):
+            return (
+                "Tracking diagnostic must confirm closure before configuration changes"
+            )
+        if (
+            self.device_state.calibration_blocked
+            or self.device_state.calibration_pending
+        ):
+            return (
+                "Display calibration must confirm closure before configuration changes"
+            )
+        calibration = self.projections.display
+        if (
+            calibration is not None
+            and calibration.HasField("calibration")
+            and (
+                calibration.calibration.state
+                != visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_IDLE
+                or not calibration.calibration.HasField("idle")
+                or not calibration.calibration.idle
+                or not calibration.calibration.HasField("resources_closed")
+                or not calibration.calibration.resources_closed
+            )
+        ):
+            return (
+                "Display calibration must confirm closure before configuration changes"
+            )
+        return ""
 
     async def save_configuration_history(
         self, command: svc.OperatorCommand

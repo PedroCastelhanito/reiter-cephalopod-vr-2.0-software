@@ -10,6 +10,15 @@
     "onebox": 1,
     "imec": 2
   },
+  "channel_type_order": {
+    "ni": ["MN", "MA", "XA", "DW"],
+    "onebox": ["XA", "DW", "SY"],
+    "imec": ["AP", "LF", "SY"]
+  },
+  "digital_word_layouts": {
+    "ni": {"channel_type": "DW", "width_bits": 16, "supported_bits": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]},
+    "onebox": {"channel_type": "DW", "width_bits": 16, "supported_bits": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}
+  },
   "gate_modes": {
     "0": "immediate",
     "1": "tcp"
@@ -48,6 +57,7 @@
   "split_shank_label_index": "1000 + 10 * stream_index + shank_index",
   "source_paths": [
     "Src-main/Version.h",
+    "Markdown/UserManual.md",
     "Src-params/DAQ.cpp",
     "Src-params/DAQ.h",
     "Src-params/CimCfg.cpp",

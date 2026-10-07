@@ -1,0 +1,224 @@
+2026-10-07 | command: .venv/bin/python -m pytest tests/visual_stimulus -q -m "not windows and not rig" | scope: full Visual Stimulus owner suite; loopback permission enabled
+.................I1007 11:19:13.536706 5514908 chttp2_transport.cc:1400] ipv4:127.0.0.1:62708: Got goaway [2] err=UNAVAILABLE:GOAWAY received; Error code: 2; Debug Text: Cancelling all calls {http2_error:2}
+....................................................... [ 45%]
+.....................................................s.................. [ 91%]
+........F....                                                            [100%]
+=================================== FAILURES ===================================
+______ test_authenticated_first_use_calibration_repeat_and_close_recovery ______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1063/test_authenticated_first_use_c0')
+
+    @pytest.mark.asyncio
+    async def test_authenticated_first_use_calibration_repeat_and_close_recovery(tmp_path):
+        import hashlib
+        from types import SimpleNamespace
+    
+        from cephvr.shared.transport_deadlines import deadline_metadata
+        from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+        from cephvr.visual_stimulus.rendering.types import OutputActivity
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+        from cephvr.visual_stimulus.worker.reporting import ReportBridge
+    
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "sessionless-calibration-test"
+        sink = ReportSink()
+        provisional = Peer(
+            "127.0.0.1:1",
+            Principal("visual_stimulus", identity.process.generation, token),
+            2_000_000,
+            kind="worker",
+        )
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=provisional,
+            controller=sink,
+            supervisor=sink,
+            ledger=ledger(identity.process.generation),
+        )
+        coordinator_listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=2_000_000,
+            testing=True,
+        )
+        remote = Peer(
+            f"127.0.0.1:{coordinator_listener.port}",
+            Principal("visual_stimulus_renderer", identity.worker.generation, token),
+            2_000_000,
+            kind="coordinator",
+        )
+        coordinator.worker = remote
+        worker_reports = Peer(
+            f"127.0.0.1:{coordinator_listener.port}",
+            Principal("visual_stimulus_renderer", identity.worker.generation, token),
+            2_000_000,
+            kind="coordinator",
+        )
+        bridge = ReportBridge(
+            asyncio.get_running_loop(),
+            worker_reports,
+            worker_reports,
+            failed=lambda error: pytest.fail(str(error)),
+            maximum_bytes=4_000_000,
+        )
+        profile_json = valid_display_json()
+        profile = parse_display_json(profile_json, max_bytes=1_000_000)
+        worker_id = identity.worker
+        controller_id = identity.controller
+        backend = identity.backend
+        artifact = make_prepared_trial()
+        graphics = Graphics(Clock(), artifact)
+        graphics.close_failure_once = True
+        graphics.presented_calibrations = 0
+    
+        def activities():
+            now = host_time_ns()
+            return (OutputActivity("projector/main", now, now + 1, 1),)
+    
+        def present_display_calibration(selected, prepared):
+            assert selected == profile
+            graphics.presented_calibrations += 1
+            return activities()
+    
+        def close_display_calibration(selected, prepared):
+            assert selected == profile
+            if graphics.close_failure_once:
+                graphics.close_failure_once = False
+                return activities(), False
+            return activities(), True
+    
+        graphics.present_display_calibration = present_display_calibration
+        graphics.close_display_calibration = close_display_calibration
+    
+        class CalibrationPreparation(Preparation):
+            def prepare_display_calibration(self, request, announce, deadline_ns):
+                return SimpleNamespace(
+                    display=parse_display_json(
+                        request.profile_json,
+                        max_bytes=request.policies.limits.max_document_bytes,
+                    ),
+                    previous_display=None,
+                    previous_calibration=None,
+                    arena=object(),
+                )
+    
+            def release_display_calibration(self, prepared):
+                return True
+    
+        driver = LifecycleDriver(
+            worker=worker_id,
+            owner=identity.process,
+            controller=controller_id,
+            policies=pb.ControlPolicies(recovery_ns=5_000_000_000),
+            engine=graphics,
+            preparation=CalibrationPreparation(artifact),
+            recording=Recorder(),
+            reports=bridge,
+            cancelled=threading.Event(),
+            clock=host_time_ns,
+            shutdown=lambda: None,
+        )
+        renderer = RenderOwner(lambda _: LifecycleDevice(driver))
+        worker_runtime = VisualStimulusWorkerRuntime(
+            visual_stimulus.WorkerContext(worker=worker_id, owner=identity.process),
+            identity.supervisor,
+            renderer,
+            remote,
+            ledger(worker_id.generation),
+        )
+        bridge.retain_lifecycle = worker_runtime.retain_and_report
+        bridge.observe_display = worker_runtime.display.CopyFrom
+        worker_listener = await serve(
+            worker_runtime,
+            {("visual_stimulus", identity.process.generation): token},
+            worker_runtime.ledger,
+            port=0,
+            max_message_bytes=2_000_000,
+            worker=True,
+        )
+        command_peer = Peer(
+            f"127.0.0.1:{coordinator_listener.port}",
+            Principal("controller", identity.controller.generation, token),
+            2_000_000,
+            kind="controller",
+        )
+        from cephvr.control.v1 import services_pb2 as wire_services
+        from cephvr.control.v1 import services_pb2_grpc as rpc
+    
+        stub = rpc.VisualStimulusConfigurationServiceStub(command_peer.channel)
+        metadata = command_peer.principal.metadata()
+        arena = b"calibration arena"
+        (tmp_path / "arena.glb").write_bytes(arena)
+        policies = vp.VisualStimulusFilePolicies(contract_version=1)
+        policies.limits.max_document_bytes = 1_000_000
+        policies.limits.max_asset_cpu_bytes = 1_000_000
+        policies.limits.max_asset_gpu_bytes = 1_000_000
+    
+        async def open_calibration(diagnostic_id):
+            deadline = host_time_ns() + 5_000_000_000
+            request = wire_services.VisualStimulusDisplayCalibrationOpenRequest(
+                command_id=str(uuid4()),
+                issuer=controller_id,
+                target=backend,
+                configuration_revision=8,
+                diagnostic_id=diagnostic_id,
+                deadline_monotonic_ns=deadline,
+                profile_json=profile_json,
+                profile_sha256=hashlib.sha256(profile_json.encode()).hexdigest(),
+                asset_root=str(tmp_path),
+                arena_relative_path="arena.glb",
+                arena_size_bytes=len(arena),
+                arena_sha256=hashlib.sha256(arena).hexdigest(),
+                policies=policies,
+            )
+            return await stub.OpenDisplayCalibration(
+                request,
+                metadata=(*metadata, deadline_metadata(deadline)),
+                timeout=5,
+            )
+    
+        async def close_calibration(diagnostic_id):
+            deadline = host_time_ns() + 5_000_000_000
+            request = wire_services.VisualStimulusDisplayCalibrationCloseRequest(
+                command_id=str(uuid4()),
+                issuer=controller_id,
+                target=backend,
+                configuration_revision=8,
+                diagnostic_id=diagnostic_id,
+                deadline_monotonic_ns=deadline,
+            )
+            return await stub.CloseDisplayCalibration(
+                request,
+                metadata=(*metadata, deadline_metadata(deadline)),
+                timeout=5,
+            )
+    
+        deadline = host_time_ns() + 10_000_000_000
+        try:
+            first = str(uuid4())
+            opened = await open_calibration(first)
+            assert opened.result == pb.COMMAND_RESULT_ACCEPTED
+            await bridge.drain(deadline)
+>           assert coordinator.state.display.calibration.presented
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'calibration'
+
+tests/visual_stimulus/test_transport.py:379: AttributeError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_first_use_calibration_repeat_and_close_recovery
+1 failed, 155 passed, 1 skipped, 1 deselected in 1.20s

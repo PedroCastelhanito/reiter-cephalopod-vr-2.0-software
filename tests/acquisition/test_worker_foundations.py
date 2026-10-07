@@ -6,6 +6,7 @@ owner's E15 rig-first verification plan.
 
 from __future__ import annotations
 
+from itertools import count
 from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
@@ -321,6 +322,88 @@ def test_early_cutoff_retrieval_is_excluded_from_trial_accounting() -> None:
     pool.release(recycled)
     queue.close()
     pool.close()
+    assert all(result.released for result in results)
+
+
+def test_manual_preview_capture_publishes_ordered_tracking_and_preview_pixels() -> None:
+    from cephvr.acquisition.buffers.records import FrameDiagnostic
+
+    layout = PixelLayout(
+        width=2,
+        height=1,
+        pixel_format=NativePixelFormat(
+            "Mono8", 1, 8, "mono", "unpacked", "byte", "lsb"
+        ),
+        row_stride_bytes=2,
+        image_payload_bytes=2,
+    )
+
+    class Result:
+        valid_image = True
+        camera_timestamp_ns = None
+
+        def __init__(self, counter: int, pixels: bytes) -> None:
+            self.camera_frame_counter = counter
+            self.layout = layout
+            self.pixels = memoryview(pixels)
+            self.released = False
+
+        def release(self) -> None:
+            self.released = True
+
+    results = [Result(10, b"\x12\x34"), Result(12, b"\x56\x78")]
+
+    class Adapter:
+        def __init__(self) -> None:
+            self.next_result = 0
+
+        def wait_for_frame_or_control(self, _timeout_ns: int) -> str:
+            return "frame"
+
+        def retrieve(self, _timeout_ns: int) -> Result:
+            result = results[self.next_result]
+            self.next_result += 1
+            return result
+
+    class Ring:
+        def __init__(self) -> None:
+            self.records: list[FrameRecord] = []
+            self.pixels: list[bytes] = []
+            self.discontinuities = 0
+
+        def publish(self, record: FrameRecord, pixels: memoryview) -> None:
+            self.records.append(record)
+            self.pixels.append(bytes(pixels))
+
+        def advance_discontinuity(self) -> None:
+            self.discontinuities += 1
+
+    tracking, preview = Ring(), Ring()
+    receipts = count(100)
+    loop = CameraCaptureLoop(
+        adapter=Adapter(),  # type: ignore[arg-type]
+        layout=layout,
+        wait_timeout_ns=lambda: 1_000_000,
+        frame_silence_timeout_ns=1_000_000,
+        tracking_ring=tracking,  # type: ignore[arg-type]
+        preview_ring=preview,  # type: ignore[arg-type]
+        diagnostics_for=lambda result: (
+            (FrameDiagnostic("NATIVE_COUNTER_GAP"),)
+            if result.camera_frame_counter == 12
+            else ()
+        ),
+        clock_ns=lambda: next(receipts),
+    )
+
+    assert loop.capture_once(lambda: True)
+    assert loop.capture_once(lambda: True)
+
+    assert [record.frame_id for record in tracking.records] == [0, 1]
+    assert [record.frame_id for record in preview.records] == [0, 1]
+    assert tracking.pixels == [b"\x12\x34", b"\x56\x78"]
+    assert preview.pixels == tracking.pixels
+    assert tracking.discontinuities == 1
+    assert not hasattr(loop, "recording_queue") or loop.recording_queue is None
     assert all(result.released for result in results)
 
 

@@ -6,7 +6,7 @@
 # Shared health lives in supervisor_config.toml; this file owns central metadata bounds.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/experiment_policy.toml; versions must match.
-policy_version = 7
+policy_version = 8
 
 [assets]
 # E07: asset_root is the configurable base directory for relative media references.
@@ -24,7 +24,8 @@ port = 50051
 max_message_bytes = 16_777_216
 
 [control]
-# Control is released on WatchState stream loss; reconnection requires Take control.
+# Control is released on WatchState stream loss; GUI reconnect claims unheld control
+# after synchronization and warning acknowledgement. Takeover remains explicit.
 
 # E03/E08: reconnect warnings come from the Snapshot's retained errors/incidents/
 # recoveries for the current Setup/session. At this bound evict the oldest resolved

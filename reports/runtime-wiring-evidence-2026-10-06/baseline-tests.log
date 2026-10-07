@@ -1,0 +1,594 @@
+........................................................................ [ 25%]
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+.....................................................EEEEEEF....         [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_authenticated_setup_duplicate_conflict_stale_and_cleanup _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x356274210>
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(identity, peer, peer, ledger, clock=clock)
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:59: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1006 21:51:03.366976 5251586 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_real_movement_baseline_start_and_separate_stop_finish[False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3e6c6d610>
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(identity, peer, peer, ledger, clock=clock)
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:59: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1006 21:51:03.480208 5251586 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_real_movement_baseline_start_and_separate_stop_finish[True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x33cb18310>
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(identity, peer, peer, ledger, clock=clock)
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:59: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1006 21:51:04.827444 5251586 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_preonset_stop_never_opens_recording_or_reports_started _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3f5e81f90>
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(identity, peer, peer, ledger, clock=clock)
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:59: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1006 21:51:04.843008 5251586 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_cleanup_failure_retains_catalogue_and_prevents_new_setup _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3087f9010>
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(identity, peer, peer, ledger, clock=clock)
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:59: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1006 21:51:04.857145 5251586 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ ERROR at setup of test_supervisor_accepts_real_tracking_heartbeat_catalogue __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x3a6d2ebd0>
+
+    @pytest.fixture
+    async def rig_boundary(monkeypatch):
+        from cephvr.tracking.methods import nvidia
+        from cephvr.tracking.processing import session
+    
+        monkeypatch.setattr(session, "RingSource", CameraBoundary)
+        monkeypatch.setattr(nvidia, "NativeFlow", FlowBoundary)
+        monkeypatch.setattr(
+            nvidia,
+            "verify_tracking_device",
+            lambda ordinal: NvidiaDevice(
+                ordinal, "GPU-" + str(uuid4()), "NVIDIA GeForce RTX 5060 Ti"
+            ),
+        )
+        identity = Identity(
+            pb.ProcessIdentity(role="tracking", generation=str(uuid4())),
+            pb.ProcessIdentity(role="controller", generation=str(uuid4())),
+            pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        )
+        peer = Peer()
+        clock = Clock()
+        ledger = CommandLedger(
+            identity.process.generation,
+            10_000_000_000,
+            max_records=128,
+            max_bytes=16 * 1024 * 1024,
+            result_reservation_bytes=65536,
+            safety_reserve_records=8,
+            safety_reserve_bytes=1024 * 1024,
+        )
+        runtime = TrackingRuntime(identity, peer, peer, ledger, clock=clock)
+        # Inject time only at the processing clock boundary; preserve timing rules.
+        monkeypatch.setattr(session, "host_time_ns", clock)
+        original = session.Movement
+        monkeypatch.setattr(session, "Movement", lambda ports: original(ports, clock=clock))
+>       listener = await serve(
+            runtime,
+            {
+                ("controller", identity.controller.generation): "token",
+                ("supervisor", identity.supervisor.generation): "safety",
+            },
+            ledger,
+            port=0,
+            max_message_bytes=4 * 1024 * 1024,
+            testing=True,
+        )
+
+tests/tracking/test_runtime.py:175: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/tracking/transport/server.py:59: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+---------------------------- Captured stderr setup -----------------------------
+E1006 21:51:04.871907 5251586 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+=================================== FAILURES ===================================
+_ VisualStimulusConfigurationTests.test_default_and_file_policy_values_are_typed _
+
+self = <tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests testMethod=test_default_and_file_policy_values_are_typed>
+
+    def test_default_and_file_policy_values_are_typed(self) -> None:
+>       defaults = load_defaults(_ROOT)
+                   ^^^^^^^^^^^^^^^^^^^^
+
+tests/visual_stimulus/test_configuration.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/configuration.py:181: in load_defaults
+    pair = _load_pair(Path(root))
+           ^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/visual_stimulus/configuration.py:124: in _load_pair
+    pair = load_pair(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_path = PosixPath('/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/config/backends/visual_stimulus_config.toml')
+policy_path = PosixPath('/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/contracts/policy/visual_stimulus_policy.toml')
+allowed_config_keys = frozenset({'feedback.max_result_age_ms', 'recording.ffmpeg_args', 'recording.save_visual_stimulus_data', 'recording_runtime.encoder_stall_timeout_s', 'recording_runtime.fragment_target_s', 'recording_runtime.record_stall_timeout_s', ...})
+allowed_policy_keys = frozenset({'arena.boundary_response', 'arena.boundary_source', 'arena.movement_modes', 'arena.shading', 'arena.source_policy', 'assets.arena_profile', ...})
+allowed_empty_tables = {'assets', 'color', 'idle', 'photodiode', 'photometric_calibration', 'presentation', ...}
+expected_policy = {'runtime.process_layout': 'coordinator_and_render_worker_with_recording_thread_when_saving'}
+max_file_bytes = 1048576
+
+    def load_pair(
+        config_path: str | Path,
+        policy_path: str | Path,
+        *,
+        allowed_config_keys: Collection[str],
+        allowed_policy_keys: Collection[str],
+        allowed_empty_tables: Collection[str] = (),
+        expected_policy: Mapping[str, object] | None = None,
+        max_file_bytes: int = 1_048_576,
+    ) -> LoadedPair:
+        """Load only recognized keys and matching policy versions.
+    
+        Allowed keys are dotted leaf paths; use ``*`` for one array-table segment.
+        The caller supplies its owned schema and any implementation constants.
+        """
+        if max_file_bytes <= 0:
+            raise ValueError("TOML byte limit must be positive")
+        config = _read_toml(Path(config_path), max_file_bytes=max_file_bytes)
+        policy = _read_toml(Path(policy_path), max_file_bytes=max_file_bytes)
+        config_version = config.get("policy_version")
+        policy_version = policy.get("policy_version")
+        if type(config.get("format_version")) is not int or config["format_version"] != 1:
+            raise ConfigurationError("unsupported or missing config format_version")
+        if (
+            type(config_version) is not int
+            or type(policy_version) is not int
+            or config_version <= 0
+            or config_version != policy_version
+        ):
+            raise ConfigurationError("config/policy policy_version mismatch")
+        config_keys = _leaf_paths(config)
+        policy_keys = _leaf_paths(policy)
+        unknown_config = config_keys - {"format_version", "policy_version"}
+        unknown_policy = policy_keys - {"policy_version"}
+        bad_config = sorted(
+            p for p in unknown_config if not _allowed(p, allowed_config_keys)
+        )
+        bad_policy = sorted(
+            p for p in unknown_policy if not _allowed(p, allowed_policy_keys)
+        )
+        bad_config.extend(
+            sorted(
+                p
+                for p in _empty_table_paths(config)
+                if not _allowed_table(p, allowed_config_keys)
+                and p not in allowed_empty_tables
+            )
+        )
+        bad_policy.extend(
+            sorted(
+                p
+                for p in _empty_table_paths(policy)
+                if not _allowed_table(p, allowed_policy_keys)
+            )
+        )
+        if bad_config or bad_policy:
+>           raise ConfigurationError(
+                f"unknown config keys {bad_config}; unknown policy keys {bad_policy}"
+            )
+E           cephvr.shared.config.ConfigurationError: unknown config keys ['presentation.pacing_refresh_hz']; unknown policy keys []
+
+src/cephvr/shared/config.py:143: ConfigurationError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_default_and_file_policy_values_are_typed
+ERROR tests/tracking/test_runtime.py::test_authenticated_setup_duplicate_conflict_stale_and_cleanup
+ERROR tests/tracking/test_runtime.py::test_real_movement_baseline_start_and_separate_stop_finish[False]
+ERROR tests/tracking/test_runtime.py::test_real_movement_baseline_start_and_separate_stop_finish[True]
+ERROR tests/tracking/test_runtime.py::test_preonset_stop_never_opens_recording_or_reports_started
+ERROR tests/tracking/test_runtime.py::test_cleanup_failure_retains_catalogue_and_prevents_new_setup
+ERROR tests/tracking/test_runtime.py::test_supervisor_accepts_real_tracking_heartbeat_catalogue
+1 failed, 273 passed, 2 deselected, 6 errors in 188.91s (0:03:08)

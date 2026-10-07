@@ -13,8 +13,11 @@ compatibility item 5 remains owner-deferred and unchanged. The bounded GUI/Spike
 diagnostic below is later evidence; full session integration remains open. Deferred scientific inputs remain unset. No camera
 settings, projection, wiring or firmware changed.
 
-Latest development handoff:
-[hardware evidence and implementation constraints](rig-handoff-2026-09-29/README.md).
+Current development handoff: [2026-10-07 managed runtime wiring](runtime.md#current-scope-and-review).
+Use the complete current source and the [Windows execution procedure](#execution-and-results);
+this development increment performed no rig/device operations. Retained
+[hardware evidence and implementation constraints](rig-handoff-2026-09-29/README.md)
+still govern the physical checks.
 Camera roles/rates are now owner-confirmed (behavioral 40065509 at 30 Hz; tracking
 40747103 at 60 Hz). Final ROI/depth and surface mapping remain deferred; the
 SpikeGLX command-server address was saved after the 2026-10-05 SDK readback.
@@ -78,8 +81,17 @@ Implementation update: 2026-10-06; physical acceptance remains open under A10/A1
 Use `.venv\Scripts\python.exe tools/generate_contracts.py`, then
 `.venv\Scripts\python.exe scripts/start_runtime_gui.py` on the rig. Do not launch a
 second application generation while the previous launcher/backends remain active.
+For replacement testing, start an idle runtime from the updated launcher, run the
+same script in another interactive terminal, and verify N leaves the first runtime
+unchanged. Repeat with Y: the first launcher must verify an empty application job
+and publish its exact exit receipt before the second generation starts. Do this
+outside an experiment; force replacement is not graceful recording closure.
+Older launchers without the replacement endpoint require one manual shutdown.
 
-1. Take control. In Devices/Microcontroller, scan and select the actual COM port,
+1. Confirm the synchronized GUI automatically acquires unheld control. With a
+   headless holder, it must remain observing until explicit confirmed takeover.
+   Manual Release must stay released; reconnect must acknowledge its warning before
+   making a fresh unheld claim. In Devices/Microcontroller, scan and select the actual COM port,
    set enabled I/O pins, complete edits with Enter, and wait for controller confirmation.
    Test connection must report the actual firmware/protocol with outputs stopped.
 2. Test one enabled output at a time, observing its configured SpikeGLX receiver
@@ -96,7 +108,10 @@ second application generation while the previous launcher/backends remain active
 5. Start capture on each camera; confirm usable frames and MCU pulse state. Open
    Preview from Cameras and the Dashboard selector. Close/reopen the viewer while
    capture continues, then Stop capture and verify camera/buffer/pulse release.
-   Repeat with both enabled. Settings remain locked while a camera is owned.
+   First repeat Behavior-only with Tracking idle to verify acceptance of its empty
+   preview identity; confirm Start completes, visible frames, Stop completes and
+   camera/buffer/pulse release, then repeat the cycle. Repeat with both enabled.
+   Settings remain locked while a camera is owned.
 6. Exercise loss of control/controller connection during tests/capture, failed PFS,
    missing trigger input and device unplug. Verify stale actions are not replayed,
    incomplete cleanup stays visible, and no false successful result appears.
@@ -116,7 +131,7 @@ Existing operating-point/throughput deferrals below remain separate.
 | Visual Stimulus protected assets | Under V04/V13, verify protected streaming sources on the actual storage/decoder combination, independent instance cursors, dependency coverage, external write/replacement attempts and release after cancellation/owner loss. Prepared-memory reuse and relocated replay must use the identified content; no periodic trial-time hashing or archive is introduced. |
 | Visual Stimulus linear color and measured tables | Under V04/V21/V23, verify source transfer/range/channels and 8/16-bit preservation, float32 composition/premultiplied alpha/filtering, named clipping flags, curve interpolation and one-time correction. Measure each output's response and actual code precision; check manual/driver/projector conditions, no double gamma, Idle/marker consistency and distinct marker light levels. Independent channel tables alone do not prove cross-projector color matching or spatial uniformity. |
 | Visual Stimulus output precision and custom encoding | Under V20/E13, verify requested versus actual RGB8/RGB10 buffers, final code preservation, calibration matching and the real driver/cable/projector path. Exercise the single composite lossy argument validation, actual encoder compatibility at the composite resolution, explicit review conversion and encoder load/failure while preserving live rendering and required state evidence. Under SYS-002, confirm the now-operational RTX 2080 Ti sustains three concurrent NVENC sessions (two cameras plus one Visual Stimulus composite) at planned rates while the RTX 5060 Ti renders/tracks and AMD integrated graphics serves the operator display/GUI. Verify actual adapter identities, explicit FFmpeg device selection and host-transfer costs; the earlier RTX 5060 Ti encoder probes do not validate this placement. Normal runtime still performs no file-content validation. |
-| SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; startRun-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; stopRun completion; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge; controller-loss emergency warning naming the run for manual stopping. Acknowledgements are not pulse timing. |
+| SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; startRun-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; stopRun completion; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge, including Stop/Cancel across trials, interrupted uncertain starts and immediate stop between trials; repeated fault/recovery episodes; controller-loss emergency warning naming the run for manual stopping. Acknowledgements are not pulse timing. |
 
 | Visual Stimulus scene composition and geometric correction | Under V02/V15, exercise one arena plus ordered alpha overlays, overlay independence from arena depth, covered-instance continuity and invalid composition rejection. Verify imported mesh coverage/orientation/fold rejection, masks and weighted overlaps, immutable session mappings, photodiode stage order and final-output recording/replay. Establish calibration accuracy through the actual optical path and resource cost on all outputs; no automatic calibration or optical-model guarantee is selected. |
 | Visual Stimulus review video and fragmented MP4 | Under E13, verify the constant-rate raw stdin input at the pacing output's nominal refresh sustains the composite resolution, video frame n maps to the n-th admitted render group in the evidence, tile placement/scale matches the recorded layout and admission drops shorten playback without duplicated frames. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
@@ -129,7 +144,10 @@ Existing operating-point/throughput deferrals below remain separate.
 | Consumer precision and encoder compatibility | Verify native unpacking/alignment and source-depth RGB/grayscale preparation under the [pixel contract](../contracts/acquisition/pixel-processing.md), including high-bit-depth sources. Confirm the actual selected codec/output bit depth and color representation; no silent lower-depth conversion or widened 8-bit data labelled original-depth. Preview alone uses the approved display scaling. Keep lossy compression quality separate from representation bit depth. Verify the explicit per-camera output pixel format under A08, including detection of encoder format substitution. Check requested versus actual range/matrix conversion and output tags using known pixel values; tags alone do not prove the conversion. Verify that lower-depth output settings reject higher-depth sources until explicitly compatible arguments are provided. |
 | Basler conversion mappings | Exercise the declared [SDK registry](../contracts/acquisition/sdk-mappings.md): native packing/stride, Bayer patterns and edges, private buffer lifetime, effective depth and preview scaling. Record actual device/SDK support; unsupported mappings must fail explicitly. |
 | Windows ownership and cleanup | Exercise the shared [acquisition/Visual Stimulus launch contract](../contracts/windows-launch.md) and acquisition [I/O/sync contracts](../contracts/acquisition/windows-resources.md), including owner death at every launch stage, partial handle transfer, blocked pipe/stdin cancellation, process identity reuse, encoder sharing and failed storage sync. Require truthful cleanup blockers. |
-| GUI authoring and planning preview | Install `.[dev,gui]` and launch `python scripts/start_gui.py`; follow [frontend review commands](../docs/development.md#dashboard-frontend-review). Check Windows DPI/narrow-window layouts, discovered cameras/COM ports, enabled projector combinations, calibration JSON load/save and pixel offsets/inversions. Build and reload a 200-epoch trial with independent per-projector layers and random/ordered batch values; switch trials and rotate/scrub the two-sided rig preview using local assets. Record latency and errors. This is frontend acceptance, not physical output or live Tracking validation. The existing pacing-default loader failure remains tracked in TODO. |
+| GUI authoring and planning preview | Install `.[dev,gui]` and launch `python scripts/start_gui.py`; follow [frontend review commands](../docs/development.md#dashboard-frontend-review). Check Windows DPI/narrow-window layouts, discovered cameras/COM ports, enabled projector combinations, calibration JSON load/save and pixel offsets/inversions. Build and reload a 200-epoch trial with independent per-projector layers and random/ordered batch values; switch trials and rotate/scrub the two-sided rig preview using local assets. Record latency and errors. This is frontend acceptance, not physical output or live Tracking validation. Typed pacing configuration and exact held-policy checks now pass locally; physical output acceptance remains open. |
+| Managed GUI configuration and authority | After local wiring acceptance, use the installed managed entry point and current review layout at wide/narrow Windows DPI. Submit subject metadata, ordered trials/seeds/gaps, recording selections, Tracking settings and projector mappings; compare accepted revision/history/session metadata. Exercise first-run display-profile import separately from calibration-value JSON. Invalid or stale visible drafts must block Setup with a useful explanation. Exercise pending Setup cancellation, Abort, lease loss/takeover, pending prompt updates, disconnect/reopen with retained warnings and GUI close/relaunch with `python scripts/start_runtime_gui.py --reopen-gui` for the same application generation. Exercise delayed/lost relaunch replies and shutdown during the request; containment deadlines must remain unchanged. Cancel a proposed discard or dismiss a save-error dialog and confirm unsent edits remain. No stale intent replay or silent draft replacement. |
+| Tracking configuration diagnostics | Under T08/A03/A10, attach to the selected owned camera preview with exact source identity, including when experiment Tracking is disabled. Start with an empty stage mask, then flow-only without pose annotations, and verify unavailable dependent stages. Verify crop/downscale annotations stay in acquired coordinates and enabled stages produce live overlays/timings. Confirm ordered Tracking consumption, bounded viewer latency, explicit viewer detach/reopen versus actual processing closure, and cleanup after source/authority loss and before Setup. Use **Use this frame for annotation** to freeze an exact acquired image; confirm source changes reset annotations and stale frames are rejected. Pending or failed Close must keep settings locked and must not enable another Begin. Changed diagnostic settings require confirmed Close and fresh Begin. Verify no scientific files or Visual Stimulus feedback arise from diagnostics. Scientific accuracy/full-load acceptance remains separate. |
+| Untimed projector calibration | Under V01, before Setup and with no initialized experiment display, Launch the protected exported arena/profile on the assigned outputs and observe actual display before Active. Close must return to Idle and confirm resources closed. Exercise changed assets, stale revisions/generations, failed presentation, control loss, renderer loss and Shutdown during active or still-preparing calibration; unknown cleanup must block Setup. Repeat Open/Close and verify restoration of the prior display or known uninitialized state. Check all assigned outputs and per-face corrections optically; local rendered checks do not establish alignment. |
 | GUI Windows display inventory | Compare Projectors table/diagram indices against Windows Settings → Identify on the actual multi-GPU rig, including reconnect, clone mode and changed topology. Verify pixel resolution, retained assignments and explicit query failures. macOS inspection and mocked native API calls do not establish equivalence. See [G01](../docs/architecture/gui.md#g01). |
 | Windows venv interpreter process tree | Prepared-image native regression now verifies one live job member, exact launched/executing PID and OS image, fresh venv imports and inherited bootstrap. Verify real managed registration and shutdown after GUI implementation; focused evidence does not establish full application behavior. |
 | Runtime finalization boundary | Under A07/E05, verify bounded online accounting, encoder finalization, sync and close without a separate file-validation pass. Measure drain/closure delay before the next trial. Output-content inspection belongs to external post hoc or development verification, never an automatic runtime validator. |
@@ -210,8 +228,8 @@ Mac `.venv`, caches or build environment. Use fresh Windows Python 3.11 under
 .\tools\test_on_rig.ps1
 ```
 
-The runner installs `.[dev,acquisition]` (including pypylon 26.3.1, NumPy 2.4.4 and
-pySerial 3.5). FFmpeg/ffprobe must be deliberately installed on PATH; no production
+The runner installs `.[dev,gui,acquisition,visual_stimulus,tracking]` (including the
+managed Qt GUI and the declared backend dependencies). FFmpeg/ffprobe must be deliberately installed on PATH; no production
 pair is validated by installation/import. If local script policy blocks execution:
 
 ```powershell
@@ -223,7 +241,7 @@ the runner rejects an empty hardware selection. Missing tests and skips are not 
 
 | Check | Evidence produced |
 | --- | --- |
-| Python/package prerequisites | Python 3.11 and generated control bindings import successfully |
+| Python/package prerequisites | Python 3.11, generated bindings, QtCore/QtWidgets and backend dependencies import successfully |
 | Syntax, Ruff, Windows-target mypy | Handwritten code parses and meets configured static checks |
 | Module boundaries | Feature modules avoid runtime/entry imports and private runtime access; size warnings require review |
 | Existing contract checks | Pure tracking and Visual Stimulus declarations remain consistent; these are separate from runtime behavior |

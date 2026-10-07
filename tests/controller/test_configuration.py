@@ -12,10 +12,33 @@ from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.configuration import (
     controller_validators,
     load_controller_configuration,
+    validate_experiment_candidate,
 )
 from cephvr.shared.config import ConfigurationError
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
+
+
+@pytest.mark.parametrize(
+    ("age", "size", "valid"),
+    [
+        (0.0, 1.0, True),
+        (float("nan"), 1.0, False),
+        (-1.0, 1.0, False),
+        (1.0, 0.0, False),
+        (1.0, float("inf"), False),
+    ],
+)
+def test_subject_metadata_numeric_bounds(age: float, size: float, valid: bool) -> None:
+    candidate = pb.ExperimentConfiguration()
+    candidate.subject_metadata.age_dph = age
+    candidate.subject_metadata.size_mm = size
+
+    result = validate_experiment_candidate(candidate)
+
+    assert result.valid is valid
+    assert candidate.subject_metadata.HasField("age_dph")
+    assert candidate.subject_metadata.HasField("size_mm")
 
 
 def _copy_pairs(root: Path) -> None:
@@ -125,7 +148,7 @@ def test_loader_rejects_removed_key_and_policy_mismatch(tmp_path: Path) -> None:
     _copy_pairs(tmp_path)
     policy = tmp_path / "contracts/policy/experiment_policy.toml"
     policy.write_text(
-        policy.read_text().replace("policy_version = 7", "policy_version = 8", 1)
+        policy.read_text().replace("policy_version = 8", "policy_version = 9", 1)
     )
     with pytest.raises(ConfigurationError, match="policy_version mismatch"):
         load_controller_configuration(tmp_path)

@@ -1,13 +1,14 @@
 """Responsive planner controls; program and history are owned by ProtocolEditor."""
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QKeySequence, QShortcut
+from PyQt6.QtGui import QAction, QKeySequence, QResizeEvent, QShortcut
 from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLineEdit,
     QListWidget,
     QMenu,
+    QSizePolicy,
     QTabBar,
     QVBoxLayout,
     QWidget,
@@ -17,6 +18,7 @@ from cephvr.gui.batch_create import BatchCreate
 from cephvr.gui.batch_edit import BatchEdit
 from cephvr.gui.components import Card, button, equal_row_height, field, label
 from cephvr.gui.group_editor import GroupEditor
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.projector_layers import ProjectorLayers
 from cephvr.gui.protocol_document import node_name
 from cephvr.gui.protocol_timeline import ProgramTimeline
@@ -47,9 +49,13 @@ class PlannerControls(QWidget):
         self.trial_card.body.addWidget(self.trials, 1)
         self.add_button = button("+")
         self.delete_trial_button = button("−")
+        self.move_trial_up_button = button("↑")
+        self.move_trial_down_button = button("↓")
         for control, title in (
             (self.add_button, "New trial"),
             (self.delete_trial_button, "Delete trial"),
+            (self.move_trial_up_button, "Move trial earlier"),
+            (self.move_trial_down_button, "Move trial later"),
         ):
             control.setAccessibleName(title)
             control.setToolTip(title)
@@ -57,6 +63,8 @@ class PlannerControls(QWidget):
         actions = QHBoxLayout()
         actions.addWidget(self.add_button, 1)
         actions.addWidget(self.delete_trial_button, 1)
+        actions.addWidget(self.move_trial_up_button, 1)
+        actions.addWidget(self.move_trial_down_button, 1)
         equal_row_height(self.add_button, self.delete_trial_button)
         self.trial_card.body.addLayout(actions)
         self.undo_action, self.redo_action = (
@@ -72,7 +80,6 @@ class PlannerControls(QWidget):
             self.addAction(action)
         self.timeline_card = Card("Trial timeline")
         self.output_preview_button = button("Preview")
-        self.timeline_card.header.addWidget(self.output_preview_button)
         self.add_epoch_button = button("+ Add epoch")
         navigation = QHBoxLayout()
         self.back_button = button("← Parent")
@@ -96,10 +103,25 @@ class PlannerControls(QWidget):
         self.modes.addTab("Batch edit")
         self.modes.setExpanding(False)
         self.modes.setDrawBase(False)
-        self.settings_card.body.addWidget(self.modes)
+        mode_row = QHBoxLayout()
+        mode_row.addWidget(self.modes)
+        mode_row.addStretch()
+        self.settings_card.body.addLayout(mode_row)
         self.settings_card.body.addSpacing(8)
         self.create_batch = BatchCreate()
         self.batch_edit = BatchEdit()
+        mode_row.addWidget(self.batch_edit.batch_actions)
+        self.timeline_actions = QWidget()
+        self.timeline_actions.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed
+        )
+        timeline_actions = QHBoxLayout(self.timeline_actions)
+        timeline_actions.setContentsMargins(0, 0, 0, 0)
+        timeline_actions.addStretch()
+        timeline_actions.addWidget(self.batch_edit.epoch_actions)
+        timeline_actions.addWidget(self.output_preview_button)
+        self.timeline_card.header.addWidget(self.timeline_actions, 1)
+        self._timeline_actions_stacked = False
         self.duplicate_epoch_button = self.batch_edit.duplicate_epoch_button
         self.remove_epoch_button = self.batch_edit.remove_epoch_button
         self.batch_edit.epoch_action.connect(self.epoch_action.emit)
@@ -148,7 +170,7 @@ class PlannerControls(QWidget):
         self.advanced_body.addWidget(self.parameters)
         self.group_editor = GroupEditor()
         self.advanced_body.addWidget(self.group_editor)
-        self.feedback = label("", wrap=True)
+        self.feedback = FormNotice()
         self.feedback.hide()
         self.settings_card.body.addWidget(self.feedback)
         management = QHBoxLayout()
@@ -168,6 +190,22 @@ class PlannerControls(QWidget):
         self.grid.setRowStretch(2, 1)
         for editor in (self.name, self.duration):
             editor.setMinimumWidth(0)
+
+    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        # Keep all timeline actions readable when the slim Trials column leaves less room.
+        stacked = self.width() < 700
+        if stacked == self._timeline_actions_stacked:
+            return
+        self._timeline_actions_stacked = stacked
+        if stacked:
+            self.timeline_card.header.removeWidget(self.timeline_actions)
+            self.timeline_card.body.insertWidget(1, self.timeline_actions)
+        else:
+            self.timeline_card.body.removeWidget(self.timeline_actions)
+            self.timeline_card.header.addWidget(self.timeline_actions, 1)
+        self._fitted_timeline_height = -1
+        self.fit_timeline_card()
 
     def fit_timeline_card(self) -> None:
         """Keep aligned cards tall enough for all trial projector/layer details."""
@@ -257,6 +295,7 @@ class PlannerControls(QWidget):
         create = self.modes.currentIndex() == 0
         self.create_batch.setVisible(create)
         self.batch_edit.setVisible(not create)
+        self.batch_edit.batch_actions.setVisible(not create)
         self.advanced.hide()
 
     def rename_epoch(self) -> None:

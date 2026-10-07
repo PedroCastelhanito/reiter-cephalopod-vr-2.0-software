@@ -1,6 +1,6 @@
 # Controller and supervisor status
 
-Updated: 2026-10-06. Implementation/source review is recorded for the controller,
+Updated: 2026-10-07. Implementation/source review is recorded for the controller,
 supervisor, launcher, headless client and shared/native helpers. Local results below
 have their original scope; Windows and full-workload acceptance remain pending.
 [ARCH-001/002](../architecture.md#arch-001) owns scope and structure;
@@ -9,6 +9,99 @@ have their original scope; Windows and full-workload acceptance remain pending.
 [E06/E08](../docs/architecture/system-contracts.md#e08) own behavior.
 
 ## Current scope and review
+
+The owner-requested runtime wiring is implemented in the existing managed application.
+Review and runtime share the current Dashboard, Protocol, Devices and Tracking layout.
+Luna audited and implemented the work; Sol 6.1 prepared the plan and reviewed the code;
+Astra reviewed the design and final source. All reproduced development findings are
+repaired. Sol and Astra accept the final development implementation; Windows/rig
+acceptance remains separate under [E15](../docs/architecture/system-contracts.md#e15).
+
+| Area | Implemented and reviewed behavior |
+| --- | --- |
+| Configuration and commands | Full E07 proposals against the accepted revision, optional subject metadata, ordered trials/seeds/gaps, recording and projector/Tracking settings; exact captured Setup identity; stale drafts remain visible without rebase/replay |
+| Authority and close | Retained warnings before control acquisition, exact prompt/command identity, safety actions during preparation, explicit discard/cancel, and history-save completion before GUI closure |
+| Tracking | Selected-stage diagnostics including image-only/partial pipelines, real ordered preview frames, bounded exact-scope live image/overlays/timings, explicit acquired-frame annotation, and confirmed Close before editing |
+| Projectors | Typed pacing and held policy propagation; first-use untimed V01 calibration through the V15 correction pipeline; exact output/context ownership, prior-display restoration, and bounded active/in-flight/lost-owner cleanup |
+| SpikeGLX | Saved host endpoint readback, serialized SDK/inventory/monitor/stop ownership, exact trial stop timing, digest-guarded pulse mapping updates and bounded off-loop persistence with truthful late outcomes |
+| GUI relaunch | Explicit same-generation reopen after exact prior release, authenticated fresh launch, retained uncertain/partially created successor identity, terminal RELEASED reconciliation and a responsive launcher backstop |
+| Ownership gates | Configuration and Setup recheck unresolved diagnostic, cleanup and inventory ownership at admission and atomic commit, preserving valid Ready-edit cleanup |
+
+Final review exercised actual controller, coordinator, worker, GUI and supervisor
+assemblies with only necessary OS/native boundaries adapted. This found gaps that
+isolated helpers missed; the final regressions preserve those paths. In particular,
+RPC admission is distinguished from worker Close application, cancelled pre-dispatch
+validation is distinguished from uncertain dispatched work, and late file completion
+is reported truthfully without freeing an in-flight writer early. Scientific values,
+encoder feasibility and firmware deferrals remain unchanged.
+
+ARCH-002 review accepts the retained controller admission/cleanup ledgers, interruption
+transaction, GUI connection/dispatch owners, GL-thread display restoration and protected
+source registry. Separable calibration rendering/preparation, GUI close/display/diagnostic
+transport/codecs, timed SpikeGLX stopping and pure inventory validation have focused
+helpers. Sol found no whole-runtime back-references in the additions. The boundary
+checker reports 597 modules and zero violations; larger cohesive owners retain their
+single state ledger instead of duplicating it across modules.
+
+Themed captures made through actual `ManagedGui.install_snapshot` with inert RPC and
+device discovery were inspected at 720px and wide sizes. Inputs are readable with
+vertical scrolling, authority text agrees with the snapshot, and menu contrast is
+corrected. The [final captures and fixture](runtime-wiring-evidence-2026-10-06/gui-captures-final-2026-10-07/)
+are local visual evidence; Windows DPI, monitor identity and optical output remain rig
+checks. See the [Tracking](tracking.md), [acquisition](acquisition.md) and
+[Visual Stimulus](visual_stimulus.md) reports for their retained scope/evidence.
+
+| Development check | Result |
+| --- | --- |
+| Combined offscreen suite, Windows/rig markers excluded | 1,240 passed, six native-platform skips, five deselected (128.20 s); frozen-source hashes unchanged |
+| Ruff / formatting | Pass; 793 files formatted |
+| Windows-target mypy | Pass; 683 source files |
+| Backend boundaries | 597 modules, zero violations; cohesion reviewed above |
+| Pure contracts | Tracking: 48 passed; Visual Stimulus: 42 passed and 79 subtests |
+| Schema consistency | 19 Tracking and 11 Visual Stimulus JSON schemas match; isolated Protobuf regeneration matches all 57 bindings from 19 sources |
+| Dependencies | No broken requirements; declared TIFF dependency installed to execute its decoder check |
+| Native package build | Blocked by the existing AMD64 Windows DLL guard on macOS; Windows packaging remains required |
+
+Exact commands, failures, repair checkpoints and scope are retained in
+[command/provenance metadata](runtime-wiring-evidence-2026-10-06/baseline-context.json)
+and [LOG](../LOG.md). The [source manifest](runtime-wiring-evidence-2026-10-06/final-source-sha256.json)
+records 954 implementation/input hashes, including generated bindings. The baseline
+commit alone does not reproduce the pre-existing dirty working tree; transfer the
+complete current source when preparing the rig. PowerShell/native execution was not
+performed on this host. The [single rig checklist](rig-verification.md) is the remaining
+execution guide; local passes do not establish experiment acceptance.
+
+2026-10-06 startup workflow: interactive duplicate launches now ask Y/N. A confirmed
+replacement signals the retained owner-private launcher event; the existing owner
+terminates its contained application job and verifies absence before publishing its
+exact exit receipt. The requester requires that receipt and the application guard
+before starting. Older launchers without an endpoint require one manual shutdown;
+missing proof, timeout and competing launches never permit overlapping generations.
+The managed GUI automatically claims an unheld lease once after synchronization and
+reconnect warning acknowledgement, using ordinary AcquireControl. Other holders
+require confirmed takeover; manual Release stays released within that connection.
+[E08](../docs/architecture/system-contracts.md#e08) revision 162 and
+[E03](../docs/architecture/gui.md#e03) revision 29 own these operator-requested changes.
+ARCH-002 reused native owner-only events, bounded private record I/O and exit receipts
+in one focused launcher module, with no service, dependency or runtime back-reference.
+GUI/launcher/configuration checks: 246 passed, one deselected in offscreen Qt mode;
+final controller/launcher checks: 238 passed. Scoped Ruff lint/format and Windows-target
+mypy (seven source files) pass; boundaries: 555 modules, zero violations, unchanged
+cohesion advisories. An initial GUI run aborted at Qt initialization before rerunning
+successfully offscreen. Native event coverage was added to the existing Windows owner
+module but not executed on macOS. Actual Windows replacement/control acceptance stays
+in the [rig checklist](rig-verification.md#managed-device-gui); no runtime or hardware
+was started for this increment.
+
+Development-machine follow-up, 2026-10-06: repaired controller rejection of explicit
+empty preview run IDs for inactive cameras. The real acquisition status reporter
+and controller reproduce Start/Stop rejection before the fix and success after it;
+active previews still require UUIDs. This applies existing A10/E07 release evidence,
+without extending deadlines or accepting unknown closure. Acquisition/controller:
+417 passed, five skipped, one deselected; Ruff lint/format pass; Windows-target mypy
+256 sources pass; boundaries 555 modules, zero violations. Existing size advisories
+are unchanged; the focused projection owner needs no extraction under ARCH-002.
+Rig viewer/Stop acceptance remains open; see the [current acquisition assessment](acquisition.md#preview-recheck-stopped-by-owner-2026-10-06).
 
 Latest handoff, 2026-10-06: owner stopped the Behavior D10 → Line4 preview recheck.
 The direct receiver check yielded 41 frames in two seconds after verified upload
@@ -260,6 +353,52 @@ windows already reuse useful reference patterns with smaller focused components.
 
 ### Dashboard frontend implementation
 
+Tracking frontend review, 2026-10-06 ([G01](../docs/architecture/gui.md#g01)
+revision 118, [G02](../docs/architecture/gui.md#g02) revision 33): role-derived
+Preprocessing/Calibration/Pose/Motion retains source-pixel crop-before-downscale,
+editable point tables and independent image-plane distance calibration. Subject
+reference now places Set points and Clear at the left, without a point-count label;
+Clear preserves manual pose and distance calibration. Numeric rectangle bounds
+remain editable; Draw region actions are removed. Preprocessing has only Enable
+crop and downscale; output-size and uncalibrated-scale captions are removed.
+Valid calibrated scale is still displayed. Manual pose now uses natural method-form
+sizing and measured table rows, with Set landmarks aligned left.
+
+Enable switches now cover pose, sampling region, optical
+flow, flow quality and locomotion. They dim dependent controls without losing values,
+close annotation editing when toggled and persist in a separate diagnostic map.
+Draft v4 migrates v1/v2 enabled and v3 by removing the obsolete preprocessing
+diagnostic flag, preserving crop/downscale and other switches. Invalid flags fail
+before mutation. These flags never enter experiment configuration: T02 still requires every
+stage of the selected experiment pipeline. Live diagnostic execution and timing,
+managed submission, acquired-image transforms and overlays remain pending. Optional
+crop/downscale and chosen pose/analysis methods retain their semantics. Image-plane
+scale does not establish physical swimming velocity or change T35/T38 output units.
+
+One shared DataTable now applies Cameras styling to camera/projector inventories,
+Tracking points, MCU I/O, SpikeGLX channels, screen calibration and dimensions.
+Persistent editor sizing includes Qt's item insets; visual inspection caught and
+corrected double padding and unpolished row sizing. Shared row-height checks now
+assert full editor containment. Coral remains on page/navigation accents; blue
+headers and existing editing/authority behavior are retained. ARCH-002 uses focused
+stage and table helpers without new dependencies or runtime back-references.
+
+Validation: current Tracking/review-draft checks pass 13 tests (221 deselected,
+9.63s), including v1/v2/v3 migration, retained settings and Manual form containment
+at 1280/720px. The new uncalibrated-label assertion initially ran after calibration
+had already updated it; its ordering was corrected. Ruff lint/format (seven files),
+Windows-target mypy (five source files), boundaries (563 modules, zero violations)
+and whitespace pass; existing unrelated size advisories remain. Inspected
+Preprocessing, Calibration and Pose at both widths plus native Manual pose. The
+updated review GUI remains open (PID 36708); temporary helpers/captures removed.
+Native UI automation inventory timed out, so validation used the app's own capture.
+Previous shared-table GUI evidence: full suite 233 passed/one skip before final
+sizing, then 39 affected passes. Previous backend evidence remains 36 local Tracking
+plus six authenticated loopback passes, one Windows test excluded. No backend
+processing changed; these local checks do not establish Windows/hardware acceptance.
+
+
+
 The 2026-10-06 [live connection checks](device-connection-evidence-2026-10-06/README.md)
 confirm controller-backed COM8 Connect and both assigned Basler connection tests,
 including camera closure and successful original-draft restoration. Earlier
@@ -374,9 +513,17 @@ speed and Direction, with initial position and whole-image rotation in Advanced
 settings. Fit has a Batch edit dropdown and is excluded from numeric variation.
 New Images use Contain; omitted legacy values preserve Stretch under
 [V04](../docs/architecture/visual_stimulus.md#v04). Video hides Retain state/Linked
-to and preserves loaded reset values during other edits; Looming hides Linked to.
+to; 3D arena hides Retain state in generation and editing. Both preserve loaded
+reset values during other edits; Looming hides Linked to.
 Image motion uses the existing 2D state, with no texture phase conversion. Fades
 and existing closed-loop availability remain in their owning forms.
+
+The 2026-10-06 arena visibility refinement under G01 revision 113 reuses the
+shared stimulus editor without changing runtime reset policy. Focused family,
+arena-variation and full-selection checks: **8 passed, 217 deselected** (8.60s).
+Scoped Ruff lint/format (two files), Windows-target mypy (one source), boundaries
+(559 modules, zero violations) and whitespace pass. These are local Qt checks;
+no native Windows or physical projection acceptance is claimed.
 
 Local checks for this increment: GUI suite **195 passed, 1 deselected**;
 the final family/legacy/Batch-fit subset **5 passed, 192 deselected** after adding
@@ -394,24 +541,34 @@ and renderer composition remain cohesive. GPU shader compilation and physical
 Windows projection are not established by these portable checks; the existing rig
 worklist remains authoritative.
 
-[G01 revision 105](../docs/architecture/gui.md#g01) gives a single Timeline
+[G01 revision 111](../docs/architecture/gui.md#g01) gives a single Timeline
 selection the shared full Batch generate form: duration, stimulus mode, batch
-label and each projector/layer's stimulus parameters. Delete/Duplicate sit beside
-the scope selector and are absent from the timeline. Target epochs retains
+label and each projector/layer's stimulus parameters. Duplicate/Delete sit before
+Preview in the timeline header; at narrow widths their row sits below the title
+without clipping. Selection/authority guards and shortcut behavior are preserved. Target epochs retains
 parameter-at-a-time batch controls with All epochs, Epoch label and Epoch index
-filters. Labels refresh from the current trial; a one-based index selects a source
+filters. Parameter choices derive from the same generation-column definition,
+plus Duration/Asset; Opacity is absent. Rotation is Texture-only, Image exposes
+Fit/Speed/Direction, Looming exposes size/growth, Video exposes Start/At end, and
+arena exposes longitudinal/lateral/angular gains. Video end behavior uses a
+dropdown; arena patches reuse the existing gain/channel helper used by variation. Labels refresh from the current trial; a one-based index selects a source
 epoch, including nested groups without expanding repeated occurrences. Invalid or
-out-of-range input warns inline and blocks Apply, including a direct apply call.
+out-of-range indices or missing label matches stay quiet during editing; Apply
+opens a warning and rejects mutation, including direct apply calls. Validation
+actions remain enabled so operators can obtain the failure reason.
 Changing filters with unapplied edits restores the accepted filter. Epochs,
 Filter and any label/index choice share one row; Parameter and the duration or
 per-projector values share the row below. Fixed matching durations retain their
 clock value; mixed/variable durations show hh:mm:ss, without staging a patch.
 Targeting and epoch identity fields share equal grid columns, matching control
 heights and explicit 12px gutters. Timeline selection keeps its larger section gap.
-One permanent action bar above targeting controls keeps Discard/Apply in the same
-top-right position across selection modes; Apply has primary emphasis. The shared
+Discard/Apply sit opposite the Batch generate/edit tabs at the card's top right
+across selection modes; Apply has primary emphasis. The shared
 pair dispatches to the full selected-source form or the target patch, without a
-second pair in the form. Shared InlineMessage collapses empty validation space. Empty narrow projector rows omit unused asset/numeric placeholders.
+second pair in the form. The redundant All parameters inspector shortcut and
+Projector header in parameter editing are removed. Shared FormNotice removes inline error/status labels: action failures open one
+window-modal warning per form; passive checks remain quiet, and status events
+reach the Dashboard activity log. Editing-authority loss dismisses owned warnings. Empty narrow projector rows omit unused asset/numeric placeholders.
 Batch generate aligns field heights and uses consistent horizontal/vertical gaps. Multiple
 Timeline selections retain
 batch patches for mixed settings, with structural actions disabled. Returning to
@@ -425,24 +582,50 @@ internal scroller, fits the largest enabled-screen layer stack across the trial,
 and caches sizing by immutable program/screen identity. Trials matches its height;
 the Protocol configuration section remains scrollable.
 
-Final fresh GUI suite: **202 passed, 1 deselected** (119.62s). Final focused
-selection/clock-format/targeting/fixed-action/reflow checks: **10 passed,
-193 deselected** (13.98s). Scoped Ruff lint/format (4 files), Windows-target
-GUI mypy (96 source files), boundaries (551 modules, zero violations), and
-whitespace pass. The first full run had two tests manipulating hidden patch
-controls in single Timeline selection; those scenarios now explicitly target
-source index 1, preserving their intended batch-patch isolation/history coverage.
-Native review checked Timeline selection and all/label/index targeting at 1280px
-and 720px, including exact action positions and matching field heights. Explicit
-gutter columns fixed a Qt grid gap lost beside hidden spanning controls. All
-inspection GUIs were closed; the updated isolated Protocol GUI remains open for
-review. Temporary helpers/captures/results were removed after assessment.
-ARCH-002 cohesion review keeps BatchEdit (506 lines) as the focused patch-binding
-and apply-dispatch owner; EpochTargets and EpochSelection own filtering and form
-composition, while ProtocolEditor owns document/history. No new dependency or
-runtime back-reference was introduced. Concurrent Devices and Image/Video/Looming
-work was preserved. These checks do not establish managed runtime or physical rig
-acceptance.
+Final fresh GUI suite: **216 passed, 1 deselected** (125.59s). Focused targeting,
+notice lifecycle, selection, generation, media and variation checks: **21 passed,
+196 deselected** (21.86s). Tests verify quiet invalid filters until Apply, rejected
+mutation, warning-window content/reuse, dismissal on editing-authority loss, and
+status delivery to the activity log. Scoped Ruff lint/format (18 files), GUI
+Windows-target mypy (100 sources), boundaries (556 modules, zero violations), and
+whitespace pass.
+The 2026-10-06 spacing refinement under [G02 revision 25](../docs/architecture/gui.md#g02)
+uses one 8 px token for the dependent sections below SpikeGLX control, photodiode
+pulse, Tracking crop and Variation rules. Margins belong to dependent sections;
+hidden variation content leaves no spacer. Table/recording checkboxes keep their
+row alignment. Four rendered sections reviewed and inspection window closed.
+Focused owning GUI checks: **8 passed, 225 deselected** (6.12s), including narrow
+variation layout. Scoped Ruff lint/format (five files), Windows-target mypy (five
+sources), boundaries (561 modules, zero violations) and whitespace pass. No new
+dependency or runtime behavior; native Windows/rig acceptance remains pending.
+
+Under [G02 revision 24](../docs/architecture/gui.md#g02), protocol forms share the
+notification helper: passive validation stages diagnostics privately, explicit
+failed actions warn, and transient status goes to the log. Generation's live
+preview no longer disables Add merely for invalid draft values; Add validates and
+warns without mutation. Under G01 revision 114, shared parameter commits and
+layer/type/scope navigation stage diagnostics privately. Parameter errors surface
+once through the owning Add epochs/Apply edit action, including the projector
+and specific invalid value; rejected navigation retains the pending draft.
+Preparing a variation stays quiet. File-picker/load failures still warn at their
+explicit file action. No new dependency or runtime policy. Local GUI suite:
+**226 passed, 1 deselected** (144.70s); final submission/target/navigation subset
+**5 passed, 222 deselected** (8.37s) after quieting the remaining batch navigation
+guards. Scoped Ruff lint/format (six files), Windows-target mypy (five sources),
+boundaries (559 modules, zero violations) and whitespace pass. Tests preserve
+invalid drafts, verify a single warning on submission and corrected resubmission.
+No native inspection window or hardware process was spawned for this increment. Authored timeline/preview counts remain visible data.
+Native review confirmed an unmatched label is quiet, Apply opens the themed warning,
+and status reaches the log. Inspection window closed normally. The first review
+handoff subsequently exited; the updated isolated Protocol GUI was reopened.
+Temporary helpers, QSettings, captures and results were removed after assessment.
+ARCH-002 extracts notification/dialog lifecycle and the focused log event into
+notices, removing InlineMessage and repeated inline-label behavior across protocol
+forms. Existing form/document/history and controller ownership remain unchanged;
+no dependency or backend policy changes. StimulusParameters remains the cohesive
+binding/atomic-commit owner, with notification behavior delegated. Concurrent
+launcher/controller/Tracking work and rig evidence were preserved. These checks
+do not establish managed runtime or physical rig acceptance.
 
 2026-10-06 portable update review of `c0120e9`: inspected the managed/review launcher
 split, controller bridge, camera viewer, MCU wiring, draft persistence and renderer
@@ -633,10 +816,10 @@ controller were left untouched. The archived 2026-09-29 behavior PFS records
 FrameStart `TriggerMode Off` with `TriggerSource Line1`; its Line1 entry alone
 does not establish a currently active external-trigger configuration or wiring.
 
-The remaining runtime controls are not yet all functional: Dashboard subject and
-recording forms, Protocol editing, projector configuration/calibration, SpikeGLX
-pairing/channel mapping and Tracking remain review-only or placeholders. Camera role
-editing and managed Test enabled also lack controller routes. Existing managed
+At this historical audit checkpoint, Dashboard subject/recording forms, Protocol,
+projectors, SpikeGLX mapping and Tracking still lacked complete managed routes. The
+[current wiring assessment](#current-scope-and-review) supersedes that implementation
+status; the rig evidence below retains its original scope. Existing managed
 Start/Stop/Attach preview, MCU diagnostics and SpikeGLX connection tests require
 separate rig execution; the audit did not prove them from a live click. Focused
 managed camera/control/MCU Qt tests passed 10 cases; related controller configuration

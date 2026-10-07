@@ -19,6 +19,7 @@ from cephvr.controller.transport.auth import ClientAuthentication
 from cephvr.controller.transport.ingress import BoundedReportIngress
 from cephvr.shared.auth import AuthenticationError, require_authenticated_peer
 from cephvr.synchronization.diagnostic import SpikeGLXDiagnostic
+from cephvr.synchronization.sdk_io import SpikeGLXIOOwner
 
 
 class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
@@ -177,6 +178,68 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             request,
             lambda: self.runtime.update_configuration(request),
         )
+
+    async def OpenDisplayCalibration(
+        self,
+        request: svc.OpenDisplayCalibrationRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "OpenDisplayCalibration",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.open_display_calibration(request),
+        )
+
+    async def CloseDisplayCalibration(
+        self,
+        request: svc.CloseDisplayCalibrationRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "CloseDisplayCalibration",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.close_display_calibration(request),
+        )
+
+    async def BeginTrackingDiagnostic(
+        self,
+        request: svc.BeginTrackingDiagnosticRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "BeginTrackingDiagnostic",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.begin_tracking_diagnostic(request),
+        )
+
+    async def CloseTrackingDiagnostic(
+        self,
+        request: svc.CloseTrackingDiagnosticRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "CloseTrackingDiagnostic",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.close_tracking_diagnostic(request),
+        )
+
+    async def GetTrackingDiagnosticState(
+        self, request: svc.TrackingDiagnosticQuery, context: grpc.aio.ServicerContext
+    ) -> pb.TrackingDiagnosticState:
+        await self._client(context, request.client_id)
+        try:
+            return await self.runtime.get_tracking_diagnostic_state(request)
+        except ValueError as exc:
+            await context.abort(grpc.StatusCode.FAILED_PRECONDITION, str(exc))
+            raise AssertionError("abort returned") from exc
 
     async def Setup(
         self, request: svc.OperatorCommand, context: grpc.aio.ServicerContext
@@ -384,6 +447,34 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             return svc.SpikeGLXConnectionResult(error="SpikeGLX diagnostic unavailable")
         return await self.spikeglx_diagnostic.check()
 
+    async def GetSpikeGLXInventory(
+        self,
+        request: svc.SpikeGLXInventoryRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> svc.SpikeGLXInventorySnapshot:
+        await self._client(context, request.command.operator.client_id)
+        snapshot, error = await self.runtime.get_spikeglx_inventory(request)
+        if error or snapshot is None:
+            await context.abort(
+                grpc.StatusCode.FAILED_PRECONDITION,
+                error or "SpikeGLX inventory is unavailable",
+            )
+            raise AssertionError("abort returned")
+        return snapshot
+
+    async def UpdateSpikeGLXInventory(
+        self,
+        request: svc.SpikeGLXInventoryUpdateRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "UpdateSpikeGLXInventory",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.update_spikeglx_inventory(request),
+        )
+
     async def GetPreviewAttachment(
         self, request: svc.PreviewAttachmentQuery, context: grpc.aio.ServicerContext
     ) -> svc.PreviewAttachmentResult:
@@ -452,6 +543,7 @@ async def start_controller_server(
     max_pending_payload_bytes: int = 67_108_864,
     command_retention_ns: int = 300_000_000_000,
     software_root: Path | None = None,
+    spikeglx_io_owner: SpikeGLXIOOwner | None = None,
 ) -> grpc.aio.Server:
     if not 0 < port <= 65535 or max_message_bytes <= 0:
         raise ValueError("invalid controller endpoint settings")
@@ -469,9 +561,11 @@ async def start_controller_server(
         max_pending_payload_bytes=max_pending_payload_bytes,
         max_message_bytes=max_message_bytes,
         command_retention_ns=command_retention_ns,
-        spikeglx_diagnostic=SpikeGLXDiagnostic(software_root)
-        if software_root is not None
-        else None,
+        spikeglx_diagnostic=(
+            SpikeGLXDiagnostic(software_root, io_owner=spikeglx_io_owner)
+            if software_root is not None
+            else None
+        ),
     )
     rpc.add_ExperimentControllerServiceServicer_to_server(servicer, server)  # type: ignore[no-untyped-call]
     bound4 = server.add_insecure_port(f"127.0.0.1:{port}")

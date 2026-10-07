@@ -23,7 +23,24 @@ message InitializeDisplay {
   ResourceLimits limits = 3;
   cephvr.control.v1.ControlPolicies policies = 4;
   optional string asset_root = 5; // Exact controller-selected display asset root.
+  optional double pacing_refresh_hz = 6; // File-only V20 target.
+  optional string pacing_output_id = 7; // Explicit file-only V20 output identity.
   // Renderer-only, no session context, recording, trial files or trial assets.
+}
+message OpenDisplayCalibrationCommand {
+  WorkerCommand command = 1;
+  string diagnostic_id = 2;
+  string profile_json = 3;
+  string profile_sha256 = 4;
+  optional string asset_root = 5;
+  string arena_relative_path = 6;
+  uint64 arena_size_bytes = 7;
+  string arena_sha256 = 8;
+  VisualStimulusFilePolicies policies = 9;
+}
+message CloseDisplayCalibrationCommand {
+  WorkerCommand command = 1;
+  string diagnostic_id = 2;
 }
 message WorkerSetup {
   WorkerCommand command = 1;
@@ -91,6 +108,7 @@ message WorkerState {
   cephvr.control.v1.VisualStimulusDisplayView display = 7;
   reserved 8;
   reserved "recording_attachments";
+  cephvr.visual_stimulus.v1.DisplayCalibrationEvidence calibration = 9;
   // Retained observations retain original times; query arrival is not fresh proof.
 }
 

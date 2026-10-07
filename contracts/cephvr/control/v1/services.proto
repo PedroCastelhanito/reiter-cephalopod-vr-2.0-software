@@ -10,6 +10,7 @@ import "cephvr/acquisition/v1/runtime.proto";
 import "cephvr/visual_stimulus/v1/runtime.proto";
 import "cephvr/tracking/v1/methods.proto";
 import "cephvr/tracking/v1/preparation.proto";
+import "cephvr/synchronization/v1/spikeglx.proto";
 
 // E08: loopback control only. The sole streaming RPC is WatchState.
 // Authentication credentials belong in protected gRPC metadata, never
@@ -17,9 +18,16 @@ import "cephvr/tracking/v1/preparation.proto";
 service ExperimentControllerService {
   rpc ReportDataPreparation(DataPreparationReport) returns (ReportReceipt);
   rpc ReportVisualStimulusDisplay(VisualStimulusDisplayView) returns (ReportReceipt);
+  rpc OpenDisplayCalibration(OpenDisplayCalibrationRequest) returns (CommandAdmission);
+  rpc CloseDisplayCalibration(CloseDisplayCalibrationRequest) returns (CommandAdmission);
   rpc GetSnapshot(SnapshotRequest) returns (Snapshot);
   rpc WatchState(WatchRequest) returns (stream Snapshot);
   rpc UpdateConfiguration(UpdateConfigurationRequest) returns (CommandAdmission);
+  rpc GetSpikeGLXInventory(SpikeGLXInventoryRequest) returns (SpikeGLXInventorySnapshot);
+  rpc UpdateSpikeGLXInventory(SpikeGLXInventoryUpdateRequest) returns (CommandAdmission);
+  rpc BeginTrackingDiagnostic(BeginTrackingDiagnosticRequest) returns (CommandAdmission);
+  rpc CloseTrackingDiagnostic(CloseTrackingDiagnosticRequest) returns (CommandAdmission);
+  rpc GetTrackingDiagnosticState(TrackingDiagnosticQuery) returns (TrackingDiagnosticState);
   rpc ExecuteCameraCommand(CameraCommandRequest) returns (CommandAdmission);
   rpc ExecuteMicrocontrollerCommand(MicrocontrollerCommandRequest) returns (CommandAdmission);
   rpc CheckSpikeGLXConnection(SpikeGLXConnectionQuery) returns (SpikeGLXConnectionResult);
@@ -71,6 +79,45 @@ service SupervisorService {
 // V19: controller-only initial display preparation, not an operator retry API.
 service VisualStimulusConfigurationService {
   rpc InitializeDisplay(VisualStimulusDisplayInitializationRequest) returns (CommandAdmission);
+  rpc OpenDisplayCalibration(VisualStimulusDisplayCalibrationOpenRequest) returns (CommandAdmission);
+  rpc CloseDisplayCalibration(VisualStimulusDisplayCalibrationCloseRequest) returns (CommandAdmission);
+}
+message OpenDisplayCalibrationRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  string diagnostic_id = 3;
+  string profile_asset_reference = 4; // Relative to the adopted asset root.
+  string arena_asset_reference = 5; // Relative to the adopted asset root.
+  string expected_profile_sha256 = 6;
+  string expected_arena_sha256 = 7;
+}
+message CloseDisplayCalibrationRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  string diagnostic_id = 3;
+}
+message VisualStimulusDisplayCalibrationOpenRequest {
+  string command_id = 1;
+  ProcessIdentity issuer = 2;
+  BackendContext target = 3;
+  uint64 configuration_revision = 4;
+  string diagnostic_id = 5;
+  int64 deadline_monotonic_ns = 6;
+  string profile_json = 7;
+  string profile_sha256 = 8;
+  optional string asset_root = 9;
+  string arena_relative_path = 10;
+  uint64 arena_size_bytes = 11;
+  string arena_sha256 = 12;
+  cephvr.visual_stimulus.v1.VisualStimulusFilePolicies policies = 13;
+}
+message VisualStimulusDisplayCalibrationCloseRequest {
+  string command_id = 1;
+  ProcessIdentity issuer = 2;
+  BackendContext target = 3;
+  uint64 configuration_revision = 4;
+  string diagnostic_id = 5;
+  int64 deadline_monotonic_ns = 6;
 }
 message VisualStimulusDisplayInitializationRequest {
   string command_id = 1;
@@ -82,6 +129,8 @@ message VisualStimulusDisplayInitializationRequest {
   ControlPolicies policies = 7;
   int64 deadline_monotonic_ns = 8;
   optional string asset_root = 9; // Display-only protected dependencies before Setup.
+  optional double pacing_refresh_hz = 10; // File-only V20 target, absent preserves profile fallback.
+  optional string pacing_output_id = 11; // File-only V20 identity; never infer from a GUI selection.
 }
 service BackendService {
   rpc ApplyIncidentScope(IncidentScopeRequest) returns (CommandAdmission);
@@ -111,6 +160,53 @@ service AcquisitionConfigurationService {
   rpc ExecuteCameraCommand(AcquisitionCameraCommand) returns (CommandAdmission);
   rpc ExecuteMicrocontrollerCommand(AcquisitionMicrocontrollerCommand) returns (CommandAdmission);
   rpc ConfirmConfiguration(AcquisitionConfigurationConfirmation) returns (CommandAdmission);
+  rpc AttachTrackingDiagnosticInput(AcquisitionTrackingDiagnosticAttachmentCommand) returns (CommandAdmission);
+}
+message SpikeGLXInventoryRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+}
+message SpikeGLXInventorySnapshot {
+  uint64 configuration_revision = 1;
+  string file_sha256 = 2;
+  repeated cephvr.synchronization.v1.PulseChannel pulse_channels = 3;
+  optional bool backend_enabled = 4;
+  optional string address = 5;
+  optional uint32 command_port = 6;
+}
+message SpikeGLXInventoryUpdateRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  string expected_file_sha256 = 3;
+  repeated cephvr.synchronization.v1.PulseChannel pulse_channels = 4;
+}
+message BeginTrackingDiagnosticRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  string preview_run_id = 3;
+  repeated TrackingDiagnosticStage selected_stages = 4;
+  TrackingSettings diagnostic_settings = 5; // Frozen diagnostic-only draft; never updates experiment configuration.
+}
+message CloseTrackingDiagnosticRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  string diagnostic_id = 3;
+  string preview_run_id = 4;
+}
+message TrackingDiagnosticQuery {
+  string client_id = 1;
+  string controller_generation = 2;
+  uint64 configuration_revision = 3;
+  string diagnostic_id = 4;
+  string preview_run_id = 5;
+  ProcessIdentity viewer = 6;
+}
+message AcquisitionTrackingDiagnosticAttachmentCommand {
+  BackendCommand command = 1;
+  uint64 configuration_revision = 2;
+  string preview_run_id = 3;
+  ProcessIdentity tracking_consumer = 4;
+  // Duplicates only the exact ordered TRACKING ring into manual preview scope.
 }
 enum CameraCommandKind {
   CAMERA_COMMAND_KIND_UNSPECIFIED = 0;

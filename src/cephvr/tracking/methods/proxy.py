@@ -107,6 +107,9 @@ class FlowProxy:
             association = self.association
             assert association is not None
             displacement = vector.astype(np.float64) * flow.component_scale
+            if sample.transform is not None:
+                displacement[..., 0] /= sample.transform.scale_x
+                displacement[..., 1] /= sample.transform.scale_y
             area = association.area.sum(axis=1)
             accepted, counts = screen(
                 displacement,

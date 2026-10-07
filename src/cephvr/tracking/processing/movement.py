@@ -157,6 +157,7 @@ class Movement:
                             p.flow.grid_mapping(),
                             use,
                             geometry,
+                            transform=frame.transform,
                         )
                     )
                 finally:

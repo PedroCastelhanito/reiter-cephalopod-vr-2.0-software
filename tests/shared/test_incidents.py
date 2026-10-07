@@ -159,6 +159,36 @@ def test_exact_isolated_camera_fault_can_continue_with_current_visual_stimulus_e
     assert result.affected_resources == ("camera.mp4",)
 
 
+def test_controller_owned_spikeglx_loss_is_a_prepared_nonessential_function() -> None:
+    context = _registered()
+    context.prepared_functions.add(
+        resource_id="spikeglx_recording",
+        owner=context.controller,
+        affected_closure_resource_ids=["spikeglx_recording"],
+        essential_to_stimulus_control=False,
+        feedback_hold_required_on_loss=False,
+        authorized_reporters=[context.controller],
+        bounded_uncertainty_supported=True,
+    )
+    topology = IncidentTopology.from_registered(context)
+    error = pb.ErrorReport(
+        error_id=_id(),
+        source=context.controller,
+        work=context.work,
+        occurred_monotonic_ns=100,
+        failure=pb.Failure(code="NO_PROGRESS", message="stream stalled"),
+        isolation=pb.FaultIsolationEvidence(
+            affected_resource_ids=["spikeglx_recording"],
+            leases_released_or_quarantined=True,
+            bounded_uncertainty=True,
+            verified_monotonic_ns=105,
+        ),
+    )
+    result = _classify(error, topology, _proof(context))
+    assert result.status == "continuable"
+    assert result.affected_resources == ("spikeglx_recording",)
+
+
 def test_lifecycle_scope_requires_exact_visual_stimulus_and_camera_worker_ancestry() -> (
     None
 ):
@@ -432,6 +462,55 @@ def test_blocking_incident_acknowledgement_never_reopens_continue() -> None:
         consequence="new unsafe consequence",
     )
     assert not reopened.acknowledged
+
+
+def test_progress_recovery_resolves_exact_revision_without_undoing_abort() -> None:
+    context = _registered()
+    topology = IncidentTopology.from_registered(context)
+    error = _error(context)
+    classification = _classify(error, topology, _proof(context))
+    registry = IncidentRegistry(
+        context.work.session, max_incidents=2, max_error_ids=3, max_bytes=4096
+    )
+    pending = registry.observe(
+        error, classification, consequence="paired recording progress lost"
+    )
+    resolved = registry.resolve_after_recovery(
+        pending.incident_id,
+        pending.revision,
+        session_active=True,
+        recovered_monotonic_ns=130,
+    )
+    assert resolved.disposition == pb.RUNTIME_INCIDENT_DISPOSITION_RESOLVED
+    assert resolved.revision == pending.revision + 1
+    with pytest.raises(StaleIncidentChoice):
+        registry.resolve_after_recovery(
+            pending.incident_id,
+            pending.revision,
+            session_active=True,
+            recovered_monotonic_ns=140,
+        )
+
+    aborting_error = _error(context)
+    aborting_error.incident_episode_id = _id()
+    aborting = registry.observe(
+        aborting_error,
+        classification,
+        consequence="another paired recording loss",
+    )
+    selected = registry.choose(
+        aborting.incident_id,
+        aborting.revision,
+        "abort_session",
+        session_active=True,
+    )
+    with pytest.raises(StaleIncidentChoice):
+        registry.resolve_after_recovery(
+            selected.incident_id,
+            selected.revision,
+            session_active=True,
+            recovered_monotonic_ns=150,
+        )
 
 
 def test_registry_preserves_cumulative_scope_and_original_deadline() -> None:

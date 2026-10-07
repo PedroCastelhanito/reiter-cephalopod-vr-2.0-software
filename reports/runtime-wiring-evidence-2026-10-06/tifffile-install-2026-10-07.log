@@ -1,0 +1,6 @@
+Collecting tifffile==2025.5.10
+  Using cached tifffile-2025.5.10-py3-none-any.whl.metadata (31 kB)
+Requirement already satisfied: numpy in ./.venv/lib/python3.11/site-packages (from tifffile==2025.5.10) (2.4.4)
+Using cached tifffile-2025.5.10-py3-none-any.whl (226 kB)
+Installing collected packages: tifffile
+Successfully installed tifffile-2025.5.10

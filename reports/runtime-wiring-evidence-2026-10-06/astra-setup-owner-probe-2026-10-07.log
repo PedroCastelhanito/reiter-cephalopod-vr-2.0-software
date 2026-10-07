@@ -1,0 +1,3 @@
+tracking COMMAND_RESULT_REJECTED attempt False phase SESSION_PHASE_CONFIGURATION Tracking diagnostic must confirm closure before Setup
+calibration COMMAND_RESULT_REJECTED attempt False phase SESSION_PHASE_CONFIGURATION Display calibration must confirm Idle and resource closure before Setup
+inventory COMMAND_RESULT_REJECTED attempt False phase SESSION_PHASE_CONFIGURATION SpikeGLX inventory persistence is still unresolved

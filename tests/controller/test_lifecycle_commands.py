@@ -398,8 +398,14 @@ async def test_shutdown_interrupts_at_once_and_completes_after_handoff_and_clean
     command = operator_command(runtime)
     await runtime.shutdown_application(command)
     command_id = command.operator.command_id
-    await asyncio.sleep(0.05)
-    # Interruption is not held back by the handoff.
+
+    async def wait_for_interruption() -> None:
+        async with asyncio.timeout(2):
+            while runtime.lifecycle.session.phase != pb.SESSION_PHASE_ENDED:
+                await asyncio.sleep(0.005)
+
+    await wait_for_interruption()
+    # Interruption is not held back by the handoff, while the operation stays pending.
     assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_ENDED
     assert not runtime.control.operations[command_id].complete
     handoff_gate.set()

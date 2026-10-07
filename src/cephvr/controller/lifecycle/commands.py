@@ -105,6 +105,16 @@ class SessionCommands:
                     error="stop withdrawal is past trial boundary",
                 )
             self.lifecycle.session.stop_after_trial = not cancel
+            if cancel and attempt is not None:
+                self.interruption.cancel_spikeglx_stop(attempt)
+            if not cancel and attempt is not None and attempt.end_ns:
+                self.interruption.arm_spikeglx_stop(
+                    attempt,
+                    stopped_deadline_ns=(
+                        attempt.end_ns + self.limit_state.current.stop_evidence_ns
+                    ),
+                    final_trial=False,
+                )
             self.control_operations.operation(
                 command.operator.command_id,
                 "CancelStopAfterTrial" if cancel else "StopAfterTrial",

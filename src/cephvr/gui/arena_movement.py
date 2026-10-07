@@ -8,6 +8,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLineEdit, QVBoxLayout, QWidget
 
 from cephvr.gui.components import equal_row_height, field
+from cephvr.gui.feedback_signals import tracking_signals
 from cephvr.gui.program_editing import unique_id
 from cephvr.tracking.config.pipeline import CHANNELS
 
@@ -196,3 +197,71 @@ class ArenaMovement(QWidget):
                     )
             else:
                 candidate["input_channels"].append(declaration)
+
+
+def patch_arena(
+    setting: dict[str, Any], changes: dict[str, str], document: dict[str, Any]
+) -> None:
+    for name, value in changes.items():
+        if name not in ("Longitudinal", "Lateral", "Angular"):
+            continue
+        gain = float(value)
+        if not isfinite(gain):
+            raise ValueError("Movement gains must be finite")
+        operation = (
+            "movement_integration"
+            if name == "Angular"
+            else "heading_relative_planar_integration"
+        )
+        binding = next(
+            (
+                b
+                for b in setting["feedback"]
+                if b["operation"] == operation
+                and (name != "Angular" or b.get("target") == "yaw")
+            ),
+            None,
+        )
+        if binding is None:
+            binding = dict(
+                binding_id=unique_id(setting["feedback"], "arena_variation"),
+                operation=operation,
+                gain=dict(kind="constant", value=0),
+            )
+            if name == "Angular":
+                binding.update(
+                    source_channel="turn_drive",
+                    target="yaw",
+                    offset=dict(kind="constant", value=0),
+                )
+            else:
+                binding.update(
+                    forward_channel="forward_drive",
+                    sideways_channel="sideways_drive",
+                    sideways_gain=dict(kind="constant", value=0),
+                )
+            setting["feedback"].append(binding)
+        key = "sideways_gain" if name == "Lateral" else "gain"
+        if binding[key]["kind"] != "constant":
+            raise ValueError("Custom movement gains cannot be replaced by a variation")
+        binding[key] = dict(kind="constant", value=gain)
+        needed = {
+            binding.get(k)
+            for k in ("source_channel", "forward_channel", "sideways_channel")
+        }
+        existing = {c["channel_id"]: c for c in document["input_channels"]}
+        streams = {existing[key]["stream_id"] for key in needed if key in existing}
+        if len(streams) > 1:
+            raise ValueError("Arena movement axes must use the same Tracking stream")
+        stream = next(iter(streams), "tracking")
+        for channel in tracking_signals():
+            channel = {**channel, "stream_id": stream}
+            identity = channel["channel_id"]
+            if identity not in needed:
+                continue
+            if identity in existing and existing[identity] != channel:
+                raise ValueError(
+                    f"{identity} conflicts with the Tracking movement channel"
+                )
+            if identity not in existing:
+                document["input_channels"].append(deepcopy(channel))

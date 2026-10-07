@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-import asyncio
 import importlib.util
 import os
-import threading
 import tomllib
-from concurrent.futures import Future
 from ctypes import byref, c_bool, c_char_p
 from pathlib import Path
 from types import ModuleType
 
 from cephvr.control.v1 import services_pb2 as rpc
+
+from .sdk_io import SpikeGLXIOBusy, SpikeGLXIOOwner
 
 
 def _sdk_package(software_root: Path) -> Path:
@@ -107,33 +106,29 @@ def _read_once(software_root: Path) -> rpc.SpikeGLXConnectionResult:
 class SpikeGLXDiagnostic:
     """One daemon I/O thread at a time; a timeout leaves its call in flight."""
 
-    def __init__(self, software_root: Path, timeout_s: float = 5.0) -> None:
+    def __init__(
+        self,
+        software_root: Path,
+        timeout_s: float = 5.0,
+        *,
+        io_owner: SpikeGLXIOOwner | None = None,
+    ) -> None:
         self.software_root = software_root
         self.timeout_s = timeout_s
-        self._lock = threading.Lock()
-        self._pending: Future[rpc.SpikeGLXConnectionResult] | None = None
+        self.io_owner = io_owner or SpikeGLXIOOwner()
 
     async def check(self) -> rpc.SpikeGLXConnectionResult:
-        with self._lock:
-            if self._pending is not None and not self._pending.done():
-                return rpc.SpikeGLXConnectionResult(
-                    error="A previous SpikeGLX connection check is still in progress"
-                )
-            future: Future[rpc.SpikeGLXConnectionResult] = Future()
-            self._pending = future
-
-        def read() -> None:
-            try:
-                future.set_result(_read_once(self.software_root))
-            except Exception as exc:
-                future.set_result(rpc.SpikeGLXConnectionResult(error=str(exc)))
-
-        threading.Thread(target=read, name="spikeglx-diagnostic", daemon=True).start()
         try:
-            return await asyncio.wait_for(
-                asyncio.shield(asyncio.wrap_future(future)), self.timeout_s
+            return await self.io_owner.run(
+                lambda: _read_once(self.software_root), self.timeout_s
             )
-        except TimeoutError:
+        except (SpikeGLXIOBusy, TimeoutError) as exc:
             return rpc.SpikeGLXConnectionResult(
-                error="SpikeGLX connection check timed out; remote state is unknown"
+                error=(
+                    "SpikeGLX diagnostic timed out; remote state is unknown"
+                    if isinstance(exc, TimeoutError)
+                    else str(exc)
+                )
             )
+        except Exception as exc:
+            return rpc.SpikeGLXConnectionResult(error=str(exc))

@@ -7,6 +7,8 @@ import "cephvr/visual_stimulus/v1/messages.proto";
 // the renderer is the only worker (V01/V12). No pixels or per-frame evidence RPC.
 service VisualStimulusWorkerService {
   rpc InitializeDisplay(cephvr.visual_stimulus.v1.InitializeDisplay) returns (cephvr.control.v1.CommandAdmission);
+  rpc OpenDisplayCalibration(OpenDisplayCalibrationCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc CloseDisplayCalibration(CloseDisplayCalibrationCommand) returns (cephvr.control.v1.CommandAdmission);
   rpc SetupSession(WorkerSetup) returns (cephvr.control.v1.CommandAdmission);
   rpc CancelSetup(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);
   rpc PrepareTrial(WorkerPrepareTrial) returns (cephvr.control.v1.CommandAdmission);

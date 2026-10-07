@@ -56,6 +56,7 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
             }
             for camera in cameras.drafts
         ],
+        "tracking": window.tracking.snapshot(),
         "microcontroller": {
             "port": mcu.port.currentData() or "",
             "trial_pin": mcu.trial_pin.text(),
@@ -117,9 +118,18 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
                     "stream": stream.currentText(),
                     "index": index.text(),
                     "channel": channel.text(),
+                    "bit": optional[0].text()
+                    if optional and isinstance(optional[0], QLineEdit)
+                    else "",
                     "enabled": spike.enable_controls[key].isChecked(),
                 }
-                for key, (signal, stream, index, channel) in spike.rows.items()
+                for key, (
+                    signal,
+                    stream,
+                    index,
+                    channel,
+                    *optional,
+                ) in spike.rows.items()
                 if isinstance(signal, (QLabel, QLineEdit))
                 and isinstance(stream, QComboBox)
                 and isinstance(index, QLineEdit)
@@ -265,17 +275,23 @@ def _restore(
             spike.add_row(key, "Other input", custom=True)
         if key not in spike.rows:
             continue
-        signal, stream, index, channel = spike.rows[key]
+        signal, stream, index, channel, *optional = spike.rows[key]
         if isinstance(signal, QLineEdit):
             signal.setText(item["signal"])
         if isinstance(stream, QComboBox):
             stream.setCurrentText(item["stream"])
         _line(index).setText(item["index"])
         _line(channel).setText(item["channel"])
+        if optional and isinstance(optional[0], QLineEdit):
+            optional[0].setText(item.get("bit", ""))
         spike.enable_controls[key].setChecked(item["enabled"])
         if key.startswith("custom:"):
-            spike.custom_count = max(spike.custom_count, int(key.split(":", 1)[1]))
+            suffix = key.rsplit("-", 1)[-1]
+            if suffix.isdecimal():
+                spike.custom_count = max(spike.custom_count, int(suffix))
     spike.refresh_controls()
+    if "tracking" in data:
+        window.tracking.restore(data["tracking"])
 
 
 def _line(widget: object) -> QLineEdit:

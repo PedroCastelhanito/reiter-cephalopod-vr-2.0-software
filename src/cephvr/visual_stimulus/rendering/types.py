@@ -4,10 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from cephvr.visual_stimulus.config.models.program_model import Settings
 from cephvr.visual_stimulus.resources.media import ImagePixels
+
+if TYPE_CHECKING:
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+    from cephvr.visual_stimulus.resources.display_calibration import (
+        PreparedDisplayCalibration,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,6 +208,16 @@ class RenderPort(Protocol):
     def diagnostics_pending(self) -> bool: ...
 
     def initialize_display(self, display: object) -> DisplayInitialization: ...
+
+    def show_idle(self, display: object) -> tuple[OutputActivity, ...]: ...
+
+    def present_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[OutputActivity, ...]: ...
+
+    def close_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[tuple[OutputActivity, ...], bool]: ...
 
     def prepare_trial(self, artifact: object, resources: object) -> None: ...
 

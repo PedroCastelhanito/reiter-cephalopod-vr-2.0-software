@@ -10,6 +10,9 @@ enum PulseRole {
   PULSE_ROLE_BEHAVIORAL_CAMERA = 1;
   PULSE_ROLE_TRACKING_CAMERA = 2;
   PULSE_ROLE_PHOTODIODE = 3;
+  PULSE_ROLE_TRIAL_STATE = 4;
+  PULSE_ROLE_PROJECTOR_FLIP = 5;
+  PULSE_ROLE_CUSTOM = 6;
 }
 enum StreamFamily {
   STREAM_FAMILY_UNSPECIFIED = 0;
@@ -23,6 +26,7 @@ message PulseChannel {
   uint32 stream_index = 3;
   uint32 channel_index = 4; // Saved acquisition index; must be in saved_channel_indices.
   optional uint32 bit = 5;  // Digital line within a word channel, when applicable.
+  optional string source_id = 6; // Stable identity for supplemental/custom mappings.
 }
 message NativeStream {
   StreamFamily family = 1;

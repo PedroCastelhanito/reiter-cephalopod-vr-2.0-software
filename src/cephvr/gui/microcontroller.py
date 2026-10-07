@@ -4,20 +4,21 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
-from PyQt6.QtCore import QSignalBlocker, Qt, pyqtSignal
+from PyQt6.QtCore import QSignalBlocker, pyqtSignal
 from PyQt6.QtSerialPort import QSerialPortInfo
 from PyQt6.QtWidgets import (
     QCheckBox,
-    QGridLayout,
+    QHeaderView,
     QLineEdit,
     QPushButton,
     QSizePolicy,
+    QTableWidgetItem,
     QVBoxLayout,
 )
 
-from cephvr.gui.components import Card, button, combo, equal_row_height, label
+from cephvr.gui.components import Card, button, combo, equal_row_height
 from cephvr.gui.device_panel import DevicePanel, entry
-from cephvr.gui.theme import SIZES
+from cephvr.gui.tables import DataTable
 from cephvr.gui.view import DashboardView, Phase
 
 
@@ -64,28 +65,38 @@ class MicrocontrollerPanel(DevicePanel):
         self.test_buttons: dict[str, QPushButton] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
         self.triggers = Card("Outputs", compact=True)
-        self.trigger_grid = QGridLayout()
-        self.triggers.body.addLayout(self.trigger_grid)
+        self.output_table = self.pin_table("Output")
+        self.triggers.body.addWidget(self.output_table)
         self.trial_pin = self.add_pin_row(
-            self.trigger_grid, 0, "trial-state", "Trial state"
+            self.output_table, 0, "trial-state", "Trial state"
         )
         self.trial_pin.setToolTip("Trial state output is always active-high")
         self.trial_pin.setPlaceholderText("D2–D13")
         self.io = Card("Inputs", compact=True)
-        flip = QGridLayout()
-        self.flip_pin = self.add_pin_row(flip, 0, "projector-flip", "Projector flip")
+        self.input_table = self.pin_table("Input")
+        self.flip_pin = self.add_pin_row(
+            self.input_table, 0, "projector-flip", "Projector flip"
+        )
         self.flip_pin.setToolTip("Projector flip input always detects rising edges")
         self.flip_pin.setPlaceholderText("D2 or D3")
-        self.io.body.addLayout(flip)
+        self.io.body.addWidget(self.input_table)
         layout = self.columns[0].layout()
         assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(1, self.io)
         layout.insertWidget(2, self.triggers)
         self.port.currentIndexChanged.connect(self.port_changed)
 
-    def add_pin_row(
-        self, grid: QGridLayout, row: int, key: str, name: str
-    ) -> QLineEdit:
+    @staticmethod
+    def pin_table(direction: str) -> DataTable:
+        table = DataTable(0, 4)
+        table.setHorizontalHeaderLabels(["Use", direction, "Pin", ""])
+        header = table.horizontalHeader()
+        assert header is not None
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        header.resizeSection(0, 52)
+        return table
+
+    def add_pin_row(self, table: DataTable, row: int, key: str, name: str) -> QLineEdit:
         pin = entry("Pin")
         pin.setAccessibleName(f"{name} pin")
         pin.setMinimumWidth(70)
@@ -109,18 +120,13 @@ class MicrocontrollerPanel(DevicePanel):
         enabled.setToolTip("Include this signal in the experiment")
         self.enable_controls[key] = enabled
         enabled.toggled.connect(lambda checked: self.set_enabled(key, checked))
-        grid.setHorizontalSpacing(SIZES.table_cell_padding)
-        grid.setVerticalSpacing(SIZES.field_x_gap)
-        grid.setColumnMinimumWidth(0, 28)
-        grid.setColumnMinimumWidth(1, 120)
-        grid.setColumnStretch(1, 2)
-        grid.setColumnStretch(2, 2)
-        grid.setColumnStretch(3, 2)
-        grid.addWidget(enabled, row, 0, Qt.AlignmentFlag.AlignCenter)
-        grid.addWidget(label(name, wrap=True), row, 1)
+        table.setRowCount(max(table.rowCount(), row + 1))
+        table.set_control(row, 0, enabled)
+        table.setItem(row, 1, QTableWidgetItem(name))
         equal_row_height(pin, test)
-        grid.addWidget(pin, row, 2)
-        grid.addWidget(test, row, 3)
+        table.set_control(row, 2, pin)
+        table.set_control(row, 3, test)
+        table.fit_rows()
         return pin
 
     def set_enabled(self, key: str, enabled: bool) -> None:
@@ -278,14 +284,10 @@ class MicrocontrollerPanel(DevicePanel):
             self.test_buttons.pop(camera.key, None)
             self.enable_controls.pop(camera.key, None)
         self.camera_rows = cameras
-        for index in reversed(range(self.trigger_grid.count())):
-            if self.trigger_grid.getItemPosition(index)[0] > 0:
-                item = self.trigger_grid.takeAt(index)
-                if item and (widget := item.widget()):
-                    widget.deleteLater()
+        self.output_table.setRowCount(1)
         self.pin_editors = {}
         for row, camera in enumerate(cameras, 1):
-            pin = self.add_pin_row(self.trigger_grid, row, camera.key, camera.role)
+            pin = self.add_pin_row(self.output_table, row, camera.key, camera.role)
             self.pin_editors[camera.key] = pin
             control = self.enable_controls[camera.key]
             control.blockSignals(True)
@@ -296,6 +298,7 @@ class MicrocontrollerPanel(DevicePanel):
             pin.textChanged.connect(
                 lambda value, key=camera.key: self.pins.__setitem__(key, value)
             )
+        self.output_table.fit_rows()
         self.refresh_tests()
 
     def refresh_tests(self) -> None:

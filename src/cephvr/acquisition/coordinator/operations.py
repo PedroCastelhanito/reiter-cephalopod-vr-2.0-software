@@ -83,6 +83,12 @@ class CoordinatorOperations(Protocol):
     async def confirm_configuration(
         self, request: wire.AcquisitionConfigurationConfirmation, *, deadline_ns: int
     ) -> control.CommandAdmission: ...
+    async def attach_tracking_diagnostic_input(
+        self,
+        request: wire.AcquisitionTrackingDiagnosticAttachmentCommand,
+        *,
+        deadline_ns: int,
+    ) -> control.CommandAdmission: ...
 
     async def report_worker_warnings(
         self, request: acq.WorkerWarningReport, *, deadline_ns: int, ingress_ns: int

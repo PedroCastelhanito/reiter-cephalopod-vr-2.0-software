@@ -2,7 +2,7 @@
 # Source rules: Experiment controller defaults. See architecture.md: E05, E06, E07, E08, E14.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/experiment_config.toml. The loader rejects a version mismatch.
-policy_version = 7
+policy_version = 8
 
 # Shared physical GPU placement, owned by SYS-002; no ordinal is a stable identity.
 [gpu_placement]
@@ -36,7 +36,7 @@ continuation_scope = "isolated_function_loss_no_restart_or_protocol_change"
 [control_lease]
 liveness = "exact_live_watch_subscription"
 disconnection = "release_invalidate_generation"
-reconnection = "observer_explicit_take_control"
+reconnection = "observer_automatic_unheld_claim_explicit_takeover"
 cli = "acquire_execute_release"
 
 [metadata]

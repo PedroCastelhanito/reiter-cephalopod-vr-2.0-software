@@ -19,6 +19,9 @@ from cephvr.visual_stimulus.rendering.types import (
     ResourceReleaseReport,
 )
 from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
+from cephvr.visual_stimulus.resources.display_calibration import (
+    PreparedDisplayCalibration,
+)
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
@@ -29,6 +32,12 @@ class EnginePort(Protocol):
     @property
     def diagnostics_pending(self) -> bool: ...
     def initialize_display(self, display: DisplayProfile) -> DisplayInitialization: ...
+    def present_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[OutputActivity, ...]: ...
+    def close_display_calibration(
+        self, display: DisplayProfile, prepared: PreparedDisplayCalibration
+    ) -> tuple[tuple[OutputActivity, ...], bool]: ...
     def display_matches(self, display: DisplayProfile) -> bool: ...
     def prepare_trial(self, artifact: PreparedTrial) -> object: ...
     def begin_trial(self, trial_id: str, start_ns: int) -> None: ...
@@ -52,6 +61,17 @@ class PreparationPort(Protocol):
     def initialize_display(
         self, display: DisplayProfile, calibration: PreparedCalibration
     ) -> DisplayInitialization: ...
+
+    def prepare_display_calibration(
+        self,
+        request: visual_stimulus.OpenDisplayCalibrationCommand,
+        announce: Callable[[str, str | None], None],
+        deadline_ns: int,
+    ) -> PreparedDisplayCalibration: ...
+
+    def release_display_calibration(
+        self, prepared: PreparedDisplayCalibration
+    ) -> bool: ...
 
     def prepare_graphics(self, artifacts: tuple[PreparedTrial, ...]) -> None: ...
 

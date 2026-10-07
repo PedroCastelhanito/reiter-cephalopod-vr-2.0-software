@@ -203,8 +203,11 @@ class CameraCaptureLoop:
             )
             if in_trial or (self.preview_ring is not None and not self.session_preview):
                 self._record_warnings(diagnostics, receipt_ns, frame_id)
+            tracking_capture = in_trial or (
+                self.preview_ring is not None and not self.session_preview
+            )
             if (
-                in_trial
+                tracking_capture
                 and self.tracking_ring is not None
                 and (
                     not result.valid_image
@@ -223,7 +226,7 @@ class CameraCaptureLoop:
                     raise RuntimeError(
                         "valid camera result differs from prepared layout"
                     )
-                if in_trial:
+                if tracking_capture:
                     self._publish_tracking(record, pixels)
                 self._publish_preview(record, pixels, receipt_ns, in_trial)
                 if not self._first_usable_reported:

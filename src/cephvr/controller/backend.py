@@ -71,6 +71,11 @@ class GrpcBackendPort:
             if registration.backend_name == "tracking"
             else None
         )
+        self.tracking_diagnostics = (
+            tracking_rpc.TrackingDiagnosticServiceStub(self.channel)  # type: ignore[no-untyped-call]
+            if registration.backend_name == "tracking"
+            else None
+        )
         self.visual_stimulus = (
             rpc.VisualStimulusConfigurationServiceStub(self.channel)  # type: ignore[no-untyped-call]
             if registration.backend_name == "visual_stimulus"
@@ -142,6 +147,36 @@ class GrpcBackendPort:
             raise RuntimeError("tracking preparation endpoint unavailable")
         return await self._admission(self.tracking.BindData, request, deadline_ns)
 
+    async def begin_tracking_diagnostic(
+        self, request: tracking_svc.TrackingDiagnosticCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission:
+        if self.tracking_diagnostics is None:
+            raise RuntimeError("tracking diagnostic endpoint unavailable")
+        return await self._admission(
+            self.tracking_diagnostics.BeginDiagnostic, request, deadline_ns
+        )
+
+    async def close_tracking_diagnostic(
+        self, request: tracking_svc.CloseTrackingDiagnosticCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission:
+        if self.tracking_diagnostics is None:
+            raise RuntimeError("tracking diagnostic endpoint unavailable")
+        return await self._admission(
+            self.tracking_diagnostics.CloseDiagnostic, request, deadline_ns
+        )
+
+    async def get_tracking_diagnostic_state(
+        self, request: tracking_svc.TrackingDiagnosticQuery, *, deadline_ns: int
+    ) -> tracking_svc.TrackingDiagnosticState:
+        if self.tracking_diagnostics is None:
+            raise RuntimeError("tracking diagnostic endpoint unavailable")
+        return cast(
+            tracking_svc.TrackingDiagnosticState,
+            await self._call(
+                self.tracking_diagnostics.GetDiagnosticState, request, deadline_ns
+            ),
+        )
+
     async def confirm_tracking_input(
         self, request: svc.TrackingInputConfirmation, *, deadline_ns: int
     ) -> pb.CommandAdmission:
@@ -203,6 +238,18 @@ class GrpcBackendPort:
             self.acquisition.ExecuteMicrocontrollerCommand, request, deadline_ns
         )
 
+    async def attach_tracking_diagnostic_input(
+        self,
+        request: svc.AcquisitionTrackingDiagnosticAttachmentCommand,
+        *,
+        deadline_ns: int,
+    ) -> pb.CommandAdmission:
+        if self.acquisition is None:
+            raise RuntimeError("acquisition configuration endpoint unavailable")
+        return await self._admission(
+            self.acquisition.AttachTrackingDiagnosticInput, request, deadline_ns
+        )
+
     async def apply_camera_settings(
         self, request: svc.AcquisitionCameraSettingsCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission:
@@ -231,6 +278,30 @@ class GrpcBackendPort:
             raise RuntimeError("Visual Stimulus configuration endpoint unavailable")
         return await self._admission(
             self.visual_stimulus.InitializeDisplay, request, deadline_ns
+        )
+
+    async def open_display_calibration(
+        self,
+        request: svc.VisualStimulusDisplayCalibrationOpenRequest,
+        *,
+        deadline_ns: int,
+    ) -> pb.CommandAdmission:
+        if self.visual_stimulus is None:
+            raise RuntimeError("Visual Stimulus configuration endpoint unavailable")
+        return await self._admission(
+            self.visual_stimulus.OpenDisplayCalibration, request, deadline_ns
+        )
+
+    async def close_display_calibration(
+        self,
+        request: svc.VisualStimulusDisplayCalibrationCloseRequest,
+        *,
+        deadline_ns: int,
+    ) -> pb.CommandAdmission:
+        if self.visual_stimulus is None:
+            raise RuntimeError("Visual Stimulus configuration endpoint unavailable")
+        return await self._admission(
+            self.visual_stimulus.CloseDisplayCalibration, request, deadline_ns
         )
 
     async def shutdown(

@@ -28,8 +28,9 @@ that must equal its policy file's.
   backend_release_cutoff_before_start_ms > 0`.
 - Central metadata queue/deadline settings belong to experiment_config.toml;
   supervisor_config.toml keeps health, reservation/emergency and shutdown settings.
-  Control reconnection has no grace timer; a fresh synchronized subscription must claim
-  control explicitly under E03. Old removed keys are rejected, not silently ignored.
+  Control reconnection has no grace timer; a fresh synchronized GUI subscription
+  automatically claims an unheld lease after warning acknowledgement under E03.
+  Replacing another holder requires explicit takeover. Old removed keys are rejected, not silently ignored.
 - Each setting has one owner. For example, change heartbeat policy only in
   `supervisor_config.toml`. Its resolved values are shared with every process that needs
   them, including controller-loss fallback; all processes read/validate health at

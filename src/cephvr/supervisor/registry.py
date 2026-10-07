@@ -226,6 +226,11 @@ class LaunchRegistry:
             self._block(entry, "LAUNCH_TIMEOUT", "launch registration deadline expired")
         return _snapshot(entry)
 
+    def planned_request(self, command_id: str) -> wire.PlanLaunchRequest:
+        """Return immutable launch identity before any native inspection."""
+        entry = self._get(command_id)
+        return wire.PlanLaunchRequest.FromString(entry.plan.SerializeToString())
+
     def confirm(
         self, request: wire.ConfirmLaunchRequest, expected_clock: HostClockDescriptor
     ) -> wire.LaunchState:
@@ -400,6 +405,24 @@ class LaunchRegistry:
         for listener in self._release_listeners:
             listener(released)
         return released
+
+    def release_gui_if_empty(self, command_id: str) -> wire.LaunchState:
+        """Release a GUI launch only after its exact native job is empty."""
+        entry = self._get(command_id)
+        if entry.plan.child.role != "gui":
+            raise LaunchError("WRONG_ROLE", "only GUI launches use this release path")
+        state = self.refresh(command_id)
+        if state.phase == wire.LAUNCH_PHASE_RELEASED:
+            return state
+        if (
+            state.phase != wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+            or not state.HasField("pid")
+            or not state.HasField("creation_time_100ns")
+        ):
+            return state
+        if self._members(entry):
+            return _snapshot(entry)
+        return self.release(command_id, obligations_met=True)
 
     def states(self, *, tolerant: bool = False) -> list[wire.LaunchState]:
         """Refresh every launch; tolerant callers get a failed entry's blocked state."""

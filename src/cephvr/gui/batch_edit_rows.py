@@ -4,38 +4,15 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QWidget
 
 from cephvr.gui.components import button, combo, label
-from cephvr.gui.epoch_batch import LayerTarget, matching_layer, parameter_value
+from cephvr.gui.epoch_batch import (
+    END_BEHAVIORS,
+    LayerTarget,
+    matching_layer,
+    parameter_value,
+)
 from cephvr.gui.paths import PathEdit
 from cephvr.gui.program_editing import node_at
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
-
-PARAMETERS = (
-    "Duration",
-    "Asset",
-    "Fit",
-    "Speed",
-    "Direction",
-    "Angular speed",
-    "Start size",
-    "End size",
-    "Growth duration",
-    "Playback start",
-    "Opacity",
-)
-
-
-def supports(family_name: str, parameter: str) -> bool:
-    if parameter == "Fit":
-        return family_name == "Image"
-    if parameter in ("Asset", "Angular speed"):
-        return True
-    if parameter in ("Speed", "Direction"):
-        return family_name in ("Texture", "Image", "3D arena")
-    if parameter in ("Start size", "End size", "Growth duration"):
-        return family_name == "Looming image"
-    if parameter == "Playback start":
-        return family_name == "Video"
-    return parameter == "Opacity" and family_name != "3D arena"
 
 
 class ProjectorEditRow(QWidget):
@@ -118,10 +95,16 @@ class ProjectorEditRow(QWidget):
         self.value.clear()
         self.value.setPlaceholderText("Unavailable")
         self.value.setEnabled(target is not None)
-        self.value.setVisible(self.parameter != "Fit")
-        self.fit.setVisible(self.parameter == "Fit")
+        self.value.setVisible(self.parameter not in ("Fit", "At end"))
+        self.fit.setVisible(self.parameter in ("Fit", "At end"))
         self.fit.setEnabled(target is not None)
         self.fit.blockSignals(True)
+        self.fit.clear()
+        self.fit.addItems(
+            ("Contain", "Cover", "Stretch")
+            if self.parameter == "Fit"
+            else ("Loop", "Hold final frame")
+        )
         self.fit.setCurrentIndex(-1)
         self.fit.blockSignals(False)
         if self.program is None or target is None:
@@ -177,9 +160,15 @@ class ProjectorEditRow(QWidget):
                 "Mixed" if len(set(values)) > 1 else values[0] if values else ""
             )
         unit = next(iter(units)) if len(units) == 1 else ""
-        if self.parameter == "Fit":
+        if self.parameter in ("Fit", "At end"):
             self.fit.blockSignals(True)
-            self.fit.setCurrentIndex(self.fit.findText(self.value.text().title()))
+            self.fit.setCurrentIndex(
+                self.fit.findText(
+                    self.value.text().replace("_", " ").capitalize()
+                    if self.parameter == "At end"
+                    else self.value.text().title()
+                )
+            )
             self.fit.blockSignals(False)
         self.value.setAccessibleName(
             f"{self.face or '3D arena'} {self.parameter}"
@@ -190,7 +179,11 @@ class ProjectorEditRow(QWidget):
         self.dirty = True
 
     def set_fit(self, text: str) -> None:
-        self.value.setText(text.lower())
+        self.value.setText(
+            END_BEHAVIORS.get(text.lower(), text.lower())
+            if self.parameter == "At end"
+            else text.lower()
+        )
         self.dirty = True
 
     def set_asset(self, path: str) -> None:

@@ -43,6 +43,82 @@ def test_release_is_idempotent_and_never_resurrects() -> None:
     assert len(seen) == 1
 
 
+def _gui_launch(
+    registry: LaunchRegistry, native: Native, *, pid: int = 42
+) -> wire.LaunchState:
+    owner = _identity("supervisor")
+    child = _identity("gui")
+    plan = wire.PlanLaunchRequest(
+        command_id=str(uuid4()),
+        owner=owner,
+        child=child,
+        executable=EXE,
+        python_worker=True,
+        stop_method="grpc_shutdown",
+    )
+    state = registry.plan(plan)
+    native.jobs[state.containment_job_name] = [(pid, pid + 100, EXE)]
+    registry.confirm(
+        wire.ConfirmLaunchRequest(
+            command_id=str(uuid4()),
+            launch_command_id=plan.command_id,
+            owner=owner,
+            child=child,
+            pid=pid,
+            creation_time_100ns=pid + 100,
+        ),
+        describe_host_clock(),
+    )
+    return registry.confirm(
+        wire.ConfirmLaunchRequest(
+            command_id=str(uuid4()),
+            launch_command_id=plan.command_id,
+            owner=owner,
+            child=child,
+            pid=pid,
+            creation_time_100ns=pid + 100,
+            endpoint=f"127.0.0.1:{50000 + pid}",
+            host_clock=types.HostClockDescriptor(
+                clock_id=describe_host_clock().clock_id,
+                implementation=describe_host_clock().implementation,
+                monotonic=describe_host_clock().monotonic,
+                adjustable=describe_host_clock().adjustable,
+                resolution_s=describe_host_clock().resolution_s,
+            ),
+        ),
+        describe_host_clock(),
+    )
+
+
+def test_gui_release_requires_empty_native_job_and_is_idempotent() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    released: list[wire.LaunchState] = []
+    registry.on_release(released.append)
+    alive = _gui_launch(registry, native)
+    assert registry.release_gui_if_empty(alive.plan.command_id).phase == alive.phase
+    assert not released
+
+    native.jobs[alive.containment_job_name] = []
+    first = registry.release_gui_if_empty(alive.plan.command_id)
+    again = registry.release_gui_if_empty(alive.plan.command_id)
+    assert first.phase == again.phase == wire.LAUNCH_PHASE_RELEASED
+    assert len(released) == 1
+
+
+def test_gui_release_keeps_unknown_native_membership_unconfirmed() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    state = _gui_launch(registry, native)
+    del native.jobs[state.containment_job_name]
+    with pytest.raises(LaunchError, match="membership could not be verified"):
+        registry.release_gui_if_empty(state.plan.command_id)
+    assert (
+        registry._entries[state.plan.command_id].state.phase
+        != wire.LAUNCH_PHASE_RELEASED
+    )
+
+
 def test_capacity_counts_only_live_launches_and_replay_survives_until_pruned() -> None:
     native = Native()
     registry = LaunchRegistry(native, 15_000_000_000, max_launches=3)

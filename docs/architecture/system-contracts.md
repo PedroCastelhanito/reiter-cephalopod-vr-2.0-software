@@ -52,7 +52,7 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 <a id="e06"></a>
 ### E06 — Stop, interruption, timeout, and recovery
 
-**Status:** Accepted · **Revision:** 76
+**Status:** Accepted · **Revision:** 77
 
 **Operator commands**
 
@@ -98,8 +98,9 @@ runtime providers, V26's numeric limit and rig evidence remain outstanding.
 - Classify with the exact prepared function/resource loss closure and authenticated
   generation/work-bound fault, fencing/lease and continuing-path observations from
   the [incident contract](../../contracts/operator-incidents.md). Prepared functions
-  declare exact backend-scoped E11 lifecycle sources; lost functions close only their
-  declared activity/cutoff gates, and worker ownership is checked against the
+  declare exact backend-scoped E11 lifecycle sources, with E12's controller-owned
+  remote recording capability retaining its session-level scope; lost functions close
+  only their declared activity/cutoff gates, and worker ownership is checked against the
   supervisor's registered launch ancestry. A code, source
   role, heartbeat or missing proof alone never grants Continue; missing proof is
   bounded by the original E06 recovery deadline, then blocks continuation.
@@ -217,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 161
+**Status:** Accepted · **Revision:** 162
 
 **Processes and startup**
 
@@ -251,7 +252,16 @@ design; runtime monitoring remains unimplemented.
   common worker framework is added. Native runtime implementation is pending.
 - Machine-wide OS guards allow one application/supervisor/controller/GUI/backend
   role, independent of ports or checkout. Launch admission is serialized, including
-  Starting; duplicate requests are no-ops. A missing GUI may be launched explicitly;
+  Starting. An interactive duplicate application launch asks Y/N before replacing
+  the existing runtime; N/EOF/noninteractive launch leaves it running. Y signals
+  only the retained owner-private, generation-specific launcher event. That launcher
+  terminates its own application job, verifies empty membership and publishes its
+  exact exit receipt before releasing the guard. The requester requires that receipt
+  and reacquires the guard before starting; missing endpoint/proof, timeout or a
+  competing launcher never permits guessed PID termination or overlapping runtimes.
+  This explicit force replacement may lose unfinished output and does not prove
+  graceful file closure. Duplicate role requests remain no-ops.
+  A missing GUI may be launched explicitly;
   headless clients may coexist. Released guards never prove descendant cleanup after
   a crash.
 - The GUI opens in startup/synchronizing state and observes registered health.

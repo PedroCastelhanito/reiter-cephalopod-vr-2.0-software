@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.components import button, combo, field, label
+from cephvr.gui.notices import FormNotice
 from cephvr.gui.program_editing import nodes_at
 from cephvr.gui.protocol_document import node_name
 from cephvr.gui.protocol_groups import Variation, make_group
@@ -139,7 +140,7 @@ class GroupDialog(QDialog):
         controls.addWidget(self.combine)
         controls.addStretch()
         body.addLayout(controls)
-        self.message = label("", wrap=True)
+        self.message = FormNotice()
         body.addWidget(self.message)
         body.addWidget(
             label(
@@ -183,7 +184,7 @@ class GroupDialog(QDialog):
                 self.combine.currentIndex() == 1,
             )
         except (ValueError, TypeError, IndexError) as error:
-            self.message.setText(str(error))
+            self.message.warn(str(error))
             return
         self.committed.emit(program, selected)
         self.accept()

@@ -1,0 +1,360 @@
+{
+  "date": "2026-10-06",
+  "source_revision": "aff8e0c8505793ca11f15b9eb572e21ade157dc4",
+  "working_tree": "Existing uncommitted changes; source revision alone does not reproduce this baseline.",
+  "scope": "Development-machine local behavior only. No native Windows, device, scientific or full-workload acceptance.",
+  "runs": [
+    {
+      "output": "baseline-tests.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/tracking tests/visual_stimulus/test_configuration.py -q -m 'not windows and not rig'",
+      "outcome": "273 passed, 1 pacing loader failure, 2 deselected, 6 Tracking RPC fixture errors (sandbox loopback denied)."
+    },
+    {
+      "output": "baseline-rpc.log",
+      "command": ".venv/bin/python -m pytest tests/tracking/test_runtime.py -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "6 passed in 2.07 seconds."
+    },
+    {
+      "output": "pacing.log",
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_configuration.py -q -m 'not windows and not rig'",
+      "outcome": "1 failed, 4 passed; presentation.pacing_refresh_hz rejected."
+    },
+    {
+      "output": "tracking-sol-fix-raw.log",
+      "command": ".venv/bin/python -m pytest tests/tracking -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "55 passed, 1 deselected in 3.15 seconds; working tree at repair checkpoint."
+    },
+    {
+      "output": "contract-checkpoint.log",
+      "command": ".venv/bin/python -m pytest contracts/tracking contracts/visual_stimulus/tests -q",
+      "outcome": "2 collection errors from Tracking local-module imports; rerun with owning unittest entry context."
+    },
+    {
+      "output": "tracking-contract-checkpoint.log",
+      "command": "../../.venv/bin/python -m unittest discover -p 'test_*.py'",
+      "cwd": "contracts/tracking",
+      "outcome": "48 tests, 1 failure: stale automatic-pose default expectation versus accepted manual config. Repair requested."
+    },
+    {
+      "output": "visual-contract-checkpoint.log",
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "outcome": "42 passed, 79 subtests passed in 0.54 seconds."
+    },
+    {
+      "output": "pacing-wrapper-repair.log",
+      "command": ".venv/bin/python -m pytest tests/controller/test_configuration_transactions.py tests/visual_stimulus/test_lifecycle.py -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "34 passed in 1.16 seconds; actual assembled held-policy regression included."
+    },
+    {
+      "output": "gui-authority-repair.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'managed_subject_metadata or managed_status or retained_summary or managed_prompt_window or prompt_completion or old_retained_dialog or retained_acknowledgement'",
+      "outcome": "10 passed, 237 deselected in 1.64 seconds; Sol re-review pending."
+    },
+    {
+      "output": "boundaries-checkpoint.log",
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "573 backend modules, zero boundary violations; size advisories require cohesion review."
+    },
+    {
+      "output": "projector-number-repair.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'gui_display_number_is_local_and_shared_with_layout'",
+      "outcome": "1 passed, 247 deselected in 1.54 seconds."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "gui-configuration-checkpoint.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig'",
+      "outcome": "Incomplete: draft-save tuple-unpacking failure followed by blocking close-error dialog. Task-owned process terminated, exit 143. Isolated test_review_draft_restores_local_configuration reproduced ValueError; Luna subsequently repaired and reports 2 focused passes."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "gui-draft-bit-repair.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'review_draft_restores_local_configuration or review_window_saves_draft_on_close'",
+      "outcome": "2 passed, 254 deselected in 2.05 seconds."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "tracking-contract-repair.log",
+      "command": "../../.venv/bin/python -m unittest discover -p 'test_*.py'",
+      "cwd": "contracts/tracking",
+      "outcome": "48 tests passed in 0.013 seconds. Pure contract consistency only."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "spikeglx-monitor-checkpoint.log",
+      "command": ".venv/bin/python -m pytest tests/controller/test_spikeglx.py tests/shared/test_incidents.py -q -m 'not windows and not rig'",
+      "outcome": ".........................                                                [100%]\n25 passed in 0.18s",
+      "scope": "Intermediate SDK/monitor/incident checks; inventory/GUI integration and final review pending."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "collection-checkpoint-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests --collect-only -q -m 'not windows and not rig'",
+      "outcome": "1165/1170 tests collected, five deselected, 1.77 seconds. Collection only; implementation still in progress."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "luna-tracking-diagnostic-focused-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests/controller/test_tracking_diagnostic.py tests/tracking/test_configuration.py tests/tracking/test_processing.py tests/tracking/test_methods.py tests/acquisition/test_manual_preview.py -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "63 passed in 1.37 seconds. Luna checkpoint, root read raw output; Sol review pending."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "luna-tracking-diagnostics-final-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests/tracking -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "69 passed, one deselected; Luna checkpoint. Later controller-only owner-loss recovery deadline correction separately passed five tests."
+    },
+    {
+      "date": "2026-10-07",
+      "output": "luna-tracking-diagnostics-sol-repairs-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests/acquisition/test_worker_foundations.py tests/acquisition/test_manual_preview.py tests/controller/test_tracking_diagnostic.py tests/tracking -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "99 passed, one deselected. Luna repair checkpoint, root read raw output; Sol re-review pending."
+    },
+    {
+      "output": "tracking-contract-final-2026-10-07.log",
+      "command": "../../.venv/bin/python -m unittest discover -p 'test_*.py'",
+      "cwd": "contracts/tracking",
+      "outcome": "48 passed in 0.013s. Pure contract consistency; working tree 2026-10-07."
+    },
+    {
+      "output": "visual-contract-final-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "outcome": "42 passed, 79 subtests passed in 0.35s. Pure contract consistency; working tree 2026-10-07."
+    },
+    {
+      "output": "assembled-backends-checkpoint-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests/acquisition tests/tracking tests/supervisor tests/launcher tests/shared tests/client tests/platform -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "Collection failed on SyntaxError in actively edited controller/device/display_calibration.py; no behavioral result."
+    },
+    {
+      "output": "assembled-backends-stable-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests/acquisition tests/tracking tests/supervisor tests/launcher tests/shared tests/client tests/platform -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "510 passed, 6 skipped, 3 deselected in 4.84s after syntax-stable checkpoint. GUI/V01 integration still active."
+    },
+    {
+      "output": "tracking-schema-final-2026-10-07.log",
+      "command": ".venv/bin/python contracts/tracking/schema_check.py",
+      "outcome": "19 schemas match canonical models."
+    },
+    {
+      "output": "visual-schema-final-2026-10-07.log",
+      "command": ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+      "outcome": "11 schemas checked; 0 needed regeneration."
+    },
+    {
+      "output": "gui-captures-unthemed-2026-10-07/",
+      "command": "Luna offscreen ManagedDashboardWindow(sample=False) capture; capture script not retained at this checkpoint",
+      "outcome": "Root rejected visual acceptance: app theme absent, dark-card text unreadable, review-only Tracking status. Requested actual runtime theme/adapter captures. No native Windows UI or hardware."
+    },
+    {
+      "output": "build-final-2026-10-07.log",
+      "command": ".venv/bin/python -m build --no-isolation --outdir /private/tmp/cephvr-runtime-wiring-dist",
+      "outcome": "Exit1 before sdist requirements: existing native DLLs require AMD64 Windows packaging in setup.py. Running macOS; retained DLLs untouched. Native packaging remains a Windows rig check."
+    },
+    {
+      "output": "gui-dashboard-280-2026-10-07.log",
+      "command": "Exact historical invocation unavailable; raw file contains pytest results only. Luna described a full Dashboard selection.",
+      "outcome": "Raw 280 passed,1deselected in116.04s. Predates latest repairs. A later command match from an unrelated 2026-10-05 variation evidence script was rejected; no inferred invocation is claimed."
+    },
+    {
+      "output": "gui-captures-managed-2026-10-07/",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python /private/tmp/managed-gui-review/capture_managed.py",
+      "outcome": "Actual ManagedGui.install_snapshot, application theme, inert RPC/device discovery. Root viewed all eleven PNGs: narrow values legible, scroll areas retained. Confirmed hardcoded Observer HUD despite held control; native menu style has low contrast. Assigned Sol/Luna review. Not final visual acceptance or Windows/rig evidence."
+    },
+    {
+      "output": "v01-native-rendering-luna-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus -q -m 'not windows and not rig'",
+      "environment": "Loopback permitted",
+      "outcome": "1 failed,155passed,1skipped,1deselected in1.20s; active authenticated calibration test sees missing coordinator display after admission/drain. C diagnosing. Three native leaf repairs await Sol re-review."
+    },
+    {
+      "output": "v01-native-render-leaf-luna-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_lifecycle.py -q",
+      "outcome": "Luna44passed0.42s; Sol independently repeated with not windows and not rig and got44passed0.40s (tool output only). Three native-leaf findings accepted; actualGL/hardware and C safety integration excluded."
+    },
+    {
+      "output": "gui-captures-final-2026-10-07/",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python /private/tmp/managed-gui-review/capture_managed.py",
+      "outcome": "Actual ManagedGui with theme and inert RPC/discovery; regenerated after display collaborator extraction. Root re-inspected dashboard, SpikeGLX and Tracking at720px; previous all-page wide/narrow review applies to shared unchanged layout. Capture fixture initially referenced removed install method and failed; updated to focused collaborator then succeeded. No native Windows/hardware acceptance."
+    },
+    {
+      "output": "ruff-final-2026-10-07.log",
+      "command": ".venv/bin/python -m ruff check src tests tools scripts",
+      "outcome": "Passed at assembled checkpoint before last pending-calibration refinements."
+    },
+    {
+      "output": "format-final-2026-10-07.log",
+      "command": ".venv/bin/python -m ruff format --check src tests tools scripts",
+      "outcome": "793 files already formatted at assembled checkpoint."
+    },
+    {
+      "output": "mypy-final-2026-10-07.log",
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr",
+      "outcome": "One error in683 sources: controller inventory imports private validation helper no longer explicitly exported after extraction. Assigned owning public import repair."
+    },
+    {
+      "output": "boundaries-final-2026-10-07.log",
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "597 backend modules, zero violations; cohesion exceptions reviewed by Sol."
+    },
+    {
+      "output": "docs-toml-final-2026-10-07.log",
+      "command": "Python local Markdown destination/heading-anchor validation on git diff --name-only and tomllib parsing of changed TOMLs. Inline command retained in chat tool history.",
+      "outcome": "19documents,711local links/anchors,7TOMLs pass; documentation continues to reflect final results."
+    },
+    {
+      "output": "gui-relaunch-focused-luna-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py tests/launcher/test_lifecycle.py -q -k 'managed_spikeglx_inventory_installs_read_only_host_settings or managed_first_use_calibration_launches_before_display_initialization or managed_snapshot_keeps_diagnostic_close_pending_and_status_visible or tracking_diagnostic_close_waits_for_closed_evidence or managed_close_finishes_only_after_controller_save_result or save_failure_dismissal_never_discards_draft or tracking_viewer_rpc_uses_frozen_authorized_endpoint or gui_relaunch or uncertain_gui_relaunch or deadline_expires_before_attempt_creation or expired_uncertain_relaunch or gui_relaunch_dispatch'",
+      "outcome": "Luna17passed303deselected. Predates final exact RELEASED reconciliation case; later Sol independently10passed22deselected in launcher-focused selection."
+    },
+    {
+      "output": "assembled-final-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests -q -ra -m 'not windows and not rig'",
+      "environment": "Permitted authenticated loopback; offscreen Qt",
+      "outcome": "Checkpoint:1225passed,7skipped,5deselected,2failed in131.46s. Failures were stale managed pairing expectation and missing extracted callback in retained-warning lightweight fixture; both repaired with independent isolated passes. C pending-calibration fixes resumed while run active, so not final frozen-source acceptance. TIFF dependency skip subsequently removed by installing repository-pinned tifffile2025.5.10."
+    },
+    {
+      "output": "tifffile-install-2026-10-07.log",
+      "command": ".venv/bin/python -m pip install 'tifffile==2025.5.10'",
+      "outcome": "Installed repository-pinned optional dependency into existing .venv for local TIFF decoder regression; NumPy2.4.4 already satisfied."
+    },
+    {
+      "output": "protobuf-final-2026-10-07.log",
+      "command": ".venv/bin/python tools/generate_contracts.py --output /private/tmp/cephvr-wiring-proto-check; then compare every generated *_pb2.py, *_pb2.pyi, *_pb2_grpc.py byte-for-byte against src equivalents",
+      "outcome": "19 Protobuf sources generated in isolated temporary output;57installed bindings match,0mismatches. Production generated files were not modified."
+    },
+    {
+      "output": "assembled-verified-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests -q -ra -m 'not windows and not rig'",
+      "environment": "Permitted authenticated loopback;offscreenQt",
+      "outcome": "Checkpoint1228passed,6platformskips,5deselected,1known calibration test phase-synchronization failure in132.95s. Test released preparation after RPC admission before worker Close applied. Repairs still active; not final acceptance."
+    },
+    {
+      "output": "astra-stable-checkpoint-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/controller/test_spikeglx.py tests/launcher/test_lifecycle.py tests/tracking/test_configuration.py tests/gui/test_tracking_live.py -q -m 'not windows and not rig'",
+      "outcome": "Astra77passed1.22s before final C/B repairs; scoped checkpoint."
+    },
+    {
+      "output": "astra-gui-checkpoint-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -m 'not windows and not rig' -k 'managed_configuration or bridge_submits or bridge_accepts or setup_captures or setup_validates or submits_then_setup or retained_summary or retained_dialog or prompt_completion or managed_prompt or reserves_safety or snapshot_keeps_diagnostic or viewer_frame_freezes or diagnostic_close_waits or save_failure or managed_close or runtime_editors or devices_draft_reflows'",
+      "outcome": "Astra29passed260deselected5.31s; scoped checkpoint."
+    },
+    {
+      "output": "tracking-codec-fin-region-luna-2026-10-07.log",
+      "command": "Luna reported the owning tests/tracking/test_configuration.py selection; full historical invocation was not supplied with the raw summary.",
+      "outcome": "Luna20passed; Sol independently20passed1.17s. Astra exact codec\u2192resolver three-case probe also passes. Fin partial-codec finding closed."
+    },
+    {
+      "output": "assembled-accepted-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests -q -ra -m 'not windows and not rig'",
+      "environment": "Permitted authenticated loopback;offscreenQt",
+      "outcome": "1237passed,6nativeplatformskips,5deselected in134.92s. Predates final shared Setup atomic-commit ownership guard; final frozen-source rerun follows."
+    },
+    {
+      "output": "astra-inventory-configuration-checks-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/controller/test_configuration_transactions.py tests/controller/test_spikeglx.py -q -m 'not windows and not rig'",
+      "outcome": "Astra52passed1.17s; inventory/E07 focused repair acceptance."
+    },
+    {
+      "output": "astra-inventory-owner-probe-2026-10-07.log",
+      "command": "Astra actual SpikeGLXInventory and real ControllerRuntime ControlOperations probe; only authentication and finite filesystem writer stall adapted. Exact interactive probe retained in agent tool history.",
+      "outcome": "Lifecycle lock responsive; timeout leaves accepted/incomplete/unconfirmed operation and pending gate; late successful settlement reports inventory committed after deadline and releases gate."
+    },
+    {
+      "output": "astra-setup-commit-checks-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/controller/test_configuration_transactions.py -q -m 'not windows and not rig'",
+      "outcome": "Astra30passed0.82s; shared Setup admission/commit guard accepted. Sol independently30passed0.80s."
+    },
+    {
+      "output": "astra-setup-owner-probe-2026-10-07.log",
+      "command": "Astra _setup_ready_runtime with actual ControllerRuntime.setup, pure validator held by threading.Event, ownership flags changed under lifecycle lock during validation, then released.",
+      "outcome": "Tracking, calibration and inventory all reject Setup; no Attempt allocated, Configuration preserved."
+    },
+    {
+      "output": "final-source-tests-2026-10-07.log",
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests -q -ra -m 'not windows and not rig'",
+      "environment": "Authenticated local loopback permitted; offscreen Qt; frozen source manifest",
+      "outcome": "1240 passed,6skipped,5deselected in128.20s. Skips: one native Windows process module and five Win32 ring tests. All954 source/input hashes unchanged after run. Astra inspected and accepted development scope."
+    },
+    {
+      "output": "final-source-ruff-2026-10-07.log",
+      "command": ".venv/bin/python -m ruff check src tests tools scripts",
+      "outcome": "Passed."
+    },
+    {
+      "output": "final-source-format-2026-10-07.log",
+      "command": ".venv/bin/python -m ruff format --check src tests tools scripts",
+      "outcome": "793 files already formatted."
+    },
+    {
+      "output": "final-source-mypy-2026-10-07.log",
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr",
+      "outcome": "Success:683 source files,0issues. Static Windows target only."
+    },
+    {
+      "output": "final-source-boundaries-2026-10-07.log",
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "597 backend modules,0violations; cohesion exceptions reviewed by Sol and reported."
+    },
+    {
+      "output": "tracking-contract-accepted-2026-10-07.log",
+      "command": "../../.venv/bin/python -m unittest discover -p 'test_*.py'",
+      "cwd": "contracts/tracking",
+      "outcome": "48tests passed0.014s."
+    },
+    {
+      "output": "visual-contract-accepted-2026-10-07.log",
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "outcome": "42passed79subtests0.44s."
+    },
+    {
+      "output": "dependencies-accepted-2026-10-07.log",
+      "command": ".venv/bin/python -m pip check",
+      "outcome": "No broken requirements. Unwritable pip cache warning affects cache only."
+    },
+    {
+      "output": "final-docs-toml-2026-10-07.log",
+      "command": "Python local Markdown file/heading-anchor validation over git diff --name-only and tomllib parsing of changed TOMLs; exact inline command retained in root tool history.",
+      "outcome": "19 documents,714local links/anchors,7TOMLs pass after final report/TODO reconciliation."
+    },
+    {
+      "output": "final-whitespace-2026-10-07.log",
+      "command": "git diff --check",
+      "outcome": "Passed (empty output), repeated independently after final documentation changes."
+    }
+  ],
+  "continued_date": "2026-10-07",
+  "source_checks": [
+    {
+      "date": "2026-10-07",
+      "source": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/0cffa0b748a01f92e4418ed15ebdbfff7e9342c5/Markdown/SpikeGLX_OneBox_Quickstart.md",
+      "sha256": "671a1857e507f18e57403ab47a80b1849daaf76f5d24ecaf7a851eca4ebae10f",
+      "bytes": 18918,
+      "method": "Read-only curl fetch; first automatic approval review timed out, permitted single retry succeeded.",
+      "scope": "Pinned source confirms OneBox 16-bit XD word after XA and before SY; not rig wiring or pulse validation."
+    },
+    {
+      "date": "2026-10-07",
+      "source": "https://raw.githubusercontent.com/billkarsh/SpikeGLX/0cffa0b748a01f92e4418ed15ebdbfff7e9342c5/Markdown/UserManual.md",
+      "sha256": "4d7d1c001040e76e2b57b0deb9de2b24f40d3f78e0268f36087908e91fdf1dab",
+      "bytes": 58475,
+      "method": "Official pinned manual read via curl after web cache miss.",
+      "scope": "NI digital data use 16-bit words; OneBox XD uses only low 12 bits. Bit12\u201315 rejection repair requested; not rig wiring proof."
+    }
+  ],
+  "final_acceptance": {
+    "date": "2026-10-07",
+    "review_sequence": "Luna audits and implementation; Sol6.1 plan/code review; Astra design/final review. All reproduced blockers repaired and rechecked.",
+    "result": "Development accepted by Sol and Astra.",
+    "source_manifest": "final-source-sha256.json",
+    "limitations": "No Windows/native/device/full-workload acceptance. Six platform skips/five excluded markers, Windows-only packaging guard, PowerShell unavailable; scientific/encoder/firmware deferrals unchanged."
+  }
+}

@@ -7,8 +7,9 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QGridLayout, QLineEdit, QSizePolicy, QWidget
 
 from cephvr.gui.batch_random import random_values
-from cephvr.gui.batch_values import END_BEHAVIORS, ValueRule
+from cephvr.gui.batch_values import ValueRule
 from cephvr.gui.components import button, combo, equal_row_height, label
+from cephvr.gui.epoch_batch import END_BEHAVIORS
 from cephvr.gui.stimulus_columns import stimulus_columns
 from cephvr.visual_stimulus.config.models.program_model import Settings
 

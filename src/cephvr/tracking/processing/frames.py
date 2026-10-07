@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from cephvr.control.v1.types_pb2 import WorkContext
 from cephvr.tracking.config.models.records import SourceFrame
+from cephvr.tracking.processing.preprocessing import ImageTransform
 from cephvr.tracking.types import ImageLayout, PrivateFrame
 
 
@@ -20,11 +21,18 @@ class _Slot:
 
 
 class FramePool:
-    def __init__(self, layout: ImageLayout, capacity: int, maximum_bytes: int) -> None:
+    def __init__(
+        self,
+        layout: ImageLayout,
+        capacity: int,
+        maximum_bytes: int,
+        transform: ImageTransform | None = None,
+    ) -> None:
         size = layout.row_stride_bytes * layout.height
         if capacity < 1 or size * capacity > maximum_bytes:
             raise ValueError("private frame pool exceeds prepared memory budget")
         self.layout = layout
+        self.transform = transform
         self.lock = threading.Lock()
         self.slots = [_Slot(bytearray(size)) for _ in range(capacity)]
 
@@ -50,6 +58,7 @@ class FramePool:
                 self.layout,
                 memoryview(slot.pixels).toreadonly(),
                 str(uuid4()),
+                self.transform,
             )
             slot.lease, slot.references, slot.writing = frame, 1, False
             return frame

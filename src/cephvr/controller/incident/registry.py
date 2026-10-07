@@ -281,6 +281,54 @@ class IncidentRegistry:
         self._records = records
         self._finalized = True
 
+    def resolve_after_recovery(
+        self,
+        incident_id: str,
+        expected_revision: int,
+        *,
+        session_active: bool,
+        recovered_monotonic_ns: int,
+    ) -> pb.RuntimeIncident:
+        """Resolve a recovered incident without undoing an Abort or automatic stop."""
+        require_uuid4(incident_id)
+        require_int64_ns(recovered_monotonic_ns)
+        existing = self._records.get(incident_id)
+        if (
+            self._finalized
+            or not session_active
+            or existing is None
+            or existing.revision != expected_revision
+            or existing.disposition
+            not in (
+                pb.RUNTIME_INCIDENT_DISPOSITION_AWAITING_OPERATOR,
+                pb.RUNTIME_INCIDENT_DISPOSITION_CONTINUE_SELECTED,
+            )
+        ):
+            raise StaleIncidentChoice(
+                "incident recovery evidence is stale or unavailable"
+            )
+        record = pb.RuntimeIncident.FromString(existing.SerializeToString())
+        record.disposition = pb.RUNTIME_INCIDENT_DISPOSITION_RESOLVED
+        record.continuation_available = False
+        record.last_observed_monotonic_ns = max(
+            record.last_observed_monotonic_ns, recovered_monotonic_ns
+        )
+        record.revision += 1
+        current_bytes = sum(len(item) for item in self._errors.values()) + sum(
+            len(item.SerializeToString(deterministic=True))
+            for key, item in self._records.items()
+            if key != incident_id
+        )
+        if (
+            current_bytes + len(record.SerializeToString(deterministic=True))
+            > self.max_bytes
+        ):
+            raise IncidentCapacityError(
+                "incident recovery exceeds serialized byte capacity"
+            )
+        self._records[incident_id] = record
+        return pb.RuntimeIncident.FromString(record.SerializeToString())
+
     def snapshot(self) -> tuple[pb.RuntimeIncident, ...]:
         return tuple(
             pb.RuntimeIncident.FromString(record.SerializeToString())

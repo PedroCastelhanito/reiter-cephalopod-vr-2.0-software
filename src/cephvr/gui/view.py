@@ -44,6 +44,7 @@ class DashboardView:
     stimulus_status: str = "Unavailable"
     tracking_status: str = "Unavailable"
     output_status: str = "No controller evidence"
+    reservation_status: str = "Not started"
     metadata_status: str = "No controller evidence"
     previews: tuple[PreviewView, ...] = ()
 

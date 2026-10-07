@@ -20,6 +20,7 @@ from cephvr.tracking.coordinator.ports import FeedbackPort, SessionPort
 from cephvr.tracking.coordinator.reports import PeerPort, Reports
 from cephvr.tracking.coordinator.state import Identity, State
 from cephvr.tracking.coordinator.trials import RecordSink, Trials
+from cephvr.tracking.diagnostic import TrackingDiagnostic
 from cephvr.tracking.feedback.delivery import FeedbackDelivery
 from cephvr.tracking.feedback.transport import FeedbackTransport
 from cephvr.tracking.processing.gate import TrialGate
@@ -47,10 +48,16 @@ class TrackingRuntime:
         *,
         session_factory: SessionFactory = NativeSession,
         feedback_factory: FeedbackFactory = FeedbackTransport,
+        recovery_ns: int = 5_000_000_000,
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
+        if recovery_ns <= 0:
+            raise ValueError("Tracking owner recovery budget must be positive")
         self.identity, self.ledger, self.clock = identity, ledger, clock
         self.state = State()
+        self.diagnostic = TrackingDiagnostic(
+            identity.process, recovery_ns=recovery_ns, clock=clock
+        )
         self.reports = Reports(
             identity, self.state, controller, supervisor, ledger, clock
         )
@@ -85,6 +92,20 @@ class TrackingRuntime:
             )
         if isinstance(request, wire.SetupSessionRequest):
             await self._setup(request, deadline_ns)
+        elif isinstance(request, tracking.TrackingDiagnosticCommand):
+            await self.diagnostic.begin(request, deadline_ns=deadline_ns)
+        elif isinstance(request, tracking.CloseTrackingDiagnosticCommand):
+            if not await self.diagnostic.close(
+                request.diagnostic_id,
+                request.preview_run_id,
+                deadline_ns=min(
+                    deadline_ns,
+                    request.deadline_monotonic_ns
+                    if request.deadline_monotonic_ns
+                    else deadline_ns,
+                ),
+            ):
+                raise RuntimeError("Tracking diagnostic source release is unconfirmed")
         elif isinstance(request, tracking.TrackingDataBinding):
             await self._bind(request, deadline_ns)
         elif isinstance(request, wire.PrepareTrialRequest):
@@ -135,6 +156,8 @@ class TrackingRuntime:
         )
 
     async def _setup(self, request: wire.SetupSessionRequest, deadline: int) -> None:
+        if self.diagnostic.active or not self.diagnostic.close_confirmed:
+            raise ValueError("prior Tracking diagnostic has not confirmed closure")
         state = self.state
         state.setup = wire.SetupSessionRequest.FromString(request.SerializeToString())
         state.cleanup = state.ready = state.error = None
@@ -307,6 +330,16 @@ class TrackingRuntime:
         deadline = self.recovery_deadline
         async with self.cleanup_lock:
             native = True
+            if self.diagnostic.active or not self.diagnostic.close_confirmed:
+                try:
+                    state = self.diagnostic.state()
+                    native = await self.diagnostic.close(
+                        state.diagnostic_id,
+                        state.preview_run_id,
+                        deadline_ns=deadline,
+                    )
+                except Exception:
+                    native = False
             if self.engine is not None and not self.engine.closed:
                 try:
                     native = await asyncio.wait_for(
@@ -436,6 +469,18 @@ class TrackingRuntime:
         await self.reports.heartbeat(deadline)
 
     async def query(self, method: str, request: Message) -> Message:
+        if method == "GetDiagnosticState":
+            if not isinstance(request, tracking.TrackingDiagnosticQuery):
+                raise ValueError("diagnostic query type mismatch")
+            state = self.diagnostic.state()
+            if (
+                request.diagnostic_id != state.diagnostic_id
+                or request.configuration_revision != state.configuration_revision
+                or request.preview_run_id != state.preview_run_id
+                or request.controller_generation != self.identity.controller.generation
+            ):
+                raise ValueError("diagnostic state query is stale")
+            return state
         from cephvr.tracking.coordinator.projection import project
 
         return project(self.identity, self.state, self.ledger, method, request)

@@ -1,0 +1,21 @@
+
+==================================== ERRORS ====================================
+____________ ERROR collecting contracts/tracking/test_contracts.py _____________
+ImportError while importing test module '/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/contracts/tracking/test_contracts.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+contracts/tracking/test_contracts.py:9: in <module>
+    from method_models import parse_method
+E   ModuleNotFoundError: No module named 'method_models'
+________ ERROR collecting contracts/tracking/test_pipeline_contracts.py ________
+ImportError while importing test module '/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/contracts/tracking/test_pipeline_contracts.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+contracts/tracking/test_pipeline_contracts.py:6: in <module>
+    from test_contracts import FLOW, GEOMETRY, BUDGET, parse
+E   ModuleNotFoundError: No module named 'test_contracts'
+=========================== short test summary info ============================
+ERROR contracts/tracking/test_contracts.py
+ERROR contracts/tracking/test_pipeline_contracts.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+2 errors in 0.54s

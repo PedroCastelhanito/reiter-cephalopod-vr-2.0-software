@@ -1,0 +1,20 @@
+# Tracking preprocessing and typed configuration evidence
+
+Date: 2026-10-06 (local test host; Asia/Tokyo)
+Source revision: `aff8e0c8505793ca11f15b9eb572e21ade157dc4` (working tree also contained concurrent GUI/controller edits)
+Scope: Tracking private acquired-image preprocessing, source-coordinate normalization, typed Tracking settings codec, local Tracking tests. No Windows-native or rig acceptance performed.
+
+## Checks
+
+- `.venv/bin/python -m pytest tests/tracking -q -m 'not windows and not rig'` — **47 passed, 1 deselected**; final run used loopback socket permission for authenticated lifecycle transport tests. An earlier sandboxed run failed to bind ephemeral localhost ports; the authorized rerun passed.
+- `.venv/bin/python -m ruff check src/cephvr/tracking src/cephvr/gui/tracking.py src/cephvr/gui/tracking_codec.py src/cephvr/gui/tracking_settings.py src/cephvr/gui/tracking_draft.py tests/tracking` — **passed**.
+- `.venv/bin/python -m ruff format --check src/cephvr/tracking src/cephvr/gui/tracking.py src/cephvr/gui/tracking_codec.py src/cephvr/gui/tracking_settings.py src/cephvr/gui/tracking_draft.py tests/tracking` — **73 files already formatted**.
+- `.venv/bin/python -m mypy --platform win32 src/cephvr/tracking src/cephvr/gui/tracking.py src/cephvr/gui/tracking_codec.py src/cephvr/gui/tracking_settings.py` — **success, 64 source files**.
+- `.venv/bin/python tools/check_backend_boundaries.py` — **checked 570 backend modules, 0 boundary violations**. Existing >500-line cohesion warnings appeared in unrelated backend modules; modified Tracking codec modules stayed below 500 lines.
+- `git diff --check` — **passed**.
+
+Focused cases exercise `RingSource.read` publishing an `INTER_AREA`-processed private uint16 frame with acquired source unchanged; pixel-centre transform round-trip, invalid crop rejection and Setup rejection for too-small downscaled flow grids; flow estimator equality for source-pixel displacement after anisotropic scale normalization; and typed-settings decode/encode retaining explicit `crop_enabled=false`, zero-valued calibration coordinates, scale metadata and manual annotations. Decoder also accepts incomplete default settings with no manual landmarks, while malformed supplied spatial values remain rejected. The page-level install method requires the current assigned Tracking camera serial and rejects settings bound to another camera role.
+
+## Evidence limits
+
+The suite uses local boundary substitutes for acquisition/NVIDIA runtime lifecycle. It does not establish NVIDIA SDK/device support, real Basler pixel layouts, throughput, hardware identity, Windows lifecycle behavior or rig equivalence. Those remain rig-acceptance evidence.

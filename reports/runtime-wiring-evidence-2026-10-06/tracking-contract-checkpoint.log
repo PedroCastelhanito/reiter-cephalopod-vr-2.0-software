@@ -1,0 +1,24 @@
+...F............................................
+======================================================================
+FAIL: test_tracking_config_defaults_load_and_validate (test_contracts.ConfigDefaultTests.test_tracking_config_defaults_load_and_validate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/contracts/tracking/test_contracts.py", line 344, in test_tracking_config_defaults_load_and_validate
+    self.assertEqual((cfg['pipeline']['name'],cfg['pose']['mode'],cfg['pose']['automatic_method'],
+AssertionError: Tuples differ: ('water_flow', 'manual', 'threshold_contour', 500) != ('water_flow', 'automatic', 'threshold_contour', 500)
+
+First differing element 1:
+'manual'
+'automatic'
+
+- ('water_flow', 'manual', 'threshold_contour', 500)
+?                   ^^^^
+
++ ('water_flow', 'automatic', 'threshold_contour', 500)
+?                 ++++  ^^^
+
+
+----------------------------------------------------------------------
+Ran 48 tests in 0.024s
+
+FAILED (failures=1)

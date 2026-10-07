@@ -20,9 +20,16 @@ from cephvr.shared.auth import Principal
 class ClientError(RuntimeError):
     """The requested command or authoritative state could not be confirmed."""
 
-    def __init__(self, message: str, *, command_id: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        command_id: str | None = None,
+        admission_uncertain: bool = False,
+    ) -> None:
         super().__init__(message)
         self.command_id = command_id
+        self.admission_uncertain = admission_uncertain
 
 
 @dataclass(frozen=True)
@@ -156,6 +163,7 @@ class HeadlessClient:
                 "Command admission is unconfirmed after transport failure; "
                 "query the retained command ID before issuing replacement work.",
                 command_id=command_id,
+                admission_uncertain=True,
             ) from exc
         if result.command_id != command_id:
             raise ClientError(

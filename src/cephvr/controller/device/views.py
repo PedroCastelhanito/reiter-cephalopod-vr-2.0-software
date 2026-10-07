@@ -138,6 +138,67 @@ class DeviceViews:
                     )
                 elif kind == "display":
                     display_view = cast(pb.VisualStimulusDisplayView, report)
+                    calibration_pending = self.device.calibration_pending
+                    if (
+                        calibration_pending is not None
+                        and display_view.command_id == calibration_pending[0]
+                    ):
+                        if (
+                            observed_ingress > calibration_pending[2]
+                            or self.configuration.revision != calibration_pending[1]
+                            or not display_view.HasField("calibration")
+                            or display_view.calibration.diagnostic_id
+                            != calibration_pending[3]
+                            or display_view.calibration.configuration_revision
+                            != calibration_pending[1]
+                        ):
+                            raise ProjectionError(
+                                "display calibration evidence is stale or mismatched"
+                            )
+                        expected_state = calibration_pending[4]
+                        evidence = display_view.calibration
+                        output_ids = {item.output_id for item in display_view.outputs}
+                        outputs_match = output_ids == calibration_pending[5] and len(
+                            display_view.outputs
+                        ) == len(output_ids)
+                        successful = (
+                            outputs_match
+                            and evidence.state == expected_state
+                            and (
+                                evidence.HasField("presented") and evidence.presented
+                                if expected_state
+                                == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+                                else evidence.HasField("idle")
+                                and evidence.idle
+                                and evidence.HasField("resources_closed")
+                                and evidence.resources_closed
+                            )
+                        )
+                        changed = self.projections.accept_display(display_view)
+                        self.hooks.complete_operation(
+                            calibration_pending[0],
+                            success=successful,
+                            progress="calibration scene presented"
+                            if expected_state
+                            == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+                            and successful
+                            else "calibration resources confirmed closed"
+                            if successful
+                            else "calibration evidence unresolved",
+                            error="renderer did not confirm the required calibration state"
+                            if not successful
+                            else "",
+                        )
+                        if (
+                            expected_state
+                            == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_IDLE
+                            and successful
+                        ):
+                            self.device.calibration_blocked = False
+                        self.device.calibration_pending = None
+                        if changed:
+                            self.hooks.publish()
+                        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
                     pending = self.device.display_pending
                     if (
                         pending is None

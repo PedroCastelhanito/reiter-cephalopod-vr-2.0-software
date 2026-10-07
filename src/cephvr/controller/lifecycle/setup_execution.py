@@ -218,12 +218,14 @@ class SetupExecution:
     async def _prepare_spikeglx(self, attempt: Attempt, deadline: int) -> None:
         """Prepare the paired SpikeGLX run and validate its readback identity."""
         assert self.spikeglx is not None
-        preparation = await asyncio.wait_for(
-            self.spikeglx.prepare(attempt.prepared.configuration, attempt.context),
-            max(0, (deadline - self.clock()) / 1e9),
-        )
         anchor = datetime.fromisoformat(attempt.prepared.anchor_wall_time)
         expected_run = f"{_safe_component(attempt.prepared.configuration.experiment)}_{_safe_component(attempt.prepared.configuration.subject)}_{anchor.strftime('%Y%m%d')}_{anchor.strftime('%H%M%S')}"
+        preparation = await asyncio.wait_for(
+            self.spikeglx.prepare(
+                attempt.prepared.configuration, attempt.context, expected_run
+            ),
+            max(0, (deadline - self.clock()) / 1e9),
+        )
         if (
             not preparation.address.strip()
             or not 1 <= preparation.port <= 65535
