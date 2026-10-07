@@ -217,6 +217,8 @@ enum CameraCommandKind {
   CAMERA_COMMAND_KIND_FINISH_EDITING = 5;
   CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER = 6;
   CAMERA_COMMAND_KIND_TEST_CONNECTION = 7; // Open/identify/close only; no capture or pulses.
+  CAMERA_COMMAND_KIND_SHOW_PREVIEW = 8; // Acquisition-owned OpenCV window; capture unchanged.
+  CAMERA_COMMAND_KIND_HIDE_PREVIEW = 9; // Close window/reader only; capture unchanged.
 }
 enum MicrocontrollerCommandKind {
   MICROCONTROLLER_COMMAND_KIND_UNSPECIFIED = 0;
@@ -254,14 +256,20 @@ message AcquisitionMicrocontrollerCommand {
   cephvr.acquisition.v1.CameraPulseConfiguration requested = 5;
   AcquisitionSettings settings = 6; // Complete controller-accepted Configuration draft.
 }
+message PreviewWindowPlacement {
+  sint32 x = 1; // Physical desktop pixels; initial visible-frame position only.
+  sint32 y = 2;
+  uint32 side = 3; // Square image area, bounded 128..2048 pixels.
+}
 message CameraCommandRequest {
   OperatorCommand command = 1;
   optional uint64 expected_configuration_revision = 2;
   cephvr.acquisition.v1.CameraRole camera = 3;
   CameraCommandKind kind = 4;
   optional string path = 5; // Required only for Import/Export, resolved on rig host.
-  optional string preview_run_id = 6; // Required for Stop/Attach; matches current preview.
+  optional string preview_run_id = 6; // Required for Stop/Attach/Show/Hide; exact current run.
   ProcessIdentity preview_consumer = 7; // Required for Attach only; absent for Start.
+  PreviewWindowPlacement preview_placement = 8; // Optional Show-only GUI geometry hint.
 }
 message AcquisitionCameraCommand {
   BackendCommand command = 1;
@@ -276,6 +284,7 @@ message AcquisitionCameraCommand {
   cephvr.acquisition.v1.AcquisitionFilePolicies file_policies = 10;
   optional uint32 preview_output_bit_depth = 11;
   AcquisitionSettings settings = 12; // Complete controller-accepted Configuration draft.
+  PreviewWindowPlacement preview_placement = 13; // Display-only; never camera/recording settings.
   // Supplied transport must equal this role's file policy; no alternative source.
   // Full controller-selected device settings, not an operator-to-device bypass.
 }
@@ -379,7 +388,16 @@ message AcquisitionDeviceStatusReport {
   OperationContext operation = 3;
   OperationState result = 4;
   optional string exported_pfs_path = 5; // Only after successful file close.
+  CameraPreviewVisibility preview_visibility = 6; // Observation only; operation/result absent.
   // Separate command result from observed device state and from original errors.
+}
+message CameraPreviewVisibility {
+  cephvr.acquisition.v1.CameraRole camera = 1;
+  string preview_run_id = 2;
+  uint64 revision = 3; // Monotone within this acquisition generation.
+  bool visible = 4;
+  int64 observed_monotonic_ns = 5;
+  string failure = 6; // Window/reader failure, never camera capture failure.
 }
 
 message SnapshotRequest {

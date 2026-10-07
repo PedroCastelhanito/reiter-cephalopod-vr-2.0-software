@@ -70,14 +70,70 @@ has no trial number, trial T, trial files or trial marker. The producer overwrit
 slot under A03's seqlock and never waits for a viewer. GUI rendering speed does not
 change capture rate.
 
-## Attach or close a viewer
+## Backend-owned camera windows
+
+`ExecuteCameraCommand(SHOW_PREVIEW/HIDE_PREVIEW)` carries the assigned role,
+current configuration revision and exact active manual `preview_run_id`; no path or
+external consumer. Show attaches a private capacity-one reader in the acquisition
+coordinator and creates an OpenCV window on its owning Win32 thread. Capture and
+pulses are unchanged; Show completes after the first converted image reaches
+the visible window and is idempotent for that live window. Hide or native X
+closes only the window/reader. Closing or failing a window never recreates it
+implicitly; explicit Show is required. Only one display consumer owns a slot.
+
+Show alone may carry `PreviewWindowPlacement`: signed physical-desktop `x`/`y`
+coordinates of the visible frame's top-left corner (absolute value at most
+1,000,000) and square image `side` of 128–2048
+pixels. Controller forwards this display-only hint; acquisition validates it before
+reserving an operation. Hide/other camera commands reject it. Without a hint use
+a 640-pixel square at native default placement. An already visible Show is
+idempotent and does not reposition the window. GUI reads its own physical visible
+frame, monitor work area and DPI. Prefer a square fitting outside its top-right
+edge, reducing the image side to available room before left fallback or work-area
+clamping. Acquisition positions only its own native window, accounting for invisible
+resize borders so visible edges align without a tool-window gap. No native GUI
+handle crosses the RPC boundary.
+
+Fit preserves source aspect ratio with black padding inside the square image area.
+Windows wheel deltas, including fractional steps, zoom by 1.2 per notch about the
+pointer from fit to 16×. Clamp image translation to avoid empty space on enlarged
+axes; keep padding centered on smaller axes. Double-click restores fit. Render
+the current private image directly into the bounded square rather than allocating
+a full enlarged source; idle interaction redraws cached pixels without reading a
+new shared frame. Native caption/borders remain outside the square image area.
+
+Each window pumps HighGUI outside the coordinator event loop. A bounded native
+event wait also allows message pumping with no new frames; idle timeouts do not
+poll frame counters. On attachment or frame wakeup select the newest valid image,
+convert private pixels with the common Basler converter, and adapt RGB to OpenCV's
+BGR display order. Native/tracking/recording pixels are unchanged. The current
+window path supports 8 bits per channel; another depth fails explicitly.
+
+Register the local reader under the coordinator generation and a fresh transfer ID
+in the native ledger before attaching. Confirm release only after window and
+mapping/event closure; unconfirmed release blocks buffer closure. Stop capture,
+configuration restart and owner cleanup close local readers before owner buffer
+release. Cleanup still attempts camera/pulse stopping if viewer release fails.
+
+Camera device views carry `preview_visible`, `preview_visibility_revision` and
+`preview_failure`. Native closure/failure uses an observation-only
+`AcquisitionDeviceStatusReport.preview_visibility` with role, exact run, monotone
+revision, visibility, host observation time and bounded failure text. Operation,
+result, work and exported path are absent; source is the registered acquisition
+backend. Controller adopts only a current run and newer consistent visibility;
+observations cannot complete a camera command or alter capture/pulse state. Older
+command snapshots cannot resurrect newer visibility from the same run. GUI Show/
+Hide completion still requires the exact terminal command and backend visibility.
+
+## External viewer attachment
 
 Use the existing ExecuteCameraCommand path with ATTACH_PREVIEW_VIEWER, current manual or
 session preview_run_id and exact registered preview_consumer. This is a separate
 operator command, never a camera Start/Stop or settings change. Controller validates current
 run, control authority and client-to-viewer identity. No arbitrary PID or
 second SDK owner is permitted. Refuse a different viewer while prior attachment or
-release is unresolved; attaching the same live viewer is idempotent.
+release is unresolved; a fresh attach, including to the same consumer, waits for
+confirmed prior release. Queries and exact command retries remain idempotent.
 
 Coordinator publishes the memory and event names only for the requested attachment,
 registers the transfer obligation and sends ReportPreviewAttachment to the controller's

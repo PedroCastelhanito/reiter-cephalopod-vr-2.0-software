@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="7" time="2.251" timestamp="2026-10-07T17:29:55.800252+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor0-area0-1.0-expected0]" time="0.002"><failure message="assert (612, 100, 640) == (600, 100, 640)&#10;  &#10;  At index 0 diff: 612 != 600&#10;  Use -v to get more diff">anchor = PyQt6.QtCore.QRect(100, 100, 500, 600)
+area = PyQt6.QtCore.QRect(0, 0, 1920, 1080), scale = 1.0
+expected = (600, 100, 640)
+
+    @pytest.mark.parametrize(
+        "anchor,area,scale,expected",
+        [
+            (QRect(100, 100, 500, 600), QRect(0, 0, 1920, 1080), 1.0, (600, 100, 640)),
+            (QRect(1000, 100, 800, 600), QRect(0, 0, 1920, 1080), 1.0, (344, 100, 640)),
+            (QRect(0, 0, 1456, 979), QRect(0, 0, 1920, 1032), 1.0, (1456, 0, 448)),
+            (QRect(100, 800, 500, 200), QRect(0, 0, 1920, 1080), 1.0, (600, 800, 216)),
+            (
+                QRect(-1800, 200, 500, 600),
+                QRect(-1920, 0, 1920, 1080),
+                1.0,
+                (-1300, 200, 640),
+            ),
+            (QRect(100, 100, 500, 600), QRect(0, 0, 3840, 2160), 2.0, (600, 100, 1280)),
+        ],
+    )
+    def test_square_preview_initial_edge_placement(
+        anchor: QRect, area: QRect, scale: float, expected: tuple[int, int, int]
+    ) -&gt; None:
+        from cephvr.gui.preview_placement import square_preview_placement
+    
+        result = square_preview_placement(anchor, area, scale)
+&gt;       assert (result.x, result.y, result.side) == expected
+E       assert (612, 100, 640) == (600, 100, 640)
+E         
+E         At index 0 diff: 612 != 600
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:58: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor1-area1-1.0-expected1]" time="0.001"><failure message="assert (332, 100, 640) == (344, 100, 640)&#10;  &#10;  At index 0 diff: 332 != 344&#10;  Use -v to get more diff">anchor = PyQt6.QtCore.QRect(1000, 100, 800, 600)
+area = PyQt6.QtCore.QRect(0, 0, 1920, 1080), scale = 1.0
+expected = (344, 100, 640)
+
+    @pytest.mark.parametrize(
+        "anchor,area,scale,expected",
+        [
+            (QRect(100, 100, 500, 600), QRect(0, 0, 1920, 1080), 1.0, (600, 100, 640)),
+            (QRect(1000, 100, 800, 600), QRect(0, 0, 1920, 1080), 1.0, (344, 100, 640)),
+            (QRect(0, 0, 1456, 979), QRect(0, 0, 1920, 1032), 1.0, (1456, 0, 448)),
+            (QRect(100, 800, 500, 200), QRect(0, 0, 1920, 1080), 1.0, (600, 800, 216)),
+            (
+                QRect(-1800, 200, 500, 600),
+                QRect(-1920, 0, 1920, 1080),
+                1.0,
+                (-1300, 200, 640),
+            ),
+            (QRect(100, 100, 500, 600), QRect(0, 0, 3840, 2160), 2.0, (600, 100, 1280)),
+        ],
+    )
+    def test_square_preview_initial_edge_placement(
+        anchor: QRect, area: QRect, scale: float, expected: tuple[int, int, int]
+    ) -&gt; None:
+        from cephvr.gui.preview_placement import square_preview_placement
+    
+        result = square_preview_placement(anchor, area, scale)
+&gt;       assert (result.x, result.y, result.side) == expected
+E       assert (332, 100, 640) == (344, 100, 640)
+E         
+E         At index 0 diff: 332 != 344
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:58: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor2-area2-1.0-expected2]" time="0.001"><failure message="assert (0, 0, 640) == (1456, 0, 448)&#10;  &#10;  At index 0 diff: 0 != 1456&#10;  Use -v to get more diff">anchor = PyQt6.QtCore.QRect(0, 0, 1456, 979)
+area = PyQt6.QtCore.QRect(0, 0, 1920, 1032), scale = 1.0
+expected = (1456, 0, 448)
+
+    @pytest.mark.parametrize(
+        "anchor,area,scale,expected",
+        [
+            (QRect(100, 100, 500, 600), QRect(0, 0, 1920, 1080), 1.0, (600, 100, 640)),
+            (QRect(1000, 100, 800, 600), QRect(0, 0, 1920, 1080), 1.0, (344, 100, 640)),
+            (QRect(0, 0, 1456, 979), QRect(0, 0, 1920, 1032), 1.0, (1456, 0, 448)),
+            (QRect(100, 800, 500, 200), QRect(0, 0, 1920, 1080), 1.0, (600, 800, 216)),
+            (
+                QRect(-1800, 200, 500, 600),
+                QRect(-1920, 0, 1920, 1080),
+                1.0,
+                (-1300, 200, 640),
+            ),
+            (QRect(100, 100, 500, 600), QRect(0, 0, 3840, 2160), 2.0, (600, 100, 1280)),
+        ],
+    )
+    def test_square_preview_initial_edge_placement(
+        anchor: QRect, area: QRect, scale: float, expected: tuple[int, int, int]
+    ) -&gt; None:
+        from cephvr.gui.preview_placement import square_preview_placement
+    
+        result = square_preview_placement(anchor, area, scale)
+&gt;       assert (result.x, result.y, result.side) == expected
+E       assert (0, 0, 640) == (1456, 0, 448)
+E         
+E         At index 0 diff: 0 != 1456
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:58: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor3-area3-1.0-expected3]" time="0.001"><failure message="assert (612, 376, 640) == (600, 800, 216)&#10;  &#10;  At index 0 diff: 612 != 600&#10;  Use -v to get more diff">anchor = PyQt6.QtCore.QRect(100, 800, 500, 200)
+area = PyQt6.QtCore.QRect(0, 0, 1920, 1080), scale = 1.0
+expected = (600, 800, 216)
+
+    @pytest.mark.parametrize(
+        "anchor,area,scale,expected",
+        [
+            (QRect(100, 100, 500, 600), QRect(0, 0, 1920, 1080), 1.0, (600, 100, 640)),
+            (QRect(1000, 100, 800, 600), QRect(0, 0, 1920, 1080), 1.0, (344, 100, 640)),
+            (QRect(0, 0, 1456, 979), QRect(0, 0, 1920, 1032), 1.0, (1456, 0, 448)),
+            (QRect(100, 800, 500, 200), QRect(0, 0, 1920, 1080), 1.0, (600, 800, 216)),
+            (
+                QRect(-1800, 200, 500, 600),
+                QRect(-1920, 0, 1920, 1080),
+                1.0,
+                (-1300, 200, 640),
+            ),
+            (QRect(100, 100, 500, 600), QRect(0, 0, 3840, 2160), 2.0, (600, 100, 1280)),
+        ],
+    )
+    def test_square_preview_initial_edge_placement(
+        anchor: QRect, area: QRect, scale: float, expected: tuple[int, int, int]
+    ) -&gt; None:
+        from cephvr.gui.preview_placement import square_preview_placement
+    
+        result = square_preview_placement(anchor, area, scale)
+&gt;       assert (result.x, result.y, result.side) == expected
+E       assert (612, 376, 640) == (600, 800, 216)
+E         
+E         At index 0 diff: 612 != 600
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:58: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor4-area4-1.0-expected4]" time="0.001"><failure message="assert (-1288, 200, 640) == (-1300, 200, 640)&#10;  &#10;  At index 0 diff: -1288 != -1300&#10;  Use -v to get more diff">anchor = PyQt6.QtCore.QRect(-1800, 200, 500, 600)
+area = PyQt6.QtCore.QRect(-1920, 0, 1920, 1080), scale = 1.0
+expected = (-1300, 200, 640)
+
+    @pytest.mark.parametrize(
+        "anchor,area,scale,expected",
+        [
+            (QRect(100, 100, 500, 600), QRect(0, 0, 1920, 1080), 1.0, (600, 100, 640)),
+            (QRect(1000, 100, 800, 600), QRect(0, 0, 1920, 1080), 1.0, (344, 100, 640)),
+            (QRect(0, 0, 1456, 979), QRect(0, 0, 1920, 1032), 1.0, (1456, 0, 448)),
+            (QRect(100, 800, 500, 200), QRect(0, 0, 1920, 1080), 1.0, (600, 800, 216)),
+            (
+                QRect(-1800, 200, 500, 600),
+                QRect(-1920, 0, 1920, 1080),
+                1.0,
+                (-1300, 200, 640),
+            ),
+            (QRect(100, 100, 500, 600), QRect(0, 0, 3840, 2160), 2.0, (600, 100, 1280)),
+        ],
+    )
+    def test_square_preview_initial_edge_placement(
+        anchor: QRect, area: QRect, scale: float, expected: tuple[int, int, int]
+    ) -&gt; None:
+        from cephvr.gui.preview_placement import square_preview_placement
+    
+        result = square_preview_placement(anchor, area, scale)
+&gt;       assert (result.x, result.y, result.side) == expected
+E       assert (-1288, 200, 640) == (-1300, 200, 640)
+E         
+E         At index 0 diff: -1288 != -1300
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:58: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_square_preview_initial_edge_placement[anchor5-area5-2.0-expected5]" time="0.001"><failure message="assert (624, 100, 1280) == (600, 100, 1280)&#10;  &#10;  At index 0 diff: 624 != 600&#10;  Use -v to get more diff">anchor = PyQt6.QtCore.QRect(100, 100, 500, 600)
+area = PyQt6.QtCore.QRect(0, 0, 3840, 2160), scale = 2.0
+expected = (600, 100, 1280)
+
+    @pytest.mark.parametrize(
+        "anchor,area,scale,expected",
+        [
+            (QRect(100, 100, 500, 600), QRect(0, 0, 1920, 1080), 1.0, (600, 100, 640)),
+            (QRect(1000, 100, 800, 600), QRect(0, 0, 1920, 1080), 1.0, (344, 100, 640)),
+            (QRect(0, 0, 1456, 979), QRect(0, 0, 1920, 1032), 1.0, (1456, 0, 448)),
+            (QRect(100, 800, 500, 200), QRect(0, 0, 1920, 1080), 1.0, (600, 800, 216)),
+            (
+                QRect(-1800, 200, 500, 600),
+                QRect(-1920, 0, 1920, 1080),
+                1.0,
+                (-1300, 200, 640),
+            ),
+            (QRect(100, 100, 500, 600), QRect(0, 0, 3840, 2160), 2.0, (600, 100, 1280)),
+        ],
+    )
+    def test_square_preview_initial_edge_placement(
+        anchor: QRect, area: QRect, scale: float, expected: tuple[int, int, int]
+    ) -&gt; None:
+        from cephvr.gui.preview_placement import square_preview_placement
+    
+        result = square_preview_placement(anchor, area, scale)
+&gt;       assert (result.x, result.y, result.side) == expected
+E       assert (624, 100, 1280) == (600, 100, 1280)
+E         
+E         At index 0 diff: 624 != 600
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:58: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_square_preview_placement_fits_small_work_area" time="0.000" /></testsuite></testsuites>

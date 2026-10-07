@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="4" failures="1" skipped="0" tests="5" time="0.358" timestamp="2026-10-07T17:02:24.915586+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_waits_for_starting_endpoint_before_prompt[N]" time="0.013"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_duplicate_waits_for_starting_endpoint_before_prompt[N]&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_waits_for_starting_endpoint_before_prompt[Y]" time="0.012"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_duplicate_waits_for_starting_endpoint_before_prompt[Y]&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_endpoint_timeout_never_prompts_or_signals" time="0.011"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_duplicate_endpoint_timeout_never_prompts_or_signals&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_invalid_endpoint_fails_without_retry" time="0.012"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_duplicate_invalid_endpoint_fails_without_retry&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{2c06ae3b-8674-4609-9f0c-7d9bf269769b}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_launcher_start_error_has_clear_message_without_traceback" time="0.002"><failure message="cephvr.platform.windows.jobs.WindowsLaunchError: missing replacement endpoint at exact-path/launcher.json">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000288F0D07E10&gt;
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x00000288F0D073D0&gt;
+
+    def test_launcher_start_error_has_clear_message_without_traceback(monkeypatch, capsys) -&gt; None:
+        from cephvr.launcher import main as launcher
+    
+        monkeypatch.setattr(launcher.sys, "argv", ["cephvr.launcher.main"])
+        def fail(**_):
+            raise WindowsLaunchError("missing replacement endpoint at exact-path/launcher.json")
+    
+        monkeypatch.setattr(launcher, "run_launcher", fail)
+        with pytest.raises(SystemExit) as outcome:
+&gt;           launcher.main()
+
+tests\launcher\test_lifecycle.py:800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\launcher\main.py:509: in main
+    run_launcher(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+_ = {'software_root': WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software'), 'supervisor_c...reter': WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.venv/Scripts/python.exe')}
+
+    def fail(**_):
+&gt;       raise WindowsLaunchError("missing replacement endpoint at exact-path/launcher.json")
+E       cephvr.platform.windows.jobs.WindowsLaunchError: missing replacement endpoint at exact-path/launcher.json
+
+tests\launcher\test_lifecycle.py:796: WindowsLaunchError</failure></testcase></testsuite></testsuites>

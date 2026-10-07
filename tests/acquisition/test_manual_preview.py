@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import sys
+import time
 from types import SimpleNamespace
 from typing import cast
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -14,6 +17,7 @@ from cephvr.acquisition.coordinator import manual_preview_start as start_module
 from cephvr.acquisition.coordinator.manual_device_status import (
     ManualDeviceStatusReporter,
 )
+from cephvr.acquisition.coordinator.manual_preview import ManualPreview
 from cephvr.acquisition.coordinator.manual_preview_pulse import (
     ManualPreviewPulseLifecycle,
 )
@@ -51,6 +55,640 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.controller.device.tracking_diagnostic import TrackingDiagnosticController
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.commands import CommandLedger
+
+
+@pytest.mark.parametrize("width,height", [(80, 40), (40, 80), (40, 40)])
+def test_square_viewport_preserves_source_and_padding(width: int, height: int) -> None:
+    import cv2
+    import numpy as np
+
+    from cephvr.acquisition.preview.viewport import SquareViewport
+
+    source = np.full((height, width, 3), (19, 87, 203), dtype=np.uint8)
+    viewport = SquareViewport(width, height, 80)
+    image = viewport.render(source, cv2, np)
+    assert image.shape == (80, 80, 3)
+    fitted_width, fitted_height = int(width * viewport.fit), int(height * viewport.fit)
+    x, y = int(viewport.tx), int(viewport.ty)
+    assert np.all(image[y : y + fitted_height, x : x + fitted_width] == source[0, 0])
+    assert np.count_nonzero(image[:, :, 0]) == fitted_width * fitted_height
+    assert np.all(source == (19, 87, 203))
+
+
+def test_square_viewport_pointer_zoom_fractional_wheel_bounds_and_reset() -> None:
+    from cephvr.acquisition.preview.viewport import SquareViewport
+
+    viewport = SquareViewport(80, 80, 80)
+    viewport.wheel(20, 30, 120 << 16)
+    assert viewport.zoom == pytest.approx(1.2)
+    assert (20 - viewport.tx) / (viewport.fit * viewport.zoom) == pytest.approx(20)
+    assert (30 - viewport.ty) / (viewport.fit * viewport.zoom) == pytest.approx(30)
+    viewport.wheel(20, 30, 60 << 16)
+    assert viewport.zoom == pytest.approx(1.2**1.5)
+    for _ in range(40):
+        viewport.wheel(0, 0, 120 << 16)
+    assert viewport.zoom == 16
+    for _ in range(80):
+        viewport.wheel(80, 80, (-120 & 0xFFFF) << 16)
+    assert viewport.zoom == 1
+    assert (viewport.tx, viewport.ty) == (0, 0)
+    viewport.wheel(20, 30, 120 << 16)
+    viewport.reset()
+    assert viewport.zoom == 1 and viewport.dirty
+    assert (viewport.tx, viewport.ty) == (0, 0)
+
+
+@pytest.mark.parametrize(
+    "message_type", [wire.CameraCommandRequest, wire.AcquisitionCameraCommand]
+)
+@pytest.mark.parametrize(
+    "side,kind,expected",
+    [
+        (128, 8, True),
+        (2048, 8, True),
+        (127, 8, False),
+        (2049, 8, False),
+        (640, 9, False),
+    ],
+)
+def test_preview_placement_admission_bounds(
+    message_type: object, side: int, kind: int, expected: bool
+) -> None:
+    from cephvr.shared.preview_placement import valid_preview_placement
+
+    request = message_type(kind=kind)
+    assert valid_preview_placement(request)
+    request.preview_placement.CopyFrom(
+        wire.PreviewWindowPlacement(x=-1920, y=20, side=side)
+    )
+    assert valid_preview_placement(request) is expected
+    request.preview_placement.x = 1_000_001
+    assert not valid_preview_placement(request)
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(sys.platform != "win32", reason="Win32 HighGUI windows")
+def test_native_highgui_windows_read_latest_and_close_without_stopping_producer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ctypes
+    import threading
+
+    from cephvr.acquisition.buffers.layout import allocation_size
+    from cephvr.acquisition.buffers.records import FrameRecord
+    from cephvr.acquisition.buffers.ring import SharedRing
+    from cephvr.acquisition.camera.native_formats import pylon_pixel_format
+    from cephvr.acquisition.preview import highgui
+    from cephvr.platform.windows.events import event_name
+    from cephvr.shared.pixels.types import PixelLayout
+
+    pytest.importorskip("pypylon")
+    images: dict[str, bytes] = {}
+    changed = threading.Event()
+    zoomed, reset = threading.Event(), threading.Event()
+    original = highgui.display_array
+    render = highgui.SquareViewport.render
+
+    def native_render(
+        viewport: object, frame: object, cv: object, numpy: object
+    ) -> object:
+        result = render(viewport, frame, cv, numpy)
+        assert result.shape == (256, 256)
+        if viewport.zoom > 1:
+            zoomed.set()
+        elif zoomed.is_set():
+            reset.set()
+        return result
+
+    monkeypatch.setattr(highgui.SquareViewport, "render", native_render)
+
+    def display(image: object, numpy: object) -> object:
+        result = original(image, numpy)
+        images[threading.current_thread().name] = bytes(result)
+        changed.set()
+        return result
+
+    monkeypatch.setattr(highgui, "display_array", display)
+    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    layout = PixelLayout(2, 2, pylon_pixel_format("Mono8"), 2, 4)
+    resources: list[tuple[object, object, object]] = []
+    try:
+        for role in (1, 2):
+            allocation, run_id = uuid4(), uuid4()
+            producer = control.ProcessIdentity(
+                role="camera_worker", generation=str(uuid4())
+            )
+            descriptor = acq.FrameBufferDescriptor(
+                allocation_id=str(allocation),
+                owner=owner,
+                producer=producer,
+                camera=role,
+                kind=acq.FRAME_BUFFER_KIND_PREVIEW,
+                layout_version=2,
+                capacity_frames=1,
+                shared_memory_name=f"Local\\cephvr-{allocation}-frames",
+                configuration_revision=1,
+                allocation_bytes=allocation_size(1, 4),
+            )
+            descriptor.preview.acquisition_run_id = str(run_id)
+            descriptor.image.CopyFrom(
+                camera.CameraImageLayout(
+                    width=2,
+                    height=2,
+                    pixel_format="Mono8",
+                    row_stride_bytes=2,
+                    image_payload_bytes=4,
+                )
+            )
+            attachment = acq.FrameBufferAttachment(buffer=descriptor)
+            attachment.sync.transfer_id = str(uuid4())
+            attachment.sync.target.CopyFrom(owner)
+            attachment.sync.event_name = event_name(allocation)
+            ring = SharedRing.create(attachment, layout, owner)
+            ring.reset_quiescent(run_id, prior_completion_confirmed=True)
+            attachment.sync.target.CopyFrom(producer)
+            producer_ring = SharedRing.attach(attachment, layout, producer)
+            producer_ring.open_admission(run_id)
+            producer_ring.publish(
+                FrameRecord(1, 1, None, None, True, None),
+                memoryview(b"\x00\x40\x80\xff"),
+            )
+            producer_ring.publish(
+                FrameRecord(2, 2, None, None, True, None),
+                memoryview(b"\xff\x80\x40\x00"),
+            )
+            attachment.sync.target.CopyFrom(owner)
+            reader = highgui.HighGuiPreview(
+                attachment,
+                8,
+                f"CephVR isolated preview {role} {uuid4()}",
+                lambda _reader: None,
+                placement=wire.PreviewWindowPlacement(
+                    x=100 + role * 300, y=100, side=256
+                ),
+            )
+            resources.append((ring, producer_ring, reader))
+            reader.start()
+            reader.ready.result(timeout=5)
+            # Both windows display their newest ring value on their own threads.
+            deadline = time.monotonic() + 3
+            while reader.title not in images and time.monotonic() < deadline:
+                changed.wait(0.02)
+                changed.clear()
+            assert images.get(reader.title) == b"\xff\x80\x40\x00", reader.failure
+            assert not reader.done.done()
+        # Send native X close to one window; the other remains alive.
+        native = ctypes.WinDLL("user32", use_last_error=True)
+        native.FindWindowW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
+        native.FindWindowW.restype = ctypes.c_void_p
+        native.PostMessageW.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_uint,
+            ctypes.c_size_t,
+            ctypes.c_ssize_t,
+        ]
+        native.PostMessageW.restype = ctypes.c_bool
+        first, second = resources[0][2], resources[1][2]
+        handle = native.FindWindowW(None, first.title)
+        native.GetWindow.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+        native.GetWindow.restype = ctypes.c_void_p
+        native.GetWindowRect.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.wintypes.RECT),
+        ]
+        child = native.GetWindow(handle, 5)
+        rect = ctypes.wintypes.RECT()
+        assert child and native.GetWindowRect(child, ctypes.byref(rect))
+        assert (rect.right - rect.left, rect.bottom - rect.top) == (256, 256)
+        frame = ctypes.wintypes.RECT()
+        assert native.GetWindowRect(handle, ctypes.byref(frame))
+        dwm = ctypes.WinDLL("dwmapi")
+        dwm.DwmGetWindowAttribute.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_uint,
+            ctypes.c_void_p,
+            ctypes.c_uint,
+        ]
+        visible = ctypes.wintypes.RECT()
+        assert (
+            dwm.DwmGetWindowAttribute(
+                handle, 9, ctypes.byref(visible), ctypes.sizeof(visible)
+            )
+            == 0
+        )
+        assert (visible.left, visible.top) == (400, 100)
+        from cephvr.platform.windows.window_coordinates import operator_window_geometry
+
+        anchor, work_area, scale = operator_window_geometry(handle)
+        assert anchor[:2] == (400, 100)
+        assert work_area[2] > 0 and work_area[3] > 0 and scale >= 1
+        point = ((rect.top + 128) & 0xFFFF) << 16 | ((rect.left + 128) & 0xFFFF)
+        assert native.PostMessageW(child, 0x020A, 120 << 16, point)
+        assert zoomed.wait(3), (
+            "Native mouse wheel did not reach the owning viewer thread"
+        )
+        assert native.PostMessageW(child, 0x0203, 0, (128 << 16) | 128)
+        assert reset.wait(3), "Native double-click did not restore the fitted view"
+        assert resources[0][1].published_count == 2
+        assert handle and native.PostMessageW(handle, 0x0010, 0, 0)
+        assert first.done.result(timeout=5), first.failure
+        assert not second.done.done()
+        for ring, producer_ring, _reader in resources:
+            assert not ring.retired and not producer_ring.input_sealed
+        second.stop()
+        assert second.done.result(timeout=5), second.failure
+    finally:
+        for ring, producer_ring, reader in reversed(resources):
+            reader.stop()
+            assert reader.done.result(timeout=5), reader.failure
+            producer_ring.close()
+            ring.close()
+
+
+@pytest.mark.parametrize("failure", ["", "display", "release"])
+def test_highgui_private_latest_frame_thread_and_x_close(
+    monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    import threading
+
+    import numpy as np
+
+    from cephvr.acquisition.preview import highgui
+    from cephvr.shared.pixels.preparer import PreparedImage
+
+    calls: list[tuple[str, int]] = []
+    sequences: list[int] = []
+    native = b"\x11\x22\x33"
+    closed = threading.Event()
+
+    class CV:
+        import cv2 as native_cv
+
+        warpAffine = staticmethod(native_cv.warpAffine)
+        INTER_LINEAR = native_cv.INTER_LINEAR
+        BORDER_REPLICATE = native_cv.BORDER_REPLICATE
+        WINDOW_NORMAL = 0
+        WND_PROP_VISIBLE = 0
+        error = RuntimeError
+        images: list[object] = []
+        destroyed = False
+
+        def __getattr__(self, name: str) -> object:
+            def operation(*args: object) -> object:
+                calls.append((name, threading.get_ident()))
+                if name == "getWindowProperty":
+                    return 1 if len(self.images) < 3 and not self.destroyed else 0
+                if name == "destroyWindow":
+                    self.destroyed = True
+                if name == "imshow":
+                    if failure == "display" and len(self.images) == 1:
+                        raise ValueError("display failed")
+                    self.images.append(args[1])
+                return -1
+
+            return operation
+
+    cv = CV()
+
+    class Ring:
+        published_count = 3
+        retired = False
+        released = False
+
+        def read_into(
+            self, sequence: int, pixels: bytearray, **_kwargs: object
+        ) -> object:
+            sequences.append(sequence)
+            pixels[:] = native
+            self.published_count = 6
+            return SimpleNamespace(status="frame")
+
+        def wait(self, _timeout: int) -> None:
+            pass
+
+        def close(self) -> None:
+            if failure == "release":
+                raise RuntimeError("mapping still owned")
+            self.released = True
+
+    ring = Ring()
+
+    class Preparer:
+        def __init__(self, _layout: object) -> None:
+            pass
+
+        def prepare_preview(self, pixels: bytearray, _bits: int) -> PreparedImage:
+            assert bytes(pixels) == native
+            return PreparedImage(memoryview(pixels), 1, 1, 3, "RGB", 8, 8, 8, "full", 3)
+
+    original_import = highgui.importlib.import_module
+    monkeypatch.setattr(
+        highgui.importlib,
+        "import_module",
+        lambda name: cv if name == "cv2" else original_import(name),
+    )
+    monkeypatch.setattr(highgui.SharedRing, "attach", lambda *_args: ring)
+    monkeypatch.setattr(highgui, "PixelPreparer", Preparer)
+    attachment = acq.FrameBufferAttachment()
+    attachment.buffer.preview.acquisition_run_id = str(uuid4())
+    attachment.buffer.image.CopyFrom(
+        camera.CameraImageLayout(
+            width=1,
+            height=1,
+            pixel_format="RGB8packed",
+            row_stride_bytes=3,
+            image_payload_bytes=3,
+        )
+    )
+    reader = highgui.HighGuiPreview(attachment, 8, "test", lambda _reader: closed.set())
+    reader.start()
+    if failure == "display":
+        with pytest.raises(RuntimeError, match="display failed"):
+            reader.ready.result(timeout=3)
+    else:
+        reader.ready.result(timeout=3)
+    assert reader.done.result(timeout=3) == (failure != "release")
+    assert closed.wait(3)
+    assert sequences == ([2] if failure == "display" else [2, 5])
+    assert ring.released == (failure != "release")
+    assert len({identity for _, identity in calls}) == 1
+    assert calls[0][1] != threading.get_ident()
+    if not failure:
+        assert np.array_equal(
+            cv.images[-1], np.full((640, 640, 3), [0x33, 0x22, 0x11], dtype=np.uint8)
+        )
+        assert reader.failure == ""
+    else:
+        assert reader.failure
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("released", [False, True])
+async def test_backend_window_release_gates_native_owner(
+    monkeypatch: pytest.MonkeyPatch, released: bool
+) -> None:
+    from concurrent.futures import Future
+
+    from cephvr.acquisition.coordinator import preview_windows as module
+    from cephvr.platform.windows.resource_ledger import ResourceKey
+
+    identity = SimpleNamespace(
+        process=control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    )
+    allocation = str(uuid4())
+    key = ResourceKey(allocation, identity.process.generation)
+    ledger = NativeResourceLedger(max_resources=2, max_transfers_per_resource=3)
+    ledger.register(key, kind="preview")
+    resource = ResourceRecord(acq.FrameBufferAttachment(), None, key)
+    previews = []
+
+    class Reader:
+        def __init__(
+            self,
+            attachment: object,
+            bits: int,
+            title: str,
+            callback: object,
+            *,
+            placement: object = None,
+        ) -> None:
+            self.ready: Future[None] = Future()
+            self.done: Future[bool] = Future()
+            self.failure = "" if released else "native release unconfirmed"
+            self.visible = not released
+            previews.append(self)
+
+        def start(self) -> None:
+            self.ready.set_result(None)
+
+        def stop(self) -> None:
+            self.done.set_result(released)
+
+    monkeypatch.setattr(module, "HighGuiPreview", Reader)
+    state = SimpleNamespace(set_preview_visibility=lambda *_args: None)
+    owner = module.PreviewWindows(
+        identity=identity,
+        resources={allocation: resource},
+        ledger=ledger,
+        status=state,
+        clock=lambda: 1,
+        report_timeout_ns=10,
+    )
+    preview = WorkerPreview(
+        run_id=str(uuid4()),
+        configuration_revision=1,
+        allocation_id=allocation,
+        started=True,
+        preview_output_bit_depth=8,
+    )
+    await owner.show(1, preview, deadline_ns=1_000_000_000)
+    assert not ledger.may_close_owner(key)
+    assert ledger.snapshot(key).transfers[0].attached
+    if released:
+        await owner.close(1, preview.run_id, deadline_ns=1_000_000_000)
+        assert ledger.may_close_owner(key)
+        assert not owner.owns(1)
+    else:
+        with pytest.raises(RuntimeError, match="release unconfirmed"):
+            await owner.close(1, preview.run_id, deadline_ns=1_000_000_000)
+        assert not ledger.may_close_owner(key)
+        assert owner.owns(1)
+    assert preview.started
+
+
+@pytest.mark.asyncio
+async def test_preview_window_rejects_stale_run_and_preserves_capture() -> None:
+    from cephvr.acquisition.coordinator.manual_preview_window import (
+        execute_preview_window,
+    )
+
+    preview = WorkerPreview(run_id=str(uuid4()), configuration_revision=1, started=True)
+    windows = SimpleNamespace(show=AsyncMock(), close=AsyncMock())
+    results = SimpleNamespace(
+        complete=AsyncMock(
+            return_value=control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED
+            )
+        ),
+        report_failure=AsyncMock(),
+    )
+    request = wire.AcquisitionCameraCommand(
+        camera=1,
+        kind=wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+        preview_run_id=str(uuid4()),
+    )
+    outcome = await execute_preview_window(
+        request, preview, windows, results, deadline_ns=100
+    )
+    assert outcome.result == control.COMMAND_RESULT_REJECTED
+    windows.show.assert_not_awaited()
+    request.preview_run_id = preview.run_id
+    request.preview_placement.CopyFrom(
+        wire.PreviewWindowPlacement(x=-700, y=20, side=640)
+    )
+    outcome = await execute_preview_window(
+        request, preview, windows, results, deadline_ns=100
+    )
+    assert outcome.result == control.COMMAND_RESULT_ACCEPTED
+    windows.show.assert_awaited_once_with(
+        1, preview, deadline_ns=100, placement=request.preview_placement
+    )
+    assert preview.started
+
+    request.kind = wire.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+    outcome = await execute_preview_window(
+        request, preview, windows, results, deadline_ns=100
+    )
+    assert outcome.result == control.COMMAND_RESULT_REJECTED
+    windows.close.assert_not_awaited()
+    request.ClearField("preview_placement")
+    outcome = await execute_preview_window(
+        request, preview, windows, results, deadline_ns=100
+    )
+    assert outcome.result == control.COMMAND_RESULT_ACCEPTED
+    windows.close.assert_awaited_once_with(1, preview.run_id, deadline_ns=100)
+    assert preview.started
+    windows.show.side_effect = RuntimeError("OpenCV unavailable")
+    request.kind = wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+    outcome = await execute_preview_window(
+        request, preview, windows, results, deadline_ns=100
+    )
+    assert outcome.result == control.COMMAND_RESULT_REJECTED
+    results.report_failure.assert_awaited_once()
+    assert preview.started
+
+
+async def test_closed_window_observation_cannot_mutate_reopened_window() -> None:
+    from concurrent.futures import Future
+
+    from cephvr.acquisition.coordinator.preview_windows import PreviewWindows
+
+    run_id = str(uuid4())
+    controller = SimpleNamespace(
+        report_acquisition_device_status=AsyncMock(
+            return_value=control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+        )
+    )
+    status = ManualDeviceStatusReporter(
+        identity=SimpleNamespace(
+            backend=control.BackendContext(
+                backend_name="acquisition", backend_generation=str(uuid4())
+            )
+        ),
+        controller=controller,
+        commands=CommandLedger(
+            str(uuid4()),
+            retention_ns=10,
+            max_records=4,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        ),
+        pulse=PulseRecord(),
+        clock=lambda: 10,
+    )
+    status._views[1].preview_run_id = run_id
+    status._views[1].preview_running = True
+    status.set_preview_visibility(1, run_id, True)
+    done: Future[bool] = Future()
+    done.set_result(True)
+    reader = SimpleNamespace(done=done, visible=False, failure="")
+    owner = PreviewWindows.__new__(PreviewWindows)
+    owner._windows = {1: SimpleNamespace(reader=reader, run_id=run_id)}
+    owner._notifications = set()
+    owner._release = lambda _window: None
+    owner.status = status
+    owner.clock = lambda: 10
+    owner.report_timeout_ns = 100
+    owner._closed(1, reader)
+    # Observation is captured before the delivery coroutine runs.
+    assert not status._views[1].preview_visible
+    assert status._views[1].preview_visibility_revision == 2
+    owner._windows[1] = SimpleNamespace(reader=object(), run_id=run_id)
+    status.set_preview_visibility(1, run_id, True)
+    owner._closed(1, reader)
+    await asyncio.gather(*tuple(owner._notifications))
+    assert status._views[1].preview_visible
+    assert status._views[1].preview_visibility_revision == 3
+    observed = controller.report_acquisition_device_status.call_args.args[
+        0
+    ].preview_visibility
+    assert not observed.visible and observed.revision == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("consumer_role", ["gui", "cli"])
+async def test_controller_viewer_attachment_uses_existing_policy_and_client_identity(
+    consumer_role: str,
+) -> None:
+    owner = ManualPreview.__new__(ManualPreview)
+    controller = control.ProcessIdentity(role="controller", generation=str(uuid4()))
+    backend = control.BackendContext(
+        backend_name="acquisition", backend_generation=str(uuid4())
+    )
+    owner.identity = SimpleNamespace(controller=controller, backend=backend)
+    policy = runtime.AcquisitionFilePolicies()
+    policy.cameras.add(camera=1, frame_silence_timeout_ns=1_000_000_000)
+    owner.configuration = ConfigurationRecord(control.AcquisitionSettings(), policy, 2)
+    owner.clock = lambda: 1
+    owner.session_slot = SimpleNamespace(current=None)
+    preview = WorkerPreview(
+        run_id=str(uuid4()),
+        configuration_revision=2,
+        allocation_id=str(uuid4()),
+        started=True,
+    )
+    owner.workers = SimpleNamespace(workers={1: SimpleNamespace(preview=preview)})
+    owner.device_status = SimpleNamespace(reserve=lambda _command: None)
+    owner.transfers = SimpleNamespace(attach=AsyncMock())
+    owner.windows = SimpleNamespace(owns=lambda _role: False)
+    owner.results = SimpleNamespace(
+        complete=AsyncMock(
+            return_value=control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+            )
+        )
+    )
+    request = wire.AcquisitionCameraCommand(
+        camera=1,
+        kind=wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+        configuration_revision=2,
+        preview_run_id=preview.run_id,
+        preview_consumer=control.ProcessIdentity(
+            role=consumer_role,
+            generation=str(uuid4()),
+        ),
+    )
+    request.command.command_id = str(uuid4())
+    request.command.issuer.CopyFrom(controller)
+    request.command.target.CopyFrom(backend)
+    request.command.parent_operation.command_id = str(uuid4())
+
+    result = await owner.execute(request, deadline_ns=100)
+
+    assert result.result == control.COMMAND_RESULT_ACCEPTED, result.failure
+    owner.transfers.attach.assert_awaited_once_with(request, preview, deadline_ns=100)
+    owner.results.complete.assert_awaited_once()
+    assert owner.configuration.file_policies == policy
+    # Omission uses the current policy; supplied conflicting policy stays invalid.
+    request.file_policies.cameras.add(camera=1, frame_silence_timeout_ns=2)
+    assert not owner._valid(request, 100)
+    request.ClearField("file_policies")
+    request.configuration_revision = 1
+    assert not owner._valid(request, 100)
+    request.configuration_revision = 2
+    preview.viewer = control.ProcessIdentity.FromString(
+        request.preview_consumer.SerializeToString()
+    )
+    rejected = await owner.execute(request, deadline_ns=100)
+    assert rejected.result == control.COMMAND_RESULT_REJECTED
+    assert rejected.failure.code == "PREVIEW_VIEWER_BUSY"
+    assert owner.transfers.attach.await_count == 1
+    assert owner.results.complete.await_count == 1
+    preview.viewer = None
+    request.preview_consumer.role = "preview_viewer"
+    rejected = await owner.execute(request, deadline_ns=100)
+    assert rejected.result == control.COMMAND_RESULT_REJECTED
+    assert owner.transfers.attach.await_count == 1
 
 
 @pytest.mark.parametrize(

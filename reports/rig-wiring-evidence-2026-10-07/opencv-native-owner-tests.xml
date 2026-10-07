@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="52" time="0.937" timestamp="2026-10-07T15:52:29.260514+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.acquisition.test_manual_preview" name="test_native_highgui_windows_read_latest_and_close_without_stopping_producer" time="0.359" /><testcase classname="tests.acquisition.test_manual_preview" name="test_highgui_private_latest_frame_thread_and_x_close[]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_highgui_private_latest_frame_thread_and_x_close[display]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_highgui_private_latest_frame_thread_and_x_close[release]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_backend_window_release_gates_native_owner[False]" time="0.002" /><testcase classname="tests.acquisition.test_manual_preview" name="test_backend_window_release_gates_native_owner[True]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_preview_window_rejects_stale_run_and_preserves_capture" time="0.005" /><testcase classname="tests.acquisition.test_manual_preview" name="test_controller_viewer_attachment_uses_existing_policy_and_client_identity[gui]" time="0.002" /><testcase classname="tests.acquisition.test_manual_preview" name="test_controller_viewer_attachment_uses_existing_policy_and_client_identity[cli]" time="0.002" /><testcase classname="tests.acquisition.test_manual_preview" name="test_manual_preview_declares_exact_non_saving_capture_scope[1]" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_manual_preview_declares_exact_non_saving_capture_scope[2]" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_preview_resolution_preserves_sdk_failure_and_requires_evidence[False]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_preview_resolution_preserves_sdk_failure_and_requires_evidence[True]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_second_external_preview_pauses_existing_role_before_configuration" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_pause_with_attached_viewer_waits_for_exact_release" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_release_receipt_lifetime_starts_at_release_not_attach_completion" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_retired_tracking_preview_waits_for_both_rings_in_either_release_order" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_tracking_worker_attachment_preserves_resource_ledger_transfer_id" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_tracking_attach_reserves_release_receipt_before_reporting_transfer" time="0.001" /><testcase classname="tests.controller.test_camera_evidence" name="test_native_preview_visibility_is_exact_observation_without_capture_change" time="0.006"><failure message="AttributeError: 'CameraCommands' object has no attribute 'report_projection'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-58/test_native_preview_visibility0')
+
+    async def test_native_preview_visibility_is_exact_observation_without_capture_change(
+        tmp_path: Path,
+    ) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        initial = _status(backend, _id(), succeeded=True)
+        initial.views.behavioral.preview_visible = True
+        initial.views.behavioral.preview_visibility_revision = 1
+        assert runtime.projections.accept_devices(initial)
+        run_id = initial.views.behavioral.preview_run_id
+        report = svc.AcquisitionDeviceStatusReport(
+            views=pb.AcquisitionDeviceViews(source=backend),
+            preview_visibility=svc.CameraPreviewVisibility(
+                camera=1,
+                preview_run_id=run_id,
+                revision=2,
+                visible=False,
+                observed_monotonic_ns=1_001,
+            ),
+        )
+&gt;       receipt = await runtime.camera.report_projection("devices", report)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CameraCommands' object has no attribute 'report_projection'
+
+tests\controller\test_camera_evidence.py:77: AttributeError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_preview_window_completion_requires_backend_visibility[False-False]" time="0.003"><failure message="AttributeError: 'CameraCommands' object has no attribute 'report_projection'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-58/test_preview_window_completion0')
+show = False, confirmed = False
+
+    @pytest.mark.parametrize("show", [False, True])
+    @pytest.mark.parametrize("confirmed", [False, True])
+    async def test_preview_window_completion_requires_backend_visibility(
+        tmp_path: Path, show: bool, confirmed: bool
+    ) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        kind = (
+            svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+            if show
+            else svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+        )
+        _start(runtime, parent, child, kind, False)
+        status = _status(backend, child, succeeded=True)
+        operation = runtime.device_state.camera_operation
+        operation.deadline_ns = 10_000
+        operation.preview_run_id = status.views.behavioral.preview_run_id
+        status.views.behavioral.preview_visible = show if confirmed else not show
+&gt;       receipt = await runtime.camera.report_projection("devices", status, 1_001)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CameraCommands' object has no attribute 'report_projection'
+
+tests\controller\test_camera_evidence.py:124: AttributeError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_preview_window_completion_requires_backend_visibility[False-True]" time="0.002"><failure message="AttributeError: 'CameraCommands' object has no attribute 'report_projection'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-58/test_preview_window_completion1')
+show = True, confirmed = False
+
+    @pytest.mark.parametrize("show", [False, True])
+    @pytest.mark.parametrize("confirmed", [False, True])
+    async def test_preview_window_completion_requires_backend_visibility(
+        tmp_path: Path, show: bool, confirmed: bool
+    ) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        kind = (
+            svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+            if show
+            else svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+        )
+        _start(runtime, parent, child, kind, False)
+        status = _status(backend, child, succeeded=True)
+        operation = runtime.device_state.camera_operation
+        operation.deadline_ns = 10_000
+        operation.preview_run_id = status.views.behavioral.preview_run_id
+        status.views.behavioral.preview_visible = show if confirmed else not show
+&gt;       receipt = await runtime.camera.report_projection("devices", status, 1_001)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CameraCommands' object has no attribute 'report_projection'
+
+tests\controller\test_camera_evidence.py:124: AttributeError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_preview_window_completion_requires_backend_visibility[True-False]" time="0.002"><failure message="AttributeError: 'CameraCommands' object has no attribute 'report_projection'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-58/test_preview_window_completion2')
+show = False, confirmed = True
+
+    @pytest.mark.parametrize("show", [False, True])
+    @pytest.mark.parametrize("confirmed", [False, True])
+    async def test_preview_window_completion_requires_backend_visibility(
+        tmp_path: Path, show: bool, confirmed: bool
+    ) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        kind = (
+            svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+            if show
+            else svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+        )
+        _start(runtime, parent, child, kind, False)
+        status = _status(backend, child, succeeded=True)
+        operation = runtime.device_state.camera_operation
+        operation.deadline_ns = 10_000
+        operation.preview_run_id = status.views.behavioral.preview_run_id
+        status.views.behavioral.preview_visible = show if confirmed else not show
+&gt;       receipt = await runtime.camera.report_projection("devices", status, 1_001)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CameraCommands' object has no attribute 'report_projection'
+
+tests\controller\test_camera_evidence.py:124: AttributeError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_preview_window_completion_requires_backend_visibility[True-True]" time="0.002"><failure message="AttributeError: 'CameraCommands' object has no attribute 'report_projection'">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-58/test_preview_window_completion3')
+show = True, confirmed = True
+
+    @pytest.mark.parametrize("show", [False, True])
+    @pytest.mark.parametrize("confirmed", [False, True])
+    async def test_preview_window_completion_requires_backend_visibility(
+        tmp_path: Path, show: bool, confirmed: bool
+    ) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        kind = (
+            svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+            if show
+            else svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+        )
+        _start(runtime, parent, child, kind, False)
+        status = _status(backend, child, succeeded=True)
+        operation = runtime.device_state.camera_operation
+        operation.deadline_ns = 10_000
+        operation.preview_run_id = status.views.behavioral.preview_run_id
+        status.views.behavioral.preview_visible = show if confirmed else not show
+&gt;       receipt = await runtime.camera.report_projection("devices", status, 1_001)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'CameraCommands' object has no attribute 'report_projection'
+
+tests\controller\test_camera_evidence.py:124: AttributeError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_initial_camera_warning_scope_matches_loaded_configuration" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_microcontroller_status_completes_exact_operator_operation" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[False-False]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[False-True]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[True-False]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[True-True]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_with_retained_terminal_but_no_confirmation_frees_slot" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_without_terminal_adopts_retained_result" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_without_result_frees_unconfirmed_with_warning" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_first_exact_report_for_slot_freed_operation_is_retained" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_late_terminal_report_never_replaces_a_newer_current_view" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_late_exact_stop_success_confirms_owner_release" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_shared_release_predicates_require_a_closed_device" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_cleanup_accepts_both_explicitly_closed_camera_roles" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_camera_policy_must_be_unique" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_loss_retention_uses_the_safety_reserve" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_cleanup_failure_retries_with_warning_and_no_interruption" time="0.075" /><testcase classname="tests.controller.test_camera_evidence" name="test_stopped_preview_is_not_released_while_camera_remains_open" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_connection_check_requires_confirmed_cleanup[False]" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_connection_check_requires_confirmed_cleanup[True]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_acquisition_reporter_completes_preview_with_idle_other_camera[False]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_acquisition_reporter_completes_preview_with_idle_other_camera[True]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[False-]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[False-invalid]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[True-]" time="0.001" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[True-invalid]" time="0.001" /><testcase classname="tests.controller.test_camera_evidence" name="test_async_viewer_rejection_completes_operator_without_consumer_confirmation[False]" time="0.025" /><testcase classname="tests.controller.test_camera_evidence" name="test_async_viewer_rejection_completes_operator_without_consumer_confirmation[True]" time="0.003" /></testsuite></testsuites>

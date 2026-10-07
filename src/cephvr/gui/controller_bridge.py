@@ -33,7 +33,6 @@ class ControllerBridge(QThread):
     command_finished = pyqtSignal(str, bool, str)
     command_admitted = pyqtSignal(str, str)
     operation_finished = pyqtSignal(str, str, str, str)
-    attachment_received = pyqtSignal(int, bytes, bool)
     spikeglx_inventory_received = pyqtSignal(int, str, bytes)
     tracking_frame_received = pyqtSignal(int, str, bytes)
     configuration_accepted = pyqtSignal(int, int)
@@ -113,14 +112,7 @@ class ControllerBridge(QThread):
             "close_display_calibration",
             "close_tracking_diagnostic",
             "quit",
-        } or (
-            action == "viewer_state"
-            and options.get("result")
-            in {
-                rpc.PREVIEW_CONSUMER_RESULT_RELEASED,
-                rpc.PREVIEW_CONSUMER_RESULT_FAILED,
-            }
-        )
+        }
 
     def _queue_request(
         self,
@@ -410,7 +402,7 @@ class ControllerBridge(QThread):
         self, client: HeadlessClient, action: str, options: dict[str, Any]
     ) -> None:
         device_result = await dispatch_device_action(
-            client, action, options, self.principal, self.attachment_received.emit
+            client, action, options, self.principal
         )
         if device_result is not None:
             success, message = device_result

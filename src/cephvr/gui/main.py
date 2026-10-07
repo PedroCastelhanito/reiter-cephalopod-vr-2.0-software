@@ -27,6 +27,7 @@ from cephvr.gui.managed_prompts import ManagedPrompts
 from cephvr.gui.managed_status import dashboard_view, retained_ack_required_for
 from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
 from cephvr.gui.managed_window import ManagedDashboardWindow
+from cephvr.gui.preview_placement import preview_window_placement
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import DashboardView
 from cephvr.platform.windows.bootstrap import read_bootstrap
@@ -117,11 +118,12 @@ class ManagedGui(QObject):
         cameras.real_devices = True
         cameras.refresh_inventory()
         self.preview_viewers = ManagedPreviewViewers(
-            window,
-            bridge,
             lambda: self.state,
-            self.refresh_camera_state,
             cameras,
+            lambda role, kind, **options: self.cameras.queue(
+                "camera", role=role, kind=kind, **options
+            ),
+            lambda: preview_window_placement(window).SerializeToString(),
         )
         self.cameras = ManagedCameras(
             cameras, bridge, self.preview_viewers.viewer_state
@@ -641,7 +643,6 @@ class ManagedGui(QObject):
             self.window.finish_close()
 
     def shutdown(self) -> None:
-        self.preview_viewers.shutdown()
         self.bridge.stop()
         self.bridge.wait(3000)
 

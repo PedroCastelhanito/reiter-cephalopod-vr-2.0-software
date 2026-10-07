@@ -1,0 +1,55 @@
+{
+  "exe": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+  "computer": "DESKTOP-MSOH8EL",
+  "localappdata": "C:\\Users\\ReiterU_PC\\AppData\\Local",
+  "tokens": [
+    {
+      "pid": 19044,
+      "elevated": 0,
+      "virtualization_enabled": 0,
+      "appcontainer": 0,
+      "user_sid": "S-1-5-21-2315698207-1626119504-1424523832-1000",
+      "integrity_sid": "S-1-16-8192"
+    },
+    {
+      "pid": 23912,
+      "elevated": 0,
+      "virtualization_enabled": 0,
+      "appcontainer": 0,
+      "user_sid": "S-1-5-21-2315698207-1626119504-1424523832-1000",
+      "integrity_sid": "S-1-16-8192"
+    },
+    {
+      "pid": 26436,
+      "elevated": 0,
+      "virtualization_enabled": 0,
+      "appcontainer": 0,
+      "user_sid": "S-1-5-21-2315698207-1626119504-1424523832-1000",
+      "integrity_sid": "S-1-16-8192"
+    },
+    {
+      "pid": 19900,
+      "elevated": 0,
+      "virtualization_enabled": 0,
+      "appcontainer": 0,
+      "user_sid": "S-1-5-21-2315698207-1626119504-1424523832-1000",
+      "integrity_sid": "S-1-16-8192"
+    }
+  ],
+  "files": [
+    {
+      "requested": "C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR2\\runtime",
+      "exists": true,
+      "final_path": "\\\\?\\C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR2\\runtime",
+      "volume_serial": "0C858F88",
+      "file_id": 16888498602960088
+    },
+    {
+      "requested": "C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR2\\runtime\\launcher.json",
+      "exists": true,
+      "final_path": "\\\\?\\C:\\Users\\ReiterU_PC\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\CephVR2\\runtime\\launcher.json",
+      "volume_serial": "0C858F88",
+      "file_id": 10133099161865980
+    }
+  ]
+}

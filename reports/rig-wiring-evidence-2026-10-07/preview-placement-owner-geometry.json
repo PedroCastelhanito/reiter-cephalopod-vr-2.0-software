@@ -1,0 +1,278 @@
+{
+  "date": "2026-10-07",
+  "scope": "Read-only native window geometry; no control claim or camera command",
+  "windows": [
+    {
+      "pid": 33756,
+      "title": "CephVR2.0 Dashboard",
+      "outer": [
+        555,
+        742,
+        867,
+        788
+      ],
+      "visible": [
+        555,
+        742,
+        867,
+        788
+      ],
+      "anchor": [
+        555,
+        742,
+        312,
+        46
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 879,
+        "y": 328,
+        "side": 640
+      }
+    },
+    {
+      "pid": 33756,
+      "title": "CephVR2.0 Dashboard",
+      "outer": [
+        210,
+        542,
+        787,
+        635
+      ],
+      "visible": [
+        210,
+        542,
+        787,
+        635
+      ],
+      "anchor": [
+        210,
+        542,
+        577,
+        93
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 799,
+        "y": 328,
+        "side": 640
+      }
+    },
+    {
+      "pid": 33756,
+      "title": "_q_titlebar",
+      "outer": [
+        0,
+        0,
+        312,
+        39
+      ],
+      "visible": [
+        0,
+        0,
+        312,
+        39
+      ],
+      "anchor": [
+        0,
+        0,
+        312,
+        39
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 324,
+        "y": 0,
+        "side": 640
+      }
+    },
+    {
+      "pid": 33756,
+      "title": "CephVR2.0 \u2014 Dashboard",
+      "outer": [
+        0,
+        0,
+        1456,
+        979
+      ],
+      "visible": [
+        7,
+        0,
+        1449,
+        972
+      ],
+      "anchor": [
+        0,
+        0,
+        1456,
+        979
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 0,
+        "y": 0,
+        "side": 640
+      }
+    },
+    {
+      "pid": 33756,
+      "title": "_q_titlebar",
+      "outer": [
+        0,
+        0,
+        577,
+        39
+      ],
+      "visible": [
+        0,
+        0,
+        577,
+        39
+      ],
+      "anchor": [
+        0,
+        0,
+        577,
+        39
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 589,
+        "y": 0,
+        "side": 640
+      }
+    },
+    {
+      "pid": 33756,
+      "title": "_q_titlebar",
+      "outer": [
+        0,
+        0,
+        1456,
+        39
+      ],
+      "visible": [
+        0,
+        0,
+        1456,
+        39
+      ],
+      "anchor": [
+        0,
+        0,
+        1456,
+        39
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 0,
+        "y": 0,
+        "side": 640
+      }
+    },
+    {
+      "pid": 33756,
+      "title": "MSCTFIME UI",
+      "outer": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "anchor": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 12,
+        "y": 0,
+        "side": 640
+      }
+    },
+    {
+      "pid": 33756,
+      "title": "Default IME",
+      "outer": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "anchor": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "work_area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "scale": 1.0,
+      "hint": {
+        "x": 12,
+        "y": 0,
+        "side": 640
+      }
+    }
+  ]
+}

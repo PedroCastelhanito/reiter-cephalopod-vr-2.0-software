@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from cephvr.acquisition.v1 import messages_pb2 as acquisition
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.device_projection import merge_devices, merge_preview_visibility
 from cephvr.shared.identity import require_uuid4
 
 
@@ -156,8 +157,27 @@ class ProjectionStore:
                 if view != self.devices:
                     raise ProjectionError("device status revision changed payload")
                 return False
-        self._budget(view.ByteSize() - (self.devices.ByteSize() if self.devices else 0))
-        self.devices = pb.AcquisitionDeviceViews.FromString(view.SerializeToString())
+        adopted = merge_devices(view, self.devices)
+        self._budget(
+            adopted.ByteSize() - (self.devices.ByteSize() if self.devices else 0)
+        )
+        self.devices = adopted
+        return True
+
+    def accept_preview_visibility(
+        self, report: rpc.AcquisitionDeviceStatusReport
+    ) -> bool:
+        self._source(report.views.source, "acquisition")
+        try:
+            adopted = merge_preview_visibility(report, self.devices)
+        except ValueError as exc:
+            raise ProjectionError(str(exc)) from exc
+        if adopted is None:
+            return False
+        self._budget(
+            adopted.ByteSize() - (self.devices.ByteSize() if self.devices else 0)
+        )
+        self.devices = adopted
         return True
 
     def accept_newer_devices(self, report: rpc.AcquisitionDeviceStatusReport) -> bool:

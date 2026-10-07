@@ -168,7 +168,7 @@ class WorkerOperationExecutor:
                     request, acq.WorkerPreparePreview
                 ) or not request.HasField("camera"):
                     raise ValueError("preview preparation has no camera payload")
-                self.camera_configuration.install_owned_functions(request.camera)
+                self.camera_configuration.require_adopted_preview(request)
                 self.preview.prepare(request)
             elif name == "StartPreview":
                 self.preview.start(request)

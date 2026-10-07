@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-07",
+  "timezone": "Asia/Tokyo",
+  "source_revision": "08d146d0d97847cb3f395144886fc175dc627487",
+  "dirty_tree": true,
+  "uploaded": true,
+  "upload_verified_exit_code": 0,
+  "firmware_image_sha256": "0e4d05e6466328f26b33866793d895d65943ea4dfbd35165a2a090f2023bf630",
+  "flash_backup_sha256": "dcc0f4d1c7f50c45115bf45c591d6df8d4bc6d77f52ba9e0785736678716e19a",
+  "source_sha256": {
+    "firmware/uno/cephvr2_mcu/cephvr2_mcu.ino": "5abce26e94630477058198b1f2bceb15797f91a7e352bcf9074f7687c69d0b36",
+    "src/cephvr/acquisition/worker/camera_configuration.py": "630241bdc989638c7b04cdeaaf662aec4332d2e3984bdd0b98526a6a3b9d2281",
+    "src/cephvr/acquisition/worker/execution.py": "3391320dd7b1db90ba06be9fabdbf60026609bbc6e5bc02daaeb4a9a0414935f",
+    "tests/acquisition/test_camera_adapter_contracts.py": "095b1143d2a940d9a95a9ffedd6a324512d934c35c2d6907100b3ecbeec7a783",
+    "contracts/policy/acquisition_policy.toml": "1a8e8d1aaefb078d88f1d6ce057b2b3a53a46fe501acddd9b73ef8e36c41af6d",
+    "config/backends/acquisition_config.toml": "b9b1be8368d7345eba7a53bc475ffe0d26840a18611403ba5dd954ca20fdec78"
+  },
+  "test_suites": {
+    "mcu-preview-adoption.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "54",
+      "time": "0.608",
+      "timestamp": "2026-10-07T16:22:29.851494+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "mcu-preview-integration.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "2",
+      "tests": "537",
+      "time": "8.592",
+      "timestamp": "2026-10-07T16:22:44.818126+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    }
+  },
+  "document_links_checked": 292,
+  "cleanup": {
+    "targets": 118,
+    "files": 1380,
+    "bytes": 25650891
+  },
+  "limits": "Behavior native command window checks pass; Tracking health failure and physical receiver/voltage/waveform acceptance remain open."
+}

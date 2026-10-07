@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-07",
+  "observed_endpoint": {
+    "controller_generation": "73987d0f-0d80-4f63-a646-3dba430048bb",
+    "supervisor_generation": "94522275-61d3-455b-b85a-c58ecd3b28f8",
+    "event_id": "dd861d9e-2087-434d-8879-915adfd1d78d",
+    "replacement_timeout_ns": 92000000000,
+    "gui_relaunch_event_id": "dff9e773-3714-42a3-bb1f-0ca978f054fb"
+  },
+  "endpoint_file": {
+    "FullName": "C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR2\\runtime\\launcher.json",
+    "Length": 286,
+    "CreationTime": "2026-10-07T16:32:03.9045773+09:00",
+    "LastWriteTime": "2026-10-07T16:32:03.9045773+09:00"
+  },
+  "launcher_process": {
+    "ProcessId": 23912,
+    "ParentProcessId": 22120,
+    "CreationDate": "2026-10-07T16:32:03.595079+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe"
+  },
+  "user_failure": "Persistent missing endpoint at C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR2\\runtime\\launcher.json after startup wait",
+  "native_cmd_check": "Exact base-Python command in native CMD displays Y/N; answered N, exit 0, old runtime preserved",
+  "limits": "Original owner terminal view remains unverified; requested dir /a output. Prior wait repair does not resolve owner recurrence."
+}

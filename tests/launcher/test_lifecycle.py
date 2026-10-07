@@ -732,6 +732,94 @@ def test_duplicate_noninteractive_does_not_signal(monkeypatch, tmp_path) -> None
     assert not event.signaled
 
 
+@pytest.mark.parametrize("answer", ["N", "Y"])
+def test_duplicate_waits_for_starting_endpoint_before_prompt(
+    monkeypatch, tmp_path, answer
+) -> None:
+    replacement, event, requests, record = _replacement_fixture(monkeypatch, tmp_path)
+    reads = []
+
+    def endpoint(root):
+        reads.append(root)
+        if len(reads) < 3:
+            raise replacement._EndpointPending("endpoint not published yet")
+        return record
+
+    def prompt(_):
+        assert len(reads) == 3
+        return answer
+
+    monkeypatch.setattr(replacement, "_existing_endpoint", endpoint)
+    monkeypatch.setattr(replacement, "host_time_ns", lambda: 0)
+    monkeypatch.setattr(replacement.time, "sleep", lambda _: None)
+    monkeypatch.setattr("builtins.input", prompt)
+    if answer == "N":
+        with pytest.raises(replacement.ReplacementDeclined):
+            replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+        assert not event.signaled and len(requests) == 1
+    else:
+        assert (
+            replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+            == "new guard"
+        )
+        assert event.signaled and len(requests) == 2
+
+
+def test_duplicate_endpoint_timeout_never_prompts_or_signals(
+    monkeypatch, tmp_path
+) -> None:
+    replacement, event, requests, _ = _replacement_fixture(monkeypatch, tmp_path)
+
+    def pending(_):
+        raise replacement._EndpointPending(
+            "missing endpoint at exact-path/launcher.json"
+        )
+
+    monkeypatch.setattr(replacement, "_existing_endpoint", pending)
+    ticks = iter((0, S))
+    monkeypatch.setattr(replacement, "host_time_ns", lambda: next(ticks))
+    monkeypatch.setattr(replacement.time, "sleep", lambda _: None)
+    monkeypatch.setattr("builtins.input", lambda _: pytest.fail("unsafe prompt"))
+    with pytest.raises(WindowsLaunchError, match="exact-path/launcher.json"):
+        replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+    assert not event.signaled and len(requests) == 1
+
+
+def test_duplicate_invalid_endpoint_fails_without_retry(monkeypatch, tmp_path) -> None:
+    replacement, event, _, _ = _replacement_fixture(monkeypatch, tmp_path)
+
+    def invalid(_):
+        raise WindowsLaunchError("invalid fields")
+
+    monkeypatch.setattr(replacement, "_existing_endpoint", invalid)
+    monkeypatch.setattr(
+        replacement.time, "sleep", lambda _: pytest.fail("invalid endpoint retried")
+    )
+    with pytest.raises(WindowsLaunchError, match="invalid fields"):
+        replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+    assert not event.signaled
+
+
+def test_launcher_start_error_has_clear_message_without_traceback(
+    monkeypatch, capsys
+) -> None:
+    from cephvr.launcher import main as launcher
+
+    monkeypatch.setattr(launcher.sys, "argv", ["cephvr.launcher.main"])
+
+    def fail(**_):
+        raise WindowsLaunchError(
+            "missing replacement endpoint at exact-path/launcher.json"
+        )
+
+    monkeypatch.setattr(launcher, "run_launcher", fail)
+    with pytest.raises(SystemExit) as outcome:
+        launcher.main()
+    assert outcome.value.code == 1
+    text = capsys.readouterr().err
+    assert "exact-path/launcher.json" in text and "Traceback" not in text
+
+
 def test_duplicate_without_exit_receipt_never_acquires_new_guard(
     monkeypatch, tmp_path
 ) -> None:

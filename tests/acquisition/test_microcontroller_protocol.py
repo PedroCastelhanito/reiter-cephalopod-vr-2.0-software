@@ -22,9 +22,9 @@ from cephvr.acquisition.microcontroller.pulses import PulseExecutor
 from cephvr.acquisition.v1 import microcontroller_pb2
 
 
-def test_v2_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
+def test_v3_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
     reply = parse_reply(
-        b"OK   id=run-1   protocol=2 firmware=board pins=D2,D3 input_pins=D2,D3 min_hz=0.1 "
+        b"OK   id=run-1   protocol=3 firmware=board pins=D2,D3 input_pins=D2,D3 min_hz=0.1 "
         b"max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
     )
 
@@ -38,7 +38,7 @@ def test_v2_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
         watchdog_min,
         watchdog_max,
     ) = parse_capabilities(reply)
-    assert (version, firmware, pins) == (2, "board", ("D2", "D3"))
+    assert (version, firmware, pins) == (3, "board", ("D2", "D3"))
     assert input_pins == ("D2", "D3")
     assert minimum == 0.1
     assert maximum == 60.0
@@ -47,7 +47,7 @@ def test_v2_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
 
 def test_caps_rejects_input_pin_outside_advertised_pins() -> None:
     reply = parse_reply(
-        b"OK id=run-1 protocol=2 firmware=board pins=D2,D3 input_pins=D4 "
+        b"OK id=run-1 protocol=3 firmware=board pins=D2,D3 input_pins=D4 "
         b"min_hz=0.1 max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
     )
     with pytest.raises(ProtocolError, match="input_pins"):
@@ -58,9 +58,37 @@ def test_diagnostic_reply_requires_exact_kind_pin_and_edge_shape() -> None:
     assert parse_diagnostic(
         parse_reply(b"OK id=run-2 active=1 kind=projector_flip pin=D2 edges=3\n")
     ) == (True, "projector_flip", "D2", 3)
-    with pytest.raises(ProtocolError, match="output diagnostic"):
+    assert parse_diagnostic(
+        parse_reply(b"OK id=run-3 active=0 kind=trial_state pin=D9 edges=1\n")
+    ) == (False, "trial_state", "D9", 1)
+    with pytest.raises(ProtocolError, match="initial HIGH"):
         parse_diagnostic(
-            parse_reply(b"OK id=run-3 active=0 kind=trial_state pin=D9 edges=1\n")
+            parse_reply(b"OK id=run-4 active=0 kind=trial_state pin=D9 edges=0\n")
+        )
+    with pytest.raises(ProtocolError, match="single HIGH"):
+        parse_diagnostic(
+            parse_reply(b"OK id=run-5 active=0 kind=trial_state pin=D9 edges=2\n")
+        )
+
+
+@pytest.mark.parametrize("kind", ["behavioral", "tracking"])
+@pytest.mark.parametrize("active,edges", [(1, 1), (1, 17), (0, 59), (0, 2**32 - 1)])
+def test_camera_diagnostic_preserves_generated_count(
+    kind: str, active: int, edges: int
+) -> None:
+    reply = parse_reply(
+        f"OK id=run-6 active={active} kind={kind} pin=D10 edges={edges}\n".encode()
+    )
+    assert parse_diagnostic(reply) == (bool(active), kind, "D10", edges)
+
+
+@pytest.mark.parametrize("edges", ["0", "-1", "4294967296", "1.5"])
+def test_camera_diagnostic_rejects_invalid_generated_counts(edges: str) -> None:
+    with pytest.raises(ProtocolError):
+        parse_diagnostic(
+            parse_reply(
+                f"OK id=run-7 active=0 kind=behavioral pin=D10 edges={edges}\n".encode()
+            )
         )
 
 

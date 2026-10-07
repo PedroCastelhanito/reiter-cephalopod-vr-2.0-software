@@ -1,0 +1,314 @@
+{
+  "date": "2026-10-07",
+  "source_logical": "C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR2\\runtime\\recovery",
+  "observed_endpoint_physical": "C:\\Users\\ReiterU_PC\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\CephVR2\\runtime\\launcher.json",
+  "destination_proposed": "C:\\Users\\ReiterU_PC\\.cephvr2\\runtime",
+  "applied": false,
+  "files": [
+    {
+      "name": "application-exit-028d0e0b-7e6e-47e8-8814-07818b27489d.json",
+      "bytes": 252,
+      "sha256": "5371f2e37385da4fa6782b420acbcfea17d8b52760e2e1ef008054b8c9b5b099"
+    },
+    {
+      "name": "application-exit-0aadb1e8-8724-4ca7-b6e2-b7c7e227c5c7.json",
+      "bytes": 252,
+      "sha256": "c4b421d2165a80854f6798276a148785943b7c9bdc4d03d0526c8789fa39266b"
+    },
+    {
+      "name": "application-exit-0ac1efbb-760a-4b9e-8297-7f0ed2d0ca4f.json",
+      "bytes": 252,
+      "sha256": "8652a1b94361670216a7be4684b0b2f0204bca0ae4a5bafadbba6d66e39a75ea"
+    },
+    {
+      "name": "application-exit-0c7fa5ec-c634-4df8-b962-3bcd30af12e1.json",
+      "bytes": 252,
+      "sha256": "4a34b2564d3134ba18164a4585d9843ce2950a0692cbd82003c6d0d29221ed4f"
+    },
+    {
+      "name": "application-exit-0e9a4300-6f5e-45ce-9251-f636d187f0db.json",
+      "bytes": 252,
+      "sha256": "dd5f495fee0fd8f7223c10400eccd9ea5bc0f4264425683a1ae0cf0dfa6a0b68"
+    },
+    {
+      "name": "application-exit-0faef98d-8221-4ab3-8dda-3553d2da899d.json",
+      "bytes": 252,
+      "sha256": "1e82bc2edcce43b6023d807d6e943bda1f368ba2daaf8f4985f7acef12b0676e"
+    },
+    {
+      "name": "application-exit-1543dad0-5bb7-4de9-a90c-600ecc41d7d1.json",
+      "bytes": 252,
+      "sha256": "7281a14210e7824b2ff09e38db4473cbbad393273b21d9aa3ffb16b0223dbcf4"
+    },
+    {
+      "name": "application-exit-17e9dc7c-3d44-493a-9c6c-01a56bb284be.json",
+      "bytes": 252,
+      "sha256": "99d9bb388bf8e6e93ecf4dd6d2f40c57dd6374adc19c702b8e26db174627b7f0"
+    },
+    {
+      "name": "application-exit-2358c318-bbdb-4bca-b277-0f3dfa8a4cce.json",
+      "bytes": 252,
+      "sha256": "bf3f618af3332c3ce50c687068e1a942cd698ff3ae10ebf2583bf0f06da1f93c"
+    },
+    {
+      "name": "application-exit-236f7e57-85f3-44bf-a41f-a8d90223cb72.json",
+      "bytes": 252,
+      "sha256": "769851ae430a418f6a4ac33d5e70c61268a1b5302919a533a041398ad3572dc3"
+    },
+    {
+      "name": "application-exit-27c3499c-55b2-4784-a116-ec8b531f1939.json",
+      "bytes": 252,
+      "sha256": "e0562076ac6a1d443d4e69f4147661d3d9d676a99dd7e83fa347c15e873727f0"
+    },
+    {
+      "name": "application-exit-2c4713bb-3a29-43c5-9f74-4b6a98e9df88.json",
+      "bytes": 252,
+      "sha256": "b47edcbbbfdb81a2b316154826017e567613a3885b5d97f641ed51476cc0ef3b"
+    },
+    {
+      "name": "application-exit-2d972776-71cf-4dc6-b823-b9b19eb02c3b.json",
+      "bytes": 249,
+      "sha256": "22a4086fbf857855d17443ffc0e998b47d105853d0ad2ba612b1b041632818c8"
+    },
+    {
+      "name": "application-exit-2dd0392f-54f9-4c83-a733-3ea0549872ef.json",
+      "bytes": 252,
+      "sha256": "02859876cd7800190528a3af6f4257827566f0f9c3c3bb263252aee10253f18e"
+    },
+    {
+      "name": "application-exit-3350efc1-8a37-47bc-a82e-7b4266714cfd.json",
+      "bytes": 252,
+      "sha256": "9cc8d8e41a1c72390bba6cd221e973a0bc80a402f0f106c656efa742846c5709"
+    },
+    {
+      "name": "application-exit-33959f56-7b26-4d51-81a4-a6a60b7391dd.json",
+      "bytes": 252,
+      "sha256": "efd575e76ad23aa99cfb113693c79f42e831e40b2c4c660c6d0cd1387aea6b8a"
+    },
+    {
+      "name": "application-exit-3aca87cc-6280-4e83-a925-2ae10d225287.json",
+      "bytes": 252,
+      "sha256": "b679897b0dc4a137f29488a83c7a70c266dfe1361751c6c82e7bccd1a7e631b0"
+    },
+    {
+      "name": "application-exit-3b888e38-9328-4863-9098-5f6f8b417891.json",
+      "bytes": 252,
+      "sha256": "1efcd370f2ca2323cfc0752f8ccaf7d8a08998e1f172786f5584960d76a4d658"
+    },
+    {
+      "name": "application-exit-3bb41ef6-9f23-43fe-98f9-ff63b422936e.json",
+      "bytes": 252,
+      "sha256": "1d69ce292950acc9c053c112176d76e1f3a1a4ca62d52ee7ab59d24f45c63c17"
+    },
+    {
+      "name": "application-exit-40fd05c6-5338-494f-89d1-fc5742bbe09a.json",
+      "bytes": 252,
+      "sha256": "581353c4d837999569f9a46d12fb43cd5da320094f625721ba9509c3960f407a"
+    },
+    {
+      "name": "application-exit-44189262-51ef-4ddf-b3f8-189f989f8c17.json",
+      "bytes": 252,
+      "sha256": "11fbb38abb766bbf7eb542ab9606abf3c2d35363f6fa3c7b5a1b19035be2bb04"
+    },
+    {
+      "name": "application-exit-45a25d18-c361-43e2-90d5-c75853724640.json",
+      "bytes": 252,
+      "sha256": "d2a52053e337648c28dda4d5f311bb6fb055241e8458af23865d0a5ced4d1a07"
+    },
+    {
+      "name": "application-exit-480e2883-2b91-4d47-b4d1-724400777665.json",
+      "bytes": 252,
+      "sha256": "341a4317ba3298b7ce2730ac88f61531f3ec1a6602b750496e60474cb71a480f"
+    },
+    {
+      "name": "application-exit-48dda5ba-5e84-4fcc-a0c9-1cbd797d0925.json",
+      "bytes": 252,
+      "sha256": "5d307a47d219e4cd751df97a4bbfa54c65becdb3492fe4da02dbb7f0c0473fd3"
+    },
+    {
+      "name": "application-exit-4a548dd5-5054-42bb-a727-ebd5a6248c68.json",
+      "bytes": 252,
+      "sha256": "4624e3ace664571110138e3cb777b93b3206b0151bc11f57a66e954fd63e6ca8"
+    },
+    {
+      "name": "application-exit-50eb58af-d5ca-4317-b587-669ff3638d2c.json",
+      "bytes": 252,
+      "sha256": "2a2e9e07a0bd12f077ea27623de0ee6c2520ced4e67fe46123e5dc95d47e958a"
+    },
+    {
+      "name": "application-exit-534de27e-b9c1-4da1-ae67-54b53512d7d3.json",
+      "bytes": 252,
+      "sha256": "368de12bc2dd5b1eccc0d1ba0b73f1067ee37180865164eae7b2e97e84f3227c"
+    },
+    {
+      "name": "application-exit-610449a5-553e-4ea5-bf26-ebf7afe0b3fb.json",
+      "bytes": 252,
+      "sha256": "980cc2894b02d73061eb7dd056d5704c99d7e956513e74e93e9a2455b454bb55"
+    },
+    {
+      "name": "application-exit-6629467e-3306-42e2-83dc-c28cdc8ae047.json",
+      "bytes": 252,
+      "sha256": "389372ffc7fa7a7c99c0484e251091024f56bdba3a1908e141d2ecf5128741c7"
+    },
+    {
+      "name": "application-exit-6f5acc20-1efa-426c-8e4a-28832f783b52.json",
+      "bytes": 252,
+      "sha256": "1826ee24e8f5dce955228b08a4df06e7e7cf4874c6f5b7b7123c0e106a363d1b"
+    },
+    {
+      "name": "application-exit-790d4bf0-17ae-4cdf-93f1-6fd264568e96.json",
+      "bytes": 252,
+      "sha256": "86ec14a752eb69fee9bd8d74310953dd100b7f136b27f6f69be533096a9a29cd"
+    },
+    {
+      "name": "application-exit-7dded6b1-d25e-449c-8b94-1fce6084e783.json",
+      "bytes": 252,
+      "sha256": "82c380934e9b61da9084e5c771ce644e85bca78a0256aec450d39ced592efa2b"
+    },
+    {
+      "name": "application-exit-7e6f4db3-13fc-4075-9b4c-588e5c00ca09.json",
+      "bytes": 252,
+      "sha256": "119c8f250ed25e9f8e8d047bf4418c3be413f95a8cdf00d4de7f4f8cae2f096a"
+    },
+    {
+      "name": "application-exit-82ac9288-f627-40fe-9737-f29c271777a2.json",
+      "bytes": 252,
+      "sha256": "39aec1e1b5341a4a70fadd1222f0ab9fe3a23a2fb8b8bbbac9d3581aed79bbbd"
+    },
+    {
+      "name": "application-exit-854b11bc-e159-4d70-a56a-db568b11bc99.json",
+      "bytes": 249,
+      "sha256": "ca91800187c66b39ca652a86c50795ad510624c4292e57e5c3f530c0a6f337f1"
+    },
+    {
+      "name": "application-exit-8dedb68e-af71-4371-9f2a-67fd1cfd714c.json",
+      "bytes": 252,
+      "sha256": "97ffedaad8b0dfbd54becfe19df695d201666a2807f64189313e54164574fe99"
+    },
+    {
+      "name": "application-exit-939c8270-4dfd-4a3f-b2da-ab3c4e5e60c1.json",
+      "bytes": 252,
+      "sha256": "c6f34be8efa8b366b9d9e3f05098f266a606e96299de48f1d5343d6aa638a23d"
+    },
+    {
+      "name": "application-exit-946945e2-2945-4397-925d-ab1196d84c77.json",
+      "bytes": 252,
+      "sha256": "58c48daeace861d3510432782330072aaa54508ccaff65ddfedf64f682717681"
+    },
+    {
+      "name": "application-exit-964a4fcf-458e-4b1a-b43e-2af9f01ec7ef.json",
+      "bytes": 252,
+      "sha256": "80ceca7917b771b25f03cc0a3569e740e65476de104e91eead2ad5a0137eb372"
+    },
+    {
+      "name": "application-exit-985de467-e9b9-4966-93a6-b51994007f35.json",
+      "bytes": 252,
+      "sha256": "eff8bcfbdcaea7ead38f56828de885c293a4a647785d2b62fa88ddbda8f16e6b"
+    },
+    {
+      "name": "application-exit-987db9fa-3983-4cc6-b934-f6be3e983b38.json",
+      "bytes": 252,
+      "sha256": "30a293969ed2c16739065965bcf0da34458a452ddcf7ee02a4cabb2f2f122d9c"
+    },
+    {
+      "name": "application-exit-a2fe8d31-f34a-4e70-92a1-6e71a2ecb3de.json",
+      "bytes": 249,
+      "sha256": "f71b16623700773d015d8d516f80cc1450c2bd0878f1ce029fa97bd977fc13a1"
+    },
+    {
+      "name": "application-exit-b5671158-c85f-4308-8a15-7713c073ed71.json",
+      "bytes": 252,
+      "sha256": "b7da324143ff5c9532416589779ff802c016dffc78dbb7615334731b2c182b2d"
+    },
+    {
+      "name": "application-exit-b6480026-24fe-470a-91ad-601248ecd303.json",
+      "bytes": 252,
+      "sha256": "b013531c75e1d36f436017956a9d907ec358137bb4bf330a8c7bd14776b6a4ac"
+    },
+    {
+      "name": "application-exit-b67d8ad5-4a05-4d62-a03a-888fbab85392.json",
+      "bytes": 252,
+      "sha256": "75a652cc31cf7728998657c1d6a7a974261f7134707c5d9296ff19606b645eff"
+    },
+    {
+      "name": "application-exit-bbcb0888-2751-4749-ab78-13f1894745d8.json",
+      "bytes": 252,
+      "sha256": "b240d678d4ecc3493d8569f04f0b291eef1313366da1b32cc15f50179e3a27e6"
+    },
+    {
+      "name": "application-exit-bc69b53e-73f1-4723-9301-93aa037bf6ba.json",
+      "bytes": 252,
+      "sha256": "7c30bb5544fe0d057a5cab5f67ed90ee995d6f16402b7e091a6d32dd16c13fd3"
+    },
+    {
+      "name": "application-exit-c16d7337-d6ec-4a11-ab01-b6a6922417c5.json",
+      "bytes": 252,
+      "sha256": "d0beb0bb109e5bd5d9d8bfffe0524efe55b5542df8d6e0e1000d31f63e0c170b"
+    },
+    {
+      "name": "application-exit-c9085872-6abe-4241-a87c-1261a2cf31ca.json",
+      "bytes": 252,
+      "sha256": "fc03ccc577a46d1af2cb60b6420df4404a4b3be47a027d785a2c0f3f23d33281"
+    },
+    {
+      "name": "application-exit-ce42a927-9060-409b-9d38-1675d8e52b7c.json",
+      "bytes": 249,
+      "sha256": "73a8c589c016957b8e07974c07a26036fd406bdb1a9ee0b70e71bcaef18ed1a4"
+    },
+    {
+      "name": "application-exit-cefa0e65-3bd2-4aa8-82b9-e8de3e91c7c8.json",
+      "bytes": 252,
+      "sha256": "7dddf6520604693bf45dce9c243f0b366f70d45175001bcf3fe6bc014121dba7"
+    },
+    {
+      "name": "application-exit-d0bcd52b-88db-4011-98d7-947d454fe86f.json",
+      "bytes": 252,
+      "sha256": "b6f2180956e6915bd6c87902b3d03df2b789f33c66978c190988c8320765a510"
+    },
+    {
+      "name": "application-exit-d1fc7b97-acf2-424d-aa8a-03f20b7bbc3b.json",
+      "bytes": 252,
+      "sha256": "21d1efb369a87eb462702576b4f032247e45977d7ffb01b5938a9e901ddcf2e7"
+    },
+    {
+      "name": "application-exit-d2a5542e-0eaa-4ff1-a029-ccfb83e314a3.json",
+      "bytes": 252,
+      "sha256": "fd859591fcf53f9a6230524fed1d8443ca50990e099cbbff81668545b1726bd7"
+    },
+    {
+      "name": "application-exit-d48aa939-ef95-4c96-886a-adbee4c4f3d3.json",
+      "bytes": 252,
+      "sha256": "4d246247c49bb3bf89b27dbc6c391a88840e966182cf262ead787242c47dd30e"
+    },
+    {
+      "name": "application-exit-eb3469e2-f39b-4b08-b445-f37077753a13.json",
+      "bytes": 252,
+      "sha256": "3b86adaa787af5622000277f1f42a973f1e18fb6fa156e2983a200e2ec9108a1"
+    },
+    {
+      "name": "application-exit-eb5bac04-cb41-4842-820d-2a75afa387c5.json",
+      "bytes": 252,
+      "sha256": "6680917cb4be633ef2fe3120bdb7f9c70c120939d35b87271493df053178406f"
+    },
+    {
+      "name": "application-exit-ed17d778-cc64-4c99-89bf-dc66a6517e10.json",
+      "bytes": 252,
+      "sha256": "34ace7d6aba4e03ac3c45faf67b2cabee16cb3a3a79f3f6f3e99cafb88053af3"
+    },
+    {
+      "name": "application-exit-edeb052f-96a0-41a4-b313-aa879727f3ee.json",
+      "bytes": 252,
+      "sha256": "43381b89cba20f21ce42b882f25657fcec2ce7dd8c3211fa36cf177359674f0b"
+    },
+    {
+      "name": "application-exit-efb4f6de-fdc4-45d8-a4cc-db7bee9c10ae.json",
+      "bytes": 252,
+      "sha256": "394ca05b40f537b62417f65e8349b8ed311761f8d7d37fde14f4ac688f21bf18"
+    },
+    {
+      "name": "application-exit-efd6f8c2-705e-450d-b518-78dffb993678.json",
+      "bytes": 252,
+      "sha256": "fe733b3dfef741b68cb6b33bb0e8fc726453b89b014edff4040c21a0c9aca474"
+    }
+  ]
+}

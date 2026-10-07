@@ -181,7 +181,12 @@ def run_launcher(
     supervisor_token = secrets.token_urlsafe(48)
     controller_token = secrets.token_urlsafe(48)
     native = WindowsJobs()
-    with acquire_application_guard(default_runtime_root()), ExitStack() as resources:
+    with (
+        acquire_application_guard(
+            default_runtime_root(), endpoint_wait_ns=startup.silence_timeout_ns
+        ),
+        ExitStack() as resources,
+    ):
         application_job = native.create_application_job()
         decisions: LauncherDecisions | None = None
         try:
@@ -513,6 +518,8 @@ def main() -> None:
         )
     except ReplacementDeclined as exc:
         print(exc)
+    except WindowsLaunchError as exc:
+        parser.exit(1, f"CephVR2 could not start: {exc}\n")
 
 
 if __name__ == "__main__":

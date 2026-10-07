@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-07T13:05:00.123081+09:00",
+  "revision": "08d146d0d97847cb3f395144886fc175dc627487",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+  "cameras": [
+    {
+      "serial": "40065509",
+      "model": "acA4112-30uc"
+    },
+    {
+      "serial": "40747103",
+      "model": "a2A2464-77umPRO"
+    }
+  ],
+  "ports": [
+    {
+      "device": "COM8",
+      "description": "Arduino Uno (COM8)",
+      "hwid": "USB VID:PID=2341:0043 SER=1344A474130351F057D6 LOCATION=1-10"
+    },
+    {
+      "device": "COM9",
+      "description": "PL2303HXA PHASED OUT SINCE 2012. PLEASE CONTACT YOUR SUPPLIER.",
+      "hwid": "USB VID:PID=067B:2303 SER= LOCATION=1-9.3"
+    }
+  ],
+  "monitors": [
+    {
+      "interface": "\\\\?\\DISPLAY#DEL41FA#5&1209fbcf&1&UID524#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 1080,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4353#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -2560,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4355#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -2280,
+      "y": 720,
+      "width": 720,
+      "height": 1280,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4357#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -1280,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    },
+    {
+      "interface": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4352#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "x": -3840,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "refresh_hz": 60,
+      "rgb_bits": 8
+    }
+  ],
+  "nvidia": "name, uuid, pci.bus_id, driver_version\nNVIDIA GeForce RTX 5060 Ti, GPU-77642118-1623-48dd-3686-1014aa86b818, 00000000:01:00.0, 617.14\nNVIDIA GeForce RTX 2080 Ti, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, 00000000:03:00.0, 617.14\n"
+}

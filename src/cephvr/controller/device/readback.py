@@ -6,6 +6,7 @@ import asyncio
 import uuid
 from collections.abc import Callable, Mapping
 
+from cephvr.acquisition.microcontroller.protocol import PROTOCOL_VERSION
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.device.ports import DeviceHooks
@@ -183,7 +184,8 @@ class CameraReadback:
             if operation.kind == svc.MICROCONTROLLER_COMMAND_KIND_CONNECT:
                 success = (
                     success
-                    and status.views.pulses.capabilities.protocol_version == 2
+                    and status.views.pulses.capabilities.protocol_version
+                    == PROTOCOL_VERSION
                     and not status.views.pulses.state.behavioral.running
                     and not status.views.pulses.state.tracking.running
                 )
@@ -197,7 +199,12 @@ class CameraReadback:
                 operation.operator_id,
                 success=success,
                 progress="MCU command confirmed" if success else "MCU command failed",
-                error="required MCU result evidence incomplete" if not success else "",
+                error=(
+                    status.result.failure.message
+                    or "required MCU result evidence incomplete"
+                )
+                if not success
+                else "",
             )
             self.status_retention.retire_operation(operation)
             return
@@ -214,7 +221,20 @@ class CameraReadback:
             )
         elif operation.kind == svc.CAMERA_COMMAND_KIND_STOP_PREVIEW:
             success = success and stop_preview_confirmed(view, operation.preview_run_id)
-        elif operation.kind == svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER:
+        elif operation.kind in {
+            svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+            svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
+        }:
+            success = (
+                success
+                and view.preview_run_id == operation.preview_run_id
+                and view.HasField("preview_visible")
+                and view.preview_visible
+                == (operation.kind == svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW)
+            )
+        elif (
+            operation.kind == svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER and success
+        ):
             transfer = self.projections.transfers.get(operation.child_id)
             if transfer is None or transfer.result is None:
                 return

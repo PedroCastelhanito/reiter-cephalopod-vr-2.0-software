@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="7" time="0.375" timestamp="2026-10-07T15:53:36.595892+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.acquisition.test_manual_devices" name="test_manual_mcu_connect_then_start_uses_controller_selected_pin[1-trial_state-D9-None-False]" time="0.002" /><testcase classname="tests.acquisition.test_manual_devices" name="test_manual_mcu_connect_then_start_uses_controller_selected_pin[3-behavioral-D10-30.0-False]" time="0.002"><failure message="assert 2 == 1&#10; +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: &quot;MCU_COMMAND_FAILED&quot;\n  message: &quot;camera diagnostic requires applied output configuration&quot;\n}\ncommand_id: &quot;a5b12ef2-9b63-4b30-9d74-a4d34b74cefe&quot;\n.result&#10; +  and   1 = control.COMMAND_RESULT_ACCEPTED">signal = 3, kind = 'behavioral', pin = 'D10', frequency = 30.0
+configure_fails = False
+
+    @pytest.mark.parametrize(
+        "signal,kind,pin,frequency,configure_fails",
+        [
+            (control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE, "trial_state", "D9", None, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL, "behavioral", "D10", 30.0, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_TRACKING, "tracking", "D11", 60.0, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL, "behavioral", "D10", 30.0, True),
+        ],
+    )
+    async def test_manual_mcu_connect_then_start_uses_controller_selected_pin(
+        signal: int, kind: str, pin: str, frequency: float | None, configure_fails: bool
+    ) -&gt; None:
+        generation = _id()
+        identity = CoordinatorIdentity(
+            backend=control.BackendContext(
+                backend_name="acquisition", backend_generation=generation
+            ),
+            process=control.ProcessIdentity(role="acquisition", generation=generation),
+            controller=control.ProcessIdentity(role="controller", generation=_id()),
+            supervisor=control.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=control.ProcessIdentity(role="tracking", generation=_id()),
+        )
+        settings = control.AcquisitionSettings()
+        settings.pulses.port = "COM8"
+        settings.pulses.trial_state_pin = "D9"
+        settings.pulses.trial_state_enabled = True
+        if frequency is not None:
+            output = getattr(settings.pulses, kind)
+            output.pin = pin
+            output.requested_frequency_hz = frequency
+        owner = object.__new__(ManualPulses)
+        owner.identity = identity
+        owner.configuration = ConfigurationRecord(
+            settings=settings,
+            file_policies=runtime_pb2.AcquisitionFilePolicies(),
+            revision=1,
+        )
+        owner.session_slot = SessionSlot()
+        owner.pulse = PulseRecord()
+        owner.workers = {}
+        owner.worker_registry = object()  # No completed session to retire.
+        owner.clock = lambda: 100
+        calls: list[object] = []
+        configured: set[str] = set()
+    
+        class Serial:
+            async def connect(self, *, deadline_ns: int) -&gt; mcu.MicrocontrollerObservation:
+                calls.append(("connect", deadline_ns))
+                return mcu.MicrocontrollerObservation(port="COM8")
+    
+            async def diagnostic_start(
+                self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
+            ) -&gt; tuple[bool, str, str, int]:
+                if frequency_hz is not None and kind not in configured:
+                    raise RuntimeError("camera diagnostic requires applied output configuration")
+                calls.append((kind, pin, frequency_hz, deadline_ns))
+                return True, kind, pin, 1
+    
+            async def configure(
+                self, requested: camera.CameraPulseConfiguration, *,
+                active_roles: tuple[int | str, ...], deadline_ns: int
+            ) -&gt; mcu.MicrocontrollerObservation:
+                calls.append(("configure", tuple(active_roles), deadline_ns))
+                assert requested == settings.pulses
+                assert active_roles == (kind,)
+                if configure_fails:
+                    raise RuntimeError("MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY")
+                configured.add(kind)
+                return mcu.MicrocontrollerObservation(port="COM8", request_id="configured")
+    
+        class Status:
+            def reserve(self, command: wire.BackendCommand) -&gt; None:
+                calls.append(("reserve", command.command_id))
+    
+            def clear_diagnostic(self) -&gt; None:
+                calls.append("clear")
+    
+            def set_diagnostic(
+                self, signal: int, pin: str, active: bool, edges: int
+            ) -&gt; None:
+                calls.append(("diagnostic", signal, pin, active, edges))
+    
+            async def report(
+                self, command: wire.BackendCommand, **kwargs: object
+            ) -&gt; control.ReportReceipt:
+                calls.append(("report", command.command_id, kwargs["succeeded"]))
+                return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+    
+            def finalize_command(self, command_id: str) -&gt; None:
+                calls.append(("finalize", command_id))
+    
+        owner.serial = Serial()  # type: ignore[assignment]
+        owner.device_status = Status()  # type: ignore[assignment]
+    
+        class Results:
+            async def report_failure(self, command: object, **kwargs: object) -&gt; None:
+                calls.append(("failure", kwargs["failure"]))
+    
+        owner.results = Results()  # type: ignore[assignment]
+    
+        def request(kind: int, signal: int = 0) -&gt; wire.AcquisitionMicrocontrollerCommand:
+            value = wire.AcquisitionMicrocontrollerCommand(
+                configuration_revision=2,
+                kind=kind,
+                signal=signal,
+            )
+            value.requested.CopyFrom(settings.pulses)
+            value.command.command_id = _id()
+            value.command.issuer.CopyFrom(identity.controller)
+            value.command.target.CopyFrom(identity.backend)
+            value.command.parent_operation.command_id = _id()
+            return value
+    
+        connected = await owner.execute_diagnostic(
+            request(wire.MICROCONTROLLER_COMMAND_KIND_CONNECT), deadline_ns=1000
+        )
+        started = await owner.execute_diagnostic(
+            request(
+                wire.MICROCONTROLLER_COMMAND_KIND_START,
+                signal,
+            ),
+            deadline_ns=1000,
+        )
+    
+        assert connected.result == control.COMMAND_RESULT_ACCEPTED
+        if configure_fails:
+            assert started.result == control.COMMAND_RESULT_REJECTED
+            assert "UNSUPPORTED_FREQUENCY" in started.failure.message
+            assert not any(isinstance(item, tuple) and item[0] == kind for item in calls)
+            return
+&gt;       assert started.result == control.COMMAND_RESULT_ACCEPTED
+E       assert 2 == 1
+E        +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "MCU_COMMAND_FAILED"\n  message: "camera diagnostic requires applied output configuration"\n}\ncommand_id: "a5b12ef2-9b63-4b30-9d74-a4d34b74cefe"\n.result
+E        +  and   1 = control.COMMAND_RESULT_ACCEPTED
+
+tests\acquisition\test_manual_devices.py:316: AssertionError</failure></testcase><testcase classname="tests.acquisition.test_manual_devices" name="test_manual_mcu_connect_then_start_uses_controller_selected_pin[4-tracking-D11-60.0-False]" time="0.001"><failure message="assert 2 == 1&#10; +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: &quot;MCU_COMMAND_FAILED&quot;\n  message: &quot;camera diagnostic requires applied output configuration&quot;\n}\ncommand_id: &quot;e18f71d1-facf-49aa-ab71-bcca11897c08&quot;\n.result&#10; +  and   1 = control.COMMAND_RESULT_ACCEPTED">signal = 4, kind = 'tracking', pin = 'D11', frequency = 60.0
+configure_fails = False
+
+    @pytest.mark.parametrize(
+        "signal,kind,pin,frequency,configure_fails",
+        [
+            (control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE, "trial_state", "D9", None, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL, "behavioral", "D10", 30.0, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_TRACKING, "tracking", "D11", 60.0, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL, "behavioral", "D10", 30.0, True),
+        ],
+    )
+    async def test_manual_mcu_connect_then_start_uses_controller_selected_pin(
+        signal: int, kind: str, pin: str, frequency: float | None, configure_fails: bool
+    ) -&gt; None:
+        generation = _id()
+        identity = CoordinatorIdentity(
+            backend=control.BackendContext(
+                backend_name="acquisition", backend_generation=generation
+            ),
+            process=control.ProcessIdentity(role="acquisition", generation=generation),
+            controller=control.ProcessIdentity(role="controller", generation=_id()),
+            supervisor=control.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=control.ProcessIdentity(role="tracking", generation=_id()),
+        )
+        settings = control.AcquisitionSettings()
+        settings.pulses.port = "COM8"
+        settings.pulses.trial_state_pin = "D9"
+        settings.pulses.trial_state_enabled = True
+        if frequency is not None:
+            output = getattr(settings.pulses, kind)
+            output.pin = pin
+            output.requested_frequency_hz = frequency
+        owner = object.__new__(ManualPulses)
+        owner.identity = identity
+        owner.configuration = ConfigurationRecord(
+            settings=settings,
+            file_policies=runtime_pb2.AcquisitionFilePolicies(),
+            revision=1,
+        )
+        owner.session_slot = SessionSlot()
+        owner.pulse = PulseRecord()
+        owner.workers = {}
+        owner.worker_registry = object()  # No completed session to retire.
+        owner.clock = lambda: 100
+        calls: list[object] = []
+        configured: set[str] = set()
+    
+        class Serial:
+            async def connect(self, *, deadline_ns: int) -&gt; mcu.MicrocontrollerObservation:
+                calls.append(("connect", deadline_ns))
+                return mcu.MicrocontrollerObservation(port="COM8")
+    
+            async def diagnostic_start(
+                self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
+            ) -&gt; tuple[bool, str, str, int]:
+                if frequency_hz is not None and kind not in configured:
+                    raise RuntimeError("camera diagnostic requires applied output configuration")
+                calls.append((kind, pin, frequency_hz, deadline_ns))
+                return True, kind, pin, 1
+    
+            async def configure(
+                self, requested: camera.CameraPulseConfiguration, *,
+                active_roles: tuple[int | str, ...], deadline_ns: int
+            ) -&gt; mcu.MicrocontrollerObservation:
+                calls.append(("configure", tuple(active_roles), deadline_ns))
+                assert requested == settings.pulses
+                assert active_roles == (kind,)
+                if configure_fails:
+                    raise RuntimeError("MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY")
+                configured.add(kind)
+                return mcu.MicrocontrollerObservation(port="COM8", request_id="configured")
+    
+        class Status:
+            def reserve(self, command: wire.BackendCommand) -&gt; None:
+                calls.append(("reserve", command.command_id))
+    
+            def clear_diagnostic(self) -&gt; None:
+                calls.append("clear")
+    
+            def set_diagnostic(
+                self, signal: int, pin: str, active: bool, edges: int
+            ) -&gt; None:
+                calls.append(("diagnostic", signal, pin, active, edges))
+    
+            async def report(
+                self, command: wire.BackendCommand, **kwargs: object
+            ) -&gt; control.ReportReceipt:
+                calls.append(("report", command.command_id, kwargs["succeeded"]))
+                return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+    
+            def finalize_command(self, command_id: str) -&gt; None:
+                calls.append(("finalize", command_id))
+    
+        owner.serial = Serial()  # type: ignore[assignment]
+        owner.device_status = Status()  # type: ignore[assignment]
+    
+        class Results:
+            async def report_failure(self, command: object, **kwargs: object) -&gt; None:
+                calls.append(("failure", kwargs["failure"]))
+    
+        owner.results = Results()  # type: ignore[assignment]
+    
+        def request(kind: int, signal: int = 0) -&gt; wire.AcquisitionMicrocontrollerCommand:
+            value = wire.AcquisitionMicrocontrollerCommand(
+                configuration_revision=2,
+                kind=kind,
+                signal=signal,
+            )
+            value.requested.CopyFrom(settings.pulses)
+            value.command.command_id = _id()
+            value.command.issuer.CopyFrom(identity.controller)
+            value.command.target.CopyFrom(identity.backend)
+            value.command.parent_operation.command_id = _id()
+            return value
+    
+        connected = await owner.execute_diagnostic(
+            request(wire.MICROCONTROLLER_COMMAND_KIND_CONNECT), deadline_ns=1000
+        )
+        started = await owner.execute_diagnostic(
+            request(
+                wire.MICROCONTROLLER_COMMAND_KIND_START,
+                signal,
+            ),
+            deadline_ns=1000,
+        )
+    
+        assert connected.result == control.COMMAND_RESULT_ACCEPTED
+        if configure_fails:
+            assert started.result == control.COMMAND_RESULT_REJECTED
+            assert "UNSUPPORTED_FREQUENCY" in started.failure.message
+            assert not any(isinstance(item, tuple) and item[0] == kind for item in calls)
+            return
+&gt;       assert started.result == control.COMMAND_RESULT_ACCEPTED
+E       assert 2 == 1
+E        +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "MCU_COMMAND_FAILED"\n  message: "camera diagnostic requires applied output configuration"\n}\ncommand_id: "e18f71d1-facf-49aa-ab71-bcca11897c08"\n.result
+E        +  and   1 = control.COMMAND_RESULT_ACCEPTED
+
+tests\acquisition\test_manual_devices.py:316: AssertionError</failure></testcase><testcase classname="tests.acquisition.test_manual_devices" name="test_manual_mcu_connect_then_start_uses_controller_selected_pin[3-behavioral-D10-30.0-True]" time="0.001"><failure message="assert 'UNSUPPORTED_FREQUENCY' in 'camera diagnostic requires applied output configuration'&#10; +  where 'camera diagnostic requires applied output configuration' = code: &quot;MCU_COMMAND_FAILED&quot;\nmessage: &quot;camera diagnostic requires applied output configuration&quot;\n.message&#10; +    where code: &quot;MCU_COMMAND_FAILED&quot;\nmessage: &quot;camera diagnostic requires applied output configuration&quot;\n = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: &quot;MCU_COMMAND_FAILED&quot;\n  message: &quot;camera diagnostic requires applied output configuration&quot;\n}\ncommand_id: &quot;a316ef7e-79e0-4a5a-be14-735572a3e2b0&quot;\n.failure">signal = 3, kind = 'behavioral', pin = 'D10', frequency = 30.0
+configure_fails = True
+
+    @pytest.mark.parametrize(
+        "signal,kind,pin,frequency,configure_fails",
+        [
+            (control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE, "trial_state", "D9", None, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL, "behavioral", "D10", 30.0, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_TRACKING, "tracking", "D11", 60.0, False),
+            (control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL, "behavioral", "D10", 30.0, True),
+        ],
+    )
+    async def test_manual_mcu_connect_then_start_uses_controller_selected_pin(
+        signal: int, kind: str, pin: str, frequency: float | None, configure_fails: bool
+    ) -&gt; None:
+        generation = _id()
+        identity = CoordinatorIdentity(
+            backend=control.BackendContext(
+                backend_name="acquisition", backend_generation=generation
+            ),
+            process=control.ProcessIdentity(role="acquisition", generation=generation),
+            controller=control.ProcessIdentity(role="controller", generation=_id()),
+            supervisor=control.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=control.ProcessIdentity(role="tracking", generation=_id()),
+        )
+        settings = control.AcquisitionSettings()
+        settings.pulses.port = "COM8"
+        settings.pulses.trial_state_pin = "D9"
+        settings.pulses.trial_state_enabled = True
+        if frequency is not None:
+            output = getattr(settings.pulses, kind)
+            output.pin = pin
+            output.requested_frequency_hz = frequency
+        owner = object.__new__(ManualPulses)
+        owner.identity = identity
+        owner.configuration = ConfigurationRecord(
+            settings=settings,
+            file_policies=runtime_pb2.AcquisitionFilePolicies(),
+            revision=1,
+        )
+        owner.session_slot = SessionSlot()
+        owner.pulse = PulseRecord()
+        owner.workers = {}
+        owner.worker_registry = object()  # No completed session to retire.
+        owner.clock = lambda: 100
+        calls: list[object] = []
+        configured: set[str] = set()
+    
+        class Serial:
+            async def connect(self, *, deadline_ns: int) -&gt; mcu.MicrocontrollerObservation:
+                calls.append(("connect", deadline_ns))
+                return mcu.MicrocontrollerObservation(port="COM8")
+    
+            async def diagnostic_start(
+                self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
+            ) -&gt; tuple[bool, str, str, int]:
+                if frequency_hz is not None and kind not in configured:
+                    raise RuntimeError("camera diagnostic requires applied output configuration")
+                calls.append((kind, pin, frequency_hz, deadline_ns))
+                return True, kind, pin, 1
+    
+            async def configure(
+                self, requested: camera.CameraPulseConfiguration, *,
+                active_roles: tuple[int | str, ...], deadline_ns: int
+            ) -&gt; mcu.MicrocontrollerObservation:
+                calls.append(("configure", tuple(active_roles), deadline_ns))
+                assert requested == settings.pulses
+                assert active_roles == (kind,)
+                if configure_fails:
+                    raise RuntimeError("MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY")
+                configured.add(kind)
+                return mcu.MicrocontrollerObservation(port="COM8", request_id="configured")
+    
+        class Status:
+            def reserve(self, command: wire.BackendCommand) -&gt; None:
+                calls.append(("reserve", command.command_id))
+    
+            def clear_diagnostic(self) -&gt; None:
+                calls.append("clear")
+    
+            def set_diagnostic(
+                self, signal: int, pin: str, active: bool, edges: int
+            ) -&gt; None:
+                calls.append(("diagnostic", signal, pin, active, edges))
+    
+            async def report(
+                self, command: wire.BackendCommand, **kwargs: object
+            ) -&gt; control.ReportReceipt:
+                calls.append(("report", command.command_id, kwargs["succeeded"]))
+                return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+    
+            def finalize_command(self, command_id: str) -&gt; None:
+                calls.append(("finalize", command_id))
+    
+        owner.serial = Serial()  # type: ignore[assignment]
+        owner.device_status = Status()  # type: ignore[assignment]
+    
+        class Results:
+            async def report_failure(self, command: object, **kwargs: object) -&gt; None:
+                calls.append(("failure", kwargs["failure"]))
+    
+        owner.results = Results()  # type: ignore[assignment]
+    
+        def request(kind: int, signal: int = 0) -&gt; wire.AcquisitionMicrocontrollerCommand:
+            value = wire.AcquisitionMicrocontrollerCommand(
+                configuration_revision=2,
+                kind=kind,
+                signal=signal,
+            )
+            value.requested.CopyFrom(settings.pulses)
+            value.command.command_id = _id()
+            value.command.issuer.CopyFrom(identity.controller)
+            value.command.target.CopyFrom(identity.backend)
+            value.command.parent_operation.command_id = _id()
+            return value
+    
+        connected = await owner.execute_diagnostic(
+            request(wire.MICROCONTROLLER_COMMAND_KIND_CONNECT), deadline_ns=1000
+        )
+        started = await owner.execute_diagnostic(
+            request(
+                wire.MICROCONTROLLER_COMMAND_KIND_START,
+                signal,
+            ),
+            deadline_ns=1000,
+        )
+    
+        assert connected.result == control.COMMAND_RESULT_ACCEPTED
+        if configure_fails:
+            assert started.result == control.COMMAND_RESULT_REJECTED
+&gt;           assert "UNSUPPORTED_FREQUENCY" in started.failure.message
+E           assert 'UNSUPPORTED_FREQUENCY' in 'camera diagnostic requires applied output configuration'
+E            +  where 'camera diagnostic requires applied output configuration' = code: "MCU_COMMAND_FAILED"\nmessage: "camera diagnostic requires applied output configuration"\n.message
+E            +    where code: "MCU_COMMAND_FAILED"\nmessage: "camera diagnostic requires applied output configuration"\n = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "MCU_COMMAND_FAILED"\n  message: "camera diagnostic requires applied output configuration"\n}\ncommand_id: "a316ef7e-79e0-4a5a-be14-735572a3e2b0"\n.failure
+
+tests\acquisition\test_manual_devices.py:313: AssertionError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_microcontroller_status_completes_exact_operator_operation[2]" time="0.006"><failure message="assert True == (2 == 3)&#10; +  where True = context {\n  command_id: &quot;bbec375b-51d7-41f1-8b4f-a02b073be158&quot;\n}\ncommand: &quot;ExecuteMicrocontrollerCommand&quot;\ncomplete: true\nsucceeded: true\nprogress: &quot;MCU command confirmed&quot;\n.succeeded">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-60/test_microcontroller_status_co0')
+version = 2
+
+    @pytest.mark.parametrize("version", [2, 3])
+    async def test_microcontroller_status_completes_exact_operator_operation(
+        tmp_path: Path, version: int,
+    ) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        ledger = runtime.camera_status_retention.ledger
+        assert ledger is not None
+        ledger.admit(parent, b"mcu-command", 1, work_key=parent)
+        runtime.control_operations.operation(parent, "ExecuteMicrocontrollerCommand")
+        operation = CameraOperation(
+            parent,
+            child,
+            1,
+            0,
+            svc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+            pb.WorkContext(),
+            999,
+            False,
+            is_microcontroller=True,
+        )
+        runtime.camera_status_retention.reserve(operation)
+        runtime.device_state.camera_operation = operation
+        status = svc.AcquisitionDeviceStatusReport()
+        status.views.source.CopyFrom(backend)
+        status.views.state_revision = 1
+        status.views.observed_monotonic_ns = 100
+        status.views.pulses.capabilities.protocol_version = version
+        status.views.pulses.state.behavioral.running = False
+        status.views.pulses.state.tracking.running = False
+        status.operation.command_id = child
+        status.result.context.command_id = child
+        status.result.complete = True
+        status.result.succeeded = True
+    
+        receipt = await runtime.report_projection("devices", status, ingress_ns=900)
+    
+        assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+&gt;       assert runtime.control.operations[parent].succeeded == (version == 3)
+E       assert True == (2 == 3)
+E        +  where True = context {\n  command_id: "bbec375b-51d7-41f1-8b4f-a02b073be158"\n}\ncommand: "ExecuteMicrocontrollerCommand"\ncomplete: true\nsucceeded: true\nprogress: "MCU command confirmed"\n.succeeded
+
+tests\controller\test_camera_evidence.py:199: AssertionError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_microcontroller_status_completes_exact_operator_operation[3]" time="0.002"><failure message="assert False == (3 == 3)&#10; +  where False = context {\n  command_id: &quot;804dc7d5-9a95-4a80-a333-c5b1844f0def&quot;\n}\ncommand: &quot;ExecuteMicrocontrollerCommand&quot;\ncomplete: tr...ress: &quot;MCU command failed&quot;\nfailure {\n  code: &quot;OPERATION_FAILED&quot;\n  message: &quot;required MCU result evidence incomplete&quot;\n}\n.succeeded">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-60/test_microcontroller_status_co1')
+version = 3
+
+    @pytest.mark.parametrize("version", [2, 3])
+    async def test_microcontroller_status_completes_exact_operator_operation(
+        tmp_path: Path, version: int,
+    ) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        ledger = runtime.camera_status_retention.ledger
+        assert ledger is not None
+        ledger.admit(parent, b"mcu-command", 1, work_key=parent)
+        runtime.control_operations.operation(parent, "ExecuteMicrocontrollerCommand")
+        operation = CameraOperation(
+            parent,
+            child,
+            1,
+            0,
+            svc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+            pb.WorkContext(),
+            999,
+            False,
+            is_microcontroller=True,
+        )
+        runtime.camera_status_retention.reserve(operation)
+        runtime.device_state.camera_operation = operation
+        status = svc.AcquisitionDeviceStatusReport()
+        status.views.source.CopyFrom(backend)
+        status.views.state_revision = 1
+        status.views.observed_monotonic_ns = 100
+        status.views.pulses.capabilities.protocol_version = version
+        status.views.pulses.state.behavioral.running = False
+        status.views.pulses.state.tracking.running = False
+        status.operation.command_id = child
+        status.result.context.command_id = child
+        status.result.complete = True
+        status.result.succeeded = True
+    
+        receipt = await runtime.report_projection("devices", status, ingress_ns=900)
+    
+        assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+&gt;       assert runtime.control.operations[parent].succeeded == (version == 3)
+E       assert False == (3 == 3)
+E        +  where False = context {\n  command_id: "804dc7d5-9a95-4a80-a333-c5b1844f0def"\n}\ncommand: "ExecuteMicrocontrollerCommand"\ncomplete: tr...ress: "MCU command failed"\nfailure {\n  code: "OPERATION_FAILED"\n  message: "required MCU result evidence incomplete"\n}\n.succeeded
+
+tests\controller\test_camera_evidence.py:199: AssertionError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_microcontroller_failure_preserves_firmware_rejection" time="0.003"><failure message="AssertionError: assert 'required MCU...ce incomplete' == 'MCU rejected...TED_FREQUENCY'&#10;  &#10;  - MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY&#10;  + required MCU result evidence incomplete">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-60/test_microcontroller_failure_p0')
+
+    async def test_microcontroller_failure_preserves_firmware_rejection(tmp_path: Path) -&gt; None:
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        runtime = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        ledger = runtime.camera_status_retention.ledger
+        ledger.admit(parent, b"mcu-command", 1, work_key=parent)
+        runtime.control_operations.operation(parent, "ExecuteMicrocontrollerCommand")
+        operation = CameraOperation(
+            parent, child, 1, 0, svc.MICROCONTROLLER_COMMAND_KIND_START,
+            pb.WorkContext(), 999, False, is_microcontroller=True,
+        )
+        runtime.camera_status_retention.reserve(operation)
+        runtime.device_state.camera_operation = operation
+        status = _status(backend, child, succeeded=False)
+        status.result.failure.code = "ACQUISITION_OPERATION_FAILED"
+        status.result.failure.message = "MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY"
+        receipt = await runtime.report_projection("devices", status, ingress_ns=900)
+        assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+        assert not runtime.control.operations[parent].succeeded
+&gt;       assert runtime.control.operations[parent].failure.message == status.result.failure.message
+E       AssertionError: assert 'required MCU...ce incomplete' == 'MCU rejected...TED_FREQUENCY'
+E         
+E         - MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY
+E         + required MCU result evidence incomplete
+
+tests\controller\test_camera_evidence.py:223: AssertionError</failure></testcase></testsuite></testsuites>

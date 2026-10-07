@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// A11 protocol v2 for the COM8 Arduino Uno. Installation is manual.
+// A11 protocol v3 for the COM8 Arduino Uno. Installation is manual.
 // Timer1 owns camera edges; serial parsing and diagnostics stay in loop().
 namespace {
 
@@ -33,13 +33,13 @@ bool configured = false;
 bool watchdogStopped = false;
 uint32_t watchdogMs = 0;
 uint32_t lastRequestMs = 0;
-bool diagnosticActive = false;
+volatile bool diagnosticActive = false;
 char diagnosticKind[20] = "";
-uint8_t diagnosticPin = 0;
+volatile uint8_t diagnosticPin = 0;
 uint32_t diagnosticStartMs = 0;
 volatile uint32_t diagnosticEdges = 0;
 
-void countFlipRise() {
+void countDiagnosticRise() {
   if (diagnosticEdges != UINT32_MAX) ++diagnosticEdges;
 }
 
@@ -52,6 +52,8 @@ ISR(TIMER1_COMPA_vect) {
     if (high != out.high) {
       out.high = high;
       digitalWrite(out.pin, high ? HIGH : LOW);
+      if (high && diagnosticActive && diagnosticPin == out.pin)
+        countDiagnosticRise();
     }
   }
 }
@@ -68,9 +70,11 @@ void startOutput(uint8_t i) {
   noInterrupts();
   outputs[i].phase = 0;
   outputs[i].high = true;
+  digitalWrite(outputs[i].pin, HIGH);
+  if (diagnosticActive && diagnosticPin == outputs[i].pin)
+    countDiagnosticRise();
   outputs[i].running = true;
   interrupts();
-  digitalWrite(outputs[i].pin, HIGH);
 }
 
 void stopDiagnostic() {
@@ -217,7 +221,7 @@ void command(char *buffer) {
     const char *allowed[] = {"id"};
     if (!knownFields(keys, count, allowed, 1)) { error(id, F("UNKNOWN_FIELD")); return; }
     lastRequestMs = millis(); prefix(id);
-    Serial.println(F(" protocol=2 firmware=cephvr2_uno_1 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    Serial.println(F(" protocol=3 firmware=cephvr2_uno_2 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     return;
   }
   if (strcmp(verb, "STATUS") == 0 || strcmp(verb, "PING") == 0) {
@@ -331,14 +335,18 @@ void command(char *buffer) {
     strncpy(diagnosticKind, kind, sizeof(diagnosticKind) - 1);
     diagnosticKind[sizeof(diagnosticKind) - 1] = '\0';
     diagnosticPin = pin;
-    noInterrupts(); diagnosticEdges = 0; interrupts();
+    noInterrupts(); diagnosticEdges = 0; diagnosticActive = true; interrupts();
     diagnosticStartMs = millis();
     pinMode(pin, role >= 0 || strcmp(kind, "trial_state") == 0 ? OUTPUT : INPUT);
+    if (role >= 0 || strcmp(kind, "trial_state") == 0) digitalWrite(pin, LOW);
     if (role >= 0) {
       startOutput(uint8_t(role));
-    } else if (strcmp(kind, "trial_state") == 0) digitalWrite(pin, HIGH);
-    else attachInterrupt(digitalPinToInterrupt(pin), countFlipRise, RISING);
-    diagnosticActive = true;
+    } else if (strcmp(kind, "trial_state") == 0) {
+      noInterrupts();
+      digitalWrite(pin, HIGH);
+      countDiagnosticRise();
+      interrupts();
+    } else attachInterrupt(digitalPinToInterrupt(pin), countDiagnosticRise, RISING);
     lastRequestMs = millis();
     diagnosticReply(id);
     return;

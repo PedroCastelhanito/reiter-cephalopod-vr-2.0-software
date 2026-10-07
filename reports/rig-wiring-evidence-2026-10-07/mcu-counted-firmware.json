@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-07",
+  "timezone": "Asia/Tokyo",
+  "fqbn": "arduino:avr:uno",
+  "protocol": 3,
+  "firmware": "cephvr2_uno_2",
+  "policy_version": 13,
+  "flash_bytes": 11078,
+  "sram_bytes": 1112,
+  "image_sha256": "0e4d05e6466328f26b33866793d895d65943ea4dfbd35165a2a090f2023bf630",
+  "image_file_bytes": 31178,
+  "uploaded": false
+}

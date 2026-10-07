@@ -1,0 +1,17 @@
+src\cephvr\acquisition\camera\pylon_wait_binding.py:10: error: Module "cephvr.acquisition.camera" has no attribute "_pylon_wait_binding"  [attr-defined]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:12: error: Cannot find implementation or library stub for module named "_pylon_wait_binding"  [import-not-found]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:17: error: Cannot find implementation or library stub for module named "__builtin__"  [import-not-found]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:17: error: Name "__builtin__" already defined (by an import)  [no-redef]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:19: error: Function is missing a return type annotation  [no-untyped-def]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:27: error: Function is missing a type annotation  [no-untyped-def]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:28: error: Function is missing a type annotation  [no-untyped-def]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:40: error: Function is missing a type annotation  [no-untyped-def]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:41: error: Function is missing a type annotation  [no-untyped-def]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:49: error: Function is missing a type annotation  [no-untyped-def]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:51: error: Function is missing a return type annotation  [no-untyped-def]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:58: error: Call to untyped function "_swig_setattr_nondynamic_class_variable" in typed context  [no-untyped-call]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:61: error: Skipping analyzing "pypylon.pylon": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:61: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+src\cephvr\acquisition\camera\pylon_wait_binding.py:61: error: Skipping analyzing "pypylon": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+src\cephvr\acquisition\camera\pylon_wait_binding.py:63: error: Function is missing a type annotation  [no-untyped-def]
+Found 15 errors in 1 file (checked 684 source files)

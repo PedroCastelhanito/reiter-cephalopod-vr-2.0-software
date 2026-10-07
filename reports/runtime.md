@@ -10,6 +10,152 @@ have their original scope; Windows and full-workload acceptance remain pending.
 
 ## Current scope and review
 
+The owner has reopened the runtime and reports incorrect preview placement. Native
+read-only bounds reproduce insufficient space for the default square and x=0
+fallback over the GUI. Placement now fits available right-hand space and aligns
+visible physical frames under G01 revision 123. Ten selected GUI checks, four final
+native/reader checks and 549 affected-owner/client checks pass (two privilege skips);
+static checks pass. Current runtime ownership is preserved; full restart and actual
+camera viewing remain outstanding. [Current camera placement assessment](acquisition.md#current-windows-wiring-checks).
+
+Owner-requested stop: controller `73987d0f-0d80-4f63-a646-3dba430048bb`
+normally shuts down successfully. Exact launcher exit receipt confirms all owned
+processes absent; independent native inventory finds zero managed Python processes
+and the application guard is free. Runtime was left stopped for that request, with no repeated
+firmware installation or restart. [Shutdown evidence](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md).
+
+Current owner recurrence is traced to MSIX AppData virtualization, not a missing
+publication delay. The owner's ordinary CMD reports File Not Found, while native
+agent CMD on the same volume sees the logical path. GetFinalPathNameByHandle
+resolves that file into Codex's package `LocalCache/Local`; all inspected user SIDs,
+integrity and UAC flags agree. [Decisive file identity/token evidence](rig-wiring-evidence-2026-10-07/replacement-msix-visibility.json)
+and [read-only idle controller state](rig-wiring-evidence-2026-10-07/replacement-msix-before-state.json)
+are retained. Microsoft's [MSIX virtualization rules](https://learn.microsoft.com/en-us/windows/msix/desktop/flexible-virtualization)
+explain this merged view. E08 currently fixes LocalAppData; owner choice is pending
+between a shared owner-only profile directory outside AppData with preserved
+recovery/restart, and retaining AppData with ordinary-CMD-only launch. No namespace
+change or restart is performed while that choice is pending. The earlier wait
+repair remains valid for startup timing but does not resolve this visibility defect.
+
+The preceding duplicate launch failed before Y/N because its replacement descriptor was
+absent. Current read-only inspection finds the earlier controller
+`73987d0f-0d80-4f63-a646-3dba430048bb` endpoint intact in the normal Windows
+profile, and the owner's exact base-Python command now displays Y/N; two native
+checks answer N and preserve it. The original failure's runtime path/timing are
+unknown, so startup timing versus a different profile directory is not proven.
+Source exposes guard-before-publication timing; [E08 revision 163](../docs/architecture/system-contracts.md#e08)
+now bounds missing directory/descriptor retries by the existing startup
+health-silence budget. Unsafe/invalid records still fail immediately, and the
+exact event remains retained before asking. Persistent absence reports the exact
+path; ordinary native launch failures print a concise error instead of a traceback.
+Five owning regressions fail before the change; 37 launcher cases pass after,
+219 shutdown/supervisor/shared/client integration cases pass (one privilege skip),
+and three real delayed-publication/private-event checks pass, including a missing
+initial runtime directory. Ruff/format (eight files), Windows mypy (six launcher
+sources) and boundaries (604 modules, zero violations) pass. ARCH-002 keeps the
+retry in the focused replacement owner and startup-budget injection/error rendering
+in launcher composition; no policy, dependency or process owner is added.
+[Dated replacement evidence](rig-wiring-evidence-2026-10-07/replacement-context.json).
+No live Y/termination/restart or device operation occurs in this repair.
+
+Latest [manual installation and camera retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
+verifies protocol-3 Uno upload/CAPS, generated D9/D10/D11 counts, managed D9/D10/D11
+Test/Status/Stop and D9 automatic timeout. Real Behavior HighGUI Start/Show/Hide/native close/reopen/Stop
+passes with acquisition-owned native window. Tracking's readback revision handoff
+is repaired (54 focused, 535 integration passes/two privilege skips; static checks
+pass), but its subsequent Start fails amid recurring coordinator-health shutdown.
+Exact launcher absence is confirmed before restoring a fresh GUI runtime.
+Firmware installation is complete; Tracking/sustained acceptance remains open.
+
+Earlier owner D10 test fails without pulses. The camera diagnostic now applies its
+selected output configuration before starting; controller completion forwards
+the backend rejection message and accepts the matching protocol-3 version.
+Seven targeted regressions and **526 acquisition/controller/client tests pass**
+(two privilege skips); static checks pass. This corrects a protocol-version gap
+missed by the previous counted suite. Runtime restart/manual installation and
+actual generated counts were pending at that repair's handoff; the authorized
+installation above supplies later board evidence.
+[Current MCU diagnostic assessment](rig-wiring-evidence-2026-10-07/mcu-camera-diagnostic-repair.md).
+
+Latest MCU diagnostic implementation follows the owner's choice to count generated
+transitions on the board under [A11 revision 37](../docs/architecture/acquisition.md#a11).
+Protocol 3 host/firmware are prepared; counted changes were validated at policy 13.
+Concurrent camera-viewer policy 14 retains MCU protocol 3; 45 owning cases pass again.
+GUI reports firmware-generated
+counts separately from observed input edges. The Uno image builds; 508 affected-owner
+integration cases and six focused GUI cases pass (two integration privilege skips).
+Source mypy, Ruff/format and boundaries pass. Matching manual installation and on-board
+counts were pending at that increment; the later installation above supersedes that status.
+Restarting the new host requires protocol 3 firmware.
+[Image and validation](rig-wiring-evidence-2026-10-07/mcu-counted-diagnostics.md).
+
+Camera display now follows the owner's [A10/G01 OpenCV ownership choice](acquisition.md#current-windows-wiring-checks).
+Current presentation adds bounded initial GUI-edge positioning, square
+aspect-preserving padding, pointer wheel zoom and double-click fit reset under
+acquisition policy 15. Native isolated windows verify placement, square image
+areas and cached-frame wheel/reset redraw; 549 affected-owner/client and eight
+selected GUI tests pass (two integration privilege skips). Geometry/pixel helpers
+remain focused, and static/boundary checks pass. The current owner runtime remains
+on its earlier loaded source; full restart and physical GUI/DPI acceptance are
+still required. [Current presentation evidence](rig-wiring-evidence-2026-10-07/preview-presentation-context.json).
+GUI sends exact-run Show/Hide; acquisition owns windows/private readers, confirms
+first-image display and native release, and reports visibility independently of
+capture. X/Hide leaves capture running. Failed release retains its ledger blocker
+while SDK/pulse cleanup is attempted; delayed observations cannot complete commands
+or undo newer visibility. The former Qt reader and GUI frame-transfer path are removed.
+526 affected-owner/client tests pass (two privilege skips), 17 GUI/bridge tests pass,
+and final first-image/reopen refinements pass 64 focused checks. Two real Win32
+OpenCV windows/latest-frame/X closure pass with isolated rings; package/dependency
+and static checks pass. These are native display/implementation evidence, not physical
+camera, heartbeat or full-load acceptance. That implementation increment preserved
+the active runtime; later authorized installation and Behavior viewing/release are
+recorded above. Original full-suite failures remain open.
+
+Current Windows rig execution (2026-10-07, `08d146d` plus the generated-SWIG mypy
+exclusion): [raw evidence, commands and limits](rig-wiring-evidence-2026-10-07/README.md).
+The full offscreen Windows suite reports **1,252 passed, nine GUI failures, four
+symlink-privilege skips, one rig deselection**. A separate native Qt run crashes
+with access violation during GUI fixture teardown. Eight failures concern
+layout/clipping; one compares normalized Qt paths to native path spelling.
+These are current Windows findings; the earlier development pass below remains
+historical evidence. Ruff/format, source mypy, boundaries, contracts/schema checks
+and AMD64 package build pass. Generated Protobuf bindings were stale on arrival
+and regenerated; source mypy now excludes only the generated Basler SWIG wrapper
+under ARCH-002, preserving checks of handwritten adapters.
+
+Managed startup registers all seven roles and stays alive for over an hour while
+desktop inspection awaits approval. Automatic GUI control and explicit headless
+takeover pass. Injected exact GUI loss followed by `--reopen-gui` creates one fresh
+GUI in the unchanged controller/application generation. Interactive replacement
+N preserves the exact endpoint; Y obtains the old process-absence receipt before
+the successor generation. Authenticated normal shutdown succeeds; exact exit
+receipts, no remaining managed processes and a free application guard are verified.
+Mouse-driven close, reconnect warning acknowledgement and viewers remain unverified:
+the computer-use app approval timed out. No full experiment ran.
+
+Camera activity reveals a current E08 blocker: after two successful Behavior
+Start/Stop cycles and a Tracking PFS import, camera workers report
+`COORDINATOR_HEALTH_LOST`, causing application shutdown. See the
+[acquisition assessment](acquisition.md#current-windows-wiring-checks).
+The owner's later [controller-route MCU console](rig-wiring-evidence-2026-10-07/owner-mcu-console.md)
+reports completed D2/D9/D10 diagnostic Start/Stop pairs, including 120 D2 rising
+edges. Output zero counts are expected; ordinary MCU Status/Stop and physical
+waveform/receiver checks remain separate unresolved acceptance work.
+The owner's follow-up requests physical signal tests using the open SpikeGLX display.
+Initial MCU output feedback correction under G01/A11: Trial state showed firmware-reported
+HIGH/LOW and camera tests show running/stopped pulse output; only input diagnostics
+show rising-edge counts. Six existing GUI diagnostic/control cases pass, GUI mypy
+checks 124 sources, Ruff/format pass, and 598 backend modules have zero boundary
+violations. ARCH-002 review keeps this presentation change in the focused existing
+panel without dependencies or ownership changes; existing size advisories are
+unchanged by it. Physical channel observations are pending, not new rig passes.
+It is superseded by counted diagnostics above; its results retain their original
+scope. The running GUI remains active with its previously loaded code. [Focused evidence](rig-wiring-evidence-2026-10-07/mcu-output-feedback.md).
+The E12 read-only SDK connection times out, then logs a TCP connection failure
+and an unretrieved late future exception. Saved endpoint/inventory readback succeeds;
+remote recording, wiring proof and paired Setup remain pending. No mapping update
+or remote mutation was issued. Existing scientific/encoder deferrals remain.
+
 The owner-requested runtime wiring is implemented in the existing managed application.
 Review and runtime share the current Dashboard, Protocol, Devices and Tracking layout.
 Luna audited and implemented the work; Sol 6.1 prepared the plan and reviewed the code;

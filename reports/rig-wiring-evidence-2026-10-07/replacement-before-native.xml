@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="5" time="0.176" timestamp="2026-10-07T17:02:49.885104+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_waits_for_starting_endpoint_before_prompt[N]" time="0.005"><failure message="TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001CE46BBE310&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-74/test_duplicate_waits_for_start0')
+answer = 'N'
+
+    @pytest.mark.parametrize("answer", ["N", "Y"])
+    def test_duplicate_waits_for_starting_endpoint_before_prompt(monkeypatch, tmp_path, answer) -&gt; None:
+        replacement, event, requests, record = _replacement_fixture(monkeypatch, tmp_path)
+        reads = []
+    
+        def endpoint(root):
+            reads.append(root)
+            if len(reads) &lt; 3:
+                raise replacement._EndpointPending("endpoint not published yet")
+            return record
+    
+        def prompt(_):
+            assert len(reads) == 3
+            return answer
+    
+        monkeypatch.setattr(replacement, "_existing_endpoint", endpoint)
+        monkeypatch.setattr(replacement, "host_time_ns", lambda: 0)
+        monkeypatch.setattr(replacement.time, "sleep", lambda _: None)
+        monkeypatch.setattr("builtins.input", prompt)
+        if answer == "N":
+            with pytest.raises(replacement.ReplacementDeclined):
+&gt;               replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+E               TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'
+
+tests\launcher\test_lifecycle.py:756: TypeError</failure></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_waits_for_starting_endpoint_before_prompt[Y]" time="0.002"><failure message="TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001CE46BA99D0&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-74/test_duplicate_waits_for_start1')
+answer = 'Y'
+
+    @pytest.mark.parametrize("answer", ["N", "Y"])
+    def test_duplicate_waits_for_starting_endpoint_before_prompt(monkeypatch, tmp_path, answer) -&gt; None:
+        replacement, event, requests, record = _replacement_fixture(monkeypatch, tmp_path)
+        reads = []
+    
+        def endpoint(root):
+            reads.append(root)
+            if len(reads) &lt; 3:
+                raise replacement._EndpointPending("endpoint not published yet")
+            return record
+    
+        def prompt(_):
+            assert len(reads) == 3
+            return answer
+    
+        monkeypatch.setattr(replacement, "_existing_endpoint", endpoint)
+        monkeypatch.setattr(replacement, "host_time_ns", lambda: 0)
+        monkeypatch.setattr(replacement.time, "sleep", lambda _: None)
+        monkeypatch.setattr("builtins.input", prompt)
+        if answer == "N":
+            with pytest.raises(replacement.ReplacementDeclined):
+                replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+            assert not event.signaled and len(requests) == 1
+        else:
+&gt;           assert replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S) == "new guard"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'
+
+tests\launcher\test_lifecycle.py:759: TypeError</failure></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_endpoint_timeout_never_prompts_or_signals" time="0.001"><failure message="TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001CE46B9B810&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-74/test_duplicate_endpoint_timeou0')
+
+    def test_duplicate_endpoint_timeout_never_prompts_or_signals(monkeypatch, tmp_path) -&gt; None:
+        replacement, event, requests, _ = _replacement_fixture(monkeypatch, tmp_path)
+    
+        def pending(_):
+            raise replacement._EndpointPending("missing endpoint at exact-path/launcher.json")
+    
+        monkeypatch.setattr(replacement, "_existing_endpoint", pending)
+        ticks = iter((0, S))
+        monkeypatch.setattr(replacement, "host_time_ns", lambda: next(ticks))
+        monkeypatch.setattr(replacement.time, "sleep", lambda _: None)
+        monkeypatch.setattr("builtins.input", lambda _: pytest.fail("unsafe prompt"))
+        with pytest.raises(WindowsLaunchError, match="exact-path/launcher.json"):
+&gt;           replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+E           TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'
+
+tests\launcher\test_lifecycle.py:775: TypeError</failure></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_duplicate_invalid_endpoint_fails_without_retry" time="0.001"><failure message="TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001CE46B9B110&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-74/test_duplicate_invalid_endpoin0')
+
+    def test_duplicate_invalid_endpoint_fails_without_retry(monkeypatch, tmp_path) -&gt; None:
+        replacement, event, _, _ = _replacement_fixture(monkeypatch, tmp_path)
+        def invalid(_):
+            raise WindowsLaunchError("invalid fields")
+    
+        monkeypatch.setattr(replacement, "_existing_endpoint", invalid)
+        monkeypatch.setattr(replacement.time, "sleep", lambda _: pytest.fail("invalid endpoint retried"))
+        with pytest.raises(WindowsLaunchError, match="invalid fields"):
+&gt;           replacement.acquire_application_guard(tmp_path, endpoint_wait_ns=S)
+E           TypeError: acquire_application_guard() got an unexpected keyword argument 'endpoint_wait_ns'
+
+tests\launcher\test_lifecycle.py:787: TypeError</failure></testcase><testcase classname="tests.launcher.test_lifecycle" name="test_launcher_start_error_has_clear_message_without_traceback" time="0.001"><failure message="cephvr.platform.windows.jobs.WindowsLaunchError: missing replacement endpoint at exact-path/launcher.json">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001CE46BAFC90&gt;
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x000001CE46BAF990&gt;
+
+    def test_launcher_start_error_has_clear_message_without_traceback(monkeypatch, capsys) -&gt; None:
+        from cephvr.launcher import main as launcher
+    
+        monkeypatch.setattr(launcher.sys, "argv", ["cephvr.launcher.main"])
+        def fail(**_):
+            raise WindowsLaunchError("missing replacement endpoint at exact-path/launcher.json")
+    
+        monkeypatch.setattr(launcher, "run_launcher", fail)
+        with pytest.raises(SystemExit) as outcome:
+&gt;           launcher.main()
+
+tests\launcher\test_lifecycle.py:800: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\launcher\main.py:509: in main
+    run_launcher(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+_ = {'software_root': WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software'), 'supervisor_c...reter': WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.venv/Scripts/python.exe')}
+
+    def fail(**_):
+&gt;       raise WindowsLaunchError("missing replacement endpoint at exact-path/launcher.json")
+E       cephvr.platform.windows.jobs.WindowsLaunchError: missing replacement endpoint at exact-path/launcher.json
+
+tests\launcher\test_lifecycle.py:796: WindowsLaunchError</failure></testcase></testsuite></testsuites>

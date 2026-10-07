@@ -1,0 +1,22 @@
+[
+  {
+    "sha256": "0BD4E3E42A232796E2161ED4FF1D76EEDA67F1E16AC4A19FEA2EB99F2B70960B",
+    "bytes": 1614241,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-wiring-evidence-2026-10-07\\automated\\packages\\cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl"
+  },
+  {
+    "sha256": "377974D8A052C49AA3497024C9D990A95AB5B75B5D1B8EBE14E8AA9F8ABAB3A2",
+    "bytes": 1197188,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-wiring-evidence-2026-10-07\\automated\\packages\\cephvr-2.0.0.dev0.tar.gz"
+  },
+  {
+    "sha256": "41D1ADD8897E37B25C17F0FE13E940D225456EDC37C813A47EC3A29968C33952",
+    "bytes": 1614241,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-wiring-evidence-2026-10-07\\automated-regenerated\\packages\\cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl"
+  },
+  {
+    "sha256": "BDE5C2399F1677D5ABBA8B55B0D9BEEABEEC522F4EE1CCFD86BF30CBEEA46A92",
+    "bytes": 1197214,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-wiring-evidence-2026-10-07\\automated-regenerated\\packages\\cephvr-2.0.0.dev0.tar.gz"
+  }
+]

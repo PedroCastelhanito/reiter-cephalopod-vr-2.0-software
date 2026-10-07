@@ -1,0 +1,5 @@
+{
+  "command": ".venv/Scripts/python.exe scripts/start_runtime_gui.py",
+  "started": "2026-10-07T13:05:41.9733921+09:00",
+  "script_pid": 24772
+}

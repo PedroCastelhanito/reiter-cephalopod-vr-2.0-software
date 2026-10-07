@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="0.426" timestamp="2026-10-07T17:05:40.923076+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.platform.test_windows_native_on_rig" name="test_replacement_waits_for_native_endpoint_publication[True]" time="0.167" /><testcase classname="tests.platform.test_windows_native_on_rig" name="test_replacement_waits_for_native_endpoint_publication[False]" time="0.110"><failure message="cephvr.shared.credentials.CredentialError: cannot inspect credential path C:\Users\ReiterU_PC\AppData\Local\Temp\pytest-of-ReiterU_PC\pytest-78\test_replacement_waits_for_nat1\starting-replacement-runtime">path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-78/test_replacement_waits_for_nat1/starting-replacement-runtime')
+directory = True
+
+    def _check_private(path: Path, *, directory: bool) -&gt; None:
+        try:
+&gt;           info = path.lstat()
+                   ^^^^^^^^^^^^
+
+src\cephvr\shared\credentials.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1163: in lstat
+    return self.stat(follow_symlinks=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-78/test_replacement_waits_for_nat1/starting-replacement-runtime')
+follow_symlinks = False
+
+    def stat(self, *, follow_symlinks=True):
+        """
+        Return the result of the stat() system call on this path, like
+        os.stat() does.
+        """
+&gt;       return os.stat(self, follow_symlinks=follow_symlinks)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-78\\test_replacement_waits_for_nat1\\starting-replacement-runtime'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1013: FileNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-78/test_replacement_waits_for_nat1')
+root_exists = False
+
+    @pytest.mark.parametrize("root_exists", [True, False])
+    def test_replacement_waits_for_native_endpoint_publication(tmp_path: Path, root_exists: bool) -&gt; None:
+        import threading
+        from uuid import UUID
+    
+        from cephvr.launcher.replacement import ReplacementEndpoint, _await_endpoint
+        from cephvr.platform.windows.events import AutoResetEvent, event_name
+        from cephvr.shared.credentials import _ensure_directory
+    
+        root = tmp_path / "starting-replacement-runtime"
+        if root_exists:
+            _ensure_directory(root)
+        release = threading.Event()
+        owners = []
+        errors = []
+    
+        def publish() -&gt; None:
+            try:
+                time.sleep(0.1)
+                with ReplacementEndpoint(
+                    root, str(uuid4()), str(uuid4()), 1_000_000_000
+                ) as owner:
+                    owners.append(owner)
+                    assert release.wait(5)
+            except BaseException as exc:
+                errors.append(exc)
+    
+        publisher = threading.Thread(target=publish)
+        publisher.start()
+        try:
+&gt;           record = _await_endpoint(root, 2_000_000_000)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\platform\test_windows_native_on_rig.py:742: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\launcher\replacement.py:142: in _await_endpoint
+    return _existing_endpoint(root)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+src\cephvr\launcher\replacement.py:113: in _existing_endpoint
+    _check_private(root, directory=True)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-78/test_replacement_waits_for_nat1/starting-replacement-runtime')
+directory = True
+
+    def _check_private(path: Path, *, directory: bool) -&gt; None:
+        try:
+            info = path.lstat()
+        except OSError as exc:
+&gt;           raise CredentialError(f"cannot inspect credential path {path}") from exc
+E           cephvr.shared.credentials.CredentialError: cannot inspect credential path C:\Users\ReiterU_PC\AppData\Local\Temp\pytest-of-ReiterU_PC\pytest-78\test_replacement_waits_for_nat1\starting-replacement-runtime
+
+src\cephvr\shared\credentials.py:48: CredentialError</failure></testcase></testsuite></testsuites>

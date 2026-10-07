@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-07",
+  "timezone": "Asia/Tokyo",
+  "source_revision": "08d146d0d97847cb3f395144886fc175dc627487",
+  "dirty_tree": true,
+  "policy_version": 15,
+  "source_sha256": {
+    "src/cephvr/acquisition/preview/highgui.py": "c9f29e92173394cb68b83b073ef604bdf1444fc2e33e451eaae8ed9e28ce1698",
+    "src/cephvr/acquisition/preview/viewport.py": "9f93f6fab6d9ffb5242940dc6cd45d47e48d2db1c9edea87d556b6e86d70c9a0",
+    "src/cephvr/acquisition/coordinator/preview_windows.py": "d37b51332c2aba19c30242ff8567d070e945ac6e929263b6dd3c9dbfaaaedcec",
+    "src/cephvr/acquisition/coordinator/manual_preview_window.py": "7f355563f5dc8d9d2f0e99ab59d4707b8f7afb9dfb28b88551b74a501d56afe6",
+    "src/cephvr/acquisition/coordinator/manual_preview.py": "9686411434c9e74a0591f5e310728250775408115278fdc0d939cd1ec9291374",
+    "src/cephvr/acquisition/config/policy.py": "ba319db3560bdd476b30f47b10af1b153e3d6a0c55f8470e1a4ad5c9c382a33c",
+    "src/cephvr/controller/device/camera.py": "451aa85f61274bf6fb33f213359d7299ee37994bd95b765205f6e68a59a931e1",
+    "src/cephvr/gui/main.py": "ab7766d894e74ff7eb5ef0f73e630ec1cc3a5d6a481e768e15661f64d8d0639f",
+    "src/cephvr/gui/managed_preview_viewers.py": "f00ad1670776e80fb02e5529db98d9c9ee3a73c9e1889c003a9d31dcf71add7d",
+    "src/cephvr/gui/managed_device_commands.py": "d0c7363b45cf584917a8278ee2bd748038e0b50ccaf5bd0421db412050489ccb",
+    "src/cephvr/gui/preview_placement.py": "2cdcaf53c4549f70a650e3cff913061495671ebeebe7517bf1dfeb99ed9fc6d7",
+    "src/cephvr/platform/windows/window_coordinates.py": "7c67e54b3227f8db26333ccd1470337c6e28fda148c3e0508237b6710fcdf7dd",
+    "src/cephvr/shared/preview_placement.py": "e95d94cfcf8d2097959b423ad733c8fd893a0711b98eb942d7207193d7023ed4",
+    "tests/acquisition/test_manual_preview.py": "53b0fe920cd18f7c3bc60ce3d8a66dcdadf1d874c5c538ef853e0ec956b4ff18",
+    "tests/gui/test_dashboard.py": "be908dbb171e296254b16316ad19ab32f7eccf4938cc899d7f230ee3b07625ea",
+    "contracts/cephvr/control/v1/services.proto": "8c5c5458902c342b2e2031415989050dd80d4aa23fe2d8e06bc1c41e08bfd9e3",
+    "contracts/policy/acquisition_policy.toml": "b030626cf52c84a7cc61542837c36fd47e8602ee06cc446a2bf890fadc6914be",
+    "config/backends/acquisition_config.toml": "31669a02f0289b73ae2e3a698cf726211c65f675b5505714668faf422c7f25a6"
+  },
+  "commands": {
+    "tests": ".venv/Scripts/python.exe -m pytest tests/acquisition tests/controller tests/client -q -m \"not rig\"",
+    "native": ".venv/Scripts/python.exe -m pytest tests/acquisition/test_manual_preview.py -q -m windows",
+    "gui": "QT_QPA_PLATFORM=offscreen; pytest tests/gui/test_dashboard.py -q -k \"square_preview or preview_window_waits or managed_camera_projection_distinguishes\""
+  },
+  "test_suites": {
+    "tests": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "2",
+      "tests": "551",
+      "time": "6.930",
+      "timestamp": "2026-10-07T16:52:26.884510+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "native": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "0.582",
+      "timestamp": "2026-10-07T16:53:00.402919+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "gui": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "8",
+      "time": "0.789",
+      "timestamp": "2026-10-07T16:51:16.859567+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    }
+  },
+  "static_checks": {
+    "ruff": "pass",
+    "format_files": 448,
+    "windows_mypy_sources": 395,
+    "boundary_modules": 604,
+    "boundary_violations": 0,
+    "protos_generated": 19
+  },
+  "document_links_checked": 448,
+  "cleanup": {
+    "targets": 52,
+    "files": 602,
+    "bytes": 30942993
+  },
+  "assessment": "Native isolated HighGUI physical placement/square image area, cached-frame wheel/reset redraw and independent X/producer lifetime pass. Owner runtime preserved; full restart, actual GUI/monitor/DPI and physical-camera presentation acceptance remain open. Existing Tracking coordinator-health and full-workload limitations remain.",
+  "failed_attempt": "Sandboxed non-Windows-marked selection stalled after 17 cases; exact test process ended and native-authorized final integration passed. Initial two geometry-local-name mypy errors corrected."
+}

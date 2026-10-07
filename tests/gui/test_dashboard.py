@@ -1,7 +1,5 @@
 """Native frontend behavior and ownership; no controller or rig execution."""
 
-import sys
-import time
 from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
@@ -33,6 +31,41 @@ from cephvr.gui.review import ReviewControls
 from cephvr.gui.theme import apply_theme
 from cephvr.gui.view import DashboardView, Phase, PreviewView, review_view
 from cephvr.gui.window import DashboardWindow
+
+
+@pytest.mark.parametrize(
+    "anchor,area,scale,expected",
+    [
+        (QRect(100, 100, 500, 600), QRect(0, 0, 1920, 1080), 1.0, (600, 100, 640)),
+        (QRect(1000, 100, 800, 600), QRect(0, 0, 1920, 1080), 1.0, (344, 100, 640)),
+        (QRect(0, 0, 1456, 979), QRect(0, 0, 1920, 1032), 1.0, (1456, 0, 448)),
+        (QRect(100, 800, 500, 200), QRect(0, 0, 1920, 1080), 1.0, (600, 800, 216)),
+        (
+            QRect(-1800, 200, 500, 600),
+            QRect(-1920, 0, 1920, 1080),
+            1.0,
+            (-1300, 200, 640),
+        ),
+        (QRect(100, 100, 500, 600), QRect(0, 0, 3840, 2160), 2.0, (600, 100, 1280)),
+    ],
+)
+def test_square_preview_initial_edge_placement(
+    anchor: QRect, area: QRect, scale: float, expected: tuple[int, int, int]
+) -> None:
+    from cephvr.gui.preview_placement import square_preview_placement
+
+    result = square_preview_placement(anchor, area, scale)
+    assert (result.x, result.y, result.side) == expected
+
+
+def test_square_preview_placement_fits_small_work_area() -> None:
+    from cephvr.gui.preview_placement import square_preview_placement
+
+    area = QRect(-800, -600, 800, 600)
+    result = square_preview_placement(QRect(-100, -10, 800, 600), area)
+    assert result.side == 536
+    assert area.left() <= result.x <= area.right() - result.side
+    assert result.y == area.top()
 
 
 @pytest.fixture(scope="module")
@@ -546,7 +579,6 @@ def test_retained_summary_includes_exact_command_and_prompt_ids() -> None:
 def test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch() -> None:
     import asyncio
 
-    from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.gui.controller_bridge import ControllerBridge
     from cephvr.shared.auth import Principal
 
@@ -558,9 +590,7 @@ def test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch() -
     bridge._queue_request("ordinary", {}, 1, False, 4, "controller-1")
     bridge._queue_request("Abort now", {}, 2, True, 4, "controller-1")
     assert bridge._queue.get_nowait()[4] == "Abort now"
-    assert ControllerBridge._is_safety_request(
-        "viewer_state", {"result": rpc.PREVIEW_CONSUMER_RESULT_RELEASED}
-    )
+    assert ControllerBridge._is_safety_request("close_tracking_diagnostic", {})
 
     bridge._pending_count = 1
     bridge._queue_request("Start", {}, 3, False, 3, "controller-0")
@@ -745,6 +775,64 @@ def test_spikeglx_inventory_draft_roundtrips_supplemental_and_optional_bits(
     app.processEvents()
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("succeeded", [True, False])
+async def test_preview_window_waits_for_backend_completion(succeeded: bool) -> None:
+    import asyncio
+
+    from cephvr.client.session import ClientError, CommandOutcome
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_device_commands import _camera
+
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.acquisition_devices.behavioral.preview_run_id = str(uuid4())
+    state.configuration.revision = 3
+    submitted = asyncio.Event()
+    confirmed = asyncio.Event()
+    placement = rpc.PreviewWindowPlacement(x=-640, y=80, side=640)
+
+    async def execute(method: str, request: rpc.CameraCommandRequest) -> CommandOutcome:
+        assert method == "ExecuteCameraCommand"
+        assert request.kind == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+        assert (
+            request.preview_run_id
+            == state.acquisition_devices.behavioral.preview_run_id
+        )
+        assert request.expected_configuration_revision == 3
+        assert not request.HasField("preview_consumer")
+        assert request.preview_placement == placement
+        submitted.set()
+        await confirmed.wait()
+        return CommandOutcome("command", True, succeeded, failure="window failed")
+
+    client = SimpleNamespace(
+        snapshot=state, operator_command=lambda: rpc.OperatorCommand(), execute=execute
+    )
+    task = asyncio.create_task(
+        _camera(
+            client,
+            {
+                "role": 1,
+                "kind": rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+                "placement": placement.SerializeToString(),
+            },
+        )
+    )
+    try:
+        await asyncio.wait_for(submitted.wait(), 1)
+        assert not task.done()
+        confirmed.set()
+        if succeeded:
+            await task
+        else:
+            with pytest.raises(ClientError, match="window failed"):
+                await task
+    finally:
+        confirmed.set()
+        await asyncio.gather(task, return_exceptions=True)
+
+
 def test_managed_camera_controls_emit_intent_without_changing_local_device_state(
     app: QApplication,
 ) -> None:
@@ -772,88 +860,6 @@ def test_managed_camera_controls_emit_intent_without_changing_local_device_state
     panel.close()
     panel.deleteLater()
     app.processEvents()
-
-
-@pytest.mark.windows
-@pytest.mark.skipif(
-    sys.platform != "win32", reason="named preview rings require Windows"
-)
-def test_native_latest_frame_viewer_reads_and_releases_ring(app: QApplication) -> None:
-    pytest.importorskip("pypylon")
-    from cephvr.acquisition.buffers.layout import allocation_size
-    from cephvr.acquisition.buffers.records import FrameRecord
-    from cephvr.acquisition.buffers.ring import SharedRing
-    from cephvr.acquisition.camera.native_formats import pylon_pixel_format
-    from cephvr.acquisition.v1 import camera_pb2
-    from cephvr.acquisition.v1 import messages_pb2 as acq
-    from cephvr.control.v1 import types_pb2 as pb
-    from cephvr.gui.camera_viewer import PreviewReader
-    from cephvr.shared.pixels.types import PixelLayout
-
-    allocation, run_id = uuid4(), uuid4()
-    owner = pb.ProcessIdentity(role="acquisition", generation=str(uuid4()))
-    producer = pb.ProcessIdentity(
-        role="acquisition_behavioral_worker", generation=str(uuid4())
-    )
-    consumer = pb.ProcessIdentity(role="gui", generation=str(uuid4()))
-    layout = PixelLayout(2, 2, pylon_pixel_format("Mono8"), 2, 4)
-    descriptor = acq.FrameBufferDescriptor(
-        allocation_id=str(allocation),
-        owner=owner,
-        producer=producer,
-        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
-        kind=acq.FRAME_BUFFER_KIND_PREVIEW,
-        layout_version=2,
-        capacity_frames=1,
-        shared_memory_name=f"Local\\cephvr-{allocation}-frames",
-        configuration_revision=1,
-        allocation_bytes=allocation_size(1, 4),
-    )
-    descriptor.preview.acquisition_run_id = str(run_id)
-    descriptor.image.width = 2
-    descriptor.image.height = 2
-    descriptor.image.pixel_format = "Mono8"
-    descriptor.image.row_stride_bytes = 2
-    descriptor.image.image_payload_bytes = 4
-    attachment = acq.FrameBufferAttachment(buffer=descriptor)
-    attachment.sync.transfer_id = str(uuid4())
-    attachment.sync.target.CopyFrom(owner)
-    attachment.sync.event_name = f"Local\\cephvr-{allocation}-event"
-    ring = SharedRing.create(attachment, layout, owner)
-    producer_ring = None
-    reader = None
-    try:
-        ring.reset_quiescent(run_id, prior_completion_confirmed=True)
-        attachment.sync.target.CopyFrom(producer)
-        producer_ring = SharedRing.attach(attachment, layout, producer)
-        producer_ring.open_admission(run_id)
-        attachment.sync.target.CopyFrom(consumer)
-        reader = PreviewReader(attachment, run_id=str(run_id))
-        errors: list[str] = []
-        reader.failed.connect(errors.append)
-        reader.start()
-        producer_ring.publish(
-            FrameRecord(1, 1, None, None, True, None), memoryview(b"\x00\x40\x80\xff")
-        )
-        producer_ring.publish(
-            FrameRecord(2, 2, None, None, True, None), memoryview(b"\xff\x80\x40\x00")
-        )
-        deadline = time.monotonic() + 3
-        latest = None
-        while time.monotonic() < deadline and latest is None:
-            app.processEvents()
-            latest = reader.take_latest()
-            time.sleep(0.01)
-        assert latest is not None, errors
-        assert latest[0] == b"\xff\x80\x40\x00"
-        assert latest[1:3] == (2, 2)
-    finally:
-        if reader is not None:
-            reader.stop()
-            assert reader.wait(2000)
-        if producer_ring is not None:
-            producer_ring.close()
-        ring.close()
 
 
 def test_devices_draft_icons_local_edits_and_command_gates(
@@ -1951,7 +1957,7 @@ def test_managed_microcontroller_emits_controller_intents(
     panel.pin_editors["camera-2"].editingFinished.emit()
     panel.action_buttons[1].click()
     panel.test_buttons["trial-state"].click()
-    panel.set_diagnostic("trial-state", True, 0)
+    panel.set_diagnostic("trial-state", True, 1)
     panel.test_buttons["trial-state"].click()
 
     assert saves == [("COM8", "D9", True, "D2", True, "D10", "D11")]
@@ -1960,7 +1966,17 @@ def test_managed_microcontroller_emits_controller_intents(
     assert "no command sent" not in panel.console.toPlainText().splitlines()[-1]
     assert "Save pins" not in [b.text() for b in panel.findChildren(QPushButton)]
     assert not panel.enable_controls["projector-flip"].isEnabled()
-    panel.set_diagnostic("trial-state", False, 0)
+    panel.set_diagnostic("trial-state", False, 1)
+    assert (
+        "output LOW, 1 rising transitions generated by MCU"
+        in panel.console.toPlainText()
+    )
+    panel.set_diagnostic("camera-1", False, 59)
+    assert (
+        "59 rising transitions generated by MCU"
+        in panel.status_column.hud.toPlainText()
+    )
+    assert "rising edges reported" not in panel.console.toPlainText()
     panel.enable_controls["projector-flip"].setChecked(False)
     assert saves[-1] == ("COM8", "D9", True, "D2", False, "D10", "D11")
     panel.port.addItem("COM9", "COM9")
@@ -9437,6 +9453,7 @@ def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
     from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.control.v1 import types_pb2 as pb
     from cephvr.gui.managed_cameras import ManagedCameras
+    from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
 
     panel = window.devices.cameras
     panel.managed = True
@@ -9484,6 +9501,37 @@ def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
         )
     )
     assert panel.connect_button.text() == "Stop capture"
+    viewers = ManagedPreviewViewers(
+        lambda: state,
+        panel,
+        lambda role, kind, **options: binding.queue(
+            "camera", role=role, kind=kind, **options
+        ),
+        placement=lambda: b"placement",
+    )
+    viewers.preview_visibility(panel.drafts[0].key, True)
+    count = len(calls)
+    assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+    assert calls[-1][1]["placement"] == b"placement"
+    assert not panel.connect_button.isEnabled()
+    viewers.preview_visibility(panel.drafts[0].key, True)
+    panel.connect_button.click()
+    assert len(calls) == count
+    assert "Preview was not sent" in panel.console.toPlainText()
+    binding.finished("camera", False, "viewer transfer rejected")
+    assert "viewer transfer rejected" in panel.console.toPlainText()
+    view.preview_run_id = str(uuid4())
+    view.preview_visible = True
+    view.preview_visibility_revision = 1
+    assert viewers.viewer_state(1, True, view.preview_run_id)
+    viewers.preview_visibility(panel.drafts[0].key, False)
+    assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+    assert "placement" not in calls[-1][1]
+    assert view.preview_running
+    binding.finished("camera", True, "window closed")
+    view.preview_visible = False
+    view.preview_visibility_revision = 2
+    assert not viewers.viewer_state(1, True, view.preview_run_id)
     panel.connect_button.click()
     assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
     binding.disconnected()

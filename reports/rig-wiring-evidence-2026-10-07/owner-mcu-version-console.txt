@@ -1,0 +1,4 @@
+No camera inventory received.
+2 Basler cameras discovered; no camera opened.
+test_cameras: 40065509: connection and identity verified
+camera: OPERATION_FAILED: incompatible MCU protocol version 2; required 3

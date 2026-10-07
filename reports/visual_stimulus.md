@@ -1,5 +1,17 @@
 # Visual Stimulus status
 
+Current Windows check (2026-10-07, `08d146d`): managed coordinator/renderer startup
+and long idle process liveness pass; normal authenticated application shutdown
+confirms exact process absence. Inventory finds four projector outputs at 60 Hz.
+The saved experiment profile, output-to-surface assignments and asset root remain
+unset, and no exported diagnostic profile/arena was supplied. Untimed Launch/Close,
+first-use restoration, physical corrections and optical timing therefore remain
+pending. Native automated tests run in the full suite; GUI failures and native
+teardown crash prevent blanket rig acceptance. See the
+[current runtime assessment](runtime.md#current-scope-and-review) and
+[dated raw evidence](rig-wiring-evidence-2026-10-07/README.md). E15 and the existing
+encoder/scientific deferrals are unchanged.
+
 Updated: 2026-10-07. The complete Visual Stimulus implementation is selected under
 [ARCH-001](../architecture.md#arch-001). This report describes the uncommitted working
 tree, preserving the existing controller, supervisor and acquisition work.

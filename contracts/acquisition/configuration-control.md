@@ -88,7 +88,7 @@ the registered coordinator. GUI/headless clients never issue worker SDK commands
 Attach Preview Viewer requires only its run/viewer context; do not apply camera
 settings, refresh SDK capabilities or perform MCU configuration for attachment.
 Paths are rig-host paths; Import/Export require one. Other kinds reject a path.
-Stop Preview and Attach Preview Viewer require the current preview_run_id; other
+Stop Preview, Attach Preview Viewer and Show/Hide Preview require the current preview_run_id; other
 operator kinds omit it. Only Attach requires preview_consumer, an exact registered
 viewer identity. Start Preview does not select or wait for a viewer.
 The coordinator creates a fresh acquisition-run UUID on each actual preview start
@@ -100,6 +100,8 @@ replacement run merely because it uses the same camera role.
 | --- | --- |
 | Start Preview | Assigned camera/settings and required pulse outputs validated; readback adopted; needed resources prepared; actual preview running. Session enable/save flags remain unchanged. |
 | Attach Preview Viewer | Existing live slot bound to the registered viewer; transfer published and viewer attachment confirmed. No camera restart or capture gate. |
+| Show Preview | Acquisition-owned OpenCV window has displayed its first converted image for the exact active manual run; local reader attached and retained in the native ledger. No capture/pulse/settings change. |
+| Hide Preview | Exact OpenCV window and local mapping/event confirmed closed; capture and pulses continue. Unknown release fails completion and remains retained. |
 | Stop Preview | Exact preview capture/pulses stopped; SDK connection and preview resources released or explicitly reported unconfirmed. |
 | Import PFS | Assigned connected SDK camera successfully loaded/validated the file; common settings and SDK snapshot read back and adopted. |
 | Export PFS | Pending current edits applied/read back, snapshot refreshed/adopted, then SDK export to the selected new file completed and closed. |

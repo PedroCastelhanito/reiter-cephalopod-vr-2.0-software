@@ -709,6 +709,52 @@ def test_replacement_endpoint_native_event_is_exact_and_private(tmp_path: Path) 
     assert not (root / "launcher.json").exists()
 
 
+@pytest.mark.parametrize("root_exists", [True, False])
+def test_replacement_waits_for_native_endpoint_publication(
+    tmp_path: Path, root_exists: bool
+) -> None:
+    import threading
+    from uuid import UUID
+
+    from cephvr.launcher.replacement import ReplacementEndpoint, _await_endpoint
+    from cephvr.platform.windows.events import AutoResetEvent, event_name
+    from cephvr.shared.credentials import _ensure_directory
+
+    root = tmp_path / "starting-replacement-runtime"
+    if root_exists:
+        _ensure_directory(root)
+    release = threading.Event()
+    owners = []
+    errors = []
+
+    def publish() -> None:
+        try:
+            time.sleep(0.1)
+            with ReplacementEndpoint(
+                root, str(uuid4()), str(uuid4()), 1_000_000_000
+            ) as owner:
+                owners.append(owner)
+                assert release.wait(5)
+        except BaseException as exc:
+            errors.append(exc)
+
+    publisher = threading.Thread(target=publish)
+    publisher.start()
+    try:
+        record = _await_endpoint(root, 2_000_000_000)
+        assert not errors and record == owners[0].record
+        allocation = UUID(record.event_id)
+        with AutoResetEvent.open(event_name(allocation), allocation) as requester:
+            assert not owners[0].requested()
+            requester.set()
+            assert owners[0].requested()
+    finally:
+        release.set()
+        publisher.join(timeout=5)
+    assert not publisher.is_alive() and not errors
+    assert not (root / "launcher.json").exists()
+
+
 if __name__ == "__main__" and "--managed-runtime-probe" in sys.argv:
     handle_index = sys.argv.index("--bootstrap-handle") + 1
     descriptor = read_bootstrap(int(sys.argv[handle_index]))

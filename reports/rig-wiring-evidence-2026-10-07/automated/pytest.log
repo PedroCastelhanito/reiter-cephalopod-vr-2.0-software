@@ -1,0 +1,313 @@
+
+=================================== ERRORS ====================================
+____________ ERROR collecting tests/client/test_controller_rpc.py _____________
+tests\client\test_controller_rpc.py:26: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_______ ERROR collecting tests/controller/test_camera_configuration.py ________
+tests\controller\test_camera_configuration.py:22: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+__________ ERROR collecting tests/controller/test_camera_evidence.py __________
+tests\controller\test_camera_evidence.py:28: in <module>
+    from tests.controller.support_components import _attempt, _id, _runtime, bind_ledger
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_________ ERROR collecting tests/controller/test_command_admission.py _________
+tests\controller\test_command_admission.py:25: in <module>
+    from tests.controller.support_components import _id
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+____ ERROR collecting tests/controller/test_configuration_transactions.py _____
+tests\controller\test_configuration_transactions.py:23: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_________ ERROR collecting tests/controller/test_device_admission.py __________
+tests\controller\test_device_admission.py:38: in <module>
+    from tests.controller.support_components import _id, _runtime, default_limits
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_____________ ERROR collecting tests/controller/test_handoffs.py ______________
+tests\controller\test_handoffs.py:12: in <module>
+    from tests.controller.support_components import _id as uid
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+__________ ERROR collecting tests/controller/test_incident_scope.py ___________
+tests\controller\test_incident_scope.py:18: in <module>
+    from tests.controller.support_components import _attempt, _id, _RetainedPeer, _runtime
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+________ ERROR collecting tests/controller/test_lifecycle_commands.py _________
+tests\controller\test_lifecycle_commands.py:15: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_________ ERROR collecting tests/controller/test_lifecycle_reports.py _________
+tests\controller\test_lifecycle_reports.py:27: in <module>
+    from tests.controller.support_components import _id
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_____________ ERROR collecting tests/controller/test_metadata.py ______________
+tests\controller\test_metadata.py:29: in <module>
+    from tests.controller.support_components import (
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_____________ ERROR collecting tests/controller/test_planning.py ______________
+tests\controller\test_planning.py:14: in <module>
+    from tests.controller.support_components import _id
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_________ ERROR collecting tests/controller/test_runtime_retention.py _________
+tests\controller\test_runtime_retention.py:14: in <module>
+    from tests.controller.support_components import (
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+________ ERROR collecting tests/controller/test_safety_regressions.py _________
+tests\controller\test_safety_regressions.py:17: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_______________ ERROR collecting tests/controller/test_setup.py _______________
+tests\controller\test_setup.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_____________ ERROR collecting tests/controller/test_spikeglx.py ______________
+tests\controller\test_spikeglx.py:16: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+_________ ERROR collecting tests/controller/test_startup_recovery.py __________
+tests\controller\test_startup_recovery.py:24: in <module>
+    from tests.controller.support_components import _id, _runtime
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+______________ ERROR collecting tests/controller/test_storage.py ______________
+tests\controller\test_storage.py:17: in <module>
+    from tests.controller.support_components import _reservation
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+____________ ERROR collecting tests/tracking/test_configuration.py ____________
+tests\tracking\test_configuration.py:16: in <module>
+    from cephvr.tracking.config.diagnostics import resolve_diagnostic
+src\cephvr\tracking\config\diagnostics.py:52: in <module>
+    wire.TRACKING_DIAGNOSTIC_STAGE_POSE: (),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.tracking.v1.services_pb2' has no attribute 'TRACKING_DIAGNOSTIC_STAGE_POSE'
+_______________ ERROR collecting tests/tracking/test_runtime.py _______________
+tests\tracking\test_runtime.py:31: in <module>
+    from cephvr.tracking import diagnostic as diagnostic_module
+src\cephvr\tracking\diagnostic.py:16: in <module>
+    from cephvr.tracking.processing.diagnostics import DiagnosticPipeline
+src\cephvr\tracking\processing\diagnostics.py:27: in <module>
+    from cephvr.tracking.processing.session import (
+src\cephvr\tracking\processing\session.py:18: in <module>
+    from cephvr.tracking.config.diagnostics import DiagnosticResolution, resolve_diagnostic
+src\cephvr\tracking\config\diagnostics.py:52: in <module>
+    wire.TRACKING_DIAGNOSTIC_STAGE_POSE: (),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.tracking.v1.services_pb2' has no attribute 'TRACKING_DIAGNOSTIC_STAGE_POSE'
+___ ERROR collecting tests/visual_stimulus/test_controller_communication.py ___
+tests\visual_stimulus\test_controller_communication.py:10: in <module>
+    from tests.controller.support_components import _runtime
+tests\controller\support_components.py:16: in <module>
+    from cephvr.controller.runtime import ControllerRuntime
+src\cephvr\controller\runtime.py:20: in <module>
+    from cephvr.controller.assembly import AssemblyInputs, assemble_controller
+src\cephvr\controller\assembly.py:28: in <module>
+    from cephvr.controller.device.spikeglx_inventory import SpikeGLXInventory
+src\cephvr\controller\device\spikeglx_inventory.py:19: in <module>
+    from cephvr.synchronization.inventory import (
+src\cephvr\synchronization\inventory.py:28: in <module>
+    wire.PULSE_ROLE_TRIAL_STATE: "trial_state",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.synchronization.v1.spikeglx_pb2' has no attribute 'PULSE_ROLE_TRIAL_STATE'
+=========================== short test summary info ===========================
+ERROR tests/client/test_controller_rpc.py - AttributeError: module 'cephvr.sy...
+ERROR tests/controller/test_camera_configuration.py - AttributeError: module ...
+ERROR tests/controller/test_camera_evidence.py - AttributeError: module 'ceph...
+ERROR tests/controller/test_command_admission.py - AttributeError: module 'ce...
+ERROR tests/controller/test_configuration_transactions.py - AttributeError: m...
+ERROR tests/controller/test_device_admission.py - AttributeError: module 'cep...
+ERROR tests/controller/test_handoffs.py - AttributeError: module 'cephvr.sync...
+ERROR tests/controller/test_incident_scope.py - AttributeError: module 'cephv...
+ERROR tests/controller/test_lifecycle_commands.py - AttributeError: module 'c...
+ERROR tests/controller/test_lifecycle_reports.py - AttributeError: module 'ce...
+ERROR tests/controller/test_metadata.py - AttributeError: module 'cephvr.sync...
+ERROR tests/controller/test_planning.py - AttributeError: module 'cephvr.sync...
+ERROR tests/controller/test_runtime_retention.py - AttributeError: module 'ce...
+ERROR tests/controller/test_safety_regressions.py - AttributeError: module 'c...
+ERROR tests/controller/test_setup.py - AttributeError: module 'cephvr.synchro...
+ERROR tests/controller/test_spikeglx.py - AttributeError: module 'cephvr.sync...
+ERROR tests/controller/test_startup_recovery.py - AttributeError: module 'cep...
+ERROR tests/controller/test_storage.py - AttributeError: module 'cephvr.synch...
+ERROR tests/tracking/test_configuration.py - AttributeError: module 'cephvr.t...
+ERROR tests/tracking/test_runtime.py - AttributeError: module 'cephvr.trackin...
+ERROR tests/visual_stimulus/test_controller_communication.py - AttributeError...
+!!!!!!!!!!!!!!!!!! Interrupted: 21 errors during collection !!!!!!!!!!!!!!!!!!!
+1 deselected, 21 errors in 3.28s

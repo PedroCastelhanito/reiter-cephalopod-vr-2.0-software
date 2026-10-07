@@ -3,7 +3,7 @@
 Derived from [A10/A11](../../docs/architecture/acquisition.md) and
 [E06/E08](../../docs/architecture/system-contracts.md). Typed host evidence is in
 [microcontroller.proto](../cephvr/acquisition/v1/microcontroller.proto).
-This specifies protocol version 2. The matching source is under `firmware/uno`;
+This specifies protocol version 3. The matching source is under `firmware/uno`;
 COM8 reported the expected protocol after the owner-authorized 2026-10-05 upload.
 Managed diagnostic transport and pin settings are implemented but have not passed
 a full GUI-to-rig test. Arduino CLI identified COM8 as Uno; timer behavior and
@@ -58,7 +58,7 @@ Replies begin `OK id=...` or `ERR id=... code=...`. Successful payloads are:
 | CAPS | `protocol`, `firmware`, `pins`, `input_pins`, `min_hz`, `max_hz`, `watchdog_min_ms`, `watchdog_max_ms`. `input_pins` is a unique subset of `pins` capable of interrupt-driven rising-edge capture. |
 | STATUS / CONFIGURE | `valid`, `watchdog_stopped`, `watchdog_ms`, both `<role>_enabled` and `<role>_running`; for each configured enabled output: `<role>_pin`, `<role>_applied_hz`. |
 | PING / ON / OFF | Both `<role>_running` and `watchdog_stopped`. |
-| DIAG_START / DIAG_STATUS / DIAG_STOP | `active=0|1`, `kind`, `pin`, `edges=<uint32>`. Input `edges` counts rising edges seen during the bounded test; outputs report zero. `DIAG_STOP` and elapsed duration return `active=0`. |
+| DIAG_START / DIAG_STATUS / DIAG_STOP | `active=0|1`, `kind`, `pin`, `edges=<uint32>`. Input `edges` counts observed rising edges; output `edges` counts generated LOW-to-HIGH transitions. `DIAG_STOP` and elapsed duration return `active=0` with retained final count. |
 
 Only one diagnostic may run, and only when normal outputs are stopped. Firmware
 rejects a conflicting request without touching pins. A Trial state test holds its
@@ -72,6 +72,16 @@ the host reports an unconfirmed stop if the acknowledgement is missing. Successf
 serial replies prove firmware state and edge count only, not physical voltage,
 camera frames or SpikeGLX recording. The GUI requires Configuration and control,
 rejects duplicate active assignments, and uses acquisition as the sole serial owner.
+
+Each new diagnostic resets its counter. Output tests count the actual HIGH writes:
+one immediate rise for Trial state; the first immediate HIGH and every subsequent
+timer-driven LOW-to-HIGH transition for a camera. Falling transitions and ordinary
+session/preview outputs do not count. Increment and read atomically against interrupt
+handlers; saturate at uint32 maximum. Stop leaves the last count available to status
+queries until the next diagnostic. Do not estimate counts from rate/duration. The
+controller's existing `rising_edges` field carries this count, distinguished by signal;
+GUI output labels explicitly say generated transitions. Protocol 2 output-zero replies
+are incompatible and rejected at connection rather than treated as measured zero.
 
 `protocol` is uint32 and must equal 2; watchdog values are uint32. Applied Hz is
 positive and finite decimal text (ordinary or exponent notation), parsed into the

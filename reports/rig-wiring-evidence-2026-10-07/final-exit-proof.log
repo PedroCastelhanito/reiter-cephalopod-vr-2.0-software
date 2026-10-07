@@ -1,0 +1,9 @@
+{
+  "controller_generation": "610449a5-553e-4ea5-bf26-ebf7afe0b3fb",
+  "supervisor_generation": "9a110f1c-c2d4-46dd-9ab2-06ab597b5d50",
+  "observed_monotonic_ns": 595938663373300,
+  "all_owned_processes_absent": true,
+  "format_version": 1,
+  "controller_channel_loss": "eof"
+}
+application guard free

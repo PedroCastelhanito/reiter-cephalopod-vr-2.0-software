@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from decimal import Decimal, InvalidOperation
 from typing import Any, cast
 
@@ -23,11 +22,10 @@ async def dispatch_device_action(
     action: str,
     options: dict[str, Any],
     principal: Principal,
-    publish_attachment: Any,
 ) -> tuple[bool, str] | None:
     """Dispatch one device request; return None when another owner handles it."""
     if action == "camera":
-        await _camera(client, options, principal, publish_attachment)
+        await _camera(client, options)
         return True, "Completed"
     if action == "test_cameras":
         return await test_camera_connections(client, options["cameras"])
@@ -113,17 +111,12 @@ async def dispatch_device_action(
     if action == "save_camera_settings":
         await _save_camera_settings(client, options)
         return True, "Completed"
-    if action == "viewer_state":
-        await _viewer_state(client, options, principal)
-        return True, "Completed"
     return None
 
 
 async def _camera(
     client: HeadlessClient,
     options: dict[str, Any],
-    principal: Principal,
-    publish_attachment: Any,
 ) -> None:
     kind = int(options["kind"])
     role = int(options["role"])
@@ -134,9 +127,12 @@ async def _camera(
     )
     request.camera = cast(Any, role)
     request.kind = cast(Any, kind)
+    if kind == rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW and "placement" in options:
+        request.preview_placement.ParseFromString(options["placement"])
     if kind in (
         rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
-        rpc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+        rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+        rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
     ):
         camera = (
             state.acquisition_devices.behavioral
@@ -146,34 +142,6 @@ async def _camera(
         if not camera.preview_run_id:
             raise ClientError("No current preview run for this camera.")
         request.preview_run_id = camera.preview_run_id
-    if kind == rpc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER:
-        request.preview_consumer.role = "gui"
-        request.preview_consumer.generation = principal.generation
-        await client.execute("ExecuteCameraCommand", request, wait=False)
-        query = rpc.PreviewAttachmentQuery(
-            client_id=principal.generation,
-            controller_generation=state.controller_generation,
-            consumer=request.preview_consumer,
-            preview_run_id=request.preview_run_id,
-        )
-        deadline = asyncio.get_running_loop().time() + client.rpc_timeout_s
-        while True:
-            response = await client.stub.GetPreviewAttachment(
-                query,
-                metadata=principal.metadata(),
-                timeout=client.rpc_timeout_s,
-            )
-            if response.available:
-                break
-            if asyncio.get_running_loop().time() >= deadline:
-                raise ClientError(
-                    response.failure.message or "Viewer transfer unavailable."
-                )
-            await asyncio.sleep(0.05)
-        publish_attachment(
-            role, response.attachment.SerializeToString(), response.release_only
-        )
-        return
     outcome = await client.execute("ExecuteCameraCommand", request)
     if not outcome.succeeded:
         raise ClientError(outcome.failure or "Camera operation did not succeed.")
@@ -257,35 +225,6 @@ async def _update_configuration(
     )
     if not outcome.succeeded:
         raise ClientError(outcome.failure or f"{label} were rejected.")
-
-
-async def _viewer_state(
-    client: HeadlessClient, options: dict[str, Any], principal: Principal
-) -> None:
-    attachment = options["attachment"]
-    descriptor = attachment.buffer
-    scope = descriptor.WhichOneof("scope")
-    if scope == "preview":
-        run_id = descriptor.preview.acquisition_run_id
-    elif scope == "session":
-        run_id = options["run_id"]
-    else:
-        raise ClientError("Viewer attachment has no run scope.")
-    result = await client.stub.ReportPreviewConsumerState(
-        rpc.PreviewConsumerReport(
-            client_id=principal.generation,
-            controller_generation=client.snapshot.controller_generation,
-            consumer=attachment.sync.target,
-            preview_run_id=run_id,
-            allocation_id=descriptor.allocation_id,
-            transfer_id=attachment.sync.transfer_id,
-            result=options["result"],
-        ),
-        metadata=principal.metadata(),
-        timeout=client.rpc_timeout_s,
-    )
-    if result.result != pb.COMMAND_RESULT_ACCEPTED:
-        raise ClientError(result.failure.message or "Viewer state was rejected.")
 
 
 def _assigned_camera(

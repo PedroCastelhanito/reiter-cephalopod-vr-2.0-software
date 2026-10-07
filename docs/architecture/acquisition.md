@@ -606,7 +606,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 52
+**Status:** Accepted · **Revision:** 54
 
 **Capture lifetime**
 
@@ -681,10 +681,24 @@ stamping/filtering and the mappings still need runtime implementation.
   valid range to the configured range consistently across frames; no per-frame
   automatic contrast.
   Storage width and physical display precision are separate from this setting.
-- Preview capture can run headlessly. A GUI may attach/detach from the latest-frame
-  slot without restarting capture; viewer availability gates neither Ready nor
-  capture start. Closing the viewer is distinct from Stop Preview and from loss of the
-  controlling client.
+- Preview capture can run headlessly. The acquisition coordinator owns OpenCV
+  windows and private latest-frame readers; GUI/headless Show/Hide commands bind the
+  exact active manual run. Each Win32 window pumps HighGUI on its owning thread,
+  outside the coordinator event loop. Native X closure hides only that window.
+  Publish monotone visibility/failure observations for the exact run; stale callbacks
+  cannot change a replacement run or complete a camera command. Viewer availability
+  gates neither Ready nor capture start. Retain each local reader in the native
+  ownership ledger and confirm window/mapping closure before buffer release. Failed
+  viewer release remains a cleanup blocker while capture/pulse cleanup is attempted.
+  Explicit external latest-frame transfers remain available to authenticated clients,
+  with one display consumer per slot. Closing a viewer is distinct from Stop Preview
+  and from loss of the controlling client.
+- The OpenCV image area is a fixed square with aspect-preserving fit and black
+  padding. Mouse wheel zooms the private image about the pointer, bounded from
+  fitted size to 16×; double-click restores fit. Repaint cached pixels without a
+  new frame. Show may supply bounded initial physical-desktop placement/size from
+  the GUI; subsequent movement is operator-owned. Display transforms never edit
+  source coordinates, camera settings or recording/tracking pixels.
 - Preview may explicitly open a session-disabled camera without changing session
   enablement or recording flags. Validate its device/settings and required trigger
   configuration; scope temporary devices, buffers and pulses to the preview request.
@@ -841,7 +855,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 36
+**Status:** Accepted · **Revision:** 37
 
 **Board and firmware**
 
@@ -854,7 +868,7 @@ hardware information and later implementation; no new deferral is implied.
 - **Deferred:** CephVR-assisted flashing of the appropriate board firmware/sketch;
   board/image selection, upload tooling and update workflow need future design. No
   automatic flashing or installation is enabled.
-- Serial protocol version is integer **2**, separate from firmware release, and must
+- Serial protocol version is integer **3**, separate from firmware release, and must
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
 
@@ -976,8 +990,16 @@ hardware information and later implementation; no new deferral is implied.
   Configuration with control authority; it rejects session/preview activity and
   conflicting or unsupported pins. Firmware ends every diagnostic within two
   seconds and leaves tested outputs LOW; explicit Stop, control loss, transport
-  failure and shutdown request earlier stop. Return matched state and input edge
-  counts as diagnostic evidence, never as physical pulse or SpikeGLX proof.
+  failure and shutdown request earlier stop. Return matched state and rising-edge
+  counts: observed edges for Projector flip, generated LOW-to-HIGH transitions at
+  the output write for camera/Trial state tests, including the first HIGH. Trial
+  state holds HIGH and therefore counts one rise; camera tests count actual timer
+  transitions, not requested Hz multiplied by duration. Reset on each new test,
+  saturate at uint32 maximum, and retain the stopped count until the next test.
+  Counter updates and readback are atomic against timer/input interrupts. Ordinary
+  STATUS/session outputs have no pulse counters. Generated counts do not prove
+  electrical delivery, camera reception or SpikeGLX capture; label the GUI evidence
+  accordingly and leave outputs LOW at stop.
   Installing/flashing the new firmware remains manual.
 
 **Status and capabilities**

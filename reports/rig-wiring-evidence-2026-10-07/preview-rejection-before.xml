@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="0.306" timestamp="2026-10-07T15:30:47.185225+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.controller.test_camera_evidence" name="test_async_viewer_rejection_completes_operator_without_consumer_confirmation[False]" time="0.054"><failure message="assert (False)&#10; +  where False = context {\n  command_id: &quot;e630ebb5-7c99-4a52-bf39-434de07a7a95&quot;\n}\ncommand: &quot;ExecuteCameraCommand&quot;\nprogress: &quot;accepted&quot;\n.complete">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-49/test_async_viewer_rejection_co0')
+retained_failure = False
+
+    @pytest.mark.parametrize("retained_failure", [False, True])
+    async def test_async_viewer_rejection_completes_operator_without_consumer_confirmation(
+        tmp_path: Path,
+        retained_failure: bool,
+    ) -&gt; None:
+        from types import SimpleNamespace
+    
+        from cephvr.acquisition.coordinator.manual_device_status import (
+            ManualDeviceStatusReporter,
+        )
+        from cephvr.acquisition.coordinator.manual_operation_results import (
+            ManualOperationResults,
+        )
+        from cephvr.acquisition.ports import ControllerPort
+        from cephvr.acquisition.runtime import AcquisitionCoordinatorRuntime
+        from cephvr.acquisition.state import CoordinatorIdentity, PulseRecord
+    
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        controller = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        ledger = controller.camera_status_retention.ledger
+        assert ledger is not None
+        ledger.admit(parent, b"viewer", 1, work_key=parent)
+        _start(
+            controller, parent, child, svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER, False
+        )
+    
+        class Controller:
+            async def report_acquisition_device_status(self, report, *, deadline_ns):
+                return await controller.report_projection("devices", report, ingress_ns=900)
+    
+            async def report_lifecycle(self, report, *, deadline_ns):
+                return pb.ReportReceipt(result=pb.COMMAND_RESULT_REJECTED)
+    
+        identity = CoordinatorIdentity(
+            backend,
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+        )
+        commands = CommandLedger(
+            _id(),
+            10_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        )
+        commands.admit(child, b"viewer", 1, work_key=child)
+        peer = cast(ControllerPort, Controller())
+        reporter = ManualDeviceStatusReporter(
+            identity=identity,
+            controller=peer,
+            commands=commands,
+            pulse=PulseRecord(),
+            clock=lambda: 100,
+        )
+        # Failure of a viewer leaves the independently running capture intact.
+        run_id = _id()
+        reporter.update_camera_state(
+            1,
+            device_open=True,
+            preview_running=True,
+            preview_prepared=True,
+            preview_run_id=run_id,
+        )
+        results = ManualOperationResults(
+            identity=identity, controller=peer, device_status=reporter
+        )
+        command = svc.BackendCommand(command_id=child)
+        original = None
+        if retained_failure:
+            await results.report_failure(
+                command,
+                command_name="attach_preview_viewer",
+                deadline_ns=999,
+                failure="viewer transfer rejected",
+            )
+            original = reporter.get_report(child).SerializeToString(deterministic=True)
+        coordinator = AcquisitionCoordinatorRuntime.__new__(AcquisitionCoordinatorRuntime)
+        coordinator.controller = peer
+        coordinator.coordinator_identity = identity
+        coordinator.manual_devices = SimpleNamespace(results=results)
+        outcome = pb.OperationState(
+            context=pb.OperationContext(command_id=child),
+            complete=True,
+            succeeded=False,
+            failure=pb.Failure(code="PREVIEW_VIEWER", message="viewer transfer rejected"),
+        )
+    
+        await coordinator.report_dispatch_failure(
+            "ExecuteCameraCommand", command, outcome, 999
+        )
+    
+        result = controller.control.operations[parent]
+&gt;       assert result.complete and not result.succeeded
+E       assert (False)
+E        +  where False = context {\n  command_id: "e630ebb5-7c99-4a52-bf39-434de07a7a95"\n}\ncommand: "ExecuteCameraCommand"\nprogress: "accepted"\n.complete
+
+tests\controller\test_camera_evidence.py:739: AssertionError</failure></testcase><testcase classname="tests.controller.test_camera_evidence" name="test_async_viewer_rejection_completes_operator_without_consumer_confirmation[True]" time="0.003"><failure message="assert (False)&#10; +  where False = context {\n  command_id: &quot;0e1e7eaf-4042-4563-9207-59b996f06096&quot;\n}\ncommand: &quot;ExecuteCameraCommand&quot;\nprogress: &quot;accepted&quot;\n.complete">tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-49/test_async_viewer_rejection_co1')
+retained_failure = True
+
+    @pytest.mark.parametrize("retained_failure", [False, True])
+    async def test_async_viewer_rejection_completes_operator_without_consumer_confirmation(
+        tmp_path: Path,
+        retained_failure: bool,
+    ) -&gt; None:
+        from types import SimpleNamespace
+    
+        from cephvr.acquisition.coordinator.manual_device_status import (
+            ManualDeviceStatusReporter,
+        )
+        from cephvr.acquisition.coordinator.manual_operation_results import (
+            ManualOperationResults,
+        )
+        from cephvr.acquisition.ports import ControllerPort
+        from cephvr.acquisition.runtime import AcquisitionCoordinatorRuntime
+        from cephvr.acquisition.state import CoordinatorIdentity, PulseRecord
+    
+        backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+        controller = _bound_runtime(tmp_path, backend)
+        parent, child = _id(), _id()
+        ledger = controller.camera_status_retention.ledger
+        assert ledger is not None
+        ledger.admit(parent, b"viewer", 1, work_key=parent)
+        _start(
+            controller, parent, child, svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER, False
+        )
+    
+        class Controller:
+            async def report_acquisition_device_status(self, report, *, deadline_ns):
+                return await controller.report_projection("devices", report, ingress_ns=900)
+    
+            async def report_lifecycle(self, report, *, deadline_ns):
+                return pb.ReportReceipt(result=pb.COMMAND_RESULT_REJECTED)
+    
+        identity = CoordinatorIdentity(
+            backend,
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+            pb.ProcessIdentity(),
+        )
+        commands = CommandLedger(
+            _id(),
+            10_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        )
+        commands.admit(child, b"viewer", 1, work_key=child)
+        peer = cast(ControllerPort, Controller())
+        reporter = ManualDeviceStatusReporter(
+            identity=identity,
+            controller=peer,
+            commands=commands,
+            pulse=PulseRecord(),
+            clock=lambda: 100,
+        )
+        # Failure of a viewer leaves the independently running capture intact.
+        run_id = _id()
+        reporter.update_camera_state(
+            1,
+            device_open=True,
+            preview_running=True,
+            preview_prepared=True,
+            preview_run_id=run_id,
+        )
+        results = ManualOperationResults(
+            identity=identity, controller=peer, device_status=reporter
+        )
+        command = svc.BackendCommand(command_id=child)
+        original = None
+        if retained_failure:
+            await results.report_failure(
+                command,
+                command_name="attach_preview_viewer",
+                deadline_ns=999,
+                failure="viewer transfer rejected",
+            )
+            original = reporter.get_report(child).SerializeToString(deterministic=True)
+        coordinator = AcquisitionCoordinatorRuntime.__new__(AcquisitionCoordinatorRuntime)
+        coordinator.controller = peer
+        coordinator.coordinator_identity = identity
+        coordinator.manual_devices = SimpleNamespace(results=results)
+        outcome = pb.OperationState(
+            context=pb.OperationContext(command_id=child),
+            complete=True,
+            succeeded=False,
+            failure=pb.Failure(code="PREVIEW_VIEWER", message="viewer transfer rejected"),
+        )
+    
+        await coordinator.report_dispatch_failure(
+            "ExecuteCameraCommand", command, outcome, 999
+        )
+    
+        result = controller.control.operations[parent]
+&gt;       assert result.complete and not result.succeeded
+E       assert (False)
+E        +  where False = context {\n  command_id: "0e1e7eaf-4042-4563-9207-59b996f06096"\n}\ncommand: "ExecuteCameraCommand"\nprogress: "accepted"\n.complete
+
+tests\controller\test_camera_evidence.py:739: AssertionError</failure></testcase></testsuite></testsuites>

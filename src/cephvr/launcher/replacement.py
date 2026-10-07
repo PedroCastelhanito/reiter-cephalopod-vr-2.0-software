@@ -13,13 +13,17 @@ from cephvr.platform.windows.events import AutoResetEvent, event_name
 from cephvr.platform.windows.guard import InstanceAlreadyRunning, SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsLaunchError
 from cephvr.shared.clock import host_time_ns, require_int64_ns
-from cephvr.shared.credentials import _check_private, _ensure_directory
+from cephvr.shared.credentials import CredentialError, _check_private, _ensure_directory
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.recovery import RecoveryStore, _publish, _read
 
 
 class ReplacementDeclined(WindowsLaunchError):
     """The operator left the existing application running."""
+
+
+class _EndpointPending(WindowsLaunchError):
+    """The guarded launcher has not published its private descriptor."""
 
 
 @dataclass(frozen=True)
@@ -106,12 +110,19 @@ class ReplacementEndpoint:
 
 
 def _existing_endpoint(root: Path) -> LauncherEndpoint:
-    _check_private(root, directory=True)
-    raw = _read(root / "launcher.json")
+    try:
+        _check_private(root, directory=True)
+    except CredentialError as exc:
+        if not isinstance(exc.__cause__, FileNotFoundError):
+            raise
+        raw = None
+    else:
+        raw = _read(root / "launcher.json")
     if raw is None:
-        raise WindowsLaunchError(
-            "Existing runtime has no replacement endpoint. Stop it from its own "
-            "terminal or controller before launching this version."
+        raise _EndpointPending(
+            f"Existing runtime has no replacement endpoint at {root / 'launcher.json'}. "
+            "Use the same Windows profile/runtime directory as the running launcher, "
+            "or stop it from its own terminal or controller before launching this version."
         )
     expected = set(LauncherEndpoint.__dataclass_fields__)
     if set(raw) not in (expected, expected - {"gui_relaunch_event_id"}):
@@ -129,7 +140,28 @@ def request_gui_relaunch(root: Path) -> None:
         event.set()
 
 
-def acquire_application_guard(root: Path) -> SingleInstanceGuard:
+def _await_endpoint(root: Path, wait_ns: int) -> LauncherEndpoint:
+    require_int64_ns(wait_ns)
+    deadline: int | None = None
+    while True:
+        try:
+            return _existing_endpoint(root)
+        except _EndpointPending:
+            now = host_time_ns()
+            if deadline is None:
+                deadline = now + wait_ns
+                if wait_ns:
+                    print(
+                        "CephVR2 is already running or starting; waiting for its replacement endpoint…"
+                    )
+            if now >= deadline:
+                raise
+            time.sleep(min(0.05, (deadline - now) / 1e9))
+
+
+def acquire_application_guard(
+    root: Path, *, endpoint_wait_ns: int = 0
+) -> SingleInstanceGuard:
     """Ask once, signal the retained old owner, and require exact exit proof."""
     try:
         return SingleInstanceGuard("application")
@@ -139,7 +171,7 @@ def acquire_application_guard(root: Path) -> SingleInstanceGuard:
         raise ReplacementDeclined(
             "CephVR2 is already running. Open an interactive terminal to replace it."
         )
-    record = _existing_endpoint(root)
+    record = _await_endpoint(root, endpoint_wait_ns)
     allocation = UUID(record.event_id)
     # Retain the exact event before asking; a successor never shares this identity.
     with AutoResetEvent.open(event_name(allocation), allocation) as event:

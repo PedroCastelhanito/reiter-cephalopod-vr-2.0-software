@@ -1,0 +1,14 @@
+{
+  "src/cephvr/acquisition/coordinator/manual_preview.py": "3ee96b604169c665b24b4877ed24632eafcc0e9bb91aa204e230758d1227adf2",
+  "src/cephvr/acquisition/coordinator/manual_operation_results.py": "6fd725b809954fd049ab5eb3573b7487acf20c139c90cd526a7294fb4816b290",
+  "src/cephvr/acquisition/runtime.py": "21c9b73d001b97206044eaa5dd41cc9ac397a80aab3eb91689a71c31709d6e7b",
+  "src/cephvr/controller/device/readback.py": "e434d804909f1d4ccdc8ecaa9e53d1764118781d41f83a1e967c81a5ec5108de",
+  "src/cephvr/gui/main.py": "7f3799014a4c2376c3b1e9e0fa68424a1bbd1e174b860e02a8e4f92548ab71ab",
+  "src/cephvr/gui/managed_device_commands.py": "911e297fcebf87bef0ec0893de883b3f7d9eded376cb637bc9bf0b575981165b",
+  "src/cephvr/gui/managed_preview_viewers.py": "07da893f0c150320db547b599b76698db69af64348b27160c5e051417e5ddac3",
+  "src/cephvr/gui/microcontroller.py": "4712a897ff22bdc5674d9802523d56fe42e62b2949b370b2e7efacc229098dad",
+  "tests/acquisition/test_manual_preview.py": "ba76a58072f2d690b8d1535ddf45b71ccca6449bfecebc47bc874910c6146934",
+  "tests/controller/test_camera_evidence.py": "de5f45f5657862c6730bbb04b438374bdce2ed072a9c9bf4dfeca16233ee5ab2",
+  "tests/gui/test_dashboard.py": "b5049e2ac627ad874ced32bac762ca922ff31a0e34ddb2b9765a3fc95a8543b3",
+  "pyproject.toml": "58b68c49d9e0553da4ece63ab797186d333442cfff873853e32e1a5d7b78afa3"
+}

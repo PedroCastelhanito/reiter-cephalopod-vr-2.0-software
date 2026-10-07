@@ -2,7 +2,7 @@
 # Source rules: Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/acquisition_config.toml. The loader rejects a version mismatch.
-policy_version = 12
+policy_version = 15
 
 [platform]
 target_os = "windows"
@@ -79,7 +79,7 @@ stop_behavior = "immediate_inactive"
 pulse_polarity = "active_high"
 inactive_level = "low"
 protocol_compatibility = "exact_version"
-protocol_version = 2
+protocol_version = 3
 capability_source = "firmware"
 capability_query = "CAPS"
 capability_reply = "single_bounded_reply"
@@ -102,6 +102,7 @@ configuration_while_running = "stop_apply_restore_running"
 keepalive_reply = "compact_status"
 status_reply = "state_and_applied_configuration"
 pulse_counters = false
+diagnostic_edge_counts = "input_observed_output_generated"
 watchdog_status_clear = "successful_configuration"
 command_timeout_action = "report_without_retry"
 pulse_generation = "microcontroller"
@@ -259,7 +260,8 @@ setting_change = "stop_apply_restart"
 capacity_frames = 1
 buffer_lifetime = "manual_preview_run_or_session"
 session_preview = "latest_frame_rate_capped_in_trial_only"
-viewer_attachment = "independent_of_capture"
+viewer_attachment = "acquisition_owned_opencv_independent_of_capture"
+window_presentation = "square_letterbox_pointer_wheel_zoom_gui_initial_placement"
 busy_action = "skip_update"
 timing = "camera_configuration"
 drive_external_pulses = true

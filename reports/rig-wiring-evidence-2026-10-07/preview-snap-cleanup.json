@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-07",
+  "targets": 3,
+  "files": 28,
+  "bytes": 18932121,
+  "scope": "Disposable workspace tool caches; source bytecode writing disabled for checks",
+  "inventory": [
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.mypy_cache",
+      "files": 18,
+      "bytes": 18866405,
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.pytest_cache",
+      "files": 5,
+      "bytes": 64834,
+      "removed": true
+    },
+    {
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.ruff_cache",
+      "files": 5,
+      "bytes": 882,
+      "removed": true
+    }
+  ]
+}

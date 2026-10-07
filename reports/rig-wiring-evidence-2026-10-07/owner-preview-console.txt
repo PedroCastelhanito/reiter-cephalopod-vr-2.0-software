@@ -1,0 +1,7 @@
+No camera inventory received.
+2 Basler cameras discovered; no camera opened.
+test_cameras: 40065509: connection and identity verified
+camera: Completed
+camera: REJECTED: camera operation unavailable or another operation pending
+camera: REJECTED: camera operation unavailable or another operation pending
+camera: REJECTED: camera operation unavailable or another operation pending

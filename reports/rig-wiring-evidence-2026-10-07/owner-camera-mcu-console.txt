@@ -1,0 +1,32 @@
+No connection checks performed.
+2 COM ports discovered; no hardware command sent.
+Requested Trial state: pin D9, active-high output test through controller.
+trial-state: output HIGH reported by firmware.
+Observe the receiving device: this test does not measure output voltage, pulse frequency or received camera frames.
+mcu: Completed
+trial-state: output LOW reported by firmware.
+mcu: Completed
+Requested Behavior cam: pin D10, requested 30 Hz output test through controller.
+MCU command failed: OPERATION_FAILED: required MCU result evidence incomplete
+mcu failed: OPERATION_FAILED: required MCU result evidence incomplete
+Requested Behavior cam: pin D10, requested 30 Hz output test through controller.
+MCU command failed: OPERATION_FAILED: required MCU result evidence incomplete
+mcu failed: OPERATION_FAILED: required MCU result evidence incomplete
+Connecting to COM8…
+mcu: Completed
+Requested Projector flip: pin D2, rising-edge input observation through controller.
+projector-flip: running, 0 rising edges reported.
+mcu: Completed
+projector-flip: stopped, 120 rising edges reported.
+mcu: Completed
+Requested Trial state: pin D9, active-high output test through controller.
+trial-state: output HIGH reported by firmware.
+Observe the receiving device: this test does not measure output voltage, pulse frequency or received camera frames.
+mcu: Completed
+trial-state: output LOW reported by firmware.
+mcu: Completed
+Requested Behavior cam: pin D10, requested 30 Hz output test through controller.
+MCU command failed: OPERATION_FAILED: required MCU result evidence incomplete
+mcu failed: OPERATION_FAILED: required MCU result evidence incomplete
+
+Camera test did not drive any pulses, all other succeeded

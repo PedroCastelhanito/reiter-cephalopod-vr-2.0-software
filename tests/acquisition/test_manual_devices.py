@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 from uuid import uuid4
 
+import pytest
+
 from cephvr.acquisition.coordinator.manual_device_status import (
     ManualDeviceStatusReporter,
 )
@@ -181,7 +183,36 @@ def test_manual_configuration_requires_local_cleanup_proof_not_delivery_receipt(
     assert slot.current is session
 
 
-async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> None:
+@pytest.mark.parametrize(
+    "signal,kind,pin,frequency,configure_fails",
+    [
+        (
+            control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+            "trial_state",
+            "D9",
+            None,
+            False,
+        ),
+        (
+            control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL,
+            "behavioral",
+            "D10",
+            30.0,
+            False,
+        ),
+        (control.MICROCONTROLLER_SIGNAL_KIND_TRACKING, "tracking", "D11", 60.0, False),
+        (
+            control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL,
+            "behavioral",
+            "D10",
+            30.0,
+            True,
+        ),
+    ],
+)
+async def test_manual_mcu_connect_then_start_uses_controller_selected_pin(
+    signal: int, kind: str, pin: str, frequency: float | None, configure_fails: bool
+) -> None:
     generation = _id()
     identity = CoordinatorIdentity(
         backend=control.BackendContext(
@@ -194,6 +225,12 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> N
     )
     settings = control.AcquisitionSettings()
     settings.pulses.port = "COM8"
+    settings.pulses.trial_state_pin = "D9"
+    settings.pulses.trial_state_enabled = True
+    if frequency is not None:
+        output = getattr(settings.pulses, kind)
+        output.pin = pin
+        output.requested_frequency_hz = frequency
     owner = object.__new__(ManualPulses)
     owner.identity = identity
     owner.configuration = ConfigurationRecord(
@@ -207,6 +244,7 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> N
     owner.worker_registry = object()  # No completed session to retire.
     owner.clock = lambda: 100
     calls: list[object] = []
+    configured: set[str] = set()
 
     class Serial:
         async def connect(self, *, deadline_ns: int) -> mcu.MicrocontrollerObservation:
@@ -216,8 +254,27 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> N
         async def diagnostic_start(
             self, kind: str, pin: str, *, frequency_hz: float | None, deadline_ns: int
         ) -> tuple[bool, str, str, int]:
+            if frequency_hz is not None and kind not in configured:
+                raise RuntimeError(
+                    "camera diagnostic requires applied output configuration"
+                )
             calls.append((kind, pin, frequency_hz, deadline_ns))
-            return True, kind, pin, 0
+            return True, kind, pin, 1
+
+        async def configure(
+            self,
+            requested: camera.CameraPulseConfiguration,
+            *,
+            active_roles: tuple[int | str, ...],
+            deadline_ns: int,
+        ) -> mcu.MicrocontrollerObservation:
+            calls.append(("configure", tuple(active_roles), deadline_ns))
+            assert requested == settings.pulses
+            assert active_roles == (kind,)
+            if configure_fails:
+                raise RuntimeError("MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY")
+            configured.add(kind)
+            return mcu.MicrocontrollerObservation(port="COM8", request_id="configured")
 
     class Status:
         def reserve(self, command: wire.BackendCommand) -> None:
@@ -243,15 +300,19 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> N
     owner.serial = Serial()  # type: ignore[assignment]
     owner.device_status = Status()  # type: ignore[assignment]
 
+    class Results:
+        async def report_failure(self, command: object, **kwargs: object) -> None:
+            calls.append(("failure", kwargs["failure"]))
+
+    owner.results = Results()  # type: ignore[assignment]
+
     def request(kind: int, signal: int = 0) -> wire.AcquisitionMicrocontrollerCommand:
         value = wire.AcquisitionMicrocontrollerCommand(
             configuration_revision=2,
             kind=kind,
             signal=signal,
         )
-        value.requested.port = "COM8"
-        value.requested.trial_state_pin = "D9"
-        value.requested.trial_state_enabled = True
+        value.requested.CopyFrom(settings.pulses)
         value.command.command_id = _id()
         value.command.issuer.CopyFrom(identity.controller)
         value.command.target.CopyFrom(identity.backend)
@@ -264,15 +325,27 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin() -> N
     started = await owner.execute_diagnostic(
         request(
             wire.MICROCONTROLLER_COMMAND_KIND_START,
-            control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+            signal,
         ),
         deadline_ns=1000,
     )
 
     assert connected.result == control.COMMAND_RESULT_ACCEPTED
+    if configure_fails:
+        assert started.result == control.COMMAND_RESULT_REJECTED
+        assert "UNSUPPORTED_FREQUENCY" in started.failure.message
+        assert not any(isinstance(item, tuple) and item[0] == kind for item in calls)
+        return
     assert started.result == control.COMMAND_RESULT_ACCEPTED
     assert ("connect", 1000) in calls
-    assert ("trial_state", "D9", None, 1000) in calls
+    assert (kind, pin, frequency, 1000) in calls
+    if frequency is not None:
+        assert calls.index(("configure", (kind,), 1000)) < calls.index(
+            (kind, pin, frequency, 1000)
+        )
+        assert owner.pulse.observation.request_id == "configured"
+    else:
+        assert not configured
     assert owner.pulse.observation is not None
 
 

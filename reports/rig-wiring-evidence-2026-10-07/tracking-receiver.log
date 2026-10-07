@@ -1,0 +1,113 @@
+{
+  "scope": "40747103 / BehaviorSquid readback / COM8 D11 -> Line2, two seconds; no recording",
+  "readback": {
+    "trigger": "Off",
+    "source": "Line2",
+    "width": 1588,
+    "height": 1344,
+    "pixel_format": "Mono8",
+    "exposure_us": 5000.0
+  },
+  "capture_trigger_mode": "On",
+  "connect": {
+    "port": "COM8",
+    "connectionId": "0af69029-b1f6-4ba8-86fb-949481a84947",
+    "requestId": "0af69029-b1f6-4ba8-86fb-949481a84947-7",
+    "observedMonotonicNs": "596003809700200",
+    "state": {
+      "configurationValid": false,
+      "watchdogStopped": false,
+      "watchdogMs": 0,
+      "behavioral": {
+        "enabled": false,
+        "running": false
+      },
+      "tracking": {
+        "enabled": false,
+        "running": false
+      }
+    },
+    "capabilities": {
+      "protocolVersion": 2,
+      "firmware": "cephvr2_uno_1",
+      "pins": [
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13"
+      ],
+      "minimumRequestedHz": 0.1,
+      "maximumRequestedHz": 100.0,
+      "minimumWatchdogMs": 500,
+      "maximumWatchdogMs": 10000,
+      "risingEdgeInputPins": [
+        "D2",
+        "D3"
+      ]
+    },
+    "capabilitiesObservedMonotonicNs": "596003789464700"
+  },
+  "on": {
+    "connectionId": "0af69029-b1f6-4ba8-86fb-949481a84947",
+    "requestId": "0af69029-b1f6-4ba8-86fb-949481a84947-9",
+    "command": "PULSE_BOUNDARY_COMMAND_ON",
+    "behavioralSelected": false,
+    "trackingSelected": true,
+    "dispatchedMonotonicNs": "596004027312100",
+    "acknowledgedMonotonicNs": "596004047182000",
+    "applied": true,
+    "resultingState": {
+      "configurationValid": true,
+      "watchdogStopped": false,
+      "watchdogMs": 3000,
+      "behavioral": {
+        "enabled": false,
+        "running": false
+      },
+      "tracking": {
+        "enabled": true,
+        "running": true,
+        "pin": "D11",
+        "appliedFrequencyHz": 60.0
+      }
+    },
+    "outcome": "PULSE_COMMAND_OUTCOME_APPLIED"
+  },
+  "off": {
+    "connectionId": "0af69029-b1f6-4ba8-86fb-949481a84947",
+    "requestId": "0af69029-b1f6-4ba8-86fb-949481a84947-10",
+    "command": "PULSE_BOUNDARY_COMMAND_OFF",
+    "behavioralSelected": false,
+    "trackingSelected": true,
+    "dispatchedMonotonicNs": "596006064914200",
+    "acknowledgedMonotonicNs": "596006086524400",
+    "applied": true,
+    "resultingState": {
+      "configurationValid": true,
+      "watchdogStopped": false,
+      "watchdogMs": 3000,
+      "behavioral": {
+        "enabled": false,
+        "running": false
+      },
+      "tracking": {
+        "enabled": true,
+        "running": false,
+        "pin": "D11",
+        "appliedFrequencyHz": 60.0
+      }
+    },
+    "outcome": "PULSE_COMMAND_OUTCOME_APPLIED"
+  },
+  "camera_closed": true,
+  "serial_close_returned": true
+}
+frames 81

@@ -7,15 +7,181 @@ allocation, actual manual capture publication, source/transfer identity and conf
 release repairs. The affected acquisition worker/manual-preview, controller diagnostic
 and full Tracking selection passed 99 tests with one deselected, independently repeated
 by Sol. Actual capture_once coverage verifies native pixels, frame IDs and discontinuity
-publication without a recording window; retired resources remain held until both GUI
-and Tracking consumers release. [Tracking evidence](tracking.md) records scope and raw
+publication without a recording window; retired resources remain held until every display
+and Tracking consumer confirms release. [Tracking evidence](tracking.md) records scope and raw
 results. Final managed GUI/development integration is accepted; native/rig acceptance
-and the paused camera/MCU findings below remain. See the
+and the current camera/MCU findings below remain. See the
 [managed wiring assessment](runtime.md#current-scope-and-review).
+
+## Current Windows wiring checks
+
+Owner reports the image did not open snapped outside the GUI's top-right edge.
+Read-only native geometry of the reopened GUI finds a 1,456-pixel outer width on
+a 1,920-pixel work area; the old 640-pixel image rule produces x=0 over the GUI.
+The GUI now fits the square into available right-hand space before left fallback,
+without a tool-window gap. Under [G01 revision 123](../docs/architecture/gui.md#g01),
+GUI and acquisition use visible physical frames; the native test reproduces a
+seven-pixel invisible-border offset before repair and exact placement afterward.
+Windows documents this distinction in [GetWindowRect](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowrect).
+Six GUI and one native regression fail before the repair; ten selected GUI checks
+and 549 acquisition/controller/client checks pass afterward (two privilege skips).
+The final focused native/reader selection passes four after removal of a redundant
+initial move. Ruff/format, Windows mypy (311 sources) and boundaries (604 modules,
+zero violations) pass. [Current inputs, raw methods and limits](rig-wiring-evidence-2026-10-07/preview-snap-context.json)
+retain the owner's observation and passive bounds. ARCH-002 extends focused geometry
+and display owners without new processes, RPCs or dependencies; policy 15's existing
+presentation rule is retained. The reopened runtime is preserved and needs a full
+restart to load both sides of this repair. Actual camera positioning/visibility,
+mixed-DPI and Tracking/health acceptance remain open.
+
+The owner-requested preview presentation follows [A10 revision 54](../docs/architecture/acquisition.md#a10)
+and [G01 revision 122](../docs/architecture/gui.md#g01), with acquisition policy 15.
+GUI Show carries a bounded physical-desktop placement hint; acquisition displays
+a fixed square with aspect-preserving padding, pointer wheel zoom and double-click
+fit reset. Interaction redraws the private cached image while capture stays idle
+or continues independently. Focused viewport, placement-admission and native
+Win32 checks pass; affected acquisition/controller/client integration passes
+**549 with two symlink-privilege skips**, and eight selected offscreen GUI checks
+pass. Native windows confirm 256×256 image areas at requested coordinates,
+real wheel/reset redraw without new publications, and independent X/producer
+lifetimes. Ruff/format (448 files), Windows mypy (395 sources) and boundaries
+(604 backend modules, zero violations) pass. ARCH-002 keeps geometry and pixel
+transforms in focused owners; manual capture (548 lines), camera admission (505)
+and GUI composition retain their existing orchestration duties. No new SDK owner,
+process or dependency is introduced. [Dated methods and input hashes](rig-wiring-evidence-2026-10-07/preview-presentation-context.json)
+record scope. The running owner runtime was preserved and needs a full restart
+to load this increment. Actual GUI-edge placement across monitor/DPI arrangements
+and physical camera interaction remain in the [rig checklist](rig-verification.md).
+
+Latest [authorized installation and retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
+closes the observed host/board version mismatch: current flash is backed up, exact
+protocol-3 firmware upload verifies, and actual CAPS reports `cephvr2_uno_2`.
+Direct bounded D9/D10/D11 count/reset/Stop/OFF checks pass; managed D9/D10/D11
+Test/Status/Stop and D9 automatic two-second timeout pass. Both Basler connection
+checks pass. Real Behavior Start/Show/Hide/
+native close/reopen/Stop passes with acquisition-owned window and capture unchanged
+by hiding. Tracking exposed a readback-adoption revision defect, repaired within
+the existing camera-resolution owner; 54 focused and 535 integration cases pass
+(two integration privilege skips), with static checks passing. Tracking then gets
+past preparation but Start is rejected and the existing coordinator-health shutdown
+recurs. Exact fault cleanup is confirmed. Tracking display/consumer release,
+sustained health and physical electrical/receiver acceptance remain open.
+
+Earlier owner test reports no D10 pulses and repeated incomplete-result failures,
+while D9 and D2 complete. Source/regressions establish missing camera CONFIGURE
+before DIAG_START; manual Test now configures the selected camera output first,
+and failure prevents start. Controller preserves the backend reason and follows
+protocol 3 for Connect completion. Seven targeted cases and **526 acquisition/
+controller/client cases pass**, with two symlink-privilege skips; static checks
+pass. The live read attempt lacked an operator credential, so no current device
+state or exact firmware rejection was collected. The runtime was not restarted
+and firmware was not uploaded; bounded board count tests remain pending.
+[Console, reproduction and correction to prior protocol-version coverage](rig-wiring-evidence-2026-10-07/mcu-camera-diagnostic-repair.md).
+
+Owner-selected counted diagnostics implement [A11 revision 37](../docs/architecture/acquisition.md#a11)
+with MCU protocol 3 / `cephvr2_uno_2`. The counted increment was validated at policy
+13; camera-viewer work advanced the binding to 14 and presentation advances it to 15 while
+preserving protocol 3, and all 45 owning MCU/configuration cases pass again. The existing counter
+counts observed D2 input edges or generated output LOW-to-HIGH writes, including the
+first HIGH; D9's held-HIGH test counts one. Camera counts come from timer transitions,
+not rate-times-duration estimates. Counts reset per test, saturate at uint32 maximum
+and remain available after Stop; ordinary session/STATUS pulse counters remain absent.
+GUI distinguishes generated from observed edges. The Uno build passes (11,078 flash
+bytes / 1,112 SRAM bytes), owning MCU/configuration tests pass 45, affected-owner
+integration passes 508 with two privilege skips, and six GUI diagnostic cases pass.
+Ruff/format (331 files), source mypy (305) and boundaries (598 modules, zero violations)
+pass. [Counted diagnostic evidence and exact image](rig-wiring-evidence-2026-10-07/mcu-counted-diagnostics.md)
+are ready for matching manual installation and on-board verification; no upload has
+run in that prepared increment; the later authorized installation above supersedes
+its installation status. New host restarts require protocol 3 firmware; protocol 2
+is rejected at connection. This is implementation
+and build evidence, not measured electrical delivery or an on-board count pass.
+
+The owner confirms the repaired Preview works, then selects acquisition-owned OpenCV
+windows matching CephVR1.0 under [A10 revision 53](../docs/architecture/acquisition.md#a10)
+and [G01 revision 121](../docs/architecture/gui.md#g01). This is user-reported viewing
+without generation/settings/timing provenance. The earlier identity/policy and
+pending-operation repairs and their raw failures remain in the [dated evidence](rig-wiring-evidence-2026-10-07/README.md).
+
+GUI Preview now sends Show/Hide for the exact active manual capture run. Acquisition
+owns each window, private converter and newest-frame reader on its Win32 thread;
+Show requires the first converted image to reach a visible window. Native X/Hide
+releases only the reader/window, leaving capture and pulses running. Stop, pulse
+reconfiguration and owner cleanup join local reader release before buffer closure.
+A native-ledger obligation remains unresolved on failed release; cleanup still
+attempts SDK/pulse stop. Monotone authenticated visibility/failure observations
+cannot complete a command, resurrect retired runs or override a reopened window.
+External client transfers and ordered Tracking consumers keep their separate exact
+release rules. The Qt camera reader and unused GUI transfer path are removed.
+Acquisition policy 14 retains concurrent MCU protocol 3 and selects OpenCV display;
+matching `opencv-python==4.13.0.92` replaces the headless dependency in acquisition
+and Tracking. The installed build reports WIN32UI and `pip check` passes.
+
+Windows isolated affected-owner/client tests pass **526**, with two symlink-privilege
+skips; selected GUI/bridge checks pass **17**. Final first-image/close-reopen refinements
+pass **64** focused owner checks. These include two real OpenCV windows displaying
+latest shared-ring images, native X closing one while the other window and both
+producers stay active, RGB-to-BGR private-copy handling, display/release failures,
+exact visibility/terminal identity and cleanup attempts despite viewer failure.
+Ruff/format pass 444 files; Windows mypy passes 391 sources; boundaries cover 602
+modules with zero violations; package build passes. ARCH-002 extracts viewer commands
+from manual capture and pure device-view merging from projections. Remaining larger
+manual capture (541 lines), camera admission (501), runtime and GUI files keep their
+cohesive lifecycle/composition duties; new owners receive focused records/operations.
+[Current OpenCV evidence](rig-wiring-evidence-2026-10-07/opencv-context.json) records
+methods, hashes and limits. The window path supports 8-bit output and rejects other
+depths explicitly; no physical display-precision pass is claimed.
+
+The original OpenCV implementation increment left the owner runtime untouched.
+The later authorized firmware/restart and actual Behavior check above supersede
+that limitation. Tracking release, sustained delivery and heartbeat acceptance
+remain in the [single rig checklist](rig-verification.md).
+
+The owner resumed rig checks on 2026-10-07 at `08d146d`; the
+[dated scripts and results](rig-wiring-evidence-2026-10-07/README.md) retain exact
+generation/command identities. Both connection-only camera checks pass. Behavior
+40065509 D10/Line4 completes two managed Start/Stop cycles with running and released
+camera/preview projections. This closes the previously observed command-completion
+failure for those cycles, but desktop viewer/frame inspection remains unverified.
+
+COM8 CAPS confirms protocol 2 / `cephvr2_uno_1`. Managed Status and Stop fail with
+`required MCU result evidence incomplete`; their native cause is unresolved.
+Later [owner-supplied controller diagnostic console](rig-wiring-evidence-2026-10-07/owner-mcu-console.md)
+reports completed Start/Stop pairs for D2 input (120 rising edges), D9 active-high
+output and D10 requested 30 Hz output. D9/D10 zero edge counts were expected by the
+then-installed protocol 2 diagnostic contract, not failed pulse
+tests. This establishes reported diagnostic completion; physical source/rate/level
+and camera reception are unmeasured. Ordinary Status/Stop failures above are separate
+operations and remain unresolved. The supplied paste lacks revision/generation/duration.
+The owner clarified that these checks are intended to test physical signals and has
+SpikeGLX open for receiver observation. The GUI's output edge-count display was
+misleading: the initial display correction reported firmware HIGH/LOW for Trial state
+and running/stopped pulse output for camera diagnostics. It is superseded by the
+owner-selected generated-transition counting implementation above. Six existing GUI
+diagnostic/control cases passed; waveform measurements remain pending
+the owner's channel observations. The live runtime is preserved; this source change
+appears on the next GUI restart. See [focused evidence](rig-wiring-evidence-2026-10-07/mcu-output-feedback.md).
+Tracking 40747103 successfully imports the owner-selected BehaviorSquid PFS and
+finishes editing: Line2, Mono8, 1588x1344, 5,000 us. Managed Start is rejected and
+leaves a prepared/open camera projection. Camera workers report
+`COORDINATOR_HEALTH_LOST`, including Behavior after successful Stop; the supervisor
+shuts down the application. No claim is made about the precise heartbeat cause.
+Attempted configuration restoration is rejected while ownership remains;
+the exact launcher receipt subsequently proves all owned processes absent.
+
+After process absence, an isolated two-second D11/Line2 check receives **81 valid
+Tracking frames** with matched ON/OFF acknowledgements. The initial readback finds
+FrameStart Off after managed cleanup; a first assertion stops without pulses.
+The successful repeat restores the selected PFS's explicit On mode; afterward the
+pre-probe Off mode is restored and camera/serial owners close. This proves bounded
+receiver delivery, not sustained 60 Hz, optical/electrical waveform timing or
+managed Tracking diagnostics. D9/D2 physical correlation, simultaneous capture,
+full recording/throughput and existing A08/A10/A11/E15 deferrals remain in the
+[single rig checklist](rig-verification.md).
 
 ## Preview recheck stopped by owner, 2026-10-06
 
-Rig work was paused; the owner subsequently authorized development-machine diagnosis. Behavior serial 40065509 received 41 SDK frames during
+Rig work was paused on 2026-10-06; the owner subsequently authorized development-machine diagnosis and resumed rig checks above on 2026-10-07. Behavior serial 40065509 received 41 SDK frames during
 the two-second direct COM8 D10 → Line4 check at a requested 30 Hz. MCU ON/OFF
 acknowledgements passed; the camera and serial owner closed. This verifies the
 receiver path, not sustained 30 fps, waveform timing, Tracking or GUI acceptance.

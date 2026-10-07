@@ -277,6 +277,12 @@ class ManualPulses:
             elif request.kind == wire.MICROCONTROLLER_COMMAND_KIND_START:
                 assert selection is not None
                 kind, pin, frequency = selection
+                if frequency is not None:
+                    self.pulse.observation = await self.serial.configure(
+                        request.requested,
+                        active_roles=(kind,),
+                        deadline_ns=deadline_ns,
+                    )
                 active, _, _, edges = await self.serial.diagnostic_start(
                     kind, pin, frequency_hz=frequency, deadline_ns=deadline_ns
                 )

@@ -27,6 +27,7 @@ from cephvr.acquisition.coordinator.manual_preview_transfer import (
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
 )
+from cephvr.acquisition.coordinator.preview_windows import PreviewWindows
 from cephvr.acquisition.coordinator.session_payloads import camera_policy, role_name
 from cephvr.acquisition.ports import ResourcePort, SerialOwnerPort
 from cephvr.acquisition.state import (
@@ -62,6 +63,7 @@ class ManualPreviewPulseLifecycle:
         transfers: ManualPreviewTransferOwner,
         device_status: ManualDeviceStatusReporter,
         lock: asyncio.Lock,
+        windows: PreviewWindows | None = None,
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.identity = identity
@@ -76,6 +78,7 @@ class ManualPreviewPulseLifecycle:
         self.device_status = device_status
         self.lock = lock
         self.clock = clock
+        self.windows = windows
 
     async def pause_for_pulse_change(
         self, roles: tuple[int, ...], *, deadline_ns: int
@@ -120,6 +123,8 @@ class ManualPreviewPulseLifecycle:
             await _wait_event(preview.cleanup_event, deadline_ns, self.clock)
             if preview.resolved_camera is None:
                 raise RuntimeError("preview pause lacks retained resolved camera")
+            if self.windows is not None:
+                await self.windows.close(role, preview.run_id, deadline_ns=deadline_ns)
             self.device_status.resolve_camera(
                 role,
                 preview.resolved_camera,

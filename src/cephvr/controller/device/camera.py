@@ -30,6 +30,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.preview_placement import valid_preview_placement
 
 NO_PATH = frozenset(
     {
@@ -38,12 +39,16 @@ NO_PATH = frozenset(
         svc.CAMERA_COMMAND_KIND_FINISH_EDITING,
         svc.CAMERA_COMMAND_KIND_TEST_CONNECTION,
         svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+        svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+        svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
     }
 )
 REQUIRES_RUN = frozenset(
     {
         svc.CAMERA_COMMAND_KIND_STOP_PREVIEW,
         svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+        svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+        svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
     }
 )
 REQUIRES_READBACK = frozenset(
@@ -232,6 +237,7 @@ class CameraCommands:
                 camera_pb.CAMERA_ROLE_TRACKING,
             )
             or request.kind not in NO_PATH | REQUIRES_READBACK
+            or not valid_preview_placement(request)
         ):
             return self.hooks.admission(
                 operator_id, error="camera command shape or revision invalid"
@@ -378,6 +384,8 @@ class CameraCommands:
             command.path = request.path
         if request.HasField("preview_run_id"):
             command.preview_run_id = request.preview_run_id
+        if request.HasField("preview_placement"):
+            command.preview_placement.CopyFrom(request.preview_placement)
         if request.kind == svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER:
             command.preview_consumer.CopyFrom(request.preview_consumer)
             try:

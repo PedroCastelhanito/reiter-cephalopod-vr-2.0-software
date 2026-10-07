@@ -834,6 +834,9 @@ message CameraDeviceView {
   cephvr.acquisition.v1.CameraSettings applied_settings = 8;
   cephvr.acquisition.v1.CameraDeviceIdentity device = 9;
   optional bool preview_prepared = 10; // Manual-preview camera/slot prepared; never session display permission.
+  optional bool preview_visible = 11; // Acquisition-owned OpenCV window observation.
+  uint64 preview_visibility_revision = 12;
+  string preview_failure = 13;
   // Descriptive evidence, not controller configuration or execution authority.
   // No frames, native handles, PFS text or scientific histories.
 }

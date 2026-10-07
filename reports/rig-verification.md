@@ -1,6 +1,60 @@
 # Rig verification — outstanding checks
 
-Latest execution: [2026-10-01 Windows audit](rig-audit-2026-10-01/README.md),
+Preview edge placement repair follows [G01 revision 123](../docs/architecture/gui.md#g01):
+fit the square into available right-hand space and align visible physical frames.
+[Current bounds and isolated validation](rig-wiring-evidence-2026-10-07/preview-snap-context.json)
+retain six GUI/one native pre-repair failures, ten GUI/549 integration passes (two
+privilege skips) and four final native/reader passes. Fully restart both GUI and
+acquisition, then verify actual camera opening outside the GUI's top-right edge,
+reopening after moving the GUI, and alternate-monitor/DPI/fallback behavior.
+The current owner's reopened runtime is preserved; camera visibility is not
+established by these isolated positioning tests.
+
+Current MCU implementation: [counted diagnostics](rig-wiring-evidence-2026-10-07/mcu-counted-diagnostics.md)
+uses protocol 3 / `cephvr2_uno_2` under A11 revision 37. Build and local host/GUI
+checks pass. The [owner-authorized manual installation](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
+now passes exact shutdown/flash backup/upload verification/CAPS, D9's one rise,
+increasing D10/D11 counts, retained Stop counts and matched OFF/stopped firmware state.
+Managed D9/D10/D11 Test/Status/Stop and D9 automatic timeout pass. Verify physical LOW/receiver
+correlation; generated counts do not prove SpikeGLX reception or electrical timing.
+
+The earlier D10 owner test reports no pulses. The
+[configure-before-start and error-report repair](rig-wiring-evidence-2026-10-07/mcu-camera-diagnostic-repair.md)
+passes seven targeted and 526 affected-owner cases (two privilege skips), including
+protocol-3 controller completion. The subsequent installed-board managed D10/D11
+Test/Status/Stop passes; physical pulse/receiver observation remains open.
+
+Current camera display: [A10/G01 backend-owned OpenCV evidence](acquisition.md#current-windows-wiring-checks)
+passes 526 affected-owner/client checks (two privilege skips), 17 GUI/bridge checks
+and 64 final focused owner checks, including two real Win32 windows with native X
+closure and independent active producers. Actual Behavior Start/Show/X/Hide/reopen/
+Stop now passes after matching firmware installation/restart, with acquisition PID
+owning the native window. Tracking revision adoption is repaired and preparation
+passes, but recurring coordinator-health shutdown blocks its Start/display. Repeat
+Tracking/ordered-consumer release after that repair, plus GUI clicks/selector visibility;
+these isolated windows do not close camera/heartbeat, Tracking or physical acceptance.
+
+Latest execution: [2026-10-07 GUI wiring rig checks](rig-wiring-evidence-2026-10-07/README.md),
+HEAD `08d146d0d97847cb3f395144886fc175dc627487` plus generated-SWIG mypy exclusion.
+Windows offscreen suite: 1,252 passed, nine GUI failures, four symlink-privilege
+skips, one rig deselection; native Qt teardown also crashes in a separate run.
+Static/contracts/schema/build checks and the separate GPU rig smoke pass.
+Managed startup, automatic control, exact GUI-loss/reopen, interactive N/Y
+replacement and authenticated normal shutdown pass their bounded procedures.
+Both camera identities and two Behavior Start/Stop cycles pass; subsequent
+camera-worker heartbeat faults cause shutdown. Tracking PFS import and isolated
+D11/Line2 receiver delivery pass, while managed Tracking capture/diagnostics remain
+blocked. Agent-run ordinary MCU Status/Stop result evidence fails, and SpikeGLX is unreachable.
+Later [owner-supplied controller diagnostics](rig-wiring-evidence-2026-10-07/owner-mcu-console.md)
+report completed D2/D9/D10 Start/Stop pairs and 120 D2 rising edges. Output diagnostics
+reported zero edges under the then-installed protocol 2; D9 levels, D10 rate/reception and D2 source correlation
+remain unmeasured. Ordinary Status/Stop still needs a repeat with exact provenance.
+Desktop app approval timed out; actual viewer/close/reconnect acknowledgement is
+unverified. Missing projector profile/arena/assignments and existing scientific,
+electrical, encoder and full-workload checks remain open. No experiment or remote
+recording ran. Final exact receipts and application-guard release confirm cleanup.
+
+Historical execution: [2026-10-01 Windows audit](rig-audit-2026-10-01/README.md),
 baseline HEAD `826984255e0a8469afccbda2dcaf8c642b528b33` plus uncommitted repairs.
 Final all-marker suite under the actual High-integrity token, using a dedicated
 workspace basetemp: 759 passed, zero skipped or failed. This ran the four previously
@@ -96,7 +150,14 @@ Older launchers without the replacement endpoint require one manual shutdown.
    Test connection must report the actual firmware/protocol with outputs stopped.
 2. Test one enabled output at a time, observing its configured SpikeGLX receiver
    under the existing wiring/voltage checks. Verify Test→Stop→Test, explicit Stop,
-   firmware's bounded termination and truthful final edge counts. Projector flip
+   firmware's bounded termination and truthful final state. Trial state D9 should
+   hold HIGH for up to two seconds and return LOW; Behavior D10 at requested 30 Hz
+   should produce a 50%-duty pulse train with approximately 33.3 ms between rising
+   edges, then return LOW. Record receiving channel and measured timing/level.
+   Protocol 3 output tests count generated rising transitions (D9: one); camera
+   counts must increase while active and remain stable after Stop/timeout. Repeat
+   Test and confirm the counter resets rather than accumulating across tests.
+   The counter does not independently measure the receiving signal. Projector flip
    observes input edges; it must not drive that pin. A software response is not
    physical waveform proof.
 3. In Cameras, refresh, assign Behavior/Tracking roles, select each PFS and confirm
@@ -106,8 +167,16 @@ Older launchers without the replacement endpoint require one manual shutdown.
 4. Test enabled: verify separate connection/identity results, no capture or trigger
    pulses, preserved selection, and reported failure for an unavailable camera.
 5. Start capture on each camera; confirm usable frames and MCU pulse state. Open
-   Preview from Cameras and the Dashboard selector. Close/reopen the viewer while
-   capture continues, then Stop capture and verify camera/buffer/pulse release.
+   OpenCV Preview from Cameras and the Dashboard selector; confirm acquisition
+   owns the native windows. Close with X/Hide and verify backend visibility updates
+   both selectors while capture continues. Reopen, then Stop capture and verify
+   window/reader and camera/buffer/pulse release.
+   After full restart for policy 15, verify initial GUI-right-edge placement, left
+   fallback and work-area clamping on actual monitor/DPI arrangements. Confirm
+   square image area, undistorted landscape/portrait padding, pointer wheel zoom
+   and double-click fit reset, including while no new frames arrive. Move the GUI
+   and reopen to verify fresh initial placement. Isolated native geometry/mouse
+   checks pass; these physical GUI/camera checks remain outstanding.
    First repeat Behavior-only with Tracking idle to verify acceptance of its empty
    preview identity; confirm Start completes, visible frames, Stop completes and
    camera/buffer/pulse release, then repeat the cycle. Repeat with both enabled.

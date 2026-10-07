@@ -52,6 +52,11 @@ class DeviceViews:
             try:
                 if kind == "devices":
                     status = cast(svc.AcquisitionDeviceStatusReport, report)
+                    if status.HasField("preview_visibility"):
+                        changed = self.projections.accept_preview_visibility(status)
+                        if changed:
+                            self.hooks.publish()
+                        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
                     operation = self.device.camera_operation
                     if (
                         operation is None

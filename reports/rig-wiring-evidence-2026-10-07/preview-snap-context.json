@@ -1,0 +1,153 @@
+{
+  "date": "2026-10-07",
+  "timezone": "Asia/Tokyo",
+  "base_revision": "08d146d0d97847cb3f395144886fc175dc627487",
+  "dirty_tree": true,
+  "owner_observation": "Image did not show up snapped the outside top right edge of the GUI",
+  "provenance_limits": "No owner image/window screenshot, selected camera, timestamp or loaded source revision supplied. Passive native bounds establish the narrow right-hand space and old hint; isolated tests establish placement defects, not actual camera display acceptance.",
+  "geometry_evidence": "preview-placement-owner-geometry.json",
+  "before": {
+    "gui_failed": 6,
+    "gui_passed": 1,
+    "native_failed": 1,
+    "native_visible_corner_expected": [
+      400,
+      100
+    ],
+    "native_visible_corner_actual": [
+      407,
+      100
+    ]
+  },
+  "scope": "Pure GUI placement plus isolated native display/readers; active runtime preserved, no camera/serial/control command or restart",
+  "decisions": [
+    "A10 revision 54",
+    "G01 revision 123",
+    "ARCH-002",
+    "E15"
+  ],
+  "policy_version": 15,
+  "sources_sha256": {
+    "src/cephvr/gui/preview_placement.py": "4bca9277180dca524781fe9874d839c1973853c81fabba97f8f507679296e846",
+    "src/cephvr/platform/windows/window_coordinates.py": "fa389ef142dbd5be7037465c34b1448efac66483d2cb7cedbbfdc22db545868a",
+    "src/cephvr/acquisition/preview/highgui.py": "0b32842fbd46b2723537e1a0864bcd8c1af982dd1373dc39be805bcafc55a11e",
+    "tests/gui/test_dashboard.py": "6c79ecf9135330bbd687c927869b6a355ef9eac11f491e8d158cc7e3ee52125a",
+    "tests/acquisition/test_manual_preview.py": "ca9e52653ba7187c1eac14c3692dc63a8d5d21d7959f477dbecb12aeba5851ca",
+    "docs/architecture/gui.md": "2a24bf3d885c538e77c15150199296697789521ddd0d254e3e10376562bfe696",
+    "contracts/acquisition/preview-control.md": "df11ed86055a7078650b1354936f63f71100ecd61ed13f8c2c8296316981eaaa",
+    "contracts/cephvr/control/v1/services.proto": "0f9a30b6be16f60f7a20716bd1d7ffa219e27d5f8a51bd422b88fee80e9dcb20"
+  },
+  "methods": {
+    "gui": "QT_QPA_PLATFORM=offscreen; python -m pytest tests/gui/test_dashboard.py -q -k \"square_preview or preview_window_waits or managed_camera_projection_distinguishes\"",
+    "integration": "python -m pytest tests/acquisition tests/controller tests/client -q -ra",
+    "final_native": "python -m pytest tests/acquisition/test_manual_preview.py -q -k \"native_highgui or highgui_private\"",
+    "static": "Ruff/check/format for five affected files; mypy --platform win32 GUI/acquisition/window_coordinates; backend boundaries"
+  },
+  "validation": {
+    "mypy_sources": 311,
+    "boundary_modules": 604,
+    "boundary_violations": 0,
+    "protos_generated_after_field_comment": 19
+  },
+  "test_suites": {
+    "preview-snap-gui-before": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "6",
+        "skipped": "0",
+        "tests": "7",
+        "time": "2.251",
+        "timestamp": "2026-10-07T17:29:55.800252+09:00",
+        "hostname": "DESKTOP-MSOH8EL"
+      }
+    ],
+    "preview-snap-native-before": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "1",
+        "skipped": "0",
+        "tests": "1",
+        "time": "0.632",
+        "timestamp": "2026-10-07T17:29:59.665643+09:00",
+        "hostname": "DESKTOP-MSOH8EL"
+      }
+    ],
+    "preview-snap-gui-after": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "10",
+        "time": "2.006",
+        "timestamp": "2026-10-07T17:30:50.511463+09:00",
+        "hostname": "DESKTOP-MSOH8EL"
+      }
+    ],
+    "preview-snap-integration": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "2",
+        "tests": "551",
+        "time": "8.191",
+        "timestamp": "2026-10-07T17:30:54.094879+09:00",
+        "hostname": "DESKTOP-MSOH8EL"
+      }
+    ],
+    "preview-snap-native-after": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "4",
+        "time": "0.608",
+        "timestamp": "2026-10-07T17:32:02.849796+09:00",
+        "hostname": "DESKTOP-MSOH8EL"
+      }
+    ]
+  },
+  "pending": [
+    "Full runtime restart to load both GUI and acquisition positioning code",
+    "Actual camera Preview placement after restart, alternate-monitor/DPI acceptance",
+    "Previously retained Tracking coordinator-health and sustained capture checks"
+  ],
+  "cleanup": {
+    "date": "2026-10-07",
+    "targets": 3,
+    "files": 28,
+    "bytes": 18932121,
+    "scope": "Disposable workspace tool caches; source bytecode writing disabled for checks",
+    "inventory": [
+      {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.mypy_cache",
+        "files": 18,
+        "bytes": 18866405,
+        "removed": true
+      },
+      {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.pytest_cache",
+        "files": 5,
+        "bytes": 64834,
+        "removed": true
+      },
+      {
+        "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.ruff_cache",
+        "files": 5,
+        "bytes": 882,
+        "removed": true
+      }
+    ]
+  },
+  "handoff_validation": {
+    "markdown_files": 9,
+    "local_links": 418,
+    "source_hashes_match": true,
+    "cleanup_targets_absent_at_verification": true,
+    "toml_parse": true
+  }
+}

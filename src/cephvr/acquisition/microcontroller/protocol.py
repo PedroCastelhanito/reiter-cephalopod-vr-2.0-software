@@ -1,4 +1,4 @@
-"""Strict bounded ASCII protocol-v2 parsing for the pulse microcontroller (A11)."""
+"""Strict bounded ASCII protocol-v3 parsing for the pulse microcontroller (A11)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
 MAX_LINE_BYTES = 512
-PROTOCOL_VERSION = 2
+PROTOCOL_VERSION = 3
 FREQUENCY_STEP = Decimal("0.1")
 _TOKEN = re.compile(r"^[!-~]+$")
 _UINT = re.compile(r"^[0-9]+$")
@@ -200,8 +200,12 @@ def parse_diagnostic(reply: Reply) -> tuple[bool, str, str, int]:
         raise ProtocolError("diagnostic kind is unsupported")
     pin = _required_token(reply.fields["pin"], "pin")
     edges = _uint(reply.fields["edges"], 32, "edges")
-    if kind != "projector_flip" and edges:
-        raise ProtocolError("output diagnostic cannot report input edges")
+    if kind != "projector_flip" and not edges:
+        raise ProtocolError("output diagnostic must report its initial HIGH transition")
+    if kind == "trial_state" and edges != 1:
+        raise ProtocolError(
+            "trial-state diagnostic must report its single HIGH transition"
+        )
     return active, kind, pin, edges
 
 

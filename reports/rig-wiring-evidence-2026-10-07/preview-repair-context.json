@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-07",
+  "timezone": "Asia/Tokyo",
+  "base_revision": "08d146d0d97847cb3f395144886fc175dc627487",
+  "source_scope": "Uncommitted repair; concurrent MCU presentation change preserved. See preview-repair-sha256.json for current affected inputs.",
+  "owner_console_provenance": "User paste; revision, generation and capture times absent. Button order supplied by owner.",
+  "snapshot_command": ".venv/Scripts/python.exe -m cephvr.client.main --controller-generation 205bc097-d44b-4d88-9325-19ad87630566 --json status",
+  "snapshot_scope": "Read-only; existing GUI lease and device ownership untouched. One retained camera timeout lacks command kind.",
+  "before": {"preview-before.xml": "4 failed", "preview-rejection-before.xml": "2 failed"},
+  "after": {"preview-after.xml": "5 passed", "preview-rejection-after.xml": "2 passed"},
+  "final_commands": [
+    "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/acquisition tests/controller tests/client -q -ra -m 'not rig' --junitxml reports/rig-wiring-evidence-2026-10-07/preview-owner-final.xml",
+    "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -ra -k 'managed_camera or preview_offer or native_latest_frame or preview_selector or preview_dialog' --junitxml reports/rig-wiring-evidence-2026-10-07/preview-gui-final.xml",
+    ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/acquisition src/cephvr/controller src/cephvr/gui",
+    ".venv/Scripts/python.exe -m ruff check src/cephvr/acquisition src/cephvr/controller src/cephvr/gui tests/acquisition tests/controller tests/gui",
+    ".venv/Scripts/python.exe -m ruff format --check src/cephvr/acquisition src/cephvr/controller src/cephvr/gui tests/acquisition tests/controller tests/gui",
+    ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "final_results": {"owner_tests": "495 passed, 2 symlink-privilege skips", "gui_tests": "13 passed; native Windows shared-ring reader included", "mypy": "387 sources pass", "format": "440 files pass", "boundaries": "598 modules, zero violations; existing cohesion advisories retained"},
+  "limits": "Offscreen isolated tests do not prove physical camera viewing, sustained rate, Tracking diagnostics or heartbeat acceptance. No runtime restart, control takeover or hardware command performed in this follow-up. Restart current runtime to apply repair."
+}

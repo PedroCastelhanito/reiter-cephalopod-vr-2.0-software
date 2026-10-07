@@ -23,6 +23,10 @@ from cephvr.acquisition.coordinator.manual_preview_start import ManualPreviewSta
 from cephvr.acquisition.coordinator.manual_preview_transfer import (
     ManualPreviewTransferOwner,
 )
+from cephvr.acquisition.coordinator.manual_preview_window import (
+    attach_preview_viewer,
+    execute_preview_window,
+)
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
 )
@@ -30,6 +34,7 @@ from cephvr.acquisition.coordinator.manual_session_access import (
     manual_configuration_available,
     retire_completed_manual_session,
 )
+from cephvr.acquisition.coordinator.preview_windows import PreviewWindows
 from cephvr.acquisition.coordinator.session_payloads import camera_policy, role_name
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.ports import ControllerPort, ResourcePort, SerialOwnerPort
@@ -48,6 +53,7 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.preview_placement import valid_preview_placement
 
 
 class ManualPreview:
@@ -70,6 +76,7 @@ class ManualPreview:
         resolution: ConfigurationResolution,
         device_status: ManualDeviceStatusReporter,
         lock: asyncio.Lock,
+        visibility_report_timeout_ns: int,
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.identity = identity
@@ -89,6 +96,14 @@ class ManualPreview:
         )
         self.lock = lock
         self.clock = clock
+        self.windows = PreviewWindows(
+            identity=identity,
+            resources=resources,
+            ledger=resource_ledger,
+            status=device_status,
+            clock=clock,
+            report_timeout_ns=visibility_report_timeout_ns,
+        )
         self.start_flow = ManualPreviewStart(
             identity=identity,
             configuration=configuration,
@@ -124,6 +139,12 @@ class ManualPreview:
             return _rejected(
                 command.command_id, "STALE_PREVIEW_COMMAND", "preview command is stale"
             )
+        if not valid_preview_placement(request):
+            return _rejected(
+                command.command_id,
+                "PREVIEW_PLACEMENT",
+                "Invalid display placement hint",
+            )
         try:
             self.device_status.reserve(command)
         except (RuntimeError, ValueError) as exc:
@@ -134,6 +155,18 @@ class ManualPreview:
             )
         except (RuntimeError, TimeoutError, ValueError) as exc:
             return _rejected(command.command_id, "SESSION_RETIREMENT", str(exc))
+        if request.kind in {
+            wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+            wire.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
+        }:
+            worker = self.workers.workers.get(request.camera)
+            return await execute_preview_window(
+                request,
+                worker.preview if worker else None,
+                self.windows,
+                self.results,
+                deadline_ns=deadline_ns,
+            )
         if request.kind == wire.CAMERA_COMMAND_KIND_START_PREVIEW:
             if (
                 request.HasField("path")
@@ -169,7 +202,15 @@ class ManualPreview:
                     "PREVIEW_ATTACH_SHAPE",
                     "viewer attach requires exact run and consumer",
                 )
-            return await self._attach(request, deadline_ns)
+            worker = self.workers.workers.get(request.camera)
+            return await attach_preview_viewer(
+                request,
+                worker.preview if worker else None,
+                self.windows,
+                self.transfers,
+                self.results,
+                deadline_ns=deadline_ns,
+            )
         return _rejected(
             command.command_id,
             "PREVIEW_COMMAND_KIND",
@@ -367,6 +408,9 @@ class ManualPreview:
                 raise RuntimeError("manual preview did not confirm stopped activity")
             if preview.resolved_camera is None:
                 raise RuntimeError("manual preview stop lacks retained resolved camera")
+            await self.windows.close(
+                request.camera, preview.run_id, deadline_ns=deadline_ns
+            )
             self.device_status.resolve_camera(
                 int(request.camera),
                 preview.resolved_camera,
@@ -433,49 +477,6 @@ class ManualPreview:
                 request.command.command_id, "PREVIEW_STOP_FAILED", str(exc)
             )
 
-    async def _attach(
-        self, request: wire.AcquisitionCameraCommand, deadline_ns: int
-    ) -> control.CommandAdmission:
-        worker = self.workers.workers.get(request.camera)
-        preview = worker.preview if worker is not None else None
-        if (
-            preview is None
-            or not preview.started
-            or preview.run_id != request.preview_run_id
-            or preview.allocation_id is None
-            or request.preview_consumer.role != "preview_viewer"
-            or not request.preview_consumer.generation
-        ):
-            return _rejected(
-                request.command.command_id,
-                "PREVIEW_VIEWER",
-                "viewer does not match a live preview slot",
-            )
-        if preview.viewer is not None:
-            if preview.viewer == request.preview_consumer:
-                return control.CommandAdmission(
-                    result=control.COMMAND_RESULT_ACCEPTED,
-                    command_id=request.command.command_id,
-                )
-            return _rejected(
-                request.command.command_id,
-                "PREVIEW_VIEWER_BUSY",
-                "another viewer transfer remains active",
-            )
-        try:
-            await self.transfers.attach(request, preview, deadline_ns=deadline_ns)
-        except (RuntimeError, ValueError) as exc:
-            return _rejected(request.command.command_id, "PREVIEW_TRANSFER", str(exc))
-        return await self.results.complete(
-            request.command,
-            command_name="attach_preview_viewer",
-            deadline_ns=deadline_ns,
-            status_code="DEVICE_STATUS",
-            status_failure="controller rejected camera status",
-            parent_code="PREVIEW_REPORT",
-            parent_failure="controller rejected preview completion",
-        )
-
     def _external_roles(self, adding_role: int | None) -> list[int]:
         roles: set[int] = set()
         for role, setting in (
@@ -510,7 +511,11 @@ class ManualPreview:
             and command.parent_operation.command_id
             and request.HasField("configuration_revision")
             and request.configuration_revision == self.configuration.revision
-            and request.file_policies == self.configuration.file_policies
+            and (
+                request.file_policies == self.configuration.file_policies
+                or request.kind == wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+                and not request.HasField("file_policies")
+            )
             and manual_configuration_available(self.session_slot)
             and request.camera
             in (

@@ -1,0 +1,17 @@
+Future exception was never retrieved
+future: <Future finished exception=RuntimeError("connect: sglx_connect: tcpConnect: Can't connect: No error (0)")>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\synchronization\diagnostic.py", line 123, in <lambda>
+    lambda: _read_once(self.software_root), self.timeout_s
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\synchronization\diagnostic.py", line 71, in _read_once
+    _required(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\synchronization\diagnostic.py", line 48, in _required
+    raise RuntimeError(f"{call}: {error or 'SpikeGLX SDK call failed'}")
+RuntimeError: connect: sglx_connect: tcpConnect: Can't connect: No error (0)
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: coordinator heartbeat receipt exceeded the configured silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

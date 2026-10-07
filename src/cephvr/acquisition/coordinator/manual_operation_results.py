@@ -77,6 +77,12 @@ class ManualOperationResults:
         failure: str,
     ) -> None:
         try:
+            retained = self.device_status.get_report(command.command_id)
+            if retained is not None:
+                await self.controller.report_acquisition_device_status(
+                    retained, deadline_ns=deadline_ns
+                )
+                return
             await self.device_status.report(
                 command,
                 command_name=command_name,

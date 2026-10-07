@@ -1,0 +1,16 @@
+.............                                                            [100%]
+============================== warnings summary ===============================
+tests/gui/test_dashboard.py::test_native_latest_frame_viewer_reads_and_releases_ring
+tests/gui/test_dashboard.py::test_native_latest_frame_viewer_reads_and_releases_ring
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+tests/gui/test_dashboard.py::test_native_latest_frame_viewer_reads_and_releases_ring
+tests/gui/test_dashboard.py::test_native_latest_frame_viewer_reads_and_releases_ring
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/gui/test_dashboard.py::test_native_latest_frame_viewer_reads_and_releases_ring
+tests/gui/test_dashboard.py::test_native_latest_frame_viewer_reads_and_releases_ring
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 278 deselected, 6 warnings in 3.47s

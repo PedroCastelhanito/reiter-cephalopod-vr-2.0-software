@@ -1,0 +1,372 @@
+........................................................................ [  5%]
+........................................................................ [ 11%]
+........................................................................ [ 17%]
+........................................................................ [ 22%]
+................s....................................................... [ 28%]
+........................................................................ [ 34%]
+...........................................s............................ [ 39%]
+..........FFF...................F...................F................... [ 45%]
+.......................................F.........................F...... [ 51%]
+........................................................................ [ 56%]
+.....F............F..................................................... [ 62%]
+...................................................................s.... [ 68%]
+...............................................s........................ [ 73%]
+........................................................................ [ 79%]
+........................................................................ [ 85%]
+........................................................................ [ 91%]
+........................................................................ [ 96%]
+.........................................                                [100%]
+================================== FAILURES ===================================
+_________ test_devices_draft_reflows_without_horizontal_clipping[720] _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D761C0E170>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>, width = 720
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -> None:
+        window.resize(width, 883)
+        window.page_buttons[2].click()
+        for index in range(4):
+            window.devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            scroll = window.devices.panels[index].scrollers[0]
+>           assert scroll.horizontalScrollBar().maximum() == 0
+E           assert 48 == 0
+E            +  where 48 = <built-in method maximum of QScrollBar object at 0x000001D766176E60>()
+E            +    where <built-in method maximum of QScrollBar object at 0x000001D766176E60> = <PyQt6.QtWidgets.QScrollBar object at 0x000001D766176E60>.maximum
+E            +      where <PyQt6.QtWidgets.QScrollBar object at 0x000001D766176E60> = <built-in method horizontalScrollBar of QScrollArea object at 0x000001D7661148B0>()
+E            +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000001D7661148B0> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D7661148B0>.horizontalScrollBar
+
+tests\gui\test_dashboard.py:908: AssertionError
+________ test_devices_draft_reflows_without_horizontal_clipping[1175] _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D766175CF0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>, width = 1175
+
+    @pytest.mark.parametrize("width", [720, 1175])
+    def test_devices_draft_reflows_without_horizontal_clipping(
+        window: DashboardWindow, app: QApplication, width: int
+    ) -> None:
+        window.resize(width, 883)
+        window.page_buttons[2].click()
+        for index in range(4):
+            window.devices.tabs.setCurrentIndex(index)
+            app.processEvents()
+            scroll = window.devices.panels[index].scrollers[0]
+>           assert scroll.horizontalScrollBar().maximum() == 0
+E           assert 85 == 0
+E            +  where 85 = <built-in method maximum of QScrollBar object at 0x000001D72B362A70>()
+E            +    where <built-in method maximum of QScrollBar object at 0x000001D72B362A70> = <PyQt6.QtWidgets.QScrollBar object at 0x000001D72B362A70>.maximum
+E            +      where <PyQt6.QtWidgets.QScrollBar object at 0x000001D72B362A70> = <built-in method horizontalScrollBar of QScrollArea object at 0x000001D761C28C10>()
+E            +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000001D761C28C10> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D761C28C10>.horizontalScrollBar
+
+tests\gui\test_dashboard.py:908: AssertionError
+__________ test_folder_picker_selection_cancellation_and_phase_lock ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D75BB50700>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D75CB358D0>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-47/test_folder_picker_selection_c0')
+
+    def test_folder_picker_selection_cancellation_and_phase_lock(
+        window: DashboardWindow, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.setattr(QFileDialog, "open", lambda self: None)
+        field = window.dashboard.output_field
+        field.editor.setText(str(tmp_path))
+        field.browse.click()
+        dialog = field.dialog
+        assert dialog is not None
+>       assert dialog.directory().absolutePath() == str(tmp_path)
+E       AssertionError: assert 'C:/Users/Rei..._selection_c0' == 'C:\\Users\\R..._selection_c0'
+E         
+E         - C:\Users\ReiterU_PC\AppData\Local\Temp\pytest-of-ReiterU_PC\pytest-47\test_folder_picker_selection_c0
+E         ?   ^     ^          ^       ^     ^    ^                    ^         ^
+E         + C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-47/test_folder_picker_selection_c0
+E         ?   ^     ^          ^       ^     ^    ^                    ^         ^
+
+tests\gui\test_dashboard.py:920: AssertionError
+____________ test_responsive_navigation_preserves_widget_identity _____________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D76C8927A0>
+
+    def test_responsive_navigation_preserves_widget_identity(
+        app: QApplication, window: DashboardWindow
+    ) -> None:
+        subject = window.dashboard.subject_id
+        subject.setText("PERSISTENT")
+        modes = set()
+        for width in (1440, 1100, 720, 1440):
+            window.resize(width, 940)
+            app.processEvents()
+            modes.add(window.dashboard.mode)
+            for index in range(4):
+                window.page_buttons[index].click()
+                app.processEvents()
+                assert window.stack.currentIndex() == index
+            window.page_buttons[0].click()
+            app.processEvents()
+            assert window.dashboard.subject_id is subject
+            assert subject.text() == "PERSISTENT"
+            assert subject.parentWidget() is not None
+>           assert window.dashboard_scroll.horizontalScrollBar().maximum() == 0
+E           assert 69 == 0
+E            +  where 69 = <built-in method maximum of QScrollBar object at 0x000001D76C891750>()
+E            +    where <built-in method maximum of QScrollBar object at 0x000001D76C891750> = <PyQt6.QtWidgets.QScrollBar object at 0x000001D76C891750>.maximum
+E            +      where <PyQt6.QtWidgets.QScrollBar object at 0x000001D76C891750> = <built-in method horizontalScrollBar of QScrollArea object at 0x000001D76C893A30>()
+E            +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000001D76C893A30> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D76C893A30>.horizontalScrollBar
+E            +          where <PyQt6.QtWidgets.QScrollArea object at 0x000001D76C893A30> = <cephvr.gui.window.DashboardWindow object at 0x000001D76C8927A0>.dashboard_scroll
+
+tests\gui\test_dashboard.py:1188: AssertionError
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D76EFB3F40>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+>               assert bar.tabRect(3).right() == bar.width() - 1
+E               assert 682 == (655 - 1)
+E                +  where 682 = <built-in method right of QRect object at 0x000001D76616DB60>()
+E                +    where <built-in method right of QRect object at 0x000001D76616DB60> = PyQt6.QtCore.QRect(531, 0, 152, 40).right
+E                +      where PyQt6.QtCore.QRect(531, 0, 152, 40) = <built-in method tabRect of QTabBar object at 0x000001D767C13760>(3)
+E                +        where <built-in method tabRect of QTabBar object at 0x000001D767C13760> = <PyQt6.QtWidgets.QTabBar object at 0x000001D767C13760>.tabRect
+E                +  and   655 = <built-in method width of QTabBar object at 0x000001D767C13760>()
+E                +    where <built-in method width of QTabBar object at 0x000001D767C13760> = <PyQt6.QtWidgets.QTabBar object at 0x000001D767C13760>.width
+
+tests\gui\test_dashboard.py:1580: AssertionError
+___________ test_configuration_scroll_keeps_projector_status_fixed ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D769313130>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>
+
+    def test_configuration_scroll_keeps_projector_status_fixed(
+        window: DashboardWindow, app: QApplication
+    ):
+        window.resize(1175, 800)
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel = window.devices.projectors
+        assert [panel.setup_tabs.tabText(i) for i in range(3)] == [
+            "Screen calibration",
+            "Synchronization",
+            "Rig geometry",
+        ]
+        panel.setup_tabs.setCurrentIndex(2)
+        app.processEvents()
+        top = panel.layout_card.mapTo(window, QPoint())
+        log = panel.status_column.log_card.mapTo(window, QPoint())
+        scroll = panel.config_scroll.verticalScrollBar()
+        assert scroll.maximum() > 0
+        scroll.setValue(scroll.maximum())
+        app.processEvents()
+        assert panel.layout_card.mapTo(window, QPoint()) == top
+        assert panel.status_column.log_card.mapTo(window, QPoint()) == log
+>       assert panel.config_scroll.horizontalScrollBar().maximum() == 0
+E       assert 178 == 0
+E        +  where 178 = <built-in method maximum of QScrollBar object at 0x000001D70D16E170>()
+E        +    where <built-in method maximum of QScrollBar object at 0x000001D70D16E170> = <PyQt6.QtWidgets.QScrollBar object at 0x000001D70D16E170>.maximum
+E        +      where <PyQt6.QtWidgets.QScrollBar object at 0x000001D70D16E170> = <built-in method horizontalScrollBar of QScrollArea object at 0x000001D70D228C10>()
+E        +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000001D70D228C10> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D70D228C10>.horizontalScrollBar
+E        +          where <PyQt6.QtWidgets.QScrollArea object at 0x000001D70D228C10> = <cephvr.gui.projectors.ProjectorsPanel object at 0x000001D70D228430>.config_scroll
+
+tests\gui\test_dashboard.py:4209: AssertionError
+__________ test_protocol_cards_reflow_and_keep_properties_reachable ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D7693531C0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>
+
+    def test_protocol_cards_reflow_and_keep_properties_reachable(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from PyQt6.QtWidgets import QPlainTextEdit, QTableWidget
+    
+        from cephvr.gui.components import StatusColumn
+    
+        panel = window.protocol
+        window.page_buttons[1].click()
+        assert not panel.findChildren(StatusColumn)
+        assert not panel.findChildren(QPlainTextEdit)
+        assert not panel.findChildren(QTableWidget)
+        for width in (1175, 720, 1175):
+            window.resize(width, 883)
+            for _ in range(3):
+                app.processEvents()
+            editor = panel.editor
+            assert editor.settings_card.width() == editor.width()
+            assert editor.trial_card.y() == editor.timeline_card.y()
+            assert editor.trial_card.geometry().right() < editor.timeline_card.x()
+            assert editor.timeline_card.geometry().right() == editor.width() - 1
+            assert editor.timeline_card.height() == editor.trial_card.height()
+            assert editor.sequence_summary.alignment() == Qt.AlignmentFlag.AlignCenter
+            assert editor.settings_card.y() > editor.timeline_card.geometry().bottom()
+            viewport = panel.config_scroll.viewport()
+>           assert panel.config_scroll.widget().width() <= viewport.width()
+E           assert 641 <= 514
+E            +  where 641 = <built-in method width of QWidget object at 0x000001D787474CA0>()
+E            +    where <built-in method width of QWidget object at 0x000001D787474CA0> = <PyQt6.QtWidgets.QWidget object at 0x000001D787474CA0>.width
+E            +      where <PyQt6.QtWidgets.QWidget object at 0x000001D787474CA0> = <built-in method widget of QScrollArea object at 0x000001D787474C10>()
+E            +        where <built-in method widget of QScrollArea object at 0x000001D787474C10> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D787474C10>.widget
+E            +          where <PyQt6.QtWidgets.QScrollArea object at 0x000001D787474C10> = <cephvr.gui.protocol.ProtocolPage object at 0x000001D787474AF0>.config_scroll
+E            +  and   514 = <built-in method width of QWidget object at 0x000001D767CF5BD0>()
+E            +    where <built-in method width of QWidget object at 0x000001D767CF5BD0> = <PyQt6.QtWidgets.QWidget object at 0x000001D767CF5BD0>.width
+
+tests\gui\test_dashboard.py:5012: AssertionError
+____ test_variation_controls_fit_narrow_protocol_without_horizontal_scroll ____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D8790288B0>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-47/test_variation_controls_fit_na0')
+
+    def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        window.page_buttons[1].click()
+        window.protocol.session_mode.setCurrentText("Closed-loop")
+        editor = window.protocol.editor
+        editor.modes.setCurrentIndex(0)
+        composer = editor.create_batch.composer
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "a_prepared_texture_with_a_long_filename.png"
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.rows["Front"].advanced.setChecked(True)
+        editor.create_batch.vary.setChecked(True)
+        editor.create_batch.add_variation()
+        window.resize(720, 900)
+        QTest.qWait(30)
+        app.processEvents()
+>       assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+E       assert 573 == 0
+E        +  where 573 = <built-in method maximum of QScrollBar object at 0x000001D72AE5E050>()
+E        +    where <built-in method maximum of QScrollBar object at 0x000001D72AE5E050> = <PyQt6.QtWidgets.QScrollBar object at 0x000001D72AE5E050>.maximum
+E        +      where <PyQt6.QtWidgets.QScrollBar object at 0x000001D72AE5E050> = <built-in method horizontalScrollBar of QScrollArea object at 0x000001D75CBEB400>()
+E        +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000001D75CBEB400> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D75CBEB400>.horizontalScrollBar
+E        +          where <PyQt6.QtWidgets.QScrollArea object at 0x000001D75CBEB400> = <cephvr.gui.protocol.ProtocolPage object at 0x000001D75CBEBE20>.config_scroll
+E        +            where <cephvr.gui.protocol.ProtocolPage object at 0x000001D75CBEBE20> = <cephvr.gui.window.DashboardWindow object at 0x000001D8790288B0>.protocol
+
+tests\gui\test_dashboard.py:8226: AssertionError
+_________ test_random_batch_values_stay_fixed_across_preview_and_save _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001D75CBE1900>
+app = <PyQt6.QtWidgets.QApplication object at 0x000001D72AE5C670>
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-47/test_random_batch_values_stay_0')
+
+    def test_random_batch_values_stay_fixed_across_preview_and_save(window, app, tmp_path):
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        window.page_buttons[1].click()
+        create = window.protocol.editor.create_batch
+        from PyQt6.QtGui import QImage
+    
+        create.composer.set_screens(("Front",))
+        create.composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        create.composer.add_file("Texture", str(path), "Front")
+        create.vary.setChecked(True)
+        create.add_variation()
+        row = create.rows[0]
+        row.random.seed(42)
+        row.method.setCurrentText("Random")
+        for key, value in {
+            "minimum": "1",
+            "maximum": "5",
+            "precision": "0.1",
+        }.items():
+            row.random_fields[key].setText(value)
+        assert set(row.random_fields) == {"minimum", "maximum", "precision"}
+        create.repetitions.setText("100")
+        first = create.candidate()
+        assert len(first.sequence) == 100
+        assert create.candidate() == first
+        row.random_fields["precision"].setText("0.2")
+        second = create.candidate()
+        assert second != first
+        assert len(second.sequence) == 100
+        assert create.candidate() == second
+        values = [
+            motion_numbers(epoch.settings[0].model_dump(mode="json"))[0]
+            for epoch in second.sequence
+        ]
+        assert all(1 <= value <= 5 for value in values)
+        assert len(set(values)) > 10
+        assert Program.model_validate_json(second.model_dump_json()) == second
+        create.repetitions.setText("10")
+        shorter = create.candidate()
+        assert len(shorter.sequence) == 10
+        assert create.candidate() == shorter
+        create.repetitions.setText("999")
+        assert len(create.candidate().sequence) == 999
+        create.repetitions.setText("3")
+        create.add_variation()
+        fixed = create.rows[1]
+        fixed.parameter.setCurrentIndex(fixed.parameter.findData("Direction"))
+        fixed.values.setText("0, 90")
+        mixed = create.candidate()
+        assert len(mixed.sequence) == 6
+        assert [
+            motion_numbers(epoch.settings[0].model_dump(mode="json"))[1]
+            for epoch in mixed.sequence
+        ] == [0, 90, 0, 90, 0, 90]
+        assert create.candidate() == mixed
+        for width in (1350, 720):
+            window.resize(width, 900)
+            app.processEvents()
+>           assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+E           assert 214 == 0
+E            +  where 214 = <built-in method maximum of QScrollBar object at 0x000001D75CBD4040>()
+E            +    where <built-in method maximum of QScrollBar object at 0x000001D75CBD4040> = <PyQt6.QtWidgets.QScrollBar object at 0x000001D75CBD4040>.maximum
+E            +      where <PyQt6.QtWidgets.QScrollBar object at 0x000001D75CBD4040> = <built-in method horizontalScrollBar of QScrollArea object at 0x000001D70D273490>()
+E            +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000001D70D273490> = <PyQt6.QtWidgets.QScrollArea object at 0x000001D70D273490>.horizontalScrollBar
+E            +          where <PyQt6.QtWidgets.QScrollArea object at 0x000001D70D273490> = <cephvr.gui.protocol.ProtocolPage object at 0x000001D70D2728C0>.config_scroll
+E            +            where <cephvr.gui.protocol.ProtocolPage object at 0x000001D70D2728C0> = <cephvr.gui.window.DashboardWindow object at 0x000001D75CBE1900>.protocol
+
+tests\gui\test_dashboard.py:8834: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\controller\test_configuration_transactions.py:158: Windows account lacks symlink creation privilege
+SKIPPED [1] tests\controller\test_storage.py:137: symlink creation unavailable on this host
+SKIPPED [1] tests\platform\test_windows_native_on_rig.py:638: Windows symlink privilege or Developer Mode is unavailable
+SKIPPED [1] tests\shared\test_recovery.py:64: Windows account lacks symlink creation privilege
+FAILED tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[720]
+FAILED tests/gui/test_dashboard.py::test_devices_draft_reflows_without_horizontal_clipping[1175]
+FAILED tests/gui/test_dashboard.py::test_folder_picker_selection_cancellation_and_phase_lock
+FAILED tests/gui/test_dashboard.py::test_responsive_navigation_preserves_widget_identity
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+FAILED tests/gui/test_dashboard.py::test_configuration_scroll_keeps_projector_status_fixed
+FAILED tests/gui/test_dashboard.py::test_protocol_cards_reflow_and_keep_properties_reachable
+FAILED tests/gui/test_dashboard.py::test_variation_controls_fit_narrow_protocol_without_horizontal_scroll
+FAILED tests/gui/test_dashboard.py::test_random_batch_values_stay_fixed_across_preview_and_save
+9 failed, 1252 passed, 4 skipped, 1 deselected in 138.86s (0:02:18)

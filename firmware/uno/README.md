@@ -1,9 +1,12 @@
 # CephVR2 Arduino Uno firmware
 
-`cephvr2_mcu/cephvr2_mcu.ino` implements the acquisition A11 serial protocol v2
-for the Arduino Uno. The owner authorized one manual upload to COM8 on
-2026-10-05; the verified image and pre-upload flash readback are preserved in
-[`reports/mcu-evidence-2026-10-05`](../../reports/mcu-evidence-2026-10-05/README.md).
+`cephvr2_mcu/cephvr2_mcu.ino` implements the acquisition A11 serial protocol v3
+for the Arduino Uno. Owner-authorized manual uploads to COM8 ran on 2026-10-05
+and 2026-10-07. The current protocol-3 image, pre-upload flash backup, verified
+upload and matching board CAPS are recorded in
+[installation evidence](../../reports/rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md).
+The [earlier protocol-2 evidence](../../reports/mcu-evidence-2026-10-05/README.md)
+retains its original image and flash readback.
 
 Build with the installed Arduino AVR core:
 
@@ -14,6 +17,13 @@ Build with the installed Arduino AVR core:
 The host must use 115200 baud. Camera and trial-state outputs can use D2–D13;
 the projector-flip rising-edge input must use D2 or D3, the Uno external
 interrupt pins. One diagnostic can run for at most two seconds. The firmware
+counts actual generated output rising transitions, including the initial HIGH;
+Trial state's held-HIGH test counts one. Camera counters increment at the timer's
+HIGH writes, not from requested rate or elapsed time. Input diagnostics count
+observed rising edges. Counts persist after Stop until a new test, with atomic
+readback and uint32 saturation. Protocol 3 requires a matching manual firmware
+update before the updated host can connect; the prior uploaded image was protocol 2.
+The firmware
 leaves outputs LOW at boot, on diagnostic completion, after OFF and on watchdog
 stop. A successful protocol response confirms only firmware state; electrical
 levels, pulse timing, polarity at the connected device and captured edges still
@@ -23,7 +33,7 @@ need rig verification.
 
 | Signal | Uno side | Other side | Current status |
 | --- | --- | --- | --- |
-| Host serial | COM8 USB | Rig PC USB | Connected; CAPS/STATUS passed |
+| Host serial | COM8 USB | Rig PC USB | Protocol-3 CAPS/STATUS verified 2026-10-07 |
 | Trial state | D9 output and GND | Recorder digital input and signal ground | Pin assigned; destination channel and 5 V tolerance unconfirmed |
 | Projector flip | D2 input and GND | Projector flip source and signal ground | Pin assigned; bounded input test counted zero edges; source voltage unconfirmed |
 | Behavioral trigger | D10 output and GND | Behavioral camera trigger input and signal ground | Pin assigned; electrical test and preview pending |

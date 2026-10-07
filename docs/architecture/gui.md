@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 120
+**Status:** Accepted · **Revision:** 123
 
 - Tracking derives its input from the unique camera assigned the Tracking role in
   Devices; no second source selector or discovery-order fallback. Its pipeline card
@@ -354,8 +354,15 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Inventory actions are ordered Test enabled, Connect, Preview. Test enabled
   targets enabled cameras without changing selection or connection state. Managed
   role assignments commit through E07 and leave the newly assigned camera disabled.
-  Start capture/Stop capture use A10 manual preview; Preview attaches a separate
-  external viewer, whose closure leaves capture running. Disconnect releases an
+  Start capture/Stop capture use A10 manual preview; Preview sends Show/Hide for an
+  acquisition-owned OpenCV window. Native X closure leaves capture running; backend
+  visibility evidence updates the GUI selector. Show snaps the visible preview frame
+  outside the GUI's top-right edge, shrinking the square to available right-hand
+  space before using the left edge; clamp to the current monitor work area when
+  neither side fits. Use physical visible-frame bounds without a tool-window gap
+  or invisible resize borders. Reopening samples the current GUI position;
+  an open window remains freely movable. A10 owns padding and wheel zoom/reset.
+  The GUI owns no camera display reader. Disconnect releases an
   editing/cleanup owner when no capture is running. Camera/pulse settings remain
   locked while a camera is owned until E07 live-edit adoption is implemented.
   Pending commands lock repeated submission; failures remain visible and queued

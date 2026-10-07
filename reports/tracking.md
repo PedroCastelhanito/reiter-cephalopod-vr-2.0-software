@@ -1,5 +1,28 @@
 # Tracking status
 
+Latest [protocol-3/repaired-preview retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
+gets past Tracking readback revision adoption/preparation, but Start is rejected
+and the existing camera-worker coordinator-health shutdown recurs. Exact process
+cleanup is confirmed; real Tracking window/ordered-consumer acceptance remains open.
+
+The owner-requested camera OpenCV windows replace the shared headless dependency
+with `opencv-python==4.13.0.92` (WIN32UI), keeping Tracking algorithms and pixel
+contracts unchanged. Existing Tracking tests pass **72**, with one rig-marked
+workload deselected (2.30 s). This is dependency/implementation compatibility,
+not native GPU or real camera diagnostic acceptance.
+[Current display evidence](rig-wiring-evidence-2026-10-07/opencv-context.json).
+
+Current Windows check (2026-10-07, `08d146d`): the existing rig-marked native
+NVIDIA flow/lease smoke passes (one test, 0.48 s). The owner-selected BehaviorSquid
+PFS imports through the actual controller. A direct two-second D11/Line2 receiver
+check yields 81 valid native frames with matched ON/OFF and closed camera/serial
+owners. Managed capture fails amid camera-worker `COORDINATOR_HEALTH_LOST` faults,
+so exact-frame annotation, image-only/flow diagnostics, viewer closure and
+simultaneous/full-workload acceptance remain unverified. See
+[current acquisition evidence](acquisition.md#current-windows-wiring-checks) and
+[dated methods/results](rig-wiring-evidence-2026-10-07/README.md). Bounded receiver
+and GPU results establish neither sustained 60 Hz nor scientific accuracy.
+
 Updated: 2026-10-07. Current frontend, configuration and diagnostic scope is owned by
 [G01](../docs/architecture/gui.md#g01), [T08](../docs/architecture/tracking.md#t08),
 [T01/T20](../docs/architecture/tracking.md#t20) and

@@ -54,6 +54,82 @@ def _start(runtime: Any, parent: str, child: str, kind: int, readback: bool) -> 
     runtime.device_state.camera_operation = operation
 
 
+async def test_native_preview_visibility_is_exact_observation_without_capture_change(
+    tmp_path: Path,
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    initial = _status(backend, _id(), succeeded=True)
+    initial.views.behavioral.preview_visible = True
+    initial.views.behavioral.preview_visibility_revision = 1
+    assert runtime.projections.accept_devices(initial)
+    run_id = initial.views.behavioral.preview_run_id
+    report = svc.AcquisitionDeviceStatusReport(
+        views=pb.AcquisitionDeviceViews(source=backend),
+        preview_visibility=svc.CameraPreviewVisibility(
+            camera=1,
+            preview_run_id=run_id,
+            revision=2,
+            visible=False,
+            observed_monotonic_ns=1_001,
+        ),
+    )
+    receipt = await runtime.report_projection("devices", report)
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    view = runtime.projections.devices.behavioral
+    assert not view.preview_visible
+    assert view.preview_running and view.device_open and view.preview_run_id == run_id
+    assert runtime.device_state.camera_operation is None
+    assert runtime.projections.accept_preview_visibility(report) is False
+    report.preview_visibility.visible = True
+    assert (
+        await runtime.report_projection("devices", report)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    report.preview_visibility.revision = 3
+    report.preview_visibility.preview_run_id = _id()
+    assert (
+        await runtime.report_projection("devices", report)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    report.preview_visibility.preview_run_id = run_id
+    report.views.source.backend_generation = _id()
+    assert (
+        await runtime.report_projection("devices", report)
+    ).result == pb.COMMAND_RESULT_REJECTED
+    # A later command snapshot cannot resurrect visibility from before X closure.
+    initial.views.state_revision = 2
+    assert runtime.projections.accept_devices(initial)
+    assert not runtime.projections.devices.behavioral.preview_visible
+    assert runtime.projections.devices.behavioral.preview_visibility_revision == 2
+    report.views.source.CopyFrom(backend)
+    report.preview_visibility.revision = 1
+    assert not runtime.projections.accept_preview_visibility(report)
+
+
+@pytest.mark.parametrize("show", [False, True])
+@pytest.mark.parametrize("confirmed", [False, True])
+async def test_preview_window_completion_requires_backend_visibility(
+    tmp_path: Path, show: bool, confirmed: bool
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    kind = (
+        svc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+        if show
+        else svc.CAMERA_COMMAND_KIND_HIDE_PREVIEW
+    )
+    _start(runtime, parent, child, kind, False)
+    status = _status(backend, child, succeeded=True)
+    operation = runtime.device_state.camera_operation
+    operation.deadline_ns = 10_000
+    operation.preview_run_id = status.views.behavioral.preview_run_id
+    status.views.behavioral.preview_visible = show if confirmed else not show
+    receipt = await runtime.report_projection("devices", status, 1_001)
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert runtime.control.operations[parent].succeeded == confirmed
+    assert runtime.device_state.camera_operation is None
+
+
 def test_initial_camera_warning_scope_matches_loaded_configuration(
     tmp_path: Path,
 ) -> None:
@@ -84,8 +160,10 @@ def test_initial_camera_warning_scope_matches_loaded_configuration(
         runtime.projections.accept_warnings(report)
 
 
+@pytest.mark.parametrize("version", [2, 3])
 async def test_microcontroller_status_completes_exact_operator_operation(
     tmp_path: Path,
+    version: int,
 ) -> None:
     backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
     runtime = _bound_runtime(tmp_path, backend)
@@ -111,7 +189,7 @@ async def test_microcontroller_status_completes_exact_operator_operation(
     status.views.source.CopyFrom(backend)
     status.views.state_revision = 1
     status.views.observed_monotonic_ns = 100
-    status.views.pulses.capabilities.protocol_version = 2
+    status.views.pulses.capabilities.protocol_version = version
     status.views.pulses.state.behavioral.running = False
     status.views.pulses.state.tracking.running = False
     status.operation.command_id = child
@@ -122,9 +200,43 @@ async def test_microcontroller_status_completes_exact_operator_operation(
     receipt = await runtime.report_projection("devices", status, ingress_ns=900)
 
     assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
-    assert runtime.control.operations[parent].succeeded
+    assert runtime.control.operations[parent].succeeded == (version == 3)
     assert runtime.device_state.camera_operation is None
-    assert runtime.projections.devices.pulses.capabilities.protocol_version == 2
+    assert runtime.projections.devices.pulses.capabilities.protocol_version == version
+
+
+async def test_microcontroller_failure_preserves_firmware_rejection(
+    tmp_path: Path,
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    ledger = runtime.camera_status_retention.ledger
+    ledger.admit(parent, b"mcu-command", 1, work_key=parent)
+    runtime.control_operations.operation(parent, "ExecuteMicrocontrollerCommand")
+    operation = CameraOperation(
+        parent,
+        child,
+        1,
+        0,
+        svc.MICROCONTROLLER_COMMAND_KIND_START,
+        pb.WorkContext(),
+        999,
+        False,
+        is_microcontroller=True,
+    )
+    runtime.camera_status_retention.reserve(operation)
+    runtime.device_state.camera_operation = operation
+    status = _status(backend, child, succeeded=False)
+    status.result.failure.code = "ACQUISITION_OPERATION_FAILED"
+    status.result.failure.message = "MCU rejected CONFIGURE: UNSUPPORTED_FREQUENCY"
+    receipt = await runtime.report_projection("devices", status, ingress_ns=900)
+    assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
+    assert not runtime.control.operations[parent].succeeded
+    assert (
+        runtime.control.operations[parent].failure.message
+        == status.result.failure.message
+    )
 
 
 @pytest.mark.parametrize("internal", [False, True])
@@ -639,3 +751,109 @@ def test_active_preview_requires_valid_run_identity(
     status.views.behavioral.preview_run_id = run_id
     with pytest.raises(ValueError):
         runtime.projections.validate_devices(status)
+
+
+@pytest.mark.parametrize("retained_failure", [False, True])
+async def test_async_viewer_rejection_completes_operator_without_consumer_confirmation(
+    tmp_path: Path,
+    retained_failure: bool,
+) -> None:
+    from types import SimpleNamespace
+
+    from cephvr.acquisition.coordinator.manual_device_status import (
+        ManualDeviceStatusReporter,
+    )
+    from cephvr.acquisition.coordinator.manual_operation_results import (
+        ManualOperationResults,
+    )
+    from cephvr.acquisition.ports import ControllerPort
+    from cephvr.acquisition.runtime import AcquisitionCoordinatorRuntime
+    from cephvr.acquisition.state import CoordinatorIdentity, PulseRecord
+
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    controller = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    ledger = controller.camera_status_retention.ledger
+    assert ledger is not None
+    ledger.admit(parent, b"viewer", 1, work_key=parent)
+    _start(
+        controller, parent, child, svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER, False
+    )
+
+    class Controller:
+        async def report_acquisition_device_status(self, report, *, deadline_ns):
+            return await controller.report_projection("devices", report, ingress_ns=900)
+
+        async def report_lifecycle(self, report, *, deadline_ns):
+            return pb.ReportReceipt(result=pb.COMMAND_RESULT_REJECTED)
+
+    identity = CoordinatorIdentity(
+        backend,
+        pb.ProcessIdentity(),
+        pb.ProcessIdentity(),
+        pb.ProcessIdentity(),
+        pb.ProcessIdentity(),
+    )
+    commands = CommandLedger(
+        _id(),
+        10_000,
+        max_records=16,
+        max_bytes=1_000_000,
+        result_reservation_bytes=4096,
+    )
+    commands.admit(child, b"viewer", 1, work_key=child)
+    peer = cast(ControllerPort, Controller())
+    reporter = ManualDeviceStatusReporter(
+        identity=identity,
+        controller=peer,
+        commands=commands,
+        pulse=PulseRecord(),
+        clock=lambda: 100,
+    )
+    # Failure of a viewer leaves the independently running capture intact.
+    run_id = _id()
+    reporter.update_camera_state(
+        1,
+        device_open=True,
+        preview_running=True,
+        preview_prepared=True,
+        preview_run_id=run_id,
+    )
+    results = ManualOperationResults(
+        identity=identity, controller=peer, device_status=reporter
+    )
+    command = svc.BackendCommand(command_id=child)
+    original = None
+    if retained_failure:
+        await results.report_failure(
+            command,
+            command_name="attach_preview_viewer",
+            deadline_ns=999,
+            failure="viewer transfer rejected",
+        )
+        original = reporter.get_report(child).SerializeToString(deterministic=True)
+    coordinator = AcquisitionCoordinatorRuntime.__new__(AcquisitionCoordinatorRuntime)
+    coordinator.controller = peer
+    coordinator.coordinator_identity = identity
+    coordinator.manual_devices = SimpleNamespace(results=results)
+    outcome = pb.OperationState(
+        context=pb.OperationContext(command_id=child),
+        complete=True,
+        succeeded=False,
+        failure=pb.Failure(code="PREVIEW_VIEWER", message="viewer transfer rejected"),
+    )
+
+    await coordinator.report_dispatch_failure(
+        "ExecuteCameraCommand", command, outcome, 999
+    )
+
+    result = controller.control.operations[parent]
+    assert result.complete and not result.succeeded
+    assert "viewer transfer rejected" in result.failure.message
+    assert controller.device_state.camera_operation is None
+    assert controller.projections.devices.behavioral.preview_running
+    assert controller.projections.devices.behavioral.preview_run_id == run_id
+    if original is not None:
+        assert (
+            reporter.get_report(child).SerializeToString(deterministic=True) == original
+        )

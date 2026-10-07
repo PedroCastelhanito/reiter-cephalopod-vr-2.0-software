@@ -341,3 +341,38 @@ def test_first_pfs_import_opens_assigned_camera_and_retains_sdk_readback(
     owner.edit(request, report)
     assert calls == [("open", "CAM-1"), ("import", "preset.pfs")]
     assert report.resolved_camera.applied.pfs_baseline.text == "SDK snapshot"
+
+
+@pytest.mark.parametrize("revision", [3, 4, 5, 6])
+@pytest.mark.parametrize("changed", [False, True])
+def test_preview_adoption_requires_retained_sdk_payload_and_exact_revision(
+    revision: int, changed: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.acquisition.v1 import camera_pb2 as camera
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker.camera_configuration import WorkerCameraConfiguration
+
+    state = SimpleNamespace(confirmed_configuration_revision=4)
+    owner = WorkerCameraConfiguration(SimpleNamespace(), state, lambda: False)
+    resolved = camera.CameraResolvedState(configuration_revision=4)
+    resolved.applied.device_id = "CAM-1"
+    owner._retain(resolved)
+    installed = []
+    monkeypatch.setattr(owner, "install_owned_functions", installed.append)
+    request = acq.WorkerPreparePreview(configuration_revision=revision)
+    request.camera.device.CopyFrom(resolved.applied)
+    if changed:
+        request.camera.device.device_id = "CAM-2"
+    if revision not in (4, 5):
+        with pytest.raises(RuntimeError, match="adopted camera revision"):
+            owner.require_adopted_preview(request)
+    elif changed:
+        with pytest.raises(ValueError, match="retained camera result"):
+            owner.require_adopted_preview(request)
+    else:
+        owner.require_adopted_preview(request)
+        assert installed == [request.camera]
+        assert state.confirmed_configuration_revision == revision
+        return
+    assert not installed
+    assert state.confirmed_configuration_revision == 4

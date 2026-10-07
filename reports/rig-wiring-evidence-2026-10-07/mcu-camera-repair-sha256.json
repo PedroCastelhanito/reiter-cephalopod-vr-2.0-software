@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-07",
+  "scope": "Captured camera MCU repair inputs; shared files may change in concurrent viewer work",
+  "files": {
+    "src/cephvr/acquisition/coordinator/manual_pulses.py": "ce7a0db3c1d57f37b9ec10207067b7c0099f118052aaf12c928b4cb3e33dd169",
+    "src/cephvr/controller/device/readback.py": "95e944ab2a1d64ff3482cfad8ca40f35b5516602622b5241b7738b8553f20464",
+    "tests/acquisition/test_manual_devices.py": "795caaf2d16bff0d7cefca909f40c1581dcd4d9df8c6e3764cbfc8296889c8c9",
+    "tests/controller/test_camera_evidence.py": "be2557b250988bf9c689ec01fa72ad7f58ee221918c27473fd2269fa1654952e"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "firmware/uno/cephvr2_mcu/cephvr2_mcu.ino": "5abce26e94630477058198b1f2bceb15797f91a7e352bcf9074f7687c69d0b36",
+  "src/cephvr/acquisition/microcontroller/protocol.py": "0c25a3c5c1623a6022ca1db464ed7c5a6b54ffdd4a0f549a1f6dc52b1a28ccbf",
+  "src/cephvr/acquisition/config/policy.py": "06a712d05ad9e817dbc5bb50d4d433e3dc3f9bb3c9712bcde042b8effb125884",
+  "src/cephvr/gui/microcontroller.py": "16e9f750a2fbc96f042d6a5bab82d40a027165328d2ff3ba458c4fe192bbb9f9",
+  "tests/acquisition/test_microcontroller_protocol.py": "19eb682690f4f72a42faef7ab99463b9f05afa1f2b10a6662abf1f606cb0a9db",
+  "tests/acquisition/test_microcontroller_owner.py": "d32a0d0058bdf2e02860fb9dc3b35704c9297d6061338cdc503956593bcc9d10",
+  "tests/gui/test_dashboard.py": "90250b932123c64c2563b4accf8669b1d1e78e597546b43a69764fc1af754d3a",
+  "contracts/policy/acquisition_policy.toml": "2b2032ff5c2ffcb0d2e5388611b7abd2292a84d476e7e168e03c9a832628f476",
+  "config/backends/acquisition_config.toml": "23c9080ca921662a927bd01b4fc15560b287c74dddcdbdcf5ce8fcec1c984efe"
+}

@@ -11,9 +11,9 @@ from typing import Any
 
 from cephvr.shared.config import ConfigurationError, LoadedPair, load_pair
 
-POLICY_VERSION = 12
+POLICY_VERSION = 15
 CONTRACT_VERSION = 1
-_POLICY_SHA256 = "08f6484488bd33ddcd0cb407ce7164aeb41c243479b94884777e3d8b74f80bb3"
+_POLICY_SHA256 = "f15eabd26e6b14033a42c0e92b7b11984bfd54196c7503c62a2ccc21743e51dc"
 
 _CONFIG_KEYS = frozenset(
     """
@@ -90,7 +90,7 @@ _POLICY_KEYS = frozenset(
     microcontroller.frequency_readback_precision microcontroller.configuration_update
     microcontroller.disabled_output_fields microcontroller.configuration_while_running
     microcontroller.keepalive_reply microcontroller.status_reply
-    microcontroller.pulse_counters microcontroller.watchdog_status_clear
+    microcontroller.pulse_counters microcontroller.diagnostic_edge_counts microcontroller.watchdog_status_clear
     microcontroller.command_timeout_action microcontroller.pulse_generation
     microcontroller.pulse_scheduler microcontroller.clock_source
     microcontroller.duty_cycle microcontroller.communication_loss_action
@@ -152,11 +152,13 @@ _POLICY_KEYS = frozenset(
     preview.conversion_implementation preview.brightness_scaling
     preview.manual_outside_session preview.session_preview_gates_nothing
     preview.stop_before_setup
+    preview.window_presentation
     """.split()
 )
 
 _FIXED_POLICY: dict[str, object] = {
-    "microcontroller.protocol_version": 2,
+    "microcontroller.protocol_version": 3,
+    "microcontroller.diagnostic_edge_counts": "input_observed_output_generated",
     "microcontroller.max_outstanding_requests": 1,
     "microcontroller.max_line_bytes": 512,
     "microcontroller.frequency_resolution_hz": Decimal("0.1"),
@@ -197,7 +199,7 @@ def _load_pair(root: Path) -> LoadedPair:
     ).encode("utf-8")
     if hashlib.sha256(encoded).hexdigest() != _POLICY_SHA256:
         raise ConfigurationError(
-            "acquisition fixed-policy declarations differ from policy version 12"
+            f"acquisition fixed-policy declarations differ from policy version {POLICY_VERSION}"
         )
     _validate_operator_structure(pair.config)
     return pair

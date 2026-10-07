@@ -112,6 +112,36 @@ class WorkerCameraConfiguration:
         if not request.HasField("camera"):
             raise ValueError("session Setup lacks the accepted camera payload")
         payload = request.camera
+        self._require_matching_payload(payload, resolved, "session Setup")
+        self.install_owned_functions(payload)
+        self.state.confirmed_configuration_revision = request.configuration_revision
+
+    def require_adopted_preview(self, request: acq.WorkerPreparePreview) -> None:
+        """Bind unchanged/readback-adopted preview revision to retained SDK facts."""
+        resolved = self._resolved
+        if (
+            not request.HasField("camera")
+            or not request.HasField("configuration_revision")
+            or resolved is None
+            or not resolved.HasField("configuration_revision")
+        ):
+            raise ValueError("preview preparation lacks retained camera resolution")
+        # Manual readback adoption increments only when resolved values change (A10).
+        if request.configuration_revision not in (
+            resolved.configuration_revision,
+            resolved.configuration_revision + 1,
+        ):
+            raise RuntimeError("preview preparation is not the adopted camera revision")
+        self._require_matching_payload(request.camera, resolved, "preview preparation")
+        self.install_owned_functions(request.camera)
+        self.state.confirmed_configuration_revision = request.configuration_revision
+
+    @staticmethod
+    def _require_matching_payload(
+        payload: acq.CameraWorkerSetupPayload,
+        resolved: camera.CameraResolvedState,
+        operation: str,
+    ) -> None:
         if (
             payload.device.SerializeToString(deterministic=True)
             != resolved.applied.SerializeToString(deterministic=True)
@@ -124,9 +154,7 @@ class WorkerCameraConfiguration:
             or payload.camera_clock.SerializeToString(deterministic=True)
             != resolved.camera_clock.SerializeToString(deterministic=True)
         ):
-            raise ValueError("session Setup differs from the retained camera result")
-        self.install_owned_functions(payload)
-        self.state.confirmed_configuration_revision = request.configuration_revision
+            raise ValueError(f"{operation} differs from the retained camera result")
 
     def install_owned_functions(self, payload: acq.CameraWorkerSetupPayload) -> None:
         scopes = validate_camera_function_scopes(payload, self.state.context)

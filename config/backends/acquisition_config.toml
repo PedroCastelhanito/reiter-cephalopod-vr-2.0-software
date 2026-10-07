@@ -2,7 +2,7 @@
 # Camera serials/rates are owner-assigned below; other rig bindings remain incomplete. A02 owns process layout.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/acquisition_policy.toml; versions must match.
-policy_version = 12
+policy_version = 15
 
 [rpc]
 # Fixed acquisition service endpoint; loopback-only, shared by all its clients.
@@ -150,6 +150,7 @@ ffmpeg_args = [
 
 [microcontroller]
 # COM8 Uno answered a matched protocol-v2 CAPS/STATUS probe on 2026-10-05.
+# Protocol 3 host now requires the manually installed counted-diagnostic firmware.
 # Configurable before Setup; baud must match the firmware connection.
 baud_rate = 115200
 # Earlier applicable trial deadlines always win; this cannot extend reporting cutoffs.

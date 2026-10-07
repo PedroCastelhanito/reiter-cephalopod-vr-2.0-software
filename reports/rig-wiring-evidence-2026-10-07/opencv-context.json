@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-07T07:04:39.977827+00:00",
+  "source_revision": "08d146d0d97847cb3f395144886fc175dc627487",
+  "dirty_working_tree": true,
+  "input_hashes_captured_after_tests": {
+    "architecture.md": "935a29a7c6869f3af056af941b6623ab17be1d175a026c88621cd6b0524ee8c1",
+    "config/backends/acquisition_config.toml": "b9b1be8368d7345eba7a53bc475ffe0d26840a18611403ba5dd954ca20fdec78",
+    "contracts/acquisition/configuration-control.md": "a9f727e247c858f4055383f3034e03d492ece9affd19f0ec1e00fc982bb12a83",
+    "contracts/acquisition/microcontroller.md": "3ab580b88ade810fc109a8b93f4e7d652431f62ffab975d0f8d82ce70ef5e479",
+    "contracts/acquisition/preview-control.md": "e1845f0c474eacc52b9db36f8844e7dd70dd117d5cf41ad6dc4ce1a3b7e76c8d",
+    "contracts/cephvr/control/v1/services.proto": "13642faf1815cd4b7cd3c7efcdebf806ed2f57abc18c14f128f7f14171efe8e8",
+    "contracts/cephvr/control/v1/types.proto": "091af2248ed445935684b91e05d79efe9c7c4cb475cc4e90930c18345311e44e",
+    "contracts/policy/acquisition_policy.toml": "1a8e8d1aaefb078d88f1d6ce057b2b3a53a46fe501acddd9b73ef8e36c41af6d",
+    "docs/architecture/acquisition.md": "7a0e7fa2d24ec3ea6b82213faf9abbc102908bf51ea629003fa1598bc484ea70",
+    "docs/architecture/gui.md": "0f7c3dd44127e2f7e67c974f231e8bed831c65c63373f738dbb5bf06f02d62d1",
+    "firmware/uno/README.md": "6e4ebb7ac1d18929ee030b90f017ed9f73da9d37eeefeb384c497f8609ebec86",
+    "firmware/uno/cephvr2_mcu/cephvr2_mcu.ino": "5abce26e94630477058198b1f2bceb15797f91a7e352bcf9074f7687c69d0b36",
+    "pyproject.toml": "94dfc67a6e4a847f4722924494be0955c79b2f5f8316c0f4c9c4dda8befe58b2",
+    "src/cephvr/acquisition/config/policy.py": "43466da36734717d106d206c45f45379fdef5b36ebd9b6e35c7ab1ea40b42448",
+    "src/cephvr/acquisition/coordinator/cleanup.py": "98a05aa94ca7a0c97e105e60e9f38afe43909b0843bca6f26b394ea51ba669dd",
+    "src/cephvr/acquisition/coordinator/manual_device_status.py": "4dd4c59ac05d42bc711953745ebaca8d0b094fcc198d8761e0680cb489fcb57d",
+    "src/cephvr/acquisition/coordinator/manual_operation_results.py": "6fd725b809954fd049ab5eb3573b7487acf20c139c90cd526a7294fb4816b290",
+    "src/cephvr/acquisition/coordinator/manual_preview.py": "6f53ab5040bc7e45c7544522adcf7a20ee1074e5643311c404fa65774b26ee97",
+    "src/cephvr/acquisition/coordinator/manual_preview_pulse.py": "b8bd83b6cc49ae6ce3799f7fdf16712f577c6b95f04faee4ce0365158cf71132",
+    "src/cephvr/acquisition/coordinator/manual_preview_window.py": "1a63af57f1e25bea2a26b560b34e59f1098dba2e9c7819b763424dba862b6019",
+    "src/cephvr/acquisition/coordinator/manual_pulses.py": "ce7a0db3c1d57f37b9ec10207067b7c0099f118052aaf12c928b4cb3e33dd169",
+    "src/cephvr/acquisition/coordinator/preview_windows.py": "857c428a91bc52a069a246afb331e8bb8cf8cc32dcc32572a0e13c11beda4857",
+    "src/cephvr/acquisition/microcontroller/protocol.py": "0c25a3c5c1623a6022ca1db464ed7c5a6b54ffdd4a0f549a1f6dc52b1a28ccbf",
+    "src/cephvr/acquisition/preview/__init__.py": "76a3c6ff46299057eaef6853878cc8a1a3268923fbce8bd909a44b86b1b72c0d",
+    "src/cephvr/acquisition/preview/highgui.py": "ada1b8f925f920bfff860d655574087d9f20b328b77235d029736a2b45af9d32",
+    "src/cephvr/acquisition/runtime.py": "3e7e0913bca6c13b52a33ade9dadb64e0823d506b7dd442fbdee64de3b605c0f",
+    "src/cephvr/controller/device/camera.py": "f1537649a84ccf34aef487af960f7a7f24f64ccea846959ba4da4ecced5578ed",
+    "src/cephvr/controller/device/readback.py": "95e944ab2a1d64ff3482cfad8ca40f35b5516602622b5241b7738b8553f20464",
+    "src/cephvr/controller/device/views.py": "f33113c6f9c63c63429195237f7a86413c02afab29a2d3f2dd1915fe89c649a0",
+    "src/cephvr/controller/device_projection.py": "40dea8b365188be0510ff9cdf0e37173645e7cfd39e6516546c247bfb4d740d2",
+    "src/cephvr/controller/projections.py": "d68fa44993484be1c845c1669ef4e037bcaa02e016bce0988bb49a06f84efb58",
+    "src/cephvr/gui/camera_viewer.py": "deleted",
+    "src/cephvr/gui/controller_bridge.py": "4f66aa0d82b5085fe611f6691fc1228c1f53dcba378f6afa40dba03e722997ef",
+    "src/cephvr/gui/main.py": "dcf16e407005b31d678cdeefe06537fccb2473a3f82cac5f6be0b1eb13233389",
+    "src/cephvr/gui/managed_device_commands.py": "eef62afe1697691e0976e7264e07db3ab32ed56e9cee21124238f3f1970ec8aa",
+    "src/cephvr/gui/managed_preview_viewers.py": "613266006155463c6177a5bdd83a329e0926257d2f8961eede0f5ba0fd8849c4",
+    "src/cephvr/gui/microcontroller.py": "16e9f750a2fbc96f042d6a5bab82d40a027165328d2ff3ba458c4fe192bbb9f9",
+    "tests/acquisition/test_cleanup_aggregation.py": "1de96b508626adf13968eb6706efbc5655ba9a903ab01bb4586015a24cd49b9e",
+    "tests/acquisition/test_manual_devices.py": "795caaf2d16bff0d7cefca909f40c1581dcd4d9df8c6e3764cbfc8296889c8c9",
+    "tests/acquisition/test_manual_preview.py": "a1a12575015b6d4002228978c0aa4a957d0a9c7e11b2275a5c52549c95678df9",
+    "tests/acquisition/test_microcontroller_owner.py": "d32a0d0058bdf2e02860fb9dc3b35704c9297d6061338cdc503956593bcc9d10",
+    "tests/acquisition/test_microcontroller_protocol.py": "19eb682690f4f72a42faef7ab99463b9f05afa1f2b10a6662abf1f606cb0a9db",
+    "tests/controller/test_camera_evidence.py": "6fd060510c817b64c451f8e3a2821f3837fd03bad15e0f98539dc0640272d1de",
+    "tests/gui/test_dashboard.py": "f9741bc3a6ed6210c37931a05e39c6996c53817fb6c44006812538c4ffa148b8"
+  },
+  "packages": {
+    "opencv-python": "4.13.0.92",
+    "numpy": "2.4.4",
+    "pypylon": "26.3.1"
+  },
+  "opencv_gui_build": "WIN32UI",
+  "artifacts_before_disposable_cleanup": {
+    "dist/cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl": "5a0fb7426e2b38813b6f849a17fccc8d5188e5dde89b6073e8fd3cd31fde65c8",
+    "dist/cephvr-2.0.0.dev0.tar.gz": "623f89c8f8ed0f90958c8065e89596ada360a5469e854beeb92bc991fda494b0",
+    "reports/rig-wiring-evidence-2026-10-07/.opencv-install/opencv_python-4.13.0.92-cp37-abi3-win_amd64.whl": "423d934c9fafb91aad38edf26efb46da91ffbc05f3f59c4b0c72e699720706f5"
+  },
+  "tests": {
+    "opencv-owner-final.xml": {
+      "tests": 528.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 2.0,
+      "time": 8.843
+    },
+    "opencv-gui-final.xml": {
+      "tests": 17.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 4.563
+    },
+    "opencv-first-image-tests.xml": {
+      "tests": 64.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 0.794
+    },
+    "opencv-tracking-tests.xml": {
+      "tests": 72.0,
+      "failures": 0.0,
+      "errors": 0.0,
+      "skipped": 0.0,
+      "time": 2.286
+    }
+  },
+  "methods": [
+    "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/acquisition tests/controller tests/client -q -ra -m not-rig (marker expression: not rig)",
+    "offscreen tests/gui/test_dashboard.py -k managed_camera/preview_window/preview_selector/preview_dialog/managed_bridge/controller_bridge",
+    "Final tests/acquisition/test_manual_preview.py tests/acquisition/test_cleanup_aggregation.py tests/controller/test_camera_evidence.py -m not-rig (marker expression: not rig)",
+    "ruff check and format --check: acquisition/controller/gui source and owning tests; 444 files",
+    "mypy --platform win32 acquisition/controller/gui; 391 sources",
+    "check_backend_boundaries.py; 602 modules, zero violations",
+    "python -m build --no-isolation; pip check; generated 19 protobuf sources",
+    "python -m pytest tests/tracking -q -ra -m \"not rig\"; 72 passed, one rig deselection"
+  ],
+  "native_scope": "Two actual Win32 OpenCV windows using isolated capacity-one rings, SDK conversion of prepared test pixels, native WM_CLOSE, live unaffected producer rings; no physical camera/serial access. Final Show first-image and delayed-close observation refinements pass focused tests. Package build preceded the final observation-delivery refinement; dependency/packaging declarations are unchanged.",
+  "limitations": [
+    "Owner-reported prior Preview success has no generation/settings/timing provenance.",
+    "Active rig runtime was not stopped or restarted; no physical-camera OpenCV acceptance here.",
+    "Coordinate full restart with the pending protocol-3 MCU firmware installation.",
+    "Capture/heartbeat, Tracking, sustained throughput and physical display precision remain outstanding.",
+    "Current OpenCV path supports 8-bit preview; other depths fail explicitly.",
+    "Native package uninstall left an obsolete in-use .venv/Lib/site-packages/~v2 directory; preserve the active runtime DLL until normal exit."
+  ],
+  "governing_decisions": [
+    "A10 revision 53",
+    "G01 revision 121",
+    "A03",
+    "E08",
+    "E14",
+    "ARCH-002"
+  ]
+}

@@ -1,0 +1,8 @@
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: coordinator heartbeat receipt exceeded the configured silence bound
+Traceback (most recent call last):
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi", line 750, in grpc._cython.cygrpc._handle_exceptions
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi", line 185, in _send_error_status_from_server
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/callback_common.pyx.pxi", line 99, in execute_batch
+grpc._cython.cygrpc.ExecuteBatchError: Failed "execute_batch": (<grpc._cython.cygrpc.SendInitialMetadataOperation object at 0x000001C7DFA5A700>, <grpc._cython.cygrpc.SendStatusFromServerOperation object at 0x000001C7DFA7E0C0>)
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

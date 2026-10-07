@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 162
+**Status:** Accepted · **Revision:** 163
 
 **Processes and startup**
 
@@ -252,8 +252,12 @@ design; runtime monitoring remains unimplemented.
   common worker framework is added. Native runtime implementation is pending.
 - Machine-wide OS guards allow one application/supervisor/controller/GUI/backend
   role, independent of ports or checkout. Launch admission is serialized, including
-  Starting. An interactive duplicate application launch asks Y/N before replacing
-  the existing runtime; N/EOF/noninteractive launch leaves it running. Y signals
+  Starting. An interactive duplicate launch waits for the existing owner's
+  published endpoint, then asks Y/N before replacing that runtime. Retry an absent
+  endpoint within the requester's startup health-silence budget; invalid/unsafe
+  records fail immediately. A persistently absent endpoint reports its exact
+  runtime path and requires the owning terminal/controller to stop that runtime.
+  N/EOF/noninteractive launch leaves it running. Y signals
   only the retained owner-private, generation-specific launcher event. That launcher
   terminates its own application job, verifies empty membership and publishes its
   exact exit receipt before releasing the guard. The requester requires that receipt

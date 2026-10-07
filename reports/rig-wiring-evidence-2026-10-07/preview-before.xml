@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="1.758" timestamp="2026-10-07T15:28:13.111771+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.acquisition.test_manual_preview" name="test_controller_viewer_attachment_uses_existing_policy_and_client_identity[gui]" time="0.004"><failure message="AssertionError: code: &quot;STALE_PREVIEW_COMMAND&quot;&#10;  message: &quot;preview command is stale&quot;&#10;  &#10;assert 2 == 1&#10; +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: &quot;STALE_PREVIEW_COMMAND&quot;\n  message: &quot;preview command is stale&quot;\n}\ncommand_id: &quot;df0186bc-4f7a-4b82-8406-af58c8b6f6b3&quot;\n.result&#10; +  and   1 = control.COMMAND_RESULT_ACCEPTED">consumer_role = 'gui'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("consumer_role", ["gui", "cli"])
+    async def test_controller_viewer_attachment_uses_existing_policy_and_client_identity(
+        consumer_role: str,
+    ) -&gt; None:
+        owner = ManualPreview.__new__(ManualPreview)
+        controller = control.ProcessIdentity(role="controller", generation=str(uuid4()))
+        backend = control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        )
+        owner.identity = SimpleNamespace(controller=controller, backend=backend)
+        policy = runtime.AcquisitionFilePolicies()
+        policy.cameras.add(camera=1, frame_silence_timeout_ns=1_000_000_000)
+        owner.configuration = ConfigurationRecord(control.AcquisitionSettings(), policy, 2)
+        owner.clock = lambda: 1
+        owner.session_slot = SimpleNamespace(current=None)
+        preview = WorkerPreview(
+            run_id=str(uuid4()),
+            configuration_revision=2,
+            allocation_id=str(uuid4()),
+            started=True,
+        )
+        owner.workers = SimpleNamespace(workers={1: SimpleNamespace(preview=preview)})
+        owner.device_status = SimpleNamespace(reserve=lambda _command: None)
+        owner.transfers = SimpleNamespace(attach=AsyncMock())
+        owner.results = SimpleNamespace(
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                )
+            )
+        )
+        request = wire.AcquisitionCameraCommand(
+            camera=1,
+            kind=wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+            configuration_revision=2,
+            preview_run_id=preview.run_id,
+            preview_consumer=control.ProcessIdentity(
+                role=consumer_role,
+                generation=str(uuid4()),
+            ),
+        )
+        request.command.command_id = str(uuid4())
+        request.command.issuer.CopyFrom(controller)
+        request.command.target.CopyFrom(backend)
+        request.command.parent_operation.command_id = str(uuid4())
+    
+        result = await owner.execute(request, deadline_ns=100)
+    
+&gt;       assert result.result == control.COMMAND_RESULT_ACCEPTED, result.failure
+E       AssertionError: code: "STALE_PREVIEW_COMMAND"
+E         message: "preview command is stale"
+E         
+E       assert 2 == 1
+E        +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "STALE_PREVIEW_COMMAND"\n  message: "preview command is stale"\n}\ncommand_id: "df0186bc-4f7a-4b82-8406-af58c8b6f6b3"\n.result
+E        +  and   1 = control.COMMAND_RESULT_ACCEPTED
+
+tests\acquisition\test_manual_preview.py:107: AssertionError</failure></testcase><testcase classname="tests.acquisition.test_manual_preview" name="test_controller_viewer_attachment_uses_existing_policy_and_client_identity[cli]" time="0.002"><failure message="AssertionError: code: &quot;STALE_PREVIEW_COMMAND&quot;&#10;  message: &quot;preview command is stale&quot;&#10;  &#10;assert 2 == 1&#10; +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: &quot;STALE_PREVIEW_COMMAND&quot;\n  message: &quot;preview command is stale&quot;\n}\ncommand_id: &quot;5cfd8010-b553-4be0-a394-1c0d4f30b0a7&quot;\n.result&#10; +  and   1 = control.COMMAND_RESULT_ACCEPTED">consumer_role = 'cli'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("consumer_role", ["gui", "cli"])
+    async def test_controller_viewer_attachment_uses_existing_policy_and_client_identity(
+        consumer_role: str,
+    ) -&gt; None:
+        owner = ManualPreview.__new__(ManualPreview)
+        controller = control.ProcessIdentity(role="controller", generation=str(uuid4()))
+        backend = control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        )
+        owner.identity = SimpleNamespace(controller=controller, backend=backend)
+        policy = runtime.AcquisitionFilePolicies()
+        policy.cameras.add(camera=1, frame_silence_timeout_ns=1_000_000_000)
+        owner.configuration = ConfigurationRecord(control.AcquisitionSettings(), policy, 2)
+        owner.clock = lambda: 1
+        owner.session_slot = SimpleNamespace(current=None)
+        preview = WorkerPreview(
+            run_id=str(uuid4()),
+            configuration_revision=2,
+            allocation_id=str(uuid4()),
+            started=True,
+        )
+        owner.workers = SimpleNamespace(workers={1: SimpleNamespace(preview=preview)})
+        owner.device_status = SimpleNamespace(reserve=lambda _command: None)
+        owner.transfers = SimpleNamespace(attach=AsyncMock())
+        owner.results = SimpleNamespace(
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                )
+            )
+        )
+        request = wire.AcquisitionCameraCommand(
+            camera=1,
+            kind=wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+            configuration_revision=2,
+            preview_run_id=preview.run_id,
+            preview_consumer=control.ProcessIdentity(
+                role=consumer_role,
+                generation=str(uuid4()),
+            ),
+        )
+        request.command.command_id = str(uuid4())
+        request.command.issuer.CopyFrom(controller)
+        request.command.target.CopyFrom(backend)
+        request.command.parent_operation.command_id = str(uuid4())
+    
+        result = await owner.execute(request, deadline_ns=100)
+    
+&gt;       assert result.result == control.COMMAND_RESULT_ACCEPTED, result.failure
+E       AssertionError: code: "STALE_PREVIEW_COMMAND"
+E         message: "preview command is stale"
+E         
+E       assert 2 == 1
+E        +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "STALE_PREVIEW_COMMAND"\n  message: "preview command is stale"\n}\ncommand_id: "5cfd8010-b553-4be0-a394-1c0d4f30b0a7"\n.result
+E        +  and   1 = control.COMMAND_RESULT_ACCEPTED
+
+tests\acquisition\test_manual_preview.py:107: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_preview_offer_waits_for_consumer_completion[True]" time="0.017"><failure message="AssertionError: An offered attachment is not confirmed consumer evidence&#10;assert not True&#10; +  where True = &lt;built-in method done of _asyncio.Task object at 0x0000021F7586EF80&gt;()&#10; +    where &lt;built-in method done of _asyncio.Task object at 0x0000021F7586EF80&gt; = &lt;Task finished name='Task-8' coro=&lt;_camera() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\managed_device_commands.py:122&gt; result=None&gt;.done">succeeded = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("succeeded", [True, False])
+    async def test_preview_offer_waits_for_consumer_completion(succeeded: bool) -&gt; None:
+        import asyncio
+        from unittest.mock import AsyncMock
+    
+        from cephvr.client.session import ClientError, CommandOutcome
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_device_commands import _camera
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation=str(uuid4()))
+        state.acquisition_devices.behavioral.preview_run_id = str(uuid4())
+        principal = Principal("gui", str(uuid4()), "test")
+        command_id = str(uuid4())
+        offered = asyncio.Event()
+        confirmed = asyncio.Event()
+    
+        async def wait_result(identifier: str) -&gt; CommandOutcome:
+            assert identifier == command_id
+            await confirmed.wait()
+            return CommandOutcome(command_id, True, succeeded, failure="attachment failed")
+    
+        client = SimpleNamespace(
+            snapshot=state,
+            rpc_timeout_s=1,
+            principal=principal,
+            operator_command=lambda: rpc.OperatorCommand(),
+            execute=AsyncMock(return_value=CommandOutcome(command_id, False, None)),
+            wait_result=wait_result,
+            stub=SimpleNamespace(
+                GetPreviewAttachment=AsyncMock(
+                    return_value=rpc.PreviewAttachmentResult(available=True),
+                )
+            ),
+        )
+        task = asyncio.create_task(
+            _camera(
+                client,
+                {"role": 1, "kind": rpc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER},
+                principal,
+                lambda *_: offered.set(),
+            )
+        )
+        try:
+            await asyncio.wait_for(offered.wait(), 1)
+&gt;           assert not task.done(), (
+                "An offered attachment is not confirmed consumer evidence"
+            )
+E           AssertionError: An offered attachment is not confirmed consumer evidence
+E           assert not True
+E            +  where True = &lt;built-in method done of _asyncio.Task object at 0x0000021F7586EF80&gt;()
+E            +    where &lt;built-in method done of _asyncio.Task object at 0x0000021F7586EF80&gt; = &lt;Task finished name='Task-8' coro=&lt;_camera() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\managed_device_commands.py:122&gt; result=None&gt;.done
+
+tests\gui\test_dashboard.py:795: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_preview_offer_waits_for_consumer_completion[False]" time="0.002"><failure message="AssertionError: An offered attachment is not confirmed consumer evidence&#10;assert not True&#10; +  where True = &lt;built-in method done of _asyncio.Task object at 0x0000021F75993880&gt;()&#10; +    where &lt;built-in method done of _asyncio.Task object at 0x0000021F75993880&gt; = &lt;Task finished name='Task-13' coro=&lt;_camera() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\managed_device_commands.py:122&gt; result=None&gt;.done">succeeded = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("succeeded", [True, False])
+    async def test_preview_offer_waits_for_consumer_completion(succeeded: bool) -&gt; None:
+        import asyncio
+        from unittest.mock import AsyncMock
+    
+        from cephvr.client.session import ClientError, CommandOutcome
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_device_commands import _camera
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation=str(uuid4()))
+        state.acquisition_devices.behavioral.preview_run_id = str(uuid4())
+        principal = Principal("gui", str(uuid4()), "test")
+        command_id = str(uuid4())
+        offered = asyncio.Event()
+        confirmed = asyncio.Event()
+    
+        async def wait_result(identifier: str) -&gt; CommandOutcome:
+            assert identifier == command_id
+            await confirmed.wait()
+            return CommandOutcome(command_id, True, succeeded, failure="attachment failed")
+    
+        client = SimpleNamespace(
+            snapshot=state,
+            rpc_timeout_s=1,
+            principal=principal,
+            operator_command=lambda: rpc.OperatorCommand(),
+            execute=AsyncMock(return_value=CommandOutcome(command_id, False, None)),
+            wait_result=wait_result,
+            stub=SimpleNamespace(
+                GetPreviewAttachment=AsyncMock(
+                    return_value=rpc.PreviewAttachmentResult(available=True),
+                )
+            ),
+        )
+        task = asyncio.create_task(
+            _camera(
+                client,
+                {"role": 1, "kind": rpc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER},
+                principal,
+                lambda *_: offered.set(),
+            )
+        )
+        try:
+            await asyncio.wait_for(offered.wait(), 1)
+&gt;           assert not task.done(), (
+                "An offered attachment is not confirmed consumer evidence"
+            )
+E           AssertionError: An offered attachment is not confirmed consumer evidence
+E           assert not True
+E            +  where True = &lt;built-in method done of _asyncio.Task object at 0x0000021F75993880&gt;()
+E            +    where &lt;built-in method done of _asyncio.Task object at 0x0000021F75993880&gt; = &lt;Task finished name='Task-13' coro=&lt;_camera() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\gui\managed_device_commands.py:122&gt; result=None&gt;.done
+
+tests\gui\test_dashboard.py:795: AssertionError</failure></testcase></testsuite></testsuites>

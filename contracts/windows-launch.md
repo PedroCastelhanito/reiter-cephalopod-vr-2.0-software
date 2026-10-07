@@ -68,6 +68,15 @@ shutdown budget. The event uses the existing owner-only native event helper; no
 service or session authority is added. A requester opens that exact event before
 asking, so an answer cannot target a later launcher generation.
 
+Guard acquisition precedes endpoint publication. An interactive requester retries
+only an absent descriptor, bounded by its already resolved startup health-silence
+timeout. Retain the published exact event before offering Y/N. Unsafe, corrupt or
+invalid records fail immediately; timeout fails without prompting, signaling or
+starting another runtime. Startup errors report the exact expected `launcher.json`
+path and the requirement to use the running launcher's Windows profile/runtime
+directory or stop it through its owning terminal/controller. No PID discovery
+substitutes for missing authority.
+
 Y asks the old containment owner to terminate its application job immediately.
 It retains the sole job handle and guard until empty membership is verified, then
 writes the existing generation-bound application-exit receipt. The requester waits

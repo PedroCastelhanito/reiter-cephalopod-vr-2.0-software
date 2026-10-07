@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from typing import cast
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -35,6 +36,25 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.commands import CommandLedger
+
+
+async def test_unconfirmed_preview_release_still_attempts_capture_and_pulse_cleanup() -> (
+    None
+):
+    owner = CoordinatorCleanup.__new__(CoordinatorCleanup)
+    owner._active = False
+    owner.close_preview_windows = AsyncMock(
+        side_effect=RuntimeError("viewer still owned")
+    )
+    owner._execute = AsyncMock(
+        return_value=control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+    )
+    command = wire.BackendCommand(command_id=str(uuid4()))
+    result = await owner.execute(command, deadline_ns=100)
+    owner._execute.assert_awaited_once_with(command, deadline_ns=100)
+    assert result.result == control.COMMAND_RESULT_REJECTED
+    assert result.failure.code == "PREVIEW_RELEASE_UNCONFIRMED"
+    assert not owner._active
 
 
 def _cleanup_owner() -> CoordinatorCleanup:

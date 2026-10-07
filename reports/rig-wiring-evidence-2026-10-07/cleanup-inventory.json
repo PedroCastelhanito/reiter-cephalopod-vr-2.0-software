@@ -1,0 +1,397 @@
+[
+  {
+    "bytes": 33202405.0,
+    "files": 18,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.mypy_cache"
+  },
+  {
+    "bytes": 139016.0,
+    "files": 5,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.pytest_cache"
+  },
+  {
+    "bytes": 55310.0,
+    "files": 12,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.ruff_cache"
+  },
+  {
+    "bytes": null,
+    "files": 0,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp"
+  },
+  {
+    "bytes": null,
+    "files": 0,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tpreview-recheck-final06"
+  },
+  {
+    "bytes": null,
+    "files": 0,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tpreview-scope06"
+  },
+  {
+    "bytes": null,
+    "files": 0,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tpreview-scope061"
+  },
+  {
+    "bytes": 84156.0,
+    "files": 8,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\contracts\\tracking\\__pycache__"
+  },
+  {
+    "bytes": 5719.0,
+    "files": 8,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\contracts\\visual_stimulus\\__pycache__"
+  },
+  {
+    "bytes": 165678.0,
+    "files": 6,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\contracts\\visual_stimulus\\tests\\__pycache__"
+  },
+  {
+    "bytes": 2811455.0,
+    "files": 2,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-wiring-evidence-2026-10-07\\automated-regenerated\\packages"
+  },
+  {
+    "bytes": 2811429.0,
+    "files": 2,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-wiring-evidence-2026-10-07\\automated\\packages"
+  },
+  {
+    "bytes": 280.0,
+    "files": 1,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\__pycache__"
+  },
+  {
+    "bytes": 92600.0,
+    "files": 11,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\__pycache__"
+  },
+  {
+    "bytes": 66166.0,
+    "files": 9,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\buffers\\__pycache__"
+  },
+  {
+    "bytes": 145503.0,
+    "files": 14,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\camera\\__pycache__"
+  },
+  {
+    "bytes": 61323.0,
+    "files": 10,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\config\\__pycache__"
+  },
+  {
+    "bytes": 658973.0,
+    "files": 52,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\__pycache__"
+  },
+  {
+    "bytes": 52597.0,
+    "files": 5,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\coordinator\\state\\__pycache__"
+  },
+  {
+    "bytes": 112333.0,
+    "files": 8,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\microcontroller\\__pycache__"
+  },
+  {
+    "bytes": 143002.0,
+    "files": 30,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\recording\\__pycache__"
+  },
+  {
+    "bytes": 50669.0,
+    "files": 5,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\transport\\__pycache__"
+  },
+  {
+    "bytes": 76768.0,
+    "files": 11,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\v1\\__pycache__"
+  },
+  {
+    "bytes": 426101.0,
+    "files": 37,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\acquisition\\worker\\__pycache__"
+  },
+  {
+    "bytes": 36544.0,
+    "files": 4,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\client\\__pycache__"
+  },
+  {
+    "bytes": 291.0,
+    "files": 1,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\control\\__pycache__"
+  },
+  {
+    "bytes": 186543.0,
+    "files": 7,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\control\\v1\\__pycache__"
+  },
+  {
+    "bytes": 359733.0,
+    "files": 23,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\__pycache__"
+  },
+  {
+    "bytes": 68462.0,
+    "files": 6,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\control\\__pycache__"
+  },
+  {
+    "bytes": 256505.0,
+    "files": 17,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\device\\__pycache__"
+  },
+  {
+    "bytes": 51929.0,
+    "files": 4,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\incident\\__pycache__"
+  },
+  {
+    "bytes": 245610.0,
+    "files": 14,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\lifecycle\\__pycache__"
+  },
+  {
+    "bytes": 94111.0,
+    "files": 8,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\metadata\\__pycache__"
+  },
+  {
+    "bytes": 51650.0,
+    "files": 6,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\startup\\__pycache__"
+  },
+  {
+    "bytes": 27091.0,
+    "files": 4,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\controller\\transport\\__pycache__"
+  },
+  {
+    "bytes": 1753468.0,
+    "files": 126,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\gui\\__pycache__"
+  },
+  {
+    "bytes": 68441.0,
+    "files": 6,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\launcher\\__pycache__"
+  },
+  {
+    "bytes": 221.0,
+    "files": 1,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\platform\\__pycache__"
+  },
+  {
+    "bytes": 297135.0,
+    "files": 26,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\platform\\windows\\__pycache__"
+  },
+  {
+    "bytes": 283925.0,
+    "files": 31,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\shared\\__pycache__"
+  },
+  {
+    "bytes": 24366.0,
+    "files": 4,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\shared\\pixels\\__pycache__"
+  },
+  {
+    "bytes": 289780.0,
+    "files": 20,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\supervisor\\__pycache__"
+  },
+  {
+    "bytes": 109408.0,
+    "files": 10,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\synchronization\\__pycache__"
+  },
+  {
+    "bytes": 5811.0,
+    "files": 3,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\synchronization\\v1\\__pycache__"
+  },
+  {
+    "bytes": 80509.0,
+    "files": 7,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\__pycache__"
+  },
+  {
+    "bytes": 59253.0,
+    "files": 7,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\config\\__pycache__"
+  },
+  {
+    "bytes": 43174.0,
+    "files": 3,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\config\\models\\__pycache__"
+  },
+  {
+    "bytes": 55715.0,
+    "files": 7,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\coordinator\\__pycache__"
+  },
+  {
+    "bytes": 15224.0,
+    "files": 3,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\feedback\\__pycache__"
+  },
+  {
+    "bytes": 114839.0,
+    "files": 15,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\methods\\__pycache__"
+  },
+  {
+    "bytes": 7280.0,
+    "files": 2,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\native\\__pycache__"
+  },
+  {
+    "bytes": 136564.0,
+    "files": 11,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\processing\\__pycache__"
+  },
+  {
+    "bytes": 19087.0,
+    "files": 4,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\recording\\__pycache__"
+  },
+  {
+    "bytes": 29443.0,
+    "files": 5,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\transport\\__pycache__"
+  },
+  {
+    "bytes": 38031.0,
+    "files": 11,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\tracking\\v1\\__pycache__"
+  },
+  {
+    "bytes": 68882.0,
+    "files": 7,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\__pycache__"
+  },
+  {
+    "bytes": 63396.0,
+    "files": 6,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\compiler\\__pycache__"
+  },
+  {
+    "bytes": 4584.0,
+    "files": 2,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\config\\__pycache__"
+  },
+  {
+    "bytes": 145771.0,
+    "files": 8,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\config\\models\\__pycache__"
+  },
+  {
+    "bytes": 93276.0,
+    "files": 10,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\coordinator\\__pycache__"
+  },
+  {
+    "bytes": 76310.0,
+    "files": 9,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\feedback\\__pycache__"
+  },
+  {
+    "bytes": 146761.0,
+    "files": 13,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\recording\\__pycache__"
+  },
+  {
+    "bytes": 286651.0,
+    "files": 23,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\rendering\\__pycache__"
+  },
+  {
+    "bytes": 236094.0,
+    "files": 20,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\resources\\__pycache__"
+  },
+  {
+    "bytes": 41151.0,
+    "files": 7,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\transport\\__pycache__"
+  },
+  {
+    "bytes": 57123.0,
+    "files": 11,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\v1\\__pycache__"
+  },
+  {
+    "bytes": 190556.0,
+    "files": 19,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\visual_stimulus\\worker\\__pycache__"
+  },
+  {
+    "bytes": 165.0,
+    "files": 1,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\__pycache__"
+  },
+  {
+    "bytes": 1308384.0,
+    "files": 47,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\acquisition\\__pycache__"
+  },
+  {
+    "bytes": 134457.0,
+    "files": 4,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\client\\__pycache__"
+  },
+  {
+    "bytes": 1915120.0,
+    "files": 52,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\controller\\__pycache__"
+  },
+  {
+    "bytes": 2946171.0,
+    "files": 4,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\gui\\__pycache__"
+  },
+  {
+    "bytes": 215771.0,
+    "files": 2,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\launcher\\__pycache__"
+  },
+  {
+    "bytes": 274560.0,
+    "files": 10,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\platform\\__pycache__"
+  },
+  {
+    "bytes": 324329.0,
+    "files": 14,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\shared\\__pycache__"
+  },
+  {
+    "bytes": 529149.0,
+    "files": 16,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\supervisor\\__pycache__"
+  },
+  {
+    "bytes": 575817.0,
+    "files": 14,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\tracking\\__pycache__"
+  },
+  {
+    "bytes": 1375610.0,
+    "files": 29,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tests\\visual_stimulus\\__pycache__"
+  },
+  {
+    "bytes": 5193.0,
+    "files": 2,
+    "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\tools\\__pycache__"
+  }
+]

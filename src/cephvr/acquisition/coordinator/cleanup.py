@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 from cephvr.acquisition.coordinator.cleanup_report import CleanupReportBuilder
 from cephvr.acquisition.coordinator.commands import (
@@ -56,6 +56,7 @@ class CoordinatorCleanup:
             [WorkerRecord, acq.WorkerCleanupEvidence], bool
         ],
         lock: asyncio.Lock,
+        close_preview_windows: Callable[..., Awaitable[None]] | None = None,
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.identity = identity
@@ -81,6 +82,7 @@ class CoordinatorCleanup:
             clock=clock,
         )
         self._active = False
+        self.close_preview_windows = close_preview_windows
         self.sessionless = SessionlessCleanup(
             workers=workers,
             resources=resources,
@@ -105,7 +107,19 @@ class CoordinatorCleanup:
             )
         self._active = True
         try:
-            return await self._execute(request, deadline_ns=deadline_ns)
+            window_failure = ""
+            if self.close_preview_windows is not None:
+                try:
+                    await self.close_preview_windows(deadline_ns=deadline_ns)
+                except Exception as exc:
+                    window_failure = str(exc)
+            # Stop SDK/pulse activity even if native viewer release remains unknown.
+            result = await self._execute(request, deadline_ns=deadline_ns)
+            if window_failure:
+                return _rejected(
+                    request.command_id, "PREVIEW_RELEASE_UNCONFIRMED", window_failure
+                )
+            return result
         finally:
             self._active = False
 

@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="72" time="10.644" timestamp="2026-10-07T15:49:12.505603+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.acquisition.test_manual_preview" name="test_controller_viewer_attachment_uses_existing_policy_and_client_identity[gui]" time="0.006"><failure message="AttributeError: 'ManualPreview' object has no attribute 'windows'">consumer_role = 'gui'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("consumer_role", ["gui", "cli"])
+    async def test_controller_viewer_attachment_uses_existing_policy_and_client_identity(
+        consumer_role: str,
+    ) -&gt; None:
+        owner = ManualPreview.__new__(ManualPreview)
+        controller = control.ProcessIdentity(role="controller", generation=str(uuid4()))
+        backend = control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        )
+        owner.identity = SimpleNamespace(controller=controller, backend=backend)
+        policy = runtime.AcquisitionFilePolicies()
+        policy.cameras.add(camera=1, frame_silence_timeout_ns=1_000_000_000)
+        owner.configuration = ConfigurationRecord(control.AcquisitionSettings(), policy, 2)
+        owner.clock = lambda: 1
+        owner.session_slot = SimpleNamespace(current=None)
+        preview = WorkerPreview(
+            run_id=str(uuid4()),
+            configuration_revision=2,
+            allocation_id=str(uuid4()),
+            started=True,
+        )
+        owner.workers = SimpleNamespace(workers={1: SimpleNamespace(preview=preview)})
+        owner.device_status = SimpleNamespace(reserve=lambda _command: None)
+        owner.transfers = SimpleNamespace(attach=AsyncMock())
+        owner.results = SimpleNamespace(
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                )
+            )
+        )
+        request = wire.AcquisitionCameraCommand(
+            camera=1,
+            kind=wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+            configuration_revision=2,
+            preview_run_id=preview.run_id,
+            preview_consumer=control.ProcessIdentity(
+                role=consumer_role,
+                generation=str(uuid4()),
+            ),
+        )
+        request.command.command_id = str(uuid4())
+        request.command.issuer.CopyFrom(controller)
+        request.command.target.CopyFrom(backend)
+        request.command.parent_operation.command_id = str(uuid4())
+    
+&gt;       result = await owner.execute(request, deadline_ns=100)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\acquisition\test_manual_preview.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\coordinator\manual_preview.py:195: in execute
+    return await self._attach(request, deadline_ns)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.acquisition.coordinator.manual_preview.ManualPreview object at 0x0000020B765B9550&gt;
+request = command {
+  command_id: "386f73fc-5ebe-4ac3-9be9-c3bfd1c3b87d"
+  issuer {
+    role: "controller"
+    generation: "6da3...2-6965-4d27-9934-bfa3b73056b4"
+preview_consumer {
+  role: "gui"
+  generation: "7a1ad769-cb5b-4ea2-9689-e6b85a602dad"
+}
+
+deadline_ns = 100
+
+    async def _attach(
+        self, request: wire.AcquisitionCameraCommand, deadline_ns: int
+    ) -&gt; control.CommandAdmission:
+        worker = self.workers.workers.get(request.camera)
+        preview = worker.preview if worker is not None else None
+        if (
+            preview is None
+            or not preview.started
+            or preview.run_id != request.preview_run_id
+            or preview.allocation_id is None
+            or request.preview_consumer.role not in {"gui", "cli"}
+            or not request.preview_consumer.generation
+        ):
+            return _rejected(
+                request.command.command_id,
+                "PREVIEW_VIEWER",
+                "viewer does not match a live preview slot",
+            )
+&gt;       if preview.viewer is not None or self.windows.owns(request.camera):
+                                         ^^^^^^^^^^^^
+E       AttributeError: 'ManualPreview' object has no attribute 'windows'
+
+src\cephvr\acquisition\coordinator\manual_preview.py:480: AttributeError</failure></testcase><testcase classname="tests.acquisition.test_manual_preview" name="test_controller_viewer_attachment_uses_existing_policy_and_client_identity[cli]" time="0.002"><failure message="AttributeError: 'ManualPreview' object has no attribute 'windows'">consumer_role = 'cli'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("consumer_role", ["gui", "cli"])
+    async def test_controller_viewer_attachment_uses_existing_policy_and_client_identity(
+        consumer_role: str,
+    ) -&gt; None:
+        owner = ManualPreview.__new__(ManualPreview)
+        controller = control.ProcessIdentity(role="controller", generation=str(uuid4()))
+        backend = control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        )
+        owner.identity = SimpleNamespace(controller=controller, backend=backend)
+        policy = runtime.AcquisitionFilePolicies()
+        policy.cameras.add(camera=1, frame_silence_timeout_ns=1_000_000_000)
+        owner.configuration = ConfigurationRecord(control.AcquisitionSettings(), policy, 2)
+        owner.clock = lambda: 1
+        owner.session_slot = SimpleNamespace(current=None)
+        preview = WorkerPreview(
+            run_id=str(uuid4()),
+            configuration_revision=2,
+            allocation_id=str(uuid4()),
+            started=True,
+        )
+        owner.workers = SimpleNamespace(workers={1: SimpleNamespace(preview=preview)})
+        owner.device_status = SimpleNamespace(reserve=lambda _command: None)
+        owner.transfers = SimpleNamespace(attach=AsyncMock())
+        owner.results = SimpleNamespace(
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                )
+            )
+        )
+        request = wire.AcquisitionCameraCommand(
+            camera=1,
+            kind=wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+            configuration_revision=2,
+            preview_run_id=preview.run_id,
+            preview_consumer=control.ProcessIdentity(
+                role=consumer_role,
+                generation=str(uuid4()),
+            ),
+        )
+        request.command.command_id = str(uuid4())
+        request.command.issuer.CopyFrom(controller)
+        request.command.target.CopyFrom(backend)
+        request.command.parent_operation.command_id = str(uuid4())
+    
+&gt;       result = await owner.execute(request, deadline_ns=100)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\acquisition\test_manual_preview.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\acquisition\coordinator\manual_preview.py:195: in execute
+    return await self._attach(request, deadline_ns)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;cephvr.acquisition.coordinator.manual_preview.ManualPreview object at 0x0000020B7E89A0D0&gt;
+request = command {
+  command_id: "f9aec79d-ad04-4969-8761-5310ce6ab605"
+  issuer {
+    role: "controller"
+    generation: "0a92...3-0ae6-434a-8097-b3e803020120"
+preview_consumer {
+  role: "cli"
+  generation: "d769d1cd-19a6-46a9-896b-c3b5bbffae63"
+}
+
+deadline_ns = 100
+
+    async def _attach(
+        self, request: wire.AcquisitionCameraCommand, deadline_ns: int
+    ) -&gt; control.CommandAdmission:
+        worker = self.workers.workers.get(request.camera)
+        preview = worker.preview if worker is not None else None
+        if (
+            preview is None
+            or not preview.started
+            or preview.run_id != request.preview_run_id
+            or preview.allocation_id is None
+            or request.preview_consumer.role not in {"gui", "cli"}
+            or not request.preview_consumer.generation
+        ):
+            return _rejected(
+                request.command.command_id,
+                "PREVIEW_VIEWER",
+                "viewer does not match a live preview slot",
+            )
+&gt;       if preview.viewer is not None or self.windows.owns(request.camera):
+                                         ^^^^^^^^^^^^
+E       AttributeError: 'ManualPreview' object has no attribute 'windows'
+
+src\cephvr\acquisition\coordinator\manual_preview.py:480: AttributeError</failure></testcase><testcase classname="tests.acquisition.test_manual_preview" name="test_manual_preview_declares_exact_non_saving_capture_scope[1]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_manual_preview_declares_exact_non_saving_capture_scope[2]" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_preview_resolution_preserves_sdk_failure_and_requires_evidence[False]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_preview_resolution_preserves_sdk_failure_and_requires_evidence[True]" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_second_external_preview_pauses_existing_role_before_configuration" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_pause_with_attached_viewer_waits_for_exact_release" time="0.001" /><testcase classname="tests.acquisition.test_manual_preview" name="test_release_receipt_lifetime_starts_at_release_not_attach_completion" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_retired_tracking_preview_waits_for_both_rings_in_either_release_order" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_tracking_worker_attachment_preserves_resource_ledger_transfer_id" time="0.000" /><testcase classname="tests.acquisition.test_manual_preview" name="test_tracking_attach_reserves_release_receipt_before_reporting_transfer" time="0.001" /><testcase classname="tests.controller.test_camera_evidence" name="test_initial_camera_warning_scope_matches_loaded_configuration" time="0.009" /><testcase classname="tests.controller.test_camera_evidence" name="test_microcontroller_status_completes_exact_operator_operation" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[False-False]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[False-True]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[True-False]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_terminal_camera_report_retires_slot_but_retains_exact_evidence[True-True]" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_with_retained_terminal_but_no_confirmation_frees_slot" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_without_terminal_adopts_retained_result" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_deadline_without_result_frees_unconfirmed_with_warning" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_first_exact_report_for_slot_freed_operation_is_retained" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_late_terminal_report_never_replaces_a_newer_current_view" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_late_exact_stop_success_confirms_owner_release" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_shared_release_predicates_require_a_closed_device" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_cleanup_accepts_both_explicitly_closed_camera_roles" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_camera_policy_must_be_unique" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_loss_retention_uses_the_safety_reserve" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_owner_cleanup_failure_retries_with_warning_and_no_interruption" time="0.083" /><testcase classname="tests.controller.test_camera_evidence" name="test_stopped_preview_is_not_released_while_camera_remains_open" time="0.000" /><testcase classname="tests.controller.test_camera_evidence" name="test_connection_check_requires_confirmed_cleanup[False]" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_connection_check_requires_confirmed_cleanup[True]" time="0.004" /><testcase classname="tests.controller.test_camera_evidence" name="test_acquisition_reporter_completes_preview_with_idle_other_camera[False]" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_acquisition_reporter_completes_preview_with_idle_other_camera[True]" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[False-]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[False-invalid]" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[True-]" time="0.003" /><testcase classname="tests.controller.test_camera_evidence" name="test_active_preview_requires_valid_run_identity[True-invalid]" time="0.002" /><testcase classname="tests.controller.test_camera_evidence" name="test_async_viewer_rejection_completes_operator_without_consumer_confirmation[False]" time="0.089" /><testcase classname="tests.controller.test_camera_evidence" name="test_async_viewer_rejection_completes_operator_without_consumer_confirmation[True]" time="0.004" /><testcase classname="tests.gui.test_dashboard" name="test_preview_offer_waits_for_consumer_completion[True]" time="0.027" /><testcase classname="tests.gui.test_dashboard" name="test_preview_offer_waits_for_consumer_completion[False]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_controls_emit_intent_without_changing_local_device_state" time="0.038" /><testcase classname="tests.gui.test_dashboard" name="test_preview_geometry_survives_recreation" time="0.732" /><testcase classname="tests.gui.test_dashboard" name="test_preview_selector_reuses_modeless_window_and_keeps_visibility" time="0.448" /><testcase classname="tests.gui.test_dashboard" name="test_preview_snap_gap_and_available_screen_bounds[anchor0-area0-expected0]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_preview_snap_gap_and_available_screen_bounds[anchor1-area1-expected1]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_preview_snap_gap_and_available_screen_bounds[anchor2-area2-expected2]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_preview_waits_for_report_and_handles_failure_closure_and_control_loss" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_unavailable_preview_retains_reported_state_without_commands" time="0.351" /><testcase classname="tests.gui.test_dashboard" name="test_preview_participation_gates_and_camera_draft_selection" time="0.365" /><testcase classname="tests.gui.test_dashboard" name="test_camera_role_uniqueness_and_extra_preview_rows" time="0.363" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_waits_for_controller_confirmation" time="0.349" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_accepts_missing_external_input" time="0.351" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_settings_submit_pfs_source_and_rate" time="0.363" /><testcase classname="tests.gui.test_dashboard" name="test_tracking_diagnostic_requests_keep_preview_and_draft_identity" time="0.012" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_enable_updates_only_assigned_camera" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_settings_supply_missing_trigger_source" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_pin_test_uses_saved_role_signal" time="0.410" /><testcase classname="tests.gui.test_dashboard" name="test_variation_bounds_and_preview_limit" time="0.494" /><testcase classname="tests.gui.test_dashboard" name="test_batch_create_variations_preview_insert_and_reload" time="0.800" /><testcase classname="tests.gui.test_dashboard" name="test_preview_uses_retained_motion_and_backward_scrubbing" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_trial_preview_is_read_only_has_enabled_screens_and_cleans_up" time="0.519" /><testcase classname="tests.gui.test_dashboard" name="test_preview_rejects_setup_resolved_durations_without_mutating_program" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_planning_preview_uses_rig_planes_and_only_enabled_projector_frames" time="0.031" /><testcase classname="tests.gui.test_dashboard" name="test_preview_calibration_matches_export_and_uses_display_pixels" time="0.015" /><testcase classname="tests.gui.test_dashboard" name="test_preview_rejects_invalid_corrections_and_unresolved_pixel_offsets" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_random_batch_values_stay_fixed_across_preview_and_save" time="1.035"><failure message="assert 214 == 0&#10; +  where 214 = &lt;built-in method maximum of QScrollBar object at 0x0000020B77966D40&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x0000020B77966D40&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000020B77966D40&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000020B77966D40&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000020B7CC95AB0&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000020B7CC95AB0&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000020B7CC95AB0&gt;.horizontalScrollBar&#10; +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000020B7CC95AB0&gt; = &lt;cephvr.gui.protocol.ProtocolPage object at 0x0000020B7CC95990&gt;.config_scroll&#10; +            where &lt;cephvr.gui.protocol.ProtocolPage object at 0x0000020B7CC95990&gt; = &lt;cephvr.gui.window.DashboardWindow object at 0x0000020B7DE43520&gt;.protocol">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000020B7DE43520&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x0000020B7E303640&gt;
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-55/test_random_batch_values_stay_0')
+
+    def test_random_batch_values_stay_fixed_across_preview_and_save(window, app, tmp_path):
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.config.models.program_model import Program
+    
+        window.page_buttons[1].click()
+        create = window.protocol.editor.create_batch
+        from PyQt6.QtGui import QImage
+    
+        create.composer.set_screens(("Front",))
+        create.composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        create.composer.add_file("Texture", str(path), "Front")
+        create.vary.setChecked(True)
+        create.add_variation()
+        row = create.rows[0]
+        row.random.seed(42)
+        row.method.setCurrentText("Random")
+        for key, value in {
+            "minimum": "1",
+            "maximum": "5",
+            "precision": "0.1",
+        }.items():
+            row.random_fields[key].setText(value)
+        assert set(row.random_fields) == {"minimum", "maximum", "precision"}
+        create.repetitions.setText("100")
+        first = create.candidate()
+        assert len(first.sequence) == 100
+        assert create.candidate() == first
+        row.random_fields["precision"].setText("0.2")
+        second = create.candidate()
+        assert second != first
+        assert len(second.sequence) == 100
+        assert create.candidate() == second
+        values = [
+            motion_numbers(epoch.settings[0].model_dump(mode="json"))[0]
+            for epoch in second.sequence
+        ]
+        assert all(1 &lt;= value &lt;= 5 for value in values)
+        assert len(set(values)) &gt; 10
+        assert Program.model_validate_json(second.model_dump_json()) == second
+        create.repetitions.setText("10")
+        shorter = create.candidate()
+        assert len(shorter.sequence) == 10
+        assert create.candidate() == shorter
+        create.repetitions.setText("999")
+        assert len(create.candidate().sequence) == 999
+        create.repetitions.setText("3")
+        create.add_variation()
+        fixed = create.rows[1]
+        fixed.parameter.setCurrentIndex(fixed.parameter.findData("Direction"))
+        fixed.values.setText("0, 90")
+        mixed = create.candidate()
+        assert len(mixed.sequence) == 6
+        assert [
+            motion_numbers(epoch.settings[0].model_dump(mode="json"))[1]
+            for epoch in mixed.sequence
+        ] == [0, 90, 0, 90, 0, 90]
+        assert create.candidate() == mixed
+        for width in (1350, 720):
+            window.resize(width, 900)
+            app.processEvents()
+&gt;           assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+E           assert 214 == 0
+E            +  where 214 = &lt;built-in method maximum of QScrollBar object at 0x0000020B77966D40&gt;()
+E            +    where &lt;built-in method maximum of QScrollBar object at 0x0000020B77966D40&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000020B77966D40&gt;.maximum
+E            +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x0000020B77966D40&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000020B7CC95AB0&gt;()
+E            +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x0000020B7CC95AB0&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000020B7CC95AB0&gt;.horizontalScrollBar
+E            +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x0000020B7CC95AB0&gt; = &lt;cephvr.gui.protocol.ProtocolPage object at 0x0000020B7CC95990&gt;.config_scroll
+E            +            where &lt;cephvr.gui.protocol.ProtocolPage object at 0x0000020B7CC95990&gt; = &lt;cephvr.gui.window.DashboardWindow object at 0x0000020B7DE43520&gt;.protocol
+
+tests\gui\test_dashboard.py:8905: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_image_fit_preview_contains_crops_and_stretches" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_batch_checks_continue_after_failure_without_capture" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_projection_distinguishes_open_capture_and_cleanup" time="0.362"><failure message="AssertionError: assert 8 == 6&#10; +  where 6 = &lt;module 'cephvr.control.v1.services_pb2' from 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\control\\v1\\services_pb2.py'&gt;.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER">window = &lt;cephvr.gui.window.DashboardWindow object at 0x0000020B77991360&gt;
+
+    def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
+        window: DashboardWindow,
+    ) -&gt; None:
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.gui.managed_cameras import ManagedCameras
+        from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
+        from cephvr.shared.auth import Principal
+    
+        panel = window.devices.cameras
+        panel.managed = True
+        state = pb.Snapshot()
+        state.configuration.revision = 3
+        entry = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        entry.acquisition.behavioral.device.device_id = panel.drafts[0].serial
+        entry.acquisition.behavioral.enabled = True
+        entry.acquisition.behavioral.device.frame_timing = 1
+        calls = []
+        binding = ManagedCameras(
+            panel,
+            SimpleNamespace(
+                request=lambda action, **kw: calls.append((action, kw)) or True
+            ),
+            lambda *_: False,
+        )
+        view = state.acquisition_devices.behavioral
+        view.device_open = True
+        previews = binding.install(state)
+        panel.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                previews=previews,
+            )
+        )
+        assert panel.connect_button.text() == "Disconnect"
+        assert not panel.preset_field.isEnabled()
+        panel.connect_button.click()
+        assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_FINISH_EDITING
+        assert not panel.connect_button.isEnabled()
+        binding.finished("camera", False, "still open")
+        view.preview_running = True
+        previews = binding.install(state)
+        panel.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                previews=previews,
+            )
+        )
+        assert panel.connect_button.text() == "Stop capture"
+        bridge = ControllerBridge(
+            Principal("gui", str(uuid4()), "test"), 50051, 16_777_216, (1,)
+        )
+        viewers = ManagedPreviewViewers(
+            window,
+            bridge,
+            lambda: state,
+            lambda: None,
+            panel,
+            lambda role, kind: binding.queue("camera", role=role, kind=kind),
+        )
+        viewers.preview_visibility(panel.drafts[0].key, True)
+        count = len(calls)
+&gt;       assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+E       AssertionError: assert 8 == 6
+E        +  where 6 = &lt;module 'cephvr.control.v1.services_pb2' from 'C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\src\\cephvr\\control\\v1\\services_pb2.py'&gt;.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+
+tests\gui\test_dashboard.py:9574: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_tracking_preview_stages_retain_settings_and_clear_only_subject_reference" time="0.346" /></testsuite></testsuites>

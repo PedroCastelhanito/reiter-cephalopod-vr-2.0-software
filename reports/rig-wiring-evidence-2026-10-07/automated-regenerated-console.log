@@ -1,0 +1,25 @@
+Python 3.11.15
+C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\cephvr-python.exe
+Running syntax; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\syntax.log
+syntax exit code: 0
+Running ruff; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\ruff.log
+ruff exit code: 0
+Running format; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\format.log
+format exit code: 0
+Running module-boundaries; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\module-boundaries.log
+module-boundaries exit code: 0
+Running mypy-win32; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\mypy-win32.log
+mypy-win32 exit code: 1
+Running contracts-tracking; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\contracts-tracking.log
+contracts-tracking exit code: 0
+Running tracking-schema-drift; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\tracking-schema-drift.log
+tracking-schema-drift exit code: 0
+Running contracts-visual_stimulus; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\contracts-visual_stimulus.log
+contracts-visual_stimulus exit code: 0
+Running visual-stimulus-schema-drift; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\visual-stimulus-schema-drift.log
+visual-stimulus-schema-drift exit code: 0
+Running pytest; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\pytest.log
+pytest exit code: -1073741819
+Running package; log: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated\package.log
+package exit code: 0
+Logs and JUnit: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-07\automated-regenerated

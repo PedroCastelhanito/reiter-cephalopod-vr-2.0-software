@@ -123,6 +123,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             clock=clock,
         )
         self.manual_preview = ManualPreview(
+            visibility_report_timeout_ns=self.control_policies.recovery_ns,
             identity=identity,
             configuration=configuration,
             session_slot=self.state.session_slot,
@@ -140,6 +141,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             clock=clock,
         )
         self.manual_preview_pulse = ManualPreviewPulseLifecycle(
+            windows=self.manual_preview.windows,
             identity=identity,
             configuration=configuration,
             workers=workers.workers,
@@ -196,6 +198,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             clock=clock,
         )
         self.cleanup_owner = CoordinatorCleanup(
+            close_preview_windows=self.manual_preview.windows.close_all,
             identity=identity,
             session_slot=self.state.session_slot,
             workers=self.state.workers,
@@ -315,6 +318,16 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
         """Push the exact retained terminal rejection without changing admission."""
         if deadline_ns <= 0:
             return
+        if method in {"ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"} and (
+            command.work.WhichOneof("work") is None
+        ):
+            await self.manual_devices.results.report_failure(
+                command,
+                command_name=method,
+                deadline_ns=deadline_ns,
+                failure=outcome.failure.message,
+            )
+            return
         report = control.LifecycleReport(
             operation=control.BackendOperationReport(
                 source=self.coordinator_identity.backend,
@@ -433,6 +446,8 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             wire.CAMERA_COMMAND_KIND_START_PREVIEW,
             wire.CAMERA_COMMAND_KIND_STOP_PREVIEW,
             wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER,
+            wire.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
+            wire.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
         }:
             return await self.manual_preview.execute(request, deadline_ns=deadline_ns)
         return await self.manual_devices.execute(request, deadline_ns=deadline_ns)

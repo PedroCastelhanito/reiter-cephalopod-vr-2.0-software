@@ -34,6 +34,7 @@ class ManualDeviceStatusReporter:
         self.pulse = pulse
         self.clock = clock
         self._revision = 0
+        self._preview_revision = 0
         # A fresh coordinator owns no cameras. Preserve that fact for untouched
         # roles so lease-loss cleanup can distinguish closed from unknown.
         self._views: dict[int, control.CameraDeviceView] = {
@@ -43,6 +44,7 @@ class ManualDeviceStatusReporter:
                 preview_prepared=False,
                 cleanup_pending=False,
                 preview_run_id="",
+                preview_visible=False,
             )
             for role in (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING)
         }
@@ -92,7 +94,17 @@ class ManualDeviceStatusReporter:
             device=resolved.device,
             applied_settings=resolved.applied.settings,
             preview_run_id=preview_run_id,
+            preview_visible=False,
         )
+        previous = self._views.get(role)
+        if (
+            previous is not None
+            and preview_run_id
+            and previous.preview_run_id == preview_run_id
+        ):
+            view.preview_visible = previous.preview_visible
+            view.preview_visibility_revision = previous.preview_visibility_revision
+            view.preview_failure = previous.preview_failure
         if configuration_revision is not None:
             view.applied_configuration_revision = configuration_revision
         view.capabilities.CopyFrom(resolved.capabilities)
@@ -143,6 +155,44 @@ class ManualDeviceStatusReporter:
         view.cleanup_pending = cleanup_pending
         # An explicit empty run confirms release; an absent field is unknown.
         view.preview_run_id = preview_run_id
+        if not preview_run_id:
+            view.preview_visible = False
+
+    def set_preview_visibility(
+        self, role: int, run_id: str, visible: bool, failure: str = ""
+    ) -> wire.CameraPreviewVisibility | None:
+        view = self._views.get(role)
+        if view is None or not run_id or view.preview_run_id != run_id:
+            return None
+        self._preview_revision += 1
+        view.preview_visible = visible
+        view.preview_visibility_revision = self._preview_revision
+        view.preview_failure = failure.encode("utf-8")[:2048].decode(
+            "utf-8", errors="ignore"
+        )
+        return wire.CameraPreviewVisibility(
+            camera=cast(camera.CameraRole, role),
+            preview_run_id=run_id,
+            revision=self._preview_revision,
+            visible=visible,
+            observed_monotonic_ns=self.clock(),
+            failure=view.preview_failure,
+        )
+
+    async def publish_preview_visibility(
+        self, observation: wire.CameraPreviewVisibility, *, deadline_ns: int
+    ) -> None:
+        receipt = await self.controller.report_acquisition_device_status(
+            wire.AcquisitionDeviceStatusReport(
+                views=control.AcquisitionDeviceViews(source=self.identity.backend),
+                preview_visibility=observation,
+            ),
+            deadline_ns=deadline_ns,
+        )
+        if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+            raise RuntimeError(
+                receipt.failure.message or "Preview visibility was rejected"
+            )
 
     def set_diagnostic(self, signal: int, pin: str, active: bool, edges: int) -> None:
         self._diagnostic = control.MicrocontrollerDiagnosticView(

@@ -1,0 +1,5 @@
+configured python: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+processes in the spawned tree: 3
+pid=17680 parent=500 image=C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+pid=28348 parent=17680 image=C:\WINDOWS\system32\conhost.exe
+pid=31116 parent=17680 image=C:\Users\ReiterU_PC\miniforge3\envs\CephVR\python.exe

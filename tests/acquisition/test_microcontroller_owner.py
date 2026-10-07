@@ -226,10 +226,10 @@ def test_bounded_trial_output_diagnostic_uses_one_serial_owner() -> None:
         True,
         "trial_state",
         "D2",
-        0,
+        1,
     )
     assert owner.diagnostic_status(10_000)[0]
-    assert owner.diagnostic_stop(10_000) == (False, "trial_state", "D2", 0)
+    assert owner.diagnostic_stop(10_000) == (False, "trial_state", "D2", 1)
     assert port.verbs == ["CAPS", "STATUS", "DIAG_START", "DIAG_STATUS", "DIAG_STOP"]
     assert port.fields[2] == {"kind": "trial_state", "pin": "D2", "duration_ms": "2000"}
 
@@ -244,6 +244,16 @@ def test_flip_input_requires_firmware_advertised_interrupt_pin() -> None:
         owner.diagnostic_start("projector_flip", "D4", 10_000)
 
     assert port.verbs == ["CAPS", "STATUS"]
+
+
+def test_old_firmware_is_rejected_before_output_diagnostics() -> None:
+    clock = _Clock(10)
+    port = _ScriptedPort(statuses=[_status()], protocol_version=2)
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    with pytest.raises(SerialOwnerError, match="incompatible MCU protocol version 2"):
+        owner.connect(deadline_ns=10_000)
+    assert port.verbs == ["CAPS"]
+    assert port.closed
 
 
 def test_reserved_off_blocks_routine_status_and_dispatches_with_original_deadline() -> (
@@ -318,8 +328,9 @@ class _Clock:
 
 
 class _ScriptedPort:
-    def __init__(self, *, statuses: list[bytes]) -> None:
+    def __init__(self, *, statuses: list[bytes], protocol_version: int = 3) -> None:
         self._statuses = deque(statuses)
+        self._protocol_version = protocol_version
         self._incoming: deque[int] = deque()
         self.verbs: list[str] = []
         self.fields: list[dict[str, str]] = []
@@ -337,7 +348,7 @@ class _ScriptedPort:
         self.fields.append(fields)
         if verb == "CAPS":
             body = (
-                "protocol=2 firmware=board pins=D2,D4 input_pins=D2 min_hz=0.1 max_hz=60.0 "
+                f"protocol={self._protocol_version} firmware=board pins=D2,D4 input_pins=D2 min_hz=0.1 max_hz=60.0 "
                 "watchdog_min_ms=100 watchdog_max_ms=10000"
             )
         elif verb == "STATUS":
@@ -347,7 +358,7 @@ class _ScriptedPort:
         elif verb.startswith("DIAG_"):
             body = (
                 "active=0" if verb == "DIAG_STOP" else "active=1"
-            ) + " kind=trial_state pin=D2 edges=0"
+            ) + " kind=trial_state pin=D2 edges=1"
         else:
             raise AssertionError(f"unexpected command {verb}")
         line = f"OK id={request_id} {body}\n".encode("ascii")
