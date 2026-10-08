@@ -271,21 +271,25 @@ class ManagedMcu(QObject):
             None,
         )
         if settings is not None and state.configuration.revision != self.revision:
-            pulses = settings.pulses
-            panel.set_saved_pins(
-                pulses.port,
-                pulses.trial_state_pin,
-                pulses.trial_state_enabled,
-                pulses.projector_flip_pin,
-                pulses.projector_flip_enabled,
-            )
-            for row in panel.camera_rows:
-                pulse = (
-                    pulses.behavioral if row.role == "Behavior cam" else pulses.tracking
+            if not panel.snapshots.draft_loaded or panel.snapshots.matches(settings):
+                panel.snapshots.draft_loaded = False
+                pulses = settings.pulses
+                panel.set_saved_pins(
+                    pulses.port,
+                    pulses.trial_state_pin,
+                    pulses.trial_state_enabled,
+                    pulses.projector_flip_pin,
+                    pulses.projector_flip_enabled,
                 )
-                panel.pins[row.key] = pulse.pin
-                if row.key in panel.pin_editors:
-                    panel.pin_editors[row.key].setText(pulse.pin)
+                for row in panel.camera_rows:
+                    pulse = (
+                        pulses.behavioral
+                        if row.role == "Behavior cam"
+                        else pulses.tracking
+                    )
+                    panel.pins[row.key] = pulse.pin
+                    if row.key in panel.pin_editors:
+                        panel.pin_editors[row.key].setText(pulse.pin)
             self.revision = state.configuration.revision
         panel.upload_available = (
             held
@@ -356,6 +360,12 @@ class ManagedMcu(QObject):
             panel.can_review = False
             panel.can_test = False
             panel.refresh_tests()
+
+    def discard_snapshot_draft(self, state: pb.Snapshot, held: bool) -> None:
+        """An explicit reload replaces pending local pins with controller values."""
+        self.panel.snapshots.draft_loaded = False
+        self.revision = -1
+        self.install(state, held)
 
 
 def signal_name(value: int) -> str:

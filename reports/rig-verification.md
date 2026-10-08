@@ -1,5 +1,51 @@
 # Rig verification — outstanding checks
 
+Latest dummy-experiment follow-up: owner authorizes unpaired execution, both camera
+videos plus stimulus recording, velocities disabled and temporary 1,000 ms drains.
+Runs40–42 complete real 60 s trial/session, close seven artifacts, sync metadata and
+release reservation locks. Run42 external counts/full CPU decode pass all three
+videos; idle liveness and normal application exit confirm all-owned absence and guard
+release. Reduced camera/render cadence and compressed unpadded MP4 duration remain
+observed limitations. MCU-only 30/60 Hz diagnostics count 61/120 edges in 2 s; source
+review identifies the saved-disabled camera limiter being enabled by the backend.
+Run43 verifies the correction. Temporary preparation lead/pacing/GPU/draft restoration
+and current final regressions remain in progress. Historical 1566-test local results
+below predate later fixes. SpikeGLX pairing is explicitly omitted for this request;
+optical/electrical correlation, native narrow/DPI, scientific outputs, measured drain
+bounds and full-load acceptance remain open. [Current assessment](runtime.md#current-scope-and-review),
+[dated raw checks](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+
+Latest execution: [2026-10-08 changes and Windows/device checks](rig-wiring-evidence-2026-10-08/README.md),
+baseline `7ba43b1` plus focused controller/native, camera-selection and Tracking
+preview-evidence repairs. Controller-owned
+MCU diagnostics with acquisition disabled, verified HEX upload and selected `.ino`
+compile/upload, compile-error preservation, active-D9 control release, real Behavior
+Connect/display/Disconnect and moved-GUI placement pass. D9/D10/D11 final counts
+are 1/13/25; isolated watchdog readback shows both outputs stopped after 3.43 seconds
+without keepalive. Counts and stopped state do not establish electrical timing/LOW
+or receiver correlation. D2 reports zero edges without an established projector source.
+Final runtime shutdown confirms exact all-owned absence, free application guard and
+closed COM; capture is stopped. Raw evidence and emergency/recovery records are retained.
+
+Later owner `.ino` crash reproduces JOB_INSPECTION_FAILED during compiler job
+inspection. Exact exit-signal checking and required launch-owner termination rights
+are repaired. Two final compile/verified-upload cycles and serial-preserving compiler
+rejection pass; affected tests pass 199 with one skip. Exact final exit, guard/COM/
+tool release and archived failed-attempt staging cleanup are confirmed.
+[Latest method/source scope](rig-wiring-evidence-2026-10-08/README.md#ino-upload-native-job-correction).
+This does not close interrupted-flash, full-load or electrical acceptance below.
+
+Earlier full Windows/offscreen suite: 1463 pass, eight existing GUI clipping failures,
+five privilege skips, one rig deselection; separate GPU smoke passes. Later Tracking
+Ready/release repair passes two physical Connect/Show/Disconnect cycles with
+BehaviorSquid and six seconds of capture each. Acquisition/affected-controller checks
+pass 363 with one skip; original settings and exact normal shutdown are confirmed.
+Ordered Tracking diagnostics and scientific acceptance remain open. SpikeGLX remains
+unreachable. Only the
+operator display is active; saved projector profile/assignments remain unset.
+The remaining electrical, native UI/DPI, projector, scientific and deferred encoder/
+full-workload checks below remain open. Earlier evidence below retains its dated scope.
+
 Preview edge placement repair follows [G01 revision 123](../docs/architecture/gui.md#g01):
 fit the square into available right-hand space and align visible physical frames.
 [Current bounds and isolated validation](rig-wiring-evidence-2026-10-07/preview-snap-context.json)
@@ -7,8 +53,9 @@ retain six GUI/one native pre-repair failures, ten GUI/549 integration passes (t
 privilege skips) and four final native/reader passes. Fully restart both GUI and
 acquisition, then verify actual camera opening outside the GUI's top-right edge,
 reopening after moving the GUI, and alternate-monitor/DPI/fallback behavior.
-The current owner's reopened runtime is preserved; camera visibility is not
-established by these isolated positioning tests.
+Actual Behavior opening and moved-GUI reopening now pass in the Oct8 evidence;
+Tracking Start/Show/Stop also passes twice; mixed-DPI/fallback and actual
+selector/button interaction remain unverified.
 
 Current MCU implementation: [counted diagnostics](rig-wiring-evidence-2026-10-07/mcu-counted-diagnostics.md)
 uses protocol 3 / `cephvr2_uno_2` under A11 revision 37. Build and local host/GUI
@@ -29,12 +76,12 @@ passes 526 affected-owner/client checks (two privilege skips), 17 GUI/bridge che
 and 64 final focused owner checks, including two real Win32 windows with native X
 closure and independent active producers. Actual Behavior Start/Show/X/Hide/reopen/
 Stop now passes after matching firmware installation/restart, with acquisition PID
-owning the native window. Tracking revision adoption is repaired and preparation
-passes, but recurring coordinator-health shutdown blocks its Start/display. Repeat
-Tracking/ordered-consumer release after that repair, plus GUI clicks/selector visibility;
-these isolated windows do not close camera/heartbeat, Tracking or physical acceptance.
+owning the native window. Tracking preparation and two real Start/Show/Stop cycles
+now pass after correcting exact two-ring readiness and release proof. Verify ordered
+Tracking diagnostics and remaining GUI clicks/selector visibility; the bounded
+preview checks do not close scientific or full-workload acceptance.
 
-Latest execution: [2026-10-07 GUI wiring rig checks](rig-wiring-evidence-2026-10-07/README.md),
+Earlier execution: [2026-10-07 GUI wiring rig checks](rig-wiring-evidence-2026-10-07/README.md),
 HEAD `08d146d0d97847cb3f395144886fc175dc627487` plus generated-SWIG mypy exclusion.
 Windows offscreen suite: 1,252 passed, nine GUI failures, four symlink-privilege
 skips, one rig deselection; native Qt teardown also crashes in a separate run.
@@ -131,6 +178,14 @@ button response remains unverified. No E12 Setup or recording command was issued
 <a id="managed-device-gui"></a>
 ### Managed MCU and camera GUI verification
 
+- [ ] Under [G01](../docs/architecture/gui.md#g01), exercise each tab's native
+  configuration chooser and sidebar full-GUI controls at narrow/window DPI settings;
+  verify experimenter files restore explicit identities/paths, changed PFS paths
+  require SDK import, pulse mapping publication stays explicit, and authority/device
+  activity cancels or blocks loading. Local round-trip tests and offscreen images
+  do not establish native chooser, optical or hardware acceptance. See the
+  [snapshot contract](../contracts/gui-configuration-files.md).
+
 Implementation update: 2026-10-08; physical acceptance remains open under A10/A11/E15.
 Use `.venv\Scripts\python.exe tools/generate_contracts.py`, then
 `.venv\Scripts\python.exe scripts/start_runtime_gui.py` on the rig. Do not launch a
@@ -155,6 +210,10 @@ changed images leave serial untouched, and failed/disconnected uploads never res
 outputs. Only perform interruption/failure injection with an approved recoverable
 image and wiring; verify unresolved native cleanup blocks Setup and device access.
 Existing successful manual installations do not establish GUI upload acceptance.
+Oct8 managed RPC execution now passes native compilation/verified upload, fresh
+outputs-off readback and compiler rejection with unchanged serial connection;
+actual chooser/button interaction, interrupted upload and unresolved-helper cleanup
+injection remain open. Active-D9 control release and stopped-diagnostic cleanup pass.
 After a full restart with acquisition policy 18 and Microcontroller policy 1, test
 Microcontroller Connect/Test/Stop and Upload with acquisition disabled, then camera
 external-trigger Setup/preview/Start/Stop through the authenticated controller claim.
@@ -196,6 +255,9 @@ rejection, and physical COM/native cleanup on normal shutdown and authority loss
    and double-click fit reset, including while no new frames arrive. Move the GUI
    and reopen to verify fresh initial placement. Isolated native geometry/mouse
    checks pass; these physical GUI/camera checks remain outstanding.
+   Oct8 real Behavior Connect/display/Disconnect and moved-GUI placement pass twice;
+   real Tracking Connect/Show/Disconnect also passes twice after exact ring-proof
+   repair. Retain alternate-DPI/fallback, actual selector/click and mouse acceptance.
    First repeat Behavior-only with Tracking idle to verify acceptance of its empty
    preview identity; confirm Start completes, visible frames, Stop completes and
    camera/buffer/pulse release, then repeat the cycle. Repeat with both enabled.
@@ -234,9 +296,9 @@ Existing operating-point/throughput deferrals below remain separate.
 | Windows ownership and cleanup | Exercise the shared [acquisition/Visual Stimulus launch contract](../contracts/windows-launch.md) and acquisition [I/O/sync contracts](../contracts/acquisition/windows-resources.md), including owner death at every launch stage, partial handle transfer, blocked pipe/stdin cancellation, process identity reuse, encoder sharing and failed storage sync. Require truthful cleanup blockers. |
 | GUI authoring and planning preview | Install `.[dev,gui]` and launch `python scripts/start_gui.py`; follow [frontend review commands](../docs/development.md#dashboard-frontend-review). Check Windows DPI/narrow-window layouts, discovered cameras/COM ports, enabled projector combinations, calibration JSON load/save and pixel offsets/inversions. Build and reload a 200-epoch trial with independent per-projector layers and random/ordered batch values; switch trials and rotate/scrub the two-sided rig preview using local assets. Record latency and errors. This is frontend acceptance, not physical output or live Tracking validation. Typed pacing configuration and exact held-policy checks now pass locally; physical output acceptance remains open. |
 | Managed GUI configuration and authority | After local wiring acceptance, use the installed managed entry point and current review layout at wide/narrow Windows DPI. Submit subject metadata, ordered trials/seeds/gaps, recording selections, Tracking settings and projector mappings; compare accepted revision/history/session metadata. Exercise first-run display-profile import separately from calibration-value JSON. Invalid or stale visible drafts must block Setup with a useful explanation. Exercise pending Setup cancellation, Abort, lease loss/takeover, pending prompt updates, disconnect/reopen with retained warnings and GUI close/relaunch with `python scripts/start_runtime_gui.py --reopen-gui` for the same application generation. Exercise delayed/lost relaunch replies and shutdown during the request; containment deadlines must remain unchanged. Cancel a proposed discard or dismiss a save-error dialog and confirm unsent edits remain. No stale intent replay or silent draft replacement. |
-| Tracking configuration diagnostics | Under T08/A03/A10, attach to the selected owned camera preview with exact source identity, including when experiment Tracking is disabled. Start with an empty stage mask, then flow-only without pose annotations, and verify unavailable dependent stages. Verify crop/downscale annotations stay in acquired coordinates and enabled stages produce live overlays/timings. Confirm ordered Tracking consumption, bounded viewer latency, explicit viewer detach/reopen versus actual processing closure, and cleanup after source/authority loss and before Setup. Use **Use this frame for annotation** to freeze an exact acquired image; confirm source changes reset annotations and stale frames are rejected. Pending or failed Close must keep settings locked and must not enable another Begin. Changed diagnostic settings require confirmed Close and fresh Begin. Verify no scientific files or Visual Stimulus feedback arise from diagnostics. Scientific accuracy/full-load acceptance remains separate. |
-| Untimed projector calibration | Under V01, before Setup and with no initialized experiment display, Launch the protected exported arena/profile on the assigned outputs and observe actual display before Active. Close must return to Idle and confirm resources closed. Exercise changed assets, stale revisions/generations, failed presentation, control loss, renderer loss and Shutdown during active or still-preparing calibration; unknown cleanup must block Setup. Repeat Open/Close and verify restoration of the prior display or known uninitialized state. Check all assigned outputs and per-face corrections optically; local rendered checks do not establish alignment. |
-| GUI Windows display inventory | Compare Projectors table/diagram indices against Windows Settings → Identify on the actual multi-GPU rig, including reconnect, clone mode and changed topology. Verify pixel resolution, retained assignments and explicit query failures. macOS inspection and mocked native API calls do not establish equivalence. See [G01](../docs/architecture/gui.md#g01). |
+| Tracking configuration diagnostics | Under T08/A03/A10, attach to the selected owned camera preview with exact source identity, including when experiment Tracking is disabled. Start with an empty stage mask, then flow-only without pose annotations, and verify unavailable dependent stages. Verify crop/downscale annotations stay in acquired coordinates and enabled stages produce live overlays/timings. Confirm ordered Tracking consumption, bounded viewer latency, explicit viewer detach/reopen versus actual processing closure, and cleanup after source/authority loss and before Setup. Use **Use this frame for annotation** to freeze an exact acquired image; confirm source changes reset annotations and stale frames are rejected. Pending or failed Close must keep settings locked and must not enable another Begin. Changed diagnostic settings require confirmed Close and fresh Begin. Verify no scientific files or Visual Stimulus feedback arise from diagnostics. Under T20/T38, confirm missing/invalid camera calibration blocks experiment/runnable locomotion, early diagnostics still run, acquired-image scale survives crop/downscale, and known motion produces correctly converted mm/s/deg/s feedback/file values with retained pixel-space evidence. Verify explicit old gain/unit rejection; scale is not animal swimming-speed validation. Scientific accuracy/full-load acceptance remains separate. |
+| Untimed projector calibration | Under V01, before Setup and with no initialized experiment display, Launch the protected exported arena/profile on the assigned outputs and observe actual display before Active. Close must return to Idle and confirm resources closed. Exercise changed assets, stale revisions/generations, failed presentation, control loss, renderer loss and Shutdown during active or still-preparing calibration; unknown cleanup must block Setup. Repeat Open/Close and verify restoration of the prior display or known uninitialized state. Check all assigned outputs and per-face corrections optically. Under G01/V15, measure both native-pixel bar spans per screen, confirm X/Y mm/px and ideal throw estimate with current zoom/keystone/Bottom fold, compare measured affine mapping against physical screen dimensions, and invalidate changed modes/optics. Verify imported nonlinear/masked/weighted corrections are preserved. Local rendered checks do not establish alignment. |
+| GUI Windows display inventory | Compare Projectors table/diagram indices against Windows Settings → Identify on the actual multi-GPU rig, including reconnect, clone mode and changed topology. Verify pixel resolution, retained assignments and explicit query failures. Oct8 isolated Qt retention checks cover immediate saving, restart, reordered/missing/returning identities and local-draft/controller isolation; repeat actual GUI restart and physical unplug/reconnect with stable native identity. macOS inspection and mocked native API calls do not establish equivalence. See [G01](../docs/architecture/gui.md#g01). |
 | Windows venv interpreter process tree | Prepared-image native regression now verifies one live job member, exact launched/executing PID and OS image, fresh venv imports and inherited bootstrap. Verify real managed registration and shutdown after GUI implementation; focused evidence does not establish full application behavior. |
 | Runtime finalization boundary | Under A07/E05, verify bounded online accounting, encoder finalization, sync and close without a separate file-validation pass. Measure drain/closure delay before the next trial. Output-content inspection belongs to external post hoc or development verification, never an automatic runtime validator. |
 | Empty camera video | Verify the all-dropped case with actual input/muxer behavior: complete frame log with its completion line, truthful artifact presence/closure and grouped warning. Reject encoder failure disguised as empty success, missing-created artifacts and unknown closure; retain Interrupted/health outcomes. |

@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_EVIDENCE: manual preview cleanup does not prove its exact ring release
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

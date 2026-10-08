@@ -13,6 +13,7 @@ from cephvr.acquisition.coordinator.evidence_helpers import (
     record_for_source,
 )
 from cephvr.acquisition.coordinator.evidence_ready import WorkerReadyReports
+from cephvr.acquisition.coordinator.manual_preview_evidence import ManualPreviewEvidence
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.ports import ControllerPort
 from cephvr.acquisition.state import (
@@ -59,6 +60,7 @@ class WorkerLifecycleReports:
         self.trial_lifecycle = trial_lifecycle
         self.ready_reports = ready_reports
         self.cleanup_reports = cleanup_reports
+        self.manual_preview = ManualPreviewEvidence(resources, resource_ledger)
 
     def _record(self, source: acq.WorkerContext) -> WorkerRecord:
         return record_for_source(source, self.workers)
@@ -156,25 +158,12 @@ class WorkerLifecycleReports:
         elif kind == "cleanup" and session_for_deadline is None:
             preview = record.preview
             if child.kind == "stop_preview":
-                if (
-                    preview is None
-                    or preview.stop_operation != evidence.operation
-                    or preview.allocation_id is None
-                    or preview.worker_attachment is None
-                    or len(evidence.cleanup.resources) != 1
-                    or evidence.cleanup.resources[0].resource != preview.allocation_id
-                    or not evidence.cleanup.resources[0].released
-                ):
+                if preview is None or preview.stop_operation != evidence.operation:
                     raise ValueError(
                         "manual preview cleanup does not prove its exact ring release"
                     )
-                resource = self.resources.get(preview.allocation_id)
-                if resource is None:
-                    raise ValueError("manual preview ring is not retained")
-                self.resource_ledger.confirm_release(
-                    resource.ledger_key,
-                    peer_instance_id=record.launch.worker.generation,
-                    transfer_id=preview.worker_attachment.sync.transfer_id,
+                self.manual_preview.confirm_cleanup(
+                    record, evidence.cleanup, exact=True
                 )
                 preview.cleanup_event.set()
                 manual_preview_event = True
@@ -196,18 +185,8 @@ class WorkerLifecycleReports:
                         "sessionless Cleanup lacks exact camera/resource release evidence"
                     )
                 if preview is not None and preview.allocation_id is not None:
-                    allocation = preview.allocation_id
-                    if allocation not in releases or preview.worker_attachment is None:
-                        raise ValueError(
-                            "sessionless Cleanup omitted its active preview transfer"
-                        )
-                    resource = self.resources.get(allocation)
-                    if resource is None:
-                        raise ValueError("manual preview ring is not retained")
-                    self.resource_ledger.confirm_release(
-                        resource.ledger_key,
-                        peer_instance_id=record.launch.worker.generation,
-                        transfer_id=preview.worker_attachment.sync.transfer_id,
+                    self.manual_preview.confirm_cleanup(
+                        record, evidence.cleanup, exact=False
                     )
                     preview.cleanup_event.set()
             else:
@@ -232,7 +211,7 @@ class WorkerLifecycleReports:
                     and preview.preparation == evidence.operation
                     and preview.configuration_revision
                     == evidence.ready.configuration_revision
-                    and self._manual_preview_attachment_matches(record, evidence.ready)
+                    and self.manual_preview.attachments_match(record, evidence.ready)
                 )
                 if not child_expected:
                     raise ValueError(
@@ -414,41 +393,6 @@ class WorkerLifecycleReports:
             return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
         except (ValueError, RuntimeError) as exc:
             return _report_rejected("INVALID_EVIDENCE", str(exc))
-
-    def _manual_preview_attachment_matches(
-        self, worker: WorkerRecord, ready: acq.WorkerReadyEvidence
-    ) -> bool:
-        preview = worker.preview
-        if (
-            preview is None
-            or preview.allocation_id is None
-            or preview.worker_attachment is None
-            or len(ready.attached_resources) != 1
-        ):
-            return False
-        attached = ready.attached_resources[0]
-        if (
-            attached.resource_id != preview.allocation_id
-            or attached.transfer_id != preview.worker_attachment.sync.transfer_id
-        ):
-            return False
-        resource = self.resources.get(preview.allocation_id)
-        if (
-            resource is None
-            or resource.attachment.buffer.producer != worker.launch.worker
-            or resource.attachment.buffer.owner != worker.launch.owner
-            or resource.attachment.sync.target != worker.launch.worker
-            or resource.attachment.sync.transfer_id != attached.transfer_id
-        ):
-            return False
-        snapshot = self.resource_ledger.snapshot(resource.ledger_key)
-        return any(
-            item.peer_instance_id == worker.launch.worker.generation
-            and item.transfer_id == attached.transfer_id
-            and not item.released
-            and not item.attached
-            for item in snapshot.transfers
-        )
 
     @staticmethod
     def _manual_camera_started_matches(

@@ -1,0 +1,90 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+_______ test_managed_camera_enable_waits_for_controller_confirmation[0] _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000014CE40DEEF0>
+row = 0
+
+    @pytest.mark.parametrize("row", (0, 1))
+    def test_managed_camera_enable_waits_for_controller_confirmation(
+        window: DashboardWindow,
+        row: int,
+    ) -> None:
+        panel = window.devices.cameras
+        panel.managed = True
+        requests: list[tuple[str, bool]] = []
+        panel.enable_requested.connect(
+            lambda serial, enabled: requests.append((serial, enabled))
+        )
+        settings_requests = []
+        panel.settings_requested.connect(lambda *values: settings_requests.append(values))
+        for index, draft in enumerate(panel.drafts):
+            draft.values.update(
+                trigger_clock="Internal clock",
+                trigger_frequency_hz=str(30 * (index + 1)),
+                preset=f"camera-{index}.pfs",
+            )
+        selected = panel.drafts[row]
+        selected.enabled = False
+        panel.table.selectRow(1 - row)
+        panel.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                phase=Phase.CONFIGURATION,
+            )
+        )
+        assert panel.enable_controls[row].isEnabled()
+        panel.enable_controls[row].click()
+>       assert panel.selected is selected
+E       AssertionError: assert CameraDraft(key='camera-2', role='Tracking cam', serial='REVIEW-002', model='Basler � sample', enabled=True, connected...ture_running=False, values={'trigger_clock': 'Internal clock', 'trigger_frequency_hz': '60', 'preset': 'camera-1.pfs'}) is CameraDraft(key='camera-1', role='Behavior cam', serial='REVIEW-001', model='Basler � sample', enabled=False, connecte...ture_running=False, values={'trigger_clock': 'Internal clock', 'trigger_frequency_hz': '30', 'preset': 'camera-0.pfs'})
+E        +  where CameraDraft(key='camera-2', role='Tracking cam', serial='REVIEW-002', model='Basler � sample', enabled=True, connected...ture_running=False, values={'trigger_clock': 'Internal clock', 'trigger_frequency_hz': '60', 'preset': 'camera-1.pfs'}) = <cephvr.gui.cameras.CamerasPanel object at 0x0000014CE40DFBE0>.selected
+
+tests\gui\test_dashboard.py:2024: AssertionError
+_______ test_managed_camera_enable_waits_for_controller_confirmation[1] _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x0000014CE28BBE20>
+row = 1
+
+    @pytest.mark.parametrize("row", (0, 1))
+    def test_managed_camera_enable_waits_for_controller_confirmation(
+        window: DashboardWindow,
+        row: int,
+    ) -> None:
+        panel = window.devices.cameras
+        panel.managed = True
+        requests: list[tuple[str, bool]] = []
+        panel.enable_requested.connect(
+            lambda serial, enabled: requests.append((serial, enabled))
+        )
+        settings_requests = []
+        panel.settings_requested.connect(lambda *values: settings_requests.append(values))
+        for index, draft in enumerate(panel.drafts):
+            draft.values.update(
+                trigger_clock="Internal clock",
+                trigger_frequency_hz=str(30 * (index + 1)),
+                preset=f"camera-{index}.pfs",
+            )
+        selected = panel.drafts[row]
+        selected.enabled = False
+        panel.table.selectRow(1 - row)
+        panel.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                phase=Phase.CONFIGURATION,
+            )
+        )
+        assert panel.enable_controls[row].isEnabled()
+        panel.enable_controls[row].click()
+>       assert panel.selected is selected
+E       AssertionError: assert CameraDraft(key='camera-1', role='Behavior cam', serial='REVIEW-001', model='Basler � sample', enabled=True, connected...ture_running=False, values={'trigger_clock': 'Internal clock', 'trigger_frequency_hz': '30', 'preset': 'camera-0.pfs'}) is CameraDraft(key='camera-2', role='Tracking cam', serial='REVIEW-002', model='Basler � sample', enabled=False, connecte...ture_running=False, values={'trigger_clock': 'Internal clock', 'trigger_frequency_hz': '60', 'preset': 'camera-1.pfs'})
+E        +  where CameraDraft(key='camera-1', role='Behavior cam', serial='REVIEW-001', model='Basler � sample', enabled=True, connected...ture_running=False, values={'trigger_clock': 'Internal clock', 'trigger_frequency_hz': '30', 'preset': 'camera-0.pfs'}) = <cephvr.gui.cameras.CamerasPanel object at 0x0000014CE3949120>.selected
+
+tests\gui\test_dashboard.py:2024: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_managed_camera_enable_waits_for_controller_confirmation[0]
+FAILED tests/gui/test_dashboard.py::test_managed_camera_enable_waits_for_controller_confirmation[1]
+2 failed, 320 deselected in 2.42s

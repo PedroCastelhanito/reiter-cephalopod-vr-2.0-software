@@ -248,14 +248,16 @@ class WorkerOperationReports:
         revision: int,
     ) -> ChildOperation:
         child = record.child_operations.get(state.context.command_id)
-        if (
-            child is None
-            or child.camera != record.context.camera
-            or child.work != state.work
-            or child.work != source.work
-            or revision <= 0
-        ):
-            raise ValueError("worker operation does not match a retained child command")
+        if child is None:
+            raise ValueError(
+                f"worker operation {state.command} has no retained child {state.context.command_id}"
+            )
+        if child.camera != record.context.camera or revision <= 0:
+            raise ValueError(
+                "worker operation camera/revision differs from its retained child"
+            )
+        if child.work != state.work or child.work != source.work:
+            raise ValueError("worker operation work differs from its retained child")
         if child.report_revision > revision:
             raise ValueError("stale worker operation revision")
         if child.report_revision == revision and child.report is not None:

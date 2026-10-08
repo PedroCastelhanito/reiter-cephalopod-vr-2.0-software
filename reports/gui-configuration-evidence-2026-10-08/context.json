@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-08",
+  "source_revision": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "uncommitted_workspace": true,
+  "governing_decisions": [
+    "G01 revision 132",
+    "E07",
+    "E12",
+    "E14",
+    "A10",
+    "ARCH-002"
+  ],
+  "method": {
+    "python": ".venv/Scripts/python.exe",
+    "pytest": "tests/gui -q -m \"not rig and not windows\"",
+    "qt_platform": "offscreen",
+    "socket_permission": "permitted Windows asyncio/local loopback; fake services",
+    "static": [
+      "ruff check src/cephvr/gui tests/gui",
+      "ruff format --check src/cephvr/gui tests/gui",
+      "mypy --platform win32 src/cephvr/gui",
+      "tools/check_backend_boundaries.py",
+      "git diff --check"
+    ]
+  },
+  "checks": [
+    {
+      "file": "fixture-tests.xml",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "file": "gui-tests.xml",
+      "tests": 369,
+      "failures": 2,
+      "errors": 0
+    },
+    {
+      "file": "initial-gui-tests.xml",
+      "tests": 368,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "file": "post-review-tests.xml",
+      "tests": 49,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "file": "snapshot-tests.xml",
+      "tests": 33,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/configuration_files.py": "366ffeee74764eecb37dd454288e59e432ebed885e5f8938b5185370f60312bf",
+    "src/cephvr/gui/protocol_snapshot.py": "0f361f1073b11dc194ca6dcd640da70980de33bc18da8d24b12feb7e33e59ba3",
+    "src/cephvr/gui/microcontroller_snapshot.py": "94a9d983c0532ed31eed15560c69d8981753174ab56b5762112c496ebfbb7dba",
+    "src/cephvr/gui/spikeglx_snapshot.py": "17e2a94a3859ec8d0b694dc1b8fd014bad3f13674e9a30a01f83a781e10dc9b1",
+    "src/cephvr/gui/gui_snapshot.py": "975335753493b951a324a5408125ec33937177f37683232093f43820345746df",
+    "src/cephvr/gui/gui_snapshot_values.py": "64dec5fdcb75be23333927dcdf8431e57d7e8abeb3e2db133fc2f1080c8ed9fe",
+    "src/cephvr/gui/camera_snapshot_settings.py": "b24be4a71d324221abff71a81f839593ef5a01a58e3da94c330935440b2abd18",
+    "src/cephvr/gui/window.py": "468333b4507f43018cfc6ceca067142ad569b95e4dfb4e55abf9cd99a780c193",
+    "src/cephvr/gui/protocol.py": "ea1421b4dd52d20e94b50f6364e8440cc8dcac37c3072f4c118f98bc2ec3da5e",
+    "src/cephvr/gui/tracking.py": "c8f5f913bd5eed883f022c92db4311ac61aa47c488c14e8eb314d744116d83c8",
+    "src/cephvr/gui/tracking_draft.py": "0615d34d949047acc385adf690646f69a036d5dae235cf821d8f5d38ada9c5bf",
+    "src/cephvr/gui/microcontroller.py": "c9153c08b264d36ac12f2339775c597f4f7ef162b2c1ca2eb5ab73499caa38ae",
+    "src/cephvr/gui/spikeglx.py": "b32b0d14496d2279307bb43e9c4cb0fe98bfaef3621615301e2821d372562a33",
+    "src/cephvr/gui/devices.py": "1fde52a6f44ab732b541cb8d4d4e201c4b3be52618e2938c1a39bdcce19fc788",
+    "src/cephvr/gui/cameras.py": "97caf065fedb9a8e3d1368fcb6191137c9c3505bd0059015cdec9f8e7b7578f1",
+    "src/cephvr/gui/managed_configuration.py": "a6334c744be1bed6d606c8f80df8c2a94a3115c8e7d715346dc1f535198a1ae7",
+    "src/cephvr/gui/managed_cameras.py": "1b6910cffe7219f432920887e41a6d574a8c16b1539c3abe1e6d61e5529d5815",
+    "src/cephvr/gui/managed_mcu.py": "a91057a828d8e24cd60beab97b27a23912cbf3ada017bb6a5a1e4f4a65c8468e",
+    "src/cephvr/gui/main.py": "596cd2219cebb2df11bd8c54f9d50b5625ea7f3a6dc9c049fb57a95e5b911196",
+    "src/cephvr/gui/projector_assignments.py": "92cc5873029808bceb165c7035bd174f18304611dfa2a4de0e5f14147f4a5a77",
+    "src/cephvr/gui/projector_files.py": "6f5b75dd460e018989280232a1dc47c2cfa70fa23042d710140f29d282570b67",
+    "src/cephvr/gui/calibration_files.py": "207e20726260b5c86727fca68be924ccf67ea92ca94cb17212940bf30da2ee66",
+    "tests/gui/test_dashboard.py": "dd7308ebf927df28132d0c97e35fc8a02041900cc1db85a30ca2de5df92e9c8c",
+    "contracts/gui-configuration-files.md": "9a14ee8d150574f1632481ba08634e7e7d2e8e1c680794db85d4e69e189503ba"
+  },
+  "limitations": [
+    "No managed runtime restart, native file chooser, hardware or optical acceptance was performed.",
+    "First default-sandbox broad tests stopped at Windows asyncio setup; permitted local sockets resolved it.",
+    "Initial broad suite passed 368; final broad suite passed 367 and failed two stale SimpleNamespace mocks. Both mocks were updated for the explicit projection interface without changing assertions; 49 owner cases and three direct projection/fixture cases pass.",
+    "GUI screenshots use sample review data and Segoe UI loaded explicitly, with an event wait for layout completion.",
+    "Referenced assets, PFS and firmware files are not embedded; changed PFS needs SDK import.",
+    "SpikeGLX startup host/pairing remains TOML-owned; editable mappings publish explicitly."
+  ],
+  "final_static_results": {
+    "ruff_lint": "pass; 138 GUI/test files",
+    "ruff_format": "pass; 138 GUI/test files",
+    "mypy_win32": "pass; 136 GUI sources",
+    "backend_boundaries": "pass; 632 modules, zero violations; existing large-owner cohesion reviewed in runtime report",
+    "local_document_links": 732,
+    "decision_register_checks": 10,
+    "whitespace": "pass"
+  }
+}

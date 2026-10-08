@@ -38,7 +38,7 @@ class ProjectorFiles(CalibrationFiles):
     def snapshot(self) -> dict[str, object]:
         result = self.calibration_snapshot()
         result.update(
-            version=3,
+            version=4,
             settings={
                 "enabled_screens": self.read_participation(),
                 "photodiode_enabled": self.timing.pulse.isChecked(),
@@ -55,7 +55,11 @@ class ProjectorFiles(CalibrationFiles):
         return result
 
     def validate(self, payload: object) -> dict[str, object]:
-        if isinstance(payload, dict) and payload.get("version") == 3:
+        if (
+            isinstance(payload, dict)
+            and payload.get("version") in (3, 4)
+            and "settings" in payload
+        ):
             if type(payload["version"]) is not int or set(payload) != {
                 "format",
                 "version",
@@ -65,7 +69,11 @@ class ProjectorFiles(CalibrationFiles):
             }:
                 raise ValueError("Expected complete projector configuration")
             values = super().validate(
-                {"format": payload["format"], "version": 2, "values": payload["values"]}
+                {
+                    "format": payload["format"],
+                    "version": payload["version"] - 1,
+                    "values": payload["values"],
+                }
             )
             settings = payload["settings"]
             if not isinstance(settings, dict) or set(settings) != {
@@ -122,7 +130,7 @@ class ProjectorFiles(CalibrationFiles):
         if isinstance(payload, dict) and "outputs" in payload and "mappings" in payload:
             profile = portable_profile(payload)
             converted = super().snapshot()
-            converted.update(version=3, screen_profile=profile)
+            converted.update(version=4, screen_profile=profile)
             outputs = payload["outputs"]
             if not isinstance(outputs, list) or any(
                 not isinstance(o, dict) for o in outputs
@@ -174,9 +182,11 @@ class ProjectorFiles(CalibrationFiles):
         self.validate(payload)
         assert isinstance(payload, dict)
         numeric = {key: payload[key] for key in ("format", "version", "values")}
-        numeric["version"] = min(numeric["version"], 2)
+        numeric["version"] = (
+            payload["version"] - 1 if "settings" in payload else payload["version"]
+        )
         super().apply_snapshot(numeric)
-        if payload["version"] == 3:
+        if "settings" in payload:
             settings = payload["settings"]
             self.profile = copy.deepcopy(payload["screen_profile"])
             self.apply_participation(settings["enabled_screens"])

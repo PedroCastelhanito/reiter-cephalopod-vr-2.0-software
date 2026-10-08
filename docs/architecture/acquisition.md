@@ -300,7 +300,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 57
+**Status:** Accepted · **Revision:** 58
 
 **Files**
 
@@ -333,9 +333,13 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   integer/rational arithmetic, preserving device origin; no host substitution or
   raw-tick duplicate. Missing units/optional metadata warn and leave the field null,
   without dropping valid pixels or blocking Ready. Timestamps are exact JSON integers.
-- The nth non-dropped frame is video frame n, stated explicitly by `video_frame`. No
-  PTS or per-frame saved-status history. A non-dropped frame alone does not prove
-  encoding; validating the persisted correspondence is external post hoc work.
+- Retain an explicit mapping for every encoded video frame to its real source or
+  identified padding under A08. Mark duplicated frames so post hoc analysis can
+  discard them without inferring duplication from image equality. Padding never
+  creates a received-source record, native timestamp or acquisition count. An
+  input submission alone does not prove encoding; persisted correspondence checks
+  remain external post hoc work. The existing frame-log schema/writer still need
+  this mapping amendment before the revised timing behavior is implemented.
 - Append complete frame lines, in contiguous source order, once final drop decisions
   are known. Every **1 s** (`sync_interval_s`, configurable) and at closure, write
   ready lines and request one OS sync; completion requires sync success. Not a
@@ -399,7 +403,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a08"></a>
 ### A08 — Video encoding and container
 
-**Status:** Accepted · **Revision:** 48
+**Status:** Accepted · **Revision:** 49
 
 **Encoder lifecycle and input**
 
@@ -533,13 +537,18 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   for free-running ones. The coordinator supplies its controller-confirmed typed MCU
   observation in the private worker Setup payload for external-trigger saving;
   missing or invalid applied-rate evidence blocks recording preparation.
-  Video frame n is the nth non-dropped frame line, shown at
-  n / nominal rate. The video timeline is not a clock; real timing comes from the
-  frame log (host receipt ns, native timestamp). Each drop shortens playback by one
-  frame period. No duplicated or padded frames, retiming or invented origin.
-- Frames are written in source order; the last frame shows for one nominal period.
-  Empty recordings follow A07's empty-video handling. Backwards host times interrupt
-  under A05.
+  Maintain the nominal video cadence through recording drops by padding missing
+  video slots with explicitly identified duplicated images. Padding must preserve
+  video duration rather than compressing gaps. A07 records encoded indices,
+  duplicate disposition and real-source references so post hoc analysis can
+  identify drops and discard duplicates. Never relabel padding as real acquisition.
+  The video timeline is not a scientific clock; host receipt/native timestamps and
+  SYS-004 pulse alignment retain their meaning.
+- Real images retain source order; padding stays within the actual E11 interval.
+  Empty recordings follow A07's empty-video handling. The slot assignment and
+  leading-gap treatment require contract formalization; no unanswered choice or
+  current unpadded writer establishes those rules. Backwards host times interrupt
+  under A05. Encoder/storage failure handling and original deadlines are unchanged.
 - Sync flushed video storage every **1 s** (configurable) and at final closure,
   without stopping encoding. This cannot persist encoder-buffered frames or guarantee
   a loss window. Video sync is separate from the frame log; storage failure enters

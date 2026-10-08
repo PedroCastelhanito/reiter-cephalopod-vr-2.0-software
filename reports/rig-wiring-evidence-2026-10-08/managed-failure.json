@@ -1,0 +1,124 @@
+{
+  "controller_generation": "e0f14c18-fa5f-49a6-8f60-da176ffe764b",
+  "checks": {
+    "connect": {
+      "command_id": "2b727457-c760-4784-b10f-36b13e025733",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "before": {
+      "observation": {
+        "port": "COM8",
+        "connection_id": "c236fa50-1cdd-4dd4-9999-1a0d75a247d8",
+        "request_id": "c236fa50-1cdd-4dd4-9999-1a0d75a247d8-7",
+        "observed_monotonic_ns": "662433970823300",
+        "state": {
+          "configuration_valid": false,
+          "watchdog_stopped": false,
+          "watchdog_ms": 0,
+          "behavioral": {
+            "enabled": false,
+            "running": false
+          },
+          "tracking": {
+            "enabled": false,
+            "running": false
+          }
+        },
+        "capabilities": {
+          "protocol_version": 3,
+          "firmware": "cephvr2_uno_2",
+          "pins": [
+            "D2",
+            "D3",
+            "D4",
+            "D5",
+            "D6",
+            "D7",
+            "D8",
+            "D9",
+            "D10",
+            "D11",
+            "D12",
+            "D13"
+          ],
+          "minimum_requested_hz": 0.1,
+          "maximum_requested_hz": 100.0,
+          "minimum_watchdog_ms": 500,
+          "maximum_watchdog_ms": 10000,
+          "rising_edge_input_pins": [
+            "D2",
+            "D3"
+          ]
+        },
+        "capabilities_observed_monotonic_ns": "662433950168900"
+      }
+    },
+    "compile_rejection": {
+      "command_id": "7b4c3d39-d652-499b-8e2f-9f35b2f03401",
+      "complete": true,
+      "succeeded": false,
+      "needs_input": false,
+      "failure": "OPERATION_FAILED: Arduino compilation failed (exit 1): C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cephvr-firmware-90b6262e-99fd-4b4f-8aa4-f220ab2be42d\\rejected-sketch\\rejected-sketch.ino:1:2: error: #error Deliberate_compile_rejection_for_rig_acceptance\r\n #error Deliberate_compile_rejection_for_rig_acceptance\r\n  ^~~~~\r\nError during build: exit status 1"
+    },
+    "after": {
+      "observation": {
+        "port": "COM8",
+        "connection_id": "c236fa50-1cdd-4dd4-9999-1a0d75a247d8",
+        "request_id": "c236fa50-1cdd-4dd4-9999-1a0d75a247d8-7",
+        "observed_monotonic_ns": "662433970823300",
+        "state": {
+          "configuration_valid": false,
+          "watchdog_stopped": false,
+          "watchdog_ms": 0,
+          "behavioral": {
+            "enabled": false,
+            "running": false
+          },
+          "tracking": {
+            "enabled": false,
+            "running": false
+          }
+        },
+        "capabilities": {
+          "protocol_version": 3,
+          "firmware": "cephvr2_uno_2",
+          "pins": [
+            "D2",
+            "D3",
+            "D4",
+            "D5",
+            "D6",
+            "D7",
+            "D8",
+            "D9",
+            "D10",
+            "D11",
+            "D12",
+            "D13"
+          ],
+          "minimum_requested_hz": 0.1,
+          "maximum_requested_hz": 100.0,
+          "minimum_watchdog_ms": 500,
+          "maximum_watchdog_ms": 10000,
+          "rising_edge_input_pins": [
+            "D2",
+            "D3"
+          ]
+        },
+        "capabilities_observed_monotonic_ns": "662433950168900"
+      }
+    },
+    "trial_start_before_release": {
+      "command_id": "0d61425e-ee8f-4a48-86f2-b93693b4b7f1",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "release_failure": null,
+    "released": {}
+  }
+}

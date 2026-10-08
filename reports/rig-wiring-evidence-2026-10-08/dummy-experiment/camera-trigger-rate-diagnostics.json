@@ -1,0 +1,163 @@
+{
+  "controller_generation": "8baf0c70-3185-449a-8457-0cc52f16ef40",
+  "tests": [
+    {
+      "name": "behavioral",
+      "start": {
+        "command_id": "07fd82d6-ae88-4fbf-9909-cc72477feee9",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      },
+      "status": {
+        "command_id": "a02a5db0-fce8-4090-add7-f1b0a307603c",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      },
+      "view": {
+        "observation": {
+          "port": "COM8",
+          "connection_id": "85801caf-df22-425e-ae9f-cb865436fd4e",
+          "request_id": "85801caf-df22-425e-ae9f-cb865436fd4e-8",
+          "observed_monotonic_ns": "683932427292700",
+          "state": {
+            "configuration_valid": true,
+            "watchdog_stopped": false,
+            "watchdog_ms": 3000,
+            "behavioral": {
+              "enabled": true,
+              "running": false,
+              "pin": "D10",
+              "applied_frequency_hz": 30.0
+            },
+            "tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 3,
+            "firmware": "cephvr2_uno_2",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "683930301462000"
+        },
+        "diagnostic": {
+          "active": false,
+          "signal": "MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL",
+          "pin": "D10",
+          "rising_edges": 61,
+          "observed_monotonic_ns": "683932603110600"
+        }
+      },
+      "stop": "firmware already completed the bounded diagnostic"
+    },
+    {
+      "name": "tracking",
+      "start": {
+        "command_id": "56877559-7b1b-43aa-90bc-78d49566fa95",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      },
+      "status": {
+        "command_id": "78ff486c-0aa4-4950-abbc-1218dc946149",
+        "complete": true,
+        "succeeded": true,
+        "needs_input": false,
+        "failure": ""
+      },
+      "view": {
+        "observation": {
+          "port": "COM8",
+          "connection_id": "85801caf-df22-425e-ae9f-cb865436fd4e",
+          "request_id": "85801caf-df22-425e-ae9f-cb865436fd4e-13",
+          "observed_monotonic_ns": "683934696354900",
+          "state": {
+            "configuration_valid": true,
+            "watchdog_stopped": false,
+            "watchdog_ms": 3000,
+            "behavioral": {
+              "enabled": false,
+              "running": false
+            },
+            "tracking": {
+              "enabled": true,
+              "running": false,
+              "pin": "D11",
+              "applied_frequency_hz": 60.0
+            }
+          },
+          "capabilities": {
+            "protocol_version": 3,
+            "firmware": "cephvr2_uno_2",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "683930301462000"
+        },
+        "diagnostic": {
+          "active": false,
+          "signal": "MICROCONTROLLER_SIGNAL_KIND_TRACKING",
+          "pin": "D11",
+          "rising_edges": 120,
+          "observed_monotonic_ns": "683934889008100"
+        }
+      },
+      "stop": "firmware already completed the bounded diagnostic"
+    }
+  ],
+  "connect": {
+    "command_id": "56592bbe-bf28-4bd5-98f1-935fe959ac7c",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "configuration_unchanged": true
+}

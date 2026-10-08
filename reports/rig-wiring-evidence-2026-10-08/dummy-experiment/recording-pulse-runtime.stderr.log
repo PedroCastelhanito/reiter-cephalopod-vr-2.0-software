@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: renderer native cleanup remains unconfirmed: resource release set is incomplete
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

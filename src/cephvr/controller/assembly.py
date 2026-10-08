@@ -411,6 +411,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         supervisor_generation=i.supervisor_generation,
         clock=i.clock,
         spawn=i.spawn,
+        save_history=configuration_commands.save_history_on_shutdown,
     )
     incidents = IncidentCoordinator(
         lifecycle=i.lifecycle,

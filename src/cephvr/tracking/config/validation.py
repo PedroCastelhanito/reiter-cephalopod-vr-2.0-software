@@ -11,6 +11,7 @@ from cephvr.tracking.config.annotations import manual, point, reference, search
 from cephvr.tracking.config.models.methods import StageConfiguration
 from cephvr.tracking.config.pipeline import ResolvedPipeline, resolve_pipeline
 from cephvr.tracking.config.stages import builtin_registry
+from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 
 
 def validate_settings(
@@ -51,7 +52,24 @@ def validate_settings(
             or settings.pose_history_capacity <= 0
         ):
             raise ValueError("pose_history_capacity must be positive")
+    if not settings.HasField("image_scale"):
+        raise ValueError(
+            "Tracking requires two camera distance endpoints and known millimetres"
+        )
     _validate_spatial_settings(settings)
+    dimensions = (
+        (
+            settings.manual_pose.image_width_px,
+            settings.manual_pose.image_height_px,
+        )
+        if settings.pose_mode == pb.TRACKING_POSE_MODE_MANUAL
+        else reference(settings.subject_reference)
+    )
+    if dimensions != (
+        settings.image_scale.image_width_px,
+        settings.image_scale.image_height_px,
+    ):
+        raise ValueError("image scale and pose source dimensions differ")
     return resolve_pipeline(
         settings.pipeline_id,
         modes[settings.pose_mode],
@@ -159,7 +177,29 @@ def validate_configuration(
     if not backend.enabled:
         return result
     try:
-        validate_settings(backend.tracking)
+        resolved = validate_settings(backend.tracking)
+        channels = {channel.channel_id: channel for channel in resolved.channels}
+        visual_enabled = any(
+            item.backend_name == "visual_stimulus" and item.enabled
+            for item in candidate.backends
+        )
+        for trial in candidate.trials if visual_enabled else ():
+            if not trial.HasField("stimulus") or not trial.stimulus.HasField("program"):
+                continue
+            program = parse_program_json(
+                trial.stimulus.program.program_json, max_bytes=16_777_216
+            )
+            for channel in program.input_channels:
+                expected = channels.get(channel.channel_id)
+                if expected is None or (
+                    channel.unit,
+                    channel.value_kind,
+                    channel.frame_id,
+                ) != (expected.unit, expected.quantity, expected.coordinate_frame):
+                    raise ValueError(
+                        f"{channel.channel_id}: stimulus input must match calibrated Tracking units; "
+                        "update its unit declaration and gain explicitly"
+                    )
         acquisitions = [
             b
             for b in candidate.backends

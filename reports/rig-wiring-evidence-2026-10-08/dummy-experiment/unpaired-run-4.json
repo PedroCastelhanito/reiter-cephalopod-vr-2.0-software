@@ -1,0 +1,103 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "9a56c74b-660c-4ee5-baaf-09ad0fb6104a"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "9a56c74b-660c-4ee5-baaf-09ad0fb6104a",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "655ebbfb-1a00-4ef6-8fbe-0d19e593d833",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "d806379c-81c1-405f-9964-532bfd14cae2",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "SETUP_FAILED: acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 1 needs confirmed exposure/rate and drain policy"
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_SETTING_UP",
+      "context": {
+        "controller_generation": "655ebbfb-1a00-4ef6-8fbe-0d19e593d833",
+        "session_id": "e209931b-c065-4ca9-bbdb-aff583127507"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-131557",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [
+    {
+      "warning_id": "9624f099-fcac-4f08-92db-5c244640d93e",
+      "component": "startup_recovery",
+      "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+    },
+    {
+      "warning_id": "d4f9d158-73ac-4509-ab90-8b55d7ac82c3",
+      "component": "controller",
+      "message": "acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 1 needs confirmed exposure/rate and drain policy"
+    }
+  ],
+  "cancel_setup": {
+    "command_id": "26eddd01-ed45-4ccb-bbb0-d7a43111c62e",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  }
+}

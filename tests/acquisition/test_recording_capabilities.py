@@ -22,6 +22,7 @@ from cephvr.acquisition.recording.encoding import (
 )
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.platform.windows.nvenc_features import _rate_control_modes
+from cephvr.shared.ffmpeg_capabilities import _parse_pixel_formats
 
 
 class _Process:
@@ -79,6 +80,17 @@ def test_probe_uses_setup_identity_and_reports_exact_local_release() -> None:
     assert kwargs["output_path"] is None
     assert kwargs["capture_stdout"] is True
     assert reports == [("ffmpeg:probe-command", True)]
+
+
+def test_pixel_format_table_accepts_four_columns_and_optional_depth_column() -> None:
+    text = """FLAGS NAME NB_COMPONENTS BITS_PER_PIXEL
+IO... yuv444p 3 24
+IO... yuv420p 3 12 8-8-8
+..H.. cuda 0 0
+IO... incomplete 3
+wrong bogus 3 24
+"""
+    assert _parse_pixel_formats(text) == {"yuv444p", "yuv420p", "cuda"}
 
 
 def test_nvenc_rate_control_mask_uses_enum_values() -> None:

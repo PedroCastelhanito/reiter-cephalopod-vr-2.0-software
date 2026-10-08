@@ -312,6 +312,7 @@ class Attempt:
     setup_operations: dict[str, str]
     ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
     trial_ready: dict[str, pb.ReadyReport] = field(default_factory=dict)
+    trial_results: dict[str, pb.OperationState] = field(default_factory=dict)
     started: dict[str, pb.StartedReport] = field(default_factory=dict)
     stopped: dict[str, pb.StoppedReport] = field(default_factory=dict)
     finished: dict[str, pb.FinishedReport] = field(default_factory=dict)

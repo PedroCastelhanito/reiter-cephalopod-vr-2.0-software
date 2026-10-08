@@ -1,0 +1,12 @@
+[
+  {
+    "sha256": "03aa7da8430e359972a68d1736db7f682fc80cbc0c325c51bb04919a3a64fa8c",
+    "name": "cephvr-2.0.0.dev0-cp311-cp311-win_amd64.whl",
+    "bytes": 1656379
+  },
+  {
+    "sha256": "c6480c0bca0c6520496b7f4cc98a2c3945d0121acc3bede5eb31a32d58880bd0",
+    "name": "cephvr-2.0.0.dev0.tar.gz",
+    "bytes": 1227893
+  }
+]

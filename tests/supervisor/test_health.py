@@ -82,6 +82,65 @@ async def test_worker_heartbeat_rejected_coordinator_heartbeat_accepted(
     assert bad.failure.code == "WRONG_CONTEXT"
 
 
+async def test_configuration_heartbeats_survive_registered_setup_scope(
+    tmp_path: Path,
+) -> None:
+    from cephvr.shared.resources import ResourceObligationRegistry
+
+    runtime, native, _, _ = make_runtime(tmp_path)
+    work = types.WorkContext(
+        session=types.SessionContext(
+            controller_generation=runtime.controller.generation,
+            session_id=str(uuid4()),
+        )
+    )
+    runtime.registration_state.context = wire.RegisteredContext(work=work)
+    for number, role in enumerate(("acquisition", "visual_stimulus", "tracking"), 50):
+        source = types.ProcessIdentity(role=role, generation=str(uuid4()))
+        launch(runtime, native, runtime.identity, source, number)
+        key = (role, source.generation)
+        catalogue = ResourceObligationRegistry(
+            source,
+            work,
+            allowed_owners=frozenset({key}),
+            max_resources=16,
+            max_bytes=4096,
+        )
+        runtime.registration_state.catalogues[key] = catalogue
+        report = heartbeat(source)
+        accepted = await runtime.health.report_heartbeat(report, host_time_ns())
+        assert accepted.result == types.COMMAND_RESULT_ACCEPTED
+        assert catalogue.revision is None
+        assert key in runtime.health_state.last_heartbeat
+
+        scoped = heartbeat(source)
+        scoped.work.CopyFrom(work)
+        scoped.cleanup_resources_revision = 0
+        accepted = await runtime.health.report_heartbeat(scoped, host_time_ns())
+        assert accepted.result == types.COMMAND_RESULT_ACCEPTED
+        accepted = await runtime.health.report_heartbeat(report, host_time_ns())
+        assert accepted.result == types.COMMAND_RESULT_ACCEPTED
+        assert catalogue.revision == 0
+
+        report.cleanup_resources_revision = 0
+        rejected = await runtime.health.report_heartbeat(report, host_time_ns())
+        assert rejected.failure.code == "WRONG_CONTEXT"
+        report.ClearField("cleanup_resources_revision")
+        report.continuing_functions.add()
+        rejected = await runtime.health.report_heartbeat(report, host_time_ns())
+        assert rejected.failure.code == "WRONG_CONTEXT"
+        report.ClearField("continuing_functions")
+        report.session_phase = types.SESSION_PHASE_READY
+        rejected = await runtime.health.report_heartbeat(report, host_time_ns())
+        assert rejected.failure.code == "WRONG_CONTEXT"
+        report.session_phase = types.SESSION_PHASE_CONFIGURATION
+        report.work.CopyFrom(work)
+        report.work.session.session_id = str(uuid4())
+        rejected = await runtime.health.report_heartbeat(report, host_time_ns())
+        assert rejected.failure.code == "WRONG_CONTEXT"
+        assert catalogue.revision == 0
+
+
 async def test_worker_error_admission_and_reserved_codes(tmp_path: Path) -> None:
     runtime, native, _, _ = make_runtime(tmp_path)
     visual_stimulus = types.ProcessIdentity(

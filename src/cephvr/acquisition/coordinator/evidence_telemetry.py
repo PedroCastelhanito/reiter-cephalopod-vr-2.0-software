@@ -96,7 +96,57 @@ class WorkerTelemetryReports:
                 expected_work = (
                     session.trial.work if session.trial is not None else session.work
                 )
-                if heartbeat.work != expected_work:
+                preparation = (
+                    record.child_operations.get(record.trial.preparation.command_id)
+                    if record.trial is not None and record.trial.preparation is not None
+                    else None
+                )
+                handoff_liveness = (
+                    session.trial is not None
+                    and heartbeat.work == session.work
+                    and preparation is not None
+                    and preparation.kind == "prepare_trial"
+                    and preparation.work == expected_work
+                    and preparation.parent_operation == session.trial.preparation
+                    and preparation.deadline_ns is not None
+                    and ingress_ns <= preparation.deadline_ns
+                    and heartbeat.HasField("session_phase")
+                    and heartbeat.session_phase == control.SESSION_PHASE_READY
+                    and not heartbeat.HasField("active_error")
+                    and not heartbeat.continuing_functions
+                    and not heartbeat.workers
+                    and not heartbeat.cleanup_resources
+                    and not heartbeat.HasField("cleanup_resources_revision")
+                    and (
+                        record.heartbeat is None
+                        or record.heartbeat.work == session.work
+                    )
+                )
+                cleanup_liveness = (
+                    heartbeat.work == session.work
+                    and heartbeat.HasField("session_phase")
+                    and heartbeat.session_phase == control.SESSION_PHASE_ENDED
+                    and not heartbeat.HasField("active_error")
+                    and not heartbeat.continuing_functions
+                    and not heartbeat.workers
+                    and not heartbeat.cleanup_resources
+                    and not heartbeat.HasField("cleanup_resources_revision")
+                    and (
+                        session.cleanup_complete
+                        or any(
+                            child.kind == "cleanup"
+                            and child.work == session.work
+                            and child.parent_operation.command_id
+                            == session.cleanup_command_id
+                            and child.deadline_ns is not None
+                            and ingress_ns <= child.deadline_ns
+                            for child in record.child_operations.values()
+                        )
+                    )
+                )
+                if heartbeat.work != expected_work and not (
+                    handoff_liveness or cleanup_liveness
+                ):
                     raise ValueError("worker heartbeat carries stale acquisition work")
             elif record.launch.work.WhichOneof("work") is None and (
                 heartbeat.work.WhichOneof("work") is not None

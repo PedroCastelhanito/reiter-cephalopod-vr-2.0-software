@@ -1,0 +1,620 @@
+diff --git a/architecture.md b/architecture.md
+index e19bfe8..99e4a22 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -63,7 +63,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 24 |
+ | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
+-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 129 |
++| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 130 |
+ | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 34 |
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+diff --git a/contracts/gui-calibration.md b/contracts/gui-calibration.md
+index 2129977..1919c29 100644
+--- a/contracts/gui-calibration.md
++++ b/contracts/gui-calibration.md
+@@ -9,6 +9,14 @@ Loading preserves the current assignments and applies participation/pulse select
+ logical rig face, so changing the machine does not restore obsolete monitor bindings.
+ This is a local draft, not backend preparation or optical calibration evidence.
+ 
++Machine-specific display assignments are retained separately in the existing frontend
++preferences (`projectors/assignments`), as a JSON object with exactly `version: 1`
++and `assignments` (stable display identity → Front/Left/Right/Bottom/Unassigned).
++The value is bounded to 1 MiB; duplicate identities/assigned roles and invalid types
++or versions reject the entire saved value without overwriting it. Explicit assignment
++changes sync immediately; inventory/loading is read-only. Restoration follows G01's
++local-draft/controller synchronization rule and does not alter this portable format.
++
+ The root has exactly five keys:
+ 
+ - `format`: `"cephvr-rig-calibration"` (retained for existing files).
+diff --git a/docs/architecture/gui.md b/docs/architecture/gui.md
+index cf26a2e..542740d 100644
+--- a/docs/architecture/gui.md
++++ b/docs/architecture/gui.md
+@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ <a id="g01"></a>
+ ### G01 — GUI navigation and settings ownership
+ 
+-**Status:** Accepted · **Revision:** 129
++**Status:** Accepted · **Revision:** 130
+ 
+ - Review and managed runtime use the same DashboardWindow page construction,
+   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
+@@ -445,6 +445,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+   A Use checkbox per display
+   retains its assignment and geometry while disabling participation; edits follow
+   Configuration/control gates. Preserve participation across inventory refresh.
++  Save explicit display assignments immediately in local frontend preferences by
++  stable display identity, retaining Unassigned and temporarily missing displays.
++  On a new GUI's initial Configuration/Ready view, restore these as local drafts;
++  differences from the controller base remain dirty and require normal submission.
++  Active-session synchronization and explicit controller reload use confirmed values.
++  Discovery/loading never writes preferences or guesses replacement displays;
++  invalid preferences stay preserved and save/restore failures are reported.
+   V15 owns output selection without altering calibrated surfaces.
+   Below the inventory, sections are ordered Screen calibration, Synchronization,
+   Rig geometry. Screen calibration uses a CephVR1.0-style per-face table containing
+diff --git a/src/cephvr/gui/devices.py b/src/cephvr/gui/devices.py
+index cd2213c..41e6297 100644
+--- a/src/cephvr/gui/devices.py
++++ b/src/cephvr/gui/devices.py
+@@ -40,7 +40,7 @@ class DevicesPage(QWidget):
+         self.cameras.drafts_changed.connect(self.sync_cameras)
+         self.microcontroller.camera_enable_requested.connect(self.set_camera_enabled)
+         self.sync_cameras()
+-        self.projectors = ProjectorsPanel()
++        self.projectors = ProjectorsPanel(settings=settings)
+         self.spikeglx = SpikeGLXPanel()
+         self.panels = (
+             self.cameras,
+diff --git a/src/cephvr/gui/managed_configuration.py b/src/cephvr/gui/managed_configuration.py
+index c5a8a06..d7f40b5 100644
+--- a/src/cephvr/gui/managed_configuration.py
++++ b/src/cephvr/gui/managed_configuration.py
+@@ -205,13 +205,19 @@ class ManagedConfiguration:
+             if display is not None
+             else visual_stimulus_pb.DisplayConfiguration()
+         )
++        restored_assignments = (
++            not self.generation
++            and snapshot.session.phase
++            in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_READY)
++            and self.pages.projectors.restore_assignment_draft()
++        )
+         if tracking is not None and serial:
+             self.pages.tracking.install_configuration(tracking, source_serial=serial)
+         self.generation, self.revision = generation, revision
+         self._installed_base.CopyFrom(base)
+         self.stale = False
+         self.last_error = ""
+-        self.dirty = False
++        self.dirty = bool(restored_assignments)
+         self.tracking_dirty = False
+         self._installing = False
+         return True
+diff --git a/src/cephvr/gui/projectors.py b/src/cephvr/gui/projectors.py
+index 37477cf..93a4a19 100644
+--- a/src/cephvr/gui/projectors.py
++++ b/src/cephvr/gui/projectors.py
+@@ -4,7 +4,7 @@ import json
+ from dataclasses import dataclass
+ from pathlib import Path
+ 
+-from PyQt6.QtCore import QRect, Qt, pyqtSignal
++from PyQt6.QtCore import QRect, QSettings, Qt, pyqtSignal
+ from PyQt6.QtGui import QGuiApplication, QScreen
+ from PyQt6.QtWidgets import (
+     QAbstractItemView,
+@@ -30,6 +30,10 @@ from cephvr.gui.calibration_profile import (
+ from cephvr.gui.components import Card, button, combo
+ from cephvr.gui.device_panel import DevicePanel
+ from cephvr.gui.display_layout import DisplayLayout
++from cephvr.gui.projector_assignments import (
++    AssignmentPreferences,
++    sync_assignment_controls,
++)
+ from cephvr.gui.projector_calibration import CalibrationTable
+ from cephvr.gui.projector_codec import display_document, merge_projector_draft
+ from cephvr.gui.projector_files import ProjectorFiles
+@@ -95,7 +99,7 @@ class ProjectorsPanel(DevicePanel):
+             face for face in ("Front", "Left", "Right", "Bottom") if face in enabled
+         )
+ 
+-    def __init__(self) -> None:
++    def __init__(self, *, settings: QSettings | None = None) -> None:
+         super().__init__(
+             "Displays",
+             "DISPLAY     —\nPROJECTOR   Unassigned\nOUTPUT      Not tested",
+@@ -120,7 +124,10 @@ class ProjectorsPanel(DevicePanel):
+         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+         self.table.setFixedHeight(180)
+         self.configuration.body.insertWidget(1, self.table)
+-        self.assignments: dict[str, str] = {}
++        self.assignment_preferences = AssignmentPreferences(
++            settings, self.console.appendPlainText
++        )
++        self.assignments = self.assignment_preferences.restore({})
+         self.participation: dict[str, bool] = {}
+         self.enable_controls: dict[str, QCheckBox] = {}
+         self.keys: list[str] = []
+@@ -246,6 +253,19 @@ class ProjectorsPanel(DevicePanel):
+     def _mark_geometry_dirty(self) -> None:
+         self._geometry_dirty = True
+ 
++    def restore_assignment_draft(self) -> bool:
++        restored = self.assignment_preferences.restore(self.assignments)
++        changed = restored != self.assignments
++        self.assignments = restored
++        sync_assignment_controls(self.assignments, self.projectors)
++        if changed:
++            self.console.appendPlainText(
++                "Last display assignments restored as a local draft; "
++                "controller validation is still required."
++            )
++            self.update_participation()
++        return changed
++
+     def install_configuration(
+         self,
+         display: visual_stimulus_pb.DisplayConfiguration,
+@@ -258,6 +278,9 @@ class ProjectorsPanel(DevicePanel):
+         self._profile_outputs = []
+         self._pulse_face = None
+         self._configuration_error = ""
++        if not display.profile_json:
++            self.assignments = {}
++            sync_assignment_controls(self.assignments, self.projectors)
+         try:
+             profile = display_document(display)
+             outputs = profile.get("outputs")
+@@ -344,6 +367,7 @@ class ProjectorsPanel(DevicePanel):
+         self.calibration.setToolTip(
+             "Imported geometric and photometric profile references are preserved."
+         )
++        sync_assignment_controls(self.assignments, self.projectors)
+         self.update_participation()
+ 
+     def configuration_loaded(self) -> None:
+@@ -714,6 +738,7 @@ class ProjectorsPanel(DevicePanel):
+             editor.blockSignals(False)
+             return
+         self.assignments[key] = name
++        self.assignment_preferences.save(self.assignments)
+         self.update_participation()
+         self.show_selected()
+ 
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index 6aed39e..379a8d1 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -923,7 +923,7 @@ def test_folder_picker_selection_cancellation_and_phase_lock(
+     field.browse.click()
+     dialog = field.dialog
+     assert dialog is not None
+-    assert dialog.directory().absolutePath() == str(tmp_path)
++    assert Path(dialog.directory().absolutePath()) == tmp_path
+     dialog.reject()
+     assert field.editor.text() == str(tmp_path)
+     field.browse.click()
+@@ -1835,6 +1835,178 @@ def test_projector_refresh_preserves_assignment(
+     assert panel.diagram.outputs
+ 
+ 
++@pytest.mark.parametrize("unassigned", [False, True])
++def test_projector_assignments_survive_restart_and_changed_inventory(
++    app: QApplication, tmp_path: Path, unassigned: bool
++) -> None:
++    from PyQt6.QtCore import QRect, QSettings
++
++    from cephvr.gui.projectors import DisplayInfo
++
++    path = tmp_path / "frontend.ini"
++    displays = (
++        DisplayInfo("edid:one", "First", "1", QRect(0, 0, 100, 100)),
++        DisplayInfo("edid:two", "Second", "2", QRect(100, 0, 100, 100)),
++    )
++    windows = []
++
++    def open_window(inventory):
++        window = DashboardWindow(
++            settings=QSettings(str(path), QSettings.Format.IniFormat)
++        )
++        windows.append(window)
++        panel = window.devices.projectors
++        panel.review_displays = inventory
++        panel.discover_displays()
++        panel.apply_view(review_view(Phase.CONFIGURATION))
++        return panel
++
++    first = open_window(displays)
++    first.projectors["edid:one"].setCurrentText("Front")
++    first.projectors["edid:two"].setCurrentText("Left")
++    if unassigned:
++        first.projectors["edid:one"].setCurrentText("Unassigned")
++    expected = dict(first.assignments)
++    assert path.exists()  # Retention does not depend on a successful close/Setup.
++    retained = path.read_bytes()
++    second = open_window(tuple(reversed(displays)))
++    assert second.assignments == expected
++    assert second.projectors["edid:one"].currentText() == expected["edid:one"]
++    assert second.projectors["edid:two"].currentText() == "Left"
++    second.review_displays = (displays[1],)
++    second.discover_displays()
++    assert second.assignments == expected
++    if not unassigned:
++        assert "Assigned displays unavailable: Front" in second.console.toPlainText()
++    second.review_displays = displays
++    second.discover_displays()
++    assert second.projectors["edid:one"].currentText() == expected["edid:one"]
++    assert path.read_bytes() == retained  # Discovery/loading are silent.
++    for window in windows:
++        window.close()
++        window.deleteLater()
++    app.processEvents()
++
++
++@pytest.mark.parametrize("editable", [False, True])
++@pytest.mark.parametrize("has_profile", [False, True])
++def test_saved_projector_assignments_restore_as_managed_drafts(
++    app: QApplication, tmp_path: Path, editable: bool, has_profile: bool
++) -> None:
++    from PyQt6.QtCore import QRect, QSettings
++    from tests.visual_stimulus.support import valid_display_json
++
++    from cephvr.control.v1 import types_pb2 as control_pb
++    from cephvr.gui.managed_configuration import (
++        ConfigurationPages,
++        ManagedConfiguration,
++    )
++    from cephvr.gui.projectors import DisplayInfo
++
++    path = tmp_path / "frontend.ini"
++    first = DashboardWindow(settings=QSettings(str(path), QSettings.Format.IniFormat))
++    panel = first.devices.projectors
++    panel.review_displays = (
++        DisplayInfo("edid:one", "First", "1", QRect(0, 0, 100, 100)),
++    )
++    panel.discover_displays()
++    panel.apply_view(review_view(Phase.CONFIGURATION))
++    panel.projectors["edid:one"].setCurrentText("Left")
++    second = DashboardWindow(settings=QSettings(str(path), QSettings.Format.IniFormat))
++    panel = second.devices.projectors
++    panel.review_displays = first.devices.projectors.review_displays
++    panel.discover_displays()
++    manager = ManagedConfiguration(
++        ConfigurationPages(
++            second.dashboard,
++            second.protocol,
++            second.recordings,
++            second.devices.cameras,
++            panel,
++            second.tracking,
++        )
++    )
++    state = control_pb.Snapshot(controller_generation="controller")
++    state.session.phase = (
++        control_pb.SESSION_PHASE_CONFIGURATION
++        if editable
++        else control_pb.SESSION_PHASE_RUNNING
++    )
++    state.configuration.revision = state.configuration_values.revision = 1
++    if has_profile:
++        state.configuration_values.current.backends.add(
++            backend_name="visual_stimulus"
++        ).visual_stimulus.display.profile_json = valid_display_json()
++    preserved = state.SerializeToString(deterministic=True)
++    assert manager.install(state)
++    baseline = "Front" if has_profile else "Unassigned"
++    expected = "Left" if editable else baseline
++    assert panel.assignments.get("edid:one", "Unassigned") == expected
++    assert panel.projectors["edid:one"].currentText() == expected
++    assert manager.dirty is editable
++    assert state.SerializeToString(deterministic=True) == preserved
++    assert manager._installed_base == state.configuration_values.current
++    assert manager.install(state, force=True)
++    assert panel.assignments.get("edid:one", "Unassigned") == baseline
++    assert not manager.dirty
++    for window in (first, second):
++        window.close()
++        window.deleteLater()
++    app.processEvents()
++
++
++@pytest.mark.parametrize(
++    "raw",
++    [
++        "broken",
++        '{"version":1,"assignments":{"one":"Front","two":"Front"}}',
++        '{"version":1,"assignments":{"one":"Front","one":"Left"}}',
++        '{"version":2,"assignments":{"one":"Front"}}',
++    ],
++)
++def test_invalid_saved_projector_assignments_are_preserved_and_reported(
++    app: QApplication, tmp_path: Path, raw: str
++) -> None:
++    from PyQt6.QtCore import QSettings
++
++    settings = QSettings(str(tmp_path / "frontend.ini"), QSettings.Format.IniFormat)
++    settings.setValue("projectors/assignments", raw)
++    settings.sync()
++    window = DashboardWindow(settings=settings)
++    panel = window.devices.projectors
++    assert panel.assignments == {}
++    assert "Saved display assignments were not restored" in panel.console.toPlainText()
++    assert settings.value("projectors/assignments") == raw
++    window.close()
++    window.deleteLater()
++    app.processEvents()
++
++
++def test_projector_assignment_save_failure_keeps_draft_and_warns(
++    app: QApplication, tmp_path: Path
++) -> None:
++    from PyQt6.QtCore import QRect, QSettings
++
++    from cephvr.gui.projectors import DisplayInfo
++
++    path = tmp_path / "frontend.ini"
++    path.mkdir()
++    window = DashboardWindow(settings=QSettings(str(path), QSettings.Format.IniFormat))
++    panel = window.devices.projectors
++    panel.review_displays = (
++        DisplayInfo("edid:one", "First", "1", QRect(0, 0, 100, 100)),
++    )
++    panel.discover_displays()
++    panel.apply_view(review_view(Phase.CONFIGURATION))
++    panel.projectors["edid:one"].setCurrentText("Front")
++    assert panel.assignments["edid:one"] == "Front"
++    assert "Display assignments were not saved" in panel.console.toPlainText()
++    assert path.is_dir()
++    window.close()
++    window.deleteLater()
++    app.processEvents()
++
++
+ def test_gui_display_number_is_local_and_shared_with_layout(
+     window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
+ ) -> None:
+@@ -1989,8 +2161,10 @@ def test_managed_microcontroller_emits_controller_intents(
+     assert len(saves) == saved_count
+ 
+ 
++@pytest.mark.parametrize("row", (0, 1))
+ def test_managed_camera_enable_waits_for_controller_confirmation(
+     window: DashboardWindow,
++    row: int,
+ ) -> None:
+     panel = window.devices.cameras
+     panel.managed = True
+@@ -1998,7 +2172,17 @@ def test_managed_camera_enable_waits_for_controller_confirmation(
+     panel.enable_requested.connect(
+         lambda serial, enabled: requests.append((serial, enabled))
+     )
+-    panel.drafts[0].enabled = False
++    settings_requests = []
++    panel.settings_requested.connect(lambda *values: settings_requests.append(values))
++    for index, draft in enumerate(panel.drafts):
++        draft.values.update(
++            trigger_clock="Internal clock",
++            trigger_frequency_hz=str(30 * (index + 1)),
++            preset=f"camera-{index}.pfs",
++        )
++    selected = panel.drafts[row]
++    selected.enabled = False
++    panel.table.selectRow(1 - row)
+     panel.apply_view(
+         DashboardView(
+             connected=True,
+@@ -2007,15 +2191,20 @@ def test_managed_camera_enable_waits_for_controller_confirmation(
+             phase=Phase.CONFIGURATION,
+         )
+     )
+-    assert panel.enable_controls[0].isEnabled()
+-    panel.enable_controls[0].click()
+-    assert requests == [("REVIEW-001", True)]
+-    assert not panel.drafts[0].enabled
+-    assert panel.enable_controls[0].isChecked()
+-    assert not panel.enable_controls[0].isEnabled()
++    assert panel.enable_controls[row].isEnabled()
++    panel.enable_controls[row].click()
++    assert panel.selected is selected
++    assert panel.role.currentText() == selected.role
++    assert panel.preset.text() == selected.values["preset"]
++    assert panel.fields["trigger_frequency_hz"].text() == str(30 * (row + 1))
++    assert requests == [(selected.serial, True)]
++    assert not settings_requests
++    assert not selected.enabled
++    assert panel.enable_controls[row].isChecked()
++    assert not panel.enable_controls[row].isEnabled()
+     panel.pending_enable.clear()
+     panel.refresh_controls()
+-    assert not panel.enable_controls[0].isChecked()
++    assert not panel.enable_controls[row].isChecked()
+ 
+ 
+ def test_managed_camera_enable_accepts_missing_external_input(
+@@ -10333,6 +10522,70 @@ def test_camera_selection_restores_pfs_source_and_frequency(window, tmp_path):
+     assert first.values["trigger_source"] == "Line3"
+ 
+ 
++@pytest.mark.parametrize("selected_row", (0, 1))
++def test_managed_camera_inventory_restores_selected_configuration(
++    window, tmp_path, selected_row
++):
++    from cephvr.acquisition.v1 import camera_pb2 as camera
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.camera_inventory import CameraDraft
++    from cephvr.gui.managed_cameras import ManagedCameras
++
++    panel = window.devices.cameras
++    panel.managed = True
++    serials = [draft.serial for draft in panel.drafts]
++    panel.drafts = []
++    panel.populate_inventory()
++    requests = []
++    binding = ManagedCameras(
++        panel,
++        SimpleNamespace(
++            request=lambda action, **options: requests.append((action, options)) or True
++        ),
++        lambda *_: False,
++    )
++    state = pb.Snapshot()
++    state.configuration.revision = 7
++    entry = state.configuration_values.current.backends.add(
++        backend_name="acquisition", enabled=True
++    )
++    settings = entry.acquisition
++    for index, role in enumerate(("behavioral", "tracking")):
++        device = getattr(settings, role).device
++        device.device_id = serials[index]
++        device.frame_timing = (
++            camera.FRAME_TIMING_EXTERNAL_TRIGGER
++            if index == 0
++            else camera.FRAME_TIMING_FREE_RUNNING
++        )
++        device.pfs_source_filename = str(tmp_path / f"{role}.pfs")
++        if index == 0:
++            device.settings.trigger_source = "Line2"
++        getattr(settings.pulses, role).requested_frequency_hz = 30 * (index + 1)
++    binding.install(state)
++
++    panel.drafts = [
++        CameraDraft(f"camera-{serial}", "Unassigned", serial, "Basler", enabled=False)
++        for serial in serials
++    ]
++    panel.populate_inventory()
++    panel.table.selectRow(selected_row)
++    binding.install(state)  # Inventory changed; controller revision did not.
++    for row in (selected_row, 1 - selected_row, selected_row):
++        panel.table.selectRow(row)
++        draft = panel.drafts[row]
++        assert panel.selected is draft
++        assert panel.role.currentText() == draft.role
++        assert panel.preset.text() == draft.values["preset"]
++        assert panel.preset.toolTip() == draft.values["preset"]
++        assert panel.trigger_source.currentText() == draft.values["trigger_clock"]
++        assert panel.fields["trigger_frequency_hz"].text() == str(30 * (row + 1))
++    panel.edit("trigger_frequency_hz", "45")
++    binding.install(state)
++    assert panel.selected.values["trigger_frequency_hz"] == "45"
++    assert not requests
++
++
+ def test_calibration_guides_keep_world_phase_center_and_physical_ruler():
+     from cephvr.gui.calibration_guides import CENTER, GRID_COLORS, add_face_guides
+ 
+diff --git a/src/cephvr/gui/projector_assignments.py b/src/cephvr/gui/projector_assignments.py
+new file mode 100644
+index 0000000..23469cd
+--- /dev/null
++++ b/src/cephvr/gui/projector_assignments.py
+@@ -0,0 +1,105 @@
++"""Machine-local display assignment drafts; never controller configuration history."""
++
++from __future__ import annotations
++
++import json
++from collections.abc import Callable
++
++from PyQt6.QtCore import QSettings, QSignalBlocker
++from PyQt6.QtWidgets import QComboBox
++
++_KEY = "projectors/assignments"
++_FACES = frozenset({"Front", "Left", "Right", "Bottom"})
++_LIMIT = 1024 * 1024
++
++
++def _validated(value: object) -> dict[str, str]:
++    if not isinstance(value, dict):
++        raise ValueError("display assignments must be an object")
++    result: dict[str, str] = {}
++    used: set[str] = set()
++    for identity, face in value.items():
++        if (
++            not isinstance(identity, str)
++            or not identity.strip()
++            or not isinstance(face, str)
++            or face not in _FACES | {"Unassigned"}
++            or face in used
++        ):
++            raise ValueError("display assignments contain invalid or duplicate roles")
++        result[identity] = face
++        if face != "Unassigned":
++            used.add(face)
++    return result
++
++
++def _unique_members(items: list[tuple[str, object]]) -> dict[str, object]:
++    result: dict[str, object] = {}
++    for key, value in items:
++        if key in result:
++            raise ValueError("display assignments contain duplicate members")
++        result[key] = value
++    return result
++
++
++class AssignmentPreferences:
++    def __init__(
++        self, settings: QSettings | None, report: Callable[[str], None]
++    ) -> None:
++        self.settings = settings
++        self.report = report
++
++    def restore(self, current: dict[str, str]) -> dict[str, str]:
++        if self.settings is None:
++            return current
++        raw = self.settings.value(_KEY)
++        if raw is None:
++            return current
++        try:
++            if not isinstance(raw, str) or len(raw.encode("utf-8")) > _LIMIT:
++                raise ValueError("display assignment preferences exceed their limit")
++            document = json.loads(raw, object_pairs_hook=_unique_members)
++            if (
++                not isinstance(document, dict)
++                or set(document) != {"version", "assignments"}
++                or type(document["version"]) is not int
++                or document["version"] != 1
++            ):
++                raise ValueError("display assignment preferences format is unsupported")
++            saved = _validated(document["assignments"])
++        except (ValueError, TypeError) as exc:
++            self.report(f"Saved display assignments were not restored: {exc}")
++            return current
++        claimed = set(saved.values()) & _FACES
++        return {
++            key: "Unassigned" if face in claimed else face
++            for key, face in current.items()
++            if key not in saved
++        } | saved
++
++    def save(self, assignments: dict[str, str]) -> None:
++        if self.settings is None:
++            return
++        try:
++            raw = json.dumps(
++                {"version": 1, "assignments": _validated(assignments)},
++                ensure_ascii=False,
++                separators=(",", ":"),
++            )
++            if len(raw.encode("utf-8")) > _LIMIT:
++                raise ValueError("display assignment preferences exceed their limit")
++            self.settings.setValue(_KEY, raw)
++            self.settings.sync()
++            if self.settings.status() != QSettings.Status.NoError:
++                raise OSError("frontend preferences write failed")
++        except (OSError, ValueError) as exc:
++            self.report(f"Display assignments were not saved: {exc}")
++
++
++def sync_assignment_controls(
++    assignments: dict[str, str], controls: dict[str, QComboBox]
++) -> None:
++    for identity, control in controls.items():
++        blocker = QSignalBlocker(control)
++        control.setCurrentText(assignments.get(identity, "Unassigned"))
++        del blocker

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 from threading import Event, Lock
 
@@ -57,7 +58,11 @@ class WorkerOperationExecutor:
         if limits is None:
             raise ValueError("worker state has no adopted control limits")
         self.report_dispatcher = WorkerReportDispatcher(
-            loop, state, reports, limits.max_records, self.coordinator_lost
+            loop,
+            state,
+            reports,
+            limits.max_records,
+            lambda details: self.coordinator_lost(details=details),
         )
         self.health = WorkerHealthReporter(
             bootstrap,
@@ -83,6 +88,7 @@ class WorkerOperationExecutor:
         self._coordinator_loss = Event()
         self._coordinator_loss_handled = False
         self._coordinator_loss_deadline_ns: int | None = None
+        self._coordinator_loss_details: str | None = None
         self._cleanup_continuation_limit = limits.safety_reserve_records
         self.cleanup = WorkerCleanupLifecycle(
             state,
@@ -231,19 +237,7 @@ class WorkerOperationExecutor:
                 self.trial.record_pulse_evidence(request)
             elif name == "StopTrial":
                 self.trial.stop_request = request
-                self.trial.stop_trial(deadline_ns)
-                evidence = acq.WorkerLifecycleEvidence()
-                if self.trial.end_marker is not None:
-                    if self.trial.end_marker.actual_stop_monotonic_ns is not None:
-                        evidence.stopped.actual_stop_monotonic_ns = (
-                            self.trial.end_marker.actual_stop_monotonic_ns
-                        )
-                    evidence.stopped.recording_end_monotonic_ns = (
-                        self.trial.end_marker.recording_end_monotonic_ns
-                    )
-                    evidence.stopped.recording_interval_sealed = True
-                evidence.stopped.activity_stopped = True
-                self._report_lifecycle(request, evidence, deadline_ns)
+                self.trial.stop_trial(deadline_ns, report_stopped=True)
                 self.trial.report_camera_finished(request, deadline_ns)
             elif name == "CancelSetup":
                 if self.recording is not None and self.recording.enabled:
@@ -270,6 +264,14 @@ class WorkerOperationExecutor:
                 )
             success = True
         except BaseException as exc:
+            logging.getLogger(__name__).error(
+                "%s %s %s failed: %s: %s",
+                self.state.context.worker.role,
+                name,
+                command.command_id,
+                type(exc).__name__,
+                exc,
+            )
             failure = control.Failure(code=_failure_code(exc), message=str(exc)[:2048])
         now_ns = host_time_ns()
         operation = self.state.complete_operation(
@@ -310,6 +312,14 @@ class WorkerOperationExecutor:
                 now_ns=host_time_ns(),
                 failure=failure,
             )
+            retained = self.state.commands.get(command_id)
+            if (
+                retained is not None
+                and retained.result is not None
+                and retained.deadline_ns is not None
+            ):
+                report = acq.WorkerOperationReport.FromString(retained.result)
+                self._report(report, retained.deadline_ns)
             _ = done
 
     def owner_failed(self, exc: BaseException) -> None:
@@ -351,6 +361,8 @@ class WorkerOperationExecutor:
         self.loop.call_soon_threadsafe(self.shutdown_requested.set)
 
     def _report(self, report: acq.WorkerOperationReport, deadline_ns: int) -> None:
+        if report.operation.context.command_id in self.state.supervisor_command_ids:
+            return
         self.report_dispatcher.operation(report, deadline_ns)
 
     def _report_lifecycle(
@@ -364,6 +376,8 @@ class WorkerOperationExecutor:
         evidence.operation.command_id = command.command_id
         evidence.state_revision = self.state.state_revision + 1
         self.state.retain_lifecycle(evidence)
+        if command.command_id in self.state.supervisor_command_ids:
+            return
         self.report_dispatcher.lifecycle(evidence, deadline_ns)
 
     def advance_due_stages(self) -> None:
@@ -374,11 +388,12 @@ class WorkerOperationExecutor:
         self.cleanup.advance()
         self._refresh_health_snapshot()
 
-    def coordinator_lost(self) -> None:
+    def coordinator_lost(self, *, details: str | None = None) -> None:
         """Fence new work and ask the serialized owner to stop local activity."""
         with self.state.lock:
             self.state.interrupted = True
         if not self._coordinator_loss.is_set():
+            self._coordinator_loss_details = details
             self._coordinator_loss_deadline_ns = (
                 host_time_ns() + self.bootstrap.control_policies.recovery_ns
             )
@@ -392,9 +407,9 @@ class WorkerOperationExecutor:
         deadline_ns = self._coordinator_loss_deadline_ns
         if deadline_ns is None:
             raise RuntimeError("coordinator loss has no retained detection deadline")
+        self.health.coordinator_lost(details=self._coordinator_loss_details)
         self.trial.stop_trial(deadline_ns)
         self.cleanup.begin_ambient_release(deadline_ns)
-        self.health.coordinator_lost()
 
     def next_deadline_ns(self) -> int | None:
         deadlines = [
@@ -432,8 +447,24 @@ class WorkerOperationExecutor:
         else:
             work = self._latest_work
             trial_phase = None
+        closed = work is not None and (
+            self.state.health_work == work
+            and self.state.health_session_phase == control.SESSION_PHASE_ENDED
+            or any(
+                evidence.source.work == work
+                and evidence.WhichOneof("evidence") == "cleanup"
+                and evidence.cleanup.resources
+                and all(
+                    item.released and not item.HasField("failure")
+                    for item in evidence.cleanup.resources
+                )
+                for evidence in self.state.lifecycle.values()
+            )
+        )
         session_phase = (
-            control.SESSION_PHASE_FINALIZING
+            control.SESSION_PHASE_ENDED
+            if closed
+            else control.SESSION_PHASE_FINALIZING
             if self.state.interrupted
             else control.SESSION_PHASE_READY
             if self._session_ready

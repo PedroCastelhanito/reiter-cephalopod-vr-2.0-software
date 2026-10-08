@@ -10,6 +10,7 @@ from cephvr.controller.planning import (
     WriterSchema,
     build_schema,
     plan_outputs,
+    requested_output_identities,
 )
 from tests.controller.support_components import _id
 
@@ -69,6 +70,24 @@ def test_planner_requires_exact_ready_and_resolved_switch() -> None:
         plan_outputs(prepared, ready)
 
 
+def test_setup_output_identities_match_ready_without_claiming_resolved_duration() -> (
+    None
+):
+    prepared, ready = _prepared_and_ready(save_visual_stimulus_data=True)
+    prepared.configuration.backends[0].CopyFrom(
+        ready["visual_stimulus"].resolved_settings
+    )
+    expected = plan_outputs(prepared, ready)
+    prepared.trials[0].ClearField("resolved_duration_ns")
+    identities = {name: item.context.backend for name, item in ready.items()}
+    assert requested_output_identities(prepared, identities) == expected
+    assert not prepared.outputs
+    with pytest.raises(PlanningError, match="resolved duration"):
+        plan_outputs(prepared, ready)
+    with pytest.raises(PlanningError, match="active backends"):
+        requested_output_identities(prepared, {})
+
+
 def test_schema_requires_actual_writer_definition_for_each_reserved_output() -> None:
     prepared, ready = _prepared_and_ready(save_visual_stimulus_data=False)
     prepared.outputs.extend(plan_outputs(prepared, ready))
@@ -88,3 +107,21 @@ def test_schema_requires_actual_writer_definition_for_each_reserved_output() -> 
     )
     assert schema["schema_version"] == 1
     assert len(schema["outputs"]) == 1
+
+
+@pytest.mark.parametrize("save", [False, True])
+def test_installed_visual_writer_covers_every_actual_reserved_output(
+    save: bool,
+) -> None:
+    from cephvr.controller.startup.providers import _writer_schema
+
+    prepared, ready = _prepared_and_ready(save_visual_stimulus_data=save)
+    prepared.outputs.extend(plan_outputs(prepared, ready))
+    schema = _writer_schema(prepared)
+    assert len(schema["outputs"]) == len(prepared.outputs)
+    recipe = schema["outputs"][0]
+    assert (recipe["output_tag"], recipe["format"], recipe["schema_version"]) == (
+        "stimulus_LOG",
+        "json",
+        2,
+    )

@@ -1,0 +1,196 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "5439c786-a7e2-4906-ac01-73fc6d3a5d12"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "5439c786-a7e2-4906-ac01-73fc6d3a5d12",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "f68c20e0-0da4-4531-bf9b-fc1ebca6ad88",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_READY",
+      "context": {
+        "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+        "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [
+    {
+      "warning_id": "cb393278-b57d-4247-ac20-7a880458dbcf",
+      "component": "acquisition_camera",
+      "message": "optional native timestamp is unavailable at preparation",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_tracking_worker",
+          "generation": "bda73a4c-9206-4ef4-8c93-238121c635e4"
+        },
+        "work": {
+          "session": {
+            "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+            "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+          }
+        },
+        "configuration_revision": "2",
+        "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "683346932426500",
+        "last_observed_monotonic_ns": "683346932426500",
+        "camera": "CAMERA_ROLE_TRACKING"
+      }
+    },
+    {
+      "warning_id": "d4100196-9ff8-4c3f-8e49-ac5df2010e47",
+      "component": "acquisition_camera",
+      "message": "optional native timestamp is unavailable at preparation",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_behavioral_worker",
+          "generation": "ec45b2ca-7e21-46bf-b6e1-68f631e011eb"
+        },
+        "work": {
+          "session": {
+            "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+            "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+          }
+        },
+        "configuration_revision": "2",
+        "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "683346933045400",
+        "last_observed_monotonic_ns": "683346933045400",
+        "camera": "CAMERA_ROLE_BEHAVIORAL"
+      }
+    }
+  ],
+  "start": {
+    "command_id": "ad3b5f3b-51ed-40d0-a478-6b6301b6df72",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "final_session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+      "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+    },
+    "outcome": "SESSION_OUTCOME_COMPLETED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242",
+    "trial_count": 1,
+    "activated": true,
+    "cleanup_confirmed": true
+  },
+  "final_trial": {
+    "context": {
+      "session": {
+        "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+        "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+      },
+      "trial_id": "4c3a6b9e-4506-4a16-b976-6aaf3416abe3",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "start_monotonic_ns": "683353207779800",
+    "scheduled_end_monotonic_ns": "683413207779800",
+    "actual_end_monotonic_ns": "683413207779800"
+  },
+  "final_metadata": [
+    {
+      "operation": {
+        "command_id": "70057602-40c9-4a25-923a-b4c8069f140c"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "d213820f-e481-4e06-af02-17c49d4a82fe"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "4a3d11ff-5310-420a-a8fd-20f838e7824b"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ],
+  "final_reservation": {
+    "session": {
+      "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+      "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+    },
+    "session_directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242"
+  }
+}

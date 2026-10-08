@@ -796,3 +796,38 @@ def test_native_generic_release_clears_calibration_owner_before_reinitialize(
     assert {item.output_id for item in activities} == set(outputs)
     assert port._calibration_owner is not None
     assert not port.release().outstanding
+
+
+def test_cleanup_receipts_cover_all_announced_cpu_sources_only_after_close(
+    tmp_path: Path,
+) -> None:
+    preparation = NativePreparation(
+        _UnusedPort(), renderer_generation="renderer", source_factory=_ProtectedFile
+    )
+    target = tmp_path / "calibration.json"
+    target.write_text("{}")
+    announce = preparation._registered_announce(
+        lambda *_args: None, "visual_stimulus:display"
+    )
+    announce("calibration:profile", str(target))
+    source = preparation.source_factory(target)
+    source.fail_close = True
+    failed = preparation.cleanup()
+    assert (
+        failed.outstanding
+        and "visual_stimulus:display:calibration:profile" not in failed.released
+    )
+    source.fail_close = False
+    closed = preparation.cleanup()
+    assert not closed.outstanding
+    assert "visual_stimulus:display:calibration:profile" in closed.released
+    assert not preparation._protected_sources and not preparation._resource_keys
+    assert preparation.cleanup().released == closed.released
+    # Reopening the same logical input invalidates its prior close receipt.
+    announce("calibration:profile", str(target))
+    source = preparation.source_factory(target)
+    source.fail_close = True
+    assert (
+        "visual_stimulus:display:calibration:profile"
+        not in preparation.cleanup().released
+    )

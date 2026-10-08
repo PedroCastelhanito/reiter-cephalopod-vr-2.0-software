@@ -61,6 +61,7 @@ class MicrocontrollerDevice:
         self.releasing = False
         self._close_lock = asyncio.Lock()
         self._close_stopped = False
+        self._diagnostic_uncertain = False
         self.changed: Callable[[], None] = lambda: None
 
     @property
@@ -74,6 +75,7 @@ class MicrocontrollerDevice:
             or self.busy
             or self.acquisition_claimed
             or self.closing
+            or self._diagnostic_uncertain
             or self.releasing
         )
 
@@ -83,6 +85,7 @@ class MicrocontrollerDevice:
             self.manual_active
             or self.closed
             or self.closing
+            or (self._diagnostic_uncertain and not allow_release)
             or (self.releasing and not allow_release)
         ):
             raise RuntimeError("Microcontroller operation is unavailable or pending")
@@ -97,7 +100,11 @@ class MicrocontrollerDevice:
 
     def snapshot_view(self) -> pb.MicrocontrollerDeviceView:
         self.view.cleanup_pending = (
-            self.closing or self.releasing or self.manual_active or self.firmware.busy
+            self.closing
+            or self.releasing
+            or self.manual_active
+            or self.firmware.busy
+            or self._diagnostic_uncertain
         )
         return self.view
 
@@ -172,6 +179,7 @@ class MicrocontrollerDevice:
                             pulses, active_roles=(kind,), deadline_ns=deadline_ns
                         )
                     )
+                self._diagnostic_uncertain = True
                 active, _, _, edges = await self.serial.diagnostic_start(
                     kind, pin, frequency_hz=frequency, deadline_ns=deadline_ns
                 )
@@ -184,6 +192,7 @@ class MicrocontrollerDevice:
                         rising_edges=edges,
                     )
                 )
+                self._diagnostic_uncertain = False
             else:
                 active, kind, pin, edges = (
                     await self.serial.diagnostic_status(deadline_ns=deadline_ns)
@@ -393,9 +402,12 @@ class MicrocontrollerDevice:
                         await self.serial.cancel_on_reservations(
                             deadline_ns=deadline_ns
                         )
-                        active, _, _, _ = await self.serial.diagnostic_stop(
-                            deadline_ns=deadline_ns
-                        )
+                        active = False
+                        if self.view.diagnostic.active or self._diagnostic_uncertain:
+                            active, _, _, _ = await self.serial.diagnostic_stop(
+                                deadline_ns=deadline_ns
+                            )
+                            self._diagnostic_uncertain = False
                         evidence = await self.serial.off(
                             (
                                 camera.CAMERA_ROLE_BEHAVIORAL,

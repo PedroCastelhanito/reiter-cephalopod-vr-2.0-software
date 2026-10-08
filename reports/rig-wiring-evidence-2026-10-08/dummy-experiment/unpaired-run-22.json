@@ -1,0 +1,149 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "7ba07ee0-e1b2-4eea-8765-4231e4073fdc"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "7ba07ee0-e1b2-4eea-8765-4231e4073fdc",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "b26cc542-fe38-49e8-8cbc-30ef182cbed6",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_READY",
+      "context": {
+        "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+        "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [],
+  "start": {
+    "command_id": "21642968-4e9d-4063-b9c0-6598e0e9b44e",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "final_session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+      "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "trial 1: acquisition PrepareTrial failed: TRIAL_PREPARATION_FAILED: camera role 1 trial preparation failed: INVALID_REQUEST: Field cephvr.acquisition.v1.CameraClockDescriptor.timestamp_source does not have presence."
+    }
+  },
+  "final_trial": {
+    "context": {
+      "session": {
+        "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+        "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+      },
+      "trial_id": "80e0ab03-b048-4364-ad30-02d14f8ffe6a",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_PREPARING"
+  },
+  "final_metadata": [
+    {
+      "operation": {
+        "command_id": "c05c8000-8158-4447-ab0c-9d9c82f7afb8"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "dfc9e994-ad09-47f0-b195-8a7a28456edb"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "f07dd2d9-ae5f-4f76-9349-9af0a8e26983"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ],
+  "final_reservation": {
+    "session": {
+      "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+      "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+    },
+    "session_directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843",
+    "lock_held": true
+  }
+}

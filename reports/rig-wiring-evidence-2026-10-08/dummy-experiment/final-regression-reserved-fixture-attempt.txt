@@ -1,0 +1,8 @@
+
+=================================== ERRORS ====================================
+________ ERROR collecting tests/acquisition/test_recording_cleanup.py _________
+tests/acquisition/test_recording_cleanup.py::test_bare_cleanup_uses_original_finish_deadline_without_stop_timestamp: 'request' is a reserved name and cannot be used in @pytest.mark.parametrize
+=========================== short test summary info ===========================
+ERROR tests/acquisition/test_recording_cleanup.py - Failed: tests/acquisition...
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 deselected, 1 error in 1.21s

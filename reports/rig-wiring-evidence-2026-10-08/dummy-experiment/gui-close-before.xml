@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="2.089" timestamp="2026-10-08T11:56:53.209203+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_managed_close_saves_accepted_partial_configuration[False-False]" time="0.019"><failure message="AssertionError: assert 'failed' == 'pending'&#10;  &#10;  - pending&#10;  + failed">dirty = False, discard = False
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -&gt; None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+&gt;       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'pending'
+E         
+E         - pending
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_managed_close_saves_accepted_partial_configuration[False-True]" time="0.001"><failure message="AssertionError: assert 'failed' == 'cancelled'&#10;  &#10;  - cancelled&#10;  + failed">dirty = True, discard = False
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -&gt; None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+&gt;       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'cancelled'
+E         
+E         - cancelled
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_managed_close_saves_accepted_partial_configuration[True-False]" time="0.001"><failure message="AssertionError: assert 'failed' == 'pending'&#10;  &#10;  - pending&#10;  + failed">dirty = False, discard = True
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -&gt; None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+&gt;       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'pending'
+E         
+E         - pending
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_managed_close_saves_accepted_partial_configuration[True-True]" time="0.001"><failure message="AssertionError: assert 'failed' == 'pending'&#10;  &#10;  - pending&#10;  + failed">dirty = True, discard = True
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -&gt; None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+&gt;       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'pending'
+E         
+E         - pending
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError</failure></testcase></testsuite></testsuites>

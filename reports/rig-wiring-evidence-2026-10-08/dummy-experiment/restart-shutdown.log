@@ -1,0 +1,26 @@
+{
+  "controller_generation": "93cbe363-06ee-419c-b55f-8e14fcf600ce",
+  "save": {
+    "command_id": "2e998fe4-b2a8-470c-b291-9ae945758bb1",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "shutdown": {
+    "command_id": "7b73ed66-386b-4901-ac26-e6f56c37e35a",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "exit_receipt": {
+    "controller_generation": "93cbe363-06ee-419c-b55f-8e14fcf600ce",
+    "supervisor_generation": "178f4f54-99cd-47b4-b058-178a5220d8a4",
+    "observed_monotonic_ns": 671420662833100,
+    "all_owned_processes_absent": true,
+    "format_version": 1,
+    "controller_channel_loss": "eof"
+  },
+  "application_guard_released": true
+}

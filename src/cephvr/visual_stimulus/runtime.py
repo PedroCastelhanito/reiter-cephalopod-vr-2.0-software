@@ -12,7 +12,11 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
-from cephvr.visual_stimulus.coordinator.commands import bind_command, validate
+from cephvr.visual_stimulus.coordinator.commands import (
+    bind_command,
+    validate,
+    wait_schedule_completion,
+)
 from cephvr.visual_stimulus.coordinator.incidents import validate_incident
 from cephvr.visual_stimulus.coordinator.ports import PeerPort
 from cephvr.visual_stimulus.coordinator.projection import project
@@ -115,9 +119,20 @@ class VisualStimulusCoordinatorRuntime:
             ):
                 self.recipes.cancel_trial(self.state.active_trial)
         if isinstance(request, wire.SetupSessionRequest):
-            await self.recipes.prepare(request, deadline_ns)
+            async with self.reports.catalogue_lock:
+                await self.recipes.prepare(request, deadline_ns)
         if isinstance(request, wire.ScheduleTrialRequest):
             self.recipes.scheduled(request)
+        if isinstance(request, wire.ReleaseTrialRequest):
+            assert isinstance(forwarded, visual_stimulus.WorkerRelease)
+            scheduled = self.state.links[forwarded.schedule_operation.command_id]
+            await wait_schedule_completion(
+                self.ledger,
+                scheduled.parent.command_id,
+                scheduled.parent.work,
+                min(deadline_ns, scheduled.deadline_ns),
+                self.clock,
+            )
         result = await self.worker.command(
             "StopTrial" if method == "AbortTrial" else method,
             forwarded,

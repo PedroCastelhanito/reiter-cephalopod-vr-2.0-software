@@ -8,7 +8,282 @@ have their original scope; Windows and full-workload acceptance remain pending.
 [E05/E07](../docs/architecture/experiment.md) and
 [E06/E08](../docs/architecture/system-contracts.md#e08) own behavior.
 
+Current native recording follow-up (`gui-backend-dummy-experiment`): runs 40–42
+complete the immutable 60 s unpaired trial and session with both camera videos,
+stimulus video, velocities disabled, seven closed artifacts, synced metadata and an
+unlocked reservation. Run42 external ffprobe counts and complete CPU decode pass all
+three MP4s; idle-after-42 remains healthy and normal Shutdown confirms exact process
+absence, released application guard and matching saved history. Its shutdown log
+contains only normal launcher channel EOF messages. Repairs retain original command/
+generation/deadline ownership through preparation, Schedule/Release, onset, normal
+cutoff/drain, retained cleanup, GPU capture and terminal liveness. Quiet ENDED camera
+heartbeats establish liveness only; already-delivered session closure is not rebound
+to a fresh Shutdown fence. Camera server termination is awaited until actual stop.
+Each failed reservation and raw native outcome remains in the
+[dated dummy evidence](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+
+Run42 camera delivery is about 20/40 fps against configured 30/60, stimulus 23.65 fps
+against 60; all admitted stimulus frames reach FFmpeg with zero capacity drops.
+Unpadded MP4 durations therefore compress elapsed time; scientific/full-load acceptance
+remains open. Subsequent MCU-only bounded diagnostics count 61/120 edges in 2 s at
+30/60 Hz, without capture or flashing. Source/PFS comparison identifies the backend
+enabling a saved-disabled internal limiter for externally triggered cameras. Preserve
+that external PFS choice while enabling a requested free-running limiter only in
+free-running mode (A10); 38 adapter checks pass and run43 tests this correction.
+Temporary 1,000 ms drains, 2,000 ms pre-Setup scheduling lead, pacing/GPU preference
+and original draft/history restoration plus final full regressions remain in progress.
+ARCH-002 reuses focused owners and owning behavior tests without a dependency/process.
+
 ## Current scope and review
+
+Reusable configuration files (2026-10-08, `gui-configuration-snapshots`):
+[G01](../docs/architecture/gui.md#g01) revision 132 and the
+[snapshot contract](../contracts/gui-configuration-files.md) govern complete Protocol,
+Microcontroller, portable Projector, SpikeGLX and Tracking files plus full GUI files
+from sidebar controls. All loads prevalidate local drafts; atomic saves preserve
+existing files. Full files retain metadata, recording choices, camera serials/roles
+and explicit display assignments; incompatible inventories reject before restore.
+Loaded camera/MCU values survive polling and join ordinary E07 proposals; changed
+PFS paths require A10 SDK import. Inactive Tracking remains a local pending draft
+until enabled. SpikeGLX rows require explicit Save pulse mapping; saved host/pairing
+references cannot override startup TOML or current file digest. Firmware, camera
+capture and projector output never start on load. Local validation completes:
+initial full GUI run passes 368; final full run passes 367 with two outdated
+SimpleNamespace projection-interface mocks failing. Correct both fixtures without
+weakening their assertions; post-review owner checks pass 49 and three direct
+projection/fixture cases pass. Ruff lint/format pass 138 GUI/test files, Win32 mypy
+passes 136 GUI sources, boundaries inspect 632 modules with zero violations, and
+732 local links/anchors plus ten register checks and whitespace pass. Retain
+[raw JUnit, source hashes and method limits](gui-configuration-evidence-2026-10-08/context.json),
+plus inspected offscreen [sidebar](gui-configuration-evidence-2026-10-08/sidebar.png),
+[MCU](gui-configuration-evidence-2026-10-08/microcontroller.png) and
+[SpikeGLX](gui-configuration-evidence-2026-10-08/spikeglx.png) images. No running
+managed runtime is restarted or native chooser/hardware pass claimed;
+[rig checks](rig-verification.md) retain native chooser/DPI and hardware acceptance.
+ARCH-002 review keeps file IO and snapshot codecs in focused modules, with existing
+page/device owners retaining widget/operation state. Existing large cameras/MCU,
+Tracking and main files receive only draft guards/callbacks; no new runtime reference,
+process or dependency is added. Projector orchestration remains unchanged.
+
+Current calibration/output-unit work (2026-10-08, `physical-reference-calibration`):
+the [Tracking](tracking.md) and [Visual Stimulus](visual_stimulus.md) assessments own
+G01/T20/T38/V15 implementation and evidence. Per-screen raw-pixel bars replace editable
+throw distance with measured X/Y scale and a derived estimate; Tracking requires camera
+scale and publishes mm/s/deg/s proxies. Explicit old input/gain editing and versioned
+files prevent silent reinterpretation. Affected checks pass 658 (one skip; two concurrent
+temporary-pacing checks excluded plus one rig deselection), with post-review owning
+checks passing. The [offscreen card](tracking-evidence-2026-10-08/physical-reference-gui.png)
+is visually checked. No managed runtime restart or physical calibration is claimed;
+native/DPI/optical/scientific/full-load acceptance remains in the rig checklist.
+
+Unpaired dummy execution follow-up (2026-10-08, `gui-backend-dummy-experiment`):
+the owner explicitly disables SpikeGLX pairing and approves temporary 1,000 ms
+post-cutoff drain allowances for both cameras. Front 60 Hz pacing and the managed
+wrapper's high-performance Windows graphics preference are temporary diagnostic
+inputs; strict RTX 5060 Ti identity/framebuffer checks remain enabled. Real Setup
+attempts now run, preserving each failed Desktop reservation and exact generation
+exit evidence before controller recovery. Start is accepted and trial scheduling is reached; no completed experiment has yet
+succeeded; earlier statements below that Setup was never attempted are historical.
+
+Native attempts expose and repair E08 Configuration-heartbeat handoff, E04 missing
+path-free Setup output identities, exact terminal Setup failure admission, empty
+arena-boundary submission, GLFW fullscreen focus loss, private renderer-completion
+routing, revision-zero cleanup catalogue initialization, CPU-to-GL video binding,
+normal renderer-owned FFmpeg helper exit retention and duplicate WGL destruction.
+The [Visual Stimulus assessment](visual_stimulus.md) records graphics/probe details;
+the [Acquisition assessment](acquisition.md) records camera and shared encoding scope.
+ARCH-002 reuses focused planners/ports/ledgers and existing behavior test modules;
+no process, dependency, deadline or resource-proof exception is introduced.
+Current native retry and output inspection remain in progress. [Raw attempts](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+
+GUI/backend dummy-experiment work (2026-10-08): the owner authorizes wiring/fixes
+and a Desktop-output dummy run, explicitly retaining both camera videos and stimulus
+video while disabling velocities. Eight reproducible Windows Qt layout failures
+are repaired under [G02](../docs/architecture/gui.md#g02): shrinkable field/status
+labels, tab elision, responsive protocol management, and targeted title wrapping
+prevent minimum-width feedback without changing device ownership. The final owning
+GUI suite passes **334 tests**. The first all-owner suite passes 1560, skips five,
+deselects one rig case and exposes two GUI regressions; both are repaired and the
+final complete GUI rerun covers them. No test assertion was weakened.
+
+Later native inspection identifies two additional wiring/closure defects. Backend
+camera-role adoption leaves Dashboard recording names at “Unassigned video”; the
+recording owner now updates names/accessibility during view refresh without toggling
+choices or marking drafts dirty. Both inventory-row regressions fail before and pass
+after; native reopening confirms Behavior/Tracking names. Normal GUI close with an
+incomplete protocol incorrectly reports history-save failure before sending a save.
+It now saves the accepted controller configuration, with explicit discard/cancel
+choice for unsent drafts, under E07. Four regression cases fail before repair; ten
+focused close/recording cases pass afterward. Native discard/save closure exits the
+GUI, preserves original configuration/history and leaves the session in Configuration.
+The repaired GUI is reopened afterward. ARCH-002 keeps both changes in their small
+existing recording/close owners with no new callbacks or state. Final all-owner
+validation, including all 338 GUI cases, passes **1566 tests, five skips and one
+rig deselection in 171.33 seconds**. Ruff lint/format, Win32 mypy and boundaries
+pass again. [Final JUnit](rig-wiring-evidence-2026-10-08/dummy-experiment/final-all.xml),
+[source/method context](rig-wiring-evidence-2026-10-08/dummy-experiment/context.json).
+
+[E07](../docs/architecture/experiment.md#e07)'s application-shutdown history save
+now shares the existing atomic writer and serialization lock. The history deadline
+covers queueing; shutdown interruption/handoff retain their original deadlines and
+run independently of that writer. Owning tests cover gated shutdown persistence,
+queue timeout and failed-write preservation. ARCH-002 keeps these responsibilities
+in the existing focused configuration/command owners, with one injected callback;
+no runtime back-reference, dependency or policy choice is added. Ruff lint/format
+pass 260 files; Win32 mypy passes 229 sources; boundaries inspect 620 modules with
+zero violations. Existing cohesive source-size advisories remain review prompts.
+
+Real GUI dispatch confirms both camera connection checks, bounded capture/disconnect
+and Arduino connection. SpikeGLX diagnostics reach the remote server but find an
+already-running acquisition; the empty pulse inventory also prevents pairing.
+An invalid standalone MCU Status probe is correctly rejected because no pin
+diagnostic is active; it is test-method error, not a backend defect. Native screen
+inspection confirms assigned camera controls. Saved native projector identities
+and rig geometry produce explicit **uncalibrated diagnostic** profiles and a
+60-second procedural-grating protocol; this does not certify optical accuracy.
+Before loading repairs, explicit history saving, normal shutdown, matching exit
+receipt and application-guard release pass for generation
+`93cbe363-06ee-419c-b55f-8e14fcf600ce`. The repaired runtime then persists a temporary
+accepted experiment-name marker through **ShutdownApplication without a separate
+save command**, confirms exact exit, and reloads it in a new generation. Restore
+and save of the original configuration pass. Pure dummy-proposal validation passes
+experiment/acquisition/inactive Tracking but rejects Visual Stimulus because V20's
+explicit pacing-output identity is unset. Automatic approval review separately
+rejects the proposed configuration/real Setup action for unavailable display
+coordination and unresolved pairing against an active remote acquisition; **no
+dummy configuration submission, Setup, Start or recording occurred**. Owner choices
+for pairing and pacing are pending. Native wide-window camera controls render
+correctly; the attempted drag did not resize the window, so narrow native/DPI
+acceptance remains open. [Dated raw checks](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+
+Latest `.ino` upload shutdown (2026-10-08, E08/A11): owner emergency identifies
+JOB_INSPECTION_FAILED; a controlled GUI-command-path upload reproduces executable
+query WinError 5 for a compiler job member, followed by TerminateJobObject WinError 5.
+The focused native inspection now waits at most one millisecond for the exact
+process exit signal after failed identity queries, within the existing three passes;
+unverified live processes still raise. Reopened launch-owner job handles now request
+the required termination right, retaining exact contained ownership. Native regression
+reproduces the missing-right failure before repair and passes afterward. Three
+upload cycles pass after the exit check, then two final compile/verified-upload cycles
+and deliberate compiler rejection pass with both repairs; rejection preserves serial
+identity and confirmed cleanup. Affected platform/supervisor/firmware-owner/shared
+tests pass 199 with one skip; static checks and 619-module boundaries pass. ARCH-002
+keeps the small native-handle changes in the existing API owner with no dependency,
+policy or firmware-source changes. Current settings were not edited. Exact exit,
+guard/COM/helper release and removal of one archived failed-attempt staging directory
+are confirmed; runtime remains stopped. Full-load and interrupted-flash acceptance
+stay in the rig checklist. [Dated method/results](rig-wiring-evidence-2026-10-08/README.md#ino-upload-native-job-correction).
+
+Output-format comparison (2026-10-08, `output-format-comparison`): inspected the
+sibling CephVR1.0 writers/schema-v5 registry and saved October 6 session
+`C:/Data/projects/reiter-cephalopod-vr/cephvr-data/20261006_ephys-pilot/SP0002-151412/protocol-data`,
+then compared current CephVR2.0 output planning and all three scientific writers.
+The existing date/experiment/subject-session layout and `protocol-data` /
+`spikeglx-data` split are shared. [E04](../docs/architecture/supervisor.md#e04)
+removes trial-number filename suffixes, adds UUID identities, replaces session-summary
+JSON with lifecycle JSONL, and uses `SCHEMA.json` instead of `SESSION_SCHEMA.json`.
+[A07/A08](../docs/architecture/acquisition.md#a07) replace acquisition/video CSV pairs
+with one camera JSONL stream containing received frames, drop/video correspondence,
+clock descriptors and terminal accounting. Current camera encoding remains
+unpadded, but the owner subsequently revised A07/A08 and E13/V12 to require
+identified padding; schemas/writers still need that amendment. The saved 1.0 example
+reports five padded Behavior frames and nineteen duplicated VR frames.
+
+[T15/T19](../docs/architecture/tracking.md#t15) replace `_tracking_state.csv` with
+typed pose/result/reset/discard/completion records. The owner's subsequent decoded
+storage choice replaces base64 feedback/escaped stage payloads with schema-2 JSON
+objects; [implementation evidence](tracking.md) records local checks and limits.
+[T35/T38](../docs/architecture/tracking.md#t35) use relative drive
+in px/s and 1/s, not the legacy mm/s/deg/s velocity columns.
+[E13/V13](../docs/architecture/visual_stimulus.md#e13) replace separate VR/stimulus
+CSV state files with the always-retained prepared `_stimulus_LOG.json` plus Save On
+render evidence/review video. The review video samples final corrected output tiles;
+the legacy recorder captures its dashboard composite. Current SubjectMetadata moves
+animal details into session configuration, uses `size_mm`, adds condition, and has
+no legacy `weight_g` field. These are format/semantic changes, not a migration or a
+claim that old readers can consume the new files.
+
+Evidence scope: 16 `SESSION_SCHEMA.json` files and no 2.0-style session/schema/
+scientific JSONL files were found by filename inventory in the inspected data root.
+The 2.0 side is source/schema inspection at HEAD `7ba43b1` with concurrent local edits,
+not an inspected production scientific session or new runtime/rig pass. The sibling
+main ref reads `1082d917`; its dirty status could not be checked through `git -C`
+under current permissions, so that ref alone does not identify the reviewed source
+snapshot. No recording, device, runtime or scientific-data mutation ran.
+
+Projector assignment retention (2026-10-08, G01 revision 130): explicit choices sync
+immediately to local frontend preferences by stable display identity, including
+Unassigned/missing displays, independently of a complete calibration or GUI closure.
+A new Configuration/Ready GUI restores these as drafts and marks differences dirty;
+active-session synchronization and explicit reload retain the controller base. Saved
+mapping identity never changes controller state or triggers output. Profile install
+now synchronizes the visible assignment dropdowns silently. Invalid/duplicate saved
+preferences remain preserved and reported; failed writes retain the current draft.
+The initial four restart/managed cases fail before repair. Final owning projector,
+calibration and managed-configuration selection passes 53 with one existing horizontal
+scroll/layout failure, already present in the earlier full suite. New retention cases
+cover restart without closing/Setup, reordered/missing/returning inventory, explicit
+Unassigned, invalid preferences, failed save, active-session isolation and explicit
+reload. Ruff/format, four-source Win32 mypy and 619-module boundaries pass.
+ARCH-002 puts bounded preferences/validation and silent control synchronization in
+a focused helper; the existing Projectors panel retains UI/native inventory ownership.
+No dependency/process or controller-history writer is added. These are isolated Qt
+settings/display fixtures; actual multi-monitor restart/unplug acceptance remains in
+the rig checklist. No hardware command or managed runtime restart ran.
+[Raw validation and source context](rig-wiring-evidence-2026-10-08/projector-assignments-context.json).
+
+Camera Disconnect presentation (2026-10-08, G01/G02): the button now uses the shared
+red danger style for a connected camera and returns to primary styling when closed
+or selecting an unconnected camera. Three existing camera-control Qt cases pass;
+offscreen theme checks confirm the actual red/primary palette and both transitions.
+Ruff/format, one-source Win32 mypy and boundaries pass. ARCH-002 keeps this small
+presentation update in the existing cohesive camera refresh owner, without new
+state or dependencies; no hardware command or managed restart ran.
+
+SpikeGLX table presentation (2026-10-08, G01): the Stream column is hidden from
+the mapping table while retained stream identity continues to roundtrip internally.
+Five existing owning Qt panel cases pass; an offscreen rendered table confirms
+zero Stream width and aligned visible columns after adding a custom row. Ruff,
+format, single-source Win32 mypy and 618-module boundaries pass. ARCH-002 uses
+the existing table's column visibility without new state, dependency or schema.
+This presentation check sends no runtime/remote command.
+
+Later G01 camera-selection increment (2026-10-08): selected config reloads after
+managed inventory assignment changes, and Use-checkbox clicks select their row.
+Camera/PFS Qt tests pass 27; selection is silent and preserves per-camera drafts.
+Static/boundary checks pass. Earlier full-suite/physical results below predate
+this increment. [Current evidence](rig-wiring-evidence-2026-10-08/README.md#later-camera-selection-correction).
+
+Latest Windows/device execution (2026-10-08): reviewed committed `e4c653c..7ba43b1`
+and repaired three observed integration defects under A11/E08/ARCH-002: invalid
+diagnostic-stop after firmware reconnect, an extra native pipe-creation argument,
+and invalid diagnostic-stop during control-release cleanup. Existing OFF proof,
+deadlines, ownership and failed-close fencing remain intact; an unacknowledged
+diagnostic Start remains uncertain until confirmed Stop/cleanup (owning regression
+coverage, without physical missing-ACK injection). Real controller-owned
+MCU diagnostics with acquisition disabled, supervised HEX upload and `.ino`
+compile/upload, deliberate compiler rejection without serial handoff, active-D9
+control release and final exact shutdown/COM cleanup pass. Behavior capture/display
+and moved-GUI native placement pass twice. The later Tracking repair validates both
+exact producer rings at Ready and release; the previous generic health shutdown was
+a rejected-report path, not an established heartbeat timeout. Two physical Tracking
+Connect/Show/Disconnect cycles now pass with restored settings and exact normal
+shutdown. Failure reporting retains a bounded specific reason without relaxing
+fencing/deadlines. Acquisition/affected-controller checks pass 363 with one skip;
+affected static/boundary checks pass.
+[Current Tracking evidence](rig-wiring-evidence-2026-10-08/README.md#tracking-connect-and-release-correction).
+SpikeGLX still times out with a late unretrieved future failure. Eight existing GUI
+clipping failures remain.
+
+Earlier full Windows/offscreen suite (before camera-selection/Tracking repairs): **1463 passed, 8 failed, 5 privilege skips, 1 rig
+deselection**. Separate native GPU smoke passes one; affected Ruff/format, Win32
+mypy and boundaries pass. Baseline contracts/schema checks and native package build
+pass. Test fixture path/privilege and asynchronous settlement/clock repairs are
+distinct from the three product repairs. [Current dated methods, exact source
+provenance, raw outcomes and cleanup](rig-wiring-evidence-2026-10-08/README.md)
+retain every failure and scope. Runtime is stopped; saved settings are retained.
+Remaining acceptance belongs to the [single rig checklist](rig-verification.md).
+The original development-only migration assessment below predates this execution.
 
 Controller Microcontroller ownership (2026-10-08) implements
 [A10 revision 55](../docs/architecture/acquisition.md#a10),
@@ -176,14 +451,15 @@ in launcher composition; no policy, dependency or process owner is added.
 [Dated replacement evidence](rig-wiring-evidence-2026-10-07/replacement-context.json).
 No live Y/termination/restart or device operation occurs in this repair.
 
-Latest [manual installation and camera retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
+Earlier [manual installation and camera retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
 verifies protocol-3 Uno upload/CAPS, generated D9/D10/D11 counts, managed D9/D10/D11
 Test/Status/Stop and D9 automatic timeout. Real Behavior HighGUI Start/Show/Hide/native close/reopen/Stop
 passes with acquisition-owned native window. Tracking's readback revision handoff
 is repaired (54 focused, 535 integration passes/two privilege skips; static checks
 pass), but its subsequent Start fails amid recurring coordinator-health shutdown.
 Exact launcher absence is confirmed before restoring a fresh GUI runtime.
-Firmware installation is complete; Tracking/sustained acceptance remains open.
+Firmware installation is complete. The later Oct8 exact two-ring repair supersedes
+this Start failure; sustained/full-workload acceptance remains open.
 
 Earlier owner D10 test fails without pulses. The camera diagnostic now applies its
 selected output configuration before starting; controller completion forwards
@@ -537,6 +813,14 @@ test), the authority-loss/evidence/recovery-inspection state machines and the Op
 fail-closed dependencies were intentionally left alone.
 
 ## Unresolved findings and limitations
+
+The Oct8 missing application-shutdown history save is repaired and locally/native
+verified in the current scope above under [E07](../docs/architecture/experiment.md#e07).
+An abrupt crash or termination that cannot execute the controller's save path can
+still lose accepted edits since the last successful save. Earlier Tracking-probe
+restoration meant its captured startup snapshot, not recovery of the owner's
+pre-crash in-memory edits; cleanup did not delete the history file. Do not reinterpret
+that historical restoration as crash resilience or recovery of those lost edits.
 
 The retained source review identifies these open items; they were not re-audited
 during documentation consolidation. The controller does not yet apply camera/pulse

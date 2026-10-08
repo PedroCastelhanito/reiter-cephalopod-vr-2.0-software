@@ -231,7 +231,11 @@ class TrialRecordingTerminal:
             return normal
         anchor = self.trial.pulses.off_boundary_ns
         stop = self.trial.stop_request
-        if anchor is None and stop is not None and stop.HasField("issued_monotonic_ns"):
+        if (
+            anchor is None
+            and isinstance(stop, (acq.WorkerStop, acq.WorkerInterrupt))
+            and stop.HasField("issued_monotonic_ns")
+        ):
             anchor = stop.issued_monotonic_ns
         if anchor is None:
             return operation_deadline

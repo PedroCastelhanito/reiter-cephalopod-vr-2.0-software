@@ -67,6 +67,20 @@ class RecipeOwner:
 
         if any(not task.done() for task in self.tasks.values()):
             raise RuntimeError("prior recipe writes remain owned")
+        if self.state.resources:
+            raise RuntimeError("prior session resources remain owned")
+        await self.supervisor.receipt(
+            "ReportHeartbeat",
+            pb.HeartbeatReport(
+                source=self.identity.process,
+                work=setup.command.work,
+                sent_monotonic_ns=self.clock(),
+                session_phase=pb.SESSION_PHASE_SETTING_UP,
+                cleanup_resources_revision=0,
+            ),
+            deadline_ns=deadline_ns,
+        )
+        self.state.catalogue_revision = 0
         self.tasks.clear()
         self.start_times.clear()
         self.cancelled_trials.clear()

@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: OpenGL context 'ATI Technologies Inc.'/'AMD Radeon(TM) Graphics' does not resolve to 'NVIDIA GeForce RTX 5060 Ti'
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -1,0 +1,39 @@
+{
+  "controller_generation": "c4bbb0f6-e0cc-4fbd-97dd-8ac20f804524",
+  "original_configuration_preserved": true,
+  "history_preserves_original": true,
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "486403db-3bce-443d-a9aa-6a8282c1168e"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "20a69437-9241-45d6-ba01-8ce16190f9cc"
+      },
+      "command": "SaveConfigurationHistory",
+      "complete": true,
+      "succeeded": true,
+      "progress": "reusable configuration history saved"
+    },
+    {
+      "context": {
+        "command_id": "c2a5432e-5db7-4885-9b1b-a0202763b4a2"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    }
+  ],
+  "devices": {},
+  "microcontroller": {}
+}

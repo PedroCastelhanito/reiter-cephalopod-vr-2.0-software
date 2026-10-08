@@ -1,0 +1,103 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "41086e54-222d-4a8b-bf6e-601a19de7b84"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "41086e54-222d-4a8b-bf6e-601a19de7b84",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "683b8272-80e8-43f6-a186-00fd05f887d1",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "f692fc4d-568a-455d-897d-42d0dc61c6bf",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: 1 validation error for ReviewTiming\ncapability_evidence_id\n  String should match pattern '^[A-Za-z][A-Za-z0-9_-]*$' [type=string_pattern_mismatch, input_value='ffmpeg-capability-probe:...-42ff-94c8-f1f0c0beff96', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch"
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_SETTING_UP",
+      "context": {
+        "controller_generation": "683b8272-80e8-43f6-a186-00fd05f887d1",
+        "session_id": "fe511b98-17ff-422d-b05c-e96fc97dbc48"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-133119",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [
+    {
+      "warning_id": "f651f666-7d60-4457-a7d6-fbe19e1df405",
+      "component": "startup_recovery",
+      "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+    },
+    {
+      "warning_id": "be68120b-8fc4-425d-a640-5660361443a5",
+      "component": "controller",
+      "message": "visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: 1 validation error for ReviewTiming\ncapability_evidence_id\n  String should match pattern '^[A-Za-z][A-Za-z0-9_-]*$' [type=string_pattern_mismatch, input_value='ffmpeg-capability-probe:...-42ff-94c8-f1f0c0beff96', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch"
+    }
+  ],
+  "cancel_setup": {
+    "command_id": "b64c7576-d94b-4b3f-b827-bd9218b4b257",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  }
+}

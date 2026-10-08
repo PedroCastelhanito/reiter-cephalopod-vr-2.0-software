@@ -677,7 +677,7 @@ def test_uno_sketch_digest_pins_companions_and_rejects_links(tmp_path):
     (root / "src").mkdir()
     (root / "src" / "helper.cpp").write_bytes(b"void helper() {}\n")
     selected = read_firmware(str(source))
-    assert [str(path) for path, _ in selected.files] == [
+    assert [path.as_posix() for path, _ in selected.files] == [
         "pin.h",
         "sketch.ino",
         "src/helper.cpp",
@@ -687,7 +687,12 @@ def test_uno_sketch_digest_pins_companions_and_rejects_links(tmp_path):
     with pytest.raises(ValueError, match="changed"):
         read_uno_sketch(str(source), selected.digest)
     source.unlink()
-    source.symlink_to(header)
+    try:
+        source.symlink_to(header)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) == 1314:
+            pytest.skip("Windows symlink privilege or Developer Mode is unavailable")
+        raise
     with pytest.raises(ValueError, match="regular file"):
         read_uno_sketch(str(source))
 
@@ -795,8 +800,7 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
                 raise RuntimeError("protocol mismatch")
 
         async def diagnostic_stop(self, *, deadline_ns):
-            events.append("diagnostic stop")
-            return False, "", "", 0
+            raise RuntimeError("no pin diagnostic is active")
 
         async def status(self, *, deadline_ns):
             events.append("fresh status")
@@ -837,7 +841,6 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
             "release serial",
             "upload",
             "fresh connect",
-            "diagnostic stop",
             "fresh status",
             "cleanup",
         ]
@@ -1231,7 +1234,10 @@ async def test_camera_claim_is_exact_and_cleanup_leaves_general_diagnostics_alon
     assert serial.close.await_count == 1
 
 
-async def test_failed_controller_close_stays_fenced_until_exact_release():
+@pytest.mark.parametrize("diagnostic_active", [False, True])
+async def test_failed_controller_close_stays_fenced_until_exact_release(
+    diagnostic_active,
+):
     from unittest.mock import AsyncMock
 
     from cephvr.controller.microcontroller.device import MicrocontrollerDevice
@@ -1247,7 +1253,11 @@ async def test_failed_controller_close_stays_fenced_until_exact_release():
     )
     owner.port_owned = True
     owner.view.observation.port = "COM8"
-    serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
+    owner.view.diagnostic.active = diagnostic_active
+    if diagnostic_active:
+        serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
+    else:
+        serial.diagnostic_stop.side_effect = RuntimeError("no pin diagnostic is active")
     stopped = mcu.MicrocontrollerState()
     stopped.behavioral.running = False
     stopped.tracking.running = False
@@ -1263,12 +1273,51 @@ async def test_failed_controller_close_stays_fenced_until_exact_release():
     serial.close.side_effect = None
     await owner.close(deadline_ns=deadline, permanent=False)
     assert serial.off.await_count == 1
+    assert serial.diagnostic_stop.await_count == int(diagnostic_active)
     assert owner.cleanup_complete and not owner.snapshot_view().cleanup_pending
     assert [call.kwargs["deadline_ns"] for call in serial.close.await_args_list] == [
         deadline,
         deadline,
     ]
     owner.ensure_idle()
+
+
+async def test_uncertain_diagnostic_start_remains_fenced_for_cleanup():
+    from unittest.mock import AsyncMock
+
+    from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+    from cephvr.shared.clock import host_time_ns
+
+    serial = AsyncMock()
+    serial.diagnostic_start.side_effect = RuntimeError(
+        "start acknowledgement unconfirmed"
+    )
+    serial.diagnostic_stop.side_effect = RuntimeError("no pin diagnostic is active")
+    owner = MicrocontrollerDevice(
+        serial,
+        control.AcquisitionSettings(),
+        runtime_pb2.AcquisitionFilePolicies(),
+        host_time_ns,
+    )
+    owner.port_owned = True
+    owner.view.observation.port = "COM8"
+    pulses = camera.CameraPulseConfiguration(
+        port="COM8", trial_state_pin="D9", trial_state_enabled=True
+    )
+    request = wire.MicrocontrollerCommandRequest(
+        kind=wire.MICROCONTROLLER_COMMAND_KIND_START,
+        signal=control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
+    )
+    deadline = host_time_ns() + 1_000_000_000
+    with pytest.raises(RuntimeError, match="unconfirmed"):
+        await owner.execute(request, pulses, deadline)
+    with pytest.raises(RuntimeError, match="pending"):
+        owner.ensure_idle()
+    with pytest.raises(RuntimeError, match="no pin diagnostic"):
+        await owner.close(deadline_ns=deadline, permanent=False)
+    assert not owner.cleanup_complete and owner.snapshot_view().cleanup_pending
+    serial.close.assert_not_awaited()
+    serial.off.assert_not_awaited()
 
 
 async def test_cancel_on_retains_off_boundary_for_watchdog_arbitration():

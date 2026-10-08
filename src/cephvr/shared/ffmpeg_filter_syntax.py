@@ -166,7 +166,7 @@ def _valid_color(value: str) -> bool:
 
 
 def _is_rgb(pixel_format: str) -> bool:
-    return pixel_format.startswith(("rgb", "bgr", "gbr"))
+    return pixel_format.startswith(("rgb", "bgr", "gbr")) or pixel_format == "x2bgr10le"
 
 
 def _is_yuv(pixel_format: str) -> bool:

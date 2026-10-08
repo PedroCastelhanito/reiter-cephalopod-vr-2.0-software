@@ -63,7 +63,12 @@ class WorkerCleanupLifecycle:
 
     def begin(self, deadline_ns: int) -> None:
         runtime = self.recording
-        if runtime is None or not runtime.enabled or self._future is not None:
+        if (
+            runtime is None
+            or not runtime.enabled
+            or runtime.recording_queue is None
+            or self._future is not None
+        ):
             return
         self._future = runtime.fail_cleanup(deadline_ns=deadline_ns)
         self._future.add_done_callback(lambda _future: self.external_wake())
@@ -137,7 +142,7 @@ class WorkerCleanupLifecycle:
 
     def _reconcile(self, deadline_ns: int) -> bool:
         runtime = self.recording
-        if runtime is None or not runtime.enabled:
+        if runtime is None or not runtime.enabled or runtime.recording_queue is None:
             return True
         if self._future is None:
             self.begin(deadline_ns)

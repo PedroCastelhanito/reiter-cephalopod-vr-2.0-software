@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import threading
 from pathlib import Path
 from typing import Any, cast
 
@@ -92,6 +94,33 @@ async def test_interrupt_during_finalize_joins_the_one_task(
     assert runtime.control.operations[abort_id].succeeded
 
 
+async def test_trial_schedule_prefix_matches_absolute_output_reservations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    attempt.prepared.configuration.subject = "dummy"
+    attempt.prepared.anchor_wall_time = "2026-10-08T14:00:00+09:00"
+    attempt.prepared.anchor_monotonic_ns = 1_000
+    plan = attempt.prepared.trials.add(
+        context=pb.TrialContext(
+            session=attempt.context, trial_id=_id(), trial_number=1
+        ),
+        resolved_duration_ns=60_000_000_000,
+    )
+    output = attempt.prepared.outputs.add(
+        trial=plan.context,
+        backend=pb.BackendContext(backend_name="visual_stimulus"),
+        output_tag="behavioral_cam",
+        extension="mp4",
+    )
+    attempt.trial_participants = {"visual_stimulus": cast(Any, object())}
+    schedule = await runtime.trials._plan_trial(attempt, plan)
+    assert Path(schedule.file_prefix).is_absolute()
+    assert Path(schedule.file_prefix).parent == attempt.reservation.protocol_directory
+    assert output.path == schedule.file_prefix + "_behavioral_cam.mp4"
+    assert attempt.trial_log_name == Path(schedule.file_prefix).name + "_LOG.json"
+
+
 @pytest.mark.parametrize(
     "outcome", [pb.SESSION_OUTCOME_COMPLETED, pb.SESSION_OUTCOME_INTERRUPTED]
 )
@@ -108,6 +137,9 @@ async def test_shutdown_after_ended_completes_without_relabel(
             return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
 
     runtime.session_commands.supervisor = cast(Any, Supervisor())
+    history_path = tmp_path / "history.json"
+    runtime.configuration_commands.configuration_history_path = history_path
+    runtime.configuration_state.current.subject = "shutdown-retained"
     command = operator_command(runtime)
     admission = await runtime.shutdown_application(command)
     assert admission.result == pb.COMMAND_RESULT_ACCEPTED
@@ -115,6 +147,9 @@ async def test_shutdown_after_ended_completes_without_relabel(
     operation = runtime.control.operations[command.operator.command_id]
     assert operation.complete and operation.succeeded
     assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_ENDED
+    assert json.loads(history_path.read_text())["configuration"]["subject"] == (
+        "shutdown-retained"
+    )
     assert runtime.lifecycle.session.outcome == outcome
     assert not attempt.interrupted or not runtime.lifecycle.session.HasField(
         "interruption_reason"
@@ -395,6 +430,19 @@ async def test_shutdown_interrupts_at_once_and_completes_after_handoff_and_clean
             return result
 
     runtime.session_commands.supervisor = cast(Any, Supervisor())
+    history_path = tmp_path / "history.json"
+    runtime.configuration_commands.configuration_history_path = history_path
+    runtime.configuration_state.current.subject = "shutdown-retained"
+    history_gate = threading.Event()
+    original_writer = runtime.configuration_commands._write_history
+
+    def delayed_writer(seq: int, path: Path, payload: bytes) -> None:
+        assert history_gate.wait(2)
+        original_writer(seq, path, payload)
+
+    monkeypatch.setattr(
+        runtime.configuration_commands, "_write_history", delayed_writer
+    )
     command = operator_command(runtime)
     await runtime.shutdown_application(command)
     command_id = command.operator.command_id
@@ -409,9 +457,15 @@ async def test_shutdown_interrupts_at_once_and_completes_after_handoff_and_clean
     assert runtime.lifecycle.session.phase == pb.SESSION_PHASE_ENDED
     assert not runtime.control.operations[command_id].complete
     handoff_gate.set()
+    await asyncio.sleep(0.02)
+    assert not runtime.control.operations[command_id].complete
+    history_gate.set()
     await drain_runtime_tasks(runtime)
     operation = runtime.control.operations[command_id]
     assert operation.complete and operation.succeeded
+    assert json.loads(history_path.read_text())["configuration"]["subject"] == (
+        "shutdown-retained"
+    )
 
 
 async def test_shutdown_with_rejected_handoff_completes_failed(

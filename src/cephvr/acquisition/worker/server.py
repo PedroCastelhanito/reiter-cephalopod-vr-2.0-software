@@ -66,7 +66,8 @@ async def serve_registered_worker(
             (server_wait, shutdown_wait), return_when=asyncio.FIRST_COMPLETED
         )
         for task in pending:
-            task.cancel()
+            if task is shutdown_wait:
+                task.cancel()
         if shutdown_wait in done and shutdown_wait.result():
             deadline = shutdown_deadline_ns()
             if deadline is None:
@@ -76,6 +77,7 @@ async def serve_registered_worker(
                 raise RuntimeError("camera owner did not stop within shutdown deadline")
             owner_stopped = True
             await server.stop(grace=remaining_seconds(deadline))
+        await asyncio.gather(*pending, return_exceptions=True)
     finally:
         if owner_started and not owner_stopped:
             deadline = shutdown_deadline_ns()

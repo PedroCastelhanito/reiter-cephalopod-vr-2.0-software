@@ -1,0 +1,190 @@
+{
+  "controller_generation": "c81d045e-62b0-40e5-ba97-399bd06a9d37",
+  "session": {
+    "phase": "SESSION_PHASE_FINALIZING",
+    "context": {
+      "controller_generation": "c81d045e-62b0-40e5-ba97-399bd06a9d37",
+      "session_id": "caca12ae-0459-4284-963e-b13f9a6de900"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140326",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "trial 1: acquisition PrepareTrial failed: TRIAL_PREPARATION_FAILED: camera role 2 trial preparation failed: INVALID_REQUEST: installed FFmpeg does not advertise prepared input format gray8"
+    }
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "c81d045e-62b0-40e5-ba97-399bd06a9d37",
+        "session_id": "caca12ae-0459-4284-963e-b13f9a6de900"
+      },
+      "trial_id": "4f1e2458-0d71-4fd0-b04a-b29afe52c894",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_PREPARING"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "e40aee6e-2742-4130-a65d-9f96ca38cfc1"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "e40aee6e-2742-4130-a65d-9f96ca38cfc1"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "c81d045e-62b0-40e5-ba97-399bd06a9d37",
+              "session_id": "caca12ae-0459-4284-963e-b13f9a6de900"
+            }
+          },
+          "operation": {
+            "command_id": "4dda70a3-978c-4107-a46d-65baa65164a0"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    },
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "ee6a5ade-1a74-42db-910e-a206a89d360f"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "ee6a5ade-1a74-42db-910e-a206a89d360f"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "c81d045e-62b0-40e5-ba97-399bd06a9d37",
+              "session_id": "caca12ae-0459-4284-963e-b13f9a6de900"
+            }
+          },
+          "operation": {
+            "command_id": "77f181a0-2d29-425d-a277-7aafd556ec82"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "472bd4e9-63b1-45e2-ae17-2203b2bb1529"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "17bf42fe-f5c4-44a2-8a6e-e3b73048e593"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+          "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "a2678c06-b401-4003-9e02-79d359413c4a"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "a942e7fb-b8b7-4b2c-8f7a-1040933ffc21"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "3ec0afdd-7466-44b9-917b-23b8fdabdd6d"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "c81d045e-62b0-40e5-ba97-399bd06a9d37",
+          "session_id": "caca12ae-0459-4284-963e-b13f9a6de900"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "34da768b-a0a5-41b3-8583-6c5a7e234252"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "c81d045e-62b0-40e5-ba97-399bd06a9d37",
+          "session_id": "caca12ae-0459-4284-963e-b13f9a6de900"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    }
+  ],
+  "warnings": null,
+  "prompts": null,
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "36f84ce9-563e-4f06-937d-83ddfaaebb66"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140326\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "a18fe5ce-687d-42f7-a3ef-70e3a288606a"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140326\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "1b6c9def-d8b7-4644-a807-ca0a98004e49"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140326\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ]
+}

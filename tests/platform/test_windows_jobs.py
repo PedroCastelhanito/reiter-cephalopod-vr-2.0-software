@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ctypes
+import os
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 
@@ -25,6 +27,8 @@ class FakeApi:
         self.gone: set[int] = set()
         self.denied: set[int] = set()
         self.exited_after_open: set[int] = set()
+        self.exited_during_wait: set[int] = set()
+        self.waits: list[tuple[int, int]] = []
         self.last_error = 0
         self.terminated: list[int] = []
         self.terminate_ok = True
@@ -58,12 +62,15 @@ class FakeApi:
             self.image_query_failures -= 1
             self.last_error = 5
             return False
-        if handle in self.exited_after_open:
+        if handle in self.exited_after_open or handle in self.exited_during_wait:
             return False
         path.value = "member.exe"
         return True
 
     def WaitForSingleObject(self, handle, timeout) -> int:
+        self.waits.append((handle, timeout))
+        if timeout and handle in self.exited_during_wait:
+            self.exited_after_open.add(handle)
         return WAIT_OBJECT_0 if handle in self.exited_after_open else WAIT_TIMEOUT
 
     def CloseHandle(self, handle) -> bool:
@@ -116,6 +123,15 @@ def test_member_exiting_after_open_is_absent() -> None:
     api.exited_after_open = {11}
     members = make_jobs(api).inspect_launch_job("job")
     assert [pid for pid, _, _ in members] == [10]
+
+
+def test_member_query_fails_while_exact_process_exit_is_becoming_signaled() -> None:
+    api = FakeApi([[10, 11]])
+    api.exited_during_wait = {11}
+    members = make_jobs(api).inspect_launch_job("job")
+    assert [pid for pid, _, _ in members] == [10]
+    assert api.waits == [(11, 1), (11, 1)]
+    assert api.closed == [10, 11, 10, 11]
 
 
 def test_reenumerates_until_two_passes_agree() -> None:
@@ -203,3 +219,18 @@ def test_new_process_handle_is_closed_when_creation_query_fails() -> None:
     with pytest.raises(WindowsLaunchError, match="creation query denied"):
         jobs._open_exact(42, 100)
     assert closed == [123]
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(os.name != "nt", reason="requires native Windows job handles")
+def test_launch_owner_can_terminate_its_reopened_native_job() -> None:
+    creator, owner = WindowsJobs(), WindowsJobs()
+    name = f"cephvr-test-owner-termination-{uuid4()}"
+    creator.create_launch_job(name)
+    try:
+        owner.open_launch_job(name)
+        owner.terminate_job(name)
+        assert owner.inspect_launch_job(name) == []
+    finally:
+        owner.close_launch_job(name)
+        creator.close_launch_job(name)

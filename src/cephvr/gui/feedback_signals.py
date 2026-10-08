@@ -54,7 +54,7 @@ def targets(setting: Settings, signal: dict[str, Any]) -> dict[str, str]:
             {"yaw": "Heading"}
             if setting.kind == "arena"
             and signal["value_kind"] == "interval_average_rate"
-            and signal["unit"] == "1/s"
+            and signal["unit"] == "deg/s"
             else {}
         )
     state = {"x", "y", "yaw"} if setting.kind == "arena" else {"x", "y", "rotation"}

@@ -1,6 +1,7 @@
 """Native frontend behavior and ownership; no controller or rig execution."""
 
 from collections.abc import Iterator
+from contextlib import nullcontext
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -103,6 +104,454 @@ def test_offline_frontend_cannot_request_commands(app: QApplication) -> None:
     window.close()
     window.deleteLater()
     app.processEvents()
+
+
+def test_protocol_config_round_trip_retains_complete_schedule(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    from cephvr.gui.protocol_document import TrialDraft, blank_program
+    from cephvr.gui.protocol_snapshot import (
+        capture_protocol,
+        restore_protocol,
+        validate_protocol,
+    )
+
+    page = window.protocol
+    data = capture_protocol(page)
+    data["mode"], data["asset_root"] = "Closed-loop", "C:/实验/assets"
+    trial = data["trials"][0]
+    trial.update(
+        name="First",
+        path="logical/first.json",
+        stimulus_seed_decimal="12",
+        gap_after_seconds="0.125",
+        arena_boundaries_json='{"format_version":1,"bindings":[]}',
+    )
+    data["trials"] = [
+        trial,
+        dict(trial, name="Second", stimulus_seed_decimal="99", gap_after_seconds=""),
+    ]
+    data["selected_trial"] = 1
+    restore_protocol(page, validate_protocol(data))
+    path = tmp_path / "protocol.json"
+    assert page.config_files.save_path(str(path))
+    restore_protocol(
+        page,
+        validate_protocol(
+            dict(data, mode="Open-loop", selected_trial=0, trials=[data["trials"][0]])
+        ),
+    )
+    assert page.config_files.load_path(str(path))
+    assert capture_protocol(page) == data
+    # Existing canonical single-trial documents remain accepted by the toolbar.
+    path.write_text(blank_program().model_dump_json(), encoding="utf-8")
+    assert page.config_files.load_path(str(path))
+    assert len(page.editor.drafts) == 2
+    assert isinstance(page.editor.drafts[1], TrialDraft)
+    assert page.editor.drafts[1].path == str(path)
+
+
+def test_microcontroller_config_load_is_local_and_explicit_apply_is_separate(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    panel = window.devices.microcontroller
+    data = panel.snapshots.capture()
+    data.update(port="COM91", firmware_path="C:/实验/firmware.ino")
+    data["trial_state"] = {"pin": "D8", "enabled": False}
+    data["projector_flip"] = {"pin": "D2", "enabled": True}
+    data["camera_pins"] = {
+        key: f"D{9 + index}" for index, key in enumerate(data["camera_pins"])
+    }
+    from cephvr.gui.configuration_files import write_snapshot
+
+    path = tmp_path / "mcu.json"
+    write_snapshot(str(path), data)
+    requests: list[tuple[object, ...]] = []
+    panel.save_requested.connect(lambda *args: requests.append(args))
+    panel.firmware_requested.connect(lambda *args: requests.append(args))
+    panel.connection_requested.connect(lambda *args: requests.append(args))
+    panel.camera_enable_requested.connect(lambda *args: requests.append(args))
+    panel.managed = True
+    assert panel.config_files.load_path(str(path))
+    assert panel.snapshots.capture() == data
+    assert requests == []
+    panel.snapshots.apply_button.click()
+    assert len(requests) == 1
+    assert requests[0][:3] == ("COM91", "D8", False)
+
+
+def test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    from PyQt6.QtWidgets import QLineEdit
+
+    from cephvr.gui.configuration_files import write_snapshot
+
+    panel = window.devices.spikeglx
+    panel.add_custom()
+    key = panel.row_keys[-1]
+    signal, stream, index, channel, bit = panel.rows[key]
+    assert isinstance(signal, QLineEdit)
+    signal.setText("stimulus-sync")
+    data = panel.snapshots.capture()
+    data["rows"][-1].update(stream="NI", index="2", channel="7", bit="3", enabled=False)
+    data["host_reference"].update(
+        address="other-server", command_port="4142", pairing=True
+    )
+    path = tmp_path / "spike.json"
+    write_snapshot(str(path), data)
+    host = panel.snapshots.host()
+    panel.inventory_file_sha256 = "current-controller-digest"
+    requests: list[object] = []
+    panel.inventory_update_requested.connect(requests.append)
+    panel.add_custom()
+    assert panel.config_files.load_path(str(path))
+    actual = panel.snapshots.capture()
+    assert actual["rows"] == data["rows"]
+    assert actual["host_reference"] == host
+    assert panel.inventory_file_sha256 == "current-controller-digest"
+    assert requests == []
+    panel.add_custom()
+    assert len(set(panel.row_keys)) == len(panel.row_keys)
+
+
+def test_full_gui_config_round_trip_restores_all_sections_without_commands(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    from cephvr.gui.configuration_files import write_snapshot
+
+    data = window.snapshots.capture()
+    data["experiment"]["dashboard"].update(
+        subject_id="octopus-7",
+        experiment="experimenter-A",
+        condition="drift",
+        output_root="C:/experiments/A",
+    )
+    data["experiment"]["cameras"][0]["values"] = {
+        "trigger_clock": "External controller",
+        "trigger_source": "Line2",
+        "trigger_frequency_hz": "18",
+        "preset": "C:/presets/A.pfs",
+    }
+    data["experiment"]["recordings"]["stimulus"] = False
+    data["protocol"]["mode"] = "Closed-loop"
+    data["protocol"]["asset_root"] = "C:/experiment-assets"
+    data["microcontroller"]["port"] = "COM92"
+    data["tracking"]["distance_mm"] = "25"
+    data["projectors"]["configuration"]["settings"]["photodiode_enabled"] = False
+    path = tmp_path / "experiment.json"
+    write_snapshot(str(path), data)
+    requests: list[object] = []
+    for signal in (
+        window.dashboard.action_requested,
+        window.devices.cameras.settings_requested,
+        window.devices.cameras.role_requested,
+        window.devices.cameras.enable_requested,
+        window.devices.microcontroller.save_requested,
+        window.devices.spikeglx.inventory_update_requested,
+    ):
+        signal.connect(lambda *args: requests.append(args))
+    assert window.config_files.load_path(str(path))
+    assert window.snapshots.capture() == data
+    assert requests == []
+    assert window.devices.cameras.snapshot_draft
+    assert window.devices.microcontroller.snapshots.draft_loaded
+    assert window.recordings.touched == {
+        "stimulus",
+        "velocities",
+        "camera-1",
+        "camera-2",
+    }
+    saved = tmp_path / "saved.json"
+    assert window.config_files.save_path(str(saved))
+    assert window.config_files.load_path(str(saved))
+    assert window.snapshots.capture() == data
+
+
+@pytest.mark.parametrize(
+    "section",
+    ["experiment", "protocol", "microcontroller", "projectors", "spikeglx", "tracking"],
+)
+def test_invalid_full_gui_config_changes_no_section(
+    window: DashboardWindow, tmp_path: Path, section: str
+) -> None:
+    from cephvr.gui.configuration_files import write_snapshot
+
+    before = window.snapshots.capture()
+    malformed = window.snapshots.capture()
+    malformed["experiment"]["dashboard"]["subject_id"] = "must-not-be-restored"
+    malformed[section] = {"unexpected": True}
+    path = tmp_path / "invalid.json"
+    write_snapshot(str(path), malformed)
+    assert not window.config_files.load_path(str(path))
+    assert window.snapshots.capture() == before
+
+
+@pytest.mark.parametrize(
+    "payload", ['{"format": "a", "format": "b"}', '{"n": NaN}', "[1,2]", '{"invalid":']
+)
+def test_gui_snapshot_rejects_invalid_json_before_editing(
+    window: DashboardWindow, tmp_path: Path, payload: str
+) -> None:
+    before = window.snapshots.capture()
+    path = tmp_path / "invalid.json"
+    path.write_text(payload, encoding="utf-8")
+    assert not window.config_files.load_path(str(path))
+    assert window.snapshots.capture() == before
+
+
+def test_snapshot_limits_and_failed_save_preserve_existing_file(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    path = tmp_path / "gui.json"
+    assert window.config_files.save_path(str(path))
+    original = path.read_bytes()
+    window.config_files.limit = 8
+    assert not window.config_files.load_path(str(path))
+    assert not window.config_files.save_path(str(path))
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    "owner", ["protocol", "tracking", "microcontroller", "spikeglx", "gui"]
+)
+def test_config_chooser_closes_on_authority_loss_and_rechecks_load(
+    window: DashboardWindow, tmp_path: Path, owner: str
+) -> None:
+    files = (
+        window.config_files
+        if owner == "gui"
+        else getattr(
+            window if owner in ("protocol", "tracking") else window.devices, owner
+        ).config_files
+    )
+    path = tmp_path / f"{owner}.json"
+    assert files.save_path(str(path))
+    files.choose(save=False)
+    assert files.dialog is not None
+    original_dialog = files.dialog
+    window.apply_view(review_view(Phase.CONFIGURATION, observer=True))
+    assert files.dialog is None
+    assert not files.load_button.isEnabled()
+    assert not files.load_path(str(path))
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    window.dashboard.subject_id.setText("newer draft")
+    window.protocol.assets.folders["root"].editor.setText("newer-assets")
+    window.tracking.forms.distance_calibration.distance.setText("24")
+    window.devices.microcontroller.trial_pin.setText("D12")
+    from PyQt6.QtWidgets import QLineEdit
+
+    channel = next(iter(window.devices.spikeglx.rows.values()))[3]
+    assert isinstance(channel, QLineEdit)
+    channel.setText("999")
+    before = window.snapshots.capture()
+    original_dialog.fileSelected.emit(str(path))
+    assert window.snapshots.capture() == before
+
+
+def test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling(
+    window: DashboardWindow, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.configuration_files import write_snapshot
+    from cephvr.gui.managed_cameras import ManagedCameras
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+    from cephvr.gui.managed_mcu import ManagedMcu
+
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.configuration.revision = state.configuration_values.revision = 5
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    base = state.configuration_values.current
+    base.mode = pb.SESSION_MODE_OPEN_LOOP
+    acquisition = base.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    for draft, selected in zip(
+        window.devices.cameras.drafts,
+        (acquisition.behavioral, acquisition.tracking),
+        strict=True,
+    ):
+        selected.device.device_id = draft.serial
+        selected.enabled = False
+    desired = window.snapshots.capture()
+    desired["protocol"]["mode"] = "Open-loop"
+    for camera in desired["experiment"]["cameras"]:
+        camera["enabled"] = False
+        camera["values"] = {
+            "trigger_clock": "Internal clock",
+            "trigger_frequency_hz": "18",
+        }
+    desired["microcontroller"]["port"] = "COM93"
+    desired["microcontroller"]["trial_state"]["pin"] = "D7"
+    desired["tracking"]["distance_mm"] = (
+        ""  # Dormant, uncalibrated Tracking is a valid saved draft.
+    )
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+            window.devices.microcontroller,
+        )
+    )
+    assert manager.install(state)
+    camera_owner = ManagedCameras(
+        window.devices.cameras,
+        SimpleNamespace(request=lambda *_a, **_kw: False),
+        lambda *_: False,
+    )
+    mcu_owner = ManagedMcu(
+        window.devices.microcontroller,
+        SimpleNamespace(request=lambda *_a, **_kw: False),
+        lambda: state,
+    )
+    camera_owner.install(state)
+    mcu_owner.install(state, True)
+    path = tmp_path / "full.json"
+    write_snapshot(str(path), desired)
+    assert window.config_files.load_path(str(path))
+    camera_owner.install(state)
+    mcu_owner.install(state, True)
+    assert window.snapshots.capture() == desired
+    assert manager.dirty and manager.tracking_dirty
+    monkeypatch.setattr(
+        window.devices.projectors, "configuration_for_submit", lambda current: current
+    )
+    proposal = manager.collect(base)
+    updated = next(
+        entry.acquisition
+        for entry in proposal.backends
+        if entry.backend_name == "acquisition"
+    )
+    assert updated.pulses.port == "COM93"
+    assert updated.pulses.trial_state_pin == "D7"
+    assert updated.pulses.behavioral.requested_frequency_hz == 18
+    assert not next(
+        entry for entry in proposal.backends if entry.backend_name == "tracking"
+    ).enabled
+    state.configuration_values.current.CopyFrom(proposal)
+    state.configuration.revision = state.configuration_values.revision = 6
+    manager.note_installed_revision(state, submitted_edit_serial=manager.edit_serial)
+    assert not window.devices.cameras.snapshot_draft
+    assert not window.devices.microcontroller.snapshots.draft_loaded
+    assert window.tracking.snapshot_draft
+    # Enabling Tracking must validate the retained loaded settings, never submit an old baseline.
+    window.recordings.velocities.setChecked(True)
+    with pytest.raises(ValueError):
+        manager.collect(proposal)
+    # Explicit device reload restores accepted roles/pins before dependent Tracking installs.
+    window.devices.cameras.drafts[0].role = "Tracking cam"
+    window.devices.cameras.drafts[1].role = "Behavior cam"
+    window.devices.cameras.snapshot_draft = True
+    window.devices.microcontroller.trial_pin.setText("D12")
+    window.devices.microcontroller.snapshots.draft_loaded = True
+    camera_owner.discard_snapshot_draft(state)
+    mcu_owner.discard_snapshot_draft(state, True)
+    assert window.devices.cameras.drafts[0].role == "Behavior cam"
+    assert window.tracking.source_serial == window.devices.cameras.drafts[1].serial
+    assert window.devices.microcontroller.trial_pin.text() == "D7"
+
+
+def test_loaded_camera_presets_cannot_claim_sdk_import_provenance(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.camera_snapshot_settings import collect_camera_snapshot
+
+    panel = window.devices.cameras
+    panel.snapshot_draft = True
+    first, second = panel.drafts
+    first.enabled = second.enabled = False
+    first.values = {
+        "preset": "changed.pfs",
+        "pfs_imported": "yes",
+        "trigger_clock": "Internal clock",
+    }
+    settings = pb.AcquisitionSettings()
+    settings.behavioral.device.device_id = first.serial
+    settings.behavioral.device.pfs_source_filename = "accepted.pfs"
+    settings.behavioral.device.pfs_baseline.text = "sdk-baseline"
+    settings.tracking.device.device_id = second.serial
+    with pytest.raises(ValueError, match="import the loaded PFS"):
+        collect_camera_snapshot(panel, settings)
+    # Changing GUI roles retains the accepted baseline with the serial, rather than borrowing another camera's preset.
+    first.role, second.role = "Tracking cam", "Behavior cam"
+    first.values["preset"] = "accepted.pfs"
+    collect_camera_snapshot(panel, settings)
+    assert settings.tracking.device.device_id == first.serial
+    assert settings.tracking.device.pfs_baseline.text == "sdk-baseline"
+    assert settings.tracking.device.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+
+
+def test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_cameras import ManagedCameras
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.configuration.revision = state.configuration_values.revision = 1
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition
+    settings.behavioral.device.device_id = window.devices.cameras.drafts[1].serial
+    settings.tracking.device.device_id = window.devices.cameras.drafts[0].serial
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+        )
+    )
+    window.tracking.forms.distance_calibration.distance.setText("24")
+    assert manager.install(state)
+    camera_owner = ManagedCameras(
+        window.devices.cameras,
+        SimpleNamespace(request=lambda *_a, **_kw: False),
+        lambda *_: False,
+    )
+    with manager.installing_projection():
+        camera_owner.install(state)
+    assert window.tracking.source_serial == settings.tracking.device.device_id
+    assert window.tracking.forms.distance_calibration.distance.text() == ""
+    assert not manager.dirty and not manager.tracking_dirty
+    window.tracking.forms.distance_calibration.distance.setText("25")
+    assert manager.dirty and manager.tracking_dirty
+
+
+@pytest.mark.parametrize(
+    "lock", ["camera", "camera_pending", "mcu", "tracking", "projector"]
+)
+def test_full_gui_snapshot_cannot_load_during_device_work(
+    window: DashboardWindow, tmp_path: Path, lock: str
+) -> None:
+    path = tmp_path / "full.json"
+    assert window.config_files.save_path(str(path))
+    if lock == "camera":
+        window.devices.cameras.drafts[0].connected = True
+    elif lock == "camera_pending":
+        window.devices.cameras.operation_pending = True
+    elif lock == "mcu":
+        window.devices.microcontroller.upload_pending = True
+    elif lock == "tracking":
+        window.tracking._diagnostic_locked = True
+    else:
+        window.devices.projectors.calibration.presentation_active = True
+    assert not window.config_files.load_path(str(path))
 
 
 def test_managed_subject_metadata_preserves_absence_and_numeric_zero(
@@ -923,7 +1372,7 @@ def test_folder_picker_selection_cancellation_and_phase_lock(
     field.browse.click()
     dialog = field.dialog
     assert dialog is not None
-    assert dialog.directory().absolutePath() == str(tmp_path)
+    assert Path(dialog.directory().absolutePath()) == tmp_path
     dialog.reject()
     assert field.editor.text() == str(tmp_path)
     field.browse.click()
@@ -1835,6 +2284,178 @@ def test_projector_refresh_preserves_assignment(
     assert panel.diagram.outputs
 
 
+@pytest.mark.parametrize("unassigned", [False, True])
+def test_projector_assignments_survive_restart_and_changed_inventory(
+    app: QApplication, tmp_path: Path, unassigned: bool
+) -> None:
+    from PyQt6.QtCore import QRect, QSettings
+
+    from cephvr.gui.projectors import DisplayInfo
+
+    path = tmp_path / "frontend.ini"
+    displays = (
+        DisplayInfo("edid:one", "First", "1", QRect(0, 0, 100, 100)),
+        DisplayInfo("edid:two", "Second", "2", QRect(100, 0, 100, 100)),
+    )
+    windows = []
+
+    def open_window(inventory):
+        window = DashboardWindow(
+            settings=QSettings(str(path), QSettings.Format.IniFormat)
+        )
+        windows.append(window)
+        panel = window.devices.projectors
+        panel.review_displays = inventory
+        panel.discover_displays()
+        panel.apply_view(review_view(Phase.CONFIGURATION))
+        return panel
+
+    first = open_window(displays)
+    first.projectors["edid:one"].setCurrentText("Front")
+    first.projectors["edid:two"].setCurrentText("Left")
+    if unassigned:
+        first.projectors["edid:one"].setCurrentText("Unassigned")
+    expected = dict(first.assignments)
+    assert path.exists()  # Retention does not depend on a successful close/Setup.
+    retained = path.read_bytes()
+    second = open_window(tuple(reversed(displays)))
+    assert second.assignments == expected
+    assert second.projectors["edid:one"].currentText() == expected["edid:one"]
+    assert second.projectors["edid:two"].currentText() == "Left"
+    second.review_displays = (displays[1],)
+    second.discover_displays()
+    assert second.assignments == expected
+    if not unassigned:
+        assert "Assigned displays unavailable: Front" in second.console.toPlainText()
+    second.review_displays = displays
+    second.discover_displays()
+    assert second.projectors["edid:one"].currentText() == expected["edid:one"]
+    assert path.read_bytes() == retained  # Discovery/loading are silent.
+    for window in windows:
+        window.close()
+        window.deleteLater()
+    app.processEvents()
+
+
+@pytest.mark.parametrize("editable", [False, True])
+@pytest.mark.parametrize("has_profile", [False, True])
+def test_saved_projector_assignments_restore_as_managed_drafts(
+    app: QApplication, tmp_path: Path, editable: bool, has_profile: bool
+) -> None:
+    from PyQt6.QtCore import QRect, QSettings
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.control.v1 import types_pb2 as control_pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+    from cephvr.gui.projectors import DisplayInfo
+
+    path = tmp_path / "frontend.ini"
+    first = DashboardWindow(settings=QSettings(str(path), QSettings.Format.IniFormat))
+    panel = first.devices.projectors
+    panel.review_displays = (
+        DisplayInfo("edid:one", "First", "1", QRect(0, 0, 100, 100)),
+    )
+    panel.discover_displays()
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    panel.projectors["edid:one"].setCurrentText("Left")
+    second = DashboardWindow(settings=QSettings(str(path), QSettings.Format.IniFormat))
+    panel = second.devices.projectors
+    panel.review_displays = first.devices.projectors.review_displays
+    panel.discover_displays()
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            second.dashboard,
+            second.protocol,
+            second.recordings,
+            second.devices.cameras,
+            panel,
+            second.tracking,
+        )
+    )
+    state = control_pb.Snapshot(controller_generation="controller")
+    state.session.phase = (
+        control_pb.SESSION_PHASE_CONFIGURATION
+        if editable
+        else control_pb.SESSION_PHASE_RUNNING
+    )
+    state.configuration.revision = state.configuration_values.revision = 1
+    if has_profile:
+        state.configuration_values.current.backends.add(
+            backend_name="visual_stimulus"
+        ).visual_stimulus.display.profile_json = valid_display_json()
+    preserved = state.SerializeToString(deterministic=True)
+    assert manager.install(state)
+    baseline = "Front" if has_profile else "Unassigned"
+    expected = "Left" if editable else baseline
+    assert panel.assignments.get("edid:one", "Unassigned") == expected
+    assert panel.projectors["edid:one"].currentText() == expected
+    assert manager.dirty is editable
+    assert state.SerializeToString(deterministic=True) == preserved
+    assert manager._installed_base == state.configuration_values.current
+    assert manager.install(state, force=True)
+    assert panel.assignments.get("edid:one", "Unassigned") == baseline
+    assert not manager.dirty
+    for window in (first, second):
+        window.close()
+        window.deleteLater()
+    app.processEvents()
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "broken",
+        '{"version":1,"assignments":{"one":"Front","two":"Front"}}',
+        '{"version":1,"assignments":{"one":"Front","one":"Left"}}',
+        '{"version":2,"assignments":{"one":"Front"}}',
+    ],
+)
+def test_invalid_saved_projector_assignments_are_preserved_and_reported(
+    app: QApplication, tmp_path: Path, raw: str
+) -> None:
+    from PyQt6.QtCore import QSettings
+
+    settings = QSettings(str(tmp_path / "frontend.ini"), QSettings.Format.IniFormat)
+    settings.setValue("projectors/assignments", raw)
+    settings.sync()
+    window = DashboardWindow(settings=settings)
+    panel = window.devices.projectors
+    assert panel.assignments == {}
+    assert "Saved display assignments were not restored" in panel.console.toPlainText()
+    assert settings.value("projectors/assignments") == raw
+    window.close()
+    window.deleteLater()
+    app.processEvents()
+
+
+def test_projector_assignment_save_failure_keeps_draft_and_warns(
+    app: QApplication, tmp_path: Path
+) -> None:
+    from PyQt6.QtCore import QRect, QSettings
+
+    from cephvr.gui.projectors import DisplayInfo
+
+    path = tmp_path / "frontend.ini"
+    path.mkdir()
+    window = DashboardWindow(settings=QSettings(str(path), QSettings.Format.IniFormat))
+    panel = window.devices.projectors
+    panel.review_displays = (
+        DisplayInfo("edid:one", "First", "1", QRect(0, 0, 100, 100)),
+    )
+    panel.discover_displays()
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    panel.projectors["edid:one"].setCurrentText("Front")
+    assert panel.assignments["edid:one"] == "Front"
+    assert "Display assignments were not saved" in panel.console.toPlainText()
+    assert path.is_dir()
+    window.close()
+    window.deleteLater()
+    app.processEvents()
+
+
 def test_gui_display_number_is_local_and_shared_with_layout(
     window: DashboardWindow, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1989,8 +2610,10 @@ def test_managed_microcontroller_emits_controller_intents(
     assert len(saves) == saved_count
 
 
+@pytest.mark.parametrize("row", (0, 1))
 def test_managed_camera_enable_waits_for_controller_confirmation(
     window: DashboardWindow,
+    row: int,
 ) -> None:
     panel = window.devices.cameras
     panel.managed = True
@@ -1998,7 +2621,17 @@ def test_managed_camera_enable_waits_for_controller_confirmation(
     panel.enable_requested.connect(
         lambda serial, enabled: requests.append((serial, enabled))
     )
-    panel.drafts[0].enabled = False
+    settings_requests = []
+    panel.settings_requested.connect(lambda *values: settings_requests.append(values))
+    for index, draft in enumerate(panel.drafts):
+        draft.values.update(
+            trigger_clock="Internal clock",
+            trigger_frequency_hz=str(30 * (index + 1)),
+            preset=f"camera-{index}.pfs",
+        )
+    selected = panel.drafts[row]
+    selected.enabled = False
+    panel.table.selectRow(1 - row)
     panel.apply_view(
         DashboardView(
             connected=True,
@@ -2007,15 +2640,20 @@ def test_managed_camera_enable_waits_for_controller_confirmation(
             phase=Phase.CONFIGURATION,
         )
     )
-    assert panel.enable_controls[0].isEnabled()
-    panel.enable_controls[0].click()
-    assert requests == [("REVIEW-001", True)]
-    assert not panel.drafts[0].enabled
-    assert panel.enable_controls[0].isChecked()
-    assert not panel.enable_controls[0].isEnabled()
+    assert panel.enable_controls[row].isEnabled()
+    panel.enable_controls[row].click()
+    assert panel.selected is selected
+    assert panel.role.currentText() == selected.role
+    assert panel.preset.text() == selected.values["preset"]
+    assert panel.fields["trigger_frequency_hz"].text() == str(30 * (row + 1))
+    assert requests == [(selected.serial, True)]
+    assert not settings_requests
+    assert not selected.enabled
+    assert panel.enable_controls[row].isChecked()
+    assert not panel.enable_controls[row].isEnabled()
     panel.pending_enable.clear()
     panel.refresh_controls()
-    assert not panel.enable_controls[0].isChecked()
+    assert not panel.enable_controls[row].isChecked()
 
 
 def test_managed_camera_enable_accepts_missing_external_input(
@@ -3357,7 +3995,9 @@ def test_managed_snapshot_keeps_diagnostic_close_pending_and_status_visible(
     window.devices.microcontroller.scan_ports = lambda: None
     window.devices.projectors.discover_displays = lambda: None
     manager = ManagedGui(window, bridge)
-    manager.configuration = SimpleNamespace(install=lambda _state: True, stale=False)
+    manager.configuration = SimpleNamespace(
+        install=lambda _state: True, stale=False, installing_projection=nullcontext
+    )
     manager.cameras = SimpleNamespace(install=lambda _state: [])
     manager.mcu = SimpleNamespace(install=lambda *_args: None)
     manager._inventory_identity = (generation, 4)
@@ -3902,6 +4542,35 @@ def test_managed_close_finishes_only_after_controller_save_result(
     ManagedGui.command_finished(manager, "save_configuration_history", True, "Saved")
     assert not manager.close_pending
     assert closed == [True]
+
+
+@pytest.mark.parametrize("dirty", [False, True])
+@pytest.mark.parametrize("discard", [False, True])
+def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_close import request_managed_close
+
+    state = pb.Snapshot()
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration_values.current.subject = "RETAINED"
+    requests = []
+    confirmations = []
+
+    def incomplete(_base):
+        raise ValueError("Add a managed trial before submitting the session")
+
+    result = request_managed_close(
+        state,
+        SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+        send=lambda action, **options: requests.append((action, options)) or True,
+        confirm_discard=lambda: confirmations.append(True) or discard,
+        log=lambda _: None,
+    )
+    allowed = not dirty or discard
+    assert result.kind == ("pending" if allowed else "cancelled")
+    assert requests == ([("save_configuration_history", {})] if allowed else [])
+    assert confirmations == ([True] if dirty else [])
+    assert state.configuration_values.current.subject == "RETAINED"
 
 
 @pytest.mark.asyncio
@@ -4631,6 +5300,9 @@ def test_managed_protocol_roundtrips_ordered_trials_seed_and_gap(
         trial.stimulus.program.program_json = blank_program().model_dump_json()
         trial.stimulus.program.logical_source_reference = f"programs/{label_text}.json"
     config.trials[0].stimulus.stimulus_seed_decimal = "0"
+    config.trials[
+        0
+    ].stimulus.arena_boundaries.boundaries_json = '{"format_version":1,"bindings":[]}'
     config.gaps.add(after_trial_number=1, minimum_duration_ns=1_250_000_000)
 
     page = window.protocol
@@ -4651,6 +5323,12 @@ def test_managed_protocol_roundtrips_ordered_trials_seed_and_gap(
         "programs/second.json",
     ]
     assert roundtrip.trials[0].stimulus.stimulus_seed_decimal == "0"
+    assert roundtrip.trials[0].stimulus.arena_boundaries == (
+        config.trials[0].stimulus.arena_boundaries
+    )
+    assert roundtrip.trials[1].stimulus.arena_boundaries.boundaries_json == (
+        '{"format_version":1,"bindings":[]}'
+    )
     assert roundtrip.gaps[0].after_trial_number == 1
     assert roundtrip.gaps[0].minimum_duration_ns == 1_250_000_000
 
@@ -6962,7 +7640,7 @@ def test_arena_custom_feedback_is_preserved_and_channel_conflicts_rejected(
                     channel_id="forward_drive",
                     stream_id="tracking",
                     value_kind="interval_average_rate",
-                    unit="mm/s",
+                    unit="px/s",
                     frame_id="anatomical_body",
                 ),
             )
@@ -9735,6 +10413,7 @@ def test_initial_and_reopened_retained_warnings_gate_auto_claim() -> None:
         state=None,
         configuration=SimpleNamespace(
             install=lambda _state: True,
+            installing_projection=nullcontext,
             stale=False,
             last_error="",
             _installing=False,
@@ -10333,6 +11012,91 @@ def test_camera_selection_restores_pfs_source_and_frequency(window, tmp_path):
     assert first.values["trigger_source"] == "Line3"
 
 
+@pytest.mark.parametrize("selected_row", (0, 1))
+def test_managed_camera_inventory_restores_selected_configuration(
+    window, tmp_path, selected_row
+):
+    from cephvr.acquisition.v1 import camera_pb2 as camera
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.camera_inventory import CameraDraft
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    panel = window.devices.cameras
+    panel.managed = True
+    serials = [draft.serial for draft in panel.drafts]
+    panel.drafts = []
+    panel.populate_inventory()
+    requests = []
+    binding = ManagedCameras(
+        panel,
+        SimpleNamespace(
+            request=lambda action, **options: requests.append((action, options)) or True
+        ),
+        lambda *_: False,
+    )
+    state = pb.Snapshot()
+    state.configuration.revision = 7
+    entry = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    settings = entry.acquisition
+    for index, role in enumerate(("behavioral", "tracking")):
+        device = getattr(settings, role).device
+        device.device_id = serials[index]
+        device.frame_timing = (
+            camera.FRAME_TIMING_EXTERNAL_TRIGGER
+            if index == 0
+            else camera.FRAME_TIMING_FREE_RUNNING
+        )
+        device.pfs_source_filename = str(tmp_path / f"{role}.pfs")
+        if index == 0:
+            device.settings.trigger_source = "Line2"
+        getattr(settings.pulses, role).requested_frequency_hz = 30 * (index + 1)
+    binding.install(state)
+
+    panel.drafts = [
+        CameraDraft(f"camera-{serial}", "Unassigned", serial, "Basler", enabled=False)
+        for serial in serials
+    ]
+    panel.populate_inventory()
+    panel.table.selectRow(selected_row)
+    window.recordings.sync_cameras()
+    recording_choices = {
+        key: control.isChecked() for key, control in window.recordings.record.items()
+    }
+    recording_touched = set(window.recordings.touched)
+    recording_edits = []
+    window.recordings.changed.connect(lambda: recording_edits.append(True))
+    binding.install(state)  # Inventory changed; controller revision did not.
+    window.apply_view(DashboardView(connected=True, has_control=True))
+    for draft in panel.drafts:
+        assert (
+            window.recordings.source_labels[draft.key].text() == f"{draft.role} video"
+        )
+        assert (
+            window.recordings.record[draft.key].accessibleName()
+            == f"Record {draft.role} video"
+        )
+    assert {
+        key: control.isChecked() for key, control in window.recordings.record.items()
+    } == recording_choices
+    assert window.recordings.touched == recording_touched
+    assert not recording_edits
+    for row in (selected_row, 1 - selected_row, selected_row):
+        panel.table.selectRow(row)
+        draft = panel.drafts[row]
+        assert panel.selected is draft
+        assert panel.role.currentText() == draft.role
+        assert panel.preset.text() == draft.values["preset"]
+        assert panel.preset.toolTip() == draft.values["preset"]
+        assert panel.trigger_source.currentText() == draft.values["trigger_clock"]
+        assert panel.fields["trigger_frequency_hz"].text() == str(30 * (row + 1))
+    panel.edit("trigger_frequency_hz", "45")
+    binding.install(state)
+    assert panel.selected.values["trigger_frequency_hz"] == "45"
+    assert not requests
+
+
 def test_calibration_guides_keep_world_phase_center_and_physical_ruler():
     from cephvr.gui.calibration_guides import CENTER, GRID_COLORS, add_face_guides
 
@@ -10541,7 +11305,7 @@ def test_projector_configuration_invalid_settings_preserve_complete_draft(
         }
     text = json.dumps(payload)
     if invalid == "duplicate":
-        text = text.replace('"version": 3', '"version": 3, "version": 3')
+        text = text.replace('"version": 4', '"version": 4, "version": 4')
     path = tmp_path / "invalid.json"
     path.write_text(text)
     panel.calibration_files.load_path(str(path))
@@ -10565,7 +11329,7 @@ def test_legacy_numeric_projector_json_preserves_synchronization(
     assert panel.rig_editor.fields["width"].text() == "200"
     assert panel.timing.pulse.isChecked()
     assert panel.timing.mode.currentText() == "All displays VSync"
-    assert panel.calibration_files.snapshot()["version"] == 3
+    assert panel.calibration_files.snapshot()["version"] == 4
 
 
 def test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage(
@@ -10619,6 +11383,143 @@ def test_authoritative_projector_install_clears_previous_profile_on_empty_state(
     panel.install_configuration(visual_pb.DisplayConfiguration())
     assert panel.calibration_files.profile is None
     assert panel._profile_outputs == []
+
+
+def test_projector_reference_measurements_derive_distance_and_roundtrip(window):
+    panel = window.devices.projectors
+    panel.display_pixels = {"reference-test": (1280, 720)}
+    panel.assignments["reference-test"] = "Front"
+    panel.screen_editor.fields["Front", "throw"].setText("1.5")
+    panel.measurements.fields["Front", "reference_x_mm"].setText("160")
+    assert panel.screen_editor.fields["Front", "distance"].text() == ""
+    panel.measurements.fields["Front", "reference_y_mm"].setText("90")
+    distance = panel.screen_editor.fields["Front", "distance"]
+    assert distance.isReadOnly()
+    assert float(distance.text()) == pytest.approx(960)
+    assert panel.measurements.scales["Front"].text() == "0.5 / 0.5"
+    snapshot = panel.calibration_files.snapshot()
+    assert snapshot["version"] == 4
+    assert snapshot["values"]["screens.Front.reference_width_px"] == 1280
+    panel.measurements.fields["Front", "reference_x_mm"].setText("200")
+    panel.calibration_files.apply_snapshot(snapshot)
+    panel.update_geometry()
+    assert float(distance.text()) == pytest.approx(960)
+    assert panel.calibration_files.snapshot() == snapshot
+    panel.display_pixels["reference-test"] = (1920, 1080)
+    panel.update_geometry()
+    assert distance.text() == ""
+    assert panel.measurements.fields["Front", "reference_width_px"].text() == "1280.0"
+    assert panel.measurements.fields["Front", "reference_x_mm"].text() == "160.0"
+
+
+def test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields(
+    window,
+):
+    import copy
+
+    panel = window.devices.projectors
+    old = panel.calibration_files.snapshot()
+    old["version"] = 3
+    old["values"] = {
+        key: value
+        for key, value in old["values"].items()
+        if not key.rsplit(".", 1)[-1].startswith("reference_")
+    }
+    old["values"]["screens.Front.distance"] = 500
+    panel.calibration_files.apply_snapshot(old)
+    assert panel.screen_editor.fields["Front", "distance"].text() == "500"
+    assert panel.measurements.fields["Front", "reference_x_mm"].text() == ""
+    before = panel.calibration_files.snapshot()
+    invalid = copy.deepcopy(old)
+    invalid["values"]["screens.Front.reference_x_mm"] = 100
+    with pytest.raises(ValueError, match="inventory"):
+        panel.calibration_files.apply_snapshot(invalid)
+    assert panel.calibration_files.snapshot() == before
+
+
+def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
+    import json
+
+    from cephvr.gui.calibration_profile import (
+        AssignedDisplay,
+        MonitorBinding,
+        diagnostic_display_profile,
+        write_diagnostic_bundle,
+    )
+    from cephvr.gui.projector_geometry import FACES
+    from cephvr.gui.projector_measured_profiles import measured_profiles
+    from cephvr.gui.trial_preview_surfaces import PreviewCorrection
+
+    values = dict(
+        zip(
+            (
+                "rig.width",
+                "rig.depth",
+                "rig.height",
+                "rig.subject_x",
+                "rig.subject_y",
+                "rig.subject_z",
+            ),
+            (120, 166, 110, 60, 93, 53),
+            strict=True,
+        )
+    )
+    for face in FACES:
+        values[f"screens.{face}.width"] = 90
+        values[f"screens.{face}.height"] = 80
+        if face != "Right":
+            values[f"screens.{face}.subject_distance"] = 50
+    calibration = {"format": "cephvr-rig-calibration", "version": 3, "values": values}
+    assignments = tuple(
+        AssignedDisplay(f, i * 1280, 0, 1280, 720, True) for i, f in enumerate(FACES)
+    )
+    monitors = tuple(
+        MonitorBinding(f"interface-{i}", i * 1280, 0, 1280, 720, 60, 8)
+        for i in range(4)
+    )
+    profile, _ = diagnostic_display_profile(calibration, assignments, monitors)
+    write_diagnostic_bundle(tmp_path, calibration, assignments, monitors)
+    original = tmp_path / "calibration/diagnostic_front.json"
+    original_bytes = original.read_bytes()
+    for key, value in dict(
+        reference_width_px=1280,
+        reference_height_px=720,
+        reference_x_mm=160,
+        reference_y_mm=90,
+        throw=1.5,
+    ).items():
+        values[f"screens.Front.{key}"] = value
+    document = measured_profiles(
+        profile.model_dump(mode="json"), calibration, str(tmp_path)
+    )
+    front = next(m for m in document["mappings"] if m["surface_id"] == "front")
+    generated = tmp_path / front["geometric_profile"]["logical_path"]
+    assert generated != original
+    mesh = json.loads(generated.read_text(encoding="utf-8"))
+    assert mesh["vertices"][0]["xy"] == pytest.approx(
+        [0.5 - 90 / 640 / 2, 0.5 - 80 / 360 / 2]
+    )
+    draft = {
+        k.removeprefix("screens.Front."): str(v)
+        for k, v in values.items()
+        if k.startswith("screens.Front.")
+    }
+    preview = PreviewCorrection.from_draft("Front", draft, (1280, 720))
+    assert not preview.error
+    assert preview.corners == tuple(
+        tuple(mesh["vertices"][i]["xy"]) for i in (0, 1, 3, 2)
+    )
+    assert original.read_bytes() == original_bytes
+    # Repeated submission produces the same content-addressed asset.
+    assert measured_profiles(document, calibration, str(tmp_path)) == document
+    values["screens.Front.reference_width_px"] = 1920
+    with pytest.raises(ValueError, match="output mode"):
+        measured_profiles(document, calibration, str(tmp_path))
+    values["screens.Front.reference_width_px"] = 1280
+    mesh["calibration_id"] = "imported-optical-warp"
+    generated.write_text(json.dumps(mesh), encoding="utf-8")
+    with pytest.raises(ValueError, match="imported warp"):
+        measured_profiles(document, calibration, str(tmp_path))
 
 
 @pytest.mark.parametrize("suffix", ["hex", "ino"])

@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-08T10:43:23.275722+09:00",
+  "head": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "scope": "Latest screen assignment retention increment, uncommitted shared tree. Patch is cumulative HEAD diff for the listed paths; owning test module also contains earlier camera edits. No earlier source context/patch was overwritten.",
+  "source_sha256": {
+    "src/cephvr/gui/projector_assignments.py": "877761898a3e6ff290e722fff9aa76be00eaef61fe2101b9382c25d19853815b",
+    "src/cephvr/gui/projectors.py": "59666253b1d6b9d27fe8e4b14c7b422523f6c8e61893d9ea1d05811b31da8e62",
+    "src/cephvr/gui/devices.py": "a03b32ad094756cc68546107b9ef760643921807304b07e807cc8a646f79047c",
+    "src/cephvr/gui/managed_configuration.py": "cbc9eda852f970b1c776dc750e4f4ee91d1e50ee0e418a559dbda60b26b8a5fb",
+    "tests/gui/test_dashboard.py": "1674996a8f6767b39412e75a5a4c249ca92ffc19cedfbde08c99603ff02e3345",
+    "architecture.md": "a3bfbe5cb94dcd7b5612c3168ac8a0b40e9fe86b9c6fa4eb549223f4f9d5a3d9",
+    "docs/architecture/gui.md": "c7448e548d7cfe0127482777a2184ca23501003a40f415679fe70e20378844af",
+    "contracts/gui-calibration.md": "7d91e4b62c3d441c95a73a2640b5a4acfd9b53eaf4fe9fad2c073a47ce6e7fa2"
+  },
+  "governing": "G01 revision 130, ARCH-002, E03/E07 controller authority remains enforced",
+  "pytest": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"projector or calibration or managed_configuration\" --basetemp reports/rig-wiring-evidence-2026-10-08/projector-assignments-tmp --junitxml reports/rig-wiring-evidence-2026-10-08/projector-assignments-tests.xml",
+    "environment": "QT_QPA_PLATFORM=offscreen; permitted native Qt execution; isolated INI preferences and fixture display identities",
+    "passed": 53,
+    "failed": 1,
+    "deselected": 279,
+    "seconds": 25.45,
+    "new_retention_cases_passed": 11,
+    "existing_failure": "test_configuration_scroll_keeps_projector_status_fixed; horizontal scrollbar maximum 178; already failed in final-tree-tests.log",
+    "raw": [
+      "projector-assignments-tests.log",
+      "projector-assignments-tests.xml"
+    ]
+  },
+  "static": {
+    "ruff_and_format_files": 5,
+    "mypy_win32_source_files": 4,
+    "boundary_modules": 619,
+    "violations": 0
+  },
+  "limits": [
+    "No actual multi-monitor or physical unplug/reconnect acceptance",
+    "No runtime restart or device/projector command",
+    "Local preferences persist drafts only, separate from accepted controller history",
+    "General configuration-history-retention task remains open"
+  ],
+  "source_patch": "projector-assignments.patch"
+}

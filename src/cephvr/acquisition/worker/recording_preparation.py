@@ -180,7 +180,6 @@ class TrialRecordingPreparation:
             not output.HasField("enabled")
             or not output.enabled
             or not output.HasField("running")
-            or not output.running
             or not output.HasField("applied_frequency_hz")
             or not math.isfinite(output.applied_frequency_hz)
             or output.applied_frequency_hz <= 0

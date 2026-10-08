@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import Card, button, combo, equal_row_height, field
 from cephvr.gui.device_panel import DevicePanel, entry
+from cephvr.gui.microcontroller_snapshot import MicrocontrollerSnapshot
 from cephvr.gui.paths import PathField
 from cephvr.gui.tables import DataTable
 from cephvr.gui.view import DashboardView, Phase
@@ -116,6 +117,8 @@ class MicrocontrollerPanel(DevicePanel):
         layout.insertWidget(1, self.io)
         layout.insertWidget(2, self.triggers)
         self.port.currentIndexChanged.connect(self.port_changed)
+        self.snapshots = MicrocontrollerSnapshot(self)
+        self.config_files = self.snapshots.files
 
     def request_upload(self) -> None:
         if self.upload.isEnabled():
@@ -350,6 +353,8 @@ class MicrocontrollerPanel(DevicePanel):
     def refresh_tests(self) -> None:
         if not hasattr(self, "flip_pin"):
             return
+        if hasattr(self, "snapshots"):
+            self.snapshots.refresh()
         active = bool(
             self.review_tests
             or self.managed_test_key

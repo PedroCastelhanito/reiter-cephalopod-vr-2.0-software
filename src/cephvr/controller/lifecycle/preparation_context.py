@@ -7,6 +7,7 @@ import uuid
 from google.protobuf.message import Message
 
 from cephvr.control.v1 import services_pb2 as svc
+from cephvr.controller.planning import requested_output_identities
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.state import Attempt, ConfigurationState, SupervisorState
 
@@ -45,6 +46,13 @@ class PreparationContext:
         request.command.work.session.CopyFrom(attempt.context)
         request.command.parent_operation.command_id = operation_id
         request.plan.CopyFrom(attempt.prepared)
+        if not request.plan.outputs:
+            request.plan.outputs.extend(
+                requested_output_identities(
+                    request.plan,
+                    {name: item.context for name, item in attempt.required.items()},
+                )
+            )
         for setting in attempt.prepared.configuration.backends:
             if setting.backend_name == backend.context.backend_name:
                 request.settings.CopyFrom(setting)

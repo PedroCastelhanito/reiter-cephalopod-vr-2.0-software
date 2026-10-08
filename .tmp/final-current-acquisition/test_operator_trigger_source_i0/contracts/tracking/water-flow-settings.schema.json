@@ -1,0 +1,157 @@
+{
+  "$defs": {
+    "ArcSectionSettings": {
+      "additionalProperties": false,
+      "description": "T32 subset embedded in each selected estimator's concrete settings.",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "count": {
+          "gt": 0,
+          "le": 4294967295,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "count"
+      ],
+      "title": "ArcSectionSettings",
+      "type": "object"
+    },
+    "ExponentialSmoothingSettings": {
+      "additionalProperties": false,
+      "description": "T45: one source-time constant for all three drive channels; default 0.08 s.",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "time_constant_s": {
+          "exclusiveMinimum": 0,
+          "title": "Time Constant S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "time_constant_s"
+      ],
+      "title": "ExponentialSmoothingSettings",
+      "type": "object"
+    },
+    "LocalMedianSettings": {
+      "additionalProperties": false,
+      "description": "T41/W1A/W2A; image pixels. Defaults 1, 4, 0.1 px, 2.0; no cost limit.",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "radius_cells": {
+          "exclusiveMinimum": 0,
+          "maximum": 4294967295,
+          "title": "Radius Cells",
+          "type": "integer"
+        },
+        "minimum_neighbors": {
+          "exclusiveMinimum": 0,
+          "maximum": 4294967295,
+          "title": "Minimum Neighbors",
+          "type": "integer"
+        },
+        "noise_floor_px": {
+          "exclusiveMinimum": 0,
+          "title": "Noise Floor Px",
+          "type": "number"
+        },
+        "maximum_normalized_residual": {
+          "exclusiveMinimum": 0,
+          "title": "Maximum Normalized Residual",
+          "type": "number"
+        },
+        "maximum_native_cost": {
+          "anyOf": [
+            {
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maximum Native Cost"
+        }
+      },
+      "required": [
+        "schema_version",
+        "radius_cells",
+        "minimum_neighbors",
+        "noise_floor_px",
+        "maximum_normalized_residual",
+        "maximum_native_cost"
+      ],
+      "title": "LocalMedianSettings",
+      "type": "object"
+    },
+    "SectionFlowSupportSettings": {
+      "additionalProperties": false,
+      "description": "T44: accepted/intended (pre-clip) area in every section; default 0.25.",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "minimum_accepted_area_fraction": {
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Minimum Accepted Area Fraction",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "minimum_accepted_area_fraction"
+      ],
+      "title": "SectionFlowSupportSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "sections": {
+      "$ref": "#/$defs/ArcSectionSettings"
+    },
+    "quality": {
+      "$ref": "#/$defs/LocalMedianSettings"
+    },
+    "support": {
+      "$ref": "#/$defs/SectionFlowSupportSettings"
+    },
+    "smoothing": {
+      "$ref": "#/$defs/ExponentialSmoothingSettings"
+    }
+  },
+  "required": [
+    "schema_version",
+    "sections",
+    "quality",
+    "support",
+    "smoothing"
+  ],
+  "title": "WaterFlowSettings",
+  "type": "object"
+}

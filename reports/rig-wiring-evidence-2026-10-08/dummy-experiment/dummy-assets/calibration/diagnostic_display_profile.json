@@ -1,0 +1,224 @@
+{
+  "format_version": 1,
+  "geometry": {
+    "frame_id": "rig-mm",
+    "observer_mm": [
+      60.0,
+      93.0,
+      53.0
+    ],
+    "near_mm": 0.8302710400826949,
+    "far_mm": 248.98192705495714,
+    "positional_tolerance_mm": 0.000166,
+    "orthogonality_tolerance": 1e-06,
+    "surfaces": [
+      {
+        "surface_id": "front",
+        "bottom_left_mm": [
+          107.0,
+          18.5,
+          12.5
+        ],
+        "bottom_right_mm": [
+          13.0,
+          18.5,
+          12.5
+        ],
+        "top_right_mm": [
+          13.0,
+          18.5,
+          97.5
+        ],
+        "top_left_mm": [
+          107.0,
+          18.5,
+          97.5
+        ]
+      },
+      {
+        "surface_id": "left",
+        "bottom_left_mm": [
+          9.0,
+          18.5,
+          12.5
+        ],
+        "bottom_right_mm": [
+          9.0,
+          144.5,
+          12.5
+        ],
+        "top_right_mm": [
+          9.0,
+          144.5,
+          97.5
+        ],
+        "top_left_mm": [
+          9.0,
+          18.5,
+          97.5
+        ]
+      },
+      {
+        "surface_id": "right",
+        "bottom_left_mm": [
+          111.0,
+          144.5,
+          12.5
+        ],
+        "bottom_right_mm": [
+          111.0,
+          18.5,
+          12.5
+        ],
+        "top_right_mm": [
+          111.0,
+          18.5,
+          97.5
+        ],
+        "top_left_mm": [
+          111.0,
+          144.5,
+          97.5
+        ]
+      },
+      {
+        "surface_id": "bottom",
+        "bottom_left_mm": [
+          13.0,
+          18.5,
+          2.0
+        ],
+        "bottom_right_mm": [
+          107.0,
+          18.5,
+          2.0
+        ],
+        "top_right_mm": [
+          107.0,
+          144.5,
+          2.0
+        ],
+        "top_left_mm": [
+          13.0,
+          144.5,
+          2.0
+        ]
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "enabled": true,
+      "output_id": "calibration_front",
+      "device_identity": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4353#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "width_px": 1280,
+      "height_px": 720,
+      "refresh_numerator": 60,
+      "refresh_denominator": 1,
+      "rgb_bits_per_channel": 8,
+      "photometric_profile": null
+    },
+    {
+      "enabled": true,
+      "output_id": "calibration_left",
+      "device_identity": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4352#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "width_px": 1280,
+      "height_px": 720,
+      "refresh_numerator": 60,
+      "refresh_denominator": 1,
+      "rgb_bits_per_channel": 8,
+      "photometric_profile": null
+    },
+    {
+      "enabled": true,
+      "output_id": "calibration_right",
+      "device_identity": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4357#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "width_px": 1280,
+      "height_px": 720,
+      "refresh_numerator": 60,
+      "refresh_denominator": 1,
+      "rgb_bits_per_channel": 8,
+      "photometric_profile": null
+    },
+    {
+      "enabled": true,
+      "output_id": "calibration_bottom",
+      "device_identity": "\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4355#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "width_px": 720,
+      "height_px": 1280,
+      "refresh_numerator": 60,
+      "refresh_denominator": 1,
+      "rgb_bits_per_channel": 8,
+      "photometric_profile": null
+    }
+  ],
+  "mappings": [
+    {
+      "mapping_id": "diagnostic_front",
+      "surface_id": "front",
+      "output_id": "calibration_front",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "geometric_profile": {
+        "logical_path": "calibration/diagnostic_front.json"
+      }
+    },
+    {
+      "mapping_id": "diagnostic_left",
+      "surface_id": "left",
+      "output_id": "calibration_left",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "geometric_profile": {
+        "logical_path": "calibration/diagnostic_left.json"
+      }
+    },
+    {
+      "mapping_id": "diagnostic_right",
+      "surface_id": "right",
+      "output_id": "calibration_right",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "geometric_profile": {
+        "logical_path": "calibration/diagnostic_right.json"
+      }
+    },
+    {
+      "mapping_id": "diagnostic_bottom",
+      "surface_id": "bottom",
+      "output_id": "calibration_bottom",
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "width": 720,
+        "height": 1280
+      },
+      "geometric_profile": {
+        "logical_path": "calibration/diagnostic_bottom.json"
+      }
+    }
+  ],
+  "presentation_mode": "photodiode_only_vsync",
+  "photometric_mode": "uncalibrated",
+  "idle_linear_rgb": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "photodiode_enabled": false,
+  "pacing_output_id": null,
+  "photodiode_output_id": null,
+  "photodiode_patch": null
+}

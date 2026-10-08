@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-08T09:25:52.525198+09:00",
+  "exact_receipt": {
+    "controller_generation": "e0f14c18-fa5f-49a6-8f60-da176ffe764b",
+    "supervisor_generation": "16bd74a6-6eb4-48ec-9944-949a99c8d25f",
+    "observed_monotonic_ns": 662523557219700,
+    "all_owned_processes_absent": true,
+    "format_version": 1,
+    "controller_channel_loss": "eof"
+  },
+  "application_guard_available_and_released": true,
+  "COM8_exclusive_open_and_closed": true,
+  "remaining_owned_runtime_or_tool_processes": [],
+  "remaining_private_firmware_dirs": [],
+  "scope": "No serial command; opening COM may reset Uno. Board watchdog test already stopped both outputs; no capture/runtime restarted."
+}

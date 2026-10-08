@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import sys
 import time
 from typing import Any
 from unittest.mock import Mock
@@ -17,6 +18,50 @@ from cephvr.platform.windows.byte_stream_native import (
     Overlapped,
 )
 from cephvr.platform.windows.jobs import WindowsLaunchError
+
+
+@pytest.mark.windows
+@pytest.mark.skipif(sys.platform != "win32", reason="native Windows pipes required")
+@pytest.mark.parametrize("parent_writable", [True, False])
+def test_native_child_endpoint_connects_transfers_and_releases(parent_writable):
+    owner = byte_stream.PipeConstructionOwner()
+    deadline = time.perf_counter_ns() + 2_000_000_000
+    endpoint = None
+    try:
+        endpoint = byte_stream.OverlappedPipe.create_child_endpoint(
+            parent_writable=parent_writable, owner=owner, deadline_ns=deadline
+        )
+        api = byte_stream.native_api()
+        payload = b"native pipe"
+        transferred = ctypes.c_ulong()
+        if parent_writable:
+            endpoint.parent.write(bytearray(payload), deadline_ns=deadline)
+            buffer = ctypes.create_string_buffer(len(payload))
+            assert api.ReadFile(
+                endpoint.child_handle,
+                buffer,
+                len(payload),
+                ctypes.byref(transferred),
+                None,
+            )
+            assert buffer.raw == payload and transferred.value == len(payload)
+        else:
+            buffer = ctypes.create_string_buffer(payload)
+            assert api.WriteFile(
+                endpoint.child_handle,
+                buffer,
+                len(payload),
+                ctypes.byref(transferred),
+                None,
+            )
+            assert endpoint.parent.read(deadline_ns=deadline) == payload
+        assert not owner.cleanup_blocked
+    finally:
+        if endpoint is not None:
+            endpoint.close_child_copy()
+            endpoint.close_parent()
+        owner.retry_cleanup(deadline_ns=deadline)
+    assert not owner.cleanup_blocked
 
 
 def test_idle_read_observation_resumes_the_same_pending_buffer(

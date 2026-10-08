@@ -20,6 +20,7 @@ from cephvr.tracking.methods.proxy import FlowProxy
 from cephvr.tracking.processing.frames import FramePool
 from cephvr.tracking.processing.gate import TrialGate
 from cephvr.tracking.processing.history import PoseHistory
+from cephvr.tracking.processing.physical_units import physical_drive
 from cephvr.tracking.processing.pose import PoseWorker
 from cephvr.tracking.recording.results import movement_record
 from cephvr.tracking.types import (
@@ -61,6 +62,7 @@ class MovementPorts:
     maximum_pose_age_ns: int
     movement_timeout_ns: int
     first_evaluation: Callable[[PrivateFrame, str, int], None]
+    pixels_per_mm: float
 
 
 class Movement:
@@ -295,7 +297,8 @@ class Movement:
                 result.interval_start_ns = self.baseline.source.host_receipt_ns
                 result.interval_end_ns = frame.source.host_receipt_ns
             if evidence is not None and evidence.filtered_average is not None:
-                for name, value in evidence.filtered_average.model_dump().items():
+                drive = physical_drive(evidence.filtered_average, p.pixels_per_mm)
+                for name, value in drive.model_dump().items():
                     result.values.add(channel_id=name, value=value)
             p.gate.record(
                 movement_record(

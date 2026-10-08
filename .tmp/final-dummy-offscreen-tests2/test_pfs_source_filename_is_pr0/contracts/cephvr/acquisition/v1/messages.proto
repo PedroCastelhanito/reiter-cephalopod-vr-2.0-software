@@ -1,0 +1,355 @@
+syntax = "proto3";
+package cephvr.acquisition.v1;
+import "cephvr/control/v1/types.proto";
+import "cephvr/acquisition/v1/camera.proto";
+import "cephvr/acquisition/v1/microcontroller.proto";
+
+// A01-A10 acquisition worker wire contract. Field tags/types are authoritative
+// assignments; transport implementation remains covered by its owning review.
+// Frame accounting stays inside each camera worker (A07); no accounting messages.
+// Validate required message/scalar presence, generations, work and authority.
+
+// CameraRole is declared in camera.proto (no control imports; shared by control types).
+message WorkerContext {
+  cephvr.control.v1.ProcessIdentity worker = 1;
+  cephvr.control.v1.ProcessIdentity owner = 2;
+  cephvr.control.v1.WorkContext work = 3;
+  CameraRole camera = 4;
+  // Registration determines camera role and exact supervisor authority.
+}
+message WorkerCommand {
+  string command_id = 1;
+  cephvr.control.v1.ProcessIdentity issuer = 2;
+  WorkerContext target = 3;
+  cephvr.control.v1.OperationContext parent_operation = 4;
+  // Owner issues ordinary work; supervisor may independently interrupt/shut down.
+  // Same ID/request is idempotent; changed request or retired work is rejected.
+}
+// Initial device resolution precedes controller adoption, allocation and final Setup.
+enum CameraEditKind {
+  CAMERA_EDIT_KIND_UNSPECIFIED = 0;
+  CAMERA_EDIT_KIND_APPLY_SETTINGS = 1;
+  CAMERA_EDIT_KIND_IMPORT_PFS = 2;
+  CAMERA_EDIT_KIND_EXPORT_PFS = 3;
+  CAMERA_EDIT_KIND_FINISH_EDITING = 4;
+  CAMERA_EDIT_KIND_TEST_CONNECTION = 5;
+}
+message WorkerEditCamera {
+  WorkerCommand command = 1;
+  optional uint64 configuration_revision = 2;
+  CameraEditKind kind = 3;
+  CameraDeviceConfiguration requested = 4;
+  CameraTransportSettings transport = 5;
+  optional string path = 6;
+  // Serialized camera owner only. Preview/pulses already paused by coordinator.
+  // Export is sent only after successful apply/readback/controller confirmation.
+  // Finish respects an existing preview connection's separate ownership.
+}
+message WorkerResolveCamera {
+  WorkerCommand command = 1;
+  optional uint64 configuration_revision = 2;
+  CameraDeviceConfiguration requested = 3;
+  CameraTransportSettings transport = 4;
+  // Camera worker only, capture/pulses stopped; no buffers or trial output writes.
+  // Full camera configuration, not a later fetch. Result is not Ready.
+}
+// Resource descriptors carry no image bytes. See frame-buffers.md and its TOML ABI.
+enum FrameBufferKind {
+  FRAME_BUFFER_KIND_UNSPECIFIED = 0;
+  reserved 1;
+  reserved "FRAME_BUFFER_KIND_RECORDING"; // A03: recording uses an in-process queue.
+  FRAME_BUFFER_KIND_TRACKING = 2;
+  FRAME_BUFFER_KIND_PREVIEW = 3;
+}
+message PreviewBufferContext {
+  cephvr.control.v1.ProcessIdentity controller = 1;
+  string acquisition_run_id = 2;
+}
+message FrameBufferDescriptor {
+  string allocation_id = 1;
+  cephvr.control.v1.ProcessIdentity owner = 2;
+  cephvr.control.v1.ProcessIdentity producer = 3;
+  cephvr.control.v1.ProcessIdentity consumer = 4; // Required TRACKING; absent PREVIEW.
+  CameraRole camera = 5;
+  FrameBufferKind kind = 6;
+  // Manual PREVIEW requires preview scope; TRACKING and session PREVIEW use session scope.
+  oneof scope {
+    cephvr.control.v1.SessionContext session = 7;
+    PreviewBufferContext preview = 8;
+  }
+  optional uint64 configuration_revision = 9;
+  string shared_memory_name = 10;
+  optional uint32 layout_version = 11;
+  optional uint32 capacity_frames = 12;
+  CameraImageLayout image = 13;
+  optional uint64 allocation_bytes = 14;
+  // Offsets/stride are derived from frame_buffers.toml, never independently editable.
+  // One producer. TRACKING has one fixed consumer; PREVIEW has at most
+  // one attached viewer, authorized separately by the synchronization transfer target.
+  // Viewer changes do not change this descriptor or producer preparation.
+}
+// A03/J1: the ring's Win32 wakeup event, opened by exact name (frame-buffers.md).
+// Seqlock slots need no lock. No handle values or CPython primitive state cross.
+message RingSyncNames {
+  string transfer_id = 1;
+  cephvr.control.v1.ProcessIdentity target = 2;
+  reserved 3;
+  reserved "mutex_name"; // A03 seqlock rings have no mutex.
+  string event_name = 4; // Local\cephvr-<allocation_uuid>-event (auto-reset)
+  // Names never authorize attachment alone; excluded from logs and public snapshots.
+}
+message FrameBufferAttachment {
+  FrameBufferDescriptor buffer = 1;
+  reserved 2;
+  reserved "synchronization";
+  RingSyncNames sync = 3;
+}
+message AttachedResource {
+  string resource_id = 1; // Frame allocation ID.
+  string transfer_id = 2;
+  // Confirmed mapping, opened named event and local validation.
+}
+message CameraCaptureSettings {
+  optional uint32 sdk_buffer_count = 1;
+  optional int64 frame_silence_timeout_ns = 2;
+  reserved 3;
+  reserved "admission_lock_timeout_ns"; // Removed: A03 ring writers never wait.
+  optional double session_preview_max_hz = 4; // Resolved [preview] cap; 0 = off (no PREVIEW).
+  // Positive resolved values from owning defaults; fixed architecture policies
+  // are validated by the loader, not exposed as unsupported alternatives here.
+}
+message CameraWorkerSetupPayload {
+  CameraDeviceConfiguration device = 1;
+  CameraTransportSettings transport = 2;
+  CameraImageLayout layout = 3;
+  CameraCaptureSettings capture = 4;
+  // Session Setup: TRACKING if consumed, PREVIEW iff session_preview_max_hz > 0.
+  // Manual preview preparation: exactly one PREVIEW.
+  repeated FrameBufferAttachment outputs = 5;
+  reserved 6;
+  reserved "accounting"; // A07 accounting is in-process (recording thread).
+  optional bool native_timestamp_available = 7;
+  optional bool native_counter_available = 8;
+  CameraClockDescriptor camera_clock = 9;
+  RecordingSettings recording = 10; // Session Setup only; present iff save_video.
+  MicrocontrollerObservation pulse_configuration = 11; // Required for externally triggered saving.
+  repeated cephvr.control.v1.PreparedFunctionScope owned_functions = 12; // Exact session fault catalogue, emitted unchanged in backend Ready.
+}
+// Camera worker recording thread (A07/A08); fixed frame-log schema in frame_log_schema.toml.
+message RecordingSettings {
+  string ffmpeg_executable = 1;
+  string ffprobe_executable = 2;
+  repeated string ffmpeg_args = 3; // This camera's validated complete output args.
+  reserved 4;
+  reserved "hdf5";
+  optional int64 video_sync_interval_ns = 5;
+  optional int64 fragment_target_ns = 6;
+  optional int64 encoder_stall_timeout_ns = 7;
+  optional uint32 diagnostic_tail_max_lines = 8;
+  optional uint32 diagnostic_tail_max_bytes = 9;
+  string session_config_reference = 10;
+  optional uint32 recording_bit_depth = 11; // Required resolved 8 or 10; source depth in input layout.
+  optional int64 frame_log_sync_interval_ns = 12;
+  optional uint32 pending_records_capacity = 13; // Frame records awaiting append (A07).
+  optional uint32 recording_queue_frames = 14; // Resolved in-process queue capacity (A03).
+  // Acquisition injects raw stdin input args at the nominal rate (A08); encoder input
+  // format/throughput feasibility remains deferred to the rig.
+}
+message WorkerPreparePreview {
+  WorkerCommand command = 1; // No session/trial work; exact camera/owner generations.
+  optional uint64 configuration_revision = 2;
+  string preview_run_id = 3;
+  CameraWorkerSetupPayload camera = 4;
+  // No recording. Exactly one PREVIEW allocation of capacity 1, even headlessly.
+  // Camera attachment is required; viewer attachment is independent of start.
+}
+message WorkerStartPreview {
+  WorkerCommand command = 1;
+  cephvr.control.v1.OperationContext preparation = 2;
+  optional uint64 configuration_revision = 3;
+  string preview_run_id = 4;
+  // Live matched preparation only. Worker starts free-running capture or confirms
+  // external arming; coordinator owns MCU ON and aggregate running evidence.
+}
+message WorkerStopPreview {
+  WorkerCommand command = 1;
+  string preview_run_id = 2;
+  optional bool release_device = 3;
+  // Explicit Stop/cleanup=true; temporary reconfiguration pause=false, followed by
+  // confirmed old-buffer release and fresh preparation/run before restart.
+}
+message WorkerSetupSession {
+  WorkerCommand command = 1;
+  oneof payload {
+    CameraWorkerSetupPayload camera = 2;
+  }
+  reserved 3;
+  reserved "recording"; // A02: no separate recording worker.
+  optional uint64 configuration_revision = 4;
+  // Presence required (zero is valid); controller-approved revision scoped by
+  // command.target.work's session/controller generation and exact worker generation.
+  // Camera apply/readback + controller adoption precede buffer allocation and this
+  // resolved payload. Independent camera Setup paths may run concurrently; all
+  // required readiness evidence must arrive within the existing Setup budget.
+  // Coordinator pushes the full role payload. Validate settings/resources before
+  // Ready; command acceptance alone does not establish a confirmed retained setup.
+  // Payload must match the registered worker role; ordinary issuer is its owner.
+}
+// Trial-specific plan only; never replace or repeat the locked session settings.
+// T/end and final timestamp-derived paths remain in WorkerSchedule.
+message CameraWorkerTrialPreparation {
+  repeated string allocation_ids = 1;
+  reserved 2;
+  reserved "accounting_resource_id";
+  repeated cephvr.control.v1.OutputPlan outputs = 3; // Saving only; symbolic, no final paths yet.
+}
+message WorkerPrepareTrial {
+  WorkerCommand command = 1;
+  oneof payload {
+    CameraWorkerTrialPreparation camera = 2;
+  }
+  reserved 3;
+  reserved "recording";
+  optional uint64 required_configuration_revision = 4;
+  // Presence required; must match this exact worker/session's confirmed Setup.
+  // Reject missing/stale/unconfirmed context; do not fetch/substitute settings.
+  // Fresh preparation for exact trial; recheck readiness and prior closure even
+  // though session settings are reused. Earlier Ready never satisfies this trial.
+}
+message WorkerSchedule {
+  WorkerCommand command = 1;
+  optional int64 start_monotonic_ns = 2;
+  optional int64 end_monotonic_ns = 3;
+  string trial_file_prefix = 4;
+  repeated cephvr.control.v1.OutputPlan outputs = 5;
+  // Only this worker's outputs. Schedule admission never authorizes execution;
+  // the recording thread launches FFmpeg on acceptance, feeding no frames before T (A08).
+}
+message WorkerRelease {
+  WorkerCommand command = 1;
+  cephvr.control.v1.OperationContext schedule_operation = 2;
+  optional int64 start_monotonic_ns = 3;
+  optional int64 end_monotonic_ns = 4;
+  // Must exactly match the retained schedule; preserve existing release cutoffs.
+}
+message WorkerStop {
+  WorkerCommand command = 1;
+  optional int64 issued_monotonic_ns = 2;
+  reserved 3;
+  reserved "end_monotonic_ns";
+  cephvr.control.v1.Failure reason = 4;
+  // Prompt stop request; normal end is already scheduled. Camera evidence owns
+  // the E11 cutoff; an issuer does not supply a retroactive recording boundary.
+}
+message WorkerInterrupt {
+  WorkerCommand command = 1;
+  optional int64 issued_monotonic_ns = 2;
+  cephvr.control.v1.Failure reason = 3;
+  // Permanently fence the session, cancel pending execution, then close gracefully.
+}
+message WorkerReadyEvidence {
+  optional uint64 configuration_revision = 1;
+  optional bool required_checks_passed = 2;
+  repeated AttachedResource attached_resources = 3;
+  // Exact obligations for this worker, not another participant's attachment proof.
+  // True only after all worker-specific obligations in README are satisfied.
+  // Confirmed revision and shared-memory attachments must satisfy final Setup payload.
+}
+message WorkerStartedEvidence {
+  // Camera worker: usable-frame evidence ("camera_callback") and, when saving, the
+  // recording thread's first real in-trial frame/accounting processing, not encoder
+  // output: ActivityEvidence.kind = "recording_input_processing" at that processing
+  // instant. Dropped-frame accounting qualifies (A07).
+  // E05 report deadline remains T + 250 ms; encoding/closure evidence is separate.
+  optional int64 actual_start_monotonic_ns = 1;
+  repeated cephvr.control.v1.ActivityEvidence first_activity = 2;
+}
+message WorkerStoppedEvidence {
+  optional int64 actual_stop_monotonic_ns = 1;
+  optional bool activity_stopped = 2;
+  optional bool recording_interval_sealed = 3;
+  optional int64 recording_end_monotonic_ns = 4; // Camera E11 cutoff.
+  // No file-closure claim; buffered in-trial frames may still drain (README).
+}
+message WorkerFinishedEvidence {
+  optional bool activity_stopped = 1;
+  repeated cephvr.control.v1.OutputResult outputs = 2;
+  cephvr.control.v1.CameraTransportSummary transport_summary = 3;
+  // Optional collected summary for source.camera and source.work. Reuse the
+  // completion-line summary values, without polling the SDK or asserting durability.
+  // Output completion must be backed by verified closure, not merely process exit.
+}
+message WorkerCleanupEvidence {
+  repeated cephvr.control.v1.ResourceRelease resources = 1;
+  repeated cephvr.control.v1.OutputResult outputs = 2;
+  // Compare against registered obligations; an empty list never proves cleanup.
+}
+message WorkerLifecycleEvidence {
+  WorkerContext source = 1;
+  cephvr.control.v1.OperationContext operation = 2;
+  oneof evidence {
+    WorkerReadyEvidence ready = 3;
+    WorkerStartedEvidence started = 4;
+    WorkerStoppedEvidence stopped = 5;
+    WorkerFinishedEvidence finished = 6;
+    WorkerCleanupEvidence cleanup = 7;
+  }
+  optional uint64 state_revision = 8;
+  // Orders cumulative evidence updates within this exact worker generation.
+  // Late closure can resolve Unconfirmed; never rewrite confirmed results/outcome.
+  // Owner aggregates backend reports; these do not make workers logical backends.
+  // Lifecycle goes to coordinator; supervisor queries retained state after owner loss.
+  // Heartbeats go to the coordinator; errors go directly to supervisor (control.v1 types).
+}
+
+// Unary reports plus read-only reconciliation; no polling/frame/status stream.
+message WorkerWarningReport {
+  WorkerContext source = 1;
+  cephvr.control.v1.AcquisitionWarningView view = 2;
+  // Same producer/camera/work; Configuration additionally binds revision/preview run.
+}
+message WorkerOperationReport {
+  WorkerContext source = 1;
+  cephvr.control.v1.OperationState operation = 2;
+  optional uint64 state_revision = 3;
+  CameraResolvedState resolved_camera = 4;
+  optional string exported_pfs_path = 5; // Successful export completion only.
+  // Camera resolution only on a successful matching resolve/apply/import command.
+  // Partial failed readback belongs in failure evidence, not a success result.
+}
+message WorkerQuery {
+  WorkerContext target = 1;
+}
+message WorkerState {
+  WorkerContext source = 1;
+  optional uint64 state_revision = 2;
+  optional uint64 confirmed_configuration_revision = 3;
+  repeated cephvr.control.v1.OperationState operations = 4;
+  repeated WorkerLifecycleEvidence lifecycle = 5;
+  reserved 6;
+  reserved "file_recovery"; // No recording recovery tool (A07).
+  repeated cephvr.control.v1.AcquisitionWarningView warning_views = 7;
+  // Latest evidence per kind for queried work, each retaining its command ID.
+  // Does not include pixels, frame histories, credentials or PFS snapshots.
+}
+message WorkerRetainedResultQuery {
+  WorkerQuery query = 1;
+  string command_id = 2;
+}
+message WorkerRetainedResult {
+  bool found = 1;
+  WorkerContext source = 2;
+  cephvr.control.v1.CommandAdmission admission = 3;
+  WorkerOperationReport operation = 4;
+  repeated WorkerLifecycleEvidence lifecycle = 5;
+  // At most one retained report per evidence kind for this exact command/work.
+  // Not-found never authorizes re-executing uncertain work; E08 retention applies.
+}
+
+// Coordinator -> camera worker: terminal grouped ON/OFF observation for this camera/
+// trial, for bounded drain and the completion line's "pulses" object (A07/A11).
+message WorkerPulseEvidence {
+  WorkerCommand command = 1;
+  CameraRole camera = 2;
+  PulseCommandEvidence evidence = 3;
+}

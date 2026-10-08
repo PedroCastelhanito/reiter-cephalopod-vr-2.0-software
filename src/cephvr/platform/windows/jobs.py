@@ -29,6 +29,7 @@ JOB_OBJECT_EXTENDED_LIMIT_INFORMATION = 9
 JOB_OBJECT_BASIC_PROCESS_ID_LIST = 3
 JOB_OBJECT_ASSIGN_PROCESS = 0x0001
 JOB_OBJECT_QUERY = 0x0004
+JOB_OBJECT_TERMINATE = 0x0008
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 PROCESS_TERMINATE = 0x0001
 SYNCHRONIZE = 0x00100000
@@ -246,7 +247,7 @@ class WindowsJobs:
         if name in self.jobs:
             return
         handle = self.api.OpenJobObjectW(
-            JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_QUERY,
+            JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_QUERY | JOB_OBJECT_TERMINATE,
             False,
             name,
         )
@@ -499,13 +500,14 @@ class WindowsJobs:
                 f"QueryFullProcessImageNameW for PID {pid}",
             )
         except WindowsLaunchError:
-            if self._exited(handle):
+            # Image teardown may precede the exact process handle's exit signal.
+            if self._exited(handle, timeout_ms=1):
                 return None
             raise
         return pid, created, str(Path(path_buf.value).resolve())
 
-    def _exited(self, handle: int) -> bool:
-        return bool(self.api.WaitForSingleObject(handle, 0) == WAIT_OBJECT_0)
+    def _exited(self, handle: int, *, timeout_ms: int = 0) -> bool:
+        return bool(self.api.WaitForSingleObject(handle, timeout_ms) == WAIT_OBJECT_0)
 
     def process_running(self, pid: int, creation_time_100ns: int) -> bool:
         try:

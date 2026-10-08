@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "description": "T44: accepted/intended (pre-clip) area in every section; default 0.25.",
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "minimum_accepted_area_fraction": {
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "title": "Minimum Accepted Area Fraction",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "minimum_accepted_area_fraction"
+  ],
+  "title": "SectionFlowSupportSettings",
+  "type": "object"
+}

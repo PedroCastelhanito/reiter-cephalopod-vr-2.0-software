@@ -95,6 +95,7 @@ class TrialRecord:
     ready_confirmed: asyncio.Event = field(default_factory=asyncio.Event)
     pulse_on_task: asyncio.Task[None] | None = None
     pulse_off_task: asyncio.Task[None] | None = None
+    normal_end_task: asyncio.Task[None] | None = None
     pulse_on_ready: asyncio.Event = field(default_factory=asyncio.Event)
     pulse_off_ready: asyncio.Event = field(default_factory=asyncio.Event)
     pulse_on: mcu.PulseCommandEvidence | None = None

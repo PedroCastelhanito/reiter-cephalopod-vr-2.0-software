@@ -281,6 +281,7 @@ class NativeSession:
                 int(Decimal(str(spec.settings.pose_max_age_ms)) * 1_000_000),
                 int(Decimal(str(limits.movement_progress_timeout_s)) * 1_000_000_000),
                 spec.first,
+                spec.settings.image_scale.pixels_per_mm,
             )
         )
         return self.methods

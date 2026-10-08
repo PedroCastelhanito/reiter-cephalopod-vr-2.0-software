@@ -44,6 +44,25 @@ class EvidenceWaiter:
                 remaining = (deadline_ns - self.clock()) / 1e9
                 if predicate():
                     return
+                if self.lifecycle.session.phase == pb.SESSION_PHASE_SETTING_UP:
+                    for name, command_id in attempt.setup_operations.items():
+                        outcome = attempt.scope_results.get(command_id)
+                        if (
+                            outcome is not None
+                            and outcome.HasField("succeeded")
+                            and not outcome.succeeded
+                        ):
+                            raise RuntimeError(
+                                f"{name} Setup failed: {outcome.failure.code}: "
+                                f"{outcome.failure.message}"
+                            )
+                if self.lifecycle.trial.phase == pb.TRIAL_PHASE_PREPARING:
+                    for name, outcome in attempt.trial_results.items():
+                        if outcome.HasField("succeeded") and not outcome.succeeded:
+                            raise RuntimeError(
+                                f"{name} PrepareTrial failed: {outcome.failure.code}: "
+                                f"{outcome.failure.message}"
+                            )
                 if remaining <= 0:
                     break
                 attempt.changed.clear()
@@ -143,7 +162,20 @@ class EvidenceWaiter:
                     or retained.work != work
                 ):
                     return
-                if kind == "finished":
+                if (
+                    kind != "finished"
+                    and retained.operation.complete
+                    and retained.operation.context.command_id == command_id
+                    and retained.operation.work == work
+                    and retained.operation.HasField("succeeded")
+                    and not retained.operation.succeeded
+                ):
+                    lifecycle = pb.LifecycleReport(
+                        operation=pb.BackendOperationReport(
+                            source=backend.context, operation=retained.operation
+                        )
+                    )
+                elif kind == "finished":
                     if retained.finished.context.operation.command_id != command_id:
                         return
                     lifecycle = pb.LifecycleReport(finished=retained.finished)

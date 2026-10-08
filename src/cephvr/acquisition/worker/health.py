@@ -64,7 +64,7 @@ class WorkerHealthReporter:
             # the fallback when this bounded direct report cannot be delivered.
             return
 
-    def coordinator_lost(self) -> None:
+    def coordinator_lost(self, *, details: str | None = None) -> None:
         """Tell the supervisor the worker has locally fenced after owner silence."""
         reporter = self.supervisor_errors
         if reporter is None:
@@ -76,7 +76,10 @@ class WorkerHealthReporter:
             occurred_monotonic_ns=now_ns,
             failure=control.Failure(
                 code="COORDINATOR_HEALTH_LOST",
-                message="coordinator heartbeat receipt exceeded the configured silence bound",
+                message=(
+                    details
+                    or "coordinator heartbeat receipt exceeded the configured silence bound"
+                )[:2048],
             ),
         )
         if self.state.context.HasField("work"):
@@ -206,6 +209,7 @@ class WorkerHealthReporter:
         for view in warnings.views():
             report = acq.WorkerWarningReport(source=self.bootstrap.context)
             report.view.CopyFrom(view)
+            report.source.work.CopyFrom(view.work)
             self._dispatch(
                 self.reports.report_warnings(report, deadline_ns=deadline_ns)
             )

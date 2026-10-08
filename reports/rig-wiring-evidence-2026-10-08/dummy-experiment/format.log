@@ -1,0 +1,13 @@
+unformatted: File would be reformatted
+   --> src\cephvr\gui\batch_create.py:179:24
+    |
+178 |             self.generation_grid.addWidget(
+    -                 widget, i // columns, i % columns, alignment=Qt.AlignmentFlag.AlignBottom
+179 +                 widget,
+180 +                 i // columns,
+181 +                 i % columns,
+182 +                 alignment=Qt.AlignmentFlag.AlignBottom,
+183 |             )
+    |
+
+1 file would be reformatted, 259 files already formatted

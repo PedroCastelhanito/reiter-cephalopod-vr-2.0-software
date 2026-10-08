@@ -1,0 +1,117 @@
+........................................................................ [ 42%]
+........................................................................ [ 85%]
+....................F....                                                [100%]
+================================== FAILURES ===================================
+_____ test_authenticated_coordinator_renderer_replay_and_stale_generation _____
+
+    @pytest.mark.asyncio
+    async def test_authenticated_coordinator_renderer_replay_and_stale_generation():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "local-test-secret"
+        sink = ReportSink()
+        provisional = Peer(
+            "127.0.0.1:1",
+            Principal("visual_stimulus", identity.process.generation, token),
+            1_000_000,
+            kind="worker",
+        )
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=provisional,
+            controller=sink,
+            supervisor=sink,
+            ledger=ledger(identity.process.generation),
+        )
+        listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+        reports = Peer(
+            f"127.0.0.1:{listener.port}",
+            Principal("visual_stimulus_renderer", identity.worker.generation, token),
+            1_000_000,
+            kind="coordinator",
+        )
+        device = Device()
+        owner = RenderOwner(lambda _: device)
+        worker = VisualStimulusWorkerRuntime(
+            visual_stimulus.WorkerContext(worker=identity.worker, owner=identity.process),
+            identity.supervisor,
+            owner,
+            reports,
+            ledger(identity.worker.generation),
+        )
+        worker_listener = await serve(
+            worker,
+            {("visual_stimulus", identity.process.generation): token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            worker=True,
+        )
+        remote = Peer(
+            f"127.0.0.1:{worker_listener.port}",
+            Principal("visual_stimulus", identity.process.generation, token),
+            1_000_000,
+            kind="worker",
+        )
+        coordinator.worker = remote
+        client = Peer(
+            f"127.0.0.1:{listener.port}",
+            Principal("controller", identity.controller.generation, token),
+            1_000_000,
+            kind="controller",
+        )
+        from cephvr.control.v1 import services_pb2_grpc as rpc
+        from cephvr.shared.transport_deadlines import deadline_metadata
+    
+        stub = rpc.VisualStimulusConfigurationServiceStub(client.channel)
+        deadline = host_time_ns() + 5_000_000_000
+        request = wire.VisualStimulusDisplayInitializationRequest(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            configuration_revision=3,
+            deadline_monotonic_ns=deadline,
+        )
+        metadata = (*client.principal.metadata(), deadline_metadata(deadline))
+        try:
+            first = await stub.InitializeDisplay(request, metadata=metadata, timeout=2)
+            retry = await stub.InitializeDisplay(request, metadata=metadata, timeout=2)
+            assert first == retry
+            assert first.result == pb.COMMAND_RESULT_ACCEPTED
+            for _ in range(100):
+                if sink.messages:
+                    break
+                await asyncio.sleep(0.01)
+            assert device.commands == ["InitializeDisplay"]
+            assert device.thread_ids == [owner.thread.ident]
+>           assert any(
+                msg.operation.operation.complete
+                for method, msg in sink.messages
+                if method == "ReportLifecycle"
+            )
+E           assert False
+E            +  where False = any(<generator object test_authenticated_coordinator_renderer_replay_and_stale_generation.<locals>.<genexpr> at 0x0000017BFEC71D20>)
+
+tests\visual_stimulus\test_transport.py:652: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_coordinator_renderer_replay_and_stale_generation
+1 failed, 168 passed in 2.64s

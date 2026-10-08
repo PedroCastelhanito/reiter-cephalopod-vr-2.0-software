@@ -2,7 +2,7 @@
 
 from dataclasses import replace
 
-from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -175,7 +175,12 @@ class BatchCreate(QWidget):
         columns = 3 if self.width() < 760 else len(fields)
         weights = (3, 2, 1, 3, 3, 2)
         for i, widget in enumerate(fields):
-            self.generation_grid.addWidget(widget, i // columns, i % columns)
+            self.generation_grid.addWidget(
+                widget,
+                i // columns,
+                i % columns,
+                alignment=Qt.AlignmentFlag.AlignBottom,
+            )
             self.generation_grid.setColumnStretch(
                 i % columns, weights[i] if columns > 3 else 1
             )

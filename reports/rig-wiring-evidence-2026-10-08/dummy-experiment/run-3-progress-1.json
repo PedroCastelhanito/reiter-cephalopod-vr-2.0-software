@@ -1,0 +1,119 @@
+{
+  "controller_generation": "830384b3-8d9c-43fb-a168-c2294ff10e49",
+  "session": {
+    "phase": "SESSION_PHASE_SETTING_UP",
+    "context": {
+      "controller_generation": "830384b3-8d9c-43fb-a168-c2294ff10e49",
+      "session_id": "4f30c143-6e6a-48cb-97dc-769be3250340"
+    },
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-130334",
+    "trial_count": 1
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "0ccd9c4f-0c3c-4c7d-af7b-08f03fe693c0"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL"
+    },
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "8b2b5d70-8da8-4e3b-b3fb-56da99d38621"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL"
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "1c2b9ea8-3701-442b-b963-248bd4c18f97"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "ab1dde75-30d1-43f4-bb19-da73cca76636"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "97305d09-42e6-4d43-aa8a-4b0b7eb9bc3a"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "c4bbb0f6-e0cc-4fbd-97dd-8ac20f804524",
+          "session_id": "87f539e5-7902-4fa5-9d81-432024089520"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "6fe6a886-d65d-4612-b4c2-e2e1e293cd19"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "f828945d-13a1-4b6a-8c1b-a2dcbb7d89bc"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration already current"
+    },
+    {
+      "context": {
+        "command_id": "09abe4ed-5c85-4f86-a23e-aeca4d268ab9"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "830384b3-8d9c-43fb-a168-c2294ff10e49",
+          "session_id": "4f30c143-6e6a-48cb-97dc-769be3250340"
+        }
+      },
+      "progress": "reserving output namespace"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "25791def-e519-4f63-9c13-924fb4d196af",
+      "component": "visual_stimulus_display",
+      "message": "Visual Stimulus display settings or registered coordinator unavailable"
+    },
+    {
+      "warning_id": "5bf38f27-e6ef-4f44-ad0d-3b18f260460c",
+      "component": "startup_recovery",
+      "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+    }
+  ],
+  "prompts": null,
+  "metadata": null
+}

@@ -382,6 +382,7 @@ class WorkerCaptureResources:
         *,
         drain_margin_ns: int = 0,
         terminal_off_confirmed: bool = True,
+        activity_stopped: Callable[[int], None] | None = None,
     ) -> object:
         if drain_margin_ns < 0:
             raise ValueError("post-cutoff drain margin cannot be negative")
@@ -404,6 +405,12 @@ class WorkerCaptureResources:
         generation_stopped = False
         if self._active:
             generation_stopped = self.adapter.begin_terminal_drain()
+        if (
+            generation_stopped
+            and terminal_off_confirmed
+            and activity_stopped is not None
+        ):
+            activity_stopped(host_time_ns())
         margin_start = admission_stop_ns
         if timing == "external_trigger":
             if terminal_off_confirmed:

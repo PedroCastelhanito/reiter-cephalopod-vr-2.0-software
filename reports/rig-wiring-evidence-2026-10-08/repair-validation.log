@@ -1,0 +1,148 @@
+FF.............................s........................................ [ 60%]
+...............................................                          [100%]
+================================== FAILURES ===================================
+______ test_native_child_endpoint_connects_transfers_and_releases[True] _______
+
+parent_writable = True
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(sys.platform != "win32", reason="native Windows pipes required")
+    @pytest.mark.parametrize("parent_writable", [True, False])
+    def test_native_child_endpoint_connects_transfers_and_releases(parent_writable):
+        owner = byte_stream.PipeConstructionOwner()
+        deadline = time.perf_counter_ns() + 2_000_000_000
+        endpoint = None
+        try:
+            endpoint = byte_stream.OverlappedPipe.create_child_endpoint(
+                parent_writable=parent_writable, owner=owner, deadline_ns=deadline
+            )
+            api = byte_stream.native_api()
+            payload = b"native pipe"
+            transferred = ctypes.c_ulong()
+            if parent_writable:
+>               endpoint.parent.write(payload, deadline_ns=deadline)
+
+tests\platform\test_byte_stream.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <cephvr.platform.windows.byte_stream.OverlappedPipe object at 0x000002BEF1729D90>
+data = b'native pipe', deadline_ns = 661969324486700
+
+    def write(self, data: bytes | memoryview, *, deadline_ns: int) -> None:
+        if not self.writable or self._closed:
+            raise WindowsLaunchError("byte-stream endpoint is not writable")
+        if self._retired is not None:
+            raise WindowsLaunchError(f"byte-stream endpoint retired: {self._retired}")
+        if self._pending is not None:
+            raise WindowsLaunchError("prior native pipe write remains unresolved")
+        view = memoryview(data).cast("B")
+        if not view.contiguous or view.readonly:
+>           raise TypeError(
+                "raw frame writes require a contiguous writable pinned buffer"
+            )
+E           TypeError: raw frame writes require a contiguous writable pinned buffer
+
+src\cephvr\platform\windows\byte_stream.py:92: TypeError
+
+During handling of the above exception, another exception occurred:
+
+parent_writable = True
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(sys.platform != "win32", reason="native Windows pipes required")
+    @pytest.mark.parametrize("parent_writable", [True, False])
+    def test_native_child_endpoint_connects_transfers_and_releases(parent_writable):
+        owner = byte_stream.PipeConstructionOwner()
+        deadline = time.perf_counter_ns() + 2_000_000_000
+        endpoint = None
+        try:
+            endpoint = byte_stream.OverlappedPipe.create_child_endpoint(
+                parent_writable=parent_writable, owner=owner, deadline_ns=deadline
+            )
+            api = byte_stream.native_api()
+            payload = b"native pipe"
+            transferred = ctypes.c_ulong()
+            if parent_writable:
+                endpoint.parent.write(payload, deadline_ns=deadline)
+                buffer = ctypes.create_string_buffer(len(payload))
+                assert api.ReadFile(
+                    endpoint.child_handle,
+                    buffer,
+                    len(payload),
+                    ctypes.byref(transferred),
+                    None,
+                )
+                assert buffer.raw == payload and transferred.value == len(payload)
+            else:
+                buffer = ctypes.create_string_buffer(payload)
+                assert api.WriteFile(
+                    endpoint.child_handle,
+                    buffer,
+                    len(payload),
+                    ctypes.byref(transferred),
+                    None,
+                )
+                assert endpoint.parent.read(deadline_ns=deadline) == payload
+            assert not owner.cleanup_blocked
+        finally:
+            if endpoint is not None:
+                endpoint.close_child_copy()
+                endpoint.close_parent()
+>           owner.close(deadline_ns=deadline)
+            ^^^^^^^^^^^
+E           AttributeError: 'PipeConstructionOwner' object has no attribute 'close'
+
+tests\platform\test_byte_stream.py:63: AttributeError
+______ test_native_child_endpoint_connects_transfers_and_releases[False] ______
+
+parent_writable = False
+
+    @pytest.mark.windows
+    @pytest.mark.skipif(sys.platform != "win32", reason="native Windows pipes required")
+    @pytest.mark.parametrize("parent_writable", [True, False])
+    def test_native_child_endpoint_connects_transfers_and_releases(parent_writable):
+        owner = byte_stream.PipeConstructionOwner()
+        deadline = time.perf_counter_ns() + 2_000_000_000
+        endpoint = None
+        try:
+            endpoint = byte_stream.OverlappedPipe.create_child_endpoint(
+                parent_writable=parent_writable, owner=owner, deadline_ns=deadline
+            )
+            api = byte_stream.native_api()
+            payload = b"native pipe"
+            transferred = ctypes.c_ulong()
+            if parent_writable:
+                endpoint.parent.write(payload, deadline_ns=deadline)
+                buffer = ctypes.create_string_buffer(len(payload))
+                assert api.ReadFile(
+                    endpoint.child_handle,
+                    buffer,
+                    len(payload),
+                    ctypes.byref(transferred),
+                    None,
+                )
+                assert buffer.raw == payload and transferred.value == len(payload)
+            else:
+                buffer = ctypes.create_string_buffer(payload)
+                assert api.WriteFile(
+                    endpoint.child_handle,
+                    buffer,
+                    len(payload),
+                    ctypes.byref(transferred),
+                    None,
+                )
+                assert endpoint.parent.read(deadline_ns=deadline) == payload
+            assert not owner.cleanup_blocked
+        finally:
+            if endpoint is not None:
+                endpoint.close_child_copy()
+                endpoint.close_parent()
+>           owner.close(deadline_ns=deadline)
+            ^^^^^^^^^^^
+E           AttributeError: 'PipeConstructionOwner' object has no attribute 'close'
+
+tests\platform\test_byte_stream.py:63: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/platform/test_byte_stream.py::test_native_child_endpoint_connects_transfers_and_releases[True]
+FAILED tests/platform/test_byte_stream.py::test_native_child_endpoint_connects_transfers_and_releases[False]
+2 failed, 116 passed, 1 skipped in 1.23s

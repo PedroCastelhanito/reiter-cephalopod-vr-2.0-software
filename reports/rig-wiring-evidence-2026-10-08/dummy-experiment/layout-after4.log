@@ -1,0 +1,51 @@
+...F....                                                                 [100%]
+================================== FAILURES ===================================
+___________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000244CE50D6C0>
+app = <PyQt6.QtWidgets.QApplication object at 0x00000244CA664430>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+                assert bar.tabRect(3).right() == bar.width() - 1
+                if width == 1175:
+                    hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    border_top = (
+                        hud.mapTo(window, QPoint()).y()
+                        + hud.caption.geometry().center().y()
+                    )
+>                   assert abs(bar.mapTo(window, QPoint()).y() - border_top) <= 1
+E                   assert 9 <= 1
+E                    +  where 9 = abs((102 - 111))
+E                    +    where 102 = <built-in method y of QPoint object at 0x00000244CCF4ECE0>()
+E                    +      where <built-in method y of QPoint object at 0x00000244CCF4ECE0> = PyQt6.QtCore.QPoint(186, 102).y
+E                    +        where PyQt6.QtCore.QPoint(186, 102) = <built-in method mapTo of QTabBar object at 0x00000244CE520E50>(<cephvr.gui.window.DashboardWindow object at 0x00000244CE50D6C0>, PyQt6.QtCore.QPoint())
+E                    +          where <built-in method mapTo of QTabBar object at 0x00000244CE520E50> = <PyQt6.QtWidgets.QTabBar object at 0x00000244CE520E50>.mapTo
+E                    +          and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests\gui\test_dashboard.py:1591: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+1 failed, 7 passed, 325 deselected in 4.74s

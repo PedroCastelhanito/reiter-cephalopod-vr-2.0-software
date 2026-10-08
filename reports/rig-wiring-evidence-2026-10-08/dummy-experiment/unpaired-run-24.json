@@ -1,0 +1,153 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "6086792a-450a-48c1-a32a-a7204b38d838"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "6086792a-450a-48c1-a32a-a7204b38d838",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "0d761e2b-7f98-4645-8d3f-7ca2ff44233a",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "76b71783-659b-4ed2-b8e0-e19b51be8538",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_READY",
+      "context": {
+        "controller_generation": "0d761e2b-7f98-4645-8d3f-7ca2ff44233a",
+        "session_id": "c788b725-7e7c-4d82-bd74-f9f50ee6f055"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140600",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [],
+  "start": {
+    "command_id": "a0f83802-a613-415f-8f9a-00be0f0420bf",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "final_session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "0d761e2b-7f98-4645-8d3f-7ca2ff44233a",
+      "session_id": "c788b725-7e7c-4d82-bd74-f9f50ee6f055"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140600",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "trial 1: required lifecycle evidence missing by deadline"
+    }
+  },
+  "final_trial": {
+    "context": {
+      "session": {
+        "controller_generation": "0d761e2b-7f98-4645-8d3f-7ca2ff44233a",
+        "session_id": "c788b725-7e7c-4d82-bd74-f9f50ee6f055"
+      },
+      "trial_id": "3719616e-82a2-4358-ac36-370a3e4dc9ef",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+    "start_monotonic_ns": "679947917068300",
+    "scheduled_end_monotonic_ns": "680007917068300",
+    "interruption_issued_monotonic_ns": "679948166998800"
+  },
+  "final_metadata": [
+    {
+      "operation": {
+        "command_id": "16f672f1-347e-4411-9310-e8c0ca054a45"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140600\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "3cdd6da3-89ce-4970-90d9-10b10aa88fcd"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140600\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "90481c7b-533c-4d64-9e18-09b883181406"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140600\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ],
+  "final_reservation": {
+    "session": {
+      "controller_generation": "0d761e2b-7f98-4645-8d3f-7ca2ff44233a",
+      "session_id": "c788b725-7e7c-4d82-bd74-f9f50ee6f055"
+    },
+    "session_directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-140600",
+    "lock_held": true
+  }
+}

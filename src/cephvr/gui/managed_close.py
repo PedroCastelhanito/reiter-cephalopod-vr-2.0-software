@@ -52,7 +52,15 @@ def request_managed_close(
     try:
         proposal = configuration.collect(state.configuration_values.current)
     except (ValueError, TypeError, AttributeError) as error:
-        return CloseRequestResult("failed", str(error))
+        if configuration.dirty and not confirm_discard():
+            return CloseRequestResult("cancelled")
+        log(
+            f"Local draft could not be submitted ({error}); saving only the "
+            "controller's last accepted configuration."
+        )
+        if not send("save_configuration_history"):
+            return CloseRequestResult("failed", "Controller connection is unavailable.")
+        return CloseRequestResult("pending")
     plan = configuration_update_plan(
         proposal,
         state.configuration_values.current,

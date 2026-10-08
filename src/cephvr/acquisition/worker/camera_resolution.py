@@ -37,13 +37,13 @@ def resolve_camera(
     adapter.open(requested.device_id)
     if requested.HasField("pfs_baseline"):
         adapter.apply_pfs_snapshot(PfsSnapshot(requested.pfs_baseline.text))
-    applied = adapter.apply_settings(settings_from_wire(requested.settings))
     if not requested.HasField("frame_timing"):
         raise ValueError("assigned camera frame timing is unresolved")
     frame_timing = _frame_timing_from_wire(requested.frame_timing)
     # Apply and read back TriggerMode at resolution so the adopted applied record
     # cannot claim free-run merely because TriggerSource still names a line.
     adapter.configure_capture(frame_timing, 1)
+    applied = adapter.apply_settings(settings_from_wire(requested.settings))
     transport = adapter.apply_transport_settings(
         transport_from_wire(request.transport)
         if request.HasField("transport")

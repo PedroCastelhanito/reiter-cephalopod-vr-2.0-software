@@ -228,8 +228,7 @@ class TrialLifecycleReports:
                     context=control.ReportContext(
                         backend=self.identity.backend,
                         work=trial.work,
-                        operation=trial.schedule
-                        or control.OperationContext(command_id=""),
+                        operation=trial.preparation,
                     ),
                     actual_start_monotonic_ns=actual,
                 )
@@ -324,7 +323,7 @@ class TrialLifecycleReports:
                     context=control.ReportContext(
                         backend=self.identity.backend,
                         work=trial.work,
-                        operation=trial.stop or control.OperationContext(command_id=""),
+                        operation=trial.preparation,
                     ),
                     actual_stop_monotonic_ns=actual,
                     trial_activity_stopped=True,
@@ -448,7 +447,7 @@ class TrialLifecycleReports:
                     context=control.ReportContext(
                         backend=self.identity.backend,
                         work=trial.work,
-                        operation=trial.stop or control.OperationContext(command_id=""),
+                        operation=trial.preparation,
                     ),
                     trial_activity_stopped=True,
                 )

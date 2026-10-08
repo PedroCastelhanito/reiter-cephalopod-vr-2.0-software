@@ -99,9 +99,18 @@ class HealthMonitor:
                 "INVALID_HEARTBEAT", "lifecycle and sender time are required"
             )
         async with self.lock:
-            if not self.registration.source_registered(
-                request.source
-            ) or not self.registration.same_work(request.work):
+            # Dormant coordinators keep process health across Setup's work handoff.
+            process_only = (
+                request.work.WhichOneof("work") is None
+                and lifecycle_kind == "session_phase"
+                and request.session_phase == types.SESSION_PHASE_CONFIGURATION
+                and not request.HasField("cleanup_resources_revision")
+                and not request.cleanup_resources
+                and not request.continuing_functions
+            )
+            if not self.registration.source_registered(request.source) or not (
+                process_only or self.registration.same_work(request.work)
+            ):
                 return report_rejected(
                     "WRONG_CONTEXT", "source generation or work is not registered"
                 )
@@ -114,7 +123,7 @@ class HealthMonitor:
                 return report_rejected(
                     "UNKNOWN_CATALOGUE", "cleanup catalogue source is not registered"
                 )
-            if catalogue is not None:
+            if catalogue is not None and not process_only:
                 try:
                     catalogue.allowed_owners = self.registration.catalogue_owners(
                         source_key

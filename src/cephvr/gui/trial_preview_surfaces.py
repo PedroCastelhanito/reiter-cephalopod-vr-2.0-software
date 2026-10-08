@@ -24,7 +24,19 @@ class PreviewCorrection:
     ) -> "PreviewCorrection":
         try:
             values: dict[str, object] = {}
-            for key in ("scale_u", "scale_v", "offset_x", "offset_y"):
+            for key in (
+                "scale_u",
+                "scale_v",
+                "offset_x",
+                "offset_y",
+                "width",
+                "height",
+                "throw",
+                "reference_width_px",
+                "reference_height_px",
+                "reference_x_mm",
+                "reference_y_mm",
+            ):
                 text = draft.get(key, "").strip()
                 values[f"screens.{face}.{key}"] = float(text) if text else None
             for key in ("flip_x", "flip_y"):
@@ -40,6 +52,13 @@ class PreviewCorrection:
                 and resolution is None
             ):
                 raise ValueError(f"Assign a display to {face} to resolve pixel offsets")
+            if resolution is None and any(
+                values[f"screens.{face}.reference_{axis}_mm"] is not None
+                for axis in ("x", "y")
+            ):
+                raise ValueError(
+                    f"Assign a display to {face} to resolve reference bars"
+                )
             width, height = resolution or (1, 1)
             if min(width, height) <= 0:
                 raise ValueError(f"{face} display resolution must be positive")

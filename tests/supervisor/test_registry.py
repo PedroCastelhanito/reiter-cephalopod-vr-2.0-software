@@ -290,6 +290,38 @@ def test_native_confirmation_rejects_python_fields(
         assert registry.confirm(os_request, clock) == operational
 
 
+@pytest.mark.parametrize(
+    "role", ["visual_stimulus_ffmpeg", "visual_stimulus_ffmpeg_probe"]
+)
+def test_renderer_eof_helper_exit_retains_cleanup_without_process_fault(role):
+    native = RegistryNative()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    request = plan()
+    request.owner.role = "visual_stimulus_renderer"
+    request.child.role = role
+    request.stop_method = "owner_stdin_eof"
+    request.work.session.CopyFrom(
+        types.SessionContext(
+            controller_generation=str(uuid4()), session_id=str(uuid4())
+        )
+    )
+    request.parent_operation.command_id = str(uuid4())
+    state = registry.plan(request)
+    native.jobs[state.containment_job_name] = [(42, 1234, request.executable)]
+    registry.confirm(confirmation(request), describe_host_clock())
+    registry.confirm(confirmation(request), describe_host_clock())
+    native.jobs[state.containment_job_name] = []
+    observed = registry.refresh(request.command_id)
+    assert observed.phase == wire.LAUNCH_PHASE_OPERATIONAL
+    assert not observed.HasField("failure")
+    with pytest.raises(LaunchError, match="not verified"):
+        registry.release(request.command_id, obligations_met=False)
+    assert (
+        registry.release(request.command_id, obligations_met=True).phase
+        == wire.LAUNCH_PHASE_RELEASED
+    )
+
+
 def test_exact_membership_and_retain_until_cleanup() -> None:
     native = RegistryNative()
     registry = LaunchRegistry(native, 15_000_000_000)

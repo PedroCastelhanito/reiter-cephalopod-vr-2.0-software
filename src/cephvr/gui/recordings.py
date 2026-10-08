@@ -67,8 +67,6 @@ class RecordingsCard(Card):
         for camera in self.cameras.drafts:
             if camera.key not in self.record:
                 self.add_recording(camera.key, camera.role)
-            self.source_labels[camera.key].setText(f"{camera.role} video")
-            self.record[camera.key].setAccessibleName(f"Record {camera.role} video")
         while self.source_grid.count():
             item = self.source_grid.takeAt(0)
             if item is not None and (layout := item.layout()) is not None:
@@ -94,7 +92,12 @@ class RecordingsCard(Card):
 
     def refresh_controls(self) -> None:
         self.velocities.setEnabled(self.can_edit)
-        active = {camera.key: camera.enabled for camera in self.cameras.drafts}
+        active = {}
+        for camera in self.cameras.drafts:
+            active[camera.key] = camera.enabled
+            if camera.key in self.record:
+                self.source_labels[camera.key].setText(f"{camera.role} video")
+                self.record[camera.key].setAccessibleName(f"Record {camera.role} video")
         active["stimulus"] = True
         for key, control in self.record.items():
             control.setEnabled(self.can_edit and active.get(key, False))

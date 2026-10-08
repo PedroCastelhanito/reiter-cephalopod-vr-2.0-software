@@ -1,6 +1,6 @@
 """Devices presentation draft; edits stay local and actions never call hardware."""
 
-from PyQt6.QtCore import QSettings, QSize
+from PyQt6.QtCore import QSettings, QSize, Qt
 from PyQt6.QtWidgets import (
     QStackedWidget,
     QTabBar,
@@ -31,7 +31,8 @@ class DevicesPage(QWidget):
         self.tab_bar.setIconSize(QSize(20, 20))
         self.tab_bar.setDrawBase(False)
         self.tab_bar.setExpanding(True)
-        self.tab_bar.setUsesScrollButtons(True)
+        self.tab_bar.setUsesScrollButtons(False)
+        self.tab_bar.setElideMode(Qt.TextElideMode.ElideRight)
         self.tab_bar.currentChanged.connect(self.tabs.setCurrentIndex)
         self.tabs.currentChanged.connect(self.tab_bar.setCurrentIndex)
         body.addWidget(self.tabs, 1)
@@ -40,7 +41,7 @@ class DevicesPage(QWidget):
         self.cameras.drafts_changed.connect(self.sync_cameras)
         self.microcontroller.camera_enable_requested.connect(self.set_camera_enabled)
         self.sync_cameras()
-        self.projectors = ProjectorsPanel()
+        self.projectors = ProjectorsPanel(settings=settings)
         self.spikeglx = SpikeGLXPanel()
         self.panels = (
             self.cameras,
@@ -53,6 +54,8 @@ class DevicesPage(QWidget):
         for key in ("trial-state", "projector-flip"):
             self.microcontroller.enable_controls[key].toggled.connect(self.sync_inputs)
         self.sync_inputs()
+        self.microcontroller.config_files.loaded.connect(self.sync_inputs)
+        self.spikeglx.config_files.loaded.connect(self.sync_inputs)
         for name, icon, panel in zip(
             ("Cameras", "Microcontroller", "Projectors", "SpikeGLX"),
             ("camera", "board", "projector", "signal"),

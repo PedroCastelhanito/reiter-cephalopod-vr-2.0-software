@@ -1,0 +1,190 @@
+{
+  "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+      "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "trial 1: acquisition PrepareTrial failed: TRIAL_PREPARATION_FAILED: camera role 1 trial preparation failed: INVALID_REQUEST: Field cephvr.acquisition.v1.CameraClockDescriptor.timestamp_source does not have presence."
+    }
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+        "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+      },
+      "trial_id": "80e0ab03-b048-4364-ad30-02d14f8ffe6a",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_PREPARING"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "5da07ce2-e1d1-4fea-b465-8e7e14e9c185"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "5da07ce2-e1d1-4fea-b465-8e7e14e9c185"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+              "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+            }
+          },
+          "operation": {
+            "command_id": "57e5f033-71b1-4a83-876a-b598e25f4dc2"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    },
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "69cd9c71-e1eb-43c4-9eb4-9db383f777b1"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "69cd9c71-e1eb-43c4-9eb4-9db383f777b1"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+              "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+            }
+          },
+          "operation": {
+            "command_id": "17e6ec1f-5d7e-438e-ae9e-b2e46d4549c8"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "7a295a14-2b00-41fc-8b85-4fe2710c24f1"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "ad655d15-2d9d-4d53-9127-492f12381bde"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+          "session_id": "6e0d88e0-3b84-483e-9b86-f45f9a446baf"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "bab805fc-ea86-45bf-86f6-2e8141ca2bbc"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "7ba07ee0-e1b2-4eea-8765-4231e4073fdc"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "b26cc542-fe38-49e8-8cbc-30ef182cbed6"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+          "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "21642968-4e9d-4063-b9c0-6598e0e9b44e"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "3e9c029e-0516-4322-ae5d-bacc661c3440",
+          "session_id": "5ac0e944-1ba8-4bf2-844f-250a583a331e"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    }
+  ],
+  "warnings": null,
+  "prompts": null,
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "c05c8000-8158-4447-ab0c-9d9c82f7afb8"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "dfc9e994-ad09-47f0-b195-8a7a28456edb"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "f07dd2d9-ae5f-4f76-9349-9af0a8e26983"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135843\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ]
+}

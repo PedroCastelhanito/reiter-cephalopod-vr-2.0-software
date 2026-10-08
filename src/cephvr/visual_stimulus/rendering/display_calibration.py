@@ -8,6 +8,7 @@ from typing import Any
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.rendering.arena_gpu import ArenaGPUSet, upload_arena
+from cephvr.visual_stimulus.rendering.reference_bars import draw_reference_bars
 from cephvr.visual_stimulus.rendering.scene_resources import (
     PreparedCalibrationOutput,
     SceneOutputBuilder,
@@ -154,6 +155,7 @@ class DisplayCalibrationRenderer:
             frame.output_texture.use(0)
             frame.lut_texture.use(1)
             frame.output_quad_array.render(mode=self.moderngl.TRIANGLE_STRIP)
+            draw_reference_bars(context, frame.width, frame.height)
             screen = getattr(context, "screen", None)
             if screen is not None:
                 context.copy_framebuffer(screen, frame.device_fbo)

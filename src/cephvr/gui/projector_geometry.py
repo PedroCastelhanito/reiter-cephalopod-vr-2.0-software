@@ -219,7 +219,7 @@ class ScreenGeometryEditor(Card):
         entries = (
             ("width", "WIDTH\n(mm)"),
             ("height", "HEIGHT\n(mm)"),
-            ("distance", "PROJ. DIST.\n(mm)"),
+            ("distance", "DERIVED DIST.\n(mm)"),
             ("throw", "THROW\nRATIO"),
         )
         self.table.setHorizontalHeaderLabels(["", *(title for _, title in entries)])
@@ -233,6 +233,7 @@ class ScreenGeometryEditor(Card):
                 edit.setMinimumWidth(0)
                 edit.setAccessibleName(f"{face} {title}")
                 if key == "distance":
+                    edit.setReadOnly(True)
                     edit.setToolTip(
                         "Total optical path: projector → 45° mirror → Bottom screen, in mm"
                         if face == "Bottom"

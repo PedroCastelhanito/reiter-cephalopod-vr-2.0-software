@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.components import button, label
 from cephvr.gui.dashboard import Dashboard
 from cephvr.gui.devices import DevicesPage
+from cephvr.gui.gui_snapshot import GuiSnapshot, SnapshotPages
 from cephvr.gui.notices import StatusEvent
 from cephvr.gui.protocol import ProtocolPage
 from cephvr.gui.recordings import RecordingsCard
@@ -108,6 +109,24 @@ class DashboardWindow(QMainWindow):
         self.stack.addWidget(self.devices)
         self.tracking = TrackingPage(self.devices.cameras)
         self.stack.addWidget(self.tracking)
+        self.snapshots = GuiSnapshot(
+            SnapshotPages(
+                self.dashboard,
+                self.devices,
+                self.protocol,
+                self.recordings,
+                self.tracking,
+            )
+        )
+        self.config_files = self.snapshots.files(self)
+        self.config_files.load_button.setText("Load GUI…")
+        self.config_files.save_button.setText("Save GUI as…")
+        sidebar_layout.insertWidget(
+            sidebar_layout.count() - 1, self.config_files.load_button
+        )
+        sidebar_layout.insertWidget(
+            sidebar_layout.count() - 1, self.config_files.save_button
+        )
         header.addStretch()
         header.addWidget(self.dashboard.preview_button)
         header_controls = (
@@ -145,6 +164,7 @@ class DashboardWindow(QMainWindow):
         self.recordings.apply_view(view)
         self.protocol.apply_view(view)
         self.tracking.apply_view(view)
+        self.config_files.set_enabled(self.snapshots.available())
         if not self.protocol.can_edit and self.trial_preview is not None:
             self.trial_preview.close()
 

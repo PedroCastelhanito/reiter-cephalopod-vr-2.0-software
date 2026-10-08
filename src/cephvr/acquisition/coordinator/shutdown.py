@@ -83,6 +83,20 @@ class CoordinatorShutdown:
         self, request: wire.BackendCommand, *, deadline_ns: int
     ) -> control.CommandAdmission:
         self.closing = True
+        session = self.session_slot.current
+        if (
+            session is not None
+            and request.work == session.work
+            and session.cleanup_complete
+            and session.cleanup_delivery_complete
+        ):
+            # Both recipients already hold the exact session closure. Shutdown
+            # retires this process; it cannot rebind that proof to a new fence.
+            self.shutdown_requested.set()
+            return control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+                command_id=request.command_id,
+            )
         receipt = await self.cleanup_session(request, deadline_ns=deadline_ns)
         if receipt.result == control.COMMAND_RESULT_ACCEPTED:
             self.shutdown_requested.set()

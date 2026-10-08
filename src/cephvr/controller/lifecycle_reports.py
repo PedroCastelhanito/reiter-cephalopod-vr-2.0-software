@@ -79,7 +79,7 @@ class LifecycleReports:
             if attempt is None:
                 return rejected_receipt("STALE", "no matching live work")
             if kind == "operation":
-                return self._operation(attempt, payload)
+                return self._operation(attempt, payload, ingress_ns)
             if kind == "cleanup":
                 receipt = self.completion.cleanup(attempt, payload)
                 if (
@@ -184,16 +184,63 @@ class LifecycleReports:
             )
 
     def _operation(
-        self, attempt: Attempt, payload: pb.BackendOperationReport
+        self, attempt: Attempt, payload: pb.BackendOperationReport, ingress_ns: int
     ) -> pb.ReportReceipt:
         operation = payload.operation
+        if operation.work.WhichOneof("work") == "trial":
+            name = payload.source.backend_name
+            backend = attempt.trial_participants.get(name)
+            within_gate = ingress_ns <= attempt.ready_deadline_ns or (
+                attempt.recovering_evidence == "trial_ready"
+                and ingress_ns <= attempt.recovery_deadline_ns
+            )
+            if (
+                backend is None
+                or payload.source != backend.context
+                or attempt.trial_index < 0
+                or operation.work.trial
+                != attempt.prepared.trials[attempt.trial_index].context
+                or operation.context.command_id != attempt.trial_operation
+                or operation.command != "PrepareTrial"
+                or not operation.complete
+                or attempt.interrupted
+                or (
+                    self.lifecycle.trial.phase != pb.TRIAL_PHASE_PREPARING
+                    and not (operation.succeeded and name in attempt.trial_ready)
+                )
+                or not within_gate
+            ):
+                return rejected_receipt("EVIDENCE", "unexpected trial operation result")
+            if (
+                conflict := retain_or_conflict(
+                    attempt.trial_results,
+                    name,
+                    operation,
+                    "changed trial operation completion",
+                )
+            ) is not None:
+                return conflict
+            attempt.changed.set()
+            return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
         expected_scope = attempt.scope_commands.get(operation.context.command_id)
+        expected_name = (
+            expected_scope[0]
+            if expected_scope is not None
+            else next(
+                (
+                    name
+                    for name, command_id in attempt.setup_operations.items()
+                    if command_id == operation.context.command_id
+                ),
+                None,
+            )
+        )
         backend = attempt.required.get(payload.source.backend_name)
         if (
-            expected_scope is None
+            expected_name is None
             or backend is None
             or payload.source != backend.context
-            or expected_scope[0] != payload.source.backend_name
+            or expected_name != payload.source.backend_name
             or operation.work.WhichOneof("work") != "session"
             or operation.work.session != attempt.context
             or not operation.complete

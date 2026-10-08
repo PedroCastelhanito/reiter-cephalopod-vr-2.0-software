@@ -44,7 +44,7 @@ class CalibrationFiles(QWidget):
             else:
                 text = editor.text().strip()
                 values[key] = float(text) if text else None
-        result = {"format": "cephvr-rig-calibration", "version": 2, "values": values}
+        result = {"format": "cephvr-rig-calibration", "version": 3, "values": values}
         self.validate(result)
         return result
 
@@ -58,7 +58,7 @@ class CalibrationFiles(QWidget):
         if (
             payload["format"] != "cephvr-rig-calibration"
             or type(payload["version"]) is not int
-            or payload["version"] not in (1, 2)
+            or payload["version"] not in (1, 2, 3)
         ):
             raise ValueError("Unsupported calibration format/version")
         values = payload["values"]
@@ -87,6 +87,16 @@ class CalibrationFiles(QWidget):
                     raise ValueError(
                         "Legacy calibration has unequal left/right wall offsets; current geometry requires equal offsets"
                     )
+        if payload["version"] in (1, 2) and isinstance(values, dict):
+            values = dict(values)
+            references = {
+                key
+                for key in self.fields
+                if key.rsplit(".", 1)[-1].startswith("reference_")
+            }
+            if set(values) != set(self.fields) - references:
+                raise ValueError("Legacy calibration has an invalid field inventory")
+            values.update(dict.fromkeys(references))
         if not isinstance(values, dict) or set(values) != set(self.fields):
             raise ValueError(
                 "Calibration must contain every rig, projection and screen field"

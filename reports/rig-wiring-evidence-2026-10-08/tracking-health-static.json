@@ -1,0 +1,22 @@
+[
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "4da91f",
+      "wall_time_seconds": 3.669787,
+      "exit_code": 0,
+      "original_token_count": 36,
+      "output": "Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.\r\nAll checks passed!\n8 files already formatted\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "ea05c3",
+      "wall_time_seconds": 3.5909601,
+      "exit_code": 0,
+      "original_token_count": 36,
+      "output": "Attempting to perform the InitializeDefaultDrives operation on the 'FileSystem' provider failed.\r\nSuccess: no issues found in 6 source files\r\n"
+    }
+  }
+]

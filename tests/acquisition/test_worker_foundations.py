@@ -456,23 +456,32 @@ def test_cancel_after_release_before_t_prevents_later_camera_start() -> None:
     assert not adapter.started
 
 
+@pytest.mark.parametrize("generation_stopped", [False, True])
+@pytest.mark.parametrize("terminal_off", [False, True])
 def test_capture_stop_retains_first_cutoff_and_original_deadline(
     monkeypatch: pytest.MonkeyPatch,
+    generation_stopped: bool,
+    terminal_off: bool,
 ) -> None:
+    events: list[object] = []
+
     class Adapter:
         def __init__(self) -> None:
             self.deadlines: list[int] = []
 
         def begin_terminal_drain(self) -> bool:
-            return True
+            events.append("generation_stop")
+            return generation_stopped
 
         def confirm_drain_margin(self) -> None:
+            events.append("drain_margin")
             return None
 
         def stop_capture(
             self, deadline_ns: int, *, should_continue_drain: object
         ) -> object:
             self.deadlines.append(deadline_ns)
+            events.append("purge")
             return SimpleNamespace(
                 discarded_frame_count=None,
                 last_native_counter=None,
@@ -501,11 +510,21 @@ def test_capture_stop_retains_first_cutoff_and_original_deadline(
         "cephvr.acquisition.worker.capture_runtime.host_time_ns", lambda: 200
     )
 
-    resources.stop(1000, drain_margin_ns=0)
+    resources.stop(
+        1000,
+        drain_margin_ns=0,
+        terminal_off_confirmed=terminal_off,
+        activity_stopped=lambda observed: events.append(observed),
+    )
     resources.stop(2000, drain_margin_ns=0)
 
     assert resources.admission_stop_ns == 200
     assert adapter.deadlines == [1000, 1000]
+    assert (200 in events) == (generation_stopped and terminal_off)
+    if 200 in events:
+        assert (
+            events.index("generation_stop") < events.index(200) < events.index("purge")
+        )
 
 
 def test_consecutive_non_saving_trials_reset_shared_trial_state() -> None:

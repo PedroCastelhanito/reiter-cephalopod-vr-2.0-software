@@ -1,0 +1,272 @@
+{
+  "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+      "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+    },
+    "outcome": "SESSION_OUTCOME_COMPLETED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242",
+    "trial_count": 1,
+    "activated": true,
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+        "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+      },
+      "trial_id": "4c3a6b9e-4506-4a16-b976-6aaf3416abe3",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "start_monotonic_ns": "683353207779800",
+    "scheduled_end_monotonic_ns": "683413207779800",
+    "actual_end_monotonic_ns": "683413207779800"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "f5679a23-9933-4b4a-bf43-06ce67ecae21"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "f5679a23-9933-4b4a-bf43-06ce67ecae21"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+              "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+            }
+          },
+          "operation": {
+            "command_id": "fb763b3d-5b6d-4f33-97d0-9c5c3d1e33ce"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    },
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "7118fbc7-e7a8-41cd-a543-d8679aec6608"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "7118fbc7-e7a8-41cd-a543-d8679aec6608"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+              "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+            }
+          },
+          "operation": {
+            "command_id": "34a3fe0f-cc20-41dc-b156-0f4ec6fd3b64"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "85f0aed5-027c-425b-b750-5e49c34e8eda"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "5439c786-a7e2-4906-ac01-73fc6d3a5d12"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "f68c20e0-0da4-4531-bf9b-fc1ebca6ad88"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+          "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "ad3b5f3b-51ed-40d0-a478-6b6301b6df72"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+          "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "278398ac-ed4b-43b3-8f97-d2feb664158c",
+      "component": "acquisition_camera",
+      "message": "frame_id=0; optional native timestamp is unavailable",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_tracking_worker",
+          "generation": "bda73a4c-9206-4ef4-8c93-238121c635e4"
+        },
+        "work": {
+          "trial": {
+            "session": {
+              "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+              "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+            },
+            "trial_id": "4c3a6b9e-4506-4a16-b976-6aaf3416abe3",
+            "trial_number": 1
+          }
+        },
+        "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "683353234347200",
+        "last_observed_monotonic_ns": "683353234347200",
+        "camera": "CAMERA_ROLE_TRACKING"
+      }
+    },
+    {
+      "warning_id": "7cda688d-cfdf-40b6-9207-1ca763bc3ec2",
+      "component": "acquisition_camera",
+      "message": "one or more SDK transport counters are unavailable or noncomparable",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_tracking_worker",
+          "generation": "bda73a4c-9206-4ef4-8c93-238121c635e4"
+        },
+        "work": {
+          "trial": {
+            "session": {
+              "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+              "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+            },
+            "trial_id": "4c3a6b9e-4506-4a16-b976-6aaf3416abe3",
+            "trial_number": 1
+          }
+        },
+        "code": "TRANSPORT_COUNTERS_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "683414255094600",
+        "last_observed_monotonic_ns": "683414255094600",
+        "camera": "CAMERA_ROLE_TRACKING"
+      }
+    },
+    {
+      "warning_id": "406a1354-12af-4248-b490-2cbd06aa6c59",
+      "component": "acquisition_camera",
+      "message": "frame_id=0; optional native timestamp is unavailable",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_behavioral_worker",
+          "generation": "ec45b2ca-7e21-46bf-b6e1-68f631e011eb"
+        },
+        "work": {
+          "trial": {
+            "session": {
+              "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+              "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+            },
+            "trial_id": "4c3a6b9e-4506-4a16-b976-6aaf3416abe3",
+            "trial_number": 1
+          }
+        },
+        "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "683353278822300",
+        "last_observed_monotonic_ns": "683353278822300",
+        "camera": "CAMERA_ROLE_BEHAVIORAL"
+      }
+    },
+    {
+      "warning_id": "b2bd4bb0-bd25-4d28-96b2-fae79700f6e6",
+      "component": "acquisition_camera",
+      "message": "one or more SDK transport counters are unavailable or noncomparable",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_behavioral_worker",
+          "generation": "ec45b2ca-7e21-46bf-b6e1-68f631e011eb"
+        },
+        "work": {
+          "trial": {
+            "session": {
+              "controller_generation": "5499956c-cc5d-4feb-a3ba-46456cb74a93",
+              "session_id": "de7cebf1-3aea-4bec-b1e3-4340112f968f"
+            },
+            "trial_id": "4c3a6b9e-4506-4a16-b976-6aaf3416abe3",
+            "trial_number": 1
+          }
+        },
+        "code": "TRANSPORT_COUNTERS_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "683414299265200",
+        "last_observed_monotonic_ns": "683414299265200",
+        "camera": "CAMERA_ROLE_BEHAVIORAL"
+      }
+    }
+  ],
+  "prompts": null,
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "70057602-40c9-4a25-923a-b4c8069f140c"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "d213820f-e481-4e06-af02-17c49d4a82fe"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "4a3d11ff-5310-420a-a8fd-20f838e7824b"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150242\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ]
+}

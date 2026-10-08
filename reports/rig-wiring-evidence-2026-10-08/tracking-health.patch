@@ -1,0 +1,679 @@
+diff --git a/src/cephvr/acquisition/coordinator/evidence_lifecycle.py b/src/cephvr/acquisition/coordinator/evidence_lifecycle.py
+index 7e8fef1..5140a1a 100644
+--- a/src/cephvr/acquisition/coordinator/evidence_lifecycle.py
++++ b/src/cephvr/acquisition/coordinator/evidence_lifecycle.py
+@@ -13,6 +13,7 @@ from cephvr.acquisition.coordinator.evidence_helpers import (
+     record_for_source,
+ )
+ from cephvr.acquisition.coordinator.evidence_ready import WorkerReadyReports
++from cephvr.acquisition.coordinator.manual_preview_evidence import ManualPreviewEvidence
+ from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
+ from cephvr.acquisition.ports import ControllerPort
+ from cephvr.acquisition.state import (
+@@ -59,6 +60,7 @@ class WorkerLifecycleReports:
+         self.trial_lifecycle = trial_lifecycle
+         self.ready_reports = ready_reports
+         self.cleanup_reports = cleanup_reports
++        self.manual_preview = ManualPreviewEvidence(resources, resource_ledger)
+ 
+     def _record(self, source: acq.WorkerContext) -> WorkerRecord:
+         return record_for_source(source, self.workers)
+@@ -156,25 +158,12 @@ class WorkerLifecycleReports:
+         elif kind == "cleanup" and session_for_deadline is None:
+             preview = record.preview
+             if child.kind == "stop_preview":
+-                if (
+-                    preview is None
+-                    or preview.stop_operation != evidence.operation
+-                    or preview.allocation_id is None
+-                    or preview.worker_attachment is None
+-                    or len(evidence.cleanup.resources) != 1
+-                    or evidence.cleanup.resources[0].resource != preview.allocation_id
+-                    or not evidence.cleanup.resources[0].released
+-                ):
++                if preview is None or preview.stop_operation != evidence.operation:
+                     raise ValueError(
+                         "manual preview cleanup does not prove its exact ring release"
+                     )
+-                resource = self.resources.get(preview.allocation_id)
+-                if resource is None:
+-                    raise ValueError("manual preview ring is not retained")
+-                self.resource_ledger.confirm_release(
+-                    resource.ledger_key,
+-                    peer_instance_id=record.launch.worker.generation,
+-                    transfer_id=preview.worker_attachment.sync.transfer_id,
++                self.manual_preview.confirm_cleanup(
++                    record, evidence.cleanup, exact=True
+                 )
+                 preview.cleanup_event.set()
+                 manual_preview_event = True
+@@ -196,18 +185,8 @@ class WorkerLifecycleReports:
+                         "sessionless Cleanup lacks exact camera/resource release evidence"
+                     )
+                 if preview is not None and preview.allocation_id is not None:
+-                    allocation = preview.allocation_id
+-                    if allocation not in releases or preview.worker_attachment is None:
+-                        raise ValueError(
+-                            "sessionless Cleanup omitted its active preview transfer"
+-                        )
+-                    resource = self.resources.get(allocation)
+-                    if resource is None:
+-                        raise ValueError("manual preview ring is not retained")
+-                    self.resource_ledger.confirm_release(
+-                        resource.ledger_key,
+-                        peer_instance_id=record.launch.worker.generation,
+-                        transfer_id=preview.worker_attachment.sync.transfer_id,
++                    self.manual_preview.confirm_cleanup(
++                        record, evidence.cleanup, exact=False
+                     )
+                     preview.cleanup_event.set()
+             else:
+@@ -232,7 +211,7 @@ class WorkerLifecycleReports:
+                     and preview.preparation == evidence.operation
+                     and preview.configuration_revision
+                     == evidence.ready.configuration_revision
+-                    and self._manual_preview_attachment_matches(record, evidence.ready)
++                    and self.manual_preview.attachments_match(record, evidence.ready)
+                 )
+                 if not child_expected:
+                     raise ValueError(
+@@ -415,41 +394,6 @@ class WorkerLifecycleReports:
+         except (ValueError, RuntimeError) as exc:
+             return _report_rejected("INVALID_EVIDENCE", str(exc))
+ 
+-    def _manual_preview_attachment_matches(
+-        self, worker: WorkerRecord, ready: acq.WorkerReadyEvidence
+-    ) -> bool:
+-        preview = worker.preview
+-        if (
+-            preview is None
+-            or preview.allocation_id is None
+-            or preview.worker_attachment is None
+-            or len(ready.attached_resources) != 1
+-        ):
+-            return False
+-        attached = ready.attached_resources[0]
+-        if (
+-            attached.resource_id != preview.allocation_id
+-            or attached.transfer_id != preview.worker_attachment.sync.transfer_id
+-        ):
+-            return False
+-        resource = self.resources.get(preview.allocation_id)
+-        if (
+-            resource is None
+-            or resource.attachment.buffer.producer != worker.launch.worker
+-            or resource.attachment.buffer.owner != worker.launch.owner
+-            or resource.attachment.sync.target != worker.launch.worker
+-            or resource.attachment.sync.transfer_id != attached.transfer_id
+-        ):
+-            return False
+-        snapshot = self.resource_ledger.snapshot(resource.ledger_key)
+-        return any(
+-            item.peer_instance_id == worker.launch.worker.generation
+-            and item.transfer_id == attached.transfer_id
+-            and not item.released
+-            and not item.attached
+-            for item in snapshot.transfers
+-        )
+-
+     @staticmethod
+     def _manual_camera_started_matches(
+         worker: WorkerRecord, started: acq.WorkerStartedEvidence
+diff --git a/src/cephvr/acquisition/worker/execution.py b/src/cephvr/acquisition/worker/execution.py
+index 39e8730..63bb8bb 100644
+--- a/src/cephvr/acquisition/worker/execution.py
++++ b/src/cephvr/acquisition/worker/execution.py
+@@ -57,7 +57,11 @@ class WorkerOperationExecutor:
+         if limits is None:
+             raise ValueError("worker state has no adopted control limits")
+         self.report_dispatcher = WorkerReportDispatcher(
+-            loop, state, reports, limits.max_records, self.coordinator_lost
++            loop,
++            state,
++            reports,
++            limits.max_records,
++            lambda details: self.coordinator_lost(details=details),
+         )
+         self.health = WorkerHealthReporter(
+             bootstrap,
+@@ -83,6 +87,7 @@ class WorkerOperationExecutor:
+         self._coordinator_loss = Event()
+         self._coordinator_loss_handled = False
+         self._coordinator_loss_deadline_ns: int | None = None
++        self._coordinator_loss_details: str | None = None
+         self._cleanup_continuation_limit = limits.safety_reserve_records
+         self.cleanup = WorkerCleanupLifecycle(
+             state,
+@@ -374,11 +379,12 @@ class WorkerOperationExecutor:
+         self.cleanup.advance()
+         self._refresh_health_snapshot()
+ 
+-    def coordinator_lost(self) -> None:
++    def coordinator_lost(self, *, details: str | None = None) -> None:
+         """Fence new work and ask the serialized owner to stop local activity."""
+         with self.state.lock:
+             self.state.interrupted = True
+         if not self._coordinator_loss.is_set():
++            self._coordinator_loss_details = details
+             self._coordinator_loss_deadline_ns = (
+                 host_time_ns() + self.bootstrap.control_policies.recovery_ns
+             )
+@@ -394,7 +400,7 @@ class WorkerOperationExecutor:
+             raise RuntimeError("coordinator loss has no retained detection deadline")
+         self.trial.stop_trial(deadline_ns)
+         self.cleanup.begin_ambient_release(deadline_ns)
+-        self.health.coordinator_lost()
++        self.health.coordinator_lost(details=self._coordinator_loss_details)
+ 
+     def next_deadline_ns(self) -> int | None:
+         deadlines = [
+diff --git a/src/cephvr/acquisition/worker/health.py b/src/cephvr/acquisition/worker/health.py
+index 2db6725..a970410 100644
+--- a/src/cephvr/acquisition/worker/health.py
++++ b/src/cephvr/acquisition/worker/health.py
+@@ -64,7 +64,7 @@ class WorkerHealthReporter:
+             # the fallback when this bounded direct report cannot be delivered.
+             return
+ 
+-    def coordinator_lost(self) -> None:
++    def coordinator_lost(self, *, details: str | None = None) -> None:
+         """Tell the supervisor the worker has locally fenced after owner silence."""
+         reporter = self.supervisor_errors
+         if reporter is None:
+@@ -76,7 +76,10 @@ class WorkerHealthReporter:
+             occurred_monotonic_ns=now_ns,
+             failure=control.Failure(
+                 code="COORDINATOR_HEALTH_LOST",
+-                message="coordinator heartbeat receipt exceeded the configured silence bound",
++                message=(
++                    details
++                    or "coordinator heartbeat receipt exceeded the configured silence bound"
++                )[:2048],
+             ),
+         )
+         if self.state.context.HasField("work"):
+diff --git a/src/cephvr/acquisition/worker/main.py b/src/cephvr/acquisition/worker/main.py
+index 97b232e..f5516b2 100644
+--- a/src/cephvr/acquisition/worker/main.py
++++ b/src/cephvr/acquisition/worker/main.py
+@@ -170,7 +170,7 @@ async def _serve(
+             return
+         failure = task.exception()
+         if failure is not None:
+-            executor.coordinator_lost()
++            executor.coordinator_lost(details=f"heartbeat loop failed: {failure}")
+             executor.owner_failed(failure)
+ 
+     health_task.add_done_callback(supervise_health_task)
+@@ -270,13 +270,16 @@ async def _health_loop(
+         try:
+             receipt = await reports.report_heartbeat(report, deadline_ns=deadline_ns)
+             if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+-                executor.coordinator_lost()
++                executor.coordinator_lost(
++                    details=f"heartbeat rejected: {receipt.failure.code}: "
++                    f"{receipt.failure.message}"
++                )
+                 return
+             last_accepted_ns = host_time_ns()
+             executor.flush_warnings(deadline_ns)
+-        except Exception:
++        except Exception as exc:
+             if host_time_ns() - last_accepted_ns >= bootstrap.health_silence_ns:
+-                executor.coordinator_lost()
++                executor.coordinator_lost(details=f"heartbeat receipt failed: {exc}")
+                 return
+             continue
+ 
+diff --git a/src/cephvr/acquisition/worker/report_dispatch.py b/src/cephvr/acquisition/worker/report_dispatch.py
+index a8a0eac..bee5822 100644
+--- a/src/cephvr/acquisition/worker/report_dispatch.py
++++ b/src/cephvr/acquisition/worker/report_dispatch.py
+@@ -25,7 +25,7 @@ class WorkerReportDispatcher:
+         state: WorkerState,
+         reports: CoordinatorReportClient,
+         capacity: int,
+-        failure: Callable[[], None],
++        failure: Callable[[str], None],
+     ) -> None:
+         if capacity <= 0:
+             raise ValueError("worker report dispatch capacity must be positive")
+@@ -44,13 +44,13 @@ class WorkerReportDispatcher:
+                 awaitable.close()
+                 with self.state.lock:
+                     self.state.interrupted = True
+-                self.failure()
++                self.failure("worker report dispatcher is draining")
+                 raise RuntimeError("worker report dispatcher is draining")
+             if not self._slots.acquire(blocking=False):
+                 awaitable.close()
+                 with self.state.lock:
+                     self.state.interrupted = True
+-                self.failure()
++                self.failure("bounded worker report queue is full")
+                 raise RuntimeError("bounded worker report queue is full")
+             try:
+                 future: Future[control.ReportReceipt] = (
+@@ -98,11 +98,14 @@ class WorkerReportDispatcher:
+             if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                 with self.state.lock:
+                     self.state.interrupted = True
+-                self.failure()
+-        except BaseException:
++                self.failure(
++                    f"worker report rejected: {receipt.failure.code}: "
++                    f"{receipt.failure.message}"
++                )
++        except BaseException as exc:
+             with self.state.lock:
+                 self.state.interrupted = True
+-            self.failure()
++            self.failure(f"worker report failed: {exc}")
+         finally:
+             with self._lock:
+                 self._pending.discard(future)
+diff --git a/tests/acquisition/test_manual_preview.py b/tests/acquisition/test_manual_preview.py
+index cbbe227..e8622c8 100644
+--- a/tests/acquisition/test_manual_preview.py
++++ b/tests/acquisition/test_manual_preview.py
+@@ -18,6 +18,7 @@ from cephvr.acquisition.coordinator.manual_device_status import (
+     ManualDeviceStatusReporter,
+ )
+ from cephvr.acquisition.coordinator.manual_preview import ManualPreview
++from cephvr.acquisition.coordinator.manual_preview_evidence import ManualPreviewEvidence
+ from cephvr.acquisition.coordinator.manual_preview_pulse import (
+     ManualPreviewPulseLifecycle,
+ )
+@@ -53,7 +54,7 @@ from cephvr.acquisition.worker.function_scopes import validate_camera_function_s
+ from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.controller.device.tracking_diagnostic import TrackingDiagnosticController
+-from cephvr.platform.windows.resource_ledger import NativeResourceLedger
++from cephvr.platform.windows.resource_ledger import NativeResourceLedger, ResourceKey
+ from cephvr.shared.commands import CommandLedger
+ 
+ 
+@@ -1155,6 +1156,154 @@ def test_retired_tracking_preview_waits_for_both_rings_in_either_release_order()
+     assert preview.run_id not in owner._retired
+ 
+ 
++def _manual_preview_evidence_case(tracking):
++    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
++    worker = control.ProcessIdentity(
++        role="acquisition_tracking_worker", generation=str(uuid4())
++    )
++    ledger = NativeResourceLedger(max_resources=4, max_transfers_per_resource=2)
++    resources = {}
++    attachments = []
++    for kind in ("preview", "tracking") if tracking else ("preview",):
++        allocation = str(uuid4())
++        attachment = acq.FrameBufferAttachment(
++            buffer=acq.FrameBufferDescriptor(
++                allocation_id=allocation, owner=owner, producer=worker
++            ),
++            sync=acq.RingSyncNames(target=worker, transfer_id=str(uuid4())),
++        )
++        key = ResourceKey(allocation, owner.generation)
++        ledger.register(key, kind=kind)
++        ledger.expect_attachment(
++            key,
++            peer_instance_id=worker.generation,
++            transfer_id=attachment.sync.transfer_id,
++        )
++        resources[allocation] = SimpleNamespace(attachment=attachment, ledger_key=key)
++        attachments.append(attachment)
++    preview = WorkerPreview(
++        run_id=str(uuid4()),
++        configuration_revision=1,
++        allocation_id=attachments[0].buffer.allocation_id,
++        worker_attachment=attachments[0],
++        tracking_allocation_id=attachments[1].buffer.allocation_id
++        if tracking
++        else None,
++        tracking_worker_attachment=attachments[1] if tracking else None,
++    )
++    record = SimpleNamespace(
++        preview=preview, launch=SimpleNamespace(worker=worker, owner=owner)
++    )
++    reports = ManualPreviewEvidence(resources, ledger)
++    return reports, record, attachments, ledger, resources, worker
++
++
++@pytest.mark.parametrize("tracking", (False, True))
++@pytest.mark.parametrize(
++    "case",
++    (
++        "valid",
++        "missing",
++        "extra",
++        "duplicate",
++        "wrong_transfer",
++        "wrong_worker",
++        "attached",
++        "released",
++    ),
++)
++def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
++    reports, record, attachments, ledger, resources, worker = (
++        _manual_preview_evidence_case(tracking)
++    )
++    ready = acq.WorkerReadyEvidence()
++    for attachment in attachments:
++        ready.attached_resources.add(
++            resource_id=attachment.buffer.allocation_id,
++            transfer_id=attachment.sync.transfer_id,
++        )
++    if case == "missing":
++        del ready.attached_resources[-1]
++    elif case == "extra":
++        ready.attached_resources.add(resource_id=str(uuid4()), transfer_id=str(uuid4()))
++    elif case == "duplicate":
++        ready.attached_resources.add().CopyFrom(ready.attached_resources[0])
++    elif case == "wrong_transfer":
++        ready.attached_resources[-1].transfer_id = str(uuid4())
++    elif case == "wrong_worker":
++        attachments[-1].buffer.producer.generation = str(uuid4())
++    elif case in {"attached", "released"}:
++        attachment = attachments[-1]
++        key = resources[attachment.buffer.allocation_id].ledger_key
++        action = (
++            ledger.confirm_attachment if case == "attached" else ledger.confirm_release
++        )
++        action(
++            key,
++            peer_instance_id=worker.generation,
++            transfer_id=attachment.sync.transfer_id,
++        )
++    assert reports.attachments_match(record, ready) == (case == "valid")
++
++
++@pytest.mark.parametrize("tracking", (False, True))
++@pytest.mark.parametrize("exact", (False, True))
++@pytest.mark.parametrize(
++    "case",
++    (
++        "valid",
++        "missing",
++        "extra",
++        "duplicate",
++        "unreleased",
++        "failed",
++        "path",
++        "wrong_transfer",
++    ),
++)
++def test_manual_preview_cleanup_confirms_both_rings_only_after_complete_proof(
++    tracking, exact, case
++):
++    reports, record, attachments, ledger, resources, worker = (
++        _manual_preview_evidence_case(tracking)
++    )
++    cleanup = acq.WorkerCleanupEvidence()
++    for attachment in attachments:
++        cleanup.resources.add(resource=attachment.buffer.allocation_id, released=True)
++        ledger.confirm_attachment(
++            resources[attachment.buffer.allocation_id].ledger_key,
++            peer_instance_id=worker.generation,
++            transfer_id=attachment.sync.transfer_id,
++        )
++    if case == "missing":
++        del cleanup.resources[-1]
++    elif case == "extra":
++        cleanup.resources.add(
++            resource=f"camera-device:{worker.generation}", released=True
++        )
++    elif case == "duplicate":
++        cleanup.resources.add().CopyFrom(cleanup.resources[0])
++    elif case == "unreleased":
++        cleanup.resources[-1].released = False
++    elif case == "failed":
++        cleanup.resources[-1].failure.code = "RELEASE_FAILED"
++    elif case == "path":
++        cleanup.resources[-1].path = "unexpected-file"
++    elif case == "wrong_transfer":
++        attachments[-1].sync.transfer_id = str(uuid4())
++    valid = case == "valid" or case == "extra" and not exact
++    if valid:
++        reports.confirm_cleanup(record, cleanup, exact=exact)
++    else:
++        with pytest.raises(ValueError):
++            reports.confirm_cleanup(record, cleanup, exact=exact)
++    for resource in resources.values():
++        assert all(
++            item.released == valid
++            for item in ledger.snapshot(resource.ledger_key).transfers
++        )
++
++
+ def test_tracking_worker_attachment_preserves_resource_ledger_transfer_id() -> None:
+     worker = control.ProcessIdentity(role="camera_worker", generation=str(uuid4()))
+     tracking = control.ProcessIdentity(role="tracking", generation=str(uuid4()))
+diff --git a/tests/acquisition/test_worker_admission.py b/tests/acquisition/test_worker_admission.py
+index 63168c1..4cb929c 100644
+--- a/tests/acquisition/test_worker_admission.py
++++ b/tests/acquisition/test_worker_admission.py
+@@ -2,6 +2,9 @@
+ 
+ from __future__ import annotations
+ 
++import asyncio
++from threading import RLock
++from types import SimpleNamespace
+ from typing import cast
+ from uuid import uuid4
+ 
+@@ -454,3 +457,78 @@ class _AdmissionService(AcquisitionWorkerService):
+     ) -> int:
+         del context, issuer
+         return host_time_ns() + 10_000_000_000
++
++
++@pytest.mark.parametrize("outcome", ("accepted", "rejected", "exception"))
++async def test_worker_report_failure_preserves_reason_and_drains(outcome):
++    from cephvr.acquisition.worker.health import WorkerHealthReporter
++    from cephvr.acquisition.worker.report_dispatch import WorkerReportDispatcher
++    from cephvr.acquisition.worker.reports import CoordinatorReportClient
++
++    source = acq.WorkerContext(
++        worker=control.ProcessIdentity(
++            role="acquisition_tracking_worker", generation=str(uuid4())
++        )
++    )
++    state = cast(
++        WorkerState, SimpleNamespace(lock=RLock(), interrupted=False, context=source)
++    )
++    failures = []
++
++    async def deliver(report, *, deadline_ns):
++        assert report.source == source and deadline_ns > host_time_ns()
++        if outcome == "exception":
++            raise RuntimeError("report transport failed")
++        return control.ReportReceipt(
++            result=control.COMMAND_RESULT_ACCEPTED
++            if outcome == "accepted"
++            else control.COMMAND_RESULT_REJECTED,
++            failure=control.Failure(
++                code="INVALID_EVIDENCE", message="wrong preparation" * 200
++            ),
++        )
++
++    reports = cast(CoordinatorReportClient, SimpleNamespace(report_lifecycle=deliver))
++    dispatcher = WorkerReportDispatcher(
++        asyncio.get_running_loop(), state, reports, 1, failures.append
++    )
++    deadline = host_time_ns() + 1_000_000_000
++    dispatcher.lifecycle(acq.WorkerLifecycleEvidence(source=source), deadline)
++    assert await dispatcher.drain(deadline)
++    assert not dispatcher._pending
++    assert state.interrupted == (outcome != "accepted")
++    if outcome == "accepted":
++        assert not failures
++        return
++    assert len(failures) == 1
++    assert failures[0].startswith(
++        "worker report rejected: INVALID_EVIDENCE:"
++        if outcome == "rejected"
++        else "worker report failed: report transport failed"
++    )
++
++    errors = []
++
++    async def report_error(request, *, deadline_ns):
++        assert deadline_ns > host_time_ns()
++        errors.append(request)
++        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
++
++    pending = []
++    health = WorkerHealthReporter(
++        SimpleNamespace(
++            context=source,
++            control_policies=control.ControlPolicies(recovery_ns=1_000_000_000),
++        ),
++        state,
++        reports,
++        SimpleNamespace(report_error=report_error),
++        pending.append,
++        lambda: None,
++    )
++    health.coordinator_lost(details=failures[0])
++    await asyncio.gather(*pending)
++    assert len(errors) == 1
++    assert errors[0].source == source.worker
++    assert errors[0].failure.code == "COORDINATOR_HEALTH_LOST"
++    assert errors[0].failure.message == failures[0][:2048]
+diff --git a/src/cephvr/acquisition/coordinator/manual_preview_evidence.py b/src/cephvr/acquisition/coordinator/manual_preview_evidence.py
+new file mode 100644
+index 0000000..c4a761d
+--- /dev/null
++++ b/src/cephvr/acquisition/coordinator/manual_preview_evidence.py
+@@ -0,0 +1,130 @@
++"""Exact producer attachment and release evidence for manual camera previews."""
++
++from __future__ import annotations
++
++from cephvr.acquisition.state import ResourceRecord, WorkerPreview, WorkerRecord
++from cephvr.acquisition.v1 import messages_pb2 as acq
++from cephvr.platform.windows.resource_ledger import NativeResourceLedger
++
++
++class ManualPreviewEvidence:
++    def __init__(
++        self, resources: dict[str, ResourceRecord], ledger: NativeResourceLedger
++    ) -> None:
++        self.resources = resources
++        self.ledger = ledger
++
++    @staticmethod
++    def _attachments(
++        preview: WorkerPreview | None,
++    ) -> list[tuple[str, acq.FrameBufferAttachment]]:
++        if (
++            preview is None
++            or preview.allocation_id is None
++            or preview.worker_attachment is None
++        ):
++            raise ValueError("manual preview producer attachment is incomplete")
++        expected = [(preview.allocation_id, preview.worker_attachment)]
++        if preview.tracking_allocation_id is not None:
++            if preview.tracking_worker_attachment is None:
++                raise ValueError("manual Tracking producer attachment is incomplete")
++            expected.append(
++                (preview.tracking_allocation_id, preview.tracking_worker_attachment)
++            )
++        elif preview.tracking_worker_attachment is not None:
++            raise ValueError("manual Tracking allocation identity is incomplete")
++        if len({allocation for allocation, _ in expected}) != len(expected):
++            raise ValueError("manual preview allocations must be distinct")
++        return expected
++
++    def _resource(
++        self,
++        worker: WorkerRecord,
++        allocation: str,
++        attachment: acq.FrameBufferAttachment,
++    ) -> ResourceRecord | None:
++        resource = self.resources.get(allocation)
++        if (
++            resource is None
++            or attachment.buffer.allocation_id != allocation
++            or resource.attachment.buffer.producer != worker.launch.worker
++            or resource.attachment.buffer.owner != worker.launch.owner
++            or resource.attachment.sync.target != worker.launch.worker
++            or resource.attachment.sync.transfer_id != attachment.sync.transfer_id
++        ):
++            return None
++        return resource
++
++    def attachments_match(
++        self, worker: WorkerRecord, ready: acq.WorkerReadyEvidence
++    ) -> bool:
++        try:
++            expected = self._attachments(worker.preview)
++        except ValueError:
++            return False
++        provided = {
++            item.resource_id: item.transfer_id for item in ready.attached_resources
++        }
++        if len(provided) != len(ready.attached_resources) or set(provided) != {
++            allocation for allocation, _ in expected
++        }:
++            return False
++        for allocation, attachment in expected:
++            transfer = provided[allocation]
++            resource = self._resource(worker, allocation, attachment)
++            if resource is None or transfer != attachment.sync.transfer_id:
++                return False
++            snapshot = self.ledger.snapshot(resource.ledger_key)
++            if not any(
++                item.peer_instance_id == worker.launch.worker.generation
++                and item.transfer_id == transfer
++                and not item.released
++                and not item.attached
++                for item in snapshot.transfers
++            ):
++                return False
++        return True
++
++    def confirm_cleanup(
++        self, worker: WorkerRecord, cleanup: acq.WorkerCleanupEvidence, *, exact: bool
++    ) -> None:
++        """Validate every release before committing any producer transfer release."""
++        expected = self._attachments(worker.preview)
++        provided = {item.resource: item for item in cleanup.resources}
++        if len(provided) != len(cleanup.resources) or (
++            exact and set(provided) != {allocation for allocation, _ in expected}
++        ):
++            raise ValueError(
++                "manual preview cleanup differs from its exact ring releases"
++            )
++        retained = []
++        for allocation, attachment in expected:
++            release = provided.get(allocation)
++            resource = self._resource(worker, allocation, attachment)
++            if (
++                release is None
++                or not release.released
++                or release.failure.code
++                or release.failure.message
++                or release.HasField("path")
++                or resource is None
++            ):
++                raise ValueError(
++                    "manual preview cleanup does not prove its exact ring release"
++                )
++            snapshot = self.ledger.snapshot(resource.ledger_key)
++            if not any(
++                item.peer_instance_id == worker.launch.worker.generation
++                and item.transfer_id == attachment.sync.transfer_id
++                for item in snapshot.transfers
++            ):
++                raise ValueError(
++                    "manual preview producer release transfer is not retained"
++                )
++            retained.append((resource.ledger_key, attachment.sync.transfer_id))
++        for key, transfer in retained:
++            self.ledger.confirm_release(
++                key,
++                peer_instance_id=worker.launch.worker.generation,
++                transfer_id=transfer,
++            )

@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-08T09:38:56.605748+09:00",
+  "source_revision": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "dirty_source_tree": true,
+  "changed_source_sha256": {
+    "src/cephvr/gui/cameras.py": "2301876a085ebae362b98f86df613235d08186219fd8c35a4e18c6a883f2ae51",
+    "src/cephvr/gui/managed_cameras.py": "fc36586e2b00ea403164ea5d118a00e7436a4461203e9a6f6470873c007eb0c8",
+    "tests/gui/test_dashboard.py": "4d604c27ecdbc816386e6a4c71583d6fac444b4b129b54a316a56e256829d207"
+  },
+  "patch": "camera-selection.patch",
+  "patch_scope": "Cumulative GUI patch against HEAD; earlier dashboard Path fixture repair is included. Earlier full-suite source manifest stays in context.json.",
+  "tests": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "27",
+    "time": "7.200",
+    "timestamp": "2026-10-08T09:37:49.405603+09:00",
+    "hostname": "DESKTOP-MSOH8EL"
+  },
+  "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -vv -k \"camera or pfs\" --basetemp reports/rig-wiring-evidence-2026-10-08/camera-selection-tmp-4 --junitxml reports/rig-wiring-evidence-2026-10-08/camera-selection-after.xml; QT_QPA_PLATFORM=offscreen; permitted native UI access",
+  "static": "Ruff check/format: three files; Win32 mypy: two sources; boundaries:617 modules/zero violations",
+  "scope": "Windows Qt local fixtures; no physical camera command, runtime restart or full-suite rerun; G01/ARCH-002"
+}

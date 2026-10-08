@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable
 
 from cephvr.acquisition.coordinator.cleanup_report import CleanupReportBuilder
@@ -243,7 +244,10 @@ class CoordinatorCleanup:
         outcomes = await asyncio.gather(*worker_tasks, return_exceptions=True)
         for (role, record), outcome in zip(selected_workers, outcomes, strict=True):
             if isinstance(outcome, BaseException):
-                failures.append(f"{record.launch.worker.role} cleanup: {outcome}")
+                failures.append(
+                    f"{record.launch.worker.role} cleanup: "
+                    f"{type(outcome).__name__}: {outcome}"
+                )
             elif outcome is None or not self.worker_cleanup_complete(record, outcome):
                 failures.append(
                     f"{record.launch.worker.role} cleanup evidence is incomplete"
@@ -338,6 +342,12 @@ class CoordinatorCleanup:
                 command.target.work.CopyFrom(child.work)
             port = record.port
         receipt = await port.cleanup(command, deadline_ns=deadline_ns)
+        logging.getLogger(__name__).info(
+            "%s Cleanup %s admission=%s",
+            record.launch.worker.role,
+            child.command_id,
+            receipt.result,
+        )
         if receipt.result != control.COMMAND_RESULT_ACCEPTED:
             raise RuntimeError("worker rejected exact cleanup command")
         operation = await wait_child_operation(

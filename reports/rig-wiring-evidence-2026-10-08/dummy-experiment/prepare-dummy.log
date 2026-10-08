@@ -1,0 +1,7 @@
+{
+  "protocol": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-wiring-evidence-2026-10-08\\dummy-experiment\\dummy-assets\\dummy_protocol.json",
+  "output": "C:\\Users\\ReiterU_PC\\Desktop",
+  "scope": "60-second open-loop sine grating; both camera videos and stimulus video; no velocities",
+  "display_calibration": "saved geometry and assignments; diagnostic uncalibrated profiles",
+  "pairing": "pending operator answer"
+}

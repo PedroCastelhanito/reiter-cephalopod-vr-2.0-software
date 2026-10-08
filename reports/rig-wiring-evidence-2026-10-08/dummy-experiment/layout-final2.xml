@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="11" time="5.946" timestamp="2026-10-08T11:38:06.126038+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[720]" time="0.409" /><testcase classname="tests.gui.test_dashboard" name="test_devices_draft_reflows_without_horizontal_clipping[1175]" time="0.380" /><testcase classname="tests.gui.test_dashboard" name="test_responsive_navigation_preserves_widget_identity" time="0.388"><failure message="assert 69 == 0&#10; +  where 69 = &lt;built-in method maximum of QScrollBar object at 0x000002B43FA2B130&gt;()&#10; +    where &lt;built-in method maximum of QScrollBar object at 0x000002B43FA2B130&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002B43FA2B130&gt;.maximum&#10; +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002B43FA2B130&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002B43FA38550&gt;()&#10; +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002B43FA38550&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002B43FA38550&gt;.horizontalScrollBar&#10; +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002B43FA38550&gt; = &lt;cephvr.gui.window.DashboardWindow object at 0x000002B43FA2B370&gt;.dashboard_scroll">app = &lt;PyQt6.QtWidgets.QApplication object at 0x000002B43BB90A60&gt;
+window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002B43FA2B370&gt;
+
+    def test_responsive_navigation_preserves_widget_identity(
+        app: QApplication, window: DashboardWindow
+    ) -&gt; None:
+        subject = window.dashboard.subject_id
+        subject.setText("PERSISTENT")
+        modes = set()
+        for width in (1440, 1100, 720, 1440):
+            window.resize(width, 940)
+            app.processEvents()
+            modes.add(window.dashboard.mode)
+            for index in range(4):
+                window.page_buttons[index].click()
+                app.processEvents()
+                assert window.stack.currentIndex() == index
+            window.page_buttons[0].click()
+            app.processEvents()
+            assert window.dashboard.subject_id is subject
+            assert subject.text() == "PERSISTENT"
+            assert subject.parentWidget() is not None
+&gt;           assert window.dashboard_scroll.horizontalScrollBar().maximum() == 0
+E           assert 69 == 0
+E            +  where 69 = &lt;built-in method maximum of QScrollBar object at 0x000002B43FA2B130&gt;()
+E            +    where &lt;built-in method maximum of QScrollBar object at 0x000002B43FA2B130&gt; = &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002B43FA2B130&gt;.maximum
+E            +      where &lt;PyQt6.QtWidgets.QScrollBar object at 0x000002B43FA2B130&gt; = &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002B43FA38550&gt;()
+E            +        where &lt;built-in method horizontalScrollBar of QScrollArea object at 0x000002B43FA38550&gt; = &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002B43FA38550&gt;.horizontalScrollBar
+E            +          where &lt;PyQt6.QtWidgets.QScrollArea object at 0x000002B43FA38550&gt; = &lt;cephvr.gui.window.DashboardWindow object at 0x000002B43FA2B370&gt;.dashboard_scroll
+
+tests\gui\test_dashboard.py:1194: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_hud_fits_content_and_log_fills_available_height" time="0.355" /><testcase classname="tests.gui.test_dashboard" name="test_device_tabs_sit_above_controls_without_moving_hud" time="0.407" /><testcase classname="tests.gui.test_dashboard" name="test_configuration_scroll_keeps_projector_status_fixed" time="0.377" /><testcase classname="tests.gui.test_dashboard" name="test_protocol_cards_reflow_and_keep_properties_reachable" time="0.739" /><testcase classname="tests.gui.test_dashboard" name="test_arena_axis_gains_roundtrip_and_editor_spacing" time="0.473" /><testcase classname="tests.gui.test_dashboard" name="test_reference_advanced_controls_align_to_layer_and_retain_first" time="0.586" /><testcase classname="tests.gui.test_dashboard" name="test_variation_controls_fit_narrow_protocol_without_horizontal_scroll" time="0.435" /><testcase classname="tests.gui.test_dashboard" name="test_random_batch_values_stay_fixed_across_preview_and_save" time="0.857" /></testsuite></testsuites>

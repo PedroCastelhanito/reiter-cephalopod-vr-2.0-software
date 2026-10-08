@@ -108,3 +108,24 @@ def test_stale_backend_generation_is_rejected() -> None:
     stale = RecordingPaths(plans.outputs, str(uuid4()))
     with pytest.raises(ValueError, match="exact acquisition work identity"):
         stale.validate("behavioral", identity)
+
+
+@pytest.mark.parametrize("available", [False, True])
+def test_recording_clock_accepts_schema_text_and_checks_explicit_conversion(
+    available: bool,
+) -> None:
+    identity = _identity()
+    if available:
+        identity.camera_clock.conversion_available = True
+        identity.camera_clock.tick_period_ns_numerator = 1
+        identity.camera_clock.tick_period_ns_denominator = 1
+        identity.camera_clock.unavailable_reason = ""
+        identity.camera_clock.counter_unavailable_reason = ""
+    identity.validate()
+    identity.camera_clock.timestamp_source = ""
+    with pytest.raises(ValueError, match="timestamp_source is invalid"):
+        identity.validate()
+    identity.camera_clock.timestamp_source = "SDK"
+    identity.camera_clock.ClearField("conversion_available")
+    with pytest.raises(ValueError, match="conversion availability is unspecified"):
+        identity.validate()

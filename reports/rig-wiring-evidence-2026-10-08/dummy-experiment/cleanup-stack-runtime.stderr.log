@@ -1,0 +1,3 @@
+Cleanup 5f9b058d-0fde-4027-85a2-f5139abc9311 failed: CLEANUP_UNCONFIRMED: acquisition_behavioral_worker cleanup: TimeoutError: ; acquisition_tracking_worker cleanup: TimeoutError: 
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

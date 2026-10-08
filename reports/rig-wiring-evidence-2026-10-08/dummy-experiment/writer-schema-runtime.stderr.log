@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: WORKER_OWNER_FAILURE: recording owner thread is not active
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

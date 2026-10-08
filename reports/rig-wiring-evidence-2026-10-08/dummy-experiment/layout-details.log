@@ -1,0 +1,132 @@
+DEVICE 720 0 viewport 514 content 514 overflow 0
+ QWidget  size 514 minhint 464 min 0
+  Card  size 514 minhint 341 min 0
+   QLabel Available devices size 284 minhint 284 min 0
+   QPushButton Test enabled size 236 minhint 182 min 0
+  Card  size 514 minhint 444 min 0
+   QLabel Camera config size 220 minhint 220 min 0
+   QWidget  size 319 minhint 319 min 0
+    SelectionBox  size 319 minhint 319 min 0
+   QWidget  size 482 minhint 166 min 0
+    PresetField  size 482 minhint 166 min 0
+  QWidget  size 514 minhint 464 min 0
+   QTabBar  size 514 minhint 464 min 0
+DEVICE 720 1 viewport 514 content 514 overflow 0
+ QWidget  size 514 minhint 464 min 0
+  Card  size 514 minhint 460 min 0
+   QLabel Microcontroller connection size 428 minhint 428 min 0
+   QPushButton Scan ports size 236 minhint 156 min 0
+   QPushButton Test connection size 236 minhint 221 min 0
+   QWidget  size 482 minhint 228 min 0
+    SelectionBox  size 482 minhint 228 min 0
+   QWidget  size 482 minhint 276 min 0
+    QWidget  size 482 minhint 276 min 0
+     PathField  size 372 minhint 166 min 0
+  QWidget  size 514 minhint 464 min 0
+   QTabBar  size 514 minhint 464 min 0
+DEVICE 720 2 viewport 514 content 514 overflow 0
+ QWidget  size 514 minhint 492 min 0
+  Card  size 514 minhint 266 min 0
+   QPushButton Refresh displays size 482 minhint 234 min 0
+  ProjectorFiles  size 514 minhint 292 min 0
+   QPushButton Load JSON� size 254 minhint 156 min 0
+  QStackedWidget  size 514 minhint 492 min 0
+   CalibrationTable  size 514 minhint 332 min 0
+    QLabel Screen calibration size 300 minhint 300 min 0
+  QWidget  size 514 minhint 464 min 0
+   QTabBar  size 514 minhint 464 min 0
+DEVICE 720 3 viewport 514 content 514 overflow 0
+ QWidget  size 514 minhint 464 min 0
+  Card  size 514 minhint 396 min 0
+   QLabel SpikeGLX connection size 316 minhint 316 min 0
+   QPushButton Test connection size 482 minhint 221 min 0
+   QCheckBox SpikeGLX pairing enabled size 482 minhint 336 min 0
+   QLabel Pairing and endpoint are read-only here; chan size 482 minhint 364 min 0
+  Card  size 514 minhint 292 min 0
+   QLabel Input channels size 236 minhint 236 min 0
+   QPushButton Save pulse mapping size 482 minhint 260 min 0
+  QWidget  size 514 minhint 464 min 0
+   QTabBar  size 514 minhint 464 min 0
+PROTOCOL 720
+ QWidget  size 514 minhint 490 min 0
+  StimulusAssetsCard  size 514 minhint 252 min 0
+   QLabel Assets folder size 220 minhint 220 min 0
+   PathField  size 482 minhint 166 min 0
+  Card  size 514 minhint 318 min 0
+   QLabel Protocol type size 220 minhint 220 min 0
+  ProtocolEditor  size 514 minhint 490 min 0
+   Card  size 208 minhint 218 min 208
+   Card  size 292 minhint 268 min 0
+    QLabel Trial timeline size 236 minhint 236 min 0
+    QLabel 3 epochs � 60 s size 260 minhint 195 min 0
+    QWidget  size 260 minhint 376 min 0
+     QWidget  size 137 minhint 253 min 0
+   Card  size 514 minhint 379 min 0
+    QLabel Epoch editor size 204 minhint 204 min 0
+    QWidget  size 214 minhint 214 min 0
+DEVICE 1175 0 viewport 477 content 477 overflow 0
+ QWidget  size 477 minhint 464 min 0
+  Card  size 477 minhint 341 min 0
+   QLabel Available devices size 284 minhint 284 min 0
+   QPushButton Test enabled size 218 minhint 182 min 0
+  Card  size 477 minhint 444 min 0
+   QLabel Camera config size 220 minhint 220 min 0
+   QWidget  size 319 minhint 319 min 0
+    SelectionBox  size 319 minhint 319 min 0
+   QWidget  size 445 minhint 166 min 0
+    PresetField  size 445 minhint 166 min 0
+  QWidget  size 477 minhint 464 min 0
+   QTabBar  size 477 minhint 464 min 0
+DEVICE 1175 1 viewport 477 content 477 overflow 0
+ QWidget  size 477 minhint 464 min 0
+  Card  size 477 minhint 460 min 0
+   QLabel Microcontroller connection size 428 minhint 428 min 0
+   QPushButton Scan ports size 214 minhint 156 min 0
+   QPushButton Test connection size 221 minhint 221 min 0
+   QWidget  size 445 minhint 228 min 0
+    SelectionBox  size 445 minhint 228 min 0
+   QWidget  size 445 minhint 276 min 0
+    QWidget  size 445 minhint 276 min 0
+     PathField  size 335 minhint 166 min 0
+  QWidget  size 477 minhint 464 min 0
+   QTabBar  size 477 minhint 464 min 0
+DEVICE 1175 2 viewport 477 content 492 overflow 15
+ QWidget  size 492 minhint 492 min 0
+  Card  size 492 minhint 266 min 0
+   QPushButton Refresh displays size 460 minhint 234 min 0
+  ProjectorFiles  size 492 minhint 292 min 0
+   QPushButton Load JSON� size 243 minhint 156 min 0
+  QStackedWidget  size 492 minhint 492 min 0
+   CalibrationTable  size 492 minhint 332 min 0
+    QLabel Screen calibration size 300 minhint 300 min 0
+  QWidget  size 492 minhint 464 min 0
+   QTabBar  size 492 minhint 464 min 0
+DEVICE 1175 3 viewport 477 content 477 overflow 0
+ QWidget  size 477 minhint 464 min 0
+  Card  size 477 minhint 396 min 0
+   QLabel SpikeGLX connection size 316 minhint 316 min 0
+   QPushButton Test connection size 445 minhint 221 min 0
+   QCheckBox SpikeGLX pairing enabled size 445 minhint 336 min 0
+   QLabel Pairing and endpoint are read-only here; chan size 445 minhint 364 min 0
+  Card  size 477 minhint 292 min 0
+   QLabel Input channels size 236 minhint 236 min 0
+   QPushButton Save pulse mapping size 445 minhint 260 min 0
+  QWidget  size 477 minhint 464 min 0
+   QTabBar  size 477 minhint 464 min 0
+PROTOCOL 1175
+ QWidget  size 969 minhint 584 min 0
+  StimulusAssetsCard  size 382 minhint 252 min 0
+   QLabel Assets folder size 220 minhint 220 min 0
+   PathField  size 350 minhint 166 min 0
+  Card  size 573 minhint 318 min 0
+   QLabel Protocol type size 220 minhint 220 min 0
+  ProtocolEditor  size 969 minhint 500 min 0
+   Card  size 208 minhint 218 min 208
+   Card  size 747 minhint 278 min 0
+    QLabel Trial timeline size 236 minhint 236 min 0
+    QLabel 3 epochs � 60 s size 715 minhint 195 min 0
+    QWidget  size 469 minhint 376 min 0
+     QWidget  size 253 minhint 253 min 0
+   Card  size 969 minhint 379 min 0
+    QLabel Epoch editor size 204 minhint 204 min 0
+    QWidget  size 293 minhint 214 min 0

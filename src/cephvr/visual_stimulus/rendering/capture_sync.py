@@ -24,7 +24,8 @@ def order_shared_outputs(
         GL.glFlush()
     next(iter(outputs.values())).activate()
     for fence in tuple(pending):
-        GL.glWaitSync(fence, 0, GL.GL_TIMEOUT_IGNORED)
+        # Some PyOpenGL builds misparse this unsigned 64-bit all-ones constant.
+        GL.glWaitSync(fence, 0, (1 << 64) - 1)
         GL.glDeleteSync(fence)
         pending.remove(fence)
 

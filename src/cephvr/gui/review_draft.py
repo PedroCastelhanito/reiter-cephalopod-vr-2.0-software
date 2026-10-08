@@ -250,6 +250,8 @@ def _restore(
         field.setText(saved_projectors["distances"].get(key, ""))
     for (face, key), field in projectors.screen_editor.fields.items():
         field.setText(saved_projectors["screens"].get(face, {}).get(key, ""))
+    for (face, key), field in projectors.measurements.fields.items():
+        field.setText(saved_projectors["screens"].get(face, {}).get(key, ""))
     for (face, key), control in projectors.calibration.controls.items():
         value = saved_projectors["screens"].get(face, {}).get(key, "")
         if isinstance(control, QCheckBox):

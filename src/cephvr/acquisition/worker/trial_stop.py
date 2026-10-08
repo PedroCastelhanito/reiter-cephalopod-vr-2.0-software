@@ -87,7 +87,7 @@ class TrialStopFinalizer:
             recording_fault_observed=recording_fault_observed,
         )
 
-    def stop_trial(self, deadline_ns: int) -> None:
+    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> None:
         scheduled = self.trial.schedule
         if not self.captures.active and scheduled is not None:
             self.captures.cancel_schedule()
@@ -118,6 +118,21 @@ class TrialStopFinalizer:
         )
         recording_end: int | None = None
         actual_stop: int | None = None
+        stopped_reported = False
+
+        def activity_stopped(observed_ns: int) -> None:
+            nonlocal actual_stop, stopped_reported
+            actual_stop = observed_ns
+            admission_stop = self.captures.admission_stop_ns
+            if report_stopped and admission_stop is not None:
+                end = (
+                    min(scheduled_end, admission_stop)
+                    if scheduled_end is not None
+                    else admission_stop
+                )
+                self._publish_stopped(observed_ns, end, deadline_ns)
+                stopped_reported = True
+
         purge = self.trial.purge_evidence
         if self.captures.active:
             off_terminal = (
@@ -131,11 +146,12 @@ class TrialStopFinalizer:
                     int(self.bootstrap.file_policy.post_cutoff_drain_margin_ns),
                 ),
                 terminal_off_confirmed=off_terminal,
+                activity_stopped=activity_stopped,
             )
             if not isinstance(stopped, PurgeEvidence):
                 raise TypeError("camera stop returned invalid purge evidence")
             purge = stopped
-            actual_stop = host_time_ns()
+            actual_stop = actual_stop or host_time_ns()
             self.trial.purge_evidence = stopped
             self.terminal.collect_transport_summary()
             admission_stop = self.captures.admission_stop_ns
@@ -177,6 +193,17 @@ class TrialStopFinalizer:
             )
 
         marker = self.trial.end_marker
+        if (
+            report_stopped
+            and not stopped_reported
+            and marker is not None
+            and marker.actual_stop_monotonic_ns is not None
+        ):
+            self._publish_stopped(
+                marker.actual_stop_monotonic_ns,
+                marker.recording_end_monotonic_ns,
+                deadline_ns,
+            )
         if marker is not None and self.trial.finish_deadline_ns is None:
             self.trial.finish_deadline_ns = self.terminal.finish_deadline(
                 deadline_ns, recording_end, scheduled_end
@@ -210,6 +237,17 @@ class TrialStopFinalizer:
         self.trial.released = False
         self.trial.prepared = False
         self._complete_warning_scope()
+
+    def _publish_stopped(self, actual_ns: int, end_ns: int, deadline_ns: int) -> None:
+        request = self.trial.stop_request
+        if request is None:
+            raise RuntimeError("camera Stopped has no exact Stop command")
+        evidence = acq.WorkerLifecycleEvidence()
+        evidence.stopped.actual_stop_monotonic_ns = actual_ns
+        evidence.stopped.recording_end_monotonic_ns = end_ns
+        evidence.stopped.recording_interval_sealed = True
+        evidence.stopped.activity_stopped = True
+        self._report_lifecycle(request, evidence, deadline_ns)
 
     def advance_due_stages(self) -> None:
         self.terminal.advance_due_stages()

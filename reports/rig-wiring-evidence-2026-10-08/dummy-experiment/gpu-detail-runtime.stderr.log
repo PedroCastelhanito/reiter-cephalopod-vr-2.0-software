@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: display initialization failed (calibration_left: framebuffer size (0, 0) does not match request); partial resources remain: window:calibration_left:(65544) b'WGL: Failed to clear current context: The handle is invalid. '
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

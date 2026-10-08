@@ -184,7 +184,7 @@ class PreprocessingPage(QWidget):
 
 class DistanceCalibration(Card):
     def __init__(self) -> None:
-        super().__init__("Pixel-to-mm calibration")
+        super().__init__("Pixel-to-mm calibration · Required for Tracking")
         self.draw = button("Set endpoints")
         self.clear = button("Clear")
         row = QHBoxLayout()

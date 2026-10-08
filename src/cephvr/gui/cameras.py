@@ -69,6 +69,7 @@ class CamerasPanel(ResponsiveColumns):
         self.has_configured_tests = False
         self.pending_enable: dict[str, bool] = {}
         self.loading = False
+        self.snapshot_draft = False
         inventory = Card("Available devices")
         self.table = DataTable(len(self.drafts), 4)
         self.refresh_button = button("", "icon", hint="Refresh available cameras")
@@ -131,6 +132,7 @@ class CamerasPanel(ResponsiveColumns):
             enabled.toggled.connect(
                 lambda checked, index=row: self.set_participation(index, checked)
             )
+            enabled.clicked.connect(lambda _, index=row: self.table.selectRow(index))
             self.enable_controls.append(enabled)
             check_host = QWidget()
             check_layout = QHBoxLayout(check_host)
@@ -469,6 +471,14 @@ class CamerasPanel(ResponsiveColumns):
         self.connect_button.setText(
             "Disconnect" if draft and draft.connected else "Connect"
         )
+        role = "danger" if draft and draft.connected else "primary"
+        if self.connect_button.property("role") != role:
+            self.connect_button.setProperty("role", role)
+            style = self.connect_button.style()
+            if style is not None:
+                style.unpolish(self.connect_button)
+                style.polish(self.connect_button)
+            self.connect_button.update()
         self.connect_button.setToolTip(
             "Stop capture and close the external preview"
             if draft and draft.connected

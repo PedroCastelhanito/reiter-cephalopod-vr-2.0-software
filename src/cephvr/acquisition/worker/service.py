@@ -259,6 +259,8 @@ class AcquisitionWorkerService(rpc.AcquisitionWorkerServiceServicer):
                 progress="accepted",
             )
             self.state.operations[command.command_id] = operation
+            if command.issuer == self.state.supervisor:
+                self.state.supervisor_command_ids.add(command.command_id)
             self.state.state_revision += 1
             ticket.commit()
         return _accepted(command.command_id)

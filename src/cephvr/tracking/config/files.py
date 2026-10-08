@@ -11,8 +11,8 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-_POLICY_VERSION = 42
-_POLICY_SHA256 = "d8ffd4e4277bac977e83e119ca1337fdf5b0092ca82c143313236d8ab60f67e7"
+_POLICY_VERSION = 43
+_POLICY_SHA256 = "fdf9ac7118b751703d01a322752a17a2d20a50a6248de9497e185fbb513ddc57"
 _CONFIG_KEYS = frozenset(
     """
 backend.enabled
@@ -164,11 +164,15 @@ geometry.settings_schema_id
 input.selection_scope
 input.source_scope
 locomotion_output.channels
+locomotion_output.camera_scale
 locomotion_output.coordinate_frame
 locomotion_output.meaning
 locomotion_output.normalization
 locomotion_output.positive_directions
 locomotion_output.quantity
+locomotion_output.translation_unit
+locomotion_output.turning_unit
+locomotion_output.unit_conversion
 locomotion_output.visual_stimulus_control
 locomotion_output.visual_stimulus_gain_owner
 pipeline.composition

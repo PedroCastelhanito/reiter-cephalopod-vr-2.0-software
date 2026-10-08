@@ -6,7 +6,10 @@ import asyncio
 from collections.abc import Callable
 from uuid import UUID
 
-from cephvr.acquisition.coordinator.commands import retain_worker_command
+from cephvr.acquisition.coordinator.commands import (
+    retain_worker_command,
+    wait_child_operation,
+)
 from cephvr.acquisition.coordinator.trial_helpers import (
     _camera_output_keys,
     _continuation_incidents_match,
@@ -149,7 +152,7 @@ class TrialPreparation:
                         source=self.identity.backend,
                         operation=control.OperationState(
                             context=trial.preparation,
-                            command="prepare_trial",
+                            command="PrepareTrial",
                             work=trial.work,
                             complete=True,
                             succeeded=True,
@@ -255,6 +258,22 @@ class TrialPreparation:
             for item in results
         ):
             raise RuntimeError("one or more camera workers rejected trial preparation")
+        for _role, prepared_worker in selected:
+            assert prepared_worker is not None and prepared_worker.trial is not None
+            preparation = prepared_worker.trial.preparation
+            if preparation is None:
+                raise RuntimeError("camera trial preparation was not retained")
+            result = await wait_child_operation(
+                prepared_worker.child_operations[preparation.command_id],
+                deadline_ns,
+                self.lock,
+                self.clock,
+            )
+            if not result.succeeded:
+                raise RuntimeError(
+                    f"camera role {prepared_worker.context.camera} trial preparation failed: "
+                    f"{result.failure.code}: {result.failure.message}"
+                )
 
     def valid_command(
         self,

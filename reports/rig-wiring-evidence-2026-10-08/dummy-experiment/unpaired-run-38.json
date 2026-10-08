@@ -1,0 +1,23 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "dac6a590-d330-4fec-b8ea-8c8cc0e9dc37"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "dac6a590-d330-4fec-b8ea-8c8cc0e9dc37",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "2e92d87a-10eb-4d91-b402-3fd8db4c4a5b",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "error": "ClientError: REJECTED: Recover unfinished session at C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-144757. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker."
+}

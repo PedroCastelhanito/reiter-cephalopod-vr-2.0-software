@@ -220,6 +220,10 @@ class NativeRecording:
             self._capture_key = f"recording-capture-slots:{self._writer_generation}"
             self._register_resource(self._owner_key, announce)
             self._register_resource(self._capture_key, announce)
+            for trial in request.session.trials:
+                self._register_resource(
+                    f"ffmpeg-child:{trial.context.trial_id}", announce
+                )
 
     def review_encoding_provider(
         self,
@@ -346,8 +350,9 @@ class NativeRecording:
         )
         if self._announce is None:
             raise RuntimeError("Schedule has no cleanup catalogue registrar")
-        self._child_key = f"ffmpeg-child:{artifact.identity.trial_id}:{uuid4()}"
-        self._register_resource(self._child_key, self._announce)
+        self._child_key = f"ffmpeg-child:{artifact.identity.trial_id}"
+        if self._child_key not in self._announced_keys:
+            raise RuntimeError("review encoder obligation was not declared at Setup")
         from .encoding import build_review_argv
 
         if self.ffmpeg_executable is None:
@@ -373,7 +378,14 @@ class NativeRecording:
             close_deadline_ns=lambda: self._io_deadline(self.encoder_stall_timeout_ns),
         )
         self._worker = RecordingWorker(
-            capture_slots=self.capture_slots, evidence=evidence, encoder=adapter
+            capture_slots=self.capture_slots,
+            evidence=evidence,
+            encoder=adapter,
+            # One already-bounded RGBA composite per overlapped write avoids a
+            # polling delay for every small slice of a large review frame.
+            max_encoder_write_chunk=(
+                encoding.composite_width * encoding.composite_height * 4
+            ),
         )
         self._session = RecordingSession(
             worker=self._worker,
@@ -550,9 +562,9 @@ class NativeRecording:
             raise RuntimeError("scheduled recording is missing")
         self._cutoff_ns, self._finish_deadline_ns = cutoff_ns, deadline_ns
         if self._capture_runtime is not None:
-            self._capture_runtime.cancel_pending("capture_unresolved_at_cutoff")
             self._capture_runtime.close_feedback_intervals(cutoff_ns)
-        self._session.begin_finish(cutoff_ns=cutoff_ns, deadline_ns=deadline_ns)
+        if self._capture_runtime is None or not self._capture_runtime.pending:
+            self._session.begin_finish(cutoff_ns=cutoff_ns, deadline_ns=deadline_ns)
 
     def begin_cancel(self, deadline_ns: int) -> None:
         if not self.saving:
@@ -579,6 +591,21 @@ class NativeRecording:
             return ()
         if self._session is None:
             return None
+        if self._cutoff_ns is not None and self._capture_runtime is not None:
+            self._capture_runtime.poll_pending()
+            if (
+                self._capture_runtime.pending
+                and self._finish_deadline_ns is not None
+                and self.clock_ns() >= self._finish_deadline_ns
+            ):
+                self._capture_runtime.cancel_pending(
+                    "capture_unresolved_at_finalization_deadline"
+                )
+            if not self._capture_runtime.pending:
+                assert self._finish_deadline_ns is not None
+                self._session.begin_finish(
+                    cutoff_ns=self._cutoff_ns, deadline_ns=self._finish_deadline_ns
+                )
         try:
             result = self._session.poll_finished()
         except Exception as exc:
@@ -677,6 +704,11 @@ class NativeRecording:
             if key is not None:
                 (released_set if closed else outstanding).add(key)
         outstanding.intersection_update(self._announced_keys)
+        released_set.update(
+            key
+            for key in self._announced_keys
+            if key.startswith("ffmpeg-child:") and key != self._child_key
+        )
         released_set.intersection_update(self._announced_keys)
         self._released_keys.update(released_set)
         if not outstanding:

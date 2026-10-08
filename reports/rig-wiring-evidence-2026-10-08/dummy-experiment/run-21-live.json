@@ -1,0 +1,201 @@
+{
+  "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+  "session": {
+    "phase": "SESSION_PHASE_FINALIZING",
+    "context": {
+      "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+      "session_id": "6e0d88e0-3b84-483e-9b86-f45f9a446baf"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135314",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "trial 1: trial_ready missing after one bounded recovery query"
+    }
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+        "session_id": "6e0d88e0-3b84-483e-9b86-f45f9a446baf"
+      },
+      "trial_id": "ed419469-14a4-4c24-ac81-273beb101fb0",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_PREPARING"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "f750d104-64cc-423a-a13d-8df1ca9f38fb"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "f750d104-64cc-423a-a13d-8df1ca9f38fb"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+              "session_id": "6e0d88e0-3b84-483e-9b86-f45f9a446baf"
+            }
+          },
+          "operation": {
+            "command_id": "5c6b01b8-f442-4f46-be71-21c66f6eeb96"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    },
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "c292fe14-4d2b-460a-b4a3-762e22175a21"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "c292fe14-4d2b-460a-b4a3-762e22175a21"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+              "session_id": "6e0d88e0-3b84-483e-9b86-f45f9a446baf"
+            }
+          },
+          "operation": {
+            "command_id": "8bf6e5a9-16cd-4c98-958e-dfc1f28b5f7b"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "f8f5b933-864a-42e5-b2c2-46fefd6ebb07"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "b8a4c599-69a8-413e-b4d4-a8bfa6df5b28"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "152e41e5-09e9-4c42-bec0-65a897057fd3",
+          "session_id": "aaab983b-5779-4a27-ae5f-467172c54fc9"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "4b4c0c4d-e491-4ed1-8409-5f2c98a52550"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "a8df73d1-dedb-4dbe-8674-4bf35d2836fe"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "177b78dd-3b1d-4323-ad20-dead88fdcc43"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+          "session_id": "6e0d88e0-3b84-483e-9b86-f45f9a446baf"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "620feaee-f402-468e-82a6-05523d94f491"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "2f9d175a-ae41-4065-912d-19cbc9626a5d",
+          "session_id": "6e0d88e0-3b84-483e-9b86-f45f9a446baf"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "de832ecd-afa1-40e5-847a-1edf3b68cb63",
+      "component": "lifecycle_recovery",
+      "message": "trial_ready initial evidence deadline expired; querying the frozen missing set"
+    },
+    {
+      "warning_id": "c399d42b-10ba-4a27-b91a-5741bb1e1995",
+      "component": "supervisor",
+      "message": "participant interruption unconfirmed: RuntimeError('backend visual_stimulus rejected interruption: COMMAND_ADMISSION')"
+    }
+  ],
+  "prompts": null,
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "06d5d770-2c10-47f8-8c44-4a338bf8f571"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135314\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "d225fcf5-de2a-497c-8060-f9496817378d"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135314\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "a0eba960-a5fa-4a54-9317-50e7b91d3f9b"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-135314\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ]
+}

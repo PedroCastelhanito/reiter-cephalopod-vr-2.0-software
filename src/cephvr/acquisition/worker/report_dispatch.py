@@ -25,7 +25,7 @@ class WorkerReportDispatcher:
         state: WorkerState,
         reports: CoordinatorReportClient,
         capacity: int,
-        failure: Callable[[], None],
+        failure: Callable[[str], None],
     ) -> None:
         if capacity <= 0:
             raise ValueError("worker report dispatch capacity must be positive")
@@ -44,13 +44,13 @@ class WorkerReportDispatcher:
                 awaitable.close()
                 with self.state.lock:
                     self.state.interrupted = True
-                self.failure()
+                self.failure("worker report dispatcher is draining")
                 raise RuntimeError("worker report dispatcher is draining")
             if not self._slots.acquire(blocking=False):
                 awaitable.close()
                 with self.state.lock:
                     self.state.interrupted = True
-                self.failure()
+                self.failure("bounded worker report queue is full")
                 raise RuntimeError("bounded worker report queue is full")
             try:
                 future: Future[control.ReportReceipt] = (
@@ -98,11 +98,14 @@ class WorkerReportDispatcher:
             if receipt.result != control.COMMAND_RESULT_ACCEPTED:
                 with self.state.lock:
                     self.state.interrupted = True
-                self.failure()
-        except BaseException:
+                self.failure(
+                    f"worker report rejected: {receipt.failure.code}: "
+                    f"{receipt.failure.message}"
+                )
+        except BaseException as exc:
             with self.state.lock:
                 self.state.interrupted = True
-            self.failure()
+            self.failure(f"worker report failed: {exc}")
         finally:
             with self._lock:
                 self._pending.discard(future)

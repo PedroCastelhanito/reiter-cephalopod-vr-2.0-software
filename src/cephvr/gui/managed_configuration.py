@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
 
@@ -16,6 +18,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.camera_snapshot_settings import collect_camera_snapshot
 from cephvr.gui.managed_config import (
     install_metadata,
     install_subject_metadata,
@@ -32,6 +35,7 @@ class ConfigurationPages:
     cameras: Any
     projectors: Any
     tracking: Any
+    microcontroller: Any = None
 
 
 class ManagedConfiguration:
@@ -50,6 +54,16 @@ class ManagedConfiguration:
         self._installed_base = pb.ExperimentConfiguration()
         self._watch_edits()
 
+    @contextmanager
+    def installing_projection(self) -> Iterator[None]:
+        """Authoritative device projection cannot masquerade as a local edit."""
+        previous = self._installing
+        self._installing = True
+        try:
+            yield
+        finally:
+            self._installing = previous
+
     def _watch_edits(self) -> None:
         def changed(*_args: Any) -> None:
             if not self._installing:
@@ -57,8 +71,9 @@ class ManagedConfiguration:
                 self.dirty = True
 
         def tracking_changed(*_args: Any) -> None:
-            changed()
-            self.tracking_dirty = True
+            if not self._installing:
+                changed()
+                self.tracking_dirty = True
 
         for page in (
             self.pages.dashboard,
@@ -82,6 +97,11 @@ class ManagedConfiguration:
         self.pages.protocol.editor.changed.connect(changed)
         self.pages.recordings.changed.connect(changed)
         self.pages.projectors.outputs_changed.connect(changed)
+        self.pages.protocol.config_files.loaded.connect(changed)
+        self.pages.projectors.calibration_files.loaded.connect(changed)
+        self.pages.tracking.config_files.loaded.connect(tracking_changed)
+        if self.pages.microcontroller is not None:
+            self.pages.microcontroller.config_files.loaded.connect(changed)
         for signal_name in (
             "points_changed",
             "distance_changed",
@@ -152,6 +172,10 @@ class ManagedConfiguration:
             self.pages.tracking.configuration_draft(tracking, source_serial=serial)
 
         self._installing = True
+        self.pages.cameras.snapshot_draft = False
+        self.pages.tracking.snapshot_draft = False
+        if self.pages.microcontroller is not None:
+            self.pages.microcontroller.snapshots.draft_loaded = False
         dashboard = self.pages.dashboard
         self.pages.protocol.install_configuration(base)
         self.pages.projectors.asset_root = (
@@ -205,13 +229,19 @@ class ManagedConfiguration:
             if display is not None
             else visual_stimulus_pb.DisplayConfiguration()
         )
+        restored_assignments = (
+            not self.generation
+            and snapshot.session.phase
+            in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_READY)
+            and self.pages.projectors.restore_assignment_draft()
+        )
         if tracking is not None and serial:
             self.pages.tracking.install_configuration(tracking, source_serial=serial)
         self.generation, self.revision = generation, revision
         self._installed_base.CopyFrom(base)
         self.stale = False
         self.last_error = ""
-        self.dirty = False
+        self.dirty = bool(restored_assignments)
         self.tracking_dirty = False
         self._installing = False
         return True
@@ -257,8 +287,24 @@ class ManagedConfiguration:
             ].isChecked()
 
         acquisition_backend = self._backend(candidate, "acquisition")
+        if acquisition_backend is None and (
+            self.pages.cameras.snapshot_draft
+            or self.pages.microcontroller is not None
+            and self.pages.microcontroller.snapshots.draft_loaded
+        ):
+            raise ValueError(
+                "Acquisition settings are unavailable for the loaded device draft"
+            )
         if acquisition_backend is not None:
             acquisition = acquisition_backend.acquisition
+            collect_camera_snapshot(self.pages.cameras, acquisition)
+            if self.pages.cameras.snapshot_draft and any(
+                camera.enabled and camera.role != "Unassigned"
+                for camera in self.pages.cameras.drafts
+            ):
+                acquisition_backend.enabled = True
+            if self.pages.microcontroller is not None:
+                self.pages.microcontroller.snapshots.collect(acquisition)
             for camera in self.pages.cameras.drafts:
                 if camera.key not in self.pages.recordings.touched:
                     continue
@@ -321,11 +367,17 @@ class ManagedConfiguration:
                     raise ValueError(
                         "Tracking settings must use the assigned Tracking camera role"
                     )
-            if self.tracking_dirty and not serial:
+            submit_tracking = (
+                (self.tracking_dirty or self.pages.tracking.snapshot_draft)
+                and tracking_participates
+                or self.tracking_dirty
+                and not self.pages.tracking.snapshot_draft
+            )
+            if submit_tracking and not serial:
                 raise ValueError(
                     "Assign a Tracking camera before submitting Tracking edits"
                 )
-            if self.tracking_dirty:
+            if submit_tracking:
                 updated = self.pages.tracking.configuration_for_submit(
                     tracking_settings,
                     asset_root=(
@@ -355,6 +407,12 @@ class ManagedConfiguration:
         self.dirty = not matches
         if matches:
             self.tracking_dirty = False
+            accepted_tracking = self._backend(accepted, "tracking")
+            if accepted_tracking is not None and accepted_tracking.enabled:
+                self.pages.tracking.snapshot_draft = False
+            self.pages.cameras.snapshot_draft = False
+            if self.pages.microcontroller is not None:
+                self.pages.microcontroller.snapshots.draft_loaded = False
             self.pages.recordings.touched.clear()
         self.last_error = (
             ""

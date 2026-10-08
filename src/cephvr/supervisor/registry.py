@@ -223,7 +223,13 @@ class LaunchRegistry:
             if not members or not self._running(entry):
                 if (
                     entry.plan.stop_method == "owner_stdin_eof"
-                    and entry.plan.owner.role in ACQUISITION_WORKER_ROLES
+                    and (
+                        entry.plan.owner.role in ACQUISITION_WORKER_ROLES
+                        or (
+                            entry.plan.owner.role == "visual_stimulus_renderer"
+                            and entry.plan.child.role in VISUAL_STIMULUS_FFMPEG_ROLES
+                        )
+                    )
                     or entry.plan.child.role == FIRMWARE_UPLOAD_ROLE
                 ):
                     # Normal helper exit still requires its owning backend

@@ -62,7 +62,7 @@ def prepare_recording(
     channels = 1 if pixel_layout.pixel_format.channel_layout.startswith("mono") else 3
     target_depth = int(settings.recording_bit_depth)
     if target_depth == 8:
-        input_format = "gray8" if channels == 1 else "rgb24"
+        input_format = "gray" if channels == 1 else "rgb24"
         container_bytes = 1
     else:
         input_format = "gray16le" if channels == 1 else "rgb48le"

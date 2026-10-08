@@ -1,0 +1,290 @@
+{
+  "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+  "session": {
+    "phase": "SESSION_PHASE_FINALIZING",
+    "context": {
+      "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+      "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-143245",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "registered visual_stimulus_renderer PID 39568 exited; cleanup evidence remains required"
+    }
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+        "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+      },
+      "trial_id": "545f525c-02e1-4526-8636-e2066acc6795",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_FINALIZING",
+    "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+    "start_monotonic_ns": "681554592331600",
+    "scheduled_end_monotonic_ns": "681614592331600",
+    "interruption_issued_monotonic_ns": "681617572670100"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "538f42c1-d07d-4a81-bcb8-b8c68d431326"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "538f42c1-d07d-4a81-bcb8-b8c68d431326"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+              "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+            }
+          },
+          "operation": {
+            "command_id": "38934023-c2e5-42c9-9c15-34cad532c1cf"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    },
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "de85099e-0f33-43da-becd-d2e7128dc0f0"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "de85099e-0f33-43da-becd-d2e7128dc0f0"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+              "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+            }
+          },
+          "operation": {
+            "command_id": "e91cbadd-7490-40da-ba29-bfdd600fdf45"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "521b1dd9-6a1d-4c91-a236-4a177e0ed12a"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "ae82ef7c-7ae3-4fd9-af0b-ba72bd7acfee"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "c3e24b0a-0306-47b4-8288-a4b3dce0f654",
+          "session_id": "918b4c4d-d6d9-4533-a40e-d5fd4153f0c4"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "623b9595-49c8-4642-8058-fa2fed58c1d3"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "1139ee71-7755-4f21-8491-33c837ee906b"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "9fd91323-4ce3-44ea-a7bd-10c3e87b48aa"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+          "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "8be35ad8-8be0-4dc4-8225-82e739ded2a2"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+          "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "f1d45053-37e5-4c79-b3e0-e3c2624fd820",
+      "component": "supervisor",
+      "message": "participant interruption unconfirmed: <AioRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAVAILABLE\n\tdetails = \"failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:52059: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n\tdebug_error_string = \"UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:52059: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.\r\n -- 10061)\"\n>"
+    },
+    {
+      "warning_id": "0db25793-77d8-47e7-a4a6-d07c8ec83202",
+      "component": "acquisition_camera",
+      "message": "frame_id=0; optional native timestamp is unavailable",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_behavioral_worker",
+          "generation": "d9175fc0-f1f9-414e-9131-f52dfe094255"
+        },
+        "work": {
+          "trial": {
+            "session": {
+              "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+              "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+            },
+            "trial_id": "545f525c-02e1-4526-8636-e2066acc6795",
+            "trial_number": 1
+          }
+        },
+        "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "681554661646900",
+        "last_observed_monotonic_ns": "681554661646900",
+        "camera": "CAMERA_ROLE_BEHAVIORAL"
+      }
+    },
+    {
+      "warning_id": "ea79f867-4743-4722-adfd-b367838ab50e",
+      "component": "acquisition_camera",
+      "message": "frame_id=0; optional native timestamp is unavailable",
+      "acquisition_occurrence": {
+        "source": {
+          "role": "acquisition_tracking_worker",
+          "generation": "307819f3-91b7-4e27-a9e2-969b440ce880"
+        },
+        "work": {
+          "trial": {
+            "session": {
+              "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+              "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+            },
+            "trial_id": "545f525c-02e1-4526-8636-e2066acc6795",
+            "trial_number": 1
+          }
+        },
+        "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+        "count": "1",
+        "first_observed_monotonic_ns": "681554616995900",
+        "last_observed_monotonic_ns": "681554616995900",
+        "camera": "CAMERA_ROLE_TRACKING"
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "prompt_id": "15d2427f-fe18-419a-81a8-a9b7ac4b868d",
+      "setup": {
+        "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+        "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+      },
+      "operation": {},
+      "explanation": "affected prepared resource set is unknown",
+      "permitted_choices": [
+        "abort_session"
+      ],
+      "runtime_incident": {
+        "incident_id": "db5aae6a-c0c6-4a9e-bc0a-0e65c5e7eeb3",
+        "revision": "1",
+        "work": {
+          "session": {
+            "controller_generation": "de1e2474-bbb9-4665-b093-bf20043e5465",
+            "session_id": "f12a2a4a-33e8-4cbf-8301-65e33f9bc4fc"
+          }
+        },
+        "error_ids": [
+          "e22001fe-0c1c-4b47-8ce4-e37ff3db431e"
+        ],
+        "consequence": "affected prepared resource set is unknown",
+        "disposition": "RUNTIME_INCIDENT_DISPOSITION_AWAITING_OPERATOR",
+        "first_observed_monotonic_ns": "681617075161800",
+        "last_observed_monotonic_ns": "681617075161800",
+        "occurrence_count": "1"
+      }
+    }
+  ],
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "41c28f4e-39a8-4a9f-9d32-3973370e9dcc"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-143245\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "289b9c81-a2c6-4eac-b711-3b6dbc6d3264"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-143245\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "31c73def-6c8c-43af-8512-ce8ed12d7eb1"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-143245\\protocol-data\\DUMMY_143253_LOG.json"
+    },
+    {
+      "operation": {
+        "command_id": "a9663f71-e4db-47b1-a87f-96555e8abdae"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-143245\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ]
+}

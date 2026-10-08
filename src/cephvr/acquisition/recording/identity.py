@@ -119,8 +119,6 @@ def _validate_clock_descriptor(descriptor: camera.CameraClockDescriptor) -> None
         "counter_unavailable_reason",
     )
     for field in required_text:
-        if not descriptor.HasField(field):
-            raise ValueError(f"camera clock descriptor lacks {field}")
         value = getattr(descriptor, field)
         optional_reason = field in {"unavailable_reason", "counter_unavailable_reason"}
         if (

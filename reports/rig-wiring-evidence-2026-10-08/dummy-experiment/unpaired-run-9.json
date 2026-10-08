@@ -1,0 +1,103 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "f9238e34-a4cd-459e-9089-123b66ef7ea7"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "f9238e34-a4cd-459e-9089-123b66ef7ea7",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "b4fdeaee-629a-41b1-905c-0c7dc2c6399c",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "7f4c1670-b0d6-4dd7-a6b8-e725f9b08068",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: pixel format layout is unknown: rgba"
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_SETTING_UP",
+      "context": {
+        "controller_generation": "b4fdeaee-629a-41b1-905c-0c7dc2c6399c",
+        "session_id": "1ce41d4d-60ca-4138-95fd-3738956c0348"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-132953",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [
+    {
+      "warning_id": "1078195e-a5c3-49e1-8c38-50620d1a7bc5",
+      "component": "startup_recovery",
+      "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+    },
+    {
+      "warning_id": "a6e1d9a6-7939-483b-bda0-0d6106babac2",
+      "component": "controller",
+      "message": "visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: pixel format layout is unknown: rgba"
+    }
+  ],
+  "cancel_setup": {
+    "command_id": "8cb51dde-0d50-4a55-8545-7e602a4d0246",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  }
+}

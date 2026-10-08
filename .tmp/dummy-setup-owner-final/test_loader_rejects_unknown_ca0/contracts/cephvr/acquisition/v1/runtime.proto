@@ -1,0 +1,44 @@
+syntax = "proto3";
+package cephvr.acquisition.v1;
+import "cephvr/acquisition/v1/camera.proto";
+
+// Controller-resolved acquisition file policies; no operator edit or wire defaults.
+// Used at Setup and in the existing configuration/preview preparation workflows.
+message CameraFilePolicy {
+  reserved 1;
+  reserved "camera_role";
+  CameraRole camera = 4; // Unique per policy set.
+  CameraTransportSettings transport = 2;
+  optional int64 frame_silence_timeout_ns = 3;
+  optional int64 post_cutoff_drain_margin_ns = 5; // Prepared exposure + transfer + one period bound.
+}
+message AcquisitionFilePolicies {
+  optional uint32 contract_version = 1; // Initially 1; exact implementation match.
+  repeated CameraFilePolicy cameras = 2;
+  reserved 3;
+  reserved "admission_lock_timeout_ns"; // Removed: A03 ring writers never wait.
+  reserved 4;
+  reserved "hdf5_sync_interval_ns"; // A07: no HDF5; see frame_log_sync_interval_ns.
+  optional int64 frame_log_sync_interval_ns = 14; // recording.sync_interval_s.
+  optional int64 video_sync_interval_ns = 5;
+  optional int64 fragment_target_ns = 6;
+  optional int64 encoder_stall_timeout_ns = 7;
+  reserved 8;
+  reserved "recovery_no_progress_timeout_ns"; // No recording recovery tool (A07).
+  optional uint32 serial_baud_rate = 9;
+  optional int64 serial_ack_timeout_ns = 10;
+  optional int64 serial_keepalive_interval_ns = 11;
+  optional int64 serial_communication_timeout_ns = 12;
+  optional int64 serial_stop_completion_margin_ns = 13; // Within shared stop-report allowance.
+  // Fixed policies/protocol/schema sizes are validated locally by the matching
+  // contract version, not editable strings sent to workers.
+}
+// Configurable non-timing values, resolved with E07 missing-value precedence.
+message AcquisitionRecordingOptions {
+  reserved 1, 2, 3, 4;
+  reserved "hdf5_compression", "hdf5_gzip_level", "accounting_queue_capacity_messages",
+      "accounting_max_message_bytes"; // A07/A02: no HDF5 or cross-process accounting.
+  optional uint32 pending_records_capacity = 5; // Per camera, in-process (A07).
+  optional uint32 diagnostic_tail_max_lines = 6;
+  optional uint32 diagnostic_tail_max_bytes = 7;
+}

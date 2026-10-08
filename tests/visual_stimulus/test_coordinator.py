@@ -9,15 +9,22 @@ import pytest
 
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.resources import ResourceObligationRegistry
 from cephvr.visual_stimulus.compiler import prepared_digest
-from cephvr.visual_stimulus.coordinator.commands import validate
+from cephvr.visual_stimulus.coordinator.commands import bind_command, validate
 from cephvr.visual_stimulus.coordinator.obligations import output_plans
 from cephvr.visual_stimulus.coordinator.recipes import RecipeOwner
 from cephvr.visual_stimulus.coordinator.reports import Reports
-from cephvr.visual_stimulus.coordinator.state import Identity, Prepared, State
+from cephvr.visual_stimulus.coordinator.state import (
+    CommandLink,
+    Identity,
+    Prepared,
+    State,
+)
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.main import command_ledger
 from cephvr.visual_stimulus.recording.recipe import PreparedRecipe
+from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 from cephvr.visual_stimulus.worker.reporting import ReportBridge
 
@@ -81,6 +88,75 @@ async def test_idle_renderer_heartbeat_carries_lifecycle_to_supervisor():
     assert accepted.sent_monotonic_ns > 0
     assert accepted.session_phase == pb.SESSION_PHASE_CONFIGURATION
     assert not accepted.HasField("cleanup_resources_revision")
+
+
+@pytest.mark.parametrize(
+    "method", ["InitializeDisplay", "PrepareTrial", "SetupSession"]
+)
+@pytest.mark.parametrize("succeeded", [True, False])
+async def test_worker_completion_routes_only_setup_to_controller(method, succeeded):
+    clock = Clock()
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    state = State()
+    controller, supervisor = Peer(), Peer()
+    ledger = command_ledger(identity.process.generation, 10**12, 1_000_000)
+    parent = wire.BackendCommand(command_id=str(uuid4()), target=identity.backend)
+    if method != "InitializeDisplay":
+        parent.work.session.CopyFrom(
+            pb.SessionContext(
+                controller_generation=identity.controller.generation,
+                session_id=str(uuid4()),
+            )
+        )
+    child = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        target=visual_stimulus.WorkerContext(
+            worker=identity.worker, owner=identity.process, work=parent.work
+        ),
+    )
+    state.links[child.command_id] = CommandLink(method, parent, child, clock() + 10**9)
+    ledger.admit(
+        parent.command_id,
+        parent.SerializeToString(),
+        clock(),
+        work_key=parent.work.session.session_id or parent.command_id,
+    )
+    ledger.complete(
+        parent.command_id,
+        pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED).SerializeToString(),
+        clock(),
+    )
+    reports = Reports(identity, state, ledger, controller, supervisor, clock)
+    await reports.operation(
+        visual_stimulus.WorkerOperation(
+            source=child.target,
+            operation=pb.OperationState(
+                context=pb.OperationContext(command_id=child.command_id),
+                complete=True,
+                succeeded=succeeded,
+                failure=pb.Failure(code="TEST_FAILURE") if not succeeded else None,
+            ),
+        )
+    )
+    assert len(controller.reports) == int(method == "SetupSession")
+    if controller.reports:
+        assert (
+            controller.reports[0][1].operation.operation.context.command_id
+            == parent.command_id
+        )
+        assert controller.reports[0][1].operation.operation.work == parent.work
+    assert len(supervisor.reports) == int(not succeeded)
+    assert state.interrupted == (not succeeded)
 
 
 async def recipe_fixture(tmp_path):
@@ -149,6 +225,52 @@ async def recipe_fixture(tmp_path):
         normal_end_monotonic_ns=clock() + plan.resolved_duration_ns,
     )
     return recipe, state, clock, release, worker, supervisor, ledger
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("attached", [False, True])
+async def test_setup_binding_preserves_optional_feedback_presence(tmp_path, attached):
+    recipe, state, clock, _, _, _, _ = await recipe_fixture(tmp_path)
+    request = state.setup
+    if attached:
+        request.feedback_attachment.SetInParent()
+    forwarded, link = bind_command(
+        recipe.identity, state, "SetupSession", request, clock() + 10**9
+    )
+    assert forwarded.HasField("feedback_attachment") == attached
+    assert forwarded.command.target.work == request.command.work
+    assert link.parent.command_id == request.command.command_id
+    if attached:
+        assert forwarded.feedback_attachment == request.feedback_attachment
+
+
+@pytest.mark.asyncio
+async def test_recipe_setup_initializes_exact_empty_catalogue_before_obligations(
+    tmp_path,
+):
+    recipe, state, clock, _, _, supervisor, _ = await recipe_fixture(tmp_path)
+    source = recipe.identity.process
+    registry = ResourceObligationRegistry(
+        source,
+        state.setup.command.work,
+        allowed_owners=frozenset({(source.role, source.generation)}),
+        max_resources=10,
+        max_bytes=10_000,
+    )
+    assert len(supervisor.reports) == 2
+    for expected_revision, (method, report, deadline) in enumerate(supervisor.reports):
+        assert method == "ReportHeartbeat"
+        assert report.work == state.setup.command.work
+        assert deadline == clock() + 10**9
+        assert registry.accept_heartbeat(report) == expected_revision
+    assert registry.obligations == tuple(state.resources)
+    # Each new session starts at revision zero even after a completed prior session.
+    state.resources.clear()
+    state.catalogue_revision = 12
+    await recipe.prepare(state.setup, clock() + 10**9)
+    assert supervisor.reports[-2][1].cleanup_resources_revision == 0
+    assert not supervisor.reports[-2][1].cleanup_resources
+    assert state.catalogue_revision == 1
 
 
 @pytest.mark.asyncio
@@ -320,3 +442,104 @@ def test_setup_with_the_wrong_file_policy_contract_version_is_rejected(
             "SetupSession",
             _setup_with_policy_version(identity, version),
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("succeeded", [False, True])
+async def test_release_waits_for_exact_schedule_completion(succeeded):
+    from cephvr.visual_stimulus.coordinator.commands import wait_schedule_completion
+
+    ledger = command_ledger(str(uuid4()), 10**12, 1_000_000)
+    command_id = str(uuid4())
+    work = pb.WorkContext(trial=pb.TrialContext(trial_id=str(uuid4())))
+    ledger.admit(command_id, b"schedule", 1, work_key=work.trial.trial_id)
+    task = asyncio.create_task(
+        wait_schedule_completion(ledger, command_id, work, 1_000_000_000, lambda: 1)
+    )
+    await asyncio.sleep(0.01)
+    assert not task.done()
+    result = pb.OperationState(
+        context=pb.OperationContext(command_id=command_id),
+        command="ScheduleTrial",
+        work=work,
+        complete=True,
+        succeeded=succeeded,
+        failure=pb.Failure(message="launch failed") if not succeeded else None,
+    )
+    ledger.complete_executor(command_id, result.SerializeToString(), 2)
+    if succeeded:
+        await task
+    else:
+        with pytest.raises(RuntimeError, match="launch failed"):
+            await task
+
+
+@pytest.mark.asyncio
+async def test_started_evidence_preserves_exact_trial_preparation_parent():
+    clock = Clock()
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    work = pb.WorkContext(trial=pb.TrialContext(trial_id=str(uuid4())))
+    state = State(
+        setup=wire.SetupSessionRequest(),
+        release=wire.ReleaseTrialRequest(
+            start_monotonic_ns=clock(), normal_end_monotonic_ns=clock() + 10**9
+        ),
+    )
+    state.setup.plan.policies.start_evidence_allowance_ns = 10**9
+    prepare_id, schedule_id = str(uuid4()), str(uuid4())
+    for method, parent in (
+        ("PrepareTrial", prepare_id),
+        ("ScheduleTrial", schedule_id),
+    ):
+        child = visual_stimulus.WorkerCommand(
+            command_id=str(uuid4()),
+            target=visual_stimulus.WorkerContext(
+                worker=identity.worker, owner=identity.process, work=work
+            ),
+        )
+        state.links[child.command_id] = CommandLink(
+            method,
+            wire.BackendCommand(command_id=parent, work=work),
+            child,
+            clock() + 10**9,
+        )
+    scheduled = next(
+        item for item in state.links.values() if item.method == "ScheduleTrial"
+    )
+    peer = Peer()
+    reports = Reports(
+        identity,
+        state,
+        command_ledger(identity.process.generation, 10**12, 1_000_000),
+        peer,
+        Peer(),
+        clock,
+    )
+    evidence = visual_stimulus.WorkerLifecycle(
+        source=identity.worker,
+        report=pb.LifecycleReport(
+            started=pb.StartedReport(
+                context=pb.ReportContext(
+                    backend=identity.backend,
+                    work=work,
+                    operation=pb.OperationContext(
+                        command_id=scheduled.child.command_id
+                    ),
+                )
+            )
+        ),
+    )
+    await reports.lifecycle(evidence)
+    assert peer.reports[-1][1].started.context.operation.command_id == prepare_id
+    assert ("started", prepare_id) in state.reports
+    assert ("started", schedule_id) not in state.reports

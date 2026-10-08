@@ -76,6 +76,21 @@ def _identity() -> Identity:
     )
 
 
+def test_pending_encoder_write_preserves_normalized_row_order() -> None:
+    encoder = _DelayedInput()
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=encoder,
+        max_encoder_write_chunk=8,
+    )
+    worker.offer(CompositeFrame(0, 0, 1, 2, "rgba8_bottom_up", b"bottom!!"))
+    assert not worker.drain_once()
+    assert worker.drain_once()
+    assert encoder.data == b"om!!bott"
+    assert worker.counts().input_submitted_count == 1
+
+
 def test_recipe_publication_is_precomputed_and_never_overwrites(tmp_path: Path) -> None:
     data = b'{"format_version":2}\n'
     digest = hashlib.sha256(data).hexdigest()
@@ -616,3 +631,75 @@ def test_recording_cleanup_retains_pending_capture_and_prior_releases(native_rec
     assert set(final.released) == {"probe", "child", "capture", "previous-child"}
     assert recording._capture_runtime is None
     assert recording.cleanup(123) == final
+
+
+def test_setup_declares_each_encoder_child_before_ready(native_recording, tmp_path):
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+
+    recording = native_recording
+    recording.ffmpeg_executable = tmp_path / "ffmpeg.exe"
+    recording.nvenc_owner = NS()
+    request = visual.WorkerSetup()
+    request.settings.save_visual_stimulus_data = True
+    request.session.trials.add().context.trial_id = "first"
+    request.session.trials.add().context.trial_id = "second"
+    request.policies.limits.capture_slots = 1
+    request.policies.limits.evidence_pending_bytes = 1024
+    request.policies.limits.max_prepared_plan_bytes = 1024
+    for field in (
+        "record_sync_interval_ns",
+        "video_sync_interval_ns",
+        "fragment_target_ns",
+        "encoder_stall_timeout_ns",
+        "record_stall_timeout_ns",
+    ):
+        setattr(request.policies, field, 1)
+    announced = []
+    recording.configure(request, lambda key, path: announced.append(key), 100)
+    assert {"ffmpeg-child:first", "ffmpeg-child:second"} <= set(announced)
+    closed = recording.cleanup(100)
+    assert {"ffmpeg-child:first", "ffmpeg-child:second"} <= set(closed.released)
+    assert not closed.outstanding
+
+
+@pytest.mark.parametrize("ready", [False, True])
+def test_normal_finish_drains_admitted_gpu_capture_before_sealing(
+    native_recording, ready
+):
+    recording = native_recording
+    now = [10]
+    events = []
+    capture = NS(pending={1: "admitted-pbo"})
+
+    def poll():
+        events.append("poll")
+        if ready:
+            capture.pending.clear()
+
+    def cancel(reason):
+        assert now[0] >= 20
+        events.append(reason)
+        capture.pending.clear()
+
+    capture.poll_pending = poll
+    capture.cancel_pending = cancel
+    capture.close_feedback_intervals = lambda cutoff: events.append(
+        ("feedback", cutoff)
+    )
+    recording.clock_ns = lambda: now[0]
+    recording._capture_runtime = capture
+    recording._session = NS(
+        begin_finish=lambda **values: events.append(values),
+        poll_finished=lambda: None,
+    )
+    recording.begin_finish(5, 20)
+    assert events == [("feedback", 5)]
+    assert recording.poll_finished() is None
+    if not ready:
+        assert events == [("feedback", 5), "poll"]
+        now[0] = 20
+        assert recording.poll_finished() is None
+        assert "capture_unresolved_at_finalization_deadline" in events
+    else:
+        assert "capture_unresolved_at_finalization_deadline" not in events
+    assert events[-1] == {"cutoff_ns": 5, "deadline_ns": 20}

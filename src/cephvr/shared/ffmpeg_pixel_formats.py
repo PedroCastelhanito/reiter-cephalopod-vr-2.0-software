@@ -15,6 +15,8 @@ PIXEL_FORMAT_LAYOUTS: dict[str, tuple[int, int, int]] = {
     "gray16le": (16, 1, 1),
     "gray16be": (16, 1, 1),
     "rgb24": (8, 1, 1),
+    "rgba": (8, 1, 1),
+    "x2bgr10le": (10, 1, 1),
     "bgr24": (8, 1, 1),
     "rgb48le": (16, 1, 1),
     "rgb48be": (16, 1, 1),

@@ -425,7 +425,7 @@ def test_file_policy_mismatch_and_unknown_operator_keys_fail(tmp_path):
         shutil.copyfile(ROOT / path, tmp_path / path)
     config = tmp_path / "config/backends/tracking_config.toml"
     original = config.read_text()
-    config.write_text(original.replace("policy_version = 42", "policy_version = 43"))
+    config.write_text(original.replace("policy_version = 43", "policy_version = 44"))
     with pytest.raises(ConfigurationError, match="mismatch"):
         load_defaults(tmp_path)
     config.write_text(original + "\nunknown_algorithm = true\n")
@@ -457,3 +457,67 @@ assert not {'numpy','cv2','onnxruntime','pypylon'} & sys.modules.keys()
         text=True,
     )
     assert check.returncode == 0, check.stderr
+
+
+@pytest.mark.parametrize(
+    "change", ["absent", "partial", "zero", "inconsistent", "source"]
+)
+def test_tracking_requires_matching_camera_distance_calibration(change):
+    settings = manual_settings()
+    if change == "absent":
+        settings.ClearField("image_scale")
+    elif change == "partial":
+        settings.image_scale.ClearField("distance_end")
+    elif change == "zero":
+        settings.image_scale.distance_mm = 0
+    elif change == "inconsistent":
+        settings.image_scale.pixels_per_mm = 5
+    else:
+        settings.image_scale.image_width_px = 101
+    configuration = candidate(settings)
+    assert not validate_configuration(configuration).valid
+    configuration.backends[0].enabled = False
+    assert validate_configuration(configuration).valid
+
+
+@pytest.mark.parametrize("unit", ["px/s", "mm/s"])
+def test_tracking_checks_stimulus_units_without_reinterpreting_old_gains(unit):
+    from tests.visual_stimulus.support import fixture_source
+
+    configuration = candidate(manual_settings())
+    visual = configuration.backends.add(backend_name="visual_stimulus", enabled=True)
+    program = json.loads(fixture_source())
+    program["input_channels"] = [
+        dict(
+            channel_id="forward_drive",
+            stream_id="tracking",
+            value_kind="interval_average_rate",
+            unit=unit,
+            frame_id="anatomical_body",
+        )
+    ]
+    configuration.trials.add().stimulus.program.program_json = json.dumps(program)
+    before = configuration.SerializeToString(deterministic=True)
+    validation = validate_configuration(configuration)
+    assert validation.valid == (unit == "mm/s")
+    assert configuration.SerializeToString(deterministic=True) == before
+    if not validation.valid:
+        assert "gain explicitly" in validation.issues[0].failure.message
+    visual.enabled = False
+    assert validate_configuration(configuration).valid
+
+
+def test_flow_only_diagnostic_allows_no_scale_but_locomotion_requires_it():
+    settings = manual_settings()
+    settings.input_camera_role = camera_pb2.CAMERA_ROLE_TRACKING
+    settings.ClearField("image_scale")
+    resolve_diagnostic(
+        settings,
+        (tracking_wire.TRACKING_DIAGNOSTIC_STAGE_OPTICAL_FLOW,),
+        _diagnostic_layout(),
+        max_bytes=1_000_000,
+    )
+    with pytest.raises(ValueError, match="image_scale"):
+        resolve_diagnostic(
+            settings, tuple(range(1, 6)), _diagnostic_layout(), max_bytes=1_000_000
+        )

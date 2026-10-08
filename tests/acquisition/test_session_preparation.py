@@ -8,14 +8,18 @@ from typing import cast
 
 import pytest
 
+from cephvr.acquisition.coordinator.session import SessionSetup
 from cephvr.acquisition.coordinator.session_preparation import SessionPreparation
 from cephvr.acquisition.coordinator.session_validation import validate_setup_request
 from cephvr.acquisition.state import (
+    ChildOperation,
     ConfigurationRecord,
     CoordinatorIdentity,
     PulseRecord,
+    WorkerRecord,
 )
 from cephvr.acquisition.v1 import camera_pb2 as camera
+from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.v1 import runtime_pb2 as runtime
 from cephvr.control.v1 import services_pb2 as wire
@@ -196,3 +200,111 @@ def test_setup_rejects_incomplete_output_closure_before_ready() -> None:
             configuration=configuration,
             clock=lambda: 1,
         )
+
+
+@pytest.mark.parametrize("ingress_ns", (50, 101))
+def test_setup_surfaces_retained_camera_failure_under_original_deadline(
+    ingress_ns: int,
+) -> None:
+    async def scenario() -> None:
+        operation = control.OperationContext(command_id="camera-setup")
+        child = ChildOperation(
+            command_id=operation.command_id,
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+            work=control.WorkContext(),
+            parent_operation=control.OperationContext(command_id="parent"),
+            kind="setup_session",
+            deadline_ns=100,
+        )
+        child.report = control.OperationState(
+            context=operation,
+            complete=True,
+            succeeded=False,
+            failure=control.Failure(code="ENCODER", message="unsupported input"),
+        )
+        child.report_ingress_ns = ingress_ns
+        worker = cast(
+            WorkerRecord,
+            SimpleNamespace(
+                setup_operation=operation,
+                child_operations={operation.command_id: child},
+                context=SimpleNamespace(camera=camera.CAMERA_ROLE_BEHAVIORAL),
+            ),
+        )
+        setup = cast(
+            SessionSetup, SimpleNamespace(lock=asyncio.Lock(), clock=lambda: 1)
+        )
+        error = RuntimeError if ingress_ns <= 100 else TimeoutError
+        match = "ENCODER: unsupported input" if ingress_ns <= 100 else "deadline"
+        with pytest.raises(error, match=match):
+            await SessionSetup._wait_worker_setup(setup, (worker,), 100)
+
+    asyncio.run(scenario())
+
+
+def test_trial_preparation_surfaces_exact_worker_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.acquisition.coordinator import trial_preparation as module
+
+    async def scenario() -> None:
+        work = control.WorkContext(trial=control.TrialContext(trial_id="trial"))
+        child = ChildOperation(
+            command_id="prepare",
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+            work=work,
+            parent_operation=control.OperationContext(command_id="parent"),
+            kind="prepare_trial",
+            deadline_ns=100,
+        )
+        child.report = control.OperationState(
+            context=control.OperationContext(command_id=child.command_id),
+            work=work,
+            complete=True,
+            succeeded=False,
+            failure=control.Failure(code="WRITER", message="cannot prepare output"),
+        )
+        child.report_ingress_ns = 50
+
+        async def prepare(payload, *, deadline_ns):
+            assert deadline_ns == 100 and payload.command.command_id == child.command_id
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+        port = SimpleNamespace(prepare_trial=prepare)
+        worker = SimpleNamespace(
+            port=port,
+            child_operations={child.command_id: child},
+            context=SimpleNamespace(camera=camera.CAMERA_ROLE_BEHAVIORAL),
+        )
+        monkeypatch.setattr(
+            module,
+            "retain_worker_command",
+            lambda *args, **kwargs: (
+                acq.WorkerCommand(command_id=child.command_id),
+                child,
+                port,
+            ),
+        )
+        preparation = cast(
+            module.TrialPreparation,
+            SimpleNamespace(
+                workers={camera.CAMERA_ROLE_BEHAVIORAL: worker},
+                lock=asyncio.Lock(),
+                clock=lambda: 1,
+            ),
+        )
+        with pytest.raises(RuntimeError, match="WRITER: cannot prepare output"):
+            await module.TrialPreparation._prepare_workers(
+                preparation,
+                SimpleNamespace(
+                    required_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+                    expected_attachments={},
+                ),
+                SimpleNamespace(work=work, configuration_revision=1),
+                wire.PrepareTrialRequest(
+                    command=wire.BackendCommand(command_id="parent")
+                ),
+                100,
+            )
+
+    asyncio.run(scenario())

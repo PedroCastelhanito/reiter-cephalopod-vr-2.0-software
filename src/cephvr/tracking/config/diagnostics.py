@@ -194,6 +194,10 @@ def resolve_diagnostic(
                 if spec.settings_schema_id != estimator.settings_schema_id:
                     raise ValueError("stages.estimator: settings schema mismatch")
                 if stage == wire.TRACKING_DIAGNOSTIC_STAGE_LOCOMOTION:
+                    if not settings.HasField("image_scale"):
+                        raise ValueError(
+                            "image_scale: locomotion requires two distance endpoints and known millimetres"
+                        )
                     complete = registry.resolve(
                         _stage_config(estimator), max_bytes=max_bytes
                     )[1]

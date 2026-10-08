@@ -1,0 +1,23 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "4a1e3d6d-2d44-4152-b1ce-e8de86f96c40"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "4a1e3d6d-2d44-4152-b1ce-e8de86f96c40",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "e9d110a2-081b-4043-8281-614aa3d4e441",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "error": "ClientError: REJECTED: Recover unfinished session at C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-134233. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\ReiterU_PC\\\\Desktop\\\\20261008_gui_backend_dummy\\\\DUMMY-134233\\\\protocol-data\\\\SESSION_CONFIG.json' Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect/stop that exact remote run manually before another paired session."
+}

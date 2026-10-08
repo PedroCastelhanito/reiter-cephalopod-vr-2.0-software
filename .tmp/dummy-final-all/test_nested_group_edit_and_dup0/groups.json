@@ -1,0 +1,391 @@
+{
+  "format_version": 2,
+  "assets": [
+    {
+      "asset_id": "stimulus_1",
+      "logical_path": "texture.png",
+      "color_override": null,
+      "profile": "png_uint_v1"
+    }
+  ],
+  "instances": [
+    {
+      "instance_id": "stimulus_1",
+      "family": "texture"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "blank",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": []
+    },
+    {
+      "scene_id": "scene_stimulus_1",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "stimulus_1"
+      ]
+    }
+  ],
+  "input_channels": [],
+  "duration": {
+    "kind": "explicit_epochs"
+  },
+  "sequence": [
+    {
+      "kind": "group",
+      "group_id": "Group_1",
+      "repetitions": 2,
+      "order": "as_listed",
+      "order_unit": "condition_rows",
+      "conditions": {
+        "columns": [
+          {
+            "column_id": "layer1_phase_x_function",
+            "value_type": "number",
+            "unit": "cycle/s"
+          },
+          {
+            "column_id": "layer1_phase_y_function",
+            "value_type": "number",
+            "unit": "cycle/s"
+          }
+        ],
+        "rows": [
+          {
+            "row_id": "Condition_1",
+            "cells": [
+              {
+                "column_id": "layer1_phase_x_function",
+                "value": -0.5
+              },
+              {
+                "column_id": "layer1_phase_y_function",
+                "value": -0.0
+              }
+            ]
+          },
+          {
+            "row_id": "Condition_2",
+            "cells": [
+              {
+                "column_id": "layer1_phase_x_function",
+                "value": -1.0
+              },
+              {
+                "column_id": "layer1_phase_y_function",
+                "value": -0.0
+              }
+            ]
+          }
+        ]
+      },
+      "body": [
+        {
+          "kind": "epoch",
+          "epoch_id": "Epoch_1",
+          "batch_label": "",
+          "scene_id": "scene_stimulus_1",
+          "duration": {
+            "kind": "fixed",
+            "duration": {
+              "seconds": "61"
+            }
+          },
+          "settings": [
+            {
+              "instance_id": "stimulus_1",
+              "space": {
+                "kind": "physical_surface",
+                "frame_id": "rig",
+                "mappings": [
+                  {
+                    "surface_id": "front",
+                    "matrix": [
+                      [
+                        1.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.0,
+                        1.0,
+                        0.0
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "initial": {
+                "x": 0.0,
+                "y": 0.0,
+                "rotation_deg": 0.0
+              },
+              "width": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "height": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "opacity": {
+                "kind": "constant",
+                "value": 1.0
+              },
+              "motion": {
+                "x": {
+                  "kind": "hold"
+                },
+                "y": {
+                  "kind": "hold"
+                },
+                "rotation": {
+                  "kind": "hold"
+                }
+              },
+              "reset": false,
+              "assignments": [],
+              "feedback": [],
+              "kind": "texture",
+              "pattern": {
+                "kind": "image_tile",
+                "asset_id": "stimulus_1",
+                "period_x": {
+                  "kind": "constant",
+                  "value": 20.0
+                },
+                "period_y": {
+                  "kind": "constant",
+                  "value": 20.0
+                },
+                "sampling": "linear"
+              },
+              "initial_phase_x_cycles": 0.0,
+              "initial_phase_y_cycles": 0.0,
+              "phase_x": {
+                "kind": "rate",
+                "function": {
+                  "kind": "constant",
+                  "value": {
+                    "kind": "condition",
+                    "group_id": "Group_1",
+                    "column_id": "layer1_phase_x_function"
+                  }
+                }
+              },
+              "phase_y": {
+                "kind": "rate",
+                "function": {
+                  "kind": "constant",
+                  "value": {
+                    "kind": "condition",
+                    "group_id": "Group_1",
+                    "column_id": "layer1_phase_y_function"
+                  }
+                }
+              },
+              "mean_linear_rgb": [
+                0.5,
+                0.5,
+                0.5
+              ],
+              "modulation_linear_rgb": [
+                0.5,
+                0.5,
+                0.5
+              ],
+              "contrast": {
+                "kind": "constant",
+                "value": 1.0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "group",
+      "group_id": "Copy_1",
+      "repetitions": 2,
+      "order": "as_listed",
+      "order_unit": "condition_rows",
+      "conditions": {
+        "columns": [
+          {
+            "column_id": "layer1_phase_x_function",
+            "value_type": "number",
+            "unit": "cycle/s"
+          },
+          {
+            "column_id": "layer1_phase_y_function",
+            "value_type": "number",
+            "unit": "cycle/s"
+          }
+        ],
+        "rows": [
+          {
+            "row_id": "Condition_1",
+            "cells": [
+              {
+                "column_id": "layer1_phase_x_function",
+                "value": -0.5
+              },
+              {
+                "column_id": "layer1_phase_y_function",
+                "value": -0.0
+              }
+            ]
+          },
+          {
+            "row_id": "Condition_2",
+            "cells": [
+              {
+                "column_id": "layer1_phase_x_function",
+                "value": -1.0
+              },
+              {
+                "column_id": "layer1_phase_y_function",
+                "value": -0.0
+              }
+            ]
+          }
+        ]
+      },
+      "body": [
+        {
+          "kind": "epoch",
+          "epoch_id": "Copy_2",
+          "batch_label": "",
+          "scene_id": "scene_stimulus_1",
+          "duration": {
+            "kind": "fixed",
+            "duration": {
+              "seconds": "61"
+            }
+          },
+          "settings": [
+            {
+              "instance_id": "stimulus_1",
+              "space": {
+                "kind": "physical_surface",
+                "frame_id": "rig",
+                "mappings": [
+                  {
+                    "surface_id": "front",
+                    "matrix": [
+                      [
+                        1.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.0,
+                        1.0,
+                        0.0
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "initial": {
+                "x": 0.0,
+                "y": 0.0,
+                "rotation_deg": 0.0
+              },
+              "width": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "height": {
+                "kind": "constant",
+                "value": 90.0
+              },
+              "opacity": {
+                "kind": "constant",
+                "value": 1.0
+              },
+              "motion": {
+                "x": {
+                  "kind": "hold"
+                },
+                "y": {
+                  "kind": "hold"
+                },
+                "rotation": {
+                  "kind": "hold"
+                }
+              },
+              "reset": false,
+              "assignments": [],
+              "feedback": [],
+              "kind": "texture",
+              "pattern": {
+                "kind": "image_tile",
+                "asset_id": "stimulus_1",
+                "period_x": {
+                  "kind": "constant",
+                  "value": 20.0
+                },
+                "period_y": {
+                  "kind": "constant",
+                  "value": 20.0
+                },
+                "sampling": "linear"
+              },
+              "initial_phase_x_cycles": 0.0,
+              "initial_phase_y_cycles": 0.0,
+              "phase_x": {
+                "kind": "rate",
+                "function": {
+                  "kind": "constant",
+                  "value": {
+                    "kind": "condition",
+                    "group_id": "Copy_1",
+                    "column_id": "layer1_phase_x_function"
+                  }
+                }
+              },
+              "phase_y": {
+                "kind": "rate",
+                "function": {
+                  "kind": "constant",
+                  "value": {
+                    "kind": "condition",
+                    "group_id": "Copy_1",
+                    "column_id": "layer1_phase_y_function"
+                  }
+                }
+              },
+              "mean_linear_rgb": [
+                0.5,
+                0.5,
+                0.5
+              ],
+              "modulation_linear_rgb": [
+                0.5,
+                0.5,
+                0.5
+              ],
+              "contrast": {
+                "kind": "constant",
+                "value": 1.0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+acquisition_tracking_worker ScheduleTrial 4ec7fa19-1761-4dbf-96f2-9cf00806e718 failed: TimeoutError: worker operation completed after its original deadline
+ReleaseTrial 87a23c10-eafa-4ff3-9221-8b439ced0921 failed: COMMAND_UNCONFIRMED: ReleaseTrial outcome is unconfirmed; do not retry with a new command ID: 
+acquisition_tracking_worker RecordPulseEvidence f97cce65-388c-4662-8ca0-4bd7ae5c74a8 failed: RuntimeError: worker session is not prepared
+InterruptSession b84e5ac3-5964-4003-be8f-290f057a30fa failed: SESSION_INTERRUPT_UNCONFIRMED: camera worker rejected Interrupt
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_OPERATION: worker operation report missed its original deadline
+InterruptSession a956e1ae-b5d1-4064-9ac3-2d53517824c5 failed: SESSION_IDENTITY: no exact live session
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_tracking_worker stopped reporting before its silence bound
+acquisition_tracking_worker RecordPulseEvidence f8d2188a-8b63-4584-9d4a-cf36245d28df failed: RuntimeError: worker session is not prepared
+Exception ignored in: <function SharedMemory.__del__ at 0x000001F52FE365C0>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

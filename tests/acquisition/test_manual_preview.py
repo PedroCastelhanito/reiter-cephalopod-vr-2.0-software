@@ -18,6 +18,7 @@ from cephvr.acquisition.coordinator.manual_device_status import (
     ManualDeviceStatusReporter,
 )
 from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+from cephvr.acquisition.coordinator.manual_preview_evidence import ManualPreviewEvidence
 from cephvr.acquisition.coordinator.manual_preview_pulse import (
     ManualPreviewPulseLifecycle,
 )
@@ -53,7 +54,7 @@ from cephvr.acquisition.worker.function_scopes import validate_camera_function_s
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.controller.device.tracking_diagnostic import TrackingDiagnosticController
-from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+from cephvr.platform.windows.resource_ledger import NativeResourceLedger, ResourceKey
 from cephvr.shared.commands import CommandLedger
 
 
@@ -1153,6 +1154,154 @@ def test_retired_tracking_preview_waits_for_both_rings_in_either_release_order()
     owner.close_retired_resource(preview)
     assert released == [tracking_id, preview_id]
     assert preview.run_id not in owner._retired
+
+
+def _manual_preview_evidence_case(tracking):
+    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    worker = control.ProcessIdentity(
+        role="acquisition_tracking_worker", generation=str(uuid4())
+    )
+    ledger = NativeResourceLedger(max_resources=4, max_transfers_per_resource=2)
+    resources = {}
+    attachments = []
+    for kind in ("preview", "tracking") if tracking else ("preview",):
+        allocation = str(uuid4())
+        attachment = acq.FrameBufferAttachment(
+            buffer=acq.FrameBufferDescriptor(
+                allocation_id=allocation, owner=owner, producer=worker
+            ),
+            sync=acq.RingSyncNames(target=worker, transfer_id=str(uuid4())),
+        )
+        key = ResourceKey(allocation, owner.generation)
+        ledger.register(key, kind=kind)
+        ledger.expect_attachment(
+            key,
+            peer_instance_id=worker.generation,
+            transfer_id=attachment.sync.transfer_id,
+        )
+        resources[allocation] = SimpleNamespace(attachment=attachment, ledger_key=key)
+        attachments.append(attachment)
+    preview = WorkerPreview(
+        run_id=str(uuid4()),
+        configuration_revision=1,
+        allocation_id=attachments[0].buffer.allocation_id,
+        worker_attachment=attachments[0],
+        tracking_allocation_id=attachments[1].buffer.allocation_id
+        if tracking
+        else None,
+        tracking_worker_attachment=attachments[1] if tracking else None,
+    )
+    record = SimpleNamespace(
+        preview=preview, launch=SimpleNamespace(worker=worker, owner=owner)
+    )
+    reports = ManualPreviewEvidence(resources, ledger)
+    return reports, record, attachments, ledger, resources, worker
+
+
+@pytest.mark.parametrize("tracking", (False, True))
+@pytest.mark.parametrize(
+    "case",
+    (
+        "valid",
+        "missing",
+        "extra",
+        "duplicate",
+        "wrong_transfer",
+        "wrong_worker",
+        "attached",
+        "released",
+    ),
+)
+def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+    reports, record, attachments, ledger, resources, worker = (
+        _manual_preview_evidence_case(tracking)
+    )
+    ready = acq.WorkerReadyEvidence()
+    for attachment in attachments:
+        ready.attached_resources.add(
+            resource_id=attachment.buffer.allocation_id,
+            transfer_id=attachment.sync.transfer_id,
+        )
+    if case == "missing":
+        del ready.attached_resources[-1]
+    elif case == "extra":
+        ready.attached_resources.add(resource_id=str(uuid4()), transfer_id=str(uuid4()))
+    elif case == "duplicate":
+        ready.attached_resources.add().CopyFrom(ready.attached_resources[0])
+    elif case == "wrong_transfer":
+        ready.attached_resources[-1].transfer_id = str(uuid4())
+    elif case == "wrong_worker":
+        attachments[-1].buffer.producer.generation = str(uuid4())
+    elif case in {"attached", "released"}:
+        attachment = attachments[-1]
+        key = resources[attachment.buffer.allocation_id].ledger_key
+        action = (
+            ledger.confirm_attachment if case == "attached" else ledger.confirm_release
+        )
+        action(
+            key,
+            peer_instance_id=worker.generation,
+            transfer_id=attachment.sync.transfer_id,
+        )
+    assert reports.attachments_match(record, ready) == (case == "valid")
+
+
+@pytest.mark.parametrize("tracking", (False, True))
+@pytest.mark.parametrize("exact", (False, True))
+@pytest.mark.parametrize(
+    "case",
+    (
+        "valid",
+        "missing",
+        "extra",
+        "duplicate",
+        "unreleased",
+        "failed",
+        "path",
+        "wrong_transfer",
+    ),
+)
+def test_manual_preview_cleanup_confirms_both_rings_only_after_complete_proof(
+    tracking, exact, case
+):
+    reports, record, attachments, ledger, resources, worker = (
+        _manual_preview_evidence_case(tracking)
+    )
+    cleanup = acq.WorkerCleanupEvidence()
+    for attachment in attachments:
+        cleanup.resources.add(resource=attachment.buffer.allocation_id, released=True)
+        ledger.confirm_attachment(
+            resources[attachment.buffer.allocation_id].ledger_key,
+            peer_instance_id=worker.generation,
+            transfer_id=attachment.sync.transfer_id,
+        )
+    if case == "missing":
+        del cleanup.resources[-1]
+    elif case == "extra":
+        cleanup.resources.add(
+            resource=f"camera-device:{worker.generation}", released=True
+        )
+    elif case == "duplicate":
+        cleanup.resources.add().CopyFrom(cleanup.resources[0])
+    elif case == "unreleased":
+        cleanup.resources[-1].released = False
+    elif case == "failed":
+        cleanup.resources[-1].failure.code = "RELEASE_FAILED"
+    elif case == "path":
+        cleanup.resources[-1].path = "unexpected-file"
+    elif case == "wrong_transfer":
+        attachments[-1].sync.transfer_id = str(uuid4())
+    valid = case == "valid" or case == "extra" and not exact
+    if valid:
+        reports.confirm_cleanup(record, cleanup, exact=exact)
+    else:
+        with pytest.raises(ValueError):
+            reports.confirm_cleanup(record, cleanup, exact=exact)
+    for resource in resources.values():
+        assert all(
+            item.released == valid
+            for item in ledger.snapshot(resource.ledger_key).transfers
+        )
 
 
 def test_tracking_worker_attachment_preserves_resource_ledger_transfer_id() -> None:

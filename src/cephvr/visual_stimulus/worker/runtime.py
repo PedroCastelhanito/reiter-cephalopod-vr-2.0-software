@@ -45,6 +45,7 @@ class VisualStimulusWorkerRuntime:
         self.display = pb.VisualStimulusDisplayView()
         self.shutdown_deadline_ns: int | None = None
         self.command_ids: set[str] = set()
+        self.supervisor_command_ids: set[str] = set()
         self.delivery_failed = delivery_failed
 
     def validate_command(self, method: str, request: Message) -> None:
@@ -126,6 +127,8 @@ class VisualStimulusWorkerRuntime:
         self.validate_command(method, request)
         command = worker_command(request)
         self.command_ids.add(command.command_id)
+        if command.issuer == self.supervisor:
+            self.supervisor_command_ids.add(command.command_id)
         if method == "Shutdown":
             self.shutdown_deadline_ns = min(
                 self.shutdown_deadline_ns or deadline_ns, deadline_ns
@@ -163,6 +166,11 @@ class VisualStimulusWorkerRuntime:
         self.ledger.complete_executor(
             command.command_id, outcome.SerializeToString(), self.clock()
         )
+        if command.command_id in self.supervisor_command_ids:
+            # Direct safety commands belong to Supervisor's retained query path.
+            return pb.CommandAdmission(
+                result=pb.COMMAND_RESULT_ACCEPTED, command_id=command.command_id
+            )
         try:
             await self.reports.receipt(
                 "ReportWorkerOperation",
@@ -257,6 +265,8 @@ class VisualStimulusWorkerRuntime:
             }
             for scope in scopes:
                 self.ledger.finalize_work(scope, self.clock())
+        if command in self.supervisor_command_ids:
+            return
         await self.reports.receipt(
             "ReportWorkerLifecycle", report, deadline_ns=deadline_ns
         )
@@ -268,6 +278,7 @@ class VisualStimulusWorkerRuntime:
             for command_id in self.command_ids
             if self.ledger.get(command_id) is not None
         }
+        self.supervisor_command_ids.intersection_update(self.command_ids)
         self.retained = {
             key: value
             for key, value in self.retained.items()

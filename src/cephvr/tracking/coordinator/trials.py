@@ -336,7 +336,7 @@ class Trials:
         layout = self.engine.image_layout
         return Header(
             kind="header",
-            schema_version=1,
+            schema_version=3,
             stream_kind="tracking",
             identity=RecordIdentity(
                 session_id=state.setup.plan.context.session_id,

@@ -5,11 +5,13 @@ from __future__ import annotations
 import asyncio
 import base64
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
 
 import pytest
 
+from cephvr.acquisition.coordinator.evidence_telemetry import WorkerTelemetryReports
 from cephvr.acquisition.coordinator.health import AcquisitionHealth
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.ports import (
@@ -20,6 +22,7 @@ from cephvr.acquisition.ports import (
 )
 from cephvr.acquisition.startup import decode_acquisition_bootstrap
 from cephvr.acquisition.state import (
+    ChildOperation,
     CoordinatorIdentity,
     LaunchRecord,
     SessionRecord,
@@ -31,6 +34,156 @@ from cephvr.acquisition.v1 import camera_pb2, runtime_pb2
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("case", ["plain", "evidence", "expired", "trial_seen"])
+async def test_camera_heartbeat_handoff_preserves_trial_evidence_fence(
+    case: str,
+) -> None:
+    session_work = control.WorkContext(
+        session=control.SessionContext(session_id="session")
+    )
+    trial_work = control.WorkContext(
+        trial=control.TrialContext(session=session_work.session, trial_id="trial")
+    )
+    parent = control.OperationContext(command_id="trial-prepare")
+    child = ChildOperation(
+        command_id="worker-prepare",
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=trial_work,
+        parent_operation=parent,
+        kind="prepare_trial",
+        deadline_ns=100,
+    )
+    worker = control.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation="worker"
+    )
+    record = SimpleNamespace(
+        launch=SimpleNamespace(worker=worker, work=session_work),
+        trial=SimpleNamespace(
+            preparation=control.OperationContext(command_id=child.command_id)
+        ),
+        child_operations={child.command_id: child},
+        heartbeat=None,
+    )
+    session = SimpleNamespace(
+        work=session_work,
+        trial=SimpleNamespace(work=trial_work, preparation=parent),
+        cleanup_complete=False,
+        cleanup_command_id=None,
+    )
+    reports = cast(
+        WorkerTelemetryReports,
+        SimpleNamespace(
+            workers={1: record}, current_session=lambda: session, lock=asyncio.Lock()
+        ),
+    )
+    heartbeat = control.HeartbeatReport(
+        source=worker,
+        work=session_work,
+        sent_monotonic_ns=50,
+        session_phase=control.SESSION_PHASE_READY,
+    )
+    if case == "evidence":
+        heartbeat.continuing_functions.add(
+            resource_id="behavioral.capture", functioning=True
+        )
+    if case == "trial_seen":
+        record.heartbeat = control.HeartbeatReport(
+            source=worker, work=trial_work, sent_monotonic_ns=40
+        )
+    receipt = await WorkerTelemetryReports.report_heartbeat(
+        reports, heartbeat, deadline_ns=200, ingress_ns=101 if case == "expired" else 50
+    )
+    assert receipt.result == (
+        control.COMMAND_RESULT_ACCEPTED
+        if case == "plain"
+        else control.COMMAND_RESULT_REJECTED
+    )
+    if case == "plain":
+        heartbeat.work.CopyFrom(trial_work)
+        heartbeat.sent_monotonic_ns = 60
+        assert (
+            await WorkerTelemetryReports.report_heartbeat(
+                reports, heartbeat, deadline_ns=200, ingress_ns=60
+            )
+        ).result == control.COMMAND_RESULT_ACCEPTED
+        heartbeat.work.CopyFrom(session_work)
+        heartbeat.sent_monotonic_ns = 70
+        assert (
+            await WorkerTelemetryReports.report_heartbeat(
+                reports, heartbeat, deadline_ns=200, ingress_ns=70
+            )
+        ).result == control.COMMAND_RESULT_REJECTED
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "case", ["pending", "complete", "expired", "wrong_parent", "active", "ready"]
+)
+async def test_camera_cleanup_heartbeat_requires_exact_quiet_terminal_scope(
+    case: str,
+) -> None:
+    work = control.WorkContext(session=control.SessionContext(session_id="session"))
+    trial = control.WorkContext(
+        trial=control.TrialContext(session=work.session, trial_id="trial")
+    )
+    worker = control.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation="worker"
+    )
+    child = ChildOperation(
+        command_id="child",
+        camera=1,
+        work=work,
+        parent_operation=control.OperationContext(
+            command_id="other" if case == "wrong_parent" else "cleanup"
+        ),
+        kind="cleanup",
+        deadline_ns=100,
+    )
+    record = SimpleNamespace(
+        launch=SimpleNamespace(worker=worker, work=work),
+        trial=None,
+        child_operations={"child": child},
+        heartbeat=control.HeartbeatReport(
+            source=worker, work=trial, sent_monotonic_ns=40
+        ),
+    )
+    session = SimpleNamespace(
+        work=work,
+        trial=SimpleNamespace(work=trial),
+        cleanup_complete=case == "complete",
+        cleanup_command_id="cleanup",
+    )
+    reports = cast(
+        WorkerTelemetryReports,
+        SimpleNamespace(
+            workers={1: record}, current_session=lambda: session, lock=asyncio.Lock()
+        ),
+    )
+    heartbeat = control.HeartbeatReport(
+        source=worker,
+        work=work,
+        sent_monotonic_ns=50,
+        session_phase=control.SESSION_PHASE_READY
+        if case == "ready"
+        else control.SESSION_PHASE_ENDED,
+    )
+    if case == "active":
+        heartbeat.continuing_functions.add(resource_id="capture", functioning=True)
+    receipt = await WorkerTelemetryReports.report_heartbeat(
+        reports,
+        heartbeat,
+        deadline_ns=300,
+        ingress_ns=200 if case in ("complete", "expired") else 50,
+    )
+    assert receipt.result == (
+        control.COMMAND_RESULT_ACCEPTED
+        if case in ("complete", "pending")
+        else control.COMMAND_RESULT_REJECTED
+    )
+    assert session.cleanup_complete == (case == "complete")
 
 
 class _HeartbeatSupervisor:

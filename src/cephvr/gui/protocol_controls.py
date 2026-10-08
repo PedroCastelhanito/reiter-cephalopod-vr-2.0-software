@@ -1,6 +1,6 @@
 """Responsive planner controls; program and history are owned by ProtocolEditor."""
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QKeySequence, QResizeEvent, QShortcut
 from PyQt6.QtWidgets import (
     QGridLayout,
@@ -173,12 +173,16 @@ class PlannerControls(QWidget):
         self.feedback = FormNotice()
         self.feedback.hide()
         self.settings_card.body.addWidget(self.feedback)
-        management = QHBoxLayout()
+        self.management = QGridLayout()
         self.layer_button = button("Layers…")
-        management.addWidget(self.layer_button)
-        management.addWidget(self.group_button)
-        management.addWidget(self.preview_button)
-        self.advanced_body.addLayout(management)
+        self.management_buttons = (
+            self.layer_button,
+            self.group_button,
+            self.preview_button,
+        )
+        for index, control in enumerate(self.management_buttons):
+            self.management.addWidget(control, 0, index)
+        self.advanced_body.addLayout(self.management)
         self.add_epoch_button.hide()
         self.modes.setCurrentIndex(1)
         self.modes.currentChanged.connect(self.arrange_mode)
@@ -191,10 +195,20 @@ class PlannerControls(QWidget):
         for editor in (self.name, self.duration):
             editor.setMinimumWidth(0)
 
+    def minimumSizeHint(self) -> QSize:  # noqa: N802
+        size = super().minimumSizeHint()
+        size.setWidth(0)
+        return size
+
     def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
         super().resizeEvent(event)
         # Keep all timeline actions readable when the slim Trials column leaves less room.
         stacked = self.width() < 700
+        for index, control in enumerate(self.management_buttons):
+            self.management.removeWidget(control)
+            self.management.addWidget(
+                control, index if stacked else 0, 0 if stacked else index
+            )
         if stacked == self._timeline_actions_stacked:
             return
         self._timeline_actions_stacked = stacked

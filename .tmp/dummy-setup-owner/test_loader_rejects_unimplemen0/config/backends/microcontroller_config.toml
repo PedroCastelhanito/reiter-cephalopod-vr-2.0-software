@@ -1,0 +1,25 @@
+# Controller-owned device settings; configure before Setup. A11/E14.
+format_version = 1
+policy_version = 1
+
+[microcontroller]
+# COM8 Uno answered a matched protocol-v2 CAPS/STATUS probe on 2026-10-05.
+# Protocol 3 host now requires the manually installed counted-diagnostic firmware.
+# Configurable before Setup; baud must match the firmware connection.
+baud_rate = 115200
+# Earlier applicable trial deadlines always win; this cannot extend reporting cutoffs.
+ack_timeout_ms = 100
+# Budget within the shared stop-report allowance, not another timeout or delay.
+# Includes camera stop/drain and command/report delivery; verify on the rig.
+stop_completion_margin_ms = 50
+# Configurable before the session; firmware stops after this time without keepalive.
+keepalive_interval_s = 1
+communication_timeout_s = 3
+port = "COM8"
+trial_state_pin = "D9"
+trial_state_enabled = true
+projector_flip_pin = "D2"
+projector_flip_enabled = true
+# Owner-assigned 2026-10-05; electrical levels and destination channels remain unverified.
+# Per-camera microcontroller_pin and pulse_frequency_hz belong to [cameras.<role>].
+# Configure before the session and lock for capture; preview uses the same frequency.

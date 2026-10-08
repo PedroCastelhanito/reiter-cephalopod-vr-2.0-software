@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-08",
+  "timezone": "Asia/Tokyo",
+  "task": "physical-reference-calibration",
+  "source_revision": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "source_scope": "Shared dirty Windows workspace with concurrent dummy-experiment repairs and temporary Visual Stimulus pacing. HEAD is not the full tested source snapshot.",
+  "source_sha256": {
+    "src/cephvr/gui/projector_measurements.py": "d7497c1ddf225e1972c26e86c676d2346ec4076dbc976f34cf08698dd6c62c8b",
+    "src/cephvr/gui/projector_measured_profiles.py": "70d6c72b10260e4ad7dddcdb0f1cec167c836554d5d4d7daa479c680047dcdc2",
+    "src/cephvr/gui/projectors.py": "1676258b32bf86214b3dca1024a287e188314d3cb43c6584103b8ed99bedc80c",
+    "src/cephvr/gui/calibration_files.py": "207e20726260b5c86727fca68be924ccf67ea92ca94cb17212940bf30da2ee66",
+    "src/cephvr/gui/projector_files.py": "6f5b75dd460e018989280232a1dc47c2cfa70fa23042d710140f29d282570b67",
+    "src/cephvr/gui/calibration_profile.py": "3e5af9e1f6995024f0fc529ef0c1f3c48249e66ff347266fae3e3b505ac3c6aa",
+    "src/cephvr/gui/trial_preview_surfaces.py": "8132117b8f222b72cbfafe33347ccb8d7742b9978f0b34dd4226f0d4d0131665",
+    "src/cephvr/gui/arena_movement.py": "b9779cdd94af62695b3b8021770333dca9153a6325a032f55f5621e3b7423ca3",
+    "src/cephvr/gui/feedback_signals.py": "c3c5e9d373f972743d09bff1b3b51af46cfebd23dc5b717a28ac43c893a9a92e",
+    "src/cephvr/gui/tracking_spatial.py": "0f579b3243bd30b1afc1bba651727a885c48578639685471aaa08ef903a04791",
+    "src/cephvr/gui/review_draft.py": "f8a989d73ffe105df574df47cb332fa6a89ede753fda4bc328a1676e4b759df0",
+    "src/cephvr/tracking/processing/physical_units.py": "3d45590a8edcb8b0e5b871fe4406d38b6632066467773df2f4d898181e2e06d7",
+    "src/cephvr/tracking/processing/movement.py": "f2cb65337ec515a3a5eae87a5e22ae9f1d412cecb7c885dee77eff0b5182e77b",
+    "src/cephvr/tracking/processing/session.py": "217add7e71be092a61c8cd680d688f0feffe7b712dce52b42500ae6264fbbdc5",
+    "src/cephvr/tracking/config/pipeline.py": "d34972877a4eb1b0de3cfad2ac41614a1bb740d5b7bed52b0609539d795dd981",
+    "src/cephvr/tracking/config/validation.py": "90db9726f837294983e46911bba9cafb123d955b6378a3446e603ba1a9192566",
+    "src/cephvr/tracking/config/diagnostics.py": "1a57da23593eb6931d1d87645442c794797d49e7111f2891fb246de6b15372c5",
+    "src/cephvr/tracking/config/files.py": "380b6d26eb354a00d6ef5b08a4dca438b762f9bac39fa2a94eb5c37333c912a5",
+    "src/cephvr/tracking/config/models/records.py": "b5b40826fd4fc154b8e328fc1bf03748c837d7e4f3d5ce3c2780e69ad9564f88",
+    "src/cephvr/tracking/recording_schema.py": "9130e7d9d228fa63700151261de4fd45c7ab21e860e18d1a7b7cac92db6a52bd",
+    "src/cephvr/tracking/coordinator/trials.py": "609edf178757bb5da45ca82f9b93fde9ff360fc8d9cf16b19329d57bfbcc8693",
+    "src/cephvr/visual_stimulus/config/calibration_bars.py": "6e77b9b88ae151ad94a57ae4986750175075c29400e11bebddc6cba306d63fe6",
+    "src/cephvr/visual_stimulus/rendering/reference_bars.py": "4c35e3149630e44a3e1cc1889eb9acd45cbb4873416bbffa44360c1c1c4f9e82",
+    "src/cephvr/visual_stimulus/rendering/display_calibration.py": "cad468fada9178b5252d5ce09ff1a21fde5a39b90f217484e8b6c73e7fbaabb6",
+    "contracts/policy/tracking_policy.toml": "8088192d5b1ba5ecfb55bd56e08a01220bceac5fee90f763a93fb0fedc66cffe",
+    "config/backends/tracking_config.toml": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c",
+    "tests/tracking/test_configuration.py": "fb5de3fd59c188e8da9df16e18e9acf4eb85b419420586c74507e576f727ec05",
+    "tests/tracking/test_processing.py": "e2fa972ff089fa44593d106bb54a0e17dc55a6f31fe41bd251a45a9108e19e4e",
+    "tests/tracking/test_recording.py": "ef8c392ef5cee384d2368207e4445de229c4a4cdee25d57e597fa19f583ed875",
+    "tests/tracking/support.py": "9a616edfc24942a4c04300bfce62c0d300df548141e01751afc3778f3cff985e",
+    "tests/gui/test_dashboard.py": "7088acc7ee5dfc3701a9c41d34ec4efdf551c48b57805afb1a30799c388dfef6",
+    "tests/visual_stimulus/test_rendering.py": "eb0a8169c2b596928682ca234c8c202eaca902efb8864d73ad8cffc1b40eda88",
+    "contracts/tracking/tracking-record.schema.json": "d2ed89c4cffc3428b5997fe28fa9182bb0f20fea325882e9723c82b3c3ad15c5"
+  },
+  "checks": [
+    {
+      "command": "python -m pytest tests/tracking tests/gui tests/visual_stimulus tests/controller/test_planning.py tests/controller/test_configuration_transactions.py -q -m \"not rig\" --basetemp=.tmp/physical-reference-all --tb=short --junitxml=reports/tracking-evidence-2026-10-08/physical-reference-tests.xml",
+      "outcome": "656 passed, 3 failed, 1 skipped, 1 rig deselected in 166.85 s. One stale GUI conflict fixture corrected. Two assertions depend on repository pacing remaining unset, while another chat deliberately sets calibration_front for a native dummy run."
+    },
+    {
+      "command": "python -m pytest tests/tracking tests/gui tests/visual_stimulus tests/controller/test_planning.py tests/controller/test_configuration_transactions.py -q -m \"not rig\" -k \"not default_and_file_policy_values_are_typed and not installed_visual_stimulus_policy_is_shared_by_edit_and_setup\" --basetemp=.tmp/physical-reference-final --tb=short --junitxml=reports/tracking-evidence-2026-10-08/physical-reference-final-tests.xml",
+      "outcome": "658 passed, 1 skipped, 3 deselected in 190.04 s. QT_QPA_PLATFORM=offscreen; authenticated local loopback permitted. Two pacing-dependent cases excluded plus one rig case."
+    },
+    {
+      "command": "python -m pytest tests/tracking/test_configuration.py tests/tracking/test_recording.py -q -m \"not rig\" --basetemp=.tmp/physical-reference-post-policy --tb=short",
+      "outcome": "57 passed in 2.18 s after final policy digest and active-Visual-Stimulus-only unit validation."
+    },
+    {
+      "command": "python -m pytest tests/gui/test_dashboard.py -q -k \"reference_measurements or old_projector_snapshot or measured_affine or custom_feedback_is_preserved\" --basetemp=.tmp/physical-reference-last-gui --tb=short --junitxml=reports/tracking-evidence-2026-10-08/physical-reference-post-review-gui.xml",
+      "outcome": "4 passed, 336 deselected in 1.89 s after final bounded generated-asset read/path validation."
+    },
+    {
+      "command": "python -m unittest discover -s contracts/tracking -p 'test_*.py' -q",
+      "outcome": "48 contract checks pass"
+    },
+    {
+      "command": "python contracts/tracking/schema_check.py",
+      "outcome": "19 schema definitions match; only changed record header declaration regenerated"
+    },
+    {
+      "command": "python contracts/visual_stimulus/generate_schemas.py --check",
+      "outcome": "11 schemas checked, zero drift"
+    },
+    {
+      "command": "python -m ruff check src/cephvr/tracking src/cephvr/gui src/cephvr/visual_stimulus tests/tracking tests/gui tests/visual_stimulus",
+      "outcome": "Pass"
+    },
+    {
+      "command": "python -m ruff format --check src/cephvr/tracking src/cephvr/gui src/cephvr/visual_stimulus tests/tracking tests/gui tests/visual_stimulus",
+      "outcome": "348 files formatted after correcting calibration_arena formatting"
+    },
+    {
+      "command": "python -m mypy --platform win32 src/cephvr/tracking src/cephvr/gui src/cephvr/visual_stimulus",
+      "outcome": "322 sources pass"
+    },
+    {
+      "command": "python tools/check_backend_boundaries.py",
+      "outcome": "625 backend modules, zero boundary violations; existing cohesion advisories reviewed"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen python .tmp/physical_reference_gui_qa.py",
+      "outcome": "760\u00d7374 measurement card rendered/read visually; offscreen Segoe UI loaded explicitly for QA. No native Windows/DPI acceptance claimed."
+    },
+    {
+      "command": "python .tmp/check_physical_reference_docs.py",
+      "outcome": "682 local links/anchors and 10 amended register entries pass"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "Pass; normalize changed text to repository UTF-8/LF"
+    }
+  ],
+  "limitations": [
+    "Two default/pacing-dependent cases remain affected by a concurrent temporary setting; it was preserved.",
+    "No hardware projector launch, camera calibration session, optical alignment, native DPI, swimming-speed accuracy, full-load, or durability acceptance run.",
+    "Measured mapping is local affine GUI calibration. Imported nonlinear/masked/weighted assets are preserved and rejected for automatic replacement.",
+    "Two projected axes assume the measured screen plane/optics; inferred throw distance is an ideal estimate requiring the effective throw ratio. Camera and projector scale are independent.",
+    "No legacy gain conversion or recording rewrite; video cadence padding remains separate open work."
+  ]
+}

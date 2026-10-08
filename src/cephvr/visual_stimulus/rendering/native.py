@@ -19,6 +19,7 @@ from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile, Output
 from cephvr.visual_stimulus.rendering.native_display import (
     NativeRenderingError,
+    attach_window_context,
     configure_window,
     idle_device_color,
     verify_framebuffer,
@@ -176,7 +177,7 @@ class ModernGLPort:
                     )
                 self._orphan_windows[output.output_id] = window
                 glfw.make_context_current(window)
-                context = self._moderngl.create_context(require=430)
+                context = attach_window_context(self._moderngl)
                 # Register ownership immediately after context creation so any
                 # subsequent capability/identity failure releases this context.
                 output_context = _OutputContext(
@@ -231,8 +232,8 @@ class ModernGLPort:
             cleanup_errors = self._release_partial(created)
             if cleanup_errors:
                 raise NativeRenderingError(
-                    "display initialization failed and partial resources remain: "
-                    + "; ".join(cleanup_errors)
+                    f"display initialization failed ({initialization_error}); "
+                    "partial resources remain: " + "; ".join(cleanup_errors)
                 ) from initialization_error
             raise
 

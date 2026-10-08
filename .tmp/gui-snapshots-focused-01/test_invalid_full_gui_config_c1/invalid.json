@@ -1,0 +1,312 @@
+{
+  "format": "cephvr-gui-config",
+  "version": 1,
+  "experiment": {
+    "dashboard": {
+      "subject_id": "must-not-be-restored",
+      "species": "Sepia officinalis",
+      "age": "",
+      "subject_size": "",
+      "experiment": "Optic flow",
+      "condition": "Baseline",
+      "output_root": "",
+      "sex": "Not specified"
+    },
+    "cameras": [
+      {
+        "serial": "REVIEW-001",
+        "role": "Behavior cam",
+        "enabled": true,
+        "values": {}
+      },
+      {
+        "serial": "REVIEW-002",
+        "role": "Tracking cam",
+        "enabled": true,
+        "values": {}
+      }
+    ],
+    "recordings": {
+      "stimulus": true,
+      "velocities": false,
+      "cameras": {
+        "REVIEW-001": true,
+        "REVIEW-002": true
+      }
+    }
+  },
+  "protocol": {
+    "unexpected": true
+  },
+  "microcontroller": {
+    "format": "cephvr-microcontroller-config",
+    "version": 1,
+    "port": "",
+    "firmware_path": "",
+    "trial_state": {
+      "pin": "",
+      "enabled": true
+    },
+    "projector_flip": {
+      "pin": "",
+      "enabled": true
+    },
+    "camera_pins": {
+      "camera-1": "",
+      "camera-2": ""
+    }
+  },
+  "projectors": {
+    "configuration": {
+      "format": "cephvr-rig-calibration",
+      "version": 4,
+      "values": {
+        "rig.width": null,
+        "rig.depth": null,
+        "rig.height": null,
+        "rig.subject_x": null,
+        "rig.subject_y": null,
+        "rig.subject_z": null,
+        "projection.near_mm": null,
+        "projection.far_mm": null,
+        "projection.positional_tolerance_mm": null,
+        "projection.orthogonality_tolerance": null,
+        "screens.Front.width": null,
+        "screens.Front.height": null,
+        "screens.Front.distance": null,
+        "screens.Front.throw": null,
+        "screens.Left.width": null,
+        "screens.Left.height": null,
+        "screens.Left.distance": null,
+        "screens.Left.throw": null,
+        "screens.Right.width": null,
+        "screens.Right.height": null,
+        "screens.Right.distance": null,
+        "screens.Right.throw": null,
+        "screens.Bottom.width": null,
+        "screens.Bottom.height": null,
+        "screens.Bottom.distance": null,
+        "screens.Bottom.throw": null,
+        "screens.Front.reference_x_mm": null,
+        "screens.Front.reference_y_mm": null,
+        "screens.Front.reference_width_px": null,
+        "screens.Front.reference_height_px": null,
+        "screens.Left.reference_x_mm": null,
+        "screens.Left.reference_y_mm": null,
+        "screens.Left.reference_width_px": null,
+        "screens.Left.reference_height_px": null,
+        "screens.Right.reference_x_mm": null,
+        "screens.Right.reference_y_mm": null,
+        "screens.Right.reference_width_px": null,
+        "screens.Right.reference_height_px": null,
+        "screens.Bottom.reference_x_mm": null,
+        "screens.Bottom.reference_y_mm": null,
+        "screens.Bottom.reference_width_px": null,
+        "screens.Bottom.reference_height_px": null,
+        "screens.Left.subject_distance": null,
+        "screens.Front.subject_distance": null,
+        "screens.Bottom.subject_distance": null,
+        "screens.Front.flip_x": false,
+        "screens.Front.flip_y": false,
+        "screens.Front.scale_u": null,
+        "screens.Front.scale_v": null,
+        "screens.Front.offset_x": null,
+        "screens.Front.offset_y": null,
+        "screens.Left.flip_x": false,
+        "screens.Left.flip_y": false,
+        "screens.Left.scale_u": null,
+        "screens.Left.scale_v": null,
+        "screens.Left.offset_x": null,
+        "screens.Left.offset_y": null,
+        "screens.Right.flip_x": false,
+        "screens.Right.flip_y": false,
+        "screens.Right.scale_u": null,
+        "screens.Right.scale_v": null,
+        "screens.Right.offset_x": null,
+        "screens.Right.offset_y": null,
+        "screens.Bottom.flip_x": false,
+        "screens.Bottom.flip_y": false,
+        "screens.Bottom.scale_u": null,
+        "screens.Bottom.scale_v": null,
+        "screens.Bottom.offset_x": null,
+        "screens.Bottom.offset_y": null
+      },
+      "settings": {
+        "enabled_screens": {},
+        "photodiode_enabled": false,
+        "pulse_screen": null,
+        "vsync_mode": "Selected display VSync",
+        "pulse_rect": {
+          "X": null,
+          "Y": null,
+          "Width": null,
+          "Height": null
+        }
+      },
+      "screen_profile": null
+    },
+    "assignments": {},
+    "participation": {}
+  },
+  "spikeglx": {
+    "format": "cephvr-spikeglx-config",
+    "version": 1,
+    "host_reference": {
+      "pairing": false,
+      "address": "",
+      "command_port": ""
+    },
+    "rows": [
+      {
+        "key": "camera-1",
+        "signal": "Behavior cam",
+        "stream": "OneBox",
+        "index": "",
+        "channel": "",
+        "bit": "",
+        "enabled": true,
+        "role": 1,
+        "source_id": "",
+        "custom": false
+      },
+      {
+        "key": "camera-2",
+        "signal": "Tracking cam",
+        "stream": "OneBox",
+        "index": "",
+        "channel": "",
+        "bit": "",
+        "enabled": true,
+        "role": 2,
+        "source_id": "",
+        "custom": false
+      },
+      {
+        "key": "trial-state",
+        "signal": "Trial state",
+        "stream": "OneBox",
+        "index": "",
+        "channel": "",
+        "bit": "",
+        "enabled": true,
+        "role": null,
+        "source_id": "",
+        "custom": false
+      },
+      {
+        "key": "projector-flip",
+        "signal": "Projector flip",
+        "stream": "OneBox",
+        "index": "",
+        "channel": "",
+        "bit": "",
+        "enabled": true,
+        "role": null,
+        "source_id": "",
+        "custom": false
+      }
+    ]
+  },
+  "tracking": {
+    "format": "cephvr-tracking-ui-draft",
+    "version": 4,
+    "diagnostics": {
+      "pose": false,
+      "sampling_region": false,
+      "optical_flow": false,
+      "flow_quality": false,
+      "locomotion": false
+    },
+    "camera": "REVIEW-002",
+    "preprocessing": {
+      "crop_enabled": false,
+      "scale_percent": 100,
+      "region": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "distance_mm": "",
+    "pipeline": "Water flow",
+    "fields": {
+      "threshold": "",
+      "minimum_area": "",
+      "maximum_area": "",
+      "model_manifest": "",
+      "candidate_score": "",
+      "landmark_score": "",
+      "anisotropy": "",
+      "axis_length": "",
+      "base_width": "",
+      "triangle_area": "",
+      "front_fraction": "0.60",
+      "taper": "0.4",
+      "squareness": "3.5",
+      "sections": "12",
+      "inner_clearance": "0.1",
+      "outer_extent": "0.75",
+      "fin_offset": "",
+      "fin_span": "",
+      "smoothing": "0.08",
+      "coverage": "0.25",
+      "minimum_neighbors": "4",
+      "radius": "1",
+      "noise_floor": "0.1",
+      "residual": "2.0"
+    },
+    "choices": {
+      "pose_method": "Manual",
+      "polarity": "Dark subject",
+      "flow_grid": "4 px",
+      "flow_preset": "Slow"
+    },
+    "analysis_drafts": {
+      "Water flow": {
+        "front_fraction": "0.60",
+        "taper": "0.4",
+        "squareness": "3.5",
+        "sections": "12",
+        "inner_clearance": "0.1",
+        "outer_extent": "0.75",
+        "fin_offset": "",
+        "fin_span": "",
+        "smoothing": "0.08",
+        "coverage": "0.25",
+        "minimum_neighbors": "4",
+        "radius": "1",
+        "noise_floor": "0.1",
+        "residual": "2.0"
+      },
+      "Fin flow": {
+        "front_fraction": "0.60",
+        "taper": "0.4",
+        "squareness": "3.5",
+        "sections": "12",
+        "inner_clearance": "0.1",
+        "outer_extent": "0.75",
+        "fin_offset": "",
+        "fin_span": "",
+        "smoothing": "0.08",
+        "coverage": "0.25",
+        "minimum_neighbors": "4",
+        "radius": "1",
+        "noise_floor": "0.1",
+        "residual": "2.0"
+      }
+    },
+    "annotations": {
+      "Reference points": [],
+      "Manual pose": [],
+      "Search region": [],
+      "Input crop": [],
+      "Distance reference": []
+    },
+    "image_size": [
+      0,
+      0
+    ],
+    "annotation_source": null
+  }
+}

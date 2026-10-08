@@ -15,6 +15,14 @@ def manual_settings() -> pb.TrackingSettings:
     )
     settings.manual_pose.image_width_px = 100
     settings.manual_pose.image_height_px = 100
+    settings.image_scale.image_width_px = 100
+    settings.image_scale.image_height_px = 100
+    settings.image_scale.distance_start.x_px = 0
+    settings.image_scale.distance_start.y_px = 0
+    settings.image_scale.distance_end.x_px = 20
+    settings.image_scale.distance_end.y_px = 0
+    settings.image_scale.distance_mm = 10
+    settings.image_scale.pixels_per_mm = 2
     for name, xy in (
         ("tip", (20.0, 50.0)),
         ("left_base", (70.0, 30.0)),

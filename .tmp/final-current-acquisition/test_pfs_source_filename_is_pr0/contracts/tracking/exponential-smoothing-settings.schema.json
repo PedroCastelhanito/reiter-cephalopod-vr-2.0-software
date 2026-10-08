@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "description": "T45: one source-time constant for all three drive channels; default 0.08 s.",
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "time_constant_s": {
+      "exclusiveMinimum": 0,
+      "title": "Time Constant S",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "time_constant_s"
+  ],
+  "title": "ExponentialSmoothingSettings",
+  "type": "object"
+}

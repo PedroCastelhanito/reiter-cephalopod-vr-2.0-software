@@ -1,0 +1,131 @@
+CASE test_responsive_navigation_preserves_widget_identity
+ASSERTION REPRODUCED
+ QWidget  width 508 minhint 508
+  Card  width 508 minhint 508
+   QLabel System controls width 252 minhint 252
+   StatusIndicator Visual stimulus width 217 minhint 217
+  Card  width 508 minhint 268
+   QLabel Session config width 236 minhint 236
+  RecordingsCard  width 508 minhint 344
+CASE test_protocol_cards_reflow_and_keep_properties_reachable
+ASSERTION REPRODUCED
+ QWidget  width 641 minhint 641
+  StimulusAssetsCard  width 641 minhint 252
+   QLabel Assets folder width 220 minhint 220
+  Card  width 641 minhint 318
+   QLabel Protocol type width 220 minhint 220
+  ProtocolEditor  width 641 minhint 641
+   Card  width 208 minhint 218
+   Card  width 419 minhint 268
+    QLabel Trial timeline width 236 minhint 236
+    QWidget  width 387 minhint 376
+     QWidget  width 253 minhint 253
+   Card  width 641 minhint 641
+    QLabel Epoch editor width 204 minhint 204
+    QWidget  width 214 minhint 214
+    BatchCreate  width 640 minhint 276
+     Card  width 640 minhint 276
+      QLabel Variation rules width 640 minhint 252
+      QWidget  width 640 minhint 286
+       QPushButton + Add variation rule width 640 minhint 286
+    QWidget  width 609 minhint 609
+     QPushButton Close all parameters width 609 minhint 286
+     ScreenScope  width 640 minhint 286
+      QPushButton Per-screen settings� width 640 minhint 286
+     StimulusParameters  width 640 minhint 308
+      QWidget  width 640 minhint 308
+       Card  width 640 minhint 308
+        QLabel Advanced settings width 640 minhint 284
+     GroupEditor  width 640 minhint 312
+      QPushButton Edit epochs in group width 640 minhint 286
+      QPushButton Edit condition values� width 640 minhint 312
+      QPushButton Apply group changes width 640 minhint 273
+     QPushButton Repeat / vary� width 208 minhint 208
+     QPushButton Expanded sequence� width 260 minhint 260
+CASE test_variation_controls_fit_narrow_protocol_without_horizontal_scroll
+ASSERTION REPRODUCED
+ QWidget  width 1065 minhint 1065
+  StimulusAssetsCard  width 1065 minhint 252
+   QLabel Assets folder width 220 minhint 220
+  Card  width 1065 minhint 318
+   QLabel Protocol type width 220 minhint 220
+  ProtocolEditor  width 1065 minhint 1065
+   Card  width 208 minhint 218
+   Card  width 843 minhint 278
+    QLabel Trial timeline width 236 minhint 236
+    QWidget  width 565 minhint 376
+     QWidget  width 253 minhint 253
+   Card  width 1065 minhint 1065
+    QLabel Epoch editor width 204 minhint 204
+    QWidget  width 426 minhint 214
+    BatchCreate  width 1033 minhint 1033
+     EpochComposer  width 1033 minhint 1033
+      ProjectorReference  width 1033 minhint 1033
+       StimulusParameters  width 1033 minhint 390
+        QWidget  width 1033 minhint 390
+         Card  width 951 minhint 308
+          QLabel Advanced settings width 284 minhint 284
+      ProjectorReference  width 1033 minhint 856
+       StimulusParameters  width 640 minhint 308
+        QWidget  width 640 minhint 308
+         Card  width 640 minhint 308
+          QLabel Advanced settings width 640 minhint 284
+     Card  width 1033 minhint 358
+      QLabel Variation rules width 252 minhint 252
+      QWidget  width 1009 minhint 334
+       QPushButton + Add variation rule width 1009 minhint 286
+       BatchVariationRow  width 1009 minhint 334
+    QWidget  width 640 minhint 609
+     QPushButton Close all parameters width 640 minhint 286
+     ScreenScope  width 640 minhint 286
+      QPushButton Per-screen settings� width 640 minhint 286
+     StimulusParameters  width 640 minhint 308
+      QWidget  width 640 minhint 308
+       Card  width 640 minhint 308
+        QLabel Advanced settings width 640 minhint 284
+     GroupEditor  width 640 minhint 312
+      QPushButton Edit epochs in group width 640 minhint 286
+      QPushButton Edit condition values� width 640 minhint 312
+      QPushButton Apply group changes width 640 minhint 273
+     QPushButton Repeat / vary� width 640 minhint 208
+     QPushButton Expanded sequence� width 640 minhint 260
+CASE test_random_batch_values_stay_fixed_across_preview_and_save
+ASSERTION REPRODUCED
+ QWidget  width 584 minhint 490
+  StimulusAssetsCard  width 584 minhint 252
+   QLabel Assets folder width 220 minhint 220
+  Card  width 584 minhint 318
+   QLabel Protocol type width 220 minhint 220
+  ProtocolEditor  width 584 minhint 490
+   Card  width 208 minhint 218
+   Card  width 362 minhint 268
+    QLabel Trial timeline width 236 minhint 236
+    QWidget  width 330 minhint 376
+     QWidget  width 207 minhint 253
+   Card  width 584 minhint 379
+    QLabel Epoch editor width 204 minhint 204
+    QWidget  width 214 minhint 214
+    BatchCreate  width 640 minhint 522
+     EpochComposer  width 640 minhint 522
+      ProjectorReference  width 640 minhint 522
+     Card  width 640 minhint 392
+      QLabel Variation rules width 640 minhint 252
+      QWidget  width 640 minhint 368
+       QPushButton + Add variation rule width 640 minhint 286
+       BatchVariationRow  width 640 minhint 368
+        QWidget  width 640 minhint 368
+       BatchVariationRow  width 640 minhint 334
+    QWidget  width 640 minhint 609
+     QPushButton Close all parameters width 640 minhint 286
+     ScreenScope  width 640 minhint 286
+      QPushButton Per-screen settings� width 640 minhint 286
+     StimulusParameters  width 640 minhint 308
+      QWidget  width 640 minhint 308
+       Card  width 640 minhint 308
+        QLabel Advanced settings width 640 minhint 284
+     GroupEditor  width 640 minhint 312
+      QPushButton Edit epochs in group width 640 minhint 286
+      QPushButton Edit condition values� width 640 minhint 312
+      QPushButton Apply group changes width 640 minhint 273
+     QPushButton Repeat / vary� width 640 minhint 208
+     QPushButton Expanded sequence� width 640 minhint 260

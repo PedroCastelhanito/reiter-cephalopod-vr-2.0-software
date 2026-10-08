@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-from uuid import uuid4
 
+from cephvr.acquisition.coordinator.commands import retain_worker_command
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
     retain_applied_pulse_state,
 )
@@ -174,23 +174,20 @@ class TrialPulseBoundaries:
         for worker in self.workers.values():
             if worker.port is None or worker.trial is None:
                 continue
-            command_id = str(uuid4())
-            command = acq.WorkerCommand(
-                command_id=command_id,
-                issuer=self.identity.process,
-                target=worker.context,
-                parent_operation=trial.schedule
-                or control.OperationContext(command_id=command_id),
+            command, _operation, port = retain_worker_command(
+                worker,
+                work=trial.work,
+                parent_operation=trial.schedule or trial.preparation,
+                kind="record_pulse_evidence",
+                deadline_ns=deadline_ns,
+                configuration_revision=trial.configuration_revision,
             )
-            command.target.work.CopyFrom(trial.work)
             pulse = acq.WorkerPulseEvidence(
                 command=command,
                 camera=worker.context.camera,
                 evidence=evidence,
             )
-            calls.append(
-                worker.port.record_pulse_evidence(pulse, deadline_ns=deadline_ns)
-            )
+            calls.append(port.record_pulse_evidence(pulse, deadline_ns=deadline_ns))
         if not calls:
             return
         results = await asyncio.gather(*calls, return_exceptions=True)

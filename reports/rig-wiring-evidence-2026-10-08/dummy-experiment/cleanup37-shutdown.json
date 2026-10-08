@@ -1,0 +1,27 @@
+{
+  "controller_generation": "b482f605-1c4a-4ffd-9a40-49686abe3be0",
+  "save": {
+    "command_id": "b3c754b8-1cd1-45fe-acbf-dda1908d7fc0",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "shutdown": {
+    "command_id": "e8d8943f-32bd-41d8-889b-a0dcb24d3588",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  },
+  "exit_receipt": {
+    "controller_generation": "b482f605-1c4a-4ffd-9a40-49686abe3be0",
+    "supervisor_generation": "40e082b7-f45f-4cd0-b673-3066b7f681b4",
+    "observed_monotonic_ns": 682727621157800,
+    "all_owned_processes_absent": true,
+    "format_version": 1,
+    "controller_channel_loss": "eof"
+  },
+  "application_guard_released": true,
+  "history_matches_accepted_configuration": true
+}

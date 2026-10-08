@@ -29,6 +29,39 @@ def test_adapter_construction_does_not_load_pypylon() -> None:
     assert adapter._camera is None
 
 
+@pytest.mark.parametrize("trigger_mode", ["On", "Off"])
+def test_setting_saved_rate_preserves_external_pfs_limiter(
+    monkeypatch, trigger_mode
+) -> None:
+    from cephvr.acquisition.camera import settings as mapping
+    from cephvr.acquisition.camera.types import CameraSettings
+
+    requested = CameraSettings(None, None, 30.0, None, None, None, None, None, None)
+    writes = []
+    nodes = object()
+    monkeypatch.setattr(mapping, "_disable_supported_auto", lambda *args: None)
+    monkeypatch.setattr(mapping, "apply_roi", lambda *args: None)
+    monkeypatch.setattr(mapping, "_apply_float", lambda *args: None)
+    monkeypatch.setattr(mapping, "read_settings", lambda camera: requested)
+    monkeypatch.setattr(mapping, "get_node", lambda *args: object())
+    values = {"TriggerMode": trigger_mode, "AcquisitionFrameRateEnable": False}
+    monkeypatch.setattr(mapping, "read_value", lambda nodes, key: values.get(key))
+
+    def write(nodes, key, value):
+        writes.append((key, value))
+        values[key] = value
+
+    monkeypatch.setattr(mapping, "write_value", write)
+    result = mapping.apply_settings(
+        SimpleNamespace(GetNodeMap=lambda: nodes), requested, object()
+    )
+    assert result.actual == requested
+    assert values["AcquisitionFrameRateEnable"] == (trigger_mode == "Off")
+    assert writes == (
+        [("AcquisitionFrameRateEnable", True)] if trigger_mode == "Off" else []
+    )
+
+
 def test_absent_sdk_node_is_optional_only_for_readback() -> None:
     class LogicalErrorException(Exception):
         pass
@@ -40,6 +73,44 @@ def test_absent_sdk_node_is_optional_only_for_readback() -> None:
     assert read_value(nodes, "BslEffectiveExposureTime") is None
     with pytest.raises(CameraAdapterError, match="required mapped feature"):
         write_value(nodes, "TriggerSource", "Line4")
+
+
+@pytest.mark.parametrize("external", [True, False])
+def test_resolution_selects_requested_timing_before_applying_saved_rate(
+    monkeypatch, external
+) -> None:
+    from unittest.mock import MagicMock
+
+    from cephvr.acquisition.v1 import camera_pb2 as camera
+    from cephvr.acquisition.v1 import messages_pb2 as acq
+    from cephvr.acquisition.worker import camera_resolution as resolution
+
+    adapter = MagicMock()
+    expected = "external_trigger" if external else "free_running"
+
+    def apply(settings):
+        adapter.configure_capture.assert_called_once_with(expected, 1)
+        return SimpleNamespace(
+            applied=settings, actual=settings, effective_exposure_us=None
+        )
+
+    adapter.apply_settings.side_effect = apply
+    monkeypatch.setattr(
+        resolution,
+        "resolved_state_to_wire",
+        lambda **kwargs: camera.CameraResolvedState(),
+    )
+    request = acq.WorkerResolveCamera(
+        configuration_revision=1,
+        requested=camera.CameraDeviceConfiguration(
+            device_id="CAM-1",
+            frame_timing=camera.FRAME_TIMING_EXTERNAL_TRIGGER
+            if external
+            else camera.FRAME_TIMING_FREE_RUNNING,
+        ),
+    )
+    resolution.resolve_camera(adapter, request)
+    adapter.apply_settings.assert_called_once()
 
 
 def test_other_sdk_lookup_failure_is_not_hidden() -> None:
@@ -345,8 +416,9 @@ def test_first_pfs_import_opens_assigned_camera_and_retains_sdk_readback(
 
 @pytest.mark.parametrize("revision", [3, 4, 5, 6])
 @pytest.mark.parametrize("changed", [False, True])
+@pytest.mark.parametrize("session", [False, True])
 def test_preview_adoption_requires_retained_sdk_payload_and_exact_revision(
-    revision: int, changed: bool, monkeypatch: pytest.MonkeyPatch
+    revision: int, changed: bool, session: bool, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from cephvr.acquisition.v1 import camera_pb2 as camera
     from cephvr.acquisition.v1 import messages_pb2 as acq
@@ -359,18 +431,23 @@ def test_preview_adoption_requires_retained_sdk_payload_and_exact_revision(
     owner._retain(resolved)
     installed = []
     monkeypatch.setattr(owner, "install_owned_functions", installed.append)
-    request = acq.WorkerPreparePreview(configuration_revision=revision)
+    request = (
+        acq.WorkerSetupSession(configuration_revision=revision)
+        if session
+        else acq.WorkerPreparePreview(configuration_revision=revision)
+    )
+    adopt = owner.require_adopted_setup if session else owner.require_adopted_preview
     request.camera.device.CopyFrom(resolved.applied)
     if changed:
         request.camera.device.device_id = "CAM-2"
     if revision not in (4, 5):
         with pytest.raises(RuntimeError, match="adopted camera revision"):
-            owner.require_adopted_preview(request)
+            adopt(request)
     elif changed:
         with pytest.raises(ValueError, match="retained camera result"):
-            owner.require_adopted_preview(request)
+            adopt(request)
     else:
-        owner.require_adopted_preview(request)
+        adopt(request)
         assert installed == [request.camera]
         assert state.confirmed_configuration_revision == revision
         return

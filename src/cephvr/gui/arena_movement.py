@@ -46,7 +46,7 @@ class ArenaMovement(QWidget):
             gain.setMinimumWidth(0)
             gain.setAccessibleName(f"{name} gain")
             gain.setToolTip(
-                f"{name} gain ({'°/rad' if index == 2 else 'mm/px'}); signed values reverse movement"
+                f"{name} gain ({'deg/deg' if index == 2 else 'mm/mm'}); signed values reverse movement"
             )
             gain.setEnabled(value != 0)
             axis.toggled.connect(gain.setEnabled)

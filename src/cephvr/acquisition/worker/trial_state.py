@@ -25,7 +25,7 @@ class WorkerTrialState:
     purge_evidence: PurgeEvidence | None = None
     pulses: TrialPulseEvidence = field(default_factory=TrialPulseEvidence)
     finished_future: Future[list[control.OutputResult]] | None = None
-    stop_request: acq.WorkerStop | acq.WorkerInterrupt | None = None
+    stop_request: acq.WorkerStop | acq.WorkerInterrupt | acq.WorkerCommand | None = None
     finish_deadline_ns: int | None = None
     transport_start: TransportCounters | None = None
     transport_summary: dict[str, int | None] | None = None

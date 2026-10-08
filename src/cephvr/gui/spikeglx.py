@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import Card, button, combo, label
 from cephvr.gui.device_panel import DevicePanel, entry
+from cephvr.gui.spikeglx_snapshot import SpikeGLXSnapshot
 from cephvr.gui.tables import DataTable
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView
@@ -58,6 +59,7 @@ class SpikeGLXPanel(DevicePanel):
         self.table.setHorizontalHeaderLabels(
             ["Use", "Signal", "Stream", "Index", "Channel", "Bit", ""]
         )
+        self.table.setColumnHidden(2, True)
         header = self.table.horizontalHeader()
         assert header is not None
         for column, width in ((0, 42), (2, 102), (3, 58), (4, 82), (5, 48), (6, 40)):
@@ -85,6 +87,8 @@ class SpikeGLXPanel(DevicePanel):
         layout = self.columns[0].layout()
         assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(1, self.mapping)
+        self.snapshots = SpikeGLXSnapshot(self)
+        self.config_files = self.snapshots.files
 
     def add_row(self, key: str, name: str, *, custom: bool = False) -> None:
         signal = entry("Input name") if custom else label(name)
@@ -133,6 +137,10 @@ class SpikeGLXPanel(DevicePanel):
         self.custom_count += 1
         source_id = f"custom-{self.custom_count}"
         key = f"custom:{source_id}"
+        while key in self.rows:
+            self.custom_count += 1
+            source_id = f"custom-{self.custom_count}"
+            key = f"custom:{source_id}"
         self.add_row(key, "Other input", custom=True)
         from PyQt6.QtWidgets import QLineEdit
 
@@ -200,6 +208,7 @@ class SpikeGLXPanel(DevicePanel):
         self.refresh_controls()
 
     def refresh_controls(self) -> None:
+        self.config_files.set_enabled(self.can_review)
         self.add_input.setEnabled(self.can_review)
         self.save_inventory.setEnabled(self.can_review)
         for key, controls in self.rows.items():

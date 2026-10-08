@@ -1,0 +1,38 @@
+..F........                                                              [100%]
+================================== FAILURES ===================================
+____________ test_responsive_navigation_preserves_widget_identity _____________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000002B43BB90A60>
+window = <cephvr.gui.window.DashboardWindow object at 0x000002B43FA2B370>
+
+    def test_responsive_navigation_preserves_widget_identity(
+        app: QApplication, window: DashboardWindow
+    ) -> None:
+        subject = window.dashboard.subject_id
+        subject.setText("PERSISTENT")
+        modes = set()
+        for width in (1440, 1100, 720, 1440):
+            window.resize(width, 940)
+            app.processEvents()
+            modes.add(window.dashboard.mode)
+            for index in range(4):
+                window.page_buttons[index].click()
+                app.processEvents()
+                assert window.stack.currentIndex() == index
+            window.page_buttons[0].click()
+            app.processEvents()
+            assert window.dashboard.subject_id is subject
+            assert subject.text() == "PERSISTENT"
+            assert subject.parentWidget() is not None
+>           assert window.dashboard_scroll.horizontalScrollBar().maximum() == 0
+E           assert 69 == 0
+E            +  where 69 = <built-in method maximum of QScrollBar object at 0x000002B43FA2B130>()
+E            +    where <built-in method maximum of QScrollBar object at 0x000002B43FA2B130> = <PyQt6.QtWidgets.QScrollBar object at 0x000002B43FA2B130>.maximum
+E            +      where <PyQt6.QtWidgets.QScrollBar object at 0x000002B43FA2B130> = <built-in method horizontalScrollBar of QScrollArea object at 0x000002B43FA38550>()
+E            +        where <built-in method horizontalScrollBar of QScrollArea object at 0x000002B43FA38550> = <PyQt6.QtWidgets.QScrollArea object at 0x000002B43FA38550>.horizontalScrollBar
+E            +          where <PyQt6.QtWidgets.QScrollArea object at 0x000002B43FA38550> = <cephvr.gui.window.DashboardWindow object at 0x000002B43FA2B370>.dashboard_scroll
+
+tests\gui\test_dashboard.py:1194: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_responsive_navigation_preserves_widget_identity
+1 failed, 10 passed, 322 deselected in 6.01s

@@ -1,0 +1,11 @@
+controller_generation "dd8703d2-9109-4abc-bac5-02ffb119e0c6"
+configuration_restored_on_restart false
+events [["admitted", "f4690fc3-9a81-42d2-a22a-03fb60aa7dc5"]]
+events [["admitted", "f4690fc3-9a81-42d2-a22a-03fb60aa7dc5"], ["accepted", 2]]
+events [["admitted", "f4690fc3-9a81-42d2-a22a-03fb60aa7dc5"], ["accepted", 2], ["submit_configuration", "f4690fc3-9a81-42d2-a22a-03fb60aa7dc5", "completed", "Accepted authoritative configuration version."]]
+configuration_accepted true
+setup {"command_id": "2053afe5-584c-40b6-a308-060a3567f1ae", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+setup_state {"session": {"phase": "SESSION_PHASE_READY", "context": {"controller_generation": "dd8703d2-9109-4abc-bac5-02ffb119e0c6", "session_id": "41901981-1403-4715-bf81-8ee8986f68d1"}, "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-134233", "trial_count": 1}, "configuration": {"revision": "2", "edit_validation": [{"configuration_revision": "2", "completed": true, "valid": true, "component": "experiment", "configuration_module_version": "experiment-v1"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "acquisition", "configuration_module_version": "acquisition-config-v1"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "synchronization", "configuration_module_version": "inactive"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "tracking", "configuration_module_version": "inactive"}, {"configuration_revision": "2", "completed": true, "valid": true, "component": "visual_stimulus", "configuration_module_version": "visual-stimulus-config-v2"}]}, "trial": {"phase": "TRIAL_PHASE_PENDING"}}
+prompts []
+warnings [{"warning_id": "7aa43b74-1632-4446-b8cc-38dd8089ef4d", "component": "startup_recovery", "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."}]
+start {"command_id": "4777c478-f7dc-4206-9ca1-4c2428b6d5f5", "complete": true, "succeeded": false, "needs_input": false, "failure": "OPERATION_FAILED: writer schema unavailable for ('visual_stimulus', 'stimulus_LOG', 'json')"}

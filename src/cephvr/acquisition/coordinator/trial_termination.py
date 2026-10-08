@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable, Coroutine, Sequence
 from typing import Any, Protocol
 from uuid import uuid4
@@ -19,6 +20,7 @@ from cephvr.acquisition.coordinator.trial_pulses import (
     TrialPulseBoundaries,
     _failure_evidence,
 )
+from cephvr.acquisition.coordinator.trial_validation import valid_pulse
 from cephvr.acquisition.ports import SerialOwnerPort
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
@@ -44,6 +46,12 @@ class PulseBoundaryRunner(Protocol):
         *,
         command: mcu.PulseBoundaryCommand,
         boundary_ns: int,
+    ) -> Coroutine[Any, Any, None]: ...
+
+
+class NormalEndRunner(Protocol):
+    def __call__(
+        self, session: SessionRecord, trial: TrialRecord
     ) -> Coroutine[Any, Any, None]: ...
 
 
@@ -129,12 +137,25 @@ class TrialTermination:
             if aborted:
                 trial.interrupted = True
         selected = _external_roles(session)
+        scheduled_off = (
+            internal
+            and not aborted
+            and (
+                not selected
+                or valid_pulse(
+                    trial.pulse_off,
+                    command=mcu.PULSE_BOUNDARY_COMMAND_OFF,
+                    boundary_ns=trial.end_monotonic_ns,
+                )
+            )
+        )
         serial_task = asyncio.create_task(
             self._force_outputs_off(
                 trial,
                 selected,
                 request.issued_monotonic_ns,
                 deadline_ns,
+                already_off=scheduled_off,
             )
         )
         failures: list[str] = []
@@ -196,7 +217,11 @@ class TrialTermination:
         selected: tuple[int, ...],
         issued_ns: int,
         deadline_ns: int,
+        *,
+        already_off: bool = False,
     ) -> list[str]:
+        if already_off:
+            return []
         failures: list[str] = []
         try:
             await self.serial.cancel_on_reservations(deadline_ns=deadline_ns)
@@ -370,6 +395,42 @@ class TrialTermination:
                 aborted=True,
                 internal=True,
             )
+
+    async def run_normal_end(self, session: SessionRecord, trial: TrialRecord) -> None:
+        """Retain and dispatch normal Stop after the immutable scheduled OFF."""
+        end = trial.end_monotonic_ns
+        if end is None:
+            raise ValueError("normal end has no retained schedule")
+        await asyncio.sleep(max(0, end - self.clock()) / 1e9)
+        if trial.pulse_off_task is not None:
+            await trial.pulse_off_task
+        if (
+            self.session_slot.current is not session
+            or session.trial is not trial
+            or session.interrupted
+            or session.setup_cancelled
+            or trial.interrupted
+            or trial.stop is not None
+        ):
+            return
+        request = wire.StopTrialRequest(
+            command=wire.BackendCommand(
+                command_id=str(uuid4()),
+                issuer=self.identity.process,
+                target=self.identity.backend,
+                work=trial.work,
+            ),
+            issued_monotonic_ns=end,
+        )
+        try:
+            result = await self.stop(
+                request, deadline_ns=end + self.lifecycle_delivery_ns, internal=True
+            )
+            if result.result != control.COMMAND_RESULT_ACCEPTED:
+                raise RuntimeError(result.failure.message)
+        except Exception as exc:
+            trial.interrupted = True
+            logging.getLogger(__name__).error("Normal camera Stop failed: %s", exc)
 
     def control_pulse_failure_allowance(self, command: mcu.PulseBoundaryCommand) -> int:
         return (

@@ -1,0 +1,39 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 322 items / 295 deselected / 27 selected
+
+tests/gui/test_dashboard.py::test_managed_camera_controls_emit_intent_without_changing_local_device_state PASSED [  3%]
+tests/gui/test_dashboard.py::test_preview_participation_gates_and_camera_draft_selection PASSED [  7%]
+tests/gui/test_dashboard.py::test_camera_role_uniqueness_and_extra_preview_rows PASSED [ 11%]
+tests/gui/test_dashboard.py::test_camera_pfs_picker_preserves_camera_identity_and_editing_gate PASSED [ 14%]
+tests/gui/test_dashboard.py::test_camera_batch_check_preserves_selection_and_connections PASSED [ 18%]
+tests/gui/test_dashboard.py::test_pfs_trigger_hint_and_per_camera_drafts PASSED [ 22%]
+tests/gui/test_dashboard.py::test_real_camera_inventory_preserves_roles_and_tests_open_close PASSED [ 25%]
+tests/gui/test_dashboard.py::test_microcontroller_camera_rows_and_discovery PASSED [ 29%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_waits_for_controller_confirmation[0] PASSED [ 33%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_waits_for_controller_confirmation[1] PASSED [ 37%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_accepts_missing_external_input PASSED [ 40%]
+tests/gui/test_dashboard.py::test_managed_camera_settings_submit_pfs_source_and_rate PASSED [ 44%]
+tests/gui/test_dashboard.py::test_managed_camera_enable_updates_only_assigned_camera PASSED [ 48%]
+tests/gui/test_dashboard.py::test_managed_camera_settings_supply_missing_trigger_source PASSED [ 51%]
+tests/gui/test_dashboard.py::test_managed_mcu_save_includes_camera_output_pins PASSED [ 55%]
+tests/gui/test_dashboard.py::test_managed_camera_pin_test_uses_saved_role_signal PASSED [ 59%]
+tests/gui/test_dashboard.py::test_microcontroller_enablement_preserves_pins_and_syncs_cameras PASSED [ 62%]
+tests/gui/test_dashboard.py::test_managed_camera_batch_checks_continue_after_failure_without_capture PASSED [ 66%]
+tests/gui/test_dashboard.py::test_managed_role_assignment_is_atomic_and_leaves_camera_disabled PASSED [ 70%]
+tests/gui/test_dashboard.py::test_managed_camera_projection_distinguishes_open_capture_and_cleanup PASSED [ 74%]
+tests/gui/test_dashboard.py::test_tracking_camera_changes_invalidate_reference_and_lock_closes_tool PASSED [ 77%]
+tests/gui/test_dashboard.py::test_camera_connect_opens_only_the_confirmed_run[True-True] PASSED [ 81%]
+tests/gui/test_dashboard.py::test_camera_connect_opens_only_the_confirmed_run[False-True] PASSED [ 85%]
+tests/gui/test_dashboard.py::test_camera_connect_opens_only_the_confirmed_run[True-False] PASSED [ 88%]
+tests/gui/test_dashboard.py::test_camera_selection_restores_pfs_source_and_frequency PASSED [ 92%]
+tests/gui/test_dashboard.py::test_managed_camera_inventory_restores_selected_configuration[0] PASSED [ 96%]
+tests/gui/test_dashboard.py::test_managed_camera_inventory_restores_selected_configuration[1] PASSED [100%]
+
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-08\camera-selection-after.xml -
+===================== 27 passed, 295 deselected in 7.30s ======================

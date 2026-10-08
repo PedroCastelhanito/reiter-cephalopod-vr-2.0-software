@@ -474,3 +474,44 @@ async def test_cached_worker_channel_revalidates_launch_at_capacity(
         assert next(iter(outbound.channels.values())) is not original
     finally:
         await outbound.close()
+
+
+async def test_camera_cleanup_waits_for_exact_executor_after_admission(
+    tmp_path: Path,
+) -> None:
+    runtime, native, _, _ = make_runtime(tmp_path)
+    worker, _ = _worker_and_helper(runtime, native)
+    target = acq.WorkerContext(
+        worker=worker.plan.child,
+        owner=worker.plan.owner,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=WORK,
+    )
+    outbound = Outbound()
+    queries = []
+
+    async def retained(launch, request, *, deadline_ns):
+        queries.append(request.command_id)
+        operation = types.OperationState(
+            context=types.OperationContext(command_id=request.command_id),
+            complete=len(queries) > 1,
+        )
+        if operation.complete:
+            operation.succeeded = True
+        return acq.WorkerRetainedResult(
+            found=True,
+            source=target,
+            operation=acq.WorkerOperationReport(source=target, operation=operation),
+        )
+
+    outbound.get_worker_retained_result = retained
+    cleanup = AcquisitionWorkerControl(
+        registration=runtime.registration,
+        registry=runtime.registry,
+        outbound=outbound,
+        issuer=runtime.identity,
+        interrupt_commands={},
+        cleanup_commands={},
+    )
+    await cleanup.cleanup_worker(worker, target, host_time_ns() + 1_000_000_000)
+    assert len(queries) == 2 and len(set(queries)) == 1

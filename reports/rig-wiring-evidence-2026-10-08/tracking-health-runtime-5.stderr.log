@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_EVIDENCE: manual preview Ready differs from its exact preparation
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

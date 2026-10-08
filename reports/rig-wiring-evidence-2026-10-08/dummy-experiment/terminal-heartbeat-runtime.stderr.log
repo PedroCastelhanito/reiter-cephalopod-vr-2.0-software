@@ -1,0 +1,123 @@
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py", line 78, in serve_registered_worker
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py", line 78, in serve_registered_worker
+Shutdown 5442e793-2798-45c5-8e49-e51c6168952f failed: CLEANUP_REPORT_UNCONFIRMED: controller: EVIDENCE cleanup identity or release proof missing; supervisor: INCOMPLETE_CLEANUP registered output/resource obligations or cleanup fence are unverified
+    await server.stop(grace=remaining_seconds(deadline))
+    await server.stop(grace=remaining_seconds(deadline))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py", line 185, in stop
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py", line 185, in stop
+    await self._server.shutdown(grace)
+    await self._server.shutdown(grace)
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi", line 1230, in shutdown
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi", line 1230, in shutdown
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+    return fut.result()
+           ^^^^^^^^^^^^
+           ^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+asyncio.exceptions.CancelledError
+
+
+During handling of the above exception, another exception occurred:
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28, in <module>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28, in <module>
+    main()
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24, in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24, in main
+    runpy.run_module(module, run_name="__main__", alter_sys=True)
+    runpy.run_module(module, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 288, in <module>
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 288, in <module>
+    raise SystemExit(main())
+    raise SystemExit(main())
+                     ^^^^^^
+                     ^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 51, in main
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 51, in main
+    asyncio.run(_serve(bootstrap, state, limits))
+    asyncio.run(_serve(bootstrap, state, limits))
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+    return runner.run(main)
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+    return future.result()
+           ^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 178, in _serve
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\main.py", line 178, in _serve
+    await serve_registered_worker(
+    await serve_registered_worker(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py", line 90, in serve_registered_worker
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\acquisition\worker\server.py", line 90, in serve_registered_worker
+    await server.stop(grace=0)
+    await server.stop(grace=0)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py", line 185, in stop
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py", line 185, in stop
+    await self._server.shutdown(grace)
+    await self._server.shutdown(grace)
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi", line 1230, in shutdown
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/server.pyx.pxi", line 1230, in shutdown
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 458, in wait_for
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 458, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+    return fut.result()
+           ^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+CephVR launcher controller channel lost: eof
+CephVR acquisition shutdown: CONTROLLER_PROCESS_LOST: registered controller process exited; acquisition is stopping
+CephVR acquisition shutdown: SUPERVISOR_HEARTBEAT_FAILED: acquisition heartbeat was not accepted: supervisor rejected acquisition heartbeat: INVALID_CATALOGUE: resource owner/key is unregistered or repeated
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: cleanup returned an unregistered resource
+Task exception was never retrieved
+future: <Task finished name='Task-2059' coro=<GrpcOutbound.report_interruption() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\supervisor\outbound.py:74> exception=<AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+>>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\supervisor\outbound.py", line 75, in report_interruption
+    receipt = await self.controller.ReportInterruption(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_call.py", line 333, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.UNAVAILABLE
+	details = "failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+	debug_error_string = "UNAVAILABLE:failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:50051: WSAGetOverlappedResult: Connection refused (No connection could be made because the target machine actively refused it.
+ -- 10061)"
+>
+CephVR launcher supervisor channel lost: eof

@@ -1,9 +1,83 @@
 # Tracking status
 
-Latest [protocol-3/repaired-preview retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
-gets past Tracking readback revision adoption/preparation, but Start is rejected
-and the existing camera-worker coordinator-health shutdown recurs. Exact process
-cleanup is confirmed; real Tracking window/ordered-consumer acceptance remains open.
+Current measured-reference implementation (2026-10-08, `physical-reference-calibration`)
+follows [T19/T20](../docs/architecture/tracking.md#t20),
+[T35/T38](../docs/architecture/tracking.md#t38) and
+[T08](../docs/architecture/tracking.md#t08). Enabled experiment Tracking and runnable
+locomotion diagnostics require complete camera distance endpoints/known mm with
+matching source dimensions. Pipeline version 2 divides filtered pixel translation
+by acquired-image px/mm and converts filtered radians/s to degrees/s before both
+record admission and feedback publication. Header/output schema 3 identifies mm/s,
+mm/s and deg/s; pixel-space stage evidence, exact settings (including calibration),
+timing, lineage, ordering and original writer/resource ownership are preserved.
+Tracking policy/config version is 43. Active Visual Stimulus input units/quantity/body
+frame must match, with explicit old declaration/gain edits; disabled consumers do not
+validate stale stimulus programs. No old recording or gain is silently converted.
+
+ARCH-002 adds a focused numerical unit adapter without changing estimator math,
+filter/quality state, dependencies, processes or deadlines. Extend existing behavior
+tests for required scale, diagnostic independence, exact admission/publication
+conversion and preserved raw evidence. Session/diagnostic size advisories remain
+cohesive preparation/execution owners; only one scale value is added to MovementPorts.
+Affected Tracking/GUI/Visual Stimulus/controller tests pass **658 / one skip / three
+deselections**; two default/pacing assertions are excluded because another chat's
+temporary native dummy setting selects calibration_front. The first broad run retains
+their failures and a corrected stale GUI unit-conflict fixture. Post-review checks
+pass 57 configuration/recording and four GUI cases. All 48 Tracking contract checks,
+19 Tracking and 11 Visual Stimulus schema checks, lint/format (348 files), Win32 mypy
+(322 sources) and boundaries (625 modules, zero violations) pass.
+[Raw JUnit, commands and source hashes](tracking-evidence-2026-10-08/physical-reference-context.json).
+Camera image-plane scale does not establish swimming velocity or depth/distortion
+correction. No native/hardware/scientific/full-load acceptance ran; see the
+[rig checklist](rig-verification.md). Earlier decoded-schema-2 evidence below retains
+its historical source/unit scope.
+
+Decoded-file implementation (2026-10-08, `tracking-decoded-records`) follows accepted
+[T15/T19 revision 4](../docs/architecture/tracking.md#t15). Header/output schema 2
+stores `feedback_result` as descriptor-owned standard Protobuf JSON and registered
+stage `payload` as nested objects. Protobuf int64/uint64 fields remain decimal
+strings; optional zero remains distinct from absent. Unknown wire/JSON fields,
+unknown enum values, nonfinite values and noncanonical representations are rejected.
+Internal payloads remain immutable compact text; the existing writer charges both
+expanded object workspace and serialization copies against its byte limit.
+Prepared-method/settings header text/digest, transport, units, record ordering,
+writer ownership and original deadlines remain. No old recording is rewritten;
+unsupported header schemas fail explicitly.
+
+ARCH-002 extracts the small object/descriptor adapter into a focused lightweight
+model helper and extends the owning recording tests. There is no dependency,
+independent feedback field inventory, new process or whole-runtime reference.
+Recording and queue files remain cohesive; unchanged Tracking processing/diagnostic
+size advisories retain their existing scope. Final Tracking/controller planning/
+metadata integration passes **113 / one rig deselection in 3.65 s**, including real
+file output, Protobuf round trips, 64-bit extrema, optional zero, mutable-copy/source
+isolation, malformed representations, schema rejection and expanded-workspace
+admission. All 48 contract checks and 19 generated-schema drift checks pass.
+Ruff/format pass 74 files; Windows-target mypy passes 66 sources; boundaries inspect
+620 modules with zero violations. An initial sandboxed runtime suite stalls and is
+interrupted; permitted authenticated-loopback runs supersede it. Initial missing
+temporary parent/old-format assertions, a fixture's nonexistent PID field, static
+annotation errors and contract pytest import discovery are corrected or superseded
+by owning unittest discovery, without weakening runtime assertions.
+[Dated raw results and source context](tracking-evidence-2026-10-08/decoded-records-context.json)
+retain the JUnit scope. No runtime restart, hardware/scientific session, full-load
+benchmark or crash-durability acceptance ran. Remaining E15 checks stay in the
+[rig checklist](rig-verification.md); video padding remains separate open work.
+
+Latest [2026-10-08 Windows/device checks](rig-wiring-evidence-2026-10-08/README.md)
+at `7ba43b1` plus focused repairs pass camera identity and owner-approved BehaviorSquid
+PFS import/readback. Two physical Tracking Connect/Show/Disconnect cycles now pass,
+with six seconds of visible capture each and confirmed camera/both producer-ring
+release. The fault was a one-ring assumption in Ready and cleanup validation;
+specific rejected-report evidence now survives the existing health path. Settings
+restoration and exact normal shutdown/guard/COM cleanup pass. Acquisition/affected
+controller checks pass 363 with one skip; affected static checks pass.
+[Current diagnosis and scope](rig-wiring-evidence-2026-10-08/README.md#tracking-connect-and-release-correction).
+The real RTX 5060 Ti CUDA/NVOF smoke passes one test (0.43 s); the earlier full Windows
+suite has 1463 passes and eight existing GUI failures and predates this repair.
+Ordered Tracking diagnostics, native GUI clicks/DPI, scientific and full-load
+acceptance remain in the [single rig checklist](rig-verification.md).
+The earlier protocol-3/preview retest below retains its original scope.
 
 The owner-requested camera OpenCV windows replace the shared headless dependency
 with `opencv-python==4.13.0.92` (WIN32UI), keeping Tracking algorithms and pixel

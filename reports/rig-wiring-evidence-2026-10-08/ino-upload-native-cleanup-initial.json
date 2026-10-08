@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-08T10:44:03.816340+09:00",
+  "exact_receipt": {
+    "all_owned_processes_absent": true,
+    "controller_channel_loss": "eof",
+    "controller_generation": "4226bad4-92db-4001-879c-1149c49dea8e",
+    "format_version": 1,
+    "observed_monotonic_ns": 667805340058500,
+    "supervisor_generation": "98104b81-9f18-4f11-b396-0c8eda0e1b71"
+  },
+  "application_guard_available_and_released": true,
+  "COM8_exclusive_open_and_closed": true,
+  "remaining_owned_runtime_or_tool_processes": [],
+  "remaining_private_firmware_dirs": [
+    "C:\\Users\\REITER~1\\AppData\\Local\\Temp\\cephvr-firmware-d073a733-9409-4d98-a5a0-e86854d83d71"
+  ],
+  "scope": "No serial command; opening COM may reset Uno. Board watchdog test already stopped both outputs; no capture/runtime restarted."
+}

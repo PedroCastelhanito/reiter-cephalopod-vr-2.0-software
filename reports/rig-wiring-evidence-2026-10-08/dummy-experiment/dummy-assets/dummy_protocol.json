@@ -1,0 +1,451 @@
+{
+  "format_version": 2,
+  "assets": [],
+  "instances": [
+    {
+      "instance_id": "dummy_front",
+      "family": "texture"
+    },
+    {
+      "instance_id": "dummy_left",
+      "family": "texture"
+    },
+    {
+      "instance_id": "dummy_right",
+      "family": "texture"
+    },
+    {
+      "instance_id": "dummy_bottom",
+      "family": "texture"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "blank",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": []
+    },
+    {
+      "scene_id": "flow",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": [
+        "dummy_front",
+        "dummy_left",
+        "dummy_right",
+        "dummy_bottom"
+      ]
+    }
+  ],
+  "input_channels": [],
+  "duration": {
+    "kind": "explicit_epochs"
+  },
+  "sequence": [
+    {
+      "kind": "epoch",
+      "epoch_id": "Dummy_baseline",
+      "batch_label": "",
+      "scene_id": "blank",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "5"
+        }
+      },
+      "settings": []
+    },
+    {
+      "kind": "epoch",
+      "epoch_id": "Dummy_moving_grating",
+      "batch_label": "",
+      "scene_id": "flow",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "20"
+        }
+      },
+      "settings": [
+        {
+          "instance_id": "dummy_front",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "front",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 47.0,
+            "y": 42.5,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 94.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 85.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "kind": "texture",
+          "pattern": {
+            "kind": "sine_grating",
+            "frequency": {
+              "kind": "constant",
+              "value": 0.05
+            }
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "rate",
+            "function": {
+              "kind": "constant",
+              "value": 1.5
+            }
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "dummy_left",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "left",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 63.0,
+            "y": 42.5,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 126.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 85.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "kind": "texture",
+          "pattern": {
+            "kind": "sine_grating",
+            "frequency": {
+              "kind": "constant",
+              "value": 0.05
+            }
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "rate",
+            "function": {
+              "kind": "constant",
+              "value": 1.5
+            }
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "dummy_right",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "right",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 63.0,
+            "y": 42.5,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 126.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 85.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "kind": "texture",
+          "pattern": {
+            "kind": "sine_grating",
+            "frequency": {
+              "kind": "constant",
+              "value": 0.05
+            }
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "rate",
+            "function": {
+              "kind": "constant",
+              "value": 1.5
+            }
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        },
+        {
+          "instance_id": "dummy_bottom",
+          "space": {
+            "kind": "physical_surface",
+            "frame_id": "rig-mm",
+            "mappings": [
+              {
+                "surface_id": "bottom",
+                "matrix": [
+                  [
+                    1.0,
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                ]
+              }
+            ]
+          },
+          "initial": {
+            "x": 47.0,
+            "y": 63.0,
+            "rotation_deg": 0.0
+          },
+          "width": {
+            "kind": "constant",
+            "value": 94.0
+          },
+          "height": {
+            "kind": "constant",
+            "value": 126.0
+          },
+          "opacity": {
+            "kind": "constant",
+            "value": 1.0
+          },
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "rotation": {
+              "kind": "hold"
+            }
+          },
+          "reset": true,
+          "assignments": [],
+          "feedback": [],
+          "kind": "texture",
+          "pattern": {
+            "kind": "sine_grating",
+            "frequency": {
+              "kind": "constant",
+              "value": 0.05
+            }
+          },
+          "initial_phase_x_cycles": 0.0,
+          "initial_phase_y_cycles": 0.0,
+          "phase_x": {
+            "kind": "rate",
+            "function": {
+              "kind": "constant",
+              "value": 1.5
+            }
+          },
+          "phase_y": {
+            "kind": "hold"
+          },
+          "mean_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "modulation_linear_rgb": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "contrast": {
+            "kind": "constant",
+            "value": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "kind": "epoch",
+      "epoch_id": "Dummy_recovery",
+      "batch_label": "",
+      "scene_id": "blank",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "35"
+        }
+      },
+      "settings": []
+    }
+  ]
+}

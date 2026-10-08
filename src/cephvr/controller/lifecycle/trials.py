@@ -106,6 +106,7 @@ class TrialExecution:
                 attempt.trial_index = index
                 attempt.trial_operation = str(uuid.uuid4())
                 attempt.trial_ready.clear()
+                attempt.trial_results.clear()
                 attempt.started.clear()
                 attempt.stopped.clear()
                 attempt.finished.clear()
@@ -233,7 +234,13 @@ class TrialExecution:
             self.lifecycle.trial.start_monotonic_ns = target
             self.lifecycle.trial.scheduled_end_monotonic_ns = end
             self.publisher.publish()
-        return TrialSchedule(target, end, schedule_deadline, release_deadline, prefix)
+        return TrialSchedule(
+            target,
+            end,
+            schedule_deadline,
+            release_deadline,
+            str(attempt.reservation.protocol_directory / prefix),
+        )
 
     async def _schedule_participants(
         self, attempt: Attempt, plan: pb.TrialPlan, schedule: TrialSchedule

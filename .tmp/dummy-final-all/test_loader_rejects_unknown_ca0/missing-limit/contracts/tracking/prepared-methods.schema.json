@@ -1,0 +1,324 @@
+{
+  "$defs": {
+    "ChannelDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "channel_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Channel Id",
+          "type": "string"
+        },
+        "quantity": {
+          "enum": [
+            "absolute",
+            "displacement",
+            "interval_average_rate"
+          ],
+          "title": "Quantity",
+          "type": "string"
+        },
+        "unit": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "coordinate_frame": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Coordinate Frame",
+          "type": "string"
+        }
+      },
+      "required": [
+        "channel_id",
+        "quantity",
+        "unit",
+        "coordinate_frame"
+      ],
+      "title": "ChannelDeclaration",
+      "type": "object"
+    },
+    "ResolvedAsset": {
+      "additionalProperties": false,
+      "properties": {
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "byte_length": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Byte Length",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "relative_path",
+        "byte_length",
+        "sha256"
+      ],
+      "title": "ResolvedAsset",
+      "type": "object"
+    },
+    "StageBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "stage_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Stage Id",
+          "type": "string"
+        },
+        "implementation_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Implementation Id",
+          "type": "string"
+        },
+        "implementation_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Implementation Version",
+          "type": "string"
+        },
+        "settings_schema_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Settings Schema Id",
+          "type": "string"
+        },
+        "resolved_settings_json": {
+          "title": "Resolved Settings Json",
+          "type": "string"
+        },
+        "input_contracts": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Input Contracts",
+          "type": "array"
+        },
+        "output_contract": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Output Contract",
+          "type": "string"
+        },
+        "evidence_schema_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Evidence Schema Id"
+        }
+      },
+      "required": [
+        "stage_id",
+        "implementation_id",
+        "implementation_version",
+        "settings_schema_id",
+        "resolved_settings_json",
+        "input_contracts",
+        "output_contract",
+        "evidence_schema_id"
+      ],
+      "title": "StageBinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "prepared_generation": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Prepared Generation",
+      "type": "string"
+    },
+    "configuration_revision": {
+      "maximum": 18446744073709551615,
+      "minimum": 0,
+      "title": "Configuration Revision",
+      "type": "integer"
+    },
+    "pipeline_id": {
+      "enum": [
+        "water_flow",
+        "fin_flow"
+      ],
+      "title": "Pipeline Id",
+      "type": "string"
+    },
+    "implementation_version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Implementation Version",
+      "type": "string"
+    },
+    "stages": {
+      "items": {
+        "$ref": "#/$defs/StageBinding"
+      },
+      "title": "Stages",
+      "type": "array"
+    },
+    "source_allocation_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Source Allocation Id",
+      "type": "string"
+    },
+    "source_layout_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Layout Digest",
+      "type": "string"
+    },
+    "method_assets": {
+      "items": {
+        "$ref": "#/$defs/ResolvedAsset"
+      },
+      "title": "Method Assets",
+      "type": "array"
+    },
+    "onnxruntime_version": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Onnxruntime Version"
+    },
+    "cuda_device_identity": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Cuda Device Identity"
+    },
+    "nvof_api_version": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Nvof Api Version"
+    },
+    "flow_sample_convention": {
+      "const": "native_block_estimate_at_footprint_centre",
+      "default": "native_block_estimate_at_footprint_centre",
+      "title": "Flow Sample Convention",
+      "type": "string"
+    },
+    "driver_version": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Driver Version"
+    },
+    "cpu_graph_node_names": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Cpu Graph Node Names",
+      "type": "array"
+    },
+    "channels": {
+      "items": {
+        "$ref": "#/$defs/ChannelDeclaration"
+      },
+      "title": "Channels",
+      "type": "array"
+    },
+    "geometry_binding_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Geometry Binding Id"
+    },
+    "estimator_binding_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Estimator Binding Id"
+    }
+  },
+  "required": [
+    "schema_version",
+    "prepared_generation",
+    "configuration_revision",
+    "pipeline_id",
+    "implementation_version",
+    "stages",
+    "source_allocation_id",
+    "source_layout_digest",
+    "method_assets",
+    "onnxruntime_version",
+    "cuda_device_identity",
+    "nvof_api_version",
+    "driver_version",
+    "cpu_graph_node_names",
+    "channels",
+    "geometry_binding_id",
+    "estimator_binding_id"
+  ],
+  "title": "PreparedMethods",
+  "type": "object"
+}

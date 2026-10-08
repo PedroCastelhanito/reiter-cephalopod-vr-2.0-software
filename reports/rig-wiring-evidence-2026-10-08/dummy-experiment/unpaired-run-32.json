@@ -1,0 +1,14 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "submit_configuration",
+      "2418896b-6fdc-4083-8f80-6ba12fb69c32",
+      "rejected",
+      "REJECTED: configuration changes were not applied: configuration or session phase changed during validation"
+    ]
+  ],
+  "controller_generation": "c3e24b0a-0306-47b4-8288-a4b3dce0f654",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": false
+}

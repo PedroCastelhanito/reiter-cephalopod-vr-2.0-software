@@ -1,5 +1,41 @@
 # Acquisition status
 
+Oct8 native dummy execution (`gui-backend-dummy-experiment`) exercises both managed
+camera connection/preview/disconnect paths and real unpaired Setup/Start. Runs40–42
+complete the 60 s trial/session with confirmed cleanup and closed camera recordings;
+Tracking velocities stay disabled independently from its camera video. Run42 counts
+1,198 Behavior and 2,397 Tracking frames; complete external CPU decode passes both,
+and frame-log video indices/counts match. SDK-reported missed/failed buffers and
+resynchronizations are zero; optional timestamp conversion and some transport counters
+remain unavailable. Exact cutoff and post-cutoff accounting complete under the owner's
+temporary 1,000 ms allowances, which are budgets rather than measured rig guarantees.
+
+Recorded delivery is about 20/40 fps against configured 30/60. MCU-only diagnostic
+counts are 61/120 rising edges in 2 s, supporting the requested generator cadence
+without establishing electrical receiver correlation. Both PFS baselines disable the
+internal camera limiter; backend settings had enabled it when applying the saved
+free-running rate even in externally triggered mode. Preserve that PFS choice under
+[A10](../docs/architecture/acquisition.md#a10); 38 owning adapter cases pass, with
+run43 native verification in progress. Do not infer a dropped trigger from transport
+frame counters, which count accepted camera frames. Gap padding remains pending below.
+
+Repairs under A02/A07/A08/E08 cover exact preparation/readback, absolute output paths,
+Schedule/Release joining, preparation-parent lifecycle, normal end/MCU OFF, SDK stop
+before bounded drain, bare cleanup commands and retained failure delivery. Completed
+cleanup publishes durable owner ENDED; coordinator accepts only exact quiet terminal
+liveness. Shutdown uses delivered closure without changing its identity and avoids
+cancelling gRPC termination before server.stop. Run42 remains healthy idle and closes
+normally with exact all-owned absence. Current restoration/full regressions remain
+pending. [Integration assessment](runtime.md#current-scope-and-review),
+[raw evidence](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+
+Owner-selected video timing revision (2026-10-08):
+[A07 revision 58 / A08 revision 49](../docs/architecture/acquisition.md#a08)
+require padding recording gaps and explicit encoded-frame/source/duplicate mapping
+for post hoc exclusion. Current frame-log schema 2 and recording pump remain
+unpadded. Slot assignment, leading-gap treatment, schema formalization and writer
+implementation are pending; no new runtime or rig pass is claimed.
+
 Microcontroller ownership update (2026-10-08) follows
 [A10 revision 55](../docs/architecture/acquisition.md#a10) and
 [A11 revision 40](../docs/architecture/acquisition.md#a11): serial, watchdog/keepalive,
@@ -50,9 +86,75 @@ and serial handoff are focused modules; camera/Microcontroller panels retain onl
 with managed dispatch separate. The shared native launcher adds a focused registered-plan
 callback and stop-method binding, retaining existing encoder defaults and deadlines.
 
+Current native recording follow-up: runs 22-28 expose and repair retained trial failure
+admission, camera clock text validation, gray raw input naming, cleanup result format,
+pre-Ready encoder obligations, asynchronous Schedule/Release sequencing, 64-bit GPU
+fence arguments, compositor resource order and trial-parent lifecycle forwarding.
+Each interrupted Desktop reservation and exact process exit remains retained in the
+[dated dummy evidence](rig-wiring-evidence-2026-10-08/dummy-experiment/). No completed
+60 s run, video decode/count verification or clean full-workload acceptance is yet
+claimed. Current retry remains in progress; temporary camera drain/pacing/GPU inputs
+must be restored. ARCH-002 reuses the existing focused owners and test modules.
+
 ## Current Windows wiring checks
 
-Owner reports the image did not open snapped outside the GUI's top-right edge.
+Latest actual rig execution (2026-10-08, `7ba43b1` plus focused repairs): both camera
+identity checks and two Behavior Connect/Show/Disconnect cycles pass through the
+GUI's managed dispatch, with over five seconds of visible capture each and confirmed
+camera/window/trigger-claim release. Native image frames begin at (1449,0), then
+(1473,24) after moving the actual GUI, exactly beside its visible right/top edge.
+Captured images show camera content. Existing isolated mouse/viewport tests remain
+separate from actual mixed-DPI, selector and button-interaction acceptance.
+Tracking Connect/Show/Disconnect now passes twice with the owner-approved
+BehaviorSquid PFS, six seconds of real capture each and confirmed camera/both-ring
+release. The earlier `COORDINATOR_HEALTH_LOST` report mislabeled rejected lifecycle
+evidence: readiness and cleanup each assumed one producer ring, while Tracking
+prepares two. Validate the exact complete set and retain the rejection reason in
+the existing bounded health report; health/deadline policy is unchanged. The focused
+helper validates every release before committing any ledger release (A03/A10/E08).
+ARCH-002 extraction reduces the lifecycle validator and introduces no dependency or
+whole-runtime reference; the existing worker executor remains lifecycle composition.
+The final acquisition/affected-controller suite passes 363 with one platform skip;
+Ruff/format, six-source Win32 mypy and 618-module boundaries pass. Original settings
+are restored and exact normal shutdown/guard/COM release is confirmed. No scientific
+recording or ordered Tracking diagnostic ran.
+[Diagnosis, reproducers and final evidence](rig-wiring-evidence-2026-10-08/README.md#tracking-connect-and-release-correction).
+
+Controller-owned MCU tests with acquisition disabled, actual `.ino` compile/HEX
+upload, compile-failure preservation, active-D9 control release and isolated firmware
+watchdog state pass after repairing invalid inactive-diagnostic cleanup and native
+pipe construction. Those checks do not measure electrical delivery or camera rate.
+Later `.ino` upload reproduces a supervisor executable-query failure and missing
+native job termination permission. The focused platform repair passes two final
+compile/verified uploads and serial-preserving compiler rejection, after three
+exit-check-only passes; exact shutdown and staging cleanup are confirmed.
+[Current native-job evidence](rig-wiring-evidence-2026-10-08/README.md#ino-upload-native-job-correction).
+[Current methods, settings, images and raw failures](rig-wiring-evidence-2026-10-08/README.md)
+retain provenance; remaining physical/full-load checks stay in the
+[single rig checklist](rig-verification.md#managed-mcu-and-camera-gui-verification).
+The earlier full Windows suite has 1463 passes/eight existing GUI failures/five
+privilege skips; it predates the selection and Tracking repairs above. Runtime and capture are stopped.
+
+Later owner console evidence (2026-10-08): enabling Tracking then importing a PFS
+on the Behavior row yields `tracking.device.settings.trigger_source` validation
+failure. Source review confirms the Behavior edit copies the whole configuration
+and changes only its selected camera; enabled external Tracking still requires its
+own explicit input. The prior saved snapshot has Tracking disabled, external timing,
+and no PFS/input. A PFS hint of Line2 on Behavior does not configure Tracking or prove
+application. Duplicate role assignment is independently refused. This is a reported
+configuration/workflow failure, not new hardware evidence; no device action ran.
+Improve cross-camera validation feedback under the existing GUI task.
+
+Owner-requested camera selection repair (2026-10-08, G01): inventory restoration
+now reloads the selected role/PFS/timing/rate even without a configuration revision
+change. Clicking Use also selects that camera's row. Per-camera drafts remain
+independent, and loading/selection sends no settings command. Both inventory rows
+and checkbox directions reproduce before repair; final owning Windows Qt/offscreen
+camera/PFS tests pass 27 with 295 deselected. Ruff/format, Win32 mypy and boundaries
+pass. This later fixture-based GUI increment does not repeat physical capture or
+the earlier full suite. [Dated results/source scope](rig-wiring-evidence-2026-10-08/README.md#later-camera-selection-correction).
+
+Earlier owner evidence reports the image did not open snapped outside the GUI's top-right edge.
 Read-only native geometry of the reopened GUI finds a 1,456-pixel outer width on
 a 1,920-pixel work area; the old 640-pixel image rule produces x=0 over the GUI.
 The GUI now fits the square into available right-hand space before left fallback,
@@ -69,7 +171,8 @@ retain the owner's observation and passive bounds. ARCH-002 extends focused geom
 and display owners without new processes, RPCs or dependencies; policy 15's existing
 presentation rule is retained. The reopened runtime is preserved and needs a full
 restart to load both sides of this repair. Actual camera positioning/visibility,
-mixed-DPI and Tracking/health acceptance remain open.
+mixed-DPI and ordered Tracking diagnostic acceptance remain open; the later Oct8
+physical preview cycles above supersede the preview health failure.
 
 The owner-requested preview presentation follows [A10 revision 54](../docs/architecture/acquisition.md#a10)
 and [G01 revision 122](../docs/architecture/gui.md#g01), with acquisition policy 15.
@@ -90,7 +193,7 @@ record scope. The running owner runtime was preserved and needs a full restart
 to load this increment. Actual GUI-edge placement across monitor/DPI arrangements
 and physical camera interaction remain in the [rig checklist](rig-verification.md).
 
-Latest [authorized installation and retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
+Earlier [authorized installation and retest](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md)
 closes the observed host/board version mismatch: current flash is backed up, exact
 protocol-3 firmware upload verifies, and actual CAPS reports `cephvr2_uno_2`.
 Direct bounded D9/D10/D11 count/reset/Stop/OFF checks pass; managed D9/D10/D11
@@ -101,8 +204,9 @@ by hiding. Tracking exposed a readback-adoption revision defect, repaired within
 the existing camera-resolution owner; 54 focused and 535 integration cases pass
 (two integration privilege skips), with static checks passing. Tracking then gets
 past preparation but Start is rejected and the existing coordinator-health shutdown
-recurs. Exact fault cleanup is confirmed. Tracking display/consumer release,
-sustained health and physical electrical/receiver acceptance remain open.
+recurs. Exact fault cleanup is confirmed. The later Oct8 two-ring evidence repair
+supersedes this Start/display failure; ordered consumer diagnostics, sustained/full-load
+health and physical electrical/receiver acceptance remain open.
 
 Earlier owner test reports no D10 pulses and repeated incomplete-result failures,
 while D9 and D2 complete. Source/regressions establish missing camera CONFIGURE

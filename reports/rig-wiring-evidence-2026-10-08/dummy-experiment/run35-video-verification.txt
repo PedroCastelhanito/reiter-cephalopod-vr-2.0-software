@@ -1,0 +1,54 @@
+DUMMY_143745_behavioral_cam.mp4
+{
+    "programs": [
+
+    ],
+    "streams": [
+        {
+            "codec_name": "h264",
+            "width": 1760,
+            "height": 3000,
+            "pix_fmt": "yuvj444p",
+            "r_frame_rate": "30/1",
+            "duration": "39.933333",
+            "nb_read_frames": "1198"
+        }
+    ]
+}
+decode: passed
+DUMMY_143745_stimulus.mp4
+{
+    "programs": [
+
+    ],
+    "streams": [
+        {
+            "codec_name": "h264",
+            "width": 2560,
+            "height": 2000,
+            "pix_fmt": "yuvj444p",
+            "r_frame_rate": "60/1",
+            "duration": "2.000000",
+            "nb_read_frames": "120"
+        }
+    ]
+}
+decode: passed
+DUMMY_143745_tracking_cam.mp4
+{
+    "programs": [
+
+    ],
+    "streams": [
+        {
+            "codec_name": "h264",
+            "width": 1588,
+            "height": 1344,
+            "pix_fmt": "yuvj444p",
+            "r_frame_rate": "60/1",
+            "duration": "39.966667",
+            "nb_read_frames": "2398"
+        }
+    ]
+}
+decode: passed

@@ -1,0 +1,68 @@
+CephVR supervisor shutdown: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: ReportHeartbeat: INVALID_CATALOGUE: first catalogue must be revision-zero empty
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28, in <module>
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24, in main
+    runpy.run_module(module, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py", line 249, in <module>
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py", line 245, in main
+    asyncio.run(run(bootstrap))
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py", line 177, in run
+    await bridge.drain(deadline)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\reporting.py", line 101, in drain
+    await asyncio.gather(*(asyncio.wrap_future(f) for f in pending))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\reporting.py", line 81, in done
+    result.result()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\reporting.py", line 61, in _deliver
+    await peer.receipt(method, message, deadline_ns=deadline_ns)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\transport\peers.py", line 79, in receipt
+    raise RuntimeError(
+RuntimeError: ReportError: WRONG_CONTEXT: source generation or work is not registered
+Exception ignored in: <function Server.__del__ at 0x000002C4B14E9580>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py", line 219, in __del__
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/common.pyx.pxi", line 121, in grpc._cython.cygrpc.schedule_coro_threadsafe
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/common.pyx.pxi", line 113, in grpc._cython.cygrpc.schedule_coro_threadsafe
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 435, in create_task
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 520, in _check_closed
+RuntimeError: Event loop is closed
+sys:1: RuntimeWarning: coroutine 'AioServer.shutdown' was never awaited
+Task exception was never retrieved
+future: <Task finished name='Task-41' coro=<run.<locals>.recover() done, defined at C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py:62> exception=RuntimeError("renderer native cleanup remains unconfirmed: window:calibration_bottom:(65544) b'WGL: Failed to clear current context: The handle is invalid. '; window:calibration_right:(65544) b'WGL: Failed to clear current context: The handle is invalid. '; window:calibration_left:(65544) b'WGL: Failed to clear current context: The handle is invalid. '")>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py", line 96, in recover
+    await owner.submit("Shutdown", command, recovery_deadline)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\owner.py", line 85, in submit
+    await asyncio.shield(asyncio.wrap_future(future))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\owner.py", line 122, in _run
+    deferred = driver.execute(
+               ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\lifecycle.py", line 176, in execute
+    self.cleanup(self.command)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\lifecycle.py", line 505, in cleanup
+    cleanup_resources(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\cleanup.py", line 96, in cleanup_resources
+    raise RuntimeError(f"renderer native cleanup remains unconfirmed: {details}")
+RuntimeError: renderer native cleanup remains unconfirmed: window:calibration_bottom:(65544) b'WGL: Failed to clear current context: The handle is invalid. '; window:calibration_right:(65544) b'WGL: Failed to clear current context: The handle is invalid. '; window:calibration_left:(65544) b'WGL: Failed to clear current context: The handle is invalid. '
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

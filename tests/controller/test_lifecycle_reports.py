@@ -231,6 +231,30 @@ async def test_operation_completion_retains_exact_duplicate_without_publishing(
     assert len(attempt.scope_results) == 1
 
 
+async def test_setup_failure_accepts_only_its_exact_backend_operation(
+    tmp_path: Path,
+) -> None:
+    fixture = _fixture(tmp_path)
+    operation = pb.OperationState(
+        context=pb.OperationContext(command_id="setup"),
+        work=pb.WorkContext(session=fixture.attempt.context),
+        complete=True,
+        succeeded=False,
+        failure=pb.Failure(code="SETUP_REJECTED", message="explicit failure"),
+    )
+    report = pb.LifecycleReport(
+        operation=pb.BackendOperationReport(source=fixture.backend, operation=operation)
+    )
+    assert (
+        await fixture.reports.receive(report, 50)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    assert fixture.attempt.scope_results["setup"] == operation
+    report.operation.source.backend_generation = str(uuid4())
+    assert (
+        await fixture.reports.receive(report, 50)
+    ).result == pb.COMMAND_RESULT_REJECTED
+
+
 async def test_setup_ready_keeps_original_deadline_and_exact_duplicate_rule(
     tmp_path: Path,
 ) -> None:
@@ -357,3 +381,69 @@ async def test_late_finished_retains_one_exact_recovery_without_changing_duplica
     assert rejected.result == pb.COMMAND_RESULT_REJECTED
     assert rejected.failure.code == "CONFLICT"
     assert len(fixture.supervisor.controller_recoveries) == 1
+
+
+async def test_trial_failure_keeps_participants_separate_and_exact_deadline(
+    tmp_path: Path,
+) -> None:
+    fixture = _fixture(tmp_path)
+    attempt = fixture.attempt
+    acquisition = pb.BackendContext(
+        backend_name="acquisition", backend_generation=_id()
+    )
+    attempt.trial_participants["acquisition"] = cast(BackendPort, _Backend(acquisition))
+    for backend in (fixture.backend, acquisition):
+        operation = pb.OperationState(
+            context=pb.OperationContext(command_id=attempt.trial_operation),
+            command="PrepareTrial",
+            work=pb.WorkContext(trial=attempt.prepared.trials[0].context),
+            complete=True,
+            succeeded=False,
+            failure=pb.Failure(code="WRITER", message="cannot prepare output"),
+        )
+        report = pb.LifecycleReport(
+            operation=pb.BackendOperationReport(source=backend, operation=operation)
+        )
+        assert (
+            await fixture.reports.receive(report, 101)
+        ).result == pb.COMMAND_RESULT_REJECTED
+        assert (
+            await fixture.reports.receive(report, 50)
+        ).result == pb.COMMAND_RESULT_ACCEPTED
+        assert (
+            await fixture.reports.receive(report, 50)
+        ).result == pb.COMMAND_RESULT_ACCEPTED
+        report.operation.operation.context.command_id = "stale"
+        assert (
+            await fixture.reports.receive(report, 50)
+        ).result == pb.COMMAND_RESULT_REJECTED
+    assert set(attempt.trial_results) == {"acquisition", "visual_stimulus"}
+    assert not attempt.scope_results
+
+
+async def test_successful_prepare_completion_can_follow_accepted_trial_ready(
+    tmp_path: Path,
+) -> None:
+    fixture = _fixture(tmp_path)
+    attempt = fixture.attempt
+    attempt.trial_ready[fixture.backend.backend_name] = pb.ReadyReport()
+    fixture.lifecycle.trial.phase = pb.TRIAL_PHASE_STARTING
+    report = pb.LifecycleReport(
+        operation=pb.BackendOperationReport(
+            source=fixture.backend,
+            operation=pb.OperationState(
+                context=pb.OperationContext(command_id=attempt.trial_operation),
+                command="PrepareTrial",
+                work=pb.WorkContext(trial=attempt.prepared.trials[0].context),
+                complete=True,
+                succeeded=True,
+            ),
+        )
+    )
+    assert (
+        await fixture.reports.receive(report, 50)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    report.operation.operation.succeeded = False
+    assert (
+        await fixture.reports.receive(report, 50)
+    ).result == pb.COMMAND_RESULT_REJECTED

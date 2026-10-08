@@ -28,8 +28,8 @@ class PipelineSpec:
 
 
 PIPELINES = {
-    "water_flow": PipelineSpec("water_flow", "1", "water_flow_proxy"),
-    "fin_flow": PipelineSpec("fin_flow", "1", "fin_flow_proxy"),
+    "water_flow": PipelineSpec("water_flow", "2", "water_flow_proxy"),
+    "fin_flow": PipelineSpec("fin_flow", "2", "fin_flow_proxy"),
 }
 CHANNELS = tuple(
     ChannelDeclaration(
@@ -39,9 +39,9 @@ CHANNELS = tuple(
         coordinate_frame="anatomical_body",
     )
     for name, unit in (
-        ("forward_drive", "px/s"),
-        ("sideways_drive", "px/s"),
-        ("turn_drive", "1/s"),
+        ("forward_drive", "mm/s"),
+        ("sideways_drive", "mm/s"),
+        ("turn_drive", "deg/s"),
     )
 )
 # The host supplies these adapters; methods are connected once during Setup.

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import struct
+import sys
+from types import ModuleType
 from types import SimpleNamespace as NS
 
 import pytest
@@ -41,6 +43,42 @@ from cephvr.visual_stimulus.rendering.types import (
     RenderedOutput,
     RenderPassResult,
 )
+
+
+def test_reference_bars_share_exact_pixel_spans_and_restore_scissor():
+    from cephvr.visual_stimulus.config.calibration_bars import (
+        reference_lengths,
+        reference_scale,
+    )
+    from cephvr.visual_stimulus.rendering.reference_bars import draw_reference_bars
+
+    class Context:
+        scissor = (1, 2, 3, 4)
+
+        def clear(self, *color, alpha, viewport):
+            calls.append((self.scissor, color, alpha, viewport))
+
+    calls = []
+    context = Context()
+    width, height = 1279, 719
+    x, y = reference_lengths(width, height)
+    draw_reference_bars(context, width, height)
+    assert context.scissor == (1, 2, 3, 4)
+    assert calls[2][0][2] == x
+    assert calls[3][0][3] == y
+    assert all(scissor == viewport for scissor, _, _, viewport in calls)
+    scale = reference_scale(width, height, x / 2, y / 2, 1.5)
+    assert scale.mm_per_pixel_x == scale.mm_per_pixel_y == 0.5
+    assert scale.projector_distance_mm == pytest.approx(width * 0.5 * 1.5)
+    for invalid in (0, -1, float("nan"), float("inf")):
+        with pytest.raises(ValueError):
+            reference_scale(width, height, invalid, y / 2, 1.5)
+    context.clear = lambda *args, **kwargs: (_ for _ in ()).throw(
+        RuntimeError("render failure")
+    )
+    with pytest.raises(RuntimeError, match="render failure"):
+        draw_reference_bars(context, width, height)
+    assert context.scissor == (1, 2, 3, 4)
 
 
 def test_linear_rate_integral_and_keyframe_evaluation() -> None:
@@ -465,6 +503,34 @@ def test_native_submission_orders_marker_last_and_preserves_failed_attempt():
     assert observed[0].swap_entry_ns == observed[0].swap_return_ns == 5
 
 
+def test_native_window_attachment_preserves_glfw_context_ownership():
+    from cephvr.visual_stimulus.rendering.native_display import (
+        NativeRenderingError,
+        attach_window_context,
+    )
+
+    contexts = []
+
+    class GraphicsAPI:
+        def init_context(self):
+            contexts.append(NS(version_code=430, release=lambda: None))
+
+        def get_context(self):
+            return contexts[-1]
+
+    api = GraphicsAPI()
+    first = attach_window_context(api)
+    second = attach_window_context(api)
+    assert first is not second
+    releases = []
+    invalid = NS(version_code=420, release=lambda: releases.append("wrapper"))
+    with pytest.raises(NativeRenderingError, match="OpenGL 4.3"):
+        attach_window_context(
+            NS(init_context=lambda: None, get_context=lambda: invalid)
+        )
+    assert releases == ["wrapper"]
+
+
 def test_native_failed_gpu_release_keeps_context_for_cleanup_retry():
     from pathlib import Path
 
@@ -524,3 +590,65 @@ def test_image_fit_uv_spans_preserve_aspect_and_center(source, target):
     assert target * contain[1] / contain[0] == pytest.approx(source)
     assert target * cover[1] / cover[0] == pytest.approx(source)
     assert fitted_uv_scale("stretch", source, target) == (1.0, 1.0)
+
+
+def test_shared_context_wait_uses_unsigned_64_bit_ignored_timeout(monkeypatch):
+    from cephvr.visual_stimulus.rendering.capture_sync import order_shared_outputs
+
+    gl = ModuleType("OpenGL.GL")
+    events = []
+    gl.GL_SYNC_GPU_COMMANDS_COMPLETE = 1
+    gl.GL_TIMEOUT_IGNORED = -9223372036854775807
+    gl.glFenceSync = lambda *_args: object()
+    gl.glFlush = lambda: None
+    gl.glWaitSync = lambda fence, flags, timeout: events.append((flags, timeout))
+    gl.glDeleteSync = lambda fence: None
+    monkeypatch.setitem(sys.modules, "OpenGL.GL", gl)
+    root = ModuleType("OpenGL")
+    root.GL = gl
+    monkeypatch.setitem(sys.modules, "OpenGL", root)
+    pending = []
+    order_shared_outputs(
+        {"one": NS(activate=lambda: None), "two": NS(activate=lambda: None)}, pending
+    )
+    assert events == [(0, 18446744073709551615)] * 2
+    assert not pending
+
+
+def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
+    from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+
+    gl = ModuleType("OpenGL.GL")
+    gl.GL_PIXEL_PACK_BUFFER = 1
+    gl.glBindBuffer = lambda *_args: None
+
+    def stop(*_args):
+        raise RuntimeError("reached PBO allocation")
+
+    gl.glGenBuffers = stop
+    root = ModuleType("OpenGL")
+    root.GL = gl
+    monkeypatch.setitem(sys.modules, "OpenGL", root)
+    monkeypatch.setitem(sys.modules, "OpenGL.GL", gl)
+    modern = ModuleType("moderngl")
+    modern.TRIANGLE_STRIP = 1
+    monkeypatch.setitem(sys.modules, "moderngl", modern)
+    events = []
+    texture = NS()
+    fbo = NS(
+        use=lambda: events.append("use"), clear=lambda *_args: events.append("clear")
+    )
+    context = NS(
+        texture=lambda *_args, **_kwargs: texture,
+        framebuffer=lambda **_kwargs: fbo,
+        program=lambda **_kwargs: {"source_tex": NS(value=None)},
+        buffer=lambda *_args: NS(),
+        vertex_array=lambda *_args, **_kwargs: NS(),
+    )
+    capture = ReviewCapture()
+    with pytest.raises(RuntimeError, match="reached PBO allocation"):
+        capture.capture(
+            (NS(output_id="one", texture_handle=NS(ctx=context)),),
+            NS(composite_width=2, composite_height=2, tiles=()),
+        )
+    assert events == ["use", "clear"]

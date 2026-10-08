@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-08",
+  "timezone": "Asia/Tokyo",
+  "task": "tracking-decoded-records",
+  "source_revision": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "source_scope": "Shared dirty Windows workspace. Hashes cover this increment; HEAD alone does not identify the full concurrent snapshot.",
+  "source_sha256": {
+    "src/cephvr/tracking/config/models/record_json.py": "5c9223f053df8b2a2ffb7b87e472de544aa0cbbf51cdbd20bfdd5d95fc6f5cb3",
+    "src/cephvr/tracking/config/models/records.py": "e095f02e10ccc48f64b73a04c32652655bea796fce91051d267f3fe3bd1532e4",
+    "src/cephvr/tracking/coordinator/trials.py": "a111c8f9c31f09661c731d418ceb4d089a12d4d0187e8d438f2e4f4ad8f69b3f",
+    "src/cephvr/tracking/recording/results.py": "c33f451590928c753f904ce79db7995bec6c5e3eb487e964afdd6e52cb6d131b",
+    "src/cephvr/tracking/recording/writer.py": "b771bec94cefb0606213b3816fc32c3ba224471090f7d58c4ec3d73e03f310cf",
+    "src/cephvr/tracking/recording_schema.py": "be0df44a2e948bbf43433a525e8e2cd12df0886785a5f59fdab2e415e4a1fe84",
+    "tests/tracking/test_recording.py": "421431f81d0a6a746fd3e9b3d16546fceafda4e221d316346246679c269842b9",
+    "contracts/tracking/test_contracts.py": "60ffa704d36fde8f85d6fd7ca89563cfa7342f573c649fff17f607d2479d5038",
+    "contracts/tracking/tracking-record.schema.json": "192945a307e07f5e7d566684d1ef20ba7bb46c75165fdaef9c5c3798baeec222"
+  },
+  "checks": [
+    {
+      "command": "python -m pytest tests/tracking tests/controller/test_planning.py tests/controller/test_metadata.py -q -m \"not windows and not rig\" --basetemp=.tmp/tracking-decoded-final --junitxml=reports/tracking-evidence-2026-10-08/decoded-records-tests.xml",
+      "outcome": "113 passed / 1 rig deselected in 3.65 s; permitted authenticated loopback"
+    },
+    {
+      "command": "python -m unittest discover -s contracts/tracking -p 'test_*.py' -q",
+      "outcome": "48 tests pass"
+    },
+    {
+      "command": "python contracts/tracking/schema_check.py",
+      "outcome": "19 schema definitions match canonical models"
+    },
+    {
+      "command": "python -m ruff check src/cephvr/tracking tests/tracking",
+      "outcome": "pass"
+    },
+    {
+      "command": "python -m ruff format --check src/cephvr/tracking tests/tracking",
+      "outcome": "74 files pass"
+    },
+    {
+      "command": "python -m mypy --platform win32 src/cephvr/tracking",
+      "outcome": "66 sources pass; static only"
+    },
+    {
+      "command": "python tools/check_backend_boundaries.py",
+      "outcome": "620 modules / 0 violations; existing size advisories reviewed, no new advisory"
+    }
+  ],
+  "prior_attempts": [
+    "Focused initial run: old-format assertions fail and missing .tmp parent prevents fixture setup.",
+    "Initial mypy: annotation/kwargs errors corrected.",
+    "Next focused run: one test used nonexistent ProcessIdentity.pid; corrected to declared trial_number.",
+    "Sandboxed full Tracking suite stalls near authenticated runtime cases and is interrupted; permitted loopback rerun passes 93, then final changed-budget integration passes 113.",
+    "Contract pytest discovery fails imports; owning unittest discovery passes 48."
+  ],
+  "limitations": [
+    "No hardware, scientific session, runtime restart, production throughput, crash-durability or rig acceptance.",
+    "Schema 1 recordings are unchanged and unsupported by the new schema-2 reader.",
+    "Video padding remains separate unresolved contract/implementation work."
+  ]
+}

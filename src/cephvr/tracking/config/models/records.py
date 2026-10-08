@@ -6,15 +6,14 @@ belongs to records.md. No recorder, file reader or simulated backend.
 
 from __future__ import annotations
 
-import base64
-import binascii
 import hashlib
 import math
 import re
 from typing import Annotated, Literal, Self
 
-from pydantic import AfterValidator, Field, model_validator
+from pydantic import AfterValidator, BeforeValidator, Field, model_validator
 
+from cephvr.tracking.config.models.record_json import FeedbackJSON, JsonObject
 from cephvr.visual_stimulus.config.models.schema_common import (
     NS,
     U32,
@@ -23,6 +22,7 @@ from cephvr.visual_stimulus.config.models.schema_common import (
     Model,
     Name,
     Version1,
+    exact_integer,
     parse_json,
 )
 
@@ -84,7 +84,7 @@ class Identity(Model):
 
 class Header(Model):
     kind: Literal["header"]
-    schema_version: Version1
+    schema_version: Annotated[Literal[3], BeforeValidator(exact_integer)]
     stream_kind: Literal["tracking"]
     identity: Identity
     trial_start_host_ns: NS
@@ -203,20 +203,6 @@ class PoseUse(Model):
                     raise ValueError("valid pose is stale")
                 if self.disposition == "stale" and self.age_ns <= self.maximum_age_ns:
                     raise ValueError("stale pose must exceed limit")
-        return self
-
-
-class WirePayload(Model):
-    protobuf_base64: Annotated[str, Field(min_length=1)]
-
-    @model_validator(mode="after")
-    def canonical(self) -> Self:
-        try:
-            data = base64.b64decode(self.protobuf_base64, validate=True)
-        except (ValueError, binascii.Error) as e:
-            raise ValueError("invalid base64") from e
-        if not data or base64.b64encode(data).decode() != self.protobuf_base64:
-            raise ValueError("noncanonical/empty protobuf bytes")
         return self
 
 
@@ -384,12 +370,14 @@ class FlowProxyEvidence(Model):
 class StageEvidence(Model):
     stage_id: Name
     schema_id: Name
-    payload_json: str  # Exact registered compact schema, never arbitrary data.
+    payload: JsonObject  # Validated against the prepared registered schema.
 
 
 class MovementResult(Model):
     kind: Literal["result"]
-    feedback_result: WirePayload  # Exact cephvr.visual_stimulus.v1.FeedbackResult bytes, independently typed/validated.
+    feedback_result: (
+        FeedbackJSON  # Descriptor-owned JSON, immutable until serialization.
+    )
     produced_host_ns: NS
     pose: PoseUse
     stage_evidence: tuple[StageEvidence, ...]

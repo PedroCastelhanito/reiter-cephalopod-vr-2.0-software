@@ -31,6 +31,22 @@ from cephvr.visual_stimulus.config.models.evidence_model import (  # noqa: F401
 
 def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
     """Return the schemas emitted by the canonical Visual Stimulus evidence writer."""
+    recipe = WriterSchema(
+        schema_version=2,
+        format="json",
+        fields={
+            "document": "cephvr.visual_stimulus.prepared_trial.v2 canonical PreparedTrial",
+            "format_version": "2",
+            "identity": "exact session/trial/configuration/prepared generations",
+            "source": "canonical source Program and source_sha256",
+            "epochs": "resolved ordered stimulus presentations",
+            "manifest": "immutable resource identities and interpretation",
+        },
+        units={"epoch_boundaries": "trial-relative nanoseconds"},
+        clocks={
+            "presentation": "trial-relative schedule; host onset retained in trial LOG"
+        },
+    )
     evidence = WriterSchema(
         schema_version=1,
         format="jsonl",
@@ -63,6 +79,7 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         },
     )
     return {
+        ("visual_stimulus", "stimulus_LOG", "json"): recipe,
         ("visual_stimulus", "stimulus_frames", "jsonl"): evidence,
         ("visual_stimulus", "stimulus", "mp4"): video,
     }

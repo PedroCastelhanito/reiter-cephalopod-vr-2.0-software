@@ -122,6 +122,45 @@ def prepared_driver(
     return driver, clock, reports, recorder, graphics, command, release
 
 
+def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from cephvr.visual_stimulus.resources.session import NativePreparation
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    clock = Clock()
+    preparation = NativePreparation(
+        object(), renderer_generation=str(uuid4()), clock_ns=clock
+    )
+    setup = visual_stimulus.WorkerSetup()
+    setup.session.configuration.asset_root = str(tmp_path)
+    setup.session.trials.add().definition.stimulus.SetInParent()
+    setup.settings.display.profile_json = valid_display_json()
+    setup.policies.limits.CopyFrom(
+        vp.ResourceLimits(
+            max_document_bytes=1_000_000,
+            max_asset_cpu_bytes=2_000_000,
+            max_asset_gpu_bytes=2_000_000,
+            decoder_threads=1,
+            decoder_contexts=1,
+            codec_threads_per_context=1,
+            codec_threads_total=1,
+            decoded_frames_per_instance=1,
+            decoded_bytes_total=1_000_000,
+            decoder_working_bytes_total=1_000_000,
+        )
+    )
+    with ThreadPoolExecutor(max_workers=1) as cpu:
+        outcome = cpu.submit(
+            preparation.prepare_trials, setup, lambda *_: None, clock() + 10**9
+        )
+        with pytest.raises(ValueError, match="canonical stimulus program"):
+            outcome.result(timeout=2)
+    assert preparation.video_session is not None
+    assert preparation.engine._video_provider is None
+    assert preparation.engine._video_reset is None
+
+
 def test_file_pacing_identity_reaches_both_startup_preparation_owners():
     import json
 

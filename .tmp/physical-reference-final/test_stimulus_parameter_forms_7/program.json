@@ -1,0 +1,115 @@
+{
+  "format_version": 2,
+  "assets": [
+    {
+      "asset_id": "stimulus_1",
+      "logical_path": "arena.glb",
+      "color_override": null,
+      "profile": "glb2_static_unlit_v1"
+    }
+  ],
+  "instances": [
+    {
+      "instance_id": "stimulus_1",
+      "family": "arena"
+    }
+  ],
+  "scenes": [
+    {
+      "scene_id": "blank",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": null,
+      "layer_instance_ids": []
+    },
+    {
+      "scene_id": "scene_stimulus_1",
+      "background_linear_rgb": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "arena_instance_id": "stimulus_1",
+      "layer_instance_ids": []
+    }
+  ],
+  "input_channels": [],
+  "duration": {
+    "kind": "explicit_epochs"
+  },
+  "sequence": [
+    {
+      "kind": "epoch",
+      "epoch_id": "Epoch_1",
+      "batch_label": "",
+      "scene_id": "scene_stimulus_1",
+      "duration": {
+        "kind": "fixed",
+        "duration": {
+          "seconds": "60"
+        }
+      },
+      "settings": [
+        {
+          "kind": "arena",
+          "instance_id": "stimulus_1",
+          "asset_id": "stimulus_1",
+          "world_frame_id": "rig",
+          "asset_to_world": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "initial": {
+            "position_mm": [
+              0.0,
+              0.0
+            ],
+            "yaw_deg": 0.0
+          },
+          "fixed_height_mm": 0.0,
+          "fixed_pitch_deg": 0.0,
+          "fixed_roll_deg": 0.0,
+          "motion": {
+            "x": {
+              "kind": "hold"
+            },
+            "y": {
+              "kind": "hold"
+            },
+            "yaw": {
+              "kind": "hold"
+            }
+          },
+          "reset": false,
+          "assignments": [],
+          "feedback": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+acquisition_tracking_worker RecordPulseEvidence 7f4fdf77-0661-4e50-8374-a2ca3d6f60d1 failed: RuntimeError: worker session is not prepared
+acquisition_behavioral_worker RecordPulseEvidence fc780360-a0e3-4009-967c-8493b15403ea failed: RuntimeError: worker session is not prepared
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_EVIDENCE: Finished evidence differs from its exact output plans
+InterruptSession e3b4106f-d416-42fe-afe0-a78fbf91c781 failed: SESSION_IDENTITY: no exact live session
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

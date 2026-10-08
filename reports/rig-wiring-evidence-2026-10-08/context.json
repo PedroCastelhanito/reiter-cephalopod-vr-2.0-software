@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-08T09:32:08.310409+09:00",
+  "baseline_revision": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "review_range": "e4c653c..7ba43b1",
+  "dirty_source_tree": true,
+  "policy_versions": {
+    "acquisition": 18,
+    "microcontroller": 1
+  },
+  "baseline_source_manifest": "source-sha256.json",
+  "source_patch": "final-repairs.patch",
+  "changed_source_sha256": {
+    "src/cephvr/controller/microcontroller/device.py": "276697d668ca5485faffd2da14dab623eec3dcf8f01d6aa0fc29a347e1b45258",
+    "src/cephvr/controller/microcontroller/firmware_operation.py": "51cd16d0395b1d28fccfa4b161716b22f27856a34879bed16b52733a6ea7cc40",
+    "src/cephvr/platform/windows/byte_stream_factory.py": "55061773ee18a780deaa7ef2aa6fcf524c33815eeffa731b60bcd25dd1d40b07",
+    "tests/controller/test_microcontroller_owner.py": "fd8b54e9e17ea3dcfd49d81f93520c83799ea2d55914e9cf642b22b4926a18d2",
+    "tests/controller/test_spikeglx.py": "d1a54310b0e8fe787930cc4b9245bd6b5e2d301584e6d0fb62fe4e6d82cbf3cd",
+    "tests/gui/test_dashboard.py": "bfed24f7af52b77c4962ddf3c800d81e8533c0153d54990054377ecabb6f4910",
+    "tests/platform/test_byte_stream.py": "6e3f5fee00232387619727daf5811462aa15cd7f70a49ea708be2d18cc55b9c7",
+    "tests/visual_stimulus/test_transport.py": "b2e8483ce4de272db1fa157f47cb8ef463c2c1d3e57230afd6d008e701025ee0"
+  },
+  "final_suite": {
+    "passed": 1463,
+    "failed": 8,
+    "skipped": 5,
+    "deselected_rig": 1,
+    "time_s": "167.145",
+    "failures": [
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_devices_draft_reflows_without_horizontal_clipping[720]",
+        "time": "0.403"
+      },
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_devices_draft_reflows_without_horizontal_clipping[1175]",
+        "time": "0.383"
+      },
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_responsive_navigation_preserves_widget_identity",
+        "time": "0.400"
+      },
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_device_tabs_sit_above_controls_without_moving_hud",
+        "time": "0.410"
+      },
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_configuration_scroll_keeps_projector_status_fixed",
+        "time": "0.424"
+      },
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_protocol_cards_reflow_and_keep_properties_reachable",
+        "time": "0.405"
+      },
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_variation_controls_fit_narrow_protocol_without_horizontal_scroll",
+        "time": "0.877"
+      },
+      {
+        "classname": "tests.gui.test_dashboard",
+        "name": "test_random_batch_values_stay_fixed_across_preview_and_save",
+        "time": "1.360"
+      }
+    ]
+  },
+  "methods": {
+    "suite": ".venv/Scripts/python.exe -m pytest tests -q -m \"not rig\"; QT_QPA_PLATFORM=offscreen",
+    "baseline": "tools/test_on_rig.ps1 -OutputDirectory reports/rig-wiring-evidence-2026-10-08/automated",
+    "managed_board": "managed_mcu.py; authenticated controller RPC; acquisition temporarily disabled, restored",
+    "cameras": "managed_cameras.py; actual GUI managed-device dispatch, native coordinates/Qt screenshot; approved BehaviorSquid",
+    "negative_compile": "managed_failure.py; native #error fixture, same-connection comparison, active-D9 release",
+    "watchdog": "board_watchdog.py; isolated board after exact application exit, 3.4 s host silence",
+    "cleanup": "cleanup.ps1; literal verified workspace paths; final-native-cleanup.json"
+  },
+  "scope": "bounded software/native/device checks; three product repairs and uncertain-start cleanup fence; no scientific session or remote mutation; physical timing, Tracking health, GUI clipping, remote/projector/full-load limitations retained"
+}

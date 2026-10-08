@@ -1,0 +1,31 @@
+controller_generation "e9d110a2-081b-4043-8281-614aa3d4e441"
+configuration_restored_on_restart false
+events [["admitted", "4a1e3d6d-2d44-4152-b1ce-e8de86f96c40"]]
+events [["admitted", "4a1e3d6d-2d44-4152-b1ce-e8de86f96c40"], ["accepted", 2]]
+events [["admitted", "4a1e3d6d-2d44-4152-b1ce-e8de86f96c40"], ["accepted", 2], ["submit_configuration", "4a1e3d6d-2d44-4152-b1ce-e8de86f96c40", "completed", "Accepted authoritative configuration version."]]
+configuration_accepted true
+error "ClientError: REJECTED: Recover unfinished session at C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-134233. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\ReiterU_PC\\\\Desktop\\\\20261008_gui_backend_dummy\\\\DUMMY-134233\\\\protocol-data\\\\SESSION_CONFIG.json' Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect/stop that exact remote run manually before another paired session."
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-08\dummy-experiment\run_dummy.py", line 96, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-08\dummy-experiment\run_dummy.py", line 59, in main
+    outcome = await asyncio.wait_for(client.execute("Setup"), 180)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 274, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: REJECTED: Recover unfinished session at C:\Users\ReiterU_PC\Desktop\20261008_gui_backend_dummy\DUMMY-134233. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-134233\\protocol-data\\SESSION_CONFIG.json' Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect/stop that exact remote run manually before another paired session.

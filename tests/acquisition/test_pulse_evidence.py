@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
 
@@ -12,14 +13,23 @@ from cephvr.acquisition.coordinator.manual_pulse_observation import (
 )
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.coordinator.trial_pulses import TrialPulseBoundaries
-from cephvr.acquisition.ports import SerialOwnerPort
+from cephvr.acquisition.ports import SerialOwnerPort, WorkerPort
 from cephvr.acquisition.recording.session_contracts import PulseEvidence
-from cephvr.acquisition.state import CoordinatorIdentity, PulseRecord, SessionRecord
+from cephvr.acquisition.state import (
+    CoordinatorIdentity,
+    LaunchRecord,
+    PulseRecord,
+    SessionRecord,
+    TrialRecord,
+    WorkerRecord,
+    WorkerTrial,
+)
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.acquisition.worker.pulse_evidence import TrialPulseEvidence
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.commands import CommandLedger
 
 
 @pytest.mark.parametrize(
@@ -284,3 +294,77 @@ def test_unspecified_terminal_pulse_does_not_mutate_retained_evidence() -> None:
         tracker.record(request, _schedule(work), camera.CAMERA_ROLE_BEHAVIORAL)
     assert tracker.connection_id is None
     assert tracker.on is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scheduled", [False, True])
+async def test_pulse_delivery_retains_exact_child_before_worker_ack(
+    scheduled: bool,
+) -> None:
+    work = _trial_work()
+    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    process = control.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation=str(uuid4())
+    )
+    preparation = control.OperationContext(command_id=str(uuid4()))
+    schedule = control.OperationContext(command_id=str(uuid4())) if scheduled else None
+    trial = TrialRecord(
+        work=work,
+        plan=control.TrialPlan(context=work.trial),
+        preparation=preparation,
+        schedule=schedule,
+        configuration_revision=2,
+    )
+    context = acq.WorkerContext(
+        worker=process,
+        owner=owner,
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        work=control.WorkContext(session=work.trial.session),
+    )
+    launch = LaunchRecord(
+        command_id=str(uuid4()),
+        worker=process,
+        owner=owner,
+        work=context.work,
+        camera=context.camera,
+        parent_operation=preparation,
+        planned_ns=1,
+    )
+    ledger = CommandLedger(
+        str(uuid4()),
+        300_000_000_000,
+        max_records=32,
+        max_bytes=2 * 1024 * 1024,
+        result_reservation_bytes=64 * 1024,
+    )
+    observed = []
+
+    async def deliver(
+        request: acq.WorkerPulseEvidence, *, deadline_ns: int
+    ) -> control.CommandAdmission:
+        child = worker.child_operations[request.command.command_id]
+        assert child.work == work and request.command.target.work == work
+        assert child.parent_operation == (schedule or preparation)
+        assert (
+            child.kind == "record_pulse_evidence" and child.configuration_revision == 2
+        )
+        assert child.deadline_ns == deadline_ns == 100
+        assert child.retention_key and child.retention_key.endswith(":safety")
+        assert ledger.has_payload(child.retention_key)
+        observed.append(request)
+        return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    worker = WorkerRecord(
+        context=context,
+        launch=launch,
+        port=cast(WorkerPort, SimpleNamespace(record_pulse_evidence=deliver)),
+        commands=ledger,
+        trial=WorkerTrial(configuration_revision=2),
+    )
+    boundaries = cast(
+        TrialPulseBoundaries, SimpleNamespace(workers={context.camera: worker})
+    )
+    await TrialPulseBoundaries.send_evidence(
+        boundaries, trial, mcu.PulseCommandEvidence(applied=True), 100
+    )
+    assert len(observed) == 1 and not trial.interrupted

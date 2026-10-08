@@ -1,0 +1,6 @@
+A fresh GUI was launched in the existing application generation.
+A fresh GUI was launched in the existing application generation.
+CephVR acquisition shutdown: SUPERVISOR_HEARTBEAT_FAILED: acquisition heartbeat was not accepted: supervisor rejected acquisition heartbeat: WRONG_CONTEXT: source generation or work is not registered
+CephVR supervisor shutdown: BACKEND_HEARTBEAT_LOST: acquisition heartbeat silence
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -127,7 +127,7 @@ def _parse_pixel_formats(text: str) -> set[str]:
     output: set[str] = set()
     for line in text.splitlines():
         parts = line.split()
-        if len(parts) >= 5 and re.fullmatch(r"[IOHPB\.]{5}", parts[0]):
+        if len(parts) >= 4 and re.fullmatch(r"[IOHPB\.]{5}", parts[0]):
             output.add(parts[1])
     return output
 

@@ -5,14 +5,20 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 
-from cephvr.acquisition.coordinator.commands import retain_worker_command
+from cephvr.acquisition.coordinator.commands import (
+    retain_worker_command,
+    wait_child_operation,
+)
 from cephvr.acquisition.coordinator.trial_helpers import (
     _camera_output_keys,
     _external_roles,
     _outputs_match,
     _rejected,
 )
-from cephvr.acquisition.coordinator.trial_termination import PulseBoundaryRunner
+from cephvr.acquisition.coordinator.trial_termination import (
+    NormalEndRunner,
+    PulseBoundaryRunner,
+)
 from cephvr.acquisition.ports import SerialOwnerPort
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
@@ -40,6 +46,8 @@ class TrialScheduleRelease:
         lifecycle_delivery_ns: int,
         valid_command: Callable[[wire.BackendCommand, SessionRecord | None, int], bool],
         run_pulse_boundary: PulseBoundaryRunner,
+        run_normal_end: NormalEndRunner,
+        lock: asyncio.Lock,
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.identity = identity
@@ -51,6 +59,8 @@ class TrialScheduleRelease:
         self.lifecycle_delivery_ns = lifecycle_delivery_ns
         self._valid_command = valid_command
         self._run_pulse_boundary = run_pulse_boundary
+        self._run_normal_end = run_normal_end
+        self.lock = lock
         self.clock = clock
 
     async def schedule(
@@ -142,6 +152,16 @@ class TrialScheduleRelease:
                 outputs=outputs,
             )
             dispatch.append((port, payload))
+        # Retain the exact intent before awaits: Release may be admitted while
+        # MCU reservations and worker Schedule executors are still in progress.
+        trial.schedule = control.OperationContext(command_id=request.command.command_id)
+        trial.start_monotonic_ns = request.start_monotonic_ns
+        trial.end_monotonic_ns = request.normal_end_monotonic_ns
+        trial.outputs = [
+            control.OutputPlan.FromString(item.SerializeToString())
+            for item in request.outputs
+            if item.backend == self.identity.backend
+        ]
         if selected:
             try:
                 await self.serial.reserve_boundary(
@@ -182,9 +202,6 @@ class TrialScheduleRelease:
                 "WORKER_SCHEDULE",
                 "one or more camera workers rejected Schedule",
             )
-        trial.schedule = control.OperationContext(command_id=request.command.command_id)
-        trial.start_monotonic_ns = request.start_monotonic_ns
-        trial.end_monotonic_ns = request.normal_end_monotonic_ns
         trial.pulse_delivery_deadline_ns = (
             request.normal_end_monotonic_ns + self.lifecycle_delivery_ns
         )
@@ -237,6 +254,26 @@ class TrialScheduleRelease:
             assert candidate is not None and candidate.port is not None
             worker = candidate
             assert worker.trial is not None
+            scheduled = worker.trial.schedule
+            if scheduled is None:
+                return _rejected(
+                    request.command.command_id,
+                    "WORKER_SCHEDULE",
+                    "camera has no retained Schedule",
+                )
+            child_schedule = worker.child_operations[scheduled.command_id]
+            outcome = await wait_child_operation(
+                child_schedule,
+                min(deadline_ns, child_schedule.deadline_ns or deadline_ns),
+                self.lock,
+                self.clock,
+            )
+            if not outcome.succeeded:
+                return _rejected(
+                    request.command.command_id,
+                    "WORKER_SCHEDULE",
+                    outcome.failure.message,
+                )
             child, operation, port = retain_worker_command(
                 worker,
                 work=trial.work,
@@ -306,6 +343,9 @@ class TrialScheduleRelease:
                     boundary_ns=trial.end_monotonic_ns,
                 )
             )
+        trial.normal_end_task = asyncio.create_task(
+            self._run_normal_end(session, trial)
+        )
         return control.CommandAdmission(
             result=control.COMMAND_RESULT_ACCEPTED,
             command_id=request.command.command_id,

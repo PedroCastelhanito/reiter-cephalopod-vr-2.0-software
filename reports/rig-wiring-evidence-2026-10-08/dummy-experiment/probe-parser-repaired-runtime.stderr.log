@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: CHILD_EXITED: registered visual_stimulus_renderer PID 28776 exited; cleanup evidence remains required
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

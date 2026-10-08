@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 166
+**Status:** Accepted · **Revision:** 168
 
 **Processes and startup**
 
@@ -469,6 +469,14 @@ design; runtime monitoring remains unimplemented.
   the supervisor, but only the controller or a top-level coordinator may report
   controller or supervisor loss. Validate context and measure silence at recipient ingress:
   **5 s** interval, **15 s** silence, no recovery window.
+  Registered controller/coordinator Configuration heartbeats without work remain
+  valid process health while session scope changes; they cannot carry session
+  cleanup catalogues or continuing-function evidence. Work-scoped reports retain
+  exact registered context validation.
+  During the exact camera PrepareTrial child's original deadline, the acquisition
+  coordinator accepts idle session-only worker health until its first trial-scoped
+  heartbeat. It carries no trial progress, error, cleanup or continuing-function
+  evidence; after that handoff, old session health is rejected.
 - Required active work reports meaningful progress; idle workers have no progress
   obligation. FFmpeg has no gRPC/heartbeat: its feeding worker monitors
   output/progress/errors and the supervisor tracks identity/exit. A healthy control

@@ -1,0 +1,262 @@
+F....F.....                                                              [100%]
+================================== FAILURES ===================================
+____ test_firmware_upload_hands_off_serial_without_resuming_outputs[hex-] _____
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-83/test_firmware_upload_hands_off0')
+source_kind = 'hex', failure = ''
+
+    @pytest.mark.parametrize(
+        "source_kind,failure",
+        [
+            (kind, failure)
+            for kind in ("hex", "ino")
+            for failure in ("", "upload", "reconnect", "digest", "active")
+        ]
+        + [("ino", "compile")],
+    )
+    async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
+        tmp_path, source_kind, failure
+    ) -> None:
+        from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+        from cephvr.controller.microcontroller.firmware import read_uno_image
+        from cephvr.controller.microcontroller.firmware_source import read_firmware
+        from cephvr.shared.clock import host_time_ns
+    
+        events = []
+        binary = tmp_path / "compiled.hex"
+        binary.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+        image = read_uno_image(str(binary))
+        path = tmp_path / f"firmware.{source_kind}"
+        path.write_bytes(
+            b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+        )
+        selected = read_firmware(str(path))
+    
+        class Uploader:
+            cleanup_complete = True
+    
+            def reset_cancel(self):
+                pass
+    
+            def compile(self, sketch, operation, *, deadline_ns):
+                events.append("compile")
+                assert sketch == selected and operation.command_id == "child"
+                assert deadline_ns > 0
+                if failure == "compile":
+                    raise RuntimeError("compilation failed")
+                return image
+    
+            def prepare(self, selected):
+                assert selected.payload == image.payload
+                events.append("prepare")
+                self.cleanup_complete = False
+    
+            def upload(self, port, operation, *, deadline_ns):
+                assert port == "COM8" and operation.command_id == "child"
+                events.append("upload")
+                if failure == "upload":
+                    raise RuntimeError("verification failed")
+    
+            def close(self, *, deadline_ns):
+                events.append("cleanup")
+                self.cleanup_complete = True
+    
+            def cancel(self):
+                events.append("cancel")
+    
+        class Serial:
+            async def close(self, *, deadline_ns):
+                events.append("release serial")
+    
+            async def connect(self, *, deadline_ns):
+                events.append("fresh connect")
+                if failure == "reconnect":
+                    raise RuntimeError("protocol mismatch")
+    
+            async def diagnostic_stop(self, *, deadline_ns):
+                raise RuntimeError("no pin diagnostic is active")
+    
+            async def status(self, *, deadline_ns):
+                events.append("fresh status")
+                result = mcu.MicrocontrollerObservation(connection_id="new")
+                result.state.behavioral.running = False
+                result.state.tracking.running = False
+                return result
+    
+        settings = control.AcquisitionSettings()
+        settings.pulses.port = "COM8"
+        owner = MicrocontrollerDevice(
+            Serial(),
+            settings,
+            runtime_pb2.AcquisitionFilePolicies(),
+            host_time_ns,
+            Uploader(),
+        )
+        owner.view.observation.connection_id = "old"
+        owner.view.diagnostic.active = failure == "active"
+        request = wire.MicrocontrollerCommandRequest(
+            kind=wire.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+            firmware_path=str(path),
+            firmware_sha256=selected.digest,
+        )
+        request.command.operator.command_id = "child"
+        if failure == "digest":
+            path.write_bytes(image.payload + b"\n")
+        deadline = host_time_ns() + 2_000_000_000
+        if failure:
+            with pytest.raises((RuntimeError, ValueError)):
+                await owner.execute(request, settings.pulses, deadline)
+        else:
+>           await owner.execute(request, settings.pulses, deadline)
+
+tests\controller\test_microcontroller_owner.py:831: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\microcontroller\device.py:142: in execute
+    await self.firmware.execute(
+src\cephvr\controller\microcontroller\firmware_operation.py:61: in execute
+    await asyncio.shield(self.task)
+src\cephvr\controller\microcontroller\firmware_operation.py:97: in _perform
+    active, _, _, _ = await self.serial.diagnostic_stop(deadline_ns=deadline_ns)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <tests.controller.test_microcontroller_owner.test_firmware_upload_hands_off_serial_without_resuming_outputs.<locals>.Serial object at 0x0000019DBA852650>
+deadline_ns = 661794238865300
+
+    async def diagnostic_stop(self, *, deadline_ns):
+>       raise RuntimeError("no pin diagnostic is active")
+E       RuntimeError: no pin diagnostic is active
+
+tests\controller\test_microcontroller_owner.py:798: RuntimeError
+____ test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-] _____
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-83/test_firmware_upload_hands_off5')
+source_kind = 'ino', failure = ''
+
+    @pytest.mark.parametrize(
+        "source_kind,failure",
+        [
+            (kind, failure)
+            for kind in ("hex", "ino")
+            for failure in ("", "upload", "reconnect", "digest", "active")
+        ]
+        + [("ino", "compile")],
+    )
+    async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
+        tmp_path, source_kind, failure
+    ) -> None:
+        from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+        from cephvr.controller.microcontroller.firmware import read_uno_image
+        from cephvr.controller.microcontroller.firmware_source import read_firmware
+        from cephvr.shared.clock import host_time_ns
+    
+        events = []
+        binary = tmp_path / "compiled.hex"
+        binary.write_bytes(b":0400000001020304F2\n:00000001FF\n")
+        image = read_uno_image(str(binary))
+        path = tmp_path / f"firmware.{source_kind}"
+        path.write_bytes(
+            b"void setup() {}\nvoid loop() {}\n" if source_kind == "ino" else image.payload
+        )
+        selected = read_firmware(str(path))
+    
+        class Uploader:
+            cleanup_complete = True
+    
+            def reset_cancel(self):
+                pass
+    
+            def compile(self, sketch, operation, *, deadline_ns):
+                events.append("compile")
+                assert sketch == selected and operation.command_id == "child"
+                assert deadline_ns > 0
+                if failure == "compile":
+                    raise RuntimeError("compilation failed")
+                return image
+    
+            def prepare(self, selected):
+                assert selected.payload == image.payload
+                events.append("prepare")
+                self.cleanup_complete = False
+    
+            def upload(self, port, operation, *, deadline_ns):
+                assert port == "COM8" and operation.command_id == "child"
+                events.append("upload")
+                if failure == "upload":
+                    raise RuntimeError("verification failed")
+    
+            def close(self, *, deadline_ns):
+                events.append("cleanup")
+                self.cleanup_complete = True
+    
+            def cancel(self):
+                events.append("cancel")
+    
+        class Serial:
+            async def close(self, *, deadline_ns):
+                events.append("release serial")
+    
+            async def connect(self, *, deadline_ns):
+                events.append("fresh connect")
+                if failure == "reconnect":
+                    raise RuntimeError("protocol mismatch")
+    
+            async def diagnostic_stop(self, *, deadline_ns):
+                raise RuntimeError("no pin diagnostic is active")
+    
+            async def status(self, *, deadline_ns):
+                events.append("fresh status")
+                result = mcu.MicrocontrollerObservation(connection_id="new")
+                result.state.behavioral.running = False
+                result.state.tracking.running = False
+                return result
+    
+        settings = control.AcquisitionSettings()
+        settings.pulses.port = "COM8"
+        owner = MicrocontrollerDevice(
+            Serial(),
+            settings,
+            runtime_pb2.AcquisitionFilePolicies(),
+            host_time_ns,
+            Uploader(),
+        )
+        owner.view.observation.connection_id = "old"
+        owner.view.diagnostic.active = failure == "active"
+        request = wire.MicrocontrollerCommandRequest(
+            kind=wire.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+            firmware_path=str(path),
+            firmware_sha256=selected.digest,
+        )
+        request.command.operator.command_id = "child"
+        if failure == "digest":
+            path.write_bytes(image.payload + b"\n")
+        deadline = host_time_ns() + 2_000_000_000
+        if failure:
+            with pytest.raises((RuntimeError, ValueError)):
+                await owner.execute(request, settings.pulses, deadline)
+        else:
+>           await owner.execute(request, settings.pulses, deadline)
+
+tests\controller\test_microcontroller_owner.py:831: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\microcontroller\device.py:142: in execute
+    await self.firmware.execute(
+src\cephvr\controller\microcontroller\firmware_operation.py:61: in execute
+    await asyncio.shield(self.task)
+src\cephvr\controller\microcontroller\firmware_operation.py:97: in _perform
+    active, _, _, _ = await self.serial.diagnostic_stop(deadline_ns=deadline_ns)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <tests.controller.test_microcontroller_owner.test_firmware_upload_hands_off_serial_without_resuming_outputs.<locals>.Serial object at 0x0000019DBAE92C90>
+deadline_ns = 661794336144500
+
+    async def diagnostic_stop(self, *, deadline_ns):
+>       raise RuntimeError("no pin diagnostic is active")
+E       RuntimeError: no pin diagnostic is active
+
+tests\controller\test_microcontroller_owner.py:798: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_microcontroller_owner.py::test_firmware_upload_hands_off_serial_without_resuming_outputs[hex-]
+FAILED tests/controller/test_microcontroller_owner.py::test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-]
+2 failed, 9 passed, 44 deselected in 0.27s

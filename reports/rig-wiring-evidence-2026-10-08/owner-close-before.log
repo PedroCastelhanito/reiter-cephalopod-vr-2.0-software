@@ -1,0 +1,44 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+____ test_failed_controller_close_stays_fenced_until_exact_release[False] _____
+
+diagnostic_active = False
+
+    @pytest.mark.parametrize("diagnostic_active", [False, True])
+    async def test_failed_controller_close_stays_fenced_until_exact_release(diagnostic_active):
+        from unittest.mock import AsyncMock
+    
+        from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+        from cephvr.shared.clock import host_time_ns
+    
+        serial = AsyncMock()
+        serial.close.side_effect = RuntimeError("serial release unconfirmed")
+        owner = MicrocontrollerDevice(
+            serial,
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            host_time_ns,
+        )
+        owner.port_owned = True
+        owner.view.observation.port = "COM8"
+        owner.view.diagnostic.active = diagnostic_active
+        if diagnostic_active:
+            serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
+        else:
+            serial.diagnostic_stop.side_effect = RuntimeError("no pin diagnostic is active")
+        stopped = mcu.MicrocontrollerState()
+        stopped.behavioral.running = False
+        stopped.tracking.running = False
+        serial.off.return_value = mcu.PulseCommandEvidence(
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
+        )
+        deadline = host_time_ns() + 1_000_000_000
+>       with pytest.raises(RuntimeError, match="unconfirmed"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'unconfirmed'
+E         Actual message: 'no pin diagnostic is active'
+
+tests\controller\test_microcontroller_owner.py:1266: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_microcontroller_owner.py::test_failed_controller_close_stays_fenced_until_exact_release[False]
+1 failed, 1 passed, 54 deselected in 0.16s

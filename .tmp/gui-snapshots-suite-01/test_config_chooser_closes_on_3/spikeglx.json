@@ -1,0 +1,59 @@
+{
+  "format": "cephvr-spikeglx-config",
+  "version": 1,
+  "host_reference": {
+    "pairing": false,
+    "address": "",
+    "command_port": ""
+  },
+  "rows": [
+    {
+      "key": "camera-1",
+      "signal": "Behavior cam",
+      "stream": "OneBox",
+      "index": "",
+      "channel": "",
+      "bit": "",
+      "enabled": true,
+      "role": 1,
+      "source_id": "",
+      "custom": false
+    },
+    {
+      "key": "camera-2",
+      "signal": "Tracking cam",
+      "stream": "OneBox",
+      "index": "",
+      "channel": "",
+      "bit": "",
+      "enabled": true,
+      "role": 2,
+      "source_id": "",
+      "custom": false
+    },
+    {
+      "key": "trial-state",
+      "signal": "Trial state",
+      "stream": "OneBox",
+      "index": "",
+      "channel": "",
+      "bit": "",
+      "enabled": true,
+      "role": null,
+      "source_id": "",
+      "custom": false
+    },
+    {
+      "key": "projector-flip",
+      "signal": "Projector flip",
+      "stream": "OneBox",
+      "index": "",
+      "channel": "",
+      "bit": "",
+      "enabled": true,
+      "role": null,
+      "source_id": "",
+      "custom": false
+    }
+  ]
+}

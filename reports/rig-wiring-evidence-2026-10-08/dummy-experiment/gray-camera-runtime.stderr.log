@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: cannot add resources after Ready
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

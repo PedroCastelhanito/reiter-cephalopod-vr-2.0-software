@@ -1,0 +1,296 @@
+{
+  "$defs": {
+    "DriveTriplet": {
+      "additionalProperties": false,
+      "properties": {
+        "forward_drive": {
+          "title": "Forward Drive",
+          "type": "number"
+        },
+        "sideways_drive": {
+          "title": "Sideways Drive",
+          "type": "number"
+        },
+        "turn_drive": {
+          "title": "Turn Drive",
+          "type": "number"
+        }
+      },
+      "required": [
+        "forward_drive",
+        "sideways_drive",
+        "turn_drive"
+      ],
+      "title": "DriveTriplet",
+      "type": "object"
+    },
+    "FlowSampleCounts": {
+      "additionalProperties": false,
+      "properties": {
+        "selected": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Selected",
+          "type": "integer"
+        },
+        "unavailable": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Unavailable",
+          "type": "integer"
+        },
+        "nonfinite": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Nonfinite",
+          "type": "integer"
+        },
+        "cost_rejected": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Cost Rejected",
+          "type": "integer"
+        },
+        "neighbor_unevaluable": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Neighbor Unevaluable",
+          "type": "integer"
+        },
+        "median_rejected": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Median Rejected",
+          "type": "integer"
+        },
+        "accepted": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Accepted",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "selected",
+        "unavailable",
+        "nonfinite",
+        "cost_rejected",
+        "neighbor_unevaluable",
+        "median_rejected",
+        "accepted"
+      ],
+      "title": "FlowSampleCounts",
+      "type": "object"
+    },
+    "FlowSectionEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "section_index": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Section Index",
+          "type": "integer"
+        },
+        "intended_area_px2": {
+          "minimum": 0,
+          "title": "Intended Area Px2",
+          "type": "number"
+        },
+        "visible_area_px2": {
+          "minimum": 0,
+          "title": "Visible Area Px2",
+          "type": "number"
+        },
+        "accepted_area_px2": {
+          "minimum": 0,
+          "title": "Accepted Area Px2",
+          "type": "number"
+        }
+      },
+      "required": [
+        "section_index",
+        "intended_area_px2",
+        "visible_area_px2",
+        "accepted_area_px2"
+      ],
+      "title": "FlowSectionEvidence",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "pipeline_id": {
+      "enum": [
+        "water_flow",
+        "fin_flow"
+      ],
+      "title": "Pipeline Id",
+      "type": "string"
+    },
+    "validity": {
+      "enum": [
+        "valid",
+        "invalid"
+      ],
+      "title": "Validity",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    },
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/FlowSectionEvidence"
+      },
+      "title": "Sections",
+      "type": "array"
+    },
+    "counts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FlowSampleCounts"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "centroid_body_px": {
+      "anyOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Centroid Body Px"
+    },
+    "mean_velocity_body_px_per_s": {
+      "anyOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Mean Velocity Body Px Per S"
+    },
+    "centred_moment_px2_per_s": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Centred Moment Px2 Per S"
+    },
+    "centred_second_moment_px2": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Centred Second Moment Px2"
+    },
+    "raw": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DriveTriplet"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "filtered_average": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DriveTriplet"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "filter_end": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DriveTriplet"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "filter_disposition": {
+      "enum": [
+        "seeded",
+        "continued",
+        "cleared"
+      ],
+      "title": "Filter Disposition",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "pipeline_id",
+    "validity",
+    "reason",
+    "sections",
+    "counts",
+    "centroid_body_px",
+    "mean_velocity_body_px_per_s",
+    "centred_moment_px2_per_s",
+    "centred_second_moment_px2",
+    "raw",
+    "filtered_average",
+    "filter_end",
+    "filter_disposition"
+  ],
+  "title": "FlowProxyEvidence",
+  "type": "object"
+}

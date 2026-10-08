@@ -12,9 +12,23 @@ class NativeRenderingError(RuntimeError):
     pass
 
 
+def attach_window_context(moderngl: Any) -> Any:
+    """Load the current context while GLFW keeps sole native lifetime ownership."""
+    # Detect-mode glcontext wrappers delete WGL contexts when released. The
+    # loader-only API leaves native destruction with the creating GLFW window.
+    moderngl.init_context()
+    context = moderngl.get_context()
+    if context.version_code < 430:
+        context.release()
+        raise NativeRenderingError("configured output requires OpenGL 4.3")
+    return context
+
+
 def configure_window(glfw: Any, output: Output) -> None:
     glfw.default_window_hints()
     glfw.window_hint(glfw.VISIBLE, glfw.TRUE)
+    # All projector windows must survive focus moving to another output or the GUI.
+    glfw.window_hint(glfw.AUTO_ICONIFY, glfw.FALSE)
     glfw.window_hint(glfw.RED_BITS, output.rgb_bits_per_channel)
     glfw.window_hint(glfw.GREEN_BITS, output.rgb_bits_per_channel)
     glfw.window_hint(glfw.BLUE_BITS, output.rgb_bits_per_channel)

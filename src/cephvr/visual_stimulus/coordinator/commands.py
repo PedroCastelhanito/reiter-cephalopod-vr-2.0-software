@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+from collections.abc import Callable
 from uuid import uuid4
 
 from google.protobuf.message import Message
 
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.commands import CommandLedger
 from cephvr.shared.identity import require_uuid4
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.transport.messages import backend_command
@@ -16,6 +19,34 @@ from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_runtime
 
 from .state import CommandLink, Identity, State
+
+
+async def wait_schedule_completion(
+    ledger: CommandLedger,
+    command_id: str,
+    work: pb.WorkContext,
+    deadline_ns: int,
+    clock: Callable[[], int],
+) -> None:
+    """Release only after the exact retained renderer Schedule executor completes."""
+    while clock() < deadline_ns:
+        record = ledger.get(command_id)
+        if record is not None and record.executor_result:
+            operation = pb.OperationState.FromString(record.executor_result)
+            if (
+                operation.context.command_id != command_id
+                or operation.work != work
+                or operation.command != "ScheduleTrial"
+            ):
+                raise ValueError("retained Schedule result identity differs")
+            if operation.complete:
+                if not operation.HasField("succeeded") or not operation.succeeded:
+                    raise RuntimeError(
+                        f"renderer Schedule failed: {operation.failure.message}"
+                    )
+                return
+        await asyncio.sleep(min(0.005, max(0, (deadline_ns - clock()) / 1e9)))
+    raise TimeoutError("renderer Schedule missed its original deadline")
 
 
 def bind_command(
@@ -165,13 +196,15 @@ def bind_command(
             command=child, diagnostic_id=request.diagnostic_id
         ), link
     if isinstance(request, wire.SetupSessionRequest):
-        return visual_stimulus.WorkerSetup(
+        setup = visual_stimulus.WorkerSetup(
             command=child,
             session=request.plan,
             settings=request.settings.visual_stimulus,
             policies=request.visual_stimulus_policies,
-            feedback_attachment=request.feedback_attachment,
-        ), link
+        )
+        if request.HasField("feedback_attachment"):
+            setup.feedback_attachment.CopyFrom(request.feedback_attachment)
+        return setup, link
     if isinstance(request, wire.PrepareTrialRequest):
         prepared = state.prepared.get(request.plan.context.trial_id)
         if (

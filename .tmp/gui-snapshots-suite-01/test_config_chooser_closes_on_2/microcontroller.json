@@ -1,0 +1,18 @@
+{
+  "format": "cephvr-microcontroller-config",
+  "version": 1,
+  "port": "",
+  "firmware_path": "",
+  "trial_state": {
+    "pin": "",
+    "enabled": true
+  },
+  "projector_flip": {
+    "pin": "",
+    "enabled": true
+  },
+  "camera_pins": {
+    "camera-1": "",
+    "camera-2": ""
+  }
+}

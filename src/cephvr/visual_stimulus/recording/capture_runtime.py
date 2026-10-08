@@ -63,6 +63,11 @@ class RecordingCaptureRuntime:
         self._interval_serial = 0
 
     def before_render(self) -> None:
+        self.poll_pending()
+        self.reservation = self.session.try_reserve_capture(self.next_group_id)
+
+    def poll_pending(self) -> None:
+        """Complete admitted GPU transfers without reserving another render group."""
         for token, (reservation, pending) in tuple(self.pending.items()):
             pixels = self.renderer.poll_review_capture(pending)
             if pixels is None:
@@ -81,7 +86,6 @@ class RecordingCaptureRuntime:
                 reservation.video_frame_index,
                 None,
             )
-        self.reservation = self.session.try_reserve_capture(self.next_group_id)
 
     def rendered(self, update: RenderUpdate) -> None:
         group_id = update.group.group_id

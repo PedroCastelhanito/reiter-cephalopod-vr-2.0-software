@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="8" time="0.129" timestamp="2026-10-08T13:31:02.485771+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimensions_resolve_oh_dependency_without_substituting_input_height" time="0.001" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimension_parser_rejects_cycles_and_non_ffmpeg_expressions[oh-ow]" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimension_parser_rejects_cycles_and_non_ffmpeg_expressions[max(1)-ih]" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_dimension_parser_rejects_cycles_and_non_ffmpeg_expressions[iw//2-ih]" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_shipped_rgb_to_yuv_default_filter_chain_has_explicit_output_matrix[rgb24]" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_shipped_rgb_to_yuv_default_filter_chain_has_explicit_output_matrix[rgba]" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_shipped_gray_to_yuv_default_filter_chain_needs_no_input_yuv_matrix" time="0.000" /><testcase classname="tests.acquisition.test_recording_filter_expressions" name="test_packed_review_rgb10_requires_explicit_matrix_without_precision_loss" time="0.000"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'explicit matrix'&#10;  Actual message: 'pixel representation change requires explicit scale converter'">def test_packed_review_rgb10_requires_explicit_matrix_without_precision_loss():
+        from cephvr.shared.ffmpeg_filters import FilterError
+    
+        source = source_format("x2bgr10le", 640, 480)
+        arguments = dict(
+            source=source,
+            target_depth=10,
+            accepted_pixel_formats=frozenset({"yuv444p10le"}),
+            terminal_pixel_format="yuv444p10le",
+            output_range="pc",
+            output_matrix="bt709",
+        )
+&gt;       with pytest.raises(FilterError, match="explicit matrix"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'explicit matrix'
+E         Actual message: 'pixel representation change requires explicit scale converter'
+
+tests\acquisition\test_recording_filter_expressions.py:71: AssertionError</failure></testcase></testsuite></testsuites>

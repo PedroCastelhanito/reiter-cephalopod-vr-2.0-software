@@ -1,6 +1,6 @@
 """Compact reference row; advanced controls and layer actions stay out of the grid."""
 
-from PyQt6.QtCore import QPoint, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QPoint, QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import (
     QGridLayout,
@@ -94,6 +94,11 @@ class ProjectorReference(QWidget):
         body.addWidget(self.parameters)
         self.advanced.toggled.connect(self.parameters.more.setChecked)
         self.parameters.bound.connect(self.render_fields)
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802
+        size = super().minimumSizeHint()
+        size.setWidth(0)
+        return size
 
     def render_fields(self) -> None:
         for heading in self.headings:

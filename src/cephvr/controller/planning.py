@@ -100,8 +100,6 @@ def plan_outputs(
         if settings.backend_name != name or not settings.enabled:
             raise PlanningError(f"{name} resolved settings are missing or disabled")
         tags_by_backend[name] = _tags(name, settings)
-    outputs: list[pb.OutputPlan] = []
-    seen: set[str] = set()
     for trial_number, trial in enumerate(prepared.trials, 1):
         if (
             trial.context.session != prepared.context
@@ -111,7 +109,49 @@ def plan_outputs(
             or trial.resolved_duration_ns < 60_000_000_000
         ):
             raise PlanningError("trial identity or resolved duration is invalid")
-        for name in sorted(configured):
+    return _output_identities(
+        prepared,
+        tags_by_backend,
+        {name: report.context.backend for name, report in ready.items()},
+    )
+
+
+def requested_output_identities(
+    prepared: pb.PreparedSession, backends: Mapping[str, pb.BackendContext]
+) -> list[pb.OutputPlan]:
+    """Bind explicit save selections to exact IDs before backend Setup fan-out."""
+    settings = {
+        item.backend_name: item
+        for item in prepared.configuration.backends
+        if item.enabled and item.backend_name != "synchronization"
+    }
+    if set(settings) != set(backends):
+        raise PlanningError("requested output owners differ from active backends")
+    return _output_identities(
+        prepared, {name: _tags(name, item) for name, item in settings.items()}, backends
+    )
+
+
+def _output_identities(
+    prepared: pb.PreparedSession,
+    tags_by_backend: Mapping[str, tuple[tuple[str, str], ...]],
+    backends: Mapping[str, pb.BackendContext],
+) -> list[pb.OutputPlan]:
+    outputs: list[pb.OutputPlan] = []
+    seen: set[str] = set()
+    for trial_number, trial in enumerate(prepared.trials, 1):
+        if (
+            trial.context.session != prepared.context
+            or trial.context.trial_number != trial_number
+            or not trial.context.trial_id
+        ):
+            raise PlanningError("trial identity is invalid")
+        for name in sorted(tags_by_backend):
+            if (
+                backends[name].backend_name != name
+                or not backends[name].backend_generation
+            ):
+                raise PlanningError("output owner identity is invalid")
             for tag, extension in tags_by_backend[name]:
                 key = f"{trial.context.trial_id}:{name}:{tag}"
                 if key in seen:
@@ -119,7 +159,7 @@ def plan_outputs(
                 seen.add(key)
                 outputs.append(
                     pb.OutputPlan(
-                        backend=ready[name].context.backend,
+                        backend=backends[name],
                         output_key=key,
                         trial=trial.context,
                         output_tag=tag,

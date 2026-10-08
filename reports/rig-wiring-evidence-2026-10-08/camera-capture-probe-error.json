@@ -1,0 +1,757 @@
+{
+  "controller_generation": "a02877dc-9ff5-420d-9f4c-1ffbc453a49d",
+  "checks": {
+    "gui": {
+      "handle": 38995570,
+      "pid": 22228,
+      "visible": true,
+      "geometry": [
+        7,
+        0,
+        1442,
+        972
+      ]
+    },
+    "camera_1_identity": [
+      true,
+      "Completed"
+    ],
+    "camera_2_identity": [
+      true,
+      "Completed"
+    ],
+    "behavior_placement": {
+      "anchor": [
+        7,
+        0,
+        1442,
+        972
+      ],
+      "area": [
+        0,
+        0,
+        1920,
+        1032
+      ],
+      "x": 1449,
+      "y": 0,
+      "side": 455
+    },
+    "behavior_connect": [
+      true,
+      "Completed"
+    ],
+    "behavior_after_connect": {
+      "controller_generation": "a02877dc-9ff5-420d-9f4c-1ffbc453a49d",
+      "captured_monotonic_ns": "662276214981200",
+      "state_revision": "56",
+      "configuration": {
+        "revision": "1"
+      },
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "control": {
+        "holder_client_id": "bb72c8d2-29e2-48f7-ad9e-98e787520f30",
+        "control_generation": "6bbce91c-a91a-4763-b18b-51efa1a4ca9d"
+      },
+      "operations": [
+        {
+          "context": {
+            "command_id": "378c8798-16f7-4091-bc74-43090090d1cd"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        },
+        {
+          "context": {
+            "command_id": "1f8f9933-ccae-4660-96db-9dcf7791932a"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        },
+        {
+          "context": {
+            "command_id": "0f78aeab-fc33-48a1-b777-6bf217624bd9"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        },
+        {
+          "context": {
+            "command_id": "32825206-1104-4a60-b7fc-999876cb1dde"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        }
+      ],
+      "warnings": [
+        {
+          "warning_id": "9f0c67db-8a4b-41a0-9ec3-9bd74b5f7a64",
+          "component": "visual_stimulus_display",
+          "message": "Visual Stimulus display settings or registered coordinator unavailable"
+        }
+      ],
+      "acquisition_devices": {
+        "source": {
+          "backend_name": "acquisition",
+          "backend_generation": "d9e2c342-7bd8-4cc0-a7ff-953deeacf930"
+        },
+        "state_revision": "4",
+        "observed_monotonic_ns": "662276209486200",
+        "behavioral": {
+          "device_open": true,
+          "preview_running": true,
+          "cleanup_pending": false,
+          "preview_run_id": "3c085ccd-6a2f-4bb6-91c4-4ab32f584f39",
+          "applied_configuration_revision": "1",
+          "capabilities": {
+            "exposure_us": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 26.0,
+              "maximum": 10000000.0,
+              "increment": 1.0,
+              "unit": "us"
+            },
+            "gain": {
+              "decimal": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": 0.0,
+                "maximum": 36.0,
+                "unit": "dB"
+              },
+              "selector": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "choices": [
+                  {
+                    "value": "All",
+                    "sdk_symbol": "All"
+                  }
+                ]
+              }
+            },
+            "frame_rate_hz": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 0.0062864274108552845,
+              "maximum": 1000000.0,
+              "unit": "Hz"
+            },
+            "roi": {
+              "width": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "4",
+                "maximum": "3716",
+                "increment": "4",
+                "unit": "pixels"
+              },
+              "height": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "2",
+                "maximum": "3004",
+                "increment": "2",
+                "unit": "pixels"
+              },
+              "offset_x": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "2352",
+                "increment": "4",
+                "unit": "coordinates"
+              },
+              "offset_y": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "8",
+                "increment": "2",
+                "unit": "coordinates"
+              }
+            },
+            "pixel_format": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Mono8",
+                  "sdk_symbol": "Mono8"
+                },
+                {
+                  "value": "BayerRG8",
+                  "sdk_symbol": "BayerRG8"
+                },
+                {
+                  "value": "BayerRG12",
+                  "sdk_symbol": "BayerRG12"
+                },
+                {
+                  "value": "BayerRG12p",
+                  "sdk_symbol": "BayerRG12p"
+                },
+                {
+                  "value": "RGB8",
+                  "sdk_symbol": "RGB8"
+                },
+                {
+                  "value": "BGR8",
+                  "sdk_symbol": "BGR8"
+                }
+              ]
+            },
+            "trigger_selector": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "FrameBurstStart",
+                  "sdk_symbol": "FrameBurstStart"
+                },
+                {
+                  "value": "frame_start",
+                  "sdk_symbol": "FrameStart"
+                }
+              ]
+            },
+            "trigger_source": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Software",
+                  "sdk_symbol": "Software"
+                },
+                {
+                  "value": "Line1",
+                  "sdk_symbol": "Line1"
+                },
+                {
+                  "value": "Line3",
+                  "sdk_symbol": "Line3"
+                },
+                {
+                  "value": "Line4",
+                  "sdk_symbol": "Line4"
+                },
+                {
+                  "value": "SoftwareSignal1",
+                  "sdk_symbol": "SoftwareSignal1"
+                },
+                {
+                  "value": "SoftwareSignal2",
+                  "sdk_symbol": "SoftwareSignal2"
+                },
+                {
+                  "value": "SoftwareSignal3",
+                  "sdk_symbol": "SoftwareSignal3"
+                }
+              ]
+            },
+            "trigger_activation": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "rising_edge",
+                  "sdk_symbol": "RisingEdge"
+                },
+                {
+                  "value": "falling_edge",
+                  "sdk_symbol": "FallingEdge"
+                }
+              ]
+            },
+            "exposure_duration_mode": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "timed",
+                  "sdk_symbol": "Timed"
+                },
+                {
+                  "value": "TriggerWidth",
+                  "sdk_symbol": "TriggerWidth"
+                }
+              ]
+            },
+            "trigger_rate_limit": {
+              "maximum_hz": 29.99940001199976,
+              "evidence": "connected SDK estimate from readable ResultingFrameRate (Hz)"
+            }
+          },
+          "applied_settings": {
+            "exposure_us": 25000.0,
+            "gain": {
+              "decimal_value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          "device": {
+            "configured_id": "40065509",
+            "physical_id": "40065509",
+            "model": "acA4112-30uc",
+            "transport_interface": "usb3"
+          },
+          "preview_prepared": true,
+          "preview_visible": true,
+          "preview_visibility_revision": "1"
+        },
+        "tracking": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "device": {
+            "configured_id": "40747103"
+          },
+          "preview_prepared": false,
+          "preview_visible": false
+        },
+        "pulses": {
+          "port": "COM8",
+          "connection_id": "268c6579-79d6-4188-9c3c-d047e0f80fce",
+          "request_id": "268c6579-79d6-4188-9c3c-d047e0f80fce-8",
+          "observed_monotonic_ns": "662275759170200",
+          "state": {
+            "configuration_valid": true,
+            "watchdog_stopped": false,
+            "watchdog_ms": 3000,
+            "behavioral": {
+              "enabled": true,
+              "running": true,
+              "pin": "D10",
+              "applied_frequency_hz": 30.0
+            },
+            "tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 3,
+            "firmware": "cephvr2_uno_2",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "662275701237700"
+        }
+      },
+      "tracking_diagnostic": {
+        "closed": true
+      },
+      "microcontroller": {
+        "observation": {
+          "port": "COM8",
+          "connection_id": "268c6579-79d6-4188-9c3c-d047e0f80fce",
+          "request_id": "268c6579-79d6-4188-9c3c-d047e0f80fce-8",
+          "observed_monotonic_ns": "662275845090100",
+          "state": {
+            "configuration_valid": true,
+            "watchdog_stopped": false,
+            "watchdog_ms": 3000,
+            "behavioral": {
+              "enabled": true,
+              "running": true,
+              "pin": "D10",
+              "applied_frequency_hz": 30.0
+            },
+            "tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 3,
+            "firmware": "cephvr2_uno_2",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "662275701237700"
+        }
+      }
+    },
+    "behavior_window": {
+      "handle": 4261562,
+      "pid": 4552,
+      "visible": true,
+      "geometry": [
+        1449,
+        0,
+        457,
+        487
+      ]
+    },
+    "behavior_disconnect": [
+      true,
+      "Completed"
+    ],
+    "behavior_after_disconnect": {
+      "controller_generation": "a02877dc-9ff5-420d-9f4c-1ffbc453a49d",
+      "captured_monotonic_ns": "662276875287100",
+      "state_revision": "64",
+      "configuration": {
+        "revision": "1"
+      },
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "control": {
+        "holder_client_id": "bb72c8d2-29e2-48f7-ad9e-98e787520f30",
+        "control_generation": "6bbce91c-a91a-4763-b18b-51efa1a4ca9d"
+      },
+      "operations": [
+        {
+          "context": {
+            "command_id": "378c8798-16f7-4091-bc74-43090090d1cd"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        },
+        {
+          "context": {
+            "command_id": "1f8f9933-ccae-4660-96db-9dcf7791932a"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        },
+        {
+          "context": {
+            "command_id": "0f78aeab-fc33-48a1-b777-6bf217624bd9"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        },
+        {
+          "context": {
+            "command_id": "32825206-1104-4a60-b7fc-999876cb1dde"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        },
+        {
+          "context": {
+            "command_id": "e12367e2-0353-4a62-84f7-425ce05b0c77"
+          },
+          "command": "ExecuteCameraCommand",
+          "complete": true,
+          "succeeded": true,
+          "progress": "camera command confirmed"
+        }
+      ],
+      "warnings": [
+        {
+          "warning_id": "9f0c67db-8a4b-41a0-9ec3-9bd74b5f7a64",
+          "component": "visual_stimulus_display",
+          "message": "Visual Stimulus display settings or registered coordinator unavailable"
+        }
+      ],
+      "acquisition_devices": {
+        "source": {
+          "backend_name": "acquisition",
+          "backend_generation": "d9e2c342-7bd8-4cc0-a7ff-953deeacf930"
+        },
+        "state_revision": "5",
+        "observed_monotonic_ns": "662276871407600",
+        "behavioral": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "applied_configuration_revision": "1",
+          "capabilities": {
+            "exposure_us": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 26.0,
+              "maximum": 10000000.0,
+              "increment": 1.0,
+              "unit": "us"
+            },
+            "gain": {
+              "decimal": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": 0.0,
+                "maximum": 36.0,
+                "unit": "dB"
+              },
+              "selector": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "choices": [
+                  {
+                    "value": "All",
+                    "sdk_symbol": "All"
+                  }
+                ]
+              }
+            },
+            "frame_rate_hz": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 0.0062864274108552845,
+              "maximum": 1000000.0,
+              "unit": "Hz"
+            },
+            "roi": {
+              "width": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "4",
+                "maximum": "3716",
+                "increment": "4",
+                "unit": "pixels"
+              },
+              "height": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "2",
+                "maximum": "3004",
+                "increment": "2",
+                "unit": "pixels"
+              },
+              "offset_x": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "2352",
+                "increment": "4",
+                "unit": "coordinates"
+              },
+              "offset_y": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "8",
+                "increment": "2",
+                "unit": "coordinates"
+              }
+            },
+            "pixel_format": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Mono8",
+                  "sdk_symbol": "Mono8"
+                },
+                {
+                  "value": "BayerRG8",
+                  "sdk_symbol": "BayerRG8"
+                },
+                {
+                  "value": "BayerRG12",
+                  "sdk_symbol": "BayerRG12"
+                },
+                {
+                  "value": "BayerRG12p",
+                  "sdk_symbol": "BayerRG12p"
+                },
+                {
+                  "value": "RGB8",
+                  "sdk_symbol": "RGB8"
+                },
+                {
+                  "value": "BGR8",
+                  "sdk_symbol": "BGR8"
+                }
+              ]
+            },
+            "trigger_selector": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "FrameBurstStart",
+                  "sdk_symbol": "FrameBurstStart"
+                },
+                {
+                  "value": "frame_start",
+                  "sdk_symbol": "FrameStart"
+                }
+              ]
+            },
+            "trigger_source": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Software",
+                  "sdk_symbol": "Software"
+                },
+                {
+                  "value": "Line1",
+                  "sdk_symbol": "Line1"
+                },
+                {
+                  "value": "Line3",
+                  "sdk_symbol": "Line3"
+                },
+                {
+                  "value": "Line4",
+                  "sdk_symbol": "Line4"
+                },
+                {
+                  "value": "SoftwareSignal1",
+                  "sdk_symbol": "SoftwareSignal1"
+                },
+                {
+                  "value": "SoftwareSignal2",
+                  "sdk_symbol": "SoftwareSignal2"
+                },
+                {
+                  "value": "SoftwareSignal3",
+                  "sdk_symbol": "SoftwareSignal3"
+                }
+              ]
+            },
+            "trigger_activation": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "rising_edge",
+                  "sdk_symbol": "RisingEdge"
+                },
+                {
+                  "value": "falling_edge",
+                  "sdk_symbol": "FallingEdge"
+                }
+              ]
+            },
+            "exposure_duration_mode": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "timed",
+                  "sdk_symbol": "Timed"
+                },
+                {
+                  "value": "TriggerWidth",
+                  "sdk_symbol": "TriggerWidth"
+                }
+              ]
+            },
+            "trigger_rate_limit": {
+              "maximum_hz": 29.99940001199976,
+              "evidence": "connected SDK estimate from readable ResultingFrameRate (Hz)"
+            }
+          },
+          "applied_settings": {
+            "exposure_us": 25000.0,
+            "gain": {
+              "decimal_value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          "device": {
+            "configured_id": "40065509",
+            "physical_id": "40065509",
+            "model": "acA4112-30uc",
+            "transport_interface": "usb3"
+          },
+          "preview_prepared": false,
+          "preview_visible": false
+        },
+        "tracking": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "device": {
+            "configured_id": "40747103"
+          },
+          "preview_prepared": false,
+          "preview_visible": false
+        }
+      },
+      "tracking_diagnostic": {
+        "closed": true
+      },
+      "microcontroller": {}
+    },
+    "behavior_window_after_disconnect": {
+      "handle": null,
+      "pid": 0,
+      "visible": false,
+      "geometry": null
+    },
+    "restore_configuration": {
+      "command_id": "94c1b982-c1ff-467f-8501-c0a8fc12e987",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "error": "ModuleNotFoundError: No module named 'PIL'"
+  }
+}

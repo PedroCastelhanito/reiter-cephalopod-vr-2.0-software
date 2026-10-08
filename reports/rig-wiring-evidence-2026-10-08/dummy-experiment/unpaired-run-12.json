@@ -1,0 +1,103 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "758561d4-13b7-4615-8cad-03a5ce144527"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "758561d4-13b7-4615-8cad-03a5ce144527",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "1944393d-0181-4ec9-a8a6-bdcf0e3bae28",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "0df63687-e3cb-47c5-bd67-b1e861a14d6f",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "SETUP_FAILED: visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: feedback attachment has no declared renderer consumer"
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_SETTING_UP",
+      "context": {
+        "controller_generation": "1944393d-0181-4ec9-a8a6-bdcf0e3bae28",
+        "session_id": "b84079b8-6f82-4d4d-b2fd-74d5d68b752b"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-133331",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [
+    {
+      "warning_id": "62f5314e-d0cf-4fe0-a482-6c446c0fa74e",
+      "component": "startup_recovery",
+      "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+    },
+    {
+      "warning_id": "3e16d95c-65b3-4ac5-b2eb-86a1101018fa",
+      "component": "controller",
+      "message": "visual_stimulus Setup failed: VISUAL_STIMULUS_OPERATION: feedback attachment has no declared renderer consumer"
+    }
+  ],
+  "cancel_setup": {
+    "command_id": "27f1916e-69d7-4d25-9b3c-b0142073a368",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  }
+}

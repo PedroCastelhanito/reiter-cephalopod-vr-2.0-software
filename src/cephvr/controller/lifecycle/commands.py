@@ -47,6 +47,7 @@ class SessionCommands:
         supervisor_generation: str,
         clock: Callable[[], int],
         spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
+        save_history: Callable[[int], Coroutine[Any, Any, None]],
     ) -> None:
         self.lifecycle = lifecycle
         self.configuration_state = configuration
@@ -63,6 +64,7 @@ class SessionCommands:
         self.supervisor_generation = supervisor_generation
         self.clock = clock
         self.spawn = spawn
+        self.save_history = save_history
 
     async def stop_after_trial(
         self, command: svc.OperatorCommand, *, cancel: bool = False
@@ -263,6 +265,11 @@ class SessionCommands:
     ) -> None:
         """Record the supervisor handoff result; complete once closure is known."""
         command_id = request.command_id
+        history_task = self.spawn(
+            self.save_history(
+                request.issued_monotonic_ns + self.limit_state.current.history_ns
+            )
+        )
         failure = ""
         try:
             if self.supervisor is None:
@@ -277,6 +284,7 @@ class SessionCommands:
                 )
         except Exception as exc:
             failure = str(exc) or type(exc).__name__
+        await history_task
         async with self.lifecycle.lock:
             if failure:
                 self.control.add_warning(

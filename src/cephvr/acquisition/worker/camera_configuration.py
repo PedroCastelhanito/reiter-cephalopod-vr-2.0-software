@@ -107,7 +107,10 @@ class WorkerCameraConfiguration:
         resolved = self._resolved
         if resolved is None or not resolved.HasField("configuration_revision"):
             raise RuntimeError("session Setup has no retained camera resolution")
-        if request.configuration_revision != resolved.configuration_revision + 1:
+        if request.configuration_revision not in (
+            resolved.configuration_revision,
+            resolved.configuration_revision + 1,
+        ):
             raise RuntimeError("session Setup is not the adopted camera revision")
         if not request.HasField("camera"):
             raise ValueError("session Setup lacks the accepted camera payload")

@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-08\dummy-experiment\run_dummy.py", line 96, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-wiring-evidence-2026-10-08\dummy-experiment\run_dummy.py", line 30, in main
+    endpoint = _existing_endpoint(default_runtime_root())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\launcher\replacement.py", line 122, in _existing_endpoint
+    raise _EndpointPending(
+cephvr.launcher.replacement._EndpointPending: Existing runtime has no replacement endpoint at C:\Users\ReiterU_PC\AppData\Local\CephVR2\runtime\launcher.json. Use the same Windows profile/runtime directory as the running launcher, or stop it from its own terminal or controller before launching this version.

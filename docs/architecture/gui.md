@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 129
+**Status:** Accepted · **Revision:** 132
 
 - Review and managed runtime use the same DashboardWindow page construction,
   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
@@ -43,8 +43,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Distance endpoints, anatomical references and manual landmarks have named, editable
   source-pixel X/Y rows synchronized with drawing; incomplete coordinate edits retain
   the committed annotation. Two distance endpoints and a positive known length derive
-  source-image px/mm and mm/px independently of downscale; this is not physical swimming-speed calibration
-  or a change to T35/T38 output units. Source/image changes invalidate annotations;
+  source-image px/mm and mm/px independently of downscale, required for enabled
+  Tracking/locomotion diagnostics under T20. T38 declares mm/s and deg/s outputs;
+  gain controls show mm/mm and deg/deg. Source/image changes invalidate annotations;
   missing/ambiguous/disabled Tracking assignments remain visible in the HUD.
   Subject reference places Set points and Clear together on the left; Clear removes
   only anatomical references. Local documents migrate older draft formats without
@@ -81,6 +82,20 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Session config, using two columns with each checkbox beside its label. Assets are prepared externally. Tracking participation follows
   E10 without a Protocol status indicator; required acquisition/rendering is independent
   of optional video recording. Device controls stay in Devices.
+- Protocol, Microcontroller, Projectors, SpikeGLX and Tracking own reusable JSON
+  Load/Save as controls; sidebar controls compose a full GUI snapshot including
+  Dashboard metadata, camera drafts and recording choices. The
+  [snapshot contract](../../contracts/gui-configuration-files.md) owns formats and
+  inventories. Validate all sections before restoring local drafts, save atomically,
+  preserve unset/dormant settings and close choosers on authority loss. Full files
+  retain explicit rig identities and require matching inventories; projector-only
+  files remain portable under the calibration contract. Loading starts no device,
+  uploads no firmware and restores no runtime status, ownership or credentials.
+  E07 submission/Setup validates runnable settings; loaded camera/MCU drafts survive
+  polling and enter the normal configuration proposal. SDK PFS import remains A10-owned.
+  Inactive loaded Tracking drafts stay local until required. SpikeGLX files restore
+  editable pulse rows for explicit Save pulse mapping; E12/E14 startup host/pairing
+  values are informational references and retain their owning TOML authority.
 - Protocol uses a widened Trials column beside Trial timeline, with a full-width Epoch
   editor below at all widths. Trials provides a selectable list and compact Add/Delete
   controls. The timeline has no internal scroller: reserve the height needed for
@@ -333,8 +348,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   rename/reorder/projector selection remain in
   its context menu. Batch edit omits the selected-epoch count line. Undo/Redo use
   Ctrl+Z/Ctrl+Y (with native macOS equivalents), without menu or toolbar entries.
-  Load/save validates canonical JSON and saves atomically
-  per trial. Trial deletion confirms the named local draft, preserves saved files
+  Protocol Load/Save as validates complete schedules with canonical trial programs,
+  mode, asset root, seeds, gaps and arena boundaries; canonical single-program import
+  remains supported. Trial deletion confirms the named local draft, preserves saved files
   and leaves a blank draft if deleting the last. Trial drafts are local documents,
   not an accepted session schedule until managed submission. The managed Trials list
   submits the explicit ordered session schedule under E01, preserving canonical
@@ -445,6 +461,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   A Use checkbox per display
   retains its assignment and geometry while disabling participation; edits follow
   Configuration/control gates. Preserve participation across inventory refresh.
+  Save explicit display assignments immediately in local frontend preferences by
+  stable display identity, retaining Unassigned and temporarily missing displays.
+  On a new GUI's initial Configuration/Ready view, restore these as local drafts;
+  differences from the controller base remain dirty and require normal submission.
+  Active-session synchronization and explicit controller reload use confirmed values.
+  Discovery/loading never writes preferences or guesses replacement displays;
+  invalid preferences stay preserved and save/restore failures are reported.
   V15 owns output selection without altering calibrated surfaces.
   Below the inventory, sections are ordered Screen calibration, Synchronization,
   Rig geometry. Screen calibration uses a CephVR1.0-style per-face table containing
@@ -452,32 +475,43 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   dimensions and fixed subject distances labeled Subject → Left wall / Front wall /
   Bottom (mm). Perpendicular distances to Left, Front and Bottom screens sit below these
   in the Rig geometry card. The screen-dimensions table contains width, height,
-  projector distance and throw ratio, with an unlabeled row-name column and wrapped
-  headers. Clip/tolerance settings remain in Rig geometry without an Advanced
+  derived read-only projector distance and effective throw ratio, with wrapped
+  headers. Per-screen measured horizontal/vertical reference bars retain native output
+  pixels and known millimetres, derive independent X/Y mm/px and full projected
+  image dimensions; full projected width times throw ratio estimates ideal throw
+  distance (Bottom: total folded path). Subject-to-screen distances stay independent.
+  Measurements from another assigned projector are cleared; imported historical
+  distances remain visible until measurements are supplied. Missing or partial
+  measured pairs cannot produce a calibrated mapping. Clip/tolerance settings remain in Rig geometry without an Advanced
   subtitle. One Load JSON / Save as action row handles the complete rig, projection
   limits, all-screen correction/dimension values, synchronization and participation
   plus reusable runtime profile references under the
   [GUI calibration contract](../../contracts/gui-calibration.md), replacing the
   per-screen profile picker. Validate the complete bounded document before applying;
   invalid files preserve drafts. Save atomically, retain unset values, respect editing
-  authority and cancel pickers on authority loss. Version 3 merges the former runtime
+  authority and cancel pickers on authority loss. Version 4 retains reference
+  measurements and their native output dimensions alongside the former runtime
   display-profile import into this row. Exclude physical inventory and output assignments;
   load preserves current display mappings, restores participation and pulse selection
   by logical rig face, and retains geometry/color calibration references and shared-output
   coverage. Rebind references using current output properties at submission; missing roles
-  fail without guessing. Numeric-only versions 1/2 preserve other settings, and legacy
+  fail without guessing. Legacy full version 3 and numeric-only versions 1/2
+  load with unset measurements; numeric version 3 retains them. Legacy
   runtime profiles remain loadable through the same action. Loading is not backend preparation.
   Launch prepares calibration files before requesting output; no separate preparation
   button is shown. Preparation uses the current four enabled face
   assignments, current rig fields and native monitor identities to export a static
   arena asset, display profile and explicitly diagnostic geometric
   profiles into Protocol Assets. The exported mapping applies each face's scale,
-  pixel offset and inverse-axis drafts, defaulting unset values to diagnostic
-  identity; reject corrections extending outside the output. Reject missing or
+  pixel offset and inverse-axis drafts, applying measured physical screen/image
+  ratios when supplied and defaulting unmeasured values to diagnostic identity;
+  reject corrections extending outside the output. Submission publishes new
+  content-addressed measured affine assets for GUI-owned 2×2 profiles, preserves
+  originals and rejects replacing imported nonlinear/masked/weighted calibration. Reject missing or
   ambiguous monitor bindings.
   Failed preparation does not send a launch request.
-  These profiles are uncalibrated optical placeholders and do not set experiment
-  defaults. Launch calibration targets all four assigned projectors together;
+  Unmeasured profiles are diagnostic placeholders; measured affine mappings
+  still require optical acceptance and do not set experiment defaults. Launch calibration targets all four assigned projectors together;
   after confirmed output activation the same control reads Close. It returns to
   Launch only after confirmed closure. Failed/pending commands never claim an
   output-state change. Launch/Close controls V01's diagnostic presentation outside

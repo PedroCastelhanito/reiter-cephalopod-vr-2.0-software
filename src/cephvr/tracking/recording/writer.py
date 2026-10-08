@@ -75,9 +75,13 @@ class TrackingWriter:
         self.thread.start()
 
     def try_admit(self, record: TrackingRecord, *, bookkeeping: bool = False) -> bool:
-        # Reserve both immutable Python payload and the maximum serialization copy.
-        size = _retained_bytes(record, self.settings.max_pending_bytes) + 2 * (
-            self.settings.max_record_bytes + 1
+        # Charge immutable admission, expanded object workspace and serialized copies.
+        size = (
+            _retained_bytes(record, self.settings.max_pending_bytes)
+            + _retained_bytes(
+                record.model_dump(mode="json"), self.settings.max_pending_bytes
+            )
+            + 2 * (self.settings.max_record_bytes + 1)
         )
         with self.condition:
             count_limit = self.settings.max_pending_records - (0 if bookkeeping else 4)
@@ -230,8 +234,10 @@ def _retained_bytes(value: object, limit: int) -> int:
     children = (
         tuple(value.__dict__.values())
         if isinstance(value, BaseModel)
+        else tuple(item for pair in value.items() for item in pair)
+        if isinstance(value, dict)
         else value
-        if isinstance(value, tuple)
+        if isinstance(value, (tuple, list))
         else ()
     )
     for child in children:

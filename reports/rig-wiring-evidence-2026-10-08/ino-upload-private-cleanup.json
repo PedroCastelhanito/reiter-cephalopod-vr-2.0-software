@@ -1,0 +1,13 @@
+{
+  "scope": "Exact inactive firmware-private directory; unique staged HEX archived before removal; all runtime/tool processes absent",
+  "target": "C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\cephvr-firmware-d073a733-9409-4d98-a5a0-e86854d83d71",
+  "method": "Resolved native temporary-root containment, exact basename, reparse rejection and complete one-file inventory verified before native Remove-Item",
+  "absent": true,
+  "files": [
+    {
+      "name": "firmware.hex",
+      "bytes": 31178,
+      "sha256": "0e4d05e6466328f26b33866793d895d65943ea4dfbd35165a2a090f2023bf630"
+    }
+  ]
+}

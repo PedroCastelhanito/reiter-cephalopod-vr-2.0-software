@@ -1,0 +1,19 @@
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: INVALID_EVIDENCE: Finished evidence differs from its exact output plans
+InterruptSession c9f65a55-8d26-44a3-8619-1775f1818a39 failed: SESSION_IDENTITY: no exact live session
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+Exception ignored in: <function SharedMemory.__del__ at 0x0000022F075665C0>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+Exception ignored in: <function SharedMemory.__del__ at 0x0000022F075665C0>
+Traceback (most recent call last):
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 187, in __del__
+    self.close()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\multiprocessing\shared_memory.py", line 230, in close
+    self._mmap.close()
+BufferError: cannot close exported pointers exist
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

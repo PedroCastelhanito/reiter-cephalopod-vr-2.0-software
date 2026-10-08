@@ -327,11 +327,43 @@ class ConfigurationCommands:
     async def save_configuration_history(
         self, command: svc.OperatorCommand
     ) -> pb.CommandAdmission:
-        async with self._history_lock:
-            return await self._save_configuration_history(command)
+        deadline_ns = self.clock() + self.limit_state.current.history_ns
+        return await self._save_configuration_history(command, deadline_ns)
+
+    async def _persist_history(self, deadline_ns: int) -> None:
+        async with asyncio.timeout(max(0, (deadline_ns - self.clock()) / 1e9)):
+            async with self._history_lock:
+                async with self.lifecycle.lock:
+                    path = self.configuration_history_path
+                    if path is None:
+                        raise ValueError("configuration history path unavailable")
+                    document = {
+                        "format_version": 1,
+                        "configuration": message_dict(self.configuration_state.current),
+                    }
+                    self._history_seq += 1
+                    seq = self._history_seq
+                payload = json.dumps(
+                    document, ensure_ascii=False, separators=(",", ":"), allow_nan=False
+                ).encode("utf-8")
+                await asyncio.to_thread(self._write_history, seq, path, payload)
+
+    async def save_history_on_shutdown(self, deadline_ns: int) -> None:
+        """Share the bounded writer without delaying interruption or asking for input."""
+        if self.configuration_history_path is None:
+            return
+        try:
+            await self._persist_history(deadline_ns)
+        except Exception as exc:
+            async with self.lifecycle.lock:
+                self.control.add_warning(
+                    "configuration_history",
+                    f"shutdown save unconfirmed or failed: {str(exc) or type(exc).__name__}",
+                )
+                self.publisher.publish()
 
     async def _save_configuration_history(
-        self, command: svc.OperatorCommand
+        self, command: svc.OperatorCommand, deadline_ns: int
     ) -> pb.CommandAdmission:
         async with self.lifecycle.lock:
             error = self.control_operations.authorized(command)
@@ -340,28 +372,14 @@ class ConfigurationCommands:
                     command.operator.command_id,
                     error=error or "configuration history path unavailable",
                 )
-            path = self.configuration_history_path
-            document = {
-                "format_version": 1,
-                "configuration": message_dict(self.configuration_state.current),
-            }
-            deadline_ns = self.clock() + self.limit_state.current.history_ns
-            self._history_seq += 1
-            seq = self._history_seq
             self.control_operations.operation(
                 command.operator.command_id,
                 "SaveConfigurationHistory",
                 progress="writing reusable configuration history",
             )
             self.publisher.publish()
-        payload = json.dumps(
-            document, ensure_ascii=False, separators=(",", ":"), allow_nan=False
-        ).encode("utf-8")
         try:
-            await asyncio.wait_for(
-                asyncio.to_thread(self._write_history, seq, path, payload),
-                max(0, (deadline_ns - self.clock()) / 1e9),
-            )
+            await self._persist_history(deadline_ns)
         except Exception as exc:
             async with self.lifecycle.lock:
                 self.control.add_warning(

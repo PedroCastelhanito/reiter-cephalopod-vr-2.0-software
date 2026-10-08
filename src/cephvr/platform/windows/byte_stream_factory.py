@@ -162,7 +162,6 @@ def create_child_endpoint(
         1,
         64 * 1024,
         64 * 1024,
-        64 * 1024,
         0,
         ctypes.byref(security),
     )

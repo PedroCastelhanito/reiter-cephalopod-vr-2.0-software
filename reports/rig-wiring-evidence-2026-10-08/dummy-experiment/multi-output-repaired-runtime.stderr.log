@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_WORKER_FAILURE: ReportWorkerOperation: VISUAL_STIMULUS_EVIDENCE: ReportLifecycle: STALE: no matching live work
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

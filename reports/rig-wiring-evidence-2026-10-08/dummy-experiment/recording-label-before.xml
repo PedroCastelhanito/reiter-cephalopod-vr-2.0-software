@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="2.511" timestamp="2026-10-08T11:54:26.958961+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_inventory_restores_selected_configuration[0]" time="0.450"><failure message="AssertionError: assert 'Unassigned video' == 'Behavior cam video'&#10;  &#10;  - Behavior cam video&#10;  + Unassigned video">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000280FFC61630&gt;
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.tmp/recording-label-before/test_managed_camera_inventory_0')
+selected_row = 0
+
+    @pytest.mark.parametrize("selected_row", (0, 1))
+    def test_managed_camera_inventory_restores_selected_configuration(
+        window, tmp_path, selected_row
+    ):
+        from cephvr.acquisition.v1 import camera_pb2 as camera
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.camera_inventory import CameraDraft
+        from cephvr.gui.managed_cameras import ManagedCameras
+    
+        panel = window.devices.cameras
+        panel.managed = True
+        serials = [draft.serial for draft in panel.drafts]
+        panel.drafts = []
+        panel.populate_inventory()
+        requests = []
+        binding = ManagedCameras(
+            panel,
+            SimpleNamespace(
+                request=lambda action, **options: requests.append((action, options)) or True
+            ),
+            lambda *_: False,
+        )
+        state = pb.Snapshot()
+        state.configuration.revision = 7
+        entry = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        settings = entry.acquisition
+        for index, role in enumerate(("behavioral", "tracking")):
+            device = getattr(settings, role).device
+            device.device_id = serials[index]
+            device.frame_timing = (
+                camera.FRAME_TIMING_EXTERNAL_TRIGGER
+                if index == 0
+                else camera.FRAME_TIMING_FREE_RUNNING
+            )
+            device.pfs_source_filename = str(tmp_path / f"{role}.pfs")
+            if index == 0:
+                device.settings.trigger_source = "Line2"
+            getattr(settings.pulses, role).requested_frequency_hz = 30 * (index + 1)
+        binding.install(state)
+    
+        panel.drafts = [
+            CameraDraft(f"camera-{serial}", "Unassigned", serial, "Basler", enabled=False)
+            for serial in serials
+        ]
+        panel.populate_inventory()
+        panel.table.selectRow(selected_row)
+        window.recordings.sync_cameras()
+        recording_choices = {
+            key: control.isChecked() for key, control in window.recordings.record.items()
+        }
+        recording_touched = set(window.recordings.touched)
+        recording_edits = []
+        window.recordings.changed.connect(lambda: recording_edits.append(True))
+        binding.install(state)  # Inventory changed; controller revision did not.
+        window.apply_view(DashboardView(connected=True, has_control=True))
+        for draft in panel.drafts:
+&gt;           assert window.recordings.source_labels[draft.key].text() == f"{draft.role} video"
+E           AssertionError: assert 'Unassigned video' == 'Behavior cam video'
+E             
+E             - Behavior cam video
+E             + Unassigned video
+
+tests\gui\test_dashboard.py:10583: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_managed_camera_inventory_restores_selected_configuration[1]" time="0.353"><failure message="AssertionError: assert 'Unassigned video' == 'Behavior cam video'&#10;  &#10;  - Behavior cam video&#10;  + Unassigned video">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000280FE133640&gt;
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.tmp/recording-label-before/test_managed_camera_inventory_1')
+selected_row = 1
+
+    @pytest.mark.parametrize("selected_row", (0, 1))
+    def test_managed_camera_inventory_restores_selected_configuration(
+        window, tmp_path, selected_row
+    ):
+        from cephvr.acquisition.v1 import camera_pb2 as camera
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.camera_inventory import CameraDraft
+        from cephvr.gui.managed_cameras import ManagedCameras
+    
+        panel = window.devices.cameras
+        panel.managed = True
+        serials = [draft.serial for draft in panel.drafts]
+        panel.drafts = []
+        panel.populate_inventory()
+        requests = []
+        binding = ManagedCameras(
+            panel,
+            SimpleNamespace(
+                request=lambda action, **options: requests.append((action, options)) or True
+            ),
+            lambda *_: False,
+        )
+        state = pb.Snapshot()
+        state.configuration.revision = 7
+        entry = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        settings = entry.acquisition
+        for index, role in enumerate(("behavioral", "tracking")):
+            device = getattr(settings, role).device
+            device.device_id = serials[index]
+            device.frame_timing = (
+                camera.FRAME_TIMING_EXTERNAL_TRIGGER
+                if index == 0
+                else camera.FRAME_TIMING_FREE_RUNNING
+            )
+            device.pfs_source_filename = str(tmp_path / f"{role}.pfs")
+            if index == 0:
+                device.settings.trigger_source = "Line2"
+            getattr(settings.pulses, role).requested_frequency_hz = 30 * (index + 1)
+        binding.install(state)
+    
+        panel.drafts = [
+            CameraDraft(f"camera-{serial}", "Unassigned", serial, "Basler", enabled=False)
+            for serial in serials
+        ]
+        panel.populate_inventory()
+        panel.table.selectRow(selected_row)
+        window.recordings.sync_cameras()
+        recording_choices = {
+            key: control.isChecked() for key, control in window.recordings.record.items()
+        }
+        recording_touched = set(window.recordings.touched)
+        recording_edits = []
+        window.recordings.changed.connect(lambda: recording_edits.append(True))
+        binding.install(state)  # Inventory changed; controller revision did not.
+        window.apply_view(DashboardView(connected=True, has_control=True))
+        for draft in panel.drafts:
+&gt;           assert window.recordings.source_labels[draft.key].text() == f"{draft.role} video"
+E           AssertionError: assert 'Unassigned video' == 'Behavior cam video'
+E             
+E             - Behavior cam video
+E             + Unassigned video
+
+tests\gui\test_dashboard.py:10583: AssertionError</failure></testcase></testsuite></testsuites>

@@ -170,7 +170,7 @@ async def _serve(
             return
         failure = task.exception()
         if failure is not None:
-            executor.coordinator_lost()
+            executor.coordinator_lost(details=f"heartbeat loop failed: {failure}")
             executor.owner_failed(failure)
 
     health_task.add_done_callback(supervise_health_task)
@@ -270,13 +270,16 @@ async def _health_loop(
         try:
             receipt = await reports.report_heartbeat(report, deadline_ns=deadline_ns)
             if receipt.result != control.COMMAND_RESULT_ACCEPTED:
-                executor.coordinator_lost()
+                executor.coordinator_lost(
+                    details=f"heartbeat rejected: {receipt.failure.code}: "
+                    f"{receipt.failure.message}"
+                )
                 return
             last_accepted_ns = host_time_ns()
             executor.flush_warnings(deadline_ns)
-        except Exception:
+        except Exception as exc:
             if host_time_ns() - last_accepted_ns >= bootstrap.health_silence_ns:
-                executor.coordinator_lost()
+                executor.coordinator_lost(details=f"heartbeat receipt failed: {exc}")
                 return
             continue
 

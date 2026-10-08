@@ -1,0 +1,184 @@
+diff --git a/src/cephvr/gui/cameras.py b/src/cephvr/gui/cameras.py
+index 55d9be3..5ee7e0d 100644
+--- a/src/cephvr/gui/cameras.py
++++ b/src/cephvr/gui/cameras.py
+@@ -131,6 +131,7 @@ class CamerasPanel(ResponsiveColumns):
+             enabled.toggled.connect(
+                 lambda checked, index=row: self.set_participation(index, checked)
+             )
++            enabled.clicked.connect(lambda _, index=row: self.table.selectRow(index))
+             self.enable_controls.append(enabled)
+             check_host = QWidget()
+             check_layout = QHBoxLayout(check_host)
+diff --git a/src/cephvr/gui/managed_cameras.py b/src/cephvr/gui/managed_cameras.py
+index 69b792d..dfad976 100644
+--- a/src/cephvr/gui/managed_cameras.py
++++ b/src/cephvr/gui/managed_cameras.py
+@@ -117,6 +117,7 @@ class ManagedCameras(QObject):
+         )
+         cameras.has_configured_tests = bool(self.configured_tests)
+         camera_config_changed = state.configuration.revision != self._camera_revision
++        selected_config_changed = camera_config_changed
+         if mcu_settings is not None:
+             assignments = {
+                 mcu_settings.behavioral.device.device_id: "Behavior cam",
+@@ -127,6 +128,8 @@ class ManagedCameras(QObject):
+                 role_changed = draft.role != expected_role
+                 if role_changed:
+                     draft.role = expected_role
++                    if draft is cameras.selected:
++                        selected_config_changed = True
+                     row = cameras.drafts.index(draft)
+                     item = cameras.table.item(row, 2)
+                     if item is not None:
+@@ -174,7 +177,7 @@ class ManagedCameras(QObject):
+                     else:
+                         draft.values.pop("trigger_frequency_hz", None)
+         self._camera_revision = state.configuration.revision
+-        if camera_config_changed:
++        if selected_config_changed:
+             cameras.load_selected()
+         preview_views: list[PreviewView] = []
+         for draft in cameras.drafts:
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index 6aed39e..c0e2b78 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -923,7 +923,7 @@ def test_folder_picker_selection_cancellation_and_phase_lock(
+     field.browse.click()
+     dialog = field.dialog
+     assert dialog is not None
+-    assert dialog.directory().absolutePath() == str(tmp_path)
++    assert Path(dialog.directory().absolutePath()) == tmp_path
+     dialog.reject()
+     assert field.editor.text() == str(tmp_path)
+     field.browse.click()
+@@ -1989,8 +1989,10 @@ def test_managed_microcontroller_emits_controller_intents(
+     assert len(saves) == saved_count
+ 
+ 
++@pytest.mark.parametrize("row", (0, 1))
+ def test_managed_camera_enable_waits_for_controller_confirmation(
+     window: DashboardWindow,
++    row: int,
+ ) -> None:
+     panel = window.devices.cameras
+     panel.managed = True
+@@ -1998,7 +2000,17 @@ def test_managed_camera_enable_waits_for_controller_confirmation(
+     panel.enable_requested.connect(
+         lambda serial, enabled: requests.append((serial, enabled))
+     )
+-    panel.drafts[0].enabled = False
++    settings_requests = []
++    panel.settings_requested.connect(lambda *values: settings_requests.append(values))
++    for index, draft in enumerate(panel.drafts):
++        draft.values.update(
++            trigger_clock="Internal clock",
++            trigger_frequency_hz=str(30 * (index + 1)),
++            preset=f"camera-{index}.pfs",
++        )
++    selected = panel.drafts[row]
++    selected.enabled = False
++    panel.table.selectRow(1 - row)
+     panel.apply_view(
+         DashboardView(
+             connected=True,
+@@ -2007,15 +2019,20 @@ def test_managed_camera_enable_waits_for_controller_confirmation(
+             phase=Phase.CONFIGURATION,
+         )
+     )
+-    assert panel.enable_controls[0].isEnabled()
+-    panel.enable_controls[0].click()
+-    assert requests == [("REVIEW-001", True)]
+-    assert not panel.drafts[0].enabled
+-    assert panel.enable_controls[0].isChecked()
+-    assert not panel.enable_controls[0].isEnabled()
++    assert panel.enable_controls[row].isEnabled()
++    panel.enable_controls[row].click()
++    assert panel.selected is selected
++    assert panel.role.currentText() == selected.role
++    assert panel.preset.text() == selected.values["preset"]
++    assert panel.fields["trigger_frequency_hz"].text() == str(30 * (row + 1))
++    assert requests == [(selected.serial, True)]
++    assert not settings_requests
++    assert not selected.enabled
++    assert panel.enable_controls[row].isChecked()
++    assert not panel.enable_controls[row].isEnabled()
+     panel.pending_enable.clear()
+     panel.refresh_controls()
+-    assert not panel.enable_controls[0].isChecked()
++    assert not panel.enable_controls[row].isChecked()
+ 
+ 
+ def test_managed_camera_enable_accepts_missing_external_input(
+@@ -10333,6 +10350,70 @@ def test_camera_selection_restores_pfs_source_and_frequency(window, tmp_path):
+     assert first.values["trigger_source"] == "Line3"
+ 
+ 
++@pytest.mark.parametrize("selected_row", (0, 1))
++def test_managed_camera_inventory_restores_selected_configuration(
++    window, tmp_path, selected_row
++):
++    from cephvr.acquisition.v1 import camera_pb2 as camera
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.camera_inventory import CameraDraft
++    from cephvr.gui.managed_cameras import ManagedCameras
++
++    panel = window.devices.cameras
++    panel.managed = True
++    serials = [draft.serial for draft in panel.drafts]
++    panel.drafts = []
++    panel.populate_inventory()
++    requests = []
++    binding = ManagedCameras(
++        panel,
++        SimpleNamespace(
++            request=lambda action, **options: requests.append((action, options)) or True
++        ),
++        lambda *_: False,
++    )
++    state = pb.Snapshot()
++    state.configuration.revision = 7
++    entry = state.configuration_values.current.backends.add(
++        backend_name="acquisition", enabled=True
++    )
++    settings = entry.acquisition
++    for index, role in enumerate(("behavioral", "tracking")):
++        device = getattr(settings, role).device
++        device.device_id = serials[index]
++        device.frame_timing = (
++            camera.FRAME_TIMING_EXTERNAL_TRIGGER
++            if index == 0
++            else camera.FRAME_TIMING_FREE_RUNNING
++        )
++        device.pfs_source_filename = str(tmp_path / f"{role}.pfs")
++        if index == 0:
++            device.settings.trigger_source = "Line2"
++        getattr(settings.pulses, role).requested_frequency_hz = 30 * (index + 1)
++    binding.install(state)
++
++    panel.drafts = [
++        CameraDraft(f"camera-{serial}", "Unassigned", serial, "Basler", enabled=False)
++        for serial in serials
++    ]
++    panel.populate_inventory()
++    panel.table.selectRow(selected_row)
++    binding.install(state)  # Inventory changed; controller revision did not.
++    for row in (selected_row, 1 - selected_row, selected_row):
++        panel.table.selectRow(row)
++        draft = panel.drafts[row]
++        assert panel.selected is draft
++        assert panel.role.currentText() == draft.role
++        assert panel.preset.text() == draft.values["preset"]
++        assert panel.preset.toolTip() == draft.values["preset"]
++        assert panel.trigger_source.currentText() == draft.values["trigger_clock"]
++        assert panel.fields["trigger_frequency_hz"].text() == str(30 * (row + 1))
++    panel.edit("trigger_frequency_hz", "45")
++    binding.install(state)
++    assert panel.selected.values["trigger_frequency_hz"] == "45"
++    assert not requests
++
++
+ def test_calibration_guides_keep_world_phase_center_and_physical_ruler():
+     from cephvr.gui.calibration_guides import CENTER, GRID_COLORS, add_face_guides
+ 

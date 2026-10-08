@@ -1,0 +1,48 @@
+======================================================================
+ERROR: test_condition_gain_units_follow_input_units (test_heading_relative_feedback.TrackingChannelBindingTests.test_condition_gain_units_follow_input_units)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\contracts\visual_stimulus\tests\test_heading_relative_feedback.py", line 94, in test_condition_gain_units_follow_input_units
+    parse(source)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\contracts\visual_stimulus\tests\test_heading_relative_feedback.py", line 42, in parse
+    return parse_program_json(json.dumps(document), max_bytes=BUDGET)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\models\program_model.py", line 669, in parse_program_json
+    return parse_json(
+           ^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\models\schema_common.py", line 138, in parse_json
+    return model.model_validate_json(source, strict=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pydantic\main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Program
+  Value error, arena.feedback[0].gain.value: condition g.gain requires unit GainUnit(kind='feedback_gain', input_unit='mm/s', output_unit='mm/s', coefficient='value'), got GainUnit(kind='feedback_gain', input_unit='px/s', output_unit='mm/s', coefficient='value') [type=value_error, input_value={'format_version': 2, 'as...n_id': 'gain'}}}]}]}]}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+======================================================================
+ERROR: test_independent_gain_roundtrip_and_unit_validation (test_heading_relative_feedback.TrackingChannelBindingTests.test_independent_gain_roundtrip_and_unit_validation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\contracts\visual_stimulus\tests\test_heading_relative_feedback.py", line 111, in test_independent_gain_roundtrip_and_unit_validation
+    parse(source)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\contracts\visual_stimulus\tests\test_heading_relative_feedback.py", line 42, in parse
+    return parse_program_json(json.dumps(document), max_bytes=BUDGET)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\models\program_model.py", line 669, in parse_program_json
+    return parse_json(
+           ^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\config\models\schema_common.py", line 138, in parse_json
+    return model.model_validate_json(source, strict=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\pydantic\main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Program
+  Value error, arena.feedback[0].sideways_gain.value: condition g.gain requires unit GainUnit(kind='feedback_gain', input_unit='mm/s', output_unit='mm/s', coefficient='value'), got GainUnit(kind='feedback_gain', input_unit='px/s', output_unit='mm/s', coefficient='value') [type=value_error, input_value={'format_version': 2, 'as...t', 'value': 0}}]}]}]}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+----------------------------------------------------------------------
+Ran 42 tests in 0.123s
+
+FAILED (errors=2)

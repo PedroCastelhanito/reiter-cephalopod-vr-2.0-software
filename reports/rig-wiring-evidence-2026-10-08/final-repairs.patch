@@ -1,0 +1,335 @@
+diff --git a/src/cephvr/controller/microcontroller/device.py b/src/cephvr/controller/microcontroller/device.py
+index ed1dc8c..fdfd910 100644
+--- a/src/cephvr/controller/microcontroller/device.py
++++ b/src/cephvr/controller/microcontroller/device.py
+@@ -61,6 +61,7 @@ class MicrocontrollerDevice:
+         self.releasing = False
+         self._close_lock = asyncio.Lock()
+         self._close_stopped = False
++        self._diagnostic_uncertain = False
+         self.changed: Callable[[], None] = lambda: None
+ 
+     @property
+@@ -74,6 +75,7 @@ class MicrocontrollerDevice:
+             or self.busy
+             or self.acquisition_claimed
+             or self.closing
++            or self._diagnostic_uncertain
+             or self.releasing
+         )
+ 
+@@ -83,6 +85,7 @@ class MicrocontrollerDevice:
+             self.manual_active
+             or self.closed
+             or self.closing
++            or (self._diagnostic_uncertain and not allow_release)
+             or (self.releasing and not allow_release)
+         ):
+             raise RuntimeError("Microcontroller operation is unavailable or pending")
+@@ -97,7 +100,11 @@ class MicrocontrollerDevice:
+ 
+     def snapshot_view(self) -> pb.MicrocontrollerDeviceView:
+         self.view.cleanup_pending = (
+-            self.closing or self.releasing or self.manual_active or self.firmware.busy
++            self.closing
++            or self.releasing
++            or self.manual_active
++            or self.firmware.busy
++            or self._diagnostic_uncertain
+         )
+         return self.view
+ 
+@@ -172,6 +179,7 @@ class MicrocontrollerDevice:
+                             pulses, active_roles=(kind,), deadline_ns=deadline_ns
+                         )
+                     )
++                self._diagnostic_uncertain = True
+                 active, _, _, edges = await self.serial.diagnostic_start(
+                     kind, pin, frequency_hz=frequency, deadline_ns=deadline_ns
+                 )
+@@ -184,6 +192,7 @@ class MicrocontrollerDevice:
+                         rising_edges=edges,
+                     )
+                 )
++                self._diagnostic_uncertain = False
+             else:
+                 active, kind, pin, edges = (
+                     await self.serial.diagnostic_status(deadline_ns=deadline_ns)
+@@ -393,9 +402,12 @@ class MicrocontrollerDevice:
+                         await self.serial.cancel_on_reservations(
+                             deadline_ns=deadline_ns
+                         )
+-                        active, _, _, _ = await self.serial.diagnostic_stop(
+-                            deadline_ns=deadline_ns
+-                        )
++                        active = False
++                        if self.view.diagnostic.active or self._diagnostic_uncertain:
++                            active, _, _, _ = await self.serial.diagnostic_stop(
++                                deadline_ns=deadline_ns
++                            )
++                            self._diagnostic_uncertain = False
+                         evidence = await self.serial.off(
+                             (
+                                 camera.CAMERA_ROLE_BEHAVIORAL,
+diff --git a/src/cephvr/controller/microcontroller/firmware_operation.py b/src/cephvr/controller/microcontroller/firmware_operation.py
+index 8fa1a8c..ec6f9f5 100644
+--- a/src/cephvr/controller/microcontroller/firmware_operation.py
++++ b/src/cephvr/controller/microcontroller/firmware_operation.py
+@@ -94,9 +94,6 @@ class FirmwareUpdate:
+             )
+             self._check(deadline_ns)
+             await self.serial.connect(deadline_ns=deadline_ns)
+-            active, _, _, _ = await self.serial.diagnostic_stop(deadline_ns=deadline_ns)
+-            if active:
+-                raise RuntimeError("Firmware diagnostic output did not stop")
+             observation = await self.serial.status(deadline_ns=deadline_ns)
+             if not all(
+                 observation.state.HasField(role)
+diff --git a/src/cephvr/platform/windows/byte_stream_factory.py b/src/cephvr/platform/windows/byte_stream_factory.py
+index 123ccf8..d97aa35 100644
+--- a/src/cephvr/platform/windows/byte_stream_factory.py
++++ b/src/cephvr/platform/windows/byte_stream_factory.py
+@@ -162,7 +162,6 @@ def create_child_endpoint(
+         1,
+         64 * 1024,
+         64 * 1024,
+-        64 * 1024,
+         0,
+         ctypes.byref(security),
+     )
+diff --git a/tests/controller/test_microcontroller_owner.py b/tests/controller/test_microcontroller_owner.py
+index 42fd16d..c8a0955 100644
+--- a/tests/controller/test_microcontroller_owner.py
++++ b/tests/controller/test_microcontroller_owner.py
+@@ -677,7 +677,7 @@ def test_uno_sketch_digest_pins_companions_and_rejects_links(tmp_path):
+     (root / "src").mkdir()
+     (root / "src" / "helper.cpp").write_bytes(b"void helper() {}\n")
+     selected = read_firmware(str(source))
+-    assert [str(path) for path, _ in selected.files] == [
++    assert [path.as_posix() for path, _ in selected.files] == [
+         "pin.h",
+         "sketch.ino",
+         "src/helper.cpp",
+@@ -687,7 +687,12 @@ def test_uno_sketch_digest_pins_companions_and_rejects_links(tmp_path):
+     with pytest.raises(ValueError, match="changed"):
+         read_uno_sketch(str(source), selected.digest)
+     source.unlink()
+-    source.symlink_to(header)
++    try:
++        source.symlink_to(header)
++    except OSError as exc:
++        if getattr(exc, "winerror", None) == 1314:
++            pytest.skip("Windows symlink privilege or Developer Mode is unavailable")
++        raise
+     with pytest.raises(ValueError, match="regular file"):
+         read_uno_sketch(str(source))
+ 
+@@ -795,8 +800,7 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
+                 raise RuntimeError("protocol mismatch")
+ 
+         async def diagnostic_stop(self, *, deadline_ns):
+-            events.append("diagnostic stop")
+-            return False, "", "", 0
++            raise RuntimeError("no pin diagnostic is active")
+ 
+         async def status(self, *, deadline_ns):
+             events.append("fresh status")
+@@ -837,7 +841,6 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
+             "release serial",
+             "upload",
+             "fresh connect",
+-            "diagnostic stop",
+             "fresh status",
+             "cleanup",
+         ]
+@@ -1231,7 +1234,10 @@ async def test_camera_claim_is_exact_and_cleanup_leaves_general_diagnostics_alon
+     assert serial.close.await_count == 1
+ 
+ 
+-async def test_failed_controller_close_stays_fenced_until_exact_release():
++@pytest.mark.parametrize("diagnostic_active", [False, True])
++async def test_failed_controller_close_stays_fenced_until_exact_release(
++    diagnostic_active,
++):
+     from unittest.mock import AsyncMock
+ 
+     from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+@@ -1247,7 +1253,11 @@ async def test_failed_controller_close_stays_fenced_until_exact_release():
+     )
+     owner.port_owned = True
+     owner.view.observation.port = "COM8"
+-    serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
++    owner.view.diagnostic.active = diagnostic_active
++    if diagnostic_active:
++        serial.diagnostic_stop.return_value = (False, "trial_state", "D9", 1)
++    else:
++        serial.diagnostic_stop.side_effect = RuntimeError("no pin diagnostic is active")
+     stopped = mcu.MicrocontrollerState()
+     stopped.behavioral.running = False
+     stopped.tracking.running = False
+@@ -1263,6 +1273,7 @@ async def test_failed_controller_close_stays_fenced_until_exact_release():
+     serial.close.side_effect = None
+     await owner.close(deadline_ns=deadline, permanent=False)
+     assert serial.off.await_count == 1
++    assert serial.diagnostic_stop.await_count == int(diagnostic_active)
+     assert owner.cleanup_complete and not owner.snapshot_view().cleanup_pending
+     assert [call.kwargs["deadline_ns"] for call in serial.close.await_args_list] == [
+         deadline,
+@@ -1271,6 +1282,44 @@ async def test_failed_controller_close_stays_fenced_until_exact_release():
+     owner.ensure_idle()
+ 
+ 
++async def test_uncertain_diagnostic_start_remains_fenced_for_cleanup():
++    from unittest.mock import AsyncMock
++
++    from cephvr.controller.microcontroller.device import MicrocontrollerDevice
++    from cephvr.shared.clock import host_time_ns
++
++    serial = AsyncMock()
++    serial.diagnostic_start.side_effect = RuntimeError(
++        "start acknowledgement unconfirmed"
++    )
++    serial.diagnostic_stop.side_effect = RuntimeError("no pin diagnostic is active")
++    owner = MicrocontrollerDevice(
++        serial,
++        control.AcquisitionSettings(),
++        runtime_pb2.AcquisitionFilePolicies(),
++        host_time_ns,
++    )
++    owner.port_owned = True
++    owner.view.observation.port = "COM8"
++    pulses = camera.CameraPulseConfiguration(
++        port="COM8", trial_state_pin="D9", trial_state_enabled=True
++    )
++    request = wire.MicrocontrollerCommandRequest(
++        kind=wire.MICROCONTROLLER_COMMAND_KIND_START,
++        signal=control.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE,
++    )
++    deadline = host_time_ns() + 1_000_000_000
++    with pytest.raises(RuntimeError, match="unconfirmed"):
++        await owner.execute(request, pulses, deadline)
++    with pytest.raises(RuntimeError, match="pending"):
++        owner.ensure_idle()
++    with pytest.raises(RuntimeError, match="no pin diagnostic"):
++        await owner.close(deadline_ns=deadline, permanent=False)
++    assert not owner.cleanup_complete and owner.snapshot_view().cleanup_pending
++    serial.close.assert_not_awaited()
++    serial.off.assert_not_awaited()
++
++
+ async def test_cancel_on_retains_off_boundary_for_watchdog_arbitration():
+     from unittest.mock import AsyncMock
+ 
+diff --git a/tests/controller/test_spikeglx.py b/tests/controller/test_spikeglx.py
+index 52d6a51..9248487 100644
+--- a/tests/controller/test_spikeglx.py
++++ b/tests/controller/test_spikeglx.py
+@@ -1404,6 +1404,8 @@ async def test_inventory_controller_binds_lease_revision_and_file_digest(
+ 
+     monkeypatch.setattr(inventory_owner_module, "update_inventory", delayed_write)
+     inventory.limits.current.validation_ns = 20_000_000
++    inventory_clock = [inventory.clock()]
++    inventory.clock = lambda: inventory_clock[0]
+     late_command = svc.OperatorCommand.FromString(command.SerializeToString())
+     late_command.operator.command_id = "inventory-late"
+     late_update = svc.SpikeGLXInventoryUpdateRequest(
+@@ -1423,6 +1425,7 @@ async def test_inventory_controller_binds_lease_revision_and_file_digest(
+     operation = operations.control.operations["inventory-late"]
+     assert not operation.complete
+     assert "unconfirmed" in operation.progress
++    inventory_clock[0] += inventory.limits.current.validation_ns
+     release.set()
+     stop = asyncio.get_running_loop().time() + 2
+     while (
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index 6aed39e..2731ea9 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -923,7 +923,7 @@ def test_folder_picker_selection_cancellation_and_phase_lock(
+     field.browse.click()
+     dialog = field.dialog
+     assert dialog is not None
+-    assert dialog.directory().absolutePath() == str(tmp_path)
++    assert Path(dialog.directory().absolutePath()) == tmp_path
+     dialog.reject()
+     assert field.editor.text() == str(tmp_path)
+     field.browse.click()
+diff --git a/tests/platform/test_byte_stream.py b/tests/platform/test_byte_stream.py
+index 092949b..1262064 100644
+--- a/tests/platform/test_byte_stream.py
++++ b/tests/platform/test_byte_stream.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import ctypes
++import sys
+ import time
+ from typing import Any
+ from unittest.mock import Mock
+@@ -19,6 +20,50 @@ from cephvr.platform.windows.byte_stream_native import (
+ from cephvr.platform.windows.jobs import WindowsLaunchError
+ 
+ 
++@pytest.mark.windows
++@pytest.mark.skipif(sys.platform != "win32", reason="native Windows pipes required")
++@pytest.mark.parametrize("parent_writable", [True, False])
++def test_native_child_endpoint_connects_transfers_and_releases(parent_writable):
++    owner = byte_stream.PipeConstructionOwner()
++    deadline = time.perf_counter_ns() + 2_000_000_000
++    endpoint = None
++    try:
++        endpoint = byte_stream.OverlappedPipe.create_child_endpoint(
++            parent_writable=parent_writable, owner=owner, deadline_ns=deadline
++        )
++        api = byte_stream.native_api()
++        payload = b"native pipe"
++        transferred = ctypes.c_ulong()
++        if parent_writable:
++            endpoint.parent.write(bytearray(payload), deadline_ns=deadline)
++            buffer = ctypes.create_string_buffer(len(payload))
++            assert api.ReadFile(
++                endpoint.child_handle,
++                buffer,
++                len(payload),
++                ctypes.byref(transferred),
++                None,
++            )
++            assert buffer.raw == payload and transferred.value == len(payload)
++        else:
++            buffer = ctypes.create_string_buffer(payload)
++            assert api.WriteFile(
++                endpoint.child_handle,
++                buffer,
++                len(payload),
++                ctypes.byref(transferred),
++                None,
++            )
++            assert endpoint.parent.read(deadline_ns=deadline) == payload
++        assert not owner.cleanup_blocked
++    finally:
++        if endpoint is not None:
++            endpoint.close_child_copy()
++            endpoint.close_parent()
++        owner.retry_cleanup(deadline_ns=deadline)
++    assert not owner.cleanup_blocked
++
++
+ def test_idle_read_observation_resumes_the_same_pending_buffer(
+     monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+diff --git a/tests/visual_stimulus/test_transport.py b/tests/visual_stimulus/test_transport.py
+index 4b1b22a..b5d89e9 100644
+--- a/tests/visual_stimulus/test_transport.py
++++ b/tests/visual_stimulus/test_transport.py
+@@ -536,6 +536,11 @@ async def test_authenticated_first_use_calibration_repeat_and_close_recovery(tmp
+         outcome = pb.OperationState.FromString(record.executor_result)
+         assert outcome.succeeded, outcome.failure.message
+         assert driver.state.cleaned
++        while (
++            not coordinator.shutdown_requested.is_set()
++            and asyncio.get_running_loop().time() < cleanup_stop
++        ):
++            await asyncio.sleep(0.005)
+         assert coordinator.shutdown_requested.is_set()
+     finally:
+         await coordinator_listener.close(deadline)

@@ -16,6 +16,8 @@ def validated_draft(
     analysis_keys: tuple[str, ...],
 ) -> dict[str, Any]:
     data = deepcopy(data)
+    if not isinstance(data, dict) or type(data.get("version")) is not int:
+        raise ValueError("Expected a versioned Tracking draft object.")
     if data.get("format") == "cephvr-tracking-ui-draft" and data.get("version") == 1:
         data["version"] = 2
         data["preprocessing"] = {
@@ -43,6 +45,22 @@ def validated_draft(
     if data.get("format") != "cephvr-tracking-ui-draft" or data.get("version") != 4:
         raise ValueError("Expected a Tracking frontend draft, version 1, 2, 3 or 4.")
     data.setdefault("annotation_source", None)
+    if set(data) != {
+        "format",
+        "version",
+        "diagnostics",
+        "camera",
+        "preprocessing",
+        "distance_mm",
+        "pipeline",
+        "fields",
+        "choices",
+        "analysis_drafts",
+        "annotations",
+        "image_size",
+        "annotation_source",
+    }:
+        raise ValueError("Invalid Tracking draft field inventory.")
     stages = data.get("diagnostics")
     if (
         not isinstance(stages, dict)
@@ -159,6 +177,7 @@ def validated_draft(
         )
     if (
         not isinstance(preprocessing, dict)
+        or set(preprocessing) != {"crop_enabled", "scale_percent", "region"}
         or type(preprocessing.get("crop_enabled")) is not bool
         or type(preprocessing.get("scale_percent")) is not int
         or not 10 <= preprocessing["scale_percent"] <= 100

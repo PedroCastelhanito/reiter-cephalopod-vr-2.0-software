@@ -103,6 +103,8 @@ class TrialCoordinator:
             lifecycle_delivery_ns=lifecycle_delivery_ns,
             valid_command=self.preparation.valid_command,
             run_pulse_boundary=self.termination.run_pulse_boundary,
+            run_normal_end=self.termination.run_normal_end,
+            lock=lock,
             clock=clock,
         )
 

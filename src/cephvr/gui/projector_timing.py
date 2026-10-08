@@ -10,6 +10,7 @@ from cephvr.gui.theme import SIZES
 class ProjectorTiming(Card):
     def __init__(self) -> None:
         super().__init__("Photodiode & synchronization")
+        self.caption.setWordWrap(True)
         self.pulse = QCheckBox("Enable photodiode pulse")
         self.body.addWidget(self.pulse)
         self.target = combo(())

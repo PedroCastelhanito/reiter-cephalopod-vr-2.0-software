@@ -188,13 +188,20 @@ class AcquisitionWorkerControl:
             launch, command, deadline_ns=deadline_ns
         )
         require_accepted(admission, "worker cleanup")
-        retained = await self.outbound.get_worker_retained_result(
-            launch,
-            acq.WorkerRetainedResultQuery(
-                query=acq.WorkerQuery(target=worker), command_id=command_id
-            ),
-            deadline_ns=deadline_ns,
-        )
+        while True:
+            retained = await self.outbound.get_worker_retained_result(
+                launch,
+                acq.WorkerRetainedResultQuery(
+                    query=acq.WorkerQuery(target=worker), command_id=command_id
+                ),
+                deadline_ns=deadline_ns,
+            )
+            if not retained.found or retained.operation.operation.complete:
+                break
+            remaining = (deadline_ns - host_time_ns()) / 1e9
+            if remaining <= 0:
+                raise TimeoutError("camera cleanup missed its original deadline")
+            await asyncio.sleep(min(0.01, remaining))
         if (
             not retained.found
             or retained.source.worker != worker.worker

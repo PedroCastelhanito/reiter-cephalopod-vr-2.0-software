@@ -1,0 +1,189 @@
+{
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "8b760942-e6b2-4341-b6cc-a835cc8d0ca3",
+      "session_id": "e7bad0d1-6c90-4765-bf98-e52627f3841a"
+    },
+    "outcome": "SESSION_OUTCOME_COMPLETED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-150756",
+    "trial_count": 1,
+    "activated": true,
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "8b760942-e6b2-4341-b6cc-a835cc8d0ca3",
+        "session_id": "e7bad0d1-6c90-4765-bf98-e52627f3841a"
+      },
+      "trial_id": "2273a811-4393-4a36-ba1b-60e7ac7e0187",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "start_monotonic_ns": "683666143442000",
+    "scheduled_end_monotonic_ns": "683726143442000",
+    "actual_end_monotonic_ns": "683726143442000"
+  },
+  "metadata_synced": true,
+  "reservation_unlocked": true,
+  "expected_outputs_closed": 7,
+  "velocities_absent": true,
+  "videos": {
+    "DUMMY_150804_behavioral_cam.mp4": {
+      "stream": {
+        "codec_name": "h264",
+        "width": 1760,
+        "height": 3000,
+        "pix_fmt": "yuvj444p",
+        "r_frame_rate": "30/1",
+        "duration": "39.933333",
+        "nb_read_frames": "1198"
+      },
+      "full_cpu_decode": "passed",
+      "delivered_fps_over_trial": 19.966666666666665,
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 683726143442000,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 1198,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 1198
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 683666150986200,
+          "on_acknowledged_monotonic_ns": 683666172657800,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 683726159757900,
+          "off_acknowledged_monotonic_ns": 683726180417900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 2,
+          "last_native_counter": 1199
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": [
+          {
+            "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+            "count": 1,
+            "first_observed_monotonic_ns": 683666215309900,
+            "last_observed_monotonic_ns": 683666215309900,
+            "first_frame_id": 0,
+            "details": "optional native timestamp is unavailable"
+          }
+        ]
+      },
+      "nominal_fps": 30.0
+    },
+    "DUMMY_150804_stimulus.mp4": {
+      "stream": {
+        "codec_name": "h264",
+        "width": 2560,
+        "height": 2000,
+        "pix_fmt": "yuvj444p",
+        "r_frame_rate": "60/1",
+        "duration": "23.650000",
+        "nb_read_frames": "1419"
+      },
+      "full_cpu_decode": "passed",
+      "delivered_fps_over_trial": 23.65,
+      "completion": {
+        "kind": "completion",
+        "cutoff_host_ns": 683726143442000,
+        "last_group_id": 1418,
+        "state_count": 1419,
+        "submission_attempt_count": 5676,
+        "capture_admission_count": 1419,
+        "capture_drop_count": 0,
+        "unresolved_attempt_count": 0,
+        "outcome": "completed"
+      },
+      "encoder": {
+        "kind": "encoder_outcome",
+        "admitted_count": 1419,
+        "input_submitted_count": 1419,
+        "capacity_drop_count": 0,
+        "final_input_group_id": 1418,
+        "cutoff_host_ns": 683726143442000,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      },
+      "recipe_digest_matches": true,
+      "render_interval_median_ms": 41.8598,
+      "render_interval_max_ms": 81.3068
+    },
+    "DUMMY_150804_tracking_cam.mp4": {
+      "stream": {
+        "codec_name": "h264",
+        "width": 1588,
+        "height": 1344,
+        "pix_fmt": "yuvj444p",
+        "r_frame_rate": "60/1",
+        "duration": "39.950000",
+        "nb_read_frames": "2397"
+      },
+      "full_cpu_decode": "passed",
+      "delivered_fps_over_trial": 39.95,
+      "completion": {
+        "type": "completion",
+        "outcome": "completed",
+        "timing": {
+          "recording_end_monotonic_ns": 683726143442000,
+          "first_recorded_frame_id": 0,
+          "final_received_frame_count": 2397,
+          "accounting_complete": true
+        },
+        "video": {
+          "recorded_frame_count": 2397
+        },
+        "pulses": {
+          "on_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "on_dispatched_monotonic_ns": 683666150986200,
+          "on_acknowledged_monotonic_ns": 683666172657800,
+          "off_outcome": "PULSE_COMMAND_OUTCOME_APPLIED",
+          "off_dispatched_monotonic_ns": 683726159757900,
+          "off_acknowledged_monotonic_ns": 683726180417900
+        },
+        "post_cutoff": {
+          "accounting_complete": true,
+          "excluded_frame_count": 1,
+          "last_native_counter": 2397
+        },
+        "transport_summary": {
+          "buffer_underruns": null,
+          "failed_buffers": 0,
+          "missed_frames": 0,
+          "resend_requests": null,
+          "resend_packets": null,
+          "resynchronizations": 0
+        },
+        "diagnostics": [
+          {
+            "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+            "count": 1,
+            "first_observed_monotonic_ns": 683666170858900,
+            "last_observed_monotonic_ns": 683666170858900,
+            "first_frame_id": 0,
+            "details": "optional native timestamp is unavailable"
+          }
+        ]
+      },
+      "nominal_fps": 60.0
+    }
+  }
+}

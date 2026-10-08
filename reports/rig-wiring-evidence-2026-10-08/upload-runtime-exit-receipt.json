@@ -1,0 +1,8 @@
+{
+  "controller_generation": "8931f391-8b79-4b9d-af83-a0a6b656770b",
+  "supervisor_generation": "f5206f95-e3f1-4d4e-86ce-a3d15496583b",
+  "observed_monotonic_ns": 662208224834800,
+  "all_owned_processes_absent": true,
+  "format_version": 1,
+  "controller_channel_loss": "eof"
+}

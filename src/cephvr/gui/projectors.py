@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from PyQt6.QtCore import QRect, Qt, pyqtSignal
+from PyQt6.QtCore import QRect, QSettings, Qt, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QScreen
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -30,6 +30,10 @@ from cephvr.gui.calibration_profile import (
 from cephvr.gui.components import Card, button, combo
 from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.display_layout import DisplayLayout
+from cephvr.gui.projector_assignments import (
+    AssignmentPreferences,
+    sync_assignment_controls,
+)
 from cephvr.gui.projector_calibration import CalibrationTable
 from cephvr.gui.projector_codec import display_document, merge_projector_draft
 from cephvr.gui.projector_files import ProjectorFiles
@@ -38,6 +42,8 @@ from cephvr.gui.projector_geometry import (
     ScreenGeometryEditor,
     resolved_screens,
 )
+from cephvr.gui.projector_measured_profiles import measured_profiles
+from cephvr.gui.projector_measurements import ProjectorMeasurements
 from cephvr.gui.projector_profile import bind_profile, current_outputs, portable_profile
 from cephvr.gui.projector_timing import ProjectorTiming
 from cephvr.gui.tables import DataTable
@@ -95,7 +101,7 @@ class ProjectorsPanel(DevicePanel):
             face for face in ("Front", "Left", "Right", "Bottom") if face in enabled
         )
 
-    def __init__(self) -> None:
+    def __init__(self, *, settings: QSettings | None = None) -> None:
         super().__init__(
             "Displays",
             "DISPLAY     —\nPROJECTOR   Unassigned\nOUTPUT      Not tested",
@@ -120,12 +126,16 @@ class ProjectorsPanel(DevicePanel):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table.setFixedHeight(180)
         self.configuration.body.insertWidget(1, self.table)
-        self.assignments: dict[str, str] = {}
+        self.assignment_preferences = AssignmentPreferences(
+            settings, self.console.appendPlainText
+        )
+        self.assignments = self.assignment_preferences.restore({})
         self.participation: dict[str, bool] = {}
         self.enable_controls: dict[str, QCheckBox] = {}
         self.keys: list[str] = []
         self.projectors: dict[str, QComboBox] = {}
         self.display_aspects: dict[str, float] = {}
+        self.display_pixels: dict[str, tuple[int, int]] = {}
         self.loading = False
         self.review_displays: tuple[DisplayInfo, ...] | None = None
         self.asset_root = ""
@@ -150,6 +160,9 @@ class ProjectorsPanel(DevicePanel):
             )
         self.timing = ProjectorTiming()
         self.calibration = CalibrationTable(self.screen_editor.drafts)
+        self.measurements = ProjectorMeasurements(self.screen_editor.drafts)
+        self.calibration.body.addWidget(self.measurements)
+        self.measurements.changed.connect(self._mark_geometry_dirty)
         self.calibration.launch_requested.connect(self.launch_calibration)
         self.calibration.close_requested.connect(self.calibration_close_requested.emit)
         calibration_fields: dict[str, QLineEdit | QCheckBox] = {
@@ -163,6 +176,12 @@ class ProjectorsPanel(DevicePanel):
                 for (face, key), editor in self.screen_editor.fields.items()
             },
         }
+        calibration_fields.update(
+            {
+                f"screens.{face}.{key}": editor
+                for (face, key), editor in self.measurements.fields.items()
+            }
+        )
         calibration_fields.update(
             {
                 f"screens.{face}.subject_distance": editor
@@ -241,10 +260,24 @@ class ProjectorsPanel(DevicePanel):
         right.insertWidget(1, self.tank_card)
         self.rig_editor.changed.connect(self.update_geometry)
         self.screen_editor.changed.connect(self.update_geometry)
+        self.measurements.changed.connect(self.update_geometry)
         self.table.currentCellChanged.connect(lambda *_: self.show_selected())
 
     def _mark_geometry_dirty(self) -> None:
         self._geometry_dirty = True
+
+    def restore_assignment_draft(self) -> bool:
+        restored = self.assignment_preferences.restore(self.assignments)
+        changed = restored != self.assignments
+        self.assignments = restored
+        sync_assignment_controls(self.assignments, self.projectors)
+        if changed:
+            self.console.appendPlainText(
+                "Last display assignments restored as a local draft; "
+                "controller validation is still required."
+            )
+            self.update_participation()
+        return changed
 
     def install_configuration(
         self,
@@ -258,6 +291,9 @@ class ProjectorsPanel(DevicePanel):
         self._profile_outputs = []
         self._pulse_face = None
         self._configuration_error = ""
+        if not display.profile_json:
+            self.assignments = {}
+            sync_assignment_controls(self.assignments, self.projectors)
         try:
             profile = display_document(display)
             outputs = profile.get("outputs")
@@ -344,6 +380,7 @@ class ProjectorsPanel(DevicePanel):
         self.calibration.setToolTip(
             "Imported geometric and photometric profile references are preserved."
         )
+        sync_assignment_controls(self.assignments, self.projectors)
         self.update_participation()
 
     def configuration_loaded(self) -> None:
@@ -430,7 +467,7 @@ class ProjectorsPanel(DevicePanel):
         geometry = None
         if self._geometry_dirty:
             geometry = self.rig_editor.geometry_payload(self.screen_editor.drafts)
-        return merge_projector_draft(
+        result = merge_projector_draft(
             source_display,
             assignments=self.assignments,
             participation=self.participation,
@@ -448,6 +485,15 @@ class ProjectorsPanel(DevicePanel):
             pulse_patch=pulse_patch,
             geometry=geometry,
         )
+        document = measured_profiles(
+            display_document(result),
+            self.calibration_files.calibration_snapshot(),
+            self.asset_root,
+        )
+        result.profile_json = json.dumps(
+            document, allow_nan=False, separators=(",", ":")
+        )
+        return result
 
     def request(self, name: str) -> None:
         if not self.can_review:
@@ -513,6 +559,7 @@ class ProjectorsPanel(DevicePanel):
         self.keys.clear()
         self.projectors.clear()
         self.display_aspects.clear()
+        self.display_pixels.clear()
         self.enable_controls.clear()
         self.diagram.outputs.clear()
         self.diagram.refreshed = True
@@ -530,6 +577,10 @@ class ProjectorsPanel(DevicePanel):
             if geometry.width() > 0 and geometry.height() > 0:
                 self.display_aspects[key] = geometry.width() / geometry.height()
             ratio = display.pixel_ratio
+            self.display_pixels[key] = (
+                round(geometry.width() * ratio),
+                round(geometry.height() * ratio),
+            )
             index = display.index if self.review_displays is not None else str(row + 1)
             for col, value in (
                 (0, index),
@@ -687,6 +738,14 @@ class ProjectorsPanel(DevicePanel):
             self.setup_pages.setFixedHeight(card.sizeHint().height())
 
     def update_geometry(self) -> None:
+        self.measurements.refresh(
+            {
+                self.assignments[key]: dimensions
+                for key, dimensions in self.display_pixels.items()
+                if self.assignments.get(key, "Unassigned") != "Unassigned"
+            },
+            self.screen_editor.fields,
+        )
         self.tank.rig = self.rig_editor.dimensions()
         self.tank.screens = resolved_screens(self.tank.rig, self.screen_editor.drafts)
         self.tank.aspects = {
@@ -713,7 +772,13 @@ class ProjectorsPanel(DevicePanel):
             editor.setCurrentText(self.assignments.get(key, "Unassigned"))
             editor.blockSignals(False)
             return
+        previous = self.assignments.get(key, "Unassigned")
+        if previous != name:
+            for face in (previous, name):
+                if face in self.screen_editor.drafts:
+                    self.measurements.clear_measurements(face)
         self.assignments[key] = name
+        self.assignment_preferences.save(self.assignments)
         self.update_participation()
         self.show_selected()
 

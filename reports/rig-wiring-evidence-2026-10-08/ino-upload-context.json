@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-08T10:46:48.485833+09:00",
+  "head": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "scope": "Two-file uncommitted exact-job inspection/termination repair; shared tree has prior camera/runtime repairs and concurrent projector-assignment changes. Earlier full-suite/source contexts are preserved and not repeated.",
+  "source_sha256": {
+    "src/cephvr/platform/windows/jobs.py": "3dcbdf45725ebe4f55decbba63b42ebc01a90649e334373484d0ea6c433e4619",
+    "tests/platform/test_windows_jobs.py": "4deb77abdff750899e1251cfec60a54b5c66558fde7e1b58822f3ebc394cc036"
+  },
+  "method_sha256": "507f07a9afe3d6fba97c06725a688d5be735163ec312e7f6251e81aba5d55162",
+  "sketch_path": "firmware/uno/cephvr2_mcu/cephvr2_mcu.ino",
+  "sketch_file_sha256": "5abce26e94630477058198b1f2bceb15797f91a7e352bcf9074f7687c69d0b36",
+  "final_generation": "4226bad4-92db-4001-879c-1149c49dea8e",
+  "physical_checks": {
+    "exit_check_only_uploads": 3,
+    "final_compile_verified_uploads": 2,
+    "final_compile_rejection_preserves_serial": true,
+    "normal_shutdown": true,
+    "configuration_edits_sent": false
+  },
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/platform/test_windows_jobs.py tests/supervisor tests/controller/test_microcontroller_owner.py tests/shared/test_supervised_encoder.py -q -m \"not rig\" --basetemp reports/rig-wiring-evidence-2026-10-08/ino-upload-tests-tmp --junitxml reports/rig-wiring-evidence-2026-10-08/ino-upload-tests.xml",
+    "passed": 199,
+    "skipped": 1,
+    "seconds": 2.79,
+    "native_owner_termination_before_repair": "one failure: TerminateJobObject failed: WinError 5",
+    "native_job_behavior_after_repair": "15 passed"
+  },
+  "static": {
+    "ruff_files": 2,
+    "format_files": 2,
+    "win32_mypy_sources": 1,
+    "boundary_modules": 619,
+    "boundary_violations": 0
+  },
+  "limits": [
+    "Owner-selected external sketch path unknown; checked-in known protocol-3 sketch tested",
+    "No physical chooser/button interaction or scientific/full-load acceptance",
+    "No forced interrupted flash",
+    "No health policy, cleanup deadline, firmware source, saved configuration or scientific-default edit"
+  ]
+}

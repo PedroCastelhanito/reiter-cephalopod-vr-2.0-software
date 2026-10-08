@@ -93,6 +93,7 @@ class NativePreparation:
         self.decoder_factory = decoder_factory
         self._bundles: dict[str, PreparedResourceBundle] = {}
         self._resource_keys: list[str] = []
+        self._released_resource_keys: set[str] = set()
         self._pathless_resource_keys: list[str] = []
         self._cpu_limit = 0
         self._gpu_limit = 0
@@ -127,6 +128,7 @@ class NativePreparation:
         def register(key: str, path: str | None) -> None:
             qualified = f"{namespace}:{key}" if namespace else key
             announce(qualified, path)
+            self._released_resource_keys.discard(qualified)
             self._resource_keys.append(qualified)
             if path is not None:
                 self._announced_paths[Path(path).resolve()] = qualified
@@ -313,8 +315,6 @@ class NativePreparation:
             clock_ns=self.clock_ns,
         )
         self.video_session = VideoSession(self.video_playback, self._budget)
-        self.engine.set_video_provider(self.video_session.present)
-        self.engine.set_video_reset(self.video_session.reset)
         display = parse_display_json(
             request.settings.display.profile_json,
             max_bytes=limits.max_document_bytes,
@@ -500,6 +500,10 @@ class NativePreparation:
             raise RuntimeError("CPU Setup preparation must precede graphics allocation")
         if not artifacts:
             raise ValueError("Setup requires at least one prepared trial")
+        if self.video_session is None:
+            raise RuntimeError("CPU video preparation must precede graphics allocation")
+        self.engine.set_video_provider(self.video_session.present)
+        self.engine.set_video_reset(self.video_session.reset)
         display = artifacts[0].display
         first_bundle = self.resources_for(artifacts[0].identity.trial_id)
         calibration_ids = {
@@ -564,9 +568,12 @@ class NativePreparation:
         else:
             failed_sources.update(id(source) for source, _ in self._protected_sources)
         if not failed_sources and decoder_closed:
-            released.extend(self._pathless_resource_keys)
+            # All retained source owners and consumers are closed, including
+            # announced intents whose creation failed before acquiring a handle.
+            released.extend(self._resource_keys)
             self._pathless_resource_keys.clear()
             self._resource_keys.clear()
+            self._announced_paths.clear()
             self._bundles.clear()
             self._budget = None
             if self._display_budget is not None:
@@ -575,4 +582,7 @@ class NativePreparation:
         self._protected_sources = [
             item for item in self._protected_sources if id(item[0]) in failed_sources
         ]
-        return ResourceReleaseReport(tuple(dict.fromkeys(released)), tuple(outstanding))
+        self._released_resource_keys.update(released)
+        return ResourceReleaseReport(
+            tuple(sorted(self._released_resource_keys)), tuple(outstanding)
+        )

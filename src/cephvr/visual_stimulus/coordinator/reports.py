@@ -217,17 +217,19 @@ class Reports:
                 return
             import asyncio
 
-            deliveries = [
-                self.controller.receipt(
-                    "ReportLifecycle",
-                    pb.LifecycleReport(
-                        operation=pb.BackendOperationReport(
-                            source=self.identity.backend, operation=result
-                        )
-                    ),
-                    deadline_ns=link.deadline_ns,
+            deliveries = []
+            if link.method == "SetupSession":
+                deliveries.append(
+                    self.controller.receipt(
+                        "ReportLifecycle",
+                        pb.LifecycleReport(
+                            operation=pb.BackendOperationReport(
+                                source=self.identity.backend, operation=result
+                            )
+                        ),
+                        deadline_ns=link.deadline_ns,
+                    )
                 )
-            ]
             if not result.succeeded:
                 self.state.interrupted = True
                 deliveries.append(
@@ -266,6 +268,19 @@ class Reports:
         work = payload.work if kind == "cleanup" else payload.context.work
         if work != link.child.target.work:
             raise ValueError("worker lifecycle work mismatch")
+        parent_id = link.parent.command_id
+        if kind in {"started", "stopped", "finished"}:
+            prepared_link = next(
+                (
+                    item
+                    for item in self.state.links.values()
+                    if item.method == "PrepareTrial" and item.parent.work == work
+                ),
+                None,
+            )
+            if prepared_link is None:
+                raise ValueError("trial lifecycle lacks retained PrepareTrial identity")
+            parent_id = prepared_link.parent.command_id
         if kind == "cleanup":
             if (
                 payload.source != self.identity.worker
@@ -306,7 +321,7 @@ class Reports:
         else:
             if payload.context.backend != self.identity.backend:
                 raise ValueError("worker evidence backend mismatch")
-            payload.context.operation.command_id = link.parent.command_id
+            payload.context.operation.command_id = parent_id
         if kind == "ready":
             if self.state.interrupted or not payload.required_checks_passed:
                 raise ValueError("worker not Ready")
@@ -325,12 +340,12 @@ class Reports:
             if recipe is None:
                 raise ValueError("stimulus log closure not yet established")
             payload.outputs.add().CopyFrom(recipe)
-        key = (kind, link.parent.command_id)
+        key = (kind, parent_id)
         old = self.state.reports.get(key)
         if old is not None and old != report:
             raise ValueError("retained lifecycle evidence changed")
         self.ledger.reserve_payload(
-            "report:" + kind + ":" + link.parent.command_id,
+            "report:" + kind + ":" + parent_id,
             report.ByteSize(),
             work_key=(
                 work.trial.trial_id

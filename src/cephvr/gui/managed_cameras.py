@@ -117,7 +117,9 @@ class ManagedCameras(QObject):
         )
         cameras.has_configured_tests = bool(self.configured_tests)
         camera_config_changed = state.configuration.revision != self._camera_revision
-        if mcu_settings is not None:
+        draft_changed = camera_config_changed
+        selected_config_changed = camera_config_changed
+        if mcu_settings is not None and not cameras.snapshot_draft:
             assignments = {
                 mcu_settings.behavioral.device.device_id: "Behavior cam",
                 mcu_settings.tracking.device.device_id: "Tracking cam",
@@ -125,8 +127,11 @@ class ManagedCameras(QObject):
             for draft in cameras.drafts:
                 expected_role = assignments.get(draft.serial, "Unassigned")
                 role_changed = draft.role != expected_role
+                draft_changed = draft_changed or role_changed
                 if role_changed:
                     draft.role = expected_role
+                    if draft is cameras.selected:
+                        selected_config_changed = True
                     row = cameras.drafts.index(draft)
                     item = cameras.table.item(row, 2)
                     if item is not None:
@@ -174,7 +179,7 @@ class ManagedCameras(QObject):
                     else:
                         draft.values.pop("trigger_frequency_hz", None)
         self._camera_revision = state.configuration.revision
-        if camera_config_changed:
+        if selected_config_changed and not cameras.snapshot_draft:
             cameras.load_selected()
         preview_views: list[PreviewView] = []
         for draft in cameras.drafts:
@@ -187,7 +192,8 @@ class ManagedCameras(QObject):
                 else None
             )
             assigned = bool(configured and configured.device.device_id == draft.serial)
-            draft.enabled = bool(assigned and configured and configured.enabled)
+            if not cameras.snapshot_draft:
+                draft.enabled = bool(assigned and configured and configured.enabled)
             if cameras.pending_enable.get(draft.serial) == draft.enabled:
                 cameras.pending_enable.pop(draft.serial, None)
             device = (
@@ -195,10 +201,30 @@ class ManagedCameras(QObject):
                 if role == 1
                 else state.acquisition_devices.tracking
             )
-            draft.connected = bool(
-                assigned and (device.device_open or device.cleanup_pending)
-            )
-            draft.capture_running = bool(assigned and device.preview_running)
+            if cameras.snapshot_draft and mcu_settings is not None:
+                reported = next(
+                    (
+                        view
+                        for settings, view in (
+                            (
+                                mcu_settings.behavioral,
+                                state.acquisition_devices.behavioral,
+                            ),
+                            (mcu_settings.tracking, state.acquisition_devices.tracking),
+                        )
+                        if settings.device.device_id == draft.serial
+                    ),
+                    None,
+                )
+                draft.connected = bool(
+                    reported and (reported.device_open or reported.cleanup_pending)
+                )
+                draft.capture_running = bool(reported and reported.preview_running)
+            else:
+                draft.connected = bool(
+                    assigned and (device.device_open or device.cleanup_pending)
+                )
+                draft.capture_running = bool(assigned and device.preview_running)
             visible = self.viewer_state(
                 role, device.preview_running, device.preview_run_id
             )
@@ -214,9 +240,22 @@ class ManagedCameras(QObject):
                     else "",
                 )
             )
+        if draft_changed and not cameras.snapshot_draft:
+            cameras.drafts_changed.emit()
         return tuple(preview_views)
 
+    def discard_snapshot_draft(self, state: pb.Snapshot) -> None:
+        """Explicit controller reload restores camera configuration before Tracking."""
+        self.panel.snapshot_draft = False
+        self._camera_revision = -1
+        self.install(state)
+
     def camera_connection(self, key: str, start: bool) -> None:
+        if start and self.panel.snapshot_draft:
+            self.panel.console.appendPlainText(
+                "Submit the loaded GUI camera draft before starting capture."
+            )
+            return
         role = self.role(key)
         if role is None:
             return

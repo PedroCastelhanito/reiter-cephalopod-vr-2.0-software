@@ -32,8 +32,10 @@ def geometry_from_calibration(
     payload: Mapping[str, object],
 ) -> tuple[RigDimensions, dict[str, list[Point]]]:
     """Resolve the same four physical screen planes used by the GUI diagram."""
-    if payload.get("format") != "cephvr-rig-calibration" or payload.get("version") != 2:
-        raise ValueError("Expected a version 2 CephVR rig calibration JSON")
+    if payload.get("format") != "cephvr-rig-calibration" or payload.get(
+        "version"
+    ) not in (2, 3):
+        raise ValueError("Expected a version 2/3 CephVR rig calibration JSON")
     values = payload.get("values")
     if not isinstance(values, dict):
         raise ValueError("Calibration values must be an object")

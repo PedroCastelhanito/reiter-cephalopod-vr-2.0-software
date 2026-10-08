@@ -94,9 +94,6 @@ class FirmwareUpdate:
             )
             self._check(deadline_ns)
             await self.serial.connect(deadline_ns=deadline_ns)
-            active, _, _, _ = await self.serial.diagnostic_stop(deadline_ns=deadline_ns)
-            if active:
-                raise RuntimeError("Firmware diagnostic output did not stop")
             observation = await self.serial.status(deadline_ns=deadline_ns)
             if not all(
                 observation.state.HasField(role)

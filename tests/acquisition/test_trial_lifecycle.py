@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
 
@@ -11,6 +12,7 @@ import pytest
 from cephvr.acquisition.coordinator.trial_delivery import TrialReportDelivery
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.coordinator.trial_pulses import TrialPulseBoundaries
+from cephvr.acquisition.coordinator.trial_schedule_release import TrialScheduleRelease
 from cephvr.acquisition.coordinator.trial_termination import TrialTermination
 from cephvr.acquisition.coordinator.trial_validation import (
     TrialLifecycleValidation,
@@ -37,6 +39,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
+from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 
 
@@ -575,5 +578,165 @@ async def test_finished_aggregation_delivers_current_trial_once() -> None:
         assert receipt.result == control.COMMAND_RESULT_ACCEPTED
     assert len(calls) == 1
     assert calls[0].finished.context.work == trial.work
+    assert calls[0].finished.context.operation == trial.preparation
     assert trial.finished_report == calls[0].finished
     assert trial.pending_finished_report is None
+
+
+@pytest.mark.parametrize("succeeded", [False, True])
+async def test_release_waits_for_exact_camera_schedule_completion(
+    succeeded: bool,
+) -> None:
+    _, worker, _, session, trial = _started_case(recording_unavailable=False)
+    assert worker.trial is not None and trial.schedule is not None
+    original_deadline = host_time_ns() + 3_000_000_000
+    child = worker.child_operations[worker.trial.schedule.command_id]
+    child.deadline_ns = original_deadline
+    worker.commands = CommandLedger(
+        worker.context.worker.generation,
+        60_000_000_000,
+        max_records=32,
+        max_bytes=1_000_000,
+        result_reservation_bytes=4096,
+    )
+    calls = []
+
+    class Port:
+        async def schedule_trial(self, request, *, deadline_ns):
+            assert request.outputs[0].path == "C:/dummy/dummy_behavioral_cam.mp4"
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+        async def release_trial(self, request, *, deadline_ns):
+            calls.append(request)
+            assert deadline_ns == original_deadline
+            assert request.schedule_operation.command_id == child.command_id
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    worker.port = cast(WorkerPort, Port())
+    trial.start_monotonic_ns = original_deadline + 1_000_000_000
+    trial.end_monotonic_ns = trial.start_monotonic_ns + 60_000_000_000
+    identity = CoordinatorIdentity(
+        control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        ),
+        worker.context.owner,
+        control.ProcessIdentity(),
+        control.ProcessIdentity(),
+        control.ProcessIdentity(),
+    )
+
+    async def no_pulse(*args, **kwargs):
+        raise AssertionError("free-run camera has no pulse boundary")
+
+    async def normal_end(*args):
+        return None
+
+    owner = TrialScheduleRelease(
+        identity=identity,
+        session_slot=SessionSlot(current=session),
+        workers={worker.context.camera: worker},
+        serial=cast(SerialOwnerPort, object()),
+        serial_ack_timeout_ns=100,
+        start_evidence_allowance_ns=100,
+        lifecycle_delivery_ns=100,
+        valid_command=lambda *args: True,
+        run_pulse_boundary=no_pulse,
+        run_normal_end=normal_end,
+        lock=asyncio.Lock(),
+    )
+    trial.schedule = None
+    trial.ready_confirmed.set()
+    trial.plan.resolved_duration_ns = 60_000_000_000
+    output = control.OutputPlan(
+        output_key="video",
+        output_tag="behavioral_cam",
+        extension="mp4",
+        backend=identity.backend,
+        trial=trial.work.trial,
+    )
+    trial.outputs = [output]
+    scheduled_output = control.OutputPlan.FromString(output.SerializeToString())
+    scheduled_output.path = "C:/dummy/dummy_behavioral_cam.mp4"
+    scheduled = wire.ScheduleTrialRequest(
+        command=wire.BackendCommand(command_id=str(uuid4()), work=trial.work),
+        start_monotonic_ns=trial.start_monotonic_ns,
+        normal_end_monotonic_ns=trial.end_monotonic_ns,
+        trial_file_prefix="C:/dummy/dummy",
+        outputs=[scheduled_output],
+    )
+    assert (
+        await owner.schedule(scheduled, deadline_ns=original_deadline)
+    ).result == control.COMMAND_RESULT_ACCEPTED
+    assert trial.outputs == [scheduled_output]
+    assert not output.HasField("path")
+    assert worker.trial.schedule is not None
+    child = worker.child_operations[worker.trial.schedule.command_id]
+    request = wire.ReleaseTrialRequest(
+        command=wire.BackendCommand(command_id=str(uuid4()), work=trial.work),
+        schedule_operation=trial.schedule,
+        start_monotonic_ns=trial.start_monotonic_ns,
+        normal_end_monotonic_ns=trial.end_monotonic_ns,
+    )
+    task = asyncio.create_task(owner.release(request, deadline_ns=original_deadline))
+    await asyncio.sleep(0)
+    assert not task.done() and not calls
+    child.report = control.OperationState(
+        context=control.OperationContext(command_id=child.command_id),
+        work=trial.work,
+        complete=True,
+        succeeded=succeeded,
+        failure=control.Failure(code="WRITER", message="bad output path")
+        if not succeeded
+        else None,
+    )
+    child.report_ingress_ns = host_time_ns()
+    child.updated.set()
+    admission = await task
+    assert bool(calls) == succeeded
+    assert admission.result == (
+        control.COMMAND_RESULT_ACCEPTED
+        if succeeded
+        else control.COMMAND_RESULT_REJECTED
+    )
+    if not succeeded:
+        assert admission.failure.message == "bad output path"
+    else:
+        assert trial.normal_end_task is not None
+        await trial.normal_end_task
+
+
+async def test_normal_end_waits_original_off_then_dispatches_one_stop() -> None:
+    _, _, _, session, trial = _started_case(recording_unavailable=False)
+    trial.end_monotonic_ns = 100
+    off = asyncio.Event()
+    trial.pulse_off_task = asyncio.create_task(off.wait())
+    requests = []
+
+    async def stop(request, *, deadline_ns, internal):
+        assert deadline_ns == 1100 and internal
+        assert request.issued_monotonic_ns == 100
+        assert request.command.work == trial.work
+        requests.append(request)
+        trial.stop = control.OperationContext(command_id=request.command.command_id)
+        return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    owner = cast(
+        TrialTermination,
+        SimpleNamespace(
+            session_slot=SessionSlot(current=session),
+            clock=lambda: 100,
+            lifecycle_delivery_ns=1000,
+            identity=SimpleNamespace(
+                process=control.ProcessIdentity(role="acquisition"),
+                backend=control.BackendContext(backend_name="acquisition"),
+            ),
+            stop=stop,
+        ),
+    )
+    task = asyncio.create_task(TrialTermination.run_normal_end(owner, session, trial))
+    await asyncio.sleep(0)
+    assert not task.done() and not requests
+    off.set()
+    await task
+    await TrialTermination.run_normal_end(owner, session, trial)
+    assert len(requests) == 1

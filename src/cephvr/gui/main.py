@@ -111,6 +111,7 @@ class ManagedGui(QObject):
                 window.devices.cameras,
                 window.devices.projectors,
                 window.tracking,
+                window.devices.microcontroller,
             )
         )
         cameras = window.devices.cameras
@@ -259,8 +260,9 @@ class ManagedGui(QObject):
             permitted and not held and bool(state.control.holder_client_id)
         )
         self.release.setEnabled(held)
-        preview_views = self.cameras.install(state)
-        self.window.devices.sync_cameras()
+        with self.configuration.installing_projection():
+            preview_views = self.cameras.install(state)
+            self.window.devices.sync_cameras()
         try:
             configuration_wired = self.configuration.install(state)
         except (ValueError, TypeError, AttributeError) as error:
@@ -522,6 +524,11 @@ class ManagedGui(QObject):
     def reload_controller_configuration(self) -> None:
         if self.state is None or not self.configuration.stale:
             return
+        self.cameras.discard_snapshot_draft(self.state)
+        self.mcu.discard_snapshot_draft(
+            self.state,
+            self.state.control.holder_client_id == self.bridge.principal.generation,
+        )
         if not self.configuration.reload(self.state):
             QMessageBox.warning(
                 self.window,

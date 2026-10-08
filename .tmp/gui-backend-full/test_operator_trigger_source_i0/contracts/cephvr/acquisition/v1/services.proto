@@ -1,0 +1,43 @@
+syntax = "proto3";
+package cephvr.acquisition.v1;
+
+import "cephvr/acquisition/v1/messages.proto";
+import "cephvr/control/v1/types.proto";
+
+// A02: private registered loopback endpoints inside acquisition, not a public
+// backend/GUI API. All calls are unary. Reuse E05/E06/E08 identity, authority,
+// idempotency, deadline and admission rules; admission never proves completion.
+// Owner issues ordinary work. Registered supervisor may independently interrupt,
+// request authorized recovery cleanup and shut down. Credentials stay in metadata.
+// Pixels and per-frame accounting never travel through this service or between processes.
+service AcquisitionWorkerService {
+  rpc PreparePreview(WorkerPreparePreview) returns (cephvr.control.v1.CommandAdmission);
+  rpc StartPreview(WorkerStartPreview) returns (cephvr.control.v1.CommandAdmission);
+  rpc StopPreview(WorkerStopPreview) returns (cephvr.control.v1.CommandAdmission);
+  rpc EditCamera(WorkerEditCamera) returns (cephvr.control.v1.CommandAdmission);
+  rpc ResolveCameraConfiguration(WorkerResolveCamera) returns (cephvr.control.v1.CommandAdmission);
+  rpc GetState(WorkerQuery) returns (WorkerState);
+  rpc GetRetainedResult(WorkerRetainedResultQuery) returns (WorkerRetainedResult);
+  rpc SetupSession(WorkerSetupSession) returns (cephvr.control.v1.CommandAdmission);
+  rpc CancelSetup(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc PrepareTrial(WorkerPrepareTrial) returns (cephvr.control.v1.CommandAdmission);
+  rpc ScheduleTrial(WorkerSchedule) returns (cephvr.control.v1.CommandAdmission);
+  rpc ReleaseTrial(WorkerRelease) returns (cephvr.control.v1.CommandAdmission);
+  // Terminal ON/OFF outcome for bounded drain and the completion line's "pulses" (A07/A11).
+  rpc RecordPulseEvidence(WorkerPulseEvidence) returns (cephvr.control.v1.ReportReceipt);
+  rpc StopTrial(WorkerStop) returns (cephvr.control.v1.CommandAdmission);
+  rpc InterruptSession(WorkerInterrupt) returns (cephvr.control.v1.CommandAdmission);
+  rpc Cleanup(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc Shutdown(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);
+}
+// Hosted on the existing coordinator endpoint alongside public BackendService.
+// Private worker reports are authenticated against exact registrations.
+service AcquisitionCoordinatorService {
+  rpc ReportWorkerWarnings(WorkerWarningReport) returns (cephvr.control.v1.ReportReceipt);
+  rpc ReportWorkerOperation(WorkerOperationReport) returns (cephvr.control.v1.ReportReceipt);
+  rpc ReportWorkerLifecycle(WorkerLifecycleEvidence) returns (cephvr.control.v1.ReportReceipt);
+  // E08: worker health goes to its coordinator, aggregated into the coordinator heartbeat.
+  rpc ReportWorkerHeartbeat(cephvr.control.v1.HeartbeatReport) returns (cephvr.control.v1.ReportReceipt);
+}
+// Setup/preparation payloads are declared; native launch/resource integration remains unfinished.
+// See acquisition/worker-control.md; declarations are not runnable servers.

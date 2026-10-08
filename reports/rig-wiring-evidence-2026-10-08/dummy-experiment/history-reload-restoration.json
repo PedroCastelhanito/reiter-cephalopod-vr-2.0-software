@@ -1,0 +1,21 @@
+{
+  "controller_generation": "c4bbb0f6-e0cc-4fbd-97dd-8ac20f804524",
+  "shutdown_history_marker_reloaded": true,
+  "registered_participants": [],
+  "restore": {
+    "command_id": "c61732f4-6217-4abd-9751-125ae6441f7d",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "save_original": {
+    "command_id": "ef234bb9-7f76-48b3-9d9f-1d42d83f9a7b",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "configuration_restored": true,
+  "visual_display_state": {}
+}

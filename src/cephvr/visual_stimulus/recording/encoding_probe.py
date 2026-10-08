@@ -43,7 +43,7 @@ def resolve_review_encoding(
     )
     codec = parsed["-c:v"][0]
     launcher.bind_operation(work, parent_operation)
-    aggregate_key = f"ffmpeg-capability-probe:{uuid4()}"
+    aggregate_key = f"ffmpeg_capability_probe_{uuid4()}"
     register_resource(aggregate_key)
     probe = RegisteredCapabilityProbe(
         launcher,

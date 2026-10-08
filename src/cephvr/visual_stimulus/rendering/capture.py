@@ -62,7 +62,7 @@ class ReviewCapture:
         self._ensure_compositor(context, width, height)
         if self._context is not context:
             raise RuntimeError("review capture must use one shared GL context")
-        framebuffer, _texture, program, _buffer, array = self._shared
+        _texture, framebuffer, program, _buffer, array = self._shared
         by_id = {item.output_id: item for item in outputs}
         framebuffer.use()
         cast(Any, context).viewport = (0, 0, width, height)

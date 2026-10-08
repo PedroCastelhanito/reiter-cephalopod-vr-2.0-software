@@ -199,7 +199,7 @@ completed-buffer identity/layout/availability).
 <a id="t08"></a>
 ### T08 — One tracking process with internal workers
 
-**Status:** Accepted · **Revision:** 8
+**Status:** Accepted · **Revision:** 9
 
 - One Python tracking backend process owns control, preparation, source attachments,
   estimator state and result publication, with internal worker threads; no separate
@@ -240,7 +240,8 @@ completed-buffer identity/layout/availability).
   method settings reject explicitly. Independent flow requires no pose; an empty
   mask provides image/preprocessing-only annotation with no native algorithm/GPU
   preparation. Never invent missing scientific inputs. Common source/crop/downscale
-  bounds remain mandatory; optional image-plane scale is not a processing prerequisite.
+  bounds remain mandatory; T20 requires valid camera scale for runnable locomotion.
+  Other diagnostic stages can run without scale.
 - Control/health responsiveness is distinct from computation progress. Blocking native
   calls run outside control handling; cancellation requests do not prove completion or
   release. Retain resources until consumers finish, report blocked cleanup under E06,
@@ -384,7 +385,7 @@ the two optical-flow options and this ID imposes no implementation requirement.
 <a id="t15"></a>
 ### T15 — Compact tracking scientific records
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 4
 
 - With T14 saving On, retain compact pose observations, movement results and their
   quality evidence, source-frame/timing links, invalidity, reset and tracking-owned
@@ -396,6 +397,11 @@ the two optical-flow options and this ID imposes no implementation requirement.
 - T19 owns durable recording and its contract the layout and writer boundary;
   estimator-specific fields follow T12/T04. Compact records do not promise exact
   reconstruction of unsaved intermediate computations.
+- Store FeedbackResult as a decoded standard Protobuf JSON object using its owning
+  descriptor: lowerCamelCase names, int64/uint64 decimal strings, enum names and
+  preserved optional-field presence. Reject unknown/nonfinite values and
+  noncanonical representations. Registered stage evidence is a nested JSON object,
+  not base64 or escaped JSON text; no second scientific schema or dense payload.
 
 <a id="t16"></a>
 ### T16 — Fixed automatic-pose search rectangle
@@ -455,13 +461,19 @@ extraction, quality fields, scoring).
 <a id="t19"></a>
 ### T19 — Tracking record file
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 5
 
 - With T14 saving On, append T15 records to `<prefix>_tracking.jsonl`: UTF-8 JSON Lines,
   one line per pose observation, movement result or reset, append-only, OS-synced every
   `sync_interval_s` and at closure. A bounded tracking-owned writer thread runs outside
   movement computation; feedback delivery never waits for disk. No checksums, envelopes
   or dependency on Visual Stimulus's former framing code.
+- Header schema version 3 identifies decoded feedback/stage objects with T38's
+  calibrated output units and pipeline version 2. Retain pixel-space stage evidence. Keep
+  admitted payloads immutable and charge expanded serialization workspace to the
+  existing recording byte limit. The file contains objects even when the internal
+  immutable representation is text. Retain exact prepared-method/settings header
+  text and its digest. Reject unsupported historical schemas; never rewrite old data.
 - Admission, write/sync/progress or closure failure of required records follows E06/E10.
   A06's lossy Visual Stimulus delivery queue is separate and never authorizes dropping scientific
   records. Finalization drains admitted work, syncs and closes before reporting output
@@ -478,7 +490,7 @@ schemas).
 <a id="t20"></a>
 ### T20 — Four labelled subject-reference points in Configuration
 
-**Status:** Accepted · **Revision:** 7
+**Status:** Accepted · **Revision:** 8
 
 - The operator supplies anterior, posterior, medial-left and medial-right subject
   coordinates in Configuration on the selected camera's manual preview; Setup validates
@@ -490,10 +502,12 @@ schemas).
   same Configuration preview/overlay workflow, converting display to acquired-image
   coordinates. Camera/layout changes require revalidation, not silent reuse. Headless
   clients supply the same typed values before Setup, without GUI interaction.
-- Optional two-endpoint distance calibration retains exact acquired-image dimensions,
-  endpoints and positive known millimetres; derived image-plane scale is metadata
-  independent of downscale. It does not calibrate swimming speed or change T35/T38
-  output units. Source changes require revalidation, never silently reused scale.
+- Enabled experiment Tracking and locomotion diagnostics require two distinct
+  camera-image distance endpoints, positive known millimetres and exact source
+  dimensions. Validate the derived acquired-image px/mm against the endpoints and
+  prepared source, independently of crop/downscale. T38 uses it for linear outputs;
+  it does not establish physical swimming velocity. Earlier diagnostic stages may
+  run without scale. Source changes require revalidation, never guessed scale.
 - The points set the initial anatomical direction and lateral reference for pose
   interpretation, locked under E07 and retained with tracking setup metadata. They are a
   setup reference, not a claim that the moving mantle stays there, a continuous
@@ -766,11 +780,12 @@ handoff).
 <a id="t35"></a>
 ### T35 — Relative locomotion-control outputs
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 4
 
-- Target relative locomotion-control signals for closed-loop Visual Stimulus, mapped to virtual
-  movement by configurable gains; never label them measured physical swimming velocities
-  or infer calibration from camera flow or body dimensions.
+- Publish camera-scale-calibrated locomotion-control proxies in mm/s for forward
+  and sideways and deg/s for turning, mapped to virtual movement by explicit gains.
+  They remain image-plane flow-derived controls, not measured animal swimming
+  velocities. Never infer calibration from camera flow or body dimensions.
 - Keep measured evidence, estimator control signals and Visual Stimulus-applied movement
   distinguishable in compact records and declarations. Method identities, units/scaling
   and source timing stay explicit (T27/A05); no undocumented arbitrary units or
@@ -816,18 +831,21 @@ meanings; links each method's unit/mathematics bindings and remaining work).
   consistent with that interval and their declared units.
 
 <a id="t38"></a>
-### T38 — Direct estimator units through existing Visual Stimulus gains
+### T38 — Calibrated estimator outputs through existing Visual Stimulus gains
 
-**Status:** Accepted · **Revision:** 4
+**Status:** Accepted · **Revision:** 5
 
 - Consumer identifiers use the canonical Visual Stimulus name owned by [V01](visual_stimulus.md#v01).
-- Feed each relative drive in its declared estimator units directly into the compatible
-  Visual Stimulus feedback binding; no reference normalization, session activity rescaling, fixed
-  [-1,1] range or adaptive gain normalization before the Visual Stimulus gain.
+- Pipeline version 2 converts the filtered pixel-space forward/sideways controls
+  once by dividing by T20's acquired-image px/mm, and converts filtered angular
+  radians/s to degrees/s. Publish mm/s and deg/s through the existing Visual Stimulus
+  feedback binding. Preserve raw/filter intermediates in px/s and rad/s for evidence;
+  no activity rescaling, fixed [-1,1] range or adaptive gain normalization.
 - Retain exact method/version, units and configuration with compact evidence; gains keep
   their stimulus-program/epoch owner. New methods or subjects may need new explicit
-  gains; changing method never silently remaps units, reuses incompatible bindings or
-  converts to physical speed.
+  gains. Require matching program input units/quantity/body frame before preparation;
+  old px/s or 1/s bindings must be edited explicitly with their gains. Never rewrite
+  old recordings or silently reinterpret their units.
 - Estimator-defining operations (native flow scaling, coordinate transforms,
   displacement-to-rate conversion) are explicit method mathematics, not hidden
   normalization. T12/T04 bind initial units and T45 the filter; this adds no clamp,
@@ -918,9 +936,10 @@ arithmetic, boundary behavior).
 <a id="t43"></a>
 ### T43 — Turning rate centred on accepted support
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 4
 
-- Turning is an angular rate in 1/s (radians per second): the signed area-weighted
+- The estimator's internal turning rate is in rad/s (1/s), converted to deg/s
+  at T38's output boundary: the signed area-weighted
   moment of accepted water velocities about their area-weighted sample-position
   centroid, divided by the area-weighted second moment of those positions about the same
   centroid. This equals the least-squares rigid-rotation rate about the centroid.

@@ -1,0 +1,41 @@
+{
+  "experiment": {
+    "completed": true,
+    "valid": true,
+    "component": "experiment",
+    "configuration_module_version": "experiment-v1"
+  },
+  "acquisition": {
+    "completed": true,
+    "valid": true,
+    "component": "acquisition",
+    "configuration_module_version": "acquisition-config-v1"
+  },
+  "synchronization": {
+    "completed": true,
+    "valid": true,
+    "component": "synchronization",
+    "configuration_module_version": "inactive"
+  },
+  "tracking": {
+    "completed": true,
+    "valid": true,
+    "component": "tracking",
+    "configuration_module_version": "inactive"
+  },
+  "visual_stimulus": {
+    "completed": true,
+    "issues": [
+      {
+        "component": "visual_stimulus",
+        "field_path": "trials[0].stimulus.arena_boundaries",
+        "failure": {
+          "code": "MISSING_ARENA_BOUNDARIES",
+          "message": "every trial requires an explicit arena-boundary document"
+        }
+      }
+    ],
+    "component": "visual_stimulus",
+    "configuration_module_version": "visual-stimulus-config-v2"
+  }
+}

@@ -28,7 +28,11 @@ class WorkerOperationOwner(Protocol):
 
 def command_from(request: object) -> acq.WorkerCommand:
     """Require the shared command envelope before worker operation dispatch."""
-    command = getattr(request, "command", None)
+    command = (
+        request
+        if isinstance(request, acq.WorkerCommand)
+        else getattr(request, "command", None)
+    )
     if not isinstance(command, acq.WorkerCommand):
         raise TypeError("worker operation has no WorkerCommand")
     return command

@@ -15,6 +15,7 @@ from cephvr.acquisition.coordinator.manual_device_status import (
 )
 from cephvr.acquisition.coordinator.queries import CoordinatorQueries
 from cephvr.acquisition.coordinator.sessionless_cleanup import SessionlessCleanup
+from cephvr.acquisition.coordinator.shutdown import CoordinatorShutdown
 from cephvr.acquisition.ports import (
     ControllerPort,
     ResourcePort,
@@ -36,6 +37,40 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.commands import CommandLedger
+
+
+@pytest.mark.parametrize(
+    "case", ["closed", "delivery_pending", "resources_pending", "wrong_work"]
+)
+async def test_shutdown_preserves_delivered_session_cleanup_identity(case: str) -> None:
+    work = control.WorkContext(session=control.SessionContext(session_id=str(uuid4())))
+    session = SessionRecord(
+        work=work,
+        operation=control.OperationContext(command_id=str(uuid4())),
+        configuration_revision=1,
+        required_cameras=set(),
+    )
+    session.cleanup_complete = case != "resources_pending"
+    session.cleanup_delivery_complete = case != "delivery_pending"
+    owner = object.__new__(CoordinatorShutdown)
+    owner.session_slot = SessionSlot(current=session)
+    owner.shutdown_requested = asyncio.Event()
+    owner.cleanup_session = AsyncMock(
+        return_value=control.CommandAdmission(result=control.COMMAND_RESULT_REJECTED)
+    )
+    command = wire.BackendCommand(command_id=str(uuid4()), work=work)
+    if case == "wrong_work":
+        command.work.session.session_id = str(uuid4())
+    result = await owner.request_shutdown(command, deadline_ns=100)
+    if case == "closed":
+        owner.cleanup_session.assert_not_awaited()
+        assert result.result == control.COMMAND_RESULT_ACCEPTED
+        assert result.command_id == command.command_id
+        assert owner.shutdown_requested.is_set()
+    else:
+        owner.cleanup_session.assert_awaited_once_with(command, deadline_ns=100)
+        assert result.result == control.COMMAND_RESULT_REJECTED
+        assert not owner.shutdown_requested.is_set()
 
 
 async def test_unconfirmed_preview_release_still_attempts_capture_and_pulse_cleanup() -> (

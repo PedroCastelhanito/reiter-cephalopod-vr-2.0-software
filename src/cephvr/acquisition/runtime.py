@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 
 from cephvr.acquisition.coordinator.authority_failure import (
@@ -311,6 +312,13 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
         deadline_ns: int,
     ) -> None:
         """Push the exact retained terminal rejection without changing admission."""
+        logging.getLogger(__name__).error(
+            "%s %s failed: %s: %s",
+            method,
+            command.command_id,
+            outcome.failure.code,
+            outcome.failure.message,
+        )
         if deadline_ns <= 0:
             return
         if method in {"ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"} and (

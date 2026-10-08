@@ -1,0 +1,144 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+____ test_managed_close_saves_accepted_partial_configuration[False-False] _____
+
+dirty = False, discard = False
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -> None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+>       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'pending'
+E         
+E         - pending
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError
+_____ test_managed_close_saves_accepted_partial_configuration[False-True] _____
+
+dirty = True, discard = False
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -> None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+>       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'cancelled'
+E         
+E         - cancelled
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError
+_____ test_managed_close_saves_accepted_partial_configuration[True-False] _____
+
+dirty = False, discard = True
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -> None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+>       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'pending'
+E         
+E         - pending
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError
+_____ test_managed_close_saves_accepted_partial_configuration[True-True] ______
+
+dirty = True, discard = True
+
+    @pytest.mark.parametrize("dirty", [False, True])
+    @pytest.mark.parametrize("discard", [False, True])
+    def test_managed_close_saves_accepted_partial_configuration(dirty, discard) -> None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_close import request_managed_close
+    
+        state = pb.Snapshot()
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration_values.current.subject = "RETAINED"
+        requests = []
+        confirmations = []
+    
+        def incomplete(_base):
+            raise ValueError("Add a managed trial before submitting the session")
+    
+        result = request_managed_close(
+            state,
+            SimpleNamespace(stale=False, dirty=dirty, collect=incomplete),
+            send=lambda action, **options: requests.append((action, options)) or True,
+            confirm_discard=lambda: confirmations.append(True) or discard,
+            log=lambda _: None,
+        )
+        allowed = not dirty or discard
+>       assert result.kind == ("pending" if allowed else "cancelled")
+E       AssertionError: assert 'failed' == 'pending'
+E         
+E         - pending
+E         + failed
+
+tests\gui\test_dashboard.py:4119: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_managed_close_saves_accepted_partial_configuration[False-False]
+FAILED tests/gui/test_dashboard.py::test_managed_close_saves_accepted_partial_configuration[False-True]
+FAILED tests/gui/test_dashboard.py::test_managed_close_saves_accepted_partial_configuration[True-False]
+FAILED tests/gui/test_dashboard.py::test_managed_close_saves_accepted_partial_configuration[True-True]
+4 failed, 334 deselected in 2.20s

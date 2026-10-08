@@ -121,7 +121,10 @@ def apply_settings(
             "settings.gain",
         )
     apply_roi(nodes, requested.roi)
-    if requested.frame_rate_hz is not None:
+    if (
+        requested.frame_rate_hz is not None
+        and read_value(nodes, "TriggerMode") == "Off"
+    ):
         _enable_supported_rate(nodes)
     _apply_float(
         nodes, _RATE_FEATURES, requested.frame_rate_hz, "settings.frame_rate_hz"

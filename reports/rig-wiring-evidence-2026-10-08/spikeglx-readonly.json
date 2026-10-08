@@ -1,0 +1,13 @@
+{
+  "controller_generation": "e0f14c18-fa5f-49a6-8f60-da176ffe764b",
+  "inventory": {
+    "configuration_revision": "1",
+    "file_sha256": "f604e3585325706b35724ecccdf458b5389aa302facb8afa6f57e711f039f67d",
+    "backend_enabled": false,
+    "address": "169.254.240.108",
+    "command_port": 4142
+  },
+  "connection": {
+    "error": "SpikeGLX diagnostic timed out; remote state is unknown"
+  }
+}

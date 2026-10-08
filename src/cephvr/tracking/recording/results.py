@@ -1,7 +1,6 @@
 """T19 scientific movement record formatting from completed result values."""
 
-import base64
-
+from cephvr.tracking.config.models.record_json import feedback_json
 from cephvr.tracking.config.models.records import (
     FlowProxyEvidence,
     GeometryEvidence,
@@ -10,7 +9,6 @@ from cephvr.tracking.config.models.records import (
     RegionCoverage,
     StageEvidence,
     TrackingRecord,
-    WirePayload,
 )
 from cephvr.visual_stimulus.v1.data_pb2 import FeedbackResult
 
@@ -29,7 +27,7 @@ def movement_record(
             StageEvidence(
                 stage_id="estimator",
                 schema_id="tracking.flow-proxy-evidence.v1",
-                payload_json=evidence.model_dump_json(),
+                payload=evidence.model_dump_json(),
             ),
         )
     )
@@ -54,18 +52,14 @@ def movement_record(
             StageEvidence(
                 stage_id="geometry",
                 schema_id="tracking.geometry-evidence.v1",
-                payload_json=coverage.model_dump_json(),
+                payload=coverage.model_dump_json(),
             ),
             *stages,
         )
     return TrackingRecord(
         record=MovementResult(
             kind="result",
-            feedback_result=WirePayload(
-                protobuf_base64=base64.b64encode(
-                    result.SerializeToString(deterministic=True)
-                ).decode("ascii")
-            ),
+            feedback_result=feedback_json(result),
             produced_host_ns=produced_host_ns,
             pose=pose,
             stage_evidence=stages,

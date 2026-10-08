@@ -1,0 +1,46 @@
+{
+  "controller_generation": "d6639c11-2916-4d83-b70b-d2e0f0331558",
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "participants": null,
+  "operations": [
+    {
+      "context": {
+        "command_id": "d04bd588-755b-4dd1-b35f-1fecea771437"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "48f04ca8-7e3b-4dc3-a54e-d8a445f2925e",
+      "component": "startup_recovery",
+      "message": "Recover unfinished session at C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-145335. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker."
+    }
+  ],
+  "prompts": [
+    {
+      "prompt_id": "9a5f0311-65d9-4ede-bb34-e0e55ec4133c",
+      "setup": {
+        "controller_generation": "2e92d87a-10eb-4d91-b402-3fd8db4c4a5b",
+        "session_id": "5c2187a2-d023-4e38-9f9a-766673e5ee0c"
+      },
+      "operation": {
+        "command_id": "c3df8f74-832f-44d1-b354-92babb2e7d12"
+      },
+      "explanation": "Recover unfinished session at C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-145335. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker.",
+      "permitted_choices": [
+        "continue",
+        "cancel"
+      ]
+    }
+  ],
+  "metadata": null
+}

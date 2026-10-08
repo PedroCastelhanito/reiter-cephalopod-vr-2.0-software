@@ -392,6 +392,7 @@ def test_movement_input_reset_preserves_evidence_order_and_pose_history(
         maximum_frame_age_ns=50,
         maximum_pose_age_ns=50,
         movement_timeout_ns=20,
+        pixels_per_mm=2,
         first_evaluation=lambda *_: pytest.fail(
             "discarded input cannot start activity"
         ),
@@ -464,6 +465,7 @@ def test_movement_commit_records_before_feedback_and_first_activity(outcome):
             maximum_frame_age_ns=50,
             maximum_pose_age_ns=50,
             movement_timeout_ns=20,
+            pixels_per_mm=2,
             first_evaluation=lambda *_: events.append("first"),
         ),
         clock=lambda: 100,
@@ -492,4 +494,107 @@ def test_movement_commit_records_before_feedback_and_first_activity(outcome):
             assert not movement.first
     finally:
         pool.release(frame)
+    assert pool.idle()
+
+
+@pytest.mark.parametrize("pixels_per_mm", [0.0, -1.0, float("nan"), float("inf")])
+def test_physical_output_rejects_unusable_camera_scale(pixels_per_mm):
+    from cephvr.tracking.config.models.records import DriveTriplet
+    from cephvr.tracking.processing.physical_units import physical_drive
+
+    with pytest.raises(ValueError, match="camera pixels_per_mm"):
+        physical_drive(
+            DriveTriplet(forward_drive=1.0, sideways_drive=2.0, turn_drive=3.0),
+            pixels_per_mm,
+        )
+
+
+def test_movement_records_and_publishes_calibrated_units_preserving_pixel_evidence():
+    import json
+    import math
+    from types import SimpleNamespace
+
+    from cephvr.control.v1.types_pb2 import ProcessIdentity
+    from cephvr.tracking.config.models.records import FlowProxyEvidence
+    from cephvr.tracking.processing.movement import Movement, MovementPorts
+
+    records, published = [], []
+    gate = TrialGate(lambda record: records.append(record) or True)
+    work = WorkContext()
+    gate.begin(work, "prepared", "attached", 1, 200, 1)
+    pool = FramePool(ImageLayout(2, 2, 2, "gray", "uint8", 8, "lsb", 0, 255, "x"), 1, 4)
+    slot, pixels = pool.acquire()
+    pixels.release()
+    frame = pool.publish(slot, SourceFrame(frame_id=2, host_receipt_ns=90), work, "1")
+    ports = MovementPorts(
+        source=SimpleNamespace(pool=pool),
+        flow=None,
+        estimator=None,
+        gate=gate,
+        history=PoseHistory(1),
+        pose=None,
+        manual_geometry=None,
+        feedback=SimpleNamespace(
+            before_result=lambda _: None, publish=published.append
+        ),
+        identity=ProcessIdentity(),
+        stream_id="water_flow",
+        maximum_frame_age_ns=50,
+        maximum_pose_age_ns=50,
+        movement_timeout_ns=20,
+        first_evaluation=lambda *_: None,
+        pixels_per_mm=2.0,
+    )
+    movement = Movement(ports, clock=lambda: 100)
+    movement.baseline = SimpleNamespace(
+        source=SourceFrame(frame_id=1, host_receipt_ns=80)
+    )
+    controls = dict(forward_drive=-100.0, sideways_drive=20.0, turn_drive=-math.pi / 2)
+    evidence = FlowProxyEvidence.model_validate_json(
+        json.dumps(
+            dict(
+                schema_version=1,
+                pipeline_id="water_flow",
+                validity="valid",
+                reason=None,
+                sections=[
+                    dict(
+                        section_index=0,
+                        intended_area_px2=1.0,
+                        visible_area_px2=1.0,
+                        accepted_area_px2=1.0,
+                    )
+                ],
+                counts=dict(
+                    selected=1,
+                    unavailable=0,
+                    nonfinite=0,
+                    cost_rejected=0,
+                    neighbor_unevaluable=0,
+                    median_rejected=0,
+                    accepted=1,
+                ),
+                centroid_body_px=[0.0, 0.0],
+                mean_velocity_body_px_per_s=[100.0, -20.0],
+                centred_moment_px2_per_s=math.pi / 2,
+                centred_second_moment_px2=1.0,
+                raw=controls,
+                filtered_average=controls,
+                filter_end=controls,
+                filter_disposition="seeded",
+            )
+        )
+    )
+    use, _ = movement._pose(frame)
+    movement._commit(frame, evidence, "valid", use)
+    saved = records[-1].model_dump(mode="json")["record"]
+    assert {v.channel_id: v.value for v in published[0].values} == pytest.approx(
+        dict(forward_drive=-50.0, sideways_drive=10.0, turn_drive=-90.0)
+    )
+    assert {
+        v["channelId"]: v["value"] for v in saved["feedback_result"]["values"]
+    } == pytest.approx(dict(forward_drive=-50.0, sideways_drive=10.0, turn_drive=-90.0))
+    assert saved["stage_evidence"][-1]["payload"]["filtered_average"] == controls
+    assert published[0].interval_start_ns == 80 and published[0].interval_end_ns == 90
+    pool.release(frame)
     assert pool.idle()

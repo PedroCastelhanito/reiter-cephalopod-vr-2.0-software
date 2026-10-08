@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "mapping_id": "spikeglx-20260901-reference-v1",
+  "evidence_status": "source_reviewed_not_rig_validated",
+  "source_repository": "https://github.com/billkarsh/SpikeGLX",
+  "source_commit": "0cffa0b748a01f92e4418ed15ebdbfff7e9342c5",
+  "reported_version": "SpikeGLX v20260901 api v4.1.3",
+  "native_stream_codes": {
+    "ni": 0,
+    "onebox": 1,
+    "imec": 2
+  },
+  "channel_type_order": {
+    "ni": ["MN", "MA", "XA", "DW"],
+    "onebox": ["XA", "DW", "SY"],
+    "imec": ["AP", "LF", "SY"]
+  },
+  "digital_word_layouts": {
+    "ni": {"channel_type": "DW", "width_bits": 16, "supported_bits": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]},
+    "onebox": {"channel_type": "DW", "width_bits": 16, "supported_bits": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}
+  },
+  "gate_modes": {
+    "0": "immediate",
+    "1": "tcp"
+  },
+  "trigger_modes": {
+    "0": "immediate",
+    "1": "timed",
+    "2": "ttl",
+    "3": "spike",
+    "4": "tcp"
+  },
+  "parameter_keys": {
+    "run_name": "snsRunName",
+    "gate_mode": "gateMode",
+    "trigger_mode": "trigMode",
+    "recording_button_shown": "manOvShowBut",
+    "recording_initially_off": "manOvInitOff",
+    "probe_subfolders": "snsFldPerProbe",
+    "split_shanks": "snsSepShanks",
+    "lf_pair_check": "snsPairChk"
+  },
+  "prepared_comparison_exclusions": {
+    "getParams": [
+      "snsRunName"
+    ]
+  },
+  "standard_output_labels": {
+    "ni": "nidq",
+    "onebox": "obx{stream_index}.obx",
+    "imec_ap": "imec{stream_index}.ap",
+    "imec_lf": "imec{stream_index}.lf"
+  },
+  "native_run_folder": "{run_name}_g{gate_index}",
+  "native_file_prefix": "{run_name}_g{gate_index}_t{trigger_index}",
+  "imec_probe_subfolder": "{run_name}_g{gate_index}_imec{stream_index}",
+  "split_shank_label_index": "1000 + 10 * stream_index + shank_index",
+  "source_paths": [
+    "Src-main/Version.h",
+    "Markdown/UserManual.md",
+    "Src-params/DAQ.cpp",
+    "Src-params/DAQ.h",
+    "Src-params/CimCfg.cpp",
+    "Src-params/ConfigCtl.cpp",
+    "Src-remote/CmdServer.cpp",
+    "Src-triggers/TrigBase.cpp",
+    "Src-datafile/DataFile.cpp",
+    "Src-datafile/DataFileIMAP.h",
+    "Src-datafile/DataFileIMLF.h",
+    "Src-datafile/DataFileIMLF.cpp",
+    "Src-datafile/DataFileOB.h",
+    "Src-datafile/DataFileNI.h"
+  ]
+}

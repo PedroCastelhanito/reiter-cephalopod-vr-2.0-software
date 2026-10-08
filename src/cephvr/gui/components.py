@@ -20,10 +20,14 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QLineEdit,
     QPlainTextEdit,
     QPushButton,
     QRadioButton,
     QSizePolicy,
+    QStyle,
+    QStyleOptionButton,
+    QStylePainter,
     QVBoxLayout,
     QWidget,
 )
@@ -74,6 +78,9 @@ def combo(options: tuple[str, ...]) -> QComboBox:
     result = SelectionBox()
     result.setProperty("chevron", True)
     result.addItems(options)
+    result.setSizeAdjustPolicy(
+        QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+    )
     result.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
     return result
 
@@ -94,10 +101,17 @@ def field(title: str, editor: QWidget, *, hint: str = "") -> QWidget:
     layout = QVBoxLayout(result)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(6)
-    caption = label(title, "label")
+    caption = label(title, "label", wrap=True)
+    caption.setSizePolicy(
+        QSizePolicy.Policy.Ignored, caption.sizePolicy().verticalPolicy()
+    )
     caption.setBuddy(editor)
     caption.setToolTip(hint)
     editor.setToolTip(hint)
+    if isinstance(editor, QLineEdit):
+        editor.setSizePolicy(
+            QSizePolicy.Policy.Ignored, editor.sizePolicy().verticalPolicy()
+        )
     layout.addWidget(caption)
     layout.addWidget(editor)
     return result
@@ -159,7 +173,21 @@ class StatusIndicator(QRadioButton):
         self.setProperty("role", "status-indicator")
         self.setAutoExclusive(False)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.set_status("Unavailable")
+
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+        option = QStyleOptionButton()
+        self.initStyleOption(option)
+        style = self.style()
+        assert style is not None
+        inset = style.pixelMetric(QStyle.PixelMetric.PM_ExclusiveIndicatorWidth)
+        inset += style.pixelMetric(QStyle.PixelMetric.PM_RadioButtonLabelSpacing)
+        option.text = self.fontMetrics().elidedText(
+            option.text, Qt.TextElideMode.ElideRight, max(0, self.width() - inset)
+        )
+        painter = QStylePainter(self)
+        painter.drawControl(QStyle.ControlElement.CE_RadioButton, option)
 
     def set_status(self, status: str) -> None:
         self.setChecked(status == "Ready")

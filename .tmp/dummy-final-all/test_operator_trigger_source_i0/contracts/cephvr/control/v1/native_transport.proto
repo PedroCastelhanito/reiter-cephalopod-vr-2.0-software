@@ -1,0 +1,11 @@
+syntax = "proto3";
+package cephvr.control.v1;
+
+// E08 named-pipe peer authentication prelude. Sent as one bounded message before
+// application messages; startup_nonce is descriptor-scoped and never logged.
+message PipeHandshake {
+  uint32 protocol_version = 1;
+  string process_instance_id = 2;
+  bytes startup_nonce = 3;
+  bool accepted = 4; // Set only in the server reply.
+}

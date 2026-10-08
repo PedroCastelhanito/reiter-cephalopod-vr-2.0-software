@@ -11,16 +11,23 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
     QScrollArea,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
 from cephvr.gui.components import Card, button, combo, equal_row_height
+from cephvr.gui.configuration_files import ConfigurationFiles
 from cephvr.gui.layouts import column
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.protocol_document import TrialDraft, blank_program
 from cephvr.gui.protocol_editor import ProtocolEditor
 from cephvr.gui.protocol_history import EditHistory
+from cephvr.gui.protocol_snapshot import (
+    capture_protocol,
+    restore_protocol,
+    validate_protocol,
+)
 from cephvr.gui.recordings import RecordingsCard
 from cephvr.gui.stimulus_assets import StimulusAssetsCard
 from cephvr.gui.view import DashboardView
@@ -44,6 +51,7 @@ class ProtocolPage(QWidget):
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
         content, body = column()
+        content.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.config_scroll.setWidget(content)
         root.addWidget(self.config_scroll)
         top = self.top_grid = QGridLayout()
@@ -119,8 +127,28 @@ class ProtocolPage(QWidget):
         self.session_mode.currentTextChanged.connect(self.update_control_mode)
         self.update_control_mode()
         body.addWidget(self.editor, 1)
-        self.save_dialog: QFileDialog | None = None
-        self.load_dialog: QFileDialog | None = None
+        self.config_files = ConfigurationFiles(
+            self,
+            "Protocol",
+            "protocol.json",
+            capture=lambda: capture_protocol(self),
+            validate=lambda value: validate_protocol(value, allow_program=True),
+            apply=lambda value: restore_protocol(self, value),
+            available=lambda: self.can_edit,
+            load_button=self.load_button,
+            save_button=self.save_button,
+            connect_actions=False,
+        )
+        self.config_files.message.connect(self.show_file_message)
+        self.config_files.loaded_document.connect(self.remember_program_import)
+
+    def remember_program_import(self, data: object, path: str) -> None:
+        if isinstance(data, dict) and data.get("format") == "cephvr-program-import":
+            self.editor.drafts[self.editor.index].path = path
+
+    def show_file_message(self, message: str) -> None:
+        self.message.status(message)
+        self.message.show()
 
     def update_control_mode(self) -> None:
         closed = self.session_mode.currentText() == "Closed-loop"
@@ -306,10 +334,9 @@ class ProtocolPage(QWidget):
                         f"Trial {number} seed must be a canonical nonnegative integer"
                     )
                 trial.stimulus.stimulus_seed_decimal = seed
-            if draft.arena_boundaries_json:
-                trial.stimulus.arena_boundaries.boundaries_json = (
-                    draft.arena_boundaries_json
-                )
+            trial.stimulus.arena_boundaries.boundaries_json = (
+                draft.arena_boundaries_json or '{"format_version":1,"bindings":[]}'
+            )
             gap = draft.gap_after_seconds.strip()
             if gap:
                 if number == len(self.editor.drafts):
@@ -354,36 +381,31 @@ class ProtocolPage(QWidget):
         self.message.show()
         self.message.setToolTip(str(error))
 
+    @property
+    def load_dialog(self) -> QFileDialog | None:
+        dialog = self.config_files.dialog
+        return (
+            dialog
+            if dialog is not None
+            and dialog.acceptMode() == QFileDialog.AcceptMode.AcceptOpen
+            else None
+        )
+
+    @property
+    def save_dialog(self) -> QFileDialog | None:
+        dialog = self.config_files.dialog
+        return (
+            dialog
+            if dialog is not None
+            and dialog.acceptMode() == QFileDialog.AcceptMode.AcceptSave
+            else None
+        )
+
     def choose_load(self) -> None:
-        if not self.can_edit:
-            return
-        if self.load_dialog is not None:
-            self.load_dialog.raise_()
-            return
-        dialog = QFileDialog(self, "Load stimulus program")
-        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-        dialog.setNameFilter("Stimulus programs (*.json)")
-        dialog.fileSelected.connect(self.load_program)
-        dialog.finished.connect(lambda: setattr(self, "load_dialog", None))
-        dialog.finished.connect(dialog.deleteLater)
-        self.load_dialog = dialog
-        dialog.open()
+        self.config_files.choose(save=False)
 
     def choose_save(self) -> None:
-        if not self.can_edit:
-            return
-        if self.save_dialog is not None:
-            self.save_dialog.raise_()
-            return
-        dialog = QFileDialog(self, "Save stimulus program")
-        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
-        dialog.setNameFilter("Stimulus programs (*.json)")
-        dialog.setDefaultSuffix("json")
-        dialog.fileSelected.connect(self.save_program)
-        dialog.finished.connect(lambda: setattr(self, "save_dialog", None))
-        dialog.finished.connect(dialog.deleteLater)
-        self.save_dialog = dialog
-        dialog.open()
+        self.config_files.choose(save=True)
 
     def save_program(self, path: str) -> None:
         if not self.can_edit or not self.editor.flush_parameters():
@@ -413,6 +435,7 @@ class ProtocolPage(QWidget):
     def apply_view(self, view: DashboardView) -> None:
         self.assets.apply_view(view)
         self.can_edit = view.can_edit
+        self.config_files.set_enabled(self.can_edit)
         if not self.can_edit:
             self.editor.parameters.close_file_dialog()
             self.editor.create_batch.composer.close_file_dialogs()

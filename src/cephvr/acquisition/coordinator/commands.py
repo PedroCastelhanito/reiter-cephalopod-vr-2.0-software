@@ -76,6 +76,7 @@ def retain_worker_command(
         "interrupt_session",
         "interrupt",
         "release_trial",
+        "record_pulse_evidence",
         "shutdown",
         "stop_preview",
         "stop_trial",

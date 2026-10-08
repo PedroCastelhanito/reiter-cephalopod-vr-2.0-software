@@ -1,0 +1,24 @@
+# Fixed architecture policy for gui (E14/GOV-001). Not an operator file.
+# Source rules: GUI client defaults. See architecture.md: E03, E08, E14, A03, A10.
+# Change only with the governing architecture decision, then bump policy_version
+# here and in config/backends/gui_config.toml. The loader rejects a version mismatch.
+policy_version = 5
+
+[controller_reconnect]
+repeat_last_delay = true
+
+[preview]
+display_updates = "latest_on_frame_arrival"
+
+[runtime_incidents]
+presentation = "one_updating_window"
+reconnect = "restore_current_incidents"
+dismissal = "not_a_decision"
+
+[control_lease]
+new_subscription = "observer"
+acquisition = "automatic_unheld_after_synchronization_explicit_takeover"
+
+[recovery]
+supervisor_completion_report = false
+reconnect_warning = "acknowledge_before_state_changing_controls"

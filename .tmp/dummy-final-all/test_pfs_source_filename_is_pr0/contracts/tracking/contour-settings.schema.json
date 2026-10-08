@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "LandmarkQuality": {
+      "additionalProperties": false,
+      "properties": {
+        "minimum_axis_px": {
+          "exclusiveMinimum": 0,
+          "title": "Minimum Axis Px",
+          "type": "number"
+        },
+        "minimum_base_width_px": {
+          "exclusiveMinimum": 0,
+          "title": "Minimum Base Width Px",
+          "type": "number"
+        },
+        "minimum_triangle_area_px2": {
+          "exclusiveMinimum": 0,
+          "title": "Minimum Triangle Area Px2",
+          "type": "number"
+        }
+      },
+      "required": [
+        "minimum_axis_px",
+        "minimum_base_width_px",
+        "minimum_triangle_area_px2"
+      ],
+      "title": "LandmarkQuality",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 2,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "minimum_axis_anisotropy": {
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "title": "Minimum Axis Anisotropy",
+      "type": "number"
+    },
+    "threshold_level": {
+      "title": "Threshold Level",
+      "type": "number"
+    },
+    "foreground_polarity": {
+      "enum": [
+        "dark",
+        "bright"
+      ],
+      "title": "Foreground Polarity",
+      "type": "string"
+    },
+    "minimum_area_px2": {
+      "exclusiveMinimum": 0,
+      "maximum": 4294967295,
+      "title": "Minimum Area Px2",
+      "type": "integer"
+    },
+    "maximum_area_px2": {
+      "exclusiveMinimum": 0,
+      "maximum": 4294967295,
+      "title": "Maximum Area Px2",
+      "type": "integer"
+    },
+    "geometry_quality": {
+      "$ref": "#/$defs/LandmarkQuality"
+    }
+  },
+  "required": [
+    "schema_version",
+    "minimum_axis_anisotropy",
+    "threshold_level",
+    "foreground_polarity",
+    "minimum_area_px2",
+    "maximum_area_px2",
+    "geometry_quality"
+  ],
+  "title": "ContourSettings",
+  "type": "object"
+}

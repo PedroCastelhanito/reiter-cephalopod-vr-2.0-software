@@ -1,0 +1,29 @@
+...........................................................F............ [ 21%]
+........................................................................ [ 42%]
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+....................................................                     [100%]
+================================== FAILURES ===================================
+_____ test_file_policies_resolve_exact_units_and_preserve_deferred_margin _____
+
+    def test_file_policies_resolve_exact_units_and_preserve_deferred_margin() -> None:
+        policies = load_file_policies(_ROOT)
+    
+        assert policies.contract_version == 1
+        assert policies.serial_baud_rate == 115200
+        assert policies.serial_ack_timeout_ns == 100_000_000
+        behavioral = next(
+            item
+            for item in policies.cameras
+            if item.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
+        )
+        assert behavioral.frame_silence_timeout_ns == 1_000_000_000
+>       assert not behavioral.HasField("post_cutoff_drain_margin_ns")
+E       AssertionError: assert not True
+E        +  where True = <built-in method HasField of CameraFilePolicy object at 0x000002257E502390>('post_cutoff_drain_margin_ns')
+E        +    where <built-in method HasField of CameraFilePolicy object at 0x000002257E502390> = frame_silence_timeout_ns: 1000000000\ncamera: CAMERA_ROLE_BEHAVIORAL\npost_cutoff_drain_margin_ns: 1000000000\n.HasField
+
+tests\acquisition\test_configuration.py:131: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_configuration.py::test_file_policies_resolve_exact_units_and_preserve_deferred_margin
+1 failed, 339 passed in 2.10s

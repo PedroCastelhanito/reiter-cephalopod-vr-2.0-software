@@ -1,0 +1,268 @@
+{
+  "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+  "session": {
+    "phase": "SESSION_PHASE_FINALIZING",
+    "context": {
+      "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+      "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+    },
+    "outcome": "SESSION_OUTCOME_INTERRUPTED",
+    "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-141718",
+    "trial_count": 1,
+    "activated": true,
+    "interruption_reason": {
+      "code": "INTERRUPTED",
+      "message": "trial 1: required lifecycle evidence missing by deadline"
+    }
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+        "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+      },
+      "trial_id": "405fd1ba-054b-40f0-9969-3fc6c25cc55d",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_FINALIZING",
+    "outcome": "TRIAL_OUTCOME_INTERRUPTED",
+    "start_monotonic_ns": "680626435964600",
+    "scheduled_end_monotonic_ns": "680686435964600",
+    "interruption_issued_monotonic_ns": "680626687211200"
+  },
+  "participants": [
+    {
+      "process": {
+        "role": "acquisition",
+        "generation": "819daeb4-d669-410c-ab29-a692966a5cb3"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "acquisition",
+            "backend_generation": "819daeb4-d669-410c-ab29-a692966a5cb3"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+              "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+            }
+          },
+          "operation": {
+            "command_id": "8ec7660b-c332-40c3-9dc6-093bd30eb9e1"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    },
+    {
+      "process": {
+        "role": "visual_stimulus",
+        "generation": "b2660fab-ca11-4547-8263-ffbf5bd92a8b"
+      },
+      "enabled": true,
+      "required": true,
+      "process_running": true,
+      "connected": true,
+      "health": "LAUNCH_PHASE_OPERATIONAL",
+      "ready": {
+        "context": {
+          "backend": {
+            "backend_name": "visual_stimulus",
+            "backend_generation": "b2660fab-ca11-4547-8263-ffbf5bd92a8b"
+          },
+          "work": {
+            "session": {
+              "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+              "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+            }
+          },
+          "operation": {
+            "command_id": "5dd5e5ab-92ca-4413-be96-fa8800e1016b"
+          }
+        },
+        "configuration_revision": "2",
+        "required_checks_passed": true
+      }
+    }
+  ],
+  "operations": [
+    {
+      "context": {
+        "command_id": "a5449382-89ea-47e0-be38-165e526d3d9e"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    },
+    {
+      "context": {
+        "command_id": "971b8ddc-e8ca-4349-be05-ff367549f285"
+      },
+      "command": "StartupRecovery",
+      "work": {
+        "session": {
+          "controller_generation": "839eccf4-87b2-4933-a821-081f0e6fdcb8",
+          "session_id": "acba15f5-f784-4ede-b5b2-f98a8f8b72b5"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "startup reservation recovery confirmed"
+    },
+    {
+      "context": {
+        "command_id": "37369580-db2f-483c-9d31-f634a7975f97"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "49e63d27-1885-49e1-aced-55b98b207a36"
+      },
+      "command": "UpdateConfiguration",
+      "complete": true,
+      "succeeded": true,
+      "progress": "configuration revision committed"
+    },
+    {
+      "context": {
+        "command_id": "fe1663c2-fd46-415d-b1f8-728863d144bd"
+      },
+      "command": "Setup",
+      "work": {
+        "session": {
+          "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+          "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "Ready"
+    },
+    {
+      "context": {
+        "command_id": "95be895d-2758-4e7c-9dfb-dabecc2d5b4d"
+      },
+      "command": "StartSession",
+      "work": {
+        "session": {
+          "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+          "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+        }
+      },
+      "complete": true,
+      "succeeded": true,
+      "progress": "session activated"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "23c86829-71d6-4705-aeff-72eb201bdb99",
+      "component": "supervisor",
+      "message": "participant interruption unconfirmed: RuntimeError('worker interrupt not accepted: RESOURCE_EXHAUSTED')"
+    }
+  ],
+  "prompts": [
+    {
+      "prompt_id": "1bcd7416-a38b-406f-bca5-33a7194c7cda",
+      "setup": {
+        "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+        "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+      },
+      "operation": {},
+      "explanation": "affected prepared resource set is unknown",
+      "permitted_choices": [
+        "abort_session"
+      ],
+      "runtime_incident": {
+        "incident_id": "b7a6483e-132b-4384-8ca0-f477eb968da1",
+        "revision": "1",
+        "work": {
+          "session": {
+            "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+            "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+          }
+        },
+        "error_ids": [
+          "e947cef3-ee7a-4ed6-89a5-43361ff53ac5"
+        ],
+        "consequence": "affected prepared resource set is unknown",
+        "disposition": "RUNTIME_INCIDENT_DISPOSITION_AWAITING_OPERATOR",
+        "first_observed_monotonic_ns": "680626449150400",
+        "last_observed_monotonic_ns": "680626449150400",
+        "occurrence_count": "1"
+      }
+    },
+    {
+      "prompt_id": "607703e3-6f1a-4c38-8fb4-86cb8ee517b3",
+      "setup": {
+        "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+        "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+      },
+      "operation": {},
+      "explanation": "affected prepared resource set is unknown",
+      "permitted_choices": [
+        "abort_session"
+      ],
+      "runtime_incident": {
+        "incident_id": "b0c67dcd-2b27-46bd-9c80-ab5e2d036448",
+        "revision": "1",
+        "work": {
+          "session": {
+            "controller_generation": "b8b7fc8b-af8d-420f-80b0-a524f1260317",
+            "session_id": "d5545753-13c6-4df5-a8e5-f5b0ebf92582"
+          }
+        },
+        "error_ids": [
+          "eb5089e9-2555-44e1-83ca-bc5d58c344f6"
+        ],
+        "consequence": "affected prepared resource set is unknown",
+        "disposition": "RUNTIME_INCIDENT_DISPOSITION_AWAITING_OPERATOR",
+        "first_observed_monotonic_ns": "680626449169400",
+        "last_observed_monotonic_ns": "680626449169400",
+        "occurrence_count": "1"
+      }
+    }
+  ],
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "3438540a-edd1-4f42-b2b4-0b9afbff1b43"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-141718\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "2e8bc9a5-df9a-4284-bfb9-52263349723a"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-141718\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "299bf68f-2b19-46c1-a629-3faccab26b23"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-141718\\protocol-data\\DUMMY_141725_LOG.json"
+    },
+    {
+      "operation": {
+        "command_id": "cb14548e-0b88-40de-bd1b-a47316f46c46"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-141718\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ]
+}

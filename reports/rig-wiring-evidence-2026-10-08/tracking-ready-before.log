@@ -1,0 +1,468 @@
+FFFFFFFFFFFFFFFF                                                         [100%]
+================================== FAILURES ===================================
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[valid-False] _
+
+tracking = False, case = 'valid'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[valid-True] __
+
+tracking = True, case = 'valid'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[missing-False] _
+
+tracking = False, case = 'missing'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[missing-True] _
+
+tracking = True, case = 'missing'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[extra-False] _
+
+tracking = False, case = 'extra'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[extra-True] __
+
+tracking = True, case = 'extra'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[duplicate-False] _
+
+tracking = False, case = 'duplicate'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[duplicate-True] _
+
+tracking = True, case = 'duplicate'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_transfer-False] _
+
+tracking = False, case = 'wrong_transfer'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_transfer-True] _
+
+tracking = True, case = 'wrong_transfer'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_worker-False] _
+
+tracking = False, case = 'wrong_worker'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_worker-True] _
+
+tracking = True, case = 'wrong_worker'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[attached-False] _
+
+tracking = False, case = 'attached'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[attached-True] _
+
+tracking = True, case = 'attached'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[released-False] _
+
+tracking = False, case = 'released'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+_ test_manual_preview_ready_requires_all_exact_pending_transfers[released-True] _
+
+tracking = True, case = 'released'
+
+    @pytest.mark.parametrize("tracking", (False, True))
+    @pytest.mark.parametrize(
+        "case",
+        (
+            "valid",
+            "missing",
+            "extra",
+            "duplicate",
+            "wrong_transfer",
+            "wrong_worker",
+            "attached",
+            "released",
+        ),
+    )
+    def test_manual_preview_ready_requires_all_exact_pending_transfers(tracking, case):
+        owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+        worker = control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+>       ledger = NativeResourceLedger()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: NativeResourceLedger.__init__() missing 2 required keyword-only arguments: 'max_resources' and 'max_transfers_per_resource'
+
+tests\acquisition\test_manual_preview.py:1178: TypeError
+=========================== short test summary info ===========================
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[valid-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[valid-True]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[missing-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[missing-True]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[extra-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[extra-True]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[duplicate-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[duplicate-True]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_transfer-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_transfer-True]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_worker-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[wrong_worker-True]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[attached-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[attached-True]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[released-False]
+FAILED tests/acquisition/test_manual_preview.py::test_manual_preview_ready_requires_all_exact_pending_transfers[released-True]
+16 failed, 37 deselected in 0.57s

@@ -1,0 +1,194 @@
+{
+  "controller_generation": "93cbe363-06ee-419c-b55f-8e14fcf600ce",
+  "captured_monotonic_ns": "670266540645200",
+  "state_revision": "1268",
+  "configuration": {
+    "revision": "1"
+  },
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "operations": [
+    {
+      "context": {
+        "command_id": "26a0277c-a662-466b-b9c2-e4499f5d6fd4"
+      },
+      "command": "ExecuteMicrocontrollerCommand",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Microcontroller command completed"
+    },
+    {
+      "context": {
+        "command_id": "307f73ee-6bd0-444d-b8ed-484321b79f32"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "35ae496b-a377-436d-ac0f-8c419b92ad00",
+      "component": "visual_stimulus_display",
+      "message": "Visual Stimulus display settings or registered coordinator unavailable"
+    }
+  ],
+  "configuration_values": {
+    "current": {
+      "backends": [
+        {
+          "backend_name": "acquisition",
+          "enabled": true,
+          "acquisition": {
+            "behavioral": {
+              "enabled": true,
+              "save_video": true,
+              "device": {
+                "device_id": "40065509",
+                "frame_timing": "FRAME_TIMING_EXTERNAL_TRIGGER",
+                "settings": {
+                  "exposure_us": 25000.0,
+                  "gain": {
+                    "decimal_value": 0.0,
+                    "unit": "dB",
+                    "selector": "All"
+                  },
+                  "frame_rate_hz": 30.00030000300003,
+                  "roi": {
+                    "width": 1760,
+                    "height": 3000,
+                    "offset_x": 396,
+                    "offset_y": 4
+                  },
+                  "pixel_format": "BayerRG8",
+                  "trigger_selector": "frame_start",
+                  "trigger_source": "Line4",
+                  "trigger_activation": "rising_edge",
+                  "exposure_duration_mode": "timed"
+                },
+                "pfs_baseline": "<retained; omitted>",
+                "pfs_source_filename": "C:/Data/projects/reiter-cephalopod-vr/cephvr-assets/camera-configs/a2A1920-160ucPRO_40065509_BehavCam_HeadFixed.pfs",
+                "unaligned_free_running": false
+              },
+              "ffmpeg_args": {
+                "values": [
+                  "-c:v",
+                  "h264_nvenc",
+                  "-pix_fmt",
+                  "+yuv444p",
+                  "-vf",
+                  "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p",
+                  "-color_range",
+                  "pc",
+                  "-colorspace",
+                  "bt709",
+                  "-preset",
+                  "p4",
+                  "-rc",
+                  "vbr",
+                  "-cq",
+                  "18",
+                  "-b:v",
+                  "0",
+                  "-rc-lookahead",
+                  "0"
+                ]
+              },
+              "sdk_buffer_count": 10
+            },
+            "tracking": {
+              "enabled": true,
+              "save_video": true,
+              "device": {
+                "device_id": "40747103",
+                "frame_timing": "FRAME_TIMING_EXTERNAL_TRIGGER",
+                "settings": {
+                  "exposure_us": 5000.0,
+                  "gain": {
+                    "decimal_value": 0.0,
+                    "unit": "dB",
+                    "selector": "All"
+                  },
+                  "frame_rate_hz": 60.0,
+                  "roi": {
+                    "width": 1588,
+                    "height": 1344,
+                    "offset_x": 0,
+                    "offset_y": 135
+                  },
+                  "pixel_format": "Mono8",
+                  "trigger_selector": "frame_start",
+                  "trigger_source": "Line2",
+                  "trigger_activation": "rising_edge",
+                  "exposure_duration_mode": "timed"
+                },
+                "pfs_baseline": "<retained; omitted>",
+                "pfs_source_filename": "C:/Data/projects/reiter-cephalopod-vr/cephvr-assets/camera-configs/a2A2464-77umPRO_40747103_BehaviorSquid.pfs",
+                "unaligned_free_running": false
+              },
+              "ffmpeg_args": {
+                "values": [
+                  "-c:v",
+                  "h264_nvenc",
+                  "-pix_fmt",
+                  "+yuv444p",
+                  "-vf",
+                  "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p",
+                  "-color_range",
+                  "pc",
+                  "-colorspace",
+                  "bt709",
+                  "-preset",
+                  "p4",
+                  "-rc",
+                  "vbr",
+                  "-cq",
+                  "18",
+                  "-b:v",
+                  "0",
+                  "-rc-lookahead",
+                  "0"
+                ]
+              },
+              "sdk_buffer_count": 10
+            },
+            "pulses": {
+              "port": "COM8",
+              "behavioral": {
+                "pin": "D10",
+                "requested_frequency_hz": 30.0
+              },
+              "tracking": {
+                "pin": "D11",
+                "requested_frequency_hz": 60.0
+              },
+              "trial_state_pin": "D9",
+              "projector_flip_pin": "D2",
+              "trial_state_enabled": true,
+              "projector_flip_enabled": true
+            },
+            "recording_options": {
+              "pending_records_capacity": 10000,
+              "diagnostic_tail_max_lines": 100,
+              "diagnostic_tail_max_bytes": 65536
+            },
+            "preview_output_bit_depth": 8,
+            "tracking_ring_frames": 10,
+            "recording_queue_frames": 10,
+            "session_preview_max_hz": 10.0
+          }
+        }
+      ]
+    },
+    "revision": "1"
+  },
+  "tracking_diagnostic": {
+    "closed": true
+  },
+  "microcontroller": {}
+}

@@ -28,7 +28,7 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
 <a id="e04"></a>
 ### E04 — Recording layout, identity, and metadata
 
-**Status:** Accepted · **Revision:** 87
+**Status:** Accepted · **Revision:** 88
 
 **Identity and files**
 
@@ -37,6 +37,9 @@ Configuration: [supervisor_config.toml](../../config/backends/supervisor_config.
   cancellation, failure or invalidated Ready retires them. Retries/reconnects preserve
   IDs; new Setup allocates new ones. Trial numbers are one-based; within-trial
   shuffled presentations share the trial occurrence's ID.
+  Backend Setup receives path-free output identities from explicit accepted save
+  selections and exact backend/trial generations; resolved Ready settings validate
+  the final output plan before Start publishes schema or trial files.
 - The owner's overall experimental-data root is `cephvr-data`; each session below it
   contains `protocol-data` and `spikeglx-data`. All CephVR trial files and central
   metadata share `protocol-data`; keep their HHMMSS names without ID/trial-number

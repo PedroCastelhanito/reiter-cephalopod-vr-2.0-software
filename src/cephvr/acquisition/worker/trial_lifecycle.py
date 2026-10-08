@@ -148,7 +148,7 @@ class WorkerTrialLifecycle:
     @stop_request.setter
     def stop_request(self, request: object | None) -> None:
         if request is None or isinstance(
-            request, (acq.WorkerStop, acq.WorkerInterrupt)
+            request, (acq.WorkerStop, acq.WorkerInterrupt, acq.WorkerCommand)
         ):
             self.trial_state.stop_request = request
             return
@@ -246,8 +246,8 @@ class WorkerTrialLifecycle:
     def release(self, request: object, deadline_ns: int) -> None:
         self._release(request, deadline_ns)
 
-    def stop_trial(self, deadline_ns: int) -> None:
-        self.stop_finalizer.stop_trial(deadline_ns)
+    def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> None:
+        self.stop_finalizer.stop_trial(deadline_ns, report_stopped=report_stopped)
 
     def advance_due_stages(self) -> None:
         self.stop_finalizer.advance_due_stages()

@@ -1,0 +1,122 @@
+........................................................................ [  4%]
+........................................................................ [  9%]
+........................................................................ [ 13%]
+........................................................................ [ 18%]
+........................................................................ [ 22%]
+..............................................s......................... [ 27%]
+........................................................................ [ 32%]
+..................s..................................................... [ 36%]
+........................................................................ [ 41%]
+..............s......................................................... [ 45%]
+................F....................................................... [ 50%]
+........................................................................ [ 55%]
+.....................................F.................................. [ 59%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+............................s........................................... [ 73%]
+.....................s.................................................. [ 78%]
+........................................................................ [ 82%]
+........................................................................ [ 87%]
+........................................................................ [ 91%]
+........................................................................ [ 96%]
+.......................................................                  [100%]
+================================== FAILURES ===================================
+____________ test_hud_fits_content_and_log_fills_available_height _____________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x0000026151464040>
+window = <cephvr.gui.window.DashboardWindow object at 0x00000261244D17E0>
+
+    def test_hud_fits_content_and_log_fills_available_height(
+        app: QApplication, window: DashboardWindow
+    ) -> None:
+        dashboard = window.dashboard
+        panel_heights = []
+        log_heights = []
+        for height in (883, 1100):
+            window.resize(1175, height)
+            app.processEvents()
+            right = dashboard.columns[1]
+            assert dashboard.hud_card.y() == 0
+            assert dashboard.log_card.geometry().bottom() == right.height() - 1
+            assert dashboard.runtime_console.verticalScrollBar().maximum() == 0
+            assert dashboard.log_console.height() > dashboard.log_console.minimumHeight()
+            log_heights.append(dashboard.log_console.height())
+            panel_heights.append(dashboard.runtime_console.height())
+        assert panel_heights[1] == panel_heights[0]
+        assert log_heights[1] - log_heights[0] == 1100 - 883
+        original = dashboard.runtime_console.toPlainText()
+        dashboard.runtime_console.setPlainText(
+            original + "\nEXTRA  additional runtime evidence"
+        )
+        app.processEvents()
+        assert dashboard.runtime_console.height() > panel_heights[0]
+        dashboard.runtime_console.setPlainText(original)
+        app.processEvents()
+        assert dashboard.runtime_console.height() == panel_heights[0]
+        setup, start, stop = (
+            dashboard.command_buttons[name] for name in ("Setup", "Start", "Stop")
+        )
+        assert setup.geometry().bottom() < start.y() == stop.y()
+        assert setup.x() == start.x()
+        assert setup.geometry().right() == stop.geometry().right()
+        assert abs(start.width() - stop.width()) <= 1
+        indicators = list(dashboard.backend_indicators.values())
+>       assert len({indicator.y() for indicator in indicators}) == 1
+E       assert 2 == 1
+E        +  where 2 = len({40, 64})
+
+tests\gui\test_dashboard.py:1294: AssertionError
+_____________ test_arena_axis_gains_roundtrip_and_editor_spacing ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002613C4A5360>
+app = <PyQt6.QtWidgets.QApplication object at 0x0000026151464040>
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.tmp/gui-backend-full/test_arena_axis_gains_roundtri0')
+
+    def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
+        import json
+    
+        from cephvr.gui.arena_movement import ArenaMovement
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.modes.setCurrentIndex(0)
+        batch = editor.create_batch
+        composer = batch.composer
+        composer.set_asset_root(str(tmp_path))
+        composer.mode.setCurrentIndex(1)
+        path = tmp_path / "arena.glb"
+        path.touch()
+        row = composer.rows[""]
+        row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
+        app.processEvents()
+        assert row.stimulus.isHidden()
+        assert "Stimulus" not in row.signature
+        assert (
+            composer.mode.mapTo(composer, QPoint()).y()
+            == composer.duration.mapTo(composer, QPoint()).y()
+        )
+>       assert (
+            composer.duration.mapTo(composer, QPoint()).y()
+            == batch.repetitions.mapTo(composer, QPoint()).y()
+        )
+E       assert 30 == 23
+E        +  where 30 = <built-in method y of QPoint object at 0x000002613DC154D0>()
+E        +    where <built-in method y of QPoint object at 0x000002613DC154D0> = PyQt6.QtCore.QPoint(278, 30).y
+E        +      where PyQt6.QtCore.QPoint(278, 30) = <built-in method mapTo of QLineEdit object at 0x000002613BB7BD90>(<cephvr.gui.epoch_composer.EpochComposer object at 0x000002613BB79D80>, PyQt6.QtCore.QPoint())
+E        +        where <built-in method mapTo of QLineEdit object at 0x000002613BB7BD90> = <PyQt6.QtWidgets.QLineEdit object at 0x000002613BB7BD90>.mapTo
+E        +          where <PyQt6.QtWidgets.QLineEdit object at 0x000002613BB7BD90> = <cephvr.gui.epoch_composer.EpochComposer object at 0x000002613BB79D80>.duration
+E        +        and   PyQt6.QtCore.QPoint() = QPoint()
+E        +  and   23 = <built-in method y of QPoint object at 0x000002618977D7E0>()
+E        +    where <built-in method y of QPoint object at 0x000002618977D7E0> = PyQt6.QtCore.QPoint(467, 23).y
+E        +      where PyQt6.QtCore.QPoint(467, 23) = <built-in method mapTo of QLineEdit object at 0x000002613BB7A560>(<cephvr.gui.epoch_composer.EpochComposer object at 0x000002613BB79D80>, PyQt6.QtCore.QPoint())
+E        +        where <built-in method mapTo of QLineEdit object at 0x000002613BB7A560> = <PyQt6.QtWidgets.QLineEdit object at 0x000002613BB7A560>.mapTo
+E        +          where <PyQt6.QtWidgets.QLineEdit object at 0x000002613BB7A560> = <cephvr.gui.batch_create.BatchCreate object at 0x000002613BB78CA0>.repetitions
+E        +        and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests\gui\test_dashboard.py:7078: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_hud_fits_content_and_log_fills_available_height
+FAILED tests/gui/test_dashboard.py::test_arena_axis_gains_roundtrip_and_editor_spacing
+2 failed, 1560 passed, 5 skipped, 1 deselected in 162.44s (0:02:42)

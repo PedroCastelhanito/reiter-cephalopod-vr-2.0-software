@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-08T10:20:03.728651+09:00",
+  "head": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "scope": "Latest uncommitted Tracking evidence/health repair. The earlier full suite is preserved in context.json/final-repairs.patch and was not repeated on this tree. Camera-selection evidence remains separately scoped. Patch is cumulative HEAD diff for the eight affected files; includes new untracked evidence helper.",
+  "source_sha256": {
+    "src/cephvr/acquisition/coordinator/manual_preview_evidence.py": "cce3a278754a4bb82f06e86097db87e6170eed57af9193a0025880de76dbdeac",
+    "src/cephvr/acquisition/coordinator/evidence_lifecycle.py": "58750ecaf3b32ab1efdc8aace396eb954d3f12c9ea062648b1f4b3ee840259a5",
+    "src/cephvr/acquisition/worker/execution.py": "37a688c53cb929065d5b5591f60e1dd122eb11c4ec310e9afaae1a397d74a279",
+    "src/cephvr/acquisition/worker/health.py": "46911bd02e26d5a3bee0033a097fb39b13161b8e2ce0df8fffb9444be7d92f16",
+    "src/cephvr/acquisition/worker/main.py": "36c3201747d912098a4ea56048b3724ab054ea1daf6117820805036e3157fcdb",
+    "src/cephvr/acquisition/worker/report_dispatch.py": "76b0e54423a207c46542f993f27e0955ffdd90c57797f1363e75b513876f371e",
+    "tests/acquisition/test_manual_preview.py": "11539962472c53a60f4893ca4cd7cd4c324cb39d2827fa2188ffa45ee72e65f6",
+    "tests/acquisition/test_worker_admission.py": "6bc9f8e956a32bbcc604ddf34c4241eed4efa21697bf5a638674cc5acf8916e0"
+  },
+  "method_sha256": "628a05b3cfd50bd2c04abd8b5ec24f4d445f973eaabfc59b2ad35c0b0352e394",
+  "controller_generation": "f4128e9d-2218-41e5-b17d-143f91383072",
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/acquisition tests/controller/test_camera_configuration.py tests/controller/test_camera_evidence.py tests/controller/test_configuration_transactions.py -q -m \"not rig\" --basetemp reports/rig-wiring-evidence-2026-10-08/tracking-health-tmp --junitxml reports/rig-wiring-evidence-2026-10-08/tracking-health-tests.xml",
+    "passed": 363,
+    "skipped": 1,
+    "seconds": 2.75,
+    "source_tests_sha256": {
+      "tests/acquisition/test_manual_preview.py": "11539962472c53a60f4893ca4cd7cd4c324cb39d2827fa2188ffa45ee72e65f6",
+      "tests/acquisition/test_worker_admission.py": "6bc9f8e956a32bbcc604ddf34c4241eed4efa21697bf5a638674cc5acf8916e0"
+    }
+  },
+  "static": {
+    "ruff_check_and_format_files": 8,
+    "mypy_win32_sources": 6,
+    "boundary_modules": 618,
+    "boundary_violations": 0
+  },
+  "limits": [
+    "No scientific session or ordered Tracking diagnostic",
+    "Actual GUI dispatch exercised, physical button clicks and mixed DPI untested",
+    "No policy/timing/firmware-source/scientific-default amendment",
+    "Test-only import sorting followed the successful physical cycles; runtime sources unchanged afterward"
+  ]
+}

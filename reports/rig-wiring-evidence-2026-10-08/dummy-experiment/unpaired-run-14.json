@@ -1,0 +1,103 @@
+{
+  "pairing": false,
+  "events": [
+    [
+      "admitted",
+      "a64fe1b9-b2e6-4baf-a2d6-67488fc501c4"
+    ],
+    [
+      "accepted",
+      2
+    ],
+    [
+      "submit_configuration",
+      "a64fe1b9-b2e6-4baf-a2d6-67488fc501c4",
+      "completed",
+      "Accepted authoritative configuration version."
+    ]
+  ],
+  "controller_generation": "f5006daa-ebbd-41b2-8db8-cec6a1c990e7",
+  "configuration_restored_on_restart": false,
+  "configuration_accepted": true,
+  "setup": {
+    "command_id": "bd389ae0-796f-40c6-bbb6-a42a7439fbaa",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "SETUP_FAILED: acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 1 Setup failed: WORKER_OPERATION_FAILED: session Setup is not the adopted camera revision"
+  },
+  "setup_state": {
+    "session": {
+      "phase": "SESSION_PHASE_SETTING_UP",
+      "context": {
+        "controller_generation": "f5006daa-ebbd-41b2-8db8-cec6a1c990e7",
+        "session_id": "ab61b3f2-7b2f-4df2-a014-343a2034bbe4"
+      },
+      "directory": "C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-134020",
+      "trial_count": 1
+    },
+    "configuration": {
+      "revision": "2",
+      "edit_validation": [
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "2",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "trial": {
+      "phase": "TRIAL_PHASE_PENDING"
+    }
+  },
+  "prompts": [],
+  "warnings": [
+    {
+      "warning_id": "04aefb74-b41e-41ae-ac2f-28cc85bc36f9",
+      "component": "startup_recovery",
+      "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+    },
+    {
+      "warning_id": "71346f71-c582-43e3-a362-23f654031703",
+      "component": "controller",
+      "message": "acquisition Setup failed: COMMAND_UNCONFIRMED: SetupSession outcome is unconfirmed; do not retry with a new command ID: camera role 1 Setup failed: WORKER_OPERATION_FAILED: session Setup is not the adopted camera revision"
+    }
+  ],
+  "cancel_setup": {
+    "command_id": "57bdfc2c-ef28-4bc2-be73-d6be15039502",
+    "complete": true,
+    "succeeded": false,
+    "needs_input": false,
+    "failure": "OPERATION_FAILED: cleanup could not be confirmed"
+  }
+}

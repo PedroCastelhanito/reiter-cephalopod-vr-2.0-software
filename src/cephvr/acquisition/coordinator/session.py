@@ -5,7 +5,10 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 
-from cephvr.acquisition.coordinator.commands import retain_worker_command
+from cephvr.acquisition.coordinator.commands import (
+    retain_worker_command,
+    wait_child_operation,
+)
 from cephvr.acquisition.coordinator.configuration_resolution import (
     confirmed_matches_resolution,
 )
@@ -27,6 +30,7 @@ from cephvr.acquisition.state import (
     ResourceRecord,
     SessionRecord,
     SessionSlot,
+    WorkerRecord,
 )
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
@@ -174,6 +178,7 @@ class SessionSetup:
             await self.preparation.prepare_workers(
                 session, request, records, deadline_ns
             )
+            await self._wait_worker_setup(records, deadline_ns)
             self._require_live_setup(session, deadline_ns)
             remaining = max(0, deadline_ns - self.clock()) / 1_000_000_000
             if remaining <= 0:
@@ -203,6 +208,23 @@ class SessionSetup:
             session.setup_cancelled = True
             await self.cancel(session, deadline_ns=deadline_ns)
             raise
+
+    async def _wait_worker_setup(
+        self, records: tuple[WorkerRecord, ...], deadline_ns: int
+    ) -> None:
+        for worker in records:
+            operation = worker.setup_operation
+            if operation is None:
+                raise RuntimeError("camera worker Setup operation was not retained")
+            child = worker.child_operations[operation.command_id]
+            result = await wait_child_operation(
+                child, deadline_ns, self.lock, self.clock
+            )
+            if not result.succeeded:
+                raise RuntimeError(
+                    f"camera role {worker.context.camera} Setup failed: "
+                    f"{result.failure.code}: {result.failure.message}"
+                )
 
     async def confirm_configuration(
         self,

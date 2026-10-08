@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 14
+**Status:** Accepted · **Revision:** 15
 
 - The backend is named **Visual Stimulus**, with `visual_stimulus` as its canonical
   configuration, registration, package and protocol identifier. Use
@@ -52,7 +52,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   coordinator/renderer generations and original deadline. Protected profile/arena
   content is fingerprinted; asset-root-relative references carry bounded size and
   digest. Active requires actual presentation, and Closed requires confirmed Idle
-  and resource closure; uncertain cleanup blocks Setup.
+  and resource closure; uncertain cleanup blocks Setup. Calibration-only orange
+  horizontal and green vertical reference bars span rounded native pixel boundaries
+  at 3/8 and 5/8 of each output dimension. Draw them after geometric/color output
+  correction so their measured lengths refer to raw device pixels; no trial timing,
+  recording or extra persistent GPU resource is added.
 - Prepare the renderer's required plan/resources before Ready. After valid schedule
   and release, execute prepared stimulus timing locally against the trial clock; the
   coordinator sends no per-frame commands and relays no rendered pixels. Setup hands
@@ -434,7 +438,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v12"></a>
 ### V12 — Visual Stimulus recording thread and overload
 
-**Status:** Accepted · **Revision:** 9
+**Status:** Accepted · **Revision:** 10
 
 - With E13 saving enabled, the rendering worker runs one recording thread and one
   FFmpeg/NVENC subprocess for the tiled review video; that thread also writes the
@@ -459,9 +463,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   recording omissions and physical presentation evidence stay distinct.
 - An all-dropped review video may complete with a warning and no artifact only when
   final accounting, required evidence and successful cleanup are confirmed. Never
-  fabricate frames.
+  fabricate real render/capture evidence; E13's identified duplicate padding is
+  derived recording content, not a newly rendered or presented image.
 - Prepare the recording thread before required Ready; finalize video and evidence
-  before aggregate Finished, draining only admitted in-interval samples (E11). With
+  before aggregate Finished, draining admitted in-interval samples and E13's
+  identified in-interval padding (E11). With
   saving Off, no recording thread, capture or encoding runs. The thread shares the
   renderer's process and GIL; full-workload throughput is an E15 rig check.
 - **Contracts:** [completion contract](../../contracts/visual_stimulus/video-completion.md);
@@ -536,7 +542,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v15"></a>
 ### V15 — Four calibrated off-axis surface views
 
-**Status:** Accepted · **Revision:** 10
+**Status:** Accepted · **Revision:** 11
 
 - V01's single rendering worker renders four calibrated views for the rectangular
   rig's front, left, right and bottom screens by direct per-surface rendering with the
@@ -569,7 +575,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   G01 owns the shared draft corner construction and ideal centered-projector diagram.
   The diagram does not change output corrections or introduce a runtime optical model.
   Corner-based backend geometry remains authoritative. Tank dimensions,
-  subject position and projector-to-screen distances are distinct inputs.
+  subject position and derived ideal projector throw distance remain distinct.
+  G01's measured raw-pixel bars derive X/Y scale and generate static affine mapping
+  assets for GUI-owned profiles using physical screen/full-image ratios and existing
+  offsets/inversions. Preserve imported warps, masks, weights and overlap ownership;
+  this does not solve nonlinear optics or change runtime projection ownership.
 - The display model covers physical corners/observer, explicit tolerances/clipping,
   output identities and viewport/profile references. Invalid/incomplete geometry or
   output mappings block preparation (E07). Geometric-profile content validation and
@@ -796,7 +806,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v24"></a>
 ### V24 — Explicit feedback parameter mappings
 
-**Status:** Accepted · **Revision:** 7
+**Status:** Accepted · **Revision:** 8
 
 - A feedback binding is an input channel, target stimulus parameter, gain, offset
   and a declared direct-value, movement-integration or heading-relative planar
@@ -814,7 +824,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 - T36 anatomical_body channels bind only by `heading_relative_planar_integration`
   (one ordered forward/sideways pair of equal unit, interval_average_rate, onto one
   arena's world x/y with independent longitudinal/lateral gains and no offset) or
-  by movement integration to that arena's yaw (1/s, deg per radian); direct world x/y binding fails Setup.
+  by movement integration to that arena's yaw (deg/s, deg per deg); direct world x/y binding fails Setup.
   `gain` scales longitudinal movement; optional `sideways_gain` scales lateral
   movement and falls back to `gain` for existing programs. A zero gain disables
   that axis; yaw retains its independent gain. Each result's yaw and midpoint-heading
@@ -923,7 +933,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 18
+**Status:** Accepted · **Revision:** 19
 
 - One **Save Visual Stimulus data** switch controls rendered Visual Stimulus video, associated frame logs and
   detailed Visual Stimulus state and presentation outputs. It defaults to On for a new
@@ -946,10 +956,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   conversion and retained source/target representation evidence; silent negotiation
   is forbidden. Rendering and V13 reconstruction keep their original precision.
 - The review video is constant-rate at the designated pacing output's nominal
-  refresh rate in both presentation modes. Video frame n is the nth admitted render
-  group; real timing (state-evaluation host time, per-output swap observations)
-  lives in the V28 evidence file. Each omission shortens playback by one frame
-  period; no duplicated frames. Review timing never establishes optical onset.
+  refresh rate in both presentation modes. Pad missing recording slots with
+  explicitly identified duplicated composite images to preserve cadence/duration.
+  V28 evidence must map every encoded frame to its real render group or padding,
+  identifying duplicates for post hoc exclusion. Padding never fabricates state,
+  render groups or presentation observations. Real timing (state-evaluation host
+  time, per-output swap observations) stays in the evidence file; review timing
+  never establishes optical onset. Slot assignment and leading-gap treatment still
+  require contract formalization; current schemas/writers retain unpadded behavior
+  until amended and implemented. Original resource bounds/deadlines stay in force.
 - Review videos are fragmented MP4, kept in that format after normal closure; no
   conversion to ordinary MP4 or faststart pass at trial end. Normal encoder drain,
   finalization, sync and close stay required; V28's Unconfirmed crashed-video outcome

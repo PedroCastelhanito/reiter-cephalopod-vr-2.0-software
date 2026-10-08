@@ -1404,6 +1404,8 @@ async def test_inventory_controller_binds_lease_revision_and_file_digest(
 
     monkeypatch.setattr(inventory_owner_module, "update_inventory", delayed_write)
     inventory.limits.current.validation_ns = 20_000_000
+    inventory_clock = [inventory.clock()]
+    inventory.clock = lambda: inventory_clock[0]
     late_command = svc.OperatorCommand.FromString(command.SerializeToString())
     late_command.operator.command_id = "inventory-late"
     late_update = svc.SpikeGLXInventoryUpdateRequest(
@@ -1423,6 +1425,7 @@ async def test_inventory_controller_binds_lease_revision_and_file_digest(
     operation = operations.control.operations["inventory-late"]
     assert not operation.complete
     assert "unconfirmed" in operation.progress
+    inventory_clock[0] += inventory.limits.current.validation_ns
     release.set()
     stop = asyncio.get_running_loop().time() + 2
     while (

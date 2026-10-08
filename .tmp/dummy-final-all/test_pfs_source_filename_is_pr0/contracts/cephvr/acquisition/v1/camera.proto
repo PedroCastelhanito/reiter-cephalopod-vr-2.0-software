@@ -1,0 +1,216 @@
+syntax = "proto3";
+package cephvr.acquisition.v1;
+
+// A01/A10 camera-side types. No control imports: shared control configuration may
+// reference these without an import cycle. See acquisition/camera-settings.md.
+// Missing scalar != zero/false/default. Validate before applying; no wire defaults.
+enum CameraRole {
+  CAMERA_ROLE_UNSPECIFIED = 0;
+  CAMERA_ROLE_BEHAVIORAL = 1; // output tag "behavioral"
+  CAMERA_ROLE_TRACKING = 2;   // output tag "tracking"
+}
+enum FrameTiming {
+  FRAME_TIMING_UNSPECIFIED = 0;
+  FRAME_TIMING_EXTERNAL_TRIGGER = 1;
+  FRAME_TIMING_FREE_RUNNING = 2;
+}
+message CameraRoi {
+  optional uint32 width = 1;
+  optional uint32 height = 2;
+  optional uint32 offset_x = 3;
+  optional uint32 offset_y = 4;
+}
+message CameraGain {
+  oneof value {
+    double decimal_value = 1;
+    sint64 integer_value = 2;
+  }
+  string unit = 3; // "dB", or explicit SDK-native label (e.g. "raw"); never inferred.
+  optional string selector = 4; // Exact SDK choice when applicable.
+}
+message CameraSettings {
+  optional double exposure_us = 1; // Setpoint/readback, NOT BslEffectiveExposureTime.
+  CameraGain gain = 2;
+  optional double frame_rate_hz = 3; // Free-running control only.
+  CameraRoi roi = 4;
+  optional string pixel_format = 5; // Exact SDK symbol; pipeline mapping also required.
+  optional string trigger_selector = 6; // Canonical option, e.g. "frame_start".
+  optional string trigger_source = 7; // Explicit SDK input symbol, e.g. "Line1".
+  optional string trigger_activation = 8; // Canonical option, e.g. "rising_edge".
+  optional string exposure_duration_mode = 9; // Canonical option, e.g. "timed".
+  // Auto exposure/gain are fixed off by A10; no auto-mode option here.
+}
+message PfsSnapshot {
+  string text = 1; // SDK persistence text, not JSON or arbitrary feature-write commands.
+  // Backend-produced configuration/history data; omitted from session/trial logs.
+}
+message CameraDeviceConfiguration {
+  string device_id = 1;
+  optional FrameTiming frame_timing = 2;
+  CameraSettings settings = 3;
+  PfsSnapshot pfs_baseline = 4; // Optional retained baseline, not a path to reread.
+  optional string pfs_source_filename = 5; // Provenance only; later edits may differ.
+  optional bool unaligned_free_running = 6; // A10: required true for FREE_RUNNING.
+}
+message CameraDeviceIdentity {
+  string configured_id = 1;
+  string physical_id = 2; // Stable SDK identity used to detect aliases/duplicate roles.
+  string model = 3;
+  string transport_interface = 4; // Initially "usb3" or "gige".
+}
+enum FeatureAccess {
+  FEATURE_ACCESS_UNSPECIFIED = 0;
+  FEATURE_ACCESS_UNAVAILABLE = 1;
+  FEATURE_ACCESS_READ_ONLY = 2;
+  FEATURE_ACCESS_READ_WRITE = 3;
+}
+message FloatCapability {
+  FeatureAccess access = 1;
+  optional double minimum = 2;
+  optional double maximum = 3;
+  optional double increment = 4;
+  string unit = 5;
+}
+message IntegerCapability {
+  FeatureAccess access = 1;
+  optional sint64 minimum = 2;
+  optional sint64 maximum = 3;
+  optional uint64 increment = 4;
+  string unit = 5;
+}
+message EnumChoice {
+  string value = 1; // Value accepted by this typed field.
+  string sdk_symbol = 2; // Actual enum entry; mappings must be unambiguous.
+}
+message EnumCapability {
+  FeatureAccess access = 1;
+  repeated EnumChoice choices = 2;
+}
+message GainCapability {
+  oneof numeric {
+    FloatCapability decimal = 1;
+    IntegerCapability integer = 2;
+  }
+  EnumCapability selector = 3;
+}
+message RoiCapabilities {
+  IntegerCapability width = 1;
+  IntegerCapability height = 2;
+  IntegerCapability offset_x = 3;
+  IntegerCapability offset_y = 4;
+}
+message TriggerRateLimit {
+  optional double maximum_hz = 1; // Absent = unknown; zero is NOT unknown.
+  string evidence = 2; // Applicable SDK feature/mode, or concise reason unavailable.
+}
+message CameraCapabilities {
+  FloatCapability exposure_us = 1;
+  GainCapability gain = 2;
+  FloatCapability frame_rate_hz = 3;
+  RoiCapabilities roi = 4;
+  EnumCapability pixel_format = 5;
+  EnumCapability trigger_selector = 6;
+  EnumCapability trigger_source = 7;
+  EnumCapability trigger_activation = 8;
+  EnumCapability exposure_duration_mode = 9;
+  TriggerRateLimit trigger_rate_limit = 10;
+  // Live evidence for one applied settings revision, not an offline support promise.
+}
+message CameraTransportOverride {
+  string sdk_name = 1;
+  oneof value {
+    bool boolean = 2;
+    sint64 integer = 3;
+    double decimal = 4;
+    string enum_symbol = 5;
+  }
+}
+message CameraTransportSettings {
+  repeated CameraTransportOverride overrides = 1;
+  // Only file-resolved, supported node mappings; not arbitrary node access.
+}
+message CameraImageLayout {
+  optional uint32 width = 1;
+  optional uint32 height = 2;
+  string pixel_format = 3;
+  optional uint64 row_stride_bytes = 4;
+  optional uint64 image_payload_bytes = 5;
+  // Native image bytes only, including row padding; exclude SDK metadata chunks.
+  // Exact format must exist in A01's common layout/conversion registry before Ready.
+}
+message CameraSettingAdjustment {
+  string field_path = 1;
+  string requested_display = 2;
+  string actual_display = 3;
+  // Explanation only: actual values stay typed in CameraSettings.
+}
+// Prepared device-native timestamp interpretation, separate from host clock.
+// Required even when conversion_available=false; camera-clock.md owns validation.
+message CameraClockDescriptor {
+  string device_id = 1;
+  string timestamp_source = 2; // Exact adapter SDK source, or "unavailable".
+  optional bool conversion_available = 3;
+  optional uint64 tick_period_ns_numerator = 4;
+  optional uint64 tick_period_ns_denominator = 5;
+  string timestamp_semantics = 6; // Documented event, or "unknown".
+  string reset_semantics = 7; // Documented behavior, or "unknown".
+  string wrap_semantics = 8; // Documented behavior, or "unknown".
+  string unavailable_reason = 9; // Required iff conversion unavailable.
+  // Native frame counter (A07 root attributes; SYS-004 pulse matching).
+  string counter_source = 10; // Exact SDK source, or "unavailable".
+  string counter_semantics = 11; // "frames", "triggers" or "unknown".
+  optional uint32 counter_width_bits = 12; // Absent/0 = unknown.
+  string counter_wrap_semantics = 13; // Documented behavior, or "unknown".
+  string counter_unavailable_reason = 14; // Required iff counter_source unavailable.
+}
+message NativeMetadataWarning {
+  string code = 1; // NATIVE_TIMESTAMP_UNAVAILABLE or NATIVE_COUNTER_UNAVAILABLE.
+  optional string sdk_code = 2;
+  string details = 3;
+}
+message CameraResolvedState {
+  optional uint64 configuration_revision = 1;
+  CameraDeviceIdentity device = 2;
+  CameraDeviceConfiguration applied = 3;
+  CameraCapabilities capabilities = 4;
+  CameraTransportSettings transport = 5;
+  CameraImageLayout layout = 6;
+  repeated CameraSettingAdjustment adjustments = 7;
+  optional bool native_timestamp_available = 8;
+  optional bool native_counter_available = 9;
+  optional double effective_exposure_us = 10; // Diagnostic SDK value, not writable setpoint.
+  repeated string metadata_warnings = 11; // Display-only, derived from field 12.
+  repeated NativeMetadataWarning metadata_diagnostics = 12;
+  CameraClockDescriptor camera_clock = 13;
+  // Same observations as warning reports; never count the display strings again.
+  // The request revision identifies this result. Controller adoption may advance it;
+  // final buffer preparation must use the resulting controller-confirmed revision.
+}
+
+// Operator configuration; presence permits default filling without replacing false/0.
+message FfmpegArguments {
+  repeated string values = 1; // Present empty list is explicit, not a missing default.
+}
+message CameraSessionSettings {
+  optional bool enabled = 1;
+  optional bool save_video = 2;
+  CameraDeviceConfiguration device = 3;
+  FfmpegArguments ffmpeg_args = 4;
+  optional uint32 sdk_buffer_count = 5;
+  optional uint32 recording_bit_depth = 6; // 8 or 10; absent preserves source depth.
+  // Explicit presence authorizes deeper-source reduction under A08; no 8-bit default.
+}
+message CameraPulseSettings {
+  optional string pin = 1; // Explicit firmware token, never inferred from role.
+  optional double requested_frequency_hz = 2; // Positive finite 0.1-Hz grid.
+}
+message CameraPulseConfiguration {
+  optional string port = 1;
+  CameraPulseSettings behavioral = 2;
+  CameraPulseSettings tracking = 3;
+  optional string trial_state_pin = 4;
+  optional string projector_flip_pin = 5;
+  optional bool trial_state_enabled = 6;
+  optional bool projector_flip_enabled = 7;
+  // Actual firmware timing is evidence; never silently replaces requested frequency.
+}

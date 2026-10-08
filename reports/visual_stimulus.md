@@ -1,5 +1,96 @@
 # Visual Stimulus status
 
+Measured-reference implementation (2026-10-08, `physical-reference-calibration`)
+follows [G01](../docs/architecture/gui.md#g01),
+[V01/V15](../docs/architecture/visual_stimulus.md#v15) and
+[V24](../docs/architecture/visual_stimulus.md#v24). Untimed calibration draws orange
+horizontal and green vertical native-pixel bars after geometric/color correction.
+Their measured mm spans derive X/Y scale and full image dimensions; the GUI derives
+ideal read-only throw distance from width × effective throw ratio. Physical screen
+dimensions and subject-to-screen distances remain independent. Portable full JSON 4
+and numeric 3 retain measurements/native dimensions; legacy files load with unset
+measurements. Output-mode mismatch invalidates scale without changing provenance.
+Export/submission applies physical screen/full-image ratios with existing offsets/
+inversions, creating new content-addressed 2×2 GUI affine assets. Original assets and
+imported nonlinear/masked/weighted calibration are preserved; automatic replacement
+of those imported corrections rejects explicitly. Planning preview shares the mapping.
+
+ARCH-002 extracts focused bar/measurement/profile helpers; the 806-line projector
+panel remains orchestration with existing draft ownership, while new numeric/file
+responsibilities live outside it. No new dependency, process or persistent GPU resource.
+Affected tests pass 658 plus the post-review checks described in the
+[Tracking assessment](tracking.md); two concurrent temporary-pacing assertions remain
+excluded and raw failures retained. Lint/format, Win32 mypy, schema drift and boundary
+checks pass. [Offscreen card preview](tracking-evidence-2026-10-08/physical-reference-gui.png)
+is visually inspected; [methods/source context](tracking-evidence-2026-10-08/physical-reference-context.json)
+records limits. Local affine scale/ideal throw estimates require optical rig acceptance,
+including current zoom/keystone/fold and depth/distortion. No projector or hardware
+session is launched by this task. [Remaining acceptance](rig-verification.md).
+
+Oct8 unpaired dummy execution uses all four saved active projector identities,
+isolated **uncalibrated** geometry/color profiles and a 60-second procedural grating.
+Temporary Front 60 Hz pacing satisfies [V20](../docs/architecture/visual_stimulus.md#v20).
+Real startup observes required Idle submissions/framebuffer sizes/RGB precision
+after strict SYS-002 RTX 5060 Ti verification. This is native initialization evidence,
+not optical accuracy, timing or full-load acceptance. Runs40–42 complete real Setup,
+Start, the immutable 60 s trial, output closure and session cleanup. Run42 admits and
+submits 1,419 captures with zero capacity drops/unresolved captures; FFmpeg exits zero
+after confirmed EOF/drain. External count and complete CPU decode pass the 2560×2000
+H.264 review MP4, with frame count matching evidence and prepared-recipe SHA256/length
+matching its header. The output is 23.65 s at nominal 60 fps, while the actual trial
+is 60 s: rendering remains below cadence and unpadded timelines compress elapsed time.
+See pending [E13](../docs/architecture/visual_stimulus.md#e13) padding work and the
+[rig checklist](rig-verification.md); this is not a scientific timing pass.
+
+Recording uses one bounded full-frame pending encoder write instead of polling every
+256 KiB, preserving native ownership/partial-progress/deadline rules. Bottom-up rows
+are normalized exactly once even when the first write is pending. At cutoff, finish
+already-admitted GPU transfers before sealing evidence; unresolved original-deadline
+transfers still fail. Calibration CPU closure receipts survive retries and are revoked
+on reopening a logical source. These fixes use existing owners under ARCH-002, V01/V12
+and E08; owning recording cases pass 28. Final current regressions/restoration remain
+pending; all native attempts retain their dated raw evidence.
+
+Under V01/V04/E08, disable GLFW's automatic fullscreen iconification so the four
+windows survive focus changes. Load each current GLFW context with ModernGL's
+loader-only initialization; GLFW retains sole WGL lifetime ownership. Detected
+glcontext wrappers otherwise destroy an already GLFW-owned context at release,
+observed as invalid WGL handles during cleanup. Move video selector/reset binding
+from CPU preparation to the existing graphics handoff. Register the exact empty
+revision-zero session cleanup catalogue before recipe/renderer resources, under the
+existing catalogue lock. Retain private operation results locally and route only
+Setup completion to the controller; display readiness still requires actual Idle
+evidence. Native tests exposed these failures; no identity, precision, resource
+proof or deadline check is bypassed.
+
+Shared probe parsing now accepts FFmpeg's four-column pixel-format table; the
+existing RGBA8 and packed RGB10 capture ABIs have explicit layout/matrix validation.
+Capability evidence names conform to the existing prepared-record identifier schema.
+System PATH FFmpeg 4.3.2 lacks the saved p4 preset; an isolated process PATH uses the
+already installed static FFmpeg 7.1, preserving encoding arguments and global PATH.
+The cached FFmpeg 8.0.1 package could not execute with available DLL paths and is
+not adopted. Current ffprobe remains the installed 4.3.2 executable; actual output
+inspection remains pending. [Current integration assessment](runtime.md#current-scope-and-review),
+[raw attempts and focused checks](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+The complete Visual Stimulus suite passed 170 before the latest context/format
+repairs; latest focused context/registry checks pass 44, CPU handoff one, probe 28,
+and strict review format eight. A later complete validation will supersede these.
+Current source checks pass lint/format and 149-source Win32 mypy. Existing rendering
+and session files remain cohesive owners; the small native attachment helper lives
+in native_display under ARCH-002.
+
+Library ownership references: [GLFW fullscreen hints](https://www.glfw.org/docs/latest/window_guide.html),
+[ModernGL context creation](https://moderngl.readthedocs.io/en/latest/topics/context.html),
+[ModernGL loader lifetime](https://github.com/moderngl/moderngl/blob/5.12.0/_moderngl.py).
+
+Owner-selected video timing revision (2026-10-08):
+[E13 revision 19](../docs/architecture/visual_stimulus.md#e13) and
+[V12 revision 10](../docs/architecture/visual_stimulus.md#v12) require identified
+duplicate padding to maintain review-video cadence/duration, without fabricating
+render/presentation evidence. Current capture/evidence/video mapping remains
+unpadded. Slot/leading-gap rules and schema/writer changes are pending; resource
+bounds, original deadlines and rig deferrals remain. No new runtime pass is claimed.
+
 Projector configuration JSON (2026-10-08) under [G01](../docs/architecture/gui.md#g01)
 now combines all Projectors GUI experiment settings with reusable runtime profile
 references. Physical inventory/mappings remain current; participation and pulse target
@@ -26,7 +117,17 @@ the sample asset is 316,004 bytes. Two focused cases pass after final guide form
 output and optical measurements remain in the existing rig checklist. No projector
 was driven in this local increment.
 
-Current Windows check (2026-10-07, `08d146d`): managed coordinator/renderer startup
+Latest Windows execution (2026-10-08, `7ba43b1` plus controller/native repairs):
+managed coordinator/renderer startup, bounded idle and exact application cleanup pass.
+Final full suite passes 1463 with eight existing GUI clipping failures/five privilege
+skips; Visual Stimulus contracts/schema drift pass. The authenticated calibration
+Shutdown test now waits for the asynchronous coordinator settlement inside its
+existing bound; no runtime policy changed. Inventory finds only the operator display,
+with no active projector outputs or saved profile/assignments. Actual corrected
+Launch/Close and optical timing remain untested. [Dated methods/results](rig-wiring-evidence-2026-10-08/README.md)
+retain scope; the [single rig checklist](rig-verification.md) owns remaining acceptance.
+
+Earlier Windows check (2026-10-07, `08d146d`): managed coordinator/renderer startup
 and long idle process liveness pass; normal authenticated application shutdown
 confirms exact process absence. Inventory finds four projector outputs at 60 Hz.
 The saved experiment profile, output-to-surface assignments and asset root remain
@@ -92,6 +193,16 @@ The emergency error is retained under `reports/emergency-*.json`; no projection 
 camera command was issued. The Visual Stimulus/supervisor behavioral run passed 242
 cases with one previously known pacing-key loader failure. See the
 [runtime report](runtime.md#dashboard-frontend-implementation) for startup details.
+
+Current native recording follow-up: runs 22-28 expose and repair retained trial failure
+admission, camera clock text validation, gray raw input naming, cleanup result format,
+pre-Ready encoder obligations, asynchronous Schedule/Release sequencing, 64-bit GPU
+fence arguments, compositor resource order and trial-parent lifecycle forwarding.
+Each interrupted Desktop reservation and exact process exit remains retained in the
+[dated dummy evidence](rig-wiring-evidence-2026-10-08/dummy-experiment/). No completed
+60 s run, video decode/count verification or clean full-workload acceptance is yet
+claimed. Current retry remains in progress; temporary camera drain/pacing/GPU inputs
+must be restored. ARCH-002 reuses the existing focused owners and test modules.
 
 ## Calibration arena asset
 

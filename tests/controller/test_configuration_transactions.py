@@ -566,13 +566,19 @@ def test_setup_request_uses_prepared_backend_settings_not_live() -> None:
         backend_name="visual_stimulus", enabled=True
     )
     live.visual_stimulus.save_visual_stimulus_data = False
-    attempt = Attempt(session, prepared, cast(OutputReservation, None), {}, {})
+    peer = cast(BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult()))
+    prepared.trials.add(
+        context=pb.TrialContext(session=session, trial_id=_id(), trial_number=1)
+    )
+    attempt = Attempt(
+        session, prepared, cast(OutputReservation, None), {"visual_stimulus": peer}, {}
+    )
     attempt.file_policies["visual_stimulus"] = (
         visual_stimulus_pb.VisualStimulusFilePolicies()
     )
     request = runtime.preparation_context.setup_request(
         attempt,
-        cast(BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult())),
+        peer,
         _id(),
     )
     assert request.settings.visual_stimulus.save_visual_stimulus_data is True
@@ -620,6 +626,22 @@ async def test_wait_evidence_still_times_out_when_evidence_missing(
     runtime.evidence_waiter.clock = lambda: 5_000
     with pytest.raises(TimeoutError):
         await runtime.evidence_waiter.wait_evidence(lambda: False, 2_000, attempt)
+
+
+async def test_wait_evidence_surfaces_retained_setup_failure(tmp_path: Path) -> None:
+    runtime = _runtime()
+    attempt = _waiting_attempt(runtime, tmp_path)
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+    attempt.setup_operations["acquisition"] = "camera-setup"
+    attempt.scope_results["camera-setup"] = pb.OperationState(
+        complete=True,
+        succeeded=False,
+        failure=pb.Failure(code="CAMERA_SETTINGS", message="readback failed"),
+    )
+    with pytest.raises(
+        RuntimeError, match="acquisition Setup failed: CAMERA_SETTINGS: readback failed"
+    ):
+        await runtime.evidence_waiter.wait_evidence(lambda: False, 10**18, attempt)
 
 
 async def test_timed_out_save_cannot_overwrite_a_newer_save(
@@ -693,3 +715,71 @@ async def test_concurrent_history_saves_do_not_overlap(
     )
     assert all(r.result == pb.COMMAND_RESULT_ACCEPTED for r in results)
     assert peak == 1
+
+
+async def test_history_queue_wait_consumes_original_save_deadline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = component_runtime(
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
+    )
+    commands = runtime.configuration_commands
+    commands.configuration_history_path = tmp_path / "history.json"
+    monkeypatch.setattr(commands.control_operations, "authorized", lambda *a, **k: "")
+    runtime.limit_state.current = dataclasses.replace(
+        runtime.limit_state.current, history_ns=20_000_000
+    )
+    await commands._history_lock.acquire()
+    try:
+        async with asyncio.timeout(0.5):
+            receipt = await commands.save_configuration_history(_history_command())
+        assert receipt.result == pb.COMMAND_RESULT_REJECTED
+        assert not commands.configuration_history_path.exists()
+        assert commands._history_seq == 0
+    finally:
+        commands._history_lock.release()
+
+
+async def test_shutdown_history_failure_preserves_previous_file_and_warns(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = component_runtime(
+        tmp_path,
+        pb.BackendContext(backend_name="visual_stimulus", backend_generation=_id()),
+    )
+    commands = runtime.configuration_commands
+    history = tmp_path / "history.json"
+    history.write_text("previous", encoding="utf-8")
+    commands.configuration_history_path = history
+
+    def fail_write(*args: object, **kwargs: object) -> None:
+        raise OSError("history disk unavailable")
+
+    monkeypatch.setattr(configuration_module, "_atomic_json", fail_write)
+    await commands.save_history_on_shutdown(
+        commands.clock() + runtime.limit_state.current.history_ns
+    )
+    assert history.read_text(encoding="utf-8") == "previous"
+    assert any(
+        warning.component == "configuration_history"
+        and "history disk unavailable" in warning.message
+        for warning in runtime.control.warnings
+    )
+
+
+async def test_wait_evidence_surfaces_retained_trial_failure(tmp_path: Path) -> None:
+    runtime = _runtime()
+    attempt = _waiting_attempt(runtime, tmp_path)
+    runtime.lifecycle.session.phase = pb.SESSION_PHASE_RUNNING
+    runtime.lifecycle.trial.phase = pb.TRIAL_PHASE_PREPARING
+    attempt.trial_results["acquisition"] = pb.OperationState(
+        complete=True,
+        succeeded=False,
+        failure=pb.Failure(code="WRITER", message="cannot prepare output"),
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="acquisition PrepareTrial failed: WRITER: cannot prepare output",
+    ):
+        await runtime.evidence_waiter.wait_evidence(lambda: False, 10**18, attempt)

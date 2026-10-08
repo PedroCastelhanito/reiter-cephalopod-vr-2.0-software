@@ -92,5 +92,8 @@ def cleanup_resources(
         state.ready = False
         state.cleaned = True
     else:
-        details = "; ".join(failures) or "resource release set is incomplete"
+        missing = sorted(set(state.resources).difference(keys))
+        details = "; ".join(
+            [*failures, *(f"release unconfirmed: {key}" for key in missing)]
+        )
         raise RuntimeError(f"renderer native cleanup remains unconfirmed: {details}")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 
 import pytest
@@ -20,9 +21,55 @@ from cephvr.acquisition.recording.session_finalizer import (
 )
 from cephvr.acquisition.recording.session_outputs import successful_outputs
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.acquisition.worker.cleanup_lifecycle import WorkerCleanupLifecycle
 from cephvr.acquisition.worker.recording_fault import RecordingFaultLifecycle
 from cephvr.acquisition.worker.recording_runtime import WorkerRecordingRuntime
+from cephvr.acquisition.worker.trial_recording_terminal import TrialRecordingTerminal
 from cephvr.control.v1 import types_pb2 as control
+
+
+@pytest.mark.parametrize(
+    "stop_request",
+    [
+        acq.WorkerCommand(),
+        acq.WorkerStop(issued_monotonic_ns=20),
+        acq.WorkerInterrupt(issued_monotonic_ns=20),
+    ],
+)
+def test_bare_cleanup_uses_original_finish_deadline_without_stop_timestamp(
+    stop_request,
+) -> None:
+    terminal = object.__new__(TrialRecordingTerminal)
+    terminal.recording = None
+    terminal.trial = SimpleNamespace(
+        pulses=SimpleNamespace(off_boundary_ns=None), stop_request=stop_request
+    )
+    terminal.bootstrap = SimpleNamespace(
+        control_policies=control.ControlPolicies(
+            trial_finished=control.WaitPolicy(initial_ns=100)
+        )
+    )
+    assert terminal.finish_deadline(200, None, None) == (
+        200 if isinstance(stop_request, acq.WorkerCommand) else 120
+    )
+
+
+def test_setup_cleanup_does_not_submit_to_an_uninstalled_recording_thread() -> None:
+    def fail_cleanup(**kwargs):
+        raise AssertionError("Setup has not installed a writer session")
+
+    cleanup = cast(
+        WorkerCleanupLifecycle,
+        SimpleNamespace(
+            recording=SimpleNamespace(
+                enabled=True, recording_queue=None, fail_cleanup=fail_cleanup
+            ),
+            _future=None,
+        ),
+    )
+    WorkerCleanupLifecycle.begin(cleanup, 100)
+    assert WorkerCleanupLifecycle._reconcile(cleanup, 100)
+    assert cleanup._future is None
 
 
 class _Encoder:

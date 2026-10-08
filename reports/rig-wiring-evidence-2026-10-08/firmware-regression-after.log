@@ -1,0 +1,56 @@
+...................F.................................................... [ 79%]
+...................                                                      [100%]
+================================== FAILURES ===================================
+__________ test_uno_sketch_digest_pins_companions_and_rejects_links ___________
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-84/test_uno_sketch_digest_pins_co0')
+
+    def test_uno_sketch_digest_pins_companions_and_rejects_links(tmp_path):
+        from cephvr.controller.microcontroller.firmware_source import (
+            read_firmware,
+            read_uno_sketch,
+        )
+    
+        root = tmp_path / "sketch"
+        root.mkdir()
+        source = root / "sketch.ino"
+        source.write_bytes(b'#include "pin.h"\nvoid setup() {}\nvoid loop() {}\n')
+        header = root / "pin.h"
+        header.write_bytes(b"#define PIN 9\n")
+        (root / "README.md").write_text("ignored")
+        (root / "src").mkdir()
+        (root / "src" / "helper.cpp").write_bytes(b"void helper() {}\n")
+        selected = read_firmware(str(source))
+        assert [path.as_posix() for path, _ in selected.files] == [
+            "pin.h",
+            "sketch.ino",
+            "src/helper.cpp",
+        ]
+        assert read_uno_sketch(str(source), selected.digest) == selected
+        header.write_bytes(b"#define PIN 10\n")
+        with pytest.raises(ValueError, match="changed"):
+            read_uno_sketch(str(source), selected.digest)
+        source.unlink()
+>       source.symlink_to(header)
+
+tests\controller\test_microcontroller_owner.py:690: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-84/test_uno_sketch_digest_pins_co0/sketch/sketch.ino')
+target = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-84/test_uno_sketch_digest_pins_co0/sketch/pin.h')
+target_is_directory = False
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+>       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] A required privilege is not held by the client: 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-84\\test_uno_sketch_digest_pins_co0\\sketch\\pin.h' -> 'C:\\Users\\ReiterU_PC\\AppData\\Local\\Temp\\pytest-of-ReiterU_PC\\pytest-84\\test_uno_sketch_digest_pins_co0\\sketch\\sketch.ino'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\pathlib.py:1198: OSError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_microcontroller_owner.py::test_uno_sketch_digest_pins_companions_and_rejects_links
+1 failed, 90 passed in 1.93s

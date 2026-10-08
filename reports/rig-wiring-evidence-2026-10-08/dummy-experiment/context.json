@@ -1,0 +1,47 @@
+{
+  "captured_utc": "2026-10-08T03:02:43.184370+00:00",
+  "source_revision": "7ba43b1c438734ecc98ed7648831d7aed19c5626",
+  "source_scope": "dirty working tree with pre-existing concurrent edits preserved; hashes are the tested files, not an isolated commit",
+  "source_sha256": {
+    "src/cephvr/controller/assembly.py": "b7eb5d734b10449d26054658a231e5c4143131cca8af12c9aac51af32a315ab5",
+    "src/cephvr/controller/control/configuration.py": "c02d44ccf153d9150e1d7f97fa4baf20be4a8724987ec5bacf707ce979fbfd96",
+    "src/cephvr/controller/lifecycle/commands.py": "180cc90d5182e47e6e62434c447a8ca1c70f05fceaead42671e01e1453cbe06d",
+    "src/cephvr/gui/components.py": "3214d15aa3fded7482c18fb34e8d1549393918280df159fce474f2992e158b9a",
+    "src/cephvr/gui/devices.py": "890835b0128416dd16ee3b5ab5ed0824b6307674055827f2d494f22bbaadf5bd",
+    "src/cephvr/gui/projector_timing.py": "d7103f3ec5730d515ebf1314daa2f88548e0451c93c6e50898977fd743a9af28",
+    "src/cephvr/gui/projector_reference.py": "b288920063bcd19d649684faab3c9926867db0c5a415688632327b68499ce36b",
+    "src/cephvr/gui/protocol.py": "fc16069b9333bdf118a74bfc2aa894db1ff5e3775f88a516fcbb4f7f8b57a2ae",
+    "src/cephvr/gui/protocol_controls.py": "334380ee3218acbad129fea6cc98b48292564a0e2c1b5211543885ca00b05f43",
+    "src/cephvr/gui/batch_create.py": "a5736d3f874b9b766564db4603a1a0598678f64ea283899bb239f912ca46e2ca",
+    "src/cephvr/gui/recordings.py": "401805405be1f58e2cdf1f5077af0f342beef1aa33d7d7d41f596b86c6bf7338",
+    "src/cephvr/gui/managed_close.py": "7245dc29b3cc897efdcc2915b90fcd12ed6ad51fced53ca4c2da5e978dcd2512",
+    "tests/gui/test_dashboard.py": "3334d10de8a73f660bbaeade0dbb35bbd7352d166a2b3777e729b091b826c664",
+    "tests/controller/test_configuration_transactions.py": "4edbdf6b97386eecdb23a346f2dc16ad33925d149c1bd360d17a19ff88ca67df",
+    "tests/controller/test_lifecycle_commands.py": "b8694aae87bad79f07ca9a9df661dd1eed37569f04ab3da7c9c74f3ac73a78cd"
+  },
+  "python": ".venv/Scripts/python.exe (Python 3.11)",
+  "commands": [
+    "pytest tests/gui -q --basetemp=.tmp/gui-backend-dummy-baseline --junitxml=.../gui-baseline.xml",
+    "pytest tests -q -m 'not rig' --basetemp=.tmp/gui-backend-full --junitxml=.../full-tests.xml",
+    "pytest tests/gui -q --basetemp=.tmp/gui-dummy-final-suite --junitxml=.../gui-final.xml",
+    "ruff check src/cephvr/gui src/cephvr/controller tests/gui tests/controller",
+    "ruff format --check src/cephvr/gui src/cephvr/controller tests/gui tests/controller",
+    "mypy --platform win32 src/cephvr/gui src/cephvr/controller",
+    "tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "tests": {
+    "baseline_gui": "326 passed, 8 failed",
+    "first_full": "1560 passed, 2 failed, 5 skipped, 1 rig deselected; GUI failures repaired afterward",
+    "gui_after_labels": "334 passed",
+    "close_and_labels_focus": "10 passed, 328 deselected",
+    "history_focus": "47 passed, 1 skipped",
+    "final_full": "1566 passed, 5 skipped, 1 rig deselected in 171.33 seconds; includes all 338 GUI cases"
+  },
+  "environment": "Windows; QT_QPA_PLATFORM=offscreen for pytest; native/loopback checks elevated through managed approval; one initial sandboxed run stalled and exact test processes were stopped",
+  "native": "actual GUI dispatch camera checks/capture/disconnect and MCU connection; SpikeGLX read-only diagnostic; normal shutdown-save/reload/restore with exact receipts; wide GUI inspection",
+  "protocol": "dummy-assets/dummy_protocol.json: 60-second open-loop grating, Desktop output, both camera videos and stimulus video selected, velocities disabled",
+  "experiment": "not run; configuration submission/real Setup denied by automatic approval review; pure validation rejects unset V20 pacing output; SpikeGLX acquisition already running and pulse inventory empty",
+  "pending": "owner answers for pairing and pacing; approval/prerequisites for real Setup; native narrow/DPI and optical/electrical/scientific/full-load acceptance",
+  "new_report_target_checks": "all targets and G02/E07/V20/current-scope anchors pass"
+}

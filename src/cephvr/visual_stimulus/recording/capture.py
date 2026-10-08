@@ -83,7 +83,7 @@ class RecordingWorker:
         self.encoder = encoder
         self.max_encoder_write_chunk = max_encoder_write_chunk
         self.on_submitted = on_submitted
-        self._frames: deque[tuple[CompositeFrame, int]] = deque()
+        self._frames: deque[tuple[CompositeFrame, int, bool]] = deque()
         self._lock = threading.Lock()
         self._reservations: dict[int, CaptureReservation] = {}
         self._next_token = 0
@@ -153,7 +153,7 @@ class RecordingWorker:
             current = self._reservations.pop(reservation.token, None)
             if current != reservation:
                 raise RuntimeError("capture reservation is stale or already completed")
-            self._frames.append((owned, 0))
+            self._frames.append((owned, 0, False))
 
     def cancel_reservation(self, reservation: CaptureReservation) -> None:
         with self._lock:
@@ -170,10 +170,10 @@ class RecordingWorker:
         with self._lock:
             if not self._frames:
                 return False
-            frame, offset = self._frames[0]
-            if offset == 0:
+            frame, offset, normalized = self._frames[0]
+            if not normalized:
                 frame = _ffmpeg_input_order(frame)
-                self._frames[0] = (frame, offset)
+                self._frames[0] = (frame, offset, True)
             end = min(len(frame.pixels), offset + self.max_encoder_write_chunk)
             chunk = memoryview(frame.pixels)[offset:end]
         consumed = self.encoder.write_chunk(chunk)
@@ -182,7 +182,7 @@ class RecordingWorker:
         if consumed == 0:
             return False
         with self._lock:
-            current, current_offset = self._frames[0]
+            current, current_offset, _normalized = self._frames[0]
             if current is not frame or current_offset != offset:
                 raise RuntimeError("recording frame ownership changed during write")
             new_offset = offset + consumed
@@ -191,7 +191,7 @@ class RecordingWorker:
                 self._submitted += 1
                 self._last_group = frame.group_id
             else:
-                self._frames[0] = (frame, new_offset)
+                self._frames[0] = (frame, new_offset, True)
         if new_offset == len(frame.pixels) and self.on_submitted is not None:
             self.on_submitted(frame)
         return True

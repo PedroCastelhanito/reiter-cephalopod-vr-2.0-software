@@ -1,0 +1,55 @@
+{
+  "controller_generation": "2e92d87a-10eb-4d91-b402-3fd8db4c4a5b",
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "trial": {
+    "phase": "TRIAL_PHASE_PENDING"
+  },
+  "participants": null,
+  "operations": [
+    {
+      "context": {
+        "command_id": "cfd1e8e3-5ed7-4fc7-8c1a-2f146b3eb405"
+      },
+      "command": "ReleaseManualCameraState",
+      "complete": true,
+      "succeeded": true,
+      "progress": "manual camera state released"
+    },
+    {
+      "context": {
+        "command_id": "a7881340-0cb0-4e1c-a838-95d66bafc42c"
+      },
+      "command": "InitializeDisplay",
+      "complete": true,
+      "succeeded": true,
+      "progress": "Idle output confirmed"
+    }
+  ],
+  "warnings": [
+    {
+      "warning_id": "4fd22fa2-3a15-418f-b29c-dfb13c640062",
+      "component": "startup_recovery",
+      "message": "Recover unfinished session at C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-144757. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker."
+    }
+  ],
+  "prompts": [
+    {
+      "prompt_id": "98cb4164-e57d-4809-b9c4-14401856e49f",
+      "setup": {
+        "controller_generation": "b482f605-1c4a-4ffd-9a40-49686abe3be0",
+        "session_id": "f4d0a5a2-6d49-4941-9db5-f5e86904b02f"
+      },
+      "operation": {
+        "command_id": "fd7430ed-02d6-4ce5-b4c8-f7629ef53ccc"
+      },
+      "explanation": "Recover unfinished session at C:\\Users\\ReiterU_PC\\Desktop\\20261008_gui_backend_dummy\\DUMMY-144757. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker.",
+      "permitted_choices": [
+        "continue",
+        "cancel"
+      ]
+    }
+  ],
+  "metadata": null
+}

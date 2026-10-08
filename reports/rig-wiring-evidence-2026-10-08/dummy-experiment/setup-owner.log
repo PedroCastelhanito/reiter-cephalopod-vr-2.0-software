@@ -1,0 +1,149 @@
+........................................................................ [ 11%]
+....................s............F.....F................................ [ 22%]
+..................................................................s..... [ 33%]
+........................................................................ [ 44%]
+...............................................................s........ [ 55%]
+........................................................................ [ 66%]
+........................................................................ [ 77%]
+........................................................................ [ 88%]
+........................................................................ [ 99%]
+......                                                                   [100%]
+================================== FAILURES ===================================
+______ test_installed_visual_stimulus_policy_is_shared_by_edit_and_setup ______
+
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.tmp/dummy-setup-owner/test_installed_visual_stimulus0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002064143AF10>
+
+    async def test_installed_visual_stimulus_policy_is_shared_by_edit_and_setup(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        for relative in (
+            "config/backends/visual_stimulus_config.toml",
+            "contracts/policy/visual_stimulus_policy.toml",
+        ):
+            destination = tmp_path / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(repository / relative, destination)
+        config_path = tmp_path / "config/backends/visual_stimulus_config.toml"
+        config_path.write_text(
+            config_path.read_text().replace(
+                '# pacing_output_id = "<configured output ID>"',
+                'pacing_output_id = "projector/main"',
+            )
+        )
+    
+        profile = json.loads(valid_display_json())
+        profile["presentation_mode"] = "photodiode_only_vsync"
+        profile["photodiode_enabled"] = False
+        profile["photodiode_output_id"] = None
+        profile.pop("pacing_output_id", None)
+        proposed = pb.ExperimentConfiguration()
+        backend = proposed.backends.add(backend_name="visual_stimulus", enabled=True)
+        backend.visual_stimulus.display.profile_json = json.dumps(profile)
+    
+        runtime = _runtime()
+        validators = controller_validators(_installed_validators(tmp_path))
+        runtime.configuration_commands.validators = validators
+        runtime.setup_admission.validators = validators
+        policy_loads = 0
+    
+        def load_policy_after_commit(active: frozenset[str]) -> dict[str, object]:
+            nonlocal policy_loads
+            policy_loads += 1
+            policies = _installed_file_policies(tmp_path, active)
+            # Setup must validate against the exact file policy it captured even if
+            # the host file changes before the validator runs.
+            config_path.write_text(
+                config_path.read_text().replace(
+                    'pacing_output_id = "projector/main"',
+                    'pacing_output_id = "projector/changed"',
+                )
+            )
+            return policies
+    
+        runtime.setup_admission.file_policy_loader = load_policy_after_commit
+        monkeypatch.setattr(runtime.control_operations, "authorized", lambda _command: "")
+        initial_revision = runtime.configuration_state.revision
+        request = svc.UpdateConfigurationRequest(
+            command=svc.OperatorCommand(operator=pb.OperatorContext(command_id=_id())),
+            expected_revision=runtime.configuration_state.revision,
+            proposed=proposed,
+        )
+    
+        admission = await runtime.update_configuration(request)
+    
+>       assert admission.result == pb.COMMAND_RESULT_ACCEPTED, admission.failure.message
+E       AssertionError: configuration validation failed: backends.visual_stimulus.display.profile_json: 1 validation error for DisplayProfile
+E           Value error, the pacing output must exist and be enabled [type=value_error, input_value={'format_version': 1, 'ge...d': 'calibration_front'}, input_type=dict]
+E             For further information visit https://errors.pydantic.dev/2.13/v/value_error
+E       assert 2 == 1
+E        +  where 2 = result: COMMAND_RESULT_REJECTED\nfailure {\n  code: "REJECTED"\n  message: "configuration validation failed: backends.vis...information visit https://errors.pydantic.dev/2.13/v/value_error"\n}\ncommand_id: "8668f873-cad2-4cf3-b1e6-cf878e3f619c"\n.result
+E        +  and   1 = pb.COMMAND_RESULT_ACCEPTED
+
+tests\controller\test_configuration_transactions.py:439: AssertionError
+_________ test_setup_request_uses_prepared_backend_settings_not_live __________
+
+    def test_setup_request_uses_prepared_backend_settings_not_live() -> None:
+        visual_stimulus = pb.BackendContext(
+            backend_name="visual_stimulus", backend_generation=_id()
+        )
+        runtime = _runtime(visual_stimulus)
+        session = pb.SessionContext(
+            controller_generation=runtime.generation, session_id=_id()
+        )
+        prepared = pb.PreparedSession(context=session)
+        frozen = prepared.configuration.backends.add(
+            backend_name="visual_stimulus", enabled=True
+        )
+        frozen.visual_stimulus.save_visual_stimulus_data = True
+        live = runtime.configuration_state.current.backends.add(
+            backend_name="visual_stimulus", enabled=True
+        )
+        live.visual_stimulus.save_visual_stimulus_data = False
+        attempt = Attempt(session, prepared, cast(OutputReservation, None), {}, {})
+        attempt.file_policies["visual_stimulus"] = (
+            visual_stimulus_pb.VisualStimulusFilePolicies()
+        )
+>       request = runtime.preparation_context.setup_request(
+            attempt,
+            cast(BackendPort, _RetainedPeer(visual_stimulus, svc.RetainedResult())),
+            _id(),
+        )
+
+tests\controller\test_configuration_transactions.py:573: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\cephvr\controller\lifecycle\preparation_context.py:51: in setup_request
+    requested_output_identities(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+prepared = context {
+  controller_generation: "151bf60b-1503-4784-b116-2f7db3107f28"
+  session_id: "64117f7c-b8a2-4891-b1d4-b08e2...kend_name: "visual_stimulus"
+    enabled: true
+    visual_stimulus {
+      save_visual_stimulus_data: true
+    }
+  }
+}
+
+backends = {}
+
+    def requested_output_identities(
+        prepared: pb.PreparedSession, backends: Mapping[str, pb.BackendContext]
+    ) -> list[pb.OutputPlan]:
+        """Bind explicit save selections to exact IDs before backend Setup fan-out."""
+        settings = {
+            item.backend_name: item
+            for item in prepared.configuration.backends
+            if item.enabled and item.backend_name != "synchronization"
+        }
+        if set(settings) != set(backends):
+>           raise PlanningError("requested output owners differ from active backends")
+E           cephvr.controller.planning.PlanningError: requested output owners differ from active backends
+
+src\cephvr\controller\planning.py:129: PlanningError
+=========================== short test summary info ===========================
+FAILED tests/controller/test_configuration_transactions.py::test_installed_visual_stimulus_policy_is_shared_by_edit_and_setup
+FAILED tests/controller/test_configuration_transactions.py::test_setup_request_uses_prepared_backend_settings_not_live
+2 failed, 649 passed, 3 skipped in 7.53s

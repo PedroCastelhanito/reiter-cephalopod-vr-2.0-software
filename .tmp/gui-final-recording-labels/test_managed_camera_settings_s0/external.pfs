@@ -1,0 +1,4 @@
+# GenApi persistence file
+TriggerSelector	FrameStart
+TriggerMode	On
+TriggerSource	Line3

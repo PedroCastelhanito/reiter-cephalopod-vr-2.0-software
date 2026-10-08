@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "description": "T32 subset embedded in each selected estimator's concrete settings.",
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "count": {
+      "gt": 0,
+      "le": 4294967295,
+      "title": "Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "count"
+  ],
+  "title": "ArcSectionSettings",
+  "type": "object"
+}

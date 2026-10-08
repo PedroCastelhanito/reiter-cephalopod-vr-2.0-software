@@ -1,0 +1,41 @@
+{
+  "experiment": {
+    "completed": true,
+    "valid": true,
+    "component": "experiment",
+    "configuration_module_version": "experiment-v1"
+  },
+  "acquisition": {
+    "completed": true,
+    "valid": true,
+    "component": "acquisition",
+    "configuration_module_version": "acquisition-config-v1"
+  },
+  "synchronization": {
+    "completed": true,
+    "valid": true,
+    "component": "synchronization",
+    "configuration_module_version": "inactive"
+  },
+  "tracking": {
+    "completed": true,
+    "valid": true,
+    "component": "tracking",
+    "configuration_module_version": "inactive"
+  },
+  "visual_stimulus": {
+    "completed": true,
+    "issues": [
+      {
+        "component": "visual_stimulus",
+        "field_path": "backends.visual_stimulus.display.profile_json",
+        "failure": {
+          "code": "INVALID_DISPLAY_PROFILE",
+          "message": "mixed pacing requires a configured pacing output"
+        }
+      }
+    ],
+    "component": "visual_stimulus",
+    "configuration_module_version": "visual-stimulus-v20-policy-overlay"
+  }
+}

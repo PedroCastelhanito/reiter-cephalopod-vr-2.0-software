@@ -52,6 +52,7 @@ class WorkerState:
         default_factory=dict
     )
     operations: dict[str, control.OperationState] = field(default_factory=dict)
+    supervisor_command_ids: set[str] = field(default_factory=set)
     warnings: WorkerWarningLedger | None = None
     interrupted: bool = False
     shutdown_requested: bool = False
@@ -259,14 +260,15 @@ class WorkerState:
             updated.progress = progress
             if failure is not None:
                 updated.failure.CopyFrom(failure)
+            if retained_result is None:
+                source = acq.WorkerContext.FromString(self.context.SerializeToString())
+                if updated.HasField("work"):
+                    source.work.CopyFrom(updated.work)
+                retained_result = acq.WorkerOperationReport(source=source)
             if isinstance(retained_result, acq.WorkerOperationReport):
                 retained_result.operation.CopyFrom(updated)
                 retained_result.state_revision = self.state_revision + 1
-            result = (
-                retained_result.SerializeToString(deterministic=True)
-                if retained_result is not None
-                else updated.SerializeToString(deterministic=True)
-            )
+            result = retained_result.SerializeToString(deterministic=True)
             self.commands.complete(command_id, result, now_ns)
             self.operations[command_id] = updated
             self.state_revision += 1
@@ -368,6 +370,7 @@ class WorkerState:
             for command_id in tuple(self.operations):
                 if self.commands.get(command_id) is None:
                     del self.operations[command_id]
+                    self.supervisor_command_ids.discard(command_id)
             for key in tuple(self.lifecycle):
                 if self.commands.get(key[0]) is None:
                     del self.lifecycle[key]

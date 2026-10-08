@@ -1,10 +1,9 @@
 """Controller-managed Tracking configuration and live diagnostic controls."""
 
 import json
-from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QIODevice, QSaveFile, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QStackedWidget, QTabBar
 
@@ -19,6 +18,7 @@ from cephvr.gui.components import (
     equal_row_height,
     field,
 )
+from cephvr.gui.configuration_files import ConfigurationFiles
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.tracking_annotation import TrackingAnnotation
@@ -47,6 +47,7 @@ class TrackingPage(ResponsiveColumns):
         self.view = DashboardView()
         self.can_edit = False
         self._diagnostic_locked = False
+        self.snapshot_draft = False
         self.notice = FormNotice()
         self.notice.setParent(self)
         self.configuration = Card("Tracking configuration")
@@ -143,8 +144,6 @@ class TrackingPage(ResponsiveColumns):
         self.forms.quality_button.toggled.connect(lambda: self.refit())
         self.pipeline.currentIndexChanged.connect(self.select_pipeline)
         self.cameras.drafts_changed.connect(self.sync_sources)
-        self.load_button.clicked.connect(self.load_settings)
-        self.save_button.clicked.connect(self.save_settings)
         self.forms.browse_model.clicked.connect(self.browse_model)
         for key, editor in self.forms.fields.items():
             if key != "model_manifest":
@@ -178,6 +177,24 @@ class TrackingPage(ResponsiveColumns):
             name: {key: self.forms.fields[key].text() for key in self.analysis_keys}
             for name in ("Water flow", "Fin flow")
         }
+
+        self.config_files = ConfigurationFiles(
+            self,
+            "Tracking",
+            "tracking.json",
+            capture=self.snapshot,
+            validate=self.validate_snapshot,
+            apply=self.restore,
+            available=lambda: self.can_edit and not self._diagnostic_locked,
+            load_button=self.load_button,
+            save_button=self.save_button,
+            limit=1_000_000,
+        )
+        self.config_files.message.connect(self.status.console.appendPlainText)
+        self.config_files.loaded.connect(self.mark_snapshot_loaded)
+
+    def mark_snapshot_loaded(self) -> None:
+        self.snapshot_draft = True
 
     def sync_sources(self) -> None:
         assigned = [
@@ -340,6 +357,8 @@ class TrackingPage(ResponsiveColumns):
             control.setEnabled(self.can_edit and not self._diagnostic_locked)
         self.pages.setEnabled(self.can_edit and not self._diagnostic_locked)
         self.annotation.setEnabled(self.can_edit and not self._diagnostic_locked)
+        if hasattr(self, "config_files"):
+            self.config_files.set_enabled(self.can_edit and not self._diagnostic_locked)
         self.diagnostic_viewer_button.setEnabled(viewer_available)
         timings = ""
         if last_duration_ns is not None and maximum_duration_ns is not None:
@@ -396,6 +415,8 @@ class TrackingPage(ResponsiveColumns):
         ):
             control.setEnabled(self.can_edit and not self._diagnostic_locked)
         self.annotation.setEnabled(self.can_edit and not self._diagnostic_locked)
+        if hasattr(self, "config_files"):
+            self.config_files.set_enabled(self.can_edit and not self._diagnostic_locked)
         self.notice.setEnabled(self.can_edit)
 
     def browse_model(self) -> None:
@@ -478,6 +499,7 @@ class TrackingPage(ResponsiveColumns):
     ) -> None:
         """Install authoritative settings only for the currently assigned source."""
         self.restore(self.configuration_draft(settings, source_serial=source_serial))
+        self.snapshot_draft = False
 
     def configuration_draft(
         self, settings: pb.TrackingSettings, *, source_serial: str
@@ -496,9 +518,8 @@ class TrackingPage(ResponsiveColumns):
             )
         return decode_tracking_settings(settings, camera_serial=source_serial)
 
-    def restore(self, data: dict[str, Any]) -> None:
-        """Validate the entire draft before changing any visible value."""
-        data = validated_draft(
+    def validate_snapshot(self, data: Any) -> dict[str, Any]:
+        return validated_draft(
             data,
             set(self.forms.fields),
             {
@@ -507,6 +528,10 @@ class TrackingPage(ResponsiveColumns):
             },
             self.analysis_keys,
         )
+
+    def restore(self, data: dict[str, Any]) -> None:
+        """Validate the entire draft before changing any visible value."""
+        data = self.validate_snapshot(data)
         fields, choices, points = data["fields"], data["choices"], data["annotations"]
         analysis, size = data["analysis_drafts"], data["image_size"]
         self.pipeline.setCurrentText(data["pipeline"])
@@ -536,36 +561,7 @@ class TrackingPage(ResponsiveColumns):
             )
 
     def save_settings(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Save Tracking draft", "tracking.json", "Tracking draft (*.json)"
-        )
-        if not path or not self.can_edit:
-            return
-        try:
-            data = self.snapshot()
-            output = QSaveFile(path)
-            if not output.open(QIODevice.OpenModeFlag.WriteOnly):
-                raise OSError(output.errorString())
-            payload = json.dumps(data, indent=2).encode()
-            if output.write(payload) != len(payload) or not output.commit():
-                raise OSError(output.errorString())
-            self.status.console.appendPlainText(f"Saved Tracking draft: {path}")
-        except (OSError, ValueError) as error:
-            self.notice.warn(error, "Tracking settings")
+        self.config_files.choose(save=True)
 
     def load_settings(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Load Tracking draft", "", "Tracking draft (*.json)"
-        )
-        if not path or not self.can_edit:
-            return
-        try:
-            if Path(path).stat().st_size > 1_000_000:
-                raise ValueError("Tracking draft exceeds 1 MB.")
-            data = json.loads(Path(path).read_text(encoding="utf-8"))
-            if not isinstance(data, dict):
-                raise ValueError("Expected a Tracking draft object.")
-            self.restore(data)
-            self.status.console.appendPlainText(f"Loaded Tracking draft: {path}")
-        except (OSError, ValueError) as error:
-            self.notice.warn(error, "Tracking settings")
+        self.config_files.choose(save=False)

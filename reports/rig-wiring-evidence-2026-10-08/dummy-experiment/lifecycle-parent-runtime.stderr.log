@@ -1,0 +1,57 @@
+PrepareTrial ddd1bc82-132d-40a5-9e5a-627961861ec7 failed: TRIAL_PREPARATION_FAILED: controller rejected aggregate trial readiness
+ReleaseTrial cca3ffc5-6a4a-4dd2-8ed3-69b78eb78848 failed: WORKER_SCHEDULE: trial prefix must be an authoritative absolute path
+InterruptSession 730124f6-135d-4212-94fe-04c812d81c09 failed: SESSION_INTERRUPT_UNCONFIRMED: camera worker rejected Interrupt; camera worker rejected Interrupt
+CephVR supervisor shutdown: WORKER_OWNER_FAILURE: scheduled start arrived before exact release
+InterruptSession 363cf07e-05d4-41d3-a1d0-5de59c140e86 failed: SESSION_IDENTITY: no exact live session
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 28, in <module>
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\platform\windows\python_entry.py", line 24, in main
+    runpy.run_module(module, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py", line 249, in <module>
+    main()
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py", line 245, in main
+    asyncio.run(run(bootstrap))
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\main.py", line 177, in run
+    await bridge.drain(deadline)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\reporting.py", line 101, in drain
+    await asyncio.gather(*(asyncio.wrap_future(f) for f in pending))
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\reporting.py", line 81, in done
+    result.result()
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\reporting.py", line 51, in _deliver
+    await self.retain_lifecycle(message, deadline_ns)
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\worker\runtime.py", line 260, in retain_and_report
+    await self.reports.receipt(
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\visual_stimulus\transport\peers.py", line 79, in receipt
+    raise RuntimeError(
+RuntimeError: ReportWorkerLifecycle: VISUAL_STIMULUS_EVIDENCE: cleanup command unknown
+Exception ignored in: <function Server.__del__ at 0x0000021D74EC9580>
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Lib\site-packages\grpc\aio\_server.py", line 219, in __del__
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/common.pyx.pxi", line 121, in grpc._cython.cygrpc.schedule_coro_threadsafe
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/common.pyx.pxi", line 113, in grpc._cython.cygrpc.schedule_coro_threadsafe
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 435, in create_task
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 520, in _check_closed
+RuntimeError: Event loop is closed
+sys:1: RuntimeWarning: coroutine 'AioServer.shutdown' was never awaited
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

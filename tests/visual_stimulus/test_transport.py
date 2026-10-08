@@ -536,6 +536,11 @@ async def test_authenticated_first_use_calibration_repeat_and_close_recovery(tmp
         outcome = pb.OperationState.FromString(record.executor_result)
         assert outcome.succeeded, outcome.failure.message
         assert driver.state.cleaned
+        while (
+            not coordinator.shutdown_requested.is_set()
+            and asyncio.get_running_loop().time() < cleanup_stop
+        ):
+            await asyncio.sleep(0.005)
         assert coordinator.shutdown_requested.is_set()
     finally:
         await coordinator_listener.close(deadline)
@@ -639,16 +644,17 @@ async def test_authenticated_coordinator_renderer_replay_and_stale_generation():
         assert first == retry
         assert first.result == pb.COMMAND_RESULT_ACCEPTED
         for _ in range(100):
-            if sink.messages:
+            record = coordinator.ledger.get(request.command_id)
+            if record is not None and record.executor_result:
                 break
             await asyncio.sleep(0.01)
         assert device.commands == ["InitializeDisplay"]
         assert device.thread_ids == [owner.thread.ident]
-        assert any(
-            msg.operation.operation.complete
-            for method, msg in sink.messages
-            if method == "ReportLifecycle"
-        )
+        assert record is not None and record.executor_result
+        completion = pb.OperationState.FromString(record.executor_result)
+        assert completion.context.command_id == request.command_id
+        assert completion.complete and completion.succeeded
+        assert not any(method == "ReportLifecycle" for method, _ in sink.messages)
         changed = wire.VisualStimulusDisplayInitializationRequest.FromString(
             request.SerializeToString()
         )
@@ -1051,7 +1057,8 @@ async def test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial()
 
 
 @pytest.mark.asyncio
-async def test_completed_worker_outcome_survives_report_receipt_loss():
+@pytest.mark.parametrize("supervisor_owned", [False, True])
+async def test_completed_worker_outcome_survives_report_receipt_loss(supervisor_owned):
     identity = Identity(
         *(
             pb.ProcessIdentity(role=role, generation=str(uuid4()))
@@ -1083,7 +1090,7 @@ async def test_completed_worker_outcome_survives_report_receipt_loss():
     deadline = host_time_ns() + 5_000_000_000
     request = visual_stimulus.WorkerCommand(
         command_id=str(uuid4()),
-        issuer=identity.process,
+        issuer=identity.supervisor if supervisor_owned else identity.process,
         target=runtime.context,
         deadline_monotonic_ns=deadline,
     )
@@ -1101,8 +1108,22 @@ async def test_completed_worker_outcome_survives_report_receipt_loss():
         )
         assert outcome.complete and outcome.succeeded
         assert result.result == pb.COMMAND_RESULT_ACCEPTED
-        assert runtime.interrupted and owner.cancelled.is_set()
-        assert len(failures) == 1 and isinstance(failures[0], ConnectionError)
+        assert runtime.interrupted
+        assert owner.cancelled.is_set()
+        if supervisor_owned:
+            cleanup = pb.CleanupReport(
+                source=identity.worker,
+                work=request.target.work,
+                operation=pb.OperationContext(command_id=request.command_id),
+            )
+            retained = visual_stimulus.WorkerLifecycle(
+                source=identity.worker, report=pb.LifecycleReport(cleanup=cleanup)
+            )
+            await runtime.retain_and_report(retained, deadline)
+            assert runtime.retained[("cleanup", request.command_id)] == retained
+            assert not failures
+        else:
+            assert len(failures) == 1 and isinstance(failures[0], ConnectionError)
         assert device.commands == ["Shutdown"]
     finally:
         await owner.close(deadline)

@@ -110,7 +110,7 @@ async def prepare_worker_payloads(
         camera_setup = acq.CameraWorkerSetupPayload()
         setting = getattr(session.confirmed_settings, role_name(role))
         camera_setup.device.CopyFrom(setting.device)
-        camera_setup.transport.CopyFrom(file_policy.transport)
+        camera_setup.transport.CopyFrom(resolved.transport)
         camera_setup.layout.CopyFrom(resolved.layout)
         if not setting.HasField("sdk_buffer_count"):
             raise ValueError(f"camera role {role} has no resolved SDK buffer count")

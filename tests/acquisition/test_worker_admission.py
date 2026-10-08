@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+from threading import Event, RLock
+from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
 
@@ -11,15 +14,70 @@ import pytest
 from cephvr.acquisition.state import LaunchRecord, WorkerRecord
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.acquisition.worker.cleanup_lifecycle import WorkerCleanupLifecycle
+from cephvr.acquisition.worker.execution import WorkerOperationExecutor
 from cephvr.acquisition.worker.function_scopes import validate_camera_function_scopes
 from cephvr.acquisition.worker.limits import AcquisitionControlLimits
 from cephvr.acquisition.worker.ports import WorkerOperationTicket
 from cephvr.acquisition.worker.service import AcquisitionWorkerService
 from cephvr.acquisition.worker.state import WorkerState
 from cephvr.acquisition.worker.terminal_scope import terminal_target_matches
+from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
+from cephvr.acquisition.worker.trial_state import WorkerTrialState
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandCapacityError, CommandLedger
+
+
+@pytest.mark.parametrize("trial", [False, True])
+async def test_warning_flush_binds_each_view_to_its_exact_work(trial: bool) -> None:
+    from cephvr.acquisition.worker.health import WorkerHealthReporter
+    from cephvr.acquisition.worker.warnings import (
+        WarningOccurrence,
+        WorkerWarningLedger,
+    )
+
+    source = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation="worker"
+        ),
+        owner=control.ProcessIdentity(role="acquisition", generation="owner"),
+        camera=camera_pb2.CAMERA_ROLE_TRACKING,
+        work=control.WorkContext(session=control.SessionContext(session_id="session")),
+    )
+    work = control.WorkContext()
+    work.CopyFrom(source.work)
+    if trial:
+        work.trial.CopyFrom(
+            control.TrialContext(session=source.work.session, trial_id="trial")
+        )
+    warnings = WorkerWarningLedger(source)
+    warnings.begin_scope(work, configuration_revision=3)
+    state = SimpleNamespace(warnings=warnings)
+    reports = []
+    pending = []
+
+    async def deliver(report, *, deadline_ns):
+        reports.append(report)
+        assert deadline_ns == 100
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    health = WorkerHealthReporter(
+        SimpleNamespace(context=source),
+        state,
+        SimpleNamespace(report_warnings=deliver),
+        None,
+        pending.append,
+        lambda: None,
+    )
+    health.warning_occurrence(WarningOccurrence("NATIVE_TIMESTAMP_UNAVAILABLE", 50))
+    health.flush(100)
+    await asyncio.gather(*pending)
+    assert len(reports) == 1
+    assert reports[0].source.work == reports[0].view.work == work
+    assert reports[0].source.worker == source.worker
+    assert reports[0].source.camera == source.camera
+    assert source.work.WhichOneof("work") == "session"
 
 
 def _scope(
@@ -260,9 +318,10 @@ def test_ordinary_coordinator_evidence_cannot_consume_reserved_cleanup_capacity(
 
 
 @pytest.mark.asyncio
-async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work() -> (
-    None
-):
+@pytest.mark.parametrize("supervisor_cleanup", [False, True])
+async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal_work(
+    supervisor_cleanup: bool,
+) -> None:
     generation = str(uuid4())
     owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
     supervisor = control.ProcessIdentity(role="supervisor", generation=str(uuid4()))
@@ -310,17 +369,60 @@ async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal
         progress="complete",
         now_ns=initial_ns,
     )
+    retained_initial = commands.get(initial.command_id)
+    assert retained_initial is not None and retained_initial.result is not None
+    initial_report = acq.WorkerOperationReport.FromString(retained_initial.result)
+    assert initial_report.source == context
+    assert initial_report.operation == state.operations[initial.command_id]
 
-    cleanup = _command(context, owner)
+    cleanup = _command(context, supervisor if supervisor_cleanup else owner)
     cleanup_admission = await service._admit("Cleanup", cleanup, cleanup, grpc_context)
     assert cleanup_admission.result == control.COMMAND_RESULT_ACCEPTED
     cleanup_ns = host_time_ns()
-    state.complete_operation(
-        cleanup.command_id,
-        succeeded=True,
-        progress="complete",
-        now_ns=cleanup_ns,
+    assert (cleanup.command_id in state.supervisor_command_ids) == supervisor_cleanup
+    deliveries: list[object] = []
+    releases = []
+    trial = object.__new__(WorkerTrialLifecycle)
+    trial.trial_state = WorkerTrialState()
+    trial.stop_finalizer = SimpleNamespace(stop_trial=lambda *args, **kwargs: None)
+    executor = object.__new__(WorkerOperationExecutor)
+    executor.state = state
+    executor.bootstrap = SimpleNamespace(context=context)
+    executor._coordinator_loss_handled = False
+    executor._cancelled = Event()
+    executor.trial = trial
+    executor.report_dispatcher = SimpleNamespace(
+        operation=lambda report, deadline: deliveries.append(report),
+        lifecycle=lambda report, deadline: deliveries.append(report),
     )
+    executor.cleanup = WorkerCleanupLifecycle(
+        state,
+        SimpleNamespace(release_device=lambda: releases.append("camera")),
+        SimpleNamespace(release=lambda: releases.append("buffers") or ()),
+        None,
+        capacity=16,
+        extra_resources=lambda: {},
+        report_lifecycle=executor._report_lifecycle,
+        report_operation=executor._report,
+        shutdown=lambda deadline: None,
+        recording_reconciled=lambda: None,
+        external_wake=lambda: None,
+    )
+    executor.execute("Cleanup", cleanup, cleanup_ns + 1_000_000_000)
+    assert state.operations[cleanup.command_id].succeeded
+    assert releases == ["buffers", "camera"]
+    assert len(deliveries) == (0 if supervisor_cleanup else 2)
+    assert (cleanup.command_id, "cleanup") in state.lifecycle
+    executor.captures = SimpleNamespace(capture=None, active=False)
+    executor._session_ready = True
+    executor._refresh_health_snapshot()
+    assert state.health_work == work
+    assert state.health_session_phase == control.SESSION_PHASE_ENDED
+    saved_lifecycle = dict(state.lifecycle)
+    state.lifecycle.clear()
+    executor._refresh_health_snapshot()
+    assert state.health_session_phase == control.SESSION_PHASE_ENDED
+    state.lifecycle.update(saved_lifecycle)
     state.finalize_scope(work, cleanup_ns)
     assert state.finalize_terminal_command(cleanup.command_id, cleanup_ns)
 
@@ -454,3 +556,78 @@ class _AdmissionService(AcquisitionWorkerService):
     ) -> int:
         del context, issuer
         return host_time_ns() + 10_000_000_000
+
+
+@pytest.mark.parametrize("outcome", ("accepted", "rejected", "exception"))
+async def test_worker_report_failure_preserves_reason_and_drains(outcome):
+    from cephvr.acquisition.worker.health import WorkerHealthReporter
+    from cephvr.acquisition.worker.report_dispatch import WorkerReportDispatcher
+    from cephvr.acquisition.worker.reports import CoordinatorReportClient
+
+    source = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_tracking_worker", generation=str(uuid4())
+        )
+    )
+    state = cast(
+        WorkerState, SimpleNamespace(lock=RLock(), interrupted=False, context=source)
+    )
+    failures = []
+
+    async def deliver(report, *, deadline_ns):
+        assert report.source == source and deadline_ns > host_time_ns()
+        if outcome == "exception":
+            raise RuntimeError("report transport failed")
+        return control.ReportReceipt(
+            result=control.COMMAND_RESULT_ACCEPTED
+            if outcome == "accepted"
+            else control.COMMAND_RESULT_REJECTED,
+            failure=control.Failure(
+                code="INVALID_EVIDENCE", message="wrong preparation" * 200
+            ),
+        )
+
+    reports = cast(CoordinatorReportClient, SimpleNamespace(report_lifecycle=deliver))
+    dispatcher = WorkerReportDispatcher(
+        asyncio.get_running_loop(), state, reports, 1, failures.append
+    )
+    deadline = host_time_ns() + 1_000_000_000
+    dispatcher.lifecycle(acq.WorkerLifecycleEvidence(source=source), deadline)
+    assert await dispatcher.drain(deadline)
+    assert not dispatcher._pending
+    assert state.interrupted == (outcome != "accepted")
+    if outcome == "accepted":
+        assert not failures
+        return
+    assert len(failures) == 1
+    assert failures[0].startswith(
+        "worker report rejected: INVALID_EVIDENCE:"
+        if outcome == "rejected"
+        else "worker report failed: report transport failed"
+    )
+
+    errors = []
+
+    async def report_error(request, *, deadline_ns):
+        assert deadline_ns > host_time_ns()
+        errors.append(request)
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    pending = []
+    health = WorkerHealthReporter(
+        SimpleNamespace(
+            context=source,
+            control_policies=control.ControlPolicies(recovery_ns=1_000_000_000),
+        ),
+        state,
+        reports,
+        SimpleNamespace(report_error=report_error),
+        pending.append,
+        lambda: None,
+    )
+    health.coordinator_lost(details=failures[0])
+    await asyncio.gather(*pending)
+    assert len(errors) == 1
+    assert errors[0].source == source.worker
+    assert errors[0].failure.code == "COORDINATOR_HEALTH_LOST"
+    assert errors[0].failure.message == failures[0][:2048]

@@ -13,6 +13,7 @@ from cephvr.gui.calibration_arena import (
     make_calibration_glb,
 )
 from cephvr.gui.projector_geometry import FACES
+from cephvr.visual_stimulus.config.calibration_bars import reference_scale
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 
@@ -118,6 +119,26 @@ def face_mapping(
 
     sx = number("scale_u", 1.0, positive=True)
     sy = number("scale_v", 1.0, positive=True)
+    if any(
+        values.get(f"screens.{face}.reference_{axis}_mm") is not None
+        for axis in ("x", "y")
+    ):
+        if (number("reference_width_px", 0), number("reference_height_px", 0)) != (
+            monitor.width,
+            monitor.height,
+        ):
+            raise ValueError(
+                f"{face}: reference bars do not match the assigned output mode"
+            )
+        measured = reference_scale(
+            monitor.width,
+            monitor.height,
+            number("reference_x_mm", 0),
+            number("reference_y_mm", 0),
+            number("throw", 0),
+        )
+        sx *= number("width", 0, positive=True) / measured.projected_width_mm
+        sy *= number("height", 0, positive=True) / measured.projected_height_mm
     dx = number("offset_x", 0.0) / monitor.width
     dy = number("offset_y", 0.0) / monitor.height
     flip_x, flip_y = flipped("flip_x"), flipped("flip_y")

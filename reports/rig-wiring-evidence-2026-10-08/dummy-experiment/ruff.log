@@ -1,0 +1,21 @@
+F821 Undefined name `Any`
+   --> tests\controller\test_configuration_transactions.py:734:27
+    |
+732 |     commands.configuration_history_path = history
+733 |
+734 |     def fail_write(*args: Any, **kwargs: Any) -> None:
+    |                           ^^^
+735 |         raise OSError("history disk unavailable")
+    |
+
+F821 Undefined name `Any`
+   --> tests\controller\test_configuration_transactions.py:734:42
+    |
+732 |     commands.configuration_history_path = history
+733 |
+734 |     def fail_write(*args: Any, **kwargs: Any) -> None:
+    |                                          ^^^
+735 |         raise OSError("history disk unavailable")
+    |
+
+Found 2 errors.
