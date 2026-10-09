@@ -9,6 +9,7 @@ from collections.abc import Callable, Coroutine, Mapping
 from pathlib import Path
 from typing import Any
 
+from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.operations import ControlOperations
@@ -48,7 +49,8 @@ def manual_camera_owned(projections: ProjectionStore, device: DeviceState) -> bo
     return views is not None and (
         views.diagnostic.active
         or any(
-            manual_state_open(camera) for camera in (views.behavioral, views.tracking)
+            manual_state_open(camera)
+            for camera in (views.behavioral, views.tracking, views.eye_tracking)
         )
     )
 
@@ -81,7 +83,7 @@ def camera_participation_only(
     if not before.HasField("acquisition") or not after.HasField("acquisition"):
         return False
     before.enabled = after.enabled
-    for role in ("behavioral", "tracking"):
+    for role in CAMERA_NAMES:
         target, source = (
             getattr(before.acquisition, role),
             getattr(after.acquisition, role),

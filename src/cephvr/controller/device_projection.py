@@ -1,5 +1,6 @@
 """Pure camera-view merging; authenticated source and byte budgets stay with the store."""
 
+from cephvr.acquisition.identity import CAMERA_NAMES, camera_role_name
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 
@@ -9,7 +10,7 @@ def merge_devices(
 ) -> pb.AcquisitionDeviceViews:
     adopted = pb.AcquisitionDeviceViews.FromString(incoming.SerializeToString())
     if previous:
-        for name in ("behavioral", "tracking"):
+        for name in CAMERA_NAMES:
             prior, current = getattr(previous, name), getattr(adopted, name)
             if (
                 current.preview_run_id == prior.preview_run_id
@@ -32,7 +33,7 @@ def merge_preview_visibility(
         or report.HasField("result")
         or report.HasField("work")
         or report.HasField("exported_pfs_path")
-        or observation.camera not in (1, 2)
+        or observation.camera not in (1, 2, 3)
         or observation.revision == 0
         or observation.observed_monotonic_ns <= 0
         or previous is None
@@ -40,7 +41,7 @@ def merge_preview_visibility(
     ):
         raise ValueError("preview visibility observation shape is invalid")
     adopted = pb.AcquisitionDeviceViews.FromString(previous.SerializeToString())
-    device = adopted.behavioral if observation.camera == 1 else adopted.tracking
+    device = getattr(adopted, camera_role_name(observation.camera))
     if (
         device.preview_run_id != observation.preview_run_id
         or not device.preview_running

@@ -53,6 +53,7 @@ class ManualOperationResults:
                     operation=control.OperationState(
                         context=control.OperationContext(command_id=command.command_id),
                         command=command_name,
+                        work=command.work,
                         complete=True,
                         succeeded=True,
                     ),

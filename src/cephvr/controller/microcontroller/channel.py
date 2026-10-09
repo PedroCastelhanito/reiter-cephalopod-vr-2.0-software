@@ -29,6 +29,10 @@ class ChannelTransportFailure(ChannelError):
     """A serial read, write or handle operation failed."""
 
 
+class ChannelIncompatibleFirmware(ChannelTransportFailure):
+    """The board explicitly rejects the required startup protocol."""
+
+
 class ChannelCancelled(ChannelError):
     """A request was cancelled; cancellation does not prove output state."""
 
@@ -217,6 +221,15 @@ class SerialChannel:
                         too_long = False
                         continue
                     line.append(byte)
+                    if (
+                        read_only
+                        and verb == "CAPS"
+                        and bytes(line).strip() == b"ERR Unknown command: CAPS"
+                    ):
+                        raise ChannelIncompatibleFirmware(
+                            "MCU firmware does not support CAPS; required protocol 3 "
+                            "firmware must be installed before capture"
+                        )
                     try:
                         reply = parse_reply(bytes(line))
                     except ProtocolError:
@@ -254,6 +267,8 @@ class SerialChannel:
             try:
                 result = self.request(verb, {}, deadline_ns, read_only=True)
             except ChannelCancelled:
+                raise
+            except ChannelIncompatibleFirmware:
                 raise
             except FirmwareRejected as exc:
                 raise ChannelTransportFailure(

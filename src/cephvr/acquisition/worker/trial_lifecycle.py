@@ -8,7 +8,7 @@ from uuid import UUID
 from cephvr.acquisition.buffers.end_marker import CaptureEndMarker
 from cephvr.acquisition.buffers.records import FrameRecord
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
-from cephvr.acquisition.v1 import camera_pb2 as camera
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 
@@ -266,11 +266,7 @@ class WorkerTrialLifecycle:
     ) -> tuple[control.ContinuingFunctionEvidence, ...]:
         if not self._recording_fault.faulted_session:
             return ()
-        role = (
-            "behavioral"
-            if self.bootstrap.context.camera == camera.CAMERA_ROLE_BEHAVIORAL
-            else "tracking"
-        )
+        role = camera_role_name(self.bootstrap.context.camera)
         recorder = control.ContinuingFunctionEvidence(
             resource_id=f"{role}.recording",
             functioning=False,

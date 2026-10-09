@@ -1,0 +1,14 @@
+{
+  "command": [
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "tools/check_backend_boundaries.py"
+  ],
+  "environment": {
+    "QT_QPA_PLATFORM": "offscreen",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "started_utc": "2026-10-09T05:47:44.150088+00:00",
+  "elapsed_seconds": 1.047,
+  "returncode": 0,
+  "raw": "windows-checkout-boundaries.txt"
+}

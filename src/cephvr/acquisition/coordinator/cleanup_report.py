@@ -89,7 +89,11 @@ class CleanupReportBuilder:
                     closure=control.OUTPUT_CLOSURE_NOT_STARTED,
                     artifact_present=False,
                 )
-                if plan.output_tag in {"behavioral_cam", "tracking_cam"}:
+                if plan.output_tag in {
+                    "behavioral_cam",
+                    "tracking_cam",
+                    "eye_tracking_cam",
+                }:
                     result.camera_video_content = control.CAMERA_VIDEO_CONTENT_NO_FRAMES
             if not cleanup_output_discharged(result):
                 raise ValueError(

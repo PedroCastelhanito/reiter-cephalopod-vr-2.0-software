@@ -35,7 +35,7 @@ from cephvr.acquisition.coordinator.manual_session_access import (
     manual_command_valid,
     retire_completed_manual_session,
 )
-from cephvr.acquisition.coordinator.session_payloads import camera_policy
+from cephvr.acquisition.coordinator.session_payloads import camera_policy, role_name
 from cephvr.acquisition.coordinator.workers import WorkerRegistry
 from cephvr.acquisition.ports import ControllerPort, WorkerPort
 from cephvr.acquisition.state import (
@@ -161,7 +161,12 @@ class ManualDevices:
         # command and is confirmed by the controller before this command succeeds.
         roles = [item.camera for item in request.cameras]
         if len(set(roles)) != len(roles) or any(
-            role not in (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING)
+            role
+            not in (
+                camera.CAMERA_ROLE_BEHAVIORAL,
+                camera.CAMERA_ROLE_TRACKING,
+                camera.CAMERA_ROLE_EYE_TRACKING,
+            )
             for role in roles
         ):
             return _rejected(
@@ -549,7 +554,7 @@ def _requested_external_previews(
         if configured is None:
             configured = getattr(
                 settings,
-                "behavioral" if role == camera.CAMERA_ROLE_BEHAVIORAL else "tracking",
+                role_name(role),
             ).device
         if (
             configured.HasField("frame_timing")

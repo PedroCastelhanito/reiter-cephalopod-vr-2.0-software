@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 132
+**Status:** Accepted · **Revision:** 134
 
 - Review and managed runtime use the same DashboardWindow page construction,
   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
@@ -126,7 +126,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   claiming Setup readiness. Camera
   refresh preserves drafts by serial. Managed Test enabled sends sequential A10
   connection-only checks for enabled, assigned cameras; a running capture is reported
-  as skipped. It does not start pulses or capture and preserves existing ownership. Display refresh preserves local assignments/participation. Explicit
+  as skipped. Test selected checks the exact assigned camera without enabling it or
+  starting capture/pulses, preserving prior ownership. Camera roles include Eye
+  tracking for third-camera preview/video only; its external trigger remains pending
+  under A01/A11, while the unique Tracking role still owns locomotion input.
+  Display refresh preserves local assignments/participation. Explicit
   test fixtures may still supply simulated displays for isolated frontend checks.
 - An assigned camera's Use flag may be enabled or disabled regardless of its
   current device, trigger, PFS or recording settings. Commit participation-only
@@ -673,7 +677,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   A11. Select `.ino` for compile-then-flash or `.hex` for direct upload. Controller owns
   compilation/validation/serial handoff; the GUI never invokes compiler or serial tooling.
   The path is an operator preference; review mode presents the same controls without
-  flashing. In managed mode Upload is available only in idle Configuration.
+  flashing. In managed mode Upload is available only in idle Configuration, with
+  diagnostics stopped and all camera ownership/native cleanup released. A displayed
+  MCU compatibility failure alone does not block this explicit repair operation.
 - Calibration Launch always prepares the geometry grid using saved corrections:
   world-phase colored solid/dashed lines, full-face center crosses, face dimensions
   and a 50 mm ruler where it fits. Existing physical screen planes and offsets remain

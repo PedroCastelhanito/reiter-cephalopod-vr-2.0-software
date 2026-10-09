@@ -491,6 +491,25 @@ def test_old_firmware_is_rejected_before_output_diagnostics() -> None:
     assert port.closed
 
 
+def test_legacy_firmware_caps_rejection_stops_probe_and_closes_port() -> None:
+    from cephvr.controller.microcontroller.channel import ChannelIncompatibleFirmware
+
+    class LegacyPort(_ScriptedPort):
+        def write(self, payload: bytes) -> int:
+            self.verbs.append(payload.decode("ascii").split()[0])
+            self._incoming.extend(b"ERR Unknown command: CAPS\r\n")
+            return len(payload)
+
+    clock = _Clock(10)
+    port = LegacyPort(statuses=[])
+    owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
+    with pytest.raises(ChannelIncompatibleFirmware, match="required protocol 3"):
+        owner.connect(deadline_ns=10_000)
+    assert port.verbs == ["CAPS"]
+    assert port.closed
+    assert clock.value < 10_000
+
+
 def test_reserved_off_blocks_routine_status_and_dispatches_with_original_deadline() -> (
     None
 ):
@@ -926,6 +945,20 @@ def test_uno_sketch_digest_pins_companions_and_rejects_links(tmp_path):
         read_uno_sketch(str(source))
 
 
+@pytest.mark.parametrize("directory", [False, True])
+def test_uno_sketch_reports_missing_or_nonfile_path(tmp_path, directory):
+    from cephvr.controller.microcontroller.firmware_source import read_uno_sketch
+
+    source = tmp_path / "moved.ino"
+    if directory:
+        source.mkdir()
+    with pytest.raises(
+        ValueError, match="not a regular file" if directory else "not found"
+    ) as error:
+        read_uno_sketch(str(source))
+    assert str(source) in str(error.value)
+
+
 @pytest.mark.parametrize("limit", ["bytes", "entries"])
 def test_uno_sketch_is_bounded_before_compilation(tmp_path, monkeypatch, limit):
     from cephvr.controller.microcontroller import firmware_source as source
@@ -1048,6 +1081,7 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
         Uploader(),
     )
     owner.view.observation.connection_id = "old"
+    owner.failure = "MCU firmware does not support CAPS"
     owner.view.diagnostic.active = failure == "active"
     request = wire.MicrocontrollerCommandRequest(
         kind=wire.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
@@ -1074,6 +1108,7 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
             "cleanup",
         ]
         assert owner.view.observation.connection_id == "new"
+        assert not owner.failure
     elif failure in {"digest", "active", "compile"}:
         assert "release serial" not in events and "upload" not in events
         assert owner.view.observation.connection_id == "old"
@@ -1082,6 +1117,62 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
         assert "fresh status" not in events
         if failure == "upload":
             assert "fresh connect" not in events
+
+
+@pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+@pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+    from unittest.mock import AsyncMock, Mock
+
+    from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+    from cephvr.controller.device.ports import DeviceHooks
+    from cephvr.controller.state import LimitsState
+    from tests.controller.support_components import default_limits
+
+    views = control.AcquisitionDeviceViews()
+    setattr(getattr(views, role), owned, True)
+    owner = MicrocontrollerDevice(
+        AsyncMock(),
+        control.AcquisitionSettings(),
+        runtime_pb2.AcquisitionFilePolicies(),
+        lambda: 1,
+    )
+    device = DeviceState()
+    hooks = DeviceHooks(
+        admission=Mock(),
+        authorized=Mock(return_value=""),
+        operation=Mock(),
+        complete_operation=Mock(),
+        prune_operations=Mock(),
+        publish=Mock(),
+        spawn=Mock(),
+    )
+    commands = MicrocontrollerCommands(
+        lifecycle=LifecycleState(),
+        configuration=ConfigurationState(
+            control.ExperimentConfiguration(), control.ControlPolicies(), revision=7
+        ),
+        device=device,
+        owner=owner,
+        limits=LimitsState(default_limits()),
+        clock=lambda: 1,
+        hooks=hooks,
+        device_views=lambda: views,
+    )
+    request = wire.MicrocontrollerCommandRequest(
+        kind=wire.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE,
+        expected_configuration_revision=7,
+        firmware_path="firmware.ino",
+        firmware_sha256="a" * 64,
+    )
+    request.command.operator.command_id = "upload"
+    await commands.execute(request)
+    hooks.admission.assert_called_once_with(
+        "upload",
+        error="Stop capture and release cameras before Microcontroller diagnostics or Upload",
+    )
+    hooks.spawn.assert_not_called()
+    assert device.camera_operation is None
 
 
 @pytest.mark.parametrize("phase", ["upload", "compile"])

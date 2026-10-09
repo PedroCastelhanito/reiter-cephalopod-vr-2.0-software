@@ -1,0 +1,54 @@
+{
+  "recorded_utc": "2026-10-09T08:31:06.265039+00:00",
+  "results": {
+    "cephvr1_mcu": {
+      "command": [
+        "C:\\Program Files\\Arduino IDE\\resources\\app\\lib\\backend\\resources\\arduino-cli.exe",
+        "compile",
+        "--fqbn",
+        "arduino:avr:uno",
+        "--clean",
+        "--build-path",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\firmware-layout-cephvr1_mcu-7tz5cokw\\build",
+        "--output-dir",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\firmware-layout-cephvr1_mcu-7tz5cokw\\output",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\firmware-layout-cephvr1_mcu-7tz5cokw\\cephvr1_mcu"
+      ],
+      "started_utc": "2026-10-09T08:30:47.473286+00:00",
+      "elapsed_seconds": 9.391,
+      "returncode": 0,
+      "source": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\firmware\\uno\\cephvr1_mcu\\cephvr1_mcu.ino",
+      "snapshot_digest": "12da15dc72c227bc254df38ad8105c64fc80574211e1a0d075ffd944e20984e6",
+      "source_sha256": {
+        "cephvr1_mcu.ino": "8e7102b221e5cab65336e2b8450cc726e4dc5ce7710e18d5cea80b38fb65c41e",
+        "projector_clock.h": "dccfa8d4782b66793138d9ddcce55a62759be661c7e7f5f93c6c7d5467a6ab9c"
+      },
+      "validated_hex_digest": "8136a3fb86d7d734312c9b92fabee4bb13eba45a4481b1dda06941bdd1a47fa6"
+    },
+    "cephvr2_mcu": {
+      "command": [
+        "C:\\Program Files\\Arduino IDE\\resources\\app\\lib\\backend\\resources\\arduino-cli.exe",
+        "compile",
+        "--fqbn",
+        "arduino:avr:uno",
+        "--clean",
+        "--build-path",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\firmware-layout-cephvr2_mcu-6nefusxt\\build",
+        "--output-dir",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\firmware-layout-cephvr2_mcu-6nefusxt\\output",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\firmware-layout-cephvr2_mcu-6nefusxt\\cephvr2_mcu"
+      ],
+      "started_utc": "2026-10-09T08:30:56.884085+00:00",
+      "elapsed_seconds": 9.375,
+      "returncode": 0,
+      "source": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\firmware\\uno\\cephvr2_mcu\\cephvr2_mcu.ino",
+      "snapshot_digest": "977533f2d5e8e3065b726fbda972f34c48036bbcf1df1c899afeaf8b52b621cf",
+      "source_sha256": {
+        "cephvr2_mcu.ino": "5abce26e94630477058198b1f2bceb15797f91a7e352bcf9074f7687c69d0b36"
+      },
+      "validated_hex_digest": "0e4d05e6466328f26b33866793d895d65943ea4dfbd35165a2a090f2023bf630"
+    }
+  },
+  "method": "Existing production source snapshot and HEX validator; Arduino CLI compiles pinned bytes in workspace scratch. TemporaryDirectory removes only its task-created workspace-contained build tree. No upload, serial access or board command.",
+  "limitations": "CephVR1 is the retained legacy serial protocol, lacking CAPS. Successful compilation is not protocol-3 host compatibility or electrical/experiment acceptance."
+}

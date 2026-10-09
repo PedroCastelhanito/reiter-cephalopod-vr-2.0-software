@@ -1,0 +1,14 @@
+{
+  "provenance": "Retained initial declaration-tool output before final context creation and historical link correction; source generated bindings unchanged on rerun.",
+  "base_revision": "0aebf47",
+  "generated_files": 57,
+  "tomls_parsed": 18,
+  "register_revisions_checked": 114,
+  "changed_markdown_files": 23,
+  "local_links_checked": 945,
+  "issues": [
+    "LOG.md: missing firmware/cephvr1_mcu.ino",
+    "reports/runtime.md: missing review-evidence-2026-10-09/runtime-root-context.json",
+    "reports/runtime.md: missing review-evidence-2026-10-09/runtime-root-context.json"
+  ]
+}

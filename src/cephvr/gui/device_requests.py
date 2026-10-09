@@ -2,6 +2,7 @@
 
 from typing import Any, cast
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
@@ -22,11 +23,7 @@ async def test_camera_connections(
             ),
             None,
         )
-        configured = (
-            (selected.behavioral if role == 1 else selected.tracking)
-            if selected
-            else None
-        )
+        configured = getattr(selected, camera_role_name(role)) if selected else None
         if (
             configured is None
             or not configured.enabled
@@ -35,11 +32,7 @@ async def test_camera_connections(
             results.append(f"{serial}: skipped; assignment or enablement changed")
             succeeded = False
             continue
-        device = (
-            state.acquisition_devices.behavioral
-            if role == 1
-            else state.acquisition_devices.tracking
-        )
+        device = getattr(state.acquisition_devices, camera_role_name(role))
         if device.preview_running:
             results.append(
                 f"{serial}: capture already running; connection check skipped"
@@ -82,6 +75,7 @@ async def assign_camera_role(client: HeadlessClient, options: dict[str, Any]) ->
     roles = {
         "Behavior cam": acquisition.behavioral,
         "Tracking cam": acquisition.tracking,
+        "Eye tracking": acquisition.eye_tracking,
     }
     if not serial or role not in (*roles, "Unassigned"):
         raise ClientError("Select a supported camera role.")

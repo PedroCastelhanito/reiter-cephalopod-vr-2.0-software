@@ -3295,10 +3295,18 @@
       "additionalProperties": false,
       "properties": {
         "pacing_output_id": {
-          "maxLength": 128,
-          "minLength": 1,
-          "title": "Pacing Output Id",
-          "type": "string"
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pacing Output Id"
         },
         "rate_numerator": {
           "exclusiveMinimum": 0,
@@ -3322,7 +3330,6 @@
         }
       },
       "required": [
-        "pacing_output_id",
         "rate_numerator",
         "rate_denominator",
         "implementation",

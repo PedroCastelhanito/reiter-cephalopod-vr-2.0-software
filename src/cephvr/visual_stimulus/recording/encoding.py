@@ -44,10 +44,10 @@ def prepare_review_encoding(
     validated against the installed build. Actual encoder input feasibility remains
     a rig check.
     """
-    if not display.active_outputs or display.selected_pacing_output_id is None:
-        raise EncodingOptionsError(
-            "review encoding requires configured output and pacing identities"
-        )
+    try:
+        rate_numerator, rate_denominator = display.review_refresh_rate()
+    except ValueError as exc:
+        raise EncodingOptionsError(str(exc)) from exc
     expected_input = ffmpeg_input_format(display)
     if input_pixel_format != expected_input:
         raise EncodingOptionsError(
@@ -115,18 +115,6 @@ def prepare_review_encoding(
         raise EncodingOptionsError(
             "Visual Stimulus review conversion must preserve prepared composite dimensions"
         )
-    pacing = next(
-        (
-            item
-            for item in display.active_outputs
-            if item.output_id == display.selected_pacing_output_id
-        ),
-        None,
-    )
-    if pacing is None:
-        raise EncodingOptionsError(
-            "configured pacing output is missing from display profile"
-        )
     review = ReviewEncoding(
         composite_width=composite_width,
         composite_height=composite_height,
@@ -157,9 +145,9 @@ def prepare_review_encoding(
         force_idr=effective.force_idr,
         effective_ffmpeg_args=tuple(ffmpeg_args),
         timing=ReviewTiming(
-            pacing_output_id=pacing.output_id,
-            rate_numerator=pacing.refresh_numerator,
-            rate_denominator=pacing.refresh_denominator,
+            pacing_output_id=display.selected_pacing_output_id,
+            rate_numerator=rate_numerator,
+            rate_denominator=rate_denominator,
             implementation="ffmpeg_rawvideo_cfr_v1",
             capability_evidence_id=capability_evidence_id,
         ),

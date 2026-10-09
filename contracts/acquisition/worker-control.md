@@ -50,8 +50,8 @@ report to each other; capture-to-recording handoff is in-process. Session-indepe
 shutdown and Configuration device operations may omit work, never process identity.
 Read-only queries may address retained ended work; they never reactivate it.
 
-The registered process roles are `acquisition_behavioral_worker` and
-`acquisition_tracking_worker`, mapped explicitly to their respective CameraRole
+The registered process roles are `acquisition_behavioral_worker`,
+`acquisition_tracking_worker` and `acquisition_eye_tracking_worker`, mapped explicitly to their respective CameraRole
 values. Require agreement with WorkerContext.camera. The supervisor uses the
 registered launch's child/owner identities and confirmed endpoint, with the
 applicable registered work belonging to that launch session, for direct worker

@@ -18,6 +18,7 @@ from cephvr.controller.device.status_retention import CameraStatusRetention
 from cephvr.controller.microcontroller.protocol import PROTOCOL_VERSION
 from cephvr.controller.ports import BackendPort
 from cephvr.controller.projections import ProjectionStore
+from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.resolution import resolved_configuration
 from cephvr.controller.state import (
     CameraOperation,
@@ -55,6 +56,27 @@ class CameraReadback:
         self.clock = clock
         self.hooks = hooks
         self.status_retention = status_retention
+
+    async def accept_operation_completion(
+        self, payload: pb.BackendOperationReport, ingress_ns: int
+    ) -> pb.ReportReceipt:
+        """Acknowledge only the operation already proved by exact device status."""
+        async with self.lifecycle.lock:
+            operation = self.status_retention.find(payload.operation.context.command_id)
+            backend = self.backends.get("acquisition")
+            if (
+                operation is None
+                or backend is None
+                or payload.source != backend.context
+                or operation.final_status is None
+                or payload.source != operation.final_status.views.source
+                or payload.operation != operation.final_status.result
+                or ingress_ns > operation.deadline_ns
+            ):
+                return rejected_receipt(
+                    "EVIDENCE", "camera completion differs from retained device result"
+                )
+            return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
 
     async def adopt_camera_resolution(
         self, operation: CameraOperation, report: svc.AcquisitionResolutionReport
@@ -262,6 +284,10 @@ class CameraReadback:
             error=(
                 status.result.failure.message
                 if not status.result.succeeded and status.result.failure.message
+                else "camera identity verified; prior cleanup remains unresolved; disconnect before reconnecting"
+                if operation.kind == svc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+                and status.result.succeeded
+                and view.cleanup_pending
                 else "required camera result evidence incomplete"
             )
             if not success

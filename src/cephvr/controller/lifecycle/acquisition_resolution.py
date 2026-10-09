@@ -377,6 +377,7 @@ class AcquisitionResolution:
                 for role, camera_settings in (
                     (camera_pb.CAMERA_ROLE_BEHAVIORAL, setting.behavioral),
                     (camera_pb.CAMERA_ROLE_TRACKING, setting.tracking),
+                    (camera_pb.CAMERA_ROLE_EYE_TRACKING, setting.eye_tracking),
                 )
                 if camera_settings.HasField("enabled") and camera_settings.enabled
             )

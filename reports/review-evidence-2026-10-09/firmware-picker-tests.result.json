@@ -1,0 +1,23 @@
+{
+  "command": [
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+    "-m",
+    "not rig",
+    "-p",
+    "no:cacheprovider",
+    "-rs",
+    "--junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\review-evidence-2026-10-09\\firmware-picker-tests.xml"
+  ],
+  "environment": {
+    "QT_QPA_PLATFORM": "offscreen",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "started_utc": "2026-10-09T07:20:17.669145+00:00",
+  "elapsed_seconds": 215.36,
+  "returncode": 0,
+  "raw": "firmware-picker-tests.txt"
+}

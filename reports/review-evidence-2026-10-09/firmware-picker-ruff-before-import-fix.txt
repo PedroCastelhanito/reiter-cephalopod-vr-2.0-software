@@ -1,0 +1,25 @@
+I001 [*] Import block is un-sorted or un-formatted
+    --> tests\controller\test_microcontroller_owner.py:1111:5
+     |
+1109 |   @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+1110 |   async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+1111 | /     from unittest.mock import AsyncMock, Mock
+1112 | |
+1113 | |     from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+1114 | |     from cephvr.controller.device.ports import DeviceHooks
+1115 | |     from cephvr.controller.state import LimitsState
+1116 | |
+1117 | |     from tests.controller.support_components import default_limits
+     | |__________________________________________________________________^
+1118 |
+1119 |       views = control.AcquisitionDeviceViews()
+     |
+help: Organize imports
+     |
+1115 |     from cephvr.controller.state import LimitsState
+     -
+1116 |     from tests.controller.support_components import default_limits
+     |
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.

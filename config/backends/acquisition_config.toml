@@ -2,7 +2,7 @@
 # Camera serials/rates are owner-assigned below; other rig bindings remain incomplete. A02 owns process layout.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/acquisition_policy.toml; versions must match.
-policy_version = 19
+policy_version = 20
 
 [rpc]
 # Fixed acquisition service endpoint; loopback-only, shared by all its clients.
@@ -66,6 +66,32 @@ save_video = true
 # or recording_bit_depth = 10 with compatible 10-bit format/codec arguments.
 # Setup blocks and explains source/target-depth or codec/format incompatibility.
 # Acknowledgement cannot bypass it; no automatic downgrade/fallback.
+ffmpeg_args = [
+  "-c:v", "h264_nvenc",
+  "-pix_fmt", "+yuv444p",
+  "-vf", "scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p",
+  "-color_range", "pc",
+  "-colorspace", "bt709",
+  "-preset", "p4",
+  "-rc", "vbr",
+  "-cq", "18",
+  "-b:v", "0",
+  "-rc-lookahead", "0",
+]
+
+
+[cameras.eye_tracking]
+# Assign the third camera serial, trigger pin/rate and required drain allowance explicitly.
+# Eye role provides preview/video only; it does not select the locomotion pipeline.
+sdk_buffer_count = 10
+frame_timing = "external_trigger"
+unaligned_free_running = false
+trigger_selector = "frame_start"
+trigger_activation = "rising_edge"
+exposure_duration_mode = "timed"
+frame_silence_timeout_s = 1
+enabled = false
+save_video = true
 ffmpeg_args = [
   "-c:v", "h264_nvenc",
   "-pix_fmt", "+yuv444p",

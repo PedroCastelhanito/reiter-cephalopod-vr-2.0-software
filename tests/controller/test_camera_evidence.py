@@ -54,6 +54,45 @@ def _start(runtime: Any, parent: str, child: str, kind: int, readback: bool) -> 
     runtime.device_state.camera_operation = operation
 
 
+@pytest.mark.parametrize(
+    "mutation", ["none", "source", "work", "command", "success", "complete", "late"]
+)
+async def test_manual_completion_ack_matches_retained_device_result(
+    tmp_path: Path, mutation: str
+) -> None:
+    backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
+    runtime = _bound_runtime(tmp_path, backend)
+    parent, child = _id(), _id()
+    _start(runtime, parent, child, svc.CAMERA_COMMAND_KIND_START_PREVIEW, False)
+    status = _status(backend, child, succeeded=True)
+    status.result.command = "execute_camera_command"
+    assert (
+        await runtime.report_projection("devices", status, ingress_ns=900)
+    ).result == pb.COMMAND_RESULT_ACCEPTED
+    report = pb.LifecycleReport(
+        operation=pb.BackendOperationReport(source=backend, operation=status.result)
+    )
+    ingress = 901
+    if mutation == "source":
+        report.operation.source.backend_generation = _id()
+    elif mutation == "work":
+        report.operation.operation.work.session.session_id = _id()
+    elif mutation == "command":
+        report.operation.operation.command = "other"
+    elif mutation == "success":
+        report.operation.operation.succeeded = False
+    elif mutation == "complete":
+        report.operation.operation.complete = False
+    elif mutation == "late":
+        ingress = 1000
+    receipt = await runtime.report_lifecycle(report, ingress)
+    assert receipt.result == (
+        pb.COMMAND_RESULT_ACCEPTED if mutation == "none" else pb.COMMAND_RESULT_REJECTED
+    )
+    assert runtime.control.operations[parent].succeeded
+    assert runtime.device_state.camera_operation is None
+
+
 async def test_native_preview_visibility_is_exact_observation_without_capture_change(
     tmp_path: Path,
 ) -> None:
@@ -502,13 +541,13 @@ def test_shared_release_predicates_require_a_closed_device() -> None:
     assert not finish_editing_confirmed(open_editing, require_closed=False)
 
 
-async def test_owner_cleanup_accepts_both_explicitly_closed_camera_roles(
+async def test_owner_cleanup_accepts_all_explicitly_closed_camera_roles(
     tmp_path: Path,
 ) -> None:
     backend = pb.BackendContext(backend_name="acquisition", backend_generation=_id())
     runtime = _bound_runtime(tmp_path, backend)
     views = pb.AcquisitionDeviceViews(source=backend)
-    for role in ("behavioral", "tracking"):
+    for role in ("behavioral", "tracking", "eye_tracking"):
         getattr(views, role).CopyFrom(
             pb.CameraDeviceView(
                 device_open=False,
@@ -660,6 +699,11 @@ async def test_connection_check_requires_confirmed_cleanup(
     receipt = await runtime.report_projection("devices", status, ingress_ns=900)
     assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
     assert runtime.control.operations[parent].succeeded is not cleanup_pending
+    if cleanup_pending:
+        assert (
+            "prior cleanup remains unresolved"
+            in runtime.control.operations[parent].failure.message
+        )
 
 
 @pytest.mark.parametrize("stop", [False, True])

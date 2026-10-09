@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 
+from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import types_pb2
 
 from .validation_values import issue
@@ -16,7 +17,7 @@ def validate_shared_options(
 ) -> None:
     if len(active_ids) != sum(
         1
-        for role in ("behavioral", "tracking")
+        for role in CAMERA_NAMES
         if getattr(settings, role).HasField("enabled")
         and getattr(settings, role).enabled
         and getattr(settings, role).device.device_id

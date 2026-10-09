@@ -20,7 +20,7 @@ class RecordingPaths:
     backend_generation: str
 
     def validate(self, role: str, identity: RecordingIdentity) -> None:
-        if role not in {"behavioral", "tracking"}:
+        if role not in {"behavioral", "tracking", "eye_tracking"}:
             raise ValueError("invalid recording role")
         if not self.backend_generation:
             raise ValueError("recording reservation lacks its acquisition generation")

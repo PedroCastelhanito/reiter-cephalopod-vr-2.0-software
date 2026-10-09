@@ -2,7 +2,7 @@
 # Visual Stimulus is required in the accepted modes; this file offers no switch to disable it.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/visual_stimulus_policy.toml; versions must match.
-policy_version = 8
+policy_version = 9
 
 [rpc]
 # E08: fixed Visual Stimulus coordinator service port; loopback only; restart required after edits.

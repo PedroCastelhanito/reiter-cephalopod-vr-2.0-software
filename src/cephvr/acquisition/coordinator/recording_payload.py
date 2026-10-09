@@ -98,6 +98,8 @@ def _selected_camera(
         return settings.behavioral
     if role == camera.CAMERA_ROLE_TRACKING:
         return settings.tracking
+    if role == camera.CAMERA_ROLE_EYE_TRACKING:
+        return settings.eye_tracking
     raise ValueError(f"unsupported acquisition camera role {role}")
 
 

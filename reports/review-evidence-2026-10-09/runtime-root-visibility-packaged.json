@@ -1,0 +1,14 @@
+{
+  "recorded_utc": "2026-10-09T07:53:21.280092+00:00",
+  "launch_tag": "packaged",
+  "package_api_returncode": 15700,
+  "package_full_name": "",
+  "runtime_root": "C:\\Users\\ReiterU_PC\\.cephvr2\\runtime",
+  "physical_endpoint": "\\\\?\\C:\\Users\\ReiterU_PC\\.cephvr2\\runtime\\launcher.json",
+  "controller_generation": "abeabfcf-08a3-41be-b806-00a7348bfce9",
+  "method": "Probe supplies interactive isatty/input=N to the real replacement function; no event is signaled",
+  "prompt": "CephVR2 is already running. Kill the existing runtime and start this one? Unsaved work may be lost. [Y/N]: ",
+  "answer": "N",
+  "outcome": "Existing runtime left running.",
+  "exact_endpoint_preserved": true
+}

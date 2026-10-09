@@ -11,6 +11,7 @@ from typing import Any
 
 from google.protobuf.message import Message
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
 from cephvr.control.v1 import services_pb2 as svc
@@ -281,6 +282,7 @@ class CameraCommands:
             not in (
                 camera_pb.CAMERA_ROLE_BEHAVIORAL,
                 camera_pb.CAMERA_ROLE_TRACKING,
+                camera_pb.CAMERA_ROLE_EYE_TRACKING,
             )
             or request.kind not in NO_PATH | REQUIRES_READBACK
             or not valid_preview_placement(request)
@@ -333,20 +335,13 @@ class CameraCommands:
             return self.hooks.admission(
                 operator_id, error="acquisition settings unavailable"
             )
-        camera = (
-            settings.behavioral
-            if request.camera == camera_pb.CAMERA_ROLE_BEHAVIORAL
-            else settings.tracking
-        )
+        camera = getattr(settings, camera_role_name(request.camera))
         if not camera.device.device_id:
             return self.hooks.admission(
                 operator_id, error="assigned camera device ID unresolved"
             )
         current_view = (
-            self.projections.devices.behavioral
-            if self.projections.devices
-            and request.camera == camera_pb.CAMERA_ROLE_BEHAVIORAL
-            else self.projections.devices.tracking
+            getattr(self.projections.devices, camera_role_name(request.camera))
             if self.projections.devices
             else None
         )

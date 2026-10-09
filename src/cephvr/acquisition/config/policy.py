@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.shared.config import (
     ConfigurationError,
     LoadedPair,
@@ -13,9 +14,9 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-POLICY_VERSION = 19
+POLICY_VERSION = 20
 CONTRACT_VERSION = 1
-_POLICY_SHA256 = "28ceefd709abe111aaab32db60e1f2255226f59a57cfe50fce6abb0cdd04280a"
+_POLICY_SHA256 = "84257769b7d8ece6196e5e0e7b030b183b0976b57231503ef64e6781ec5599ad"
 
 _CONFIG_KEYS = frozenset(
     """
@@ -51,7 +52,7 @@ _POLICY_KEYS = frozenset(
     workers.setup_payload workers.camera_setup_execution
     workers.trial_preparation_payload workers.port_assignment workers.control_execution
     workers.capture_wait
-    cameras.transport_tuning cameras.transport_settings_source
+    cameras.roles cameras.transport_tuning cameras.transport_settings_source
     cameras.transport_parameter_names cameras.transport_interfaces
     cameras.pretrial_validation cameras.pixel_format_support
     cameras.image_format_implementation cameras.pixel_processing_location
@@ -125,6 +126,7 @@ _POLICY_KEYS = frozenset(
 )
 
 _FIXED_POLICY: dict[str, object] = {
+    "cameras.roles": list(CAMERA_NAMES),
     "cameras.prepared_high_depth_alignment": "msb",
     "cameras.post_cutoff_retrieval": "terminal_off_then_bounded_drain",
     "workers.capture_wait": "frame_command_or_deadline",
@@ -157,13 +159,13 @@ def _validate_operator_structure(config: Mapping[str, Any]) -> None:
     cameras = config.get("cameras")
     if not isinstance(cameras, dict):
         raise ConfigurationError("acquisition config requires [cameras] tables")
-    unexpected = cameras.keys() - {"behavioral", "tracking"}
+    unexpected = cameras.keys() - set(CAMERA_NAMES)
     if unexpected:
         raise ConfigurationError(
             f"unknown camera roles in acquisition config: {sorted(unexpected)}"
         )
     accepted_transport = {"DeviceLinkThroughputLimitMode", "DeviceLinkThroughputLimit"}
-    for role in ("behavioral", "tracking"):
+    for role in CAMERA_NAMES:
         camera = cameras.get(role)
         if not isinstance(camera, dict):
             raise ConfigurationError(f"cameras.{role} table is required")

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "contracts/visual_stimulus/tests",
+    "-p",
+    "test_*.py"
+  ],
+  "environment": {
+    "QT_QPA_PLATFORM": "offscreen",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "started_utc": "2026-10-09T05:47:09.359486+00:00",
+  "elapsed_seconds": 3.281,
+  "returncode": 0,
+  "raw": "windows-checkout-visual-contracts.txt"
+}

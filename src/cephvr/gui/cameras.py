@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
-from cephvr.gui.camera_inventory import CameraDraft, discover_drafts
+from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_drafts
 from cephvr.gui.components import ActionHeader, Card, StatusColumn, button, combo, field
 from cephvr.gui.formatting import metrics_text
 from cephvr.gui.icons import device_icon
@@ -29,6 +29,7 @@ from cephvr.gui.view import DashboardView, Phase
 
 class CamerasPanel(ResponsiveColumns):
     test_requested = pyqtSignal()
+    selected_test_requested = pyqtSignal(str)
     inventory_refreshed = pyqtSignal()
     role_requested = pyqtSignal(str, str)
     participation_changed = pyqtSignal()
@@ -47,7 +48,7 @@ class CamerasPanel(ResponsiveColumns):
         self.console.setPlainText(
             "Camera inventory uses local review samples."
             if sample
-            else "No camera inventory received."
+            else "Camera inventory has not been refreshed yet."
         )
         super().__init__(left, right)
         self.drafts = (
@@ -103,6 +104,10 @@ class CamerasPanel(ResponsiveColumns):
             "Test enabled", hint="Check connections for cameras enabled for experiment"
         )
         self.test_button.clicked.connect(self.test_enabled)
+        self.selected_test_button = button(
+            "Test selected", hint="Verify the assigned camera identity without capture"
+        )
+        self.selected_test_button.clicked.connect(self.test_selected)
         self.connect_button = button(
             "Connect", "primary", hint="Start capture and open the external preview"
         )
@@ -111,9 +116,10 @@ class CamerasPanel(ResponsiveColumns):
         for control in (self.test_button, self.connect_button):
             actions.addWidget(control)
         inventory.body.addLayout(actions)
+        inventory.body.addWidget(self.selected_test_button)
         left_layout.addWidget(inventory)
         self.configuration = Card("Camera config")
-        self.role = combo(("Behavior cam", "Tracking cam", "Unassigned"))
+        self.role = combo((*CAMERA_ROLES, "Unassigned"))
         self.role.currentTextChanged.connect(self.assign_role)
         self.configuration.body.addWidget(field("ROLE", self.role))
         form = QGridLayout()
@@ -418,6 +424,17 @@ class CamerasPanel(ResponsiveColumns):
             self.refresh_controls()
             self.preview_requested.emit(draft.key, draft.connected)
 
+    def test_selected(self) -> None:
+        draft = self.selected
+        if not self.can_operate or draft is None or draft.role not in CAMERA_ROLES:
+            return
+        if self.managed:
+            self.selected_test_requested.emit(draft.key)
+        else:
+            self.console.appendPlainText(
+                "Review · Selected camera identity was not tested."
+            )
+
     def test_enabled(self) -> None:
         if not self.can_operate:
             return
@@ -466,6 +483,9 @@ class CamerasPanel(ResponsiveColumns):
 
     def refresh_controls(self) -> None:
         draft = self.selected
+        self.selected_test_button.setEnabled(
+            self.can_operate and draft is not None and draft.role in CAMERA_ROLES
+        )
         self.refresh_button.setEnabled(
             not self.operation_pending and (self.can_operate or self.managed)
         )

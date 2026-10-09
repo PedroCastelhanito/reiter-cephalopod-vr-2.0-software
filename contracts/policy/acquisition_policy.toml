@@ -2,7 +2,7 @@
 # Source rules: Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/acquisition_config.toml. The loader rejects a version mismatch.
-policy_version = 19
+policy_version = 20
 
 [platform]
 target_os = "windows"
@@ -22,6 +22,7 @@ control_execution = "separate_threads"
 capture_wait = "frame_command_or_deadline"
 
 [cameras]
+roles = ["behavioral", "tracking", "eye_tracking"]
 transport_tuning = "explicit_per_camera"
 transport_settings_source = "config_file"
 transport_parameter_names = "sdk_native"

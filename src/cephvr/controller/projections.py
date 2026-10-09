@@ -226,7 +226,7 @@ class ProjectionStore:
         require_uuid4(view.producer.generation)
         if (
             not view.producer.role
-            or view.camera not in (1, 2)
+            or view.camera not in (1, 2, 3)
             or not view.HasField("warning_revision")
             or view.warning_revision == 0
             or not self._scope_current(view)
@@ -312,7 +312,7 @@ class ProjectionStore:
             if kind == acquisition.FRAME_BUFFER_KIND_TRACKING
             else {"gui", "cli"}
         )
-        if consumer.role not in roles or camera not in (1, 2):
+        if consumer.role not in roles or camera not in (1, 2, 3):
             raise ProjectionError("preview target/camera is invalid")
         old = self.transfers.get(operation)
         if old is not None:

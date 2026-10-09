@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="9" skipped="0" tests="40" time="3.111" timestamp="2026-10-09T16:19:28.911004+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_managed_firmware_controls_require_idle_configuration[hex]" time="0.428" /><testcase classname="tests.gui.test_dashboard" name="test_managed_firmware_controls_require_idle_configuration[ino]" time="0.402" /><testcase classname="tests.gui.test_dashboard" name="test_gui_firmware_dispatch_pins_selected_sketch_or_image[hex]" time="0.006" /><testcase classname="tests.gui.test_dashboard" name="test_gui_firmware_dispatch_pins_selected_sketch_or_image[ino]" time="0.012" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_flip_input_requires_firmware_advertised_interrupt_pin" time="0.001" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_old_firmware_is_rejected_before_output_diagnostics" time="0.000" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_legacy_firmware_caps_rejection_stops_probe_and_closes_port" time="0.000" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_native_helper_pins_image_and_retains_cleanup_until_receipt[hex-False-]" time="0.015" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_native_helper_pins_image_and_retains_cleanup_until_receipt[hex-True-]" time="0.008" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_native_helper_pins_image_and_retains_cleanup_until_receipt[ino-False-]" time="0.016" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_native_helper_pins_image_and_retains_cleanup_until_receipt[ino-True-]" time="0.011" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_native_helper_pins_image_and_retains_cleanup_until_receipt[ino-False-compiler]" time="0.010" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_native_helper_pins_image_and_retains_cleanup_until_receipt[ino-False-checksum]" time="0.010" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_native_helper_pins_image_and_retains_cleanup_until_receipt[ino-False-cancel]" time="0.009" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_source_bounds_match_fixed_microcontroller_policy" time="0.004" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[hex-]" time="0.006" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[hex-upload]" time="0.006" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[hex-reconnect]" time="0.005" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[hex-digest]" time="0.006" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[hex-active]" time="0.004" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-]" time="0.007" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-upload]" time="0.007" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-reconnect]" time="0.007" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-digest]" time="0.008" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-active]" time="0.005" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_upload_hands_off_serial_without_resuming_outputs[ino-compile]" time="0.007" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[device_open-behavioral]" time="0.036"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'behavioral', owned = 'device_open'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005883869008'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[device_open-tracking]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'tracking', owned = 'device_open'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005994253008'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[device_open-eye_tracking]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'eye_tracking', owned = 'device_open'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005994562832'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[preview_running-behavioral]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'behavioral', owned = 'preview_running'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005969154192'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[preview_running-tracking]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'tracking', owned = 'preview_running'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005883801488'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[preview_running-eye_tracking]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'eye_tracking', owned = 'preview_running'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005883239312'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[cleanup_pending-behavioral]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'behavioral', owned = 'cleanup_pending'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005883238608'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[cleanup_pending-tracking]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'tracking', owned = 'cleanup_pending'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005969075984'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_microcontroller_upload_requires_every_camera_released[cleanup_pending-eye_tracking]" time="0.002"><failure message="AttributeError: Mock object has no attribute 'authorized'">role = 'eye_tracking', owned = 'cleanup_pending'
+
+    @pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+    @pytest.mark.parametrize("owned", ["device_open", "preview_running", "cleanup_pending"])
+    async def test_microcontroller_upload_requires_every_camera_released(role, owned):
+        from unittest.mock import AsyncMock, Mock
+    
+        from cephvr.controller.device.microcontroller import MicrocontrollerCommands
+        from cephvr.controller.device.ports import DeviceHooks
+        from cephvr.controller.state import LimitsState
+    
+        from tests.controller.support_components import default_limits
+    
+        views = control.AcquisitionDeviceViews()
+        setattr(getattr(views, role), owned, True)
+        owner = MicrocontrollerDevice(
+            AsyncMock(),
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: 1,
+        )
+        device = DeviceState()
+        hooks = Mock(spec=DeviceHooks)
+&gt;       hooks.authorized.return_value = ""
+        ^^^^^^^^^^^^^^^^
+
+tests\controller\test_microcontroller_owner.py:1129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Mock spec='DeviceHooks' id='3005881780432'&gt;, name = 'authorized'
+
+    def __getattr__(self, name):
+        if name in {'_mock_methods', '_mock_unsafe'}:
+            raise AttributeError(name)
+        elif self._mock_methods is not None:
+            if name not in self._mock_methods or name in _all_magics:
+&gt;               raise AttributeError("Mock object has no attribute %r" % name)
+E               AttributeError: Mock object has no attribute 'authorized'
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\unittest\mock.py:653: AttributeError</failure></testcase><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_cancellation_waits_for_tool_and_preserves_serial_handoff[upload]" time="0.006" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_firmware_cancellation_waits_for_tool_and_preserves_serial_handoff[compile]" time="0.013" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_keepalive_does_not_cross_firmware_serial_handoff[True]" time="0.001" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_keepalive_does_not_cross_firmware_serial_handoff[False]" time="0.001" /><testcase classname="tests.controller.test_microcontroller_owner" name="test_unconfirmed_firmware_helper_blocks_camera_trigger_access" time="0.005" /></testsuite></testsuites>

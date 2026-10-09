@@ -1,0 +1,5 @@
+cancelled Setup cleanup completed at recovery
+ExecuteCameraCommand 5378034f-ed87-4fb9-ae55-d72f946f0312 failed: PARENT_REPORT: controller rejected camera completion
+ExecuteCameraCommand f732c4aa-5e8f-4b2d-9d9e-c2114297c881 failed: PARENT_REPORT: controller rejected camera completion
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

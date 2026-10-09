@@ -693,7 +693,12 @@ async def test_controller_viewer_attachment_uses_existing_policy_and_client_iden
 
 
 @pytest.mark.parametrize(
-    "role", [camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING]
+    "role",
+    [
+        camera.CAMERA_ROLE_BEHAVIORAL,
+        camera.CAMERA_ROLE_TRACKING,
+        camera.CAMERA_ROLE_EYE_TRACKING,
+    ],
 )
 def test_manual_preview_declares_exact_non_saving_capture_scope(role: int) -> None:
     owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
@@ -804,6 +809,116 @@ async def test_preview_resolution_preserves_sdk_failure_and_requires_evidence(
 class _Status:
     def resolve_camera(self, *args: object, **kwargs: object) -> None:
         _ = args, kwargs
+
+
+@pytest.mark.parametrize(
+    "failure", [asyncio.CancelledError(), TimeoutError("serial timeout")]
+)
+async def test_failed_connect_retires_readback_without_claiming_device_release(
+    monkeypatch, failure
+):
+    from unittest.mock import AsyncMock
+
+    from cephvr.acquisition.coordinator import manual_preview as module
+    from cephvr.acquisition.coordinator.configuration_resolution import (
+        ConfigurationResolution,
+    )
+
+    identity = CoordinatorIdentity(
+        process=control.ProcessIdentity(),
+        supervisor=control.ProcessIdentity(),
+        tracking=control.ProcessIdentity(),
+        controller=control.ProcessIdentity(role="controller", generation=str(uuid4())),
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=str(uuid4())
+        ),
+    )
+    configuration = ConfigurationRecord(
+        control.AcquisitionSettings(), runtime.AcquisitionFilePolicies(), revision=1
+    )
+    configuration.settings.behavioral.device.device_id = "serial"
+    resolution = ConfigurationResolution(
+        identity=identity,
+        configuration=configuration,
+        controller=SimpleNamespace(),
+        lock=asyncio.Lock(),
+        clock=lambda: 1,
+    )
+    request = wire.AcquisitionCameraCommand(
+        command=wire.BackendCommand(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            parent_operation=control.OperationContext(command_id=str(uuid4())),
+        ),
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        configuration_revision=1,
+        preview_output_bit_depth=8,
+        file_policies=configuration.file_policies,
+    )
+    status = ManualDeviceStatusReporter(
+        identity=identity,
+        controller=SimpleNamespace(),
+        commands=SimpleNamespace(),
+        pulse=PulseRecord(),
+        clock=lambda: 1,
+    )
+    status.begin_device_access(request.camera, "serial")
+
+    async def start(*args, **kwargs):
+        await resolution.begin(
+            request.command,
+            expected_cameras={request.camera},
+            request_revision=1,
+            deadline_ns=100,
+        )
+        raise failure
+
+    owner = object.__new__(ManualPreview)
+    owner.configuration = configuration
+    owner.workers = SimpleNamespace(
+        workers={
+            request.camera: SimpleNamespace(context=acq.WorkerContext(), preview=None)
+        }
+    )
+    owner.start_flow = SimpleNamespace(start=start)
+    owner.resolution = resolution
+    owner.device_status = status
+    owner.results = SimpleNamespace(report_failure=AsyncMock())
+    owner._external_roles = lambda role: []
+    monkeypatch.setattr(
+        module, "camera_policy", lambda *args: runtime.CameraFilePolicy()
+    )
+    if isinstance(failure, asyncio.CancelledError):
+        with pytest.raises(asyncio.CancelledError):
+            await owner._start(request, 100)
+    else:
+        reply = await owner._start(request, 100)
+        assert reply.result == control.COMMAND_RESULT_REJECTED
+    assert resolution._pending is None
+    view = status._views[request.camera]
+    assert view.cleanup_pending and not view.device_open
+    request.command.command_id = str(uuid4())
+    await resolution.begin(
+        request.command,
+        expected_cameras={request.camera},
+        request_revision=1,
+        deadline_ns=100,
+    )
+
+
+async def test_unwired_eye_preview_rejects_before_worker_or_serial_access():
+    owner = object.__new__(ManualPreview)
+    owner.configuration = ConfigurationRecord(
+        control.AcquisitionSettings(), runtime.AcquisitionFilePolicies(), revision=1
+    )
+    owner.configuration.settings.eye_tracking.device.device_id = "eye-serial"
+    result = await owner._start(
+        wire.AcquisitionCameraCommand(camera=camera.CAMERA_ROLE_EYE_TRACKING), 100
+    )
+    assert result.result == control.COMMAND_RESULT_REJECTED
+    assert result.failure.code == "EYE_TRIGGER_PENDING"
+    # No workers/serial owner are installed: rejection must precede device access.
 
 
 class _Port:

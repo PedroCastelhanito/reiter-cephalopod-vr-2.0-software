@@ -260,3 +260,45 @@ def test_file_pacing_overlays_stable_output_and_checks_native_rate():
             refresh_hz=60.0,
             output_id="projector/missing",
         )
+
+
+def test_all_output_vsync_without_pacer_preserves_common_recording_rate():
+    import pytest
+    from tests.visual_stimulus.support import valid_display_json
+
+    from cephvr.visual_stimulus.configuration import resolve_pacing_profile
+
+    source = json.loads(valid_display_json())
+    source.update(
+        presentation_mode="all_outputs_vsync",
+        photodiode_enabled=False,
+        photodiode_output_id=None,
+        pacing_output_id=None,
+    )
+    second = dict(
+        source["outputs"][0], output_id="second", device_identity="second-device"
+    )
+    source["outputs"].append(second)
+    source["mappings"].append(
+        dict(source["mappings"][0], mapping_id="second-map", output_id="second")
+    )
+    resolved = resolve_pacing_profile(
+        json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
+    )
+    resolved.require_trial_marker()
+    assert resolved.selected_pacing_output_id is None
+    assert resolved.review_refresh_rate() == (60, 1)
+    second["refresh_numerator"] = 30
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+
+    with pytest.raises(ValueError, match="common nominal"):
+        DisplayProfile.model_validate_json(json.dumps(source)).review_refresh_rate()
+    with pytest.raises(ValueError, match="configured target"):
+        resolve_pacing_profile(
+            json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
+        )
+    source["presentation_mode"] = "photodiode_only_vsync"
+    with pytest.raises(ValueError, match="pacing output"):
+        resolve_pacing_profile(
+            json.dumps(source), max_bytes=1_000_000, refresh_hz=60.0, output_id=None
+        )

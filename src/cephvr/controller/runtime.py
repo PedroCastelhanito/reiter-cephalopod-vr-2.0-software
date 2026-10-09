@@ -519,6 +519,13 @@ class ControllerRuntime:
                 return await self.acquisition_resolution.report_configuration_edit_operation(
                     report.operation, ingress_ns
                 )
+            if (
+                self.camera_status_retention.find(operation.context.command_id)
+                is not None
+            ):
+                return await self.camera_readback.accept_operation_completion(
+                    report.operation, ingress_ns
+                )
         return await self.lifecycle_reports.receive(report, ingress_ns)
 
     async def authority_loss(self, reason: str, issued_ns: int) -> None:

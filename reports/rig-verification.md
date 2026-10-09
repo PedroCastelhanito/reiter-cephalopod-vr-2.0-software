@@ -1,5 +1,26 @@
 # Rig verification — outstanding checks
 
+Oct9 camera-role check: real GUI identity tests for 40065509/40747103 pass; third
+Basler serial 40278236 is discovered. Eye preview/video admission is pending external
+wiring, source/rate and trigger integration under [A11](../docs/architecture/acquisition.md#a11).
+Do not use an internal clock or assume a third MCU output. The owner selects
+all-projector VSync without a pacer; local V20/E13 validation now supports it.
+Reconnect required outputs and verify native MCU Apply before another dummy run.
+Oct9 native startup with disconnected outputs instead shuts down; investigate that
+V19 failure classification. The owner requests stop while leaving the rig; no new
+Apply/experiment is verified. [Latest evidence](review-evidence-2026-10-09/mcu-configurable-context.json).
+The owner's earlier
+firmware request passes native `.ino` selection, GUI compile/verified upload and
+connection retest on COM8: protocol 3, `cephvr2_uno_2`, both camera outputs stopped.
+This resolves the observed legacy-firmware incompatibility; electrical/timing and
+interrupted-upload acceptance remain pending.
+Then verify accepted Eye assignment, exact identity, triggered preview/stop/reuse,
+recorded Eye video/frame-log pair and all-three cleanup/output closure, preserving
+Behavior/Tracking settings and disabled velocity recording.
+[Current diagnosis and local/native limits](acquisition.md),
+[raw camera checks](review-evidence-2026-10-09/eye-camera-context.json),
+[firmware repair checks](review-evidence-2026-10-09/firmware-picker-context.json).
+
 Latest retained dummy-experiment evidence is run43 (Oct8), reconciled on Oct9:
 unpaired 60 s trial/session, seven closed outputs, synced metadata, unlocked reservation,
 external counts/full CPU decode and normal exact shutdown pass in the retained records.
@@ -201,7 +222,12 @@ outside an experiment; force replacement is not graceful recording closure.
 Older launchers without the replacement endpoint require one manual shutdown.
 
 For explicit firmware Upload, select the primary Arduino `.ino` (or compiled Uno
-application `.hex`) and verify the board/port before pressing Upload. Verify the installed
+application `.hex`) and verify the board/port before pressing Upload. Keep the selected
+sketch in its own directory with its companion headers. The repaired paths are
+`firmware/uno/cephvr2_mcu/cephvr2_mcu.ino` for this protocol-3 host and
+`firmware/uno/cephvr1_mcu/cephvr1_mcu.ino` for the incompatible legacy program.
+Both pinned snapshots compile on Oct9; this does not authorize treating the legacy
+program as host-compatible. Verify the installed
 CLI/Uno AVR core and required libraries. Confirm source/companion changes are detected,
 compiler errors leave serial untouched, the application image excludes bootloader data,
 and exact compiler/job/source/build cleanup precedes upload. During Configuration

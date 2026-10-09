@@ -19,7 +19,8 @@ port = "COM8"
 trial_state_pin = "D9"
 trial_state_enabled = true
 projector_flip_pin = "D2"
-projector_flip_enabled = true
+projector_flip_enabled = false
+# Projector flip is disconnected; retain its editable pin for optional reuse.
 # Owner-assigned 2026-10-05; electrical levels and destination channels remain unverified.
 # Per-camera microcontroller_pin and pulse_frequency_hz belong to [cameras.<role>].
 # Configure before the session and lock for capture; preview uses the same frequency.

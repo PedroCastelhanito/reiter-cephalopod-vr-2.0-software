@@ -1,5 +1,29 @@
 # Visual Stimulus status
 
+Oct9 [V20/V15](../docs/architecture/visual_stimulus.md#v20) now permits the owner's
+all-projector VSync mode without a designated pacer. [E13 revision 21](../docs/architecture/visual_stimulus.md#e13)
+derives recording cadence from the common exact nominal enabled-output rate and
+records null pacing identity; differing rates reject. Mixed mode still requires
+its selected pacer. Fixed policy/config version 9 and the canonical prepared schema
+bind this behavior. The focused profile/pacing/encoding owners reuse existing
+state and dependencies under ARCH-002. The 300-case affected suite passes with one
+privilege skip; 42 Visual contracts and full static checks pass. The latest full
+suite has 1,858 passes and one exact-completion timeout, which passes focused rerun;
+this is not a full-suite pass. [Current evidence](review-evidence-2026-10-09/mcu-configurable-context.json).
+
+Native startup reaches display identity validation, then reports zero active matches
+for a saved DLP output and shuts down. The owner confirms the projectors were
+disconnected and requests stopping work while leaving the rig. V19 requires missing
+startup settings to leave configuration editing available; investigate this observed
+failure classification before claiming that behavior. No fix or native MCU Apply,
+new rendering/recording run, optical or throughput acceptance is claimed. Work remains
+deferred in TODO, with no new runtime left by this attempt.
+
+Earlier Windows checkout `94285ac` passes the complete non-rig suite, all 42 stimulus
+contract cases and 11 schema matches after regenerating stale local bindings.
+[Current cross-owner results and limits](runtime.md) retain exact evidence; presentation,
+encoding throughput and optical acceptance remain separate rig checks.
+
 Oct9 authorized baseline repair restores the 500 ms preparation lead and unsets the
 diagnostic pacing-output identity; camera drain margins are also unset. All 36 owning
 configuration cases pass. Visual Stimulus contract discovery passes 42 tests and all

@@ -89,6 +89,8 @@ class TrialReportDelivery:
                         if tag.startswith("behavioral_cam")
                         else camera.CAMERA_ROLE_TRACKING
                         if tag.startswith("tracking_cam")
+                        else camera.CAMERA_ROLE_EYE_TRACKING
+                        if tag.startswith("eye_tracking_cam")
                         else 0
                     )
                     worker = self.workers.get(role)

@@ -27,10 +27,13 @@ class CredentialError(RuntimeError):
 def default_runtime_root() -> Path:
     """Choose a user-private runtime location; CredentialStore verifies it."""
     if sys.platform == "win32":
-        appdata = os.environ.get("LOCALAPPDATA")
-        if not appdata:
-            raise CredentialError("LOCALAPPDATA is required for local credentials")
-        return Path(appdata) / "CephVR2" / "runtime"
+        profile = os.environ.get("USERPROFILE")
+        if not profile or not Path(profile).is_absolute():
+            raise CredentialError(
+                "An absolute USERPROFILE is required for local credentials"
+            )
+        # AppData writes from packaged launchers can be hidden from ordinary terminals.
+        return Path(profile) / ".cephvr2" / "runtime"
     parent = os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
     return Path(parent) / f"cephvr-{os.getuid()}"
 

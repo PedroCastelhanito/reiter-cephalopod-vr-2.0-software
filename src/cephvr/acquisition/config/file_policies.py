@@ -23,6 +23,7 @@ def load_file_policies(root: Path) -> runtime_pb2.AcquisitionFilePolicies:
     for role, enum_value in (
         ("behavioral", camera_pb2.CAMERA_ROLE_BEHAVIORAL),
         ("tracking", camera_pb2.CAMERA_ROLE_TRACKING),
+        ("eye_tracking", camera_pb2.CAMERA_ROLE_EYE_TRACKING),
     ):
         values = config.get("cameras", {}).get(role, {})
         policy = result.cameras.add(camera=enum_value)

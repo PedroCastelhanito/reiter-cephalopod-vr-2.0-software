@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.state import ResourceRecord, SessionRecord, WorkerRecord
-from cephvr.acquisition.v1 import camera_pb2
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
@@ -55,11 +55,7 @@ class WorkerCleanupEvidence:
                     "session cleanup does not prove exact ownership release"
                 )
         result_keys: set[str] = set()
-        role_prefix = (
-            "behavioral_cam"
-            if worker.context.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
-            else "tracking_cam"
-        )
+        role_prefix = f"{camera_role_name(worker.context.camera)}_cam"
         for result in cleanup.outputs:
             if (
                 result.output_key in result_keys

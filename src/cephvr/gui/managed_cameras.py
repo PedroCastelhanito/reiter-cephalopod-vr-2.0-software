@@ -5,14 +5,16 @@ from collections.abc import Callable
 
 from PyQt6.QtCore import QObject
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.camera_inventory import CAMERA_ROLES
 from cephvr.gui.cameras import CamerasPanel
 from cephvr.gui.controller_bridge import ControllerBridge
 from cephvr.gui.view import PreviewView
 
-_CAMERAS = {"Behavior cam": 1, "Tracking cam": 2}
+_CAMERAS = CAMERA_ROLES
 
 
 class ManagedCameras(QObject):
@@ -39,6 +41,7 @@ class ManagedCameras(QObject):
         panel.preset_import_requested.connect(self.import_preset)
         panel.role_requested.connect(self.assign_role)
         panel.test_requested.connect(self.test_enabled)
+        panel.selected_test_requested.connect(self.test_selected)
 
     def role(self, key: str) -> int | None:
         return next(
@@ -67,12 +70,14 @@ class ManagedCameras(QObject):
         self.panel.console.appendPlainText(f"{action}: {message}")
         if action == "save_camera_settings" and not success:
             match = re.search(
-                r"backends\.acquisition\.(behavioral|tracking)\.([^:]+):",
+                r"backends\.acquisition\.(behavioral|tracking|eye_tracking)\.([^:]+):",
                 message,
             )
             if match is not None:
-                role = (
-                    "Behavior cam" if match.group(1) == "behavioral" else "Tracking cam"
+                role = next(
+                    label
+                    for label, value in _CAMERAS.items()
+                    if camera_role_name(value) == match.group(1)
                 )
                 path = match.group(2)
                 field_name = (
@@ -98,6 +103,18 @@ class ManagedCameras(QObject):
     def test_enabled(self) -> None:
         if self.configured_tests:
             self.queue("test_cameras", cameras=list(self.configured_tests))
+
+    def test_selected(self, key: str) -> None:
+        if self.panel.snapshot_draft:
+            self.panel.console.appendPlainText(
+                "Submit the camera assignment before testing its identity."
+            )
+            return
+        role = self.role(key)
+        if role is not None:
+            self.queue(
+                "camera", role=role, kind=rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
 
     def assign_role(self, serial: str, role: str) -> None:
         if not self.queue("assign_camera_role", serial=serial, role=role):
@@ -130,6 +147,7 @@ class ManagedCameras(QObject):
                 for role, setting in (
                     (1, camera_settings.behavioral),
                     (2, camera_settings.tracking),
+                    (3, camera_settings.eye_tracking),
                 )
                 if setting.enabled and setting.device.device_id
             ]
@@ -144,6 +162,7 @@ class ManagedCameras(QObject):
             assignments = {
                 mcu_settings.behavioral.device.device_id: "Behavior cam",
                 mcu_settings.tracking.device.device_id: "Tracking cam",
+                mcu_settings.eye_tracking.device.device_id: "Eye tracking",
             }
             for draft in cameras.drafts:
                 expected_role = assignments.get(draft.serial, "Unassigned")
@@ -160,10 +179,8 @@ class ManagedCameras(QObject):
                 if expected_role in _CAMERAS and (
                     camera_config_changed or role_changed
                 ):
-                    assigned_camera = (
-                        mcu_settings.behavioral
-                        if expected_role == "Behavior cam"
-                        else mcu_settings.tracking
+                    assigned_camera = getattr(
+                        mcu_settings, camera_role_name(_CAMERAS[expected_role])
                     )
                     timing = assigned_camera.device.frame_timing
                     draft.values["trigger_clock"] = (
@@ -188,10 +205,8 @@ class ManagedCameras(QObject):
                         if assigned_camera.device.HasField("pfs_source_filename")
                         else ""
                     )
-                    pulse = (
-                        mcu_settings.pulses.behavioral
-                        if expected_role == "Behavior cam"
-                        else mcu_settings.pulses.tracking
+                    pulse = getattr(
+                        mcu_settings.pulses, camera_role_name(_CAMERAS[expected_role])
                     )
                     if pulse.HasField("requested_frequency_hz"):
                         draft.values["trigger_frequency_hz"] = (
@@ -208,7 +223,7 @@ class ManagedCameras(QObject):
             if role is None:
                 continue
             configured = (
-                (camera_settings.behavioral if role == 1 else camera_settings.tracking)
+                getattr(camera_settings, camera_role_name(role))
                 if camera_settings is not None
                 else None
             )
@@ -217,11 +232,7 @@ class ManagedCameras(QObject):
                 draft.enabled = bool(assigned and configured and configured.enabled)
             if cameras.pending_enable.get(draft.serial) == draft.enabled:
                 cameras.pending_enable.pop(draft.serial, None)
-            device = (
-                state.acquisition_devices.behavioral
-                if role == 1
-                else state.acquisition_devices.tracking
-            )
+            device = getattr(state.acquisition_devices, camera_role_name(role))
             if cameras.snapshot_draft and mcu_settings is not None:
                 reported = next(
                     (
@@ -232,6 +243,10 @@ class ManagedCameras(QObject):
                                 state.acquisition_devices.behavioral,
                             ),
                             (mcu_settings.tracking, state.acquisition_devices.tracking),
+                            (
+                                mcu_settings.eye_tracking,
+                                state.acquisition_devices.eye_tracking,
+                            ),
                         )
                         if settings.device.device_id == draft.serial
                     ),

@@ -256,6 +256,15 @@ class PreparedFixTests(unittest.TestCase):
             document['review_encoding'] = bad
             with self.subTest(case=name), self.assertRaises(ValueError): load(document)
 
+        document['display']['photodiode_enabled'] = False
+        document['display']['pacing_output_id'] = None
+        unpaced = dict(encoding, timing=dict(timing(), pacing_output_id=None))
+        document['review_encoding'] = unpaced
+        self.assertIsNone(load(document).review_encoding.timing.pacing_output_id)
+        document['display']['outputs'][1]['refresh_numerator'] = 30
+        with self.assertRaisesRegex(ValueError, 'common nominal'):
+            load(document)
+
     def test_arena_boundary_coverage(self):
         document = prepared([arena_block()])
         with self.assertRaises(ValueError): load(document)

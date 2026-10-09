@@ -82,15 +82,42 @@ def test_windows_runtime_namespace_does_not_touch_legacy_files(
     log = legacy / "controller.log"
     log.write_text("legacy log", encoding="utf-8")
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "profile"))
 
     root = default_runtime_root()
-    assert root == tmp_path / "CephVR2" / "runtime"
+    assert root == tmp_path / "profile" / ".cephvr2" / "runtime"
     store = CredentialStore(root, _id())
     principal = store.provision_client("cli")
     assert store.lookup(principal.generation) == principal
     assert log.read_text(encoding="utf-8") == "legacy log"
     with log.open("a", encoding="utf-8") as stream:
         stream.write("\nstill writable")
+
+
+def test_windows_runtime_root_is_shared_across_appdata_contexts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "AppData" / "Local"))
+    ordinary = default_runtime_root()
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "package" / "LocalCache"))
+    assert default_runtime_root() == ordinary == tmp_path / ".cephvr2" / "runtime"
+    monkeypatch.delenv("LOCALAPPDATA")
+    assert default_runtime_root() == ordinary
+
+
+@pytest.mark.parametrize("profile", [None, "", "relative-profile"])
+def test_windows_runtime_root_requires_absolute_profile(
+    monkeypatch: pytest.MonkeyPatch, profile: str | None
+) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+    if profile is None:
+        monkeypatch.delenv("USERPROFILE", raising=False)
+    else:
+        monkeypatch.setenv("USERPROFILE", profile)
+    with pytest.raises(CredentialError, match="absolute USERPROFILE"):
+        default_runtime_root()
 
 
 def test_clock_requires_matching_validated_domain() -> None:

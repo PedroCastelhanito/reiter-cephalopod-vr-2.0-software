@@ -187,13 +187,20 @@ class ManualDeviceCommands:
                 # Every export is preceded by a fresh apply/readback handshake
                 # under this command's exact revision, then gets its own child.
                 await self._apply_for_export(worker, request, deadline_ns)
-            except (RuntimeError, TimeoutError, ValueError) as exc:
+            except (
+                asyncio.CancelledError,
+                RuntimeError,
+                TimeoutError,
+                ValueError,
+            ) as exc:
                 pending = control.OperationContext(command_id=command.command_id)
                 try:
                     await self.resolution.cancel(pending)
                     await self.resolution.retire(pending)
                 except (RuntimeError, ValueError):
                     pass
+                if isinstance(exc, asyncio.CancelledError):
+                    raise
                 return _rejected(command.command_id, "PFS_EXPORT_READBACK", str(exc))
         try:
             if request.kind == wire.CAMERA_COMMAND_KIND_IMPORT_PFS:
@@ -310,14 +317,15 @@ class ManualDeviceCommands:
                     else None
                 ),
             )
-        except (RuntimeError, TimeoutError, ValueError) as exc:
-            if request.kind == wire.CAMERA_COMMAND_KIND_IMPORT_PFS:
-                pending = control.OperationContext(command_id=command.command_id)
-                try:
-                    await self.resolution.cancel(pending)
-                    await self.resolution.retire(pending)
-                except (RuntimeError, ValueError):
-                    pass
+        except (asyncio.CancelledError, RuntimeError, TimeoutError, ValueError) as exc:
+            pending = control.OperationContext(command_id=command.command_id)
+            try:
+                await self.resolution.cancel(pending)
+                await self.resolution.retire(pending)
+            except (RuntimeError, ValueError):
+                pass
+            if isinstance(exc, asyncio.CancelledError):
+                raise
             await self.results.report_failure(
                 command,
                 command_name="execute_camera_command",

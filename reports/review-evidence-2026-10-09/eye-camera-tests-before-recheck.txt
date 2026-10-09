@@ -1,0 +1,383 @@
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 11%]
+........................................................................ [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 23%]
+.............F.......................................................... [ 27%]
+................................s....................................... [ 31%]
+........................................................................ [ 35%]
+............s........................................................... [ 39%]
+........................................................................ [ 43%]
+....................s................................................... [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 62%]
+........................................................................ [ 66%]
+........................................................................ [ 70%]
+........s............................................................... [ 74%]
+................s....................................................... [ 78%]
+........................................................................ [ 82%]
+........................................................................ [ 86%]
+........................................................................ [ 90%]
+........................................................................ [ 94%]
+........................................................................ [ 97%]
+......................................                                   [100%]
+================================== FAILURES ===================================
+___ test_empty_edit_uses_real_acquisition_status_and_completion_path[True] ____
+
+fut = <_GatheringFuture finished exception=CancelledError()>, timeout = 2
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout <= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+>                   return fut.result()
+                           ^^^^^^^^^^^^
+E                   asyncio.exceptions.CancelledError
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:500: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/ReiterU_PC/AppData/Local/Temp/pytest-of-ReiterU_PC/pytest-120/test_empty_edit_uses_real_acqu1')
+never_confirm = True
+
+    @pytest.mark.parametrize("never_confirm", [False, True])
+    async def test_empty_edit_uses_real_acquisition_status_and_completion_path(
+        tmp_path: Path, never_confirm: bool
+    ) -> None:
+        runtime = _runtime_with_validators(tmp_path)
+        runtime.clock = host_time_ns
+        runtime.acquisition_resolution.clock = host_time_ns
+        runtime.device_views.clock = host_time_ns
+        runtime.configuration_commands.clock = host_time_ns
+        runtime.configuration_commands.owned_edits.clock = host_time_ns
+        if never_confirm:
+            runtime.configuration_commands.owned_edits.limits.current = dataclasses.replace(
+                runtime.configuration_commands.owned_edits.limits.current,
+                setup_ns=100_000_000,
+                recovery_ns=1_000_000,
+            )
+        _open_preview(runtime)
+        entry = runtime.configuration_state.current.backends.add(
+            backend_name="acquisition", enabled=True
+        )
+        entry.acquisition.behavioral.enabled = True
+        backend_context = pb.BackendContext(
+            backend_name="acquisition", backend_generation=_id()
+        )
+        runtime.projections.peers["acquisition"] = backend_context
+        controller_identity = pb.ProcessIdentity(
+            role="controller",
+            generation=runtime.configuration_commands.owned_edits.generation,
+        )
+        acquisition_settings = pb.AcquisitionSettings()
+        acquisition_settings.CopyFrom(entry.acquisition)
+        file_policies = acquisition_pb.AcquisitionFilePolicies()
+        configuration = ConfigurationRecord(
+            settings=acquisition_settings,
+            file_policies=file_policies,
+            revision=runtime.configuration_state.revision,
+        )
+        commands = CommandLedger(
+            backend_context.backend_generation,
+            10_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        )
+    
+        class _Bridge:
+            resolution_receipt: pb.ReportReceipt | None = None
+            status_receipt: pb.ReportReceipt | None = None
+            lifecycle_receipt: pb.ReportReceipt | None = None
+            lifecycle_report: pb.LifecycleReport | None = None
+    
+            def __init__(self) -> None:
+                self.status_started = asyncio.Event()
+                self.status_gate = asyncio.Event()
+    
+            async def report_acquisition_resolution(self, report, *, deadline_ns):
+                _ = deadline_ns
+                self.resolution_receipt = await runtime.report_acquisition_resolution(
+                    report, runtime.clock()
+                )
+                return self.resolution_receipt
+    
+            async def report_acquisition_device_status(self, report, *, deadline_ns):
+                _ = deadline_ns
+                self.status_started.set()
+                await self.status_gate.wait()
+                self.status_receipt = await runtime.report_projection(
+                    "devices", report, runtime.clock()
+                )
+                return self.status_receipt
+    
+            async def report_lifecycle(self, report, *, deadline_ns):
+                _ = deadline_ns
+                self.lifecycle_report = pb.LifecycleReport.FromString(
+                    report.SerializeToString(deterministic=True)
+                )
+                self.lifecycle_receipt = await runtime.report_lifecycle(
+                    report, runtime.clock()
+                )
+                return self.lifecycle_receipt
+    
+        bridge = _Bridge()
+        identity = CoordinatorIdentity(
+            backend=backend_context,
+            process=pb.ProcessIdentity(
+                role="acquisition", generation=backend_context.backend_generation
+            ),
+            controller=controller_identity,
+            supervisor=pb.ProcessIdentity(role="supervisor", generation=_id()),
+            tracking=pb.ProcessIdentity(role="tracking", generation=_id()),
+        )
+        resolution = ConfigurationResolution(
+            identity=identity,
+            configuration=configuration,
+            controller=bridge,  # type: ignore[arg-type]
+            lock=asyncio.Lock(),
+            clock=runtime.clock,
+        )
+        device_status = ManualDeviceStatusReporter(
+            identity=identity,
+            controller=bridge,  # type: ignore[arg-type]
+            commands=commands,
+            pulse=PulseRecord(),
+            clock=runtime.clock,
+        )
+    
+        class _Workers:
+            workers: dict[int, Any] = {}
+    
+            async def retire_completed_session(self, *_args, **_kwargs):
+                return None
+    
+        class _Serial:
+            pass
+    
+        class _Preview:
+            pass
+    
+        manual = ManualDevices(
+            identity=identity,
+            configuration=configuration,
+            session_slot=SessionSlot(),
+            workers=_Workers(),  # type: ignore[arg-type]
+            controller=bridge,  # type: ignore[arg-type]
+            resolution=resolution,
+            device_status=device_status,
+            pulse=device_status.pulse,
+            serial=_Serial(),  # type: ignore[arg-type]
+            preview=_Preview(),  # type: ignore[arg-type]
+            lock=resolution.lock,
+            clock=runtime.clock,
+        )
+    
+        class _Backend:
+            context = backend_context
+    
+            def __init__(self) -> None:
+                self.request: svc.AcquisitionCameraSettingsCommand | None = None
+                self.manual_admission: pb.CommandAdmission | None = None
+                self.confirmation_admission: pb.CommandAdmission | None = None
+                self.confirmation_started = asyncio.Event()
+                self.confirmation_gate = asyncio.Event()
+                self.confirmation_calls = 0
+                self.transport = CommandAdmissionTransport(commands)
+    
+            async def apply_camera_settings(self, request, *, deadline_ns):
+                self.request = request
+    
+                async def execute(*, deadline_ns):
+                    self.manual_admission = await manual.apply(
+                        request, deadline_ns=deadline_ns
+                    )
+                    return self.manual_admission
+    
+                return await self.transport.dispatch(
+                    "ApplyCameraSettings",
+                    request,
+                    request.command,
+                    deadline_ns,
+                    execute,
+                )
+    
+            async def confirm_configuration(self, request, *, deadline_ns):
+                self.confirmation_calls += 1
+                self.confirmation_started.set()
+                await self.confirmation_gate.wait()
+                self.confirmation_admission = await resolution.confirm(
+                    request, deadline_ns=deadline_ns
+                )
+                # The handler ran, but the reply was lost. The controller retries
+                # the same confirmation command; only the retained device status
+                # and completion make the live edit terminal.
+                raise TimeoutError("confirmation reply was lost after handler execution")
+    
+        backend = _Backend()
+        runtime.configuration_commands.owned_edits.backend = backend  # type: ignore[assignment]
+        runtime.configuration_commands.owned_edits.file_policy_loader = lambda _names: {
+            "acquisition": file_policies
+        }
+        runtime.acquisition_resolution.backends = {"acquisition": backend}  # type: ignore[assignment]
+        runtime.acquisition_resolution.validators = (
+            runtime.configuration_commands.validators
+        )
+        runtime.acquisition_resolution.authorized = lambda _command: ""
+    
+        update = asyncio.create_task(
+            runtime.update_configuration(_update(runtime, experiment="e3"))
+        )
+        await asyncio.wait_for(backend.confirmation_started.wait(), 1)
+        if never_confirm:
+            admission = await asyncio.wait_for(update, 2)
+>           await asyncio.wait_for(
+                asyncio.gather(*tuple(backend.transport._inflight.values())), 2
+            )
+
+tests\controller\test_camera_configuration.py:772: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+fut = <_GatheringFuture finished exception=CancelledError()>, timeout = 2
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout <= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+                    return fut.result()
+                except exceptions.CancelledError as exc:
+>                   raise exceptions.TimeoutError() from exc
+E                   TimeoutError
+
+C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py:502: TimeoutError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\controller\test_configuration_transactions.py:158: Windows account lacks symlink creation privilege
+SKIPPED [1] tests\controller\test_microcontroller_owner.py:923: Windows symlink privilege or Developer Mode is unavailable
+SKIPPED [1] tests\controller\test_storage.py:137: symlink creation unavailable on this host
+SKIPPED [1] tests\platform\test_windows_native_on_rig.py:638: Windows symlink privilege or Developer Mode is unavailable
+SKIPPED [1] tests\shared\test_recovery.py:64: Windows account lacks symlink creation privilege
+1 failed, 1832 passed, 5 skipped, 1 deselected in 195.91s (0:03:15)

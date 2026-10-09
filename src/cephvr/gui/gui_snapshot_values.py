@@ -80,7 +80,8 @@ class ExperimentSnapshot:
             serials.add(serial)
             role = text(camera["role"], "Camera role")
             if (
-                role not in ("Behavior cam", "Tracking cam", "Unassigned")
+                role
+                not in ("Behavior cam", "Tracking cam", "Eye tracking", "Unassigned")
                 or role != "Unassigned"
                 and role in roles
             ):

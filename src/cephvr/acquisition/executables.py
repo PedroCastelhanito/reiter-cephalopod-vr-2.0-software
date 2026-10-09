@@ -17,6 +17,7 @@ class PythonWorkerExecutables:
         if role not in {
             camera_pb2.CAMERA_ROLE_BEHAVIORAL,
             camera_pb2.CAMERA_ROLE_TRACKING,
+            camera_pb2.CAMERA_ROLE_EYE_TRACKING,
         }:
             raise ValueError("unsupported worker camera role")
         return self.interpreter, True, "grpc_shutdown"

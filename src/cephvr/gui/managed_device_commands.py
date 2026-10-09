@@ -6,6 +6,7 @@ import asyncio
 from decimal import Decimal, InvalidOperation
 from typing import Any, cast
 
+from cephvr.acquisition.identity import CAMERA_NAME_BY_ROLE, camera_role_name
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.client.session import ClientError, HeadlessClient
 from cephvr.control.v1 import services_pb2 as rpc
@@ -137,6 +138,13 @@ async def _camera(
     kind = int(options["kind"])
     role = int(options["role"])
     state = client.snapshot
+    device = getattr(state.acquisition_devices, camera_role_name(role))
+    if (
+        kind == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+        and not device.preview_run_id
+        and (device.device_open or device.cleanup_pending)
+    ):
+        kind = rpc.CAMERA_COMMAND_KIND_FINISH_EDITING
     request = rpc.CameraCommandRequest(
         command=client.operator_command(),
         expected_configuration_revision=state.configuration.revision,
@@ -150,11 +158,7 @@ async def _camera(
         rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW,
         rpc.CAMERA_COMMAND_KIND_HIDE_PREVIEW,
     ):
-        camera = (
-            state.acquisition_devices.behavioral
-            if role == 1
-            else state.acquisition_devices.tracking
-        )
+        camera = getattr(state.acquisition_devices, camera_role_name(role))
         if not camera.preview_run_id:
             raise ClientError("No current preview run for this camera.")
         request.preview_run_id = camera.preview_run_id
@@ -164,11 +168,7 @@ async def _camera(
     if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW and options.get("show_preview"):
         # Completion's current view supplies the exact new run; Show never starts capture.
         current = client.snapshot
-        device = (
-            current.acquisition_devices.behavioral
-            if role == 1
-            else current.acquisition_devices.tracking
-        )
+        device = getattr(current.acquisition_devices, camera_role_name(role))
         if not device.preview_running or not device.preview_run_id:
             raise ClientError(
                 "Capture completed without a confirmed preview run; refresh camera status."
@@ -227,6 +227,7 @@ async def _save_camera_settings(
             if not acquisition.enabled:
                 acquisition.acquisition.behavioral.enabled = False
                 acquisition.acquisition.tracking.enabled = False
+                acquisition.acquisition.eye_tracking.enabled = False
             acquisition.enabled = True
             selected.device.ClearField("pfs_baseline")
         selected.device.pfs_source_filename = preset
@@ -243,11 +244,11 @@ async def _save_camera_settings(
         pulse.requested_frequency_hz = float(frequency)
     await _update_configuration(client, state, proposed, "Camera settings")
     if import_preset:
-        role = (
-            1
-            if acquisition.acquisition.behavioral.device.device_id
+        role = next(
+            role
+            for role, name in CAMERA_NAME_BY_ROLE.items()
+            if getattr(acquisition.acquisition, name).device.device_id
             == str(options["serial"])
-            else 2
         )
         await import_camera_preset(client, role, preset)
 
@@ -286,6 +287,10 @@ def _assigned_camera(
     pairs = (
         (acquisition.acquisition.behavioral, acquisition.acquisition.pulses.behavioral),
         (acquisition.acquisition.tracking, acquisition.acquisition.pulses.tracking),
+        (
+            acquisition.acquisition.eye_tracking,
+            acquisition.acquisition.pulses.eye_tracking,
+        ),
     )
     matches = [
         (settings, pulse)

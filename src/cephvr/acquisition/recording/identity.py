@@ -8,7 +8,7 @@ from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.shared.clock import HOST_CLOCK_ID
 from cephvr.shared.identity import require_uuid4
 
-_ROLES = {"behavioral", "tracking"}
+_ROLES = {"behavioral", "tracking", "eye_tracking"}
 MP4_IDENTITY_KEYS = (
     "cephvr_identity_version",
     "cephvr_session_id",

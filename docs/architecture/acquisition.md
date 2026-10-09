@@ -27,7 +27,7 @@ is not runtime or rig validation (E15).
 <a id="a01"></a>
 ### A01 — Camera acquisition and recording ownership
 
-**Status:** Accepted · **Revision:** 16
+**Status:** Accepted · **Revision:** 17
 
 - The acquisition backend owns camera capture, video encoding and camera video files,
   including trial-bound recording and verified file closure under E05/E11. The
@@ -71,9 +71,12 @@ is not runtime or rig validation (E15).
 - Bind each enabled camera role to an explicitly configured stable device ID (e.g.
   serial number). Setup verifies that exact device; an unavailable device or missing
   assignment blocks Ready with an actionable error. Never substitute by discovery
-  order. With both roles enabled, require distinct physical devices and reject
+  order. With multiple roles enabled, require distinct physical devices and reject
   duplicate assignments before capture; initially no camera stream is shared across
-  behavioral/tracking roles.
+  behavioral/tracking/eye-tracking roles. Eye tracking is a third preview/video role;
+  it supplies no eye-position analysis or locomotion input. Its required external
+  trigger wiring/source/rate remain unset; capture is blocked until trigger
+  integration and rig verification are completed under A11/E15.
 - Assignments are configurable under E07 before the session and locked during it;
   changing a prepared assignment invalidates Ready and requires fresh Setup. Supplied
   owner assignments live in the acquisition configuration; discovery/readback alone
@@ -87,9 +90,9 @@ Remaining format mappings and integration are classified in the contract worklis
 <a id="a02"></a>
 ### A02 — Acquisition service and camera workers
 
-**Status:** Accepted · **Revision:** 30
+**Status:** Accepted · **Revision:** 31
 
-- One acquisition coordinator serves both camera roles through one external control
+- One acquisition coordinator serves Behavioral, Tracking and Eye tracking roles through one external control
   endpoint; it aggregates readiness/closure and never relays pixels.
 - The initial runtime targets Windows. Isolate OS-specific memory, process
   containment and storage integration; other OS support is future work.
@@ -300,12 +303,13 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 59
+**Status:** Accepted · **Revision:** 60
 
 **Files**
 
 - Each saved camera/trial has two files sharing its prefix: `<prefix>_<role>_cam.mp4`
-  and `<prefix>_<role>_cam_frames.jsonl` (`behavioral_cam`, `tracking_cam`).
+  and `<prefix>_<role>_cam_frames.jsonl` (`behavioral_cam`, `tracking_cam`,
+  `eye_tracking_cam`). Eye trigger admission remains subject to A01/A11.
   `save_video` enables both; disabled saving creates neither, no recording
   thread/queue and no detailed camera history. Tracking outputs and operational
   warnings/health are independent. No HDF5, CSV or separate meta file.
@@ -623,7 +627,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 57
+**Status:** Accepted · **Revision:** 58
 
 **Capture lifetime**
 
@@ -671,6 +675,14 @@ stamping/filtering and the mappings still need runtime implementation.
   are started. Existing preview is not interrupted. Retain cleanup as unconfirmed
   on failure until normal device-release evidence resolves it. This check is not
   frame-delivery, trigger or Setup-readiness evidence.
+- Failed or canceled manual preview/PFS readback retires only its exact pending
+  configuration-adoption barrier and propagates cancellation. It does not infer SDK,
+  worker, pulse or resource release. Disconnect without a preview run uses Finish
+  Editing and requires ordinary confirmed device-release evidence; an identity check
+  retains any prior unresolved cleanup instead of claiming the camera was released.
+- Manual camera completion acknowledgement must match its retained exact device
+  result and backend generation within the original deadline. It adds no readiness
+  or release evidence and cannot change an already completed operator outcome.
 
 **Preview**
 
@@ -881,7 +893,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 41
+**Status:** Accepted · **Revision:** 43
 
 **Board and firmware**
 
@@ -909,6 +921,10 @@ hardware information and later implementation; no new deferral is implied.
 - Serial protocol version is integer **3**, separate from firmware release, and must
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
+- Version 3 controls Behavioral and Tracking outputs. Eye tracking requires external
+  triggering, but its wiring/source/rate are not yet specified. Do not map Eye onto
+  either existing output, add an independent output or flash firmware by inference.
+  A01 blocks its capture pending that input and the corresponding integration.
 
 **Connection**
 
@@ -1042,7 +1058,11 @@ hardware information and later implementation; no new deferral is implied.
 **Operator I/O diagnostics**
 
 - Trial state is an active-high output; Projector flip is a rising-edge input.
-  Their pin assignments belong to Microcontroller. Per-output test intent targets
+  Their enablement and pin assignments are independently configurable in
+  Microcontroller; disabled signals retain their draft assignments and cannot run
+  diagnostics. The disconnected Projector flip defaults disabled; rendering VSync
+  does not require this physical input. Camera trigger enablement/rates retain A10's
+  owner. Per-output test intent targets
   one assigned pin for external observation in SpikeGLX; camera tests use the rate
   already configured in Cameras. Input diagnostics observe edges rather than drive
   the input. Controller owns one diagnostic on its serial connection in

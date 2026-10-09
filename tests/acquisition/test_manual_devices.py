@@ -785,3 +785,88 @@ def test_manual_command_installs_current_draft_but_rejects_stale_or_owned_change
     request.settings.CopyFrom(configuration.settings)
     assert owner.install(request, 100) is None  # unrelated controller revision
     assert configuration.revision == 3
+
+
+def test_canceled_pfs_export_retires_only_its_readback_barrier() -> None:
+    from unittest.mock import Mock
+
+    import pytest
+
+    from cephvr.acquisition.coordinator.configuration_resolution import (
+        ConfigurationResolution,
+    )
+    from cephvr.acquisition.coordinator.manual_device_commands import (
+        ManualDeviceCommands,
+    )
+
+    async def run():
+        identity = CoordinatorIdentity(
+            process=control.ProcessIdentity(),
+            supervisor=control.ProcessIdentity(),
+            tracking=control.ProcessIdentity(),
+            controller=control.ProcessIdentity(role="controller", generation=_id()),
+            backend=control.BackendContext(
+                backend_name="acquisition", backend_generation=_id()
+            ),
+        )
+        configuration = ConfigurationRecord(
+            control.AcquisitionSettings(),
+            runtime_pb2.AcquisitionFilePolicies(),
+            revision=1,
+        )
+        resolution = ConfigurationResolution(
+            identity=identity,
+            configuration=configuration,
+            controller=SimpleNamespace(),
+            lock=asyncio.Lock(),
+            clock=lambda: 1,
+        )
+        request = wire.AcquisitionCameraCommand(
+            command=wire.BackendCommand(
+                command_id=_id(),
+                issuer=identity.controller,
+                target=identity.backend,
+                parent_operation=control.OperationContext(command_id=_id()),
+            ),
+            camera=camera.CAMERA_ROLE_BEHAVIORAL,
+            configuration_revision=1,
+            file_policies=configuration.file_policies,
+            kind=wire.CAMERA_COMMAND_KIND_EXPORT_PFS,
+            path="camera.pfs",
+        )
+        owner = object.__new__(ManualDeviceCommands)
+        owner.identity, owner.configuration = identity, configuration
+        owner.session_slot = SessionSlot()
+        owner.clock = lambda: 1
+        owner.workers = SimpleNamespace(
+            workers={
+                request.camera: SimpleNamespace(
+                    context=acq.WorkerContext(), preview=None
+                )
+            }
+        )
+        owner.device_status = SimpleNamespace(reserve=Mock())
+        owner.resolution = resolution
+
+        async def apply(*args):
+            await resolution.begin(
+                request.command,
+                expected_cameras={request.camera},
+                request_revision=1,
+                deadline_ns=100,
+            )
+            raise asyncio.CancelledError()
+
+        owner._apply_for_export = apply
+        with pytest.raises(asyncio.CancelledError):
+            await owner.execute(request, deadline_ns=100)
+        assert resolution._pending is None
+        request.command.command_id = _id()
+        await resolution.begin(
+            request.command,
+            expected_cameras={request.camera},
+            request_revision=1,
+            deadline_ns=100,
+        )
+
+    asyncio.run(run())

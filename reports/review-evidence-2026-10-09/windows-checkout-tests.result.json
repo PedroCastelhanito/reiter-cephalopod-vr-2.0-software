@@ -1,0 +1,23 @@
+{
+  "command": [
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+    "-m",
+    "not rig",
+    "-p",
+    "no:cacheprovider",
+    "-rs",
+    "--junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\review-evidence-2026-10-09\\windows-checkout-tests.xml"
+  ],
+  "environment": {
+    "QT_QPA_PLATFORM": "offscreen",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "started_utc": "2026-10-09T05:47:40.351980+00:00",
+  "elapsed_seconds": 184.062,
+  "returncode": 0,
+  "raw": "windows-checkout-tests.txt"
+}

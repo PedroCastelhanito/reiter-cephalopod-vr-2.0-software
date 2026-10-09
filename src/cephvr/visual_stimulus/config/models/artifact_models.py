@@ -142,8 +142,8 @@ class Boundary(Model):
 class ReviewTiming(
     Model
 ):  # E13: constant rate; frame n is the n-th admitted render group.
-    pacing_output_id: OutputId  # Always the designated pacing output (E13).
-    rate_numerator: Pos  # Equals that output's nominal refresh numerator/denominator.
+    pacing_output_id: OutputId | None = None  # Null for common-rate all-output VSync.
+    rate_numerator: Pos
     rate_denominator: Pos
     implementation: str
     capability_evidence_id: Id
@@ -272,17 +272,17 @@ class PreparedTrial(Model):
                     "composite depth must be the largest output depth, with tile source depths retained"
                 )
             d = self.display
-            pacing = {o.output_id: o for o in d.active_outputs}.get(
-                r.timing.pacing_output_id
-            )
-            if pacing is None or pacing.output_id != d.selected_pacing_output_id:
-                raise ValueError("review timing must use the designated pacing output")
+            if r.timing.pacing_output_id != d.selected_pacing_output_id:
+                raise ValueError(
+                    "review timing must preserve the configured pacing identity"
+                )
+            numerator, denominator = d.review_refresh_rate()
             if (
-                r.timing.rate_numerator * pacing.refresh_denominator
-                != pacing.refresh_numerator * r.timing.rate_denominator
+                r.timing.rate_numerator * denominator
+                != numerator * r.timing.rate_denominator
             ):
                 raise ValueError(
-                    "review frame rate must equal the pacing output nominal refresh rate"
+                    "review frame rate must equal the configured nominal refresh rate"
                 )
         arenas: dict[str, set[str]] = {}
         for e in self.epochs:

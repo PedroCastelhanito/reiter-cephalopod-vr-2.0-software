@@ -45,6 +45,8 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
     return {
         ("acquisition", "behavioral_cam", "mp4"): video,
         ("acquisition", "tracking_cam", "mp4"): video,
+        ("acquisition", "eye_tracking_cam", "mp4"): video,
         ("acquisition", "behavioral_cam_frames", "jsonl"): frame_log,
         ("acquisition", "tracking_cam_frames", "jsonl"): frame_log,
+        ("acquisition", "eye_tracking_cam_frames", "jsonl"): frame_log,
     }

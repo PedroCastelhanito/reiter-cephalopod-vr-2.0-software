@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from cephvr.acquisition.v1 import camera_pb2
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 
@@ -16,13 +16,7 @@ def validate_camera_function_scopes(
     """Check owner, reporter, role source and complete transitive closures."""
     if not context.HasField("owner") or not context.HasField("worker"):
         raise ValueError("camera worker context lacks exact owner or worker identity")
-    role = (
-        "behavioral"
-        if context.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
-        else "tracking"
-        if context.camera == camera_pb2.CAMERA_ROLE_TRACKING
-        else ""
-    )
+    role = camera_role_name(context.camera)
     if not role:
         raise ValueError("camera worker function catalogue has an unknown camera role")
     expected_capture = f"{role}.capture"
@@ -91,7 +85,7 @@ def validate_camera_function_scopes(
 def recording_scope_resources(
     scopes: Iterable[control.PreparedFunctionScope], camera: int
 ) -> tuple[str, ...]:
-    role = "behavioral" if camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL else "tracking"
+    role = camera_role_name(camera)
     key = f"{role}.recording"
     for scope in scopes:
         if scope.resource_id == key:

@@ -7,6 +7,7 @@ framebuffer capabilities and measured calibration remain preparation obligations
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 from typing import Annotated, Literal, Self
 
 from pydantic import Field, field_validator, model_validator
@@ -194,6 +195,31 @@ class DisplayProfile(Model):
             mapping for mapping in self.mappings if mapping.output_id in active
         )
 
+    def review_refresh_rate(self) -> tuple[int, int]:
+        """Use a designated rate or the common all-output VSync rate without guessing a face."""
+        selected = self.selected_pacing_output_id
+        outputs = tuple(
+            output
+            for output in self.active_outputs
+            if selected is None or output.output_id == selected
+        )
+        if not outputs or (
+            selected is None and self.presentation_mode != "all_outputs_vsync"
+        ):
+            raise ValueError(
+                "review recording requires a pacing output or all-output VSync"
+            )
+        rates = {
+            Fraction(output.refresh_numerator, output.refresh_denominator)
+            for output in outputs
+        }
+        if len(rates) != 1:
+            raise ValueError(
+                "review recording without a pacer requires a common nominal output refresh rate"
+            )
+        rate = rates.pop()
+        return rate.numerator, rate.denominator
+
     @model_validator(mode="after")
     def references(self) -> Self:
         for label, values in [
@@ -263,7 +289,10 @@ class DisplayProfile(Model):
 
     def require_trial_marker(self) -> None:
         """Setup-only requirement; startup Idle never needs a flashing patch."""
-        if self.selected_pacing_output_id is None:
+        if (
+            self.presentation_mode != "all_outputs_vsync"
+            and self.selected_pacing_output_id is None
+        ):
             raise ValueError("trial Setup requires an explicit pacing output")
         if self.photodiode_enabled and (
             self.photodiode_output_id is None or self.photodiode_patch is None

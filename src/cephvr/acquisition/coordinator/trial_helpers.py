@@ -49,6 +49,7 @@ def _external_roles(session: SessionRecord) -> tuple[int, ...]:
     for role, name in (
         (camera.CAMERA_ROLE_BEHAVIORAL, "behavioral"),
         (camera.CAMERA_ROLE_TRACKING, "tracking"),
+        (camera.CAMERA_ROLE_EYE_TRACKING, "eye_tracking"),
     ):
         if role not in session.required_cameras:
             continue
@@ -80,7 +81,7 @@ def _trial_finished(trial: TrialRecord) -> bool:
         if result.failure.ByteSize() or not result.HasField("artifact_present"):
             return False
         if (
-            plan.output_tag in {"behavioral_cam", "tracking_cam"}
+            plan.output_tag in {"behavioral_cam", "tracking_cam", "eye_tracking_cam"}
             and plan.extension == "mp4"
         ):
             if (

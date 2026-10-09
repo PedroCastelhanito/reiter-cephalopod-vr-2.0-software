@@ -35,6 +35,7 @@ def build_preview_payload(
     role = {
         camera.CAMERA_ROLE_BEHAVIORAL: "behavioral",
         camera.CAMERA_ROLE_TRACKING: "tracking",
+        camera.CAMERA_ROLE_EYE_TRACKING: "eye_tracking",
     }.get(attachment.buffer.camera)
     if role is None:
         raise ValueError("manual preview requires an exact camera role")

@@ -59,6 +59,7 @@ def decode_worker_bootstrap(document: Mapping[str, object]) -> WorkerBootstrap:
     if strings["role"] not in {
         "acquisition_behavioral_worker",
         "acquisition_tracking_worker",
+        "acquisition_eye_tracking_worker",
     }:
         raise ValueError("worker bootstrap role is not a camera worker role")
     worker = control.ProcessIdentity(

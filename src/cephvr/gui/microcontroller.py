@@ -407,7 +407,11 @@ class MicrocontrollerPanel(DevicePanel):
             if camera.key not in self.pin_editors:
                 continue
             editor = self.pin_editors[camera.key]
-            external = camera.enabled and camera.source == "External controller"
+            external = (
+                camera.enabled
+                and camera.source == "External controller"
+                and camera.role in ("Behavior cam", "Tracking cam")
+            )
             editor.setEnabled(self.can_review and external and not active)
             self.test_buttons[camera.key].setEnabled(
                 self.can_test

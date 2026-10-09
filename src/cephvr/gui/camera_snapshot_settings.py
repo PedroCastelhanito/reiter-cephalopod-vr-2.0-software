@@ -31,12 +31,13 @@ def collect_camera_snapshot(
         item.device.device_id: pb.CameraSessionSettings.FromString(
             item.SerializeToString()
         )
-        for item in (settings.behavioral, settings.tracking)
+        for item in (settings.behavioral, settings.tracking, settings.eye_tracking)
         if item.device.device_id
     }
     for role, target, pulse in (
         ("Behavior cam", settings.behavioral, settings.pulses.behavioral),
         ("Tracking cam", settings.tracking, settings.pulses.tracking),
+        ("Eye tracking", settings.eye_tracking, settings.pulses.eye_tracking),
     ):
         draft = next((draft for draft in panel.drafts if draft.role == role), None)
         if draft is None:

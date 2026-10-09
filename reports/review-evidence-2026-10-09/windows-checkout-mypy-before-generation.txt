@@ -1,0 +1,20 @@
+src\cephvr\supervisor\camera_release.py:11: error: Name "wire.AcquisitionWorkerCleanupProof" is not defined  [name-defined]
+src\cephvr\supervisor\camera_release.py:96: error: "ConfirmLaunchRequest" has no attribute "acquisition_worker_cleanup"  [attr-defined]
+src\cephvr\supervisor\registry.py:427: error: "ConfirmLaunchRequest" has no attribute "acquisition_worker_cleanup"  [attr-defined]
+src\cephvr\controller\microcontroller\lifecycle.py:186: error: "MicrocontrollerIoRequest" has no attribute "resolution_operation"  [attr-defined]
+src\cephvr\controller\microcontroller\lifecycle.py:210: error: "MicrocontrollerIoRequest" has no attribute "resolution_operation"  [attr-defined]
+src\cephvr\controller\microcontroller\lifecycle.py:212: error: "MicrocontrollerIoRequest" has no attribute "resolution_operation"  [attr-defined]
+src\cephvr\controller\microcontroller\lifecycle.py:213: error: "MicrocontrollerIoRequest" has no attribute "requested_configuration_revision"  [attr-defined]
+src\cephvr\controller\microcontroller\lifecycle.py:259: error: "MicrocontrollerIoRequest" has no attribute "requested_configuration_revision"  [attr-defined]
+src\cephvr\controller\control\owned_camera_edits.py:158: error: Unexpected keyword argument "accepted_base_revision" for "AcquisitionCameraSettingsCommand"  [call-arg]
+src\cephvr\controller\control\owned_camera_edits.py:158: note: "AcquisitionCameraSettingsCommand" defined in "cephvr.control.v1.services_pb2"
+src\cephvr\controller\control\owned_camera_edits.py:163: error: "AcquisitionCameraSettingsCommand" has no attribute "accepted_base_settings"  [attr-defined]
+src\cephvr\acquisition\coordinator\workers.py:221: error: Module has no attribute "AcquisitionWorkerCleanupProof"  [attr-defined]
+src\cephvr\acquisition\coordinator\workers.py:305: error: Module has no attribute "AcquisitionWorkerCleanupProof"  [attr-defined]
+src\cephvr\acquisition\coordinator\workers.py:351: error: Name "wire.AcquisitionWorkerCleanupProof" is not defined  [name-defined]
+src\cephvr\acquisition\coordinator\workers.py:355: error: Unexpected keyword argument "acquisition_worker_cleanup" for "ConfirmLaunchRequest"  [call-arg]
+src\cephvr\acquisition\coordinator\workers.py:355: note: "ConfirmLaunchRequest" defined in "cephvr.control.v1.services_pb2"
+src\cephvr\acquisition\coordinator\manual_devices.py:150: error: "AcquisitionCameraSettingsCommand" has no attribute "accepted_base_revision"  [attr-defined]
+src\cephvr\acquisition\coordinator\manual_devices.py:246: error: "AcquisitionCameraSettingsCommand" has no attribute "accepted_base_revision"  [attr-defined]
+src\cephvr\acquisition\coordinator\manual_devices.py:247: error: "AcquisitionCameraSettingsCommand" has no attribute "accepted_base_settings"  [attr-defined]
+Found 17 errors in 6 files (checked 734 source files)

@@ -4,6 +4,13 @@ from dataclasses import dataclass
 from dataclasses import field as data_field
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
+from cephvr.acquisition.v1 import camera_pb2
+
+CAMERA_ROLES = {
+    "Behavior cam": camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+    "Tracking cam": camera_pb2.CAMERA_ROLE_TRACKING,
+    "Eye tracking": camera_pb2.CAMERA_ROLE_EYE_TRACKING,
+}
 
 
 @dataclass
@@ -41,11 +48,7 @@ def discover_drafts(
         draft = previous.get(serial)
         if draft is None:
             role = next(
-                (
-                    role
-                    for role in ("Behavior cam", "Tracking cam")
-                    if role not in roles
-                ),
+                (role for role in CAMERA_ROLES if role not in roles),
                 "Unassigned",
             )
             draft = CameraDraft(f"camera-{serial}", role, serial, model)

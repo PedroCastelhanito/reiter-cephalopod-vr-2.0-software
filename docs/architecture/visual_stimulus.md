@@ -545,7 +545,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v15"></a>
 ### V15 — Four calibrated off-axis surface views
 
-**Status:** Accepted · **Revision:** 11
+**Status:** Accepted · **Revision:** 12
 
 - V01's single rendering worker renders four calibrated views for the rectangular
   rig's front, left, right and bottom screens by direct per-surface rendering with the
@@ -567,7 +567,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   enabled outputs and their mappings, in retained authored order. Never stretch,
   recenter, reassign coverage or renormalize calibration when outputs are disabled.
   Participation is fixed for prepared execution; changes require fresh preparation.
-  At least one output and the selected pacing output must be enabled. V22
+  At least one output must be enabled; any explicitly selected pacing output must
+  be enabled. V20 permits all-output VSync without a designated pacer. V22
   independently gates the pulse target; reject invalid selections rather than
   moving either target silently.
 - Physical screen planes need not coincide with tank walls. The GUI parallel-plane
@@ -702,7 +703,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v20"></a>
 ### V20 — Configurable projector presentation pacing
 
-**Status:** Accepted · **Revision:** 7
+**Status:** Accepted · **Revision:** 8
 
 - Default: VSync on the explicitly designated pacing projector, immediate
   presentation on the other outputs (current CephVR rig behavior). All-output VSync
@@ -725,7 +726,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   startup Idle/Setup; no timing guarantee follows from the requested value alone.
 - Pacing selection is independent of V22 pulse visibility/placement. Existing profiles
   without an explicit pacing ID retain their enabled photodiode target as a legacy
-  fallback; pulse-disabled profiles require explicit pacing.
+  fallback. Mixed mode requires explicit pacing when the pulse is disabled;
+  all-output VSync may have no designated pacer. In that case validate the file-owned
+  nominal refresh target against every enabled output without selecting a face.
+  E13 owns the common-rate recording requirement.
 - VSync requests and sequential swaps do not establish simultaneous scanout or
   effective driver behavior. Immediate outputs may tear; one photodiode measures only
   its own output. Throughput, swap behavior and optical timing retain E15's rig
@@ -939,7 +943,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 20
+**Status:** Accepted · **Revision:** 21
 
 - One **Save Visual Stimulus data** switch controls rendered Visual Stimulus video, associated frame logs and
   detailed Visual Stimulus state and presentation outputs. It defaults to On for a new
@@ -962,7 +966,9 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   conversion and retained source/target representation evidence; silent negotiation
   is forbidden. Rendering and V13 reconstruction keep their original precision.
 - The review video is constant-rate at the designated pacing output's nominal
-  refresh rate in both presentation modes. Pad missing recording slots with
+  refresh rate, or the common nominal refresh rate of all enabled outputs when
+  all-output VSync has no pacer. The latter records a null pacing identity and
+  rejects differing nominal rates rather than guessing an output. Pad missing recording slots with
   explicitly identified duplicated composite images to preserve cadence/duration.
   V28 evidence must map every encoded frame to its real render group or padding,
   identifying duplicates for post hoc exclusion. Padding never fabricates state,

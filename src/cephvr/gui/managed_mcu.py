@@ -286,22 +286,27 @@ class ManagedMcu(QObject):
                         pulses.behavioral
                         if row.role == "Behavior cam"
                         else pulses.tracking
+                        if row.role == "Tracking cam"
+                        else pulses.eye_tracking
+                        if row.role == "Eye tracking"
+                        else None
                     )
-                    panel.pins[row.key] = pulse.pin
+                    pin = pulse.pin if pulse is not None else ""
+                    panel.pins[row.key] = pin
                     if row.key in panel.pin_editors:
-                        panel.pin_editors[row.key].setText(pulse.pin)
+                        panel.pin_editors[row.key].setText(pin)
             self.revision = state.configuration.revision
         panel.upload_available = (
             held
             and state.session.phase == pb.SESSION_PHASE_CONFIGURATION
             and not state.microcontroller.diagnostic.active
             and not state.microcontroller.cleanup_pending
-            and not state.microcontroller.failure
             and not any(
                 view.device_open or view.preview_running or view.cleanup_pending
                 for view in (
                     state.acquisition_devices.behavioral,
                     state.acquisition_devices.tracking,
+                    state.acquisition_devices.eye_tracking,
                 )
             )
         )
@@ -355,6 +360,7 @@ class ManagedMcu(QObject):
             for view in (
                 state.acquisition_devices.behavioral,
                 state.acquisition_devices.tracking,
+                state.acquisition_devices.eye_tracking,
             )
         ):
             panel.can_review = False

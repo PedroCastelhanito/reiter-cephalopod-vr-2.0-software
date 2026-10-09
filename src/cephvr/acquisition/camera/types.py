@@ -14,7 +14,7 @@ from typing import Literal, Protocol
 from cephvr.shared.pixels.types import NativePixelFormat as NativePixelFormat
 from cephvr.shared.pixels.types import PixelLayout as PixelLayout
 
-CameraRole = Literal["behavioral", "tracking"]
+CameraRole = Literal["behavioral", "tracking", "eye_tracking"]
 FrameTiming = Literal["external_trigger", "free_running"]
 
 

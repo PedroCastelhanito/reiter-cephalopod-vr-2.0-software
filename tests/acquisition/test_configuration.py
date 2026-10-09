@@ -41,10 +41,31 @@ def test_defaults_bind_owner_assigned_mcu_pins() -> None:
     assert settings.pulses.trial_state_pin == "D9"
     assert settings.pulses.trial_state_enabled
     assert settings.pulses.projector_flip_pin == "D2"
-    assert settings.pulses.projector_flip_enabled
+    assert not settings.pulses.projector_flip_enabled
     assert not settings.behavioral.device.settings.HasField("trigger_source")
     assert not settings.behavioral.device.settings.HasField("exposure_us")
     assert not settings.behavioral.device.settings.HasField("roi")
+    assert not settings.eye_tracking.enabled
+    assert settings.eye_tracking.save_video
+    assert (
+        settings.eye_tracking.device.frame_timing
+        == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    )
+    assert not settings.eye_tracking.device.device_id
+    assert not settings.pulses.eye_tracking.HasField("pin")
+    assert not settings.pulses.eye_tracking.HasField("requested_frequency_hz")
+
+
+def test_eye_capture_blocks_until_external_trigger_integration() -> None:
+    candidate = types_pb2.ExperimentConfiguration()
+    backend = candidate.backends.add(backend_name="acquisition", enabled=True)
+    backend.acquisition.CopyFrom(load_defaults(_ROOT))
+    backend.acquisition.behavioral.enabled = False
+    backend.acquisition.eye_tracking.enabled = True
+    result = validate_configuration(candidate)
+    assert not result.valid
+    codes = {entry.failure.code for entry in result.issues}
+    assert {"EYE_TRIGGER_PENDING", "PIN_REQUIRED", "RATE_REQUIRED"} <= codes
 
 
 def test_microcontroller_io_pin_validation_keeps_disabled_drafts() -> None:

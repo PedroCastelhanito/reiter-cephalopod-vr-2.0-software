@@ -205,7 +205,7 @@ def empty_video_exception(
     if (
         plan is None
         or plan.extension != "mp4"
-        or plan.output_tag not in {"behavioral_cam", "tracking_cam"}
+        or plan.output_tag not in {"behavioral_cam", "tracking_cam", "eye_tracking_cam"}
         or missing.camera_video_content != control.CAMERA_VIDEO_CONTENT_NO_FRAMES
         or missing.artifact_present
         or missing.failure.ByteSize()

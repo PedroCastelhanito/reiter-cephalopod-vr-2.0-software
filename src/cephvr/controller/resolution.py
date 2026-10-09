@@ -41,6 +41,7 @@ def resolved_configuration(
     if not expected_cameras <= {
         camera.CAMERA_ROLE_BEHAVIORAL,
         camera.CAMERA_ROLE_TRACKING,
+        camera.CAMERA_ROLE_EYE_TRACKING,
     }:
         raise ProjectionError("resolution camera role is invalid")
     candidate = pb.ExperimentConfiguration.FromString(current.SerializeToString())
@@ -53,6 +54,7 @@ def resolved_configuration(
     roles = {
         camera.CAMERA_ROLE_BEHAVIORAL: settings.behavioral,
         camera.CAMERA_ROLE_TRACKING: settings.tracking,
+        camera.CAMERA_ROLE_EYE_TRACKING: settings.eye_tracking,
     }
     physical_ids: set[str] = set()
     for role, resolved in entries.items():

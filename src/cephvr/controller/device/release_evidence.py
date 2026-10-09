@@ -4,20 +4,18 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Mapping
+from typing import cast
 
 from google.protobuf.message import Message
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
 from cephvr.control.v1 import types_pb2 as pb
 
 
 def camera_view(camera: int, views: pb.AcquisitionDeviceViews) -> pb.CameraDeviceView:
-    return (
-        views.behavioral
-        if camera == camera_pb.CAMERA_ROLE_BEHAVIORAL
-        else views.tracking
-    )
+    return cast(pb.CameraDeviceView, getattr(views, camera_role_name(camera)))
 
 
 def manual_state_open(view: pb.CameraDeviceView) -> bool:

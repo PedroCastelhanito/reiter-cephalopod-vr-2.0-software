@@ -211,7 +211,9 @@ class ManagedConfiguration:
             for camera in self.pages.cameras.drafts:
                 role = camera.role.casefold()
                 target = (
-                    acquisition.behavioral
+                    acquisition.eye_tracking
+                    if "eye" in role
+                    else acquisition.behavioral
                     if "behavior" in role
                     else acquisition.tracking
                     if "tracking" in role
@@ -317,7 +319,9 @@ class ManagedConfiguration:
                     continue
                 role = camera.role.casefold()
                 target = (
-                    acquisition.behavioral
+                    acquisition.eye_tracking
+                    if "eye" in role
+                    else acquisition.behavioral
                     if "behavior" in role
                     else acquisition.tracking
                     if "tracking" in role

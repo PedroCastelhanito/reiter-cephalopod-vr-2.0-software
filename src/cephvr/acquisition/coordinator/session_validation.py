@@ -48,6 +48,11 @@ def validate_setup_request(
     ):
         raise ValueError("acquisition file policy version differs from loaded policy")
     active = enabled_cameras_from_settings(settings)
+    if camera.CAMERA_ROLE_EYE_TRACKING in active:
+        raise ValueError(
+            "Eye tracking capture requires wired external triggering; "
+            "source, rate and controller integration remain pending"
+        )
     if not active:
         raise ValueError("acquisition Setup requires at least one enabled camera")
     tracking_required = tracking_backend_enabled(request.plan)
@@ -73,6 +78,7 @@ def _acquisition_outputs(
     cameras = {
         "behavioral": settings.behavioral,
         "tracking": settings.tracking,
+        "eye_tracking": settings.eye_tracking,
     }
     saved: list[control.OutputPlan] = []
     keys: set[str] = set()
@@ -138,6 +144,7 @@ def enabled_cameras_from_settings(settings: control.AcquisitionSettings) -> set[
         for role, item in (
             (camera.CAMERA_ROLE_BEHAVIORAL, settings.behavioral),
             (camera.CAMERA_ROLE_TRACKING, settings.tracking),
+            (camera.CAMERA_ROLE_EYE_TRACKING, settings.eye_tracking),
         )
         if item.HasField("enabled") and item.enabled
     }

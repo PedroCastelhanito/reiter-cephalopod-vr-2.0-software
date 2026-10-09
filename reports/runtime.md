@@ -1,5 +1,61 @@
 # Controller and supervisor status
 
+Latest Oct9 optional-I/O/all-VSync changes are stopped at the owner's request.
+[Current evidence](review-evidence-2026-10-09/mcu-configurable-context.json) retains
+300 affected passes/one privilege skip and passing full static checks. Full regression
+reports 1,858 passes, one timeout, five privilege skips and one rig deselection;
+the two parametrized exact-completion cases pass focused rerun without code/deadline
+changes. A full passing rerun and declaration reconciliation remain pending.
+Native startup with disconnected projectors reports a saved DLP interface matching
+zero monitors and closes the runtime. Investigate its V19 configuration-error/fatal
+classification; no corrective code is written before the stop request. Native MCU
+settings save and a new experiment remain unverified. Earlier firmware compilation,
+CephVR2 upload/connection and namespace replacement results retain their original scope.
+
+Oct9 Eye role/connect recovery (working tree based on `94285ac`) extends common
+three-camera configuration/process/output evidence under
+[A01/A02/A07](../docs/architecture/acquisition.md#a01),
+[A10/A11](../docs/architecture/acquisition.md#a10) and
+[G01](../docs/architecture/gui.md#g01). It repairs canceled readback barriers,
+failed-start Disconnect, exact manual terminal acknowledgements, prior-cleanup
+diagnostics and GUI pin aliasing. No new state owner, dependency or firmware policy
+is introduced; the existing ledger retains exact terminal evidence. Controller runtime
+only routes that evidence to its focused readback owner under ARCH-002.
+[Acquisition assessment](acquisition.md) records role/capture limits.
+
+Live GUI identity tests pass for both existing cameras. COM8's native responses identify
+legacy firmware that does not implement CAPS, explaining the original timeout.
+The owner's subsequent `.ino` Upload request exercises the native chooser and exposes
+a GUI recovery defect: a displayed MCU failure disabled Upload despite A11 allowing
+the idle repair handoff. G01 revision 134 removes that failure-only gate; diagnostics,
+all three camera ownership views and exact native cleanup still block Upload. Controller
+admission now includes Eye ownership, matching the GUI. ARCH-002 keeps the existing
+focused bindings/admission owner and introduces no dependency or state owner.
+Native Browse accepts `firmware/uno/cephvr2_mcu/cephvr2_mcu.ino`; explicit GUI Upload
+compiles and verifies it on COM8, reconnecting as `cephvr2_uno_2`, protocol 3, with both
+camera outputs stopped and cleanup complete. A subsequent Test connection succeeds.
+That repair left the GUI open. The owner's subsequent all-output VSync choice now
+passes pure validation without a pacer, but disconnected outputs prevent live checks.
+Eye additionally needs external wiring/source/rate
+and corresponding integration. Run43 remains historical output evidence; no new
+recording or SpikeGLX pairing is claimed.
+[Firmware repair method, source and raw outcomes](review-evidence-2026-10-09/firmware-picker-context.json)
+retain chooser/button observations, native status and current checks.
+[Current check/source/native evidence](review-evidence-2026-10-09/eye-camera-context.json)
+preserves final verification and failed attempts separately from the prior checkout
+audit. See the [rig checklist](rig-verification.md) for remaining acceptance.
+Earlier non-rig Windows/offscreen execution passes 1,856 tests with five symlink
+privilege skips and one rig deselection. Ruff/format (849 files), Win32 mypy
+(734 sources), boundaries (640 modules/zero violations), dependencies,
+contracts/schemas and declarations pass. The firmware evidence records the tested
+1,039-input snapshot and a subsequent test-only import-separator formatting correction;
+the forty focused firmware cases pass again on that final text. Subsequent E08
+revision 170 moves all local runtime records to the owner-private
+`%USERPROFILE%/.cephvr2/runtime` namespace. The current full suite and static checks
+cover the final runtime source, with 295 focused integration cases passing and one
+privilege skip. [Runtime namespace evidence](review-evidence-2026-10-09/runtime-root-context.json)
+records preservation, live Y/N replacement, physical path visibility and limits.
+
 Updated: 2026-10-09. Implementation/source review is recorded for the controller,
 supervisor, launcher, headless client and shared/native helpers. Local results below
 have their original scope; Windows and full-workload acceptance remain pending.
@@ -7,6 +63,22 @@ have their original scope; Windows and full-workload acceptance remain pending.
 [E04](../docs/architecture/supervisor.md#e04) and
 [E05/E07](../docs/architecture/experiment.md) and
 [E06/E08](../docs/architecture/system-contracts.md#e08) own behavior.
+
+Current Windows checkout verification (2026-10-09, `94285ac`): regenerate stale
+ignored local bindings from all 19 authoritative protos, resolving seven collection
+errors and 17 typing errors without changing runtime source. The full offscreen
+`not rig` suite, including isolated Windows resources/children and authenticated
+loopback, passes **1,820 tests / five symlink-privilege skips / one rig deselection**.
+Ruff/format (849 files), Win32 mypy (734 sources), boundaries (640 modules, zero
+violations), dependency consistency, Tracking/Visual Stimulus contracts (48/42),
+schema drift (19/11), fresh binding comparison (57 files), TOMLs (18), decision
+register (114 revisions) and current changed-document links pass. Correct stale
+V08/V17/V18 root index revisions to their owning records without changing decisions.
+Size advisories retain their existing ownership/cohesion assessments; this verification
+adds no runtime behavior or dependency. [Exact Windows commands, input hashes and outcomes](review-evidence-2026-10-09/windows-checkout-context.json)
+retain failed attempts and exclusions. These checks do not rerun the dummy protocol
+or establish camera/encoder throughput, optical/electrical or scientific acceptance;
+those remain in the [rig checklist](rig-verification.md).
 
 Completed initial repair scope (2026-10-09, working tree based on `0aebf47`): the owner
 authorized fixes and cleanup after the Luna/Sol/Astra audit. Sol and Astra accept the final source with no remaining actionable finding in this
@@ -422,18 +494,42 @@ processes absent; independent native inventory finds zero managed Python process
 and the application guard is free. Runtime was left stopped for that request, with no repeated
 firmware installation or restart. [Shutdown evidence](rig-wiring-evidence-2026-10-07/mcu-installation-and-preview.md).
 
-Current owner recurrence is traced to MSIX AppData virtualization, not a missing
+The earlier owner recurrence was traced to MSIX AppData virtualization, not a missing
 publication delay. The owner's ordinary CMD reports File Not Found, while native
 agent CMD on the same volume sees the logical path. GetFinalPathNameByHandle
 resolves that file into Codex's package `LocalCache/Local`; all inspected user SIDs,
 integrity and UAC flags agree. [Decisive file identity/token evidence](rig-wiring-evidence-2026-10-07/replacement-msix-visibility.json)
 and [read-only idle controller state](rig-wiring-evidence-2026-10-07/replacement-msix-before-state.json)
 are retained. Microsoft's [MSIX virtualization rules](https://learn.microsoft.com/en-us/windows/msix/desktop/flexible-virtualization)
-explain this merged view. E08 currently fixes LocalAppData; owner choice is pending
-between a shared owner-only profile directory outside AppData with preserved
-recovery/restart, and retaining AppData with ordinary-CMD-only launch. No namespace
-change or restart is performed while that choice is pending. The earlier wait
-repair remains valid for startup timing but does not resolve this visibility defect.
+explain this merged view. The owner now authorizes moving the namespace. E08 revision
+170 selects `%USERPROFILE%/.cephvr2/runtime`, outside AppData, using the existing
+private ACL and credential/recovery helpers. Missing or relative USERPROFILE fails
+without an AppData fallback. ARCH-002 review retains the single root selector and
+existing exact replacement event/exit-receipt mechanism; no new service or state
+owner is needed. Normal shutdown precedes guard-exclusive preservation of all 136
+recovery records, with identical source/destination hashes and originals retained.
+Old endpoint/generation credentials are not imported; startup provisions fresh ones.
+
+Oct9 recurrence: the owner again reports the ordinary-terminal endpoint timeout.
+The current Codex child shell sees the descriptor for controller
+`ebb927d3-ad19-4f61-b52b-a906cdb44a57`; the owner's exact base-Python launch command
+shows Y/N here, and answering N preserves that generation. Launcher/shared
+credential/recovery baseline tests pass 66 with one privilege skip. The initial
+baseline command named a nonexistent test file and collected nothing; retain it
+separately. [Baseline method and provenance](review-evidence-2026-10-09/runtime-replacement-baseline-context.json)
+remain historical diagnostic evidence. After the authorized move, the owner's exact
+base-Python command reaches Y/N in native exec PTY: N preserves the exact controller
+generation; Y starts a new generation only after the former launcher's matching
+all-owned-processes-absent receipt. A Codex child shell and a Windows Shell-launched
+helper independently resolve the endpoint to the same physical profile path and
+exercise the real N branch with injected interactive input. Both report no package
+identity (API result 15700); artifact tags are launch-context labels, not evidence
+of a packaged process. The owner's own terminal has not been manually retested.
+Final GUI relaunch succeeds in the same idle controller generation; retained V20
+pacing warning still blocks new experiment Setup. An early final-start attempt
+entered the duplicate prompt before launcher exit; retire only its verified task
+helper and retry after exact release. Preserve failed-attempt logs alongside
+[current commands, source hashes and native outcomes](review-evidence-2026-10-09/runtime-root-context.json).
 
 The preceding duplicate launch failed before Y/N because its replacement descriptor was
 absent. Current read-only inspection finds the earlier controller

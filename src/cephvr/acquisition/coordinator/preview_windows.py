@@ -89,7 +89,7 @@ class PreviewWindows:
         reader = HighGuiPreview(
             attachment,
             preview.preview_output_bit_depth,
-            "Behavior camera" if role == 1 else "Tracking camera",
+            {1: "Behavior camera", 2: "Tracking camera", 3: "Eye tracking"}[role],
             on_closed,
             placement=placement,
         )

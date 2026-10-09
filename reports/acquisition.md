@@ -1,5 +1,90 @@
 # Acquisition status
 
+Oct9 optional-I/O work is stopped at the owner's request while leaving the rig.
+Existing signal roles retain independent Use/pin controls under
+[A11 revision 43](../docs/architecture/acquisition.md#a11); the disconnected projector
+flip defaults Off with its D2 setting retained. An explicit saved On setting is not
+overwritten: native Apply has not been verified. Missing sketch paths now produce
+an actionable error containing the submitted path instead of incorrectly reporting
+a link. Both repaired sketches already pass production snapshot/Arduino compilation;
+the earlier CephVR2 GUI upload and protocol-3 connection test pass. CephVR1's missing
+CAPS remains a compatibility limitation. No firmware code or new upload changes here.
+[Latest scope/check evidence](review-evidence-2026-10-09/mcu-configurable-context.json)
+records 300 focused passes/one privilege skip, static passes and a full-suite timeout
+that passes focused rerun. The owner confirms projectors are disconnected; native
+settings save and another experiment remain unverified.
+
+Oct9 Eye camera/connect recovery (working tree based on `94285ac`) follows
+[A01/A02](../docs/architecture/acquisition.md#a01),
+[A07](../docs/architecture/acquisition.md#a07),
+[A10/A11](../docs/architecture/acquisition.md#a10) and
+[G01](../docs/architecture/gui.md#g01). The third role supports common configuration,
+worker identity, status, preview plumbing and video/frame-log output pairs; Tracking
+analysis still uses only its original camera. Eye capture rejects before worker/COM
+access until external wiring, source/rate and trigger integration are specified.
+The discovered third serial is 40278236. The prior missing-pacer validation rejection
+is repaired for the owner's all-projector VSync mode; native assignment remains
+unverified while projectors are disconnected and Eye triggering is unspecified.
+
+Failed/canceled manual Connect and PFS readback now retire their exact adoption
+barrier without clearing native ownership. Disconnect can finish an editing camera
+that has no preview run, and identity results explain retained prior cleanup.
+Manual completion acknowledgement uses the exact retained device result rather than
+requiring a live experiment; altered source/work/result and late evidence reject.
+The GUI has a separate selected-camera identity check and does not map Eye/unassigned
+MCU rows onto Tracking's pin. Acquisition fixed policy is version 20.
+
+Native GUI checks verify Behavior 40065509 and Tracking 40747103 identities.
+A normally closed runtime followed by a bounded real SerialOwner probe finds
+legacy `dual_camera_projector_sync` firmware on COM8 rejecting CAPS. The host now
+reports that incompatibility immediately. The owner's subsequent Upload request
+resolves the GUI's failure-only recovery block under G01/A11. Native `.ino` Browse,
+GUI compile/verified upload to COM8 and Test connection succeed: `cephvr2_uno_2`,
+protocol 3, both camera outputs stopped, no pending tool cleanup. The controller's
+Upload admission also fences Eye device/preview/cleanup ownership. No new trial ran.
+[Firmware source/native/check evidence](review-evidence-2026-10-09/firmware-picker-context.json)
+retains the method and limits. Local tests cover all three role paths and
+exact canceled/terminal evidence; native Eye capture and experiment/output acceptance
+remain pending in the [rig checklist](rig-verification.md).
+[Current commands, raw evidence and source provenance](review-evidence-2026-10-09/eye-camera-context.json)
+retain final results and intermediate failures. Under ARCH-002 the existing manual
+device command owner remains cohesive (SDK edit sequencing); results/status/preview
+already have separate owners. GUI camera/MCU size advisories concern cohesive widget
+construction and presentation; this change reuses focused managed bindings.
+Earlier whole-repository non-rig execution passes 1,856 tests with five privilege
+skips and one rig deselection after the subsequent shared runtime namespace repair;
+all static and declaration checks pass. Earlier contract/schema evidence remains
+scoped to its retained source/check provenance.
+
+Final GUI relaunch during the runtime namespace repair retained a separate legacy-sketch compilation
+failure: command `09e718b2-9c6b-4a19-b133-38f3a17f1cbe` reports missing
+`projector_clock.h` in the staged `cephvr1_mcu.ino`. The owner reproduces that
+failure after both independent sketches were placed together under `firmware/uno`
+and the header stayed above them. A11's bounded complete-folder snapshot is correct;
+repair the source layout, with no backend or new dependency/state change under
+ARCH-002. Each sketch now has its own matching directory, and the legacy header is
+copied beside CephVR1 with the original retained. All three source hashes match
+their pre-repair bytes. Production snapshot/HEX validators plus installed Arduino
+CLI compile both immutable snapshots for Uno successfully: CephVR1 uses 16,366
+flash bytes/603 RAM bytes, CephVR2 11,078/1,112. Existing MCU owner checks pass 68
+with one symlink-privilege skip. CephVR1 still lacks CAPS; compilation does not make
+it compatible with the protocol-3 host. No new serial command or upload runs.
+[Pinned sources, exact commands and compile outcomes](review-evidence-2026-10-09/firmware-layout-compile.json)
+and [retained earlier failure](review-evidence-2026-10-09/runtime-root-final-reopened-status.json)
+distinguish current compilation from installation/experiment acceptance.
+Native Browse lists both repaired directories and accepts the current CephVR2
+selection at `firmware/uno/cephvr2_mcu/cephvr2_mcu.ino`, with Upload enabled.
+The former flat path remains only in retained failed activity. The fresh GUI is
+idle; no firmware button is pressed by this task.
+[Layout/check/picker reconciliation](review-evidence-2026-10-09/firmware-layout-context.json)
+confirms all 1,039 prior runtime/test/config/contract inputs are unchanged, so their
+earlier full/static results remain applicable; no new full-suite run is claimed.
+
+The earlier Windows checkout `94285ac` passes the complete non-rig suite after regenerating
+stale local bindings, including available native camera-wait/resource checks.
+[Current cross-owner results and limits](runtime.md) retain commands and source hashes;
+this does not repeat native trial recording or close encoder/camera throughput acceptance.
+
 Latest retained native dummy evidence is run43 (Oct8), reviewed on 2026-10-09:
 the 60 s unpaired trial/session completes with cleanup, metadata sync and seven
 closed outputs. Behavior records 1,797 frames (29.95 fps) and Tracking camera 3,596

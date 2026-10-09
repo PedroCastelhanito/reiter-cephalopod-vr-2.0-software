@@ -386,6 +386,6 @@ def _codec(arguments: Iterable[str]) -> str:
 
 def _camera_role(value: int) -> str:
     role = camera.CameraRole.Name(value).lower().removeprefix("camera_role_")
-    if role not in {"behavioral", "tracking"}:
+    if role not in {"behavioral", "tracking", "eye_tracking"}:
         raise ValueError("worker camera role is unsupported")
     return role

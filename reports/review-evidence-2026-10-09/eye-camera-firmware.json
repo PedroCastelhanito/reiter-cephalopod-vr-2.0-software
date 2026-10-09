@@ -1,0 +1,9 @@
+{
+  "sketch": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\firmware\\uno\\cephvr2_mcu\\cephvr2_mcu.ino",
+  "sketch_snapshot_sha256": "977533f2d5e8e3065b726fbda972f34c48036bbcf1df1c899afeaf8b52b621cf",
+  "image": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\review-evidence-2026-10-09\\eye-camera-protocol3.hex",
+  "image_sha256": "0e4d05e6466328f26b33866793d895d65943ea4dfbd35165a2a090f2023bf630",
+  "compiled": true,
+  "uploaded": false,
+  "build_cleanup": "Generated compiler intermediates removed after preserving validated HEX"
+}

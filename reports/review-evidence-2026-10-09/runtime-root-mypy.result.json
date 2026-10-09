@@ -1,0 +1,18 @@
+{
+  "command": [
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "-m",
+    "mypy",
+    "--platform",
+    "win32",
+    "src/cephvr"
+  ],
+  "environment": {
+    "QT_QPA_PLATFORM": "offscreen",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "started_utc": "2026-10-09T07:47:43.841102+00:00",
+  "elapsed_seconds": 2.5,
+  "returncode": 0,
+  "raw": "runtime-root-mypy.txt"
+}

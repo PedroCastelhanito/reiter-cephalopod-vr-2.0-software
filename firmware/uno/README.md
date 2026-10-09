@@ -8,6 +8,15 @@ upload and matching board CAPS are recorded in
 The [earlier protocol-2 evidence](../../reports/mcu-evidence-2026-10-05/README.md)
 retains its original image and flash readback.
 
+Keep each independent sketch in its own directory. Select
+`cephvr2_mcu/cephvr2_mcu.ino` for this GUI's protocol-3 backend.
+`cephvr1_mcu/cephvr1_mcu.ino` is the legacy program; its required
+`projector_clock.h` is beside it. It compiles for Uno but lacks the CAPS protocol
+required by CephVR2. Both sketches must not share one sketch directory: Arduino
+compiles all its companion sources together. The GUI snapshots the selected
+directory, including headers and recursive `src` content; headers outside that
+directory are not staged. After moving a sketch, Browse and select its new path.
+
 Build with the installed Arduino AVR core:
 
 ```powershell
@@ -32,7 +41,8 @@ present. Controller releases the configured COM port, owns the contained uploade
 CAPS/STATUS with outputs off. Stop camera capture/editing and pin diagnostics first.
 The GUI delegates compilation to controller; it does not invoke tools or serial itself.
 Automatic tool/core/library installation remains outside this workflow. Native GUI
-compile/upload acceptance is still pending on the rig. See
+CephVR2 compile/verified upload and connection retest passed on 2026-10-09;
+electrical/timing acceptance remains pending. See
 [A11](../../docs/architecture/acquisition.md#a11) and [the upload contract](../../contracts/acquisition/microcontroller.md).
 The firmware
 leaves outputs LOW at boot, on diagnostic completion, after OFF and on watchdog

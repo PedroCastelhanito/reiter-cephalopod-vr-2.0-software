@@ -8,6 +8,7 @@ from collections.abc import Callable, Mapping
 
 from google.protobuf.message import Message
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
@@ -95,6 +96,7 @@ class OwnedCameraEdits:
             for role, name in (
                 (camera.CAMERA_ROLE_BEHAVIORAL, "behavioral"),
                 (camera.CAMERA_ROLE_TRACKING, "tracking"),
+                (camera.CAMERA_ROLE_EYE_TRACKING, "eye_tracking"),
             )
             if role in owned
             and getattr(current, name).device != getattr(proposed, name).device
@@ -168,7 +170,7 @@ class OwnedCameraEdits:
         acquisition.command.target.CopyFrom(self.backend.context)
         acquisition.command.parent_operation.command_id = command_id
         for role in sorted(roles):
-            name = "behavioral" if role == camera.CAMERA_ROLE_BEHAVIORAL else "tracking"
+            name = camera_role_name(role)
             setting = getattr(proposed, name)
             policy = next(
                 (item for item in policies.cameras if item.camera == role), None
@@ -364,6 +366,7 @@ def _owned_camera_roles(projections: ProjectionStore) -> frozenset[int]:
         for role, view in (
             (camera.CAMERA_ROLE_BEHAVIORAL, views.behavioral),
             (camera.CAMERA_ROLE_TRACKING, views.tracking),
+            (camera.CAMERA_ROLE_EYE_TRACKING, views.eye_tracking),
         )
         if manual_state_open(view)
     )

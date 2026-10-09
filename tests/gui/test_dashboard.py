@@ -4323,7 +4323,8 @@ async def test_bridge_rejects_stale_configuration_base_without_admission() -> No
 
 
 @pytest.mark.asyncio
-async def test_managed_camera_enable_updates_only_assigned_camera() -> None:
+@pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
+async def test_managed_camera_enable_updates_only_assigned_camera(role: str) -> None:
     from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.control.v1 import types_pb2 as pb
     from cephvr.gui.controller_bridge import ControllerBridge
@@ -4337,6 +4338,8 @@ async def test_managed_camera_enable_updates_only_assigned_camera() -> None:
     acquisition.acquisition.behavioral.device.device_id = "40065509"
     acquisition.acquisition.tracking.device.device_id = "40747103"
     acquisition.acquisition.tracking.enabled = False
+    acquisition.acquisition.eye_tracking.device.device_id = "eye-serial"
+    serial = getattr(acquisition.acquisition, role).device.device_id
     requests = []
 
     async def execute(method: str, request: object) -> SimpleNamespace:
@@ -4352,7 +4355,7 @@ async def test_managed_camera_enable_updates_only_assigned_camera() -> None:
         execute=execute,
     )
     await bridge._dispatch(
-        client, "set_camera_enabled", {"serial": "40065509", "enabled": True}
+        client, "set_camera_enabled", {"serial": serial, "enabled": True}
     )
     assert len(requests) == 1
     method, request = requests[0]
@@ -4360,9 +4363,96 @@ async def test_managed_camera_enable_updates_only_assigned_camera() -> None:
     assert request.expected_revision == 4
     updated = request.proposed.backends[0]
     assert updated.enabled
-    assert updated.acquisition.behavioral.enabled
-    assert not updated.acquisition.tracking.enabled
+    for name in ("behavioral", "tracking", "eye_tracking"):
+        assert getattr(updated.acquisition, name).enabled is (name == role)
     assert not state.configuration_values.current.backends[0].enabled
+
+
+@pytest.mark.asyncio
+async def test_disconnect_after_failed_connect_uses_device_cleanup() -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_device_commands import _camera
+
+    state = pb.Snapshot()
+    state.configuration.revision = 4
+    state.acquisition_devices.behavioral.cleanup_pending = True
+    requests = []
+
+    async def execute(method, request):
+        requests.append(request)
+        return SimpleNamespace(succeeded=True)
+
+    client = SimpleNamespace(
+        snapshot=state, operator_command=rpc.OperatorCommand, execute=execute
+    )
+    await _camera(client, {"role": 1, "kind": rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW})
+    assert requests[0].kind == rpc.CAMERA_COMMAND_KIND_FINISH_EDITING
+    assert not requests[0].HasField("preview_run_id")
+
+
+def test_eye_role_projects_and_tests_selected_without_capture(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    panel = window.devices.cameras
+    panel.managed = True
+    assert panel.role.findText("Eye tracking") >= 0
+    state = pb.Snapshot()
+    state.configuration.revision = 4
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.eye_tracking.device.device_id = panel.drafts[0].serial
+    settings.eye_tracking.enabled = False
+    calls = []
+    binding = ManagedCameras(
+        panel,
+        SimpleNamespace(
+            request=lambda action, **kw: calls.append((action, kw)) or True
+        ),
+        lambda *_: False,
+    )
+    binding.install(state)
+    assert panel.drafts[0].role == "Eye tracking"
+    binding.test_selected(panel.drafts[0].key)
+    assert calls == [
+        ("camera", {"role": 3, "kind": rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION})
+    ]
+
+
+@pytest.mark.asyncio
+async def test_eye_assignment_preserves_existing_camera_roles() -> None:
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.device_requests import assign_camera_role
+
+    state = pb.Snapshot()
+    settings = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.behavioral.device.device_id = "behavior"
+    settings.tracking.device.device_id = "tracking"
+    requests = []
+
+    async def execute(method, request):
+        requests.append(request)
+        return SimpleNamespace(succeeded=True)
+
+    await assign_camera_role(
+        SimpleNamespace(
+            snapshot=state, operator_command=rpc.OperatorCommand, execute=execute
+        ),
+        {"serial": "third", "role": "Eye tracking"},
+    )
+    changed = requests[0].proposed.backends[0].acquisition
+    assert changed.behavioral.device.device_id == "behavior"
+    assert changed.tracking.device.device_id == "tracking"
+    assert changed.eye_tracking.device.device_id == "third"
+    assert not changed.eye_tracking.enabled
 
 
 @pytest.mark.asyncio
@@ -4581,6 +4671,41 @@ def test_managed_camera_pin_test_uses_saved_role_signal(
         "Await controller confirmation of this pin assignment"
         in panel.console.toPlainText()
     )
+
+
+@pytest.mark.parametrize("role", ["Eye tracking", "Unassigned"])
+def test_managed_mcu_does_not_alias_unsupported_camera_to_tracking(
+    window: DashboardWindow, monkeypatch: pytest.MonkeyPatch, role: str
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui import managed_mcu
+    from cephvr.gui.microcontroller import CameraTrigger
+
+    panel = window.devices.microcontroller
+    panel.managed = True
+    panel.set_cameras((CameraTrigger("third", role, "External controller", "60"),))
+    state = pb.Snapshot()
+    state.configuration.revision = 1
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    acquisition = state.configuration_values.current.backends.add(
+        backend_name="acquisition"
+    ).acquisition
+    acquisition.pulses.port = "COM8"
+    acquisition.pulses.tracking.pin = "D11"
+    requests: list[object] = []
+    bridge = SimpleNamespace(request=lambda *args, **kwargs: requests.append(args))
+    monkeypatch.setattr(managed_mcu.QTimer, "singleShot", lambda *_: None)
+    binding = managed_mcu.ManagedMcu(panel, bridge, lambda: state)
+    window.apply_view(
+        DashboardView(connected=True, has_control=True, phase=Phase.CONFIGURATION)
+    )
+    binding.install(state, True)
+    assert panel.pin_editors["third"].text() == ""
+    panel.pin_editors["third"].setText("D11")
+    assert not panel.pin_editors["third"].isEnabled()
+    assert not panel.test_buttons["third"].isEnabled()
+    binding.test_pin("third", True)
+    assert requests == []
 
 
 def test_managed_window_waits_for_history_save_before_closing(
@@ -11277,19 +11402,20 @@ def test_managed_firmware_controls_require_idle_configuration(window, tmp_path, 
     binding.install(state, True)
     assert not panel.upload.isEnabled()
     state.microcontroller.diagnostic.active = False
-    for blocker in ("cleanup_pending", "failure"):
-        setattr(
-            state.microcontroller,
-            blocker,
-            True if blocker == "cleanup_pending" else "serial failure",
-        )
+    state.microcontroller.failure = "MCU firmware does not support CAPS"
+    binding.install(state, True)
+    assert panel.upload.isEnabled()
+    assert panel.firmware.browse.isEnabled()
+    for view, attribute in (
+        (state.microcontroller, "cleanup_pending"),
+        (state.acquisition_devices.behavioral, "preview_running"),
+        (state.acquisition_devices.tracking, "device_open"),
+        (state.acquisition_devices.eye_tracking, "cleanup_pending"),
+    ):
+        setattr(view, attribute, True)
         binding.install(state, True)
         assert not panel.upload.isEnabled()
-        state.microcontroller.ClearField(blocker)
-    state.acquisition_devices.behavioral.preview_running = True
-    binding.install(state, True)
-    assert not panel.upload.isEnabled()
-    state.acquisition_devices.behavioral.preview_running = False
+        setattr(view, attribute, False)
     panel.apply_view(DashboardView(connected=True, has_control=True))
     binding.install(state, True)
     panel.upload.click()

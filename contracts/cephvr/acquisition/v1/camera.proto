@@ -8,6 +8,7 @@ enum CameraRole {
   CAMERA_ROLE_UNSPECIFIED = 0;
   CAMERA_ROLE_BEHAVIORAL = 1; // output tag "behavioral"
   CAMERA_ROLE_TRACKING = 2;   // output tag "tracking"
+  CAMERA_ROLE_EYE_TRACKING = 3; // Preview/video only; output tag "eye_tracking".
 }
 enum FrameTiming {
   FRAME_TIMING_UNSPECIFIED = 0;
@@ -212,5 +213,6 @@ message CameraPulseConfiguration {
   optional string projector_flip_pin = 5;
   optional bool trial_state_enabled = 6;
   optional bool projector_flip_enabled = 7;
+  CameraPulseSettings eye_tracking = 8;
   // Actual firmware timing is evidence; never silently replaces requested frequency.
 }

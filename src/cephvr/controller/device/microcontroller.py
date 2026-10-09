@@ -86,7 +86,7 @@ class MicrocontrollerCommands:
             views = self.device_views()
             if views is not None and any(
                 camera.device_open or camera.preview_running or camera.cleanup_pending
-                for camera in (views.behavioral, views.tracking)
+                for camera in (views.behavioral, views.tracking, views.eye_tracking)
             ):
                 return self.hooks.admission(
                     operator_id,

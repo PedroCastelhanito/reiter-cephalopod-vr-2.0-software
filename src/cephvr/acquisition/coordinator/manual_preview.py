@@ -280,6 +280,14 @@ class ManualPreview:
                 "CAMERA_ASSIGNMENT",
                 "preview camera has no assigned device",
             )
+        if role == camera.CAMERA_ROLE_EYE_TRACKING:
+            return _rejected(
+                command.command_id,
+                "EYE_TRIGGER_PENDING",
+                "Eye tracking capture requires wired external triggering; "
+                "its source, rate and controller integration remain pending. "
+                "Test connection can verify camera identity without capture.",
+            )
         if not request.HasField(
             "preview_output_bit_depth"
         ) or request.preview_output_bit_depth not in (8, 10):
@@ -335,13 +343,15 @@ class ManualPreview:
                 parent_code="PREVIEW_REPORT",
                 parent_failure="controller rejected preview completion",
             )
-        except (RuntimeError, TimeoutError, ValueError) as exc:
+        except (asyncio.CancelledError, RuntimeError, TimeoutError, ValueError) as exc:
             try:
                 operation = control.OperationContext(command_id=command.command_id)
                 await self.resolution.cancel(operation)
                 await self.resolution.retire(operation)
             except (RuntimeError, ValueError):
                 pass
+            if isinstance(exc, asyncio.CancelledError):
+                raise
             await self.results.report_failure(
                 command,
                 command_name="start_preview",
@@ -369,11 +379,7 @@ class ManualPreview:
         preview.stopping = True
         active_roles = self._external_roles(None)
         if uncertain_preview:
-            setting = (
-                self.configuration.settings.behavioral
-                if request.camera == camera.CAMERA_ROLE_BEHAVIORAL
-                else self.configuration.settings.tracking
-            )
+            setting = getattr(self.configuration.settings, role_name(request.camera))
             if (
                 setting.HasField("device")
                 and setting.device.HasField("frame_timing")
@@ -613,6 +619,7 @@ class ManualPreview:
             in (
                 camera.CAMERA_ROLE_BEHAVIORAL,
                 camera.CAMERA_ROLE_TRACKING,
+                camera.CAMERA_ROLE_EYE_TRACKING,
             )
         )
 

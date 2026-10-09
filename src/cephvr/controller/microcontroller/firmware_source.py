@@ -25,8 +25,16 @@ def read_uno_sketch(path: str, expected_digest: str = "") -> FirmwareSketch:
     source = Path(path)
     if not source.is_absolute() or source.suffix.lower() != ".ino":
         raise ValueError("Select an absolute path to an Arduino .ino sketch.")
-    if source.is_symlink() or not source.is_file():
-        raise ValueError("Firmware sketch must be a regular file, not a link.")
+    if source.is_symlink():
+        raise ValueError(
+            f"Firmware sketch must be a regular file, not a link: {source}"
+        )
+    if not source.exists():
+        raise ValueError(
+            f"Firmware sketch not found: {source}. Select its current path with Browse."
+        )
+    if not source.is_file():
+        raise ValueError(f"Firmware sketch is not a regular file: {source}")
     root = source.parent
     files: list[tuple[Path, bytes]] = []
     pending = [root]

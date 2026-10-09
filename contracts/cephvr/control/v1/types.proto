@@ -172,6 +172,7 @@ message AcquisitionSettings {
   optional uint32 tracking_ring_frames = 8; // A03 shared tracking ring.
   optional uint32 recording_queue_frames = 9; // A03 in-process recording queue minimum.
   optional double session_preview_max_hz = 10; // A03/A10 session preview cap; 0 = off.
+  cephvr.acquisition.v1.CameraSessionSettings eye_tracking = 11;
   // File-policy bindings: acquisition/configuration-bindings.md. Applied MCU
   // timing is separate evidence, never an operator override.
 }
@@ -849,6 +850,7 @@ message AcquisitionDeviceViews {
   cephvr.acquisition.v1.MicrocontrollerObservation pulses = 6;
   TrialPulseEvidence trial_pulses = 7;
   MicrocontrollerDiagnosticView diagnostic = 8;
+  CameraDeviceView eye_tracking = 9;
 }
 message MicrocontrollerDiagnosticView {
   optional bool active = 1;

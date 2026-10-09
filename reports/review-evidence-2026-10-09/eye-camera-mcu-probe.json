@@ -1,0 +1,900 @@
+{
+  "method": "SerialOwner.connect; COM8/115200, unchanged 100 ms acknowledgement; 10 s diagnostic deadline",
+  "writes": [
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-1\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-2\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-3\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-4\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-5\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-6\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-7\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-8\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-9\n",
+      "elapsed_s": 0.0,
+      "accepted": 47
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-10\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-11\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-12\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-13\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-14\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-15\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-16\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-17\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-18\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-19\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-20\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-21\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-22\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-23\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-24\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-25\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-26\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-27\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-28\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-29\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-30\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-31\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-32\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-33\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-34\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-35\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-36\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-37\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-38\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-39\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-40\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-41\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-42\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-43\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-44\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-45\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-46\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-47\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-48\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-49\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-50\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-51\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-52\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-53\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-54\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-55\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-56\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-57\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-58\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-59\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-60\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-61\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-62\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-63\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-64\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-65\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-66\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-67\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-68\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-69\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-70\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-71\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-72\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-73\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-74\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-75\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-76\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-77\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-78\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-79\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-80\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-81\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-82\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-83\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-84\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-85\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-86\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-87\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-88\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-89\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-90\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    },
+    {
+      "payload": "CAPS id=47c89e93-ac33-4f97-9031-2b4e88fadcf4-91\n",
+      "elapsed_s": 0.0,
+      "accepted": 48
+    }
+  ],
+  "received": [
+    {
+      "bytes": "O",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "K READY dual_camera_projector_sync\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.016000000000531145
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.014999999999417923
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown comman",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "d: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.015000000000327418
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.015000000000327418
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown co",
+      "elapsed_s": 0.015000000000327418
+    },
+    {
+      "bytes": "mmand: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown comm",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "and: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CA",
+      "elapsed_s": 0.015000000000327418
+    },
+    {
+      "bytes": "PS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command:",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": " CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command:",
+      "elapsed_s": 0.015000000000327418
+    },
+    {
+      "bytes": " CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: C",
+      "elapsed_s": 0.015000000000327418
+    },
+    {
+      "bytes": "APS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAP",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "S\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.015000000000327418
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.014999999999417923
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "E",
+      "elapsed_s": 0.014999999999417923
+    },
+    {
+      "bytes": "RR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown ",
+      "elapsed_s": 0.01599999999962165
+    },
+    {
+      "bytes": "command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown comma",
+      "elapsed_s": 0.016000000000531145
+    },
+    {
+      "bytes": "nd: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    },
+    {
+      "bytes": "ERR Unknown command: CAPS\r\n",
+      "elapsed_s": 0.0
+    }
+  ],
+  "read_calls": 685,
+  "error": "SerialOwnerError: MCU startup failed: no valid CAPS response before original deadline; cleanup: startup failure cleanup closed the port after its original deadline",
+  "unmatched_replies": 0,
+  "malformed_replies": 87,
+  "closed": true,
+  "elapsed_s": 10.061999999999898
+}

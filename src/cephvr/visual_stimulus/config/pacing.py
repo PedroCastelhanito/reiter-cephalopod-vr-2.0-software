@@ -24,31 +24,29 @@ def apply_pacing_settings(
         values["pacing_output_id"] = output_id
     resolved = DisplayProfile.model_validate(values)
     selected_id = resolved.selected_pacing_output_id
-    if selected_id is None:
+    if selected_id is None and resolved.presentation_mode != "all_outputs_vsync":
         raise ValueError("mixed pacing requires a configured pacing output")
-    selected = next(
-        (
-            output
-            for output in resolved.active_outputs
-            if output.output_id == selected_id
-        ),
-        None,
+    selected = tuple(
+        output
+        for output in resolved.active_outputs
+        if selected_id is None or output.output_id == selected_id
     )
-    if selected is None:
+    if not selected:
         raise ValueError("configured pacing output is unavailable or disabled")
     if refresh_hz is not None:
         if not math.isfinite(refresh_hz) or not refresh_hz.is_integer():
             raise ValueError(
                 "V20 pacing refresh must match an integer native display mode"
             )
-        native_rate = (
-            2 * selected.refresh_numerator + selected.refresh_denominator
-        ) // (2 * selected.refresh_denominator)
-        if native_rate != int(refresh_hz):
-            raise ValueError(
-                f"pacing output {selected_id} profile refresh {native_rate:g} Hz "
-                f"does not match configured target {refresh_hz:g} Hz"
-            )
+        for output in selected:
+            native_rate = (
+                2 * output.refresh_numerator + output.refresh_denominator
+            ) // (2 * output.refresh_denominator)
+            if native_rate != int(refresh_hz):
+                raise ValueError(
+                    f"output {output.output_id} profile refresh {native_rate:g} Hz "
+                    f"does not match configured target {refresh_hz:g} Hz"
+                )
     return resolved
 
 

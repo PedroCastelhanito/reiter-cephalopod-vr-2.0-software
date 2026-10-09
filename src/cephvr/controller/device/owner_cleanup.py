@@ -9,6 +9,7 @@ from copy import deepcopy
 
 from google.protobuf.message import Message
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
 from cephvr.control.v1 import services_pb2 as svc
@@ -120,6 +121,7 @@ class ManualControlCleanup:
             view_by_role = (
                 (camera_pb.CAMERA_ROLE_BEHAVIORAL, views.behavioral),
                 (camera_pb.CAMERA_ROLE_TRACKING, views.tracking),
+                (camera_pb.CAMERA_ROLE_EYE_TRACKING, views.eye_tracking),
             )
             known_views = all(
                 view.HasField("device_open")
@@ -307,9 +309,7 @@ class ManualControlCleanup:
         deadline_ns: int,
         owner_operation_id: str,
     ) -> pb.CameraDeviceView:
-        role_name = (
-            "behavioral" if role == camera_pb.CAMERA_ROLE_BEHAVIORAL else "tracking"
-        )
+        role_name = camera_role_name(role)
         camera_settings = getattr(settings, role_name)
         if not camera_settings.HasField("device"):
             raise RuntimeError(f"{role_name} camera has no retained device assignment")

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.ports import ControllerPort
 from cephvr.acquisition.state import CoordinatorIdentity, PulseRecord
 from cephvr.acquisition.v1 import camera_pb2 as camera
@@ -46,7 +47,11 @@ class ManualDeviceStatusReporter:
                 preview_run_id="",
                 preview_visible=False,
             )
-            for role in (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING)
+            for role in (
+                camera.CAMERA_ROLE_BEHAVIORAL,
+                camera.CAMERA_ROLE_TRACKING,
+                camera.CAMERA_ROLE_EYE_TRACKING,
+            )
         }
         self._diagnostic: control.MicrocontrollerDiagnosticView | None = None
         self._reports: dict[str, tuple[bytes, wire.AcquisitionDeviceStatusReport]] = {}
@@ -78,6 +83,7 @@ class ManualDeviceStatusReporter:
         if role not in (
             camera.CAMERA_ROLE_BEHAVIORAL,
             camera.CAMERA_ROLE_TRACKING,
+            camera.CAMERA_ROLE_EYE_TRACKING,
         ):
             raise ValueError("device projection has an invalid camera role")
         if (
@@ -264,11 +270,7 @@ class ManualDeviceStatusReporter:
             observed_monotonic_ns=now,
         )
         for role, retained_view in self._views.items():
-            target = (
-                views.behavioral
-                if role == camera.CAMERA_ROLE_BEHAVIORAL
-                else views.tracking
-            )
+            target = getattr(views, camera_role_name(role))
             target.CopyFrom(retained_view)
         if self.pulse.observation is not None:
             views.pulses.CopyFrom(self.pulse.observation)

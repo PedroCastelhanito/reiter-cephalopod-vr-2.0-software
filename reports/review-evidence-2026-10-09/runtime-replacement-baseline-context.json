@@ -1,0 +1,28 @@
+{
+  "recorded_utc": "2026-10-09T07:39:43.6776358Z",
+  "source_revision": "94285ac748419b74bec048394ad30807837ff4fe",
+  "source_sha256": {
+    "src/cephvr/launcher/replacement.py": "1eab06aeef3c8e9191f6c0c1eaddeb84b27a164cae4c6a900763d5b243141f47",
+    "scripts/start_runtime_gui.py": "266f615d63baab4cbaf65363bc640ca9039580f4cc1d9cee37baed6debf701ec",
+    "src/cephvr/shared/credentials.py": "f58aace2186db471117056f56762690ceada0efc23809ff1e3b51d87fb4ec706",
+    "src/cephvr/launcher/main.py": "a7819bfaa73ef6e39ab8488dfc9134fc5a0fba32705b68d6e2d83f165d299d2d",
+    "tests/shared/test_recovery.py": "3351bf86be255cf36f023ff0652d06eca90796ad892626b30af4b076fbfc0ae1",
+    "tests/shared/test_invariants.py": "24362940d7be4259b876285fa1f71ae623100f00b80042a608ffc6a9779faf1f",
+    "tests/launcher/test_lifecycle.py": "c185c659750e54bd0a5a43fe7b86c468f7cfa1686bc1c9705fcb95b114e0132b"
+  },
+  "user_report": "Ordinary terminal startup waits, then fails: existing runtime has no replacement endpoint at the logical AppData launcher.json path",
+  "native_context": "Codex child shell; same logical AppData endpoint visible",
+  "logical_runtime_path": "C:\\Users\\ReiterU_PC\\AppData\\Local\\CephVR2\\runtime",
+  "observed_generation_after_N": "ebb927d3-ad19-4f61-b52b-a906cdb44a57",
+  "command": "C:/Users/ReiterU_PC/miniforge3/python.exe scripts/start_runtime_gui.py",
+  "method": "Native exec PTY, interactive prompt, explicitly answer N",
+  "prompt": "CephVR2 is already running. Kill the existing runtime and start this one? Unsaved work may be lost. [Y/N]:",
+  "answer": "N",
+  "outcome": "Existing runtime left running.",
+  "exit_code": 0,
+  "tests": "runtime-replacement-baseline-corrected.xml: 66 passed, one Windows symlink-privilege skip",
+  "failed_attempt": "runtime-replacement-baseline.xml: nonexistent tests/shared/test_auth.py; no tests ran",
+  "pending": "Owner root-location choice under E08 revision 169; no namespace change or Y/kill performed",
+  "prior_cause_evidence": "../rig-wiring-evidence-2026-10-07/replacement-msix-visibility.json",
+  "documentation": "https://learn.microsoft.com/en-us/windows/msix/desktop/flexible-virtualization"
+}

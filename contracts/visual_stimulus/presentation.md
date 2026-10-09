@@ -15,14 +15,16 @@ or establish physical projector precision.
 The legacy enum spelling `photodiode_only_vsync` is retained for compatibility; it
 now refers to the selected pacing output even with the pulse disabled or elsewhere.
 Absent explicit pacing, legacy pulse-enabled profiles retain their marker target.
-New pulse-disabled configurations require explicit active pacing.
+Pulse-disabled mixed-mode configurations require explicit active pacing.
+All-output VSync allows no designated pacer; validate every enabled output's native
+rate against the file-owned target. No output identity is guessed.
 
 Use two session modes with explicit requested swap intervals:
 
 | Mode | Pacing output | Other outputs |
 | --- | --- | --- |
 | `photodiode_only_vsync` (default for new profiles) | 1 | 0 |
-| `all_outputs_vsync` (selectable for rig testing) | 1 | 1 |
+| `all_outputs_vsync` (selectable for rig testing; pacer optional) | 1 if selected | 1 |
 
 Resolve the designated pacing output through a stable output identity, not a
 hard-coded tank face, monitor enumeration index or window creation order. The mixed

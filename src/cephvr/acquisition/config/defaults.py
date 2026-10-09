@@ -5,6 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from pathlib import Path
 
+from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2
 from cephvr.controller.microcontroller.config import load_microcontroller_pair
@@ -27,7 +28,7 @@ def load_defaults(root: Path) -> types_pb2.AcquisitionSettings:
     pair = _load_pair(Path(root))
     config = pair.config
     result = types_pb2.AcquisitionSettings()
-    for role in ("behavioral", "tracking"):
+    for role in CAMERA_NAMES:
         values = config.get("cameras", {}).get(role, {})
         camera = getattr(result, role)
         camera.enabled = _bool(

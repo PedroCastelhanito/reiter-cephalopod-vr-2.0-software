@@ -68,6 +68,13 @@ shutdown budget. The event uses the existing owner-only native event helper; no
 service or session authority is added. A requester opens that exact event before
 asking, so an answer cannot target a later launcher generation.
 
+All local roles select E08's `%USERPROFILE%/.cephvr2/runtime` root outside AppData
+virtualization, so packaged launchers and ordinary terminals see the same endpoint.
+Keep the existing owner-only ACLs and exact event/exit-receipt checks. Upgrading an
+old AppData-based instance requires normal shutdown and guarded byte-preserving
+recovery transfer before the first new-root launch; do not reuse stale endpoints or
+credentials, overwrite conflicts or discover a process to kill by name.
+
 Guard acquisition precedes endpoint publication. An interactive requester retries
 only an absent descriptor, bounded by its already resolved startup health-silence
 timeout. Retain the published exact event before offering Y/N. Unsafe, corrupt or

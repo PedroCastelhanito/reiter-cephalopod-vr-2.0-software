@@ -1,0 +1,23 @@
+{
+  "command": [
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+    "-m",
+    "not rig",
+    "-p",
+    "no:cacheprovider",
+    "-rs",
+    "--junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\review-evidence-2026-10-09\\mcu-configurable-tests.xml"
+  ],
+  "environment": {
+    "QT_QPA_PLATFORM": "offscreen",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "started_utc": "2026-10-09T08:49:05.503260+00:00",
+  "elapsed_seconds": 183.985,
+  "returncode": 1,
+  "raw": "mcu-configurable-tests.txt"
+}

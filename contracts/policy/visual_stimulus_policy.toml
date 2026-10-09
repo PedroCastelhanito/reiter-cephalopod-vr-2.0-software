@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 8
+policy_version = 9
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_recording_thread_when_saving"
@@ -122,7 +122,7 @@ args_scope = "output_only"
 args_ownership = "composite"
 argument_contract = "shared_acquisition_inventory_with_visual_stimulus_constraints"
 container = "mp4"
-review_timing = "constant_nominal_refresh_rate_of_pacing_output"
+review_timing = "constant_nominal_refresh_rate_of_pacing_output_or_common_vsync_outputs"
 review_frame_mapping = "first_usable_evaluation_per_nominal_slot_with_identified_duplicates"
 # E13/V12/V28: leading backfill uses the first real image; later gaps repeat
 # the preceding selected image with exact source-group/time evidence.

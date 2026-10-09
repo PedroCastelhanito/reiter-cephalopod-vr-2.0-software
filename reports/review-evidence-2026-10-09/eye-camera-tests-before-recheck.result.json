@@ -1,0 +1,24 @@
+{
+  "command": [
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+    "-m",
+    "not rig",
+    "-p",
+    "no:cacheprovider",
+    "-rs",
+    "--junitxml=C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\review-evidence-2026-10-09\\eye-camera-tests.xml"
+  ],
+  "environment": {
+    "QT_QPA_PLATFORM": "offscreen",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "started_utc": "2026-10-09T06:25:21.498640+00:00",
+  "elapsed_seconds": 196.985,
+  "returncode": 1,
+  "raw": "eye-camera-tests-before-recheck.txt",
+  "source_inputs": "eye-camera-inputs-before-mcu-pins.json"
+}

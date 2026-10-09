@@ -166,6 +166,15 @@ projector displays and a simulated Arduino inventory without detecting physical
 devices. `start_runtime_gui.py` uses the Windows application launcher so the
 controller-backed GUI can discover attached cameras, secondary displays and COM
 ports and send supported managed commands.
+Windows runtime records now live at `%USERPROFILE%\.cephvr2\runtime`, with owner-only
+access, so Codex and ordinary terminals share the same replacement endpoint.
+Starting another runtime in an interactive terminal offers Y/N: N leaves it running;
+Y asks its existing launcher to terminate its contained processes, then verifies exit
+before starting the replacement. This can lose unsaved work. When upgrading from
+the old AppData location, normally stop that instance and preserve its private
+recovery records before first startup at the new location; retain originals and
+reject differing destination files. Old client credentials and launcher descriptors
+are generation-specific and are not transferred.
 Both launchers use the same Dashboard and device/editor components. Layout changes
 therefore apply to the runtime GUI directly; there is no separate frontend build or
 layout copy to update. The runtime uses controller-owned settings and command gates,

@@ -1,5 +1,10 @@
 # Tracking status
 
+Current Windows checkout `94285ac` passes the complete non-rig suite, all 48 Tracking
+contract cases and 19 schema matches after regenerating stale local bindings.
+[Current cross-owner results and limits](runtime.md) retain exact evidence; scientific
+and full-load acceptance remain in the existing rig checklist.
+
 Current source audit (2026-10-09, `0aebf47`): Luna reviewed physical-unit conversion,
 configuration and recording paths; Sol interpreted the findings and Astra reviewed
 the synthesis. No additional actionable Tracking defect was established. The owning

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Set
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import microcontroller_pb2 as pulses
 from cephvr.control.v1 import types_pb2 as pb
@@ -54,7 +55,11 @@ def started_satisfied(
                 activity.kind != "camera_callback"
                 or not device.HasField("camera")
                 or device.camera
-                not in {camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING}
+                not in {
+                    camera.CAMERA_ROLE_BEHAVIORAL,
+                    camera.CAMERA_ROLE_TRACKING,
+                    camera.CAMERA_ROLE_EYE_TRACKING,
+                }
                 or device.HasField("visual_stimulus_output")
                 or device.HasField("tracking_evaluation")
                 or (device.producer.role, device.producer.generation)
@@ -62,11 +67,7 @@ def started_satisfied(
             ):
                 return False
             key: int | str = device.camera
-            source = (
-                "behavioral"
-                if device.camera == camera.CAMERA_ROLE_BEHAVIORAL
-                else "tracking"
-            )
+            source = camera_role_name(device.camera)
             if source_producers is not None and source_producers.get(source) != (
                 device.producer.role,
                 device.producer.generation,
@@ -263,7 +264,8 @@ def outputs_satisfied(
             return False
         camera_video = (
             plan.backend.backend_name == "acquisition"
-            and plan.output_tag in {"behavioral_cam", "tracking_cam"}
+            and plan.output_tag
+            in {"behavioral_cam", "tracking_cam", "eye_tracking_cam"}
             and plan.extension == "mp4"
         )
         visual_stimulus_video = (

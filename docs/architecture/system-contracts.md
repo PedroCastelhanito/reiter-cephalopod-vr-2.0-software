@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 169
+**Status:** Accepted · **Revision:** 170
 
 **Processes and startup**
 
@@ -309,8 +309,15 @@ design; runtime monitoring remains unimplemented.
 
 **Control transport and state**
 
-- Windows runtime credentials and recovery records use the version-specific
-  `%LOCALAPPDATA%/CephVR2/runtime` namespace, with existing owner-only protection.
+- Windows runtime credentials, launcher endpoints and recovery records use
+  `%USERPROFILE%/.cephvr2/runtime`, outside AppData virtualization, with existing
+  owner-only protection. Missing/relative USERPROFILE fails without an AppData
+  fallback. All local process/client roles use the same shared root selection.
+  On transition from the former CephVR2 AppData root, stop its owner normally and
+  preserve recovery records byte-for-byte under exclusive application-guard
+  ownership before first new-root startup. Keep original records; do not import
+  stale launcher endpoints or generation credentials. Unsafe records or destination
+  conflicts block preservation without overwrite or guessed process termination.
   CephVR2.0 never hardens the legacy `%LOCALAPPDATA%/CephVR/runtime` tree;
   independent versions must not change each other's runtime-file access.
 - Rig services use gRPC/Protobuf on local loopback only. The only off-host

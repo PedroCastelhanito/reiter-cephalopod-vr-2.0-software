@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.camera_inventory import CAMERA_ROLES
 from cephvr.gui.cameras import CamerasPanel
 
 
@@ -26,7 +28,7 @@ class ManagedPreviewViewers:
     def preview_visibility(self, key: str, visible: bool) -> None:
         role = next(
             (
-                {"Behavior cam": 1, "Tracking cam": 2}.get(camera.role)
+                CAMERA_ROLES.get(camera.role)
                 for camera in self.cameras.drafts
                 if camera.key == key
             ),
@@ -59,11 +61,7 @@ class ManagedPreviewViewers:
         state = self.snapshot()
         if state is None:
             return False
-        device = (
-            state.acquisition_devices.behavioral
-            if role == 1
-            else state.acquisition_devices.tracking
-        )
+        device = getattr(state.acquisition_devices, camera_role_name(role))
         if device.preview_visibility_revision != self._reported.get(role):
             self._reported[role] = device.preview_visibility_revision
             if device.preview_failure:

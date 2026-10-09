@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.ports import BackendPort
@@ -9,7 +10,7 @@ from cephvr.controller.state import Attempt
 
 
 def _camera_source(role: int) -> str:
-    return "behavioral" if role == camera_pb.CAMERA_ROLE_BEHAVIORAL else "tracking"
+    return camera_role_name(role)
 
 
 def activity_requirements(
@@ -54,6 +55,7 @@ def activity_requirements(
         selected = {
             camera_pb.CAMERA_ROLE_BEHAVIORAL: settings.behavioral,
             camera_pb.CAMERA_ROLE_TRACKING: settings.tracking,
+            camera_pb.CAMERA_ROLE_EYE_TRACKING: settings.eye_tracking,
         }
         configured = {
             _camera_source(role)

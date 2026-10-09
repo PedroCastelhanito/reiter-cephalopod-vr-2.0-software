@@ -70,8 +70,10 @@ results; it does not waive encoder errors or required state/presentation records
 
 ## Review timing
 
-The review video is constant-rate at the pacing output's nominal refresh rate (the
-photodiode output in `photodiode_only_vsync` mode), retained as PreparedTrial
+The review video is constant-rate at the pacing output's nominal refresh rate,
+or the common nominal refresh rate of enabled outputs in all-output VSync without
+a designated pacer. Differing rates in the latter case reject recording preparation;
+`pacing_output_id` is null, never a guessed face. This timing is retained as PreparedTrial
 ReviewEncoding.timing. Video frame n (zero-based) occupies nominal slot n under
 [E13](../../docs/architecture/visual_stimulus.md#e13). The first usable source group
 in a slot wins; leading gaps repeat the first selected image and interior/trailing

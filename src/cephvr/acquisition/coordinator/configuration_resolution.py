@@ -77,7 +77,11 @@ class ConfigurationResolution:
             )
             or (not expected_cameras and not expected_pulses and not allow_empty)
             or not expected_cameras.issubset(
-                {camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING}
+                {
+                    camera.CAMERA_ROLE_BEHAVIORAL,
+                    camera.CAMERA_ROLE_TRACKING,
+                    camera.CAMERA_ROLE_EYE_TRACKING,
+                }
             )
             or expected_pulses != (requested_pulses is not None)
         ):
@@ -451,6 +455,7 @@ def confirmed_matches_resolution(
     selected = {
         camera.CAMERA_ROLE_BEHAVIORAL: "behavioral",
         camera.CAMERA_ROLE_TRACKING: "tracking",
+        camera.CAMERA_ROLE_EYE_TRACKING: "eye_tracking",
     }
     entries = {item.camera: item.result for item in resolution.cameras}
     for role in roles:

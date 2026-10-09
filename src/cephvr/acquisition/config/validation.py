@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import types_pb2
 
 from .validation_buffers import validate_shared_options
@@ -57,7 +58,7 @@ def validate_configuration(
         validate_pulse_port(settings, result, ())
         return result
     external_roles: list[str] = []
-    for role in ("behavioral", "tracking"):
+    for role in CAMERA_NAMES:
         device_id = validate_camera_role(settings, role, result)
         if device_id is not None:
             active_ids[device_id] = role

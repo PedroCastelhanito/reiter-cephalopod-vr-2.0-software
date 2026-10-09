@@ -7,7 +7,7 @@ from threading import Lock
 from typing import Any
 from uuid import uuid4
 
-from cephvr.acquisition.v1 import camera_pb2
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
@@ -145,11 +145,7 @@ class WorkerHealthReporter:
             error.isolation.leases_released_or_quarantined = True
         error.isolation.verified_monotonic_ns = observed_ns
 
-        camera_name = (
-            "behavioral"
-            if self.bootstrap.context.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
-            else "tracking"
-        )
+        camera_name = camera_role_name(self.bootstrap.context.camera)
         capture = control.ContinuingFunctionEvidence()
         capture.CopyFrom(capture_function)
         capture.resource_id = f"{camera_name}.capture"

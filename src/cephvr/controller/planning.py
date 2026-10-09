@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import types_pb2 as pb
 
 
@@ -48,7 +49,7 @@ def _tags(
         if settings.WhichOneof("settings") != "acquisition":
             raise PlanningError("acquisition Ready lacks resolved camera settings")
         tags = []
-        for camera_role in ("behavioral", "tracking"):
+        for camera_role in CAMERA_NAMES:
             camera = getattr(settings.acquisition, camera_role)
             if _save_flag(camera, "enabled") and _save_flag(camera, "save_video"):
                 tag = f"{camera_role}_cam"

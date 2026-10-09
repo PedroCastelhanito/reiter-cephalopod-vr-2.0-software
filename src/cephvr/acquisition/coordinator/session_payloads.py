@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable
 from cephvr.acquisition.coordinator.commands import retain_worker_command
 from cephvr.acquisition.coordinator.prepared_functions import role_prepared_functions
 from cephvr.acquisition.coordinator.session_resources import allocate_camera_outputs
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.ports import ControllerPort, ResourcePort
 from cephvr.acquisition.state import (
     ConfigurationRecord,
@@ -231,11 +232,7 @@ def camera_policy(
 
 
 def role_name(role: int) -> str:
-    if role == camera.CAMERA_ROLE_BEHAVIORAL:
-        return "behavioral"
-    if role == camera.CAMERA_ROLE_TRACKING:
-        return "tracking"
-    raise ValueError(f"unsupported acquisition camera role {role}")
+    return camera_role_name(role)
 
 
 def nominal_frame_rate(

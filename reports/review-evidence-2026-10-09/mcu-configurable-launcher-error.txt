@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: display interface '\\\\?\\DISPLAY#DLP5050#5&2f6fd671&0&UID4353#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}' matched 0 active monitors
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -17,7 +17,7 @@ from cephvr.shared.identity import require_uuid4
 
 ClassificationStatus = Literal["pending", "continuable", "blocking"]
 _LIFECYCLE_SOURCES = {
-    "acquisition": frozenset({"behavioral", "tracking"}),
+    "acquisition": frozenset({"behavioral", "tracking", "eye_tracking"}),
     "tracking": frozenset({"tracking"}),
     "visual_stimulus": frozenset({"renderer"}),
 }

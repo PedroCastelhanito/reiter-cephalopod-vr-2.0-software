@@ -17,7 +17,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 
 
-def _identity() -> RecordingIdentity:
+def _identity(role: str = "behavioral") -> RecordingIdentity:
     session_id, trial_id = str(uuid4()), str(uuid4())
     clock = camera.CameraClockDescriptor(
         device_id="device-17",
@@ -34,7 +34,7 @@ def _identity() -> RecordingIdentity:
         conversion_available=False,
     )
     return RecordingIdentity(
-        session_id, trial_id, 1, "behavioral", "device-17", "config.json", clock
+        session_id, trial_id, 1, role, "device-17", "config.json", clock
     )
 
 
@@ -57,25 +57,27 @@ def _reservation(identity: RecordingIdentity) -> RecordingPaths:
                 extension=extension,
             )
             for tag, extension in (
-                ("behavioral_cam", "mp4"),
-                ("behavioral_cam_frames", "jsonl"),
+                (f"{identity.camera_role}_cam", "mp4"),
+                (f"{identity.camera_role}_cam_frames", "jsonl"),
             )
         ),
         backend.backend_generation,
     )
 
 
+@pytest.mark.parametrize("role", ["behavioral", "tracking", "eye_tracking"])
 def test_valid_backend_context_and_exact_scheduled_paths_are_accepted(
     tmp_path: Path,
+    role: str,
 ) -> None:
-    identity = _identity()
+    identity = _identity(role)
     plans = _reservation(identity)
-    plans.validate("behavioral", identity)
+    plans.validate(role, identity)
     prefix = tmp_path / "trial"
     schedule = acq.WorkerSchedule(
         command=acq.WorkerCommand(
             target=acq.WorkerContext(
-                camera=camera.CAMERA_ROLE_BEHAVIORAL,
+                camera=camera.CameraRole.Value(f"CAMERA_ROLE_{role.upper()}"),
                 work=control.WorkContext(
                     trial=control.TrialContext(
                         session=control.SessionContext(session_id=identity.session_id),
@@ -93,9 +95,9 @@ def test_valid_backend_context_and_exact_scheduled_paths_are_accepted(
     for item in schedule.outputs:
         item.path = f"{prefix}_{item.output_tag}.{item.extension}"
 
-    assert resolve_recording_paths(plans, "behavioral", identity, schedule) == (
-        Path(f"{prefix}_behavioral_cam.mp4"),
-        Path(f"{prefix}_behavioral_cam_frames.jsonl"),
+    assert resolve_recording_paths(plans, role, identity, schedule) == (
+        Path(f"{prefix}_{role}_cam.mp4"),
+        Path(f"{prefix}_{role}_cam_frames.jsonl"),
     )
 
 

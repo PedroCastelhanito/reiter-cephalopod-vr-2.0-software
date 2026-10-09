@@ -1,0 +1,89 @@
+
+=================================== ERRORS ====================================
+______________ ERROR collecting tests/supervisor/test_health.py _______________
+tests\supervisor\test_health.py:18: in <module>
+    from tests.supervisor.support import Context, make_runtime
+tests\supervisor\support.py:14: in <module>
+    from cephvr.supervisor.registry import LaunchRegistry
+src\cephvr\supervisor\registry.py:23: in <module>
+    from cephvr.supervisor.camera_release import camera_release_request_matches
+src\cephvr\supervisor\camera_release.py:11: in <module>
+    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionWorkerCleanupProof'
+_____________ ERROR collecting tests/supervisor/test_recovery.py ______________
+tests\supervisor\test_recovery.py:19: in <module>
+    from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
+src\cephvr\supervisor\acquisition_worker.py:22: in <module>
+    from cephvr.supervisor.registration import RegistrationCoordinator
+src\cephvr\supervisor\registration.py:20: in <module>
+    from cephvr.supervisor.registry import (
+src\cephvr\supervisor\registry.py:23: in <module>
+    from cephvr.supervisor.camera_release import camera_release_request_matches
+src\cephvr\supervisor\camera_release.py:11: in <module>
+    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionWorkerCleanupProof'
+___________ ERROR collecting tests/supervisor/test_registration.py ____________
+tests\supervisor\test_registration.py:18: in <module>
+    from cephvr.supervisor import startup
+src\cephvr\supervisor\startup.py:33: in <module>
+    from cephvr.supervisor.outbound import GrpcOutbound
+src\cephvr\supervisor\outbound.py:18: in <module>
+    from cephvr.supervisor.worker_outbound import GrpcWorkerOutbound
+src\cephvr\supervisor\worker_outbound.py:18: in <module>
+    from cephvr.supervisor.registry import LIVE_PHASES, LaunchError, LaunchRegistry
+src\cephvr\supervisor\registry.py:23: in <module>
+    from cephvr.supervisor.camera_release import camera_release_request_matches
+src\cephvr\supervisor\camera_release.py:11: in <module>
+    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionWorkerCleanupProof'
+_____________ ERROR collecting tests/supervisor/test_registry.py ______________
+tests\supervisor\test_registry.py:18: in <module>
+    from cephvr.supervisor.registry import LaunchError, LaunchRegistry
+src\cephvr\supervisor\registry.py:23: in <module>
+    from cephvr.supervisor.camera_release import camera_release_request_matches
+src\cephvr\supervisor\camera_release.py:11: in <module>
+    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionWorkerCleanupProof'
+_____________ ERROR collecting tests/supervisor/test_shutdown.py ______________
+tests\supervisor\test_shutdown.py:18: in <module>
+    from cephvr.supervisor.acquisition_worker import lifecycle_payload_matches
+src\cephvr\supervisor\acquisition_worker.py:22: in <module>
+    from cephvr.supervisor.registration import RegistrationCoordinator
+src\cephvr\supervisor\registration.py:20: in <module>
+    from cephvr.supervisor.registry import (
+src\cephvr\supervisor\registry.py:23: in <module>
+    from cephvr.supervisor.camera_release import camera_release_request_matches
+src\cephvr\supervisor\camera_release.py:11: in <module>
+    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionWorkerCleanupProof'
+______________ ERROR collecting tests/supervisor/test_status.py _______________
+tests\supervisor\test_status.py:9: in <module>
+    from tests.supervisor.support import make_runtime
+tests\supervisor\support.py:14: in <module>
+    from cephvr.supervisor.registry import LaunchRegistry
+src\cephvr\supervisor\registry.py:23: in <module>
+    from cephvr.supervisor.camera_release import camera_release_request_matches
+src\cephvr\supervisor\camera_release.py:11: in <module>
+    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionWorkerCleanupProof'
+_____ ERROR collecting tests/supervisor/test_worker_outbound_contracts.py _____
+tests\supervisor\test_worker_outbound_contracts.py:18: in <module>
+    from cephvr.supervisor.acquisition_worker import AcquisitionWorkerControl
+src\cephvr\supervisor\acquisition_worker.py:22: in <module>
+    from cephvr.supervisor.registration import RegistrationCoordinator
+src\cephvr\supervisor\registration.py:20: in <module>
+    from cephvr.supervisor.registry import (
+src\cephvr\supervisor\registry.py:23: in <module>
+    from cephvr.supervisor.camera_release import camera_release_request_matches
+src\cephvr\supervisor\camera_release.py:11: in <module>
+    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'AcquisitionWorkerCleanupProof'
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!
+1 deselected, 7 errors in 5.91s

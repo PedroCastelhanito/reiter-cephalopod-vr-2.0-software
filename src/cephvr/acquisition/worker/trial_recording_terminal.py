@@ -6,8 +6,8 @@ from collections.abc import Callable
 from concurrent.futures import Future
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
+from cephvr.acquisition.identity import camera_role_name
 from cephvr.acquisition.recording.session_contracts import RecordingCompletionContext
-from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
@@ -260,11 +260,7 @@ class TrialRecordingTerminal:
         )
 
     def _camera_resource_id(self) -> str:
-        role = (
-            "behavioral"
-            if self.bootstrap.context.camera == camera.CAMERA_ROLE_BEHAVIORAL
-            else "tracking"
-        )
+        role = camera_role_name(self.bootstrap.context.camera)
         return f"{role}.capture"
 
     def capture_continuing_snapshot(

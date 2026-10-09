@@ -4,8 +4,8 @@
 # camera's MP4: a header, received-image rows, encoded-slot mappings and completion.
 contract_status = "declared" # Host acceptance/verification: reports/acquisition.md.
 schema_version = 3 # v2 was source-frame-only JSONL with implicit one-to-one video rows.
-camera_roles = ["behavioral", "tracking"]
-camera_tags = ["behavioral_cam", "tracking_cam"]
+camera_roles = ["behavioral", "tracking", "eye_tracking"]
+camera_tags = ["behavioral_cam", "tracking_cam", "eye_tracking_cam"]
 video_pattern = "<trial_prefix>_<camera_role>_cam.mp4"
 frames_pattern = "<trial_prefix>_<camera_role>_cam_frames.jsonl"
 
