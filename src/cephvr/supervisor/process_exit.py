@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.supervisor.registry import BACKEND_ROLES, LaunchRegistry, NativeLaunches
 from cephvr.supervisor.state import ShutdownState
 
@@ -24,7 +25,9 @@ async def wait_while(
     """Poll until ``until_ns`` or the condition clears; the deadline is checked first."""
     # No event signals the condition clearing (OS job membership), so poll to the deadline.
     while host_time_ns() < until_ns and condition():  # noqa: ASYNC110
-        await asyncio.sleep(min(poll_s, max(0.0, (until_ns - host_time_ns()) / 1e9)))
+        await asyncio.sleep(
+            min(poll_s, remaining_seconds(until_ns, clock=host_time_ns))
+        )
 
 
 async def stop_owned_processes(

@@ -438,7 +438,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v12"></a>
 ### V12 — Visual Stimulus recording thread and overload
 
-**Status:** Accepted · **Revision:** 10
+**Status:** Accepted · **Revision:** 11
 
 - With E13 saving enabled, the rendering worker runs one recording thread and one
   FFmpeg/NVENC subprocess for the tiled review video; that thread also writes the
@@ -449,8 +449,11 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   writes completed readbacks as raw frames to FFmpeg's stdin. The GL thread never
   waits on recording: one admission decision per render group; with no free slot,
   drop that group's video sample and record its identity, timing and drop
-  disposition. Never evict an admitted sample, slow presentation or grow memory
-  without bound. Submission evidence stays per output.
+  disposition. Apply E13's first-usable-per-slot selection before pixel admission;
+  same-slot omissions have a separate disposition from capacity drops. Never evict
+  an admitted sample, slow presentation or grow memory without bound. Retained
+  padding pixels count against the recording resource budget. Submission evidence
+  stays per output.
 - Launch FFmpeg at ScheduleTrial acceptance, off the render thread, with final paths;
   feed no frames before T (as A08). Launch failure before T is a required failure
   before release; cancellation before T terminates it and deletes only its own file.
@@ -911,14 +914,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v28"></a>
 ### V28 — Visual Stimulus evidence file and crash behavior
 
-**Status:** Accepted · **Revision:** 4
+**Status:** Accepted · **Revision:** 5
 
 - With E13 saving On, the recording thread writes `<prefix>_stimulus_frames.jsonl`:
   UTF-8 JSON Lines, one line per render group plus separate update lines for late
   outcomes (referencing the group ID), append-only, OS-synced every **1 s**
   (`record_sync_interval_s`) and at closure. Never rewrite earlier lines or make
-  rendering wait for disk sync. A final closing line records complete accounting.
-  Missing required evidence or failed writes/sync follows V12/E06.
+  rendering wait for disk sync. Separate encoded-frame mapping records identify each
+  selected real composite or leading/gap/trailing duplicate and its exact source
+  group/time; padding adds no render-group or presentation evidence. A final closing
+  line records real, omitted and padded accounting separately. Missing required
+  evidence or failed writes/sync follows V12/E06.
 - After a crash the file is valid up to its last complete line; readers discard an
   incomplete final line. No checksums, custom framing or recovery contract. Periodic
   sync does not guarantee pending lines survive.
@@ -933,7 +939,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="e13"></a>
 ### E13 — Save Visual Stimulus data
 
-**Status:** Accepted · **Revision:** 19
+**Status:** Accepted · **Revision:** 20
 
 - One **Save Visual Stimulus data** switch controls rendered Visual Stimulus video, associated frame logs and
   detailed Visual Stimulus state and presentation outputs. It defaults to On for a new
@@ -962,9 +968,15 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   identifying duplicates for post hoc exclusion. Padding never fabricates state,
   render groups or presentation observations. Real timing (state-evaluation host
   time, per-output swap observations) stays in the evidence file; review timing
-  never establishes optical onset. Slot assignment and leading-gap treatment still
-  require contract formalization; current schemas/writers retain unpadded behavior
-  until amended and implemented. Original resource bounds/deadlines stay in force.
+  never establishes optical onset. Assign each group's evaluation host time to
+  half-open nominal-rate slots from trial start T, selecting the first usable
+  composite per slot. Later same-slot groups retain full real evidence and an
+  explicit video-omission disposition. Fill interior/trailing gaps with the last
+  selected composite; backfill leading slots with the first usable composite,
+  explicitly retaining its real source/time. Include slots starting before the
+  actual E11 cutoff; whole-frame quantization adds less than one nominal period.
+  Generate padding incrementally within V12's existing bounds and original
+  deadlines. An entirely empty recording retains V12's existing empty-video rule.
 - Review videos are fragmented MP4, kept in that format after normal closure; no
   conversion to ordinary MP4 or faststart pass at trial end. Normal encoder drain,
   finalization, sync and close stay required; V28's Unconfirmed crashed-video outcome

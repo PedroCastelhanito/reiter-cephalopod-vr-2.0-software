@@ -83,6 +83,8 @@ def test_pending_encoder_write_preserves_normalized_row_order() -> None:
         evidence=EvidenceWriter(max_pending_bytes=4096),
         encoder=encoder,
         max_encoder_write_chunk=8,
+        video_start_ns=0,
+        video_rate_hz=1,
     )
     worker.offer(CompositeFrame(0, 0, 1, 2, "rgba8_bottom_up", b"bottom!!"))
     assert not worker.drain_once()
@@ -137,7 +139,7 @@ def test_recording_worker_copies_frames_and_prioritizes_evidence(
     recipe_path.write_bytes(recipe_data)
     header = Header(
         kind="header",
-        format_version=1,
+        format_version=3,
         identity=_identity(),
         writer_generation="writer",
         recipe=ArtifactRef(
@@ -172,6 +174,8 @@ def test_recording_worker_copies_frames_and_prioritizes_evidence(
         evidence=writer,
         encoder=encoder,
         max_encoder_write_chunk=4,
+        video_start_ns=0,
+        video_rate_hz=1,
     )
     pixels = bytearray(b"abcdefgh")
     admitted = worker.offer(CompositeFrame(0, 0, 2, 1, "rgba8_bottom_up", pixels))
@@ -179,7 +183,9 @@ def test_recording_worker_copies_frames_and_prioritizes_evidence(
     assert admitted.admitted
     assert (
         worker.offer(
-            CompositeFrame(1, 1, 2, 1, "rgba8_bottom_up", b"12345678")
+            CompositeFrame(
+                1, 1, 2, 1, "rgba8_bottom_up", b"12345678", source_host_ns=1_000_000_000
+            )
         ).disposition
         == "capacity_drop"
     )
@@ -214,7 +220,13 @@ def test_rawvideo_abi_flips_rows_and_clears_packed_x_bits(
 ) -> None:
     writer = EvidenceWriter(max_pending_bytes=64)
     encoder = _Input()
-    worker = RecordingWorker(capture_slots=1, evidence=writer, encoder=encoder)
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=writer,
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
     assert worker.offer(
         CompositeFrame(0, 0, 1, 2, pixel_format, pixels)  # type: ignore[arg-type]
     ).admitted
@@ -222,6 +234,133 @@ def test_rawvideo_abi_flips_rows_and_clears_packed_x_bits(
         pass
     assert bytes(encoder.data) == expected
     writer.close()
+
+
+def test_nominal_slots_separate_collisions_and_stream_interior_and_tail_duplicates() -> (
+    None
+):
+    encoder = _Input()
+    submitted = []
+    worker = RecordingWorker(
+        capture_slots=2,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+        on_submitted=submitted.append,
+    )
+
+    first, disposition, slot = worker.classify_and_reserve(0, 0)
+    assert first is not None and (disposition, slot) == ("admitted", 0)
+    worker.complete_capture(
+        first,
+        width=1,
+        height=1,
+        pixel_format="rgba8_bottom_up",
+        pixels=b"aaaa",
+    )
+    omitted, disposition, slot = worker.classify_and_reserve(1, 500_000_000)
+    assert omitted is None and (disposition, slot) == ("same_slot_omission", 0)
+    second, disposition, slot = worker.classify_and_reserve(2, 2_000_000_000)
+    assert second is not None and (disposition, slot) == ("admitted", 2)
+    worker.complete_capture(
+        second,
+        width=1,
+        height=1,
+        pixel_format="rgba8_bottom_up",
+        pixels=b"bbbb",
+    )
+    worker.set_cutoff(4_000_000_000)
+    while worker.drain_once():
+        pass
+
+    counts = worker.counts()
+    assert counts.eligible_group_count == 3
+    assert counts.admitted_count == counts.selected_real_count == 2
+    assert counts.same_slot_omission_count == 1
+    assert counts.encoded_frame_count == counts.input_submitted_count == 4
+    assert counts.duplicate_frame_count == 2
+    assert encoder.data == b"aaaaaaaabbbbbbbb"
+    assert [
+        (frame.group_id, frame.video_frame_index, frame.encoded_disposition)
+        for frame in submitted
+    ] == [
+        (0, 0, "real"),
+        (0, 1, "interior_duplicate"),
+        (2, 2, "real"),
+        (2, 3, "trailing_duplicate"),
+    ]
+
+
+def test_nominal_leading_backfill_uses_first_source_and_waits_for_earlier_capture() -> (
+    None
+):
+    encoder = _Input()
+    worker = RecordingWorker(
+        capture_slots=2,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
+    first, _, _ = worker.classify_and_reserve(0, 2_000_000_000)
+    second, _, _ = worker.classify_and_reserve(1, 3_000_000_000)
+    assert first is not None and second is not None
+    worker.complete_capture(
+        second, width=1, height=1, pixel_format="rgba8_bottom_up", pixels=b"bbbb"
+    )
+    assert not worker.drain_once()
+    worker.complete_capture(
+        first, width=1, height=1, pixel_format="rgba8_bottom_up", pixels=b"aaaa"
+    )
+    worker.set_cutoff(4_000_000_000)
+    while worker.drain_once():
+        pass
+    counts = worker.counts()
+    assert counts.encoded_frame_count == 4
+    assert counts.duplicate_frame_count == 2
+    assert encoder.data == b"aaaa" * 3 + b"bbbb"
+
+
+def test_cadence_duplicates_reuse_normalized_rows_and_single_capture_slot_progresses() -> (
+    None
+):
+    encoder = _Input()
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
+
+    def capture(group_id: int, source_ns: int, pixels: bytes) -> None:
+        reservation, disposition, _slot = worker.classify_and_reserve(
+            group_id, source_ns
+        )
+        assert reservation is not None and disposition == "admitted"
+        worker.complete_capture(
+            reservation,
+            width=1,
+            height=2,
+            pixel_format="rgba8_bottom_up",
+            pixels=pixels,
+        )
+
+    capture(0, 0, b"downUP!!")
+    while worker.drain_once():
+        pass
+    # The retained image is separately budgeted; one capture slot still advances.
+    capture(1, 2_000_000_000, b"low!HIGH")
+    worker.set_cutoff(4_000_000_000)
+    while worker.drain_once():
+        pass
+
+    assert encoder.data == b"UP!!down" * 2 + b"HIGHlow!" * 2
+    counts = worker.counts()
+    assert counts.admitted_count == counts.selected_real_count == 2
+    assert counts.encoded_frame_count == 4
+    assert counts.duplicate_frame_count == 2
 
 
 def test_evidence_pending_budget_fails_instead_of_growing() -> None:
@@ -235,7 +374,13 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
 ) -> None:
     evidence = EvidenceWriter(max_pending_bytes=1024)
     events: list[str] = []
-    worker = RecordingWorker(capture_slots=1, evidence=evidence, encoder=_Input())
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=evidence,
+        encoder=_Input(),
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
     session = RecordingSession(
         worker=worker,
         evidence=evidence,
@@ -258,6 +403,183 @@ def test_recording_session_cancel_before_header_reconciles_process_without_outpu
     assert result is not None and not result.evidence_closed
     assert events == ["registered_child_started", "exact_child_reconciled"]
     assert not (tmp_path / "frames.jsonl").exists()
+
+
+def test_recording_finish_publishes_cadence_cutoff_before_closing_wakes_owner(
+    tmp_path: Path,
+) -> None:
+    evidence = EvidenceWriter(max_pending_bytes=1024)
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=evidence,
+        encoder=_Input(),
+        video_start_ns=1,
+        video_rate_hz=1,
+    )
+    session = RecordingSession(
+        worker=worker,
+        evidence=evidence,
+        evidence_path=tmp_path / "frames.jsonl",
+        recipe_path=tmp_path / "recipe.json",
+        max_queued_evidence_bytes=1024,
+        finalizer=lambda _counts: (b"{}\n", b"{}\n"),
+    )
+    original_set_cutoff = worker.set_cutoff
+    observed = []
+
+    def set_cutoff_before_close(cutoff_ns: int) -> None:
+        assert not session._closing
+        original_set_cutoff(cutoff_ns)
+        observed.append(cutoff_ns)
+
+    worker.set_cutoff = set_cutoff_before_close  # type: ignore[method-assign]
+    session.begin_finish(cutoff_ns=2_000_000_001, deadline_ns=3_000_000_000)
+    assert observed == [2_000_000_001]
+    assert worker._cutoff_slots == 2
+
+
+def test_native_preonset_cancel_closes_real_session_without_cadence_cutoff(
+    native_recording, tmp_path: Path
+) -> None:
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+
+    recording = native_recording
+    now = [99]
+    recording.clock_ns = lambda: now[0]
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=1024),
+        encoder=_Input(),
+        video_start_ns=100,
+        video_rate_hz=1,
+    )
+    events: list[str] = []
+    session = RecordingSession(
+        worker=worker,
+        evidence=worker.evidence,
+        evidence_path=tmp_path / "frames.jsonl",
+        recipe_path=tmp_path / "recipe.json",
+        max_queued_evidence_bytes=1024,
+        finalizer=lambda _counts: (b"{}\n", b"{}\n"),
+        failure_cleanup=lambda: events.append("closed"),
+    )
+    schedule = visual.WorkerSchedule(start_monotonic_ns=100)
+    schedule.outputs.add(
+        output_key="video",
+        output_tag="stimulus",
+        path=str(tmp_path / "video.mp4"),
+    )
+    schedule.outputs.add(
+        output_key="frames",
+        output_tag="stimulus_frames",
+        path=str(tmp_path / "frames.jsonl"),
+    )
+    recording._schedule = schedule
+    recording._session = session
+    recording._video_path = tmp_path / "video.mp4"
+    recording._evidence_path = tmp_path / "frames.jsonl"
+
+    recording.begin_cancel(deadline_ns=250)
+    assert recording._cutoff_ns is None
+    assert recording._finish_deadline_ns == 250
+    assert worker._cutoff_slots is None
+    now[0] = 120
+    recording.begin_cancel(deadline_ns=300)
+    recording.begin_finish(cutoff_ns=120, deadline_ns=300)
+    assert recording._cutoff_ns is None
+    assert recording._finish_deadline_ns == 250
+    assert worker._cutoff_slots is None
+    result = None
+    for _ in range(100):
+        result = recording.poll_finished()
+        if result is not None:
+            break
+        import time
+
+        time.sleep(0.005)
+    assert result is not None
+    assert events == ["closed"]
+    assert worker._cutoff_slots is None
+
+
+def test_native_cleanup_keeps_first_cutoff_and_original_finish_deadline(
+    native_recording, tmp_path: Path
+) -> None:
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+
+    recording = native_recording
+    now = [20_000_000_000]
+    recording.clock_ns = lambda: now[0]
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=1024),
+        encoder=_Input(),
+        video_start_ns=10_000_000_000,
+        video_rate_hz=1,
+    )
+    session = RecordingSession(
+        worker=worker,
+        evidence=worker.evidence,
+        evidence_path=tmp_path / "frames.jsonl",
+        recipe_path=tmp_path / "recipe.json",
+        max_queued_evidence_bytes=1024,
+        finalizer=lambda _counts: (b"{}\n", b"{}\n"),
+        failure_cleanup=lambda: None,
+    )
+    recording._schedule = visual.WorkerSchedule(start_monotonic_ns=10_000_000_000)
+    recording._session = session
+
+    recording.begin_finish(cutoff_ns=15_000_000_000, deadline_ns=100_000_000_000)
+    assert worker._cutoff_slots == 5
+    now[0] = 30_000_000_000
+    recording.begin_cancel(deadline_ns=200_000_000_000)
+    assert recording._cutoff_ns == 15_000_000_000
+    assert recording._finish_deadline_ns == 100_000_000_000
+    assert worker._cutoff_slots == 5
+
+
+def test_native_cancel_after_trial_end_uses_scheduled_end_as_cutoff(
+    native_recording, tmp_path: Path
+) -> None:
+    from cephvr.visual_stimulus.v1 import messages_pb2 as visual
+
+    recording = native_recording
+    recording.clock_ns = lambda: 30_000_000_000
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=EvidenceWriter(max_pending_bytes=1024),
+        encoder=_Input(),
+        video_start_ns=10_000_000_000,
+        video_rate_hz=1,
+    )
+    session = RecordingSession(
+        worker=worker,
+        evidence=worker.evidence,
+        evidence_path=tmp_path / "frames.jsonl",
+        recipe_path=tmp_path / "recipe.json",
+        max_queued_evidence_bytes=1024,
+        finalizer=lambda _counts: (b"{}\n", b"{}\n"),
+        failure_cleanup=lambda: None,
+    )
+    recording._schedule = visual.WorkerSchedule(
+        start_monotonic_ns=10_000_000_000,
+        normal_end_monotonic_ns=25_000_000_000,
+    )
+    recording._session = session
+
+    recording.begin_cancel(deadline_ns=40_000_000_000)
+    assert recording._cutoff_ns == 25_000_000_000
+    assert recording._finish_deadline_ns == 40_000_000_000
+    assert worker._cutoff_slots == 15
+    result = None
+    for _ in range(100):
+        result = recording.poll_finished()
+        if result is not None:
+            break
+        import time
+
+        time.sleep(0.005)
+    assert result is not None
 
 
 def test_empty_review_completion_requires_clean_encoder_exit_and_exact_absence() -> (
@@ -322,6 +644,51 @@ def test_video_presence_and_exit_are_insufficient_without_creator_identity() -> 
     assert outcome.closure == "UNCONFIRMED"
 
 
+def test_same_slot_omissions_complete_capture_reconciliation_for_video_closure() -> (
+    None
+):
+    counts = RecordingCounts(
+        eligible_group_count=2,
+        admitted_count=1,
+        input_submitted_count=1,
+        capacity_drop_count=0,
+        failed_capture_count=0,
+        unresolved_capture_count=0,
+        final_input_group_id=0,
+        encoded_frame_count=1,
+        same_slot_omission_count=1,
+        selected_real_count=1,
+    )
+    result = resolve_video_completion(
+        counts,
+        final_cutoff_known=True,
+        every_eligible_group_resolved=True,
+        no_partial_input_write=True,
+        encoder_cleanup_confirmed=True,
+        encoder_finalized=True,
+        file_sync_and_close_confirmed=True,
+        artifact_present=True,
+        artifact_created_by_session=True,
+        reserved_path_absent_after_cleanup=False,
+    )
+    assert (result.content, result.closure) == ("FRAMES_SUBMITTED", "CLOSED")
+    assert (
+        resolve_video_completion(
+            counts,
+            final_cutoff_known=True,
+            every_eligible_group_resolved=False,
+            no_partial_input_write=True,
+            encoder_cleanup_confirmed=True,
+            encoder_finalized=True,
+            file_sync_and_close_confirmed=True,
+            artifact_present=True,
+            artifact_created_by_session=True,
+            reserved_path_absent_after_cleanup=False,
+        ).closure
+        == "UNCONFIRMED"
+    )
+
+
 def test_pending_capture_remains_owned_until_gl_cancellation_is_confirmed() -> None:
     outcomes: list[bool] = [False, True]
     cancel_calls: list[object] = []
@@ -370,6 +737,14 @@ def test_capture_exception_still_queues_required_render_evidence() -> None:
             raise RuntimeError("PBO allocation failed")
 
     class Session:
+        def classify_capture(self, group_id: int, evaluation_host_ns: int):
+            assert evaluation_host_ns == 12
+            return (
+                CaptureReservation(3, group_id, 0, evaluation_host_ns),
+                "admitted",
+                0,
+            )
+
         def cancel_capture(self, reservation: CaptureReservation) -> None:
             cancelled.append(reservation)
 
@@ -388,8 +763,7 @@ def test_capture_exception_still_queues_required_render_evidence() -> None:
         evidence_pending_bytes=4096,
         capture_slots=1,
     )
-    reservation = CaptureReservation(3, 0, 0)
-    runtime.reservation = reservation
+    reservation = CaptureReservation(3, 0, 0, 12)
     update = NS(
         group=NS(group_id=0, outputs=(object(),)),
         outputs=(object(),),
@@ -503,7 +877,7 @@ def test_evidence_queue_runs_while_overlapped_encoder_write_is_pending(
     recipe_path.write_bytes(b"recipe")
     header = Header(
         kind="header",
-        format_version=1,
+        format_version=3,
         identity=_identity(),
         writer_generation="writer",
         recipe=ArtifactRef(
@@ -519,7 +893,13 @@ def test_evidence_queue_runs_while_overlapped_encoder_write_is_pending(
     evidence = EvidenceWriter(max_pending_bytes=4096)
     evidence.open_after_recipe(tmp_path / "evidence.jsonl", header, header.recipe)
     encoder = _DelayedInput()
-    worker = RecordingWorker(capture_slots=1, evidence=evidence, encoder=encoder)
+    worker = RecordingWorker(
+        capture_slots=1,
+        evidence=evidence,
+        encoder=encoder,
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
     worker.offer(CompositeFrame(0, 0, 1, 1, "rgba8_bottom_up", b"1234"))
     assert worker.drain_once()  # Write required Header before encoder input.
     assert encoder.events == []
@@ -595,10 +975,10 @@ def test_recording_cleanup_requires_exact_child_and_session_release(
     owner.process = (
         None if process_closed is None else NS(cleanup_complete=process_closed)
     )
-    deadlines = []
+    cancellation = []
     if session_pending:
         recording._session = NS(
-            begin_cancel=lambda *, deadline_ns: deadlines.append(deadline_ns),
+            begin_cancel=lambda **values: cancellation.append(values),
             poll_finished=lambda: None,
         )
     result = recording.cleanup(123)
@@ -609,7 +989,9 @@ def test_recording_cleanup_requires_exact_child_and_session_release(
         expected.update(("owner", "capture"))
     assert set(result.outstanding) == expected
     assert set(result.released) == recording._announced_keys - expected
-    assert deadlines == ([123] if session_pending else [])
+    assert cancellation == (
+        [{"deadline_ns": 123, "cutoff_ns": 10}] if session_pending else []
+    )
 
 
 def test_recording_cleanup_retains_pending_capture_and_prior_releases(native_recording):

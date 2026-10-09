@@ -32,6 +32,7 @@ from cephvr.controller.recovery_inspection import (
 )
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
 from cephvr.shared.clock import host_time_ns, require_int64_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.recovery import RecoveryStore, UnfinishedSessionPointer
 
@@ -143,7 +144,7 @@ class StartupRecovery:
             return None
         proof = await asyncio.wait_for(
             query(pointer.controller_generation),
-            max(0, (deadline - host_time_ns()) / 1e9),
+            remaining_seconds(deadline, clock=host_time_ns),
         )
         receipt = proof.prior_application_exit
         if (
@@ -160,12 +161,12 @@ class StartupRecovery:
         directory = Path(pointer.session_directory)
         if await run_pipe_io_daemon(
             lambda: _settle_cancelled_namespace(directory),
-            timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+            timeout_s=remaining_seconds(deadline, clock=host_time_ns),
         ):
             # Crash between cancelled-Setup namespace removal and pointer clear.
             await run_pipe_io_daemon(
                 lambda: self.store.clear_pointer(pointer),
-                timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+                timeout_s=remaining_seconds(deadline, clock=host_time_ns),
             )
             self.notice = "cancelled Setup cleanup completed at recovery"
             logging.getLogger(__name__).warning(self.notice)
@@ -174,7 +175,7 @@ class StartupRecovery:
             Path(pointer.session_directory),
             pointer.session_id,
             pointer.controller_generation,
-            max(0, (deadline - host_time_ns()) / 1e9),
+            remaining_seconds(deadline, clock=host_time_ns),
         )
         reservation = self.reservation
         if reservation.marker_issue == "reservation marker already complete":
@@ -182,7 +183,7 @@ class StartupRecovery:
             try:
                 await run_pipe_io_daemon(
                     lambda: self.store.clear_pointer(pointer),
-                    timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+                    timeout_s=remaining_seconds(deadline, clock=host_time_ns),
                 )
             finally:
                 reservation.release()
@@ -191,7 +192,7 @@ class StartupRecovery:
         try:
             self.inspection = await run_pipe_io_daemon(
                 lambda: inspect_recovery(reservation, self.max_bytes),
-                timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+                timeout_s=remaining_seconds(deadline, clock=host_time_ns),
             )
         except BaseException:
             reservation.release()
@@ -255,7 +256,7 @@ class StartupRecovery:
                 lambda: writer.adopt_recovery_log(
                     reservation, expected_dev=dev, expected_ino=ino, expected_size=size
                 ),
-                timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+                timeout_s=remaining_seconds(deadline, clock=host_time_ns),
             )
         work = pb.WorkContext(
             session=pb.SessionContext(
@@ -284,7 +285,7 @@ class StartupRecovery:
             )
             completion = await asyncio.wait_for(
                 asyncio.shield(asyncio.wrap_future(writer.submit(request))),
-                max(0, (deadline - host_time_ns()) / 1e9),
+                remaining_seconds(deadline, clock=host_time_ns),
             )
             writer.retire(command_id)
             if completion.state != "synced" or not completion.deadline_met:
@@ -370,18 +371,18 @@ class StartupRecovery:
                 },
             )
             sealed = await run_pipe_io_daemon(
-                lambda: writer.seal(max(0, (deadline - host_time_ns()) / 1e9)),
-                timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+                lambda: writer.seal(remaining_seconds(deadline, clock=host_time_ns)),
+                timeout_s=remaining_seconds(deadline, clock=host_time_ns),
             )
             if not sealed:
                 raise StorageError("recovery writer closure is unconfirmed")
             await run_pipe_io_daemon(
                 lambda: reservation.finish_recovery(inspection.marker_digest),
-                timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+                timeout_s=remaining_seconds(deadline, clock=host_time_ns),
             )
             await run_pipe_io_daemon(
                 lambda: self.store.clear_pointer(pointer),
-                timeout_s=max(0, (deadline - host_time_ns()) / 1e9),
+                timeout_s=remaining_seconds(deadline, clock=host_time_ns),
             )
         except BaseException:
             # Seal admission once; never retry a failed/uncertain file operation.

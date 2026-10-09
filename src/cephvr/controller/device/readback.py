@@ -25,6 +25,7 @@ from cephvr.controller.state import (
     DeviceState,
     LifecycleState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class CameraReadback:
@@ -86,7 +87,7 @@ class CameraReadback:
                         for validator in self.validators.values()
                     )
                 ),
-                max(0, (operation.deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(operation.deadline_ns, clock=self.clock),
             )
             if not results or any(
                 not result.completed or not result.valid for result in results
@@ -130,7 +131,7 @@ class CameraReadback:
                 backend.confirm_configuration(
                     confirmation, deadline_ns=operation.deadline_ns
                 ),
-                max(0, (operation.deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(operation.deadline_ns, clock=self.clock),
             )
             if reply.result != pb.COMMAND_RESULT_ACCEPTED:
                 raise RuntimeError(

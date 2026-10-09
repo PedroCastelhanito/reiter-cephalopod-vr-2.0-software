@@ -21,6 +21,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 
@@ -215,7 +216,7 @@ class DisplayInitialization:
         try:
             reply = await asyncio.wait_for(
                 backend.initialize_display(request, deadline_ns=deadline_ns),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             if reply.result != pb.COMMAND_RESULT_ACCEPTED:
                 raise RuntimeError(
@@ -251,7 +252,7 @@ class DisplayInitialization:
         )
 
     async def _display_timeout(self, command_id: str, deadline_ns: int) -> None:
-        await asyncio.sleep(max(0, (deadline_ns - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(deadline_ns, clock=self.clock))
         async with self.lifecycle.lock:
             if (
                 self.device.display_pending is not None

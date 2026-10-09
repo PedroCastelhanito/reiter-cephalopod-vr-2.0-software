@@ -300,7 +300,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 58
+**Status:** Accepted · **Revision:** 59
 
 **Files**
 
@@ -320,8 +320,8 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 **Frame log (`_frames.jsonl`)**
 
 - UTF-8 JSON Lines, append-only from creation (at/after T) to closure: one `header`
-  line, one `frame` line per received in-trial image, one `completion` line. A missing
-  `completion` line means incomplete.
+  line, one `frame` line per received in-trial image, explicit encoded-frame mapping
+  lines, and one `completion` line. A missing `completion` line means incomplete.
 - `header`: identity, host and camera clock/counter descriptors (resolved once during
   preparation under the [camera-clock contract](../../contracts/acquisition/camera-clock.md)),
   trial start and the nominal video rate.
@@ -338,8 +338,9 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   discard them without inferring duplication from image equality. Padding never
   creates a received-source record, native timestamp or acquisition count. An
   input submission alone does not prove encoding; persisted correspondence checks
-  remain external post hoc work. The existing frame-log schema/writer still need
-  this mapping amendment before the revised timing behavior is implemented.
+  remain external post hoc work. Same-slot video omissions retain explicit source
+  dispositions; encoded counts distinguish selected real images from leading, gap
+  and trailing duplicates without changing acquisition counts.
 - Append complete frame lines, in contiguous source order, once final drop decisions
   are known. Every **1 s** (`sync_interval_s`, configurable) and at closure, write
   ready lines and request one OS sync; completion requires sync success. Not a
@@ -403,7 +404,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a08"></a>
 ### A08 — Video encoding and container
 
-**Status:** Accepted · **Revision:** 49
+**Status:** Accepted · **Revision:** 50
 
 **Encoder lifecycle and input**
 
@@ -544,11 +545,18 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   identify drops and discard duplicates. Never relabel padding as real acquisition.
   The video timeline is not a scientific clock; host receipt/native timestamps and
   SYS-004 pulse alignment retain their meaning.
-- Real images retain source order; padding stays within the actual E11 interval.
-  Empty recordings follow A07's empty-video handling. The slot assignment and
-  leading-gap treatment require contract formalization; no unanswered choice or
-  current unpadded writer establishes those rules. Backwards host times interrupt
-  under A05. Encoder/storage failure handling and original deadlines are unchanged.
+- Assign host-receipt times to half-open nominal-rate slots from trial start T.
+  Select the first usable image per slot; later images in that slot remain in the
+  source log with an explicit video-omission disposition. Selected images retain
+  source order. Fill interior/trailing gaps with the last selected image; backfill
+  leading slots with the first usable image, explicitly identifying that later
+  source and its real receipt time. Padding never changes source timestamps.
+- Include slots whose start precedes the actual E11 cutoff; nominal video duration
+  is quantized to whole frames and may exceed the interval by less than one period.
+  Padding is generated incrementally within existing resource/deadline bounds;
+  it does not allocate a gap-sized queue or delay acquisition. No usable image
+  retains A07's existing empty-video handling. Backwards host times interrupt under
+  A05. Encoder/storage failure handling and original deadlines are unchanged.
 - Sync flushed video storage every **1 s** (configurable) and at final closure,
   without stopping encoding. This cannot persist encoder-buffered frames or guarantee
   a loss window. Video sync is separate from the frame log; storage failure enters
@@ -615,7 +623,7 @@ stamping/filtering and the mappings still need runtime implementation.
 <a id="a10"></a>
 ### A10 — Camera capture lifetime and Basler settings
 
-**Status:** Accepted · **Revision:** 55
+**Status:** Accepted · **Revision:** 57
 
 **Capture lifetime**
 
@@ -796,10 +804,17 @@ stamping/filtering and the mappings still need runtime implementation.
   cannot be inferred. Offline validation may leave device features pending; Setup
   resolves them or blocks Ready on unsupported/unreadable required settings.
 - Setup, preview, camera/pulse edits and PFS operations share one internal
-  resolution/readback/adoption workflow with operation-specific checks; no separate
-  confirmation/validation machinery.
+  resolution/readback/adoption workflow with operation-specific checks. The controller
+  commits validated matched readback before confirming it to acquisition; transport
+  admission is not backend adoption. Later confirmation or preview failure preserves
+  committed configuration and reports failed/stopped device work without rollback.
+  A subsequent owned edit may synchronize accepted configuration bookkeeping only
+  after the prior exact batch is terminal and quiesced; this never proves SDK application.
+  After camera cleanup, a fresh authorized caller may retry a pending exact MCU
+  claim release under its own bound. Unknown release stays fenced; recovery never
+  reconnects, reapplies settings or renews the expired SDK operation.
   [Configuration control](../../contracts/acquisition/configuration-control.md) owns
-  its detailed contract.
+  the exact reconciliation and confirmation contract.
 - Read back applied values before locking. Camera adjustments warn with requested
   versus actual values, compared at documented precision, without separate
   confirmation. Update controller config, GUI/headless state, history and
@@ -866,7 +881,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 40
+**Status:** Accepted · **Revision:** 41
 
 **Board and firmware**
 
@@ -904,6 +919,10 @@ hardware information and later implementation; no new deferral is implied.
   and release calls retain exact generation/claim, original deadlines and returned MCU
   timing evidence. The final external manual preview releases its claim after confirmed
   OFF and camera cutoff; remaining external previews retain it. Acquisition owns its logical device claim, never the physical COM handle.
+  Ordinary connection/configuration uses accepted controller settings. A10's owned
+  edit may configure only its exact validated pending pulse proposal, bound to the
+  live edit, authority, acquisition generation/claim and original deadline; stale or
+  incomplete edit scope rejects without falling back to ordinary authorization.
   Failed or uncertain release remains a cleanup blocker; no automatic pulse resumption.
   The standalone review GUI opens no serial handle; physical tests use the managed
   controller API. Serial timing reloads only with no owned port.

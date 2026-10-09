@@ -1,1 +1,0 @@
-{"schema_version": 1, "session_id": "43f4f2f5-2e54-4d35-846d-6fa4bf47fabe", "controller_generation": "77a8d23f-f2b4-4176-9180-767f2c0277d9", "local_timezone": "UTC", "trials": [{"context": {"trial_number": 1}}], "configuration": {"backends": [{"backend_name": "synchronization", "enabled": true}]}, "spikeglx": {"run_name": "known-run", "address": "192.0.2.10", "port": 4142}}

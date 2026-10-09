@@ -3,6 +3,7 @@
 from typing import Protocol
 
 from cephvr.acquisition.v1 import camera_pb2, microcontroller_pb2
+from cephvr.control.v1 import types_pb2 as control
 
 
 class SerialOwnerPort(Protocol):
@@ -17,6 +18,8 @@ class SerialOwnerPort(Protocol):
         *,
         active_roles: tuple[int | str, ...],
         deadline_ns: int,
+        resolution_operation: control.OperationContext | None = None,
+        requested_configuration_revision: int | None = None,
     ) -> microcontroller_pb2.MicrocontrollerObservation: ...
     async def status(
         self, *, deadline_ns: int

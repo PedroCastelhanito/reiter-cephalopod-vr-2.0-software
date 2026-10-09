@@ -13,6 +13,7 @@ from cephvr.controller.metadata.coordination import MetadataCoordinator
 from cephvr.controller.metadata.documents import message_dict
 from cephvr.controller.metadata.types import StorageError
 from cephvr.controller.state import Attempt, ControlState, LifecycleState, LimitsState
+from cephvr.shared.deadlines import remaining_seconds
 
 
 def _trial_log_document(
@@ -164,13 +165,14 @@ class TrialLogs:
                 start_task = self.spawn(self.start_trial_log(attempt, plan))
                 attempt.trial_log_start_task = start_task
             await asyncio.wait_for(
-                asyncio.shield(start_task), max(0, (deadline_ns - self.clock()) / 1e9)
+                asyncio.shield(start_task),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             normal_finish = attempt.trial_log_finish_task
             if normal_finish is not None:
                 await asyncio.wait_for(
                     asyncio.gather(normal_finish, return_exceptions=True),
-                    max(0, (deadline_ns - self.clock()) / 1e9),
+                    remaining_seconds(deadline_ns, clock=self.clock),
                 )
                 if attempt.trial_log_finished:
                     async with self.lifecycle.lock:
@@ -222,7 +224,7 @@ class TrialLogs:
                         outputs=output_results,
                     ),
                 ),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             if not attempt.trial_log_finished:
                 actual_end_ns = _actual_stop_ns(attempt, active_backends)
@@ -244,7 +246,7 @@ class TrialLogs:
                             "interruption_issued_monotonic_ns": attempt.interruption_issued_ns,
                         },
                     ),
-                    max(0, (deadline_ns - self.clock()) / 1e9),
+                    remaining_seconds(deadline_ns, clock=self.clock),
                 )
                 attempt.trial_log_finished = True
             async with self.lifecycle.lock:

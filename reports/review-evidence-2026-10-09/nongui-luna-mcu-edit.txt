@@ -1,0 +1,41 @@
+MCU scoped configuration-edit lane handoff
+Date: 2026-10-09
+Repository: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software
+
+Governing rules: A10/A11 owned-camera editing and the controller ownership rules in contracts/acq/microcontroller (root amended these during this lane). No GUI, hardware, or live external-service actions were performed.
+
+Implementation:
+- Appended optional `resolution_operation` and `requested_configuration_revision` to `MicrocontrollerIoRequest` fields 12 and 13 in contracts/cephvr/control/v1/services.proto. Ran `.venv/bin/python tools/generate_contracts.py`; generator reported 19 Protobuf sources generated. Generated bindings are ignored/not present as tracked diffs in this checkout.
+- Routed the optional scope pair from `ManualDevices.apply` through the shared SerialOwnerPort shape and ControllerMicrocontrollerClient. Controller-local LazySerialOwner/SerialOwnerBridge reject the scope if passed directly; the live controller lifecycle consumes it before invoking the controller serial owner.
+- In `MicrocontrollerLifecycle.execute`, under lifecycle.lock, scoped Configure requires both fields and an exact live configuration edit/terminal: matching edit operation ID, accepted base/current revision, edit expects pulse changes and is not failed/reported/confirmed/adopted, matching acquisition backend generation, exact deterministic serialized candidate pulse configuration, active Configuration/Ready phase, authority available and request/edit deadlines still live. It uses the existing camera-operation slot to serialize the admitted request through serial completion, clearing that slot in `finally`. Ordinary accepted-configuration operations retain the existing equality gate. No accepted settings or revision are changed by this CONFIGURE path.
+- Added a real MicrocontrollerLifecycle + MicrocontrollerDevice serial-owner test for permitted candidate CONFIGURE and pre-serial rejection of stale revision, incomplete scope, wrong acquisition generation, and changed candidate.
+
+Owned source/test paths:
+- contracts/cephvr/control/v1/services.proto
+- src/cephvr/shared/microcontroller.py
+- src/cephvr/acquisition/microcontroller_client.py
+- src/cephvr/controller/microcontroller/lazy_owner.py
+- src/cephvr/controller/microcontroller/bridge.py
+- src/cephvr/controller/microcontroller/lifecycle.py
+- tests/controller/test_microcontroller_owner.py
+
+Validation:
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/controller/test_microcontroller_owner.py -q` — 58 passed.
+- `.venv/bin/python -m mypy --platform win32 src/cephvr/controller/microcontroller/lifecycle.py src/cephvr/controller/microcontroller/bridge.py src/cephvr/controller/microcontroller/lazy_owner.py src/cephvr/acquisition/microcontroller_client.py src/cephvr/shared/microcontroller.py` — success, no issues in 5 files.
+- Ruff check and format check on the six owned Python files above — pass.
+- A combined run with tests/acquisition/test_manual_devices.py had one failure in its existing fake Serial.configure signature: it does not accept newly supplied `resolution_operation` and revision kwargs. That file is now owned by the separate late-camera recovery lane; update the fake and assert the exact scope pair there. All other tests in that combined run passed (63 pass, 1 fail).
+
+Limits/open integration:
+- No backend/controller authenticated loopback integration test was added here. The controller real-owner lifecycle test covers the gate and actual serial call; the acquisition manual-device fake requires the coordinated update above.
+- No GUI, native Windows, physical MCU, or rig verification was performed.
+- Current worktree also contains other agents' concurrent changes. The paths above are the only files I own; my files are now frozen for Sol review.
+
+Follow-up Sol finding and correction:
+- `ControllerMicrocontrollerClient.configure` now permits an empty active-role set by calling `_roles(..., allow_empty=True)` only for Configure. Duplicate and unsupported roles remain rejected; ON/OFF and other selection paths retain the nonempty requirement. Pulse-only configuration can therefore configure both outputs disabled.
+- The owning lifecycle test now exercises typed `ControllerMicrocontrollerClient -> MicrocontrollerLifecycle -> real MicrocontrollerDevice -> serial fake`, and a separate test verifies empty roles work only for Configure.
+- Follow-up validation: `tests/controller/test_microcontroller_owner.py` — 59 passed; `/tmp/cephvr-sol-mcu-client-integration.py` — passed end-to-end ManualDevices.apply -> typed client -> real lifecycle/device; Ruff check/format passed on six owned Python files; Win32 mypy passed on five source files.
+
+Follow-up Astra narrow guard correction:
+- `MicrocontrollerLifecycle.execute` now rejects either configuration-edit scope field on every non-CONFIGURE kind before safety or ordinary-operation handling. Unscoped safety requests are unchanged.
+- Real-owner negative coverage exercises both fields together, operation-only, and revision-only against STATUS, ON, OFF, RESERVE, CANCEL_ON, CANCEL_ACTIVE, and CLOSE. Every attempt is rejected before serial calls, claim changes, or boundary changes.
+- Validation after this correction: controller MCU tests 59 passed; Ruff check/format and Win32 mypy passed. Source is frozen for Astra/Sol review.

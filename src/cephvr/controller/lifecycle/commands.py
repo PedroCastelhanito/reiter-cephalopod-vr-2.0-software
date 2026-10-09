@@ -255,6 +255,7 @@ class SessionCommands:
                     attempt.closure.reason = attempt.closure.reason or (
                         "application shutdown"
                     )
+                    self.cleanup.cancel_attempt_prompts(attempt)
                 if attempt.handoff is not None:
                     attempt.handoff.retire()
                 self.spawn(self.cleanup.cancel_attempt(attempt))

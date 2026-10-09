@@ -156,6 +156,37 @@ async def test_shutdown_after_ended_completes_without_relabel(
     )
 
 
+async def test_pre_activation_shutdown_cancels_attempt_prompts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime, attempt = _setup(tmp_path, monkeypatch)
+    attempt.activated = False
+    runtime.lifecycle.session = pb.SessionState(phase=pb.SESSION_PHASE_SETTING_UP)
+    prompt_id = _id()
+    prompt = pb.Prompt(prompt_id=prompt_id, explanation="operator choice")
+    future: asyncio.Future[str] = asyncio.get_running_loop().create_future()
+    runtime.incident_state.prompts[prompt_id] = (prompt, future, attempt)
+    cancel_calls: list[Attempt] = []
+
+    async def cancel_attempt(owner: Attempt) -> None:
+        cancel_calls.append(owner)
+
+    monkeypatch.setattr(runtime.cleanup, "cancel_attempt", cancel_attempt)
+
+    class Supervisor:
+        async def request_shutdown(self, _request: object) -> pb.ReportReceipt:
+            return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    runtime.session_commands.supervisor = cast(Any, Supervisor())
+    command = operator_command(runtime)
+    result = await runtime.shutdown_application(command)
+
+    assert result.result == pb.COMMAND_RESULT_ACCEPTED
+    assert future.cancelled()
+    await drain_runtime_tasks(runtime)
+    assert cancel_calls == [attempt]
+
+
 class _Writer:
     sealed = 0
 

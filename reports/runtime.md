@@ -1,6 +1,6 @@
 # Controller and supervisor status
 
-Updated: 2026-10-08. Implementation/source review is recorded for the controller,
+Updated: 2026-10-09. Implementation/source review is recorded for the controller,
 supervisor, launcher, headless client and shared/native helpers. Local results below
 have their original scope; Windows and full-workload acceptance remain pending.
 [ARCH-001/002](../architecture.md#arch-001) owns scope and structure;
@@ -8,31 +8,34 @@ have their original scope; Windows and full-workload acceptance remain pending.
 [E05/E07](../docs/architecture/experiment.md) and
 [E06/E08](../docs/architecture/system-contracts.md#e08) own behavior.
 
-Current native recording follow-up (`gui-backend-dummy-experiment`): runs 40–42
-complete the immutable 60 s unpaired trial and session with both camera videos,
-stimulus video, velocities disabled, seven closed artifacts, synced metadata and an
-unlocked reservation. Run42 external ffprobe counts and complete CPU decode pass all
-three MP4s; idle-after-42 remains healthy and normal Shutdown confirms exact process
-absence, released application guard and matching saved history. Its shutdown log
-contains only normal launcher channel EOF messages. Repairs retain original command/
-generation/deadline ownership through preparation, Schedule/Release, onset, normal
-cutoff/drain, retained cleanup, GPU capture and terminal liveness. Quiet ENDED camera
-heartbeats establish liveness only; already-delivered session closure is not rebound
-to a fresh Shutdown fence. Camera server termination is awaited until actual stop.
-Each failed reservation and raw native outcome remains in the
-[dated dummy evidence](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+Completed initial repair scope (2026-10-09, working tree based on `0aebf47`): the owner
+authorized fixes and cleanup after the Luna/Sol/Astra audit. Sol and Astra accept the final source with no remaining actionable finding in this
+bounded review. The confirmed retirement,
+recovery, replay, shutdown, SDK and GUI-feedback defects are repaired below; accepted
+defaults are restored to a 500 ms preparation lead with unmeasured camera drain margins
+and pacing-output identity unset. All 36 owning configuration cases now pass.
+[Original audit and rejected candidates](review-evidence-2026-10-09/context.json)
+remain historical evidence. [Implementation methods and validation](review-evidence-2026-10-09/implementation-context.json)
+identify the final source snapshot, model handoffs and local/native boundary.
 
-Run42 camera delivery is about 20/40 fps against configured 30/60, stimulus 23.65 fps
-against 60; all admitted stimulus frames reach FFmpeg with zero capacity drops.
-Unpadded MP4 durations therefore compress elapsed time; scientific/full-load acceptance
-remains open. Subsequent MCU-only bounded diagnostics count 61/120 edges in 2 s at
-30/60 Hz, without capture or flashing. Source/PFS comparison identifies the backend
-enabling a saved-disabled internal limiter for externally triggered cameras. Preserve
-that external PFS choice while enabling a requested free-running limiter only in
-free-running mode (A10); 38 adapter checks pass and run43 tests this correction.
-Temporary 1,000 ms drains, 2,000 ms pre-Setup scheduling lead, pacing/GPU preference
-and original draft/history restoration plus final full regressions remain in progress.
-ARCH-002 reuses focused owners and owning behavior tests without a dependency/process.
+Latest retained native evidence is **run43**, not run42: its unpaired 60 s trial and
+session complete, seven artifacts close, metadata syncs and the reservation unlocks.
+Both camera videos and stimulus video pass external count/full CPU decode in the
+[Oct8 output summary](rig-wiring-evidence-2026-10-08/dummy-experiment/unpaired-run-43-output-verification.json).
+Behavior delivers 1,797 frames (29.95 fps) and Tracking camera 3,596 (59.93 fps),
+superseding the earlier 20/40 fps observation after the external-trigger limiter fix.
+Stimulus delivers 1,182 frames (19.7 fps), with four capacity drops; its nominal-60-fps
+MP4 is 19.7 s for a 60 s trial. Render intervals have a 49.29 ms median. Throughput
+remains open; the Oct9 non-GUI implementation adds explicit nominal-slot padding,
+which cannot repair missed presentations and has not been rerun on the rig.
+[Shutdown](rig-wiring-evidence-2026-10-08/dummy-experiment/final43-shutdown.json)
+records exact process absence, released guard and saved history. Later raw records
+report [GPU preference restoration](rig-wiring-evidence-2026-10-08/dummy-experiment/final-gpu-restoration.json)
+and [original configuration restoration](rig-wiring-evidence-2026-10-08/dummy-experiment/final-history-restoration.json).
+These are historical observations with no exact source revision in the inspected
+summaries, not new native checks or current-default/full-load acceptance. Velocities
+and SpikeGLX pairing were disabled. Remaining acceptance lives in the
+[rig checklist](rig-verification.md).
 
 ## Current scope and review
 
@@ -82,8 +85,8 @@ post-cutoff drain allowances for both cameras. Front 60 Hz pacing and the manage
 wrapper's high-performance Windows graphics preference are temporary diagnostic
 inputs; strict RTX 5060 Ti identity/framebuffer checks remain enabled. Real Setup
 attempts now run, preserving each failed Desktop reservation and exact generation
-exit evidence before controller recovery. Start is accepted and trial scheduling is reached; no completed experiment has yet
-succeeded; earlier statements below that Setup was never attempted are historical.
+exit evidence before controller recovery. This early-attempt account is historical;
+run43 completion and its remaining cadence limits are summarized above.
 
 Native attempts expose and repair E08 Configuration-heartbeat handoff, E04 missing
 path-free Setup output identities, exact terminal Setup failure admission, empty
@@ -94,7 +97,8 @@ The [Visual Stimulus assessment](visual_stimulus.md) records graphics/probe deta
 the [Acquisition assessment](acquisition.md) records camera and shared encoding scope.
 ARCH-002 reuses focused planners/ports/ledgers and existing behavior test modules;
 no process, dependency, deadline or resource-proof exception is introduced.
-Current native retry and output inspection remain in progress. [Raw attempts](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+Run43 supersedes these early attempts; remaining throughput and native acceptance are
+in the rig checklist. [Raw attempts](rig-wiring-evidence-2026-10-08/dummy-experiment/).
 
 GUI/backend dummy-experiment work (2026-10-08): the owner authorizes wiring/fixes
 and a Desktop-output dummy run, explicitly retaining both camera videos and stimulus
@@ -184,10 +188,11 @@ removes trial-number filename suffixes, adds UUID identities, replaces session-s
 JSON with lifecycle JSONL, and uses `SCHEMA.json` instead of `SESSION_SCHEMA.json`.
 [A07/A08](../docs/architecture/acquisition.md#a07) replace acquisition/video CSV pairs
 with one camera JSONL stream containing received frames, drop/video correspondence,
-clock descriptors and terminal accounting. Current camera encoding remains
-unpadded, but the owner subsequently revised A07/A08 and E13/V12 to require
-identified padding; schemas/writers still need that amendment. The saved 1.0 example
-reports five padded Behavior frames and nineteen duplicated VR frames.
+clock descriptors and terminal accounting. The Oct9 implementation adds identified
+nominal-slot padding under A07/A08 and E13/V12; the owning
+[acquisition](acquisition.md) and [stimulus](visual_stimulus.md) reports retain current
+validation and native limits. The historical 1.0 example reports five padded Behavior
+frames and nineteen duplicated VR frames.
 
 [T15/T19](../docs/architecture/tracking.md#t15) replace `_tracking_state.csv` with
 typed pose/result/reset/discard/completion records. The owner's subsequent decoded
@@ -822,31 +827,118 @@ restoration meant its captured startup snapshot, not recovery of the owner's
 pre-crash in-memory edits; cleanup did not delete the history file. Do not reinterpret
 that historical restoration as crash resilience or recovery of those lost edits.
 
-The retained source review identifies these open items; they were not re-audited
-during documentation consolidation. The controller does not yet apply camera/pulse
-edits to owned editing/preview cameras (contracts/acquisition/configuration-control.md);
-until it does, such edits are rejected while a camera is owned. Setup and manual
-camera readback still use separate resolution/adoption paths. Supervisor worker
-launches are never released, so their registry entries persist for the run.
+Oct9 repairs follow [E06/E08 revision 169](../docs/architecture/system-contracts.md#e08),
+[E04](../docs/architecture/supervisor.md#e04),
+[E07](../docs/architecture/experiment.md#e07) and
+[E12](../docs/architecture/synchronization.md#e12):
 
-Known low-severity limits left for a later pass: after accepted shutdown intent the
-supervisor checks for controller loss at shutdown entry and before backend Shutdown,
-not continuously; a pending backend-exit expiry or launch timeout can still raise a
-safety fence during shutdown; a PlanLaunch replayed after its released entry is
-pruned (only at registry capacity) plans anew; and a mid-session late-Finished
-`recovery` event makes startup inspection treat an intact log as unconfirmed (the
-safe fallback).
+- Camera-worker retirement sends typed retained Cleanup operation/lifecycle evidence
+  through the existing authenticated ConfirmLaunch route before Shutdown, then replays
+  the identical request after exit. Acknowledgement fences only that exact expected
+  exit; live ownership remains retained. The coordinator checks its
+  exact resource/output obligations; supervisor independently checks child/work/owner
+  identity and exact process/job absence. Both independently delivered Cleanup records
+  must arrive within the original deadline, including guarded retained-query recovery.
+  Workless Configuration retirement is supported; discharged failed outputs remain failed.
+  Queries, exit and quiet liveness do not become closure evidence; persistent renderer
+  session cleanup remains distinct.
+- Released launch records stay pinned for active work and through the configured
+  replay window after both release and work finalization. Capacity refuses new admission
+  instead of evicting unexpired canonical replay evidence. Finalized-work bookkeeping
+  is bounded by retained records; obsolete release-order state is removed.
+- Startup inspection distinguishes exact late-Finished/incident reconciliation from
+  terminal startup recovery. Malformed/unknown records remain unconfirmed; terminal
+  recovery must still follow session end and remain last. Pre-activation Shutdown
+  settles attempt-owned Setup prompt futures through the existing cancellation owner.
+- Accepted shutdown watches controller loss during the existing bounded cleanup waits
+  and invokes the same one-shot interruption under unchanged deadlines. An event-gated
+  regression requires interruption while the first wait is still held; disabling the
+  observer makes it fail. Pending-fault escalation remains covered.
+- Timeout/caller cancellation attaches an observer to the shielded SDK future without
+  releasing in-flight native ownership. Late results/failures are consumed and logged;
+  subsequent calls remain busy until native completion.
+- Snapshot and ordinary camera-save errors select the blocking camera row and field.
+  Tests use the actual backend validation error, preserve the Behavior draft and whole
+  proposal validation, and accept corrected Tracking settings. Native UI acceptance
+  remains separate.
 
-Remaining observations from the 2026-10-01 controller audit (not fixed):
-`setup_admission.py` and `start.py` write `control.operations` entries directly,
-bypassing `operation()`'s duplicate-ID helper; ingress duplicate handling still needs
-review, and capacity is checked by `authorized()`. Terminal timestamp retention was
-repaired and regression-tested in the authorized phase. A shutdown before activation does
-not cancel pending Setup prompt futures the way `cancel_setup` does; and `cancel_attempt`
-appends its reservation warning outside the lifecycle lock. Two state fields have no
-reader in source and need an owner decision before removal: `default_intertrial_gap_ns`
-(still validated from the configuration file) and `DeviceState.completed_camera_operation`
-(only tests read it). `transport/ingress.py` has no direct test.
+Sol found no compatible remaining readback duplication: Setup and manual paths already
+share `resolved_configuration()` while owning different admission/adoption transactions.
+Close that conditional task without another abstraction. Remove only the write-only
+`completed_camera_operation` mirror; retain authoritative bounded status evidence and
+accepted operator compatibility settings. Duplicate-command ingress and warning-race
+claims remain rejected by the audit. Owned-camera edits now use exact readback and
+commit-before-confirm semantics under [A10 revision 57](../docs/architecture/acquisition.md#a10)
+and [A11 revision 41](../docs/architecture/acquisition.md#a11). Confirmation transport
+admission is separate from execution/adoption; post-commit device failure does not
+roll back accepted settings. Exact pending MCU proposals require the live edit,
+claim, generation and original deadline; scope on other request kinds rejects.
+
+Recovery retains exact late worker terminal evidence without adopting settings or
+resuming previews. Fresh callers query retained results and can retry only an already
+pending exact MCU CLOSE after camera cleanup. Stable previews remain editable;
+unknown SDK/preview/resource/claim ownership remains fenced. Explicit exact-run Stop
+works across controller/backend revision lag. Confirmed OFF/claim-release proof
+survives live-observation clearing and expires before new connection/output work.
+Cleanup failure keeps actual ownership and truthful closed-camera status; expired
+Ready/Started records never create readiness. [Sol source and real-chain evidence](review-evidence-2026-10-09/nongui-sol-owned-camera.txt)
+and [Luna recovery scope](review-evidence-2026-10-09/nongui-luna-camera-recovery.txt)
+record the corrections and limits. Proven never-dispatched or explicitly rejected edits create no missing-status obligation; unknown admission retains its fence. Removal targets only that attempt; existing bounded-history pruning is unchanged. Sol and Astra accept the final integrated implementation.
+
+Repository hygiene: remove the 10,353-file, 224,923,430-byte tracked `.tmp` tree and
+ignore that root. Preserve three unique historical QA/collection artifacts in their
+own dated bundles; existing JUnit copies match exactly. Git history, the environment,
+actual runtime recovery/history and dated rig evidence remain intact. The
+[cleanup inventory](review-evidence-2026-10-09/cleanup.json) records preservation hashes
+and removal of 75 project cache directories (932 files / 52,844,967 bytes) after
+validation in the preceding cohort. Final non-GUI cleanup removes another 42 cache
+directories (321 files / 28,233,854 bytes); nine redundant handoff snapshots (181,320
+bytes) were consolidated only after exact prefix checks. No active credential leak
+was established.
+
+ARCH-002 review extracts pure launch-request and cleanup-proof validation, leaving
+registry native/state ownership and acquisition worker lifecycle orchestration in their
+existing modules. The Oct9 non-GUI follow-up extracts worker preparation/waits/health,
+shared native launch sequencing, manual-device recovery and exact retained-status
+querying. Preview transfer release stays with its focused owner. Existing records keep
+state/resource ownership; helpers receive explicit operations and focused records.
+No process, dependency, whole-runtime reference or duplicate resource catalogue is
+introduced. Remaining manual edit/preview orchestration (559/656 lines), recording
+session closure (599 lines) and stimulus recording (833 lines) retain their cohesive
+workflow/thread ownership; the size advisories do not justify duplicating that state.
+
+Portable worker coverage/execution extraction and shared launch are accepted by
+Sol/Astra. The deadline sweep closes the original 148-site inventory (135 first-batch,
+10 controller and three launcher sites); the final controller increment also converts
+one expression introduced during concurrent owned-edit work. Exact clocks, original
+bounds and existing transport validation remain unchanged. The final scan finds zero
+remaining inventoried patterns. Padding uses first usable image per nominal slot,
+labelled first-image leading backfill and explicit omission/duplicate mappings;
+[acquisition](acquisition.md) and [stimulus](visual_stimulus.md) own the details.
+GUI source/tests are unchanged throughout this cohort.
+
+Current non-GUI validation: repository-wide lint/format pass (849 files), Windows-target
+mypy passes 734 sources, and boundaries inspect 639 modules with zero violations.
+Contract discovery passes 48 Tracking and 42 stimulus cases; canonical schemas match
+19/11 and all 57 generated bindings match. Final portable/offscreen authenticated-loopback
+validation: **1795 passed, 6 skipped, 8 deselected in 309.49s (0:05:09)**. Sol and Astra
+accept the final integrated source. [Current provenance](review-evidence-2026-10-09/nongui-context.json)
+records the dirty baseline, exact changes, commands and model handoffs. One dirty
+worker-test before-state could not be recovered: retain its declared hash and separately
+label its HEAD-to-final supplement; every final tested input is hashed.
+
+The preceding initial-repair portable/offscreen suite passes **1,698 tests, six skips and eight marker
+exclusions** in 322.25 s before the final retirement-order correction. After that
+correction, the complete supervisor/acquisition rerun passes **472 tests, five skips
+and two exclusions** in 4.02 s; other source is unchanged. Final Ruff and formatting
+(839 files), Win32-target mypy (726 sources) and boundaries (633 modules, zero
+violations; 41 cohesion advisories) pass. Tracking/Visual Stimulus contract discovery
+passes 48/42 and generated schemas match 19/11. Do not sum overlapping selections.
+[Implementation evidence and model dispositions](review-evidence-2026-10-09/implementation-context.json)
+retain commands, source patch/hashes, failures and limitations. Current full-suite
+alignment passes; the historical advanced-card issue is not reproduced.
+Windows native camera reuse, process/job proof, fault-injected shutdown, SDK pairing,
+DPI and scientific/full-load acceptance remain unverified by these local checks.
 
 Recovery and native acceptance cases have one home in the
 [rig worklist](rig-verification.md#runtime-recovery-and-regression-coverage).
@@ -2164,8 +2256,8 @@ serial-keyed discovery records moved out of the Cameras widget. The remaining
 Cameras widget remains cohesive presentation/signal wiring; the Basler adapter's
 small ownership property remains with its sole SDK owner. No new
 dependency or direct GUI hardware ownership was added. Camera/pulse edits while
-owned remain blocked by the current E07 controller guard; `owned-camera-edits`
-tracks live-edit adoption. The final source trace found that accepted drafts previously never reached manual
+owned were blocked in this historical Oct6 scope; the current Oct9 owned-edit
+implementation and review are described above. The final source trace found that accepted drafts previously never reached manual
 acquisition commands and GUI PFS selection only changed provenance. Commands now
 carry the accepted acquisition draft/revision, with ownership/staleness gates;
 selected PFS files use actual SDK import/readback and explicit editing completion.

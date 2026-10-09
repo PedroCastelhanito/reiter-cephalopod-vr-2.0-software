@@ -7,6 +7,8 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from cephvr.shared.deadlines import remaining_seconds
+
 from .protocol import FirmwareRejected, ProtocolError, Reply, parse_reply, request_line
 from .serial_port import PySerialPort, SerialPort
 
@@ -190,7 +192,7 @@ class SerialChannel:
         line = bytearray()
         too_long = False
         while self.clock() < command_deadline:
-            remaining = max(0, command_deadline - self.clock()) / 1e9
+            remaining = remaining_seconds(command_deadline, clock=self.clock)
             self.port.set_timeouts(read_seconds=remaining, write_seconds=remaining)
             try:
                 chunk = self.port.read(512)

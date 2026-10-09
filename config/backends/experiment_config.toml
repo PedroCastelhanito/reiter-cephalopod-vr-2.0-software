@@ -102,7 +102,7 @@ default_intertrial_gap_s = 0
 [timing]
 # E05: after all trial gates pass, schedule the target this far ahead.
 # Loaded during Setup and fixed for the session; no recording during this allowance.
-start_lead_time_ms = 2000
+start_lead_time_ms = 500
 
 # All required target acknowledgements collected and release dispatched by T - this.
 controller_release_cutoff_before_start_ms = 100
@@ -135,4 +135,3 @@ max_pending_bytes = 67_108_864
 # Total queue + write/append + flush + sync time for each required metadata operation.
 # Expiry leaves persistence unconfirmed: no uncertain-write retry or writer takeover.
 completion_timeout_s = 5
-

@@ -14,6 +14,7 @@ from typing import Protocol
 from google.protobuf.message import Message
 
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class Driver(Protocol):
@@ -147,7 +148,9 @@ class RenderOwner:
                 with self.condition:
                     if not self.regular and not self.safety and not self.closed:
                         timeout = (
-                            None if due is None else max(0, (due - self.clock()) / 1e9)
+                            None
+                            if due is None
+                            else remaining_seconds(due, clock=self.clock)
                         )
                         self.condition.wait(timeout)
         except BaseException as exc:
@@ -166,7 +169,7 @@ class RenderOwner:
             self.closed = True
             self.condition.notify()
         await asyncio.to_thread(
-            self.thread.join, max(0, (deadline_ns - self.clock()) / 1e9)
+            self.thread.join, remaining_seconds(deadline_ns, clock=self.clock)
         )
         if self.thread.is_alive():
             raise TimeoutError("GL owner has not released its thread/resources")

@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-09",
+  "method": "Arithmetic over retained Oct8 run43 verification summary; no native execution or raw per-stage timing available.",
+  "source": "reports/rig-wiring-evidence-2026-10-08/dummy-experiment/unpaired-run-43-output-verification.json",
+  "duration_s": 60.0,
+  "real_render_groups": 1186,
+  "real_render_groups_per_s": 19.766666666666666,
+  "recording_capture_admissions": 1182,
+  "capacity_drops": 4,
+  "admission_fraction": 0.9966273187183811,
+  "encoder_submitted_matches_admitted": true,
+  "per_group_output_submissions": 4.0,
+  "render_interval_median_ms": 49.2916,
+  "interpretation": "The summary shows about 19.8 real groups/s and 99.66% capture admission. Four bounded capture-slot drops alone do not explain the gap to 60 groups/s. Input submissions equal admitted captures, so there is no observed admitted-frame backlog/loss at closure. This does not exonerate capture/readback/copy/encoding CPU/GPU contention from slowing render groups; per-stage timing and controlled same-rig workload comparison are needed. Padding preserves review duration, not missing physical presentations.",
+  "next_rig_measurement": "Under unchanged accepted placement/precision/settings, separate state/draw/composite/readback/swap durations and compare with recording enabled/disabled; preserve all four output submissions and actual GPU identity. Existing encoder/toolchain changes stay owner-deferred."
+}

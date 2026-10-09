@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+    "-m",
+    "not windows and not rig",
+    "-p",
+    "no:cacheprovider",
+    "--junitxml=/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/reports/review-evidence-2026-10-09/nongui-portable-suite.xml"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "started_utc": "2026-10-09T04:59:04.398074+00:00",
+  "elapsed_seconds": 303.711,
+  "returncode": 1,
+  "raw": "nongui-portable-before-rejected-edit-fix.txt",
+  "source_hashes": "nongui-before-rejected-edit-input-hashes.json",
+  "scope_note": "Before final rejected/non-dispatched edit candidate correction and admission-test selector fixture update; one fixture signature failure, 1790 passes."
+}

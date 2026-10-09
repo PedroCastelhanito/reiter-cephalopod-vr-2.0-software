@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import threading
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, TypeVar
 
 T = TypeVar("T")
+_LOG = logging.getLogger(__name__)
 
 
 class SpikeGLXIOBusy(RuntimeError):
@@ -46,10 +48,40 @@ class SpikeGLXIOOwner:
 
         future.add_done_callback(release)
         wrapped = asyncio.wrap_future(future)
+
+        def report_late(completed: asyncio.Future[T]) -> None:
+            try:
+                error = completed.exception()
+            except asyncio.CancelledError:
+                _LOG.warning(
+                    "SpikeGLX SDK call was cancelled after its caller stopped waiting"
+                )
+            else:
+                if error is not None:
+                    _LOG.warning(
+                        "SpikeGLX SDK call failed after its caller stopped waiting: %s",
+                        error,
+                    )
+                else:
+                    _LOG.info(
+                        "SpikeGLX SDK call completed after its caller stopped waiting"
+                    )
+
+        def observe_late() -> None:
+            if wrapped.done():
+                report_late(wrapped)
+            else:
+                wrapped.add_done_callback(report_late)
+
         try:
             return await asyncio.wait_for(asyncio.shield(wrapped), timeout_s)
         except TimeoutError:
             # Keep _pending until the native invocation actually returns.
+            observe_late()
+            raise
+        except asyncio.CancelledError:
+            # Caller cancellation also abandons the shielded result, not native work.
+            observe_late()
             raise
 
     def close(self, wait: bool = False) -> None:

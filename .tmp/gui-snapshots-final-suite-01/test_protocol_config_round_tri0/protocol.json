@@ -1,1 +1,0 @@
-{"format_version":2,"assets":[],"instances":[],"scenes":[{"scene_id":"blank","background_linear_rgb":[0.0,0.0,0.0],"arena_instance_id":null,"layer_instance_ids":[]}],"input_channels":[],"duration":{"kind":"explicit_epochs"},"sequence":[{"kind":"epoch","epoch_id":"Epoch_1","batch_label":"","scene_id":"blank","duration":{"kind":"fixed","duration":{"seconds":"60"}},"settings":[]}]}

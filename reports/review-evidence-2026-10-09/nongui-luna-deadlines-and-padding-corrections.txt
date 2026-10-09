@@ -1,0 +1,43 @@
+Deadline helper sweep handoff (Luna, 2026-10-09)
+
+Scope: extracted generic clamped nanosecond/second remaining-time arithmetic into `src/cephvr/shared/deadlines.py`; `src/cephvr/shared/transport_deadlines.py` keeps validating transport wrappers to preserve its pre-existing signed-int64 contract. `Deadline.remaining_ns` explicit-now validation is unchanged. Migrated 135 exact AST matches across 60 source files in the candidate inventory, preserving each injected/bound clock. `src/cephvr/shared/admission.py` was restored to its transport-wrapper import after review showed it relies on the transport wrapper's existing int64 validation; extended `tests/shared/test_invariants.py` for clamp boundaries, one-time clock sampling, huge direct-expression sentinel parity, and transport validation.
+
+Exact source migration paths are in `/tmp/cephvr-deadline-applied.json`; apply command was:
+`PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cephvr-deadline-sweep.py --apply --exclude src/cephvr/acquisition/worker_launcher.py src/cephvr/visual_stimulus/worker_launcher.py src/cephvr/controller/control/configuration.py src/cephvr/controller/control/owned_camera_edits.py src/cephvr/controller/device/camera.py src/cephvr/controller/lifecycle/acquisition_resolution.py`
+
+The subsequent source scan, excluding both worker launchers and UI-owned live paths, found 0 remaining candidate matches. The following UI-owned files were kept out pending handoff: `src/cephvr/controller/control/configuration.py`, `src/cephvr/controller/control/owned_camera_edits.py` (untracked), `src/cephvr/controller/device/camera.py`, `src/cephvr/controller/lifecycle/acquisition_resolution.py`, `src/cephvr/acquisition/coordinator/manual_devices.py`, `src/cephvr/acquisition/coordinator/configuration_resolution.py`, `src/cephvr/acquisition/coordinator/manual_operation_results.py`, `src/cephvr/controller/device/views.py`, `src/cephvr/controller/device/runtime.py`, `src/cephvr/controller/device/state.py`, `tests/controller/test_camera_configuration.py`, `tests/controller/test_tracking_diagnostic.py`, and `tests/acquisition/test_manual_devices.py`. `controller/device/tracking_diagnostic.py` was included in the initial 60-file pass before this expanded list arrived; UI owner was informed for reconciliation. Worker launchers and GUI were not touched. Recheck current content after UI handoff; no candidate remained in the dry-run scan at this snapshot.
+
+Validation:
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/shared/test_invariants.py tests/visual_stimulus/test_feedback.py -q`: 36 passed, 1 skipped.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/controller tests/acquisition tests/supervisor tests/tracking --ignore=tests/tracking/test_runtime.py -m 'not windows and not rig' -q`: 997 passed, 5 skipped, 4 deselected.
+- The unignored broader run had 1007 passed, 5 skipped, 4 deselected, and 6 setup errors in `tests/tracking/test_runtime.py`: sandbox denied `127.0.0.1:0` loopback binding (`Operation not permitted`).
+- Visual Stimulus offline suite (excluding transport/controller-communication modules): 181 passed, 1 deselected after direct-expression sentinel parity was restored.
+- Win32 mypy on 63 touched source files: success, no issues.
+- Ruff check and format check on migrated sources/helpers/test: passed; `git diff --check` on those paths: passed.
+- `tools/check_backend_boundaries.py`: checked 637 backend modules, 0 violations; existing cohesion advisories were printed.
+
+Observed issue and correction: a direct-expression site used `10**30` as an unbounded test sentinel. Applying transport's int64 validation in the generic helper broke this existing behavior. The generic helper now preserves direct clamp arithmetic; transport wrappers retain validation. No runtime behavior changes beyond consolidating equivalent arithmetic were intended.
+
+Limits: the UI-owned live paths still need post-handoff scan/reconciliation; no native Windows or rig execution was run. Tracking authenticated loopback tests remain blocked by sandbox socket restrictions, not by a code assertion.
+
+Follow-up padding integration corrections (same Luna handoff, requested during final review):
+- Acquisition tail slot generation now requires shared terminal stop/interval/accounting proof, preventing padding from a marker that later fails exact-stop validation.
+- Visual Stimulus pre-onset cancellation seals without installing a cadence cutoff; repeated finish/cancel/cleanup retains the first cutoff and original deadline.
+- Capture completion reconciliation includes same-slot omissions.
+- A successful encoder write is now mapped to its frame-log slot before fallible watchdog/sync maintenance. A required frame-log mapping failure poisons normal finish retries so accepted input cannot be resent or claimed as closed.
+- Added tests to existing owner modules, including real RecordingSession tail retries after post-write maintenance failure and NativeRecording backed by a real session/worker for pre-T cancellation and retained cutoff/deadline.
+
+Latest validation after these follow-ups:
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition tests/visual_stimulus --ignore=tests/visual_stimulus/test_transport.py --ignore=tests/visual_stimulus/test_controller_communication.py -m 'not windows and not rig' -q`: 548 passed, 5 skipped, 3 deselected before the final schedule-end cancellation cap/test; latest focused recording tests after that change: 53 passed.
+- Focused acquisition/VS recording tests: 51 passed.
+- Win32 mypy on 68 touched source files: success, no issues.
+- Ruff check and format on all migrated candidates plus the padding sources: passed; `git diff --check` on touched helpers, backends and owning tests: passed.
+- Boundary checker: 0 violations across 637 backend modules; existing file-size cohesion advisories include acquisition recording/session.py and Visual Stimulus recording/native.py.
+
+The candidate scan was clean at the last deadline-sweep snapshot, with the UI-owned paths listed above excluded and awaiting post-review handoff. Windows/native rig acceptance remains outside this Mac-only pass.
+
+Final deadline-wrapper correction from Sol review: the shared generic helper keeps unvalidated direct-clamp arithmetic for migrated call sites; transport remains signed-int64 validating, and the existing admission consumer remains on that transport API.
+
+Sol review disposition for deadline batch: accepted. AST review found 56 whole-module-equivalent conversions after normalizing arithmetic/imports, plus four known independent modifications. The 13 remaining direct matches are in six still-coordinated files: acquisition and Visual Stimulus launchers (one each), controller acquisition-resolution (four), device camera (three), configuration (one), and owned camera edits (three). Recheck/migrate these only after their camera/launcher owners hand them off. Sol independently verified the restored `shared/admission.py` transport-wrapper identity and that it rejects `-1` and `10**30` before sampling the clock; shared checks were 36 passed, 1 skipped.
+
+Final padding checks after terminal-state simplification and scheduled-end cap: 53 focused recording tests passed; the wider affected-owner run was 548 passed, 5 skipped, 3 deselected before the last localized cap/test addition. Ruff, format, Win32 mypy (five padding source modules), and scoped whitespace checks passed. Boundary checker reported 0 violations across 637 modules; cohesion review advisories remain for `acquisition/recording/session.py` (599 lines) and `visual_stimulus/recording/native.py` (833 lines). The terminal tail loop is in the existing `session_pump.py` module with explicit callbacks; `RecordingSession` keeps cutoff proof, watchdog scope, and deadline ownership.

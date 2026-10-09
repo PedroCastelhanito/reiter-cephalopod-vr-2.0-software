@@ -1,0 +1,315 @@
+{
+  "recorded_utc": "2026-10-09T05:37:50.861312+00:00",
+  "source_revision": "0aebf47bc869d69db511a7dd736709480d3e4d53",
+  "source_state": "Pre-existing dirty worktree preserved. nongui-source.patch records only this non-GUI cohort against its hashed start, including prior dirty-file reconstruction; it is not a full patch from HEAD. The exact dirty start content of test_worker_foundations.py could not be recovered: its declared start/final hashes are retained, and nongui-worker-foundations-head.patch separately records HEAD-to-final, which may include earlier edits. Earlier implementation-context.json and implementation.patch describe the preceding repair cohort.",
+  "scope": "Authorized local non-GUI TODO implementation, including lifted shared-launch/execution/deadline deferrals, owned-camera edits and accepted first-usable-slot/leading-backfill video mapping. No GUI source/test modifications in this cohort.",
+  "models": {
+    "implementation": "gpt-6-luna",
+    "interpretation": "gpt-6.1-sol",
+    "review": "gpt-6-astra"
+  },
+  "source_manifest": "nongui-source-hashes.json",
+  "source_patch": "nongui-source.patch",
+  "baseline_exceptions": {
+    "tests/acquisition/test_worker_foundations.py": {
+      "declared_start_sha256": "b5cb9e8ecb34d6a3463e955476ec177ff47768f3477ffeafa39a985e51d74307",
+      "final_sha256": "240201eb95512572f1e34972f6b3fba7ee95713e6f13986b12a8324c69a035ed",
+      "known_HEAD_sha256": "65e1c37259bc80c68cf8300ed94a75006c21d6fc04e675b0ac1d372d03197bdf",
+      "supplement": "nongui-worker-foundations-head.patch",
+      "limitation": "Exact dirty cohort before-state unavailable. Supplement is HEAD-to-final and may include earlier edits; excluded from cohort patch."
+    }
+  },
+  "final_validation_inputs": "nongui-final-input-hashes.json",
+  "gui_source_test_files_unchanged": 138,
+  "commands": {
+    "nongui-boundaries.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "tools/check_backend_boundaries.py"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T05:31:52.718166+00:00",
+      "elapsed_seconds": 3.661,
+      "returncode": 0,
+      "raw": "nongui-boundaries.txt"
+    },
+    "nongui-doc-links.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "/tmp/cephvr-check-final-doc-links.py"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T05:37:49.228804+00:00",
+      "elapsed_seconds": 0.479,
+      "returncode": 0,
+      "raw": "nongui-doc-links.txt"
+    },
+    "nongui-format.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "tools",
+        "--no-cache"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T05:31:51.403679+00:00",
+      "elapsed_seconds": 0.359,
+      "returncode": 0,
+      "raw": "nongui-format.txt"
+    },
+    "nongui-mypy-win32.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "--cache-dir",
+        "/tmp/cephvr-nongui-mypy-final",
+        "src/cephvr"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T05:31:51.774095+00:00",
+      "elapsed_seconds": 0.934,
+      "returncode": 0,
+      "raw": "nongui-mypy-win32.txt"
+    },
+    "nongui-portable-before-rejected-edit-fix.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests",
+        "-q",
+        "-m",
+        "not windows and not rig",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/reports/review-evidence-2026-10-09/nongui-portable-suite.xml"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T04:59:04.398074+00:00",
+      "elapsed_seconds": 303.711,
+      "returncode": 1,
+      "raw": "nongui-portable-before-rejected-edit-fix.txt",
+      "source_hashes": "nongui-before-rejected-edit-input-hashes.json",
+      "scope_note": "Before final rejected/non-dispatched edit candidate correction and admission-test selector fixture update; one fixture signature failure, 1790 passes."
+    },
+    "nongui-portable-checkpoint.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests",
+        "-q",
+        "-m",
+        "not windows and not rig",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/reports/review-evidence-2026-10-09/nongui-portable-suite.xml"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T04:44:24.140791+00:00",
+      "elapsed_seconds": 183.271,
+      "returncode": 0,
+      "raw": "nongui-portable-checkpoint.txt",
+      "retained_junit": "nongui-portable-checkpoint.xml",
+      "source_hashes": "nongui-suite-source-hashes.json",
+      "scope_note": "Passing checkpoint before the final normal-Stop failure status and failed-restart exact cleanup identity corrections; final validation follows."
+    },
+    "nongui-portable-suite.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests",
+        "-q",
+        "-m",
+        "not windows and not rig",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/reports/review-evidence-2026-10-09/nongui-portable-suite.xml"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T05:31:49.904007+00:00",
+      "elapsed_seconds": 310.307,
+      "returncode": 0,
+      "raw": "nongui-portable-suite.txt",
+      "source_hashes": "nongui-final-input-hashes.json",
+      "scope_note": "Final frozen non-GUI implementation, including rejected/non-dispatched edit correction and owning admission fixture; 1795 passed, 6 skipped, 8 deselected."
+    },
+    "nongui-ruff.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "tools",
+        "--no-cache"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T05:31:51.077691+00:00",
+      "elapsed_seconds": 0.312,
+      "returncode": 0,
+      "raw": "nongui-ruff.txt"
+    },
+    "nongui-tracking-contracts.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "contracts/tracking",
+        "-p",
+        "test_*.py"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T04:44:30.531797+00:00",
+      "elapsed_seconds": 0.3,
+      "returncode": 0,
+      "raw": "nongui-tracking-contracts.txt"
+    },
+    "nongui-tracking-schema.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "contracts/tracking/schema_check.py"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T04:44:31.419361+00:00",
+      "elapsed_seconds": 0.317,
+      "returncode": 0,
+      "raw": "nongui-tracking-schema.txt"
+    },
+    "nongui-visual-contracts.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "contracts/visual_stimulus/tests",
+        "-p",
+        "test_*.py"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T04:44:30.840969+00:00",
+      "elapsed_seconds": 0.572,
+      "returncode": 0,
+      "raw": "nongui-visual-contracts.txt"
+    },
+    "nongui-visual-schema.result.json": {
+      "command": [
+        "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+        "contracts/visual_stimulus/generate_schemas.py",
+        "--check"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T04:44:31.748066+00:00",
+      "elapsed_seconds": 0.347,
+      "returncode": 0,
+      "raw": "nongui-visual-schema.txt"
+    },
+    "nongui-whitespace.result.json": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "environment": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "QT_QPA_PLATFORM": "offscreen"
+      },
+      "started_utc": "2026-10-09T05:37:49.708910+00:00",
+      "elapsed_seconds": 1.096,
+      "returncode": 0,
+      "raw": "nongui-whitespace.txt"
+    }
+  },
+  "generation_and_declarations": [
+    "nongui-protobuf-check.json",
+    "nongui-declarations-check.json"
+  ],
+  "review_evidence": [
+    "nongui-astra-review.txt",
+    "nongui-luna-camera-recovery.txt",
+    "nongui-luna-camera-stop-gate.txt",
+    "nongui-luna-deadline-remainder.txt",
+    "nongui-luna-deadlines-and-padding-corrections.txt",
+    "nongui-luna-deadlines-first-batch.txt",
+    "nongui-luna-launch.txt",
+    "nongui-luna-mcu-edit.txt",
+    "nongui-luna-padding.txt",
+    "nongui-luna-retained-query.txt",
+    "nongui-luna-worker.txt",
+    "nongui-sol-deadlines.txt",
+    "nongui-sol-launch.txt",
+    "nongui-sol-mcu-edit.txt",
+    "nongui-sol-owned-camera.txt",
+    "nongui-sol-padding.txt",
+    "nongui-sol-worker.txt"
+  ],
+  "governance_sha256": {
+    "AGENTS.md": "ed1dc6f9cb19bb1c12cd2727f4f89f27554c2631e31b8cee7d6c5b898b02a90a",
+    "TODO.md": "00c7377d560ce70ccfe3ed4b22644bb60a8f0cb4d53af93db6210aa1fb9b93de",
+    "LOG.md": "e8a2fe83c747ba08db436f6f9f826b129aaeb827eb55da75e02e5397785cd0dd",
+    "architecture.md": "c46d53802d40c2a35790bb488f768e5ccc249be6755e5c8ccbf3cdb26d081396",
+    "docs/architecture/acquisition.md": "12d524598a54cf24753a2bd7d4f312aa43c3ac770b24c5ca8b53e96d0d403db8",
+    "docs/architecture/visual_stimulus.md": "3c1ad45cc7caf89a522e2f09643b8be82865657ed54303c3e4f9705db0936b9f",
+    "docs/architecture/system-contracts.md": "1f9fb36728b62e5c93b68ba2e60df190777706e2079de05501a1b8bf42531ec7",
+    "reports/runtime.md": "b4db439cae8454d412ed5d533456f82f2c22f501d48c14e03604720711471a00",
+    "reports/acquisition.md": "abff8d5899083087dc3a285213b42be605f8e35ab71ceb6575b513af4f5640f5",
+    "reports/visual_stimulus.md": "3240b87dcc70db578bd8d2fe436d2687cfa09c8a66fae71e0510d74a4e625492",
+    "reports/rig-verification.md": "9c96ec4508c23deb90887c4eadcee063d54b81d0d1b95e5e0e71896326a1c370"
+  },
+  "cleanup": "cleanup.json",
+  "limitations": [
+    "Portable/offscreen tests and Windows-target static analysis do not establish Windows-native, SDK, serial, electrical, optical, encoder compatibility, throughput or full-workload acceptance.",
+    "Native/rig/remote/scientific and firmware deferrals remain in TODO.md and reports/rig-verification.md. No hardware, running managed runtime, remote SpikeGLX or native GUI interaction was performed for this cohort.",
+    "Scoped test selections overlap; do not sum their counts. Earlier failures and corrections remain in LOG.md and raw review evidence.",
+    "No commit or push was requested or performed."
+  ]
+}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Literal
@@ -24,6 +25,18 @@ def duration_ns(value: int | float | Decimal, unit: Literal["s", "ms", "ns"]) ->
             "duration cannot be represented as nonnegative int64 nanoseconds"
         )
     return int(ns)
+
+
+def remaining_ns(deadline_ns: int, *, clock: Callable[[], int] = host_time_ns) -> int:
+    """Return nonnegative time to a deadline in nanoseconds."""
+    return max(0, deadline_ns - clock())
+
+
+def remaining_seconds(
+    deadline_ns: int, *, clock: Callable[[], int] = host_time_ns
+) -> float:
+    """Return nonnegative time to a deadline in seconds."""
+    return remaining_ns(deadline_ns, clock=clock) / 1_000_000_000
 
 
 @dataclass(frozen=True)

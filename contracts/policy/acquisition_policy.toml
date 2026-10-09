@@ -2,7 +2,7 @@
 # Source rules: Camera/acquisition defaults. See architecture.md: E10, E14, A01-A05, A07-A11.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/acquisition_config.toml. The loader rejects a version mismatch.
-policy_version = 18
+policy_version = 19
 
 [platform]
 target_os = "windows"
@@ -103,7 +103,7 @@ working_buffer_allocation = "prepare_and_reuse"
 output_tag = "camera_role_cam"
 frame_log_video_column = "video_frame"
 metadata_policy = "with_video"
-frame_records_format = "jsonl_header_frames_completion"
+frame_records_format = "jsonl_header_source_frames_encoded_mappings_completion"
 saved_confirmation = "online_accounting_and_durable_closure"
 empty_video_action = "warn_continue_keep_metadata"
 empty_video_result = "explicit_content_presence_and_closure"
@@ -112,7 +112,7 @@ drop_selection = "oldest_waiting"
 
 [recording.frame_log]
 schema = "contracts/acquisition/frame_log_schema.toml"
-frames_file = "append_only_jsonl_header_frame_completion"
+frames_file = "append_only_jsonl_header_source_frame_encoded_mapping_completion"
 diagnostics = "grouped_by_code_in_completion_plus_per_frame_invalid_code"
 diagnostic_details_overflow = "truncate_with_marker"
 pair_identity = "embedded_existing_identities"
@@ -121,8 +121,8 @@ native_timestamp_unit = "ns"
 native_clock_provenance = "prepared_descriptor"
 native_timestamp_unavailable = "warn_and_leave_empty"
 invalid_image_row = "dropped"
-video_correspondence = "non_dropped_row_order"
-row_write_policy = "append_after_drop_decision"
+video_correspondence = "nominal_slot_to_real_source_or_identified_duplicate"
+row_write_policy = "source_after_selection_encoded_mapping_after_input_submission"
 pending_records_owner = "camera_worker_recording_thread"
 metadata_transport = "in_process_with_frame"
 capture_completion = "single_end_marker_after_drain_with_independent_stop_and_pulse_evidence"
@@ -162,7 +162,9 @@ mp4_mode = "hybrid_fragmented"
 faststart = false
 playback_timing = "constant_nominal_rate"
 nominal_rate_source = "applied_mcu_rate_or_free_running_frame_rate"
-frame_duplication = false
+# A07/A08: first usable receipt per slot; identified first-image leading backfill,
+# then previous-image interior/trailing padding through the actual cutoff.
+frame_duplication = true
 b_frames = 0
 final_frame_duration = "one_nominal_period"
 

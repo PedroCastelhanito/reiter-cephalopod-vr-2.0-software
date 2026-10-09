@@ -54,6 +54,7 @@ class MicrocontrollerCommands:
                 or self.lifecycle.authority_lost
                 or self.lifecycle.session.shutdown_requested
                 or self.device.camera_operation is not None
+                or self.device.configuration_edit is not None
                 or not request.HasField("expected_configuration_revision")
                 or request.expected_configuration_revision
                 != self.configuration.revision

@@ -18,6 +18,7 @@ from cephvr.platform.windows.security import (
     create_owner_only,
     create_owner_only_directory,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.supervised_encoder import SupervisedEncoderLauncher
 from cephvr.shared.transport_deadlines import deadline_metadata
 
@@ -236,7 +237,7 @@ class WindowsFirmwareUpload:
         expected: wire.PlanLaunchRequest | None = None,
     ) -> None:
         metadata = (*self.launcher.owner.metadata(), deadline_metadata(deadline_ns))
-        timeout = max(0, (deadline_ns - self.launcher.clock_ns()) / 1e9)
+        timeout = remaining_seconds(deadline_ns, clock=self.launcher.clock_ns)
         if timeout <= 0:
             raise TimeoutError("Firmware native cleanup missed its original deadline.")
         state = self.launcher.supervisor.GetLaunchState(
@@ -275,7 +276,7 @@ class WindowsFirmwareUpload:
         receipt = self.launcher.supervisor.ConfirmLaunch(
             request,
             metadata=metadata,
-            timeout=max(0, (deadline_ns - self.launcher.clock_ns()) / 1e9),
+            timeout=remaining_seconds(deadline_ns, clock=self.launcher.clock_ns),
         )
         if (
             receipt.admission.result != control.COMMAND_RESULT_ACCEPTED

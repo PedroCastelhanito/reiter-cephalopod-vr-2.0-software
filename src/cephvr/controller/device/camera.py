@@ -15,6 +15,7 @@ from cephvr.acquisition.v1 import camera_pb2 as camera_pb
 from cephvr.acquisition.v1 import runtime_pb2 as acquisition_pb
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.device.owned_edit_recovery import recover_owned_edit_status
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.release_evidence import (
     camera_policy,
@@ -30,6 +31,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.preview_placement import valid_preview_placement
 
 NO_PATH = frozenset(
@@ -115,10 +117,48 @@ class CameraCommands:
     ) -> pb.CommandAdmission:
         operator_id = request.command.operator.command_id
         async with self.lifecycle.lock:
-            selection = self._select_locked(request)
+            selection = self._select_locked(
+                request,
+                allow_stale_stop_run=(
+                    request.kind == svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+                ),
+            )
         if isinstance(selection, pb.CommandAdmission):
             return selection
         backend = selection.backend
+        deadline_ns: int | None = None
+        if request.kind == svc.CAMERA_COMMAND_KIND_STOP_PREVIEW:
+            async with self.lifecycle.lock:
+                try:
+                    recovery = self._owned_edit_recovery_locked(request, backend)
+                except ValueError as exc:
+                    return self.hooks.admission(operator_id, error=str(exc))
+            if recovery is not None:
+                operation_id, source, work = recovery
+                deadline_ns = (
+                    self.clock()
+                    + self.limits.current.setup_ns
+                    + self.limits.current.recovery_ns
+                )
+                if not await recover_owned_edit_status(
+                    backend=backend,
+                    operation_id=operation_id,
+                    source=source,
+                    work=work,
+                    report_devices=self._report_devices,
+                    clock=self.clock,
+                    deadline_ns=deadline_ns,
+                ):
+                    return self.hooks.admission(
+                        operator_id,
+                        error="owned camera cleanup status could not be reconciled",
+                    )
+            async with self.lifecycle.lock:
+                refreshed = self._select_locked(request)
+            if isinstance(refreshed, pb.CommandAdmission):
+                return refreshed
+            selection = refreshed
+            backend = selection.backend
         policy: acquisition_pb.AcquisitionFilePolicies | None = None
         if request.kind != svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER:
             try:
@@ -132,7 +172,9 @@ class CameraCommands:
                 )
         async with self.lifecycle.lock:
             try:
-                dispatched = self._dispatch_locked(request, selection, policy)
+                dispatched = self._dispatch_locked(
+                    request, selection, policy, deadline_ns=deadline_ns
+                )
             except (RuntimeError, ValueError) as exc:
                 return self.hooks.admission(operator_id, error=str(exc))
         if isinstance(dispatched, pb.CommandAdmission):
@@ -143,7 +185,7 @@ class CameraCommands:
         try:
             reply = await asyncio.wait_for(
                 backend.execute_camera_command(command, deadline_ns=deadline_ns),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
         except Exception as exc:
             async with self.lifecycle.lock:
@@ -196,7 +238,10 @@ class CameraCommands:
         return self.hooks.admission(operator_id)
 
     def _select_locked(
-        self, request: svc.CameraCommandRequest
+        self,
+        request: svc.CameraCommandRequest,
+        *,
+        allow_stale_stop_run: bool = False,
     ) -> CameraSelection | pb.CommandAdmission:
         operator_id = request.command.operator.command_id
         error = self.hooks.authorized(
@@ -214,6 +259,7 @@ class CameraCommands:
             or self.lifecycle.manual_control_cleanup_pending
             or backend is None
             or self.device.camera_operation is not None
+            or self.device.configuration_edit is not None
             or self.lifecycle.session.cleanup_blockers
             or self.lifecycle.authority_lost
             or self.lifecycle.session.shutdown_requested
@@ -304,10 +350,23 @@ class CameraCommands:
             if self.projections.devices
             else None
         )
-        if request.kind in REQUIRES_RUN and (
-            current_view is None
-            or not current_view.preview_running
-            or current_view.preview_run_id != request.preview_run_id
+        stale_stop_refresh = (
+            allow_stale_stop_run
+            and request.kind == svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+        )
+        cleanup_stop = (
+            request.kind == svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+            and current_view is not None
+            and current_view.cleanup_pending
+        )
+        if (
+            request.kind in REQUIRES_RUN
+            and not stale_stop_refresh
+            and (
+                current_view is None
+                or current_view.preview_run_id != request.preview_run_id
+                or (not current_view.preview_running and not cleanup_stop)
+            )
         ):
             return self.hooks.admission(
                 operator_id, error="current preview run does not match"
@@ -333,6 +392,8 @@ class CameraCommands:
         request: svc.CameraCommandRequest,
         selection: CameraSelection,
         policy: acquisition_pb.AcquisitionFilePolicies | None,
+        *,
+        deadline_ns: int | None = None,
     ) -> CameraDispatch | pb.CommandAdmission:
         operator_id = request.command.operator.command_id
         backend = selection.backend
@@ -347,7 +408,10 @@ class CameraCommands:
         if (
             error
             or self.configuration.revision != revision
+            or deadline_ns is not None
+            and self.clock() >= deadline_ns
             or self.device.camera_operation is not None
+            or self.device.configuration_edit is not None
             or self.lifecycle.authority_lost
             or self.lifecycle.session.shutdown_requested
         ):
@@ -356,11 +420,12 @@ class CameraCommands:
                 error=error or "camera operation retired before dispatch",
             )
         child_id = str(uuid.uuid4())
-        deadline_ns = (
-            self.clock()
-            + self.limits.current.setup_ns
-            + self.limits.current.recovery_ns
-        )
+        if deadline_ns is None:
+            deadline_ns = (
+                self.clock()
+                + self.limits.current.setup_ns
+                + self.limits.current.recovery_ns
+            )
         command = svc.AcquisitionCameraCommand(
             camera=request.camera,
             kind=request.kind,
@@ -446,8 +511,26 @@ class CameraCommands:
         self._report_devices = report_devices
         self._warn = warn
 
+    def _owned_edit_recovery_locked(
+        self, request: svc.CameraCommandRequest, backend: BackendPort
+    ) -> tuple[str, pb.BackendContext, pb.WorkContext] | None:
+        if request.kind != svc.CAMERA_COMMAND_KIND_STOP_PREVIEW:
+            return None
+        if not self.device.configuration_edit_terminals:
+            return None
+        operation_id = next(reversed(self.device.configuration_edit_terminals))
+        terminal = self.device.configuration_edit_terminals[operation_id]
+        if terminal.device_status is not None:
+            return None
+        source = pb.BackendContext.FromString(
+            terminal.source.SerializeToString(deterministic=True)
+        )
+        if operation_id != terminal.operation_id or source != backend.context:
+            raise ValueError("owned camera cleanup terminal has stale source identity")
+        return operation_id, source, pb.WorkContext()
+
     async def _camera_timeout(self, child_id: str, deadline_ns: int) -> None:
-        await asyncio.sleep(max(0, (deadline_ns - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(deadline_ns, clock=self.clock))
         async with self.lifecycle.lock:
             operation = self.device.camera_operation
             if operation is None or operation.child_id != child_id:
@@ -490,7 +573,7 @@ class CameraCommands:
         try:
             retained = await asyncio.wait_for(
                 backend.get_retained_result(request, deadline_ns=deadline_ns),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             if (
                 retained.found

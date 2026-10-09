@@ -1,0 +1,3 @@
+initial timeout: observed
+in-flight ownership: retained
+loop exception events: [('Future exception was never retrieved', 'audit injected late SDK failure')]

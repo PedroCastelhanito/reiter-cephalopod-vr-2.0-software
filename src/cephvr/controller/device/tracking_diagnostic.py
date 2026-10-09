@@ -35,6 +35,7 @@ from cephvr.controller.state import (
     SupervisorState,
 )
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.tracking.config.models.methods import FileLimits
 from cephvr.tracking.v1 import services_pb2 as tracking
 from cephvr.tracking.v1.methods_pb2 import TrackingFilePolicies
@@ -92,6 +93,14 @@ class TrackingDiagnosticController:
             if request.expected_configuration_revision != self.configuration.revision:
                 return _reject(
                     operator.operator.command_id, "configuration revision changed"
+                )
+            if (
+                self.device.configuration_edit is not None
+                or self.device.camera_operation is not None
+            ):
+                return _reject(
+                    operator.operator.command_id,
+                    "camera configuration or camera operation is unresolved",
                 )
             if (
                 self.lifecycle.attempt is not None
@@ -709,7 +718,9 @@ class TrackingDiagnosticController:
                 )
             if status.active is active and status.close_confirmed is not active:
                 return status
-            await asyncio.sleep(min(0.01, max(0.0, (deadline - self.clock()) / 1e9)))
+            await asyncio.sleep(
+                min(0.01, remaining_seconds(deadline, clock=self.clock))
+            )
         return None
 
     def _backend_query(

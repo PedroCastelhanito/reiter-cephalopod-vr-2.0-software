@@ -1,1 +1,0 @@
-{"format_version":1,"configuration":{"subject":"subject","experiment":"experiment","recording_root":"C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.tmp\\gui-backend-full\\test_gui_can_save_current_conf0","mode":"SESSION_MODE_OPEN_LOOP","trials":[{"trial_number":1}],"backends":[{"backend_name":"visual_stimulus","enabled":true}]}}

@@ -18,7 +18,10 @@ from PyQt6.QtWidgets import (
 
 from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.gui.camera_snapshot_settings import collect_camera_snapshot
+from cephvr.gui.camera_snapshot_settings import (
+    CameraSnapshotValidationError,
+    collect_camera_snapshot,
+)
 from cephvr.gui.managed_config import (
     install_metadata,
     install_subject_metadata,
@@ -297,7 +300,11 @@ class ManagedConfiguration:
             )
         if acquisition_backend is not None:
             acquisition = acquisition_backend.acquisition
-            collect_camera_snapshot(self.pages.cameras, acquisition)
+            try:
+                collect_camera_snapshot(self.pages.cameras, acquisition)
+            except CameraSnapshotValidationError as error:
+                self.pages.cameras.focus_validation_error(error.role, error.field)
+                raise
             if self.pages.cameras.snapshot_draft and any(
                 camera.enabled and camera.role != "Unassigned"
                 for camera in self.pages.cameras.drafts

@@ -388,6 +388,8 @@ class HealthMonitor:
             if state.phase != wire.LAUNCH_PHASE_CLEANUP_REQUIRED:
                 continue
             if state.failure.code == "CHILD_EXITED":
+                if self.registry.camera_cleanup_acknowledged(state.plan.command_id):
+                    continue
                 self.observe_backend_exit(state, now)
             elif state.failure.code in {"LAUNCH_TIMEOUT", "UNCONFIRMED_CHILD"}:
                 self.begin_safety(

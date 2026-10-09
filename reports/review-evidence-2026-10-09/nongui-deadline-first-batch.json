@@ -1,0 +1,246 @@
+{
+  "applied": true,
+  "files": [
+    {
+      "path": "src/cephvr/synchronization/client.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/sessionless_cleanup.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/trial_preparation.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/session_payloads.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/preview_windows.py",
+      "replacements": 3
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/health.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/session.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/cleanup.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/trial_pulses.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/manual_preview_pulse.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/manual_preview.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/trial_termination.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/workers.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/manual_preview_start.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/acquisition/coordinator/commands.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/runtime.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/coordinator/recipes.py",
+      "replacements": 3
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/coordinator/commands.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/resources/video.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/feedback/pipe_consumer.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/worker/owner.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/worker/main.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/worker/preparation.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/visual_stimulus/worker/reporting.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/shared/emergency.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/recovery.py",
+      "replacements": 12
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle_reports.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/authority.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/trials.py",
+      "replacements": 6
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/cleanup.py",
+      "replacements": 8
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/start.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+      "replacements": 8
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/evidence_wait.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/setup_resolution.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/handoffs.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/lifecycle/interruption.py",
+      "replacements": 3
+    },
+    {
+      "path": "src/cephvr/controller/device/display.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/device/tracking_diagnostic.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/device/spikeglx_inventory.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/device/owner_cleanup.py",
+      "replacements": 3
+    },
+    {
+      "path": "src/cephvr/controller/device/readback.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/device/spikeglx_stop.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/device/display_calibration.py",
+      "replacements": 13
+    },
+    {
+      "path": "src/cephvr/controller/incident/coordination.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/incident/scope.py",
+      "replacements": 3
+    },
+    {
+      "path": "src/cephvr/controller/metadata/trial_logs.py",
+      "replacements": 4
+    },
+    {
+      "path": "src/cephvr/controller/metadata/coordination.py",
+      "replacements": 5
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/device.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/channel.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/bridge.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/lifecycle.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/firmware_upload.py",
+      "replacements": 2
+    },
+    {
+      "path": "src/cephvr/controller/microcontroller/firmware_operation.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/tracking/methods/nvidia.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/tracking/processing/session.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/tracking/processing/pose.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/tracking/recording/writer.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/tracking/feedback/transport.py",
+      "replacements": 1
+    },
+    {
+      "path": "src/cephvr/supervisor/recovery.py",
+      "replacements": 3
+    },
+    {
+      "path": "src/cephvr/supervisor/process_exit.py",
+      "replacements": 1
+    }
+  ],
+  "total": 135
+}

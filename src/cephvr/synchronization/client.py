@@ -9,6 +9,7 @@ from typing import Any
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.synchronization.v1 import spikeglx_pb2 as wire
 
 from .diagnostic import _required
@@ -256,7 +257,7 @@ class SpikeGLXControllerClient:
                 await self._sleep(
                     min(
                         settings.observation_interval_s,
-                        max(0, (deadline - self.clock()) / 1e9),
+                        remaining_seconds(deadline, clock=self.clock),
                     )
                 )
             return False

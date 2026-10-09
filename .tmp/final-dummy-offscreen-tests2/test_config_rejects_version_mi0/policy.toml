@@ -1,3 +1,0 @@
-policy_version = 2
-[health]
-loss = "shutdown"

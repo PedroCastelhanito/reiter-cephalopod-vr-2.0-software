@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+    "-m",
+    "not windows and not rig",
+    "-p",
+    "no:cacheprovider",
+    "--junitxml=/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/reports/review-evidence-2026-10-09/nongui-portable-suite.xml"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "started_utc": "2026-10-09T04:44:24.140791+00:00",
+  "elapsed_seconds": 183.271,
+  "returncode": 0,
+  "raw": "nongui-portable-checkpoint.txt",
+  "retained_junit": "nongui-portable-checkpoint.xml",
+  "source_hashes": "nongui-suite-source-hashes.json",
+  "scope_note": "Passing checkpoint before the final normal-Stop failure status and failed-restart exact cleanup identity corrections; final validation follows."
+}

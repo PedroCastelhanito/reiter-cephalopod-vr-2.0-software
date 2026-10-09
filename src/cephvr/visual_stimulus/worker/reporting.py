@@ -11,6 +11,7 @@ from google.protobuf.message import Message
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.coordinator.ports import PeerPort
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
@@ -90,12 +91,14 @@ class ReportBridge:
 
     def confirm(self, method: str, message: Message, deadline_ns: int) -> None:
         self._enqueue(method, message, deadline_ns).result(
-            max(0, (deadline_ns - host_time_ns()) / 1e9)
+            remaining_seconds(deadline_ns, clock=host_time_ns)
         )
 
     async def drain(self, deadline_ns: int) -> None:
         with self.lock:
             pending = tuple(self.pending)
         if pending:
-            async with asyncio.timeout(max(0, (deadline_ns - host_time_ns()) / 1e9)):
+            async with asyncio.timeout(
+                remaining_seconds(deadline_ns, clock=host_time_ns)
+            ):
                 await asyncio.gather(*(asyncio.wrap_future(f) for f in pending))

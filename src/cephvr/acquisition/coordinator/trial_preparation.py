@@ -31,6 +31,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
 
 
@@ -140,7 +141,7 @@ class TrialPreparation:
             await self.pulse_boundaries.ensure_outputs_off(session, deadline_ns)
             self._bind_session_rings(session, trial, deadline_ns, prior_complete)
             await self._prepare_workers(session, trial, request, deadline_ns)
-            remaining = max(0, deadline_ns - self.clock()) / 1_000_000_000
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 raise TimeoutError("trial readiness missed its original deadline")
             await asyncio.wait_for(trial.ready_confirmed.wait(), remaining)

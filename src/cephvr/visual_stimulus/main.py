@@ -8,7 +8,7 @@ import sys
 from uuid import uuid4
 
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.platform.windows.bootstrap import read_bootstrap
+from cephvr.platform.windows.bootstrap import BootstrapPipeWrite, read_bootstrap
 from cephvr.platform.windows.guard import SingleInstanceGuard
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.shared.auth import Principal
@@ -89,14 +89,20 @@ async def run(bootstrap: BackendBootstrap) -> None:
     )
     launch = None
     watch = None
+    pending_bootstrap_writes: list[BootstrapPipeWrite] = []
+    launch_deadline_ns: int | None = None
     try:
         await register_backend_endpoint(bootstrap)
+        launch_deadline_ns = (
+            host_time_ns() + bootstrap.policies.supervisor_registration.initial_ns
+        )
         launch = await launch_renderer(
             bootstrap,
             supervisor,
             native,
             credentials,
-            host_time_ns() + bootstrap.policies.supervisor_registration.initial_ns,
+            launch_deadline_ns,
+            pending_bootstrap_writes=pending_bootstrap_writes,
             identity=worker,
         )
         endpoint.attach(launch.peer)
@@ -111,6 +117,17 @@ async def run(bootstrap: BackendBootstrap) -> None:
             runtime.recovery_deadline_ns
             or host_time_ns() + bootstrap.policies.recovery_ns
         )
+        if launch_deadline_ns is not None:
+            for attempt in tuple(pending_bootstrap_writes):
+                try:
+                    await attempt.wait(launch_deadline_ns)
+                except TimeoutError:
+                    pass
+                except Exception:
+                    pass
+                finally:
+                    if attempt.completed.is_set():
+                        pending_bootstrap_writes.remove(attempt)
         try:
             await listener.close(deadline)
         finally:

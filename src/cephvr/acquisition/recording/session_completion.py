@@ -28,6 +28,32 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 
 
+def terminal_capture_proof(
+    end: CaptureEndMarker,
+    completion: RecordingCompletionContext,
+    *,
+    schedule: acq.WorkerSchedule,
+    received: int,
+    logged: int,
+    last_frame_id: int,
+) -> tuple[bool, bool, bool]:
+    """Return exact stop, interval, and source-accounting proof for a cutoff."""
+    stop_matches = (
+        end.recording_end_monotonic_ns == completion.stopped_recording_end_monotonic_ns
+        and end.actual_stop_monotonic_ns == completion.stopped_actual_stop_monotonic_ns
+    )
+    timing_valid = (
+        end.actual_stop_monotonic_ns is not None
+        and schedule.start_monotonic_ns
+        <= end.recording_end_monotonic_ns
+        <= schedule.end_monotonic_ns
+    )
+    accounting_complete = (
+        end.received_frame_count == received == logged and last_frame_id == received - 1
+    )
+    return stop_matches, timing_valid, accounting_complete
+
+
 def finish_recording(
     end: CaptureEndMarker,
     pulses: PulseEvidence,
@@ -55,19 +81,13 @@ def finish_recording(
     """Write one terminal record, then return only evidence-backed output states."""
     if completion.outcome not in {"completed", "interrupted"}:
         raise RecordingFailure("terminal recording outcome is invalid")
-    stop_matches = (
-        end.recording_end_monotonic_ns == completion.stopped_recording_end_monotonic_ns
-        and end.actual_stop_monotonic_ns == completion.stopped_actual_stop_monotonic_ns
-    )
-    timing_valid = (
-        end.recording_end_monotonic_ns is not None
-        and end.actual_stop_monotonic_ns is not None
-        and schedule.start_monotonic_ns
-        <= end.recording_end_monotonic_ns
-        <= schedule.end_monotonic_ns
-    )
-    accounting_complete = (
-        end.received_frame_count == received == logged and last_frame_id == received - 1
+    stop_matches, timing_valid, accounting_complete = terminal_capture_proof(
+        end,
+        completion,
+        schedule=schedule,
+        received=received,
+        logged=logged,
+        last_frame_id=last_frame_id,
     )
     if received and not submitted and not diagnostics.contains("NO_VIDEO_FRAMES"):
         diagnostics.record(
@@ -116,6 +136,8 @@ def finish_recording(
         final_received_frame_count=received if accounting_complete else None,
         accounting_complete=accounting_complete,
         recorded_frame_count=submitted,
+        selected_source_frame_count=frame_log.selected_source_count,
+        duplicate_frame_count=frame_log.duplicate_count,
         on_outcome=pulses.on_outcome,
         on_dispatched_monotonic_ns=pulses.on_dispatched_monotonic_ns,
         on_acknowledged_monotonic_ns=pulses.on_acknowledged_monotonic_ns,

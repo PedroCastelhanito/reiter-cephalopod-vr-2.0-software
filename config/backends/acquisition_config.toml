@@ -2,7 +2,7 @@
 # Camera serials/rates are owner-assigned below; other rig bindings remain incomplete. A02 owns process layout.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/acquisition_policy.toml; versions must match.
-policy_version = 18
+policy_version = 19
 
 [rpc]
 # Fixed acquisition service endpoint; loopback-only, shared by all its clients.
@@ -25,7 +25,6 @@ pulse_frequency_hz = 30.0
 # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
 # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
 # Rig-specific value intentionally unset; unknown does not mean zero.
-post_cutoff_drain_margin_ms = 1000
 # Independently configurable SDK image-buffer pool; validate before session locking.
 # Additional to recording/tracking rings and working copies; no growth while running.
 # Initial value awaits rig verification; this is not a bound on all driver/device RAM.
@@ -87,7 +86,6 @@ pulse_frequency_hz = 60.0
 # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
 # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
 # Rig-specific value intentionally unset; unknown does not mean zero.
-post_cutoff_drain_margin_ms = 1000
 # Independently configurable SDK image-buffer pool; validate before session locking.
 # Additional to recording/tracking rings and working copies; no growth while running.
 # Initial value awaits rig verification; this is not a bound on all driver/device RAM.

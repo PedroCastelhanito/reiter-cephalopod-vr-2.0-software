@@ -12,6 +12,7 @@ from cephvr.shared.cleanup_outputs import cleanup_output_discharged
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandCapacityError, CommandConflict, CommandLedger
 from cephvr.shared.credentials import default_runtime_root
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.recovery import RecoveryStore
 from cephvr.shared.resources import ResourceCatalogueError, cleanup_command_fenced
@@ -178,7 +179,7 @@ class RecoveryCoordinator:
                     )
             except (TimeoutError, OSError, RuntimeError):
                 pass
-            remaining = max(0.0, (deadline_ns - host_time_ns()) / 1_000_000_000)
+            remaining = remaining_seconds(deadline_ns, clock=host_time_ns)
             if remaining <= 0:
                 break
             await asyncio.sleep(min(delay_s, remaining))
@@ -389,8 +390,8 @@ class RecoveryCoordinator:
         operation = self.state.operations[command.command_id]
         recovery = self.state.recoveries[command.command_id]
         try:
-            remaining_s = max(
-                0.0, (recovery.deadline_monotonic_ns - host_time_ns()) / 1e9
+            remaining_s = remaining_seconds(
+                recovery.deadline_monotonic_ns, clock=host_time_ns
             )
             await asyncio.wait_for(
                 self.outbound.cleanup_backend(
@@ -400,8 +401,8 @@ class RecoveryCoordinator:
             )
             operation.progress = "cleanup admitted; awaiting verified Cleanup evidence"
             recovery.progress = operation.progress
-            remaining_s = max(
-                0.0, (recovery.deadline_monotonic_ns - host_time_ns()) / 1e9
+            remaining_s = remaining_seconds(
+                recovery.deadline_monotonic_ns, clock=host_time_ns
             )
             await asyncio.wait_for(
                 self.state.cleanup_events[command.command_id].wait(),

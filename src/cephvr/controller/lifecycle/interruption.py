@@ -26,6 +26,7 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.synchronization.v1 import spikeglx_pb2 as spikeglx_pb
 
 
@@ -281,7 +282,7 @@ class InterruptionWorkflow:
                     ),
                     return_exceptions=True,
                 ),
-                max(0, (stop_deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(stop_deadline_ns, clock=self.clock),
             )
         except TimeoutError:
             pass
@@ -431,7 +432,7 @@ class InterruptionWorkflow:
             else:
                 confirmed = await asyncio.wait_for(
                     self.spikeglx.stop_expected_run(cleanup_deadline),
-                    max(0, (cleanup_deadline - self.clock()) / 1e9),
+                    remaining_seconds(cleanup_deadline, clock=self.clock),
                 )
             if not confirmed:
                 async with self.lifecycle.lock:
@@ -495,7 +496,7 @@ class InterruptionWorkflow:
         try:
             await asyncio.wait_for(
                 asyncio.to_thread(attempt.reservation.complete),
-                max(0, (cleanup_deadline - self.clock()) / 1e9),
+                remaining_seconds(cleanup_deadline, clock=self.clock),
             )
             return await self.cleanup.release_reservation_pointer(
                 attempt, cleanup_deadline

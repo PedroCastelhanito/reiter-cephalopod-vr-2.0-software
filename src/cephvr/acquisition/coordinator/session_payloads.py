@@ -24,6 +24,7 @@ from cephvr.acquisition.v1 import runtime_pb2 as runtime
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+from cephvr.shared.deadlines import remaining_seconds
 
 
 async def prepare_worker_payloads(
@@ -195,7 +196,7 @@ async def prepare_worker_payloads(
         )
         if receipt.result != control.COMMAND_RESULT_ACCEPTED:
             raise RuntimeError("controller rejected acquisition tracking input")
-        remaining = max(0, deadline_ns - clock()) / 1_000_000_000
+        remaining = remaining_seconds(deadline_ns, clock=clock)
         if remaining <= 0:
             raise TimeoutError("tracking input confirmation missed Setup deadline")
         await asyncio.wait_for(session.tracking_input_confirmed.wait(), remaining)

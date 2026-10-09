@@ -1,5 +1,6 @@
 """Controller-backed camera intent and snapshot projection (A10/G01)."""
 
+import re
 from collections.abc import Callable
 
 from PyQt6.QtCore import QObject
@@ -64,6 +65,26 @@ class ManagedCameras(QObject):
         self.panel.operation_pending = False
         self.panel.pending_enable.clear()
         self.panel.console.appendPlainText(f"{action}: {message}")
+        if action == "save_camera_settings" and not success:
+            match = re.search(
+                r"backends\.acquisition\.(behavioral|tracking)\.([^:]+):",
+                message,
+            )
+            if match is not None:
+                role = (
+                    "Behavior cam" if match.group(1) == "behavioral" else "Tracking cam"
+                )
+                path = match.group(2)
+                field_name = (
+                    "Trigger source"
+                    if path.endswith("device.frame_timing")
+                    else "Parameter file"
+                    if path.endswith("device.settings.trigger_source")
+                    else "Trigger rate"
+                    if ".pulses." in path or path.endswith("requested_frequency_hz")
+                    else ""
+                )
+                self.panel.focus_validation_error(role, field_name)
         self.panel.refresh_controls()
 
     def disconnected(self) -> None:

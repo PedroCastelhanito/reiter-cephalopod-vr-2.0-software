@@ -34,6 +34,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 
 MANUAL_CLEANUP_TASK_NAME = "manual-camera-cleanup"
 _RETRY_MAX_S = 10.0
@@ -265,7 +266,7 @@ class ManualControlCleanup:
                 return True
             self.device.camera_operation_changed.clear()
         while True:
-            remaining = max(0, deadline_ns - self.clock()) / 1e9
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 return False
             try:
@@ -364,7 +365,7 @@ class ManualControlCleanup:
         try:
             reply = await asyncio.wait_for(
                 backend.execute_camera_command(command, deadline_ns=deadline_ns),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             if reply.result != pb.COMMAND_RESULT_ACCEPTED:
                 async with self.lifecycle.lock:
@@ -382,7 +383,7 @@ class ManualControlCleanup:
                         self.hooks.publish()
                 raise RuntimeError(reply.failure.message or "camera release rejected")
             while True:
-                remaining = max(0, deadline_ns - self.clock()) / 1e9
+                remaining = remaining_seconds(deadline_ns, clock=self.clock)
                 if remaining <= 0:
                     raise TimeoutError("camera release completion was not confirmed")
                 async with self.lifecycle.lock:

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+    "contracts/visual_stimulus/generate_schemas.py",
+    "--check"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "started_utc": "2026-10-09T04:44:31.748066+00:00",
+  "elapsed_seconds": 0.347,
+  "returncode": 0,
+  "raw": "nongui-visual-schema.txt"
+}

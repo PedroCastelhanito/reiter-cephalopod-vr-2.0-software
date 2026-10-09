@@ -1,0 +1,37 @@
+{
+  "date_utc": "2026-10-09T04:18:18.226029+00:00",
+  "method": "Parse all config/contract TOMLs with Python3.11 tomllib; compare each revised owning decision revision to its root register row.",
+  "toml_files": 18,
+  "matched_decision_revisions": {
+    "A07": 59,
+    "A08": 50,
+    "A10": 56,
+    "A11": 41,
+    "E13": 20,
+    "V12": 11,
+    "V28": 5
+  },
+  "sha256": {
+    "architecture.md": "72ad8f358d83833c04ca58d39a36afc8d99546e7281adb46d0a0da7df1c67e8d",
+    "docs/architecture/acquisition.md": "1b259be32e144b5cc449cc147ae785d3944fd05bf48f690cf5783f98b3af606a",
+    "docs/architecture/visual_stimulus.md": "3c1ad45cc7caf89a522e2f09643b8be82865657ed54303c3e4f9705db0936b9f",
+    "config/backends/acquisition_config.toml": "41983112774d00d82d48236414c1089147d6cb95aad51624b7e79cc532d43619",
+    "config/backends/experiment_config.toml": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115",
+    "config/backends/gui_config.toml": "c06a3079d907e673e5f62b677b4e3fadb7f425fd72abe0150a391a26314b593d",
+    "config/backends/microcontroller_config.toml": "02f31b2cc1f6856be00f3ffb6d9068b5c6d562ea7d64ed2f6a0daaef2bc290b8",
+    "config/backends/supervisor_config.toml": "e58131394e0933c831565db4c0e41f264131fff4f435127d2337848d114594fe",
+    "config/backends/synchronization_config.toml": "f604e3585325706b35724ecccdf458b5389aa302facb8afa6f57e711f039f67d",
+    "config/backends/tracking_config.toml": "63b70fa566dafd66fc3ace905e84ec78b36cfed7f5b0f9542c945e85b555c69c",
+    "config/backends/visual_stimulus_config.toml": "92d6ac79419107c206f006768aae86ad005dc36189d03e0b772c98eccce73b62",
+    "contracts/acquisition/frame_buffers.toml": "bdafb9781ecba45203f3c0760da7360781231a834089d0185267031951233ee3",
+    "contracts/acquisition/frame_log_schema.toml": "eba4ffc6364525be8f78cdf37ebbe9a7706e38a528cd3e91a743242e663cdf76",
+    "contracts/policy/acquisition_policy.toml": "12d786c8119706ff3b03bdc085eb0c220893410d902e6864db2ddf161f1aec62",
+    "contracts/policy/experiment_policy.toml": "a49e66efaf073c30f8d3651bf847f6037fa3355ed51b7e8a33bc89beb48bc386",
+    "contracts/policy/gui_policy.toml": "d072f6b909b05352ccd4c82bbb983e39326037a62888a01fe8facb4be53701c8",
+    "contracts/policy/microcontroller_policy.toml": "9e1c5b78bb1a2f47e53bf46fcb9568c7ec1c59fb42bb1e275561c210582e3dc5",
+    "contracts/policy/supervisor_policy.toml": "0167cb585e6cd6ad3918db8458e757d492cf79f4e10a2880dd1e3094d4d64a5c",
+    "contracts/policy/synchronization_policy.toml": "dba08411a913384691230f7cb7f5b38a3c2fb199a96bcbcaf6a4b7e20d26e7c3",
+    "contracts/policy/tracking_policy.toml": "8088192d5b1ba5ecfb55bd56e08a01220bceac5fee90f763a93fb0fedc66cffe",
+    "contracts/policy/visual_stimulus_policy.toml": "0e0de7fcda9697170332c246a09404f6b508696ec8adb2583270d889e3763fe7"
+  }
+}

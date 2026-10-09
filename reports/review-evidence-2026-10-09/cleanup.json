@@ -1,0 +1,715 @@
+{
+  "date": "2026-10-09",
+  "source_revision": "0aebf47bc869d69db511a7dd736709480d3e4d53",
+  "method": "Inventory of exact repository .tmp tree; preserve unique historical QA/collection methods, remove generated test trees and obsolete one-shot amendment scripts/tools. Git history remains untouched.",
+  "removed_files": 10353,
+  "removed_bytes": 224923430,
+  "preserved": [
+    {
+      "original": ".tmp/gui_snapshots_qa.py",
+      "destination": "reports/gui-configuration-evidence-2026-10-08/gui_snapshots_qa.py",
+      "sha256": "24066b330cac438bfcc48a80fd4486f3f42a586298e3172e5148317550411a59"
+    },
+    {
+      "original": ".tmp/physical_reference_gui_qa.py",
+      "destination": "reports/tracking-evidence-2026-10-08/physical_reference_gui_qa.py",
+      "sha256": "cbbfd6f1f141eca96201bccc78d14077fa6bba707823e8da4a7b6e8ccb05a1d4"
+    },
+    {
+      "original": ".tmp/gui_snapshot_collection.txt",
+      "destination": "reports/gui-configuration-evidence-2026-10-08/gui_snapshot_collection.txt",
+      "sha256": "eede08e800ae91bf2beff1b514ca1b80c4cba3898bc904e9631b28c0140d5dad"
+    }
+  ],
+  "duplicate_junit": [
+    ".tmp/gui-snapshots-final-focused-01.xml matches reports/gui-configuration-evidence-2026-10-08/snapshot-tests.xml",
+    ".tmp/gui-snapshots-suite-03.xml matches reports/gui-configuration-evidence-2026-10-08/initial-gui-tests.xml"
+  ],
+  "disposable_categories": [
+    "pytest basetemp fixture trees (including synthetic credentials/output examples)",
+    "copied ffmpeg.exe/ffprobe.exe diagnostic tools",
+    "superseded one-shot doc amendment/report/check scripts",
+    "duplicate JUnit reports"
+  ],
+  "limits": "No actual runtime recovery, operator history, firmware, native source, environment/dependency or dated rig evidence deleted. Moved QA scripts retain their historical method/platform assumptions; no rerender claimed.",
+  "project_caches": {
+    "method": "After final verification, remove only named generated cache directories while excluding .git and .venv; no symlinks followed.",
+    "directories": 75,
+    "files": 932,
+    "bytes": 52844967,
+    "paths": [
+      {
+        "path": ".pytest_cache",
+        "files": 5,
+        "bytes": 210035
+      },
+      {
+        "path": ".ruff_cache",
+        "files": 21,
+        "bytes": 116114
+      },
+      {
+        "path": ".mypy_cache",
+        "files": 18,
+        "bytes": 35115232
+      },
+      {
+        "path": "tools/__pycache__",
+        "files": 1,
+        "bytes": 1995
+      },
+      {
+        "path": "contracts/visual_stimulus/__pycache__",
+        "files": 8,
+        "bytes": 5783
+      },
+      {
+        "path": "contracts/visual_stimulus/tests/__pycache__",
+        "files": 6,
+        "bytes": 165706
+      },
+      {
+        "path": "contracts/tracking/__pycache__",
+        "files": 9,
+        "bytes": 162494
+      },
+      {
+        "path": "tests/__pycache__",
+        "files": 1,
+        "bytes": 244
+      },
+      {
+        "path": "tests/launcher/__pycache__",
+        "files": 2,
+        "bytes": 187913
+      },
+      {
+        "path": "tests/acquisition/__pycache__",
+        "files": 25,
+        "bytes": 1226485
+      },
+      {
+        "path": "tests/platform/__pycache__",
+        "files": 5,
+        "bytes": 204332
+      },
+      {
+        "path": "tests/visual_stimulus/__pycache__",
+        "files": 18,
+        "bytes": 1132777
+      },
+      {
+        "path": "tests/shared/__pycache__",
+        "files": 9,
+        "bytes": 271566
+      },
+      {
+        "path": "tests/controller/__pycache__",
+        "files": 31,
+        "bytes": 1755858
+      },
+      {
+        "path": "tests/gui/__pycache__",
+        "files": 2,
+        "bytes": 2523196
+      },
+      {
+        "path": "tests/tracking/__pycache__",
+        "files": 8,
+        "bytes": 446462
+      },
+      {
+        "path": "tests/client/__pycache__",
+        "files": 3,
+        "bytes": 159056
+      },
+      {
+        "path": "tests/supervisor/__pycache__",
+        "files": 9,
+        "bytes": 467821
+      },
+      {
+        "path": "src/cephvr/__pycache__",
+        "files": 1,
+        "bytes": 288
+      },
+      {
+        "path": "src/cephvr/launcher/__pycache__",
+        "files": 8,
+        "bytes": 73231
+      },
+      {
+        "path": "src/cephvr/synchronization/__pycache__",
+        "files": 10,
+        "bytes": 111652
+      },
+      {
+        "path": "src/cephvr/synchronization/v1/__pycache__",
+        "files": 2,
+        "bytes": 4714
+      },
+      {
+        "path": "src/cephvr/acquisition/__pycache__",
+        "files": 8,
+        "bytes": 57205
+      },
+      {
+        "path": "src/cephvr/acquisition/v1/__pycache__",
+        "files": 6,
+        "bytes": 68351
+      },
+      {
+        "path": "src/cephvr/acquisition/buffers/__pycache__",
+        "files": 8,
+        "bytes": 64056
+      },
+      {
+        "path": "src/cephvr/acquisition/coordinator/__pycache__",
+        "files": 56,
+        "bytes": 704385
+      },
+      {
+        "path": "src/cephvr/acquisition/coordinator/state/__pycache__",
+        "files": 5,
+        "bytes": 53045
+      },
+      {
+        "path": "src/cephvr/acquisition/transport/__pycache__",
+        "files": 4,
+        "bytes": 46167
+      },
+      {
+        "path": "src/cephvr/acquisition/config/__pycache__",
+        "files": 10,
+        "bytes": 57069
+      },
+      {
+        "path": "src/cephvr/acquisition/camera/__pycache__",
+        "files": 13,
+        "bytes": 142366
+      },
+      {
+        "path": "src/cephvr/acquisition/recording/__pycache__",
+        "files": 27,
+        "bytes": 143514
+      },
+      {
+        "path": "src/cephvr/acquisition/preview/__pycache__",
+        "files": 3,
+        "bytes": 18733
+      },
+      {
+        "path": "src/cephvr/acquisition/worker/__pycache__",
+        "files": 33,
+        "bytes": 390786
+      },
+      {
+        "path": "src/cephvr/acquisition/microcontroller/__pycache__",
+        "files": 11,
+        "bytes": 141648
+      },
+      {
+        "path": "src/cephvr/platform/__pycache__",
+        "files": 1,
+        "bytes": 300
+      },
+      {
+        "path": "src/cephvr/platform/windows/__pycache__",
+        "files": 25,
+        "bytes": 304818
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/__pycache__",
+        "files": 7,
+        "bytes": 70531
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/v1/__pycache__",
+        "files": 6,
+        "bytes": 48879
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/coordinator/__pycache__",
+        "files": 11,
+        "bytes": 111365
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/transport/__pycache__",
+        "files": 14,
+        "bytes": 81934
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/config/__pycache__",
+        "files": 3,
+        "bytes": 8417
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/config/models/__pycache__",
+        "files": 8,
+        "bytes": 146048
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/recording/__pycache__",
+        "files": 13,
+        "bytes": 149382
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/resources/__pycache__",
+        "files": 20,
+        "bytes": 237660
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/feedback/__pycache__",
+        "files": 8,
+        "bytes": 69607
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/rendering/__pycache__",
+        "files": 24,
+        "bytes": 283948
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/worker/__pycache__",
+        "files": 16,
+        "bytes": 180941
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/compiler/__pycache__",
+        "files": 6,
+        "bytes": 63870
+      },
+      {
+        "path": "src/cephvr/shared/__pycache__",
+        "files": 34,
+        "bytes": 291123
+      },
+      {
+        "path": "src/cephvr/shared/pixels/__pycache__",
+        "files": 4,
+        "bytes": 24611
+      },
+      {
+        "path": "src/cephvr/controller/__pycache__",
+        "files": 24,
+        "bytes": 381804
+      },
+      {
+        "path": "src/cephvr/controller/transport/__pycache__",
+        "files": 4,
+        "bytes": 27336
+      },
+      {
+        "path": "src/cephvr/controller/lifecycle/__pycache__",
+        "files": 15,
+        "bytes": 282395
+      },
+      {
+        "path": "src/cephvr/controller/device/__pycache__",
+        "files": 19,
+        "bytes": 322911
+      },
+      {
+        "path": "src/cephvr/controller/incident/__pycache__",
+        "files": 4,
+        "bytes": 52245
+      },
+      {
+        "path": "src/cephvr/controller/startup/__pycache__",
+        "files": 6,
+        "bytes": 54241
+      },
+      {
+        "path": "src/cephvr/controller/metadata/__pycache__",
+        "files": 8,
+        "bytes": 94689
+      },
+      {
+        "path": "src/cephvr/controller/control/__pycache__",
+        "files": 6,
+        "bytes": 71895
+      },
+      {
+        "path": "src/cephvr/controller/microcontroller/__pycache__",
+        "files": 19,
+        "bytes": 219386
+      },
+      {
+        "path": "src/cephvr/gui/__pycache__",
+        "files": 138,
+        "bytes": 1886575
+      },
+      {
+        "path": "src/cephvr/tracking/__pycache__",
+        "files": 6,
+        "bytes": 71646
+      },
+      {
+        "path": "src/cephvr/tracking/v1/__pycache__",
+        "files": 7,
+        "bytes": 33835
+      },
+      {
+        "path": "src/cephvr/tracking/coordinator/__pycache__",
+        "files": 7,
+        "bytes": 56268
+      },
+      {
+        "path": "src/cephvr/tracking/methods/__pycache__",
+        "files": 15,
+        "bytes": 116019
+      },
+      {
+        "path": "src/cephvr/tracking/transport/__pycache__",
+        "files": 5,
+        "bytes": 29838
+      },
+      {
+        "path": "src/cephvr/tracking/native/__pycache__",
+        "files": 2,
+        "bytes": 7438
+      },
+      {
+        "path": "src/cephvr/tracking/config/__pycache__",
+        "files": 8,
+        "bytes": 73577
+      },
+      {
+        "path": "src/cephvr/tracking/config/models/__pycache__",
+        "files": 4,
+        "bytes": 47419
+      },
+      {
+        "path": "src/cephvr/tracking/processing/__pycache__",
+        "files": 12,
+        "bytes": 138819
+      },
+      {
+        "path": "src/cephvr/tracking/recording/__pycache__",
+        "files": 4,
+        "bytes": 19778
+      },
+      {
+        "path": "src/cephvr/tracking/feedback/__pycache__",
+        "files": 3,
+        "bytes": 15461
+      },
+      {
+        "path": "src/cephvr/client/__pycache__",
+        "files": 3,
+        "bytes": 38506
+      },
+      {
+        "path": "src/cephvr/control/__pycache__",
+        "files": 1,
+        "bytes": 299
+      },
+      {
+        "path": "src/cephvr/control/v1/__pycache__",
+        "files": 5,
+        "bytes": 189518
+      },
+      {
+        "path": "src/cephvr/supervisor/__pycache__",
+        "files": 21,
+        "bytes": 309356
+      }
+    ]
+  },
+  "nongui_duplicate_handoffs": {
+    "method": "Consolidate only byte-identical prefixes into complete raw model handoffs; update incoming report/log links; no unique findings/evidence lost.",
+    "files": 9,
+    "bytes": 181320,
+    "paths": [
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-astra-early.txt",
+        "sha256": "fbdd7fd4f477a94f8e0b2dcf78f5e6977535f9f24a06381af2c0bfa761b467d2",
+        "bytes": 7314,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-astra-review.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-astra-launch-accepted.txt",
+        "sha256": "15ea2232ba4e54c008bdbed5ed70e13ba8b380a29d1221c844fc9c24f8031bb1",
+        "bytes": 31136,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-astra-review.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-astra-padding-accepted.txt",
+        "sha256": "a9b020a50b56edcba796886cbef8023085b0631133bd1471cbbc3e6bfe349625",
+        "bytes": 27002,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-astra-review.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-astra-padding-corrections.txt",
+        "sha256": "0588b29bd9939a0327c478390d803cfbb2fc6b081569bfca5c726da1930901e8",
+        "bytes": 21355,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-astra-review.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera-initial.txt",
+        "sha256": "805f90d16f5c77227fd9422790edae2f45464a9ec77328ade5ee10ff665ec514",
+        "bytes": 8182,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera-nonempty.txt",
+        "sha256": "3640fa3ec44a64f6d94de685b52389150fb34e4825df42623f590a3486bc3611",
+        "bytes": 36453,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera-recovery.txt",
+        "sha256": "23e2cf1f11e18830ed8a2ce9b63f8ee417805eb63e88907b6bbc14cb32f59db2",
+        "bytes": 26620,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera-second.txt",
+        "sha256": "9f31cd45f06f9b7e814728068ff07dcd40790cba7ccbdb33041b9673df9c2718",
+        "bytes": 18493,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-sol-owned-camera.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      },
+      {
+        "path": "reports/review-evidence-2026-10-09/nongui-sol-deadlines-first-batch.txt",
+        "sha256": "12530c3b836f2278ab49e839316d7ee4670ecdf2e079da3054440a0b6d154927",
+        "bytes": 4765,
+        "retained_in": "reports/review-evidence-2026-10-09/nongui-sol-deadlines.txt",
+        "proof": "The removed file was a byte-identical prefix of retained raw handoff."
+      }
+    ]
+  },
+  "nongui_project_caches": {
+    "method": "After final verification, remove only named generated cache directories while excluding .git and .venv; no symlinks followed.",
+    "directories": 42,
+    "files": 321,
+    "bytes": 28233854,
+    "paths": [
+      {
+        "path": ".ruff_cache",
+        "files": 7,
+        "bytes": 19866
+      },
+      {
+        "path": ".mypy_cache",
+        "files": 19,
+        "bytes": 24424687
+      },
+      {
+        "path": "tests/__pycache__",
+        "files": 1,
+        "bytes": 244
+      },
+      {
+        "path": "tests/acquisition/__pycache__",
+        "files": 3,
+        "bytes": 151708
+      },
+      {
+        "path": "tests/visual_stimulus/__pycache__",
+        "files": 1,
+        "bytes": 16910
+      },
+      {
+        "path": "tests/controller/__pycache__",
+        "files": 6,
+        "bytes": 407668
+      },
+      {
+        "path": "src/cephvr/__pycache__",
+        "files": 1,
+        "bytes": 288
+      },
+      {
+        "path": "src/cephvr/synchronization/__pycache__",
+        "files": 8,
+        "bytes": 78273
+      },
+      {
+        "path": "src/cephvr/synchronization/v1/__pycache__",
+        "files": 2,
+        "bytes": 4714
+      },
+      {
+        "path": "src/cephvr/acquisition/__pycache__",
+        "files": 6,
+        "bytes": 44377
+      },
+      {
+        "path": "src/cephvr/acquisition/v1/__pycache__",
+        "files": 5,
+        "bytes": 35786
+      },
+      {
+        "path": "src/cephvr/acquisition/buffers/__pycache__",
+        "files": 5,
+        "bytes": 42962
+      },
+      {
+        "path": "src/cephvr/acquisition/coordinator/__pycache__",
+        "files": 17,
+        "bytes": 211017
+      },
+      {
+        "path": "src/cephvr/acquisition/coordinator/state/__pycache__",
+        "files": 5,
+        "bytes": 53045
+      },
+      {
+        "path": "src/cephvr/acquisition/config/__pycache__",
+        "files": 10,
+        "bytes": 57069
+      },
+      {
+        "path": "src/cephvr/acquisition/camera/__pycache__",
+        "files": 13,
+        "bytes": 142366
+      },
+      {
+        "path": "src/cephvr/acquisition/recording/__pycache__",
+        "files": 24,
+        "bytes": 146568
+      },
+      {
+        "path": "src/cephvr/platform/__pycache__",
+        "files": 1,
+        "bytes": 300
+      },
+      {
+        "path": "src/cephvr/platform/windows/__pycache__",
+        "files": 15,
+        "bytes": 202661
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/__pycache__",
+        "files": 3,
+        "bytes": 22374
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/v1/__pycache__",
+        "files": 4,
+        "bytes": 12931
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/config/__pycache__",
+        "files": 2,
+        "bytes": 4742
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/config/models/__pycache__",
+        "files": 7,
+        "bytes": 139638
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/resources/__pycache__",
+        "files": 9,
+        "bytes": 96245
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/rendering/__pycache__",
+        "files": 5,
+        "bytes": 70794
+      },
+      {
+        "path": "src/cephvr/visual_stimulus/compiler/__pycache__",
+        "files": 5,
+        "bytes": 60844
+      },
+      {
+        "path": "src/cephvr/shared/__pycache__",
+        "files": 26,
+        "bytes": 217466
+      },
+      {
+        "path": "src/cephvr/shared/pixels/__pycache__",
+        "files": 4,
+        "bytes": 24611
+      },
+      {
+        "path": "src/cephvr/controller/__pycache__",
+        "files": 18,
+        "bytes": 263901
+      },
+      {
+        "path": "src/cephvr/controller/lifecycle/__pycache__",
+        "files": 14,
+        "bytes": 263818
+      },
+      {
+        "path": "src/cephvr/controller/device/__pycache__",
+        "files": 17,
+        "bytes": 260998
+      },
+      {
+        "path": "src/cephvr/controller/incident/__pycache__",
+        "files": 4,
+        "bytes": 52195
+      },
+      {
+        "path": "src/cephvr/controller/startup/__pycache__",
+        "files": 2,
+        "bytes": 16621
+      },
+      {
+        "path": "src/cephvr/controller/metadata/__pycache__",
+        "files": 8,
+        "bytes": 94403
+      },
+      {
+        "path": "src/cephvr/controller/control/__pycache__",
+        "files": 7,
+        "bytes": 93292
+      },
+      {
+        "path": "src/cephvr/controller/microcontroller/__pycache__",
+        "files": 14,
+        "bytes": 185414
+      },
+      {
+        "path": "src/cephvr/tracking/__pycache__",
+        "files": 2,
+        "bytes": 10470
+      },
+      {
+        "path": "src/cephvr/tracking/v1/__pycache__",
+        "files": 6,
+        "bytes": 20832
+      },
+      {
+        "path": "src/cephvr/tracking/config/__pycache__",
+        "files": 6,
+        "bytes": 46169
+      },
+      {
+        "path": "src/cephvr/tracking/config/models/__pycache__",
+        "files": 4,
+        "bytes": 47419
+      },
+      {
+        "path": "src/cephvr/control/__pycache__",
+        "files": 1,
+        "bytes": 299
+      },
+      {
+        "path": "src/cephvr/control/v1/__pycache__",
+        "files": 4,
+        "bytes": 187869
+      }
+    ]
+  },
+  "nongui_final_verification": {
+    "checked_utc": "2026-10-09T05:37:48.838651+00:00",
+    "excluded_trees": [
+      ".git",
+      ".venv"
+    ],
+    "remaining_named_cache_directories": [],
+    "remaining_loose_temporary_files": []
+  }
+}

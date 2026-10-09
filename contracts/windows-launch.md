@@ -131,6 +131,19 @@ the exact job empty. No other helper accepts this cleanup flag. No-PID partial
 creation may be released only after owner cleanup and verified empty containment;
 uncertain cleanup remains a blocker.
 
+Acquisition camera workers use the separate
+`ConfirmLaunch.acquisition_worker_cleanup` proof after the coordinator verifies
+retained successful Cleanup, before requesting worker Shutdown. Bind the retained operation and
+Cleanup payload to the planned owner, worker, work and cleanup command; retain all
+resource/output proof. The supervisor authenticates the owner and acknowledges exact
+validated cleanup so the expected exit cannot race health classification. Acknowledgement
+does not release live ownership: subsequent confirmation requires independent exact
+process/job absence. All steps retain the original absolute retirement deadline.
+Invalid or missing Cleanup proof remains a blocker; a discharged Failed output keeps
+its recording failure. `GetLaunchState` is a query, never an implicit cleanup
+confirmation. This does not release the persistent Visual Stimulus renderer at a
+session boundary.
+
 Owner `ConfirmLaunch` submits exact process evidence. Supervisor verifies membership,
 executable and retained identity, and observes children through its existing process
 monitor/job enumeration. A partial child discovered in the dedicated planned job

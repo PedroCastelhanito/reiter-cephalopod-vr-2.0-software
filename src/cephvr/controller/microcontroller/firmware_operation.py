@@ -9,6 +9,7 @@ from cephvr.controller.microcontroller.firmware_source import (
     FirmwareSketch,
     read_firmware,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.microcontroller import SerialOwnerPort
 
 
@@ -128,7 +129,7 @@ class FirmwareUpdate:
             if self.task is not None:
                 try:
                     async with asyncio.timeout(
-                        max(0, (deadline_ns - self.clock()) / 1e9)
+                        remaining_seconds(deadline_ns, clock=self.clock)
                     ):
                         await asyncio.shield(self.task)
                 except (OSError, RuntimeError, ValueError, UnicodeError):

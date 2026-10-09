@@ -263,7 +263,6 @@ async def test_terminal_camera_report_retires_slot_but_retains_exact_evidence(
     assert runtime.control.operations[parent].succeeded == succeeded
     assert runtime.device_state.camera_operation is None
     assert runtime.device_state.camera_operation_changed.is_set()
-    assert runtime.device_state.completed_camera_operation is operation
     assert runtime.device_state.manual_effects_admitted
     assert runtime.camera_status_retention.find(child) is operation
     assert operation.final_status == status
@@ -327,7 +326,7 @@ async def test_deadline_without_terminal_adopts_retained_result(
     assert not runtime.control.operations[parent].succeeded
     assert runtime.projections.devices is not None
     assert not any("unconfirmed" in w.message for w in runtime.control.warnings)
-    operation = runtime.device_state.completed_camera_operation
+    operation = runtime.camera_status_retention.find(child)
     assert operation is not None and operation.final_status == status
 
 
@@ -833,6 +832,7 @@ async def test_async_viewer_rejection_completes_operator_without_consumer_confir
         )
         original = reporter.get_report(child).SerializeToString(deterministic=True)
     coordinator = AcquisitionCoordinatorRuntime.__new__(AcquisitionCoordinatorRuntime)
+    coordinator.clock = lambda: 100
     coordinator.controller = peer
     coordinator.coordinator_identity = identity
     coordinator.manual_devices = SimpleNamespace(results=results)

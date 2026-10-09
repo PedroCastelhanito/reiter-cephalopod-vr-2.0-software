@@ -1,0 +1,33 @@
+Retained-result read-only recovery handoff
+Date: 2026-10-09
+Repository: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software
+
+Governing rules: system E06; acquisition A10/A11 and the accepted camera-owned edit/cleanup constraints. Late query evidence is read-only: it may settle exact local terminal evidence and unblock fresh work only after established quiescence, but it cannot replay SDK commands, adopt camera settings, Confirm configuration, resume preview, or relabel a late event as timely.
+
+Changes:
+- `src/cephvr/acquisition/coordinator/evidence_operations.py` now validates the actual nested WorkerOperationReport shape (`operation.operation.context`, not the nonexistent outer context), exact source/child ID/command/work/revision/success/completion, and all retained lifecycle item identities before dispatching any lifecycle evidence. Conflicting local terminal revisions remain rejected by the existing operation owner.
+- Late exact StartPreview `Started` evidence is skipped as timely lifecycle evidence when its receipt arrives after the original child cutoff. The exact terminal operation is still reconciled and retained. This does not set the preview started event or mark the run quiet.
+- Retained lifecycle evidence is dispatched through an explicit focused callback bound by `WorkerEvidenceCoordinator` to its `WorkerLifecycleReports` owner. `WorkerOperationReports` no longer tries to call a nonexistent `self.report_lifecycle`, and no runtime back-reference was added.
+- Extended the existing `tests/acquisition/test_coordinator.py` owner tests with an actual WorkerEvidenceCoordinator + WorkerOperationReports + WorkerLifecycleReports + ConfigurationResolution + ManualDeviceRecovery chain. Its read-only query uses a fresh query deadline 900 while the SDK child deadline remains 100; it proves exact terminal retention, no readback adoption/confirmation/lifecycle success relay, canceled-resolution retirement only after quiescence, and successful fresh-base admission without SDK replay. Additional cases reject mismatched source, child ID, kind, work, stale revision, terminal conflict, and extraneous lifecycle identity before adopting state. A late Started case proves the preview remains not-started/not-quiet while the terminal operation is independently retained.
+
+Validation:
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition/test_coordinator.py -q` — 40 passed.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition/test_worker_foundations.py -q` — 31 passed.
+- `PYTHONPATH=. PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cephvr-sol-retained-recovery-chain-probe.py` — passed; exact `sdk-child` queried with deadline 900/original cutoff 100, retained, pending resolution retired, fresh read-only-base admission succeeded.
+- Ruff check/format passed for `evidence.py`, `evidence_operations.py`, and `test_coordinator.py`.
+- Win32 mypy passed for `evidence.py` and `evidence_operations.py`.
+- `python tools/check_backend_boundaries.py` — 638 modules, 0 boundary violations; existing cohesion notices include acquisition owner files over 500 lines.
+
+Scope/limits:
+- Only `src/cephvr/acquisition/coordinator/evidence.py`, `src/cephvr/acquisition/coordinator/evidence_operations.py`, and existing `tests/acquisition/test_coordinator.py` were edited in this increment. No hardware, Windows-native, authenticated loopback, or rig test was run. No docs/TODO/LOG files were edited; root owns those.
+- Recovery/manual device/preview/pulse/state files and their tests remain under the separate worker lane and were not edited.
+
+Worker API update during review:
+- The recovery owner added a required `serial` dependency to `ManualDeviceRecovery` for bounded CLOSE retry. The owning test helper now supplies an inert `SimpleNamespace` because these read-only query cases never set a pending pulse-claim release.
+- The original Sol probe then failed during setup because it predates the constructor parameter. Re-ran an otherwise identical `/tmp` copy with the inert serial argument; the actual query/recovery result remained successful with fresh deadline 900, original deadline 100, exact terminal retained, pending resolution retired, and fresh admission accepted.
+
+Astra follow-up — late Ready evidence:
+- Retained reconciliation now skips both `ready` and `started` lifecycle evidence when the read-only query arrives after the child’s original deadline. It still retains the exact terminal operation report, but late Ready cannot confirm preview readiness/attachments or mark work quiet; late Started cannot mark a preview started.
+- Extended the existing composed-owner test with exact failed PreparePreview plus same-child retained Ready. It proves terminal retention, no setup/preview readiness mutation, no controller lifecycle relay, and the failed resolution remains pending while the preview operation is still associated. Repeating the exact terminal without the late Ready remains accepted and does not retire the failed resolution.
+- `/tmp/cephvr-astra-retained-ready-probe.py` — passed: late prepare query returns true, terminal retained, pending resolution remains, preview.started false; direct lifecycle delivery rejects as expired; same terminal without late Ready remains accepted/pending.
+- Final focused checks after this correction: combined `tests/acquisition/test_coordinator.py tests/acquisition/test_worker_foundations.py` — 72 passed; Ruff check/format passed; Win32 mypy passed for the two production evidence files; boundaries checked 638 modules with 0 violations.

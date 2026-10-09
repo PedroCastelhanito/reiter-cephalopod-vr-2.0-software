@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import json
+import tomllib
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 
+from cephvr.acquisition.recording.frame_log import FrameLogWriter
 from cephvr.acquisition.recording.identity import RecordingIdentity
 from cephvr.acquisition.recording.paths import RecordingPaths, resolve_recording_paths
+from cephvr.acquisition.recording_schema import get_writer_schemas
 from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
@@ -129,3 +134,36 @@ def test_recording_clock_accepts_schema_text_and_checks_explicit_conversion(
     identity.camera_clock.ClearField("conversion_available")
     with pytest.raises(ValueError, match="conversion availability is unspecified"):
         identity.validate()
+
+
+def test_frame_log_header_matches_declared_and_planned_cadence_schema(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "camera_frames.jsonl"
+    writer = FrameLogWriter(
+        path,
+        _identity(),
+        start_ns=1_000_000_000,
+        nominal_frame_rate_hz=30,
+        nominal_rate_source="applied_mcu_rate",
+        sync_interval_ns=1_000_000_000,
+        syncer=SimpleNamespace(sync=lambda _: None),
+    )
+    writer.create()
+    writer.close_failed()  # A header alone is deliberately not completed recording.
+    header = json.loads(path.read_text().splitlines()[0])
+    declaration = tomllib.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "contracts/acquisition/frame_log_schema.toml"
+        ).read_text()
+    )
+    planned = get_writer_schemas()["acquisition", "behavioral_cam_frames", "jsonl"]
+    assert (
+        header["schema_version"]
+        == declaration["schema_version"]
+        == planned.schema_version
+        == 3
+    )
+    assert "video_frame" in declaration["format"]["line_types"]
+    assert "source_host_receipt_ns" in planned.fields["video_frame"]

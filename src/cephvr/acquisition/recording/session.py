@@ -31,7 +31,10 @@ from cephvr.acquisition.recording.session_cleanup import (
 from cephvr.acquisition.recording.session_cleanup import (
     unlaunched_outputs as _unlaunched_outputs,
 )
-from cephvr.acquisition.recording.session_completion import finish_recording
+from cephvr.acquisition.recording.session_completion import (
+    finish_recording,
+    terminal_capture_proof,
+)
 from cephvr.acquisition.recording.session_contracts import (
     EncoderLauncher,
     EncoderProcess,
@@ -49,7 +52,11 @@ from cephvr.acquisition.recording.session_contracts import (
 from cephvr.acquisition.recording.session_diagnostics import RecordingDiagnostics
 from cephvr.acquisition.recording.session_finalizer import FinalizationProgress
 from cephvr.acquisition.recording.session_prepare import prepare_recording
-from cephvr.acquisition.recording.session_pump import write_ordered_entry
+from cephvr.acquisition.recording.session_pump import (
+    SubmittedFrameLogFailure,
+    write_ordered_entry,
+    write_trailing_slots,
+)
 from cephvr.acquisition.recording.session_schedule import launch_scheduled_encoder
 from cephvr.acquisition.recording.session_storage import (
     observe_video_identity,
@@ -311,12 +318,17 @@ class RecordingSession:
             if self._finish_results is not None:
                 return list(self._finish_results)
             raise RecordingFailure("recording is already finished without results")
+        if self._error is not None:
+            raise RecordingFailure(
+                "recording cannot retry terminal input after a prior failure"
+            )
         if self._encoder is None or self._frame_log is None:
             raise RecordingFailure("recording is incomplete")
         arguments = (end, pulses, completion)
         if self._finish_arguments is None:
             self._finish_arguments = arguments
             self._original_finish_deadline_ns = deadline_ns
+            self._active_io_deadline_ns = deadline_ns
         elif self._finish_arguments != arguments:
             raise RecordingFailure(
                 "recording finish retry differs from its retained terminal evidence"
@@ -330,6 +342,52 @@ class RecordingSession:
         assert original_deadline is not None
         assert self._scheduled is not None
         assert self._video_path is not None and self._frame_log_path is not None
+        stop_matches, timing_valid, accounting_complete = terminal_capture_proof(
+            end,
+            completion,
+            schedule=self._scheduled,
+            received=self._received,
+            logged=self._logged,
+            last_frame_id=self._last_frame_id,
+        )
+        cutoff_ns = (
+            end.recording_end_monotonic_ns
+            if stop_matches and timing_valid and accounting_complete
+            else None
+        )
+
+        def trailing_slot_submitted() -> None:
+            self._submitted += 1
+            if self._watchdog is not None:
+                self._watchdog.note_input_submitted()
+            self._check_progress()
+            self._sync_due()
+            self._observe_video_identity()
+
+        if (
+            cutoff_ns is not None
+            and self._frame_log.last_video_source is not None
+            and self._prepared_buffer is not None
+            and self._encoder is not None
+        ):
+            if self._watchdog is None:
+                raise RecordingFailure(
+                    "recording encoder progress watchdog is unavailable"
+                )
+            final_slots = self._frame_log.video_grid.slots_before(cutoff_ns)
+            with self._watchdog.active_input_work():
+                try:
+                    write_trailing_slots(
+                        final_slots,
+                        frame_log=self._frame_log,
+                        encoder=self._encoder,
+                        prepared_buffer=self._prepared_buffer,
+                        write_deadline=self._write_deadline,
+                        on_slot_submitted=trailing_slot_submitted,
+                    )
+                except SubmittedFrameLogFailure as exc:
+                    self._error = f"{type(exc).__name__}: {exc}"
+                    raise
         self._finish_results, self._video_sync = finish_recording(
             end,
             pulses,
@@ -449,8 +507,16 @@ class RecordingSession:
             for diagnostic in record.diagnostics:
                 self._diagnostics.record_frame(record, diagnostic)
 
+        def slot_submitted() -> None:
+            self._submitted += 1
+            if self._watchdog is not None:
+                self._watchdog.note_input_submitted()
+            self._check_progress()
+            self._sync_due()
+            self._observe_video_identity()
+
         frame_id = entry.record.frame_id
-        submitted = write_ordered_entry(
+        write_ordered_entry(
             entry,
             expected_frame_id=self._last_frame_id + 1,
             schedule=self._scheduled,
@@ -462,11 +528,8 @@ class RecordingSession:
             on_started=start_accounting,
             write_deadline=self._write_deadline,
             record_diagnostic=record_diagnostics,
+            on_video_slot_submitted=slot_submitted,
         )
-        if submitted:
-            self._submitted += 1
-            if self._watchdog is not None:
-                self._watchdog.note_input_submitted()
         self._last_frame_id = frame_id
         self._received += 1
         self._logged += 1

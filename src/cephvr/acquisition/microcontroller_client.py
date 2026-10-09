@@ -113,13 +113,29 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
         *,
         active_roles: tuple[int | str, ...],
         deadline_ns: int,
+        resolution_operation: pb.OperationContext | None = None,
+        requested_configuration_revision: int | None = None,
     ) -> mcu.MicrocontrollerObservation:
+        if (resolution_operation is None) != (requested_configuration_revision is None):
+            raise ValueError("configuration edit scope is incomplete")
+        scope = {}
+        if resolution_operation is not None:
+            if (
+                not resolution_operation.command_id
+                or not requested_configuration_revision
+            ):
+                raise ValueError("configuration edit scope is invalid")
+            scope = {
+                "resolution_operation": resolution_operation,
+                "requested_configuration_revision": requested_configuration_revision,
+            }
         return (
             await self._call(
                 wire.MICROCONTROLLER_IO_KIND_CONFIGURE,
                 deadline_ns,
                 requested=requested,
-                roles=_roles(active_roles),
+                roles=_roles(active_roles, allow_empty=True),
+                **scope,
             )
         ).observation
 
@@ -217,10 +233,10 @@ class ControllerMicrocontrollerClient(SerialOwnerPort):
         raise RuntimeError("Microcontroller diagnostics are controller-owned")
 
 
-def _roles(selected: tuple[int | str, ...]) -> list[int]:
+def _roles(selected: tuple[int | str, ...], *, allow_empty: bool = False) -> list[int]:
     result = [_ROLES[role] if isinstance(role, str) else role for role in selected]
     if (
-        not result
+        (not result and not allow_empty)
         or len(set(result)) != len(result)
         or any(role not in _ROLES.values() for role in result)
     ):

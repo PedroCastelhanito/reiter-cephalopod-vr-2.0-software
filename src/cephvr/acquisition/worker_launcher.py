@@ -6,9 +6,7 @@ import asyncio
 import base64
 import secrets
 import sys
-import threading
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from pathlib import Path
 from uuid import uuid4
 
@@ -25,53 +23,27 @@ from cephvr.acquisition.transport.grpc_ports import GrpcWorkerPort
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.bootstrap import (
-    close_handle,
+    BootstrapPipeWrite,
     create_bootstrap_pipe,
-    write_bootstrap,
 )
-from cephvr.platform.windows.jobs import WindowsJobs, WindowsLaunchError
+from cephvr.platform.windows.jobs import (
+    SuspendedProcess,
+    WindowsJobs,
+    WindowsLaunchError,
+)
 from cephvr.platform.windows.python_runtime import (
     module_arguments,
     resolve_python_executable,
 )
+from cephvr.platform.windows.worker_launch import (
+    BootstrapPipeHandles,
+    launch_registered_worker,
+)
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
-from cephvr.shared.transport_deadlines import remaining_seconds
 
 PeerRegistrar = Callable[[control.ProcessIdentity, str], None]
 PeerRevoker = Callable[[control.ProcessIdentity], None]
-
-
-@dataclass
-class _BootstrapWrite:
-    """Retain the writer and inherited handle until its blocking write returns."""
-
-    handle: int
-    descriptor: dict[str, object]
-    completed: threading.Event = field(default_factory=threading.Event)
-    failure: list[BaseException] = field(default_factory=list)
-
-    def start(self) -> None:
-        def write() -> None:
-            try:
-                write_bootstrap(self.handle, self.descriptor)
-            except BaseException as exc:
-                self.failure.append(exc)
-            finally:
-                self.completed.set()
-
-        threading.Thread(
-            target=write, daemon=True, name="cephvr-worker-bootstrap"
-        ).start()
-
-    async def wait(self, deadline_ns: int) -> None:
-        timeout = remaining_seconds(deadline_ns)
-        if timeout <= 0 or not await asyncio.to_thread(self.completed.wait, timeout):
-            raise TimeoutError("worker bootstrap pipe write remains in progress")
-        if self.failure:
-            raise WindowsLaunchError(
-                f"worker bootstrap write failed: {self.failure[0]}"
-            ) from self.failure[0]
 
 
 class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
@@ -111,7 +83,7 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
         self.max_message_bytes = max_message_bytes
         self.register_peer = register_peer
         self.revoke_peer = revoke_peer
-        self._pending_bootstrap_writes: list[_BootstrapWrite] = []
+        self._pending_bootstrap_writes: list[BootstrapPipeWrite] = []
         self._retained_processes: dict[str, tuple[str, int, int]] = {}
 
     async def launch(
@@ -145,108 +117,139 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
         if context.work.WhichOneof("work") is not None:
             plan.work.CopyFrom(context.work)
         worker_token = secrets.token_urlsafe(32)
-        planned = await self.supervisor.plan_launch(
-            plan, deadline_ns=deadline_ns, child_token=worker_token
-        )
-        if planned.admission.result != control.COMMAND_RESULT_ACCEPTED:
-            raise RuntimeError(_admission_failure(planned.admission))
-        if (
-            planned.state.phase != wire.LAUNCH_PHASE_PLANNED
-            or planned.state.containment_job_name == ""
-        ):
-            raise RuntimeError("supervisor did not retain the exact planned worker job")
+        planned_job_name = ""
+        launched_children: list[SuspendedProcess] = []
+        pipes: BootstrapPipeHandles | None = None
 
-        read_handle, write_handle = create_bootstrap_pipe()
-        child = None
-        try:
-            self.native.open_launch_job(planned.state.containment_job_name)
+        def make_pipes() -> BootstrapPipeHandles:
+            nonlocal pipes
+            pipes = BootstrapPipeHandles(*create_bootstrap_pipe())
+            return pipes
+
+        async def plan_launch(
+            request: wire.PlanLaunchRequest,
+        ) -> wire.LaunchState:
+            nonlocal planned_job_name
+            receipt = await self.supervisor.plan_launch(
+                request, deadline_ns=deadline_ns, child_token=worker_token
+            )
+            if receipt.admission.result != control.COMMAND_RESULT_ACCEPTED:
+                raise RuntimeError(_admission_failure(receipt.admission))
+            planned_job_name = receipt.state.containment_job_name
+            return receipt.state
+
+        def create_suspended(
+            planned: wire.LaunchState, handles: BootstrapPipeHandles
+        ) -> SuspendedProcess:
+            self.native.open_launch_job(planned.containment_job_name)
             child = self.native.launch_suspended(
                 str(self.python_executable),
                 module_arguments(
                     "cephvr.acquisition.worker.main",
-                    ["--bootstrap-handle", str(read_handle)],
+                    ["--bootstrap-handle", str(handles.read_handle)],
                 ),
-                [planned.state.containment_job_name],
-                (read_handle,),
+                [planned.containment_job_name],
+                (handles.read_handle,),
             )
             self._retained_processes[context.worker.generation] = (
-                planned.state.containment_job_name,
+                planned.containment_job_name,
                 child.pid,
                 child.creation_time_100ns,
             )
-        except BaseException as exc:
-            try:
-                members = self.native.inspect_launch_job(
-                    planned.state.containment_job_name
-                )
-            except BaseException:
-                members = None
-            close_handle(read_handle)
-            close_handle(write_handle)
-            if members == []:
-                await self._confirm_creation_failure(spec, exc, deadline_ns)
-            raise
+            launched_children.append(child)
+            return child
 
-        try:
-            os_confirmation = await self.supervisor.confirm_launch(
+        async def confirm(child_process: SuspendedProcess) -> wire.LaunchState:
+            receipt = await self.supervisor.confirm_launch(
                 wire.ConfirmLaunchRequest(
                     command_id=str(uuid4()),
                     launch_command_id=spec.launch_command_id,
                     owner=self.owner,
                     child=context.worker,
-                    pid=child.pid,
-                    creation_time_100ns=child.creation_time_100ns,
+                    pid=child_process.pid,
+                    creation_time_100ns=child_process.creation_time_100ns,
                 ),
                 deadline_ns=deadline_ns,
             )
-            if os_confirmation.admission.result != control.COMMAND_RESULT_ACCEPTED:
-                raise RuntimeError(_admission_failure(os_confirmation.admission))
-            if os_confirmation.state.phase != wire.LAUNCH_PHASE_OS_CONFIRMED:
-                raise RuntimeError("supervisor did not retain exact worker OS identity")
-            descriptor, worker_token = self._descriptor(
+            if receipt.admission.result != control.COMMAND_RESULT_ACCEPTED:
+                raise RuntimeError(_admission_failure(receipt.admission))
+            return receipt.state
+
+        def build_descriptor(child_process: SuspendedProcess) -> dict[str, object]:
+            descriptor, _token = self._descriptor(
                 spec,
-                pid=child.pid,
-                creation_time_100ns=child.creation_time_100ns,
+                pid=child_process.pid,
+                creation_time_100ns=child_process.creation_time_100ns,
                 registration_deadline_ns=deadline_ns,
                 worker_token=worker_token,
             )
+            return descriptor
+
+        def register(
+            _child_process: SuspendedProcess, _descriptor: dict[str, object]
+        ) -> None:
             self.register_peer(context.worker, worker_token)
-            self.native.resume(child)
-            write_attempt = _BootstrapWrite(write_handle, descriptor)
-            self._pending_bootstrap_writes.append(write_attempt)
-            write_handle = -1
-            write_attempt.start()
-            await write_attempt.wait(deadline_ns)
-            self._pending_bootstrap_writes.remove(write_attempt)
-            close_handle(read_handle)
-            read_handle = -1
-            state = await self._wait_registered(spec, deadline_ns)
-            if state.phase != wire.LAUNCH_PHASE_OPERATIONAL or not state.endpoint:
-                raise RuntimeError("worker endpoint did not become operational")
-            channel = grpc.aio.insecure_channel(
-                state.endpoint,
-                options=(
-                    ("grpc.max_send_message_length", self.max_message_bytes),
-                    ("grpc.max_receive_message_length", self.max_message_bytes),
+
+        def retain_writer(attempt: BootstrapPipeWrite) -> None:
+            self._pending_bootstrap_writes.append(attempt)
+
+        def finish_writer(attempt: BootstrapPipeWrite) -> None:
+            self._pending_bootstrap_writes.remove(attempt)
+
+        try:
+            child, state = await launch_registered_worker(
+                request=plan,
+                create_pipes=make_pipes,
+                plan=plan_launch,
+                create_suspended=create_suspended,
+                process_identity=lambda process: (
+                    process.pid,
+                    process.creation_time_100ns,
                 ),
+                confirm=confirm,
+                descriptor=build_descriptor,
+                register_peer=register,
+                resume=self.native.resume,
+                retain_writer=retain_writer,
+                finish_writer=finish_writer,
+                get_state=lambda: self.supervisor.get_launch_state(
+                    wire.LaunchQuery(
+                        requester=self.owner,
+                        launch_command_id=spec.launch_command_id,
+                    ),
+                    deadline_ns=deadline_ns,
+                ),
+                deadline_ns=deadline_ns,
             )
-            worker_port = GrpcWorkerPort(
-                channel,
-                Principal(self.owner.role, self.owner.generation, self.owner_token),
-                context,
-            )
-            return WorkerLaunchResult(
-                context=context,
-                port=worker_port,
-                pid=child.pid,
-                creation_time_100ns=child.creation_time_100ns,
-                endpoint=state.endpoint,
-            )
-        finally:
-            if read_handle >= 0:
-                close_handle(read_handle)
-            if write_handle >= 0:
-                close_handle(write_handle)
+        except BaseException as exc:
+            members: list[tuple[int, int, str]] | None = None
+            if not launched_children and planned_job_name:
+                try:
+                    members = self.native.inspect_launch_job(planned_job_name)
+                except BaseException:
+                    pass
+            if not launched_children and members == []:
+                await self._confirm_creation_failure(spec, exc, deadline_ns)
+            raise
+        channel = grpc.aio.insecure_channel(
+            state.endpoint,
+            options=(
+                ("grpc.max_send_message_length", self.max_message_bytes),
+                ("grpc.max_receive_message_length", self.max_message_bytes),
+            ),
+        )
+        worker_port = GrpcWorkerPort(
+            channel,
+            Principal(self.owner.role, self.owner.generation, self.owner_token),
+            context,
+        )
+        return WorkerLaunchResult(
+            context=context,
+            port=worker_port,
+            pid=child.pid,
+            creation_time_100ns=child.creation_time_100ns,
+            endpoint=state.endpoint,
+        )
 
     async def retire(
         self, worker: control.ProcessIdentity, *, deadline_ns: int
@@ -283,8 +286,11 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
     async def drain_bootstrap_writes(self, deadline_ns: int) -> None:
         """Retain incomplete pipe writes as cleanup blockers until thread return."""
         for attempt in tuple(self._pending_bootstrap_writes):
-            await attempt.wait(deadline_ns)
-            self._pending_bootstrap_writes.remove(attempt)
+            try:
+                await attempt.wait(deadline_ns)
+            finally:
+                if attempt.completed.is_set():
+                    self._pending_bootstrap_writes.remove(attempt)
 
     async def _confirm_creation_failure(
         self, spec: WorkerLaunchSpec, failure: BaseException, deadline_ns: int
@@ -305,31 +311,6 @@ class WindowsWorkerBootstrapPort(WorkerBootstrapPort):
         )
         if receipt.admission.result != control.COMMAND_RESULT_ACCEPTED:
             raise RuntimeError(_admission_failure(receipt.admission)) from failure
-
-    async def _wait_registered(
-        self, spec: WorkerLaunchSpec, deadline_ns: int
-    ) -> wire.LaunchState:
-        last = wire.LaunchState()
-        while host_time_ns() < deadline_ns:
-            last = await self.supervisor.get_launch_state(
-                wire.LaunchQuery(
-                    requester=self.owner,
-                    launch_command_id=spec.launch_command_id,
-                ),
-                deadline_ns=deadline_ns,
-            )
-            if last.phase in (
-                wire.LAUNCH_PHASE_OPERATIONAL,
-                wire.LAUNCH_PHASE_CLEANUP_REQUIRED,
-                wire.LAUNCH_PHASE_RELEASED,
-            ):
-                return last
-            await asyncio.sleep(
-                min(0.01, max(0.0, deadline_ns - host_time_ns()) / 1_000_000_000)
-            )
-        raise TimeoutError(
-            f"worker endpoint registration missed deadline; last phase={last.phase}"
-        )
 
     def _descriptor(
         self,

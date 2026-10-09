@@ -98,6 +98,7 @@ class TrialCoordinator:
             session_slot=session_slot,
             workers=workers,
             serial=serial,
+            pulse=pulse,
             serial_ack_timeout_ns=serial_ack_timeout_ns,
             start_evidence_allowance_ns=start_evidence_allowance_ns,
             lifecycle_delivery_ns=lifecycle_delivery_ns,

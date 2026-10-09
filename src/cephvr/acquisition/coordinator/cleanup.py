@@ -11,6 +11,10 @@ from cephvr.acquisition.coordinator.commands import (
     retain_worker_command,
     wait_child_operation,
 )
+from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    clear_observation,
+    invalidate_released_idle_proof,
+)
 from cephvr.acquisition.coordinator.sessionless_cleanup import SessionlessCleanup
 from cephvr.acquisition.ports import (
     ControllerPort,
@@ -34,6 +38,7 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class CoordinatorCleanup:
@@ -373,7 +378,7 @@ class CoordinatorCleanup:
                     )
                     return saved
                 child.updated.clear()
-            remaining = max(0, deadline_ns - self.clock()) / 1_000_000_000
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 break
             try:
@@ -398,6 +403,7 @@ class CoordinatorCleanup:
             failures.append("serial cleanup deadline expired")
             return False
         try:
+            invalidate_released_idle_proof(self.pulse)
             await self.serial.cancel_on_reservations(deadline_ns=deadline_ns)
             evidence = await self.serial.off(
                 (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING),
@@ -414,7 +420,7 @@ class CoordinatorCleanup:
             if self.pulse.observation is not None:
                 self.pulse.observation.state.CopyFrom(evidence.resulting_state)
             await self.serial.close(deadline_ns=deadline_ns)
-            self.pulse.observation = None
+            clear_observation(self.pulse)
             session.serial_owner_released = True
             return True
         except Exception as exc:

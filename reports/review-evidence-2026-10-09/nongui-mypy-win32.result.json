@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+    "-m",
+    "mypy",
+    "--platform",
+    "win32",
+    "--cache-dir",
+    "/tmp/cephvr-nongui-mypy-final",
+    "src/cephvr"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "started_utc": "2026-10-09T05:31:51.774095+00:00",
+  "elapsed_seconds": 0.934,
+  "returncode": 0,
+  "raw": "nongui-mypy-win32.txt"
+}

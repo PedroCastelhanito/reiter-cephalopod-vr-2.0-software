@@ -1,0 +1,27 @@
+Controller deadline-helper remainder handoff
+Date: 2026-10-09
+Repository: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software
+
+Completed the 11 residual direct clamped ns-to-seconds conversions using `cephvr.shared.deadlines.remaining_seconds(..., clock=self.clock)`, preserving the original absolute deadlines and injected-clock sampling behavior:
+- src/cephvr/controller/control/configuration.py: 1 conversion
+- src/cephvr/controller/control/owned_camera_edits.py: 3 conversions
+- src/cephvr/controller/lifecycle/acquisition_resolution.py: 4 conversions
+- src/cephvr/controller/device/camera.py: 3 conversions
+
+No new timeout budgets or refreshed deadlines were introduced. `validation_ns / 1e9` in device/camera.py is a configured fixed duration and was intentionally left unchanged.
+
+Preparation/source proof:
+- Reviewed `/tmp/cephvr-nongui-deadline-plan.txt` and `/tmp/cephvr-deadline-sweep.py`.
+- Fresh AST dry-run reported exactly 8 candidates in the first three files and exactly 3 in device/camera.py. Applied only these paths.
+- Saved immediate pre-migration copies at `/tmp/luna-before-controller-configuration.py`, `/tmp/luna-before-owned-camera-edits.py`, `/tmp/luna-before-acquisition-resolution.py`, and `/tmp/luna-before-controller-camera-deadlines.py`.
+- Snapshot comparisons show only helper imports and the 11 intended expression replacements in these files. A fresh script scan on all four files reports zero candidates.
+- No tests or documents were edited.
+
+Validation:
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/controller/test_configuration.py tests/controller/test_configuration_transactions.py tests/controller/test_camera_configuration.py tests/controller/test_lifecycle_commands.py tests/controller/test_lifecycle_reports.py -q` — 104 passed.
+- Ruff check and format check on all four source files — pass.
+- Win32 mypy on all four source files — success, no issues in 4 files.
+- `python tools/check_backend_boundaries.py` — 637 modules checked, 0 boundary violations. It emitted existing cohesion review notices for files over 500 lines, including controller/device/camera.py (509 lines); this mechanical change does not alter its responsibility.
+- A broader run that also included tests/controller/test_camera_evidence.py had 2 failures and 137 passes. Both failures are unrelated to these edits: test_async_viewer_rejection_completes_operator_without_consumer_confirmation constructs AcquisitionCoordinatorRuntime with __new__ and omits `clock`, while the concurrently changed report_dispatch_failure reads self.clock. Error is AttributeError at src/cephvr/acquisition/runtime.py:325. The 104 passing tests above exclude that module.
+
+All four files are safe for worker ownership now; no further edits are pending from this lane.

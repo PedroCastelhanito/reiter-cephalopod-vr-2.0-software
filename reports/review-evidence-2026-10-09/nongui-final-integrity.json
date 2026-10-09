@@ -1,0 +1,9 @@
+{
+  "generated_bindings_still_match": 57,
+  "declaration_inputs_unchanged": true,
+  "recorded_utc": "2026-10-09T05:37:49.173702+00:00",
+  "tested_input_files_unchanged": 1088,
+  "GUI_files_unchanged": 138,
+  "input_manifest": "nongui-final-input-hashes.json",
+  "note": "Exact final source/test/contract/config hashes, including generated stubs. Native/rig acceptance is separate."
+}

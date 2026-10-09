@@ -9,6 +9,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.compiler import serialize_prepared_trial
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import plan_pb2
@@ -48,7 +49,7 @@ def begin(
                 raise ValueError("preparer omitted a required trial")
             future = recording.prepare_artifacts(artifacts, deadline_ns)
             if future is not None:
-                future.result(max(0, (deadline_ns - clock()) / 1e9))
+                future.result(remaining_seconds(deadline_ns, clock=clock))
             result = []
             for artifact in artifacts:
                 if clock() >= deadline_ns:

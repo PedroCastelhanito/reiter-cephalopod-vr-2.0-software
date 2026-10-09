@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ntpath
 import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -10,7 +9,6 @@ from typing import Protocol
 from uuid import uuid4
 
 from cephvr.acquisition.identity import ACQUISITION_WORKER_ROLES
-from cephvr.acquisition.identity import FFMPEG_ROLES as ACQ_FFMPEG_ROLES
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
@@ -20,18 +18,25 @@ from cephvr.shared.clock import (
     host_time_ns,
     validate_host_clock,
 )
+from cephvr.shared.commands import DEFAULT_COMMAND_RETENTION_NS
 from cephvr.shared.identity import require_uuid4
+from cephvr.supervisor.camera_release import camera_release_request_matches
+from cephvr.supervisor.launch_validation import (
+    BACKEND_ROLES as BACKEND_ROLES,
+)
+from cephvr.supervisor.launch_validation import (
+    TOP_LEVEL_ROLES as TOP_LEVEL_ROLES,
+)
+from cephvr.supervisor.launch_validation import (
+    LaunchError as LaunchError,
+)
+from cephvr.supervisor.launch_validation import (
+    launch_work_key,
+    validate_plan,
+)
 from cephvr.visual_stimulus.identity import FFMPEG_ROLES as VISUAL_STIMULUS_FFMPEG_ROLES
 
 LIVE_PHASES = (wire.LAUNCH_PHASE_OPERATIONAL, wire.LAUNCH_PHASE_CLEANUP_REQUIRED)
-BACKEND_ROLES = frozenset({"acquisition", "visual_stimulus", "tracking"})
-TOP_LEVEL_ROLES = BACKEND_ROLES | {"controller", "gui"}
-
-
-class LaunchError(ValueError):
-    def __init__(self, code: str, message: str) -> None:
-        self.code = code
-        super().__init__(message)
 
 
 class NativeLaunches(Protocol):
@@ -61,7 +66,9 @@ class _Entry:
     deadline_ns: int
     os_confirm_command_id: str | None = None
     confirmations: dict[str, bytes] = field(default_factory=dict)
-    released_seq: int = 0
+    released_ns: int | None = None
+    work_key: str | None = None
+    camera_cleanup_proof: bytes | None = None
 
 
 def _snapshot(entry: _Entry) -> wire.LaunchState:
@@ -76,97 +83,67 @@ class LaunchRegistry:
     """No PID/name guesswork: each dedicated job must hold exactly its child."""
 
     def __init__(
-        self, native: NativeLaunches, silence_timeout_ns: int, max_launches: int = 1024
+        self,
+        native: NativeLaunches,
+        silence_timeout_ns: int,
+        max_launches: int = 1024,
+        retention_ns: int = DEFAULT_COMMAND_RETENTION_NS,
     ) -> None:
-        if silence_timeout_ns <= 0:
-            raise ValueError("silence_timeout_ns must be positive")
+        if silence_timeout_ns <= 0 or retention_ns <= 0 or max_launches <= 0:
+            raise ValueError("launch timeouts and capacity must be positive")
         self.native = native
         self.silence_timeout_ns = silence_timeout_ns
         self.max_launches = max_launches
+        self.retention_ns = retention_ns
         self._entries: dict[str, _Entry] = {}
-        self._release_seq = 0
+        self._finalized_work: dict[str, int] = {}
         self._release_listeners: list[Callable[[wire.LaunchState], None]] = []
 
     def on_release(self, listener: Callable[[wire.LaunchState], None]) -> None:
         """Notify once per launch when it transitions to RELEASED."""
         self._release_listeners.append(listener)
 
-    def _prune_released(self) -> None:
-        """Drop the oldest RELEASED entries (replay window ends at capacity)."""
-        released = sorted(
-            (
-                (entry.released_seq, command_id)
-                for command_id, entry in self._entries.items()
-                if entry.state.phase == wire.LAUNCH_PHASE_RELEASED
-            )
-        )
-        for _, command_id in released:
-            if len(self._entries) < self.max_launches:
-                break
-            del self._entries[command_id]
+    def finalize_work(self, work_key: str, finalized_ns: int | None = None) -> None:
+        """Start replay retention for a completed session work scope."""
+        require_uuid4(work_key)
+        now_ns = host_time_ns() if finalized_ns is None else finalized_ns
+        prior = self._finalized_work.setdefault(work_key, now_ns)
+        now_ns = prior
+        self._prune_released(now_ns)
 
-    @staticmethod
-    def _validate_plan(request: wire.PlanLaunchRequest) -> None:
-        require_uuid4(request.command_id)
-        require_uuid4(request.owner.generation)
-        require_uuid4(request.child.generation)
-        if not request.owner.role or not request.child.role or not request.executable:
-            raise LaunchError(
-                "INVALID_LAUNCH", "owner, child and executable are required"
+    def _prune_released(self, now_ns: int) -> None:
+        """Remove only RELEASED plans past their E08 replay-retention window."""
+        expired = []
+        for command_id, entry in self._entries.items():
+            if entry.state.phase != wire.LAUNCH_PHASE_RELEASED:
+                continue
+            finalized_ns = self._finalized_work.get(entry.work_key or "")
+            retention_start_ns = (
+                max(entry.released_ns, finalized_ns)
+                if finalized_ns is not None and entry.released_ns is not None
+                else entry.released_ns
+                if entry.work_key is None
+                else None
             )
-        if not ntpath.isabs(request.executable):
-            raise LaunchError(
-                "INVALID_EXECUTABLE", "launch executable must be an absolute path"
-            )
-        if request.stop_method not in {"grpc_shutdown", "owner_stdin_eof"} and not (
-            request.child.role == FIRMWARE_UPLOAD_ROLE
-            and request.stop_method == "owner_job_terminate"
-        ):
-            raise LaunchError("INVALID_STOP_METHOD", "unsupported child stop method")
-        if request.python_worker and request.stop_method != "grpc_shutdown":
-            raise LaunchError(
-                "INVALID_STOP_METHOD", "Python child requires gRPC shutdown"
-            )
-        if request.child.role == "supervisor":
-            raise LaunchError("INVALID_CHILD", "launcher alone creates supervisor")
-        if request.child.role == FIRMWARE_UPLOAD_ROLE and (
-            request.owner.role != "controller"
-            or request.python_worker
-            or request.stop_method != "owner_job_terminate"
-            or request.HasField("work")
-            or not request.parent_operation.command_id
-        ):
-            raise LaunchError(
-                "INVALID_OWNER",
-                "firmware upload requires its controller Configuration owner and operation",
-            )
-        if request.child.role == FIRMWARE_UPLOAD_ROLE:
-            require_uuid4(request.parent_operation.command_id)
-        if request.child.role in VISUAL_STIMULUS_FFMPEG_ROLES:
-            if request.owner.role != "visual_stimulus_renderer" or not request.HasField(
-                "work"
+            if (
+                retention_start_ns is not None
+                and now_ns > retention_start_ns + self.retention_ns
             ):
-                raise LaunchError(
-                    "INVALID_OWNER",
-                    "Visual Stimulus media children require their exact renderer owner and work",
-                )
-        if (
-            request.child.role in ACQ_FFMPEG_ROLES
-            and request.owner.role not in ACQUISITION_WORKER_ROLES
-        ):
-            raise LaunchError(
-                "INVALID_OWNER",
-                "acquisition media children require an acquisition worker owner",
-            )
-        if request.child.role in TOP_LEVEL_ROLES and request.owner.role != "supervisor":
-            raise LaunchError("INVALID_OWNER", "top-level launch owner is invalid")
-        if request.HasField("work") and not request.HasField("parent_operation"):
-            raise LaunchError(
-                "MISSING_OPERATION", "work-scoped launch requires parent operation"
-            )
+                expired.append(command_id)
+        for command_id in expired:
+            del self._entries[command_id]
+        retained_work_keys = {
+            entry.work_key
+            for entry in self._entries.values()
+            if entry.work_key is not None
+        }
+        for work_key in tuple(self._finalized_work):
+            if work_key not in retained_work_keys:
+                del self._finalized_work[work_key]
 
     def plan(self, request: wire.PlanLaunchRequest) -> wire.LaunchState:
-        self._validate_plan(request)
+        validate_plan(request)
+        self._prune_released(host_time_ns())
         prior = self._entries.get(request.command_id)
         if prior:
             if prior.plan.SerializeToString(
@@ -176,8 +153,6 @@ class LaunchRegistry:
                     "COMMAND_ID_REUSED", "launch command ID has changed payload"
                 )
             return self.refresh(request.command_id)
-        if len(self._entries) >= self.max_launches:
-            self._prune_released()
         if len(self._entries) >= self.max_launches:
             raise LaunchError("LAUNCH_CAPACITY", "retained launch capacity exhausted")
         if any(
@@ -204,6 +179,7 @@ class LaunchRegistry:
             plan=wire.PlanLaunchRequest.FromString(request.SerializeToString()),
             state=state,
             deadline_ns=host_time_ns() + self.silence_timeout_ns,
+            work_key=launch_work_key(request) if request.HasField("work") else None,
         )
         return wire.LaunchState.FromString(state.SerializeToString())
 
@@ -266,6 +242,11 @@ class LaunchRegistry:
             raise LaunchError(
                 "COMMAND_ID_REUSED", "confirmation command ID has changed payload"
             )
+        if (
+            previous_confirmation is not None
+            and entry.state.phase == wire.LAUNCH_PHASE_RELEASED
+        ):
+            return _snapshot(entry)
         if previous_confirmation is None and len(entry.confirmations) >= 8:
             raise LaunchError(
                 "CONFIRM_CAPACITY", "launch confirmation record capacity exhausted"
@@ -284,9 +265,11 @@ class LaunchRegistry:
             raise self._block(
                 entry, "LAUNCH_TIMEOUT", "launch registration deadline expired"
             )
+        has_camera_cleanup = request.HasField("acquisition_worker_cleanup")
         if (
             entry.state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
             and not request.native_cleanup_complete
+            and not has_camera_cleanup
         ):
             if previous_confirmation is not None:
                 return _snapshot(entry)
@@ -312,6 +295,9 @@ class LaunchRegistry:
             released = self.release(request.launch_command_id, obligations_met=True)
             entry.confirmations[request.command_id] = canonical
             return released
+        if has_camera_cleanup:
+            self._release_camera_worker(request, entry, canonical)
+            return _snapshot(entry)
         members = self._members(entry)
         if (
             request.HasField("creation_failed_without_child")
@@ -427,6 +413,64 @@ class LaunchRegistry:
         entry.confirmations[request.command_id] = canonical
         return self.refresh(request.launch_command_id)
 
+    def _release_camera_worker(
+        self,
+        request: wire.ConfirmLaunchRequest,
+        entry: _Entry,
+        canonical: bytes,
+    ) -> None:
+        if not camera_release_request_matches(request, entry.plan, entry.state):
+            raise LaunchError(
+                "INVALID_WORKER_CLEANUP",
+                "retained Cleanup proof is incomplete or mismatched",
+            )
+        proof = request.acquisition_worker_cleanup.SerializeToString(deterministic=True)
+        if (
+            entry.camera_cleanup_proof is not None
+            and entry.camera_cleanup_proof != proof
+        ):
+            raise LaunchError(
+                "COMMAND_ID_REUSED",
+                "camera cleanup proof changed after retirement acknowledgement",
+            )
+        members = self._members(entry)
+        running = self._running(entry)
+        if members or running:
+            if (
+                entry.state.phase == wire.LAUNCH_PHASE_OPERATIONAL
+                and len(members) == 1
+                and members[0][:2] == (entry.state.pid, entry.state.creation_time_100ns)
+                and os.path.normcase(os.path.abspath(members[0][2]))
+                == os.path.normcase(os.path.abspath(entry.plan.executable))
+                and running
+            ):
+                # Retain exact owner-verified cleanup before Shutdown. This
+                # narrowly authorizes the ensuing exact worker exit.
+                if entry.camera_cleanup_proof is None:
+                    entry.camera_cleanup_proof = proof
+                entry.confirmations[request.command_id] = canonical
+                return
+            raise LaunchError(
+                "PROCESS_STILL_RUNNING",
+                "camera worker process/job absence is unconfirmed",
+            )
+        if entry.camera_cleanup_proof is None:
+            raise LaunchError(
+                "MISSING_CLEANUP_ACK",
+                "camera worker exit preceded its cleanup acknowledgement",
+            )
+        self.release(entry.plan.command_id, obligations_met=True)
+        entry.confirmations[request.command_id] = canonical
+
+    def camera_cleanup_acknowledged(self, command_id: str) -> bool:
+        """Return whether this exact launch retained its owner's Cleanup proof."""
+        entry = self._entries.get(command_id)
+        return bool(
+            entry is not None
+            and entry.camera_cleanup_proof is not None
+            and entry.plan.child.role in ACQUISITION_WORKER_ROLES
+        )
+
     def release(self, command_id: str, obligations_met: bool) -> wire.LaunchState:
         entry = self._get(command_id)
         if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:
@@ -444,8 +488,9 @@ class LaunchRegistry:
                 entry.state.pid, entry.state.creation_time_100ns
             )
         entry.state.phase = wire.LAUNCH_PHASE_RELEASED
-        self._release_seq += 1
-        entry.released_seq = self._release_seq
+        entry.released_ns = host_time_ns()
+        if entry.work_key is not None:
+            self._prune_released(entry.released_ns)
         released = _snapshot(entry)
         for listener in self._release_listeners:
             listener(released)

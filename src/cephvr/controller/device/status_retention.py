@@ -107,7 +107,6 @@ class CameraStatusRetention:
         Manual effects stay admitted in case an expired command was delivered.
         Callers own the terminal/timeout decision and verify the active operation.
         """
-        self.device.completed_camera_operation = operation
         self.complete_internal(operation)
         self.device.camera_operation = None
         self.device.camera_operation_changed.set()

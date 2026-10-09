@@ -34,6 +34,7 @@ from cephvr.visual_stimulus.resources.media import (
     MediaPreparationError,
     decode_image,
 )
+from cephvr.visual_stimulus.resources.session import review_capture_cpu_bytes
 from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
 from cephvr.visual_stimulus.resources.video import VideoPlayback
 from cephvr.visual_stimulus.resources.video_index import (
@@ -90,6 +91,15 @@ def test_resource_budget_replacement_is_atomic() -> None:
     assert (budget.usage.cpu_bytes, budget.usage.gpu_bytes) == (60, 40)
     budget.release(owner="texture")
     assert (budget.usage.cpu_bytes, budget.usage.gpu_bytes) == (0, 0)
+
+
+def test_review_capture_cpu_budget_includes_fixed_copy_and_row_scratch() -> None:
+    frame_bytes = 1920 * 1080 * 4
+    row_bytes = 1920 * 4
+    assert review_capture_cpu_bytes(1920, 1080, 1) == 3 * frame_bytes + row_bytes
+    assert review_capture_cpu_bytes(1920, 1080, 3) == 5 * frame_bytes + row_bytes
+    with pytest.raises(ValueError, match="positive review capture"):
+        review_capture_cpu_bytes(0, 1080, 1)
 
 
 def test_arena_gpu_budget_covers_generated_attributes_and_both_mip_chains() -> None:

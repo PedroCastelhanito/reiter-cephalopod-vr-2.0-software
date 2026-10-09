@@ -1,6 +1,6 @@
 # CephVR2.0 architecture
 
-Last updated: 2026-10-08
+Last updated: 2026-10-09
 
 This overview and the linked records in `docs/architecture/` form the authoritative
 architecture. Each decision has one home; this register locates it by permanent ID.
@@ -72,12 +72,12 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 77 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 59 |
-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 168 |
+| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 169 |
 | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
 | <a id="e12"></a>[E12](docs/architecture/synchronization.md#e12) | Remote SpikeGLX control | Accepted | 20 |
-| <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 19 |
+| <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 20 |
 | <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 207 |
 | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
 | <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 16 |
@@ -86,11 +86,11 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
 | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
 | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
-| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 58 |
-| <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 49 |
+| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 59 |
+| <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 50 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 12 |
-| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 55 |
-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 40 |
+| <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 57 |
+| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 41 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 15 |
 | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 12 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 9 |
@@ -102,7 +102,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="v09"></a>[V09](docs/architecture/visual_stimulus.md#v09) | Video clip completion | Accepted | 4 |
 | <a id="v10"></a>[V10](docs/architecture/visual_stimulus.md#v10) | Clock-preserving playback and nonfatal timing misses | Accepted | 4 |
 | <a id="v11"></a>[V11](docs/architecture/visual_stimulus.md#v11) | Bounded video decode-ahead preparation | Accepted | 5 |
-| <a id="v12"></a>[V12](docs/architecture/visual_stimulus.md#v12) | Visual Stimulus recording thread and overload | Accepted | 10 |
+| <a id="v12"></a>[V12](docs/architecture/visual_stimulus.md#v12) | Visual Stimulus recording thread and overload | Accepted | 11 |
 | <a id="v13"></a>[V13](docs/architecture/visual_stimulus.md#v13) | Trial replay from program and actual render evidence | Accepted | 10 |
 | <a id="v14"></a>[V14](docs/architecture/visual_stimulus.md#v14) | Explicit stimulus coordinate spaces | Accepted | 3 |
 | <a id="v15"></a>[V15](docs/architecture/visual_stimulus.md#v15) | Four calibrated off-axis surface views | Accepted | 11 |
@@ -118,7 +118,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="v25"></a>[V25](docs/architecture/visual_stimulus.md#v25) | Hold feedback-driven state during invalid input | Accepted | 4 |
 | <a id="v26"></a>[V26](docs/architecture/visual_stimulus.md#v26) | Feedback freshness guard with local hold | Accepted | 8 |
 | <a id="v27"></a>[V27](docs/architecture/visual_stimulus.md#v27) | Additive motion on retained stimulus state | Accepted | 2 |
-| <a id="v28"></a>[V28](docs/architecture/visual_stimulus.md#v28) | Visual Stimulus evidence file and crash behavior | Accepted | 4 |
+| <a id="v28"></a>[V28](docs/architecture/visual_stimulus.md#v28) | Visual Stimulus evidence file and crash behavior | Accepted | 5 |
 | <a id="t01"></a>[T01](docs/architecture/tracking.md#t01) | Tracking image representation | Accepted | 4 |
 | <a id="t02"></a>[T02](docs/architecture/tracking.md#t02) | Named tracking pipelines with shared stages | Accepted | 4 |
 | <a id="t03"></a>[T03](docs/architecture/tracking.md#t03) | One selected tracking camera per session | Accepted | 1 |

@@ -13,6 +13,7 @@ from uuid import uuid4
 from cephvr.acquisition.v1.messages_pb2 import FrameBufferAttachment
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.tracking.config.annotations import manual
 from cephvr.tracking.config.annotations import reference as validate_reference
 from cephvr.tracking.config.diagnostics import DiagnosticResolution, resolve_diagnostic
@@ -234,7 +235,7 @@ class NativeSession:
                 failure_close=self._close_pose,
             )
             self.pose.ready.result(
-                timeout=max(0, (spec.deadline - host_time_ns()) / 1e9)
+                timeout=remaining_seconds(spec.deadline, clock=host_time_ns)
             )
             assert self.pose_geometry is not None
             geometry_binding = self.pose_geometry.binding

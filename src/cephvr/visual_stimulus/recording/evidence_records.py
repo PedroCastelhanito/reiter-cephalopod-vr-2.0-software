@@ -28,10 +28,14 @@ from cephvr.visual_stimulus.rendering.types import (
 CaptureDisposition = Literal[
     "admitted",
     "capacity_drop",
+    "same_slot_omission",
     "cutoff_excluded",
     "transfer_complete",
     "transfer_failed",
     "input_submitted",
+    "leading_duplicate",
+    "interior_duplicate",
+    "trailing_duplicate",
     "unknown",
 ]
 

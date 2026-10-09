@@ -1,0 +1,36 @@
+Acquisition worker tests and execution split (E15 / A02, A03, A07, A10, ARCH-002)
+Date: 2026-10-09
+
+Changed files:
+- tests/acquisition/test_worker_foundations.py
+- tests/acquisition/test_worker_admission.py (fixture follows the new preparation owner)
+- src/cephvr/acquisition/worker/execution.py
+- src/cephvr/acquisition/worker/blocking_wait.py (new)
+- src/cephvr/acquisition/worker/health_snapshot.py (new)
+- src/cephvr/acquisition/worker/session_preparation.py (new)
+
+Coverage baseline before extraction:
+PYTHONDONTWRITEBYTECODE=1 COVERAGE_FILE=/tmp/cephvr-worker-baseline.coverage .venv/bin/python -m coverage run --branch --source=cephvr.acquisition.worker.execution,cephvr.acquisition.worker.owner,cephvr.acquisition.worker.cleanup_lifecycle,cephvr.acquisition.worker.preview_lifecycle,cephvr.acquisition.worker.health,cephvr.acquisition.worker.report_dispatch,cephvr.acquisition.worker.camera_resolution -m pytest tests/acquisition/test_worker_admission.py tests/acquisition/test_worker_bootstrap.py tests/acquisition/test_worker_foundations.py tests/acquisition/test_worker_ring_regressions.py -q -p no:cacheprovider
+Outcome: 40 passed, 5 skipped in 1.14 s. Coverage's source warning says owner was never imported, so the baseline report omitted its 199 statements. The six imported modules had 960 statements, 632 missed, and 29% branch-inclusive Cover. Their statement coverage is 328/960 (34.2%); adding the unimported owner at zero gives a normalized seven-module baseline of 328/1,159 (28.30%) statement coverage and 24.53% branch-inclusive coverage. Baseline branch-inclusive module Cover: execution 33%, cleanup_lifecycle 37%, preview_lifecycle 12%, health 41%, report_dispatch 73%, camera_resolution 8%; owner had no report row.
+
+Coverage after the test additions, before extraction (captured before source edits):
+PYTHONDONTWRITEBYTECODE=1 COVERAGE_FILE=/tmp/cephvr-worker-final.coverage .venv/bin/python -m coverage run --branch --source=cephvr.acquisition.worker.execution,cephvr.acquisition.worker.owner,cephvr.acquisition.worker.cleanup_lifecycle,cephvr.acquisition.worker.preview_lifecycle,cephvr.acquisition.worker.health,cephvr.acquisition.worker.report_dispatch,cephvr.acquisition.worker.camera_resolution -m pytest tests/acquisition/test_worker_admission.py tests/acquisition/test_worker_bootstrap.py tests/acquisition/test_worker_foundations.py tests/acquisition/test_worker_ring_regressions.py -q -p no:cacheprovider
+Outcome: 51 passed, 5 skipped in 0.86 s. Seven modules had 1,159 statements, 543 missed, 53.15% statement coverage; branch-inclusive Cover was 47.83%. Per-module branch-inclusive Cover: execution 36%, owner 66%, cleanup_lifecycle 77%, preview_lifecycle 51%, health 51%, report_dispatch 74%, camera_resolution 19%. These pre-extraction values were preserved from the command output before source changes; do not regenerate them against current source.
+
+Final post-extraction command:
+PYTHONDONTWRITEBYTECODE=1 COVERAGE_FILE=/tmp/cephvr-worker-extraction.coverage .venv/bin/python -m coverage run --branch --source=cephvr.acquisition.worker.execution,cephvr.acquisition.worker.owner,cephvr.acquisition.worker.cleanup_lifecycle,cephvr.acquisition.worker.preview_lifecycle,cephvr.acquisition.worker.health,cephvr.acquisition.worker.report_dispatch,cephvr.acquisition.worker.camera_resolution,cephvr.acquisition.worker.blocking_wait,cephvr.acquisition.worker.health_snapshot,cephvr.acquisition.worker.session_preparation -m pytest tests/acquisition/test_worker_admission.py tests/acquisition/test_worker_bootstrap.py tests/acquisition/test_worker_foundations.py tests/acquisition/test_worker_ring_regressions.py -q -p no:cacheprovider
+Outcome: 55 passed, 5 skipped in 0.85 s. Ten current modules have 1,202 statements, 463 missed, 61.5% statement coverage; branch-inclusive Cover is 56%. Their module Cover: execution 52%, owner 66%, cleanup_lifecycle 77%, preview_lifecycle 51%, health 51%, report_dispatch 74%, camera_resolution 19%, blocking_wait 87%, health_snapshot 76%, session_preparation 88%. The seven original paths after extraction have 1,079 statements, 451 missed, 58.2% statement coverage; branch-inclusive Cover is 52%.
+
+Added portable fake-adapter scenarios assert executor failure retention under its original deadline; repeated coordinator-loss detection preserves its first recovery deadline, fences preview, stops trial once and begins cleanup once; owner-thread execution and safety-queue priority with an explicit commit barrier; cleanup report ordering, deadline failure and ambient resource release only after recording proof/wakeup; preview first-usable-frame identity/deadline evidence and timeout cleanup; warning/error report dispatch failure handling; exact assigned-camera resolution/readback order; and session/trial readiness revision guards.
+
+ARCH-002 extraction moves Setup/PrepareTrial sequencing and readiness ownership to `session_preparation.py`, event-loop wake compatibility to `blocking_wait.py`, and health snapshot assembly to `health_snapshot.py`. Executor retains narrow forwarding methods; there are no whole-runtime references or added dependencies. `execution.py` fell from 620 to 482 lines. The coordinator-loss guard exercises the executor wiring and keeps the original cleanup bound. No source behavior defect was found.
+
+Checks on final tree:
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/acquisition/test_worker_admission.py tests/acquisition/test_worker_bootstrap.py tests/acquisition/test_worker_foundations.py tests/acquisition/test_worker_ring_regressions.py -q -p no:cacheprovider — 55 passed, 5 skipped.
+.venv/bin/ruff check tests/acquisition/test_worker_foundations.py tests/acquisition/test_worker_admission.py src/cephvr/acquisition/worker — passed.
+.venv/bin/ruff format --check tests/acquisition/test_worker_foundations.py tests/acquisition/test_worker_admission.py src/cephvr/acquisition/worker — passed after formatting the last test addition.
+.venv/bin/python -m mypy --platform win32 src/cephvr/acquisition/worker — passed, 40 source files.
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python tools/check_backend_boundaries.py — passed; 636 backend modules checked, zero boundary violations. Existing advisories remain, including capture_runtime.py at 607 lines.
+git diff --check on the six changed files — passed.
+
+Limits: the five skips are existing platform-marked cases. Local fake-adapter tests do not verify Windows-native ownership/containment, actual SDK behavior, camera timing, hardware, GPU or full-workload acceptance; those remain E15 rig checks. No simulated backend was added.

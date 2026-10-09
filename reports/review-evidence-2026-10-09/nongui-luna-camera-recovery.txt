@@ -1,0 +1,31 @@
+Late camera recovery increment — 2026-10-09
+
+Scope and outcome
+- Extracted retained-result reconciliation, prior-work checks and quiescence proofs into `src/cephvr/acquisition/coordinator/manual_device_recovery.py`. Its dependencies are explicit (workers, resolution, pulse record, serial owner, clock, evidence callback); it has no ManualDevices back-reference.
+- A failed preview edit no longer allows a fresh accepted-base edit while exact child work, preview ownership, unknown MCU state, or an MCU claim CLOSE remains unresolved. Fresh Apply may query exact retained worker results with its own deadline and may retry only the same pending MCU CLOSE under that caller deadline. It never renews or replays the original SDK operation.
+- An uncertain exact-run Stop sends OFF for a configured external-trigger output even if the Start report never confirmed `started`; it waits for exact worker Cleanup and transfer release before claim close. Failed claim close keeps the same exact connection and OFF state fenced. Fresh recovery retries CLOSE only; only successful CLOSE creates the retained OFF proof. New serial ownership mutations invalidate that proof. If the worker was already retired, status remains camera-closed with cleanup pending.
+- Added/extended owning tests for fresh-deadline exact child query shape, bound closed-claim proof versus unknown/invalidated/pending-close states, uncertain output OFF and worker Cleanup order, failed CLOSE and same-claim retry followed by fresh ConfigurationResolution admission, and actual ControllerRuntime → ManualPreview exact-run Stop at controller revision 2 / acquisition revision 1. Fixed the camera-evidence test fixture clock.
+- Retained-query reconciliation itself was handed to UI lane for source-owner fixes and a real `WorkerOperationReports` regression; see `/tmp/cephvr-nongui-luna-retained-query.txt`.
+
+Exact validation commands and results
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition -q -m 'not windows and not rig'` — 376 passed, 5 skipped, 2 deselected.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/controller/test_camera_configuration.py tests/controller/test_camera_evidence.py -q -m 'not windows and not rig'` — 59 passed.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition/test_manual_preview.py::test_uncertain_preview_stop_switches_external_output_off_before_cleanup tests/acquisition/test_manual_devices.py::test_quiescence_needs_live_off_state_or_bound_closed_claim_proof -q` — 2 passed after the final STOP/claim-close ordering adjustment.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m mypy --platform win32 src/cephvr/acquisition/coordinator` — passed, 61 source files.
+- Scoped Ruff `check` and `format --check` across the changed acquisition recovery/preview/pulse modules and owning tests — passed; 19 files already formatted.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python tools/check_backend_boundaries.py` — 638 modules checked, zero boundary violations. It emitted size/cohesion review notices, including `manual_devices.py` (561 lines) and `manual_preview.py` (652 lines); the separately owned recovery concern was extracted, while these remaining workflows stay in their owning modules.
+- `git diff --check` — passed.
+
+Limits
+- No native Windows, camera/MCU hardware, authenticated rig, or GUI validation ran on the development Mac. Keep these under E15/rig acceptance.
+- The temporary Sol source-rewrite probe `/tmp/cephvr-sol-pulse-close-failure-probe.py` no longer runs unchanged because its textual source anchor is absent. Equivalent failed-close → exact fresh CLOSE retry → new resolution admission is covered by the owning pytest regression.
+
+Subsequent frozen corrections — 2026-10-09
+These are later owning-module checks; the 376-pass acquisition result above predates these corrections and is historical evidence for the earlier recovery increment, not a rerun after every later fix.
+
+- Normal Stop now tracks successful worker device release plus Stopped/Cleanup evidence. If serial CLOSE then fails, camera status truthfully reports closed and not prepared/running while retaining the exact run ID and cleanup-pending fence. Added a normal Stop → ring release → failed CLOSE regression. Paths: `src/cephvr/acquisition/coordinator/manual_preview.py`, `tests/acquisition/test_manual_preview.py`.
+- Pulse restart retains the newly installed exact run ID in camera status immediately, as cleanup-pending and not running. Preparation is reported only after successful prepare evidence; running is reported only after first usable-frame evidence. A failed start remains targetable by exact-ID Stop. Paths: `src/cephvr/acquisition/coordinator/manual_preview_pulse.py`, `tests/acquisition/test_manual_preview.py`.
+- Added shared `ManualPreviewTransferOwner.retire_and_release`: it retires once, waits for both exact viewer releases, closes and verifies both primary and Tracking rings. Pulse pause and ordinary Stop use this operation. Pulse pause keeps the preview attached/stopping and reports stopped/nonready cleanup-pending status until full release proof arrives. A retained Tracking transfer keeps the exact preview fenced, makes the real `ManualDeviceRecovery.prior_device_work_quiescent()` false, and blocks accepted-base `ConfigurationResolution.begin`. Paths: `src/cephvr/acquisition/coordinator/manual_preview_transfer.py`, `src/cephvr/acquisition/coordinator/manual_preview_pulse.py`, `src/cephvr/acquisition/coordinator/manual_preview.py`, `tests/acquisition/test_manual_preview.py`.
+- Latest owning check after these corrections: `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition/test_manual_preview.py -q -m 'not windows and not rig'` — 88 passed, 1 deselected. Win32 mypy for the three touched production modules passed. Scoped Ruff/format and whitespace checks passed during the correction sequence; repository-wide final validation is owned by root.
+
+No native Windows, camera/MCU hardware, authenticated rig, or GUI validation ran for these later corrections. The lifecycle and recovery proofs remain portable Mac-side checks only.

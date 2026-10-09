@@ -15,7 +15,12 @@ from cephvr.acquisition.coordinator.evidence_ready import WorkerReadyReports
 from cephvr.acquisition.coordinator.evidence_telemetry import WorkerTelemetryReports
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
 from cephvr.acquisition.ports import ControllerPort
-from cephvr.acquisition.state import ResourceRecord, SessionRecord, WorkerRecord
+from cephvr.acquisition.state import (
+    ChildOperation,
+    ResourceRecord,
+    SessionRecord,
+    WorkerRecord,
+)
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
@@ -77,6 +82,7 @@ class WorkerEvidenceCoordinator:
             commands=commands,
             current_session=current_session,
             controller=controller,
+            lifecycle_report=self.lifecycle.report_lifecycle,
             lock=lock,
             configuration_resolution=configuration_resolution,
         )
@@ -87,6 +93,24 @@ class WorkerEvidenceCoordinator:
             current_session=current_session,
             controller=controller,
             lock=lock,
+        )
+
+    async def reconcile_retained_operation(
+        self,
+        record: WorkerRecord,
+        child: ChildOperation,
+        retained: acq.WorkerRetainedResult,
+        *,
+        deadline_ns: int,
+        ingress_ns: int,
+    ) -> bool:
+        """Validate a fresh read-only worker query through its evidence owners."""
+        return await self.operations.reconcile_retained_operation(
+            record,
+            child,
+            retained,
+            deadline_ns=deadline_ns,
+            ingress_ns=ingress_ns,
         )
 
     async def report_lifecycle(

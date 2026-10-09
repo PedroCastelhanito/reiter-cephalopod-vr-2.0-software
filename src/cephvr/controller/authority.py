@@ -22,6 +22,7 @@ from cephvr.controller.ports import BACKEND_NAMES
 from cephvr.controller.state import AuthorityStatus, LimitsState
 from cephvr.platform.windows.bootstrap import run_pipe_io_daemon
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
 
 
@@ -226,7 +227,8 @@ async def handle_authority_loss(
         failures.append(f"launcher notification unconfirmed: {exc}")
     try:
         await asyncio.wait_for(
-            asyncio.shield(cleanup), max(0, (cleanup_deadline - host_time_ns()) / 1e9)
+            asyncio.shield(cleanup),
+            remaining_seconds(cleanup_deadline, clock=host_time_ns),
         )
     except Exception as exc:
         failures.append(f"authority cleanup unconfirmed: {exc}")
@@ -267,7 +269,7 @@ async def handle_authority_loss(
         try:
             await asyncio.wait_for(
                 backend.shutdown(request, deadline_ns=graceful_deadline),
-                max(0, (graceful_deadline - host_time_ns()) / 1e9),
+                remaining_seconds(graceful_deadline, clock=host_time_ns),
             )
         except Exception:
             pass  # Exact job/process observation below determines exit, never admission.

@@ -21,7 +21,14 @@ from cephvr.controller.metadata.documents import (
 )
 from cephvr.controller.metadata.writer import MetadataWriter
 from cephvr.controller.ports import SpikeGLXPort, SupervisorPort
-from cephvr.controller.state import Attempt, ControlState, LifecycleState, LimitsState
+from cephvr.controller.state import (
+    Attempt,
+    ControlState,
+    DeviceState,
+    LifecycleState,
+    LimitsState,
+)
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class StartActivation:
@@ -32,6 +39,7 @@ class StartActivation:
         *,
         lifecycle: LifecycleState,
         control: ControlState,
+        device: DeviceState,
         limit_state: LimitsState,
         clock: Callable[[], int],
         publisher: SnapshotPublisher,
@@ -53,6 +61,7 @@ class StartActivation:
     ) -> None:
         self.lifecycle = lifecycle
         self.control = control
+        self.device = device
         self.limit_state = limit_state
         self.clock = clock
         self.publisher = publisher
@@ -77,6 +86,7 @@ class StartActivation:
             if (
                 error
                 or self.lifecycle.startup_blocker
+                or self.device.configuration_edit is not None
                 or attempt is None
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_READY
             ):
@@ -84,6 +94,11 @@ class StartActivation:
                     command_id,
                     error=error
                     or self.lifecycle.startup_blocker
+                    or (
+                        "acquisition configuration edit is unresolved"
+                        if self.device.configuration_edit is not None
+                        else ""
+                    )
                     or "Start requires this attempt's Ready state",
                 )
             if (
@@ -189,11 +204,11 @@ class StartActivation:
                     self.spikeglx is None
                     or not await asyncio.wait_for(
                         self.spikeglx.verify_before_start(start_deadline_ns),
-                        max(0, (start_deadline_ns - self.clock()) / 1e9),
+                        remaining_seconds(start_deadline_ns, clock=self.clock),
                     )
                     or not await asyncio.wait_for(
                         self.spikeglx.start_and_verify_writing(start_deadline_ns),
-                        max(0, (start_deadline_ns - self.clock()) / 1e9),
+                        remaining_seconds(start_deadline_ns, clock=self.clock),
                     )
                 ):
                     raise RuntimeError("SpikeGLX writing gate failed")

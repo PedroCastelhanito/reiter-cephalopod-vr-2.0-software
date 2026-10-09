@@ -49,6 +49,19 @@ backend generation, work, operation and request revision. Reject duplicates, mis
 roles, mismatched device identity or conflicting repeated results. Retain the report
 for normal GetRetainedResult reconciliation; receipt alone is not confirmation.
 
+An owned-edit batch also carries the controller's current accepted acquisition snapshot
+and revision, distinct from its proposed camera/pulse changes. With the previous exact
+batch terminal and device work quiesced, the coordinator may install this snapshot to
+align lagging configuration bookkeeping before applying the new batch. This does not
+open a camera, apply SDK values, resume capture or replace actual-device evidence.
+Never decrease the revision; equal revisions require byte-identical settings. A higher
+revision requires the exact authenticated current controller generation and terminal,
+quiescent prior resolution/SDK work. Keep applied-device settings/revisions separate;
+late confirmation for an old operation cannot satisfy the new batch. Reject conflicting
+or unresolved ownership; ordinary manual-command installation rules are unchanged.
+An empty camera/pulse batch can synchronize an unrelated full-configuration edit without
+an SDK write.
+
 The controller verifies that the operation remains live and its request revision is
 current. Overlay only permitted actual device fields/PFS snapshot from matched readback;
 never let a device report change mode, enablement, recording flags, trial order,
@@ -64,6 +77,20 @@ its dependent allocation, preview restart or PFS export; every other existing re
 MCU, control and lifecycle gate still applies. During Setup, dependent MCU checks must
 also succeed before final resource preparation. This message is not Ready or Start.
 
+The controller commit precedes this message; ConfirmConfiguration transport acceptance
+only admits execution. Positive adoption is established by exact parent-operation/device
+evidence after acquisition's confirmation barrier, not an admission receipt or query
+presence. Retry only the identical retained confirmation within its original deadline;
+a later query may recover evidence but cannot authorize late SDK work or confirmation.
+Once committed, a confirmation, preview restart or status-delivery failure is a separate
+failed device operation: retain accepted configuration, stop affected capture/pulses and
+report any unconfirmed cleanup truthfully. Do not return a rejected edit claiming those
+committed settings were not applied. Settle the configuration transaction on its terminal
+outcome; retain remaining uncertainty in existing device/cleanup evidence. Fresh owned
+edits use the bounded snapshot synchronization above only after prior work is quiescent.
+Cleanup remains bound to the exact retained worker/run; role-only identity cannot bypass
+revision or ownership checks to release a later replacement.
+
 Duplicate identical reports/confirmations return retained results. Conflicting content
 under the same command is rejected. Cancellation, timeout, control loss or a newer edit
 cannot be undone by late confirmation. If hardware changed before a stale/failed result
@@ -72,6 +99,23 @@ do not overwrite newer configuration, claim hardware rollback or continue prepar
 Queries recover evidence without replaying uncertain SDK or file writes or extending
 existing deadlines. Public snapshots separate applied device evidence from current
 controller configuration, so a pending edit is not shown as already applied.
+
+After the original execution deadline, exact terminal worker evidence may establish
+observed device/resource ownership; it cannot adopt settings, resume a preview or
+turn the expired operation into timely success. Preview stop/prepare/start children
+retain their parent edit identity. A late start observation is active ownership,
+not proof of quiescence: require the exact run's stop and cleanup/release evidence.
+Keep canceled resolution bookkeeping until its device work is actually quiescent,
+then retire it independently of whether terminal report delivery was acknowledged.
+A fresh caller may query retained evidence under its own query deadline; the old
+SDK operation's deadline remains unchanged. Exact retained-run cleanup remains
+available when controller and applied-device configuration revisions differ.
+After camera cutoff/cleanup, an uncertain MCU claim release retains its exact
+connection/claim and known OFF evidence. A fresh authorized edit may retry only
+that claim's CLOSE under its own deadline before admitting new device work;
+failure or native busy retains the fence. Confirmed release evidence may establish
+quiescence after the live observation is cleared, but new connection/output mutation
+invalidates that proof before dispatch. Missing state alone never proves release.
 
 Use one internal resolution/adoption helper for Setup, editable camera/pulse updates,
 Preview and PFS import/export. Parameterize the expected roles, revision and operation;

@@ -38,6 +38,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class SessionSetup:
@@ -169,7 +170,7 @@ class SessionSetup:
                 session, request, records, deadline_ns
             )
             self._require_live_setup(session, deadline_ns)
-            remaining = max(0, deadline_ns - self.clock()) / 1_000_000_000
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 raise TimeoutError("controller readback adoption missed Setup deadline")
             await asyncio.wait_for(session.resolution_confirmed.wait(), remaining)
@@ -180,7 +181,7 @@ class SessionSetup:
             )
             await self._wait_worker_setup(records, deadline_ns)
             self._require_live_setup(session, deadline_ns)
-            remaining = max(0, deadline_ns - self.clock()) / 1_000_000_000
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 raise TimeoutError("camera worker Setup missed its original deadline")
             await asyncio.wait_for(session.ready_confirmed.wait(), remaining)

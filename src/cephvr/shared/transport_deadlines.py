@@ -5,12 +5,32 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 
 from cephvr.shared.clock import host_time_ns, require_int64_ns
+from cephvr.shared.deadlines import (
+    remaining_ns as _remaining_ns,
+)
+from cephvr.shared.deadlines import (
+    remaining_seconds as _remaining_seconds,
+)
 
 DEADLINE_METADATA_KEY = "x-cephvr-deadline-ns"
 
 
 class DeadlineMetadataError(ValueError):
     """An RPC deadline metadata value is absent, duplicated or malformed."""
+
+
+def remaining_ns(deadline_ns: int, *, clock: Callable[[], int] = host_time_ns) -> int:
+    """Keep transport deadline validation while sharing the arithmetic."""
+    require_int64_ns(deadline_ns)
+    return _remaining_ns(deadline_ns, clock=clock)
+
+
+def remaining_seconds(
+    deadline_ns: int, *, clock: Callable[[], int] = host_time_ns
+) -> float:
+    """Keep transport deadline validation while sharing the arithmetic."""
+    require_int64_ns(deadline_ns)
+    return _remaining_seconds(deadline_ns, clock=clock)
 
 
 def deadline_metadata(deadline_ns: int) -> tuple[str, str]:
@@ -40,14 +60,3 @@ def parse_deadline_metadata(
         return deadline_ns
     except (UnicodeDecodeError, ValueError) as exc:
         raise DeadlineMetadataError("deadline metadata is malformed") from exc
-
-
-def remaining_ns(deadline_ns: int, *, clock: Callable[[], int] = host_time_ns) -> int:
-    require_int64_ns(deadline_ns)
-    return max(0, deadline_ns - clock())
-
-
-def remaining_seconds(
-    deadline_ns: int, *, clock: Callable[[], int] = host_time_ns
-) -> float:
-    return remaining_ns(deadline_ns, clock=clock) / 1_000_000_000

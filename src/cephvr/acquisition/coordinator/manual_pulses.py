@@ -15,7 +15,11 @@ from cephvr.acquisition.coordinator.manual_device_status import (
 from cephvr.acquisition.coordinator.manual_operation_results import (
     ManualOperationResults,
 )
-from cephvr.acquisition.coordinator.manual_pulse_observation import release_idle_claim
+from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    invalidate_released_idle_proof,
+    release_idle_claim,
+    retain_observation,
+)
 from cephvr.acquisition.coordinator.manual_session_access import (
     manual_configuration_available,
     retire_completed_manual_session,
@@ -41,11 +45,19 @@ class PreviewPulseControl(Protocol):
     """Stop/recreate affected preview runs around shared MCU reconfiguration."""
 
     async def pause_for_pulse_change(
-        self, roles: tuple[int, ...], *, deadline_ns: int
+        self,
+        roles: tuple[int, ...],
+        *,
+        deadline_ns: int,
+        parent_operation: control.OperationContext | None = None,
     ) -> tuple[PausedPreview, ...]: ...
 
     async def resume_after_pulse_change(
-        self, token: tuple[PausedPreview, ...], *, deadline_ns: int
+        self,
+        token: tuple[PausedPreview, ...],
+        *,
+        deadline_ns: int,
+        parent_operation: control.OperationContext | None = None,
     ) -> None: ...
 
 
@@ -159,7 +171,9 @@ class ManualPulses:
                     active_roles, deadline_ns=deadline_ns
                 )
             if self.pulse.observation is None:
+                invalidate_released_idle_proof(self.pulse)
                 await self.serial.connect(deadline_ns=deadline_ns)
+            invalidate_released_idle_proof(self.pulse)
             observation = await self.serial.configure(
                 request.application.requested,
                 active_roles=tuple(active_roles),
@@ -179,8 +193,11 @@ class ManualPulses:
                 raise RuntimeError("controller did not accept MCU readback")
             await self.resolution.wait_confirmed(operation, deadline_ns=deadline_ns)
             await self.resolution.retire(operation)
-            self.pulse.observation = mcu.MicrocontrollerObservation.FromString(
-                observation.SerializeToString(deterministic=True)
+            retain_observation(
+                self.pulse,
+                mcu.MicrocontrollerObservation.FromString(
+                    observation.SerializeToString(deterministic=True)
+                ),
             )
             if preview_token is not None:
                 await self.preview.resume_after_pulse_change(

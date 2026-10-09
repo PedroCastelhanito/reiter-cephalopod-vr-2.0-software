@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-09",
+  "base_revision": "0aebf47bc869d69db511a7dd736709480d3e4d53",
+  "source_state": "Uncommitted authorized implementation; final changed source/config/contracts and architecture patch retained. Scratch/cache removals indexed separately in cleanup.json. No commit or history rewrite.",
+  "hierarchy": [
+    "gpt-6-luna implementation lanes",
+    "gpt-6.1-sol integration/source review",
+    "gpt-6-astra final independent review; retirement/health race returned through Luna and Sol"
+  ],
+  "scope": "Confirmed audit fixes, baseline restoration, proven redundant state removal and repository hygiene. Preserve existing native/rig, encoder, padding, broad refactor and scientific deferrals.",
+  "source_sha256": {
+    ".gitignore": "3af66c75e6bb9d91b755fa50f694d407c4a598274e34d1f47c47a80c04a39262",
+    "architecture.md": "f7fc95972ab47f3b7c83bc683939d2603a3c534093fb5928e5b3bbcb8d9dae9e",
+    "config/backends/acquisition_config.toml": "b90f84277237524841f91dc14ab12d81be56c37aa89152296cbaad250904203e",
+    "config/backends/experiment_config.toml": "ba85c0829be44400a07cbcb298c1b41cdef46bcdfa4d62b1d4d7cab1684b0115",
+    "config/backends/visual_stimulus_config.toml": "b590203672b13ce19f5c65122a503adbcf584299cb4502db26bae830ca687f7a",
+    "contracts/cephvr/control/v1/services.proto": "3143c8b738a92ea991a4cf475c928919c68852187fbfdf0e8ef9ca510d398c64",
+    "contracts/windows-launch.md": "f4b5c102201faf3b2035522b0e0791c65d00f9b8a9886faec16cf003eb9a5049",
+    "docs/architecture/system-contracts.md": "1f9fb36728b62e5c93b68ba2e60df190777706e2079de05501a1b8bf42531ec7",
+    "src/cephvr/acquisition/coordinator/workers.py": "b82f3e8366e7fe142c8c713441a0a623ea870769c235fb197d47951c04243298",
+    "src/cephvr/controller/device/status_retention.py": "c5a8686c847004d85ae17234a5958777aa66af5ecee25c62ca51d80d5bf99ca2",
+    "src/cephvr/controller/lifecycle/cleanup.py": "5541131603cba621f6d7b3c2c78fb19f536556b9d587cc3337b07234c794a567",
+    "src/cephvr/controller/lifecycle/commands.py": "d80839ea91d4b869753e44009d2675f27772fec573371ab4a4c5de65347b233c",
+    "src/cephvr/controller/recovery_inspection.py": "54bb2066d467cce3953be53116a186759971be4a8323ad9b7415cb79f46f8e7f",
+    "src/cephvr/controller/state.py": "abd8a3497a6b6b190a4a77d6673fc89f1ea363db329d99399df2f3e23ae4678f",
+    "src/cephvr/gui/camera_snapshot_settings.py": "1c33cfc5a54ff900be8d770a85aa2e78fa453955dcba60e7699da10cbc79b506",
+    "src/cephvr/gui/cameras.py": "0e4ff8a101f79609db2efbc29edf1ac4bc10f10c62997b451986f92d3573e391",
+    "src/cephvr/gui/managed_cameras.py": "402aa8273d778124c2369557526008642c2e0c424dc29fe501d5d825abb8bce3",
+    "src/cephvr/gui/managed_configuration.py": "d53d54c52d6c291489dd5772057063a2673210e38bc20fe6f9af34943ad26539",
+    "src/cephvr/shared/commands.py": "9049b9c74de557ca75872239a624ab3c80b67f4266d781c4d176a073352925c8",
+    "src/cephvr/supervisor/camera_release.py": "b91b3b6dd782f4502df0374a5c7e3fb874604d496b6f4797a9344c96aae99534",
+    "src/cephvr/supervisor/health.py": "a2618c4b9eca5db48e620a6c82d6e18a942b0e15c4ccc769f9175fbc3482b22c",
+    "src/cephvr/supervisor/launch_validation.py": "2bd3f6206f1cc7939caf47f335f10fa06eee2f9cf6beb31dacd453897cd5492e",
+    "src/cephvr/supervisor/registration.py": "74f7e5d349ad5cc85bca6883080f3272ee65de7eb785807f1c20ea9104da24cf",
+    "src/cephvr/supervisor/registry.py": "38689e9493a02930d277ac3b63c46ecc9a7899bb9d1736e0286cd7b2b8ef0a27",
+    "src/cephvr/supervisor/runtime.py": "b05211f4b36040a825b3c26494f3a973e57569442db03e30bc926a4cd11baeb0",
+    "src/cephvr/supervisor/shutdown.py": "8a977f8c49096297e4efa6810883956fe85b6e62582f0250ff1987c2ec784051",
+    "src/cephvr/synchronization/sdk_io.py": "22499235d6c3740ed8e44d626c655d0eb5dd5271eec51fda054e7c5850785718",
+    "tests/acquisition/test_coordinator.py": "c754588377f578a27abf33dc458b00212e633ff3e8284b1e85b282a12a86530c",
+    "tests/controller/test_camera_configuration.py": "8da8a3bcd90de1b52ff5db10e4af376450a240c03e7d5a22f214746eca9dc8ed",
+    "tests/controller/test_camera_evidence.py": "79eb022fea3d0a0e6faa028982a2fd19a00d8107db139e555ccb6d182d62442d",
+    "tests/controller/test_device_admission.py": "bec2f32f9cc76f8dec7df52cfe6084de9cfd8215133bb75f0aa8dfc964c165b4",
+    "tests/controller/test_lifecycle_commands.py": "e1e1472c8831adc497d480a690088829e6be3f7f042c1979264a551cb68cf7a3",
+    "tests/controller/test_spikeglx.py": "8ef1b54e9095bddbbf0d8da6f87f6a86c60952b6d1aad7393a1d8e574355c77d",
+    "tests/controller/test_startup_recovery.py": "f6aa480574ee43bbf0cc7f04d2f8ab90d15b2b74ca283a5e6b68caf5ebb67445",
+    "tests/gui/test_dashboard.py": "8551dc7cc8edaab3c057ddc4213a94e4f69edf067fa2fe9ab5372ddbbb7871bb",
+    "tests/supervisor/test_health.py": "67a2736b9ab8e030e807849aefe1902429c75324e60f204e9838cbf4fa52b08d",
+    "tests/supervisor/test_registry.py": "6d4b758eb26a70c049e80c2c70ce08abe4096b8c43981f865caf35bc704e8901",
+    "tests/supervisor/test_shutdown.py": "fa58182b467473c377627805c12a6aec95ccf808e1840f60f13a9749d2db0733"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests -q -m 'not windows and not rig' --junitxml=/tmp/cephvr-fixes-full.xml",
+      "result": {
+        "tests": "1704",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "6",
+        "time": "322.175"
+      },
+      "scope": "Full portable suite, imported implementation before final camera-retirement preack correction. Includes full offscreen GUI. Final affected runtime rerun follows."
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/supervisor tests/acquisition -q -m 'not windows and not rig' --junitxml=/tmp/cephvr-fixes-final-runtime.xml",
+      "result": {
+        "tests": "477",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "5",
+        "time": "4.002"
+      },
+      "scope": "Final corrected camera-retirement, health, replay and coordinator source. Other implementation source unchanged since full run."
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src tests tools",
+      "raw": "implementation-ruff.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src tests tools",
+      "raw": "implementation-format.txt"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr",
+      "raw": "implementation-mypy-win32.txt"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "raw": "implementation-boundaries.txt"
+    },
+    {
+      "scope": "Owning unittest discovery and schema drift checks",
+      "raw": [
+        "implementation-tracking-contracts.txt",
+        "implementation-visual-contracts.txt"
+      ]
+    },
+    {
+      "scope": "Sol independent controller142/runtime90/dashboard+runtime459 checks overlap; do not sum as unique full-suite coverage. Shutdown observer-disabled negative probe intentionally fails and never edits production code. See final Sol/Astra reports for corrected retirement review."
+    },
+    {
+      "command": ".venv/bin/python /tmp/cephvr-check-final-doc-links.py",
+      "result": "651 local links/anchors in 10 edited Markdown files; passed",
+      "raw": "implementation-doc-links.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "limits": [
+    "Local loopback permission was required for unchanged authenticated transport tests; the initial restricted bind probe failed. Assertions were not weakened.",
+    "No native Windows process/job, hardware/rig, remote SpikeGLX, native DPI/optical/scientific/full-load acceptance.",
+    "Historical run43 evidence retains its original source-provenance limitations. No new native decode/session claimed."
+  ],
+  "final_review": "Sol and Astra accept final corrected source with no remaining actionable finding in the bounded review; see model reports."
+}

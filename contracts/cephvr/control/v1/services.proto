@@ -306,6 +306,8 @@ message AcquisitionCameraSettingsCommand {
   repeated CameraSettingsApplication cameras = 3;
   PulseSettingsApplication pulses = 4; // Combine related camera/pulse edits in one revision batch.
   cephvr.acquisition.v1.AcquisitionFilePolicies file_policies = 5;
+  optional uint64 accepted_base_revision = 6;
+  AcquisitionSettings accepted_base_settings = 7;
   // Internal application after UpdateConfiguration validation, only for currently
   // owned editing/preview devices; offline edits must not open devices implicitly.
   // Batch changed roles under one revision so readback adoption stays atomic.
@@ -712,7 +714,12 @@ message ConfirmLaunchRequest {
   Failure failure = 9;
   HostClockDescriptor host_clock = 10; // Required on Python endpoint confirmation.
   bool native_cleanup_complete = 11; // A11 uploader only: exact child/job exit plus owner pipe/image closure.
+  AcquisitionWorkerCleanupProof acquisition_worker_cleanup = 12; // Exact retained camera Cleanup evidence after owner verification.
   // OS evidence precedes resume; endpoint and matching clock precede operational work.
+}
+message AcquisitionWorkerCleanupProof {
+  cephvr.acquisition.v1.WorkerOperationReport operation = 1;
+  cephvr.acquisition.v1.WorkerLifecycleEvidence cleanup = 2;
 }
 message LaunchQuery {
   ProcessIdentity requester = 1;
@@ -789,6 +796,9 @@ message MicrocontrollerIoRequest {
   cephvr.acquisition.v1.PulseBoundaryCommand boundary_command = 10;
   // CONNECT command ID; later operations belong to this exact live claim.
   string claim_id = 11;
+  // Scoped candidate pulse write from one live Configuration edit only.
+  cephvr.control.v1.OperationContext resolution_operation = 12;
+  optional uint64 requested_configuration_revision = 13;
 }
 message MicrocontrollerIoResult {
   string command_id = 1;

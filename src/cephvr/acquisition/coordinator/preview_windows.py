@@ -16,6 +16,7 @@ from cephvr.acquisition.state import CoordinatorIdentity, ResourceRecord, Worker
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+from cephvr.shared.deadlines import remaining_seconds
 
 
 @dataclass
@@ -100,7 +101,7 @@ class PreviewWindows:
         try:
             await asyncio.wait_for(
                 asyncio.shield(asyncio.wrap_future(reader.ready)),
-                max(0, deadline_ns - self.clock()) / 1e9,
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             self.ledger.confirm_attachment(
                 resource.ledger_key,
@@ -122,7 +123,7 @@ class PreviewWindows:
         window.reader.stop()
         released = await asyncio.wait_for(
             asyncio.shield(asyncio.wrap_future(window.reader.done)),
-            max(0, deadline_ns - self.clock()) / 1e9,
+            remaining_seconds(deadline_ns, clock=self.clock),
         )
         self.status.set_preview_visibility(
             role, run_id, window.reader.visible, window.reader.failure
@@ -140,7 +141,7 @@ class PreviewWindows:
         if self._notifications:
             await asyncio.wait_for(
                 asyncio.gather(*tuple(self._notifications), return_exceptions=True),
-                max(0, deadline_ns - self.clock()) / 1e9,
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
 
     def owns(self, role: int) -> bool:

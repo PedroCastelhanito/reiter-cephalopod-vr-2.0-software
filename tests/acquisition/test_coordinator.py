@@ -13,7 +13,10 @@ import pytest
 
 from cephvr.acquisition.coordinator.evidence_telemetry import WorkerTelemetryReports
 from cephvr.acquisition.coordinator.health import AcquisitionHealth
-from cephvr.acquisition.coordinator.workers import WorkerRegistry
+from cephvr.acquisition.coordinator.workers import (
+    WorkerRegistry,
+    _adopt_retained_operation,
+)
 from cephvr.acquisition.ports import (
     SupervisorPort,
     WorkerBootstrapPort,
@@ -31,6 +34,8 @@ from cephvr.acquisition.state import (
     WorkerRecord,
 )
 from cephvr.acquisition.v1 import camera_pb2, runtime_pb2
+from cephvr.acquisition.v1 import messages_pb2 as acq
+from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
@@ -326,6 +331,272 @@ def test_launch_intent_survives_endpoint_registration_timeout() -> None:
     asyncio.run(run())
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("session_scoped", [False, True])
+@pytest.mark.parametrize("process_exits", [False, True])
+async def test_camera_retirement_confirms_exact_cleanup_proof(
+    session_scoped: bool, process_exits: bool
+) -> None:
+    owner = control.ProcessIdentity(role="acquisition", generation=_id())
+    worker = control.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation=_id()
+    )
+    work = (
+        control.WorkContext(session=control.SessionContext(session_id=_id()))
+        if session_scoped
+        else control.WorkContext()
+    )
+    context = acq.WorkerContext(
+        worker=worker,
+        owner=owner,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+    )
+    if session_scoped:
+        context.work.CopyFrom(work)
+    launch = LaunchRecord(
+        command_id=_id(),
+        worker=worker,
+        owner=owner,
+        work=work,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        parent_operation=control.OperationContext(command_id=_id()),
+        planned_ns=1,
+        pid=71,
+        creation_time_100ns=171,
+    )
+    commands = CommandLedger(
+        owner.generation,
+        300_000_000_000,
+        max_records=64,
+        max_bytes=1024 * 1024,
+        result_reservation_bytes=64 * 1024,
+    )
+    record = WorkerRecord(context=context, port=None, launch=launch, commands=commands)
+
+    class Supervisor:
+        def __init__(self) -> None:
+            self.requests: list[wire.ConfirmLaunchRequest] = []
+            self.deadlines: list[int] = []
+
+        async def confirm_launch(self, request, *, deadline_ns):  # type: ignore[no-untyped-def]
+            self.requests.append(request)
+            self.deadlines.append(deadline_ns)
+            phase = (
+                wire.LAUNCH_PHASE_OPERATIONAL
+                if len(self.requests) == 1
+                else wire.LAUNCH_PHASE_RELEASED
+            )
+            return wire.LaunchReceipt(
+                admission=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED,
+                    command_id=request.command_id,
+                ),
+                state=wire.LaunchState(phase=phase),
+            )
+
+    class Bootstrap:
+        def __init__(self) -> None:
+            self.deadlines: list[int] = []
+            self.process_exits = process_exits
+
+        async def wait_process_exit(self, _worker, *, deadline_ns):  # type: ignore[no-untyped-def]
+            self.deadlines.append(deadline_ns)
+            return self.process_exits
+
+        async def retire(self, _worker, *, deadline_ns):  # type: ignore[no-untyped-def]
+            del deadline_ns
+
+    class WorkerPort:
+        def __init__(self) -> None:
+            self.context = context
+            self.completion_task: asyncio.Task[None] | None = None
+
+        async def cleanup(self, request, *, deadline_ns):  # type: ignore[no-untyped-def]
+            del deadline_ns
+            child = record.child_operations[request.command_id]
+            state = control.OperationState(
+                context=control.OperationContext(command_id=request.command_id),
+                command="Cleanup",
+                work=work,
+                complete=True,
+                succeeded=True,
+            )
+            evidence = acq.WorkerLifecycleEvidence(
+                source=context,
+                operation=control.OperationContext(command_id=request.command_id),
+                state_revision=1,
+            )
+            evidence.cleanup.resources.add(resource="camera-device", released=True)
+            record.retain_lifecycle(evidence, commands=commands)
+
+            async def complete_operation() -> None:
+                await asyncio.sleep(0.01)
+                child.report = state
+                child.report_ingress_ns = host_time_ns()
+                child.report_revision = 1
+                child.updated.set()
+
+            self.completion_task = asyncio.create_task(complete_operation())
+            return control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+                command_id=request.command_id,
+            )
+
+        async def get_retained_result(self, _request, *, deadline_ns):  # type: ignore[no-untyped-def]
+            del deadline_ns
+            return acq.WorkerRetainedResult()
+
+        async def shutdown(self, request, *, deadline_ns):  # type: ignore[no-untyped-def]
+            del deadline_ns
+            assert len(supervisor.requests) == 1
+            return control.CommandAdmission(
+                result=control.COMMAND_RESULT_ACCEPTED,
+                command_id=request.command_id,
+            )
+
+        async def close(self) -> None:
+            pass
+
+    record.port = WorkerPort()
+    supervisor = Supervisor()
+    registry = WorkerRegistry.__new__(WorkerRegistry)
+    registry.workers = {camera_pb2.CAMERA_ROLE_BEHAVIORAL: record}
+    registry.launches = {launch.command_id: launch}
+    registry.owner = owner
+    registry.supervisor = supervisor
+    bootstrap = Bootstrap()
+    registry.bootstrap = bootstrap
+    registry.commands = commands
+    registry.cleanup_complete = lambda _record, _evidence: True
+    registry.policies = control.ControlPolicies(
+        command_retention_after_finalization_ns=300_000_000_000
+    )
+    registry.max_launch_records = 16
+    registry._lock = asyncio.Lock()
+    deadline = host_time_ns() + 1_000_000_000
+
+    if session_scoped:
+        child_id = _id()
+        child = ChildOperation(
+            command_id=child_id,
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            work=work,
+            parent_operation=launch.parent_operation,
+            kind="cleanup",
+        )
+        child.report = control.OperationState(
+            context=control.OperationContext(command_id=child_id),
+            command="Cleanup",
+            work=work,
+            complete=True,
+            succeeded=True,
+        )
+        evidence = acq.WorkerLifecycleEvidence(
+            source=context,
+            operation=control.OperationContext(command_id=child_id),
+            state_revision=1,
+        )
+        evidence.cleanup.resources.add(resource="camera-device", released=True)
+        record.child_operations[child_id] = child
+        record.lifecycle_evidence[(work.session.session_id, child_id, "cleanup")] = (
+            evidence
+        )
+        retire = registry.retire_completed_session(work, deadline_ns=deadline)
+    else:
+        retire = registry.retire_sessionless_worker(
+            camera_pb2.CAMERA_ROLE_BEHAVIORAL, deadline_ns=deadline
+        )
+
+    if process_exits:
+        confirmed = await retire
+    else:
+        with pytest.raises(RuntimeError, match="process/job release is unconfirmed"):
+            await retire
+        assert len(supervisor.requests) == 1
+        assert supervisor.deadlines == [deadline]
+        assert bootstrap.deadlines == [deadline]
+        if record.port.completion_task is not None:
+            await record.port.completion_task
+        return
+
+    assert confirmed is None
+    assert len(supervisor.requests) == 2
+    assert supervisor.requests[0].SerializeToString(
+        deterministic=True
+    ) == supervisor.requests[1].SerializeToString(deterministic=True)
+    assert supervisor.deadlines == [deadline, deadline]
+    assert bootstrap.deadlines == [deadline]
+    proof = supervisor.requests[0].acquisition_worker_cleanup
+    assert proof.cleanup.source == context
+    assert proof.operation.source == context
+    assert proof.cleanup.source.work == work
+    if record.port.completion_task is not None:
+        await record.port.completion_task
+
+
+def test_retained_cleanup_query_cannot_replace_conflicting_local_terminal_report() -> (
+    None
+):
+    owner = control.ProcessIdentity(role="acquisition", generation=_id())
+    worker = control.ProcessIdentity(
+        role="acquisition_behavioral_worker", generation=_id()
+    )
+    context = acq.WorkerContext(
+        worker=worker,
+        owner=owner,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+    )
+    command_id = _id()
+    child = ChildOperation(
+        command_id=command_id,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=control.WorkContext(),
+        parent_operation=control.OperationContext(command_id=_id()),
+        kind="cleanup",
+        report=control.OperationState(
+            context=control.OperationContext(command_id=command_id),
+            command="Cleanup",
+            complete=True,
+            succeeded=False,
+        ),
+        report_revision=2,
+    )
+    record = WorkerRecord(
+        context=context,
+        port=None,
+        launch=LaunchRecord(
+            command_id=_id(),
+            worker=worker,
+            owner=owner,
+            work=control.WorkContext(),
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+            parent_operation=control.OperationContext(command_id=_id()),
+            planned_ns=1,
+        ),
+    )
+    retained = acq.WorkerRetainedResult(
+        found=True,
+        source=context,
+        admission=control.CommandAdmission(
+            result=control.COMMAND_RESULT_ACCEPTED, command_id=command_id
+        ),
+        operation=acq.WorkerOperationReport(
+            source=context,
+            operation=control.OperationState(
+                context=control.OperationContext(command_id=command_id),
+                command="Cleanup",
+                complete=True,
+                succeeded=True,
+            ),
+            state_revision=3,
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="differs from local terminal"):
+        _adopt_retained_operation(record, child, command_id, retained)
+    assert child.report is not None and not child.report.succeeded
+
+
 class _FailingBootstrap(WorkerBootstrapPort):
     async def launch(
         self, spec: WorkerLaunchSpec, *, deadline_ns: int
@@ -445,3 +716,386 @@ def test_acquisition_bootstrap_rejects_invalid_protected_values(
     document[key] = value
     with pytest.raises(ValueError):
         decode_acquisition_bootstrap(document)
+
+
+async def _retained_operation_test_owner(*, late_started: bool = False):
+    from cephvr.acquisition.coordinator.configuration_resolution import (
+        ConfigurationResolution,
+    )
+    from cephvr.acquisition.coordinator.evidence import WorkerEvidenceCoordinator
+    from cephvr.acquisition.coordinator.manual_device_recovery import (
+        ManualDeviceRecovery,
+    )
+    from cephvr.acquisition.state import (
+        ConfigurationRecord,
+        CoordinatorIdentity,
+        PulseRecord,
+    )
+    from cephvr.platform.windows.resource_ledger import NativeResourceLedger
+
+    backend = control.BackendContext(
+        backend_name="acquisition", backend_generation=_id()
+    )
+    owner = control.ProcessIdentity(
+        role="acquisition", generation=backend.backend_generation
+    )
+    controller_identity = control.ProcessIdentity(role="controller", generation=_id())
+    identity = CoordinatorIdentity(
+        backend=backend,
+        process=owner,
+        controller=controller_identity,
+        supervisor=control.ProcessIdentity(role="supervisor", generation=_id()),
+        tracking=control.ProcessIdentity(role="tracking", generation=_id()),
+    )
+    settings = control.AcquisitionSettings()
+    configuration = ConfigurationRecord(
+        settings=settings,
+        file_policies=runtime_pb2.AcquisitionFilePolicies(),
+        revision=1,
+    )
+    lock = asyncio.Lock()
+    controller = SimpleNamespace(resolutions=[], lifecycles=[])
+
+    async def report_resolution(report, *, deadline_ns):
+        controller.resolutions.append((report, deadline_ns))
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    async def report_lifecycle(report, *, deadline_ns):
+        controller.lifecycles.append((report, deadline_ns))
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    controller.report_acquisition_resolution = report_resolution
+    controller.report_lifecycle = report_lifecycle
+    resolution = ConfigurationResolution(
+        identity=identity,
+        configuration=configuration,
+        controller=controller,
+        lock=lock,
+        clock=lambda: 50,
+    )
+    parent_id = _id()
+    operation = await resolution.begin(
+        wire.BackendCommand(
+            command_id=parent_id,
+            issuer=controller_identity,
+            target=backend,
+            parent_operation=control.OperationContext(command_id=parent_id),
+        ),
+        expected_cameras={camera_pb2.CAMERA_ROLE_BEHAVIORAL},
+        request_revision=1,
+        deadline_ns=100,
+    )
+    child_id = _id()
+    work = control.WorkContext()
+    context = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=_id()
+        ),
+        owner=owner,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=work,
+    )
+    child = ChildOperation(
+        command_id=child_id,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        work=work,
+        parent_operation=operation,
+        kind="start_preview" if late_started else "apply_camera",
+        configuration_revision=1,
+        requested_device_id=None if late_started else "CAM-1",
+        deadline_ns=100,
+    )
+    worker_record = WorkerRecord(
+        context=context,
+        port=None,
+        launch=LaunchRecord(
+            command_id=_id(),
+            worker=context.worker,
+            owner=owner,
+            work=work,
+            camera=context.camera,
+            parent_operation=operation,
+            planned_ns=1,
+        ),
+        child_operations={child_id: child},
+    )
+    if late_started:
+        from cephvr.acquisition.coordinator.state import WorkerPreview
+
+        worker_record.preview = WorkerPreview(
+            run_id=_id(),
+            configuration_revision=1,
+            start_operation=control.OperationContext(command_id=child_id),
+        )
+    workers = {context.camera: worker_record}
+    ledger = CommandLedger(
+        backend.backend_generation,
+        10_000,
+        max_records=16,
+        max_bytes=1_000_000,
+        result_reservation_bytes=4096,
+    )
+    evidence = WorkerEvidenceCoordinator(
+        backend=backend,
+        owner=owner,
+        settings=settings,
+        workers=workers,
+        resources={},
+        resource_ledger=NativeResourceLedger(
+            max_resources=8, max_transfers_per_resource=4
+        ),
+        commands=ledger,
+        current_session=lambda: None,
+        controller=controller,
+        lock=lock,
+        configuration_resolution=resolution,
+    )
+    recovery = ManualDeviceRecovery(
+        workers=SimpleNamespace(workers=workers),
+        resolution=resolution,
+        pulse=PulseRecord(),
+        serial=SimpleNamespace(),
+        clock=lambda: 500,
+    )
+    resolution._pending.device_work_quiescent = lambda: recovery.device_work_quiescent(
+        parent_command_id=operation.command_id
+    )
+    await resolution.cancel(operation)
+    return SimpleNamespace(
+        backend=backend,
+        child=child,
+        child_id=child_id,
+        context=context,
+        controller=controller,
+        evidence=evidence,
+        identity=identity,
+        operation=operation,
+        recovery=recovery,
+        record=worker_record,
+        resolution=resolution,
+        settings=settings,
+        workers=workers,
+        late_started=late_started,
+    )
+
+
+def _retained_operation_report(owner, *, late_started: bool = False):
+    if late_started:
+        operation = control.OperationState(
+            context=control.OperationContext(command_id=owner.child_id),
+            command="StartPreview",
+            work=owner.child.work,
+            complete=True,
+            succeeded=False,
+            failure=control.Failure(code="START_FAILED", message="late start"),
+        )
+        resolved = None
+    else:
+        operation = control.OperationState(
+            context=control.OperationContext(command_id=owner.child_id),
+            command="ApplyCameraSettings",
+            work=owner.child.work,
+            complete=True,
+            succeeded=True,
+        )
+        resolved = camera_pb2.CameraResolvedState(configuration_revision=1)
+        resolved.device.configured_id = "CAM-1"
+        resolved.applied.device_id = "CAM-1"
+    report = acq.WorkerOperationReport(
+        source=owner.context,
+        operation=operation,
+        state_revision=1,
+    )
+    if resolved is not None:
+        report.resolved_camera.CopyFrom(resolved)
+    retained = acq.WorkerRetainedResult(
+        found=True,
+        source=owner.context,
+        admission=control.CommandAdmission(
+            result=control.COMMAND_RESULT_ACCEPTED,
+            command_id=owner.child_id,
+        ),
+        operation=report,
+    )
+    if late_started:
+        retained.lifecycle.add(
+            source=owner.context,
+            operation=control.OperationContext(command_id=owner.child_id),
+            state_revision=1,
+            started=acq.WorkerStartedEvidence(actual_start_monotonic_ns=90),
+        )
+    return retained
+
+
+@pytest.mark.asyncio
+async def test_retained_late_apply_query_retains_terminal_without_readback_adoption() -> (
+    None
+):
+    owner = await _retained_operation_test_owner()
+
+    class Port:
+        async def get_retained_result(self, request, *, deadline_ns):
+            assert request.query.target == owner.context
+            assert request.command_id == owner.child_id
+            assert deadline_ns == 900
+            return _retained_operation_report(owner)
+
+    owner.record.port = Port()
+    owner.recovery.bind_retained_operation_reconciler(
+        lambda record, child, retained, deadline, ingress: (
+            owner.evidence.reconcile_retained_operation(
+                record,
+                child,
+                retained,
+                deadline_ns=deadline,
+                ingress_ns=ingress,
+            )
+        )
+    )
+    await owner.recovery.recover_failed_device_work(900)
+
+    assert owner.child.report is not None and owner.child.report.complete
+    assert owner.child.report.succeeded
+    assert owner.child.report_ingress_ns == 500 > owner.child.deadline_ns
+    assert owner.child.resolved_camera is not None
+    assert owner.settings == control.AcquisitionSettings()
+    assert owner.resolution.configuration.revision == 1
+    assert owner.controller.resolutions == []
+    assert owner.controller.lifecycles == []
+    assert owner.resolution._pending is None
+    fresh = await owner.resolution.begin(
+        wire.BackendCommand(
+            command_id=_id(),
+            issuer=owner.identity.controller,
+            target=owner.backend,
+            parent_operation=control.OperationContext(command_id=_id()),
+        ),
+        expected_cameras=set(),
+        request_revision=1,
+        deadline_ns=900,
+        allow_empty=True,
+        accepted_base_revision=1,
+        accepted_base_settings=owner.settings,
+        preexisting_work_quiescent=owner.recovery.prior_device_work_quiescent,
+    )
+    assert fresh.command_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mismatch", ["source", "child", "kind", "work", "revision", "conflict", "lifecycle"]
+)
+async def test_retained_query_rejects_mismatched_terminal_without_local_adoption(
+    mismatch: str,
+) -> None:
+    owner = await _retained_operation_test_owner()
+    retained = _retained_operation_report(owner)
+    if mismatch == "source":
+        retained.operation.source.worker.generation = _id()
+    elif mismatch == "child":
+        retained.operation.operation.context.command_id = _id()
+    elif mismatch == "kind":
+        retained.operation.operation.command = "StopPreview"
+    elif mismatch == "work":
+        retained.operation.operation.work.session.session_id = _id()
+    elif mismatch == "revision":
+        owner.child.report_revision = 2
+    elif mismatch == "conflict":
+        owner.child.report_revision = 1
+        owner.child.report = control.OperationState(
+            context=control.OperationContext(command_id=owner.child_id),
+            command="ApplyCameraSettings",
+            complete=True,
+            succeeded=False,
+        )
+    else:
+        retained.lifecycle.add(
+            source=owner.context,
+            operation=control.OperationContext(command_id=_id()),
+            state_revision=1,
+            stopped=acq.WorkerStoppedEvidence(),
+        )
+
+    accepted = await owner.evidence.reconcile_retained_operation(
+        owner.record,
+        owner.child,
+        retained,
+        deadline_ns=900,
+        ingress_ns=500,
+    )
+    assert not accepted
+    if mismatch != "conflict":
+        assert owner.child.report is None
+    assert owner.resolution.configuration.revision == 1
+    assert owner.controller.resolutions == []
+
+
+@pytest.mark.asyncio
+async def test_retained_late_started_evidence_does_not_mark_preview_quiet() -> None:
+    owner = await _retained_operation_test_owner(late_started=True)
+    retained = _retained_operation_report(owner, late_started=True)
+    accepted = await owner.evidence.reconcile_retained_operation(
+        owner.record,
+        owner.child,
+        retained,
+        deadline_ns=900,
+        ingress_ns=500,
+    )
+
+    assert accepted
+    assert owner.child.report is not None and owner.child.report.complete
+    assert owner.record.preview is not None
+    assert not owner.record.preview.started
+    assert not owner.record.preview.started_event.is_set()
+    assert owner.resolution._pending is not None
+    assert owner.controller.resolutions == []
+
+
+@pytest.mark.asyncio
+async def test_retained_late_ready_is_skipped_but_prepare_terminal_is_retained() -> (
+    None
+):
+    owner = await _retained_operation_test_owner(late_started=True)
+    owner.child.kind = "prepare_preview"
+    preview = owner.record.preview
+    assert preview is not None
+    preview.preparation = preview.start_operation
+    preview.start_operation = None
+    retained = _retained_operation_report(owner, late_started=True)
+    retained.operation.operation.command = "PreparePreview"
+    retained.ClearField("lifecycle")
+    retained.lifecycle.add(
+        source=owner.context,
+        operation=retained.operation.operation.context,
+        state_revision=1,
+        ready=acq.WorkerReadyEvidence(
+            configuration_revision=1, required_checks_passed=True
+        ),
+    )
+
+    accepted = await owner.evidence.reconcile_retained_operation(
+        owner.record,
+        owner.child,
+        retained,
+        deadline_ns=900,
+        ingress_ns=500,
+    )
+
+    assert accepted
+    assert owner.child.report is not None and owner.child.report.complete
+    assert not preview.started and not preview.started_event.is_set()
+    assert owner.record.setup_ready is None
+    assert owner.resolution._pending is not None
+    assert owner.controller.lifecycles == []
+
+    retained.ClearField("lifecycle")
+    repeated = await owner.evidence.reconcile_retained_operation(
+        owner.record,
+        owner.child,
+        retained,
+        deadline_ns=900,
+        ingress_ns=500,
+    )
+    assert repeated
+    assert owner.child.report is not None
+    assert owner.resolution._pending is not None

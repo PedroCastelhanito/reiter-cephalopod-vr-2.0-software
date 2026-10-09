@@ -10,6 +10,7 @@ from uuid import uuid4
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
 from .ports import PeerPort
@@ -180,7 +181,7 @@ class RecipeOwner:
         confirmed = self.release_confirmations.setdefault(tid, asyncio.Event())
         try:
             async with asyncio.timeout(
-                max(0, (release_deadline_ns - self.clock()) / 1e9)
+                remaining_seconds(release_deadline_ns, clock=self.clock)
             ):
                 await confirmed.wait()
         except TimeoutError:
@@ -215,7 +216,9 @@ class RecipeOwner:
 
     async def drain(self, deadline_ns: int) -> None:
         if self.tasks:
-            async with asyncio.timeout(max(0, (deadline_ns - self.clock()) / 1e9)):
+            async with asyncio.timeout(
+                remaining_seconds(deadline_ns, clock=self.clock)
+            ):
                 await asyncio.gather(
                     *(asyncio.shield(task) for task in self.tasks.values())
                 )
@@ -235,7 +238,7 @@ class RecipeOwner:
             try:
                 await asyncio.wait_for(
                     self.wake.wait(),
-                    max(0, (release.start_monotonic_ns - self.clock()) / 1e9),
+                    remaining_seconds(release.start_monotonic_ns, clock=self.clock),
                 )
                 self.wake.clear()
             except TimeoutError:

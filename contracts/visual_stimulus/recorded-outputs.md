@@ -1,11 +1,5 @@
 # Visual Stimulus recorded output images
 
-Status: E13 revision 19 / V12 revision 10 select identified duplicate padding to
-preserve video cadence/duration. The unpadded implementation contract below and
-its evidence/completion schemas still need amendment before that behavior is
-implemented; their current one-admitted-group/one-video-frame rule is not the
-revised timing rule.
-
 Governing rules: [E13](../../docs/architecture/visual_stimulus.md#e13) and
 [V12](../../docs/architecture/visual_stimulus.md#v12). Recording namespace and administrative
 metadata ownership follow E04; trial intervals follow E11. This declares capture,
@@ -34,7 +28,8 @@ preview/recording layout must not alter the stimulus. Record the composite with
 high-quality lossy compression through one complete custom FFmpeg token list under
 [encoding options](encoding-options.md), including explicit codec/quality/pixel
 conversion within the required constraints. Keep fragmented MP4 at closure under
-that binding. The video is constant-rate; frame n is the n-th admitted render group
+that binding. The video is constant-rate; frame n occupies nominal slot n and maps
+explicitly to its selected real source group or identified duplicate
 ([review timing](encoding-options.md#review-timing)). The video serves
 posthoc visualization, not exact pixel recovery. [V13 replay](replay.md) uses retained
 program/assets and actual frame state for high-fidelity reconstruction and lossless
@@ -67,8 +62,11 @@ transport or evidence bridge. The coordinator prepares the renderer and aggregat
 lifecycle evidence; it never relays pixels or performs scientific file writes.
 
 The GL thread tiles each render group's final output images into one composite and
-reads it back by PBO into one of the bounded in-process `capture_slots`. The recording
-thread takes completed readbacks, writes raw composite frames to FFmpeg's stdin and
+reads it back by PBO into one of the bounded in-process `capture_slots`. Before pixel
+admission, `evaluation_host_ns` selects the first usable group in each nominal slot
+`[T+n/R,T+(n+1)/R)`; later same-slot groups remain full source evidence and are marked
+video-only omissions. The recording thread takes completed readbacks, writes selected
+real composites and explicit duplicate slots to FFmpeg's stdin and
 writes the [evidence file](evidence-format.md). The GL thread never waits on recording.
 Launch FFmpeg at ScheduleTrial acceptance, off the render thread, with the final
 paths; feed no frames before T. Launch failure before T is a required failure before
@@ -78,12 +76,15 @@ Prepare the recording thread and reservations before required readiness under
 E04/E05/E08; create/write trial outputs only under E11. When saving is Off no
 recording thread, capture or encoding runs and no capture slots are allocated.
 
-Make one admission decision per render group. If no capture slot is free, drop that
-group's video sample before compositing/readback, record its identity, timing and
-`capacity_drop` disposition in the evidence and continue rendering. Never evict an
-admitted sample, slow presentation, spill to an unbounded queue or replay the omitted
-sample. `recording_bytes_total` bounds slots plus encoder-input buffering. Temporary
-exhaustion alone is not encoder failure. A blocked FFmpeg write must not stop the
+Make one admission decision per render group. A same-slot omission is decided before
+pixel admission and remains distinct from a `capacity_drop`; neither changes source
+group/state facts. If no capture slot is free, drop that group's video sample before
+compositing/readback and continue rendering. Never evict an admitted sample, slow
+presentation, spill to an unbounded queue or replay an omitted source.
+`recording_bytes_total` bounds capture slots, encoder-input buffering, one retained
+prepared image for streamed duplicates and one transient PBO readback ownership copy.
+It also includes one bounded row-swap scratch buffer. Temporary exhaustion alone is
+not encoder failure. A blocked FFmpeg write must not stop the
 recording thread servicing required evidence lines, nor the worker's control/health path.
 
 Evidence lines are bounded by `evidence_pending_bytes`, separately from capture slots,
@@ -95,11 +96,13 @@ encoding success from a stdin write, encoder liveness or successful presentation
 Unconfirmed outcomes after a crash stay unknown; surviving samples are never renumbered.
 V10 render/epoch misses and media source frame skips are not recording-capacity drops.
 
-At trial cutoff, stop admitting out-of-interval samples and drain admitted work under
-E11. Apply the [review-video completion predicate](video-completion.md), including
-confirmed empty/absent results with warnings and complete required records. Report
-closure/evidence before aggregate Finished; finalization never adds a replacement for
-a dropped sample. E05's external post hoc file-validation boundary applies: no file
+At trial cutoff, stop admitting out-of-interval samples, reconcile the exact producer
+watermark and drain admitted work under E11. Fill leading slots from the first usable
+real image and interior/trailing slots from the last selected image, mapping every
+encoded slot to its unchanged source group and evaluation time. No usable image keeps
+the existing empty/absent outcome. Apply the [review-video completion predicate](video-completion.md),
+including confirmed empty/absent results with warnings and complete required records.
+Report closure/evidence before aggregate Finished. E05's external post hoc file-validation boundary applies: no file
 reread/decode validator runs in the runtime. Confirmed encoder, storage or required
 logging failures retain E06 handling. E08 health/progress checks must not mistake a
 live heartbeat for encoder/file progress. Recording-loss counts belong in compact
@@ -115,7 +118,7 @@ are dropped. Associate recorded frames with render/state identity and tile layou
 video source-frame lineage where applicable, and software timing observations.
 Separate rendered, submitted, captured and encoded outcomes. An encoded image does
 not establish that the output swap succeeded or that the projector emitted it.
-Do not fabricate frames for V10 missed epochs or interpret recording gaps as proof
+Do not fabricate source groups for V10 missed epochs or interpret recording gaps as proof
 of missing physical presentation. Conversely, render submission does not prove the
 frame reached the recording file.
 

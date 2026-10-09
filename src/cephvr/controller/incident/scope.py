@@ -16,6 +16,7 @@ from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.lifecycle_reports import LifecycleReports
 from cephvr.controller.ports import SupervisorPort
 from cephvr.controller.state import Attempt, IncidentState, LifecycleState, LimitsState
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class Interrupt(Protocol):
@@ -118,7 +119,7 @@ class ScopeConfirmation:
                     for name in commands
                 )
             ),
-            max(0, (deadline_ns - self.clock()) / 1e9),
+            remaining_seconds(deadline_ns, clock=self.clock),
         )
         if any(reply.result != pb.COMMAND_RESULT_ACCEPTED for reply in replies):
             raise RuntimeError("healthy coordinator rejected incident scope")
@@ -151,7 +152,7 @@ class ScopeConfirmation:
                             ),
                             deadline_ns=deadline_ns,
                         ),
-                        max(0, (deadline_ns - self.clock()) / 1e9),
+                        remaining_seconds(deadline_ns, clock=self.clock),
                     )
                     if (
                         not retained.found
@@ -213,7 +214,7 @@ class ScopeConfirmation:
         try:
             acknowledgement = await asyncio.wait_for(
                 self.supervisor.register_context(registration),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             if (
                 acknowledgement.admission.result != pb.COMMAND_RESULT_ACCEPTED

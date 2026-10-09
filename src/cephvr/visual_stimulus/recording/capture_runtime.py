@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
+from typing import Literal, cast
 
 from cephvr.visual_stimulus.config.models.artifact_models import ReviewEncoding
 from cephvr.visual_stimulus.config.models.evidence_model import (
@@ -64,7 +64,7 @@ class RecordingCaptureRuntime:
 
     def before_render(self) -> None:
         self.poll_pending()
-        self.reservation = self.session.try_reserve_capture(self.next_group_id)
+        self.reservation = None
 
     def poll_pending(self) -> None:
         """Complete admitted GPU transfers without reserving another render group."""
@@ -96,10 +96,12 @@ class RecordingCaptureRuntime:
         self.submission_count += len(update.group.outputs)
         state = update.evidence_state
         submissions = update.evidence_submissions
-        reservation, self.reservation = self.reservation, None
+        reservation, disposition, slot = self.session.classify_capture(
+            group_id, state.evaluation_host_ns
+        )
         captures: tuple[tuple[CaptureDisposition, int | None, str | None], ...]
         if reservation is None:
-            captures = (("capacity_drop", None, None),)
+            captures = ((cast(CaptureDisposition, disposition), slot, None),)
         else:
             try:
                 pending = self.renderer.capture_review_composite(

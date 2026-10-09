@@ -1,0 +1,78 @@
+.....F.......F..........F....F......                                     [100%]
+=================================== FAILURES ===================================
+_____ test_file_policies_resolve_exact_units_and_preserve_deferred_margin ______
+
+    def test_file_policies_resolve_exact_units_and_preserve_deferred_margin() -> None:
+        policies = load_file_policies(_ROOT)
+    
+        assert policies.contract_version == 1
+        assert policies.serial_baud_rate == 115200
+        assert policies.serial_ack_timeout_ns == 100_000_000
+        behavioral = next(
+            item
+            for item in policies.cameras
+            if item.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
+        )
+        assert behavioral.frame_silence_timeout_ns == 1_000_000_000
+>       assert not behavioral.HasField("post_cutoff_drain_margin_ns")
+E       AssertionError: assert not True
+E        +  where True = <built-in method HasField of CameraFilePolicy object at 0x10505fab0>('post_cutoff_drain_margin_ns')
+E        +    where <built-in method HasField of CameraFilePolicy object at 0x10505fab0> = frame_silence_timeout_ns: 1000000000\ncamera: CAMERA_ROLE_BEHAVIORAL\npost_cutoff_drain_margin_ns: 1000000000\n.HasField
+
+tests/acquisition/test_configuration.py:131: AssertionError
+_ VisualStimulusConfigurationTests.test_default_and_file_policy_values_are_typed _
+
+self = <tests.visual_stimulus.test_configuration.VisualStimulusConfigurationTests testMethod=test_default_and_file_policy_values_are_typed>
+
+    def test_default_and_file_policy_values_are_typed(self) -> None:
+        defaults = load_defaults(_ROOT)
+        self.assertTrue(defaults.HasField("save_visual_stimulus_data"))
+        self.assertTrue(defaults.save_visual_stimulus_data)
+        policies = load_file_policies(_ROOT)
+        self.assertEqual(policies.contract_version, 1)
+        self.assertEqual(policies.limits.max_expanded_epochs, 100_000)
+        self.assertEqual(policies.max_result_age_ns, 350_000_000)
+        self.assertEqual(policies.record_sync_interval_ns, 1_000_000_000)
+        self.assertTrue(policies.HasField("pacing_refresh_hz"))
+        self.assertEqual(policies.pacing_refresh_hz, 60.0)
+>       self.assertFalse(policies.HasField("pacing_output_id"))
+E       AssertionError: True is not false
+
+tests/visual_stimulus/test_configuration.py:57: AssertionError
+________________ test_loader_binds_exact_file_timing_and_budget ________________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1288/test_loader_binds_exact_file_t0')
+
+    def test_loader_binds_exact_file_timing_and_budget(tmp_path: Path) -> None:
+        _copy_pairs(tmp_path)
+        loaded = load_controller_configuration(tmp_path)
+        assert loaded.controller_port == 50051
+        assert loaded.supervisor_startup.port == 50052
+>       assert loaded.policies.start_lead_ns == 500_000_000
+E       assert 2000000000 == 500000000
+E        +  where 2000000000 = setup {\n  initial_ns: 60000000000\n}\nsetup_cancel {\n  initial_ns: 10000000000\n}\ntrial_ready {\n  initial_ns: 10000000000...ries: 1\nmetadata_timeout_ns: 5000000000\ncommand_retention_after_finalization_ns: 300000000000\nrecovery_ns: 10000000000\n.start_lead_ns
+E        +    where setup {\n  initial_ns: 60000000000\n}\nsetup_cancel {\n  initial_ns: 10000000000\n}\ntrial_ready {\n  initial_ns: 10000000000...ries: 1\nmetadata_timeout_ns: 5000000000\ncommand_retention_after_finalization_ns: 300000000000\nrecovery_ns: 10000000000\n = ControllerConfiguration(configuration=backends {\n  backend_name: "acquisition"\n  acquisition {\n    behavioral {\n      ...024, max_pending_payload_bytes=67108864, max_retained_incidents=256, default_intertrial_gap_ns=0, history_warning=None).policies
+
+tests/controller/test_configuration.py:65: AssertionError
+______________ test_loader_rejects_fractional_nanosecond_duration ______________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1288/test_loader_rejects_fractional0')
+
+    def test_loader_rejects_fractional_nanosecond_duration(tmp_path: Path) -> None:
+        _copy_pairs(tmp_path)
+        config = tmp_path / "config/backends/experiment_config.toml"
+        config.write_text(
+            config.read_text().replace(
+                "start_lead_time_ms = 500", "start_lead_time_ms = 500.0000000001"
+            )
+        )
+>       with pytest.raises(ConfigurationError, match="start_lead_time_ms"):
+E       Failed: DID NOT RAISE ConfigurationError
+
+tests/controller/test_configuration.py:181: Failed
+=========================== short test summary info ============================
+FAILED tests/acquisition/test_configuration.py::test_file_policies_resolve_exact_units_and_preserve_deferred_margin
+FAILED tests/visual_stimulus/test_configuration.py::VisualStimulusConfigurationTests::test_default_and_file_policy_values_are_typed
+FAILED tests/controller/test_configuration.py::test_loader_binds_exact_file_timing_and_budget
+FAILED tests/controller/test_configuration.py::test_loader_rejects_fractional_nanosecond_duration
+4 failed, 32 passed in 3.86s

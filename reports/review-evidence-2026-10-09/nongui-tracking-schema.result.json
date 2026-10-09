@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+    "contracts/tracking/schema_check.py"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "started_utc": "2026-10-09T04:44:31.419361+00:00",
+  "elapsed_seconds": 0.317,
+  "returncode": 0,
+  "raw": "nongui-tracking-schema.txt"
+}

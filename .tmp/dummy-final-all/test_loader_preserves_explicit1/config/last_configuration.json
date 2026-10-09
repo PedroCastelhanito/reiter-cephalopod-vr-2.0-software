@@ -1,1 +1,0 @@
-{"format_version": 1, "configuration": {"backends": [{"backendName": "acquisition", "enabled": false, "acquisition": {"behavioral": {"enabled": false, "saveVideo": false, "ffmpegArgs": {"values": []}}}}]}}

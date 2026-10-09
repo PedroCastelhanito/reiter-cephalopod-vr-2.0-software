@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from copy import deepcopy
 
 from cephvr.acquisition.coordinator.configuration_resolution import (
@@ -32,6 +32,7 @@ class WorkerOperationReports:
         commands: CommandLedger,
         current_session: Callable[[], SessionRecord | None],
         controller: ControllerPort,
+        lifecycle_report: Callable[..., Awaitable[control.ReportReceipt]],
         lock: asyncio.Lock,
         configuration_resolution: ConfigurationResolution | None,
     ) -> None:
@@ -40,6 +41,7 @@ class WorkerOperationReports:
         self.commands = commands
         self.current_session = current_session
         self.controller = controller
+        self.lifecycle_report = lifecycle_report
         self.lock = lock
         self.configuration_resolution = configuration_resolution
 
@@ -55,6 +57,7 @@ class WorkerOperationReports:
         *,
         deadline_ns: int,
         ingress_ns: int,
+        retained_query: bool = False,
     ) -> control.ReportReceipt:
         try:
             record = self._record(report.source)
@@ -70,8 +73,23 @@ class WorkerOperationReports:
             child = self.child_operation(
                 record, report.source, report.operation, report.state_revision
             )
-            if child.deadline_ns is None or ingress_ns > child.deadline_ns:
-                raise ValueError("worker operation report missed its original deadline")
+            if child.deadline_ns is None:
+                raise ValueError("worker operation has no retained deadline")
+            late_terminal = retained_query or ingress_ns > child.deadline_ns
+            if late_terminal and (
+                not report.operation.complete
+                or report.source.work.WhichOneof("work") is not None
+                or child.kind
+                not in {
+                    "apply_camera",
+                    "stop_preview",
+                    "prepare_preview",
+                    "start_preview",
+                }
+            ):
+                raise ValueError(
+                    "late worker evidence is not a terminal sessionless camera operation"
+                )
             session = self._matching_session(report.source.work)
             pending_resolution: wire.AcquisitionResolutionReport | None = None
             if report.HasField("resolved_camera"):
@@ -125,7 +143,7 @@ class WorkerOperationReports:
                             session.pending_resolution_deadline_ns = child.deadline_ns
                         if not session.resolution_reported:
                             pending_resolution = session.pending_resolution_report
-                elif self.configuration_resolution is not None:
+                elif self.configuration_resolution is not None and not late_terminal:
                     receipt = await self.configuration_resolution.accept_camera(
                         record,
                         child,
@@ -134,7 +152,7 @@ class WorkerOperationReports:
                     )
                     if receipt.result != control.COMMAND_RESULT_ACCEPTED:
                         return receipt
-                else:
+                elif self.configuration_resolution is None and not late_terminal:
                     raise ValueError(
                         "sessionless camera readback has no resolution owner"
                     )
@@ -191,6 +209,10 @@ class WorkerOperationReports:
                     session.pending_resolution_report = None
                     session.pending_resolution_deadline_ns = None
                     session.pending_resolution_attempts = 0
+            if late_terminal and self.configuration_resolution is not None:
+                await self.configuration_resolution.retire_failed_if_quiescent(
+                    child.parent_operation
+                )
             # A worker command is one owned stage, not the parent backend command.
             # Relay only in-progress detail; the coordinator reports terminal parent
             # success/failure after every required stage and cleanup obligation ends.
@@ -215,6 +237,80 @@ class WorkerOperationReports:
             return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
         except (ValueError, OverflowError) as exc:
             return _report_rejected("INVALID_OPERATION", str(exc))
+
+    async def reconcile_retained_operation(
+        self,
+        record: WorkerRecord,
+        child: ChildOperation,
+        retained: acq.WorkerRetainedResult,
+        *,
+        deadline_ns: int,
+        ingress_ns: int,
+    ) -> bool:
+        """Retain exact worker evidence from a read-only query without adoption."""
+        expected_command = {
+            "apply_camera": "ApplyCameraSettings",
+            "stop_preview": "StopPreview",
+            "prepare_preview": "PreparePreview",
+            "start_preview": "StartPreview",
+        }.get(child.kind)
+        if (
+            expected_command is None
+            or not retained.found
+            or not retained.HasField("source")
+            or retained.source != record.context
+            or not retained.HasField("admission")
+            or retained.admission.result != control.COMMAND_RESULT_ACCEPTED
+            or retained.admission.command_id != child.command_id
+            or not retained.HasField("operation")
+            or not retained.operation.HasField("source")
+            or retained.operation.source != record.context
+            or not retained.operation.HasField("operation")
+            or not retained.operation.operation.HasField("context")
+            or retained.operation.operation.context.command_id != child.command_id
+            or retained.operation.operation.command != expected_command
+            or retained.operation.operation.work != child.work
+            or not retained.operation.operation.complete
+            or not retained.operation.operation.HasField("succeeded")
+            or retained.operation.operation.work != record.context.work
+            or not retained.operation.HasField("state_revision")
+            or retained.operation.state_revision <= 0
+        ):
+            return False
+
+        for evidence in retained.lifecycle:
+            if (
+                not evidence.HasField("source")
+                or evidence.source != record.context
+                or not evidence.HasField("operation")
+                or evidence.operation.command_id != child.command_id
+                or not evidence.HasField("state_revision")
+                or evidence.state_revision <= 0
+                or evidence.WhichOneof("evidence") is None
+            ):
+                return False
+
+        for evidence in retained.lifecycle:
+            if (
+                evidence.WhichOneof("evidence") in {"ready", "started"}
+                and child.deadline_ns is not None
+                and ingress_ns > child.deadline_ns
+            ):
+                # A fresh read-only query cannot make late readiness/start timely
+                # or release resources through readiness processing.
+                continue
+            receipt = await self.lifecycle_report(
+                evidence, deadline_ns=deadline_ns, ingress_ns=ingress_ns
+            )
+            if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                return False
+        receipt = await self.report_operation(
+            retained.operation,
+            deadline_ns=deadline_ns,
+            ingress_ns=ingress_ns,
+            retained_query=True,
+        )
+        return receipt.result == control.COMMAND_RESULT_ACCEPTED
 
     def resolution_report(
         self, session: SessionRecord

@@ -9,7 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import TypeVar, cast
 
 from cephvr.acquisition.v1 import camera_pb2, microcontroller_pb2
+from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 from .owner import SerialOwner, SerialOwnerError
 
@@ -54,7 +56,14 @@ class SerialOwnerBridge:
         *,
         active_roles: tuple[int | str, ...],
         deadline_ns: int,
+        resolution_operation: control.OperationContext | None = None,
+        requested_configuration_revision: int | None = None,
     ) -> microcontroller_pb2.MicrocontrollerObservation:
+        if (
+            resolution_operation is not None
+            or requested_configuration_revision is not None
+        ):
+            raise ValueError("serial bridge cannot authorize controller edit scope")
         return await self._call(
             lambda: self._get_owner().configure(
                 requested, deadline_ns, active_roles=active_roles
@@ -220,7 +229,7 @@ class SerialOwnerBridge:
                     self._release_after_return
                 )
             raise
-        remaining = max(0, deadline_ns - self._clock()) / 1_000_000_000
+        remaining = remaining_seconds(deadline_ns, clock=self._clock)
         try:
             done, _ = await asyncio.wait((future,), timeout=remaining)
         except asyncio.CancelledError:
@@ -242,7 +251,7 @@ class SerialOwnerBridge:
         return future.result()
 
     async def _acquire_until(self, deadline_ns: int) -> bool:
-        remaining = max(0, deadline_ns - self._clock()) / 1_000_000_000
+        remaining = remaining_seconds(deadline_ns, clock=self._clock)
         if remaining <= 0:
             return False
         waiter = asyncio.create_task(self._gate.acquire())

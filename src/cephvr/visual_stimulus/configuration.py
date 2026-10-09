@@ -36,10 +36,10 @@ from cephvr.visual_stimulus.config.pacing import (
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 7
+_POLICY_VERSION = 8
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "1c13b18107ee4044918433d7e3b4e5264fbaa61eab3aebf0a91b0d0999db90ab"
+_POLICY_SHA256 = "8207b9a949b0bd55c9f4332284315ade4ea38d9ca36371a20f3161a77b4b5990"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port

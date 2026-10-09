@@ -1,0 +1,2 @@
+{'session_scoped': False, 'same_command_id': '9062409a-444c-4795-94ff-85168952e074', 'phases': [3, 3, 4, 5], 'safety_fault': False}
+{'session_scoped': True, 'same_command_id': '6833c737-0816-44c6-9ae1-7c166d68ac61', 'phases': [3, 3, 4, 5], 'safety_fault': False}

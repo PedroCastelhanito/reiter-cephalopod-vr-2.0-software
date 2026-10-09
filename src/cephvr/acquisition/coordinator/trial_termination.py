@@ -35,6 +35,7 @@ from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class PulseBoundaryRunner(Protocol):
@@ -401,7 +402,7 @@ class TrialTermination:
         end = trial.end_monotonic_ns
         if end is None:
             raise ValueError("normal end has no retained schedule")
-        await asyncio.sleep(max(0, end - self.clock()) / 1e9)
+        await asyncio.sleep(remaining_seconds(end, clock=self.clock))
         if trial.pulse_off_task is not None:
             await trial.pulse_off_task
         if (

@@ -12,6 +12,7 @@ from google.protobuf.message import Message
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.transport.messages import backend_command
@@ -45,7 +46,7 @@ async def wait_schedule_completion(
                         f"renderer Schedule failed: {operation.failure.message}"
                     )
                 return
-        await asyncio.sleep(min(0.005, max(0, (deadline_ns - clock()) / 1e9)))
+        await asyncio.sleep(min(0.005, remaining_seconds(deadline_ns, clock=clock)))
     raise TimeoutError("renderer Schedule missed its original deadline")
 
 

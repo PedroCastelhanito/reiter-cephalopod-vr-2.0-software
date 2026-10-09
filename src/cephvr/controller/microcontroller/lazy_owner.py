@@ -69,7 +69,14 @@ class LazySerialOwner(SerialOwnerPort):
         *,
         active_roles: tuple[int | str, ...],
         deadline_ns: int,
+        resolution_operation: control.OperationContext | None = None,
+        requested_configuration_revision: int | None = None,
     ) -> mcu.MicrocontrollerObservation:
+        if (
+            resolution_operation is not None
+            or requested_configuration_revision is not None
+        ):
+            raise ValueError("controller-local serial owner cannot adopt edit scope")
         selected_port = requested.port if requested.HasField("port") else None
         if self.bridge is not None and selected_port and selected_port != self.port:
             await self.bridge.close(deadline_ns=deadline_ns)

@@ -414,7 +414,7 @@ async def test_finalized_cleanup_allows_retained_shutdown_but_rejects_new_normal
     assert len(deliveries) == (0 if supervisor_cleanup else 2)
     assert (cleanup.command_id, "cleanup") in state.lifecycle
     executor.captures = SimpleNamespace(capture=None, active=False)
-    executor._session_ready = True
+    executor.preparation = SimpleNamespace(session_ready=True)
     executor._refresh_health_snapshot()
     assert state.health_work == work
     assert state.health_session_phase == control.SESSION_PHASE_ENDED

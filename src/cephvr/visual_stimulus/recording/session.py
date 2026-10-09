@@ -158,11 +158,13 @@ class RecordingSession:
             self._line_bytes += reserved_bytes
             self._condition.notify_all()
 
-    def try_reserve_capture(self, group_id: int) -> CaptureReservation | None:
+    def classify_capture(
+        self, group_id: int, evaluation_host_ns: int
+    ) -> tuple[CaptureReservation | None, str, int | None]:
         with self._condition:
             if self._closing:
                 raise RuntimeError("capture admission is sealed at cutoff")
-        return self.worker.try_reserve(group_id)
+        return self.worker.classify_and_reserve(group_id, evaluation_host_ns)
 
     def complete_capture(
         self,
@@ -197,13 +199,22 @@ class RecordingSession:
         """Seal admissions without joining the recording thread on the GL owner."""
         if cutoff_ns < 0 or deadline_ns < cutoff_ns:
             raise ValueError("recording cutoff/deadline are invalid")
-        self.seal_at_cutoff()
+        with self._condition:
+            self.worker.set_cutoff(cutoff_ns)
+            self._closing = True
+            self._condition.notify_all()
 
-    def begin_cancel(self, *, deadline_ns: int) -> None:
+    def begin_cancel(self, *, deadline_ns: int, cutoff_ns: int | None = None) -> None:
         """Seal admissions for interruption; bounded closure continues in background."""
         if deadline_ns < 0:
             raise ValueError("recording cancellation deadline is invalid")
-        self.seal_at_cutoff()
+        if cutoff_ns is not None and cutoff_ns < 0:
+            raise ValueError("recording cancellation cutoff is invalid")
+        with self._condition:
+            if cutoff_ns is not None:
+                self.worker.set_cutoff(cutoff_ns)
+            self._closing = True
+            self._condition.notify_all()
 
     def poll_finished(self) -> RecordingCloseResult | None:
         """Return closure only after the recorder has finalized all owned outputs."""
@@ -291,6 +302,15 @@ class RecordingSession:
                     self.evidence.write_pending()
                     continue
                 if self.worker.drain_once():
+                    now_ns = self.clock_ns()
+                    if (
+                        self.sync_interval_ns
+                        and now_ns - last_sync_ns >= self.sync_interval_ns
+                    ):
+                        self.evidence.write_pending(sync=True)
+                        if self.periodic_sync is not None:
+                            self.periodic_sync()
+                        last_sync_ns = now_ns
                     continue
                 now_ns = self.clock_ns()
                 if (

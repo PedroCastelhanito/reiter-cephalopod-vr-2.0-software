@@ -22,6 +22,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.identity import require_uuid4
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vs_runtime
 
@@ -199,7 +200,7 @@ class DisplayCalibrationController:
                 asyncio.to_thread(
                     self.file_policy_loader, frozenset({"visual_stimulus"})
                 ),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             policies = loaded.get("visual_stimulus")
             if (
@@ -238,7 +239,7 @@ class DisplayCalibrationController:
                     request.expected_profile_sha256,
                     profile_limit,
                 ),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             arena_data, _ = await asyncio.wait_for(
                 asyncio.to_thread(
@@ -248,7 +249,7 @@ class DisplayCalibrationController:
                     request.expected_arena_sha256,
                     arena_limit,
                 ),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             if not arena_data:
                 raise ValueError("arena asset is empty")
@@ -262,13 +263,13 @@ class DisplayCalibrationController:
                     asyncio.to_thread(
                         self.display_pacing_resolver, display_json, policies
                     ),
-                    max(0, (deadline - self.clock()) / 1e9),
+                    remaining_seconds(deadline, clock=self.clock),
                 )
             accepted = parse_display_json(display_json, max_bytes=profile_limit)
             canonical_profile_json = accepted.model_dump_json()
             output_ids = await asyncio.wait_for(
                 asyncio.to_thread(self.display_validator, display_json),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             if not output_ids or len(output_ids) > 64:
                 raise ValueError("display profile has no bounded active outputs")
@@ -311,7 +312,7 @@ class DisplayCalibrationController:
                 try:
                     await asyncio.wait_for(
                         self._dispatch_lock.acquire(),
-                        max(0, (deadline - self.clock()) / 1e9),
+                        remaining_seconds(deadline, clock=self.clock),
                     )
                 except asyncio.CancelledError:
                     rejection = "display calibration Open cancelled before dispatch"
@@ -378,7 +379,7 @@ class DisplayCalibrationController:
         try:
             reply = await asyncio.wait_for(
                 asyncio.shield(rpc_task),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
         except asyncio.CancelledError:
             raise
@@ -469,7 +470,7 @@ class DisplayCalibrationController:
             try:
                 await asyncio.wait_for(
                     self._dispatch_lock.acquire(),
-                    max(0, (deadline - self.clock()) / 1e9),
+                    remaining_seconds(deadline, clock=self.clock),
                 )
             except TimeoutError:
                 return self.hooks.admission(
@@ -514,7 +515,7 @@ class DisplayCalibrationController:
         try:
             reply = await asyncio.wait_for(
                 asyncio.shield(rpc_task),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
         except asyncio.CancelledError:
             raise
@@ -634,7 +635,7 @@ class DisplayCalibrationController:
         try:
             await asyncio.wait_for(
                 self._dispatch_lock.acquire(),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
         except TimeoutError:
             return
@@ -656,7 +657,7 @@ class DisplayCalibrationController:
         try:
             reply = await asyncio.wait_for(
                 asyncio.shield(rpc_task),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
         except Exception as exc:
             self.hooks.complete_operation(
@@ -680,7 +681,7 @@ class DisplayCalibrationController:
         self, command_id: str, diagnostic_id: str, deadline_ns: int
     ) -> None:
         loop = asyncio.get_running_loop()
-        wall_deadline = loop.time() + max(0, (deadline_ns - self.clock()) / 1e9)
+        wall_deadline = loop.time() + remaining_seconds(deadline_ns, clock=self.clock)
         while self.clock() < deadline_ns and loop.time() < wall_deadline:
             async with self.lifecycle.lock:
                 evidence = self._evidence()
@@ -736,7 +737,7 @@ class DisplayCalibrationController:
                 self.hooks.publish()
 
     async def _timeout(self, command_id: str, deadline_ns: int) -> None:
-        await asyncio.sleep(max(0, (deadline_ns - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(deadline_ns, clock=self.clock))
         async with self.lifecycle.lock:
             pending = self.device.calibration_pending
             if pending is not None and pending[0] == command_id:

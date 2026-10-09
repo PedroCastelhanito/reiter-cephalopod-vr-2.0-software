@@ -8,7 +8,10 @@ from typing import cast
 
 from cephvr.acquisition.coordinator.commands import retain_worker_command
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    clear_observation,
+    invalidate_released_idle_proof,
     retain_applied_pulse_state,
+    retain_observation,
 )
 from cephvr.acquisition.coordinator.session_catalogue import SessionCatalogue
 from cephvr.acquisition.coordinator.session_payloads import (
@@ -98,15 +101,18 @@ class SessionPreparation:
             f"microcontroller-claim:{settings.pulses.port}",
             deadline_ns=deadline_ns,
         )
+        invalidate_released_idle_proof(self.pulse)
         observation = await self.serial.connect(deadline_ns=deadline_ns)
-        self.pulse.observation = observation
-        self.pulse.observation = await self.serial.configure(
+        retain_observation(self.pulse, observation)
+        invalidate_released_idle_proof(self.pulse)
+        configured = await self.serial.configure(
             settings.pulses,
             active_roles=active_roles,
             deadline_ns=deadline_ns,
         )
+        retain_observation(self.pulse, configured)
         applied = mcu.MicrocontrollerObservation()
-        applied.CopyFrom(self.pulse.observation)
+        applied.CopyFrom(configured)
         resolution = mcu.PulseConfigurationResolution(
             requested_configuration_revision=request.plan.configuration_revision,
             requested=settings.pulses,
@@ -148,8 +154,9 @@ class SessionPreparation:
         # showed no enabled outputs. Close it before session catalogue ownership
         # begins so a free-run Setup cannot leave an uncatalogued serial port.
         if self.pulse.observation is not None:
+            invalidate_released_idle_proof(self.pulse)
             await self.serial.close(deadline_ns=deadline_ns)
-            self.pulse.observation = None
+            clear_observation(self.pulse)
 
     async def launch_workers(
         self,

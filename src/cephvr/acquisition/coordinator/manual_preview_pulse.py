@@ -25,6 +25,7 @@ from cephvr.acquisition.coordinator.manual_preview_transfer import (
     ManualPreviewTransferOwner,
 )
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    invalidate_released_idle_proof,
     retain_applied_pulse_state,
 )
 from cephvr.acquisition.coordinator.preview_windows import PreviewWindows
@@ -44,6 +45,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class ManualPreviewPulseLifecycle:
@@ -81,9 +83,14 @@ class ManualPreviewPulseLifecycle:
         self.windows = windows
 
     async def pause_for_pulse_change(
-        self, roles: tuple[int, ...], *, deadline_ns: int
+        self,
+        roles: tuple[int, ...],
+        *,
+        deadline_ns: int,
+        parent_operation: control.OperationContext | None = None,
     ) -> tuple[PausedPreview, ...]:
         paused: list[PausedPreview] = []
+        parent = parent_operation or control.OperationContext(command_id=str(uuid4()))
         for role in roles:
             worker = self.workers.get(role)
             preview = worker.preview if worker is not None else None
@@ -91,11 +98,10 @@ class ManualPreviewPulseLifecycle:
                 continue
             if worker is None:
                 raise RuntimeError("preview worker disappeared before pulse pause")
-            command_id = str(uuid4())
             command, child, port = retain_worker_command(
                 worker,
                 work=None,
-                parent_operation=control.OperationContext(command_id=command_id),
+                parent_operation=parent,
                 kind="stop_preview",
                 deadline_ns=deadline_ns,
                 configuration_revision=preview.configuration_revision,
@@ -123,16 +129,19 @@ class ManualPreviewPulseLifecycle:
             await _wait_event(preview.cleanup_event, deadline_ns, self.clock)
             if preview.resolved_camera is None:
                 raise RuntimeError("preview pause lacks retained resolved camera")
-            if self.windows is not None:
-                await self.windows.close(role, preview.run_id, deadline_ns=deadline_ns)
             self.device_status.resolve_camera(
                 role,
                 preview.resolved_camera,
                 device_open=True,
                 preview_prepared=False,
                 preview_running=False,
+                preview_run_id=preview.run_id,
+                cleanup_pending=True,
                 configuration_revision=preview.configuration_revision,
             )
+            if self.windows is not None:
+                await self.windows.close(role, preview.run_id, deadline_ns=deadline_ns)
+            await self.transfers.retire_and_release(preview, deadline_ns=deadline_ns)
             paused.append(
                 PausedPreview(
                     role,
@@ -142,39 +151,42 @@ class ManualPreviewPulseLifecycle:
                     preview.preview_output_bit_depth,
                 )
             )
-            viewer_was_attached = preview.viewer is not None
             preview.stopping = False
-            self.transfers.retire(preview)
             worker.preview = None
-            self.transfers.close_retired_resource(preview)
-            if viewer_was_attached:
-                await _wait_event(
-                    preview.viewer_released_event, deadline_ns, self.clock
-                )
-                if preview.viewer is not None:
-                    raise RuntimeError(
-                        "preview viewer release did not retire exact transfer"
-                    )
-            self.transfers.close_retired_resource(preview)
-            if preview.allocation_id in self.resources:
-                raise RuntimeError("paused preview ring ownership remains unresolved")
+            self.device_status.resolve_camera(
+                role,
+                preview.resolved_camera,
+                device_open=True,
+                preview_prepared=False,
+                preview_running=False,
+                configuration_revision=preview.configuration_revision,
+            )
         return tuple(paused)
 
     async def resume_after_pulse_change(
-        self, token: tuple[PausedPreview, ...], *, deadline_ns: int
+        self,
+        token: tuple[PausedPreview, ...],
+        *,
+        deadline_ns: int,
+        parent_operation: control.OperationContext | None = None,
     ) -> None:
+        parent = parent_operation or control.OperationContext(command_id=str(uuid4()))
         restarted: list[tuple[WorkerRecord, WorkerPreview]] = []
         for item in token:
             worker = self.workers.get(item.role)
             if worker is None or worker.preview is not None:
                 raise RuntimeError("paused preview ownership changed before resume")
             restarted.append(
-                (worker, await self._prepare_restart(worker, item, deadline_ns))
+                (
+                    worker,
+                    await self._prepare_restart(worker, item, deadline_ns, parent),
+                )
             )
         external_roles = tuple(
             item.role for item in token if _is_external(self.configuration, item.role)
         )
         if external_roles:
+            invalidate_released_idle_proof(self.pulse)
             evidence = await self.serial.on(
                 external_roles,
                 scheduled_boundary_ns=None,
@@ -195,6 +207,7 @@ class ManualPreviewPulseLifecycle:
                 preview_prepared=True,
                 preview_running=True,
                 preview_run_id=preview.run_id,
+                cleanup_pending=False,
                 configuration_revision=preview.configuration_revision,
             )
 
@@ -203,6 +216,7 @@ class ManualPreviewPulseLifecycle:
         worker: WorkerRecord,
         paused: PausedPreview,
         deadline_ns: int,
+        parent_operation: control.OperationContext,
     ) -> WorkerPreview:
         setting = getattr(self.configuration.settings, role_name(paused.role))
         policy = camera_policy(self.configuration.file_policies, paused.role)
@@ -248,11 +262,20 @@ class ManualPreviewPulseLifecycle:
             tracking_worker_attachment=tracking_worker_attachment,
         )
         worker.preview = preview
-        command_id = str(uuid4())
+        self.device_status.resolve_camera(
+            paused.role,
+            paused.resolved,
+            device_open=True,
+            preview_prepared=False,
+            preview_running=False,
+            preview_run_id=preview.run_id,
+            cleanup_pending=True,
+            configuration_revision=preview.configuration_revision,
+        )
         prepare_command, prepare_child, port = retain_worker_command(
             worker,
             work=None,
-            parent_operation=control.OperationContext(command_id=command_id),
+            parent_operation=parent_operation,
             kind="prepare_preview",
             deadline_ns=deadline_ns,
             configuration_revision=self.configuration.revision,
@@ -282,10 +305,20 @@ class ManualPreviewPulseLifecycle:
         )
         if not prepared.succeeded:
             raise RuntimeError("preview re-preparation failed")
+        self.device_status.resolve_camera(
+            paused.role,
+            paused.resolved,
+            device_open=True,
+            preview_prepared=True,
+            preview_running=False,
+            preview_run_id=preview.run_id,
+            cleanup_pending=True,
+            configuration_revision=preview.configuration_revision,
+        )
         start_command, start_child, port = retain_worker_command(
             worker,
             work=None,
-            parent_operation=control.OperationContext(command_id=command_id),
+            parent_operation=parent_operation,
             kind="start_preview",
             deadline_ns=deadline_ns,
             configuration_revision=self.configuration.revision,
@@ -324,7 +357,7 @@ def _is_external(configuration: ConfigurationRecord, role: int) -> bool:
 async def _wait_event(
     event: asyncio.Event, deadline_ns: int, clock: Callable[[], int]
 ) -> None:
-    remaining = max(0, deadline_ns - clock()) / 1_000_000_000
+    remaining = remaining_seconds(deadline_ns, clock=clock)
     if remaining <= 0:
         raise TimeoutError("preview lifecycle evidence missed its deadline")
     await asyncio.wait_for(event.wait(), remaining)

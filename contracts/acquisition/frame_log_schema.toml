@@ -1,10 +1,9 @@
 # A07/E04 format declaration, NOT runtime configuration or a writer.
-# Current unpadded writer format. A07 revision 58 / A08 revision 49 select identified
-# duplicate padding; encoded-frame mapping/schema amendment is pending before implementation.
+# A07/A08 nominal-slot video mapping; source rows remain independent and unchanged.
 # One append-only JSON Lines frame log per recorded camera/trial, next to that
-# camera's MP4: a header line, one frame line per received image, a completion line.
+# camera's MP4: a header, received-image rows, encoded-slot mappings and completion.
 contract_status = "declared" # Host acceptance/verification: reports/acquisition.md.
-schema_version = 2 # v1 was CSV frames + separate meta JSON.
+schema_version = 3 # v2 was source-frame-only JSONL with implicit one-to-one video rows.
 camera_roles = ["behavioral", "tracking"]
 camera_tags = ["behavioral_cam", "tracking_cam"]
 video_pattern = "<trial_prefix>_<camera_role>_cam.mp4"
@@ -14,8 +13,8 @@ frames_pattern = "<trial_prefix>_<camera_role>_cam_frames.jsonl"
 # UTF-8 JSON Lines, LF-terminated, compact separators, fixed key order per line type,
 # every line carries "type". Integers are JSON integers (ns values stay exact int64;
 # readers should load ns fields as int64, not float). null = unavailable, never 0.
-line_types = ["header", "frame", "completion"]
-order = "header_first_then_frames_in_acquisition_order_then_completion"
+line_types = ["header", "frame", "video_frame", "completion"]
+order = "header_then_ordered_source_rows_and_encoded_mapping_rows_then_completion"
 sync = "append_ready_lines_then_os_sync_every_sync_interval_s_and_at_close"
 crash_state = "valid_up_to_last_complete_line_missing_completion_means_incomplete"
 # A reader discards an incomplete final line. No checkpoints, checksums, index or
@@ -53,13 +52,22 @@ nominal_rate_source_values = ["applied_mcu_rate", "free_running_frame_rate"]
 [frame]
 # One line per received in-trial image, including invalid images and recording drops,
 # appended once its drop decision is final, in contiguous source order; never placeholders.
-fields = ["type", "frame_id", "host_receipt_ns", "dropped", "video_frame", "camera_frame_counter", "camera_timestamp_ns", "invalid_code"]
+fields = ["type", "frame_id", "host_receipt_ns", "dropped", "video_frame", "video_disposition", "camera_frame_counter", "camera_timestamp_ns", "invalid_code"]
 frame_id_start = 0 # Per camera per trial, including invalid/dropped frames (A09).
-# dropped: true/false. video_frame: 0-based MP4 frame index for non-dropped lines
-# (= count of earlier non-dropped lines); null when dropped. camera_* : null when
-# unavailable. invalid_code: null for valid images; a stable CephVR diagnostic code
-# (A07) for a received invalid/incomplete image, whose line is always dropped=true.
-video_mapping = "nth_non_dropped_frame_is_nth_video_frame"
+# dropped: true/false. video_frame: nominal slot for selected real source frames;
+# null for invalid, capacity-dropped and same-slot-omitted sources. video_disposition
+# identifies the distinct source omission. camera_* : null when unavailable.
+# invalid_code: null for valid images; stable code for invalid/incomplete images.
+video_disposition_values = ["real", "invalid_image", "capacity_drop", "same_slot_omission"]
+video_mapping = "explicit_encoded_video_frame_lines_reference_original_source_identity_and_time"
+
+[video_frame]
+fields = ["type", "encoded_frame_index", "nominal_slot", "source_frame_id", "source_host_receipt_ns", "disposition"]
+disposition_values = ["real", "leading_duplicate", "interior_duplicate", "trailing_duplicate"]
+slot_interval = "[T+n/R,T+(n+1)/R)"
+slot_clock = "host_receipt_ns"
+selection = "first_usable_image_per_slot; later_same_slot_images_are_video_omissions_only"
+endpoint = "emit_slots_whose_start_is_strictly_before_actual_cutoff"
 
 [completion]
 # Appended once at closure after drain/reconciliation; absent after a crash.
@@ -75,7 +83,8 @@ fields = [
 ]
 
 [completion.video]
-fields = ["recorded_frame_count"]
+fields = ["recorded_frame_count", "selected_source_frame_count", "duplicate_frame_count"]
+recorded_frame_count = "complete nominal frames submitted to FFmpeg input; not proof of encoded/persisted samples"
 
 [completion.pulses]
 # SYS-004 matching evidence from A11 grouped ON/OFF; null for free-running cameras

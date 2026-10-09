@@ -36,6 +36,10 @@ class PulseRecord:
     """Last full typed observation from the serialized serial owner port."""
 
     observation: mcu.MicrocontrollerObservation | None = None
+    released_idle_state: mcu.MicrocontrollerState | None = None
+    released_idle_connection_id: str | None = None
+    claim_release_pending: bool = False
+    claim_release_connection_id: str | None = None
 
 
 @dataclass

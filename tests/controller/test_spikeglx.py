@@ -1492,3 +1492,67 @@ async def test_timed_out_sdk_call_keeps_ownership_until_native_return() -> None:
     await asyncio.sleep(0.02)
     assert await owner.run(lambda: "next", 1) == "next"
     owner.close(wait=True)
+
+
+@pytest.mark.asyncio
+async def test_late_sdk_exception_is_consumed_and_logged(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    owner = SpikeGLXIOOwner()
+    entered, release = threading.Event(), threading.Event()
+
+    def fail_late() -> str:
+        entered.set()
+        release.wait(2)
+        raise RuntimeError("late SDK diagnostic")
+
+    call = asyncio.create_task(owner.run(fail_late, 0.02))
+    assert await asyncio.to_thread(entered.wait, 1)
+    with pytest.raises(TimeoutError):
+        await call
+    with pytest.raises(SpikeGLXIOBusy):
+        await owner.run(lambda: "must not run", 1)
+    release.set()
+    async with asyncio.timeout(1):
+        while True:
+            try:
+                assert await owner.run(lambda: "next", 1) == "next"
+                break
+            except SpikeGLXIOBusy:
+                await asyncio.sleep(0.005)
+    assert "failed after its caller stopped waiting: late SDK diagnostic" in caplog.text
+    owner.close(wait=True)
+
+
+@pytest.mark.asyncio
+async def test_cancelled_sdk_caller_keeps_native_ownership_and_late_error(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    owner = SpikeGLXIOOwner()
+    entered, release = threading.Event(), threading.Event()
+
+    def fail_late() -> str:
+        entered.set()
+        release.wait(2)
+        raise RuntimeError("cancelled-call diagnostic")
+
+    call = asyncio.create_task(owner.run(fail_late, 5))
+    assert await asyncio.to_thread(entered.wait, 1)
+    call.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await call
+    with pytest.raises(SpikeGLXIOBusy):
+        await owner.run(lambda: "must not run", 1)
+    release.set()
+    async with asyncio.timeout(1):
+        while True:
+            try:
+                assert await owner.run(lambda: "next", 1) == "next"
+                break
+            except SpikeGLXIOBusy:
+                await asyncio.sleep(0.005)
+    assert (
+        "failed after its caller stopped waiting: cancelled-call diagnostic"
+        in caplog.text
+    )
+    owner.close(wait=True)

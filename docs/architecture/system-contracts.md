@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 168
+**Status:** Accepted · **Revision:** 169
 
 **Processes and startup**
 
@@ -250,12 +250,18 @@ design; runtime monitoring remains unimplemented.
   planned with an exact parent operation and no session/trial work. Reuse registered
   suspended creation and containment before resume; no Ready/heartbeat is required.
   Normal exit remains retained until controller confirms native process/job/pipe
-  and private source/build/image cleanup before starting the next phase. Only this role
-  accepts an authenticated exact-owner
-  cleanup confirmation; supervisor independently requires its exact job empty before
-  release. Partial launches remain blockers until reconciled. Cancellation/deadline
+  and private source/build/image cleanup before starting the next phase. Only this helper role
+  accepts the native-helper cleanup flag; supervisor independently requires its exact
+  job empty before release. Partial launches remain blockers until reconciled. Cancellation/deadline
   terminates the exact job, including compiler/uploader descendants, without extending the
   original operation budget.
+- Acquisition retires a camera worker through explicit exact-owner launch confirmation
+  carrying its verified retained successful Cleanup operation and matching resource/output
+  evidence before requesting worker shutdown. Supervisor acknowledgement fences only
+  that exact worker/work/operation's expected exit; release still requires independently
+  verified native process/job absence. The original retirement deadline is unchanged;
+  released resources do not turn failed recordings into successful outputs. Queries, exit and liveness alone
+  never establish closure; persistent renderer session cleanup does not retire its process.
 - Acquisition, Visual Stimulus and tracking reuse the small
   [native transport helpers](../../contracts/native-transport.md) for bounded
   message-mode pipes, mapping attachment, cancellation and resource ownership.

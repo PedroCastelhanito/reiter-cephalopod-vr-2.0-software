@@ -390,6 +390,15 @@ class ShutdownCoordinator:
     async def _wait_for_cleanup_blockers(self, until_ns: int) -> None:
         await wait_while(self.recovery.cleanup_blockers, until_ns)
 
+    async def _watch_controller_loss(self, until_ns: int) -> None:
+        """Observe authority loss while bounded worker cleanup is in flight."""
+        await wait_while(
+            lambda: not self.state.shutdown_interrupted and not self._controller_gone(),
+            until_ns,
+        )
+        if host_time_ns() < until_ns:
+            await self.interrupt_if_controller_lost()
+
     def _registered_context(self) -> wire.RegisteredContext:
         # Re-read at each step: a re-registration may replace the context.
         context = self.registration.state.context
@@ -489,24 +498,36 @@ class ShutdownCoordinator:
             )
             recovery_ns = max(0, self._registered_context().policies.recovery_ns)
             initial_deadline = max(host_time_ns(), cleanup_deadline - recovery_ns)
-            await self._wait_for_cleanup_blockers(initial_deadline)
-            # Concurrent: one backend running to the deadline must not leave the
-            # other's outputs unattempted.
-            branches = await asyncio.gather(
-                self._cleanup_acquisition_workers(cleanup_deadline),
-                self._cleanup_workers(
-                    self.visual_stimulus_worker_control, cleanup_deadline
-                ),
-                return_exceptions=True,
+            observer = asyncio.create_task(
+                self._watch_controller_loss(cleanup_deadline)
             )
-            for name, branch in zip(
-                ("acquisition", "visual stimulus"), branches, strict=True
-            ):
-                if isinstance(branch, Exception):
-                    self.tasks.report_failure(f"{name} worker cleanup", branch)
-            await self._wait_for_cleanup_blockers(cleanup_deadline)
-            await self.interrupt_if_controller_lost()
-            await self._request_participant_shutdown(cleanup_deadline)
+            try:
+                await self._wait_for_cleanup_blockers(initial_deadline)
+                # Concurrent: one backend running to the deadline must not leave the
+                # other's outputs unattempted.
+                branches = await asyncio.gather(
+                    self._cleanup_acquisition_workers(cleanup_deadline),
+                    self._cleanup_workers(
+                        self.visual_stimulus_worker_control, cleanup_deadline
+                    ),
+                    return_exceptions=True,
+                )
+                for name, branch in zip(
+                    ("acquisition", "visual stimulus"), branches, strict=True
+                ):
+                    if isinstance(branch, Exception):
+                        self.tasks.report_failure(f"{name} worker cleanup", branch)
+                await self._wait_for_cleanup_blockers(cleanup_deadline)
+                await self.interrupt_if_controller_lost()
+                await self._request_participant_shutdown(cleanup_deadline)
+            finally:
+                observer.cancel()
+                try:
+                    await observer
+                except asyncio.CancelledError:
+                    pass
+                except Exception as exc:
+                    self.tasks.report_failure("controller loss observer", exc)
         exits = await stop_owned_processes(
             registry=self.registry,
             native=self.native,

@@ -277,6 +277,23 @@ class CamerasPanel(ResponsiveColumns):
         self.loading = False
         self.refresh_controls()
 
+    def focus_validation_error(self, role: str, field_name: str) -> None:
+        """Select the camera and field named by whole-proposal validation."""
+        row = next(
+            (index for index, draft in enumerate(self.drafts) if draft.role == role),
+            None,
+        )
+        if row is None:
+            return
+        self.table.selectRow(row)
+        editor = {
+            "Parameter file": self.preset,
+            "Trigger source": self.trigger_source,
+            "Trigger rate": self.fields["trigger_frequency_hz"],
+        }.get(field_name)
+        if editor is not None:
+            editor.setFocus()
+
     def edit(self, key: str, value: str) -> None:
         if (
             not self.loading

@@ -32,6 +32,7 @@ from cephvr.controller.state import (
     LimitsState,
     TrialClosureState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 
 
 @dataclass(frozen=True)
@@ -168,7 +169,7 @@ class TrialExecution:
                     for name, request in request_by_name.items()
                 )
             ),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         if any(reply.result != pb.COMMAND_RESULT_ACCEPTED for reply in replies):
             raise RuntimeError("trial preparation rejected")
@@ -315,7 +316,7 @@ class TrialExecution:
                     for backend, request in releases.values()
                 )
             ),
-            max(0, (schedule.release_deadline_ns - self.clock()) / 1e9),
+            remaining_seconds(schedule.release_deadline_ns, clock=self.clock),
         )
         for name, reply in zip(releases, release_results, strict=True):
             if reply.result != pb.COMMAND_RESULT_ACCEPTED:
@@ -328,7 +329,7 @@ class TrialExecution:
     ) -> None:
         target = schedule.target_ns
         end = schedule.end_ns
-        await asyncio.sleep(max(0, (target - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(target, clock=self.clock))
         async with self.lifecycle.lock:
             self.lifecycle.trial.phase = pb.TRIAL_PHASE_RUNNING
             self.publisher.publish()
@@ -347,7 +348,7 @@ class TrialExecution:
             target + self.limit_state.current.start_evidence_ns,
             attempt,
         )
-        await asyncio.sleep(max(0, (end - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(end, clock=self.clock))
         async with self.lifecycle.lock:
             self.lifecycle.trial.phase = pb.TRIAL_PHASE_FINALIZING
             attempt.finished_deadline_ns = end + self.limit_state.current.finished_ns
@@ -386,7 +387,7 @@ class TrialExecution:
             ),
             0,
         )
-        await asyncio.sleep(max(0, (end + gap - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(end + gap, clock=self.clock))
 
     async def trial_command_with_retry(
         self,
@@ -400,7 +401,8 @@ class TrialExecution:
                 raise TimeoutError("trial command dispatch cutoff elapsed")
             try:
                 return await asyncio.wait_for(
-                    send(request), max(0, (receipt_deadline_ns - self.clock()) / 1e9)
+                    send(request),
+                    remaining_seconds(receipt_deadline_ns, clock=self.clock),
                 )
             except grpc.RpcError:
                 if retry or self.clock() >= receipt_deadline_ns:

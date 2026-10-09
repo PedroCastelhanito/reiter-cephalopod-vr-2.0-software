@@ -1,0 +1,37 @@
+CephVR GUI / Tracking / SpikeGLX audit
+Snapshot: HEAD 0aebf47bc869d69db511a7dd736709480d3e4d53, delta 7ba43b1..HEAD
+Scope: current GUI / Tracking / SpikeGLX and boundaries; read-only source review.
+
+RESULT
+No newly introduced P1/P2 behavioral defect found in the reviewed Tracking format/unit changes or GUI configuration snapshot paths. The GUI/controller cross-camera feedback issue and SpikeGLX late future exception remain valid open items. GUI alignment/narrow issues are intermittent or native-only; no extra defect reproduced here.
+
+FINDINGS (severity-ranked)
+
+P2 — Cross-camera configuration rejection is only surfaced at whole-proposal level, without directing the operator to the blocking row.
+Location: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/src/cephvr/gui/managed_configuration.py:359 (Tracking proposal role gate); /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/src/cephvr/gui/camera_snapshot_settings.py:51 (per-row source gate).
+Trigger/consequence: a selected Behavior camera proposal can be refused because enabled Tracking still has no explicit external trigger source. The operator sees the global submission rejection but not which other row must be completed, so a seemingly unrelated Behavior save is confusing. The accepted PFS hint is draft-only; current behavior is validation, not a wrongly attributed hardware failure. This is recorded in LOG.md 2026-10-08 and TODO `camera-configuration-validation-feedback`.
+Governing IDs: G01, E07, A10, E15. Simplest fix: retain field-path/backend/camera provenance from validation and place a concise error on the Tracking row while keeping whole-configuration atomic validation.
+Status: known, still open; no code fix included in this audit. Existing evidence is user console report plus read-only validation source review, no new device operation.
+
+P2 — A late SDK exception following a SpikeGLX timeout is not consumed by the asyncio wrapper future.
+Location: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/src/cephvr/synchronization/sdk_io.py:48-53.
+Trigger/consequence: diagnostic `run()` times out while a blocking SDK call is still executing. `asyncio.shield` prevents cancellation and `_pending` retains native ownership correctly, but when the wrapped future later faults, there is no waiter/callback consuming its exception; this can produce an unretrieved-future warning. Remote log evidence says SpikeGLX diagnostic times out then has a late TCP/future failure. The timed-out call is read-only in the observed diagnostic. It does not by itself establish a remote mutation or data-integrity failure.
+Governing IDs: E08/E12/E15. Simplest fix: after caller timeout, keep a completion observer for the asyncio wrapper and explicitly consume/log its eventual result/exception, while preserving `_pending` ownership until native invocation actually returns. Add a focused timeout-then-late-failure case to existing `tests/controller/test_spikeglx.py` if the owner authorizes a repair increment.
+Status: known, open as `spikeglx-controller-integration`; remote failure evidence is historical; this audit did not call the remote server.
+
+P3 — GUI alignment/narrow concerns are not a new regression demonstrated by this delta.
+Relevant location/test: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/tests/gui/test_dashboard.py:8544 (`test_reference_advanced_controls_align_to_layer_and_retain_first`); TODO entries `protocol-advanced-alignment` and `devices-narrow-overflow`.
+Evidence: the focused offscreen command below passes the advanced alignment and narrow protocol tests. That cannot settle the intermittent full-suite displacement or native window minimum-width/DPI behavior. The runtime report retains eight clipping failures from the current full suite and records that the native drag did not resize the window; native narrow evidence remains unverified. Keep the TODOs and rig check open; do not recast a focused offscreen pass as full-suite/native acceptance.
+Governing IDs: G01/G02/E15.
+
+SIMPLIFICATION / SCOPE REVIEW
+The GUI configuration helper and individual snapshot codecs have clear file IO versus page-state responsibilities; load validates before restore and QSaveFile is used for atomic replacement. Current new ownership remains in focused page components. Tracking's physical conversion adapter keeps estimator math separate. Recording admission now charges the immutable record, expanded JSON workspace and serialization buffers; existing tests exercise the bound. No additional dependency, process, whole-runtime reference, policy choice, or generated source edit found in the reviewed GUI/Tracking/SpikeGLX areas. Avoid treating historical root HEAD diff totals as useful scope evidence because the repository contains a large tracked .tmp fixture set; root is reconciling hygiene separately.
+
+TESTS / EVIDENCE RUN
+- `.venv/bin/python -m pytest tests/tracking/test_configuration.py tests/tracking/test_processing.py tests/tracking/test_recording.py -q` — 80 passed in 5.11s.
+- `.venv/bin/python -m pytest tests/controller/test_spikeglx.py -q` — 25 passed in 0.57s. These tests do not exercise the actual remote SpikeGLX server timeout described above.
+- `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'full_gui_config or invalid_full_gui or gui_snapshot or snapshot_limits or snapshot_draft or configuration_files or reference_advanced_controls_align_to_layer or narrow_protocol or camera_snapshot'` — 19 passed, 349 deselected in 15.37s. First attempt without QT_QPA_PLATFORM=offscreen aborted in Qt GUI fixture initialization; retry under offscreen passed. Offscreen is not native DPI/physical window verification.
+- Current report evidence already records broader Tracking/schema/static/boundary results; this audit did not rerun all static checks.
+
+READ-ONLY / LIMITED SCOPE
+Read root AGENTS guidance and architecture/system-contracts plus GUI, Tracking, Synchronization decision pages and reports/runtime.md, reports/tracking.md, TODO.md, recent LOG.md. No deeper AGENTS files found under GUI/Tracking/test/docs paths. No source, report, TODO, or LOG edits. No hardware, network mutation, runtime restart, or rig test.

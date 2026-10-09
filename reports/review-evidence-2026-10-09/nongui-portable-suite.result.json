@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+    "-m",
+    "not windows and not rig",
+    "-p",
+    "no:cacheprovider",
+    "--junitxml=/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/reports/review-evidence-2026-10-09/nongui-portable-suite.xml"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "started_utc": "2026-10-09T05:31:49.904007+00:00",
+  "elapsed_seconds": 310.307,
+  "returncode": 0,
+  "raw": "nongui-portable-suite.txt",
+  "source_hashes": "nongui-final-input-hashes.json",
+  "scope_note": "Final frozen non-GUI implementation, including rejected/non-dispatched edit correction and owning admission fixture; 1795 passed, 6 skipped, 8 deselected."
+}

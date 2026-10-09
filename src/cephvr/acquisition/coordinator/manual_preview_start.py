@@ -25,7 +25,9 @@ from cephvr.acquisition.coordinator.manual_preview_setup import (
     new_worker_preview,
 )
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    invalidate_released_idle_proof,
     retain_applied_pulse_state,
+    retain_observation,
 )
 from cephvr.acquisition.ports import ResourcePort, SerialOwnerPort
 from cephvr.acquisition.state import (
@@ -45,15 +47,24 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class PreviewPulseLifecycle(Protocol):
     async def pause_for_pulse_change(
-        self, roles: tuple[int, ...], *, deadline_ns: int
+        self,
+        roles: tuple[int, ...],
+        *,
+        deadline_ns: int,
+        parent_operation: control.OperationContext | None = None,
     ) -> tuple[PausedPreview, ...]: ...
 
     async def resume_after_pulse_change(
-        self, token: tuple[PausedPreview, ...], *, deadline_ns: int
+        self,
+        token: tuple[PausedPreview, ...],
+        *,
+        deadline_ns: int,
+        parent_operation: control.OperationContext | None = None,
     ) -> None: ...
 
 
@@ -214,14 +225,19 @@ class ManualPreviewStart:
             raise RuntimeError("camera resolution lacks successful SDK evidence")
         if external_roles:
             if self.pulse.observation is None:
+                invalidate_released_idle_proof(self.pulse)
                 await self.serial.connect(deadline_ns=deadline_ns)
+            invalidate_released_idle_proof(self.pulse)
             observation = await self.serial.configure(
                 self.configuration.settings.pulses,
                 active_roles=external_roles,
                 deadline_ns=deadline_ns,
             )
-            self.pulse.observation = mcu.MicrocontrollerObservation.FromString(
-                observation.SerializeToString(deterministic=True)
+            retain_observation(
+                self.pulse,
+                mcu.MicrocontrollerObservation.FromString(
+                    observation.SerializeToString(deterministic=True)
+                ),
             )
             pulse_resolution = mcu.PulseConfigurationResolution(
                 requested_configuration_revision=request.configuration_revision,
@@ -379,6 +395,7 @@ class ManualPreviewStart:
         if not state.succeeded:
             raise RuntimeError(state.failure.message or "manual preview start failed")
         if external_roles:
+            invalidate_released_idle_proof(self.pulse)
             evidence = await self.serial.on(
                 external_roles,
                 scheduled_boundary_ns=None,
@@ -404,7 +421,7 @@ class ManualPreviewStart:
 async def _wait_event(
     event: asyncio.Event, deadline_ns: int, clock: Callable[[], int]
 ) -> None:
-    remaining = max(0, deadline_ns - clock()) / 1_000_000_000
+    remaining = remaining_seconds(deadline_ns, clock=clock)
     if remaining <= 0:
         raise TimeoutError("preview first-frame evidence missed its retained deadline")
     await asyncio.wait_for(event.wait(), remaining)

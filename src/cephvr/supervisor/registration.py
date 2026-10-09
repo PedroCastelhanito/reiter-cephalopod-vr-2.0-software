@@ -281,11 +281,14 @@ class RegistrationCoordinator:
                 raise ValueError("matching registration is still pending")
             return wire.RegistrationReceipt.FromString(admission.record.result), False
         if self.state.context and not self.same_work(request.context.work):
+            finalized_ns = host_time_ns()
+            prior_work_key = self.work_key(self.state.context.work)
             self.commands.finalize_work(
-                self.work_key(self.state.context.work),
-                host_time_ns(),
+                prior_work_key,
+                finalized_ns,
             )
-            self.commands.prune(host_time_ns())
+            self.registry.finalize_work(prior_work_key, finalized_ns)
+            self.commands.prune(finalized_ns)
             self.recovery.cleanup.clear()
             self.state.catalogues.clear()
             self.health.heartbeat_reports.clear()

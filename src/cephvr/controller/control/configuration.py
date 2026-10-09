@@ -12,6 +12,7 @@ from typing import Any
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.operations import ControlOperations
+from cephvr.controller.control.owned_camera_edits import OwnedCameraEdits
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.device.release_evidence import manual_state_open
 from cephvr.controller.lifecycle.cleanup import CleanupWorkflow
@@ -25,6 +26,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 
 _EDITABLE_PHASES = (
@@ -35,8 +37,13 @@ _EDITABLE_PHASES = (
 
 def manual_camera_owned(projections: ProjectionStore, device: DeviceState) -> bool:
     """True while a camera operation, editing owner or manual preview is open."""
-    if device.camera_operation is not None:
+    if device.camera_operation is not None and (
+        not hasattr(device.camera_operation, "work")
+        or device.camera_operation.work.WhichOneof("work") is None
+    ):
         return True
+    if projections.work.WhichOneof("work") is not None:
+        return False
     views = projections.devices
     return views is not None and (
         views.diagnostic.active
@@ -108,6 +115,7 @@ class ConfigurationCommands:
         clock: Callable[[], int],
         spawn: Callable[[Coroutine[Any, Any, Any]], asyncio.Task[Any]],
         microcontroller_active: Callable[[], bool] = lambda: False,
+        owned_edits: OwnedCameraEdits,
     ) -> None:
         self.lifecycle = lifecycle
         self.configuration_state = configuration
@@ -123,6 +131,7 @@ class ConfigurationCommands:
         self.clock = clock
         self.spawn = spawn
         self.microcontroller_active = microcontroller_active
+        self.owned_edits = owned_edits
         # C11: saves run one at a time; a timed-out writer thread that has not
         # started replacing the file skips once a newer save was issued.
         self._history_lock = asyncio.Lock()
@@ -152,6 +161,11 @@ class ConfigurationCommands:
             blocker = self._ownership_blocker()
             if blocker:
                 return self.control_operations.admission(command_id, error=blocker)
+            if self.device_state.configuration_edit is not None:
+                return self.control_operations.admission(
+                    command_id,
+                    error="another acquisition configuration edit is unresolved",
+                )
             revision = self.control.revision
             participation_only = camera_participation_only(
                 self.configuration_state.current, request.proposed
@@ -228,54 +242,55 @@ class ConfigurationCommands:
                 )
                 self.publisher.publish()
                 return self.control_operations.admission(command_id)
+            owned_camera_edit = manual_camera_owned(self.projections, self.device_state)
             if (
-                manual_camera_owned(self.projections, self.device_state)
-                or self.microcontroller_active()
-            ) and _acquisition_settings(request.proposed) != _acquisition_settings(
-                self.configuration_state.current
+                not owned_camera_edit
+                and self.microcontroller_active()
+                and _acquisition_settings(request.proposed)
+                != _acquisition_settings(self.configuration_state.current)
             ):
                 return self.control_operations.admission(
                     command_id,
-                    error=(
-                        "stop Microcontroller diagnostics to edit camera or pulse settings"
-                        if self.microcontroller_active()
-                        else "stop camera preview/editing to edit camera or pulse settings"
-                    ),
+                    error="stop Microcontroller diagnostics to edit camera or pulse settings",
                 )
-            if (
-                self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
-                and self.lifecycle.attempt is not None
-            ):
-                attempt = self.lifecycle.attempt
-                attempt.cancel_requested = True
-                if attempt.handoff is not None:
-                    attempt.handoff.retire()
-                self.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
-                self.spawn(self.cleanup.cancel_attempt(attempt))
-            self.configuration_state.current.CopyFrom(request.proposed)
-            self.configuration_state.revision += 1
-            self.configuration_state.retain_validation(results)
-            self.projections.set_scope(
-                self.projections.work, self.configuration_state.revision
-            )
-            self.control_operations.operation(
-                command_id,
-                "UpdateConfiguration",
-                progress="configuration revision committed",
-                complete=True,
-                succeeded=True,
-            )
-            if self.device_state.display_pending is not None:
-                self.control_operations.complete_operation(
-                    self.device_state.display_pending[0],
-                    success=False,
-                    progress="display initialization superseded",
-                    error="configuration revision changed",
+            if not owned_camera_edit:
+                if (
+                    self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
+                    and self.lifecycle.attempt is not None
+                ):
+                    attempt = self.lifecycle.attempt
+                    attempt.cancel_requested = True
+                    if attempt.handoff is not None:
+                        attempt.handoff.retire()
+                    self.lifecycle.session.phase = pb.SESSION_PHASE_SETTING_UP
+                    self.spawn(self.cleanup.cancel_attempt(attempt))
+                self.configuration_state.current.CopyFrom(request.proposed)
+                self.configuration_state.revision += 1
+                self.configuration_state.retain_validation(results)
+                self.projections.set_scope(
+                    self.projections.work, self.configuration_state.revision
                 )
-                self.device_state.display_pending = None
-                self.projections.expected_display = None
-            self.publisher.publish()
-            return self.control_operations.admission(command_id)
+                self.control_operations.operation(
+                    command_id,
+                    "UpdateConfiguration",
+                    progress="configuration revision committed",
+                    complete=True,
+                    succeeded=True,
+                )
+                if self.device_state.display_pending is not None:
+                    self.control_operations.complete_operation(
+                        self.device_state.display_pending[0],
+                        success=False,
+                        progress="display initialization superseded",
+                        error="configuration revision changed",
+                    )
+                    self.device_state.display_pending = None
+                    self.projections.expected_display = None
+                self.publisher.publish()
+                return self.control_operations.admission(command_id)
+        return await self.owned_edits.apply(
+            request, ownership_blocker=self._ownership_blocker
+        )
 
     def _ownership_blocker(self) -> str:
         """Keep accepted revisions stable while an owner still holds resources."""
@@ -331,7 +346,7 @@ class ConfigurationCommands:
         return await self._save_configuration_history(command, deadline_ns)
 
     async def _persist_history(self, deadline_ns: int) -> None:
-        async with asyncio.timeout(max(0, (deadline_ns - self.clock()) / 1e9)):
+        async with asyncio.timeout(remaining_seconds(deadline_ns, clock=self.clock)):
             async with self._history_lock:
                 async with self.lifecycle.lock:
                     path = self.configuration_history_path

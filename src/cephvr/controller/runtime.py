@@ -510,6 +510,15 @@ class ControllerRuntime:
     async def report_lifecycle(
         self, report: pb.LifecycleReport, ingress_ns: int
     ) -> pb.ReportReceipt:
+        if report.WhichOneof("report") == "operation":
+            operation = report.operation.operation
+            retained = self.device_state.configuration_edit_terminals.get(
+                operation.context.command_id
+            )
+            if retained is not None:
+                return await self.acquisition_resolution.report_configuration_edit_operation(
+                    report.operation, ingress_ns
+                )
         return await self.lifecycle_reports.receive(report, ingress_ns)
 
     async def authority_loss(self, reason: str, issued_ns: int) -> None:

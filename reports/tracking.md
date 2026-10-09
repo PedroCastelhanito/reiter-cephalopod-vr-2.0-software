@@ -1,5 +1,17 @@
 # Tracking status
 
+Current source audit (2026-10-09, `0aebf47`): Luna reviewed physical-unit conversion,
+configuration and recording paths; Sol interpreted the findings and Astra reviewed
+the synthesis. No additional actionable Tracking defect was established. The owning
+configuration/processing/recording selection passes 80 tests, contract discovery 48,
+and all 19 generated schemas match. [Audit evidence and limits](review-evidence-2026-10-09/context.json)
+retain model reports and current-check provenance; no scientific/native/full-load
+acceptance is implied. Tracking camera run43 delivery is acquisition evidence with
+velocities disabled, not a Tracking algorithm or feedback acceptance test. Oct9 repair
+validation repeats all 48 contract cases and 19 schema matches;
+[combined local results](review-evidence-2026-10-09/implementation-context.json)
+retain their scope separately from scientific/rig acceptance.
+
 Current measured-reference implementation (2026-10-08, `physical-reference-calibration`)
 follows [T19/T20](../docs/architecture/tracking.md#t20),
 [T35/T38](../docs/architecture/tracking.md#t38) and

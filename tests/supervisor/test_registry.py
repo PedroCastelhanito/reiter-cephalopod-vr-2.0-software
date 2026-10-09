@@ -7,6 +7,8 @@ from uuid import uuid4
 import pytest
 
 from cephvr.acquisition.identity import FFMPEG_ROLE
+from cephvr.acquisition.v1 import camera_pb2
+from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import (
@@ -17,7 +19,7 @@ from cephvr.supervisor.registry import LaunchError, LaunchRegistry
 from cephvr.visual_stimulus.identity import FFMPEG_ROLE as VISUAL_STIMULUS_FFMPEG_ROLE
 from tests.supervisor.support import Native
 
-from .support import EXE, WORKER_ROLE, _identity, _launch
+from .support import EXE, WORK, WORKER_ROLE, _identity, _launch
 
 # Idempotent release and retained launch capacity.
 
@@ -119,42 +121,259 @@ def test_gui_release_keeps_unknown_native_membership_unconfirmed() -> None:
     )
 
 
-def test_capacity_counts_only_live_launches_and_replay_survives_until_pruned() -> None:
+def test_capacity_preserves_replay_through_work_finalization_retention(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     native = Native()
-    registry = LaunchRegistry(native, 15_000_000_000, max_launches=3)
+    now = 100
+    monkeypatch.setattr("cephvr.supervisor.registry.host_time_ns", lambda: now)
+    registry = LaunchRegistry(native, 15_000_000_000, max_launches=1, retention_ns=100)
     owner = _identity("acquisition")
-    released = []
-    for pid in range(1, 8):
-        state = _launch(
-            registry, native, owner, _identity(WORKER_ROLE), pid, python=True
-        )
-        native.jobs[state.containment_job_name] = []
-        registry.release(state.plan.command_id, obligations_met=True)
-        released.append(state)
-    assert len(registry._entries) <= 3
-    live = [
-        _launch(registry, native, owner, _identity(WORKER_ROLE), 20 + i, python=True)
-        for i in range(3)
-    ]
-    # Only live launches fill capacity: a fourth live launch is refused.
-    with pytest.raises(LaunchError, match="capacity"):
-        registry.plan(
-            wire.PlanLaunchRequest(
-                command_id=str(uuid4()),
-                owner=owner,
-                child=_identity(WORKER_ROLE),
-                executable=EXE,
-                python_worker=True,
-                stop_method="grpc_shutdown",
-            )
-        )
-    assert all(item.plan.command_id in registry._entries for item in live)
-    # A retained released entry still replays its exact plan idempotently.
-    registry2 = LaunchRegistry(native, 15_000_000_000, max_launches=4)
-    state = _launch(registry2, native, owner, _identity(WORKER_ROLE), 90, python=True)
+    state = _launch(registry, native, owner, _identity(WORKER_ROLE), 1, python=True)
     native.jobs[state.containment_job_name] = []
-    registry2.release(state.plan.command_id, obligations_met=True)
-    assert registry2.plan(state.plan).phase == wire.LAUNCH_PHASE_RELEASED
+    released = registry.release(state.plan.command_id, obligations_met=True)
+    assert registry.plan(state.plan) == released
+
+    now = 1_000
+    next_request = wire.PlanLaunchRequest(
+        command_id=str(uuid4()),
+        owner=owner,
+        child=_identity(WORKER_ROLE),
+        executable=EXE,
+        python_worker=True,
+        stop_method="grpc_shutdown",
+    )
+    with pytest.raises(LaunchError, match="capacity"):
+        registry.plan(next_request)
+
+    # Released work remains pinned until the exact session is finalized.
+    now = 2_000
+    registry.finalize_work(WORK.session.session_id, finalized_ns=now)
+    now = 2_099
+    with pytest.raises(LaunchError, match="capacity"):
+        registry.plan(next_request)
+    now = 2_101
+    admitted = registry.plan(next_request)
+    assert admitted.plan.command_id == next_request.command_id
+    assert state.plan.command_id not in registry._entries
+
+    # Finalization may precede exact worker exit; the retention window starts
+    # only once both finalization and release have happened.
+    later = LaunchRegistry(native, 15_000_000_000, max_launches=1, retention_ns=100)
+    now = 3_000
+    delayed_release = _launch(
+        later, native, owner, _identity(WORKER_ROLE), 10, python=True
+    )
+    later.finalize_work(WORK.session.session_id, finalized_ns=3_100)
+    now = 3_200
+    native.jobs[delayed_release.containment_job_name] = []
+    later.release(delayed_release.plan.command_id, obligations_met=True)
+    now = 3_299
+    with pytest.raises(LaunchError, match="capacity"):
+        later.plan(next_request)
+    now = 3_301
+    assert later.plan(next_request).plan.command_id == next_request.command_id
+
+
+def _camera_cleanup_proof(
+    worker: wire.LaunchState,
+    *,
+    include_resource: bool = True,
+    output_closure: int | None = None,
+) -> wire.AcquisitionWorkerCleanupProof:
+    source = acq.WorkerContext(
+        worker=worker.plan.child,
+        owner=worker.plan.owner,
+        work=WORK,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+    )
+    cleanup_id = str(uuid4())
+    operation = acq.WorkerOperationReport(
+        source=source,
+        operation=types.OperationState(
+            context=types.OperationContext(command_id=cleanup_id),
+            command="Cleanup",
+            work=WORK,
+            complete=True,
+            succeeded=True,
+        ),
+    )
+    cleanup = acq.WorkerLifecycleEvidence(
+        source=source,
+        operation=types.OperationContext(command_id=cleanup_id),
+        state_revision=1,
+    )
+    cleanup.cleanup.SetInParent()
+    if include_resource:
+        cleanup.cleanup.resources.add(resource="camera-device", released=True)
+    if output_closure is not None:
+        cleanup.cleanup.outputs.add(output_key="camera-video", closure=output_closure)
+    return wire.AcquisitionWorkerCleanupProof(operation=operation, cleanup=cleanup)
+
+
+def test_camera_release_requires_exact_retained_cleanup_and_empty_job() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    worker = _launch(
+        registry,
+        native,
+        _identity("acquisition"),
+        _identity(WORKER_ROLE),
+        1,
+        python=True,
+    )
+    request = wire.ConfirmLaunchRequest(
+        command_id=str(uuid4()),
+        launch_command_id=worker.plan.command_id,
+        owner=worker.plan.owner,
+        child=worker.plan.child,
+        pid=1,
+        creation_time_100ns=101,
+        acquisition_worker_cleanup=_camera_cleanup_proof(worker),
+    )
+    acknowledged = registry.confirm(request, describe_host_clock())
+    assert acknowledged.phase == wire.LAUNCH_PHASE_OPERATIONAL
+    assert registry.camera_cleanup_acknowledged(worker.plan.command_id)
+    assert (
+        registry.confirm(request, describe_host_clock()).phase
+        == wire.LAUNCH_PHASE_OPERATIONAL
+    )
+    changed_proof = wire.ConfirmLaunchRequest.FromString(request.SerializeToString())
+    changed_proof.command_id = str(uuid4())
+    changed_proof.acquisition_worker_cleanup.cleanup.state_revision += 1
+    with pytest.raises(LaunchError, match="proof changed"):
+        registry.confirm(changed_proof, describe_host_clock())
+    native.jobs[worker.containment_job_name] = []
+    assert (
+        registry.refresh(worker.plan.command_id).phase
+        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+    )
+    released = registry.confirm(request, describe_host_clock())
+    assert released.phase == wire.LAUNCH_PHASE_RELEASED
+    assert (
+        registry.confirm(request, describe_host_clock()).phase
+        == wire.LAUNCH_PHASE_RELEASED
+    )
+
+
+@pytest.mark.parametrize("include_resource", [False, True])
+def test_camera_release_rejects_incomplete_proof_or_live_job(
+    include_resource: bool,
+) -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    worker = _launch(
+        registry,
+        native,
+        _identity("acquisition"),
+        _identity(WORKER_ROLE),
+        2,
+        python=True,
+    )
+    if include_resource:
+        native.jobs[worker.containment_job_name] = [(2, 102, worker.plan.executable)]
+    else:
+        native.jobs[worker.containment_job_name] = []
+    if include_resource:
+        registry._block(
+            registry._entries[worker.plan.command_id],
+            "TEST_RETIRED",
+            "exercise live-job release rejection",
+        )
+    assert (
+        registry.refresh(worker.plan.command_id).phase
+        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+    )
+    request = wire.ConfirmLaunchRequest(
+        command_id=str(uuid4()),
+        launch_command_id=worker.plan.command_id,
+        owner=worker.plan.owner,
+        child=worker.plan.child,
+        pid=2,
+        creation_time_100ns=102,
+        acquisition_worker_cleanup=_camera_cleanup_proof(
+            worker, include_resource=include_resource
+        ),
+    )
+    with pytest.raises(LaunchError):
+        registry.confirm(request, describe_host_clock())
+    assert (
+        registry._entries[worker.plan.command_id].state.phase
+        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+    )
+
+
+def test_camera_release_accepts_failed_output_cleanup_but_rejects_unknown_closure() -> (
+    None
+):
+    for closure, accepted in (
+        (types.OUTPUT_CLOSURE_FAILED, True),
+        (types.OUTPUT_CLOSURE_UNCONFIRMED, False),
+    ):
+        native = Native()
+        registry = LaunchRegistry(native, 15_000_000_000)
+        worker = _launch(
+            registry,
+            native,
+            _identity("acquisition"),
+            _identity(WORKER_ROLE),
+            3,
+            python=True,
+        )
+        request = wire.ConfirmLaunchRequest(
+            command_id=str(uuid4()),
+            launch_command_id=worker.plan.command_id,
+            owner=worker.plan.owner,
+            child=worker.plan.child,
+            pid=3,
+            creation_time_100ns=103,
+            acquisition_worker_cleanup=_camera_cleanup_proof(
+                worker, include_resource=False, output_closure=closure
+            ),
+        )
+        if accepted:
+            assert (
+                registry.confirm(request, describe_host_clock()).phase
+                == wire.LAUNCH_PHASE_OPERATIONAL
+            )
+            native.jobs[worker.containment_job_name] = []
+            registry.refresh(worker.plan.command_id)
+            assert (
+                registry.confirm(request, describe_host_clock()).phase
+                == wire.LAUNCH_PHASE_RELEASED
+            )
+        else:
+            with pytest.raises(LaunchError, match="incomplete or mismatched"):
+                registry.confirm(request, describe_host_clock())
+
+
+def test_camera_process_exit_without_cleanup_proof_does_not_release() -> None:
+    native = Native()
+    registry = LaunchRegistry(native, 15_000_000_000)
+    worker = _launch(
+        registry,
+        native,
+        _identity("acquisition"),
+        _identity(WORKER_ROLE),
+        4,
+        python=True,
+    )
+    native.jobs[worker.containment_job_name] = []
+    registry.refresh(worker.plan.command_id)
+    request = wire.ConfirmLaunchRequest(
+        command_id=str(uuid4()),
+        launch_command_id=worker.plan.command_id,
+        owner=worker.plan.owner,
+        child=worker.plan.child,
+        pid=4,
+        creation_time_100ns=104,
+    )
+    with pytest.raises(LaunchError, match="requires reconciliation"):
+        registry.confirm(request, describe_host_clock())
+    assert (
+        registry._entries[worker.plan.command_id].state.phase
+        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+    )
 
 
 def test_tolerant_states_keep_other_entries_when_one_job_is_unreadable() -> None:

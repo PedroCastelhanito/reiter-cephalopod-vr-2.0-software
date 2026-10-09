@@ -27,6 +27,8 @@ reference to `_stimulus_LOG.json` (including its manifest and uniform layouts). 
 referenced log must be published before the Header is written. Paths are relative to
 the session's `protocol-data/` directory (no `protocol-data/` prefix) and cannot escape
 it after normalization/symlink resolution.
+The cadence-mapped evidence uses Header `format_version = 3`; earlier one-admitted-group
+mapping is not compatible with this encoded-slot correspondence.
 Artifact names still use E04's reservation mechanism.
 
 ## Definitions and effective inputs
@@ -108,11 +110,13 @@ the offline reader use the same semantic rules:
   No projector shows a trial image after the cutoff.
 - Capture dispositions are independent of submission and refer to the group's one
   tiled review composite (tiles map to outputs through the recipe's ReviewEncoding
-  layout). Admission, capacity drop (no free `capture_slots`) or cutoff exclusion is
-  decided once per `group_id`; readback and FFmpeg-input outcomes follow admission in
-  order. An admitted group carries `video_frame_index` n: the review video's frame n
-  is the n-th admitted group, so indices start at zero and increase by one. A stdin
-  write is not proof of encoded pixels.
+  layout). The first usable evaluation per nominal half-open slot selects its source;
+  later same-slot groups carry `same_slot_omission`, distinct from capacity loss or
+  failed readback. `video_frame_index` is the nominal slot, not an admitted-group
+  ordinal. `leading_duplicate`, `interior_duplicate` and `trailing_duplicate` updates
+  map encoded slots back to the original source group's unchanged evaluation time.
+  The first usable source backfills leading slots; the last selected source fills
+  interior and trailing gaps. A stdin write is not proof of encoded pixels.
 - Feedback and interval lines retain the current application/disposition identities.
   Applied FeedbackEvidence references an existing RenderGroup and is written after it
   even though the application occurred before rendering. Each line keeps its result's
@@ -128,8 +132,9 @@ the offline reader use the same semantic rules:
   (`alpha`, `linear_output`, `device_code`); an empty set records complete coverage
   with no clipping. Capture-slot drops do not omit clipping records.
 - EncoderOutcome is one final account for the composite FFmpeg process after all
-  capture dispositions, including late GroupUpdates. Verify counts against earlier
-  lines; absent observations remain unknown. File sync/close is reported through E06;
+  capture dispositions, including late GroupUpdates. Reconcile successful real
+  captures, same-slot omissions, capacity drops, encoded frames and duplicate frames
+  separately; absent observations remain unknown. File sync/close is reported through E06;
   a line cannot prove the later close of its own file.
 - Completion counts reconcile all prior groups, attempts and dispositions (each group
   contributes exactly one state), declared cutoff and exact output set. Normal

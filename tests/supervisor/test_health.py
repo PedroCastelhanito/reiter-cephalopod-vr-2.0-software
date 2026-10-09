@@ -8,12 +8,17 @@ from collections.abc import Callable
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
+
+from cephvr.acquisition.v1 import camera_pb2
+from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.shared.clock import describe_host_clock, host_time_ns
 from tests.supervisor.support import Context, make_runtime
 
 from .support import (
+    _identity,
     _worker_and_helper,
     launch,
 )
@@ -80,6 +85,68 @@ async def test_worker_heartbeat_rejected_coordinator_heartbeat_accepted(
     bad = await runtime.health.report_heartbeat(heartbeat(worker), host_time_ns())
     assert bad.result == types.COMMAND_RESULT_REJECTED
     assert bad.failure.code == "WRONG_CONTEXT"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("acknowledged", [False, True])
+async def test_camera_exit_during_retirement_ack_gap_is_scoped(
+    tmp_path: Path, acknowledged: bool
+) -> None:
+    from cephvr.shared.clock import describe_host_clock
+
+    runtime, native, _, _ = make_runtime(tmp_path)
+    owner = _identity("acquisition")
+    child = _identity("acquisition_behavioral_worker")
+    launch(runtime, native, owner, child, 71)
+    state = next(item for item in runtime.registry.states() if item.plan.child == child)
+    request = wire.ConfirmLaunchRequest(
+        command_id=str(uuid4()),
+        launch_command_id=state.plan.command_id,
+        owner=owner,
+        child=child,
+        pid=71,
+        creation_time_100ns=171,
+    )
+    if acknowledged:
+        context = acq.WorkerContext(
+            worker=child,
+            owner=owner,
+            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+        )
+        operation_id = str(uuid4())
+        operation = types.OperationState(
+            context=types.OperationContext(command_id=operation_id),
+            command="Cleanup",
+            complete=True,
+            succeeded=True,
+        )
+        evidence = acq.WorkerLifecycleEvidence(
+            source=context,
+            operation=types.OperationContext(command_id=operation_id),
+            state_revision=1,
+        )
+        evidence.cleanup.resources.add(resource="camera-device", released=True)
+        request.acquisition_worker_cleanup.operation.source.CopyFrom(context)
+        request.acquisition_worker_cleanup.operation.operation.CopyFrom(operation)
+        request.acquisition_worker_cleanup.cleanup.CopyFrom(evidence)
+        receipt = runtime.registry.confirm(request, describe_host_clock())
+        assert receipt.phase == wire.LAUNCH_PHASE_OPERATIONAL
+
+    native.jobs[state.containment_job_name] = []
+    exited = runtime.registry.states()
+    assert exited[0].phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+    assert exited[0].failure.code == "CHILD_EXITED"
+    runtime.health._check_launch_states(exited, host_time_ns())
+    if acknowledged:
+        assert runtime.shutdown_state.interruption is None
+        assert (
+            runtime.registry.confirm(request, describe_host_clock()).phase
+            == wire.LAUNCH_PHASE_RELEASED
+        )
+    else:
+        assert runtime.shutdown_state.interruption is not None
+        if runtime.shutdown_state.safety_task is not None:
+            await runtime.shutdown_state.safety_task
 
 
 async def test_configuration_heartbeats_survive_registered_setup_scope(
@@ -231,6 +298,30 @@ async def test_pre_session_error_without_isolation_proof_fences_safety(
     assert len(outbound.interruptions) == 1
     report_path = next((tmp_path / "reports").glob("emergency-*.json"))
     assert json.loads(report_path.read_text())["spikeglx_stop_unconfirmed"] is False
+
+
+async def test_pending_fault_still_escalates_during_accepted_shutdown(
+    tmp_path: Path,
+) -> None:
+    runtime, _, outbound, _ = make_runtime(tmp_path)
+    report = types.ErrorReport(
+        error_id=str(uuid4()),
+        source=runtime.controller,
+        occurred_monotonic_ns=host_time_ns(),
+        failure=types.Failure(code="UNCLASSIFIED", message="pending fault"),
+    )
+    runtime.shutdown_state.shutdown_request = wire.ApplicationShutdownRequest(
+        command_id=str(uuid4())
+    ).SerializeToString()
+    runtime.health_state.errors[report.error_id] = report
+    runtime.health_state.pending_error_deadlines[report.error_id] = host_time_ns() - 1
+
+    runtime.health._expire_pending_errors(host_time_ns())
+    assert runtime.shutdown_state.interruption is not None
+    assert runtime.shutdown_state.interruption.reason.code == "UNCLASSIFIED"
+    assert runtime.shutdown_state.safety_task is not None
+    await runtime.shutdown_state.safety_task
+    assert len(outbound.interruptions) == 1
 
 
 async def test_unclassified_error_fences_safety(tmp_path: Path) -> None:

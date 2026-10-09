@@ -234,10 +234,220 @@ def _copy_configuration(destination: Path) -> Path:
 
 
 class _Controller:
+    def __init__(self) -> None:
+        self.resolutions: list[wire.AcquisitionResolutionReport] = []
+
     async def report_acquisition_resolution(
-        self, *_: object, **__: object
+        self,
+        report: wire.AcquisitionResolutionReport,
+        **__: object,
     ) -> control.ReportReceipt:
+        self.resolutions.append(
+            wire.AcquisitionResolutionReport.FromString(
+                report.SerializeToString(deterministic=True)
+            )
+        )
         return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+
+def test_empty_resolution_still_requires_exact_controller_confirmation() -> None:
+    async def scenario() -> None:
+        controller_identity = control.ProcessIdentity(
+            role="controller", generation="controller-1"
+        )
+        backend = control.BackendContext(
+            backend_name="acquisition", backend_generation="acq-1"
+        )
+        identity = CoordinatorIdentity(
+            backend=backend,
+            process=control.ProcessIdentity(role="acquisition", generation="acq-1"),
+            controller=controller_identity,
+            supervisor=control.ProcessIdentity(
+                role="supervisor", generation="supervisor-1"
+            ),
+            tracking=control.ProcessIdentity(role="tracking", generation="tracking-1"),
+        )
+        peer = _Controller()
+        configuration = ConfigurationRecord(
+            settings=control.AcquisitionSettings(),
+            file_policies=runtime.AcquisitionFilePolicies(),
+            revision=5,
+        )
+        resolution = ConfigurationResolution(
+            identity=identity,
+            configuration=configuration,
+            controller=peer,  # type: ignore[arg-type]
+            lock=asyncio.Lock(),
+            clock=lambda: 10,
+        )
+        command = wire.BackendCommand(
+            command_id="configuration-edit",
+            issuer=controller_identity,
+            target=backend,
+            parent_operation=control.OperationContext(command_id="operator-edit"),
+        )
+        operation = await resolution.begin(
+            command,
+            expected_cameras=set(),
+            request_revision=5,
+            deadline_ns=100,
+            allow_empty=True,
+        )
+        receipt = await resolution.report_if_ready(operation)
+        assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+        assert len(peer.resolutions) == 1
+        assert peer.resolutions[0].operation == operation
+        assert not peer.resolutions[0].cameras and not peer.resolutions[0].HasField(
+            "pulses"
+        )
+
+        confirmed = control.AcquisitionSettings()
+        confirmation = wire.AcquisitionConfigurationConfirmation(
+            command=wire.BackendCommand(
+                command_id="configuration-confirmation",
+                issuer=controller_identity,
+                target=backend,
+                parent_operation=operation,
+            ),
+            resolution_operation=operation,
+            requested_configuration_revision=5,
+            confirmed_configuration_revision=6,
+            confirmed=confirmed,
+        )
+        admitted = await resolution.confirm(confirmation, deadline_ns=100)
+        assert admitted.result == control.COMMAND_RESULT_ACCEPTED
+        assert configuration.revision == 6
+
+    asyncio.run(scenario())
+
+
+def test_owned_edit_base_sync_requires_monotonic_quiescent_exact_snapshot() -> None:
+    async def scenario() -> None:
+        controller = control.ProcessIdentity(
+            role="controller", generation="controller-1"
+        )
+        backend = control.BackendContext(
+            backend_name="acquisition", backend_generation="acq-1"
+        )
+        identity = CoordinatorIdentity(
+            backend=backend,
+            process=control.ProcessIdentity(role="acquisition", generation="acq-1"),
+            controller=controller,
+            supervisor=control.ProcessIdentity(
+                role="supervisor", generation="supervisor-1"
+            ),
+            tracking=control.ProcessIdentity(role="tracking", generation="tracking-1"),
+        )
+        configuration = ConfigurationRecord(
+            settings=control.AcquisitionSettings(),
+            file_policies=runtime.AcquisitionFilePolicies(),
+            revision=5,
+        )
+        resolution = ConfigurationResolution(
+            identity=identity,
+            configuration=configuration,
+            controller=_Controller(),  # type: ignore[arg-type]
+            lock=asyncio.Lock(),
+            clock=lambda: 10,
+        )
+
+        def command(command_id: str) -> wire.BackendCommand:
+            return wire.BackendCommand(
+                command_id=command_id,
+                issuer=controller,
+                target=backend,
+                parent_operation=control.OperationContext(command_id="operator-edit"),
+            )
+
+        base = control.AcquisitionSettings()
+        base.behavioral.enabled = True
+        with pytest.raises(RuntimeError, match="terminal and quiescent"):
+            await resolution.begin(
+                command("busy"),
+                expected_cameras=set(),
+                request_revision=6,
+                deadline_ns=100,
+                allow_empty=True,
+                accepted_base_revision=6,
+                accepted_base_settings=base,
+                preexisting_work_quiescent=lambda: False,
+            )
+        assert configuration.revision == 5
+        with pytest.raises(ValueError, match="decreases revision"):
+            await resolution.begin(
+                command("decrease"),
+                expected_cameras=set(),
+                request_revision=4,
+                deadline_ns=100,
+                allow_empty=True,
+                accepted_base_revision=4,
+                accepted_base_settings=base,
+                preexisting_work_quiescent=lambda: True,
+            )
+        with pytest.raises(ValueError, match="base conflicts"):
+            await resolution.begin(
+                command("same-revision-conflict"),
+                expected_cameras=set(),
+                request_revision=5,
+                deadline_ns=100,
+                allow_empty=True,
+                accepted_base_revision=5,
+                accepted_base_settings=base,
+                preexisting_work_quiescent=lambda: True,
+            )
+        operation = await resolution.begin(
+            command("sync"),
+            expected_cameras=set(),
+            request_revision=6,
+            deadline_ns=100,
+            allow_empty=True,
+            accepted_base_revision=6,
+            accepted_base_settings=base,
+            preexisting_work_quiescent=lambda: True,
+        )
+        assert configuration.revision == 6
+        assert configuration.settings == base
+        await resolution.report_if_ready(operation)
+        old_confirmation = wire.AcquisitionConfigurationConfirmation(
+            command=command("late-confirm"),
+            resolution_operation=control.OperationContext(command_id="old-op"),
+            requested_configuration_revision=6,
+            confirmed_configuration_revision=6,
+            confirmed=base,
+        )
+        assert (
+            await resolution.confirm(old_confirmation, deadline_ns=100)
+        ).result == control.COMMAND_RESULT_REJECTED
+        await resolution.cancel(operation)
+        await resolution.retire(operation)
+
+        fresh = await resolution.begin(
+            command("fresh-after-cancel"),
+            expected_cameras=set(),
+            request_revision=6,
+            deadline_ns=100,
+            allow_empty=True,
+            accepted_base_revision=6,
+            accepted_base_settings=base,
+            preexisting_work_quiescent=lambda: True,
+        )
+        assert fresh.command_id == "fresh-after-cancel"
+        late_old_confirmation = wire.AcquisitionConfigurationConfirmation(
+            command=command("late-old-confirmation"),
+            resolution_operation=operation,
+            requested_configuration_revision=6,
+            confirmed_configuration_revision=7,
+            confirmed=base,
+        )
+        assert (
+            await resolution.confirm(late_old_confirmation, deadline_ns=100)
+        ).result == control.COMMAND_RESULT_REJECTED
+        assert resolution._pending is not None
+        assert resolution._pending.operation == fresh
+        await resolution.cancel(fresh)
+        await resolution.retire(fresh)
+
+    asyncio.run(scenario())
 
 
 def test_controller_shaped_confirmation_uses_original_command_as_parent() -> None:

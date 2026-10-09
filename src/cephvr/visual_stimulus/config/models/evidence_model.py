@@ -22,6 +22,7 @@ from .schema_common import (
     SwapInterval,
     UnitQuaternion,
     Version1,
+    Version3,
     parse_json,
     portable_path,
 )
@@ -89,7 +90,7 @@ class Pose(Model):
 
 class Header(Model):
     kind: Literal["header"]
-    format_version: Version1
+    format_version: Version3
     identity: Identity
     writer_generation: Id
     recipe: (
@@ -171,13 +172,17 @@ class Capture(
     disposition: Literal[
         "admitted",
         "capacity_drop",
+        "same_slot_omission",
         "cutoff_excluded",
         "transfer_complete",
         "transfer_failed",
         "input_submitted",
+        "leading_duplicate",
+        "interior_duplicate",
+        "trailing_duplicate",
         "unknown",
     ]
-    # E13: n-th admitted render group is review-video frame n (zero-based); None if not admitted.
+    # E13: nominal encoded slot; source identity/time comes from the referenced group.
     video_frame_index: U64 | None
     source_pixel_format: Id
     encoder_pixel_format: Id | None
@@ -294,6 +299,10 @@ class EncoderOutcome(Model):  # One final account for the single composite encod
     admitted_count: U64
     input_submitted_count: U64
     capacity_drop_count: U64
+    selected_real_count: U64
+    same_slot_omission_count: U64
+    encoded_frame_count: U64
+    duplicate_frame_count: U64
     final_input_group_id: U64 | None
     cutoff_host_ns: NS | None
     exit_code: int | None
@@ -310,6 +319,7 @@ class Completion(Model):  # The closing line; its absence makes replay partial (
     submission_attempt_count: U64
     capture_admission_count: U64
     capture_drop_count: U64
+    same_slot_omission_count: U64
     unresolved_attempt_count: U64
     outcome: Literal[
         "completed", "interrupted"

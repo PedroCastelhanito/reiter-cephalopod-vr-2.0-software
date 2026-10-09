@@ -10,6 +10,7 @@ from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.state import Attempt, ControlState, LifecycleState, LimitsState
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class EvidenceWaiter:
@@ -154,7 +155,7 @@ class EvidenceWaiter:
                     backend.get_retained_result(
                         request, deadline_ns=recovery_deadline_ns
                     ),
-                    max(0, (recovery_deadline_ns - self.clock()) / 1e9),
+                    remaining_seconds(recovery_deadline_ns, clock=self.clock),
                 )
                 if (
                     not retained.found

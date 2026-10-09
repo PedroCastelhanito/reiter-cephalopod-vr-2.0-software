@@ -41,10 +41,14 @@
           "enum": [
             "admitted",
             "capacity_drop",
+            "same_slot_omission",
             "cutoff_excluded",
             "transfer_complete",
             "transfer_failed",
             "input_submitted",
+            "leading_duplicate",
+            "interior_duplicate",
+            "trailing_duplicate",
             "unknown"
           ],
           "title": "Disposition",
@@ -211,6 +215,12 @@
           "title": "Capture Drop Count",
           "type": "integer"
         },
+        "same_slot_omission_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Same Slot Omission Count",
+          "type": "integer"
+        },
         "unresolved_attempt_count": {
           "maximum": 18446744073709551615,
           "minimum": 0,
@@ -234,6 +244,7 @@
         "submission_attempt_count",
         "capture_admission_count",
         "capture_drop_count",
+        "same_slot_omission_count",
         "unresolved_attempt_count",
         "outcome"
       ],
@@ -264,6 +275,30 @@
           "maximum": 18446744073709551615,
           "minimum": 0,
           "title": "Capacity Drop Count",
+          "type": "integer"
+        },
+        "selected_real_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Selected Real Count",
+          "type": "integer"
+        },
+        "same_slot_omission_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Same Slot Omission Count",
+          "type": "integer"
+        },
+        "encoded_frame_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Encoded Frame Count",
+          "type": "integer"
+        },
+        "duplicate_frame_count": {
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "title": "Duplicate Frame Count",
           "type": "integer"
         },
         "final_input_group_id": {
@@ -331,6 +366,10 @@
         "admitted_count",
         "input_submitted_count",
         "capacity_drop_count",
+        "selected_real_count",
+        "same_slot_omission_count",
+        "encoded_frame_count",
+        "duplicate_frame_count",
         "final_input_group_id",
         "cutoff_host_ns",
         "exit_code",
@@ -541,7 +580,7 @@
           "type": "string"
         },
         "format_version": {
-          "const": 1,
+          "const": 3,
           "title": "Format Version",
           "type": "integer"
         },

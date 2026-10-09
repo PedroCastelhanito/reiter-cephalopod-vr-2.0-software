@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.metadata.reservation import OutputReservation
 from cephvr.controller.metadata.types import StorageError
 
@@ -27,6 +28,84 @@ def _pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
 
 def _constant(value: str) -> None:
     raise ValueError(f"invalid JSON number {value}")
+
+
+def _classify_recovery_event(
+    event: dict[str, Any],
+    trials: dict[int, str | None],
+    started: set[int],
+    finished: set[int],
+    session_started: bool,
+    session_ended: bool,
+) -> tuple[str, tuple[int, str] | None]:
+    """Validate one known reconciliation record or the final startup repair."""
+    details = event.get("details")
+    if not isinstance(details, dict):
+        raise ValueError("recovery event details are unconfirmed")
+    if (
+        details.get("component") == "Finished"
+        and details.get("action") == "reconcile exact output closure"
+    ):
+        number = event.get("trial_number")
+        backend = details.get("backend")
+        outputs = details.get("outputs")
+        trial_id = details.get("trial_id")
+        if (
+            event.get("outcome") != "completed"
+            or type(number) is not int
+            or number not in started
+            or number not in trials
+            or not isinstance(trial_id, str)
+            or not trial_id
+            or trials[number] != trial_id
+            or not isinstance(backend, str)
+            or not backend
+            or type(details.get("initial_deadline_ns")) is not int
+            or details["initial_deadline_ns"] < 0
+            or not isinstance(outputs, list)
+        ):
+            raise ValueError("Finished reconciliation is unconfirmed")
+        output_keys: set[str] = set()
+        for output in outputs:
+            closure = output.get("closure") if isinstance(output, dict) else None
+            if (
+                not isinstance(output, dict)
+                or set(output) != {"output_key", "closure"}
+                or not isinstance(output.get("output_key"), str)
+                or not output["output_key"]
+                or output["output_key"] in output_keys
+                or not isinstance(closure, str)
+                or closure not in pb.OutputClosure.keys()
+                or closure == pb.OutputClosure.Name(pb.OUTPUT_CLOSURE_UNSPECIFIED)
+            ):
+                raise ValueError("Finished output reconciliation is invalid")
+            output_keys.add(output["output_key"])
+        return "finished", (number, backend)
+    if (
+        isinstance(details.get("incident_id"), str)
+        and details["incident_id"]
+        and isinstance(details.get("resolved_by"), str)
+        and details["resolved_by"]
+        and type(details.get("recovered_monotonic_ns")) is int
+        and details["recovered_monotonic_ns"] >= 0
+        and session_started
+        and not session_ended
+        and event.get("outcome") is None
+    ):
+        return "incident", None
+    if (
+        details.get("component") == "controller"
+        and details.get("action") == "startup_recovery"
+        and isinstance(details.get("recovery_controller_generation"), str)
+        and details["recovery_controller_generation"]
+        and details.get("event_clock") == "current_recovery_application"
+        and details.get("scientific_output_closure") == "unconfirmed"
+        and event.get("outcome") == "completed"
+        and session_ended
+        and started == finished
+    ):
+        return "terminal", None
+    raise ValueError("recovery event is malformed or out of order")
 
 
 def read_recovery_file(path: Path, limit: int) -> tuple[bytes, os.stat_result]:
@@ -116,14 +195,15 @@ def inspect_recovery(
         ZoneInfo(zone)
         if not isinstance(config.get("trials"), list):
             raise ValueError("session trial plan is invalid")
-        trial_numbers = [item["context"]["trial_number"] for item in config["trials"]]
+        trial_contexts = [item["context"] for item in config["trials"]]
+        trial_numbers = [item["trial_number"] for item in trial_contexts]
         if (
             not trial_numbers
             or any(type(number) is not int or number < 1 for number in trial_numbers)
             or len(set(trial_numbers)) != len(trial_numbers)
         ):
             raise ValueError("session trial plan numbers are invalid")
-        trials = set(trial_numbers)
+        trials = {item["trial_number"]: item.get("trial_id") for item in trial_contexts}
         configuration = config.get("configuration")
         if not isinstance(configuration, dict) or not isinstance(
             configuration.get("backends"), list
@@ -163,6 +243,7 @@ def inspect_recovery(
             raise ValueError("session log is empty or its final line is incomplete")
         started: set[int] = set()
         finished: set[int] = set()
+        reconciled_finished: set[tuple[int, str]] = set()
         session_started = session_ended = recovery_recorded = False
         stopped_remote = False
         catalog = {
@@ -225,13 +306,16 @@ def inspect_recovery(
                 if details.get("run_name") == run:
                     stopped_remote = True
             elif kind == "recovery":
-                if (
-                    event.get("outcome") != "completed"
-                    or not session_ended
-                    or started != finished
-                ):
-                    raise ValueError("prior recovery has no completed outcome")
-                recovery_recorded = True
+                category, key = _classify_recovery_event(
+                    event, trials, started, finished, session_started, session_ended
+                )
+                if category == "finished":
+                    assert key is not None
+                    if key in reconciled_finished:
+                        raise ValueError("duplicate Finished reconciliation")
+                    reconciled_finished.add(key)
+                elif category == "terminal":
+                    recovery_recorded = True
         if not session_started or session_ended and started != finished:
             raise ValueError("session lifecycle is incomplete or out of order")
         return RecoveryInspection(

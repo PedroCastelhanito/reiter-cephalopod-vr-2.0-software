@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-09",
+  "timezone": "Asia/Tokyo",
+  "source_revision": "0aebf47bc869d69db511a7dd736709480d3e4d53",
+  "comparison_revision": "7ba43b1",
+  "initial_worktree": "clean",
+  "scope": "read-only source audit, portable tests and existing evidence review; only tracking/report artifacts modified",
+  "models": {
+    "luna": "gpt-6-luna",
+    "sol": "gpt-6.1-sol",
+    "astra": "gpt-6-astra"
+  },
+  "assessment": "Raw reviewer claims are candidates; final Sol/Astra disposition and owning reports supersede unverified or historical claims. No runtime or rig acceptance is granted.",
+  "root_checks": {
+    "configuration_tests": "4 failed,32 passed; committed diagnostic settings differ from expected baseline",
+    "ruff": "passed",
+    "format": "837 files passed",
+    "mypy_win32": "724 sources passed",
+    "boundaries": "631 modules,0 violations,40 cohesion advisories",
+    "tracking_contracts": "48 unittest tests passed",
+    "visual_contracts": "42 unittest tests passed",
+    "schema_drift": "19 Tracking and11 Visual Stimulus schemas match",
+    "spike_late_repro": "timeout and retained ownership then unhandled wrapper exception reproduced without remote SDK",
+    "launch_replay_repro": "immediate replay after released-entry capacity pruning creates a new PLANNED native job using a local adapter",
+    "document_links": "465 local links/anchors in7editedMarkdownfiles passed",
+    "whitespace": "git diff --check passed"
+  },
+  "historical_rig_evidence": "Oct8 run43 raw outputs/shutdown/restoration inspected; no new native execution or video decoding. Inspected summaries do not identify an exact tested source revision. Current committed defaults contradict historical restored-defaults test pass.",
+  "tracked_tmp": {
+    "files": 10353,
+    "uncompressed_blob_bytes": 224923430,
+    "previous_revision_files": 0
+  },
+  "failed_attempts": [
+    "Direct pytest collection of Tracking contract unittest files:2 local-import errors; corrected by owning unittest discovery.",
+    "Luna GUI run without offscreen aborted in Qt setup; offscreen retry19pass."
+  ],
+  "commands": {
+    "ruff": ".venv/bin/python -m ruff check src tests tools",
+    "format": ".venv/bin/python -m ruff format --check src tests tools",
+    "mypy": ".venv/bin/python -m mypy --platform win32 src/cephvr",
+    "boundaries": ".venv/bin/python tools/check_backend_boundaries.py",
+    "configuration": ".venv/bin/python -m pytest tests/acquisition/test_configuration.py tests/visual_stimulus/test_configuration.py tests/controller/test_configuration.py -q -m 'not windows and not rig'",
+    "tracking_contracts": ".venv/bin/python -m unittest discover -s contracts/tracking -p 'test_*.py'",
+    "visual_contracts": ".venv/bin/python -m unittest discover -s contracts/visual_stimulus/tests -p 'test_*.py'",
+    "tracking_schemas": ".venv/bin/python contracts/tracking/schema_check.py",
+    "visual_schemas": ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+    "sdk_repro": ".venv/bin/python reports/review-evidence-2026-10-09/spike-late-repro.py",
+    "launch_replay_repro": "PYTHONPATH=. .venv/bin/python reports/review-evidence-2026-10-09/launch-replay-repro.py"
+  },
+  "focused_review_runs": {
+    "runtime": 45,
+    "capture": 132,
+    "tracking": 80,
+    "spikeglx": 25,
+    "gui_offscreen": 19,
+    "scope": "individual selected invocations; not a full-suite or rig result"
+  },
+  "review_dispositions": {
+    "defaults_priority": "P2, not P1; three baseline mismatches and one ineffective replacement-based fixture, not four independent product defects",
+    "sdk_priority": "P3 diagnostics; ownership retained",
+    "external_duplicate_command": "rejected: transport ledger protects ingress",
+    "warning_lost_update": "not established",
+    "shutdown": "loss-response gap retained; no second owner/deadline extension established",
+    "worker_retirement": "camera-worker reuse source finding; native reproduction pending; persistent renderer session cleanup excluded"
+  },
+  "status": "audit complete; no implementation changes",
+  "final_assessment": "astra-review.txt"
+}

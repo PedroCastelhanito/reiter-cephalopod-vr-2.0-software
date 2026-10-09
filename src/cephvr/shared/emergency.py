@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 _IDENTITY_CAP = 256
 
@@ -98,7 +99,7 @@ async def write_emergency_report(
             completion.set_exception(exc)
 
     threading.Thread(target=write, name="cephvr-emergency", daemon=True).start()
-    remaining_s = max(0.0, (deadline_ns - host_time_ns()) / 1e9)
+    remaining_s = remaining_seconds(deadline_ns, clock=host_time_ns)
     return await asyncio.wait_for(
         asyncio.shield(asyncio.wrap_future(completion)), timeout=remaining_s
     )

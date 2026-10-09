@@ -1,0 +1,46 @@
+CephVR Luna launch fixes — 2026-10-09
+
+Scope and design
+
+Implemented the supervisor launch replay-retention and acquisition-camera worker retirement fixes under ARCH-002, E06 and E08. LaunchRegistry now retains RELEASED launch commands for the configured command_retention_ns window. For work-scoped launches the retention clock starts at max(exact release time, work finalization time), and exact active work pins its launch record. It prunes only expired RELEASED records; if capacity is full of active or still-retained records, admission fails with LAUNCH_CAPACITY. This avoids premature replay loss and avoids capacity-based eviction. The registry receives the existing configured retention value from runtime; shared command default is reused rather than adding a second policy default.
+
+Camera retirement now requires an explicit ConfirmLaunch request carrying typed retained Cleanup operation and lifecycle evidence. The acquisition coordinator validates the exact registered resource/output catalogue and Cleanup evidence, waits for exact process exit, then sends the proof. The supervisor independently verifies exact owner/child/launch/work binding, empty native job and process absence before release. GetLaunchState remains observational. Workless session Configuration retirement is represented explicitly and does not fabricate a work identity. Failed recording output closure is accepted only when cleanup evidence shows the output was discharged; unconfirmed closure is rejected. Firmware uploader cleanup semantics remain distinct, and persistent renderer ownership remains excluded.
+
+Extracted launch request validation and camera proof structure checks into focused modules to keep registry ownership cohesive and avoid growing an already large registry. No whole-runtime back-reference or duplicate resource inventory was introduced. Proto source was updated and generated sources regenerated with the repository generator.
+
+Validation evidence
+
+- .venv/bin/python -m pytest tests/supervisor/test_registry.py tests/supervisor/test_worker_outbound_contracts.py tests/acquisition/test_coordinator.py -q -m 'not windows and not rig' — 104 passed.
+- .venv/bin/python -m pytest tests/supervisor -q -m 'not windows and not rig' — 132 passed.
+- .venv/bin/python -m pytest tests/acquisition -q -m 'not windows and not rig' — 336 passed, 5 skipped, 2 deselected.
+- .venv/bin/python -m ruff check src/cephvr/supervisor src/cephvr/acquisition tests/supervisor/test_registry.py tests/supervisor/test_worker_outbound_contracts.py tests/acquisition/test_coordinator.py — passed.
+- .venv/bin/python -m ruff format --check on the same affected source/test paths — 11 files already formatted.
+- .venv/bin/python -m mypy --platform win32 src/cephvr/supervisor src/cephvr/acquisition — success, 202 sources.
+- .venv/bin/python tools/check_backend_boundaries.py — 633 modules, 0 violations. It reports cohesion advisories for supervisor/registry.py (524 lines) and acquisition/coordinator/workers.py (517 lines); registry validation and proof structure were extracted into focused modules, while these remaining modules retain their single registry/worker lifecycle ownership.
+- git diff --check — passed.
+- .venv/bin/python tools/generate_contracts.py — regenerated 19 contract sources.
+
+Limits
+
+These are local tests and Win32-target static analysis. Native Windows job/process behavior and rig acceptance were not run; adapter tests do not establish native equivalence. Existing owner changes in TODO.md, LOG.md, architecture records and reports were outside this implementation scope and were not modified by this lane. No commit was created.
+
+Post-review simplification (2026-10-09)
+
+Replaced SupervisorRuntime's repeated 300-second command-retention literal with the shared DEFAULT_COMMAND_RETENTION_NS constant, so runtime, command ledger, and launch registry use one default. Checks after this edit: Ruff check and format on runtime.py passed, Win32-target mypy on runtime.py passed, and diff-check on runtime.py passed. Full suites were not rerun because root is running integration tests.
+
+Post-review retirement-race correction (2026-10-09)
+
+Closed the Supervisor health race by sending one exact ConfirmLaunch Cleanup proof before Shutdown and replaying the identical request after process exit. The first confirmation validates proof and the exact live job/process, then retains the canonical proof on that exact launch without release. The second can release only after independent empty-job and process-absence checks. Health continues to record CHILD_EXITED, but suppresses only safety escalation for that exact launch when its validated proof is retained. Unacknowledged camera exits still escalate; native inspection failures and acquisition-owner authority/heartbeat loss retain existing escalation paths. The same original coordinator absolute deadline covers proof acknowledgement, Shutdown, process-exit wait and final confirmation; no new deadline or state enum was introduced.
+
+Added regressions for lifecycle/health classification in the exit-before-final-confirm interval, unacknowledged exit escalation, proof immutability, same-request replay, both session/manual callers, and a hung worker that returns failure after the original deadline without a second confirmation. Sol and Astra reviewed the proposed design and agreed on the no-new-deadline approach; final acceptance is pending.
+
+Validation after this correction:
+- Focused supervisor registry/health + acquisition coordinator tests: 74 passed.
+- Full supervisor suite: 134 passed.
+- Full acquisition suite: 338 passed, 5 skipped, 2 deselected.
+- Ruff check/format, Win32-target mypy (202 sources), and git diff --check passed.
+- Boundary checker: 633 modules, 0 violations. Current warned line counts include supervisor/registry.py 563 lines and acquisition/coordinator/workers.py 536 lines; both preserve focused launch registry and worker retirement ownership after extracting proof parsing and launch validation.
+
+Final review disposition (2026-10-09)
+
+Sol and Astra accepted the retirement-race correction with no remaining actionable findings. Root reports final472 runtime tests and all static checks passing. No further source changes or checks were made after that integration run.

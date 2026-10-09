@@ -16,6 +16,7 @@ from cephvr.platform.windows.bootstrap import read_bootstrap
 from cephvr.platform.windows.jobs import WindowsJobs
 from cephvr.shared.auth import Principal
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.main import command_ledger
 from cephvr.visual_stimulus.transport.peers import Peer
 from cephvr.visual_stimulus.transport.server import serve
@@ -91,7 +92,7 @@ async def run(bootstrap: WorkerBootstrap) -> None:
         # A local safety operation does not impersonate an authenticated remote caller.
         try:
             async with asyncio.timeout(
-                max(0, (recovery_deadline - host_time_ns()) / 1e9)
+                remaining_seconds(recovery_deadline, clock=host_time_ns)
             ):
                 await owner.submit("Shutdown", command, recovery_deadline)
         finally:

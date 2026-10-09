@@ -9,6 +9,7 @@ import numpy as np
 
 from cephvr.platform.windows.nvidia_device import verify_tracking_device
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.tracking.config.models.methods import FileLimits, FlowSettings
 from cephvr.tracking.methods.flow_buffers import grid_mapping
 from cephvr.tracking.methods.images import GrayPreparation
@@ -187,7 +188,7 @@ class NvidiaFlow:
         while host_time_ns() < deadline:
             if self._native().complete():
                 return True
-            time.sleep(min(0.001, max(0, (deadline - host_time_ns()) / 1e9)))
+            time.sleep(min(0.001, remaining_seconds(deadline, clock=host_time_ns)))
         return False
 
 

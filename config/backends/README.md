@@ -75,12 +75,12 @@ that must equal its policy file's.
 
 ## Defaults and session records
 
-The planned `config/last_configuration.json` stores one current reusable configuration,
+The controller-owned `config/last_configuration.json` stores one current reusable configuration,
 grouped by backend with shared experiment/protocol settings. Rejected edits are not saved;
 there is no rollback section. GUI initialization reads it, while controller owns atomic
 saving on normal GUI/application closure under [E07](../../docs/architecture/experiment.md#e07).
-This does not rewrite backend TOMLs. Loading/saving remains unimplemented; normal
-validation and device/asset preparation are still required.
+This does not rewrite backend TOMLs. Restored configuration still requires normal
+validation and device/asset preparation.
 
 These files describe reusable settings; their control timing/timeout values are
 the only editable source for those policies. They are not by themselves a record
@@ -90,7 +90,8 @@ resolved values, and blocking Setup on required default-file errors. Startup set
 needed before controller coordination may be read locally from the same owning files.
 File errors for inactive, unneeded backends warn without blocking Setup; correct them
 before enabling those backends.
-Runtime loading and distribution remain to be implemented.
+The owning lightweight modules load and validate these pairs; device acceptance
+and actual rig behavior remain separate from successful file loading.
 
 Backend-owned lightweight Python configuration modules supply the types and pure
 validators used by both controller and backend. The controller validates edits
@@ -102,7 +103,6 @@ application; no automatic rollback. A stopped backend alone does not prevent pur
 validation. Results bind the request, expected revision and module version; late results
 cannot commit after expiry or against changed authority/state.
 The shared local validation deadline remains `configuration_validation.timeout_s`.
-No validator package or runtime loading is implemented yet.
 
 Keep the accepted [JSON logging scheme](../../docs/architecture/supervisor.md#e04): record effective
 setup settings for active backends only, at the existing session/trial boundaries.

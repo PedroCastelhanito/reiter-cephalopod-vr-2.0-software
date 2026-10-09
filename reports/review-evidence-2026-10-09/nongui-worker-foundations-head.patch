@@ -1,0 +1,842 @@
+--- a/tests/acquisition/test_worker_foundations.py
++++ b/tests/acquisition/test_worker_foundations.py
+@@ -1,12 +1,14 @@
+-"""Prepared, hardware-free checks for worker accounting and warning contracts.
+-
+-The behavioral camera and synchronization suite is intentionally reserved for the
+-owner's E15 rig-first verification plan.
++"""Hardware-free worker accounting, lifecycle, ownership and warning behavior checks.
++
++Native camera and synchronization acceptance remains under the owner's E15 rig plan.
+ """
+ 
+ from __future__ import annotations
+ 
++import asyncio
++from concurrent.futures import Future
+ from itertools import count
++from threading import Event, get_ident
+ from types import SimpleNamespace
+ from typing import cast
+ from uuid import uuid4
+@@ -23,15 +25,288 @@
+ from cephvr.acquisition.camera.types import PurgeEvidence, TransportCounters
+ from cephvr.acquisition.v1 import camera_pb2
+ from cephvr.acquisition.v1 import messages_pb2 as acq
++from cephvr.acquisition.worker.blocking_wait import verify_blocking_wait
+ from cephvr.acquisition.worker.capture import CameraCaptureLoop, CaptureWindow
+ from cephvr.acquisition.worker.capture_runtime import WorkerCaptureResources
++from cephvr.acquisition.worker.cleanup_lifecycle import WorkerCleanupLifecycle
++from cephvr.acquisition.worker.execution import WorkerOperationExecutor
++from cephvr.acquisition.worker.health import WorkerHealthReporter
+ from cephvr.acquisition.worker.limits import AcquisitionControlLimits
++from cephvr.acquisition.worker.owner import SerializedCameraOwner
++from cephvr.acquisition.worker.preview_lifecycle import WorkerPreviewLifecycle
++from cephvr.acquisition.worker.report_dispatch import WorkerReportDispatcher
++from cephvr.acquisition.worker.session_preparation import WorkerSessionPreparation
+ from cephvr.acquisition.worker.state import WorkerBootstrap, WorkerState
+ from cephvr.acquisition.worker.trial_lifecycle import WorkerTrialLifecycle
+ from cephvr.acquisition.worker.warnings import WarningOccurrence, WorkerWarningLedger
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.shared.commands import CommandLedger
+ from cephvr.shared.pixels.types import NativePixelFormat, PixelLayout
++
++
++def _worker_context() -> acq.WorkerContext:
++    return acq.WorkerContext(
++        worker=control.ProcessIdentity(
++            role="acquisition_behavioral_worker", generation=str(uuid4())
++        ),
++        owner=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++    )
++
++
++def _worker_state(context: acq.WorkerContext | None = None) -> WorkerState:
++    source = context or _worker_context()
++    return WorkerState(
++        source,
++        control.ProcessIdentity(role="supervisor", generation=str(uuid4())),
++        CommandLedger(
++            source.worker.generation,
++            10_000,
++            max_records=8,
++            max_bytes=1024 * 1024,
++            result_reservation_bytes=1024,
++        ),
++    )
++
++
++def test_worker_executor_retains_unknown_operation_failure_under_original_deadline() -> (
++    None
++):
++    state = _worker_state()
++    command_id = str(uuid4())
++    deadline_ns = 10**18
++    request = acq.WorkerCommand(command_id=command_id, target=state.context)
++    state.commands.admit(
++        command_id,
++        b"unknown-operation",
++        1,
++        work_key=state.context.worker.generation,
++        deadline_ns=deadline_ns,
++    )
++    state.operations[command_id] = control.OperationState(
++        context=control.OperationContext(command_id=command_id),
++        command="Unknown",
++    )
++    reports: list[tuple[acq.WorkerOperationReport, int]] = []
++    executor = object.__new__(WorkerOperationExecutor)
++    executor.bootstrap = SimpleNamespace(context=state.context)
++    executor.state = state
++    executor._latest_work = None
++    executor._coordinator_loss_handled = False
++    executor.report_dispatcher = SimpleNamespace(
++        operation=lambda report, bound: reports.append((report, bound))
++    )
++
++    executor.execute("Unknown", request, deadline_ns)
++
++    result = state.operations[command_id]
++    assert result.complete and not result.succeeded
++    assert result.progress == "failed"
++    assert result.failure.code == "WORKER_OPERATION_FAILED"
++    assert "unknown worker operation" in result.failure.message
++    assert reports[0][0].operation == result
++    assert reports[0][1] == deadline_ns
++
++
++def test_blocking_wait_wakeup_verification_uses_loop_and_respects_deadline() -> None:
++    async def run() -> list[int]:
++        loop = asyncio.get_running_loop()
++        wake = Event()
++        timeouts: list[int] = []
++
++        class Camera:
++            def verify_blocking_wait_wakeup(self, schedule, timeout_ns: int) -> None:
++                timeouts.append(timeout_ns)
++                acknowledgement = schedule(wake.set)
++                assert acknowledgement.wait(1)
++                assert wake.wait(1)
++
++        await asyncio.to_thread(
++            verify_blocking_wait, loop, Camera(), 200, clock_ns=lambda: 100
++        )
++        return timeouts
++
++    assert asyncio.run(run()) == [100]
++
++
++def test_session_preparation_requires_exact_work_and_configuration_revision() -> None:
++    context = _worker_context()
++    state = _worker_state(context)
++    state.confirmed_configuration_revision = 4
++    bootstrap = cast(WorkerBootstrap, SimpleNamespace())
++    preparation = WorkerSessionPreparation(
++        bootstrap,
++        state,
++        cast(object, SimpleNamespace()),  # type: ignore[arg-type]
++        cast(object, SimpleNamespace()),  # type: ignore[arg-type]
++        begin_warning_scope=lambda *_args, **_kwargs: None,
++        verify_wait=lambda _deadline: None,
++        report_lifecycle=lambda *_args: None,
++    )
++    work = control.WorkContext(session=control.SessionContext(session_id=str(uuid4())))
++    request = acq.WorkerPrepareTrial(
++        command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
++        required_configuration_revision=4,
++    )
++    request.command.target.work.CopyFrom(work)
++
++    with pytest.raises(RuntimeError, match="session is not prepared"):
++        preparation.require_ready_session(request)
++    preparation.session_ready = True
++    preparation.require_ready_session(request)
++    request.required_configuration_revision = 3
++    with pytest.raises(RuntimeError, match="configuration revision is stale"):
++        preparation.require_ready_session(request)
++
++
++def test_session_and_trial_preparation_report_after_confirmed_resources() -> None:
++    from cephvr.acquisition.v1 import runtime_pb2
++
++    context = _worker_context()
++    state = _worker_state(context)
++    state.confirmed_configuration_revision = 5
++    bootstrap = cast(
++        WorkerBootstrap,
++        SimpleNamespace(
++            file_policy=runtime_pb2.CameraFilePolicy(post_cutoff_drain_margin_ns=1)
++        ),
++    )
++    events: list[object] = []
++    resource = acq.AttachedResource(resource_id="allocation")
++
++    class CameraConfiguration:
++        def require_adopted_setup(self, _request: object) -> None:
++            events.append("adopted")
++
++    class Captures:
++        def prepare(
++            self, _camera: object, *, session_preview: bool
++        ) -> tuple[object, ...]:
++            events.append(("capture-prepare", session_preview))
++            return (resource,)
++
++    class RecordingPreparation:
++        def prepare_session(self, _request: object) -> None:
++            events.append("recording-session-prepare")
++
++        def prepare_trial(self, _request: object, deadline_ns: int) -> None:
++            events.append(("recording-trial-prepare", deadline_ns))
++
++    trial = SimpleNamespace(
++        pulse_required=False,
++        trial_prepared=False,
++        recording_preparation=RecordingPreparation(),
++        prepare_trial_state=lambda _request, deadline_ns: events.append(
++            ("trial-state-prepare", deadline_ns)
++        ),
++    )
++    preparation = WorkerSessionPreparation(
++        bootstrap,
++        state,
++        CameraConfiguration(),  # type: ignore[arg-type]
++        Captures(),  # type: ignore[arg-type]
++        begin_warning_scope=lambda *_args, **_kwargs: events.append("warning-scope"),
++        verify_wait=lambda deadline: events.append(("wait-verified", deadline)),
++        report_lifecycle=lambda request, evidence, deadline: events.append(
++            ("report", request.command.command_id, evidence, deadline)
++        ),
++    )
++    session_work = control.WorkContext(
++        session=control.SessionContext(session_id=str(uuid4()))
++    )
++    setup = acq.WorkerSetupSession(
++        command=acq.WorkerCommand(
++            command_id=str(uuid4()),
++            target=acq.WorkerContext(),
++        ),
++        configuration_revision=5,
++    )
++    setup.command.target.work.CopyFrom(session_work)
++    setup.camera.device.frame_timing = camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
++    setup.camera.capture.session_preview_max_hz = 10
++
++    preparation.setup_session(setup, 100, trial)  # type: ignore[arg-type]
++
++    assert preparation.session_ready
++    assert trial.pulse_required
++    setup_report = events[-1]
++    assert setup_report[0:2] == ("report", setup.command.command_id)
++    assert setup_report[2].ready.required_checks_passed
++    assert setup_report[2].ready.attached_resources[0] == resource
++    assert events.index("recording-session-prepare") < events.index(
++        next(item for item in events if isinstance(item, tuple) and item[0] == "report")
++    )
++
++    trial_work = control.WorkContext(
++        trial=control.TrialContext(session=session_work.session, trial_id=str(uuid4()))
++    )
++    prepare_trial = acq.WorkerPrepareTrial(
++        command=acq.WorkerCommand(command_id=str(uuid4()), target=context),
++        required_configuration_revision=5,
++    )
++    prepare_trial.command.target.work.CopyFrom(trial_work)
++    preparation.prepare_trial(prepare_trial, 200, trial)  # type: ignore[arg-type]
++
++    assert trial.trial_prepared
++    assert events[-1][0:2] == ("report", prepare_trial.command.command_id)
++    assert events[-1][2].ready.configuration_revision == 5
++
++
++def test_coordinator_loss_fences_paths_and_reuses_first_cleanup_deadline(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    state = _worker_state()
++    clock = iter((100, 200))
++    monkeypatch.setattr(
++        "cephvr.acquisition.worker.execution.host_time_ns", lambda: next(clock)
++    )
++    events: list[object] = []
++    executor = object.__new__(WorkerOperationExecutor)
++    executor.state = state
++    executor.bootstrap = SimpleNamespace(
++        control_policies=SimpleNamespace(recovery_ns=50)
++    )
++    executor._coordinator_loss = Event()
++    executor._coordinator_loss_handled = False
++    executor._coordinator_loss_details = None
++    executor._coordinator_loss_deadline_ns = None
++    executor._cancelled = Event()
++    executor.external_wake = lambda: events.append("wake")
++    executor.preview = SimpleNamespace(
++        fence=lambda: events.append("preview-fenced"),
++        advance_due_stage=lambda: events.append("preview-advance"),
++    )
++    executor.health = SimpleNamespace(
++        coordinator_lost=lambda **kwargs: events.append(("health-loss", kwargs))
++    )
++    executor.trial = SimpleNamespace(
++        stop_trial=lambda deadline: events.append(("trial-stop", deadline)),
++        advance_due_stages=lambda: events.append("trial-advance"),
++    )
++    executor.cleanup = SimpleNamespace(
++        begin_ambient_release=lambda deadline: events.append(
++            ("cleanup-begin", deadline)
++        ),
++        advance=lambda: events.append("cleanup-advance"),
++    )
++    executor._refresh_health_snapshot = lambda: None
++
++    executor.coordinator_lost(details="owner receipt lost")
++    executor.coordinator_lost(details="repeated observation")
++    executor.advance_due_stages()
++    executor.advance_due_stages()
++
++    assert state.interrupted
++    assert executor._coordinator_loss_deadline_ns == 150
++    assert executor._coordinator_loss_handled
++    assert executor._cancelled.is_set()
++    assert events.count("preview-fenced") == 1
++    assert events.count(("trial-stop", 150)) == 1
++    assert events.count(("cleanup-begin", 150)) == 1
++    assert ("health-loss", {"details": "owner receipt lost"}) in events
++    assert events.count("preview-advance") == 2
++    assert events.count("trial-advance") == 2
++    assert events.count("cleanup-advance") == 2
+ 
+ 
+ def _frame(frame_id: int, valid: bool = True) -> FrameRecord:
+@@ -645,6 +920,531 @@
+     assert activity.resets == 2
+ 
+ 
++def test_camera_owner_serializes_safety_work_ahead_of_committed_normal_work() -> None:
++    entered_wait = Event()
++    release_wait = Event()
++    wake = Event()
++    completed = Event()
++    observed: list[tuple[str, int, int]] = []
++    owner_ref: list[SerializedCameraOwner] = []
++
++    def wait_control(_timeout_ns: int) -> None:
++        entered_wait.set()
++        release_wait.wait(1)
++        wake.clear()
++
++    def execute(name: str, _request: object, deadline_ns: int) -> None:
++        observed.append((name, get_ident(), deadline_ns))
++        if len(observed) == 2:
++            completed.set()
++
++    owner = SerializedCameraOwner(
++        capacity=2,
++        safety_capacity=2,
++        execute=execute,
++        capture_once=lambda _handoff: False,
++        capture_active=lambda: False,
++        next_deadline_ns=lambda: None,
++        advance_due_stages=lambda: None,
++        wait_control=wait_control,
++        wake_control=wake.set,
++        clear_control=wake.clear,
++        operation_failed=lambda _name, error: pytest.fail(str(error)),
++        owner_failed=lambda error: pytest.fail(str(error)),
++        idle_maintenance_interval_ns=1_000_000,
++    )
++    owner_ref.append(owner)
++    owner.start()
++    try:
++        assert entered_wait.wait(1)
++        normal = owner.reserve("ResolveCameraConfiguration", object(), 100)
++        safety = owner.reserve("Cleanup", object(), 200)
++        normal.commit()
++        safety.commit()
++        release_wait.set()
++        assert completed.wait(1)
++    finally:
++        assert owner_ref[0].stop(1)
++
++    assert [item[0] for item in observed] == ["Cleanup", "ResolveCameraConfiguration"]
++    assert {item[1] for item in observed} == {owner.owner_thread_id}
++    assert [item[2] for item in observed] == [200, 100]
++
++
++def test_preview_start_reports_only_first_usable_frame_for_retained_run() -> None:
++    state = _worker_state()
++    run_id = str(uuid4())
++    deadline = 900
++    events: list[object] = []
++
++    class Captures:
++        active = False
++
++        def start(self) -> None:
++            events.append("capture-start")
++
++    request = acq.WorkerStartPreview(
++        command=acq.WorkerCommand(command_id=str(uuid4())),
++        preview_run_id=run_id,
++    )
++    lifecycle = WorkerPreviewLifecycle(
++        state,
++        Captures(),  # type: ignore[arg-type]
++        cast(
++            object,
++            SimpleNamespace(release_device=lambda: events.append("device-release")),
++        ),  # type: ignore[arg-type]
++        begin_warning_scope=lambda *_args, **_kwargs: None,
++        complete_warning_scope=lambda: None,
++        verify_wait=lambda _deadline: None,
++        operation_deadline=lambda command_id: (
++            deadline if command_id == request.command.command_id else 0
++        ),
++        report_lifecycle=lambda req, evidence, bound: events.append(
++            (req.command.command_id, evidence, bound)
++        ),
++        owner_failure=lambda error: events.append(error),
++        recovery_ns=100,
++        clock_ns=lambda: 500,
++    )
++    lifecycle.manual_preview = True
++    lifecycle.run_id = run_id
++    lifecycle.start(request)
++
++    assert lifecycle.next_deadline_ns == deadline
++    assert lifecycle.first_usable_frame(_frame(0))
++    report_id, evidence, bound = events[-1]  # type: ignore[misc]
++    assert report_id == request.command.command_id
++    assert bound == deadline
++    assert evidence.started.first_activity[0].device_evidence.camera == (
++        camera_pb2.CAMERA_ROLE_BEHAVIORAL
++    )
++    assert evidence.started.first_activity[0].device_evidence.producer == (
++        state.context.worker
++    )
++    assert lifecycle.next_deadline_ns is None
++    assert not lifecycle.first_usable_frame(_frame(1))
++
++
++def test_preview_start_deadline_stops_and_releases_unusable_capture() -> None:
++    state = _worker_state()
++    run_id = str(uuid4())
++    events: list[object] = []
++
++    class Captures:
++        active = True
++
++        def start(self) -> None:
++            events.append("capture-start")
++
++        def stop(self, deadline_ns: int) -> None:
++            events.append(("capture-stop", deadline_ns))
++
++        def release(self) -> tuple[object, ...]:
++            events.append("capture-release")
++            return ()
++
++    class Adapter:
++        def release_device(self) -> None:
++            events.append("device-release")
++
++    request = acq.WorkerStartPreview(
++        command=acq.WorkerCommand(command_id=str(uuid4())),
++        preview_run_id=run_id,
++    )
++    captures = Captures()
++    lifecycle = WorkerPreviewLifecycle(
++        state,
++        captures,  # type: ignore[arg-type]
++        Adapter(),  # type: ignore[arg-type]
++        begin_warning_scope=lambda *_args, **_kwargs: None,
++        complete_warning_scope=lambda: None,
++        verify_wait=lambda _deadline: None,
++        operation_deadline=lambda _command_id: 500,
++        report_lifecycle=lambda *_args: pytest.fail(
++            "timed-out preview start cannot report started evidence"
++        ),
++        owner_failure=lambda error: events.append(error),
++        recovery_ns=100,
++        clock_ns=lambda: 500,
++    )
++    lifecycle.manual_preview = True
++    lifecycle.run_id = run_id
++    lifecycle.start(request)
++
++    lifecycle.advance_due_stage()
++
++    assert state.interrupted
++    assert not lifecycle.manual_preview and lifecycle.run_id is None
++    assert events[:4] == [
++        "capture-start",
++        ("capture-stop", 600),
++        "capture-release",
++        "device-release",
++    ]
++    assert isinstance(events[4], TimeoutError)
++    assert "no usable frame" in str(events[4])
++
++
++def test_cleanup_releases_owned_resources_before_reporting_exact_evidence() -> None:
++    state = _worker_state()
++    events: list[str] = []
++    reports: list[acq.WorkerLifecycleEvidence] = []
++
++    class Captures:
++        def release(self) -> tuple[object, ...]:
++            events.append("capture-release")
++            return (SimpleNamespace(resource_id="ring:preview"),)
++
++    class Adapter:
++        def release_device(self) -> None:
++            events.append("device-release")
++
++    request = acq.WorkerCommand(command_id=str(uuid4()))
++    cleanup = WorkerCleanupLifecycle(
++        state,
++        Adapter(),  # type: ignore[arg-type]
++        Captures(),  # type: ignore[arg-type]
++        None,
++        capacity=2,
++        extra_resources=lambda: {"ring:tracking": True, "ring:other": False},
++        report_lifecycle=lambda _request, evidence, _deadline: (
++            events.append("report"),
++            reports.append(evidence),
++        ),
++        report_operation=lambda *_args: None,
++        shutdown=lambda _deadline: events.append("shutdown"),
++        recording_reconciled=lambda: None,
++        external_wake=lambda: None,
++    )
++
++    assert cleanup.begin_operation(
++        "Cleanup", request, 1_000, acq.WorkerOperationReport()
++    )
++
++    assert events == ["capture-release", "device-release", "report"]
++    assert reports[0].cleanup.resources[0].resource == (
++        f"camera-device:{state.context.worker.generation}"
++    )
++    assert [item.resource for item in reports[0].cleanup.resources] == [
++        f"camera-device:{state.context.worker.generation}",
++        "ring:preview",
++        "ring:other",
++        "ring:tracking",
++    ]
++    assert [item.released for item in reports[0].cleanup.resources] == [
++        True,
++        True,
++        False,
++        True,
++    ]
++
++
++def test_cleanup_continuation_fails_at_original_deadline_without_releasing_camera(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    state = _worker_state()
++    command_id = str(uuid4())
++    deadline_ns = 500
++    request = acq.WorkerCommand(command_id=command_id, target=state.context)
++    state.commands.admit(
++        command_id,
++        b"cleanup",
++        1,
++        work_key=state.context.worker.generation,
++        deadline_ns=deadline_ns,
++    )
++    state.operations[command_id] = control.OperationState(
++        context=control.OperationContext(command_id=command_id), command="Cleanup"
++    )
++    recording_cleanup: Future[list[control.OutputResult]] = Future()
++    events: list[object] = []
++
++    class Recording:
++        enabled = True
++        recording_queue = object()
++
++        def fail_cleanup(
++            self, *, deadline_ns: int
++        ) -> Future[list[control.OutputResult]]:
++            events.append(("recording-cleanup", deadline_ns))
++            return recording_cleanup
++
++    class Captures:
++        def release(self) -> tuple[object, ...]:
++            events.append("capture-release")
++            return ()
++
++    class Adapter:
++        def release_device(self) -> None:
++            events.append("device-release")
++
++    cleanup = WorkerCleanupLifecycle(
++        state,
++        Adapter(),  # type: ignore[arg-type]
++        Captures(),  # type: ignore[arg-type]
++        Recording(),  # type: ignore[arg-type]
++        capacity=2,
++        extra_resources=lambda: {},
++        report_lifecycle=lambda *_args: events.append("lifecycle-report"),
++        report_operation=lambda _report, bound: events.append(
++            ("operation-report", bound)
++        ),
++        shutdown=lambda _deadline: None,
++        recording_reconciled=lambda: None,
++        external_wake=lambda: None,
++    )
++    assert not cleanup.begin_operation(
++        "Cleanup", request, deadline_ns, acq.WorkerOperationReport()
++    )
++    monkeypatch.setattr(
++        "cephvr.acquisition.worker.cleanup_lifecycle.host_time_ns", lambda: deadline_ns
++    )
++
++    cleanup.advance()
++
++    result = state.operations[command_id]
++    assert result.complete and not result.succeeded
++    assert result.failure.code == "DEADLINE_EXCEEDED"
++    assert events == [
++        ("recording-cleanup", deadline_ns),
++        ("operation-report", deadline_ns),
++    ]
++
++
++def test_ambient_cleanup_waits_for_recording_proof_then_wakes_and_releases() -> None:
++    state = _worker_state()
++    recording_cleanup: Future[list[control.OutputResult]] = Future()
++    wake = Event()
++    events: list[object] = []
++
++    class Recording:
++        enabled = True
++        recording_queue = object()
++
++        def fail_cleanup(
++            self, *, deadline_ns: int
++        ) -> Future[list[control.OutputResult]]:
++            events.append(("recording-cleanup", deadline_ns))
++            return recording_cleanup
++
++        def recycle_finished(self, deadline_ns: int) -> None:
++            events.append(("recording-reconciled", deadline_ns))
++
++    class Captures:
++        def release(self) -> tuple[object, ...]:
++            events.append("capture-release")
++            return ()
++
++    class Adapter:
++        def release_device(self) -> None:
++            events.append("device-release")
++
++    cleanup = WorkerCleanupLifecycle(
++        state,
++        Adapter(),  # type: ignore[arg-type]
++        Captures(),  # type: ignore[arg-type]
++        Recording(),  # type: ignore[arg-type]
++        capacity=2,
++        extra_resources=lambda: {},
++        report_lifecycle=lambda *_args: events.append("lifecycle-report"),
++        report_operation=lambda *_args: None,
++        shutdown=lambda _deadline: None,
++        recording_reconciled=lambda: events.append("reconciliation-callback"),
++        external_wake=wake.set,
++    )
++
++    cleanup.begin_ambient_release(700)
++    cleanup.advance()
++    assert events == [("recording-cleanup", 700)]
++    assert not wake.is_set()
++
++    recording_cleanup.set_result([])
++    assert wake.wait(1)
++    cleanup.advance()
++
++    assert events == [
++        ("recording-cleanup", 700),
++        ("recording-reconciled", 700),
++        "reconciliation-callback",
++        "capture-release",
++        "device-release",
++    ]
++
++
++def test_worker_report_dispatch_marks_rejection_and_drains_accepted_rpc() -> None:
++    async def run() -> tuple[WorkerState, list[str]]:
++        state = _worker_state()
++        failures: list[str] = []
++
++        class Reports:
++            async def report_operation(
++                self, _report: acq.WorkerOperationReport, *, deadline_ns: int
++            ) -> control.ReportReceipt:
++                assert deadline_ns > 0
++                return control.ReportReceipt(
++                    result=control.COMMAND_RESULT_REJECTED,
++                    failure=control.Failure(code="STALE", message="wrong generation"),
++                )
++
++        dispatcher = WorkerReportDispatcher(
++            asyncio.get_running_loop(),
++            state,
++            Reports(),  # type: ignore[arg-type]
++            1,
++            failures.append,
++        )
++        dispatcher.operation(acq.WorkerOperationReport(), 10**18)
++        assert await dispatcher.drain(10**18)
++        return state, failures
++
++    state, failures = asyncio.run(run())
++    assert state.interrupted
++    assert failures == ["worker report rejected: STALE: wrong generation"]
++
++
++def test_camera_resolution_rejects_unassigned_device_before_adapter_access() -> None:
++    from cephvr.acquisition.worker.camera_resolution import resolve_camera
++
++    class Adapter:
++        touched = False
++
++        def open(self, _device_id: str) -> None:
++            self.touched = True
++
++    adapter = Adapter()
++    request = acq.WorkerResolveCamera(configuration_revision=1)
++
++    with pytest.raises(ValueError, match="assigned device"):
++        resolve_camera(adapter, request)  # type: ignore[arg-type]
++
++    assert not adapter.touched
++
++
++def test_camera_resolution_applies_the_assigned_device_before_readback(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    from cephvr.acquisition.camera.types import CameraSettings
++    from cephvr.acquisition.worker import camera_resolution
++
++    events: list[object] = []
++    request = acq.WorkerResolveCamera(
++        configuration_revision=7,
++        requested=camera_pb2.CameraDeviceConfiguration(
++            device_id="serial-A",
++            frame_timing=camera_pb2.FRAME_TIMING_FREE_RUNNING,
++        ),
++    )
++    actual = CameraSettings(
++        exposure_us=125.0,
++        gain=None,
++        frame_rate_hz=60.0,
++        roi=None,
++        pixel_format="Mono8",
++        trigger_selector=None,
++        trigger_source=None,
++        trigger_activation=None,
++        exposure_duration_mode=None,
++    )
++
++    class Adapter:
++        def open(self, device_id: str) -> None:
++            events.append(("open", device_id))
++
++        def configure_capture(self, timing: str, buffer_count: int) -> None:
++            events.append(("capture", timing, buffer_count))
++
++        def apply_settings(self, settings: CameraSettings) -> object:
++            events.append(("settings", settings))
++            return SimpleNamespace(actual=actual, effective_exposure_us=125.0)
++
++        def apply_transport_settings(self, settings: object) -> object:
++            events.append(("transport", settings))
++            return settings
++
++        def configure_native_metadata(self) -> object:
++            events.append("metadata")
++            return object()
++
++        def read_layout(self) -> object:
++            events.append("layout")
++            return object()
++
++        def read_device_identity(self) -> object:
++            events.append("identity")
++            return object()
++
++        def capabilities(self) -> object:
++            events.append("capabilities")
++            return object()
++
++    resolved: list[dict[str, object]] = []
++
++    def serialize(**kwargs: object) -> camera_pb2.CameraResolvedState:
++        resolved.append(kwargs)
++        return camera_pb2.CameraResolvedState(configuration_revision=7)
++
++    monkeypatch.setattr(camera_resolution, "resolved_state_to_wire", serialize)
++    result = camera_resolution.resolve_camera(Adapter(), request)  # type: ignore[arg-type]
++
++    assert result.configuration_revision == 7
++    assert events[0] == ("open", "serial-A")
++    assert events[1] == ("capture", "free_running", 1)
++    assert [item if isinstance(item, str) else item[0] for item in events] == [
++        "open",
++        "capture",
++        "settings",
++        "transport",
++        "metadata",
++        "layout",
++        "identity",
++        "capabilities",
++    ]
++    assert resolved[0]["configuration_revision"] == 7
++    assert resolved[0]["effective_exposure_us"] == 125.0
++
++
++def test_worker_health_owner_failure_is_retained_when_supervisor_report_fails() -> None:
++    state = _worker_state()
++    dispatched: list[object] = []
++    bootstrap = cast(
++        WorkerBootstrap,
++        SimpleNamespace(
++            context=state.context,
++            control_policies=SimpleNamespace(recovery_ns=100),
++        ),
++    )
++
++    class Supervisor:
++        async def report_error(
++            self, request: control.ErrorReport, *, deadline_ns: int
++        ) -> control.ReportReceipt:
++            assert deadline_ns == request.occurred_monotonic_ns + 100
++            dispatched.append(request)
++            raise RuntimeError("supervisor unavailable")
++
++    def dispatch(awaitable: object) -> None:
++        asyncio.run(cast(object, awaitable))  # type: ignore[arg-type]
++
++    reporter = WorkerHealthReporter(
++        bootstrap,
++        state,
++        cast(object, SimpleNamespace()),  # type: ignore[arg-type]
++        Supervisor(),  # type: ignore[arg-type]
++        dispatch,
++        lambda: None,
++    )
++
++    reporter.owner_failed(RuntimeError("camera owner stopped"))
++
++    assert state.interrupted
++    assert len(dispatched) == 1
++    error = cast(control.ErrorReport, dispatched[0])
++    assert error.source == state.context.worker
++    assert error.failure.code == "WORKER_OWNER_FAILURE"
++    assert error.failure.message == "camera owner stopped"
++
++
+ def test_health_ages_owner_published_capture_snapshot_without_runtime_reads() -> None:
+     source = acq.WorkerContext(
+         worker=control.ProcessIdentity(

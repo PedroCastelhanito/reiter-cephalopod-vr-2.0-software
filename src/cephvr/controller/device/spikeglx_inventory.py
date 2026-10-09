@@ -16,6 +16,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.synchronization.inventory import (
     _mapping,
     _validate_channels,
@@ -133,7 +134,7 @@ class SpikeGLXInventory:
         # that work under the lifecycle lock.
         try:
             required_roles = required_inventory_roles(captured_configuration)
-            remaining = max(0, deadline_ns - self.clock()) / 1e9
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:
                 raise TimeoutError("inventory edit exceeded its validation deadline")
 
@@ -198,7 +199,7 @@ class SpikeGLXInventory:
             self.publish()
 
         try:
-            remaining = max(0, deadline_ns - self.clock()) / 1e9
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             done, _ = await asyncio.wait((writer,), timeout=remaining)
         except asyncio.CancelledError:
             await self._mark_unconfirmed(

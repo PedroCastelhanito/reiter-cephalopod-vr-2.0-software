@@ -38,9 +38,10 @@ def resolve_video_completion(
     created it and a post-cleanup absent-path observation. A created-then-missing file
     and an empty-input encoder error remain unconfirmed/failures.
     """
-    reconciled_counts = (
-        counts.eligible_group_count
-        == counts.admitted_count + counts.capacity_drop_count
+    reconciled_counts = counts.eligible_group_count == (
+        counts.admitted_count
+        + counts.capacity_drop_count
+        + counts.same_slot_omission_count
     )
     accounting_complete = (
         final_cutoff_known

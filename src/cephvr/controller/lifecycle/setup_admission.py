@@ -289,6 +289,7 @@ class SetupAdmission:
                 or self.lifecycle.startup_blocker
                 or self.lifecycle.manual_control_cleanup_pending
                 or self.configuration_state.revision != expected_revision
+                or self.device_state.configuration_edit is not None
                 or self.lifecycle.session.phase != pb.SESSION_PHASE_CONFIGURATION
                 or not self.lifecycle.session.cleanup_confirmed
                 and self.lifecycle.attempt is not None

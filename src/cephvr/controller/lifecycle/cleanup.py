@@ -23,6 +23,7 @@ from cephvr.controller.state import (
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.resources import (
     ResourceCatalogueError,
     validate_cleanup_fence_update,
@@ -95,7 +96,7 @@ class CleanupWorkflow:
         try:
             await asyncio.wait_for(
                 self.reservation_released(attempt),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             return True
         except Exception as exc:
@@ -110,7 +111,7 @@ class CleanupWorkflow:
         self, attempt: Attempt, deadline_ns: int
     ) -> None:
         """E06: an unactivated attempt keeps metadata already written."""
-        remaining = max(0, (deadline_ns - self.clock()) / 1e9)
+        remaining = remaining_seconds(deadline_ns, clock=self.clock)
         if not attempt.closure.metadata_written:
             await asyncio.wait_for(
                 asyncio.to_thread(attempt.reservation.cancel), remaining
@@ -125,7 +126,7 @@ class CleanupWorkflow:
             attempt.writer_closed = True
         await asyncio.wait_for(
             asyncio.to_thread(attempt.reservation.close_unactivated),
-            max(0, (deadline_ns - self.clock()) / 1e9),
+            remaining_seconds(deadline_ns, clock=self.clock),
         )
 
     def clear_projection_scope(self) -> None:
@@ -208,7 +209,7 @@ class CleanupWorkflow:
                     ),
                     return_exceptions=True,
                 ),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             return (
                 all(
@@ -287,7 +288,7 @@ class CleanupWorkflow:
             try:
                 await asyncio.wait_for(
                     attempt.changed.wait(),
-                    max(0, (initial_deadline_ns - self.clock()) / 1e9),
+                    remaining_seconds(initial_deadline_ns, clock=self.clock),
                 )
             except TimeoutError:
                 break
@@ -302,7 +303,7 @@ class CleanupWorkflow:
             try:
                 state = await asyncio.wait_for(
                     backend.get_state(request, deadline_ns=recovery_deadline),
-                    max(0, (recovery_deadline - self.clock()) / 1e9),
+                    remaining_seconds(recovery_deadline, clock=self.clock),
                 )
                 if state.HasField("cleanup"):
                     await self.report(
@@ -353,7 +354,7 @@ class CleanupWorkflow:
                         command_id=str(uuid.uuid4()), context=updated
                     )
                 ),
-                max(0, (deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(deadline_ns, clock=self.clock),
             )
             if (
                 receipt.admission.result != pb.COMMAND_RESULT_ACCEPTED
@@ -389,11 +390,15 @@ class CleanupWorkflow:
             )
             if attempt.handoff is not None:
                 attempt.handoff.retire()
-            for _prompt, future, owner in self.incident_state.prompts.values():
-                if owner is attempt and not future.done():
-                    future.cancel()
+            self.cancel_attempt_prompts(attempt)
             self.spawn(self.cancel_attempt(attempt))
             return self.control_operations.admission(command.operator.command_id)
+
+    def cancel_attempt_prompts(self, attempt: Attempt) -> None:
+        """Settle outstanding Setup prompts owned by one retiring attempt."""
+        for _prompt, future, owner in self.incident_state.prompts.values():
+            if owner is attempt and not future.done():
+                future.cancel()
 
     async def late_cleanup(self, attempt: Attempt) -> None:
         async with self.lifecycle.lock:
@@ -425,7 +430,7 @@ class CleanupWorkflow:
             if complete:
                 await asyncio.wait_for(
                     asyncio.to_thread(attempt.reservation.complete),
-                    max(0, (deadline_ns - self.clock()) / 1e9),
+                    remaining_seconds(deadline_ns, clock=self.clock),
                 )
             else:
                 await self.retire_unactivated_reservation(attempt, deadline_ns)

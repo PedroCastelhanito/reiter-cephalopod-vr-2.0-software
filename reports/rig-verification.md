@@ -1,18 +1,21 @@
 # Rig verification — outstanding checks
 
-Latest dummy-experiment follow-up: owner authorizes unpaired execution, both camera
-videos plus stimulus recording, velocities disabled and temporary 1,000 ms drains.
-Runs40–42 complete real 60 s trial/session, close seven artifacts, sync metadata and
-release reservation locks. Run42 external counts/full CPU decode pass all three
-videos; idle liveness and normal application exit confirm all-owned absence and guard
-release. Reduced camera/render cadence and compressed unpadded MP4 duration remain
-observed limitations. MCU-only 30/60 Hz diagnostics count 61/120 edges in 2 s; source
-review identifies the saved-disabled camera limiter being enabled by the backend.
-Run43 verifies the correction. Temporary preparation lead/pacing/GPU/draft restoration
-and current final regressions remain in progress. Historical 1566-test local results
-below predate later fixes. SpikeGLX pairing is explicitly omitted for this request;
-optical/electrical correlation, native narrow/DPI, scientific outputs, measured drain
-bounds and full-load acceptance remain open. [Current assessment](runtime.md#current-scope-and-review),
+Latest retained dummy-experiment evidence is run43 (Oct8), reconciled on Oct9:
+unpaired 60 s trial/session, seven closed outputs, synced metadata, unlocked reservation,
+external counts/full CPU decode and normal exact shutdown pass in the retained records.
+Camera rates recover to 29.95/59.93 fps after the external-trigger limiter correction;
+stimulus recording remains 19.7 fps with four capacity drops and a compressed 19.7 s
+MP4. Recheck presentation/recording throughput and later padding under the intended
+configuration and full workload; the completed unpaired trial does not establish either.
+Separate state/draw/composite/readback/swap timing and compare recording enabled/disabled
+under unchanged accepted placement/settings; retain actual GPU identity and all four
+output submissions. The [local run43 analysis](review-evidence-2026-10-09/nongui-throughput-assessment.json)
+cannot isolate contention or authorize the deferred encoder/toolchain change.
+Measured drain bounds, SpikeGLX pairing, Tracking velocities, optical/electrical
+correlation, native narrow/DPI and scientific/full-load acceptance remain open.
+Oct9 restores accepted source defaults; all 36 owning configuration checks pass.
+[Current local implementation validation](review-evidence-2026-10-09/implementation-context.json)
+does not establish native acceptance or measured drain/throughput guarantees. [Current assessment](runtime.md#current-scope-and-review),
 [dated raw checks](rig-wiring-evidence-2026-10-08/dummy-experiment/).
 
 Latest execution: [2026-10-08 changes and Windows/device checks](rig-wiring-evidence-2026-10-08/README.md),
@@ -284,13 +287,14 @@ Existing operating-point/throughput deferrals below remain separate.
 | SpikeGLX session control | Under E12 and the [control contract](../contracts/spikeglx-control.md): installed SDK/SpikeGLX versions; command server bound to the dedicated link and firewall admitting only the rig; readback, gate/trigger-mode rejection and run-name collision behavior; startRun-to-saving latency and per-stream sample-count progress (including one stalled stream) to set the writing/no-progress bounds; stopRun completion; timed-out mutation reconciliation; Abort/link-loss behavior including transient recovery, per-stream deadline expiry, late replies and counter reset detection; command-server port (default 4142); stop margin against the final photodiode edge, including Stop/Cancel across trials, interrupted uncertain starts and immediate stop between trials; repeated fault/recovery episodes; controller-loss emergency warning naming the run for manual stopping. Acknowledgements are not pulse timing. |
 
 | Visual Stimulus scene composition and geometric correction | Under V02/V15, exercise one arena plus ordered alpha overlays, overlay independence from arena depth, covered-instance continuity and invalid composition rejection. Verify imported mesh coverage/orientation/fold rejection, masks and weighted overlaps, immutable session mappings, photodiode stage order and final-output recording/replay. Establish calibration accuracy through the actual optical path and resource cost on all outputs; no automatic calibration or optical-model guarantee is selected. |
-| Visual Stimulus review video and fragmented MP4 | Under E13, verify the constant-rate raw stdin input at the pacing output's nominal refresh sustains the composite resolution, video frame n maps to the n-th admitted render group in the evidence, tile placement/scale matches the recorded layout and admission drops shorten playback without duplicated frames. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
+| Visual Stimulus review video and fragmented MP4 | Under E13, verify the constant-rate raw stdin input at the pacing output's nominal refresh sustains the composite resolution, video frame n maps to nominal slot n and its exact real source or identified duplicate, and tile placement/scale matches the recorded layout. Verify omission accounting permits successful closure, pre-T cancellation produces no padding, and cleanup retries retain the first cutoff and original write deadline. Exercise fragmented output, keyframe/fragment resource bounds, reader compatibility and drain/sync/close without ordinary-MP4 conversion or file-validation passes. |
 | Empty Visual Stimulus review video and explicit depth conversion | Under V12/E13, exercise an all-dropped composite with complete required records, warnings, truthful artifact presence and successful cleanup. Reject empty-input encoder errors, missing-created artifacts and unknown results as normal completion. Verify explicit RGB10-to-8-bit review conversion and rejection of silent negotiation while live output/replay retain their selected precision. Normal runtime does not inspect completed-file contents. |
 | Visual Stimulus capture and durability | Verify per-group composite admission, compositing/PBO readback cost on the render thread, recording-thread and FFmpeg throughput within the renderer's process/GIL, ScheduleTrial FFmpeg launch with no frames before T and pre-T cancellation cleanup, required state/metadata retention and failures under V12/V13/V28; test periodic sync, sync failure, an incomplete final JSON line and replay labelled "partial, up to render group N". Preserve Unconfirmed crashed-video outcomes. |
 | Acquisition electrical/serial behavior | COM8 Uno protocol-v2 CAPS/STATUS passed after the manual upload. Owner assigned D9 Trial state, D2 Projector flip input, D10 behavioral trigger and D11 tracking trigger; the initial D2 test counted zero edges while the projector was off, and a later local GUI-worker test counted 120 rising edges without independent source observation. Confirm actual destinations, 5 V compatibility and shared signal ground before output tests. Run bounded GUI Test/Stop with physical level/edge observation and repeat D2 with independently observed projector flips. Then verify camera trigger levels/edges, OFF/watchdog behavior, serial latency and DTR/RTS reconnect/reset under A10/A11; do not infer pulse-to-frame edge mapping from host receipts. |
+| Owned camera/pulse edits | Under A10/E07, apply a two-camera batch and pulse-only/configuration-only edits while the backend owns editing/preview devices. Verify actual readback, old external-output OFF before timing changes, exact preview restart and partial SDK/confirmation failure with capture/pulses stopped. Lose confirmation replies and verify committed configuration stays distinct from device outcome; exercise bounded next-edit base synchronization only after prior work quiesces, plus control loss, late results and exact cleanup. Suppress failed-restart status delivery before first-frame proof; recover the exact cleanup run without claiming it is running. Inject primary/Tracking transfer-release failure and lost MCU CLOSE replies; retain ownership fences until exact release or same-claim cleanup succeeds. Local fake-device tests do not close this check. |
 | Acquisition platform bindings | Verify frame-log flush/OS sync on the selected filesystem and SDK/native conversion under A07/A10, and the A03 seqlock slots plus Win32 named event adapter across spawned and independently launched consumers, including torn/lapped-read skips under load and a killed producer. |
 | Visual Stimulus feedback freshness | Tune and validate the 350 ms engineering default maximum under [V26](../docs/architecture/visual_stimulus.md#v26) with the full rig workload. Measure host-receipt-to-application age separately from optical latency; verify local stale-result rejection, fresh-result resumption within the same generation, producer-marker generation exclusion and logged hold/resumption. No passing evidence is supplied. |
-| FFmpeg raw input path | Verify raw stdin input (`-f rawvideo`, resolved pixel format/size, nominal `-framerate`) for the selected native pixel/conversion paths sustains the planned rates. Confirm video frame count equals non-dropped frame lines, no duplicated/padded frames and a final frame of one nominal period. Record exact tested versions, arguments and camera formats. |
+| FFmpeg raw input path | Verify raw stdin input (`-f rawvideo`, resolved pixel format/size, nominal `-framerate`) for the selected native pixel/conversion paths sustains the planned rates. Confirm decoded video count equals encoded-slot mappings, with real sources and explicitly labelled leading/interior/trailing duplicates distinguished. Exercise same-slot omissions, fractional cutoff, long gaps and entirely empty input under A07/A08/E13; source timestamps remain unchanged and final-frame quantization stays below one nominal period. Record exact tested versions, arguments and camera formats. |
 | Consumer precision and encoder compatibility | Verify native unpacking/alignment and source-depth RGB/grayscale preparation under the [pixel contract](../contracts/acquisition/pixel-processing.md), including high-bit-depth sources. Confirm the actual selected codec/output bit depth and color representation; no silent lower-depth conversion or widened 8-bit data labelled original-depth. Preview alone uses the approved display scaling. Keep lossy compression quality separate from representation bit depth. Verify the explicit per-camera output pixel format under A08, including detection of encoder format substitution. Check requested versus actual range/matrix conversion and output tags using known pixel values; tags alone do not prove the conversion. Verify that lower-depth output settings reject higher-depth sources until explicitly compatible arguments are provided. |
 | Basler conversion mappings | Exercise the declared [SDK registry](../contracts/acquisition/sdk-mappings.md): native packing/stride, Bayer patterns and edges, private buffer lifetime, effective depth and preview scaling. Record actual device/SDK support; unsupported mappings must fail explicitly. |
 | Windows ownership and cleanup | Exercise the shared [acquisition/Visual Stimulus launch contract](../contracts/windows-launch.md) and acquisition [I/O/sync contracts](../contracts/acquisition/windows-resources.md), including owner death at every launch stage, partial handle transfer, blocked pipe/stdin cancellation, process identity reuse, encoder sharing and failed storage sync. Require truthful cleanup blockers. |
@@ -317,8 +321,9 @@ outputs must remain uncertain rather than being counted as a passing result.
 Other runtime, performance and durability verification remains required by E15;
 this list records the specific items deferred here, not a completed test plan.
 
-Visual Stimulus declaration closure: the constant-rate review timing (frame n = n-th admitted render
-group) is bound in [encoding options](../contracts/visual_stimulus/encoding-options.md#review-timing).
+Visual Stimulus declaration closure: the constant-rate review timing (frame n = nominal slot n,
+with explicit source/duplicate mapping) is bound in
+[encoding options](../contracts/visual_stimulus/encoding-options.md#review-timing).
 The existing encoder input-format/throughput deferral is unchanged; no successful test
 is implied. Full declaration status is in the
 [Visual Stimulus contract index](../contracts/visual_stimulus/README.md).
@@ -328,7 +333,12 @@ and partial helper launch; sole non-inherited outer handle; controller, supervis
 both-authority and launcher failure; graceful cleanup followed by bounded escalation;
 no unrelated process termination; unresolved output/SpikeGLX evidence retained at
 next startup. Verify actual process absence and machine-guard release separately
-from file closure. These checks remain pending rig execution; implementation status belongs in the backend reports.
+from file closure. Verify repeated manual-camera and session retirement using the
+new exact typed Cleanup confirmation, including independently delayed lifecycle and
+operation reports, failed-but-discharged outputs and unconfirmed resource rejection.
+Inject controller loss while the first accepted-shutdown cleanup wait is pending;
+interruption must begin promptly without extending the retained cleanup/outer bounds.
+These checks remain pending rig execution; implementation status belongs in the backend reports.
 
 E06 operator-incident verification remains pending: confirm popup/reconnect/headless
 behavior without shifting stimulus clocks; isolate camera/recording/tracking/ephys
@@ -463,6 +473,10 @@ an old bundle for the current tree.
   visible with the saved endpoint/run when available.
 - An uncertain recovery append is not retried in the same application. Failed
   durable pointer publication blocks reservation release and another Setup.
+- On the rig, inspect a preserved administrative log after late-Finished reconciliation
+  and a later process loss. Exact reconciliation must remain nonterminal; malformed
+  records and missing process-absence proof must retain blockers. Local parser tests
+  cover both outcomes without certifying scientific output closure.
 
 | Guarantee | Prepared coverage |
 | --- | --- |

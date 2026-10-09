@@ -25,6 +25,7 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.incidents import (
     IncidentEvidenceError,
     IsolationProof,
@@ -313,7 +314,7 @@ class IncidentCoordinator:
     async def incident_deadline(
         self, attempt: Attempt, error_id: str, deadline_ns: int
     ) -> None:
-        await asyncio.sleep(max(0, (deadline_ns - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(deadline_ns, clock=self.clock))
         async with self.lifecycle.lock:
             if (
                 self.lifecycle.attempt is not attempt

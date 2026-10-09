@@ -25,9 +25,11 @@ unknown enum values and output-kind/context mismatches. Required detailed-record
 outputs have neither video field set. Counts and identities stay in the existing
 detailed stream and bounded final summaries, not per-frame lifecycle RPCs.
 
-At cutoff, reconcile eligible render groups, capacity omissions, admissions and terminal
-input dispositions of the composite stream. Drain admitted work, resolve pending capture
-slots and confirm writers/children/handles released. A partial or failed input write
+At cutoff, reconcile eligible render groups, same-slot video omissions, capacity
+omissions, admissions and terminal input dispositions of the composite stream. Drain
+admitted work, resolve pending capture slots, emit nominal slots before the exact cutoff
+from a retained selected source image, and confirm writers/children/handles released.
+With no usable image, retain the existing empty-stream accounting. A partial or failed input write
 cannot become NO_FRAMES merely because the completed-frame counter is zero. Any
 known encode/write/sync failure remains failure, regardless of the content count.
 Missing final accounting stays unknown. Required state/presentation evidence remains
@@ -50,10 +52,11 @@ these combinations satisfy its normal completion obligation:
 Only the last row permits NOT_STARTED for an enabled Visual Stimulus review video. An exact-path
 existence check is allowed after writers stop; it is not a content scan and cannot
 replace creation/ownership history. Created-then-missing files do not qualify. Never
-ignore empty-input exit errors, delete a file to manufacture absence, restart an
-encoder to hide failure or supply dummy/duplicated frames. Attempt the selected
-path's normal finalization. Its ability to finish with empty input is still to be
-verified; this contract does not choose or prove MP4 input packaging.
+ignore empty-input exit errors, delete a file to manufacture absence or restart an
+encoder to hide failure. Attempt the selected path's normal finalization. Its ability
+to finish with empty input is still to be verified; this contract does not choose or
+prove MP4 input packaging. Duplicate slots map to a real selected source and carry an
+explicit leading, interior or trailing disposition; they do not create source groups.
 
 For a NO_FRAMES review video, emit one warning and retain its exact loss/accounting
 summary, using existing bounded diagnostics/admin status.

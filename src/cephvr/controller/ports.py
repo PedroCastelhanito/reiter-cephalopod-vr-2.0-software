@@ -88,6 +88,12 @@ class BackendPort(Protocol):
     async def execute_camera_command(
         self, request: svc.AcquisitionCameraCommand, *, deadline_ns: int
     ) -> pb.CommandAdmission: ...
+    async def apply_camera_settings(
+        self, request: svc.AcquisitionCameraSettingsCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission: ...
+    async def apply_pulse_configuration(
+        self, request: svc.AcquisitionPulseCommand, *, deadline_ns: int
+    ) -> pb.CommandAdmission: ...
     async def attach_tracking_diagnostic_input(
         self,
         request: svc.AcquisitionTrackingDiagnosticAttachmentCommand,

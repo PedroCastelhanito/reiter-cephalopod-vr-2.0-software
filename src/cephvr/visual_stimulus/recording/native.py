@@ -8,8 +8,9 @@ import threading
 import time
 from collections.abc import Callable
 from concurrent.futures import Future
+from fractions import Fraction
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from cephvr.control.v1 import services_pb2_grpc
@@ -46,7 +47,7 @@ from cephvr.visual_stimulus.rendering.types import (
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
 
-from .capture import RecordingCounts, RecordingWorker
+from .capture import CompositeFrame, RecordingCounts, RecordingWorker
 from .capture_runtime import RecordingCaptureRuntime
 from .encoder_owner import EncoderTrialOwner
 from .encoding_probe import resolve_review_encoding
@@ -381,6 +382,10 @@ class NativeRecording:
             capture_slots=self.capture_slots,
             evidence=evidence,
             encoder=adapter,
+            video_start_ns=request.start_monotonic_ns,
+            video_rate_hz=Fraction(
+                encoding.timing.rate_numerator, encoding.timing.rate_denominator
+            ),
             # One already-bounded RGBA composite per overlapped write avoids a
             # polling delay for every small slice of a large review frame.
             max_encoder_write_chunk=(
@@ -407,13 +412,22 @@ class NativeRecording:
             evidence_pending_bytes=self.evidence_pending_bytes,
             capture_slots=self.capture_slots,
         )
-        self._worker.on_submitted = lambda frame: self._enqueue_capture_update(
-            frame.group_id,
-            "input_submitted",
-            frame.video_frame_index,
-            None,
-            terminal=True,
-        )
+
+        def record_video_input(frame: CompositeFrame) -> None:
+            disposition: CaptureDisposition = (
+                "input_submitted"
+                if frame.encoded_disposition == "real"
+                else cast(CaptureDisposition, frame.encoded_disposition)
+            )
+            self._enqueue_capture_update(
+                frame.group_id,
+                disposition,
+                frame.video_frame_index,
+                None,
+                terminal=True,
+            )
+
+        self._worker.on_submitted = record_video_input
         return launch_future
 
     def _io_deadline(self, timeout_ns: int) -> int:
@@ -496,7 +510,7 @@ class NativeRecording:
             )
             header = Header(
                 kind="header",
-                format_version=1,
+                format_version=3,
                 identity=artifact.identity,
                 writer_generation=self._writer_generation,
                 recipe=receipt,
@@ -560,19 +574,41 @@ class NativeRecording:
             return
         if self._session is None:
             raise RuntimeError("scheduled recording is missing")
-        self._cutoff_ns, self._finish_deadline_ns = cutoff_ns, deadline_ns
+        if self._finish_deadline_ns is None:
+            self._cutoff_ns, self._finish_deadline_ns = cutoff_ns, deadline_ns
+        elif self._cancelled or (
+            self._cutoff_ns != cutoff_ns or self._finish_deadline_ns != deadline_ns
+        ):
+            return
         if self._capture_runtime is not None:
             self._capture_runtime.close_feedback_intervals(cutoff_ns)
         if self._capture_runtime is None or not self._capture_runtime.pending:
-            self._session.begin_finish(cutoff_ns=cutoff_ns, deadline_ns=deadline_ns)
+            assert self._cutoff_ns is not None and self._finish_deadline_ns is not None
+            self._session.begin_finish(
+                cutoff_ns=self._cutoff_ns, deadline_ns=self._finish_deadline_ns
+            )
 
     def begin_cancel(self, deadline_ns: int) -> None:
         if not self.saving:
             self._output_results = ()
             return
         self._cancelled = True
-        self._cutoff_ns, self._finish_deadline_ns = self.clock_ns(), deadline_ns
-        if self._capture_runtime is not None:
+        if self._finish_deadline_ns is None:
+            now_ns = self.clock_ns()
+            start_ns = (
+                self._schedule.start_monotonic_ns
+                if self._schedule is not None
+                else now_ns
+            )
+            cutoff_ns = now_ns if now_ns >= start_ns else None
+            if (
+                cutoff_ns is not None
+                and self._schedule is not None
+                and self._schedule.normal_end_monotonic_ns > 0
+            ):
+                cutoff_ns = min(cutoff_ns, self._schedule.normal_end_monotonic_ns)
+            self._cutoff_ns, self._finish_deadline_ns = cutoff_ns, deadline_ns
+        if self._capture_runtime is not None and self._cutoff_ns is not None:
             self._capture_runtime.close_feedback_intervals(self._cutoff_ns)
         if self._session is None:
             self._output_results = failed_results(
@@ -582,7 +618,10 @@ class NativeRecording:
             return
         if self._capture_runtime is not None:
             self._capture_runtime.cancel_pending("capture_cancelled")
-        self._session.begin_cancel(deadline_ns=deadline_ns)
+        assert self._finish_deadline_ns is not None
+        self._session.begin_cancel(
+            deadline_ns=self._finish_deadline_ns, cutoff_ns=self._cutoff_ns
+        )
 
     def poll_finished(self) -> tuple[pb.OutputResult, ...] | None:
         if self._output_results is not None:
@@ -591,7 +630,7 @@ class NativeRecording:
             return ()
         if self._session is None:
             return None
-        if self._cutoff_ns is not None and self._capture_runtime is not None:
+        if self._finish_deadline_ns is not None and self._capture_runtime is not None:
             self._capture_runtime.poll_pending()
             if (
                 self._capture_runtime.pending
@@ -601,11 +640,18 @@ class NativeRecording:
                 self._capture_runtime.cancel_pending(
                     "capture_unresolved_at_finalization_deadline"
                 )
-            if not self._capture_runtime.pending:
+            if not self._capture_runtime.pending and self._cutoff_ns is not None:
                 assert self._finish_deadline_ns is not None
-                self._session.begin_finish(
-                    cutoff_ns=self._cutoff_ns, deadline_ns=self._finish_deadline_ns
-                )
+                if self._cancelled:
+                    self._session.begin_cancel(
+                        cutoff_ns=self._cutoff_ns,
+                        deadline_ns=self._finish_deadline_ns,
+                    )
+                else:
+                    self._session.begin_finish(
+                        cutoff_ns=self._cutoff_ns,
+                        deadline_ns=self._finish_deadline_ns,
+                    )
         try:
             result = self._session.poll_finished()
         except Exception as exc:
@@ -734,6 +780,10 @@ class NativeRecording:
             admitted_count=counts.admitted_count,
             input_submitted_count=counts.input_submitted_count,
             capacity_drop_count=counts.capacity_drop_count,
+            selected_real_count=counts.selected_real_count,
+            same_slot_omission_count=counts.same_slot_omission_count,
+            encoded_frame_count=counts.encoded_frame_count,
+            duplicate_frame_count=counts.duplicate_frame_count,
             final_input_group_id=counts.final_input_group_id,
             cutoff_host_ns=self._cutoff_ns,
             exit_code=self._encoder_exit,
@@ -760,6 +810,7 @@ class NativeRecording:
             ),
             capture_admission_count=counts.admitted_count,
             capture_drop_count=counts.capacity_drop_count,
+            same_slot_omission_count=counts.same_slot_omission_count,
             unresolved_attempt_count=0,
             outcome="interrupted" if self._cancelled else "completed",
         )

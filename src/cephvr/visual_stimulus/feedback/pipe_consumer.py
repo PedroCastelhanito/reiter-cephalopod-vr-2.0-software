@@ -10,6 +10,7 @@ from typing import Any, Protocol
 from google.protobuf.message import DecodeError
 
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.feedback.consumer import FeedbackResult
 from cephvr.visual_stimulus.feedback.wire import decode_entry
 from cephvr.visual_stimulus.v1 import data_pb2 as data
@@ -285,11 +286,11 @@ class FeedbackPipeConsumer:
         self._stop.set()
         if self._result_pipe is not None and not self._result_closed:
             self._result_pipe.request_cancel()
-        remaining = max(0, deadline_ns - self._clock_ns()) / 1_000_000_000
+        remaining = remaining_seconds(deadline_ns, clock=self._clock_ns)
         if self._reader is not None:
             self._reader.join(remaining)
         if self._writer is not None:
-            self._writer.join(max(0, deadline_ns - self._clock_ns()) / 1_000_000_000)
+            self._writer.join(remaining_seconds(deadline_ns, clock=self._clock_ns))
         if (self._reader is not None and self._reader.is_alive()) or (
             self._writer is not None and self._writer.is_alive()
         ):

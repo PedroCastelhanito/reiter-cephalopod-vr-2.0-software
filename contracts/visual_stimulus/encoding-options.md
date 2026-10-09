@@ -72,12 +72,17 @@ results; it does not waive encoder errors or required state/presentation records
 
 The review video is constant-rate at the pacing output's nominal refresh rate (the
 photodiode output in `photodiode_only_vsync` mode), retained as PreparedTrial
-ReviewEncoding.timing. Video frame n (zero-based) is the n-th admitted render group;
-its evidence Capture carries `video_frame_index` n. Real timing (state-evaluation
-host time, per-output swap observations) lives only in the
-[evidence file](evidence-format.md). Each omission shortens playback by one frame
-period; no duplicated, padded or replacement frames and no per-frame timestamps are
-passed to FFmpeg. Review timing never establishes optical onset or display duration.
+ReviewEncoding.timing. Video frame n (zero-based) occupies nominal slot n under
+[E13](../../docs/architecture/visual_stimulus.md#e13). The first usable source group
+in a slot wins; leading gaps repeat the first selected image and interior/trailing
+gaps repeat the previous selected image. Emit slots starting strictly before the
+actual cutoff, retaining the existing empty-stream behavior when no image is usable.
+The [evidence file](evidence-format.md) maps each encoded slot to its original source
+group and distinguishes real input from leading/interior/trailing duplicates and
+source omissions. State-evaluation times and per-output swap observations remain
+unchanged. Pass this prepared sequence to FFmpeg without per-frame timestamps or
+additional encoder duplication/drop. Review timing never establishes optical onset
+or display duration.
 
 ## Fragmented MP4 lifecycle
 

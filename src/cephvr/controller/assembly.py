@@ -15,6 +15,7 @@ from cephvr.controller.configuration import ControllerConfiguration
 from cephvr.controller.control.configuration import ConfigurationCommands
 from cephvr.controller.control.leases import ControlLeases
 from cephvr.controller.control.operations import ControlOperations
+from cephvr.controller.control.owned_camera_edits import OwnedCameraEdits
 from cephvr.controller.control.prompts import OperatorPrompts
 from cephvr.controller.control.snapshots import SnapshotPublisher
 from cephvr.controller.device.camera import CameraCommands
@@ -315,6 +316,26 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         configuration=i.configuration_state,
         projections=i.projections,
     )
+    owned_camera_edits = OwnedCameraEdits(
+        lifecycle=i.lifecycle,
+        configuration=i.configuration_state,
+        device=i.device_state,
+        limits=i.limit_state,
+        projections=i.projections,
+        operations=control_operations,
+        publisher=publisher,
+        backend=i.backends.get("acquisition"),
+        file_policy_loader=i.file_policy_loader,
+        generation=i.generation,
+        clock=i.clock,
+        microcontroller_active=lambda: (
+            i.microcontroller_device is not None
+            and (
+                i.microcontroller_device.view.diagnostic.active
+                or i.microcontroller_device.closing
+            )
+        ),
+    )
     configuration_commands = ConfigurationCommands(
         lifecycle=i.lifecycle,
         configuration=i.configuration_state,
@@ -329,6 +350,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         configuration_history_path=i.configuration_history_path,
         clock=i.clock,
         spawn=i.spawn,
+        owned_edits=owned_camera_edits,
         microcontroller_active=lambda: (
             i.microcontroller_device is not None
             and (
@@ -488,6 +510,7 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
     start = StartActivation(
         lifecycle=i.lifecycle,
         control=i.control,
+        device=i.device_state,
         limit_state=i.limit_state,
         clock=i.clock,
         publisher=publisher,
@@ -564,8 +587,10 @@ def assemble_controller(i: AssemblyInputs) -> ControllerComponents:
         setup_execution=setup_execution,
         publisher=publisher,
         validators=i.validators,
+        generation=i.generation,
         clock=i.clock,
         spawn=i.spawn,
+        authorized=control_operations.authorized,
     )
     tracking_diagnostic = TrackingDiagnosticController(
         generation=i.generation,

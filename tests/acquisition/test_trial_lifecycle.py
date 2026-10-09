@@ -636,6 +636,7 @@ async def test_release_waits_for_exact_camera_schedule_completion(
         session_slot=SessionSlot(current=session),
         workers={worker.context.camera: worker},
         serial=cast(SerialOwnerPort, object()),
+        pulse=PulseRecord(),
         serial_ack_timeout_ns=100,
         start_evidence_allowance_ns=100,
         lifecycle_delivery_ns=100,

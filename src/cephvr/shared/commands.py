@@ -8,6 +8,8 @@ from threading import RLock
 from cephvr.shared.clock import require_int64_ns
 from cephvr.shared.identity import require_uuid4
 
+DEFAULT_COMMAND_RETENTION_NS = 300_000_000_000
+
 
 class CommandConflict(ValueError):
     """A command ID was reused with a different canonical request."""

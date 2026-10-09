@@ -9,7 +9,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as types
 from cephvr.platform.windows.jobs import WindowsLaunchError
 from cephvr.shared.clock import describe_host_clock, host_time_ns
-from cephvr.shared.commands import CommandLedger
+from cephvr.shared.commands import DEFAULT_COMMAND_RETENTION_NS, CommandLedger
 from cephvr.shared.identity import require_uuid4
 from cephvr.supervisor.health import HealthMonitor
 from cephvr.supervisor.ports import SupervisorOutbound
@@ -44,7 +44,7 @@ class SupervisorRuntime:
         application_backstop_ns: int = 90_000_000_000,
         max_message_bytes: int = 16 * 1024 * 1024,
         max_retained_entries: int = 256,
-        command_retention_ns: int = 300_000_000_000,
+        command_retention_ns: int = DEFAULT_COMMAND_RETENTION_NS,
         graceful_exit_ns: int = 5_000_000_000,
         terminate_exit_ns: int = 2_000_000_000,
         heartbeat_interval_ns: int = 5_000_000_000,
@@ -59,7 +59,9 @@ class SupervisorRuntime:
         self.identity = identity
         self.controller = controller
         self.credentials = dict(credentials)
-        self.registry = LaunchRegistry(native, silence_timeout_ns)
+        self.registry = LaunchRegistry(
+            native, silence_timeout_ns, retention_ns=command_retention_ns
+        )
         self.commands = CommandLedger(
             identity.generation,
             command_retention_ns,

@@ -1,0 +1,34 @@
+[
+  {
+    "path": "src/cephvr/controller/control/configuration.py",
+    "snapshot": "/tmp/luna-before-controller-configuration.py",
+    "replacements": 1,
+    "whole_module_ast_equivalent": true,
+    "unconverted": 0,
+    "all_clocks": "self.clock"
+  },
+  {
+    "path": "src/cephvr/controller/control/owned_camera_edits.py",
+    "snapshot": "/tmp/luna-before-owned-camera-edits.py",
+    "replacements": 3,
+    "whole_module_ast_equivalent": true,
+    "unconverted": 0,
+    "all_clocks": "self.clock"
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/acquisition_resolution.py",
+    "snapshot": "/tmp/luna-before-acquisition-resolution.py",
+    "replacements": 4,
+    "whole_module_ast_equivalent": true,
+    "unconverted": 0,
+    "all_clocks": "self.clock"
+  },
+  {
+    "path": "src/cephvr/controller/device/camera.py",
+    "snapshot": "/tmp/luna-before-controller-camera-deadlines.py",
+    "replacements": 3,
+    "whole_module_ast_equivalent": true,
+    "unconverted": 0,
+    "all_clocks": "self.clock"
+  }
+]

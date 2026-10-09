@@ -27,6 +27,7 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.incidents import (
     IncidentEvidenceError,
     IncidentTopology,
@@ -135,7 +136,7 @@ class SetupExecution:
             )
         conflicts = await asyncio.wait_for(
             asyncio.to_thread(attempt.reservation.acquire),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         if conflicts:
             listed = [str(path) for path in conflicts]
@@ -152,7 +153,7 @@ class SetupExecution:
             deadline = extended
             await asyncio.wait_for(
                 asyncio.to_thread(attempt.reservation.resolve_collisions, conflicts),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             attempt.overrides.append({"check": "output_conflict", "paths": listed})
         if self.reservation_started is not None:
@@ -167,7 +168,7 @@ class SetupExecution:
                 attempt.reservation_registered = False
             await asyncio.wait_for(
                 self.reservation_started(attempt),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             async with self.lifecycle.lock:
                 attempt.reservation_registered = True
@@ -224,7 +225,7 @@ class SetupExecution:
             self.spikeglx.prepare(
                 attempt.prepared.configuration, attempt.context, expected_run
             ),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         if (
             not preparation.address.strip()
@@ -252,7 +253,7 @@ class SetupExecution:
             supervisor.register_context(
                 self.preparation_context.registration(attempt, command_id)
             ),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         if (
             initial_registration.admission.result != pb.COMMAND_RESULT_ACCEPTED
@@ -275,7 +276,7 @@ class SetupExecution:
                     ),
                     deadline_ns=deadline,
                 ),
-                max(0, (deadline - self.clock()) / 1e9),
+                remaining_seconds(deadline, clock=self.clock),
             )
             if response.result != pb.COMMAND_RESULT_ACCEPTED:
                 raise RuntimeError(
@@ -307,7 +308,7 @@ class SetupExecution:
                     for name, backend in initial.items()
                 )
             ),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         for name, response in zip(initial, responses, strict=True):
             if response.result != pb.COMMAND_RESULT_ACCEPTED:
@@ -353,7 +354,7 @@ class SetupExecution:
             raise RuntimeError(f"prepared incident closure invalid: {exc}") from exc
         registration = await asyncio.wait_for(
             supervisor.register_context(context_request),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         if (
             registration.admission.result != pb.COMMAND_RESULT_ACCEPTED

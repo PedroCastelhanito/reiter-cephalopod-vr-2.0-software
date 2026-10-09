@@ -57,6 +57,11 @@ class ConfigurationResolution:
         deadline_ns: int,
         expected_pulses: bool = False,
         requested_pulses: camera.CameraPulseConfiguration | None = None,
+        allow_empty: bool = False,
+        accepted_base_revision: int | None = None,
+        accepted_base_settings: control.AcquisitionSettings | None = None,
+        device_work_quiescent: Callable[[], bool] | None = None,
+        preexisting_work_quiescent: Callable[[], bool] | None = None,
     ) -> control.OperationContext:
         if (
             self.clock() >= deadline_ns
@@ -66,8 +71,11 @@ class ConfigurationResolution:
             or command.work.WhichOneof("work") is not None
             or not command.HasField("parent_operation")
             or not command.parent_operation.command_id
-            or request_revision != self.configuration.revision
-            or (not expected_cameras and not expected_pulses)
+            or (
+                request_revision != self.configuration.revision
+                and accepted_base_revision is None
+            )
+            or (not expected_cameras and not expected_pulses and not allow_empty)
             or not expected_cameras.issubset(
                 {camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING}
             )
@@ -77,6 +85,35 @@ class ConfigurationResolution:
         async with self.lock:
             if self._pending is not None:
                 raise RuntimeError("another configuration readback is unresolved")
+            if accepted_base_revision is not None or accepted_base_settings is not None:
+                if (
+                    accepted_base_revision is None
+                    or accepted_base_settings is None
+                    or accepted_base_revision != request_revision
+                ):
+                    raise ValueError("accepted configuration base is incomplete")
+                if (
+                    preexisting_work_quiescent is None
+                    or not preexisting_work_quiescent()
+                ):
+                    raise RuntimeError(
+                        "prior camera device work is not terminal and quiescent"
+                    )
+                base = control.AcquisitionSettings.FromString(
+                    accepted_base_settings.SerializeToString(deterministic=True)
+                )
+                if accepted_base_revision < self.configuration.revision:
+                    raise ValueError("accepted configuration base decreases revision")
+                if accepted_base_revision == self.configuration.revision:
+                    if base.SerializeToString(deterministic=True) != (
+                        self.configuration.settings.SerializeToString(
+                            deterministic=True
+                        )
+                    ):
+                        raise ValueError("accepted configuration base conflicts")
+                else:
+                    self.configuration.settings.CopyFrom(base)
+                    self.configuration.revision = accepted_base_revision
             operation = control.OperationContext(command_id=command.command_id)
             self._pending = _PendingResolution(
                 command=wire.BackendCommand.FromString(
@@ -94,8 +131,22 @@ class ConfigurationResolution:
                     if requested_pulses is not None
                     else None
                 ),
+                device_work_quiescent=device_work_quiescent,
             )
             return control.OperationContext(command_id=operation.command_id)
+
+    async def report_if_ready(
+        self, operation: control.OperationContext
+    ) -> control.ReportReceipt:
+        """Send an empty exact batch for a configuration-only revision update."""
+        async with self.lock:
+            pending = self._require_pending(operation)
+            if pending.expected_cameras or pending.expected_pulses:
+                raise ValueError("only an empty configuration batch uses this report")
+            report = self._complete_report_if_ready(pending)
+        if report is None:
+            raise RuntimeError("empty configuration report was not ready")
+        return await self._send_report(report, pending)
 
     async def accept_camera(
         self,
@@ -270,6 +321,38 @@ class ConfigurationResolution:
                 raise RuntimeError("configuration resolution is not terminal")
             self._pending = None
 
+    async def retire_failed_if_quiescent(
+        self, operation: control.OperationContext | None = None
+    ) -> bool:
+        """Release a canceled edit only after its retained device work is quiet."""
+        async with self.lock:
+            pending = self._pending
+            if (
+                pending is None
+                or pending.failure is None
+                or not pending.confirmed.is_set()
+                or (operation is not None and pending.operation != operation)
+                or pending.device_work_quiescent is None
+                or not pending.device_work_quiescent()
+            ):
+                return False
+            self._pending = None
+            return True
+
+    async def failed_operation(self) -> control.OperationContext | None:
+        """Return the exact canceled edit identity for read-only recovery queries."""
+        async with self.lock:
+            pending = self._pending
+            if (
+                pending is None
+                or pending.failure is None
+                or not pending.confirmed.is_set()
+            ):
+                return None
+            return control.OperationContext.FromString(
+                pending.operation.SerializeToString(deterministic=True)
+            )
+
     async def _send_report(
         self,
         report: wire.AcquisitionResolutionReport,
@@ -344,6 +427,7 @@ class _PendingResolution:
     expected_cameras: frozenset[int]
     expected_pulses: bool
     requested_pulses: camera.CameraPulseConfiguration | None
+    device_work_quiescent: Callable[[], bool] | None = None
     cameras: dict[int, camera.CameraResolvedState] = field(default_factory=dict)
     pulses: mcu.PulseConfigurationResolution | None = None
     report: wire.AcquisitionResolutionReport = field(

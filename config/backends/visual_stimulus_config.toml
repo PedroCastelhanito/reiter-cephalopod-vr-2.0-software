@@ -2,7 +2,7 @@
 # Visual Stimulus is required in the accepted modes; this file offers no switch to disable it.
 format_version = 1
 # E14: fixed policy lives in contracts/policy/visual_stimulus_policy.toml; versions must match.
-policy_version = 7
+policy_version = 8
 
 [rpc]
 # E08: fixed Visual Stimulus coordinator service port; loopback only; restart required after edits.
@@ -65,7 +65,7 @@ record_stall_timeout_s = 10
 # Config-file-only target cadence; no GUI pacing editor. Native timing still needs rig verification.
 pacing_refresh_hz = 60.0
 # Configure the active pacing output identity here; no display is guessed.
-pacing_output_id = "calibration_front"
+# pacing_output_id = "<configured output ID>"
 # V20 pacing mode is owned by the display profile (DisplayProfile.presentation_mode).
 # New profiles default to photodiode_only_vsync; all_outputs_vsync is selectable for
 # rig testing. No second default here.

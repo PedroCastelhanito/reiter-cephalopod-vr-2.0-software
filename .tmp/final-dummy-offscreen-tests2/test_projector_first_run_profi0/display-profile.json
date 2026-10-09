@@ -1,1 +1,0 @@
-{"outputs": [{"output_id": "front-output", "device_identity": "monitor-front", "width_px": 1920, "height_px": 1080, "refresh_numerator": 60, "refresh_denominator": 1, "rgb_bits_per_channel": 8}], "mappings": [{"surface_id": "front", "output_id": "front-output"}], "presentation_mode": "all_outputs_vsync", "photodiode_enabled": false}

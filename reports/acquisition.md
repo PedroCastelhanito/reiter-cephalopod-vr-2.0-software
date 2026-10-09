@@ -1,40 +1,88 @@
 # Acquisition status
 
-Oct8 native dummy execution (`gui-backend-dummy-experiment`) exercises both managed
-camera connection/preview/disconnect paths and real unpaired Setup/Start. Runs40–42
-complete the 60 s trial/session with confirmed cleanup and closed camera recordings;
-Tracking velocities stay disabled independently from its camera video. Run42 counts
-1,198 Behavior and 2,397 Tracking frames; complete external CPU decode passes both,
-and frame-log video indices/counts match. SDK-reported missed/failed buffers and
-resynchronizations are zero; optional timestamp conversion and some transport counters
-remain unavailable. Exact cutoff and post-cutoff accounting complete under the owner's
-temporary 1,000 ms allowances, which are budgets rather than measured rig guarantees.
+Latest retained native dummy evidence is run43 (Oct8), reviewed on 2026-10-09:
+the 60 s unpaired trial/session completes with cleanup, metadata sync and seven
+closed outputs. Behavior records 1,797 frames (29.95 fps) and Tracking camera 3,596
+(59.93 fps); external counts and full CPU decode pass. This supersedes the run42
+20/40 fps observation after preserving the saved-disabled limiter in external-trigger
+mode under [A10](../docs/architecture/acquisition.md#a10). SDK missed/failed frames
+are zero in the summary; unavailable native timestamps/counters remain unavailable.
+This does not prove electrical trigger correlation, scientific timing or full-load
+acceptance. Tracking velocities remain disabled independently from its camera video.
+[Run43 raw summary](rig-wiring-evidence-2026-10-08/dummy-experiment/unpaired-run-43-output-verification.json)
+has no exact tested source revision; no native run or decode was repeated in this audit.
 
-Recorded delivery is about 20/40 fps against configured 30/60. MCU-only diagnostic
-counts are 61/120 rising edges in 2 s, supporting the requested generator cadence
-without establishing electrical receiver correlation. Both PFS baselines disable the
-internal camera limiter; backend settings had enabled it when applying the saved
-free-running rate even in externally triggered mode. Preserve that PFS choice under
-[A10](../docs/architecture/acquisition.md#a10); 38 owning adapter cases pass, with
-run43 native verification in progress. Do not infer a dropped trigger from transport
-frame counters, which count accepted camera frames. Gap padding remains pending below.
+Post-cutoff accounting used temporary 1,000 ms allowances, not measured guarantees.
+The Oct9 authorized repair removes those temporary defaults; all 36 combined
+configuration checks pass. Camera-worker retirement now explicitly confirms retained
+successful Cleanup plus exact lifecycle/resource/output evidence under
+[E08 revision 169](../docs/architecture/system-contracts.md#e08), with independent
+supervisor native absence checks. Exact proof is acknowledged before Shutdown to
+avoid an expected-exit/health race, then reconciled after native exit using the same
+immutable confirmation. Independent operation/lifecycle delivery is joined
+within the original deadline; guarded retained-query recovery preserves accepted state.
+Workless Configuration and session callers are covered, including discharged failed
+outputs. The final owning suite passes 338 with five skips and two marker exclusions.
+Portable worker tests and execution extraction are complete locally (see below).
+Sol and Astra also accept the shared worker-launch handshake: backend wrappers retain
+their descriptors and retirement rules while one native helper owns the protected
+bootstrap/confirmation sequence. Exact process identity, handle transfer and original
+deadlines remain intact; 57 focused tests pass with one platform skip and three marker
+exclusions. [Source review and limits](review-evidence-2026-10-09/nongui-sol-launch.txt).
+[Implementation evidence and native limits](review-evidence-2026-10-09/implementation-context.json).
 
 Repairs under A02/A07/A08/E08 cover exact preparation/readback, absolute output paths,
 Schedule/Release joining, preparation-parent lifecycle, normal end/MCU OFF, SDK stop
 before bounded drain, bare cleanup commands and retained failure delivery. Completed
 cleanup publishes durable owner ENDED; coordinator accepts only exact quiet terminal
 liveness. Shutdown uses delivered closure without changing its identity and avoids
-cancelling gRPC termination before server.stop. Run42 remains healthy idle and closes
-normally with exact all-owned absence. Current restoration/full regressions remain
-pending. [Integration assessment](runtime.md#current-scope-and-review),
+cancelling gRPC termination before server.stop. Run43 remains healthy idle and closes
+normally with exact all-owned absence in retained evidence. Committed defaults are
+restored; current local regression results are recorded in the implementation evidence. [Integration assessment](runtime.md#current-scope-and-review),
 [raw evidence](rig-wiring-evidence-2026-10-08/dummy-experiment/).
 
-Owner-selected video timing revision (2026-10-08):
-[A07 revision 58 / A08 revision 49](../docs/architecture/acquisition.md#a08)
-require padding recording gaps and explicit encoded-frame/source/duplicate mapping
-for post hoc exclusion. Current frame-log schema 2 and recording pump remain
-unpadded. Slot assignment, leading-gap treatment, schema formalization and writer
-implementation are pending; no new runtime or rig pass is claimed.
+Oct9 non-GUI implementation: Luna adds portable worker deadline, safety priority,
+coordinator-loss, preview, cleanup/report and camera-readback coverage; preparation,
+wait verification and health projection move to focused owners under
+[ARCH-002](../architecture.md#arch-002). Execution falls from 620 to 482 lines.
+Sol independently passes 55 cases with five platform skips and accepts the preserved
+ownership/deadlines; Astra concurs. Original-source statement coverage rises from
+28.30% to 53.15% across 1,159 statements; branch-inclusive coverage is a separate
+24.53% to 47.83% measure. [Methods and limitations](review-evidence-2026-10-09/nongui-luna-worker.txt),
+[Sol review](review-evidence-2026-10-09/nongui-sol-worker.txt).
+
+Owned camera/pulse editing and failed-operation recovery now follow
+[A10 revision 57](../docs/architecture/acquisition.md#a10) and
+[A11 revision 41](../docs/architecture/acquisition.md#a11). Exact late evidence,
+pending cleanup identities and confirmed claim/resource release remain distinct from
+configuration adoption and readiness. The [cross-owner assessment](runtime.md#unresolved-findings-and-limitations)
+records current implementation, review findings and validation limits.
+
+Owner-selected video timing rules are now recorded in
+[A07 revision 59 / A08 revision 50](../docs/architecture/acquisition.md#a08).
+First usable receipt-time image per slot wins; later same-slot sources retain explicit
+video omissions. Leading slots use explicitly labelled first-image backfill, and later
+gaps repeat the last selected image. Entirely empty recordings retain existing handling.
+The bounded writer retains one prepared image and emits explicit encoded-slot rows;
+source rows, same-slot omissions and duplicate counts remain distinct. Tail work keeps
+the encoder-progress watchdog active even after its source queue empties; retries retain
+the original stall/finish bounds. Header and grid use the same canonical FFmpeg rate.
+Frame-log schema 3 and fixed policy 19 bind these changes. Sol accepts the corrected
+implementation after 71 focused cross-owner checks and 21 header/closure checks.
+Pre-T cancellation, immutable cleanup cutoff, omission accounting and proved camera
+tail boundaries are corrected. Successful encoder input is retained before maintenance;
+a missing required mapping poisons normal retry. Sol accepts the corrections after 53
+focused checks and the reproduced cancellation/omission paths. Astra independently
+accepts these corrections and the exact camera terminal proof, with no remaining
+padding finding. [Astra evidence](review-evidence-2026-10-09/nongui-astra-review.txt).
+Repository-wide lint/format, Windows-target mypy, boundary and contract/schema checks
+pass; the final portable suite passes and Sol/Astra accept the integrated source.
+[Exact full-suite result and provenance](review-evidence-2026-10-09/nongui-context.json)
+retain counts, source hashes and limits. Local checks
+do not establish native encoder behavior or throughput.
+[Implementation handoff](review-evidence-2026-10-09/nongui-luna-padding.txt),
+[Sol review](review-evidence-2026-10-09/nongui-sol-padding.txt).
+No rig timing or encoder throughput pass is claimed.
 
 Microcontroller ownership update (2026-10-08) follows
 [A10 revision 55](../docs/architecture/acquisition.md#a10) and
@@ -49,7 +97,7 @@ it. Unconfirmed release keeps evidence and cleanup pending. Sessionless pulse ed
 with no external previews also release their verified-stopped claim.
 
 Microcontroller config/policy 1 is the sole generic serial/I/O/defaults owner; acquisition
-config/policy 18 retains camera pins/rates and distributes the resolved serial timing
+config/policy 19 retains camera pins/rates and distributes the resolved serial timing
 compatibility fields. New replay/identity/cleanup, idle-policy and preview-release cases
 extend the existing owning test modules; the existing core owner/protocol and firmware
 cases moved intact to controller. Portable acquisition/controller/supervisor/shared/client
@@ -86,15 +134,14 @@ and serial handoff are focused modules; camera/Microcontroller panels retain onl
 with managed dispatch separate. The shared native launcher adds a focused registered-plan
 callback and stop-method binding, retaining existing encoder defaults and deadlines.
 
-Current native recording follow-up: runs 22-28 expose and repair retained trial failure
-admission, camera clock text validation, gray raw input naming, cleanup result format,
-pre-Ready encoder obligations, asynchronous Schedule/Release sequencing, 64-bit GPU
-fence arguments, compositor resource order and trial-parent lifecycle forwarding.
-Each interrupted Desktop reservation and exact process exit remains retained in the
-[dated dummy evidence](rig-wiring-evidence-2026-10-08/dummy-experiment/). No completed
-60 s run, video decode/count verification or clean full-workload acceptance is yet
-claimed. Current retry remains in progress; temporary camera drain/pacing/GPU inputs
-must be restored. ARCH-002 reuses the existing focused owners and test modules.
+Historical recording attempts 22–28 repaired retained trial failure admission,
+camera clock validation, gray raw input naming, cleanup result format, pre-Ready
+encoder obligations, Schedule/Release ordering, GPU fence arguments, compositor
+resource order and trial-parent forwarding. Their interrupted reservations and exact
+exit evidence remain in the [dated bundle](rig-wiring-evidence-2026-10-08/dummy-experiment/).
+Run43 completion/decode results above supersede the early incomplete-run assessment.
+Oct9 restores source defaults; measured timing and full-workload acceptance remain open.
+ARCH-002 keeps focused owners and existing behavior test modules.
 
 ## Current Windows wiring checks
 
@@ -143,7 +190,10 @@ own explicit input. The prior saved snapshot has Tracking disabled, external tim
 and no PFS/input. A PFS hint of Line2 on Behavior does not configure Tracking or prove
 application. Duplicate role assignment is independently refused. This is a reported
 configuration/workflow failure, not new hardware evidence; no device action ran.
-Improve cross-camera validation feedback under the existing GUI task.
+Oct9 repairs feedback in both snapshot and ordinary camera-save paths: select/focus
+the blocking Tracking row/input while retaining the Behavior draft and atomic whole-
+configuration validation. The focused three-case offscreen selection passes using a
+real validator error; actual native chooser/DPI behavior remains in the rig checklist.
 
 Owner-requested camera selection repair (2026-10-08, G01): inventory restoration
 now reloads the selected role/PFS/timing/rate even without a configuration revision

@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 from typing import Any
 
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.rendering.types import MediaSnapshot
 
 from .assets import ProtectedSource
@@ -494,7 +495,7 @@ class VideoPlayback:
                 instance.cancelled = True
             self._condition.notify_all()
         for worker in self._workers:
-            remaining = max(0.0, (deadline_ns - self.clock_ns()) / 1_000_000_000)
+            remaining = remaining_seconds(deadline_ns, clock=self.clock_ns)
             worker.join(remaining)
         outstanding = [worker.name for worker in self._workers if worker.is_alive()]
         with self._condition:

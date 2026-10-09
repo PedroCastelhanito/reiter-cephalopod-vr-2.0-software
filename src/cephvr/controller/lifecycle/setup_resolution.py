@@ -11,6 +11,7 @@ from cephvr.controller.lifecycle.activity import activity_requirements
 from cephvr.controller.lifecycle.evidence_wait import EvidenceWaiter
 from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.state import Attempt
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class SetupResolution:
@@ -79,7 +80,7 @@ class SetupResolution:
                     for validator in self.validators.values()
                 )
             ),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         if not results or any(
             not result.completed or not result.valid for result in results
@@ -111,7 +112,7 @@ class SetupResolution:
             asyncio.to_thread(
                 self.display_validator, visual_stimulus_settings.display.profile_json
             ),
-            max(0, (deadline - self.clock()) / 1e9),
+            remaining_seconds(deadline, clock=self.clock),
         )
         if not attempt.visual_stimulus_output_ids:
             raise RuntimeError(

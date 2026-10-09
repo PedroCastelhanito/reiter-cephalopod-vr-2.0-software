@@ -1,0 +1,38 @@
+CephVR2 non-GUI Luna increment: nominal video cadence padding
+Date: 2026-10-09
+Repository: /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software
+Scope: acquisition recording frame-log/session writer; Visual Stimulus recording worker/session/resource preflight; shared nominal grid; owner tests and recording contract/schema. No GUI, camera hardware, GL context, FFmpeg child, encoder throughput or rig validation was performed.
+
+Behavior implemented
+- Shared exact nominal grid selects half-open slots from the unchanged T and rational cadence. Acquisition selects by camera host receipt; Visual Stimulus selects by evaluation_host_ns. Same-slot omissions remain distinct from transfer/capacity failure, with source facts preserved.
+- Acquisition streams leading/interior/trailing duplicates through the existing prepared buffer after cutoff/producer completion. Each encoded submission advances watchdog/progress/sync and is included in encoded count; source and encoded counts/mapping are distinct. Existing finish deadline is retained.
+- Visual Stimulus preserves group admission order despite out-of-order transfer completion, resolves first usable image as leading source, streams duplicates, and seals exact cutoff before waking the writer. It normalizes owned pixel data once on the recording owner; repeated rows do not flip twice. Required-grid admission replaces the test-only unpadded production branch.
+- Visual Stimulus resource preflight accounts CPU peak `(capture_slots + 2) * (width * height * 4) + (width * 4)`: admitted slots, one retained source, one serialized PBO readback ownership-copy transient, and one row-swap scratch. Actual GPU reservation is compositor `pixels * 16` plus one RGBA PBO per capture slot. No new setting was added.
+- Evidence schema/mapping carries encoded index, nominal slot, real source identity/time and duplicate disposition; source, encoded, duplicate, omission and failure counts remain separate.
+
+Focused validation
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/visual_stimulus/test_recording.py tests/visual_stimulus/test_resources.py tests/acquisition/test_recording_cleanup.py tests/shared/test_invariants.py -q` — 86 passed, 1 skipped.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/visual_stimulus -m 'not windows and not rig' --ignore=tests/visual_stimulus/test_transport.py --ignore=tests/visual_stimulus/test_controller_communication.py -q` — 180 passed, 1 deselected.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition -m 'not windows and not rig' -q` — 356 passed, 5 skipped, 2 deselected.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider contracts/visual_stimulus/tests/test_contract_fixes.py tests/visual_stimulus/test_evidence_contract.py -q` — 39 passed, 53 subtests passed.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python contracts/visual_stimulus/generate_schemas.py --check` — 11 schemas checked, 0 needed regeneration.
+- Scoped Ruff check — passed. Scoped Ruff format check — 49 files already formatted.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m mypy --platform win32 src/cephvr/acquisition/recording src/cephvr/visual_stimulus/recording src/cephvr/visual_stimulus/resources/session.py src/cephvr/shared/nominal_video_grid.py` — success, 45 source files.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python tools/check_backend_boundaries.py` — 637 modules, 0 boundary violations; existing >500-line cohesion review notices include acquisition recording session, Visual Stimulus recording native and resources session.
+- Scoped `git diff --check` — clean.
+
+Tests cover cadence boundaries/collisions, explicit real/duplicate mappings, failed and out-of-order readback admission, leading/interior/trailing repeats, retained buffer reuse at capture_slots=1, exact cutoff publication, repeated buffer normalization, resource-budget arithmetic, acquisition writer ordering and progress. These use deterministic fake encoder/pixel adapters and do not establish native hardware equivalence.
+
+Limitations / known environment boundary
+- The full Visual Stimulus owner suite was not used as a final pass: loopback transport/controller communication tests are excluded because local authenticated socket binding is restricted in this environment. An earlier full run reported loopback bind failures; the scoped offline suite above passed without weakening assertions.
+- Windows-native capture/cleanup, actual PBO timing, OpenGL ownership, FFmpeg/NVENC behavior, audio/video synchronization, throughput and the hardware/rig acceptance items remain unverified and are tracked under E15/rig verification.
+- The `recording_bytes_total` CPU reserve is a conservative worker-side memory bound; it is not a performance or throughput claim.
+
+Acquisition tail-watchdog correction and integrated session proof (2026-10-09)
+- `EncoderProgressWatchdog.active_input_work()` scopes tail writes as pending encoder input even after the source queue drains. `check()` now combines real queue ownership with this explicit active operation. Successful scope exit clears pending state; failed writes preserve the first pending timestamp across retries. Actual progress-frame advancement alone updates the progress timestamp; repeated successful stdin writes do not renew the stall clock. `RecordingSession.finish()` scopes its trailing duplicate loop with this operation. Existing retained absolute finish deadline still bounds each write and is preserved across same-evidence retry.
+- Acquisition `FrameLogWriter` now derives the rational cadence from the same canonical `_format_rate()` string sent to FFmpeg, avoiding float precision drift between nominal-slot mapping and the configured encoder input rate. Integrated session test asserts 29.97002997002997 is represented by the encoder's canonical 29.97002997 cadence.
+- Added deterministic real-watchdog tests with empty `RecordingQueue`: unchanged progress fails at the original stall bound despite repeated checks; advancing `progress_frame` moves that bound once, then unchanged progress expires it. Added a real `RecordingSession` + real `FrameLogWriter` test with bounded `RecordingQueue`/`PixelBufferPool` and a fake encoder: leading/interior/tail slots, counts, mapping and completion are checked; a failed first tail write is retried with a later cleanup deadline while stdin remains capped at the original finish deadline; source/tail writes advance fake progress and the configured periodic frame-log/video syncs occur during the repeated tail.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition/test_recording_cleanup.py tests/acquisition/test_recording_payload.py tests/shared/test_invariants.py tests/visual_stimulus/test_recording.py -q -m 'not windows and not rig'` — 71 passed, 1 deselected.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/acquisition -m 'not windows and not rig' -q` — 362 passed, 5 skipped, 2 deselected.
+- Scoped Ruff check and format check passed; Windows-target mypy passed for the three changed source modules; backend boundaries found 0 violations; scoped diff check clean. Boundary scan still reports existing >500-line cohesion review notices, including acquisition `recording/session.py`.
+- These remain fake encoder/file-sync tests; Windows pipe reader, FFmpeg progress emission, physical camera, file-sync implementation and E15 rig behavior remain unverified.

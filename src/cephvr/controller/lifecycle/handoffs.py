@@ -13,6 +13,7 @@ from cephvr.controller.lifecycle.preparation_context import PreparationContext
 from cephvr.controller.preparation import PreparationError
 from cephvr.controller.receipts import rejected_receipt
 from cephvr.controller.state import Attempt, LifecycleState
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.tracking.v1 import services_pb2 as tracking_svc
 
 
@@ -104,7 +105,7 @@ class PreparationHandoffs:
                     attempt,
                 )
                 continue
-            remaining = max(0, (deadline_ns - self.clock()) / 1e9)
+            remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if action == "bind":
                 assert isinstance(request, tracking_svc.TrackingDataBinding)
                 response = await asyncio.wait_for(

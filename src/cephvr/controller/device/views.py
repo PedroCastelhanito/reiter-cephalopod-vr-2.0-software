@@ -57,6 +57,57 @@ class DeviceViews:
                         if changed:
                             self.hooks.publish()
                         return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+                    terminal = self.device.configuration_edit_terminals.get(
+                        status.operation.command_id
+                    )
+                    if terminal is not None:
+                        if (
+                            status.views.source != terminal.source
+                            or status.work.WhichOneof("work") is not None
+                            or status.result.work.WhichOneof("work") is not None
+                            or status.result.context.command_id != terminal.operation_id
+                            or status.result.command != "ApplyCameraSettings"
+                            or not status.result.complete
+                            or not status.result.HasField("succeeded")
+                        ):
+                            raise ProjectionError(
+                                "configuration edit status identity or deadline mismatch"
+                            )
+                        if (
+                            terminal.device_status is not None
+                            and terminal.device_status.SerializeToString(
+                                deterministic=True
+                            )
+                            != status.SerializeToString(deterministic=True)
+                        ):
+                            raise ProjectionError(
+                                "retained configuration edit status changed on retry"
+                            )
+                        if terminal.device_status is not None:
+                            return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+                        self.projections.validate_devices(status)
+                        changed = self.projections.accept_newer_devices(status)
+                        terminal.device_status = (
+                            svc.AcquisitionDeviceStatusReport.FromString(
+                                status.SerializeToString(deterministic=True)
+                            )
+                        )
+                        terminal.device_status_late = (
+                            observed_ingress > terminal.deadline_ns
+                        )
+                        edit = self.device.configuration_edit
+                        if (
+                            edit is not None
+                            and edit.operation_id == terminal.operation_id
+                        ):
+                            edit.device_status = (
+                                svc.AcquisitionDeviceStatusReport.FromString(
+                                    status.SerializeToString(deterministic=True)
+                                )
+                            )
+                        if changed:
+                            self.hooks.publish()
+                        return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
                     operation = self.device.camera_operation
                     if (
                         operation is None

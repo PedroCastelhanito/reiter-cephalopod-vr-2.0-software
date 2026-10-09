@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from uuid import uuid4
 
@@ -17,6 +18,7 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 
 _RELEASE_RECEIPT_RESERVATION_BYTES = 4096
 
@@ -292,6 +294,40 @@ class ManualPreviewTransferOwner:
             )
         self._close_tracking_resource(preview)
 
+    async def retire_and_release(
+        self, preview: WorkerPreview, *, deadline_ns: int
+    ) -> None:
+        """Retire one preview and prove both consumer and ring releases."""
+        self.retire(preview)
+        self.close_retired_resource(preview)
+        if preview.viewer is not None:
+            await _wait_release_event(
+                preview.viewer_released_event, deadline_ns, self.clock
+            )
+            if preview.viewer is not None:
+                raise RuntimeError(
+                    "preview viewer release did not retire exact transfer"
+                )
+        if preview.tracking_viewer is not None:
+            await _wait_release_event(
+                preview.tracking_viewer_released_event, deadline_ns, self.clock
+            )
+            if preview.tracking_viewer is not None:
+                raise RuntimeError(
+                    "Tracking viewer release did not retire exact transfer"
+                )
+        self.close_retired_resource(preview)
+        retained = {
+            allocation_id
+            for allocation_id in (
+                preview.allocation_id,
+                preview.tracking_allocation_id,
+            )
+            if allocation_id is not None and allocation_id in self.resources
+        }
+        if retained:
+            raise RuntimeError("preview ring ownership remains unresolved")
+
     def close_retired_resource(self, preview: WorkerPreview) -> None:
         tracking_id = preview.tracking_allocation_id
         if tracking_id is not None and tracking_id in self.resources:
@@ -390,3 +426,12 @@ def _rejected(code: str, message: str) -> control.ReportReceipt:
         result=control.COMMAND_RESULT_REJECTED,
         failure=control.Failure(code=code, message=message[:2048]),
     )
+
+
+async def _wait_release_event(
+    event: asyncio.Event, deadline_ns: int, clock: Callable[[], int]
+) -> None:
+    remaining = remaining_seconds(deadline_ns, clock=clock)
+    if remaining <= 0:
+        raise TimeoutError("preview transfer release missed its retained deadline")
+    await asyncio.wait_for(event.wait(), remaining)

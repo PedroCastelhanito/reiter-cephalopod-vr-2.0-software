@@ -10,9 +10,12 @@ import sys
 import threading
 from collections.abc import Callable
 from ctypes import wintypes
+from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
 from cephvr.platform.windows.jobs import WindowsLaunchError
+from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class _SECURITY_ATTRIBUTES(ctypes.Structure):
@@ -24,6 +27,38 @@ class _SECURITY_ATTRIBUTES(ctypes.Structure):
 
 
 _T = TypeVar("_T")
+
+
+@dataclass
+class BootstrapPipeWrite:
+    """Keep one blocking bootstrap write and its handle owned through completion."""
+
+    handle: int
+    descriptor: dict[str, object]
+    completed: threading.Event = field(default_factory=threading.Event)
+    failure: list[BaseException] = field(default_factory=list)
+
+    def start(self) -> None:
+        def write() -> None:
+            try:
+                write_bootstrap(self.handle, self.descriptor)
+            except BaseException as exc:
+                self.failure.append(exc)
+            finally:
+                self.completed.set()
+
+        threading.Thread(
+            target=write, daemon=True, name="cephvr-worker-bootstrap"
+        ).start()
+
+    async def wait(self, deadline_ns: int) -> None:
+        timeout = remaining_seconds(deadline_ns, clock=host_time_ns)
+        if timeout <= 0 or not await asyncio.to_thread(self.completed.wait, timeout):
+            raise TimeoutError("worker bootstrap pipe write remains in progress")
+        if self.failure:
+            raise WindowsLaunchError(
+                f"worker bootstrap write failed: {self.failure[0]}"
+            ) from self.failure[0]
 
 
 async def run_pipe_io_daemon(operation: Callable[[], _T], *, timeout_s: float) -> _T:
@@ -145,11 +180,12 @@ def write_bootstrap(handle: int, document: dict[str, Any]) -> None:
         raise WindowsLaunchError("Windows bootstrap pipes require Windows")
     import msvcrt
 
-    encoded = json.dumps(document, separators=(",", ":")).encode("utf-8")
-    if len(encoded) > 64 * 1024:
-        raise WindowsLaunchError("bootstrap document exceeds 64 KiB")
-    fd = msvcrt.open_osfhandle(handle, 0)
+    fd: int | None = None
     try:
+        encoded = json.dumps(document, separators=(",", ":")).encode("utf-8")
+        if len(encoded) > 64 * 1024:
+            raise WindowsLaunchError("bootstrap document exceeds 64 KiB")
+        fd = msvcrt.open_osfhandle(handle, 0)
         framed = len(encoded).to_bytes(4, "little") + encoded
         offset = 0
         while offset < len(framed):
@@ -158,7 +194,10 @@ def write_bootstrap(handle: int, document: dict[str, Any]) -> None:
                 raise WindowsLaunchError("bootstrap pipe closed during write")
             offset += written
     finally:
-        os.close(fd)
+        if fd is not None:
+            os.close(fd)
+        else:
+            close_handle(handle)
 
 
 def read_bootstrap(handle: int) -> dict[str, Any]:

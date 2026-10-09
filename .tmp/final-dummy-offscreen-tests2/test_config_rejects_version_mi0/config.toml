@@ -1,5 +1,0 @@
-format_version = 1
-policy_version = 2
-[health]
-silence_timeout_s = 15
-removed_grace_s = 1

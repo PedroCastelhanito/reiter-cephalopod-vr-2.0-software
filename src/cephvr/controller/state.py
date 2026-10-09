@@ -126,6 +126,41 @@ class ConfigurationState:
 
 
 @dataclass
+class ConfigurationEdit:
+    """One E07 acquisition edit awaiting exact device readback/adoption."""
+
+    command: svc.OperatorCommand
+    command_id: str
+    operation_id: str
+    revision: int
+    deadline_ns: int
+    expected_cameras: frozenset[int]
+    expect_pulses: bool
+    proposed: pb.ExperimentConfiguration
+    validation: tuple[pb.ValidationResult, ...] = ()
+    adopted: pb.ExperimentConfiguration | None = None
+    adopted_revision: int | None = None
+    report: svc.AcquisitionResolutionReport | None = None
+    device_status: svc.AcquisitionDeviceStatusReport | None = None
+    operation_result: pb.OperationState | None = None
+    confirmed: asyncio.Event = field(default_factory=asyncio.Event)
+    failure: str = ""
+
+
+@dataclass
+class ConfigurationEditTerminal:
+    """Bounded exact edit identity and device outcome, including late delivery."""
+
+    operation_id: str
+    source: pb.BackendContext
+    deadline_ns: int
+    device_status: svc.AcquisitionDeviceStatusReport | None = None
+    device_status_late: bool = False
+    operation_result: pb.OperationState | None = None
+    operation_result_late: bool = False
+
+
+@dataclass
 class LifecycleState:
     """Authoritative session, trial, and attempt on the controller event loop."""
 
@@ -231,11 +266,12 @@ class DeviceState:
     calibration_pending: tuple[str, int, int, str, int, frozenset[str]] | None = None
     calibration_blocked: bool = False
     camera_operation: CameraOperation | None = None
-    # One exact terminal camera operation prevents late retries from becoming
-    # current device projections after the active operation slot is cleared.
-    completed_camera_operation: CameraOperation | None = None
     camera_operations: dict[str, CameraOperation] = field(default_factory=dict)
     camera_operation_changed: asyncio.Event = field(default_factory=asyncio.Event)
+    configuration_edit: ConfigurationEdit | None = None
+    configuration_edit_terminals: dict[str, ConfigurationEditTerminal] = field(
+        default_factory=dict
+    )
     manual_effects_admitted: bool = False
 
 

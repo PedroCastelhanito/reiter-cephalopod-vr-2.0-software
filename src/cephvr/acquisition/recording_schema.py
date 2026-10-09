@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from cephvr.acquisition.recording.frame_log import FRAME_LOG_FIELDS
+from cephvr.acquisition.recording.frame_log import (
+    FRAME_LOG_FIELDS,
+    FRAME_LOG_SCHEMA_VERSION,
+)
 from cephvr.acquisition.recording.identity import MP4_IDENTITY_KEYS
 from cephvr.controller.planning import WriterSchema, WriterSchemaKey
 
@@ -10,7 +13,7 @@ from cephvr.controller.planning import WriterSchema, WriterSchemaKey
 def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
     """Return definitions that are also used by ``FrameLogWriter``."""
     frame_log = WriterSchema(
-        schema_version=2,
+        schema_version=FRAME_LOG_SCHEMA_VERSION,
         format="jsonl",
         fields={key: ", ".join(fields) for key, fields in FRAME_LOG_FIELDS.items()},
         units={
@@ -22,7 +25,8 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         clocks={
             "host_clock": "cephvr.host.perf_counter_ns.v1",
             "camera_timestamp_ns": "cephvr.camera.native.v1",
-            "video_frame": "constant-rate index at nominal_frame_rate_hz",
+            "video_frame": "nominal slot selected for this real source; omitted sources have null",
+            "encoded_frame_index": "contiguous constant-rate slot at nominal_frame_rate_hz",
         },
     )
     video = WriterSchema(
@@ -31,7 +35,7 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         fields={
             "container_identity_tags": ", ".join(MP4_IDENTITY_KEYS),
             "video_timeline": "constant-rate frame index at nominal_frame_rate_hz",
-            "frame_correspondence": "nth non-dropped frame-log record is video frame n",
+            "frame_correspondence": "explicit encoded-slot mappings name each real source or identified duplicate",
         },
         units={"frame_rate": "frames/s"},
         clocks={

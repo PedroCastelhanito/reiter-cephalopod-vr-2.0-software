@@ -351,7 +351,8 @@ results share the controller's bounded command ledger; changed replay is rejecte
 accepted operations are never retransmitted by the client. CONNECT establishes its
 command ID as `claim_id`; every subsequent camera operation must match this live claim.
 A released claim cannot change a later connection. Connection/configuration requests
-must match the controller's current requested pulse settings; diagnostics remain local. The owner returns existing
+must match the controller's current requested pulse settings, except for the exact
+pending edit binding below; diagnostics remain local. The owner returns existing
 observation/PulseCommandEvidence with actual host dispatch and ACK timestamps.
 Transport time consumes the original budget; it never becomes a new acknowledgement
 budget. Acquisition cleanup records only `microcontroller-claim:<port>` release after
@@ -362,3 +363,14 @@ Shutdown waits for acquisition's original claim-release allowance, then confirms
 controller-owned serial/device closure within the retained cleanup/recovery deadline,
 clamped by the application backstop. A failed close stays fenced and visible.
 Serial timing reloads only with no owned port; changing an active connection's timing requires release and cannot silently alter the watchdog budget.
+
+Only an owned-edit CONFIGURE request may carry both `resolution_operation` and
+`requested_configuration_revision`. They must match the live controller
+ConfigurationEdit, its expected pulse readback, exact validated candidate pulse
+settings, acquisition owner generation, current control authority and original
+absolute deadline. The existing claim must also match. Check these before dispatch
+to the sole serial owner; this scoped request does not commit configuration, resume
+pulses or establish readiness. A partially specified, stale or conflicting scope
+rejects even if the payload happens to match accepted settings. Ordinary requests
+omit both fields and retain their existing accepted-settings rule. Returned applied
+timing joins A10's complete readback/confirmation workflow.

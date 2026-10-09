@@ -1,0 +1,2 @@
+Checked 465 local links/anchors in 7 edited Markdown files
+

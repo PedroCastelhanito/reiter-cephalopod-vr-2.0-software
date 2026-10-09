@@ -48,13 +48,13 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         },
     )
     evidence = WriterSchema(
-        schema_version=1,
+        schema_version=3,
         format="jsonl",
         fields={
             "line": "EvidenceRecord(payload: Header|RenderGroup|GroupUpdate|FeedbackEvidence|Interval|EncoderOutcome|Completion)",
-            "group_id": "monotonic render-group identity; admitted video frame index is independent",
+            "group_id": "monotonic source render-group identity; video slots map to original group state and evaluation time",
             "submission": "per-output attempt/return/failure/unknown/cutoff_excluded observation",
-            "capture": "per-group tiled-composite admission and encoder-input outcome",
+            "capture": "per-group admission, same-slot omission, and explicit real/duplicate encoded-slot mapping",
         },
         units={
             "host_time": "host monotonic ns",
@@ -62,15 +62,15 @@ def get_writer_schemas() -> dict[WriterSchemaKey, WriterSchema]:
         },
         clocks={
             "host": "cephvr.host.perf_counter_ns.v1",
-            "video": "n-th admitted render group",
+            "video": "first usable evaluation per nominal slot; duplicate mappings preserve source group/time",
         },
     )
     video = WriterSchema(
-        schema_version=1,
+        schema_version=2,
         format="mp4",
         fields={
             "review_composite": "one tiled lossy review stream; no original-pixel guarantee",
-            "frame_correspondence": "video frame n is the n-th admitted render group",
+            "frame_correspondence": "video slot n maps to a real source group or an explicitly labeled duplicate",
             "fragmentation": "fragmented MP4; no hybrid conversion or remux",
         },
         units={"frame_rate": "photodiode output refresh rate"},

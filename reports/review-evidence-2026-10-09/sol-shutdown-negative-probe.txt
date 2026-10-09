@@ -1,0 +1,228 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_controller_loss_during_worker_cleanup_interrupts_with_original_bounds __
+
+fut = <Task cancelled name='Task-6' coro=<Event.wait() done, defined at /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/asyncio/locks.py:200>>
+timeout = 1
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout <= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+>                   return fut.result()
+                           ^^^^^^^^^^^^
+
+.venv/lib/python3.11/asyncio/tasks.py:500: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <asyncio.locks.Event object at 0x1042653d0 [unset]>
+
+    async def wait(self):
+        """Block until the internal flag is true.
+    
+        If the internal flag is true on entry, return True
+        immediately.  Otherwise, block until another coroutine calls
+        set() to set the flag to true, then return True.
+        """
+        if self._value:
+            return True
+    
+        fut = self._get_loop().create_future()
+        self._waiters.append(fut)
+        try:
+>           await fut
+E           asyncio.exceptions.CancelledError
+
+.venv/lib/python3.11/asyncio/locks.py:213: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/tmp/cephvr-sol-oldshutdown-probe/test_controller_loss_during_wo0')
+
+    async def test_controller_loss_during_worker_cleanup_interrupts_with_original_bounds(
+        tmp_path: Path,
+    ) -> None:
+        runtime, _, outbound, _ = await _registered_visual_stimulus(tmp_path)
+        calls: list[str] = []
+        waiting_for_blocker = asyncio.Event()
+        interrupted = asyncio.Event()
+        release_blocker = asyncio.Event()
+    
+        async def interrupt_backend(target, request, *, deadline_ns) -> None:  # type: ignore[no-untyped-def]
+            calls.append(f"interrupt:{request.reason.code}")
+            interrupted.set()
+    
+        async def shutdown_backend(target, request, *, deadline_ns) -> None:  # type: ignore[no-untyped-def]
+            calls.append("shutdown")
+    
+        outbound.interrupt_backend = interrupt_backend  # type: ignore[attr-defined]
+        outbound.shutdown_backend = shutdown_backend  # type: ignore[attr-defined]
+    
+        runtime.registration_state.context.policies.recovery_ns = 2_000_000_000
+    
+        def blockers():  # type: ignore[no-untyped-def]
+            waiting_for_blocker.set()
+            return [] if release_blocker.is_set() else [object()]
+    
+        runtime.recovery.cleanup_blockers = blockers  # type: ignore[method-assign]
+        key = ("controller", runtime.controller.generation)
+        runtime.health_state.last_heartbeat[key] = host_time_ns()
+        runtime.health_state.heartbeat_reports[key] = types.HeartbeatReport(
+            source=runtime.controller,
+            sent_monotonic_ns=host_time_ns(),
+            session_phase=types.SESSION_PHASE_RUNNING,
+        )
+        runtime.shutdown_state.shutdown_request = wire.ApplicationShutdownRequest(
+            command_id=str(uuid4())
+        ).SerializeToString()
+        shutdown_deadline = host_time_ns() + 5_500_000_000
+        cleanup_deadline = host_time_ns() + 5_000_000_000
+        runtime.shutdown_state.shutdown_deadline_ns = shutdown_deadline
+        runtime.shutdown_state.cleanup_deadline_ns = cleanup_deadline
+        runtime.shutdown.graceful_exit_ns = 1
+        runtime.shutdown.terminate_exit_ns = 1
+    
+        task = asyncio.create_task(runtime.shutdown.shutdown_owned())
+        await asyncio.wait_for(waiting_for_blocker.wait(), timeout=1)
+        runtime.health_state.last_heartbeat[key] = 1
+>       await asyncio.wait_for(interrupted.wait(), timeout=1)
+
+tests/supervisor/test_shutdown.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fut = <Task cancelled name='Task-6' coro=<Event.wait() done, defined at /Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/asyncio/locks.py:200>>
+timeout = 1
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout <= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+                    return fut.result()
+                except exceptions.CancelledError as exc:
+>                   raise exceptions.TimeoutError() from exc
+E                   TimeoutError
+
+.venv/lib/python3.11/asyncio/tasks.py:502: TimeoutError
+=========================== short test summary info ============================
+FAILED tests/supervisor/test_shutdown.py::test_controller_loss_during_worker_cleanup_interrupts_with_original_bounds
+1 failed in 1.12s

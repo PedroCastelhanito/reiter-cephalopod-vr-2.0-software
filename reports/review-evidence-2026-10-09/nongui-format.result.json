@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/bin/python",
+    "-m",
+    "ruff",
+    "format",
+    "--check",
+    "src",
+    "tests",
+    "tools",
+    "--no-cache"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "started_utc": "2026-10-09T05:31:51.403679+00:00",
+  "elapsed_seconds": 0.359,
+  "returncode": 0,
+  "raw": "nongui-format.txt"
+}

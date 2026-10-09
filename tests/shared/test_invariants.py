@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 import uuid
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
@@ -23,19 +24,52 @@ from cephvr.shared.credentials import (
     CredentialStore,
     default_runtime_root,
 )
-from cephvr.shared.deadlines import Deadline, duration_ns
+from cephvr.shared.deadlines import (
+    Deadline,
+    duration_ns,
+    remaining_seconds,
+)
+from cephvr.shared.deadlines import (
+    remaining_ns as deadline_remaining_ns,
+)
 from cephvr.shared.identity import require_uuid4
 from cephvr.shared.ingress import BoundedEventIngress, IngressOverload
+from cephvr.shared.nominal_video_grid import NominalVideoGrid
 from cephvr.shared.transport_deadlines import (
     DeadlineMetadataError,
     deadline_metadata,
     parse_deadline_metadata,
-    remaining_ns,
+)
+from cephvr.shared.transport_deadlines import (
+    remaining_ns as transport_remaining_ns,
+)
+from cephvr.shared.transport_deadlines import (
+    remaining_seconds as transport_remaining_seconds,
 )
 
 
 def _id() -> str:
     return str(uuid.uuid4())
+
+
+def test_nominal_video_grid_uses_half_open_rational_slots_and_ceil_cutoff() -> None:
+    grid = NominalVideoGrid(10_000_000_000, Fraction(30_000, 1_001))
+    first_boundary = grid.start_ns + (1_001_000_000 + 29) // 30
+    assert grid.slot_for(grid.start_ns) == 0
+    assert grid.slot_for(first_boundary - 1) == 0
+    assert grid.slot_for(first_boundary) == 1
+    assert grid.slots_before(grid.start_ns) == 0
+    assert grid.slots_before(first_boundary - 1) == 1
+    assert grid.slots_before(first_boundary) == 2
+    assert grid.slots_before(first_boundary + 1) == 2
+    integral_grid = NominalVideoGrid(0, Fraction(25, 1))
+    assert integral_grid.slots_before(40_000_000) == 1
+
+
+@pytest.mark.parametrize("rate", [0, -1, float("inf"), float("nan")])
+def test_nominal_video_grid_rejects_nonpositive_or_nonfinite_rate(rate: float) -> None:
+    with pytest.raises(ValueError, match="finite and positive"):
+        NominalVideoGrid(0, rate)
 
 
 @pytest.mark.windows
@@ -101,13 +135,39 @@ def test_deadline_does_not_renew_or_round() -> None:
 def test_deadline_metadata_requires_one_positive_int64_decimal_value() -> None:
     encoded = deadline_metadata(1_000_000_000)
     assert parse_deadline_metadata((encoded,)) == 1_000_000_000
-    assert remaining_ns(15, clock=lambda: 10) == 5
+    assert transport_remaining_ns(15, clock=lambda: 10) == 5
     with pytest.raises(DeadlineMetadataError):
         parse_deadline_metadata((encoded, encoded))
     with pytest.raises(DeadlineMetadataError):
         parse_deadline_metadata((("x-cephvr-deadline-ns", "+10"),))
     with pytest.raises(DeadlineMetadataError):
         parse_deadline_metadata((("x-cephvr-deadline-ns", str(1 << 63)),))
+
+
+def test_remaining_deadline_helpers_preserve_clamping_and_transport_validation() -> (
+    None
+):
+    samples: list[int] = []
+
+    def clock() -> int:
+        samples.append(10)
+        return 10
+
+    assert remaining_seconds(15, clock=clock) == 5 / 1_000_000_000
+    assert samples == [10]
+    assert remaining_seconds(10, clock=lambda: 10) == 0.0
+    assert remaining_seconds(9, clock=lambda: 10) == 0.0
+    assert remaining_seconds(10**30, clock=lambda: 0) == 10**21
+    assert deadline_remaining_ns(15, clock=lambda: 10) == 5
+    assert transport_remaining_seconds(15, clock=lambda: 10) == 5 / 1_000_000_000
+    assert transport_remaining_ns(15, clock=lambda: 10) == 5
+    with pytest.raises(ValueError, match="signed int64"):
+        transport_remaining_seconds(10**30, clock=lambda: 0)
+    assert remaining_seconds(-1, clock=lambda: 0) == 0.0
+    with pytest.raises(ValueError, match="signed int64"):
+        transport_remaining_seconds(-1, clock=lambda: 0)
+    with pytest.raises(ValueError, match="signed int64"):
+        Deadline(100).remaining_ns(now_ns=-1)
 
 
 def test_interruption_remains_available_on_ordinary_overload() -> None:

@@ -19,10 +19,239 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.controller.microcontroller import SerialOwner, SerialOwnerBridge
 from cephvr.controller.microcontroller.channel import ChannelDeadline
+from cephvr.controller.microcontroller.device import MicrocontrollerDevice
+from cephvr.controller.microcontroller.lifecycle import MicrocontrollerLifecycle
 from cephvr.controller.microcontroller.owner import SerialOwnerError
 from cephvr.controller.microcontroller.serial_port import PySerialPort
+from cephvr.controller.state import (
+    ConfigurationEdit,
+    ConfigurationEditTerminal,
+    ConfigurationState,
+    DeviceState,
+    LifecycleState,
+)
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.microcontroller import SerialOwnerPort
+
+
+def test_owned_configuration_edit_scopes_candidate_microcontroller_write() -> None:
+    async def scenario() -> None:
+        now = 100
+        acquisition_generation = str(uuid4())
+        calls: list[camera.CameraPulseConfiguration] = []
+        serial_effects: list[str] = []
+
+        class Serial:
+            async def configure(self, requested, *, active_roles, deadline_ns):
+                assert active_roles == (camera.CAMERA_ROLE_BEHAVIORAL,)
+                assert deadline_ns == 200
+                calls.append(
+                    camera.CameraPulseConfiguration.FromString(
+                        requested.SerializeToString(deterministic=True)
+                    )
+                )
+                return mcu.MicrocontrollerObservation(port="COM8")
+
+            async def status(self, *, deadline_ns):
+                serial_effects.append("status")
+                return mcu.MicrocontrollerObservation(port="COM8")
+
+            async def on(self, *args, **kwargs):
+                serial_effects.append("on")
+                return mcu.PulseCommandEvidence()
+
+            async def off(self, *args, **kwargs):
+                serial_effects.append("off")
+                return mcu.PulseCommandEvidence()
+
+            async def close(self, *, deadline_ns):
+                serial_effects.append("close")
+
+            async def reserve_boundary(self, *args, **kwargs):
+                serial_effects.append("reserve")
+
+            async def cancel_on_reservations(self, *, deadline_ns):
+                serial_effects.append("cancel_on")
+
+            async def cancel_active_request(self, *, deadline_ns):
+                serial_effects.append("cancel_active")
+                return True
+
+        current_pulses = camera.CameraPulseConfiguration(port="COM8")
+        candidate_pulses = camera.CameraPulseConfiguration(port="COM8")
+        candidate_pulses.behavioral.requested_frequency_hz = 20.0
+        settings = control.AcquisitionSettings(pulses=current_pulses)
+        owner = MicrocontrollerDevice(
+            Serial(),
+            settings,
+            runtime_pb2.AcquisitionFilePolicies(),
+            lambda: now,
+        )
+        owner.acquisition_claimed = True
+        owner.claim_id = "claim"
+        candidate = control.ExperimentConfiguration()
+        acquisition = candidate.backends.add(backend_name="acquisition").acquisition
+        acquisition.pulses.CopyFrom(candidate_pulses)
+        edit = ConfigurationEdit(
+            command=wire.OperatorCommand(),
+            command_id="operator-edit",
+            operation_id="edit-op",
+            revision=7,
+            deadline_ns=200,
+            expected_cameras=frozenset(),
+            expect_pulses=True,
+            proposed=candidate,
+        )
+        device = DeviceState(configuration_edit=edit)
+        device.configuration_edit_terminals[edit.operation_id] = (
+            ConfigurationEditTerminal(
+                operation_id=edit.operation_id,
+                source=control.BackendContext(
+                    backend_name="acquisition",
+                    backend_generation=acquisition_generation,
+                ),
+                deadline_ns=200,
+            )
+        )
+        lifecycle = LifecycleState()
+        configuration = ConfigurationState(
+            current=control.ExperimentConfiguration.FromString(
+                candidate.SerializeToString(deterministic=True)
+            ),
+            policies=control.ControlPolicies(),
+            revision=7,
+        )
+        # The accepted controller configuration still has the old pulse timing.
+        configuration.current.backends[0].acquisition.pulses.CopyFrom(current_pulses)
+        configuration.current.backends[
+            0
+        ].acquisition.pulses.behavioral.requested_frequency_hz = 10.0
+        owner.settings.pulses.CopyFrom(
+            configuration.current.backends[0].acquisition.pulses
+        )
+        controller = MicrocontrollerLifecycle(
+            owner,
+            generation="controller-gen",
+            lifecycle=lifecycle,
+            configuration=configuration,
+            device=device,
+            limits=SimpleNamespace(current=SimpleNamespace(setup_ns=100)),
+            clock=lambda: now,
+            publish=lambda: None,
+            warning=_noop_warning,
+            interrupt=_noop_interrupt,
+            spawn=lambda coroutine: asyncio.create_task(coroutine),
+        )
+        from cephvr.acquisition.microcontroller_client import (
+            ControllerMicrocontrollerClient,
+        )
+        from cephvr.shared.auth import Principal
+
+        received = []
+
+        class Stub:
+            async def ExecuteMicrocontrollerIo(self, request, **_kwargs):
+                received.append(request)
+                return await controller.execute(request)
+
+        client = ControllerMicrocontrollerClient(
+            Stub(),
+            Principal("acquisition", acquisition_generation, "token"),
+            "controller-gen",
+            lambda: current_pulses,
+            clock=lambda: now,
+        )
+        client.claim_id = "claim"
+        observation = await client.configure(
+            candidate_pulses,
+            active_roles=("behavioral",),
+            deadline_ns=200,
+            resolution_operation=control.OperationContext(command_id="edit-op"),
+            requested_configuration_revision=7,
+        )
+        assert observation.port == "COM8"
+        request = received[0]
+        assert calls == [candidate_pulses]
+        assert request.resolution_operation.command_id == "edit-op"
+        assert request.requested_configuration_revision == 7
+        assert request.claim_id == "claim"
+        assert configuration.revision == 7
+        assert (
+            configuration.current.backends[
+                0
+            ].acquisition.pulses.behavioral.requested_frequency_hz
+            == 10.0
+        )
+        assert device.camera_operation is None
+
+        stale = wire.MicrocontrollerIoRequest.FromString(
+            request.SerializeToString(deterministic=True)
+        )
+        stale.requested_configuration_revision = 6
+        with pytest.raises(ValueError, match="not authorized"):
+            await controller.execute(stale)
+        assert len(calls) == 1
+
+        partial_scope = wire.MicrocontrollerIoRequest.FromString(
+            request.SerializeToString(deterministic=True)
+        )
+        partial_scope.ClearField("requested_configuration_revision")
+        with pytest.raises(ValueError, match="not authorized"):
+            await controller.execute(partial_scope)
+        assert len(calls) == 1
+
+        wrong_generation = wire.MicrocontrollerIoRequest.FromString(
+            request.SerializeToString(deterministic=True)
+        )
+        wrong_generation.requester.generation = "stale-generation"
+        with pytest.raises(ValueError, match="not authorized"):
+            await controller.execute(wrong_generation)
+
+        wrong_candidate = wire.MicrocontrollerIoRequest.FromString(
+            request.SerializeToString(deterministic=True)
+        )
+        wrong_candidate.requested.behavioral.requested_frequency_hz = 30.0
+        with pytest.raises(ValueError, match="not authorized"):
+            await controller.execute(wrong_candidate)
+        assert len(calls) == 1
+
+        for kind in (
+            wire.MICROCONTROLLER_IO_KIND_STATUS,
+            wire.MICROCONTROLLER_IO_KIND_ON,
+            wire.MICROCONTROLLER_IO_KIND_OFF,
+            wire.MICROCONTROLLER_IO_KIND_RESERVE,
+            wire.MICROCONTROLLER_IO_KIND_CANCEL_ON,
+            wire.MICROCONTROLLER_IO_KIND_CANCEL_ACTIVE,
+            wire.MICROCONTROLLER_IO_KIND_CLOSE,
+        ):
+            for scope in ("both", "operation", "revision"):
+                scoped_non_configure = wire.MicrocontrollerIoRequest.FromString(
+                    request.SerializeToString(deterministic=True)
+                )
+                scoped_non_configure.kind = kind
+                if scope == "operation":
+                    scoped_non_configure.ClearField("requested_configuration_revision")
+                elif scope == "revision":
+                    scoped_non_configure.ClearField("resolution_operation")
+                if kind == wire.MICROCONTROLLER_IO_KIND_RESERVE:
+                    scoped_non_configure.boundary_monotonic_ns = 150
+                    scoped_non_configure.boundary_command = (
+                        mcu.PULSE_BOUNDARY_COMMAND_ON
+                    )
+                with pytest.raises(ValueError, match="only valid for Configure"):
+                    await controller.execute(scoped_non_configure)
+                assert owner.acquisition_claimed
+                assert owner.claim_id == "claim"
+                assert owner.boundaries == {}
+                assert not serial_effects
+
+    async def _noop_warning(_warning) -> None:
+        return None
+
+    async def _noop_interrupt(_attempt, _message, _deadline) -> None:
+        return None
+
+    asyncio.run(scenario())
 
 
 def test_native_serial_write_uses_remaining_command_budget_without_read_reconfiguration(
@@ -1479,3 +1708,50 @@ async def test_camera_client_cancellation_retains_deadline_and_requires_typed_re
             "metadata": (*principal.metadata(), deadline_metadata(1000)),
             "timeout": 990 / 1e9,
         }
+
+
+def test_camera_client_allows_empty_roles_only_for_configuration() -> None:
+    from cephvr.acquisition.microcontroller_client import (
+        ControllerMicrocontrollerClient,
+    )
+    from cephvr.shared.auth import Principal
+
+    async def scenario() -> None:
+        calls = []
+        acquisition_generation = str(uuid4())
+
+        class Stub:
+            async def ExecuteMicrocontrollerIo(self, request, **kwargs):
+                calls.append(request)
+                result = wire.MicrocontrollerIoResult(
+                    command_id=request.command_id, succeeded=True
+                )
+                if request.kind == wire.MICROCONTROLLER_IO_KIND_CONFIGURE:
+                    result.observation.port = "COM8"
+                else:
+                    result.evidence.outcome = mcu.PULSE_COMMAND_OUTCOME_APPLIED
+                return result
+
+        client = ControllerMicrocontrollerClient(
+            Stub(),
+            Principal("acquisition", acquisition_generation, "token"),
+            "controller-gen",
+            lambda: camera.CameraPulseConfiguration(port="COM8"),
+            clock=lambda: 10,
+        )
+        client.claim_id = "claim"
+        requested = camera.CameraPulseConfiguration(port="COM8")
+        scope = control.OperationContext(command_id="edit-op")
+        await client.configure(
+            requested,
+            active_roles=(),
+            deadline_ns=100,
+            resolution_operation=scope,
+            requested_configuration_revision=7,
+        )
+        assert calls[0].roles == []
+        with pytest.raises(ValueError, match="distinct supported"):
+            await client.on((), scheduled_boundary_ns=None, deadline_ns=100)
+        assert len(calls) == 1
+
+    asyncio.run(scenario())

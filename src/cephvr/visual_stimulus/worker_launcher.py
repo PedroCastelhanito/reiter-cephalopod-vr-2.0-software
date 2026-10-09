@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import secrets
 import sys
@@ -13,15 +12,17 @@ from uuid import uuid4
 from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.platform.windows.bootstrap import (
-    close_handle,
+    BootstrapPipeWrite,
     create_bootstrap_pipe,
-    run_pipe_io_daemon,
-    write_bootstrap,
 )
 from cephvr.platform.windows.jobs import SuspendedProcess, WindowsJobs
 from cephvr.platform.windows.python_runtime import (
     module_arguments,
     resolve_python_executable,
+)
+from cephvr.platform.windows.worker_launch import (
+    BootstrapPipeHandles,
+    launch_registered_worker,
 )
 from cephvr.shared.auth import Principal
 from cephvr.shared.backend_bootstrap import BackendBootstrap
@@ -62,6 +63,7 @@ async def launch_renderer(
     credentials: dict[tuple[str, str], str],
     deadline_ns: int,
     *,
+    pending_bootstrap_writes: list[BootstrapPipeWrite],
     identity: pb.ProcessIdentity | None = None,
 ) -> RendererLaunch:
     identity = identity or pb.ProcessIdentity(
@@ -70,76 +72,77 @@ async def launch_renderer(
     interpreter = resolve_python_executable(Path(sys.executable))
     command_id = str(uuid4())
     token = secrets.token_urlsafe(32)
-    planned = await supervisor.call(
-        "PlanLaunch",
-        wire.PlanLaunchRequest(
-            command_id=command_id,
-            owner=bootstrap.identity,
-            child=identity,
-            executable=str(interpreter),
-            python_worker=True,
-            stop_method="grpc_shutdown",
-        ),
-        deadline_ns=deadline_ns,
-        metadata=(("x-cephvr-child-token", token),),
+    request = wire.PlanLaunchRequest(
+        command_id=command_id,
+        owner=bootstrap.identity,
+        child=identity,
+        executable=str(interpreter),
+        python_worker=True,
+        stop_method="grpc_shutdown",
     )
-    if (
-        not isinstance(planned, wire.LaunchReceipt)
-        or planned.admission.result != pb.COMMAND_RESULT_ACCEPTED
-        or planned.state.phase != wire.LAUNCH_PHASE_PLANNED
-    ):
-        raise RuntimeError("supervisor did not plan renderer containment")
-    job_name = planned.state.containment_job_name
-    native.open_launch_job(job_name)
-    read, write = create_bootstrap_pipe()
-    try:
+    job_name = ""
+    launched_children: list[SuspendedProcess] = []
+    pipes: BootstrapPipeHandles | None = None
+
+    def make_pipes() -> BootstrapPipeHandles:
+        nonlocal pipes
+        pipes = BootstrapPipeHandles(*create_bootstrap_pipe())
+        return pipes
+
+    async def plan_launch(plan: wire.PlanLaunchRequest) -> wire.LaunchState:
+        nonlocal job_name
+        receipt = await supervisor.call(
+            "PlanLaunch",
+            plan,
+            deadline_ns=deadline_ns,
+            metadata=(("x-cephvr-child-token", token),),
+        )
+        if (
+            not isinstance(receipt, wire.LaunchReceipt)
+            or receipt.admission.result != pb.COMMAND_RESULT_ACCEPTED
+        ):
+            raise RuntimeError("supervisor did not plan renderer containment")
+        job_name = receipt.state.containment_job_name
+        return receipt.state
+
+    def create_suspended(
+        planned: wire.LaunchState, handles: BootstrapPipeHandles
+    ) -> SuspendedProcess:
+        native.open_launch_job(planned.containment_job_name)
         child = native.launch_suspended(
             str(interpreter),
             module_arguments(
-                "cephvr.visual_stimulus.worker.main", ["--bootstrap-handle", str(read)]
+                "cephvr.visual_stimulus.worker.main",
+                ["--bootstrap-handle", str(handles.read_handle)],
             ),
-            [job_name],
-            (read,),
+            [planned.containment_job_name],
+            (handles.read_handle,),
         )
-    except BaseException as exc:
-        close_handle(read)
-        close_handle(write)
-        if native.inspect_launch_job(job_name) == []:
-            await supervisor.call(
-                "ConfirmLaunch",
-                wire.ConfirmLaunchRequest(
-                    command_id=str(uuid4()),
-                    launch_command_id=command_id,
-                    owner=bootstrap.identity,
-                    child=identity,
-                    creation_failed_without_child=True,
-                    failure=pb.Failure(code="RENDERER_CREATE", message=str(exc)[:2048]),
-                ),
-                deadline_ns=deadline_ns,
-            )
-        raise
-    writing_started = False
-    try:
-        confirmed = await supervisor.call(
+        launched_children.append(child)
+        return child
+
+    async def confirm(child_process: SuspendedProcess) -> wire.LaunchState:
+        receipt = await supervisor.call(
             "ConfirmLaunch",
             wire.ConfirmLaunchRequest(
                 command_id=str(uuid4()),
                 launch_command_id=command_id,
                 owner=bootstrap.identity,
                 child=identity,
-                pid=child.pid,
-                creation_time_100ns=child.creation_time_100ns,
+                pid=child_process.pid,
+                creation_time_100ns=child_process.creation_time_100ns,
             ),
             deadline_ns=deadline_ns,
         )
         if (
-            not isinstance(confirmed, wire.LaunchReceipt)
-            or confirmed.admission.result != pb.COMMAND_RESULT_ACCEPTED
-            or confirmed.state.phase != wire.LAUNCH_PHASE_OS_CONFIRMED
+            not isinstance(receipt, wire.LaunchReceipt)
+            or receipt.admission.result != pb.COMMAND_RESULT_ACCEPTED
         ):
             raise RuntimeError("renderer OS identity was not accepted")
-        credentials[(identity.role, identity.generation)] = token
-        descriptor = {
+        return receipt.state
+
+    def build_descriptor(child_process: SuspendedProcess) -> dict[str, object]:
+        return {
             "role": identity.role,
             "generation": identity.generation,
             "token": token,
@@ -155,8 +158,8 @@ async def launch_renderer(
             "coordinator_endpoint": f"127.0.0.1:{bootstrap.endpoint_port}",
             "supervisor_endpoint": f"127.0.0.1:{bootstrap.supervisor_port}",
             "launch_command_id": command_id,
-            "pid": child.pid,
-            "creation_time_100ns": child.creation_time_100ns,
+            "pid": child_process.pid,
+            "creation_time_100ns": child_process.creation_time_100ns,
             "registration_deadline_ns": deadline_ns,
             "max_message_bytes": bootstrap.max_message_bytes,
             "heartbeat_interval_ns": bootstrap.heartbeat_interval_ns,
@@ -171,54 +174,83 @@ async def launch_renderer(
                 bootstrap.policies.SerializeToString()
             ).decode("ascii"),
         }
-        native.resume(child)
-        writing_started = True
-        await run_pipe_io_daemon(
-            lambda: write_bootstrap(write, descriptor),
-            timeout_s=max(0, (deadline_ns - host_time_ns()) / 1e9),
+
+    def register(_child: SuspendedProcess, _document: dict[str, object]) -> None:
+        credentials[(identity.role, identity.generation)] = token
+
+    def retain_writer(attempt: BootstrapPipeWrite) -> None:
+        pending_bootstrap_writes.append(attempt)
+
+    def finish_writer(attempt: BootstrapPipeWrite) -> None:
+        pending_bootstrap_writes.remove(attempt)
+
+    async def get_launch_state() -> wire.LaunchState:
+        state = await supervisor.call(
+            "GetLaunchState",
+            wire.LaunchQuery(
+                requester=bootstrap.identity, launch_command_id=command_id
+            ),
+            deadline_ns=deadline_ns,
         )
-        close_handle(read)
-        read = -1
-        while host_time_ns() < deadline_ns:
-            state = await supervisor.call(
-                "GetLaunchState",
-                wire.LaunchQuery(
-                    requester=bootstrap.identity, launch_command_id=command_id
-                ),
-                deadline_ns=deadline_ns,
-            )
-            if not isinstance(state, wire.LaunchState):
-                raise TypeError("invalid renderer launch state")
-            if state.phase == wire.LAUNCH_PHASE_OPERATIONAL:
-                if not state.endpoint:
-                    raise RuntimeError("renderer registration lacks endpoint")
-                return RendererLaunch(
-                    command_id,
-                    child,
-                    job_name,
-                    identity,
-                    token,
-                    Peer(
-                        state.endpoint,
-                        Principal(
-                            "visual_stimulus",
-                            bootstrap.identity.generation,
-                            bootstrap.token,
+        if not isinstance(state, wire.LaunchState):
+            raise TypeError("invalid renderer launch state")
+        return state
+
+    try:
+        child, state = await launch_registered_worker(
+            request=request,
+            create_pipes=make_pipes,
+            plan=plan_launch,
+            create_suspended=create_suspended,
+            process_identity=lambda process: (
+                process.pid,
+                process.creation_time_100ns,
+            ),
+            confirm=confirm,
+            descriptor=build_descriptor,
+            register_peer=register,
+            resume=native.resume,
+            retain_writer=retain_writer,
+            finish_writer=finish_writer,
+            get_state=get_launch_state,
+            deadline_ns=deadline_ns,
+        )
+    except BaseException as exc:
+        if not launched_children and job_name:
+            try:
+                no_members = native.inspect_launch_job(job_name) == []
+            except BaseException:
+                no_members = False
+            if no_members:
+                await supervisor.call(
+                    "ConfirmLaunch",
+                    wire.ConfirmLaunchRequest(
+                        command_id=str(uuid4()),
+                        launch_command_id=command_id,
+                        owner=bootstrap.identity,
+                        child=identity,
+                        creation_failed_without_child=True,
+                        failure=pb.Failure(
+                            code="RENDERER_CREATE", message=str(exc)[:2048]
                         ),
-                        bootstrap.max_message_bytes,
-                        kind="worker",
                     ),
+                    deadline_ns=deadline_ns,
                 )
-            if state.phase in {
-                wire.LAUNCH_PHASE_CLEANUP_REQUIRED,
-                wire.LAUNCH_PHASE_RELEASED,
-            }:
-                raise RuntimeError("renderer startup failed; cleanup remains tracked")
-            await asyncio.sleep(min(0.01, max(0, (deadline_ns - host_time_ns()) / 1e9)))
-        raise TimeoutError("renderer registration missed its original deadline")
-    finally:
-        if read >= 0:
-            close_handle(read)
-        if not writing_started:
-            close_handle(write)
-        # Once dispatched, write_bootstrap retains and closes the handle.
+        raise
+    return RendererLaunch(
+        command_id,
+        child,
+        job_name,
+        identity,
+        token,
+        Peer(
+            state.endpoint,
+            Principal(
+                "visual_stimulus",
+                bootstrap.identity.generation,
+                bootstrap.token,
+            ),
+            bootstrap.max_message_bytes,
+            kind="worker",
+        ),
+    )

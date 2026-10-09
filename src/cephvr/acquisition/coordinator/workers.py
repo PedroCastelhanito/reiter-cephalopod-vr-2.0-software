@@ -7,7 +7,10 @@ from collections.abc import Callable
 from pathlib import Path
 from uuid import uuid4
 
-from cephvr.acquisition.coordinator.commands import retain_worker_command
+from cephvr.acquisition.coordinator.commands import (
+    retain_worker_command,
+    wait_child_operation,
+)
 from cephvr.acquisition.identity import process_role_for_camera
 from cephvr.acquisition.ports import (
     ExecutableResolver,
@@ -22,6 +25,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class WorkerRegistry:
@@ -186,22 +190,46 @@ class WorkerRegistry:
         if receipt.result != control.COMMAND_RESULT_ACCEPTED:
             raise RuntimeError("configuration worker cleanup was not admitted")
         cleanup = await _wait_cleanup_evidence(record, child, deadline_ns=deadline_ns)
-        if cleanup is None:
+        if cleanup is None or child.report is None or not child.report.complete:
             retained = await record.port.get_retained_result(
                 acq.WorkerRetainedResultQuery(
                     query=acq.WorkerQuery(target=record.context), command_id=command_id
                 ),
                 deadline_ns=deadline_ns,
             )
-            cleanup = _retained_cleanup(record, command_id, retained)
+            if cleanup is None:
+                cleanup = _retained_cleanup(record, command_id, retained)
+            _adopt_retained_operation(record, child, command_id, retained)
         if cleanup is None:
             raise RuntimeError(
                 "configuration worker cleanup completion remains unconfirmed"
             )
+        operation = await wait_child_operation(child, deadline_ns, self._lock)
+        if (
+            not operation.complete
+            or not operation.HasField("succeeded")
+            or not operation.succeeded
+            or operation.command != "Cleanup"
+            or operation.failure.code
+            or operation.failure.message
+        ):
+            raise RuntimeError("configuration worker Cleanup operation is unconfirmed")
         if not self.cleanup_complete(record, cleanup.cleanup):
             raise RuntimeError(
                 "configuration worker still has unresolved cleanup obligations"
             )
+        cleanup_proof = wire.AcquisitionWorkerCleanupProof(
+            operation=acq.WorkerOperationReport(
+                source=record.context, operation=child.report
+            ),
+            cleanup=cleanup,
+        )
+        confirmation = self._worker_cleanup_confirmation(record, cleanup_proof)
+        acknowledged = await self._confirm_worker_cleanup(
+            record, confirmation, deadline_ns
+        )
+        if acknowledged.phase != wire.LAUNCH_PHASE_OPERATIONAL:
+            raise RuntimeError("configuration worker cleanup acknowledgement failed")
         shutdown_id = str(uuid4())
         shutdown = acq.WorkerCommand(
             command_id=shutdown_id,
@@ -218,12 +246,8 @@ class WorkerRegistry:
             raise RuntimeError(
                 "configuration worker process/job release is unconfirmed"
             )
-        launch_state = await self.supervisor.get_launch_state(
-            wire.LaunchQuery(
-                requester=self.owner,
-                launch_command_id=record.launch.command_id,
-            ),
-            deadline_ns=deadline_ns,
+        launch_state = await self._confirm_worker_cleanup(
+            record, confirmation, deadline_ns
         )
         if launch_state.phase != wire.LAUNCH_PHASE_RELEASED:
             raise RuntimeError(
@@ -273,10 +297,23 @@ class WorkerRegistry:
                 or cleanup_child is None
                 or cleanup_child.report is None
                 or not cleanup_child.report.complete
+                or not cleanup_child.report.HasField("succeeded")
                 or not cleanup_child.report.succeeded
                 or not self.cleanup_complete(record, cleanup_evidence.cleanup)
             ):
                 raise RuntimeError("session worker cleanup is not fully retained")
+            cleanup_proof = wire.AcquisitionWorkerCleanupProof(
+                operation=acq.WorkerOperationReport(
+                    source=record.context, operation=cleanup_child.report
+                ),
+                cleanup=cleanup_evidence,
+            )
+            confirmation = self._worker_cleanup_confirmation(record, cleanup_proof)
+            acknowledged = await self._confirm_worker_cleanup(
+                record, confirmation, deadline_ns
+            )
+            if acknowledged.phase != wire.LAUNCH_PHASE_OPERATIONAL:
+                raise RuntimeError("session worker cleanup acknowledgement failed")
             parent = cleanup_child.parent_operation
             shutdown_request, _child, port = retain_worker_command(
                 record,
@@ -293,12 +330,8 @@ class WorkerRegistry:
                 record.launch.worker, deadline_ns=deadline_ns
             ):
                 raise RuntimeError("session worker process/job release is unconfirmed")
-            launch_state = await self.supervisor.get_launch_state(
-                wire.LaunchQuery(
-                    requester=self.owner,
-                    launch_command_id=record.launch.command_id,
-                ),
-                deadline_ns=deadline_ns,
+            launch_state = await self._confirm_worker_cleanup(
+                record, confirmation, deadline_ns
             )
             if launch_state.phase != wire.LAUNCH_PHASE_RELEASED:
                 raise RuntimeError("session worker containment release is unconfirmed")
@@ -311,6 +344,41 @@ class WorkerRegistry:
                 record.alive = False
                 self.workers.pop(role, None)
                 self._prune_launches_locked()
+
+    def _worker_cleanup_confirmation(
+        self,
+        record: WorkerRecord,
+        proof: wire.AcquisitionWorkerCleanupProof,
+    ) -> wire.ConfirmLaunchRequest:
+        if record.launch.pid is None or record.launch.creation_time_100ns is None:
+            raise RuntimeError("camera worker exact process identity is unavailable")
+        return wire.ConfirmLaunchRequest(
+            command_id=str(uuid4()),
+            launch_command_id=record.launch.command_id,
+            owner=self.owner,
+            child=record.launch.worker,
+            pid=record.launch.pid,
+            creation_time_100ns=record.launch.creation_time_100ns,
+            acquisition_worker_cleanup=proof,
+        )
+
+    async def _confirm_worker_cleanup(
+        self,
+        record: WorkerRecord,
+        request: wire.ConfirmLaunchRequest,
+        deadline_ns: int,
+    ) -> wire.LaunchState:
+        """Retain or reconcile the same exact owner-verified Cleanup proof."""
+        receipt = await self.supervisor.confirm_launch(
+            request,
+            deadline_ns=deadline_ns,
+        )
+        if receipt.admission.result != control.COMMAND_RESULT_ACCEPTED:
+            raise RuntimeError(
+                "camera worker containment release was rejected: "
+                f"{receipt.admission.failure.code if receipt.admission.HasField('failure') else 'unknown'}"
+            )
+        return receipt.state
 
     def _prune_launches_locked(self) -> None:
         """Retire only terminal facts after the configured E08 retention window."""
@@ -346,7 +414,7 @@ async def _wait_cleanup_evidence(
         evidence = _find_cleanup_evidence(record, child.command_id)
         if evidence is not None:
             return evidence
-        remaining = max(0, deadline_ns - host_time_ns()) / 1_000_000_000
+        remaining = remaining_seconds(deadline_ns, clock=host_time_ns)
         if remaining <= 0:
             return None
         child.updated.clear()
@@ -403,3 +471,67 @@ def _retained_cleanup(
     return acq.WorkerLifecycleEvidence.FromString(
         matches[0].SerializeToString(deterministic=True)
     )
+
+
+def _retained_operation(
+    record: WorkerRecord,
+    command_id: str,
+    retained: acq.WorkerRetainedResult,
+) -> acq.WorkerOperationReport | None:
+    if (
+        not retained.found
+        or retained.source != record.context
+        or retained.admission.result != control.COMMAND_RESULT_ACCEPTED
+        or not retained.HasField("operation")
+        or retained.operation.source != record.context
+        or retained.operation.operation.context.command_id != command_id
+        or retained.operation.operation.command != "Cleanup"
+        or not retained.operation.operation.complete
+        or not retained.operation.operation.HasField("succeeded")
+        or not retained.operation.operation.succeeded
+        or retained.operation.operation.failure.code
+        or retained.operation.operation.failure.message
+        or not retained.operation.HasField("state_revision")
+        or retained.operation.operation.work != record.context.work
+    ):
+        return None
+    return acq.WorkerOperationReport.FromString(
+        retained.operation.SerializeToString(deterministic=True)
+    )
+
+
+def _adopt_retained_operation(
+    record: WorkerRecord,
+    child: ChildOperation,
+    command_id: str,
+    retained: acq.WorkerRetainedResult,
+) -> None:
+    """Adopt exact query recovery without replacing conflicting local evidence."""
+    report = _retained_operation(record, command_id, retained)
+    if report is None:
+        return
+    state = report.operation
+    revision = report.state_revision
+    if child.report is not None and child.report.complete:
+        if child.report.SerializeToString(
+            deterministic=True
+        ) != state.SerializeToString(deterministic=True):
+            raise RuntimeError("retained Cleanup differs from local terminal operation")
+        if revision >= child.report_revision:
+            child.report_revision = revision
+        return
+    if revision < child.report_revision:
+        return
+    if (
+        revision == child.report_revision
+        and child.report is not None
+        and child.report.SerializeToString(deterministic=True)
+        != state.SerializeToString(deterministic=True)
+    ):
+        raise RuntimeError("retained Cleanup conflicts at the local operation revision")
+    child.report = control.OperationState.FromString(
+        state.SerializeToString(deterministic=True)
+    )
+    child.report_ingress_ns = host_time_ns()
+    child.report_revision = revision
+    child.updated.set()

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 
 from cephvr.acquisition.recording.session_contracts import (
     EncoderProcess,
@@ -29,6 +30,24 @@ class EncoderProgressWatchdog:
         self._last_progress_ns: int | None = None
         self._pending_started_ns: int | None = None
         self._first_input_ns: int | None = None
+        self._active_input_work = False
+
+    @contextmanager
+    def active_input_work(self) -> Iterator[None]:
+        """Keep the stall clock armed for bounded writes outside the source queue."""
+        previous = self._active_input_work
+        self._active_input_work = True
+        failed = False
+        try:
+            self.check()
+            yield
+        except BaseException:
+            failed = True
+            raise
+        finally:
+            self._active_input_work = previous
+            if not previous and not failed:
+                self.check()
 
     def note_input_submitted(self) -> None:
         """Arm one fixed startup deadline after the first complete input packet."""
@@ -44,7 +63,11 @@ class EncoderProgressWatchdog:
         if progress is not None and progress > self._last_progress:
             self._last_progress = progress
             self._last_progress_ns = self.clock_ns()
-        pending = bool(self.queue.pending_records or self.queue.waiting_pixels)
+        pending = bool(
+            self._active_input_work
+            or self.queue.pending_records
+            or self.queue.waiting_pixels
+        )
         now = self.clock_ns()
         if (
             self._first_input_ns is not None

@@ -9,6 +9,19 @@ from cephvr.control.v1 import types_pb2
 from cephvr.gui.cameras import CamerasPanel
 
 
+class CameraSnapshotValidationError(ValueError):
+    """A camera draft error with enough provenance to focus its editor."""
+
+    def __init__(self, role: str, field: str, message: str) -> None:
+        self.role = role
+        self.field = field
+        super().__init__(f"{role} · {field}: {message}")
+
+
+def _invalid(role: str, field: str, message: str) -> CameraSnapshotValidationError:
+    return CameraSnapshotValidationError(role, field, message)
+
+
 def collect_camera_snapshot(
     panel: CamerasPanel, settings: types_pb2.AcquisitionSettings
 ) -> None:
@@ -42,8 +55,10 @@ def collect_camera_snapshot(
             preset != target.device.pfs_source_filename
             or not target.device.HasField("pfs_baseline")
         ):
-            raise ValueError(
-                f"{role}: import the loaded PFS path through Cameras before submitting this GUI snapshot"
+            raise _invalid(
+                role,
+                "Parameter file",
+                "import the loaded PFS path through Cameras before submitting this GUI snapshot",
             )
         if not preset:
             target.device.ClearField("pfs_source_filename")
@@ -52,8 +67,10 @@ def collect_camera_snapshot(
         if clock == "External controller":
             source = values.get("trigger_source", "").strip()
             if not source and draft.enabled:
-                raise ValueError(
-                    f"{role}: select a PFS file with an explicit FrameStart line source"
+                raise _invalid(
+                    role,
+                    "Parameter file",
+                    "select a PFS file with an explicit FrameStart line source",
                 )
             target.device.frame_timing = pb.FRAME_TIMING_EXTERNAL_TRIGGER
             target.device.unaligned_free_running = False
@@ -66,8 +83,10 @@ def collect_camera_snapshot(
             target.device.unaligned_free_running = True
             target.device.settings.ClearField("trigger_source")
         elif draft.enabled:
-            raise ValueError(
-                f"{role}: select a camera trigger source before submitting"
+            raise _invalid(
+                role,
+                "Trigger source",
+                "select a camera trigger source before submitting",
             )
         else:
             target.device.ClearField("frame_timing")
@@ -76,14 +95,16 @@ def collect_camera_snapshot(
             try:
                 frequency = Decimal(rate)
             except InvalidOperation as error:
-                raise ValueError(f"{role}: trigger rate must be a number") from error
+                raise _invalid(role, "Trigger rate", "must be a number") from error
             if (
                 not frequency.is_finite()
                 or frequency <= 0
                 or frequency % Decimal("0.1")
             ):
-                raise ValueError(
-                    f"{role}: trigger rate must use a positive 0.1 Hz grid"
+                raise _invalid(
+                    role,
+                    "Trigger rate",
+                    "must use a positive 0.1 Hz grid",
                 )
             pulse.requested_frequency_hz = float(frequency)
         else:

@@ -16,6 +16,7 @@ from cephvr.acquisition.state import (
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 
 FailureHandler = Callable[
     [control.ProcessIdentity, control.WorkContext, control.Failure, int],
@@ -70,7 +71,7 @@ class AcquisitionHealth:
     async def _heartbeat_loop(self, shutdown: asyncio.Event) -> None:
         next_due = self.clock()
         while not shutdown.is_set():
-            delay = max(0, next_due - self.clock()) / 1_000_000_000
+            delay = remaining_seconds(next_due, clock=self.clock)
             if delay:
                 try:
                     await asyncio.wait_for(shutdown.wait(), delay)

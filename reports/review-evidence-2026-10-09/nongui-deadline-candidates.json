@@ -1,0 +1,1038 @@
+[
+  {
+    "path": "src/cephvr/synchronization/client.py",
+    "line": 259,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/worker_launcher.py",
+    "line": 328,
+    "before": "max(0.0, deadline_ns - host_time_ns()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/sessionless_cleanup.py",
+    "line": 166,
+    "before": "max(0, deadline_ns - self.clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/trial_preparation.py",
+    "line": 143,
+    "before": "max(0, deadline_ns - self.clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/session_payloads.py",
+    "line": 198,
+    "before": "max(0, deadline_ns - clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/preview_windows.py",
+    "line": 125,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/preview_windows.py",
+    "line": 103,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/preview_windows.py",
+    "line": 143,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/health.py",
+    "line": 73,
+    "before": "max(0, next_due - self.clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(next_due, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/session.py",
+    "line": 172,
+    "before": "max(0, deadline_ns - self.clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/session.py",
+    "line": 183,
+    "before": "max(0, deadline_ns - self.clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/cleanup.py",
+    "line": 376,
+    "before": "max(0, deadline_ns - self.clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/trial_pulses.py",
+    "line": 97,
+    "before": "max(0, boundary_ns - self.clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(boundary_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/manual_preview_pulse.py",
+    "line": 327,
+    "before": "max(0, deadline_ns - clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/manual_preview.py",
+    "line": 550,
+    "before": "max(0, deadline_ns - clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/trial_termination.py",
+    "line": 404,
+    "before": "max(0, end - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(end, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/workers.py",
+    "line": 416,
+    "before": "max(0, deadline_ns - host_time_ns()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/manual_preview_start.py",
+    "line": 407,
+    "before": "max(0, deadline_ns - clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/acquisition/coordinator/commands.py",
+    "line": 162,
+    "before": "max(0, deadline_ns - clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker_launcher.py",
+    "line": 178,
+    "before": "max(0, (deadline_ns - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker_launcher.py",
+    "line": 217,
+    "before": "max(0, (deadline_ns - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/runtime.py",
+    "line": 289,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/coordinator/recipes.py",
+    "line": 183,
+    "before": "max(0, (release_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(release_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/coordinator/recipes.py",
+    "line": 218,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/coordinator/recipes.py",
+    "line": 238,
+    "before": "max(0, (release.start_monotonic_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(release.start_monotonic_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/coordinator/commands.py",
+    "line": 48,
+    "before": "max(0, (deadline_ns - clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/resources/video.py",
+    "line": 497,
+    "before": "max(0.0, (deadline_ns - self.clock_ns()) / 1_000_000_000)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/feedback/pipe_consumer.py",
+    "line": 288,
+    "before": "max(0, deadline_ns - self._clock_ns()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self._clock_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/feedback/pipe_consumer.py",
+    "line": 292,
+    "before": "max(0, deadline_ns - self._clock_ns()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self._clock_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker/owner.py",
+    "line": 169,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker/owner.py",
+    "line": 150,
+    "before": "max(0, (due - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(due, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker/main.py",
+    "line": 94,
+    "before": "max(0, (recovery_deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(recovery_deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker/preparation.py",
+    "line": 51,
+    "before": "max(0, (deadline_ns - clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker/reporting.py",
+    "line": 93,
+    "before": "max(0, (deadline_ns - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/visual_stimulus/worker/reporting.py",
+    "line": 100,
+    "before": "max(0, (deadline_ns - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/shared/emergency.py",
+    "line": 101,
+    "before": "max(0.0, (deadline_ns - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 146,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 177,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 163,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 287,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 168,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 194,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 258,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 374,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 380,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 384,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 185,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/recovery.py",
+    "line": 373,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle_reports.py",
+    "line": 173,
+    "before": "max(0.0, (deadline_ns - self.hooks.clock()) / 1_000_000_000)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.hooks.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/authority.py",
+    "line": 229,
+    "before": "max(0, (cleanup_deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(cleanup_deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/authority.py",
+    "line": 270,
+    "before": "max(0, (graceful_deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(graceful_deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/trials.py",
+    "line": 171,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/trials.py",
+    "line": 318,
+    "before": "max(0, (schedule.release_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(schedule.release_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/trials.py",
+    "line": 331,
+    "before": "max(0, (target - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(target, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/trials.py",
+    "line": 350,
+    "before": "max(0, (end - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(end, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/trials.py",
+    "line": 389,
+    "before": "max(0, (end + gap - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(end + gap, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/trials.py",
+    "line": 403,
+    "before": "max(0, (receipt_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(receipt_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 113,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 128,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 98,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 211,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 356,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 290,
+    "before": "max(0, (initial_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(initial_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 305,
+    "before": "max(0, (recovery_deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(recovery_deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/cleanup.py",
+    "line": 432,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/start.py",
+    "line": 192,
+    "before": "max(0, (start_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(start_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/start.py",
+    "line": 196,
+    "before": "max(0, (start_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(start_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 138,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 227,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 255,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 310,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 356,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 155,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 170,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_execution.py",
+    "line": 278,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/evidence_wait.py",
+    "line": 157,
+    "before": "max(0, (recovery_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(recovery_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_resolution.py",
+    "line": 82,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/setup_resolution.py",
+    "line": 114,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/handoffs.py",
+    "line": 107,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/interruption.py",
+    "line": 284,
+    "before": "max(0, (stop_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(stop_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/interruption.py",
+    "line": 498,
+    "before": "max(0, (cleanup_deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(cleanup_deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/interruption.py",
+    "line": 434,
+    "before": "max(0, (cleanup_deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(cleanup_deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/acquisition_resolution.py",
+    "line": 201,
+    "before": "max(0, (edit.deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(edit.deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/acquisition_resolution.py",
+    "line": 249,
+    "before": "max(0, (edit.deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(edit.deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/acquisition_resolution.py",
+    "line": 335,
+    "before": "max(0, (attempt.setup_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(attempt.setup_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/lifecycle/acquisition_resolution.py",
+    "line": 375,
+    "before": "max(0, (attempt.setup_deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(attempt.setup_deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display.py",
+    "line": 254,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display.py",
+    "line": 218,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/camera.py",
+    "line": 450,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/camera.py",
+    "line": 146,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/camera.py",
+    "line": 493,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/tracking_diagnostic.py",
+    "line": 712,
+    "before": "max(0.0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/spikeglx_inventory.py",
+    "line": 136,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/spikeglx_inventory.py",
+    "line": 201,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/owner_cleanup.py",
+    "line": 268,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/owner_cleanup.py",
+    "line": 367,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/owner_cleanup.py",
+    "line": 385,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/readback.py",
+    "line": 89,
+    "before": "max(0, (operation.deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(operation.deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/readback.py",
+    "line": 133,
+    "before": "max(0, (operation.deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(operation.deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/spikeglx_stop.py",
+    "line": 134,
+    "before": "max(0, (due_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(due_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/spikeglx_stop.py",
+    "line": 107,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 683,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 739,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 202,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 241,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 251,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 271,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 381,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 517,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 637,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 659,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 265,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 472,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/device/display_calibration.py",
+    "line": 314,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/incident/coordination.py",
+    "line": 316,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/incident/scope.py",
+    "line": 121,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/incident/scope.py",
+    "line": 216,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/incident/scope.py",
+    "line": 154,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/trial_logs.py",
+    "line": 167,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/trial_logs.py",
+    "line": 225,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/trial_logs.py",
+    "line": 173,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/trial_logs.py",
+    "line": 247,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/coordination.py",
+    "line": 98,
+    "before": "max(0, (request.deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(request.deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/coordination.py",
+    "line": 339,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/coordination.py",
+    "line": 349,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/coordination.py",
+    "line": 322,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/metadata/coordination.py",
+    "line": 347,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/control/configuration.py",
+    "line": 346,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/control/owned_camera_edits.py",
+    "line": 103,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/control/owned_camera_edits.py",
+    "line": 190,
+    "before": "max(0, deadline_ns - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/device.py",
+    "line": 398,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/channel.py",
+    "line": 193,
+    "before": "max(0, command_deadline - self.clock()) / 1e9",
+    "candidate": "remaining_seconds(command_deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/bridge.py",
+    "line": 223,
+    "before": "max(0, deadline_ns - self._clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self._clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/bridge.py",
+    "line": 245,
+    "before": "max(0, deadline_ns - self._clock()) / 1_000_000_000",
+    "candidate": "remaining_seconds(deadline_ns, clock=self._clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/lifecycle.py",
+    "line": 228,
+    "before": "max(0, (wait_until - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(wait_until, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/lifecycle.py",
+    "line": 68,
+    "before": "max(0, (wait_until - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(wait_until, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/firmware_upload.py",
+    "line": 239,
+    "before": "max(0, (deadline_ns - self.launcher.clock_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.launcher.clock_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/firmware_upload.py",
+    "line": 278,
+    "before": "max(0, (deadline_ns - self.launcher.clock_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.launcher.clock_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/controller/microcontroller/firmware_operation.py",
+    "line": 131,
+    "before": "max(0, (deadline_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/tracking/methods/nvidia.py",
+    "line": 190,
+    "before": "max(0, (deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/tracking/processing/session.py",
+    "line": 237,
+    "before": "max(0, (spec.deadline - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(spec.deadline, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/tracking/processing/pose.py",
+    "line": 118,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/tracking/recording/writer.py",
+    "line": 124,
+    "before": "max(0, (deadline_host_ns - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline_host_ns, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/tracking/feedback/transport.py",
+    "line": 101,
+    "before": "max(0, (deadline - self.clock()) / 1e9)",
+    "candidate": "remaining_seconds(deadline, clock=self.clock)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/supervisor/recovery.py",
+    "line": 181,
+    "before": "max(0.0, (deadline_ns - host_time_ns()) / 1_000_000_000)",
+    "candidate": "remaining_seconds(deadline_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/supervisor/recovery.py",
+    "line": 392,
+    "before": "max(\n                0.0, (recovery.deadline_monotonic_ns - host_time_ns()) / 1e9\n            )",
+    "candidate": "remaining_seconds(recovery.deadline_monotonic_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/supervisor/recovery.py",
+    "line": 403,
+    "before": "max(\n                0.0, (recovery.deadline_monotonic_ns - host_time_ns()) / 1e9\n            )",
+    "candidate": "remaining_seconds(recovery.deadline_monotonic_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  },
+  {
+    "path": "src/cephvr/supervisor/process_exit.py",
+    "line": 27,
+    "before": "max(0.0, (until_ns - host_time_ns()) / 1e9)",
+    "candidate": "remaining_seconds(until_ns, clock=host_time_ns)",
+    "scope": "Review caller clock/type/monkeypatch semantics before migration; no automated repository edit applied."
+  }
+]

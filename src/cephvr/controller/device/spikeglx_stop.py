@@ -9,6 +9,7 @@ from typing import Any
 
 from cephvr.controller.ports import SpikeGLXPort
 from cephvr.controller.state import Attempt, LifecycleState
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class SpikeGLXStopScheduler:
@@ -104,7 +105,7 @@ class SpikeGLXStopScheduler:
                 result = task.result()
             else:
                 result = await asyncio.wait_for(
-                    task, max(0, (deadline_ns - self.clock()) / 1e9)
+                    task, remaining_seconds(deadline_ns, clock=self.clock)
                 )
         except TimeoutError:
             return False
@@ -131,7 +132,7 @@ class SpikeGLXStopScheduler:
         trial_index: int,
         trial_end_ns: int,
     ) -> bool:
-        await asyncio.sleep(max(0, (due_ns - self.clock()) / 1e9))
+        await asyncio.sleep(remaining_seconds(due_ns, clock=self.clock))
         async with self.lifecycle.lock:
             same_trial = (
                 attempt.trial_operation == operation

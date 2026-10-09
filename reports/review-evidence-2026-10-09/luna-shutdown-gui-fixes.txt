@@ -1,0 +1,23 @@
+# Luna shutdown and GUI audit fixes — 2026-10-09
+
+## Scope and decisions
+
+Implemented the bounded authorized fixes under E06/E08, G01/E07/A10 and ARCH-002. Read the root guidance, ARCH-002, E06, E08, E07, G01, A10, TODO/recent LOG, current backend reports and the 2026-10-09 Astra/Luna/ Sol review evidence before editing. No architecture decision changes were needed. Root owns shared documentation/TODO/LOG and performs integration review.
+
+## Changes
+
+- Supervisor shutdown now runs a short-lived observer during the existing cleanup phase. It waits on the existing controller-gone predicate and calls the existing one-shot `interrupt_if_controller_lost()` within the original cleanup deadline. Shutdown identity, interruption behavior, blocker and process deadlines remain owned by the existing coordinator. Observer failures are surfaced through supervisor task warnings. The existing health monitor still escalates expired pending faults during accepted shutdown; focused coverage retains that behavior.
+- GUI camera snapshot validation now carries camera role and editable field provenance. An invalid full proposal selects the blocking camera row and focuses the relevant field while preserving atomic proposal construction and loaded-draft provenance. The ordinary camera-settings completion route also extracts the existing controller validator field path, then focuses the affected camera row and mapped field. It does not change controller validation or partial-acceptance behavior.
+- ARCH-002 cohesion review: `supervisor/shutdown.py` and `gui/cameras.py` remain over the 500-line review threshold, but their existing responsibilities are cohesive: shutdown process/cleanup sequencing and camera inventory/editor state respectively. The new observer belongs to the shutdown coordinator, and validation focus belongs to the panel that owns those controls; no separable module extraction was justified. No dependency or generic framework was added.
+
+## Validation
+
+- `.venv/bin/python -m pytest tests/supervisor/test_health.py tests/supervisor/test_shutdown.py -q` — 30 passed. Includes pending-fault escalation during accepted shutdown and controller loss during the first cleanup-blocker wait. The latter holds the blocker open, observes interruption before the original 3-second initial boundary, then releases it and asserts both retained deadlines are unchanged.
+- `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'cross_camera_snapshot_error or camera_save_validation_error or loaded_camera_presets_cannot_claim_sdk_import_provenance'` — 3 passed, 367 deselected. Uses a real acquisition validator result to exercise ordinary Behavior-save rejection with a Tracking field path, checks row/focus, keeps the Behavior draft intact, and validates a corrected Tracking setting.
+- Ruff check and format check passed for all changed Python source/test files.
+- `.venv/bin/python -m mypy --platform win32 src/cephvr/supervisor` — passed for 22 source files.
+- `.venv/bin/python tools/check_backend_boundaries.py` — 633 modules checked, zero boundary violations. Existing cohesion review warnings include the two owning files above; this increment added no new module or runtime back-reference.
+
+## Limits
+
+No full GUI suite, full repository suite, native Windows UI, hardware/rig, process restart, network operation or acceptance run was performed. Offscreen GUI checks do not establish native DPI behavior. Win32 mypy is static analysis only. These fixes and tests do not close E15 rig validation.

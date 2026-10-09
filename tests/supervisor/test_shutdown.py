@@ -149,6 +149,62 @@ async def test_lost_controller_with_active_session_interrupts_before_shutdown(
     assert not (tmp_path / "reports").exists()
 
 
+async def test_controller_loss_during_worker_cleanup_interrupts_with_original_bounds(
+    tmp_path: Path,
+) -> None:
+    runtime, _, outbound, _ = await _registered_visual_stimulus(tmp_path)
+    calls: list[str] = []
+    waiting_for_blocker = asyncio.Event()
+    interrupted = asyncio.Event()
+    release_blocker = asyncio.Event()
+
+    async def interrupt_backend(target, request, *, deadline_ns) -> None:  # type: ignore[no-untyped-def]
+        calls.append(f"interrupt:{request.reason.code}")
+        interrupted.set()
+
+    async def shutdown_backend(target, request, *, deadline_ns) -> None:  # type: ignore[no-untyped-def]
+        calls.append("shutdown")
+
+    outbound.interrupt_backend = interrupt_backend  # type: ignore[attr-defined]
+    outbound.shutdown_backend = shutdown_backend  # type: ignore[attr-defined]
+
+    runtime.registration_state.context.policies.recovery_ns = 2_000_000_000
+
+    def blockers():  # type: ignore[no-untyped-def]
+        waiting_for_blocker.set()
+        return [] if release_blocker.is_set() else [object()]
+
+    runtime.recovery.cleanup_blockers = blockers  # type: ignore[method-assign]
+    key = ("controller", runtime.controller.generation)
+    runtime.health_state.last_heartbeat[key] = host_time_ns()
+    runtime.health_state.heartbeat_reports[key] = types.HeartbeatReport(
+        source=runtime.controller,
+        sent_monotonic_ns=host_time_ns(),
+        session_phase=types.SESSION_PHASE_RUNNING,
+    )
+    runtime.shutdown_state.shutdown_request = wire.ApplicationShutdownRequest(
+        command_id=str(uuid4())
+    ).SerializeToString()
+    shutdown_deadline = host_time_ns() + 5_500_000_000
+    cleanup_deadline = host_time_ns() + 5_000_000_000
+    runtime.shutdown_state.shutdown_deadline_ns = shutdown_deadline
+    runtime.shutdown_state.cleanup_deadline_ns = cleanup_deadline
+    runtime.shutdown.graceful_exit_ns = 1
+    runtime.shutdown.terminate_exit_ns = 1
+
+    task = asyncio.create_task(runtime.shutdown.shutdown_owned())
+    await asyncio.wait_for(waiting_for_blocker.wait(), timeout=1)
+    runtime.health_state.last_heartbeat[key] = 1
+    await asyncio.wait_for(interrupted.wait(), timeout=1)
+    release_blocker.set()
+    await task
+
+    assert calls == ["interrupt:CONTROLLER_LOST_DURING_SHUTDOWN", "shutdown"]
+    assert runtime.shutdown_state.shutdown_interrupted
+    assert runtime.shutdown_state.shutdown_deadline_ns == shutdown_deadline
+    assert runtime.shutdown_state.cleanup_deadline_ns == cleanup_deadline
+
+
 class _CleanupControl:
     """Worker control whose cleanup optionally runs to the original deadline."""
 

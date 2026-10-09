@@ -233,13 +233,18 @@ class ManualDeviceStatusReporter:
             status = wire.AcquisitionDeviceStatusReport.FromString(
                 retained_report[1].SerializeToString(deterministic=True)
             )
+            if self.clock() >= deadline_ns:
+                return _rejected(
+                    "DEVICE_STATUS_DEADLINE",
+                    "device status was retained after its delivery deadline",
+                )
             return await self.controller.report_acquisition_device_status(
                 status, deadline_ns=deadline_ns
             )
         now = self.clock()
-        if now >= deadline_ns or not command.command_id or not command_name:
+        if not command.command_id or not command_name:
             return _rejected(
-                "DEVICE_STATUS_DEADLINE", "device status missed its retained deadline"
+                "DEVICE_STATUS_IDENTITY", "device status identity is incomplete"
             )
         self._revision += 1
         context = control.OperationContext(command_id=command.command_id)
@@ -294,6 +299,11 @@ class ManualDeviceStatusReporter:
             ),
         )
         self._prune_reports()
+        if now >= deadline_ns:
+            return _rejected(
+                "DEVICE_STATUS_DEADLINE",
+                "device status was retained after its delivery deadline",
+            )
         return await self.controller.report_acquisition_device_status(
             status, deadline_ns=deadline_ns
         )

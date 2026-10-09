@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.tracking.config.models.records import Completion, Header, TrackingRecord
 from cephvr.tracking.recording.codec import encode_line
 from cephvr.tracking.v1.recording_pb2 import TrackingRecordingSettings
@@ -121,7 +122,7 @@ class TrackingWriter:
 
     def finalize(self, deadline_host_ns: int) -> pb.OutputResult:
         if self.thread is not None:
-            self.thread.join(max(0, (deadline_host_ns - self.clock()) / 1e9))
+            self.thread.join(remaining_seconds(deadline_host_ns, clock=self.clock))
         success = self.closed and self.failure is None
         return pb.OutputResult(
             output_key=self.output_key,

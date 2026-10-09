@@ -12,6 +12,7 @@ from cephvr.acquisition.state import ChildOperation, WorkerRecord
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 def retain_worker_command(
@@ -159,7 +160,7 @@ async def wait_child_operation(
                     state.SerializeToString(deterministic=True)
                 )
             child.updated.clear()
-        timeout = max(0, deadline_ns - clock()) / 1_000_000_000
+        timeout = remaining_seconds(deadline_ns, clock=clock)
         if timeout <= 0:
             raise TimeoutError("worker operation missed its original deadline")
         await asyncio.wait_for(child.updated.wait(), timeout)

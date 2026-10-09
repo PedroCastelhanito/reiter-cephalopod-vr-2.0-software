@@ -1,0 +1,56 @@
+Camera cleanup recovery handoff
+Date: 2026-10-09
+Owned scope: `src/cephvr/controller/device/camera.py`, new focused `src/cephvr/controller/device/owned_edit_recovery.py`, and existing `tests/controller/test_camera_configuration.py`.
+Governing contracts: E06 exact run/cleanup ownership; A10/A11 exact accepted-configuration source/generation, terminal device evidence, and revision/authority gates; ARCH-002 focused interfaces and no whole-runtime back-reference.
+
+Implemented behavior:
+- Fresh STOP calls still pass ordinary controller authorization, phase, shape, revision, operation and authority checks before read-only recovery. The initial selector skips only the run identity/running test for STOP so a stale projection cannot prevent status refresh. After the query the full selector runs again with no bypass before policy loading or dispatch.
+- Recovery considers only the newest retained owned-edit terminal. If it already has accepted device status, older missing history is superseded and no query runs. Otherwise its exact source, Apply operation ID and empty WorkContext are queried from the acquisition BackendPort under one fresh caller deadline.
+- The focused helper validates the retained backend generation/source, work, status operation/context, Apply command, terminal result and matching ledger outcome; then routes only `acquisition_device_result` through the existing DeviceViews callback. No Apply, SDK work, Confirm or other mutation is replayed.
+- DeviceViews retains late status against the original terminal deadline and adopts/publishes a newer truthful run projection. When this differs from the caller's run, the original STOP is rejected after refresh so the client can retry using the exact reported run. If the run matches, query and admitted Stop share one absolute deadline; the dispatch gate rejects if it expired during intervening local work.
+- Exact nonrunning cleanup-pending STOP remains allowed only for its current exact run; SHOW/ATTACH retain their running requirement. Existing authority and revision rules remain intact.
+
+Focused integration coverage:
+- Uses real `ManualDeviceStatusReporter` to retain ApplyCameraSettings status after its original send deadline expires, real `CoordinatorQueries.get_retained_result` over the exact command ledger/work, and real ControllerRuntime/DeviceViews routing.
+- Covers a stale running old run with `cleanup_pending=False`: recovered new run is adopted, old request rejected, exact new-run retry stops it.
+- Covers a matching run where the retained query and admitted Stop use the same deadline.
+- Covers newer accepted terminal status superseding an older terminal whose status is missing: Stop proceeds without querying old history.
+- Negative evidence cases cover wrong backend source, wrong retained ledger operation, wrong status operation ID, and stale generation; they do not alter the view or start cleanup.
+- Exact nonrunning cleanup-pending Stop positive plus wrong-run, SHOW and ATTACH negatives remain in the owning test.
+
+Validation:
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/controller/test_camera_configuration.py -q` — 30 passed.
+- `.venv/bin/python -m ruff check` on the three owned paths — pass.
+- `.venv/bin/python -m ruff format --check` on the three owned paths — pass.
+- `.venv/bin/python -m mypy --platform win32 src/cephvr/controller/device/camera.py src/cephvr/controller/device/owned_edit_recovery.py` — pass.
+- `.venv/bin/python tools/check_backend_boundaries.py` — 639 modules, 0 boundary violations. Existing cohesion review warning remains for `controller/device/camera.py` (588 lines); query validation is extracted into the focused helper.
+- `git diff --check` on the three owned paths — pass.
+
+Limits: portable controller/coordinator integration only; no hardware, native Windows, authenticated loopback, or rig acceptance. Shared worktree contains previous authorized changes; this handoff covers the paths above and does not include docs/TODO/LOG, which root owns. Frozen for Sol/Astra review and root's final suite.
+
+
+# Controller owned-edit Stop recovery handoff (2026-10-09)
+
+## Final correction: proven rejected / never-dispatched attempts
+
+Governing constraints: E06 exact ownership/cleanup evidence; A10 and A11 configuration-edit admission, retained result, and truthful recovery rules. An admission-only REJECTED result must not be mistaken for evidence of an SDK operation. Unknown admission and accepted failures remain fenced for exact read-only reconciliation.
+
+Changed the owner implementation in `src/cephvr/controller/control/owned_camera_edits.py`. A terminal is removed only when a camera role cannot be dispatched because its assignment/policy is missing, or the backend returns `COMMAND_RESULT_REJECTED` with the exact edit operation ID. A mismatched or absent ID, UNSPECIFIED result, lost reply, or exception keeps the terminal. Retirement also checks that no readback/report/status/adoption evidence exists before removing it. Removal is keyed to the exact current edit and leaves older unresolved terminals intact.
+
+Extended `tests/controller/test_camera_configuration.py` with prior-terminal preservation, local no-policy/no-dispatch retirement, and timeout/UNSPECIFIED/mismatched-rejection retention cases. The explicit rejected fixture carries the exact operation ID. Updated `tests/controller/test_device_admission.py` fake selector/dispatcher signatures for the existing stale-stop and original-deadline keywords.
+
+## Validation
+
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/controller -q` — 408 passed.
+- `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider tests/controller/test_camera_configuration.py tests/controller/test_device_admission.py -q` — 50 passed.
+- `PYTHONPATH=.:src PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cephvr-astra-rejected-edit-stop-probe.py` — explicit rejected edit has no missing-status terminal; exact Stop succeeds; baseline without rejected edit succeeds.
+- Ruff check — passed for the three edited owner/test paths.
+- Ruff format check — passed for the three edited paths.
+- `mypy --platform win32 src/cephvr/controller` — passed, 104 source files.
+- `tools/check_backend_boundaries.py` — 639 modules, 0 boundary violations; reports pre-existing >500-line cohesion prompts in several areas.
+- `git diff --check` on the three owned paths — passed.
+
+No hardware/native rig behavior was exercised. Source is frozen for Sol/Astra review and root integration.
+
+
+Root evidence correction after final Astra replay: the first formerly blocked exact Stop now succeeds and occupies camera_operation. The unchanged probe's second counterfactual consequently rejects; it is not a second successful baseline execution. Astra's final handoff records the actual sequencing and accepts the correction.

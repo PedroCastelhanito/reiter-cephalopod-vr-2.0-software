@@ -26,6 +26,7 @@ from cephvr.controller.state import (
     LimitsState,
     MetadataState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class MetadataCoordinator:
@@ -95,7 +96,7 @@ class MetadataCoordinator:
         try:
             completion = await asyncio.wait_for(
                 asyncio.shield(asyncio.wrap_future(future)),
-                max(0, (request.deadline_ns - self.clock()) / 1e9),
+                remaining_seconds(request.deadline_ns, clock=self.clock),
             )
             terminal = True
         except (TimeoutError, asyncio.CancelledError) as exc:
@@ -319,7 +320,7 @@ class MetadataCoordinator:
                 try:
                     recovery_results = await asyncio.wait_for(
                         asyncio.gather(*recovery_logs, return_exceptions=True),
-                        max(0, (deadline_ns - self.clock()) / 1e9),
+                        remaining_seconds(deadline_ns, clock=self.clock),
                     )
                     if any(
                         isinstance(result, BaseException) for result in recovery_results
@@ -336,7 +337,7 @@ class MetadataCoordinator:
             try:
                 await asyncio.wait_for(
                     self.log_event(attempt, "session_ended", outcome=outcome),
-                    max(0, (deadline_ns - self.clock()) / 1e9),
+                    remaining_seconds(deadline_ns, clock=self.clock),
                 )
             except (StorageError, TimeoutError):
                 clean = False
@@ -344,9 +345,9 @@ class MetadataCoordinator:
                 sealed = await asyncio.wait_for(
                     asyncio.to_thread(
                         attempt.writer.seal,
-                        max(0, (deadline_ns - self.clock()) / 1e9),
+                        remaining_seconds(deadline_ns, clock=self.clock),
                     ),
-                    max(0, (deadline_ns - self.clock()) / 1e9),
+                    remaining_seconds(deadline_ns, clock=self.clock),
                 )
             except (TimeoutError, StorageError, OSError):
                 sealed = False

@@ -12,6 +12,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.visual_stimulus.coordinator.commands import (
     bind_command,
     validate,
@@ -286,7 +287,9 @@ class VisualStimulusCoordinatorRuntime:
             )
             if result.result != pb.COMMAND_RESULT_ACCEPTED:
                 raise RuntimeError(result.failure.message)
-            async with asyncio.timeout(max(0, (deadline_ns - self.clock()) / 1e9)):
+            async with asyncio.timeout(
+                remaining_seconds(deadline_ns, clock=self.clock)
+            ):
                 await self.shutdown_requested.wait()
         except Exception as exc:
             try:

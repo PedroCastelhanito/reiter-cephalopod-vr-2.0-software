@@ -28,8 +28,10 @@ from cephvr.acquisition.coordinator.manual_preview_window import (
     execute_preview_window,
 )
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    invalidate_released_idle_proof,
     release_idle_claim,
     retain_applied_pulse_state,
+    retain_observation,
 )
 from cephvr.acquisition.coordinator.manual_session_access import (
     manual_configuration_available,
@@ -54,6 +56,7 @@ from cephvr.control.v1 import types_pb2 as control
 from cephvr.platform.windows.resource_ledger import NativeResourceLedger
 from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.preview_placement import valid_preview_placement
 
 
@@ -356,19 +359,38 @@ class ManualPreview:
             worker is None
             or preview is None
             or preview.run_id != request.preview_run_id
-            or not preview.started
-            or preview.stopping
         ):
             return _rejected(
                 request.command.command_id,
                 "PREVIEW_RUN",
                 "Stop Preview does not match the live run",
             )
+        uncertain_preview = preview.stopping or not preview.started
         preview.stopping = True
         active_roles = self._external_roles(None)
+        if uncertain_preview:
+            setting = (
+                self.configuration.settings.behavioral
+                if request.camera == camera.CAMERA_ROLE_BEHAVIORAL
+                else self.configuration.settings.tracking
+            )
+            if (
+                setting.HasField("device")
+                and setting.device.HasField("frame_timing")
+                and setting.device.frame_timing == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+            ):
+                active_roles = sorted(set(active_roles).union({request.camera}))
         resume_roles = tuple(role for role in active_roles if role != request.camera)
+        device_cleanup_established = False
         try:
             if active_roles:
+                if self.pulse.observation is None:
+                    invalidate_released_idle_proof(self.pulse)
+                    retain_observation(
+                        self.pulse,
+                        await self.serial.connect(deadline_ns=deadline_ns),
+                    )
+                invalidate_released_idle_proof(self.pulse)
                 evidence = await self.serial.off(
                     tuple(active_roles),
                     scheduled_boundary_ns=None,
@@ -378,68 +400,89 @@ class ManualPreview:
                 retain_applied_pulse_state(
                     self.pulse, evidence, deadline_ns=deadline_ns
                 )
-            parent = control.OperationContext(command_id=request.command.command_id)
-            child, operation, port = retain_worker_command(
-                worker,
-                work=None,
-                parent_operation=parent,
-                kind="stop_preview",
-                deadline_ns=deadline_ns,
-                configuration_revision=preview.configuration_revision,
-            )
-            preview.stop_operation = control.OperationContext(
-                command_id=operation.command_id
-            )
-            stop = acq.WorkerStopPreview(
-                command=child,
-                preview_run_id=preview.run_id,
-                release_device=True,
-            )
-            receipt = await port.stop_preview(stop, deadline_ns=deadline_ns)
-            if receipt.result != control.COMMAND_RESULT_ACCEPTED:
-                raise RuntimeError("manual preview stop was rejected")
-            state = await wait_child_operation(
-                operation, deadline_ns, self.lock, self.clock
-            )
-            if not state.succeeded:
-                raise RuntimeError("manual preview worker cleanup failed")
-            await _wait_preview_event(preview.stopped_event, deadline_ns, self.clock)
-            await _wait_preview_event(preview.cleanup_event, deadline_ns, self.clock)
-            if preview.started:
-                raise RuntimeError("manual preview did not confirm stopped activity")
-            if preview.resolved_camera is None:
-                raise RuntimeError("manual preview stop lacks retained resolved camera")
-            await self.windows.close(
-                request.camera, preview.run_id, deadline_ns=deadline_ns
-            )
-            self.device_status.resolve_camera(
-                int(request.camera),
-                preview.resolved_camera,
-                device_open=False,
-                configuration_revision=preview.configuration_revision,
-            )
-            self.transfers.retire(preview)
-            viewer_was_attached = preview.viewer is not None
-            tracking_consumer_attached = preview.tracking_viewer is not None
-            preview.stopping = False
-            worker.preview = None
-            if viewer_was_attached:
+            if uncertain_preview:
+                # A late Start or timed-out Stop cannot be inferred from its
+                # admission result. Retire this exact worker through its existing
+                # Cleanup/read-only retained-result path before releasing ownership.
+                await self.windows.close(
+                    request.camera, preview.run_id, deadline_ns=deadline_ns
+                )
+                self.transfers.retire(preview)
+                if preview.viewer is not None:
+                    await _wait_preview_event(
+                        preview.viewer_released_event, deadline_ns, self.clock
+                    )
+                if preview.tracking_viewer is not None:
+                    await _wait_preview_event(
+                        preview.tracking_viewer_released_event,
+                        deadline_ns,
+                        self.clock,
+                    )
+                await self.workers.retire_sessionless_worker(
+                    request.camera, deadline_ns=deadline_ns
+                )
+                if self.workers.workers.get(request.camera) is worker:
+                    raise RuntimeError("uncertain preview worker cleanup remains owned")
+            else:
+                parent = control.OperationContext(command_id=request.command.command_id)
+                child, operation, port = retain_worker_command(
+                    worker,
+                    work=None,
+                    parent_operation=parent,
+                    kind="stop_preview",
+                    deadline_ns=deadline_ns,
+                    configuration_revision=preview.configuration_revision,
+                )
+                preview.stop_operation = control.OperationContext(
+                    command_id=operation.command_id
+                )
+                stop = acq.WorkerStopPreview(
+                    command=child,
+                    preview_run_id=preview.run_id,
+                    release_device=True,
+                )
+                receipt = await port.stop_preview(stop, deadline_ns=deadline_ns)
+                if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+                    raise RuntimeError("manual preview stop was rejected")
+                state = await wait_child_operation(
+                    operation, deadline_ns, self.lock, self.clock
+                )
+                if not state.succeeded:
+                    raise RuntimeError("manual preview worker cleanup failed")
                 await _wait_preview_event(
-                    preview.viewer_released_event, deadline_ns, self.clock
+                    preview.stopped_event, deadline_ns, self.clock
                 )
-            if tracking_consumer_attached:
                 await _wait_preview_event(
-                    preview.tracking_viewer_released_event, deadline_ns, self.clock
+                    preview.cleanup_event, deadline_ns, self.clock
                 )
-            self.transfers.close_retired_resource(preview)
-            if preview.allocation_id in self.resources or (
-                preview.tracking_allocation_id is not None
-                and preview.tracking_allocation_id in self.resources
-            ):
-                raise RuntimeError(
-                    "manual preview or Tracking diagnostic ring ownership is not fully released"
+                if preview.started:
+                    raise RuntimeError(
+                        "manual preview did not confirm stopped activity"
+                    )
+                if preview.resolved_camera is None:
+                    raise RuntimeError(
+                        "manual preview stop lacks retained resolved camera"
+                    )
+                device_cleanup_established = True
+            if not uncertain_preview:
+                await self.windows.close(
+                    request.camera, preview.run_id, deadline_ns=deadline_ns
                 )
+            if not uncertain_preview:
+                await self.transfers.retire_and_release(
+                    preview, deadline_ns=deadline_ns
+                )
+            else:
+                self.transfers.close_retired_resource(preview)
+                if preview.allocation_id in self.resources or (
+                    preview.tracking_allocation_id is not None
+                    and preview.tracking_allocation_id in self.resources
+                ):
+                    raise RuntimeError(
+                        "manual preview or Tracking diagnostic ring ownership is not fully released"
+                    )
             if resume_roles:
+                invalidate_released_idle_proof(self.pulse)
                 on = await self.serial.on(
                     resume_roles,
                     scheduled_boundary_ns=None,
@@ -450,6 +493,25 @@ class ManualPreview:
                 await release_idle_claim(
                     self.pulse, self.serial, deadline_ns=deadline_ns
                 )
+            if preview.resolved_camera is not None:
+                self.device_status.resolve_camera(
+                    int(request.camera),
+                    preview.resolved_camera,
+                    device_open=False,
+                    configuration_revision=preview.configuration_revision,
+                )
+            else:
+                self.device_status.update_camera_state(
+                    int(request.camera),
+                    device_open=False,
+                    preview_prepared=False,
+                    preview_running=False,
+                    preview_run_id="",
+                    cleanup_pending=False,
+                )
+            preview.stopping = False
+            worker.preview = None
+            await self.resolution.retire_failed_if_quiescent()
             return await self.results.complete(
                 request.command,
                 command_name="stop_preview",
@@ -462,14 +524,33 @@ class ManualPreview:
         except (RuntimeError, TimeoutError, ValueError) as exc:
             if preview is not None:
                 try:
-                    self.device_status.update_camera_state(
-                        int(request.camera),
-                        device_open=True,
-                        preview_prepared=True,
-                        preview_running=preview.started,
-                        preview_run_id=preview.run_id,
-                        cleanup_pending=True,
-                    )
+                    if device_cleanup_established:
+                        self.device_status.update_camera_state(
+                            int(request.camera),
+                            device_open=False,
+                            preview_prepared=False,
+                            preview_running=False,
+                            preview_run_id=preview.run_id,
+                            cleanup_pending=True,
+                        )
+                    elif self.workers.workers.get(request.camera) is worker:
+                        self.device_status.update_camera_state(
+                            int(request.camera),
+                            device_open=True,
+                            preview_prepared=True,
+                            preview_running=preview.started,
+                            preview_run_id=preview.run_id,
+                            cleanup_pending=True,
+                        )
+                    else:
+                        self.device_status.update_camera_state(
+                            int(request.camera),
+                            device_open=False,
+                            preview_prepared=False,
+                            preview_running=False,
+                            preview_run_id="",
+                            cleanup_pending=True,
+                        )
                 except ValueError:
                     pass
             await self.results.report_failure(
@@ -506,6 +587,12 @@ class ManualPreview:
 
     def _valid(self, request: wire.AcquisitionCameraCommand, deadline_ns: int) -> bool:
         command = request.command
+        exact_run_cleanup = self._exact_run_cleanup(request)
+        revision_matches = request.HasField("configuration_revision") and (
+            request.configuration_revision == self.configuration.revision
+            or exact_run_cleanup
+            and request.configuration_revision > self.configuration.revision
+        )
         return bool(
             self.clock() < deadline_ns
             and command.command_id
@@ -514,12 +601,12 @@ class ManualPreview:
             and command.work.WhichOneof("work") is None
             and command.HasField("parent_operation")
             and command.parent_operation.command_id
-            and request.HasField("configuration_revision")
-            and request.configuration_revision == self.configuration.revision
+            and revision_matches
             and (
                 request.file_policies == self.configuration.file_policies
                 or request.kind == wire.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
                 and not request.HasField("file_policies")
+                or exact_run_cleanup
             )
             and manual_configuration_available(self.session_slot)
             and request.camera
@@ -527,6 +614,22 @@ class ManualPreview:
                 camera.CAMERA_ROLE_BEHAVIORAL,
                 camera.CAMERA_ROLE_TRACKING,
             )
+        )
+
+    def _exact_run_cleanup(self, request: wire.AcquisitionCameraCommand) -> bool:
+        if (
+            request.kind != wire.CAMERA_COMMAND_KIND_STOP_PREVIEW
+            or not request.HasField("preview_run_id")
+        ):
+            return False
+        worker = self.workers.workers.get(request.camera)
+        preview = worker.preview if worker is not None else None
+        return bool(
+            worker is not None
+            and worker.context.camera == request.camera
+            and preview is not None
+            and preview.run_id == request.preview_run_id
+            and request.configuration_revision >= preview.configuration_revision
         )
 
     def _find_preview(self, run_id: str) -> WorkerPreview | None:
@@ -547,7 +650,7 @@ def _rejected(command_id: str, code: str, message: str) -> control.CommandAdmiss
 async def _wait_preview_event(
     event: asyncio.Event, deadline_ns: int, clock: Callable[[], int]
 ) -> None:
-    remaining = max(0, deadline_ns - clock()) / 1_000_000_000
+    remaining = remaining_seconds(deadline_ns, clock=clock)
     if remaining <= 0:
         raise TimeoutError("preview lifecycle evidence missed its retained deadline")
     await asyncio.wait_for(event.wait(), remaining)

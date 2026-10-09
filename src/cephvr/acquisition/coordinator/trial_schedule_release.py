@@ -9,6 +9,9 @@ from cephvr.acquisition.coordinator.commands import (
     retain_worker_command,
     wait_child_operation,
 )
+from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    invalidate_released_idle_proof,
+)
 from cephvr.acquisition.coordinator.trial_helpers import (
     _camera_output_keys,
     _external_roles,
@@ -22,6 +25,7 @@ from cephvr.acquisition.coordinator.trial_termination import (
 from cephvr.acquisition.ports import SerialOwnerPort
 from cephvr.acquisition.state import (
     CoordinatorIdentity,
+    PulseRecord,
     SessionRecord,
     SessionSlot,
     WorkerRecord,
@@ -41,6 +45,7 @@ class TrialScheduleRelease:
         session_slot: SessionSlot,
         workers: dict[int, WorkerRecord],
         serial: SerialOwnerPort,
+        pulse: PulseRecord,
         serial_ack_timeout_ns: int,
         start_evidence_allowance_ns: int,
         lifecycle_delivery_ns: int,
@@ -54,6 +59,7 @@ class TrialScheduleRelease:
         self.session_slot = session_slot
         self.workers = workers
         self.serial = serial
+        self.pulse = pulse
         self.serial_ack_timeout_ns = serial_ack_timeout_ns
         self.start_evidence_allowance_ns = start_evidence_allowance_ns
         self.lifecycle_delivery_ns = lifecycle_delivery_ns
@@ -164,6 +170,7 @@ class TrialScheduleRelease:
         ]
         if selected:
             try:
+                invalidate_released_idle_proof(self.pulse)
                 await self.serial.reserve_boundary(
                     request.start_monotonic_ns,
                     mcu.PULSE_BOUNDARY_COMMAND_ON,

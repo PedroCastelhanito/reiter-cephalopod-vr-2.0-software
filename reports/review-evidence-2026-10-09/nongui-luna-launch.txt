@@ -1,0 +1,37 @@
+# Registered worker launch refactor handoff
+
+Date: 2026-10-09
+Repository: `/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software`
+Scope: Shared Windows worker launch ordering under E08 for acquisition and Visual Stimulus. No GUI code or hardware execution.
+
+## Changes
+
+- Added `src/cephvr/platform/windows/worker_launch.py`, a generic typed handshake that owns only parent pipe handles and ordering: exact PlanLaunch receipt, pipe creation, suspended native child creation, exact OS confirmation, backend peer registration, resume, retained bootstrap writer, and Operational polling under the caller's original absolute deadline.
+- Moved the blocking bootstrap writer into `src/cephvr/platform/windows/bootstrap.py`. Its attempt remains held by the backend cleanup list while incomplete; consumed write handles stay with the writer. A failed thread start closes both parent handles. Confirmed child/job ownership remains backend/native-owned.
+- Updated acquisition and Visual Stimulus launchers to supply backend-specific requests, descriptors, auth, native operations, and state queries to the helper. Acquisition and Visual Stimulus preserve their own process/job and credential ownership.
+- Updated Visual Stimulus startup cleanup to drain completed writes using the original launch deadline.
+- GetLaunchState must echo the planned payload and the exact PID/creation time confirmed with the supervisor. CLEANUP_REQUIRED, RELEASED, missing endpoint, identity mismatch, and wrong state type fail startup.
+- Native creation failure is reported to the supervisor only after positive empty-job inspection. Failed/unknown inspection retains the unresolved launch state without asserting that no child exists.
+
+Changed paths:
+- `src/cephvr/platform/windows/worker_launch.py` (new)
+- `src/cephvr/platform/windows/bootstrap.py`
+- `src/cephvr/acquisition/worker_launcher.py`
+- `src/cephvr/visual_stimulus/worker_launcher.py`
+- `src/cephvr/visual_stimulus/main.py`
+- `tests/platform/test_worker_launch.py` (new)
+- `tests/platform/test_windows_bootstrap.py` (new)
+
+## Verification
+
+Commands ran with `PYTHONDONTWRITEBYTECODE=1` and pytest cache disabled:
+
+- `.venv/bin/python -m pytest -p no:cacheprovider tests/platform tests/acquisition/test_worker_bootstrap.py -q -m 'not windows and not rig'` — 57 passed, 1 skipped, 3 deselected.
+- `.venv/bin/python -m mypy --platform win32 src/cephvr/platform/windows/bootstrap.py src/cephvr/platform/windows/worker_launch.py src/cephvr/acquisition/worker_launcher.py src/cephvr/visual_stimulus/worker_launcher.py src/cephvr/visual_stimulus/main.py` — success, no issues in 5 source files.
+- Ruff check and format check on the 7 changed source/test paths — passed; 7 files already formatted.
+- `tools/check_backend_boundaries.py` — 0 boundary violations across 637 modules. It printed existing repository size/cohesion notices for >500-line modules; the new helper is focused and below that threshold.
+- Scoped `git diff --check` on the changed paths — passed.
+
+Focused launch coverage includes handshake order/deadline, rejected confirmation with no resume, exact operational identity, writer thread-start failure, a timed-out real writer retained through return, acquisition wrapper success, and acquisition native creation failure with both empty-job proof and unknown inspection. Visual Stimulus wrapper success is covered. E08 ownership/order is portable-test covered; no Windows-native process creation, authenticated Windows pipe, rig, or encoder/runtime acceptance was executed on macOS. The skipped and deselected test counts are pytest marker filtering in this command.
+
+Architecture basis: E08 (registered launch sequencing and child identity), with backend ownership under A02 and V01; implementation keeps the helper narrower than backend runtime/native ownership per ARCH-002.

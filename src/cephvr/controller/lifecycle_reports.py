@@ -25,6 +25,7 @@ from cephvr.controller.state import (
     LimitsState,
     SupervisorState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 
 ActivityRequirements = tuple[
     frozenset[int],
@@ -170,7 +171,7 @@ class LifecycleReports:
                 grpc.aio.AioRpcError,
             ) as exc:
                 reason = f"transport failure: {exc}"
-            remaining_s = max(0.0, (deadline_ns - self.hooks.clock()) / 1_000_000_000)
+            remaining_s = remaining_seconds(deadline_ns, clock=self.hooks.clock)
             if remaining_s <= 0:
                 break
             await asyncio.sleep(min(delay_s, remaining_s))

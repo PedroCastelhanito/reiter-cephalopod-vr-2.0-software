@@ -69,6 +69,7 @@ def exact_integer(value: object) -> object:
 
 Version1 = Annotated[Literal[1], BeforeValidator(exact_integer)]
 Version2 = Annotated[Literal[2], BeforeValidator(exact_integer)]
+Version3 = Annotated[Literal[3], BeforeValidator(exact_integer)]
 RGBBits = Annotated[Literal[8, 10], BeforeValidator(exact_integer)]
 SwapInterval = Annotated[Literal[0, 1], BeforeValidator(exact_integer)]
 OrientationDegrees = Annotated[Literal[0, 90, 180, 270], BeforeValidator(exact_integer)]

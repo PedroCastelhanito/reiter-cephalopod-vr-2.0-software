@@ -1,1 +1,0 @@
-{"schema_version":1,"cause":"PREPARE_FAILED","supervisor_generation":"71882070-bacc-4e29-abb7-eb5b8a604e74","controller_generation":"1fac9b33-f5b9-4e93-8f78-1d71e9eef38e","work":null,"errors":[{"id":"c2686a0e-db18-4ec2-b94a-07c6d60564d6","component":"controller","code":"PREPARE_FAILED","message":"preparation failed"}],"spikeglx_stop_unconfirmed":false}

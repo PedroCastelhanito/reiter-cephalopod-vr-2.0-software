@@ -11,11 +11,13 @@ from cephvr.controller.microcontroller.device import MicrocontrollerDevice
 from cephvr.controller.microcontroller.health import MicrocontrollerHealth
 from cephvr.controller.state import (
     Attempt,
+    CameraOperation,
     ConfigurationState,
     DeviceState,
     LifecycleState,
     LimitsState,
 )
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class MicrocontrollerLifecycle:
@@ -65,7 +67,7 @@ class MicrocontrollerLifecycle:
                 try:
                     await asyncio.wait_for(
                         self.owner.claim_released.wait(),
-                        max(0, (wait_until - self.clock()) / 1e9),
+                        remaining_seconds(wait_until, clock=self.clock),
                     )
                 except TimeoutError:
                     pass
@@ -142,6 +144,12 @@ class MicrocontrollerLifecycle:
             wire.MICROCONTROLLER_IO_KIND_CANCEL_ON,
             wire.MICROCONTROLLER_IO_KIND_CANCEL_ACTIVE,
         }
+        scoped_edit = request.HasField("resolution_operation") or request.HasField(
+            "requested_configuration_revision"
+        )
+        if scoped_edit and request.kind != wire.MICROCONTROLLER_IO_KIND_CONFIGURE:
+            raise ValueError("Microcontroller edit scope is only valid for Configure")
+        admitted_operation: CameraOperation | None = None
         async with self.lifecycle.lock:
             if not safety and (
                 self.lifecycle.authority_lost
@@ -171,7 +179,62 @@ class MicrocontrollerLifecycle:
                     wire.MICROCONTROLLER_IO_KIND_CONNECT,
                     wire.MICROCONTROLLER_IO_KIND_CONFIGURE,
                 }:
-                    if request.requested != settings.pulses:
+                    if scoped_edit:
+                        edit = self.device.configuration_edit
+                        terminal = (
+                            self.device.configuration_edit_terminals.get(
+                                request.resolution_operation.command_id
+                            )
+                            if request.HasField("resolution_operation")
+                            else None
+                        )
+                        proposed = (
+                            next(
+                                (
+                                    item.acquisition
+                                    for item in edit.proposed.backends
+                                    if item.backend_name == "acquisition"
+                                    and item.WhichOneof("settings") == "acquisition"
+                                ),
+                                None,
+                            )
+                            if edit is not None
+                            else None
+                        )
+                        if (
+                            request.kind != wire.MICROCONTROLLER_IO_KIND_CONFIGURE
+                            or not request.HasField("resolution_operation")
+                            or not request.HasField("requested_configuration_revision")
+                            or edit is None
+                            or terminal is None
+                            or not request.resolution_operation.command_id
+                            or edit.operation_id
+                            != request.resolution_operation.command_id
+                            or request.requested_configuration_revision != edit.revision
+                            or self.configuration.revision != edit.revision
+                            or not edit.expect_pulses
+                            or edit.failure
+                            or edit.report is not None
+                            or edit.confirmed.is_set()
+                            or edit.adopted is not None
+                            or terminal.source.backend_name != "acquisition"
+                            or request.requester.generation
+                            != terminal.source.backend_generation
+                            or proposed is None
+                            or request.requested.SerializeToString(deterministic=True)
+                            != proposed.pulses.SerializeToString(deterministic=True)
+                            or request.deadline_monotonic_ns > edit.deadline_ns
+                            or self.clock() >= edit.deadline_ns
+                            or self.lifecycle.session.phase
+                            not in {
+                                pb.SESSION_PHASE_CONFIGURATION,
+                                pb.SESSION_PHASE_READY,
+                            }
+                        ):
+                            raise ValueError(
+                                "Microcontroller candidate is not authorized by the live configuration edit"
+                            )
+                    elif request.requested != settings.pulses:
                         raise ValueError(
                             "Camera trigger configuration differs from the controller revision"
                         )
@@ -189,7 +252,29 @@ class MicrocontrollerLifecycle:
                             "A camera trigger claim must be established during Configuration or Setup"
                         )
                     self.owner.settings.pulses.CopyFrom(settings.pulses)
-        return await self.owner.io(request)
+                    if scoped_edit:
+                        admitted_operation = CameraOperation(
+                            operator_id=request.requester.generation,
+                            child_id=request.command_id,
+                            revision=request.requested_configuration_revision,
+                            camera=0,
+                            kind=request.kind,
+                            work=pb.WorkContext(),
+                            deadline_ns=request.deadline_monotonic_ns,
+                            readback_required=False,
+                            is_microcontroller=True,
+                        )
+                        self.device.camera_operation = admitted_operation
+                        self.device.camera_operation_changed.clear()
+        try:
+            return await self.owner.io(request)
+        finally:
+            if admitted_operation is not None:
+                async with self.lifecycle.lock:
+                    if self.device.camera_operation is admitted_operation:
+                        self.device.camera_operation = None
+                        self.device.camera_operation_changed.set()
+                        self.publish()
 
     def bind_shutdown_deadline(self, deadline_ns: int) -> None:
         current = self.owner.shutdown_deadline_ns
@@ -225,7 +310,7 @@ class MicrocontrollerLifecycle:
             try:
                 await asyncio.wait_for(
                     self.owner.claim_released.wait(),
-                    max(0, (wait_until - self.clock()) / 1e9),
+                    remaining_seconds(wait_until, clock=self.clock),
                 )
             except TimeoutError:
                 pass

@@ -1,0 +1,122 @@
+........................................................................ [  4%]
+........................................................................ [  8%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+....................sssss............................................... [ 24%]
+........................................................................ [ 28%]
+.................................................F...................... [ 32%]
+........................................................................ [ 36%]
+........................................................................ [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 72%]
+........................................................................ [ 76%]
+........................................................................ [ 80%]
+........................................................................ [ 84%]
+........................................................................ [ 88%]
+........................................................................ [ 92%]
+........................................................................ [ 96%]
+....................................................................     [100%]
+=================================== FAILURES ===================================
+___________ test_camera_admission_failure_keeps_slot_until_deadline ____________
+
+    async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
+        env = _Env()
+        retention = CameraStatusRetention(env.device, clock=lambda: env.now)
+        generation = _id()
+        retention.bind_ledger(
+            CommandLedger(
+                generation,
+                10_000,
+                max_records=16,
+                max_bytes=1_000_000,
+                result_reservation_bytes=4096,
+            )
+        )
+        camera = CameraCommands(
+            lifecycle=env.lifecycle,
+            configuration=env.configuration,
+            device=env.device,
+            backends={},
+            projections=cast(Any, None),
+            file_policy_loader=None,
+            generation=generation,
+            limits=_limits(),
+            clock=lambda: env.now,
+            hooks=env.hooks,
+            status_retention=retention,
+        )
+        child = _id()
+        deadline = env.now + 500
+    
+        def select(request: svc.CameraCommandRequest) -> CameraSelection:
+            return CameraSelection(
+                cast(BackendPort, _FailingBackend()),
+                1,
+                pb.WorkContext(),
+                camera_pb.CameraSessionSettings(),
+                None,
+            )
+    
+        def dispatch(request: Any, selection: Any, policy: Any) -> CameraDispatch:
+            operator_id = request.command.operator.command_id
+            env.device.camera_operation = CameraOperation(
+                operator_id,
+                child,
+                1,
+                camera_pb.CAMERA_ROLE_BEHAVIORAL,
+                request.kind,
+                pb.WorkContext(),
+                deadline,
+                False,
+            )
+            retention.reserve(env.device.camera_operation)
+            env.ops.operation(operator_id, "ExecuteCameraCommand")
+            return CameraDispatch(
+                selection.backend, svc.AcquisitionCameraCommand(), child, deadline
+            )
+    
+        camera._select_locked = select  # type: ignore[method-assign]
+        camera._dispatch_locked = dispatch  # type: ignore[method-assign]
+        request = svc.CameraCommandRequest(
+            kind=svc.CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+        )
+        request.command.operator.command_id = _id()
+>       result = await camera.execute_camera_command(request)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/controller/test_device_admission.py:149: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.controller.device.camera.CameraCommands object at 0x10edf40d0>
+request = command {
+  operator {
+    command_id: "a8ae595a-7a4a-4aab-8f99-5d4ad4ab34d1"
+  }
+}
+kind: CAMERA_COMMAND_KIND_ATTACH_PREVIEW_VIEWER
+
+
+    async def execute_camera_command(
+        self, request: svc.CameraCommandRequest
+    ) -> pb.CommandAdmission:
+        operator_id = request.command.operator.command_id
+        async with self.lifecycle.lock:
+>           selection = self._select_locked(
+                request,
+                allow_stale_stop_run=(
+                    request.kind == svc.CAMERA_COMMAND_KIND_STOP_PREVIEW
+                ),
+            )
+E           TypeError: test_camera_admission_failure_keeps_slot_until_deadline.<locals>.select() got an unexpected keyword argument 'allow_stale_stop_run'
+
+src/cephvr/controller/device/camera.py:120: TypeError
+=========================== short test summary info ============================
+FAILED tests/controller/test_device_admission.py::test_camera_admission_failure_keeps_slot_until_deadline
+1 failed, 1790 passed, 6 skipped, 8 deselected in 302.87s (0:05:02)

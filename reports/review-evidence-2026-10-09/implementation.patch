@@ -1,0 +1,2874 @@
+diff --git a/.gitignore b/.gitignore
+index a561b3c..4a9f245 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,6 +30,7 @@ __pycache__/
+ /.local-spikeglx-rpc-*/
+ 
+ # Disposable rig-test fixtures and SDK/build investigations.
++/.tmp/
+ /.local-calibration-pytest/
+ /.local-camera-*/
+ /.local-gui-*/
+diff --git a/architecture.md b/architecture.md
+index 3c82e2d..6ecf726 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -1,6 +1,6 @@
+ # CephVR2.0 architecture
+ 
+-Last updated: 2026-10-08
++Last updated: 2026-10-09
+ 
+ This overview and the linked records in `docs/architecture/` form the authoritative
+ architecture. Each decision has one home; this register locates it by permanent ID.
+@@ -72,7 +72,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
+ | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 77 |
+ | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 59 |
+-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 168 |
++| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 169 |
+ | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
+ | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
+ | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
+diff --git a/config/backends/acquisition_config.toml b/config/backends/acquisition_config.toml
+index 5aaebf2..600d584 100644
+--- a/config/backends/acquisition_config.toml
++++ b/config/backends/acquisition_config.toml
+@@ -25,7 +25,6 @@ pulse_frequency_hz = 30.0
+ # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
+ # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
+ # Rig-specific value intentionally unset; unknown does not mean zero.
+-post_cutoff_drain_margin_ms = 1000
+ # Independently configurable SDK image-buffer pool; validate before session locking.
+ # Additional to recording/tracking rings and working copies; no growth while running.
+ # Initial value awaits rig verification; this is not a bound on all driver/device RAM.
+@@ -87,7 +86,6 @@ pulse_frequency_hz = 60.0
+ # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
+ # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
+ # Rig-specific value intentionally unset; unknown does not mean zero.
+-post_cutoff_drain_margin_ms = 1000
+ # Independently configurable SDK image-buffer pool; validate before session locking.
+ # Additional to recording/tracking rings and working copies; no growth while running.
+ # Initial value awaits rig verification; this is not a bound on all driver/device RAM.
+diff --git a/config/backends/experiment_config.toml b/config/backends/experiment_config.toml
+index 8187e17..d9a6b5b 100644
+--- a/config/backends/experiment_config.toml
++++ b/config/backends/experiment_config.toml
+@@ -102,7 +102,7 @@ default_intertrial_gap_s = 0
+ [timing]
+ # E05: after all trial gates pass, schedule the target this far ahead.
+ # Loaded during Setup and fixed for the session; no recording during this allowance.
+-start_lead_time_ms = 2000
++start_lead_time_ms = 500
+ 
+ # All required target acknowledgements collected and release dispatched by T - this.
+ controller_release_cutoff_before_start_ms = 100
+@@ -135,4 +135,3 @@ max_pending_bytes = 67_108_864
+ # Total queue + write/append + flush + sync time for each required metadata operation.
+ # Expiry leaves persistence unconfirmed: no uncertain-write retry or writer takeover.
+ completion_timeout_s = 5
+-
+diff --git a/config/backends/visual_stimulus_config.toml b/config/backends/visual_stimulus_config.toml
+index 2e183ee..0e58842 100644
+--- a/config/backends/visual_stimulus_config.toml
++++ b/config/backends/visual_stimulus_config.toml
+@@ -65,7 +65,7 @@ record_stall_timeout_s = 10
+ # Config-file-only target cadence; no GUI pacing editor. Native timing still needs rig verification.
+ pacing_refresh_hz = 60.0
+ # Configure the active pacing output identity here; no display is guessed.
+-pacing_output_id = "calibration_front"
++# pacing_output_id = "<configured output ID>"
+ # V20 pacing mode is owned by the display profile (DisplayProfile.presentation_mode).
+ # New profiles default to photodiode_only_vsync; all_outputs_vsync is selectable for
+ # rig testing. No second default here.
+diff --git a/contracts/cephvr/control/v1/services.proto b/contracts/cephvr/control/v1/services.proto
+index a3e19bd..0d0ff01 100644
+--- a/contracts/cephvr/control/v1/services.proto
++++ b/contracts/cephvr/control/v1/services.proto
+@@ -712,8 +712,13 @@ message ConfirmLaunchRequest {
+   Failure failure = 9;
+   HostClockDescriptor host_clock = 10; // Required on Python endpoint confirmation.
+   bool native_cleanup_complete = 11; // A11 uploader only: exact child/job exit plus owner pipe/image closure.
++  AcquisitionWorkerCleanupProof acquisition_worker_cleanup = 12; // Exact retained camera Cleanup evidence after owner verification.
+   // OS evidence precedes resume; endpoint and matching clock precede operational work.
+ }
++message AcquisitionWorkerCleanupProof {
++  cephvr.acquisition.v1.WorkerOperationReport operation = 1;
++  cephvr.acquisition.v1.WorkerLifecycleEvidence cleanup = 2;
++}
+ message LaunchQuery {
+   ProcessIdentity requester = 1;
+   string launch_command_id = 2;
+diff --git a/contracts/windows-launch.md b/contracts/windows-launch.md
+index ecd2942..42726f7 100644
+--- a/contracts/windows-launch.md
++++ b/contracts/windows-launch.md
+@@ -131,6 +131,19 @@ the exact job empty. No other helper accepts this cleanup flag. No-PID partial
+ creation may be released only after owner cleanup and verified empty containment;
+ uncertain cleanup remains a blocker.
+ 
++Acquisition camera workers use the separate
++`ConfirmLaunch.acquisition_worker_cleanup` proof after the coordinator verifies
++retained successful Cleanup, before requesting worker Shutdown. Bind the retained operation and
++Cleanup payload to the planned owner, worker, work and cleanup command; retain all
++resource/output proof. The supervisor authenticates the owner and acknowledges exact
++validated cleanup so the expected exit cannot race health classification. Acknowledgement
++does not release live ownership: subsequent confirmation requires independent exact
++process/job absence. All steps retain the original absolute retirement deadline.
++Invalid or missing Cleanup proof remains a blocker; a discharged Failed output keeps
++its recording failure. `GetLaunchState` is a query, never an implicit cleanup
++confirmation. This does not release the persistent Visual Stimulus renderer at a
++session boundary.
++
+ Owner `ConfirmLaunch` submits exact process evidence. Supervisor verifies membership,
+ executable and retained identity, and observes children through its existing process
+ monitor/job enumeration. A partial child discovered in the dedicated planned job
+diff --git a/docs/architecture/system-contracts.md b/docs/architecture/system-contracts.md
+index e45b9e5..87684da 100644
+--- a/docs/architecture/system-contracts.md
++++ b/docs/architecture/system-contracts.md
+@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
+ <a id="e08"></a>
+ ### E08 — Processes and control transport
+ 
+-**Status:** Accepted · **Revision:** 168
++**Status:** Accepted · **Revision:** 169
+ 
+ **Processes and startup**
+ 
+@@ -250,12 +250,18 @@ design; runtime monitoring remains unimplemented.
+   planned with an exact parent operation and no session/trial work. Reuse registered
+   suspended creation and containment before resume; no Ready/heartbeat is required.
+   Normal exit remains retained until controller confirms native process/job/pipe
+-  and private source/build/image cleanup before starting the next phase. Only this role
+-  accepts an authenticated exact-owner
+-  cleanup confirmation; supervisor independently requires its exact job empty before
+-  release. Partial launches remain blockers until reconciled. Cancellation/deadline
++  and private source/build/image cleanup before starting the next phase. Only this helper role
++  accepts the native-helper cleanup flag; supervisor independently requires its exact
++  job empty before release. Partial launches remain blockers until reconciled. Cancellation/deadline
+   terminates the exact job, including compiler/uploader descendants, without extending the
+   original operation budget.
++- Acquisition retires a camera worker through explicit exact-owner launch confirmation
++  carrying its verified retained successful Cleanup operation and matching resource/output
++  evidence before requesting worker shutdown. Supervisor acknowledgement fences only
++  that exact worker/work/operation's expected exit; release still requires independently
++  verified native process/job absence. The original retirement deadline is unchanged;
++  released resources do not turn failed recordings into successful outputs. Queries, exit and liveness alone
++  never establish closure; persistent renderer session cleanup does not retire its process.
+ - Acquisition, Visual Stimulus and tracking reuse the small
+   [native transport helpers](../../contracts/native-transport.md) for bounded
+   message-mode pipes, mapping attachment, cancellation and resource ownership.
+diff --git a/src/cephvr/acquisition/coordinator/workers.py b/src/cephvr/acquisition/coordinator/workers.py
+index 3307f83..62d34e3 100644
+--- a/src/cephvr/acquisition/coordinator/workers.py
++++ b/src/cephvr/acquisition/coordinator/workers.py
+@@ -7,7 +7,10 @@ from collections.abc import Callable
+ from pathlib import Path
+ from uuid import uuid4
+ 
+-from cephvr.acquisition.coordinator.commands import retain_worker_command
++from cephvr.acquisition.coordinator.commands import (
++    retain_worker_command,
++    wait_child_operation,
++)
+ from cephvr.acquisition.identity import process_role_for_camera
+ from cephvr.acquisition.ports import (
+     ExecutableResolver,
+@@ -186,22 +189,46 @@ class WorkerRegistry:
+         if receipt.result != control.COMMAND_RESULT_ACCEPTED:
+             raise RuntimeError("configuration worker cleanup was not admitted")
+         cleanup = await _wait_cleanup_evidence(record, child, deadline_ns=deadline_ns)
+-        if cleanup is None:
++        if cleanup is None or child.report is None or not child.report.complete:
+             retained = await record.port.get_retained_result(
+                 acq.WorkerRetainedResultQuery(
+                     query=acq.WorkerQuery(target=record.context), command_id=command_id
+                 ),
+                 deadline_ns=deadline_ns,
+             )
+-            cleanup = _retained_cleanup(record, command_id, retained)
++            if cleanup is None:
++                cleanup = _retained_cleanup(record, command_id, retained)
++            _adopt_retained_operation(record, child, command_id, retained)
+         if cleanup is None:
+             raise RuntimeError(
+                 "configuration worker cleanup completion remains unconfirmed"
+             )
++        operation = await wait_child_operation(child, deadline_ns, self._lock)
++        if (
++            not operation.complete
++            or not operation.HasField("succeeded")
++            or not operation.succeeded
++            or operation.command != "Cleanup"
++            or operation.failure.code
++            or operation.failure.message
++        ):
++            raise RuntimeError("configuration worker Cleanup operation is unconfirmed")
+         if not self.cleanup_complete(record, cleanup.cleanup):
+             raise RuntimeError(
+                 "configuration worker still has unresolved cleanup obligations"
+             )
++        cleanup_proof = wire.AcquisitionWorkerCleanupProof(
++            operation=acq.WorkerOperationReport(
++                source=record.context, operation=child.report
++            ),
++            cleanup=cleanup,
++        )
++        confirmation = self._worker_cleanup_confirmation(record, cleanup_proof)
++        acknowledged = await self._confirm_worker_cleanup(
++            record, confirmation, deadline_ns
++        )
++        if acknowledged.phase != wire.LAUNCH_PHASE_OPERATIONAL:
++            raise RuntimeError("configuration worker cleanup acknowledgement failed")
+         shutdown_id = str(uuid4())
+         shutdown = acq.WorkerCommand(
+             command_id=shutdown_id,
+@@ -218,12 +245,8 @@ class WorkerRegistry:
+             raise RuntimeError(
+                 "configuration worker process/job release is unconfirmed"
+             )
+-        launch_state = await self.supervisor.get_launch_state(
+-            wire.LaunchQuery(
+-                requester=self.owner,
+-                launch_command_id=record.launch.command_id,
+-            ),
+-            deadline_ns=deadline_ns,
++        launch_state = await self._confirm_worker_cleanup(
++            record, confirmation, deadline_ns
+         )
+         if launch_state.phase != wire.LAUNCH_PHASE_RELEASED:
+             raise RuntimeError(
+@@ -273,10 +296,23 @@ class WorkerRegistry:
+                 or cleanup_child is None
+                 or cleanup_child.report is None
+                 or not cleanup_child.report.complete
++                or not cleanup_child.report.HasField("succeeded")
+                 or not cleanup_child.report.succeeded
+                 or not self.cleanup_complete(record, cleanup_evidence.cleanup)
+             ):
+                 raise RuntimeError("session worker cleanup is not fully retained")
++            cleanup_proof = wire.AcquisitionWorkerCleanupProof(
++                operation=acq.WorkerOperationReport(
++                    source=record.context, operation=cleanup_child.report
++                ),
++                cleanup=cleanup_evidence,
++            )
++            confirmation = self._worker_cleanup_confirmation(record, cleanup_proof)
++            acknowledged = await self._confirm_worker_cleanup(
++                record, confirmation, deadline_ns
++            )
++            if acknowledged.phase != wire.LAUNCH_PHASE_OPERATIONAL:
++                raise RuntimeError("session worker cleanup acknowledgement failed")
+             parent = cleanup_child.parent_operation
+             shutdown_request, _child, port = retain_worker_command(
+                 record,
+@@ -293,12 +329,8 @@ class WorkerRegistry:
+                 record.launch.worker, deadline_ns=deadline_ns
+             ):
+                 raise RuntimeError("session worker process/job release is unconfirmed")
+-            launch_state = await self.supervisor.get_launch_state(
+-                wire.LaunchQuery(
+-                    requester=self.owner,
+-                    launch_command_id=record.launch.command_id,
+-                ),
+-                deadline_ns=deadline_ns,
++            launch_state = await self._confirm_worker_cleanup(
++                record, confirmation, deadline_ns
+             )
+             if launch_state.phase != wire.LAUNCH_PHASE_RELEASED:
+                 raise RuntimeError("session worker containment release is unconfirmed")
+@@ -312,6 +344,41 @@ class WorkerRegistry:
+                 self.workers.pop(role, None)
+                 self._prune_launches_locked()
+ 
++    def _worker_cleanup_confirmation(
++        self,
++        record: WorkerRecord,
++        proof: wire.AcquisitionWorkerCleanupProof,
++    ) -> wire.ConfirmLaunchRequest:
++        if record.launch.pid is None or record.launch.creation_time_100ns is None:
++            raise RuntimeError("camera worker exact process identity is unavailable")
++        return wire.ConfirmLaunchRequest(
++            command_id=str(uuid4()),
++            launch_command_id=record.launch.command_id,
++            owner=self.owner,
++            child=record.launch.worker,
++            pid=record.launch.pid,
++            creation_time_100ns=record.launch.creation_time_100ns,
++            acquisition_worker_cleanup=proof,
++        )
++
++    async def _confirm_worker_cleanup(
++        self,
++        record: WorkerRecord,
++        request: wire.ConfirmLaunchRequest,
++        deadline_ns: int,
++    ) -> wire.LaunchState:
++        """Retain or reconcile the same exact owner-verified Cleanup proof."""
++        receipt = await self.supervisor.confirm_launch(
++            request,
++            deadline_ns=deadline_ns,
++        )
++        if receipt.admission.result != control.COMMAND_RESULT_ACCEPTED:
++            raise RuntimeError(
++                "camera worker containment release was rejected: "
++                f"{receipt.admission.failure.code if receipt.admission.HasField('failure') else 'unknown'}"
++            )
++        return receipt.state
++
+     def _prune_launches_locked(self) -> None:
+         """Retire only terminal facts after the configured E08 retention window."""
+         now = host_time_ns()
+@@ -403,3 +470,67 @@ def _retained_cleanup(
+     return acq.WorkerLifecycleEvidence.FromString(
+         matches[0].SerializeToString(deterministic=True)
+     )
++
++
++def _retained_operation(
++    record: WorkerRecord,
++    command_id: str,
++    retained: acq.WorkerRetainedResult,
++) -> acq.WorkerOperationReport | None:
++    if (
++        not retained.found
++        or retained.source != record.context
++        or retained.admission.result != control.COMMAND_RESULT_ACCEPTED
++        or not retained.HasField("operation")
++        or retained.operation.source != record.context
++        or retained.operation.operation.context.command_id != command_id
++        or retained.operation.operation.command != "Cleanup"
++        or not retained.operation.operation.complete
++        or not retained.operation.operation.HasField("succeeded")
++        or not retained.operation.operation.succeeded
++        or retained.operation.operation.failure.code
++        or retained.operation.operation.failure.message
++        or not retained.operation.HasField("state_revision")
++        or retained.operation.operation.work != record.context.work
++    ):
++        return None
++    return acq.WorkerOperationReport.FromString(
++        retained.operation.SerializeToString(deterministic=True)
++    )
++
++
++def _adopt_retained_operation(
++    record: WorkerRecord,
++    child: ChildOperation,
++    command_id: str,
++    retained: acq.WorkerRetainedResult,
++) -> None:
++    """Adopt exact query recovery without replacing conflicting local evidence."""
++    report = _retained_operation(record, command_id, retained)
++    if report is None:
++        return
++    state = report.operation
++    revision = report.state_revision
++    if child.report is not None and child.report.complete:
++        if child.report.SerializeToString(
++            deterministic=True
++        ) != state.SerializeToString(deterministic=True):
++            raise RuntimeError("retained Cleanup differs from local terminal operation")
++        if revision >= child.report_revision:
++            child.report_revision = revision
++        return
++    if revision < child.report_revision:
++        return
++    if (
++        revision == child.report_revision
++        and child.report is not None
++        and child.report.SerializeToString(deterministic=True)
++        != state.SerializeToString(deterministic=True)
++    ):
++        raise RuntimeError("retained Cleanup conflicts at the local operation revision")
++    child.report = control.OperationState.FromString(
++        state.SerializeToString(deterministic=True)
++    )
++    child.report_ingress_ns = host_time_ns()
++    child.report_revision = revision
++    child.updated.set()
+diff --git a/src/cephvr/controller/device/status_retention.py b/src/cephvr/controller/device/status_retention.py
+index 343e642..087dad8 100644
+--- a/src/cephvr/controller/device/status_retention.py
++++ b/src/cephvr/controller/device/status_retention.py
+@@ -107,7 +107,6 @@ class CameraStatusRetention:
+         Manual effects stay admitted in case an expired command was delivered.
+         Callers own the terminal/timeout decision and verify the active operation.
+         """
+-        self.device.completed_camera_operation = operation
+         self.complete_internal(operation)
+         self.device.camera_operation = None
+         self.device.camera_operation_changed.set()
+diff --git a/src/cephvr/controller/lifecycle/cleanup.py b/src/cephvr/controller/lifecycle/cleanup.py
+index 6888bfe..0f9782b 100644
+--- a/src/cephvr/controller/lifecycle/cleanup.py
++++ b/src/cephvr/controller/lifecycle/cleanup.py
+@@ -389,12 +389,16 @@ class CleanupWorkflow:
+             )
+             if attempt.handoff is not None:
+                 attempt.handoff.retire()
+-            for _prompt, future, owner in self.incident_state.prompts.values():
+-                if owner is attempt and not future.done():
+-                    future.cancel()
++            self.cancel_attempt_prompts(attempt)
+             self.spawn(self.cancel_attempt(attempt))
+             return self.control_operations.admission(command.operator.command_id)
+ 
++    def cancel_attempt_prompts(self, attempt: Attempt) -> None:
++        """Settle outstanding Setup prompts owned by one retiring attempt."""
++        for _prompt, future, owner in self.incident_state.prompts.values():
++            if owner is attempt and not future.done():
++                future.cancel()
++
+     async def late_cleanup(self, attempt: Attempt) -> None:
+         async with self.lifecycle.lock:
+             if (
+diff --git a/src/cephvr/controller/lifecycle/commands.py b/src/cephvr/controller/lifecycle/commands.py
+index ec3535e..6a03230 100644
+--- a/src/cephvr/controller/lifecycle/commands.py
++++ b/src/cephvr/controller/lifecycle/commands.py
+@@ -255,6 +255,7 @@ class SessionCommands:
+                     attempt.closure.reason = attempt.closure.reason or (
+                         "application shutdown"
+                     )
++                    self.cleanup.cancel_attempt_prompts(attempt)
+                 if attempt.handoff is not None:
+                     attempt.handoff.retire()
+                 self.spawn(self.cleanup.cancel_attempt(attempt))
+diff --git a/src/cephvr/controller/recovery_inspection.py b/src/cephvr/controller/recovery_inspection.py
+index 35bbe69..1a2d51d 100644
+--- a/src/cephvr/controller/recovery_inspection.py
++++ b/src/cephvr/controller/recovery_inspection.py
+@@ -12,6 +12,7 @@ from pathlib import Path
+ from typing import Any
+ from zoneinfo import ZoneInfo
+ 
++from cephvr.control.v1 import types_pb2 as pb
+ from cephvr.controller.metadata.reservation import OutputReservation
+ from cephvr.controller.metadata.types import StorageError
+ 
+@@ -29,6 +30,84 @@ def _constant(value: str) -> None:
+     raise ValueError(f"invalid JSON number {value}")
+ 
+ 
++def _classify_recovery_event(
++    event: dict[str, Any],
++    trials: dict[int, str | None],
++    started: set[int],
++    finished: set[int],
++    session_started: bool,
++    session_ended: bool,
++) -> tuple[str, tuple[int, str] | None]:
++    """Validate one known reconciliation record or the final startup repair."""
++    details = event.get("details")
++    if not isinstance(details, dict):
++        raise ValueError("recovery event details are unconfirmed")
++    if (
++        details.get("component") == "Finished"
++        and details.get("action") == "reconcile exact output closure"
++    ):
++        number = event.get("trial_number")
++        backend = details.get("backend")
++        outputs = details.get("outputs")
++        trial_id = details.get("trial_id")
++        if (
++            event.get("outcome") != "completed"
++            or type(number) is not int
++            or number not in started
++            or number not in trials
++            or not isinstance(trial_id, str)
++            or not trial_id
++            or trials[number] != trial_id
++            or not isinstance(backend, str)
++            or not backend
++            or type(details.get("initial_deadline_ns")) is not int
++            or details["initial_deadline_ns"] < 0
++            or not isinstance(outputs, list)
++        ):
++            raise ValueError("Finished reconciliation is unconfirmed")
++        output_keys: set[str] = set()
++        for output in outputs:
++            closure = output.get("closure") if isinstance(output, dict) else None
++            if (
++                not isinstance(output, dict)
++                or set(output) != {"output_key", "closure"}
++                or not isinstance(output.get("output_key"), str)
++                or not output["output_key"]
++                or output["output_key"] in output_keys
++                or not isinstance(closure, str)
++                or closure not in pb.OutputClosure.keys()
++                or closure == pb.OutputClosure.Name(pb.OUTPUT_CLOSURE_UNSPECIFIED)
++            ):
++                raise ValueError("Finished output reconciliation is invalid")
++            output_keys.add(output["output_key"])
++        return "finished", (number, backend)
++    if (
++        isinstance(details.get("incident_id"), str)
++        and details["incident_id"]
++        and isinstance(details.get("resolved_by"), str)
++        and details["resolved_by"]
++        and type(details.get("recovered_monotonic_ns")) is int
++        and details["recovered_monotonic_ns"] >= 0
++        and session_started
++        and not session_ended
++        and event.get("outcome") is None
++    ):
++        return "incident", None
++    if (
++        details.get("component") == "controller"
++        and details.get("action") == "startup_recovery"
++        and isinstance(details.get("recovery_controller_generation"), str)
++        and details["recovery_controller_generation"]
++        and details.get("event_clock") == "current_recovery_application"
++        and details.get("scientific_output_closure") == "unconfirmed"
++        and event.get("outcome") == "completed"
++        and session_ended
++        and started == finished
++    ):
++        return "terminal", None
++    raise ValueError("recovery event is malformed or out of order")
++
++
+ def read_recovery_file(path: Path, limit: int) -> tuple[bytes, os.stat_result]:
+     if type(limit) is not int or limit < 1:
+         raise StorageError("recovery input has no positive inspection byte budget")
+@@ -116,14 +195,15 @@ def inspect_recovery(
+         ZoneInfo(zone)
+         if not isinstance(config.get("trials"), list):
+             raise ValueError("session trial plan is invalid")
+-        trial_numbers = [item["context"]["trial_number"] for item in config["trials"]]
++        trial_contexts = [item["context"] for item in config["trials"]]
++        trial_numbers = [item["trial_number"] for item in trial_contexts]
+         if (
+             not trial_numbers
+             or any(type(number) is not int or number < 1 for number in trial_numbers)
+             or len(set(trial_numbers)) != len(trial_numbers)
+         ):
+             raise ValueError("session trial plan numbers are invalid")
+-        trials = set(trial_numbers)
++        trials = {item["trial_number"]: item.get("trial_id") for item in trial_contexts}
+         configuration = config.get("configuration")
+         if not isinstance(configuration, dict) or not isinstance(
+             configuration.get("backends"), list
+@@ -163,6 +243,7 @@ def inspect_recovery(
+             raise ValueError("session log is empty or its final line is incomplete")
+         started: set[int] = set()
+         finished: set[int] = set()
++        reconciled_finished: set[tuple[int, str]] = set()
+         session_started = session_ended = recovery_recorded = False
+         stopped_remote = False
+         catalog = {
+@@ -225,13 +306,16 @@ def inspect_recovery(
+                 if details.get("run_name") == run:
+                     stopped_remote = True
+             elif kind == "recovery":
+-                if (
+-                    event.get("outcome") != "completed"
+-                    or not session_ended
+-                    or started != finished
+-                ):
+-                    raise ValueError("prior recovery has no completed outcome")
+-                recovery_recorded = True
++                category, key = _classify_recovery_event(
++                    event, trials, started, finished, session_started, session_ended
++                )
++                if category == "finished":
++                    assert key is not None
++                    if key in reconciled_finished:
++                        raise ValueError("duplicate Finished reconciliation")
++                    reconciled_finished.add(key)
++                elif category == "terminal":
++                    recovery_recorded = True
+         if not session_started or session_ended and started != finished:
+             raise ValueError("session lifecycle is incomplete or out of order")
+         return RecoveryInspection(
+diff --git a/src/cephvr/controller/state.py b/src/cephvr/controller/state.py
+index 7169b01..6ac7136 100644
+--- a/src/cephvr/controller/state.py
++++ b/src/cephvr/controller/state.py
+@@ -231,9 +231,6 @@ class DeviceState:
+     calibration_pending: tuple[str, int, int, str, int, frozenset[str]] | None = None
+     calibration_blocked: bool = False
+     camera_operation: CameraOperation | None = None
+-    # One exact terminal camera operation prevents late retries from becoming
+-    # current device projections after the active operation slot is cleared.
+-    completed_camera_operation: CameraOperation | None = None
+     camera_operations: dict[str, CameraOperation] = field(default_factory=dict)
+     camera_operation_changed: asyncio.Event = field(default_factory=asyncio.Event)
+     manual_effects_admitted: bool = False
+diff --git a/src/cephvr/gui/camera_snapshot_settings.py b/src/cephvr/gui/camera_snapshot_settings.py
+index 37403e5..bd49aab 100644
+--- a/src/cephvr/gui/camera_snapshot_settings.py
++++ b/src/cephvr/gui/camera_snapshot_settings.py
+@@ -9,6 +9,19 @@ from cephvr.control.v1 import types_pb2
+ from cephvr.gui.cameras import CamerasPanel
+ 
+ 
++class CameraSnapshotValidationError(ValueError):
++    """A camera draft error with enough provenance to focus its editor."""
++
++    def __init__(self, role: str, field: str, message: str) -> None:
++        self.role = role
++        self.field = field
++        super().__init__(f"{role} · {field}: {message}")
++
++
++def _invalid(role: str, field: str, message: str) -> CameraSnapshotValidationError:
++    return CameraSnapshotValidationError(role, field, message)
++
++
+ def collect_camera_snapshot(
+     panel: CamerasPanel, settings: types_pb2.AcquisitionSettings
+ ) -> None:
+@@ -42,8 +55,10 @@ def collect_camera_snapshot(
+             preset != target.device.pfs_source_filename
+             or not target.device.HasField("pfs_baseline")
+         ):
+-            raise ValueError(
+-                f"{role}: import the loaded PFS path through Cameras before submitting this GUI snapshot"
++            raise _invalid(
++                role,
++                "Parameter file",
++                "import the loaded PFS path through Cameras before submitting this GUI snapshot",
+             )
+         if not preset:
+             target.device.ClearField("pfs_source_filename")
+@@ -52,8 +67,10 @@ def collect_camera_snapshot(
+         if clock == "External controller":
+             source = values.get("trigger_source", "").strip()
+             if not source and draft.enabled:
+-                raise ValueError(
+-                    f"{role}: select a PFS file with an explicit FrameStart line source"
++                raise _invalid(
++                    role,
++                    "Parameter file",
++                    "select a PFS file with an explicit FrameStart line source",
+                 )
+             target.device.frame_timing = pb.FRAME_TIMING_EXTERNAL_TRIGGER
+             target.device.unaligned_free_running = False
+@@ -66,8 +83,10 @@ def collect_camera_snapshot(
+             target.device.unaligned_free_running = True
+             target.device.settings.ClearField("trigger_source")
+         elif draft.enabled:
+-            raise ValueError(
+-                f"{role}: select a camera trigger source before submitting"
++            raise _invalid(
++                role,
++                "Trigger source",
++                "select a camera trigger source before submitting",
+             )
+         else:
+             target.device.ClearField("frame_timing")
+@@ -76,14 +95,16 @@ def collect_camera_snapshot(
+             try:
+                 frequency = Decimal(rate)
+             except InvalidOperation as error:
+-                raise ValueError(f"{role}: trigger rate must be a number") from error
++                raise _invalid(role, "Trigger rate", "must be a number") from error
+             if (
+                 not frequency.is_finite()
+                 or frequency <= 0
+                 or frequency % Decimal("0.1")
+             ):
+-                raise ValueError(
+-                    f"{role}: trigger rate must use a positive 0.1 Hz grid"
++                raise _invalid(
++                    role,
++                    "Trigger rate",
++                    "must use a positive 0.1 Hz grid",
+                 )
+             pulse.requested_frequency_hz = float(frequency)
+         else:
+diff --git a/src/cephvr/gui/cameras.py b/src/cephvr/gui/cameras.py
+index e43fee7..62f10d7 100644
+--- a/src/cephvr/gui/cameras.py
++++ b/src/cephvr/gui/cameras.py
+@@ -277,6 +277,23 @@ class CamerasPanel(ResponsiveColumns):
+         self.loading = False
+         self.refresh_controls()
+ 
++    def focus_validation_error(self, role: str, field_name: str) -> None:
++        """Select the camera and field named by whole-proposal validation."""
++        row = next(
++            (index for index, draft in enumerate(self.drafts) if draft.role == role),
++            None,
++        )
++        if row is None:
++            return
++        self.table.selectRow(row)
++        editor = {
++            "Parameter file": self.preset,
++            "Trigger source": self.trigger_source,
++            "Trigger rate": self.fields["trigger_frequency_hz"],
++        }.get(field_name)
++        if editor is not None:
++            editor.setFocus()
++
+     def edit(self, key: str, value: str) -> None:
+         if (
+             not self.loading
+diff --git a/src/cephvr/gui/managed_cameras.py b/src/cephvr/gui/managed_cameras.py
+index bfc70e9..71565b1 100644
+--- a/src/cephvr/gui/managed_cameras.py
++++ b/src/cephvr/gui/managed_cameras.py
+@@ -1,5 +1,6 @@
+ """Controller-backed camera intent and snapshot projection (A10/G01)."""
+ 
++import re
+ from collections.abc import Callable
+ 
+ from PyQt6.QtCore import QObject
+@@ -64,6 +65,26 @@ class ManagedCameras(QObject):
+         self.panel.operation_pending = False
+         self.panel.pending_enable.clear()
+         self.panel.console.appendPlainText(f"{action}: {message}")
++        if action == "save_camera_settings" and not success:
++            match = re.search(
++                r"backends\.acquisition\.(behavioral|tracking)\.([^:]+):",
++                message,
++            )
++            if match is not None:
++                role = (
++                    "Behavior cam" if match.group(1) == "behavioral" else "Tracking cam"
++                )
++                path = match.group(2)
++                field_name = (
++                    "Trigger source"
++                    if path.endswith("device.frame_timing")
++                    else "Parameter file"
++                    if path.endswith("device.settings.trigger_source")
++                    else "Trigger rate"
++                    if ".pulses." in path or path.endswith("requested_frequency_hz")
++                    else ""
++                )
++                self.panel.focus_validation_error(role, field_name)
+         self.panel.refresh_controls()
+ 
+     def disconnected(self) -> None:
+diff --git a/src/cephvr/gui/managed_configuration.py b/src/cephvr/gui/managed_configuration.py
+index 5fc004b..afd2e9a 100644
+--- a/src/cephvr/gui/managed_configuration.py
++++ b/src/cephvr/gui/managed_configuration.py
+@@ -18,7 +18,10 @@ from PyQt6.QtWidgets import (
+ 
+ from cephvr.acquisition.v1 import camera_pb2
+ from cephvr.control.v1 import types_pb2 as pb
+-from cephvr.gui.camera_snapshot_settings import collect_camera_snapshot
++from cephvr.gui.camera_snapshot_settings import (
++    CameraSnapshotValidationError,
++    collect_camera_snapshot,
++)
+ from cephvr.gui.managed_config import (
+     install_metadata,
+     install_subject_metadata,
+@@ -297,7 +300,11 @@ class ManagedConfiguration:
+             )
+         if acquisition_backend is not None:
+             acquisition = acquisition_backend.acquisition
+-            collect_camera_snapshot(self.pages.cameras, acquisition)
++            try:
++                collect_camera_snapshot(self.pages.cameras, acquisition)
++            except CameraSnapshotValidationError as error:
++                self.pages.cameras.focus_validation_error(error.role, error.field)
++                raise
+             if self.pages.cameras.snapshot_draft and any(
+                 camera.enabled and camera.role != "Unassigned"
+                 for camera in self.pages.cameras.drafts
+diff --git a/src/cephvr/shared/commands.py b/src/cephvr/shared/commands.py
+index a075abf..0ee2824 100644
+--- a/src/cephvr/shared/commands.py
++++ b/src/cephvr/shared/commands.py
+@@ -8,6 +8,8 @@ from threading import RLock
+ from cephvr.shared.clock import require_int64_ns
+ from cephvr.shared.identity import require_uuid4
+ 
++DEFAULT_COMMAND_RETENTION_NS = 300_000_000_000
++
+ 
+ class CommandConflict(ValueError):
+     """A command ID was reused with a different canonical request."""
+diff --git a/src/cephvr/supervisor/health.py b/src/cephvr/supervisor/health.py
+index 0da5225..da98f25 100644
+--- a/src/cephvr/supervisor/health.py
++++ b/src/cephvr/supervisor/health.py
+@@ -388,6 +388,8 @@ class HealthMonitor:
+             if state.phase != wire.LAUNCH_PHASE_CLEANUP_REQUIRED:
+                 continue
+             if state.failure.code == "CHILD_EXITED":
++                if self.registry.camera_cleanup_acknowledged(state.plan.command_id):
++                    continue
+                 self.observe_backend_exit(state, now)
+             elif state.failure.code in {"LAUNCH_TIMEOUT", "UNCONFIRMED_CHILD"}:
+                 self.begin_safety(
+diff --git a/src/cephvr/supervisor/registration.py b/src/cephvr/supervisor/registration.py
+index d0df3e5..b2ae347 100644
+--- a/src/cephvr/supervisor/registration.py
++++ b/src/cephvr/supervisor/registration.py
+@@ -281,11 +281,14 @@ class RegistrationCoordinator:
+                 raise ValueError("matching registration is still pending")
+             return wire.RegistrationReceipt.FromString(admission.record.result), False
+         if self.state.context and not self.same_work(request.context.work):
++            finalized_ns = host_time_ns()
++            prior_work_key = self.work_key(self.state.context.work)
+             self.commands.finalize_work(
+-                self.work_key(self.state.context.work),
+-                host_time_ns(),
++                prior_work_key,
++                finalized_ns,
+             )
+-            self.commands.prune(host_time_ns())
++            self.registry.finalize_work(prior_work_key, finalized_ns)
++            self.commands.prune(finalized_ns)
+             self.recovery.cleanup.clear()
+             self.state.catalogues.clear()
+             self.health.heartbeat_reports.clear()
+diff --git a/src/cephvr/supervisor/registry.py b/src/cephvr/supervisor/registry.py
+index 991a581..3f1213f 100644
+--- a/src/cephvr/supervisor/registry.py
++++ b/src/cephvr/supervisor/registry.py
+@@ -2,7 +2,6 @@
+ 
+ from __future__ import annotations
+ 
+-import ntpath
+ import os
+ from collections.abc import Callable
+ from dataclasses import dataclass, field
+@@ -10,7 +9,6 @@ from typing import Protocol
+ from uuid import uuid4
+ 
+ from cephvr.acquisition.identity import ACQUISITION_WORKER_ROLES
+-from cephvr.acquisition.identity import FFMPEG_ROLES as ACQ_FFMPEG_ROLES
+ from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import types_pb2 as types
+ from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
+@@ -20,18 +18,25 @@ from cephvr.shared.clock import (
+     host_time_ns,
+     validate_host_clock,
+ )
++from cephvr.shared.commands import DEFAULT_COMMAND_RETENTION_NS
+ from cephvr.shared.identity import require_uuid4
++from cephvr.supervisor.camera_release import camera_release_request_matches
++from cephvr.supervisor.launch_validation import (
++    BACKEND_ROLES as BACKEND_ROLES,
++)
++from cephvr.supervisor.launch_validation import (
++    TOP_LEVEL_ROLES as TOP_LEVEL_ROLES,
++)
++from cephvr.supervisor.launch_validation import (
++    LaunchError as LaunchError,
++)
++from cephvr.supervisor.launch_validation import (
++    launch_work_key,
++    validate_plan,
++)
+ from cephvr.visual_stimulus.identity import FFMPEG_ROLES as VISUAL_STIMULUS_FFMPEG_ROLES
+ 
+ LIVE_PHASES = (wire.LAUNCH_PHASE_OPERATIONAL, wire.LAUNCH_PHASE_CLEANUP_REQUIRED)
+-BACKEND_ROLES = frozenset({"acquisition", "visual_stimulus", "tracking"})
+-TOP_LEVEL_ROLES = BACKEND_ROLES | {"controller", "gui"}
+-
+-
+-class LaunchError(ValueError):
+-    def __init__(self, code: str, message: str) -> None:
+-        self.code = code
+-        super().__init__(message)
+ 
+ 
+ class NativeLaunches(Protocol):
+@@ -61,7 +66,9 @@ class _Entry:
+     deadline_ns: int
+     os_confirm_command_id: str | None = None
+     confirmations: dict[str, bytes] = field(default_factory=dict)
+-    released_seq: int = 0
++    released_ns: int | None = None
++    work_key: str | None = None
++    camera_cleanup_proof: bytes | None = None
+ 
+ 
+ def _snapshot(entry: _Entry) -> wire.LaunchState:
+@@ -76,97 +83,67 @@ class LaunchRegistry:
+     """No PID/name guesswork: each dedicated job must hold exactly its child."""
+ 
+     def __init__(
+-        self, native: NativeLaunches, silence_timeout_ns: int, max_launches: int = 1024
++        self,
++        native: NativeLaunches,
++        silence_timeout_ns: int,
++        max_launches: int = 1024,
++        retention_ns: int = DEFAULT_COMMAND_RETENTION_NS,
+     ) -> None:
+-        if silence_timeout_ns <= 0:
+-            raise ValueError("silence_timeout_ns must be positive")
++        if silence_timeout_ns <= 0 or retention_ns <= 0 or max_launches <= 0:
++            raise ValueError("launch timeouts and capacity must be positive")
+         self.native = native
+         self.silence_timeout_ns = silence_timeout_ns
+         self.max_launches = max_launches
++        self.retention_ns = retention_ns
+         self._entries: dict[str, _Entry] = {}
+-        self._release_seq = 0
++        self._finalized_work: dict[str, int] = {}
+         self._release_listeners: list[Callable[[wire.LaunchState], None]] = []
+ 
+     def on_release(self, listener: Callable[[wire.LaunchState], None]) -> None:
+         """Notify once per launch when it transitions to RELEASED."""
+         self._release_listeners.append(listener)
+ 
+-    def _prune_released(self) -> None:
+-        """Drop the oldest RELEASED entries (replay window ends at capacity)."""
+-        released = sorted(
+-            (
+-                (entry.released_seq, command_id)
+-                for command_id, entry in self._entries.items()
+-                if entry.state.phase == wire.LAUNCH_PHASE_RELEASED
+-            )
+-        )
+-        for _, command_id in released:
+-            if len(self._entries) < self.max_launches:
+-                break
+-            del self._entries[command_id]
+-
+-    @staticmethod
+-    def _validate_plan(request: wire.PlanLaunchRequest) -> None:
+-        require_uuid4(request.command_id)
+-        require_uuid4(request.owner.generation)
+-        require_uuid4(request.child.generation)
+-        if not request.owner.role or not request.child.role or not request.executable:
+-            raise LaunchError(
+-                "INVALID_LAUNCH", "owner, child and executable are required"
+-            )
+-        if not ntpath.isabs(request.executable):
+-            raise LaunchError(
+-                "INVALID_EXECUTABLE", "launch executable must be an absolute path"
+-            )
+-        if request.stop_method not in {"grpc_shutdown", "owner_stdin_eof"} and not (
+-            request.child.role == FIRMWARE_UPLOAD_ROLE
+-            and request.stop_method == "owner_job_terminate"
+-        ):
+-            raise LaunchError("INVALID_STOP_METHOD", "unsupported child stop method")
+-        if request.python_worker and request.stop_method != "grpc_shutdown":
+-            raise LaunchError(
+-                "INVALID_STOP_METHOD", "Python child requires gRPC shutdown"
+-            )
+-        if request.child.role == "supervisor":
+-            raise LaunchError("INVALID_CHILD", "launcher alone creates supervisor")
+-        if request.child.role == FIRMWARE_UPLOAD_ROLE and (
+-            request.owner.role != "controller"
+-            or request.python_worker
+-            or request.stop_method != "owner_job_terminate"
+-            or request.HasField("work")
+-            or not request.parent_operation.command_id
+-        ):
+-            raise LaunchError(
+-                "INVALID_OWNER",
+-                "firmware upload requires its controller Configuration owner and operation",
++    def finalize_work(self, work_key: str, finalized_ns: int | None = None) -> None:
++        """Start replay retention for a completed session work scope."""
++        require_uuid4(work_key)
++        now_ns = host_time_ns() if finalized_ns is None else finalized_ns
++        prior = self._finalized_work.setdefault(work_key, now_ns)
++        now_ns = prior
++        self._prune_released(now_ns)
++
++    def _prune_released(self, now_ns: int) -> None:
++        """Remove only RELEASED plans past their E08 replay-retention window."""
++        expired = []
++        for command_id, entry in self._entries.items():
++            if entry.state.phase != wire.LAUNCH_PHASE_RELEASED:
++                continue
++            finalized_ns = self._finalized_work.get(entry.work_key or "")
++            retention_start_ns = (
++                max(entry.released_ns, finalized_ns)
++                if finalized_ns is not None and entry.released_ns is not None
++                else entry.released_ns
++                if entry.work_key is None
++                else None
+             )
+-        if request.child.role == FIRMWARE_UPLOAD_ROLE:
+-            require_uuid4(request.parent_operation.command_id)
+-        if request.child.role in VISUAL_STIMULUS_FFMPEG_ROLES:
+-            if request.owner.role != "visual_stimulus_renderer" or not request.HasField(
+-                "work"
++            if (
++                retention_start_ns is not None
++                and now_ns > retention_start_ns + self.retention_ns
+             ):
+-                raise LaunchError(
+-                    "INVALID_OWNER",
+-                    "Visual Stimulus media children require their exact renderer owner and work",
+-                )
+-        if (
+-            request.child.role in ACQ_FFMPEG_ROLES
+-            and request.owner.role not in ACQUISITION_WORKER_ROLES
+-        ):
+-            raise LaunchError(
+-                "INVALID_OWNER",
+-                "acquisition media children require an acquisition worker owner",
+-            )
+-        if request.child.role in TOP_LEVEL_ROLES and request.owner.role != "supervisor":
+-            raise LaunchError("INVALID_OWNER", "top-level launch owner is invalid")
+-        if request.HasField("work") and not request.HasField("parent_operation"):
+-            raise LaunchError(
+-                "MISSING_OPERATION", "work-scoped launch requires parent operation"
+-            )
++                expired.append(command_id)
++        for command_id in expired:
++            del self._entries[command_id]
++        retained_work_keys = {
++            entry.work_key
++            for entry in self._entries.values()
++            if entry.work_key is not None
++        }
++        for work_key in tuple(self._finalized_work):
++            if work_key not in retained_work_keys:
++                del self._finalized_work[work_key]
+ 
+     def plan(self, request: wire.PlanLaunchRequest) -> wire.LaunchState:
+-        self._validate_plan(request)
++        validate_plan(request)
++        self._prune_released(host_time_ns())
+         prior = self._entries.get(request.command_id)
+         if prior:
+             if prior.plan.SerializeToString(
+@@ -176,8 +153,6 @@ class LaunchRegistry:
+                     "COMMAND_ID_REUSED", "launch command ID has changed payload"
+                 )
+             return self.refresh(request.command_id)
+-        if len(self._entries) >= self.max_launches:
+-            self._prune_released()
+         if len(self._entries) >= self.max_launches:
+             raise LaunchError("LAUNCH_CAPACITY", "retained launch capacity exhausted")
+         if any(
+@@ -204,6 +179,7 @@ class LaunchRegistry:
+             plan=wire.PlanLaunchRequest.FromString(request.SerializeToString()),
+             state=state,
+             deadline_ns=host_time_ns() + self.silence_timeout_ns,
++            work_key=launch_work_key(request) if request.HasField("work") else None,
+         )
+         return wire.LaunchState.FromString(state.SerializeToString())
+ 
+@@ -266,6 +242,11 @@ class LaunchRegistry:
+             raise LaunchError(
+                 "COMMAND_ID_REUSED", "confirmation command ID has changed payload"
+             )
++        if (
++            previous_confirmation is not None
++            and entry.state.phase == wire.LAUNCH_PHASE_RELEASED
++        ):
++            return _snapshot(entry)
+         if previous_confirmation is None and len(entry.confirmations) >= 8:
+             raise LaunchError(
+                 "CONFIRM_CAPACITY", "launch confirmation record capacity exhausted"
+@@ -284,9 +265,11 @@ class LaunchRegistry:
+             raise self._block(
+                 entry, "LAUNCH_TIMEOUT", "launch registration deadline expired"
+             )
++        has_camera_cleanup = request.HasField("acquisition_worker_cleanup")
+         if (
+             entry.state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
+             and not request.native_cleanup_complete
++            and not has_camera_cleanup
+         ):
+             if previous_confirmation is not None:
+                 return _snapshot(entry)
+@@ -312,6 +295,9 @@ class LaunchRegistry:
+             released = self.release(request.launch_command_id, obligations_met=True)
+             entry.confirmations[request.command_id] = canonical
+             return released
++        if has_camera_cleanup:
++            self._release_camera_worker(request, entry, canonical)
++            return _snapshot(entry)
+         members = self._members(entry)
+         if (
+             request.HasField("creation_failed_without_child")
+@@ -427,6 +413,64 @@ class LaunchRegistry:
+         entry.confirmations[request.command_id] = canonical
+         return self.refresh(request.launch_command_id)
+ 
++    def _release_camera_worker(
++        self,
++        request: wire.ConfirmLaunchRequest,
++        entry: _Entry,
++        canonical: bytes,
++    ) -> None:
++        if not camera_release_request_matches(request, entry.plan, entry.state):
++            raise LaunchError(
++                "INVALID_WORKER_CLEANUP",
++                "retained Cleanup proof is incomplete or mismatched",
++            )
++        proof = request.acquisition_worker_cleanup.SerializeToString(deterministic=True)
++        if (
++            entry.camera_cleanup_proof is not None
++            and entry.camera_cleanup_proof != proof
++        ):
++            raise LaunchError(
++                "COMMAND_ID_REUSED",
++                "camera cleanup proof changed after retirement acknowledgement",
++            )
++        members = self._members(entry)
++        running = self._running(entry)
++        if members or running:
++            if (
++                entry.state.phase == wire.LAUNCH_PHASE_OPERATIONAL
++                and len(members) == 1
++                and members[0][:2] == (entry.state.pid, entry.state.creation_time_100ns)
++                and os.path.normcase(os.path.abspath(members[0][2]))
++                == os.path.normcase(os.path.abspath(entry.plan.executable))
++                and running
++            ):
++                # Retain exact owner-verified cleanup before Shutdown. This
++                # narrowly authorizes the ensuing exact worker exit.
++                if entry.camera_cleanup_proof is None:
++                    entry.camera_cleanup_proof = proof
++                entry.confirmations[request.command_id] = canonical
++                return
++            raise LaunchError(
++                "PROCESS_STILL_RUNNING",
++                "camera worker process/job absence is unconfirmed",
++            )
++        if entry.camera_cleanup_proof is None:
++            raise LaunchError(
++                "MISSING_CLEANUP_ACK",
++                "camera worker exit preceded its cleanup acknowledgement",
++            )
++        self.release(entry.plan.command_id, obligations_met=True)
++        entry.confirmations[request.command_id] = canonical
++
++    def camera_cleanup_acknowledged(self, command_id: str) -> bool:
++        """Return whether this exact launch retained its owner's Cleanup proof."""
++        entry = self._entries.get(command_id)
++        return bool(
++            entry is not None
++            and entry.camera_cleanup_proof is not None
++            and entry.plan.child.role in ACQUISITION_WORKER_ROLES
++        )
++
+     def release(self, command_id: str, obligations_met: bool) -> wire.LaunchState:
+         entry = self._get(command_id)
+         if entry.state.phase == wire.LAUNCH_PHASE_RELEASED:
+@@ -444,8 +488,9 @@ class LaunchRegistry:
+                 entry.state.pid, entry.state.creation_time_100ns
+             )
+         entry.state.phase = wire.LAUNCH_PHASE_RELEASED
+-        self._release_seq += 1
+-        entry.released_seq = self._release_seq
++        entry.released_ns = host_time_ns()
++        if entry.work_key is not None:
++            self._prune_released(entry.released_ns)
+         released = _snapshot(entry)
+         for listener in self._release_listeners:
+             listener(released)
+diff --git a/src/cephvr/supervisor/runtime.py b/src/cephvr/supervisor/runtime.py
+index ad6d687..41920bd 100644
+--- a/src/cephvr/supervisor/runtime.py
++++ b/src/cephvr/supervisor/runtime.py
+@@ -9,7 +9,7 @@ from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import types_pb2 as types
+ from cephvr.platform.windows.jobs import WindowsLaunchError
+ from cephvr.shared.clock import describe_host_clock, host_time_ns
+-from cephvr.shared.commands import CommandLedger
++from cephvr.shared.commands import DEFAULT_COMMAND_RETENTION_NS, CommandLedger
+ from cephvr.shared.identity import require_uuid4
+ from cephvr.supervisor.health import HealthMonitor
+ from cephvr.supervisor.ports import SupervisorOutbound
+@@ -44,7 +44,7 @@ class SupervisorRuntime:
+         application_backstop_ns: int = 90_000_000_000,
+         max_message_bytes: int = 16 * 1024 * 1024,
+         max_retained_entries: int = 256,
+-        command_retention_ns: int = 300_000_000_000,
++        command_retention_ns: int = DEFAULT_COMMAND_RETENTION_NS,
+         graceful_exit_ns: int = 5_000_000_000,
+         terminate_exit_ns: int = 2_000_000_000,
+         heartbeat_interval_ns: int = 5_000_000_000,
+@@ -59,7 +59,9 @@ class SupervisorRuntime:
+         self.identity = identity
+         self.controller = controller
+         self.credentials = dict(credentials)
+-        self.registry = LaunchRegistry(native, silence_timeout_ns)
++        self.registry = LaunchRegistry(
++            native, silence_timeout_ns, retention_ns=command_retention_ns
++        )
+         self.commands = CommandLedger(
+             identity.generation,
+             command_retention_ns,
+diff --git a/src/cephvr/supervisor/shutdown.py b/src/cephvr/supervisor/shutdown.py
+index 450fb6d..32d7b1b 100644
+--- a/src/cephvr/supervisor/shutdown.py
++++ b/src/cephvr/supervisor/shutdown.py
+@@ -390,6 +390,15 @@ class ShutdownCoordinator:
+     async def _wait_for_cleanup_blockers(self, until_ns: int) -> None:
+         await wait_while(self.recovery.cleanup_blockers, until_ns)
+ 
++    async def _watch_controller_loss(self, until_ns: int) -> None:
++        """Observe authority loss while bounded worker cleanup is in flight."""
++        await wait_while(
++            lambda: not self.state.shutdown_interrupted and not self._controller_gone(),
++            until_ns,
++        )
++        if host_time_ns() < until_ns:
++            await self.interrupt_if_controller_lost()
++
+     def _registered_context(self) -> wire.RegisteredContext:
+         # Re-read at each step: a re-registration may replace the context.
+         context = self.registration.state.context
+@@ -489,24 +498,36 @@ class ShutdownCoordinator:
+             )
+             recovery_ns = max(0, self._registered_context().policies.recovery_ns)
+             initial_deadline = max(host_time_ns(), cleanup_deadline - recovery_ns)
+-            await self._wait_for_cleanup_blockers(initial_deadline)
+-            # Concurrent: one backend running to the deadline must not leave the
+-            # other's outputs unattempted.
+-            branches = await asyncio.gather(
+-                self._cleanup_acquisition_workers(cleanup_deadline),
+-                self._cleanup_workers(
+-                    self.visual_stimulus_worker_control, cleanup_deadline
+-                ),
+-                return_exceptions=True,
++            observer = asyncio.create_task(
++                self._watch_controller_loss(cleanup_deadline)
+             )
+-            for name, branch in zip(
+-                ("acquisition", "visual stimulus"), branches, strict=True
+-            ):
+-                if isinstance(branch, Exception):
+-                    self.tasks.report_failure(f"{name} worker cleanup", branch)
+-            await self._wait_for_cleanup_blockers(cleanup_deadline)
+-            await self.interrupt_if_controller_lost()
+-            await self._request_participant_shutdown(cleanup_deadline)
++            try:
++                await self._wait_for_cleanup_blockers(initial_deadline)
++                # Concurrent: one backend running to the deadline must not leave the
++                # other's outputs unattempted.
++                branches = await asyncio.gather(
++                    self._cleanup_acquisition_workers(cleanup_deadline),
++                    self._cleanup_workers(
++                        self.visual_stimulus_worker_control, cleanup_deadline
++                    ),
++                    return_exceptions=True,
++                )
++                for name, branch in zip(
++                    ("acquisition", "visual stimulus"), branches, strict=True
++                ):
++                    if isinstance(branch, Exception):
++                        self.tasks.report_failure(f"{name} worker cleanup", branch)
++                await self._wait_for_cleanup_blockers(cleanup_deadline)
++                await self.interrupt_if_controller_lost()
++                await self._request_participant_shutdown(cleanup_deadline)
++            finally:
++                observer.cancel()
++                try:
++                    await observer
++                except asyncio.CancelledError:
++                    pass
++                except Exception as exc:
++                    self.tasks.report_failure("controller loss observer", exc)
+         exits = await stop_owned_processes(
+             registry=self.registry,
+             native=self.native,
+diff --git a/src/cephvr/synchronization/sdk_io.py b/src/cephvr/synchronization/sdk_io.py
+index 5454954..c1a7118 100644
+--- a/src/cephvr/synchronization/sdk_io.py
++++ b/src/cephvr/synchronization/sdk_io.py
+@@ -3,12 +3,14 @@
+ from __future__ import annotations
+ 
+ import asyncio
++import logging
+ import threading
+ from collections.abc import Callable
+ from concurrent.futures import Future, ThreadPoolExecutor
+ from typing import Any, TypeVar
+ 
+ T = TypeVar("T")
++_LOG = logging.getLogger(__name__)
+ 
+ 
+ class SpikeGLXIOBusy(RuntimeError):
+@@ -46,10 +48,40 @@ class SpikeGLXIOOwner:
+ 
+         future.add_done_callback(release)
+         wrapped = asyncio.wrap_future(future)
++
++        def report_late(completed: asyncio.Future[T]) -> None:
++            try:
++                error = completed.exception()
++            except asyncio.CancelledError:
++                _LOG.warning(
++                    "SpikeGLX SDK call was cancelled after its caller stopped waiting"
++                )
++            else:
++                if error is not None:
++                    _LOG.warning(
++                        "SpikeGLX SDK call failed after its caller stopped waiting: %s",
++                        error,
++                    )
++                else:
++                    _LOG.info(
++                        "SpikeGLX SDK call completed after its caller stopped waiting"
++                    )
++
++        def observe_late() -> None:
++            if wrapped.done():
++                report_late(wrapped)
++            else:
++                wrapped.add_done_callback(report_late)
++
+         try:
+             return await asyncio.wait_for(asyncio.shield(wrapped), timeout_s)
+         except TimeoutError:
+             # Keep _pending until the native invocation actually returns.
++            observe_late()
++            raise
++        except asyncio.CancelledError:
++            # Caller cancellation also abandons the shielded result, not native work.
++            observe_late()
+             raise
+ 
+     def close(self, wait: bool = False) -> None:
+diff --git a/tests/acquisition/test_coordinator.py b/tests/acquisition/test_coordinator.py
+index 46ca92d..1f7bb1b 100644
+--- a/tests/acquisition/test_coordinator.py
++++ b/tests/acquisition/test_coordinator.py
+@@ -13,7 +13,10 @@ import pytest
+ 
+ from cephvr.acquisition.coordinator.evidence_telemetry import WorkerTelemetryReports
+ from cephvr.acquisition.coordinator.health import AcquisitionHealth
+-from cephvr.acquisition.coordinator.workers import WorkerRegistry
++from cephvr.acquisition.coordinator.workers import (
++    WorkerRegistry,
++    _adopt_retained_operation,
++)
+ from cephvr.acquisition.ports import (
+     SupervisorPort,
+     WorkerBootstrapPort,
+@@ -31,6 +34,8 @@ from cephvr.acquisition.state import (
+     WorkerRecord,
+ )
+ from cephvr.acquisition.v1 import camera_pb2, runtime_pb2
++from cephvr.acquisition.v1 import messages_pb2 as acq
++from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.shared.clock import host_time_ns
+ from cephvr.shared.commands import CommandLedger
+@@ -326,6 +331,272 @@ def test_launch_intent_survives_endpoint_registration_timeout() -> None:
+     asyncio.run(run())
+ 
+ 
++@pytest.mark.asyncio
++@pytest.mark.parametrize("session_scoped", [False, True])
++@pytest.mark.parametrize("process_exits", [False, True])
++async def test_camera_retirement_confirms_exact_cleanup_proof(
++    session_scoped: bool, process_exits: bool
++) -> None:
++    owner = control.ProcessIdentity(role="acquisition", generation=_id())
++    worker = control.ProcessIdentity(
++        role="acquisition_behavioral_worker", generation=_id()
++    )
++    work = (
++        control.WorkContext(session=control.SessionContext(session_id=_id()))
++        if session_scoped
++        else control.WorkContext()
++    )
++    context = acq.WorkerContext(
++        worker=worker,
++        owner=owner,
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++    )
++    if session_scoped:
++        context.work.CopyFrom(work)
++    launch = LaunchRecord(
++        command_id=_id(),
++        worker=worker,
++        owner=owner,
++        work=work,
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++        parent_operation=control.OperationContext(command_id=_id()),
++        planned_ns=1,
++        pid=71,
++        creation_time_100ns=171,
++    )
++    commands = CommandLedger(
++        owner.generation,
++        300_000_000_000,
++        max_records=64,
++        max_bytes=1024 * 1024,
++        result_reservation_bytes=64 * 1024,
++    )
++    record = WorkerRecord(context=context, port=None, launch=launch, commands=commands)
++
++    class Supervisor:
++        def __init__(self) -> None:
++            self.requests: list[wire.ConfirmLaunchRequest] = []
++            self.deadlines: list[int] = []
++
++        async def confirm_launch(self, request, *, deadline_ns):  # type: ignore[no-untyped-def]
++            self.requests.append(request)
++            self.deadlines.append(deadline_ns)
++            phase = (
++                wire.LAUNCH_PHASE_OPERATIONAL
++                if len(self.requests) == 1
++                else wire.LAUNCH_PHASE_RELEASED
++            )
++            return wire.LaunchReceipt(
++                admission=control.CommandAdmission(
++                    result=control.COMMAND_RESULT_ACCEPTED,
++                    command_id=request.command_id,
++                ),
++                state=wire.LaunchState(phase=phase),
++            )
++
++    class Bootstrap:
++        def __init__(self) -> None:
++            self.deadlines: list[int] = []
++            self.process_exits = process_exits
++
++        async def wait_process_exit(self, _worker, *, deadline_ns):  # type: ignore[no-untyped-def]
++            self.deadlines.append(deadline_ns)
++            return self.process_exits
++
++        async def retire(self, _worker, *, deadline_ns):  # type: ignore[no-untyped-def]
++            del deadline_ns
++
++    class WorkerPort:
++        def __init__(self) -> None:
++            self.context = context
++            self.completion_task: asyncio.Task[None] | None = None
++
++        async def cleanup(self, request, *, deadline_ns):  # type: ignore[no-untyped-def]
++            del deadline_ns
++            child = record.child_operations[request.command_id]
++            state = control.OperationState(
++                context=control.OperationContext(command_id=request.command_id),
++                command="Cleanup",
++                work=work,
++                complete=True,
++                succeeded=True,
++            )
++            evidence = acq.WorkerLifecycleEvidence(
++                source=context,
++                operation=control.OperationContext(command_id=request.command_id),
++                state_revision=1,
++            )
++            evidence.cleanup.resources.add(resource="camera-device", released=True)
++            record.retain_lifecycle(evidence, commands=commands)
++
++            async def complete_operation() -> None:
++                await asyncio.sleep(0.01)
++                child.report = state
++                child.report_ingress_ns = host_time_ns()
++                child.report_revision = 1
++                child.updated.set()
++
++            self.completion_task = asyncio.create_task(complete_operation())
++            return control.CommandAdmission(
++                result=control.COMMAND_RESULT_ACCEPTED,
++                command_id=request.command_id,
++            )
++
++        async def get_retained_result(self, _request, *, deadline_ns):  # type: ignore[no-untyped-def]
++            del deadline_ns
++            return acq.WorkerRetainedResult()
++
++        async def shutdown(self, request, *, deadline_ns):  # type: ignore[no-untyped-def]
++            del deadline_ns
++            assert len(supervisor.requests) == 1
++            return control.CommandAdmission(
++                result=control.COMMAND_RESULT_ACCEPTED,
++                command_id=request.command_id,
++            )
++
++        async def close(self) -> None:
++            pass
++
++    record.port = WorkerPort()
++    supervisor = Supervisor()
++    registry = WorkerRegistry.__new__(WorkerRegistry)
++    registry.workers = {camera_pb2.CAMERA_ROLE_BEHAVIORAL: record}
++    registry.launches = {launch.command_id: launch}
++    registry.owner = owner
++    registry.supervisor = supervisor
++    bootstrap = Bootstrap()
++    registry.bootstrap = bootstrap
++    registry.commands = commands
++    registry.cleanup_complete = lambda _record, _evidence: True
++    registry.policies = control.ControlPolicies(
++        command_retention_after_finalization_ns=300_000_000_000
++    )
++    registry.max_launch_records = 16
++    registry._lock = asyncio.Lock()
++    deadline = host_time_ns() + 1_000_000_000
++
++    if session_scoped:
++        child_id = _id()
++        child = ChildOperation(
++            command_id=child_id,
++            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++            work=work,
++            parent_operation=launch.parent_operation,
++            kind="cleanup",
++        )
++        child.report = control.OperationState(
++            context=control.OperationContext(command_id=child_id),
++            command="Cleanup",
++            work=work,
++            complete=True,
++            succeeded=True,
++        )
++        evidence = acq.WorkerLifecycleEvidence(
++            source=context,
++            operation=control.OperationContext(command_id=child_id),
++            state_revision=1,
++        )
++        evidence.cleanup.resources.add(resource="camera-device", released=True)
++        record.child_operations[child_id] = child
++        record.lifecycle_evidence[(work.session.session_id, child_id, "cleanup")] = (
++            evidence
++        )
++        retire = registry.retire_completed_session(work, deadline_ns=deadline)
++    else:
++        retire = registry.retire_sessionless_worker(
++            camera_pb2.CAMERA_ROLE_BEHAVIORAL, deadline_ns=deadline
++        )
++
++    if process_exits:
++        confirmed = await retire
++    else:
++        with pytest.raises(RuntimeError, match="process/job release is unconfirmed"):
++            await retire
++        assert len(supervisor.requests) == 1
++        assert supervisor.deadlines == [deadline]
++        assert bootstrap.deadlines == [deadline]
++        if record.port.completion_task is not None:
++            await record.port.completion_task
++        return
++
++    assert confirmed is None
++    assert len(supervisor.requests) == 2
++    assert supervisor.requests[0].SerializeToString(
++        deterministic=True
++    ) == supervisor.requests[1].SerializeToString(deterministic=True)
++    assert supervisor.deadlines == [deadline, deadline]
++    assert bootstrap.deadlines == [deadline]
++    proof = supervisor.requests[0].acquisition_worker_cleanup
++    assert proof.cleanup.source == context
++    assert proof.operation.source == context
++    assert proof.cleanup.source.work == work
++    if record.port.completion_task is not None:
++        await record.port.completion_task
++
++
++def test_retained_cleanup_query_cannot_replace_conflicting_local_terminal_report() -> (
++    None
++):
++    owner = control.ProcessIdentity(role="acquisition", generation=_id())
++    worker = control.ProcessIdentity(
++        role="acquisition_behavioral_worker", generation=_id()
++    )
++    context = acq.WorkerContext(
++        worker=worker,
++        owner=owner,
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++    )
++    command_id = _id()
++    child = ChildOperation(
++        command_id=command_id,
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++        work=control.WorkContext(),
++        parent_operation=control.OperationContext(command_id=_id()),
++        kind="cleanup",
++        report=control.OperationState(
++            context=control.OperationContext(command_id=command_id),
++            command="Cleanup",
++            complete=True,
++            succeeded=False,
++        ),
++        report_revision=2,
++    )
++    record = WorkerRecord(
++        context=context,
++        port=None,
++        launch=LaunchRecord(
++            command_id=_id(),
++            worker=worker,
++            owner=owner,
++            work=control.WorkContext(),
++            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++            parent_operation=control.OperationContext(command_id=_id()),
++            planned_ns=1,
++        ),
++    )
++    retained = acq.WorkerRetainedResult(
++        found=True,
++        source=context,
++        admission=control.CommandAdmission(
++            result=control.COMMAND_RESULT_ACCEPTED, command_id=command_id
++        ),
++        operation=acq.WorkerOperationReport(
++            source=context,
++            operation=control.OperationState(
++                context=control.OperationContext(command_id=command_id),
++                command="Cleanup",
++                complete=True,
++                succeeded=True,
++            ),
++            state_revision=3,
++        ),
++    )
++
++    with pytest.raises(RuntimeError, match="differs from local terminal"):
++        _adopt_retained_operation(record, child, command_id, retained)
++    assert child.report is not None and not child.report.succeeded
++
++
+ class _FailingBootstrap(WorkerBootstrapPort):
+     async def launch(
+         self, spec: WorkerLaunchSpec, *, deadline_ns: int
+diff --git a/tests/controller/test_camera_configuration.py b/tests/controller/test_camera_configuration.py
+index 193bbf8..fc90353 100644
+--- a/tests/controller/test_camera_configuration.py
++++ b/tests/controller/test_camera_configuration.py
+@@ -130,7 +130,6 @@ def test_exact_camera_status_after_deadline_is_retained_and_adopted_if_newer() -
+     def finish(camera_operation: CameraOperation) -> None:
+         if camera_operation is operation:
+             assert camera_operation.timed_out
+-        device.completed_camera_operation = camera_operation
+         retention.complete_internal(camera_operation)
+         if device.camera_operation is camera_operation:
+             device.camera_operation = None
+@@ -221,7 +220,7 @@ def test_exact_camera_status_after_deadline_is_retained_and_adopted_if_newer() -
+     assert second_receipt.result == pb.COMMAND_RESULT_ACCEPTED
+     assert current.final_status == current_report
+     assert device.camera_operation is None
+-    assert device.completed_camera_operation is current
++    assert retention.find(current.child_id) is current
+     assert projection.device_accepts == 1
+ 
+     async def retry_old_after_second_completion() -> pb.ReportReceipt:
+diff --git a/tests/controller/test_camera_evidence.py b/tests/controller/test_camera_evidence.py
+index a2f91ca..09b0059 100644
+--- a/tests/controller/test_camera_evidence.py
++++ b/tests/controller/test_camera_evidence.py
+@@ -263,7 +263,6 @@ async def test_terminal_camera_report_retires_slot_but_retains_exact_evidence(
+     assert runtime.control.operations[parent].succeeded == succeeded
+     assert runtime.device_state.camera_operation is None
+     assert runtime.device_state.camera_operation_changed.is_set()
+-    assert runtime.device_state.completed_camera_operation is operation
+     assert runtime.device_state.manual_effects_admitted
+     assert runtime.camera_status_retention.find(child) is operation
+     assert operation.final_status == status
+@@ -327,7 +326,7 @@ async def test_deadline_without_terminal_adopts_retained_result(
+     assert not runtime.control.operations[parent].succeeded
+     assert runtime.projections.devices is not None
+     assert not any("unconfirmed" in w.message for w in runtime.control.warnings)
+-    operation = runtime.device_state.completed_camera_operation
++    operation = runtime.camera_status_retention.find(child)
+     assert operation is not None and operation.final_status == status
+ 
+ 
+diff --git a/tests/controller/test_device_admission.py b/tests/controller/test_device_admission.py
+index 40b008f..64ee02e 100644
+--- a/tests/controller/test_device_admission.py
++++ b/tests/controller/test_device_admission.py
+@@ -34,6 +34,7 @@ from cephvr.controller.state import (
+     LimitsState,
+     Watch,
+ )
++from cephvr.shared.commands import CommandLedger
+ from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
+ from tests.controller.support_components import _id, _runtime, default_limits
+ from tests.visual_stimulus.support import valid_display_json
+@@ -86,6 +87,16 @@ class _FailingBackend:
+ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
+     env = _Env()
+     retention = CameraStatusRetention(env.device, clock=lambda: env.now)
++    generation = _id()
++    retention.bind_ledger(
++        CommandLedger(
++            generation,
++            10_000,
++            max_records=16,
++            max_bytes=1_000_000,
++            result_reservation_bytes=4096,
++        )
++    )
+     camera = CameraCommands(
+         lifecycle=env.lifecycle,
+         configuration=env.configuration,
+@@ -93,7 +104,7 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
+         backends={},
+         projections=cast(Any, None),
+         file_policy_loader=None,
+-        generation=_id(),
++        generation=generation,
+         limits=_limits(),
+         clock=lambda: env.now,
+         hooks=env.hooks,
+@@ -123,6 +134,7 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
+             deadline,
+             False,
+         )
++        retention.reserve(env.device.camera_operation)
+         env.ops.operation(operator_id, "ExecuteCameraCommand")
+         return CameraDispatch(
+             selection.backend, svc.AcquisitionCameraCommand(), child, deadline
+@@ -151,7 +163,7 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
+     # but keep manual effects admitted in case it was delivered.
+     assert operation.admission_unconfirmed
+     assert env.device.camera_operation is None
+-    assert env.device.completed_camera_operation is operation
++    assert camera.status_retention.find(operation.child_id) is operation
+     assert env.device.camera_operation_changed.is_set()
+ 
+ 
+diff --git a/tests/controller/test_lifecycle_commands.py b/tests/controller/test_lifecycle_commands.py
+index 3209ea6..5056fa6 100644
+--- a/tests/controller/test_lifecycle_commands.py
++++ b/tests/controller/test_lifecycle_commands.py
+@@ -156,6 +156,37 @@ async def test_shutdown_after_ended_completes_without_relabel(
+     )
+ 
+ 
++async def test_pre_activation_shutdown_cancels_attempt_prompts(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    runtime, attempt = _setup(tmp_path, monkeypatch)
++    attempt.activated = False
++    runtime.lifecycle.session = pb.SessionState(phase=pb.SESSION_PHASE_SETTING_UP)
++    prompt_id = _id()
++    prompt = pb.Prompt(prompt_id=prompt_id, explanation="operator choice")
++    future: asyncio.Future[str] = asyncio.get_running_loop().create_future()
++    runtime.incident_state.prompts[prompt_id] = (prompt, future, attempt)
++    cancel_calls: list[Attempt] = []
++
++    async def cancel_attempt(owner: Attempt) -> None:
++        cancel_calls.append(owner)
++
++    monkeypatch.setattr(runtime.cleanup, "cancel_attempt", cancel_attempt)
++
++    class Supervisor:
++        async def request_shutdown(self, _request: object) -> pb.ReportReceipt:
++            return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
++
++    runtime.session_commands.supervisor = cast(Any, Supervisor())
++    command = operator_command(runtime)
++    result = await runtime.shutdown_application(command)
++
++    assert result.result == pb.COMMAND_RESULT_ACCEPTED
++    assert future.cancelled()
++    await drain_runtime_tasks(runtime)
++    assert cancel_calls == [attempt]
++
++
+ class _Writer:
+     sealed = 0
+ 
+diff --git a/tests/controller/test_spikeglx.py b/tests/controller/test_spikeglx.py
+index 9248487..4a47fa9 100644
+--- a/tests/controller/test_spikeglx.py
++++ b/tests/controller/test_spikeglx.py
+@@ -1492,3 +1492,67 @@ async def test_timed_out_sdk_call_keeps_ownership_until_native_return() -> None:
+     await asyncio.sleep(0.02)
+     assert await owner.run(lambda: "next", 1) == "next"
+     owner.close(wait=True)
++
++
++@pytest.mark.asyncio
++async def test_late_sdk_exception_is_consumed_and_logged(
++    caplog: pytest.LogCaptureFixture,
++) -> None:
++    owner = SpikeGLXIOOwner()
++    entered, release = threading.Event(), threading.Event()
++
++    def fail_late() -> str:
++        entered.set()
++        release.wait(2)
++        raise RuntimeError("late SDK diagnostic")
++
++    call = asyncio.create_task(owner.run(fail_late, 0.02))
++    assert await asyncio.to_thread(entered.wait, 1)
++    with pytest.raises(TimeoutError):
++        await call
++    with pytest.raises(SpikeGLXIOBusy):
++        await owner.run(lambda: "must not run", 1)
++    release.set()
++    async with asyncio.timeout(1):
++        while True:
++            try:
++                assert await owner.run(lambda: "next", 1) == "next"
++                break
++            except SpikeGLXIOBusy:
++                await asyncio.sleep(0.005)
++    assert "failed after its caller stopped waiting: late SDK diagnostic" in caplog.text
++    owner.close(wait=True)
++
++
++@pytest.mark.asyncio
++async def test_cancelled_sdk_caller_keeps_native_ownership_and_late_error(
++    caplog: pytest.LogCaptureFixture,
++) -> None:
++    owner = SpikeGLXIOOwner()
++    entered, release = threading.Event(), threading.Event()
++
++    def fail_late() -> str:
++        entered.set()
++        release.wait(2)
++        raise RuntimeError("cancelled-call diagnostic")
++
++    call = asyncio.create_task(owner.run(fail_late, 5))
++    assert await asyncio.to_thread(entered.wait, 1)
++    call.cancel()
++    with pytest.raises(asyncio.CancelledError):
++        await call
++    with pytest.raises(SpikeGLXIOBusy):
++        await owner.run(lambda: "must not run", 1)
++    release.set()
++    async with asyncio.timeout(1):
++        while True:
++            try:
++                assert await owner.run(lambda: "next", 1) == "next"
++                break
++            except SpikeGLXIOBusy:
++                await asyncio.sleep(0.005)
++    assert (
++        "failed after its caller stopped waiting: cancelled-call diagnostic"
++        in caplog.text
++    )
++    owner.close(wait=True)
+diff --git a/tests/controller/test_startup_recovery.py b/tests/controller/test_startup_recovery.py
+index 501382f..34bbc30 100644
+--- a/tests/controller/test_startup_recovery.py
++++ b/tests/controller/test_startup_recovery.py
+@@ -34,8 +34,8 @@ def _recovery() -> StartupRecovery:
+     )
+ 
+ 
+-def _inspect(tmp_path: Path, log: bytes):  # type: ignore[no-untyped-def]
+-    store, pointer, _ = _fixture(tmp_path, log)
++def _inspect(tmp_path: Path, log: bytes, *, trial_id: str | None = None):  # type: ignore[no-untyped-def]
++    store, pointer, _ = _fixture(tmp_path, log, trial_id=trial_id)
+     reservation = OutputReservation.open_existing(
+         Path(pointer.session_directory),
+         pointer.session_id,
+@@ -225,7 +225,7 @@ def _event(kind: str, **extra: object) -> bytes:
+ 
+ 
+ def _fixture(
+-    tmp_path: Path, log: bytes
++    tmp_path: Path, log: bytes, *, trial_id: str | None = None
+ ) -> tuple[RecoveryStore, UnfinishedSessionPointer, Path]:
+     session = _id()
+     controller = _id()
+@@ -244,7 +244,14 @@ def _fixture(
+         "session_id": session,
+         "controller_generation": controller,
+         "local_timezone": "UTC",
+-        "trials": [{"context": {"trial_number": 1}}],
++        "trials": [
++            {
++                "context": {
++                    "trial_number": 1,
++                    **({"trial_id": trial_id} if trial_id is not None else {}),
++                }
++            }
++        ],
+         "configuration": {
+             "backends": [{"backend_name": "synchronization", "enabled": True}]
+         },
+@@ -429,10 +436,21 @@ def test_recovery_reader_rejects_zero_budget_and_nonregular_file(
+ 
+ 
+ def test_prior_completed_recovery_event_is_not_duplicated(tmp_path: Path) -> None:
++    terminal = _event(
++        "recovery",
++        outcome="completed",
++        details={
++            "component": "controller",
++            "action": "startup_recovery",
++            "recovery_controller_generation": _id(),
++            "event_clock": "current_recovery_application",
++            "scientific_output_closure": "unconfirmed",
++        },
++    )
+     log = (
+         _event("session_started")
+         + _event("session_ended", outcome="interrupted")
+-        + _event("recovery", outcome="completed")
++        + terminal
+     )
+     _store, pointer, path = _fixture(tmp_path, log)
+     held = OutputReservation.open_existing(
+@@ -444,3 +462,162 @@ def test_prior_completed_recovery_event_is_not_duplicated(tmp_path: Path) -> Non
+         assert inspection.unfinished_trials == ()
+     finally:
+         held.release()
++
++
++def test_late_finished_reconciliation_is_nonterminal_and_append_only(
++    tmp_path: Path,
++) -> None:
++    trial_id = _id()
++    reconciliation = _event(
++        "recovery",
++        trial_number=1,
++        outcome="completed",
++        details={
++            "component": "Finished",
++            "action": "reconcile exact output closure",
++            "trial_id": trial_id,
++            "backend": "acquisition",
++            "outputs": [
++                {"output_key": "camera-video", "closure": "OUTPUT_CLOSURE_CLOSED"}
++            ],
++            "initial_deadline_ns": 100,
++        },
++    )
++    log = (
++        _event("session_started")
++        + _event("trial_started", trial_number=1)
++        + reconciliation
++        + _event("trial_finished", trial_number=1, outcome="completed")
++        + _event("session_ended", outcome="completed")
++        + _event(
++            "recovery",
++            trial_number=1,
++            outcome="completed",
++            details={
++                "component": "Finished",
++                "action": "reconcile exact output closure",
++                "trial_id": trial_id,
++                "backend": "tracking",
++                "outputs": [],
++                "initial_deadline_ns": 100,
++            },
++        )
++        + _event(
++            "recovery",
++            outcome="completed",
++            details={
++                "component": "controller",
++                "action": "startup_recovery",
++                "recovery_controller_generation": _id(),
++                "event_clock": "current_recovery_application",
++                "scientific_output_closure": "unconfirmed",
++            },
++        )
++    )
++    result = _inspect(tmp_path, log, trial_id=trial_id)
++    assert result.log_identity is not None
++    assert result.session_ended
++    assert result.recovery_recorded
++    assert result.unfinished_trials == ()
++
++
++@pytest.mark.parametrize(
++    "details",
++    [
++        {"component": "Finished", "action": "unknown"},
++        {"component": "Finished", "action": "reconcile exact output closure"},
++    ],
++)
++def test_malformed_nonterminal_recovery_remains_unconfirmed(
++    tmp_path: Path, details: dict[str, object]
++) -> None:
++    event = _event("recovery", trial_number=1, outcome="completed", details=details)
++    trial_id = _id()
++    result = _inspect(
++        tmp_path,
++        _event("session_started") + _event("trial_started", trial_number=1) + event,
++        trial_id=trial_id,
++    )
++    assert result.log_identity is None
++    assert "unconfirmed" in (result.issue or "")
++
++
++def test_terminal_recovery_must_remain_last_record(tmp_path: Path) -> None:
++    terminal = _event(
++        "recovery",
++        outcome="completed",
++        details={
++            "component": "controller",
++            "action": "startup_recovery",
++            "recovery_controller_generation": _id(),
++            "event_clock": "current_recovery_application",
++            "scientific_output_closure": "unconfirmed",
++        },
++    )
++    result = _inspect(
++        tmp_path,
++        _event("session_started")
++        + _event("session_ended", outcome="interrupted")
++        + terminal
++        + _event("error"),
++    )
++    assert result.log_identity is None
++    assert "after final recovery" in (result.issue or "")
++
++
++def test_incident_reconciliation_remains_nonterminal(tmp_path: Path) -> None:
++    terminal = _event(
++        "recovery",
++        outcome="completed",
++        details={
++            "component": "controller",
++            "action": "startup_recovery",
++            "recovery_controller_generation": _id(),
++            "event_clock": "current_recovery_application",
++            "scientific_output_closure": "unconfirmed",
++        },
++    )
++    result = _inspect(
++        tmp_path,
++        _event("session_started")
++        + _event(
++            "recovery",
++            details={
++                "incident_id": _id(),
++                "resolved_by": "spikeglx_progress",
++                "recovered_monotonic_ns": 200,
++                "incident_revision": 3,
++                "affected_resources": ["recording"],
++            },
++        )
++        + _event("session_ended", outcome="completed")
++        + terminal,
++    )
++    assert result.log_identity is not None
++    assert result.recovery_recorded
++
++
++def test_finished_reconciliation_must_match_configured_trial_id(
++    tmp_path: Path,
++) -> None:
++    configured_trial_id = _id()
++    event = _event(
++        "recovery",
++        trial_number=1,
++        outcome="completed",
++        details={
++            "component": "Finished",
++            "action": "reconcile exact output closure",
++            "trial_id": _id(),
++            "backend": "acquisition",
++            "outputs": [],
++            "initial_deadline_ns": 100,
++        },
++    )
++    result = _inspect(
++        tmp_path,
++        _event("session_started") + _event("trial_started", trial_number=1) + event,
++        trial_id=configured_trial_id,
++    )
++    assert result.log_identity is None
++    assert "Finished reconciliation" in (result.issue or "")
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index 92b7a2e..c4d3c0e 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -490,6 +490,105 @@ def test_loaded_camera_presets_cannot_claim_sdk_import_provenance(
+     assert settings.tracking.device.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+ 
+ 
++def test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic(
++    window: DashboardWindow,
++) -> None:
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.managed_configuration import (
++        ConfigurationPages,
++        ManagedConfiguration,
++    )
++
++    panel = window.devices.cameras
++    behavior, tracking = panel.drafts
++    behavior.enabled = True
++    behavior.values = {"trigger_clock": "Internal clock"}
++    tracking.enabled = True
++    tracking.values = {"trigger_clock": "External controller"}
++    panel.snapshot_draft = True
++    panel.table.setFocus()
++    window.protocol.session_mode.setCurrentText("Open-loop")
++    window.devices.projectors.configuration_for_submit = lambda display: display
++
++    base = pb.ExperimentConfiguration()
++    acquisition = base.backends.add(
++        backend_name="acquisition", enabled=True
++    ).acquisition
++    acquisition.behavioral.device.device_id = behavior.serial
++    acquisition.tracking.device.device_id = tracking.serial
++    before = base.SerializeToString(deterministic=True)
++    manager = ManagedConfiguration(
++        ConfigurationPages(
++            window.dashboard,
++            window.protocol,
++            window.recordings,
++            panel,
++            window.devices.projectors,
++            window.tracking,
++        )
++    )
++
++    with pytest.raises(ValueError, match="Tracking cam · Parameter file"):
++        manager.collect(base)
++    assert base.SerializeToString(deterministic=True) == before
++    assert panel.table.currentRow() == 1
++    assert panel.focusWidget() is panel.preset
++
++    tracking.values["trigger_source"] = "Line2"
++    proposal = manager.collect(base)
++    assert (
++        proposal.backends[0].acquisition.tracking.device.settings.trigger_source
++        == "Line2"
++    )
++    assert base.SerializeToString(deterministic=True) == before
++
++
++def test_camera_save_validation_error_routes_to_other_camera_row(
++    window: DashboardWindow,
++) -> None:
++    from cephvr.acquisition.config.validation import validate_configuration
++    from cephvr.acquisition.v1 import camera_pb2
++    from cephvr.control.v1 import types_pb2 as pb
++    from cephvr.gui.managed_cameras import ManagedCameras
++
++    panel = window.devices.cameras
++    panel.drafts[0].role = "Behavior cam"
++    panel.drafts[1].role = "Tracking cam"
++    behavior, tracking = panel.drafts
++    behavior_before = behavior.values.copy()
++    candidate = pb.ExperimentConfiguration()
++    acquisition = candidate.backends.add(
++        backend_name="acquisition", enabled=True
++    ).acquisition
++    acquisition.behavioral.enabled = True
++    acquisition.behavioral.device.device_id = behavior.serial
++    acquisition.behavioral.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
++    acquisition.behavioral.device.unaligned_free_running = True
++    acquisition.tracking.enabled = True
++    acquisition.tracking.device.device_id = tracking.serial
++    validation = validate_configuration(candidate)
++    issue = next(item for item in validation.issues if "tracking." in item.field_path)
++    message = (
++        f"configuration validation failed: {issue.field_path}: {issue.failure.message}"
++    )
++    cameras = ManagedCameras(panel, SimpleNamespace(), lambda *_: False)
++    cameras.pending = "save_camera_settings"
++    cameras.finished("save_camera_settings", False, message)
++
++    assert panel.table.currentRow() == 1
++    assert panel.focusWidget() is panel.trigger_source
++    assert behavior.values == behavior_before
++
++    panel.drafts[1].values["trigger_clock"] = "Internal clock"
++    acquisition.tracking.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
++    acquisition.tracking.device.unaligned_free_running = True
++    corrected = validate_configuration(candidate)
++    assert corrected.valid
++    cameras.pending = "save_camera_settings"
++    cameras.finished("save_camera_settings", True, "Completed")
++    assert "save_camera_settings: Completed" in panel.console.toPlainText()
++
++
+ def test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit(
+     window: DashboardWindow,
+ ) -> None:
+diff --git a/tests/supervisor/test_health.py b/tests/supervisor/test_health.py
+index c03fe9d..f6283f7 100644
+--- a/tests/supervisor/test_health.py
++++ b/tests/supervisor/test_health.py
+@@ -8,12 +8,17 @@ from collections.abc import Callable
+ from pathlib import Path
+ from uuid import uuid4
+ 
++import pytest
++
++from cephvr.acquisition.v1 import camera_pb2
++from cephvr.acquisition.v1 import messages_pb2 as acq
+ from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import types_pb2 as types
+ from cephvr.shared.clock import describe_host_clock, host_time_ns
+ from tests.supervisor.support import Context, make_runtime
+ 
+ from .support import (
++    _identity,
+     _worker_and_helper,
+     launch,
+ )
+@@ -82,6 +87,68 @@ async def test_worker_heartbeat_rejected_coordinator_heartbeat_accepted(
+     assert bad.failure.code == "WRONG_CONTEXT"
+ 
+ 
++@pytest.mark.asyncio
++@pytest.mark.parametrize("acknowledged", [False, True])
++async def test_camera_exit_during_retirement_ack_gap_is_scoped(
++    tmp_path: Path, acknowledged: bool
++) -> None:
++    from cephvr.shared.clock import describe_host_clock
++
++    runtime, native, _, _ = make_runtime(tmp_path)
++    owner = _identity("acquisition")
++    child = _identity("acquisition_behavioral_worker")
++    launch(runtime, native, owner, child, 71)
++    state = next(item for item in runtime.registry.states() if item.plan.child == child)
++    request = wire.ConfirmLaunchRequest(
++        command_id=str(uuid4()),
++        launch_command_id=state.plan.command_id,
++        owner=owner,
++        child=child,
++        pid=71,
++        creation_time_100ns=171,
++    )
++    if acknowledged:
++        context = acq.WorkerContext(
++            worker=child,
++            owner=owner,
++            camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++        )
++        operation_id = str(uuid4())
++        operation = types.OperationState(
++            context=types.OperationContext(command_id=operation_id),
++            command="Cleanup",
++            complete=True,
++            succeeded=True,
++        )
++        evidence = acq.WorkerLifecycleEvidence(
++            source=context,
++            operation=types.OperationContext(command_id=operation_id),
++            state_revision=1,
++        )
++        evidence.cleanup.resources.add(resource="camera-device", released=True)
++        request.acquisition_worker_cleanup.operation.source.CopyFrom(context)
++        request.acquisition_worker_cleanup.operation.operation.CopyFrom(operation)
++        request.acquisition_worker_cleanup.cleanup.CopyFrom(evidence)
++        receipt = runtime.registry.confirm(request, describe_host_clock())
++        assert receipt.phase == wire.LAUNCH_PHASE_OPERATIONAL
++
++    native.jobs[state.containment_job_name] = []
++    exited = runtime.registry.states()
++    assert exited[0].phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
++    assert exited[0].failure.code == "CHILD_EXITED"
++    runtime.health._check_launch_states(exited, host_time_ns())
++    if acknowledged:
++        assert runtime.shutdown_state.interruption is None
++        assert (
++            runtime.registry.confirm(request, describe_host_clock()).phase
++            == wire.LAUNCH_PHASE_RELEASED
++        )
++    else:
++        assert runtime.shutdown_state.interruption is not None
++        if runtime.shutdown_state.safety_task is not None:
++            await runtime.shutdown_state.safety_task
++
++
+ async def test_configuration_heartbeats_survive_registered_setup_scope(
+     tmp_path: Path,
+ ) -> None:
+@@ -233,6 +300,30 @@ async def test_pre_session_error_without_isolation_proof_fences_safety(
+     assert json.loads(report_path.read_text())["spikeglx_stop_unconfirmed"] is False
+ 
+ 
++async def test_pending_fault_still_escalates_during_accepted_shutdown(
++    tmp_path: Path,
++) -> None:
++    runtime, _, outbound, _ = make_runtime(tmp_path)
++    report = types.ErrorReport(
++        error_id=str(uuid4()),
++        source=runtime.controller,
++        occurred_monotonic_ns=host_time_ns(),
++        failure=types.Failure(code="UNCLASSIFIED", message="pending fault"),
++    )
++    runtime.shutdown_state.shutdown_request = wire.ApplicationShutdownRequest(
++        command_id=str(uuid4())
++    ).SerializeToString()
++    runtime.health_state.errors[report.error_id] = report
++    runtime.health_state.pending_error_deadlines[report.error_id] = host_time_ns() - 1
++
++    runtime.health._expire_pending_errors(host_time_ns())
++    assert runtime.shutdown_state.interruption is not None
++    assert runtime.shutdown_state.interruption.reason.code == "UNCLASSIFIED"
++    assert runtime.shutdown_state.safety_task is not None
++    await runtime.shutdown_state.safety_task
++    assert len(outbound.interruptions) == 1
++
++
+ async def test_unclassified_error_fences_safety(tmp_path: Path) -> None:
+     runtime, _, outbound, caller = make_runtime(tmp_path)
+     work = types.WorkContext(
+diff --git a/tests/supervisor/test_registry.py b/tests/supervisor/test_registry.py
+index cc7ba95..3fb72f2 100644
+--- a/tests/supervisor/test_registry.py
++++ b/tests/supervisor/test_registry.py
+@@ -7,6 +7,8 @@ from uuid import uuid4
+ import pytest
+ 
+ from cephvr.acquisition.identity import FFMPEG_ROLE
++from cephvr.acquisition.v1 import camera_pb2
++from cephvr.acquisition.v1 import messages_pb2 as acq
+ from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import types_pb2 as types
+ from cephvr.shared.clock import (
+@@ -17,7 +19,7 @@ from cephvr.supervisor.registry import LaunchError, LaunchRegistry
+ from cephvr.visual_stimulus.identity import FFMPEG_ROLE as VISUAL_STIMULUS_FFMPEG_ROLE
+ from tests.supervisor.support import Native
+ 
+-from .support import EXE, WORKER_ROLE, _identity, _launch
++from .support import EXE, WORK, WORKER_ROLE, _identity, _launch
+ 
+ # Idempotent release and retained launch capacity.
+ 
+@@ -119,42 +121,259 @@ def test_gui_release_keeps_unknown_native_membership_unconfirmed() -> None:
+     )
+ 
+ 
+-def test_capacity_counts_only_live_launches_and_replay_survives_until_pruned() -> None:
++def test_capacity_preserves_replay_through_work_finalization_retention(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
+     native = Native()
+-    registry = LaunchRegistry(native, 15_000_000_000, max_launches=3)
++    now = 100
++    monkeypatch.setattr("cephvr.supervisor.registry.host_time_ns", lambda: now)
++    registry = LaunchRegistry(native, 15_000_000_000, max_launches=1, retention_ns=100)
+     owner = _identity("acquisition")
+-    released = []
+-    for pid in range(1, 8):
+-        state = _launch(
+-            registry, native, owner, _identity(WORKER_ROLE), pid, python=True
+-        )
+-        native.jobs[state.containment_job_name] = []
+-        registry.release(state.plan.command_id, obligations_met=True)
+-        released.append(state)
+-    assert len(registry._entries) <= 3
+-    live = [
+-        _launch(registry, native, owner, _identity(WORKER_ROLE), 20 + i, python=True)
+-        for i in range(3)
+-    ]
+-    # Only live launches fill capacity: a fourth live launch is refused.
++    state = _launch(registry, native, owner, _identity(WORKER_ROLE), 1, python=True)
++    native.jobs[state.containment_job_name] = []
++    released = registry.release(state.plan.command_id, obligations_met=True)
++    assert registry.plan(state.plan) == released
++
++    now = 1_000
++    next_request = wire.PlanLaunchRequest(
++        command_id=str(uuid4()),
++        owner=owner,
++        child=_identity(WORKER_ROLE),
++        executable=EXE,
++        python_worker=True,
++        stop_method="grpc_shutdown",
++    )
+     with pytest.raises(LaunchError, match="capacity"):
+-        registry.plan(
+-            wire.PlanLaunchRequest(
+-                command_id=str(uuid4()),
+-                owner=owner,
+-                child=_identity(WORKER_ROLE),
+-                executable=EXE,
+-                python_worker=True,
+-                stop_method="grpc_shutdown",
+-            )
++        registry.plan(next_request)
++
++    # Released work remains pinned until the exact session is finalized.
++    now = 2_000
++    registry.finalize_work(WORK.session.session_id, finalized_ns=now)
++    now = 2_099
++    with pytest.raises(LaunchError, match="capacity"):
++        registry.plan(next_request)
++    now = 2_101
++    admitted = registry.plan(next_request)
++    assert admitted.plan.command_id == next_request.command_id
++    assert state.plan.command_id not in registry._entries
++
++    # Finalization may precede exact worker exit; the retention window starts
++    # only once both finalization and release have happened.
++    later = LaunchRegistry(native, 15_000_000_000, max_launches=1, retention_ns=100)
++    now = 3_000
++    delayed_release = _launch(
++        later, native, owner, _identity(WORKER_ROLE), 10, python=True
++    )
++    later.finalize_work(WORK.session.session_id, finalized_ns=3_100)
++    now = 3_200
++    native.jobs[delayed_release.containment_job_name] = []
++    later.release(delayed_release.plan.command_id, obligations_met=True)
++    now = 3_299
++    with pytest.raises(LaunchError, match="capacity"):
++        later.plan(next_request)
++    now = 3_301
++    assert later.plan(next_request).plan.command_id == next_request.command_id
++
++
++def _camera_cleanup_proof(
++    worker: wire.LaunchState,
++    *,
++    include_resource: bool = True,
++    output_closure: int | None = None,
++) -> wire.AcquisitionWorkerCleanupProof:
++    source = acq.WorkerContext(
++        worker=worker.plan.child,
++        owner=worker.plan.owner,
++        work=WORK,
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++    )
++    cleanup_id = str(uuid4())
++    operation = acq.WorkerOperationReport(
++        source=source,
++        operation=types.OperationState(
++            context=types.OperationContext(command_id=cleanup_id),
++            command="Cleanup",
++            work=WORK,
++            complete=True,
++            succeeded=True,
++        ),
++    )
++    cleanup = acq.WorkerLifecycleEvidence(
++        source=source,
++        operation=types.OperationContext(command_id=cleanup_id),
++        state_revision=1,
++    )
++    cleanup.cleanup.SetInParent()
++    if include_resource:
++        cleanup.cleanup.resources.add(resource="camera-device", released=True)
++    if output_closure is not None:
++        cleanup.cleanup.outputs.add(output_key="camera-video", closure=output_closure)
++    return wire.AcquisitionWorkerCleanupProof(operation=operation, cleanup=cleanup)
++
++
++def test_camera_release_requires_exact_retained_cleanup_and_empty_job() -> None:
++    native = Native()
++    registry = LaunchRegistry(native, 15_000_000_000)
++    worker = _launch(
++        registry,
++        native,
++        _identity("acquisition"),
++        _identity(WORKER_ROLE),
++        1,
++        python=True,
++    )
++    request = wire.ConfirmLaunchRequest(
++        command_id=str(uuid4()),
++        launch_command_id=worker.plan.command_id,
++        owner=worker.plan.owner,
++        child=worker.plan.child,
++        pid=1,
++        creation_time_100ns=101,
++        acquisition_worker_cleanup=_camera_cleanup_proof(worker),
++    )
++    acknowledged = registry.confirm(request, describe_host_clock())
++    assert acknowledged.phase == wire.LAUNCH_PHASE_OPERATIONAL
++    assert registry.camera_cleanup_acknowledged(worker.plan.command_id)
++    assert (
++        registry.confirm(request, describe_host_clock()).phase
++        == wire.LAUNCH_PHASE_OPERATIONAL
++    )
++    changed_proof = wire.ConfirmLaunchRequest.FromString(request.SerializeToString())
++    changed_proof.command_id = str(uuid4())
++    changed_proof.acquisition_worker_cleanup.cleanup.state_revision += 1
++    with pytest.raises(LaunchError, match="proof changed"):
++        registry.confirm(changed_proof, describe_host_clock())
++    native.jobs[worker.containment_job_name] = []
++    assert (
++        registry.refresh(worker.plan.command_id).phase
++        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
++    )
++    released = registry.confirm(request, describe_host_clock())
++    assert released.phase == wire.LAUNCH_PHASE_RELEASED
++    assert (
++        registry.confirm(request, describe_host_clock()).phase
++        == wire.LAUNCH_PHASE_RELEASED
++    )
++
++
++@pytest.mark.parametrize("include_resource", [False, True])
++def test_camera_release_rejects_incomplete_proof_or_live_job(
++    include_resource: bool,
++) -> None:
++    native = Native()
++    registry = LaunchRegistry(native, 15_000_000_000)
++    worker = _launch(
++        registry,
++        native,
++        _identity("acquisition"),
++        _identity(WORKER_ROLE),
++        2,
++        python=True,
++    )
++    if include_resource:
++        native.jobs[worker.containment_job_name] = [(2, 102, worker.plan.executable)]
++    else:
++        native.jobs[worker.containment_job_name] = []
++    if include_resource:
++        registry._block(
++            registry._entries[worker.plan.command_id],
++            "TEST_RETIRED",
++            "exercise live-job release rejection",
+         )
+-    assert all(item.plan.command_id in registry._entries for item in live)
+-    # A retained released entry still replays its exact plan idempotently.
+-    registry2 = LaunchRegistry(native, 15_000_000_000, max_launches=4)
+-    state = _launch(registry2, native, owner, _identity(WORKER_ROLE), 90, python=True)
+-    native.jobs[state.containment_job_name] = []
+-    registry2.release(state.plan.command_id, obligations_met=True)
+-    assert registry2.plan(state.plan).phase == wire.LAUNCH_PHASE_RELEASED
++    assert (
++        registry.refresh(worker.plan.command_id).phase
++        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
++    )
++    request = wire.ConfirmLaunchRequest(
++        command_id=str(uuid4()),
++        launch_command_id=worker.plan.command_id,
++        owner=worker.plan.owner,
++        child=worker.plan.child,
++        pid=2,
++        creation_time_100ns=102,
++        acquisition_worker_cleanup=_camera_cleanup_proof(
++            worker, include_resource=include_resource
++        ),
++    )
++    with pytest.raises(LaunchError):
++        registry.confirm(request, describe_host_clock())
++    assert (
++        registry._entries[worker.plan.command_id].state.phase
++        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
++    )
++
++
++def test_camera_release_accepts_failed_output_cleanup_but_rejects_unknown_closure() -> (
++    None
++):
++    for closure, accepted in (
++        (types.OUTPUT_CLOSURE_FAILED, True),
++        (types.OUTPUT_CLOSURE_UNCONFIRMED, False),
++    ):
++        native = Native()
++        registry = LaunchRegistry(native, 15_000_000_000)
++        worker = _launch(
++            registry,
++            native,
++            _identity("acquisition"),
++            _identity(WORKER_ROLE),
++            3,
++            python=True,
++        )
++        request = wire.ConfirmLaunchRequest(
++            command_id=str(uuid4()),
++            launch_command_id=worker.plan.command_id,
++            owner=worker.plan.owner,
++            child=worker.plan.child,
++            pid=3,
++            creation_time_100ns=103,
++            acquisition_worker_cleanup=_camera_cleanup_proof(
++                worker, include_resource=False, output_closure=closure
++            ),
++        )
++        if accepted:
++            assert (
++                registry.confirm(request, describe_host_clock()).phase
++                == wire.LAUNCH_PHASE_OPERATIONAL
++            )
++            native.jobs[worker.containment_job_name] = []
++            registry.refresh(worker.plan.command_id)
++            assert (
++                registry.confirm(request, describe_host_clock()).phase
++                == wire.LAUNCH_PHASE_RELEASED
++            )
++        else:
++            with pytest.raises(LaunchError, match="incomplete or mismatched"):
++                registry.confirm(request, describe_host_clock())
++
++
++def test_camera_process_exit_without_cleanup_proof_does_not_release() -> None:
++    native = Native()
++    registry = LaunchRegistry(native, 15_000_000_000)
++    worker = _launch(
++        registry,
++        native,
++        _identity("acquisition"),
++        _identity(WORKER_ROLE),
++        4,
++        python=True,
++    )
++    native.jobs[worker.containment_job_name] = []
++    registry.refresh(worker.plan.command_id)
++    request = wire.ConfirmLaunchRequest(
++        command_id=str(uuid4()),
++        launch_command_id=worker.plan.command_id,
++        owner=worker.plan.owner,
++        child=worker.plan.child,
++        pid=4,
++        creation_time_100ns=104,
++    )
++    with pytest.raises(LaunchError, match="requires reconciliation"):
++        registry.confirm(request, describe_host_clock())
++    assert (
++        registry._entries[worker.plan.command_id].state.phase
++        == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
++    )
+ 
+ 
+ def test_tolerant_states_keep_other_entries_when_one_job_is_unreadable() -> None:
+diff --git a/tests/supervisor/test_shutdown.py b/tests/supervisor/test_shutdown.py
+index e571da4..fe67ba0 100644
+--- a/tests/supervisor/test_shutdown.py
++++ b/tests/supervisor/test_shutdown.py
+@@ -149,6 +149,62 @@ async def test_lost_controller_with_active_session_interrupts_before_shutdown(
+     assert not (tmp_path / "reports").exists()
+ 
+ 
++async def test_controller_loss_during_worker_cleanup_interrupts_with_original_bounds(
++    tmp_path: Path,
++) -> None:
++    runtime, _, outbound, _ = await _registered_visual_stimulus(tmp_path)
++    calls: list[str] = []
++    waiting_for_blocker = asyncio.Event()
++    interrupted = asyncio.Event()
++    release_blocker = asyncio.Event()
++
++    async def interrupt_backend(target, request, *, deadline_ns) -> None:  # type: ignore[no-untyped-def]
++        calls.append(f"interrupt:{request.reason.code}")
++        interrupted.set()
++
++    async def shutdown_backend(target, request, *, deadline_ns) -> None:  # type: ignore[no-untyped-def]
++        calls.append("shutdown")
++
++    outbound.interrupt_backend = interrupt_backend  # type: ignore[attr-defined]
++    outbound.shutdown_backend = shutdown_backend  # type: ignore[attr-defined]
++
++    runtime.registration_state.context.policies.recovery_ns = 2_000_000_000
++
++    def blockers():  # type: ignore[no-untyped-def]
++        waiting_for_blocker.set()
++        return [] if release_blocker.is_set() else [object()]
++
++    runtime.recovery.cleanup_blockers = blockers  # type: ignore[method-assign]
++    key = ("controller", runtime.controller.generation)
++    runtime.health_state.last_heartbeat[key] = host_time_ns()
++    runtime.health_state.heartbeat_reports[key] = types.HeartbeatReport(
++        source=runtime.controller,
++        sent_monotonic_ns=host_time_ns(),
++        session_phase=types.SESSION_PHASE_RUNNING,
++    )
++    runtime.shutdown_state.shutdown_request = wire.ApplicationShutdownRequest(
++        command_id=str(uuid4())
++    ).SerializeToString()
++    shutdown_deadline = host_time_ns() + 5_500_000_000
++    cleanup_deadline = host_time_ns() + 5_000_000_000
++    runtime.shutdown_state.shutdown_deadline_ns = shutdown_deadline
++    runtime.shutdown_state.cleanup_deadline_ns = cleanup_deadline
++    runtime.shutdown.graceful_exit_ns = 1
++    runtime.shutdown.terminate_exit_ns = 1
++
++    task = asyncio.create_task(runtime.shutdown.shutdown_owned())
++    await asyncio.wait_for(waiting_for_blocker.wait(), timeout=1)
++    runtime.health_state.last_heartbeat[key] = 1
++    await asyncio.wait_for(interrupted.wait(), timeout=1)
++    release_blocker.set()
++    await task
++
++    assert calls == ["interrupt:CONTROLLER_LOST_DURING_SHUTDOWN", "shutdown"]
++    assert runtime.shutdown_state.shutdown_interrupted
++    assert runtime.shutdown_state.shutdown_deadline_ns == shutdown_deadline
++    assert runtime.shutdown_state.cleanup_deadline_ns == cleanup_deadline
++
++
+ class _CleanupControl:
+     """Worker control whose cleanup optionally runs to the original deadline."""
+ 
+diff --git a/src/cephvr/supervisor/camera_release.py b/src/cephvr/supervisor/camera_release.py
+new file mode 100644
+index 0000000..63be211
+--- /dev/null
++++ b/src/cephvr/supervisor/camera_release.py
+@@ -0,0 +1,96 @@
++"""Typed owner proof required before releasing a retired camera worker (E08)."""
++
++from cephvr.acquisition.identity import camera_for_process_role
++from cephvr.acquisition.v1 import messages_pb2 as acq
++from cephvr.control.v1 import services_pb2 as wire
++from cephvr.shared.cleanup_outputs import cleanup_output_discharged
++from cephvr.shared.identity import require_uuid4
++
++
++def camera_cleanup_proof_matches(
++    proof: wire.AcquisitionWorkerCleanupProof, expected: acq.WorkerContext
++) -> bool:
++    """Check exact worker/work binding and nonempty cleanup completion evidence."""
++    operation = proof.operation
++    cleanup = proof.cleanup
++    try:
++        require_uuid4(cleanup.operation.command_id)
++    except ValueError:
++        return False
++    if (
++        operation.source != expected
++        or cleanup.source != expected
++        or operation.operation.command != "Cleanup"
++        or not operation.operation.complete
++        or not operation.operation.HasField("succeeded")
++        or not operation.operation.succeeded
++        or operation.operation.failure.code
++        or operation.operation.failure.message
++        or operation.operation.context.command_id != cleanup.operation.command_id
++        or operation.operation.work != expected.work
++        or cleanup.WhichOneof("evidence") != "cleanup"
++        or not cleanup.HasField("state_revision")
++    ):
++        return False
++    resources = cleanup.cleanup.resources
++    outputs = cleanup.cleanup.outputs
++    resource_names = [item.resource for item in resources]
++    output_keys = [item.output_key for item in outputs]
++    if (
++        len(resource_names) != len(set(resource_names))
++        or any(
++            not item.resource
++            or not item.released
++            or item.failure.code
++            or item.failure.message
++            for item in resources
++        )
++        or len(output_keys) != len(set(output_keys))
++        or any(
++            not item.output_key or not cleanup_output_discharged(item)
++            for item in outputs
++        )
++        or not resources
++        and not outputs
++    ):
++        return False
++    return True
++
++
++def camera_release_request_matches(
++    request: wire.ConfirmLaunchRequest,
++    plan: wire.PlanLaunchRequest,
++    state: wire.LaunchState,
++) -> bool:
++    """Bind owner cleanup proof to one exact retired camera process generation."""
++    try:
++        camera = camera_for_process_role(plan.child.role)
++    except ValueError:
++        return False
++    if (
++        plan.owner.role != "acquisition"
++        or not plan.python_worker
++        or state.phase
++        not in (wire.LAUNCH_PHASE_OPERATIONAL, wire.LAUNCH_PHASE_CLEANUP_REQUIRED)
++        or (
++            state.phase == wire.LAUNCH_PHASE_CLEANUP_REQUIRED
++            and state.failure.code != "CHILD_EXITED"
++        )
++        or request.owner != plan.owner
++        or request.child != plan.child
++        or not request.HasField("pid")
++        or not request.HasField("creation_time_100ns")
++        or not state.HasField("pid")
++        or not state.HasField("creation_time_100ns")
++        or request.pid != state.pid
++        or request.creation_time_100ns != state.creation_time_100ns
++        or request.HasField("endpoint")
++        or request.HasField("host_clock")
++        or request.HasField("creation_failed_without_child")
++        or request.native_cleanup_complete
++    ):
++        return False
++    expected = acq.WorkerContext(worker=plan.child, owner=plan.owner, camera=camera)
++    if plan.HasField("work"):
++        expected.work.CopyFrom(plan.work)
++    return camera_cleanup_proof_matches(request.acquisition_worker_cleanup, expected)
+diff --git a/src/cephvr/supervisor/launch_validation.py b/src/cephvr/supervisor/launch_validation.py
+new file mode 100644
+index 0000000..bfef113
+--- /dev/null
++++ b/src/cephvr/supervisor/launch_validation.py
+@@ -0,0 +1,88 @@
++"""Pure validation for immutable E08 launch plans."""
++
++from __future__ import annotations
++
++import ntpath
++
++from cephvr.acquisition.identity import ACQUISITION_WORKER_ROLES
++from cephvr.acquisition.identity import FFMPEG_ROLES as ACQ_FFMPEG_ROLES
++from cephvr.control.v1 import services_pb2 as wire
++from cephvr.controller.microcontroller.identity import FIRMWARE_UPLOAD_ROLE
++from cephvr.shared.identity import require_uuid4
++from cephvr.visual_stimulus.identity import FFMPEG_ROLES as VISUAL_STIMULUS_FFMPEG_ROLES
++
++BACKEND_ROLES = frozenset({"acquisition", "visual_stimulus", "tracking"})
++TOP_LEVEL_ROLES = BACKEND_ROLES | {"controller", "gui"}
++
++
++class LaunchError(ValueError):
++    def __init__(self, code: str, message: str) -> None:
++        self.code = code
++        super().__init__(message)
++
++
++def launch_work_key(request: wire.PlanLaunchRequest) -> str:
++    kind = request.work.WhichOneof("work")
++    if kind == "session":
++        return require_uuid4(request.work.session.session_id)
++    if kind == "trial":
++        return require_uuid4(request.work.trial.session.session_id)
++    raise LaunchError("INVALID_WORK", "launch work must identify a session")
++
++
++def validate_plan(request: wire.PlanLaunchRequest) -> None:
++    require_uuid4(request.command_id)
++    require_uuid4(request.owner.generation)
++    require_uuid4(request.child.generation)
++    if not request.owner.role or not request.child.role or not request.executable:
++        raise LaunchError("INVALID_LAUNCH", "owner, child and executable are required")
++    if not ntpath.isabs(request.executable):
++        raise LaunchError(
++            "INVALID_EXECUTABLE", "launch executable must be an absolute path"
++        )
++    if request.stop_method not in {"grpc_shutdown", "owner_stdin_eof"} and not (
++        request.child.role == FIRMWARE_UPLOAD_ROLE
++        and request.stop_method == "owner_job_terminate"
++    ):
++        raise LaunchError("INVALID_STOP_METHOD", "unsupported child stop method")
++    if request.python_worker and request.stop_method != "grpc_shutdown":
++        raise LaunchError("INVALID_STOP_METHOD", "Python child requires gRPC shutdown")
++    if request.child.role == "supervisor":
++        raise LaunchError("INVALID_CHILD", "launcher alone creates supervisor")
++    if request.child.role == FIRMWARE_UPLOAD_ROLE and (
++        request.owner.role != "controller"
++        or request.python_worker
++        or request.stop_method != "owner_job_terminate"
++        or request.HasField("work")
++        or not request.parent_operation.command_id
++    ):
++        raise LaunchError(
++            "INVALID_OWNER",
++            "firmware upload requires its controller Configuration owner and operation",
++        )
++    if request.child.role == FIRMWARE_UPLOAD_ROLE:
++        require_uuid4(request.parent_operation.command_id)
++    if request.child.role in VISUAL_STIMULUS_FFMPEG_ROLES:
++        if request.owner.role != "visual_stimulus_renderer" or not request.HasField(
++            "work"
++        ):
++            raise LaunchError(
++                "INVALID_OWNER",
++                "Visual Stimulus media children require their exact renderer owner and work",
++            )
++    if (
++        request.child.role in ACQ_FFMPEG_ROLES
++        and request.owner.role not in ACQUISITION_WORKER_ROLES
++    ):
++        raise LaunchError(
++            "INVALID_OWNER",
++            "acquisition media children require an acquisition worker owner",
++        )
++    if request.child.role in TOP_LEVEL_ROLES and request.owner.role != "supervisor":
++        raise LaunchError("INVALID_OWNER", "top-level launch owner is invalid")
++    if request.HasField("work") and not request.HasField("parent_operation"):
++        raise LaunchError(
++            "MISSING_OPERATION", "work-scoped launch requires parent operation"
++        )
++    if request.HasField("work"):
++        launch_work_key(request)

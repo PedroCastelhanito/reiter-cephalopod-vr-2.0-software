@@ -96,6 +96,34 @@ async def test_begin_and_close_reconcile_until_exact_backend_state_arrives() -> 
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("owner_field", ["configuration_edit", "camera_operation"])
+async def test_begin_rejects_while_camera_configuration_is_owned(
+    owner_field: str,
+) -> None:
+    controller = TrackingDiagnosticController.__new__(TrackingDiagnosticController)
+    controller._authorize = lambda _command: ""
+    controller.lifecycle = SimpleNamespace(
+        lock=asyncio.Lock(),
+        attempt=None,
+        session=pb.SessionState(phase=pb.SESSION_PHASE_CONFIGURATION),
+    )
+    controller.configuration = SimpleNamespace(revision=7)
+    controller.device = SimpleNamespace(configuration_edit=None, camera_operation=None)
+    setattr(controller.device, owner_field, object())
+    command = svc.OperatorCommand()
+    command.operator.command_id = str(uuid4())
+
+    admission = await controller.begin(
+        svc.BeginTrackingDiagnosticRequest(
+            command=command, expected_configuration_revision=7
+        )
+    )
+
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    assert "camera configuration or camera operation" in admission.failure.message
+
+
+@pytest.mark.asyncio
 async def test_release_requires_both_exact_owner_receipts() -> None:
     controller = TrackingDiagnosticController.__new__(TrackingDiagnosticController)
     controller.generation = str(uuid4())

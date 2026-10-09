@@ -1,0 +1,16 @@
+Controller implementation handoff — 2026-10-09
+
+Changes made
+- E04/E06: `recovery_inspection.py` now classifies only explicit in-session incident reconciliation, exact late-Finished output reconciliation, and terminal startup-recovery records. Finished reconciliation must match the SESSION_CONFIG trial ID, backend, initial deadline and unique output keys with recognized non-unspecified closure names. It may appear before or after session_ended but does not become terminal; startup recovery still requires completed outcome, session_ended, all trials finished, canonical recovery details, and no later log records. Unknown/malformed recovery records remain unconfirmed. Tests cover active and post-session late Finished records, multiple backends, incident reconciliation, trial-ID mismatch, malformed events, and terminal-last enforcement.
+- E06/E08: extracted `CleanupWorkflow.cancel_attempt_prompts()` and reused it from CancelSetup and pre-activation Shutdown. This settles only prompts owned by that attempt; shutdown cleanup scheduling and deadlines are unchanged. Added a pre-activation shutdown regression.
+- E12: `SpikeGLXIOOwner.run()` observes the shielded asyncio wrapper after timeout or caller cancellation. It consumes the eventual exception and logs late success/failure/cancellation while native `_pending` ownership continues until the executor future returns. Tests cover timeout and caller cancellation with a late exception and confirm a second call stays busy until return.
+- ARCH-002 simplification: removed `DeviceState.completed_camera_operation`, which had only been assigned and read by tests. Exact terminal evidence remains in `camera_operations` and the existing status-retention ledger; affected tests now assert that authoritative retention, including the admission-timeout fixture.
+
+Validation
+- Focused pytest selection: 142 passed (`test_startup_recovery`, `test_lifecycle_commands`, `test_lifecycle_reports`, `test_spikeglx`, `test_camera_evidence`, `test_camera_configuration`, `test_device_admission`).
+- Ruff check: passed for all 12 affected source/test files.
+- Ruff format check: passed for all 12 affected source/test files.
+- Win32-target mypy: passed for `src/cephvr/controller` and `src/cephvr/synchronization` (113 files).
+- Backend boundaries: 0 violations across 632 modules; existing size/cohesion advisories remain.
+- `git diff --check`: passed.
+- No hardware, Windows runtime or rig acceptance was run. No TODO/LOG/report/audit evidence files were edited; root owns their reconciliation.

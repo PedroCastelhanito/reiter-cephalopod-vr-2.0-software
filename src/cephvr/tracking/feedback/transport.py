@@ -7,6 +7,7 @@ from collections.abc import Callable
 
 from cephvr.platform.windows.message_server import MessageListener
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.tracking.feedback.delivery import FeedbackDelivery
 from cephvr.visual_stimulus.v1 import data_pb2 as data
 from cephvr.visual_stimulus.v1 import runtime_pb2 as wire
@@ -98,7 +99,7 @@ class FeedbackTransport:
             if hasattr(listener, "api"):
                 listener.cancel()
         for thread in self.threads:
-            thread.join(max(0, (deadline - self.clock()) / 1e9))
+            thread.join(remaining_seconds(deadline, clock=self.clock))
         if any(thread.is_alive() for thread in self.threads):
             return False
         for listener in self.listeners:

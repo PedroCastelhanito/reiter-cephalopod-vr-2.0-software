@@ -34,6 +34,7 @@ from cephvr.controller.state import (
     LimitsState,
     Watch,
 )
+from cephvr.shared.commands import CommandLedger
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_pb
 from tests.controller.support_components import _id, _runtime, default_limits
 from tests.visual_stimulus.support import valid_display_json
@@ -86,6 +87,16 @@ class _FailingBackend:
 async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
     env = _Env()
     retention = CameraStatusRetention(env.device, clock=lambda: env.now)
+    generation = _id()
+    retention.bind_ledger(
+        CommandLedger(
+            generation,
+            10_000,
+            max_records=16,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        )
+    )
     camera = CameraCommands(
         lifecycle=env.lifecycle,
         configuration=env.configuration,
@@ -93,7 +104,7 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
         backends={},
         projections=cast(Any, None),
         file_policy_loader=None,
-        generation=_id(),
+        generation=generation,
         limits=_limits(),
         clock=lambda: env.now,
         hooks=env.hooks,
@@ -102,7 +113,10 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
     child = _id()
     deadline = env.now + 500
 
-    def select(request: svc.CameraCommandRequest) -> CameraSelection:
+    def select(
+        request: svc.CameraCommandRequest, *, allow_stale_stop_run: bool = False
+    ) -> CameraSelection:
+        _ = request, allow_stale_stop_run
         return CameraSelection(
             cast(BackendPort, _FailingBackend()),
             1,
@@ -111,7 +125,14 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
             None,
         )
 
-    def dispatch(request: Any, selection: Any, policy: Any) -> CameraDispatch:
+    def dispatch(
+        request: Any,
+        selection: Any,
+        policy: Any,
+        *,
+        deadline_ns: int | None = None,
+    ) -> CameraDispatch:
+        _ = deadline_ns
         operator_id = request.command.operator.command_id
         env.device.camera_operation = CameraOperation(
             operator_id,
@@ -123,6 +144,7 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
             deadline,
             False,
         )
+        retention.reserve(env.device.camera_operation)
         env.ops.operation(operator_id, "ExecuteCameraCommand")
         return CameraDispatch(
             selection.backend, svc.AcquisitionCameraCommand(), child, deadline
@@ -151,7 +173,7 @@ async def test_camera_admission_failure_keeps_slot_until_deadline() -> None:
     # but keep manual effects admitted in case it was delivered.
     assert operation.admission_unconfirmed
     assert env.device.camera_operation is None
-    assert env.device.completed_camera_operation is operation
+    assert camera.status_retention.find(operation.child_id) is operation
     assert env.device.camera_operation_changed.is_set()
 
 

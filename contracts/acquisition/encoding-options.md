@@ -130,7 +130,8 @@ after previous forced time + F (`expr:if(isnan(prev_forced_t),1,gte(t,prev_force
 Use locale-independent decimal seconds. This avoids a burst of catch-up keyframes
 after a gap. Request independently decodable IDR boundaries where the selected codec
 uses them, and fragment on keyframes with hybrid-fragmented MP4. Additional encoder
-keyframes are permitted. No timer fabricates a frame; F is a target, not a loss bound.
+keyframes are permitted. Fragment scheduling does not create source images; F is a
+target, not a loss bound. A08's explicit duplicate slots remain part of prepared input.
 
 Use passthrough frame synchronization so FFmpeg neither duplicates nor drops input
 frames: input frame n is video frame n at n / nominal rate (A08). The deferred rig

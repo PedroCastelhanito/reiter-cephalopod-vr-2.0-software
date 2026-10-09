@@ -10,6 +10,7 @@ from typing import Literal
 from uuid import uuid4
 
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.tracking.config.models.records import (
     Point,
     PoseObservation,
@@ -115,7 +116,7 @@ class PoseWorker:
             )
             self.stopping = True
             self.condition.notify()
-        self.thread.join(max(0, (deadline - self.clock()) / 1e9))
+        self.thread.join(remaining_seconds(deadline, clock=self.clock))
         return self.closed and not self.thread.is_alive()
 
     def _run(self) -> None:

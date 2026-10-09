@@ -165,6 +165,9 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             controller=controller,
             resolution=self.configuration_resolution,
             device_status=self.device_status,
+            pulse=self.state.pulse,
+            serial=serial,
+            preview=self.manual_preview_pulse,
             lock=self.lock,
             clock=clock,
         )
@@ -275,6 +278,17 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             configuration_resolution=self.configuration_resolution,
             trial_lifecycle=self.trial_lifecycle,
         )
+        self.manual_devices.bind_retained_operation_reconciler(
+            lambda record, child, retained, deadline, ingress: (
+                self.evidence.reconcile_retained_operation(
+                    record,
+                    child,
+                    retained,
+                    deadline_ns=deadline,
+                    ingress_ns=ingress,
+                )
+            )
+        )
         self.incidents = IncidentScopeOwner(
             identity=identity,
             session_slot=self.state.session_slot,
@@ -319,7 +333,7 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
             outcome.failure.code,
             outcome.failure.message,
         )
-        if deadline_ns <= 0:
+        if deadline_ns <= 0 or self.clock() >= deadline_ns:
             return
         if method in {"ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"} and (
             command.work.WhichOneof("work") is None
@@ -344,7 +358,17 @@ class AcquisitionCoordinatorRuntime(CoordinatorOperations):
                 ),
             )
         )
-        await self.controller.report_lifecycle(report, deadline_ns=deadline_ns)
+        receipt = await self.controller.report_lifecycle(
+            report, deadline_ns=deadline_ns
+        )
+        if (
+            method == "ApplyCameraSettings"
+            and receipt.result == control.COMMAND_RESULT_ACCEPTED
+        ):
+            try:
+                await self.manual_devices.retire_failed_edit(command.command_id)
+            except (RuntimeError, ValueError):
+                pass
 
     async def setup_session(
         self, request: wire.SetupSessionRequest, *, deadline_ns: int

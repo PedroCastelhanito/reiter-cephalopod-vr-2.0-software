@@ -7,7 +7,9 @@ from collections.abc import Callable
 
 from cephvr.acquisition.coordinator.commands import retain_worker_command
 from cephvr.acquisition.coordinator.manual_pulse_observation import (
+    invalidate_released_idle_proof,
     retain_applied_pulse_state,
+    retain_observation,
 )
 from cephvr.acquisition.coordinator.trial_helpers import _external_roles
 from cephvr.acquisition.coordinator.trial_lifecycle import TrialLifecycleReports
@@ -24,6 +26,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
+from cephvr.shared.deadlines import remaining_seconds
 
 
 class TrialPulseBoundaries:
@@ -64,11 +67,15 @@ class TrialPulseBoundaries:
             or not observation.state.configuration_valid
         ):
             raise RuntimeError("MCU state is not valid before trial preparation")
-        self.pulse.observation = mcu.MicrocontrollerObservation.FromString(
-            observation.SerializeToString(deterministic=True)
+        retain_observation(
+            self.pulse,
+            mcu.MicrocontrollerObservation.FromString(
+                observation.SerializeToString(deterministic=True)
+            ),
         )
         now = self.clock()
         off_deadline_ns = min(deadline_ns, now + self.serial_ack_timeout_ns)
+        invalidate_released_idle_proof(self.pulse)
         off = await self.serial.off(
             (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING),
             scheduled_boundary_ns=None,
@@ -94,7 +101,7 @@ class TrialPulseBoundaries:
         command: mcu.PulseBoundaryCommand,
         boundary_ns: int,
     ) -> None:
-        remaining = max(0, boundary_ns - self.clock()) / 1_000_000_000
+        remaining = remaining_seconds(boundary_ns, clock=self.clock)
         if remaining:
             await asyncio.sleep(remaining)
         cancelled_on = command == mcu.PULSE_BOUNDARY_COMMAND_ON and (
@@ -118,6 +125,7 @@ class TrialPulseBoundaries:
                 )
                 trial.pulse_on = evidence
             elif command == mcu.PULSE_BOUNDARY_COMMAND_ON:
+                invalidate_released_idle_proof(self.pulse)
                 evidence = await self.serial.on(
                     selected_roles,
                     scheduled_boundary_ns=boundary_ns,
@@ -125,6 +133,7 @@ class TrialPulseBoundaries:
                 )
                 trial.pulse_on = evidence
             else:
+                invalidate_released_idle_proof(self.pulse)
                 evidence = await self.serial.off(
                     selected_roles,
                     scheduled_boundary_ns=boundary_ns,

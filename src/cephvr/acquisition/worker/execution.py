@@ -5,23 +5,25 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Callable
-from threading import Event, Lock
+from threading import Event
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
-from cephvr.acquisition.v1 import camera_pb2 as camera
 from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
 
+from .blocking_wait import verify_blocking_wait
 from .camera_configuration import WorkerCameraConfiguration
 from .capture_runtime import WorkerCaptureResources
 from .cleanup_lifecycle import WorkerCleanupLifecycle
 from .health import WorkerHealthReporter
+from .health_snapshot import refresh_health_snapshot
 from .ports import command_from
 from .preview_lifecycle import WorkerPreviewLifecycle
 from .recording_runtime import WorkerRecordingRuntime
 from .report_dispatch import WorkerReportDispatcher
 from .reports import CoordinatorReportClient, SupervisorErrorClient
+from .session_preparation import WorkerSessionPreparation
 from .state import WorkerBootstrap, WorkerState
 from .trial_lifecycle import WorkerTrialLifecycle
 
@@ -72,9 +74,17 @@ class WorkerOperationExecutor:
             self.report_dispatcher.dispatch,
             external_wake,
         )
-        self._session_ready = False
         self.camera_configuration = WorkerCameraConfiguration(
             adapter, state, lambda: self.preview.manual_preview
+        )
+        self.preparation = WorkerSessionPreparation(
+            bootstrap,
+            state,
+            self.camera_configuration,
+            captures,
+            begin_warning_scope=self._begin_warning_scope,
+            verify_wait=self._verify_blocking_wait,
+            report_lifecycle=self._report_lifecycle,
         )
         self._cleanup_resources: dict[str, bool] = {}
         self._latest_work = (
@@ -118,7 +128,7 @@ class WorkerOperationExecutor:
             external_wake=external_wake,
             recording_first_frame=self.recording_first_frame,
             recording_isolated=self._recording_isolated,
-            require_ready_session=self._require_ready_session,
+            require_ready_session=self.preparation.require_ready_session,
             capability_resource_released=self._capability_resource_released,
         )
         self.preview = WorkerPreviewLifecycle(
@@ -181,54 +191,9 @@ class WorkerOperationExecutor:
             elif name == "StopPreview":
                 self.preview.stop(request, deadline_ns)
             elif name == "SetupSession":
-                self.camera_configuration.require_adopted_setup(request)
-                if not isinstance(
-                    request, acq.WorkerSetupSession
-                ) or not request.HasField("camera"):
-                    raise ValueError("session Setup payload is missing")
-                policy = self.bootstrap.file_policy
-                if (
-                    not policy.HasField("post_cutoff_drain_margin_ns")
-                    or policy.post_cutoff_drain_margin_ns <= 0
-                ):
-                    raise ValueError(
-                        "camera Setup lacks a positive post-cutoff drain allowance"
-                    )
-                self._begin_warning_scope(
-                    request.command.target.work,
-                    configuration_revision=request.configuration_revision,
-                )
-                self.trial.pulse_required = (
-                    request.camera.device.frame_timing
-                    == camera.FRAME_TIMING_EXTERNAL_TRIGGER
-                )
-                attached = self.captures.prepare(
-                    request.camera,
-                    session_preview=request.camera.capture.session_preview_max_hz > 0,
-                )
-                self._verify_blocking_wait(deadline_ns)
-                self.trial.recording_preparation.prepare_session(request)
-                self._session_ready = True
-                ready = acq.WorkerLifecycleEvidence()
-                ready.ready.configuration_revision = request.configuration_revision
-                ready.ready.required_checks_passed = True
-                for resource in attached:
-                    ready.ready.attached_resources.add().CopyFrom(resource)
-                self._report_lifecycle(request, ready, deadline_ns)
+                self.preparation.setup_session(request, deadline_ns, self.trial)
             elif name == "PrepareTrial":
-                self._require_ready_session(request)
-                if not isinstance(request, acq.WorkerPrepareTrial):
-                    raise TypeError("trial preparation has the wrong protobuf type")
-                self._begin_warning_scope(request.command.target.work)
-                self.trial.prepare_trial_state(request, deadline_ns)
-                self.trial.recording_preparation.prepare_trial(request, deadline_ns)
-                self.trial.trial_prepared = True
-                evidence = acq.WorkerLifecycleEvidence()
-                evidence.ready.configuration_revision = (
-                    self.state.confirmed_configuration_revision
-                )
-                evidence.ready.required_checks_passed = True
-                self._report_lifecycle(request, evidence, deadline_ns)
+                self.preparation.prepare_trial(request, deadline_ns, self.trial)
             elif name == "ScheduleTrial":
                 self._schedule(request, deadline_ns)
             elif name == "ReleaseTrial":
@@ -242,14 +207,14 @@ class WorkerOperationExecutor:
             elif name == "CancelSetup":
                 if self.recording is not None and self.recording.enabled:
                     self.recording.cancel_before_start(deadline_ns=deadline_ns)
-                self._session_ready = False
+                self.preparation.cancel_setup()
                 self.trial.trial_prepared = False
             elif name == "InterruptSession":
                 self._cancelled.set()
                 self.trial.stop_request = request
                 self.trial.stop_trial(deadline_ns)
                 self.trial.report_camera_finished(request, deadline_ns)
-                self._session_ready = False
+                self.preparation.cancel_setup()
             elif name in {"Cleanup", "Shutdown"}:
                 self._cancelled.set()
                 self.trial.stop_request = request
@@ -324,19 +289,6 @@ class WorkerOperationExecutor:
 
     def owner_failed(self, exc: BaseException) -> None:
         self.health.owner_failed(exc)
-
-    def _require_ready_session(self, request: object) -> None:
-        command = command_from(request)
-        if not command.target.HasField("work"):
-            raise ValueError("trial operation has no exact work context")
-        if not self._session_ready:
-            raise RuntimeError("worker session is not prepared")
-        required = getattr(request, "required_configuration_revision", None)
-        if (
-            required is not None
-            and required != self.state.confirmed_configuration_revision
-        ):
-            raise RuntimeError("trial configuration revision is stale")
 
     def _schedule(self, request: object, deadline_ns: int) -> None:
         self.trial.schedule(request, deadline_ns)
@@ -423,62 +375,12 @@ class WorkerOperationExecutor:
         return min(deadlines) if deadlines else None
 
     def _refresh_health_snapshot(self) -> None:
-        if self.state.health_active_error is not None:
-            self.state.update_continuing_snapshot(
-                self.trial.continuing_functions(host_time_ns())
-            )
-        schedule = self.trial.scheduled
-        last_progress_ns: int | None = None
-        capture = self.captures.capture
-        if capture is not None and capture.last_usable_ns > 0:
-            last_progress_ns = capture.last_usable_ns
-        work: control.WorkContext | None
-        if schedule is not None and schedule.command.target.HasField("work"):
-            work = schedule.command.target.work
-            trial_phase = (
-                control.TRIAL_PHASE_FINALIZING
-                if self.trial.terminal_pending
-                else control.TRIAL_PHASE_ENDED
-                if self.trial.end_marker is not None
-                else control.TRIAL_PHASE_RUNNING
-                if self.captures.active
-                else control.TRIAL_PHASE_STARTING
-            )
-        else:
-            work = self._latest_work
-            trial_phase = None
-        closed = work is not None and (
-            self.state.health_work == work
-            and self.state.health_session_phase == control.SESSION_PHASE_ENDED
-            or any(
-                evidence.source.work == work
-                and evidence.WhichOneof("evidence") == "cleanup"
-                and evidence.cleanup.resources
-                and all(
-                    item.released and not item.HasField("failure")
-                    for item in evidence.cleanup.resources
-                )
-                for evidence in self.state.lifecycle.values()
-            )
-        )
-        session_phase = (
-            control.SESSION_PHASE_ENDED
-            if closed
-            else control.SESSION_PHASE_FINALIZING
-            if self.state.interrupted
-            else control.SESSION_PHASE_READY
-            if self._session_ready
-            else control.SESSION_PHASE_SETTING_UP
-            if self.state.registered
-            else control.SESSION_PHASE_CONFIGURATION
-        )
-        self.state.update_health_snapshot(
-            work=work,
-            session_phase=session_phase,
-            trial_phase=trial_phase,
-            progress_required=self.captures.active,
-            last_progress_ns=last_progress_ns,
-            observed_ns=host_time_ns(),
+        refresh_health_snapshot(
+            self.state,
+            self.trial,
+            self.captures,
+            self._latest_work,
+            self.preparation.session_ready,
         )
 
     def refresh_health_snapshot(self) -> None:
@@ -556,47 +458,7 @@ class WorkerOperationExecutor:
                 pass
 
     def _verify_blocking_wait(self, deadline_ns: int) -> None:
-        remaining = deadline_ns - host_time_ns()
-        if remaining <= 0:
-            raise TimeoutError("camera wait compatibility deadline expired")
-        timeout_ns = min(250_000_000, remaining)
-        delay_s = min(0.01, timeout_ns / 2_000_000_000)
-        cancelled = Event()
-        callback_lock = Lock()
-        acknowledgement = Event()
-        handles: list[asyncio.TimerHandle] = []
-
-        def fire(wake_private_event: Callable[[], None]) -> None:
-            with callback_lock:
-                if cancelled.is_set():
-                    return
-                wake_private_event()
-                acknowledgement.set()
-
-        def register(wake_private_event: Callable[[], None]) -> None:
-            with callback_lock:
-                if cancelled.is_set():
-                    return
-                handles.append(self.loop.call_later(delay_s, fire, wake_private_event))
-
-        def schedule_wake(wake_private_event: Callable[[], None]) -> Event:
-            self.loop.call_soon_threadsafe(register, wake_private_event)
-            return acknowledgement
-
-        try:
-            self.adapter.verify_blocking_wait_wakeup(schedule_wake, timeout_ns)
-        finally:
-            with callback_lock:
-                cancelled.set()
-
-            def cancel_handles() -> None:
-                for handle in handles:
-                    handle.cancel()
-
-            def cancel_on_loop() -> None:
-                cancel_handles()
-
-            self.loop.call_soon_threadsafe(cancel_on_loop)
+        verify_blocking_wait(self.loop, self.adapter, deadline_ns)
 
     def _capability_resource_released(self, resource: str, released: bool) -> None:
         if not resource or "\x00" in resource:

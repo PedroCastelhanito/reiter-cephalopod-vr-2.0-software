@@ -79,6 +79,8 @@ class ManualOperationResults:
         try:
             retained = self.device_status.get_report(command.command_id)
             if retained is not None:
+                if self.device_status.clock() >= deadline_ns:
+                    return
                 await self.controller.report_acquisition_device_status(
                     retained, deadline_ns=deadline_ns
                 )
@@ -92,6 +94,46 @@ class ManualOperationResults:
             )
         except (RuntimeError, TimeoutError, ValueError):
             return
+
+    async def report_operation_failure(
+        self,
+        command: wire.BackendCommand,
+        *,
+        command_name: str,
+        deadline_ns: int,
+        code: str,
+        failure: str,
+    ) -> bool:
+        """Retain the exact failed parent outcome before releasing its owner."""
+        status = self.device_status.get_report(command.command_id)
+        if (
+            status is None
+            or status.result.succeeded
+            or self.device_status.clock() >= deadline_ns
+        ):
+            return False
+        try:
+            receipt = await self.controller.report_lifecycle(
+                control.LifecycleReport(
+                    operation=control.BackendOperationReport(
+                        source=self.identity.backend,
+                        operation=control.OperationState(
+                            context=control.OperationContext(
+                                command_id=command.command_id
+                            ),
+                            command=command_name,
+                            work=command.work,
+                            complete=True,
+                            succeeded=False,
+                            failure=control.Failure(code=code, message=failure[:2048]),
+                        ),
+                    )
+                ),
+                deadline_ns=deadline_ns,
+            )
+        except (RuntimeError, TimeoutError, ValueError):
+            return False
+        return receipt.result == control.COMMAND_RESULT_ACCEPTED
 
 
 def _rejected(

@@ -723,6 +723,18 @@ class _TransferOwner:
         _ = preview
         self.retired.set()
 
+    async def retire_and_release(
+        self, preview: WorkerPreview, *, deadline_ns: int
+    ) -> None:
+        _ = deadline_ns
+        self.retire(preview)
+        if preview.viewer is not None:
+            await preview.viewer_released_event.wait()
+        if preview.tracking_viewer is not None:
+            await preview.tracking_viewer_released_event.wait()
+        if preview.viewer is not None or preview.tracking_viewer is not None:
+            raise RuntimeError("exact preview consumer release is incomplete")
+
     def close_retired_resource(self, preview: WorkerPreview) -> None:
         _ = preview
 
@@ -1543,10 +1555,13 @@ async def test_preview_disconnect_releases_only_last_external_camera_claim(
         pulse=pulse,
         clock=lambda: 1,
         lock=asyncio.Lock(),
+        resolution=SimpleNamespace(retire_failed_if_quiescent=AsyncMock()),
         windows=SimpleNamespace(close=AsyncMock()),
         device_status=SimpleNamespace(resolve_camera=MagicMock()),
         transfers=SimpleNamespace(
-            retire=MagicMock(), close_retired_resource=MagicMock()
+            retire_and_release=AsyncMock(),
+            retire=MagicMock(),
+            close_retired_resource=MagicMock(),
         ),
         resources={},
         results=SimpleNamespace(
@@ -1572,6 +1587,219 @@ async def test_preview_disconnect_releases_only_last_external_camera_claim(
     )
 
 
+async def test_uncertain_preview_stop_switches_external_output_off_before_cleanup():
+    from cephvr.acquisition.coordinator.configuration_resolution import (
+        ConfigurationResolution,
+    )
+    from cephvr.acquisition.coordinator.manual_device_recovery import (
+        ManualDeviceRecovery,
+    )
+    from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+
+    events: list[str] = []
+    preview = SimpleNamespace(
+        run_id="late-start-run",
+        started=False,
+        stopping=False,
+        configuration_revision=1,
+        resolved_camera=camera.CameraResolvedState(),
+        viewer=None,
+        tracking_viewer=None,
+        allocation_id="ring",
+        tracking_allocation_id=None,
+    )
+    worker = SimpleNamespace(preview=preview)
+    workers = SimpleNamespace(workers={camera.CAMERA_ROLE_BEHAVIORAL: worker})
+
+    close_calls = 0
+
+    async def off(roles, *, scheduled_boundary_ns, stop_issued_ns, deadline_ns):
+        assert roles == (camera.CAMERA_ROLE_BEHAVIORAL,)
+        assert scheduled_boundary_ns is None
+        assert stop_issued_ns is not None
+        assert deadline_ns == 1000
+        events.append("external-output-off")
+        state = mcu.MicrocontrollerState()
+        state.behavioral.running = False
+        state.tracking.running = False
+        return mcu.PulseCommandEvidence(
+            connection_id="connection",
+            request_id="off",
+            outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED,
+            applied=True,
+            dispatched_monotonic_ns=10,
+            acknowledged_monotonic_ns=20,
+            resulting_state=state,
+        )
+
+    async def close(*, deadline_ns):
+        nonlocal close_calls
+        assert deadline_ns == 1000
+        close_calls += 1
+        events.append("claim-close")
+        if close_calls == 1:
+            raise RuntimeError("serial close response was lost")
+
+    class _Workers:
+        def __init__(self):
+            self.workers = workers.workers
+
+        async def retire_sessionless_worker(self, role, *, deadline_ns):
+            assert role == camera.CAMERA_ROLE_BEHAVIORAL
+            assert deadline_ns == 1000
+            assert events[0] == "external-output-off"
+            events.append("worker-cleanup")
+            self.workers.pop(role)
+
+    settings = control.AcquisitionSettings()
+    settings.behavioral.device.device_id = "CAM-1"
+    settings.behavioral.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    pulse = PulseRecord(
+        observation=mcu.MicrocontrollerObservation(connection_id="connection")
+    )
+    workers_owner = _Workers()
+    backend = control.BackendContext(
+        backend_name="acquisition", backend_generation=str(uuid4())
+    )
+    controller = control.ProcessIdentity(role="controller", generation=str(uuid4()))
+    identity = CoordinatorIdentity(
+        backend=backend,
+        process=control.ProcessIdentity(role="acquisition", generation=str(uuid4())),
+        controller=controller,
+        supervisor=control.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        tracking=control.ProcessIdentity(role="tracking", generation=str(uuid4())),
+    )
+    configuration = ConfigurationRecord(
+        settings, runtime.AcquisitionFilePolicies(), revision=1
+    )
+
+    class _Controller:
+        pass
+
+    resolution = ConfigurationResolution(
+        identity=identity,
+        configuration=configuration,
+        controller=cast(ControllerPort, _Controller()),
+        lock=asyncio.Lock(),
+        clock=lambda: 5,
+    )
+    serial = SimpleNamespace(off=off, close=close)
+    recovery = ManualDeviceRecovery(
+        workers=workers_owner,  # type: ignore[arg-type]
+        resolution=resolution,
+        pulse=pulse,
+        serial=cast(SerialOwnerPort, serial),
+        clock=lambda: 6,
+    )
+    old_id = str(uuid4())
+    old_operation = await resolution.begin(
+        wire.BackendCommand(
+            command_id=old_id,
+            issuer=controller,
+            target=backend,
+            parent_operation=control.OperationContext(command_id=old_id),
+        ),
+        expected_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+        request_revision=1,
+        deadline_ns=1000,
+        expected_pulses=True,
+        requested_pulses=camera.CameraPulseConfiguration(),
+        device_work_quiescent=lambda: recovery.device_work_quiescent(
+            required_pulse_roles={
+                camera.CAMERA_ROLE_BEHAVIORAL,
+                camera.CAMERA_ROLE_TRACKING,
+            }
+        ),
+    )
+    await resolution.cancel(old_operation)
+    flow = SimpleNamespace(
+        workers=workers_owner,
+        configuration=SimpleNamespace(settings=settings),
+        pulse=pulse,
+        serial=serial,
+        clock=lambda: 5,
+        windows=SimpleNamespace(close=AsyncMock()),
+        transfers=SimpleNamespace(
+            retire=lambda _preview: events.append("viewer-retire"),
+            close_retired_resource=lambda _preview: events.append("ring-release"),
+        ),
+        device_status=SimpleNamespace(
+            resolve_camera=lambda *_args, **_kwargs: events.append("status"),
+            update_camera_state=lambda *_args, **_kwargs: events.append(
+                "closed-camera-cleanup-pending"
+            ),
+        ),
+        resources={},
+        resolution=resolution,
+        results=SimpleNamespace(
+            report_failure=AsyncMock(),
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED
+                )
+            ),
+        ),
+    )
+    flow._external_roles = lambda adding_role: ManualPreview._external_roles(
+        flow, adding_role
+    )
+    request = wire.AcquisitionCameraCommand(
+        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        preview_run_id=preview.run_id,
+        command=wire.BackendCommand(command_id="stop-late-run"),
+    )
+
+    failed = await ManualPreview._stop(flow, request, 1000)
+    assert failed.result == control.COMMAND_RESULT_REJECTED
+    assert events == [
+        "external-output-off",
+        "viewer-retire",
+        "worker-cleanup",
+        "ring-release",
+        "claim-close",
+        "closed-camera-cleanup-pending",
+    ]
+    assert camera.CAMERA_ROLE_BEHAVIORAL not in flow.workers.workers
+    assert worker.preview is preview and preview.stopping
+    assert pulse.claim_release_pending
+    assert pulse.observation is not None
+
+    assert not recovery.device_work_quiescent(
+        required_pulse_roles={
+            camera.CAMERA_ROLE_BEHAVIORAL,
+            camera.CAMERA_ROLE_TRACKING,
+        }
+    )
+    await recovery.retry_pending_claim_release(deadline_ns=1000)
+
+    assert events[-1] == "claim-close"
+    assert close_calls == 2
+    assert not pulse.claim_release_pending
+    assert pulse.observation is None
+    assert pulse.released_idle_connection_id == "connection"
+    assert pulse.released_idle_state is not None
+    assert not pulse.released_idle_state.behavioral.running
+    assert not pulse.released_idle_state.tracking.running
+    assert await resolution.retire_failed_if_quiescent(old_operation)
+    new_id = str(uuid4())
+    await resolution.begin(
+        wire.BackendCommand(
+            command_id=new_id,
+            issuer=controller,
+            target=backend,
+            parent_operation=control.OperationContext(command_id=new_id),
+        ),
+        expected_cameras={camera.CAMERA_ROLE_BEHAVIORAL},
+        request_revision=1,
+        accepted_base_revision=1,
+        accepted_base_settings=settings,
+        deadline_ns=1000,
+        device_work_quiescent=lambda: True,
+        preexisting_work_quiescent=recovery.prior_device_work_quiescent,
+    )
+
+
 async def test_failed_idle_claim_release_retains_camera_cleanup_evidence():
     from cephvr.acquisition.coordinator.manual_pulse_observation import (
         release_idle_claim,
@@ -1591,3 +1819,536 @@ async def test_failed_idle_claim_release_retains_camera_cleanup_evidence():
         pulse.observation is not None
         and pulse.observation.connection_id == "connection"
     )
+
+
+@pytest.mark.asyncio
+async def test_normal_stop_reports_camera_closed_when_claim_close_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.acquisition.coordinator import manual_preview as preview_module
+    from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+
+    events: list[object] = []
+    preview = WorkerPreview(
+        run_id="normal-stop-run",
+        configuration_revision=3,
+        allocation_id="ring",
+        resolved_camera=camera.CameraResolvedState(),
+        started=True,
+    )
+    role = camera.CAMERA_ROLE_BEHAVIORAL
+    worker = SimpleNamespace(context=SimpleNamespace(camera=role), preview=preview)
+
+    class Port:
+        async def stop_preview(self, request, *, deadline_ns):
+            assert request.release_device
+            assert deadline_ns == 1000
+            preview.started = False
+            preview.stopped_event.set()
+            preview.cleanup_event.set()
+            events.append("worker-stop-release-device")
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    port = Port()
+    child = ChildOperation(
+        command_id="stop-child",
+        camera=role,
+        work=control.WorkContext(),
+        parent_operation=control.OperationContext(),
+        kind="stop_preview",
+    )
+    monkeypatch.setattr(
+        preview_module,
+        "retain_worker_command",
+        lambda *_args, **_kwargs: (acq.WorkerCommand(), child, port),
+    )
+
+    async def completed(*_args, **_kwargs):
+        return control.OperationState(complete=True, succeeded=True)
+
+    monkeypatch.setattr(preview_module, "wait_child_operation", completed)
+
+    async def close(*, deadline_ns):
+        assert deadline_ns == 1000
+        events.append("claim-close-failed")
+        raise RuntimeError("serial close response was lost")
+
+    pulse = PulseRecord(
+        observation=mcu.MicrocontrollerObservation(connection_id="connection")
+    )
+    pulse.observation.state.behavioral.running = False
+    pulse.observation.state.tracking.running = False
+    worker_registry = SimpleNamespace(workers={role: worker})
+    states: list[dict[str, object]] = []
+
+    def update_camera_state(_role: int, **state: object) -> None:
+        events.append("status")
+        states.append(state)
+
+    async def _release_retired(target_events: list[object], deadline_ns: int) -> None:
+        assert deadline_ns == 1000
+        target_events.extend(("viewer-retire", "ring-release"))
+
+    flow = SimpleNamespace(
+        workers=worker_registry,
+        configuration=SimpleNamespace(settings=control.AcquisitionSettings()),
+        pulse=pulse,
+        serial=SimpleNamespace(close=close),
+        clock=lambda: 10,
+        lock=asyncio.Lock(),
+        windows=SimpleNamespace(
+            close=AsyncMock(side_effect=lambda *_a, **_k: events.append("window-close"))
+        ),
+        transfers=SimpleNamespace(
+            retire_and_release=lambda _preview, *, deadline_ns: _release_retired(
+                events, deadline_ns
+            ),
+        ),
+        device_status=SimpleNamespace(
+            resolve_camera=lambda *_a, **_k: events.append("resolved-closed"),
+            update_camera_state=update_camera_state,
+        ),
+        resources={},
+        resolution=SimpleNamespace(retire_failed_if_quiescent=AsyncMock()),
+        results=SimpleNamespace(
+            report_failure=AsyncMock(),
+            complete=AsyncMock(),
+        ),
+    )
+    flow._external_roles = lambda _adding_role: []
+    request = wire.AcquisitionCameraCommand(
+        camera=role,
+        preview_run_id=preview.run_id,
+        command=wire.BackendCommand(command_id="stop-normal-run"),
+    )
+
+    result = await ManualPreview._stop(flow, request, 1000)
+
+    assert result.result == control.COMMAND_RESULT_REJECTED
+    assert events == [
+        "worker-stop-release-device",
+        "window-close",
+        "viewer-retire",
+        "ring-release",
+        "claim-close-failed",
+        "status",
+    ]
+    assert states == [
+        {
+            "device_open": False,
+            "preview_prepared": False,
+            "preview_running": False,
+            "preview_run_id": preview.run_id,
+            "cleanup_pending": True,
+        }
+    ]
+    assert worker_registry.workers[role] is worker
+    assert worker.preview is preview and preview.stopping
+    assert pulse.claim_release_pending
+
+
+@pytest.mark.asyncio
+async def test_failed_pulse_restart_retains_exact_cleanup_run_for_stop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.acquisition.coordinator import manual_preview_pulse as pulse_module
+    from cephvr.acquisition.coordinator.manual_preview import ManualPreview
+
+    role = camera.CAMERA_ROLE_BEHAVIORAL
+    resolved = camera.CameraResolvedState()
+    worker = SimpleNamespace(context=SimpleNamespace(camera=role), preview=None)
+    status: dict[int, dict[str, object]] = {}
+    events: list[object] = []
+
+    class Status:
+        def resolve_camera(self, target_role: int, _resolved, **values: object) -> None:
+            status[target_role] = values
+            events.append(("status", values.copy()))
+
+        def update_camera_state(self, target_role: int, **values: object) -> None:
+            status[target_role].update(values)
+            events.append(("status", values.copy()))
+
+    async def allocate(**_kwargs):
+        return acq.FrameBufferAttachment(), object()
+
+    monkeypatch.setattr(pulse_module, "allocate_manual_preview_slot", allocate)
+    monkeypatch.setattr(
+        pulse_module,
+        "new_worker_preview",
+        lambda run_id, revision, _attachment, camera_state, _bits, **_kwargs: (
+            WorkerPreview(
+                run_id=run_id,
+                configuration_revision=revision,
+                allocation_id="new-ring",
+                resolved_camera=camera_state,
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        pulse_module,
+        "build_preview_payload",
+        lambda *_args, **_kwargs: acq.CameraWorkerSetupPayload(),
+    )
+
+    children: dict[str, ChildOperation] = {}
+
+    def retain(_worker, *, kind, deadline_ns, **_kwargs):
+        command_id = f"{kind}-child"
+        child = ChildOperation(
+            command_id=command_id,
+            camera=role,
+            work=control.WorkContext(),
+            parent_operation=control.OperationContext(command_id="pulse-edit"),
+            kind=kind,
+            deadline_ns=deadline_ns,
+        )
+        children[kind] = child
+        return acq.WorkerCommand(), child, port
+
+    class Port:
+        async def prepare_preview(self, _request, *, deadline_ns):
+            assert deadline_ns == 1000
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+        async def start_preview(self, request, *, deadline_ns):
+            assert deadline_ns == 1000
+            assert request.preview_run_id == worker.preview.run_id
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    port = Port()
+
+    async def wait_child(child, *_args):
+        if child.kind == "start_preview":
+            return control.OperationState(complete=True, succeeded=False)
+        return control.OperationState(complete=True, succeeded=True)
+
+    monkeypatch.setattr(pulse_module, "retain_worker_command", retain)
+    monkeypatch.setattr(pulse_module, "wait_child_operation", wait_child)
+
+    settings = control.AcquisitionSettings()
+    settings.behavioral.device.device_id = "CAM-1"
+    settings.behavioral.sdk_buffer_count = 4
+    settings.behavioral.enabled = True
+    policy = runtime.AcquisitionFilePolicies()
+    policy.cameras.add().camera = role
+    worker_map = {role: worker}
+    lifecycle = ManualPreviewPulseLifecycle(
+        identity=cast(
+            CoordinatorIdentity,
+            SimpleNamespace(
+                controller=control.ProcessIdentity(
+                    role="controller", generation="controller"
+                )
+            ),
+        ),
+        configuration=ConfigurationRecord(settings, policy, revision=7),
+        workers=worker_map,
+        pulse=PulseRecord(),
+        serial=cast(SerialOwnerPort, object()),
+        resources={},
+        resource_ledger=cast(NativeResourceLedger, object()),
+        resource_port=cast(ResourcePort, object()),
+        transfers=cast(ManualPreviewTransferOwner, object()),
+        device_status=cast(ManualDeviceStatusReporter, Status()),
+        lock=asyncio.Lock(),
+        clock=lambda: 10,
+    )
+    paused = PausedPreview(role, resolved, 8)
+
+    with pytest.raises(RuntimeError, match="preview restart failed"):
+        await lifecycle._prepare_restart(
+            worker,
+            paused,
+            1000,
+            control.OperationContext(command_id="pulse-edit"),
+        )
+
+    preview = worker.preview
+    assert preview is not None and preview.run_id
+    exact_run_id = preview.run_id
+    assert status[role] == {
+        "device_open": True,
+        "preview_prepared": True,
+        "preview_running": False,
+        "preview_run_id": exact_run_id,
+        "cleanup_pending": True,
+        "configuration_revision": 7,
+    }
+    assert not preview.started
+
+    async def retire_worker(target_role: int, *, deadline_ns: int) -> None:
+        assert target_role == role and deadline_ns == 1000
+        events.append(("cleanup", worker.preview.run_id))
+        worker_map.pop(target_role)
+
+    flow = SimpleNamespace(
+        workers=SimpleNamespace(
+            workers=worker_map, retire_sessionless_worker=retire_worker
+        ),
+        configuration=SimpleNamespace(settings=settings),
+        pulse=lifecycle.pulse,
+        serial=SimpleNamespace(),
+        clock=lambda: 10,
+        windows=SimpleNamespace(
+            close=AsyncMock(
+                side_effect=lambda target_role, run_id, **_kwargs: events.append(
+                    ("window-close", target_role, run_id)
+                )
+            )
+        ),
+        transfers=SimpleNamespace(
+            retire=lambda _preview: events.append(("viewer-retire", exact_run_id)),
+            close_retired_resource=lambda _preview: None,
+        ),
+        device_status=Status(),
+        resources={},
+        resolution=SimpleNamespace(retire_failed_if_quiescent=AsyncMock()),
+        results=SimpleNamespace(
+            report_failure=AsyncMock(),
+            complete=AsyncMock(
+                return_value=control.CommandAdmission(
+                    result=control.COMMAND_RESULT_ACCEPTED
+                )
+            ),
+        ),
+    )
+    flow._external_roles = lambda _adding_role: []
+    stop = wire.AcquisitionCameraCommand(
+        camera=role,
+        preview_run_id=exact_run_id,
+        command=wire.BackendCommand(command_id="stop-restarted-run"),
+    )
+
+    result = await ManualPreview._stop(flow, stop, 1000)
+
+    assert result.result == control.COMMAND_RESULT_ACCEPTED
+    assert ("window-close", role, exact_run_id) in events
+    assert ("cleanup", exact_run_id) in events
+
+
+@pytest.mark.asyncio
+async def test_pulse_pause_retains_stopping_preview_until_tracking_release(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.acquisition.coordinator import manual_preview_pulse as pulse_module
+    from cephvr.acquisition.coordinator import (
+        manual_preview_transfer as transfer_module,
+    )
+    from cephvr.acquisition.coordinator.configuration_resolution import (
+        ConfigurationResolution,
+    )
+    from cephvr.acquisition.coordinator.manual_device_recovery import (
+        ManualDeviceRecovery,
+    )
+    from cephvr.acquisition.coordinator.workers import WorkerRegistry
+    from cephvr.platform.windows.resource_ledger import ResourceKey
+
+    role = camera.CAMERA_ROLE_BEHAVIORAL
+    primary_id = str(uuid4())
+    tracking_id = str(uuid4())
+    tracking_transfer_id = str(uuid4())
+    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    controller = control.ProcessIdentity(role="controller", generation=str(uuid4()))
+    identity = CoordinatorIdentity(
+        backend=control.BackendContext(
+            backend_name="acquisition", backend_generation=owner.generation
+        ),
+        process=owner,
+        controller=controller,
+        supervisor=control.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        tracking=control.ProcessIdentity(role="tracking", generation=str(uuid4())),
+    )
+    preview = WorkerPreview(
+        run_id=str(uuid4()),
+        configuration_revision=2,
+        allocation_id=primary_id,
+        tracking_allocation_id=tracking_id,
+        resolved_camera=camera.CameraResolvedState(),
+        tracking_viewer=control.ProcessIdentity(
+            role="tracking_viewer", generation=str(uuid4())
+        ),
+        tracking_viewer_transfer_id=tracking_transfer_id,
+        started=True,
+    )
+    context = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=str(uuid4())
+        ),
+        owner=owner,
+        camera=role,
+    )
+
+    class Port:
+        async def stop_preview(self, request, *, deadline_ns):
+            assert request.preview_run_id == preview.run_id
+            assert not request.release_device
+            assert deadline_ns == 100_000_010
+            preview.started = False
+            preview.stopped_event.set()
+            preview.cleanup_event.set()
+            return control.CommandAdmission(result=control.COMMAND_RESULT_ACCEPTED)
+
+    port = Port()
+    worker = WorkerRecord(
+        context=context,
+        port=cast(WorkerPort, port),
+        launch=LaunchRecord(
+            command_id=str(uuid4()),
+            worker=context.worker,
+            owner=owner,
+            work=control.WorkContext(),
+            camera=role,
+            parent_operation=control.OperationContext(command_id=str(uuid4())),
+            planned_ns=1,
+        ),
+        preview=preview,
+    )
+    worker_map = {role: worker}
+
+    def retained_command(*_args, **_kwargs):
+        return (
+            acq.WorkerCommand(),
+            ChildOperation(
+                command_id="pause-child",
+                camera=role,
+                work=control.WorkContext(),
+                parent_operation=control.OperationContext(command_id="pause-edit"),
+                kind="stop_preview",
+            ),
+            port,
+        )
+
+    async def completed(*_args, **_kwargs):
+        return control.OperationState(complete=True, succeeded=True)
+
+    monkeypatch.setattr(pulse_module, "retain_worker_command", retained_command)
+    monkeypatch.setattr(pulse_module, "wait_child_operation", completed)
+
+    ledger = NativeResourceLedger(max_resources=3, max_transfers_per_resource=2)
+    resources: dict[str, ResourceRecord] = {}
+    for allocation_id in (primary_id, tracking_id):
+        key = ResourceKey(allocation_id, owner.generation)
+        ledger.register(key, kind="preview")
+        resources[allocation_id] = ResourceRecord(
+            acq.FrameBufferAttachment(), None, key
+        )
+    tracking_key = resources[tracking_id].ledger_key
+    ledger.expect_attachment(
+        tracking_key,
+        peer_instance_id=preview.tracking_viewer.generation,
+        transfer_id=preview.tracking_viewer_transfer_id,
+    )
+
+    class ResourcePort:
+        def release_ring(self, _allocation_id: str) -> None:
+            raise AssertionError("unreleased tracking consumer must retain both rings")
+
+    release_waiting = asyncio.Event()
+    original_wait_release = transfer_module._wait_release_event
+
+    async def wait_tracking_release(event, deadline_ns, clock):
+        release_waiting.set()
+        await original_wait_release(event, deadline_ns, clock)
+
+    monkeypatch.setattr(transfer_module, "_wait_release_event", wait_tracking_release)
+    transfers = ManualPreviewTransferOwner(
+        identity=identity,
+        resources=resources,
+        resource_ledger=ledger,
+        resource_port=cast(ResourcePort, ResourcePort()),
+        controller=cast(ControllerPort, object()),
+        commands=CommandLedger(
+            str(uuid4()),
+            retention_ns=10,
+            max_records=8,
+            max_bytes=1_000_000,
+            result_reservation_bytes=4096,
+        ),
+        find_preview=lambda run_id: (
+            worker.preview
+            if worker.preview is not None and worker.preview.run_id == run_id
+            else None
+        ),
+        clock=lambda: 10,
+    )
+    settings = control.AcquisitionSettings()
+    settings.behavioral.enabled = True
+    file_policies = runtime.AcquisitionFilePolicies()
+    file_policies.cameras.add().camera = role
+    configuration = ConfigurationRecord(settings, file_policies, revision=2)
+    resolution = ConfigurationResolution(
+        identity=identity,
+        configuration=configuration,
+        controller=cast(ControllerPort, object()),
+        lock=asyncio.Lock(),
+        clock=lambda: 10,
+    )
+    pulse = PulseRecord()
+    recovery = ManualDeviceRecovery(
+        workers=cast(WorkerRegistry, SimpleNamespace(workers=worker_map)),
+        resolution=resolution,
+        pulse=pulse,
+        serial=cast(SerialOwnerPort, object()),
+        clock=lambda: 10,
+    )
+    status: dict[str, object] = {}
+
+    class Status:
+        def resolve_camera(self, _role, _resolved, **values):
+            status.update(values)
+
+    lifecycle = ManualPreviewPulseLifecycle(
+        identity=identity,
+        configuration=configuration,
+        workers=worker_map,
+        pulse=pulse,
+        serial=cast(SerialOwnerPort, object()),
+        resources=resources,
+        resource_ledger=ledger,
+        resource_port=cast(ResourcePort, ResourcePort()),
+        transfers=transfers,
+        device_status=cast(ManualDeviceStatusReporter, Status()),
+        lock=asyncio.Lock(),
+        clock=lambda: 10,
+    )
+    task = asyncio.create_task(
+        lifecycle.pause_for_pulse_change((role,), deadline_ns=100_000_010)
+    )
+    await release_waiting.wait()
+
+    assert not task.done()
+    assert worker.preview is preview and preview.stopping
+    assert status == {
+        "device_open": True,
+        "preview_prepared": False,
+        "preview_running": False,
+        "preview_run_id": preview.run_id,
+        "cleanup_pending": True,
+        "configuration_revision": 2,
+    }
+    assert tracking_id in resources
+    assert not recovery.prior_device_work_quiescent()
+
+    command_id = str(uuid4())
+    backend_command = wire.BackendCommand(
+        command_id=command_id,
+        issuer=controller,
+        target=identity.backend,
+        parent_operation=control.OperationContext(command_id=command_id),
+    )
+    with pytest.raises(RuntimeError, match="prior camera device work"):
+        await resolution.begin(
+            backend_command,
+            expected_cameras={role},
+            request_revision=2,
+            deadline_ns=1000,
+            accepted_base_revision=2,
+            accepted_base_settings=settings,
+            preexisting_work_quiescent=recovery.prior_device_work_quiescent,
+        )
+
+    with pytest.raises(TimeoutError):
+        await task
+    assert worker.preview is preview and preview.stopping
+    assert tracking_id in resources

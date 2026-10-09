@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace as NS
 
 import pytest
+from pydantic import ValidationError
 from tests.visual_stimulus.evidence_reader import EvidenceValidationError, read_evidence
 from tests.visual_stimulus.evidence_state import _validate_recipe_states
 
@@ -24,7 +25,7 @@ from cephvr.visual_stimulus.config.models.evidence_model import (
 def _header() -> Header:
     return Header(
         kind="header",
-        format_version=1,
+        format_version=3,
         identity=Identity(
             session_id="session",
             trial_id="trial",
@@ -376,3 +377,16 @@ def test_evidence_writer_preserves_exact_inputs_when_review_frame_drops(
     assert saved.submissions[0].phase == "returned"
     assert saved.captures[0].disposition == "capacity_drop"
     assert parsed.completion is None  # Closing a file cannot imply trial completion.
+
+
+def test_cadence_header_rejects_legacy_evidence_version_and_keeps_recipe_v2() -> None:
+    from cephvr.visual_stimulus.recording_schema import get_writer_schemas
+
+    header = _header().model_dump()
+    assert header["format_version"] == 3
+    header["format_version"] = 2
+    with pytest.raises(ValidationError):
+        Header.model_validate(header)
+    schemas = get_writer_schemas()
+    assert schemas["visual_stimulus", "stimulus_frames", "jsonl"].schema_version == 3
+    assert schemas["visual_stimulus", "stimulus_LOG", "json"].schema_version == 2

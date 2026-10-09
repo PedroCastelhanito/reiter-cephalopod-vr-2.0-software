@@ -490,6 +490,105 @@ def test_loaded_camera_presets_cannot_claim_sdk_import_provenance(
     assert settings.tracking.device.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
 
 
+def test_cross_camera_snapshot_error_focuses_tracking_field_and_keeps_proposal_atomic(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    panel = window.devices.cameras
+    behavior, tracking = panel.drafts
+    behavior.enabled = True
+    behavior.values = {"trigger_clock": "Internal clock"}
+    tracking.enabled = True
+    tracking.values = {"trigger_clock": "External controller"}
+    panel.snapshot_draft = True
+    panel.table.setFocus()
+    window.protocol.session_mode.setCurrentText("Open-loop")
+    window.devices.projectors.configuration_for_submit = lambda display: display
+
+    base = pb.ExperimentConfiguration()
+    acquisition = base.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    acquisition.behavioral.device.device_id = behavior.serial
+    acquisition.tracking.device.device_id = tracking.serial
+    before = base.SerializeToString(deterministic=True)
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            panel,
+            window.devices.projectors,
+            window.tracking,
+        )
+    )
+
+    with pytest.raises(ValueError, match="Tracking cam · Parameter file"):
+        manager.collect(base)
+    assert base.SerializeToString(deterministic=True) == before
+    assert panel.table.currentRow() == 1
+    assert panel.focusWidget() is panel.preset
+
+    tracking.values["trigger_source"] = "Line2"
+    proposal = manager.collect(base)
+    assert (
+        proposal.backends[0].acquisition.tracking.device.settings.trigger_source
+        == "Line2"
+    )
+    assert base.SerializeToString(deterministic=True) == before
+
+
+def test_camera_save_validation_error_routes_to_other_camera_row(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.acquisition.config.validation import validate_configuration
+    from cephvr.acquisition.v1 import camera_pb2
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_cameras import ManagedCameras
+
+    panel = window.devices.cameras
+    panel.drafts[0].role = "Behavior cam"
+    panel.drafts[1].role = "Tracking cam"
+    behavior, tracking = panel.drafts
+    behavior_before = behavior.values.copy()
+    candidate = pb.ExperimentConfiguration()
+    acquisition = candidate.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    acquisition.behavioral.enabled = True
+    acquisition.behavioral.device.device_id = behavior.serial
+    acquisition.behavioral.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
+    acquisition.behavioral.device.unaligned_free_running = True
+    acquisition.tracking.enabled = True
+    acquisition.tracking.device.device_id = tracking.serial
+    validation = validate_configuration(candidate)
+    issue = next(item for item in validation.issues if "tracking." in item.field_path)
+    message = (
+        f"configuration validation failed: {issue.field_path}: {issue.failure.message}"
+    )
+    cameras = ManagedCameras(panel, SimpleNamespace(), lambda *_: False)
+    cameras.pending = "save_camera_settings"
+    cameras.finished("save_camera_settings", False, message)
+
+    assert panel.table.currentRow() == 1
+    assert panel.focusWidget() is panel.trigger_source
+    assert behavior.values == behavior_before
+
+    panel.drafts[1].values["trigger_clock"] = "Internal clock"
+    acquisition.tracking.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
+    acquisition.tracking.device.unaligned_free_running = True
+    corrected = validate_configuration(candidate)
+    assert corrected.valid
+    cameras.pending = "save_camera_settings"
+    cameras.finished("save_camera_settings", True, "Completed")
+    assert "save_camera_settings: Completed" in panel.console.toPlainText()
+
+
 def test_authoritative_camera_projection_invalidates_spatial_draft_without_user_edit(
     window: DashboardWindow,
 ) -> None:

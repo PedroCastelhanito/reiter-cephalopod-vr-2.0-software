@@ -11,6 +11,7 @@ from cephvr.control.v1 import services_pb2 as wire
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.controller.microcontroller.firmware import FirmwareUploadPort
 from cephvr.controller.microcontroller.firmware_operation import FirmwareUpdate
+from cephvr.shared.deadlines import remaining_seconds
 from cephvr.shared.microcontroller import SerialOwnerPort
 
 _SAFETY_IO = frozenset(
@@ -395,7 +396,9 @@ class MicrocontrollerDevice:
         self.closed = self.closed or permanent
         self.changed()
         try:
-            async with asyncio.timeout(max(0, (deadline_ns - self.clock()) / 1e9)):
+            async with asyncio.timeout(
+                remaining_seconds(deadline_ns, clock=self.clock)
+            ):
                 async with self._close_lock:
                     await self.firmware.close(deadline_ns=deadline_ns)
                     if self.view.HasField("observation") and not self._close_stopped:

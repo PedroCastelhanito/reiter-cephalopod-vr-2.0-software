@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
+from fractions import Fraction
 from pathlib import Path
 from typing import BinaryIO, Protocol, cast
 
@@ -13,6 +14,10 @@ from cephvr.acquisition.recording.identity import (
     RecordingIdentity,
     header_clocks,
 )
+from cephvr.shared.ffmpeg_encoding_rules import _format_rate
+from cephvr.shared.nominal_video_grid import NominalVideoGrid
+
+FRAME_LOG_SCHEMA_VERSION = 3
 
 FRAME_LOG_FIELDS = {
     "header": ("type", "schema_version", "identity", "clocks", "video"),
@@ -51,9 +56,18 @@ FRAME_LOG_FIELDS = {
         "host_receipt_ns",
         "dropped",
         "video_frame",
+        "video_disposition",
         "camera_frame_counter",
         "camera_timestamp_ns",
         "invalid_code",
+    ),
+    "video_frame": (
+        "type",
+        "encoded_frame_index",
+        "nominal_slot",
+        "source_frame_id",
+        "source_host_receipt_ns",
+        "disposition",
     ),
     "completion": (
         "type",
@@ -71,7 +85,11 @@ FRAME_LOG_FIELDS = {
         "final_received_frame_count",
         "accounting_complete",
     ),
-    "completion.video": ("recorded_frame_count",),
+    "completion.video": (
+        "recorded_frame_count",
+        "selected_source_frame_count",
+        "duplicate_frame_count",
+    ),
     "completion.pulses": (
         "on_outcome",
         "on_dispatched_monotonic_ns",
@@ -115,6 +133,8 @@ class FrameLogCompletion:
     final_received_frame_count: int | None
     accounting_complete: bool
     recorded_frame_count: int
+    selected_source_frame_count: int
+    duplicate_frame_count: int
     on_outcome: str | None
     on_dispatched_monotonic_ns: int | None
     on_acknowledged_monotonic_ns: int | None
@@ -163,8 +183,15 @@ class FrameLogWriter:
         self._closed = False
         self._completion_appended = False
         self._completion_attempted = False
-        self._nominal_rate = nominal_frame_rate_hz
         self._nominal_rate_source = nominal_rate_source
+        self.video_grid = NominalVideoGrid(
+            start_ns, Fraction(_format_rate(nominal_frame_rate_hz))
+        )
+        self._nominal_rate = float(self.video_grid.rate)
+        self.next_video_slot = 0
+        self.last_video_source: tuple[int, int] | None = None
+        self.selected_source_count = 0
+        self.duplicate_count = 0
 
     def create(self) -> None:
         if self.file is not None or self._closed:
@@ -174,7 +201,7 @@ class FrameLogWriter:
         self._append(
             {
                 "type": "header",
-                "schema_version": 2,
+                "schema_version": FRAME_LOG_SCHEMA_VERSION,
                 "identity": self.identity.header_identity(),
                 "clocks": header_clocks(self.identity, self.start_ns),
                 "video": {
@@ -184,7 +211,14 @@ class FrameLogWriter:
             }
         )
 
-    def append_frame(self, record: FrameRecord, *, dropped: bool) -> int | None:
+    def append_frame(
+        self,
+        record: FrameRecord,
+        *,
+        dropped: bool,
+        video_frame: int | None = None,
+        video_disposition: str | None = None,
+    ) -> int | None:
         if self.file is None or self._closed:
             raise RuntimeError("frame log is not open")
         if self._completion_attempted:
@@ -194,13 +228,17 @@ class FrameLogWriter:
             raise ValueError("frame IDs are not contiguous and ordered")
         invalid = not record.valid_image
         final_dropped = bool(dropped or invalid)
-        video_frame = None if final_dropped else self.frame_count
+        if final_dropped and video_frame is not None:
+            raise ValueError("dropped source frames cannot map to encoded slots")
+        if not final_dropped and video_frame is None:
+            raise ValueError("selected source frame requires a nominal video slot")
         values: dict[str, object] = {
             "type": "frame",
             "frame_id": frame_id,
             "host_receipt_ns": record.acquisition_time_ns,
             "dropped": final_dropped,
             "video_frame": video_frame,
+            "video_disposition": video_disposition,
             "camera_frame_counter": record.camera_frame_counter,
             "camera_timestamp_ns": record.camera_timestamp_ns,
             "invalid_code": record.invalid_code if invalid else None,
@@ -210,8 +248,41 @@ class FrameLogWriter:
         if not final_dropped:
             if self.first_recorded_frame_id is None:
                 self.first_recorded_frame_id = frame_id
-            self.frame_count += 1
+            self.selected_source_count += 1
         return video_frame
+
+    def append_video_frame(
+        self,
+        *,
+        slot: int,
+        source_frame_id: int,
+        source_host_receipt_ns: int,
+        disposition: str,
+    ) -> None:
+        if slot != self.frame_count or slot != self.next_video_slot:
+            raise ValueError("encoded video slots must be contiguous and ordered")
+        if disposition not in {
+            "real",
+            "leading_duplicate",
+            "interior_duplicate",
+            "trailing_duplicate",
+        }:
+            raise ValueError("unsupported encoded-frame disposition")
+        self._append(
+            {
+                "type": "video_frame",
+                "encoded_frame_index": slot,
+                "nominal_slot": slot,
+                "source_frame_id": source_frame_id,
+                "source_host_receipt_ns": source_host_receipt_ns,
+                "disposition": disposition,
+            }
+        )
+        self.frame_count += 1
+        if disposition != "real":
+            self.duplicate_count += 1
+        self.next_video_slot += 1
+        self.last_video_source = (source_frame_id, source_host_receipt_ns)
 
     def append_completion(self, completion: FrameLogCompletion) -> None:
         if self.file is None or self._closed:
@@ -220,7 +291,11 @@ class FrameLogWriter:
             raise RuntimeError("frame-log completion line may be appended exactly once")
         if completion.outcome not in {"completed", "interrupted"}:
             raise ValueError("invalid recording outcome")
-        if completion.recorded_frame_count != self.frame_count:
+        if (
+            completion.recorded_frame_count != self.frame_count
+            or completion.selected_source_frame_count != self.selected_source_count
+            or completion.duplicate_frame_count != self.duplicate_count
+        ):
             raise ValueError(
                 "completion video count differs from online frame-log accounting"
             )
@@ -250,7 +325,11 @@ class FrameLogWriter:
                     "final_received_frame_count": completion.final_received_frame_count,
                     "accounting_complete": completion.accounting_complete,
                 },
-                "video": {"recorded_frame_count": completion.recorded_frame_count},
+                "video": {
+                    "recorded_frame_count": completion.recorded_frame_count,
+                    "selected_source_frame_count": completion.selected_source_frame_count,
+                    "duplicate_frame_count": completion.duplicate_frame_count,
+                },
                 "pulses": {
                     "on_outcome": completion.on_outcome,
                     "on_dispatched_monotonic_ns": completion.on_dispatched_monotonic_ns,

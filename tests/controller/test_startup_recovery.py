@@ -34,8 +34,8 @@ def _recovery() -> StartupRecovery:
     )
 
 
-def _inspect(tmp_path: Path, log: bytes):  # type: ignore[no-untyped-def]
-    store, pointer, _ = _fixture(tmp_path, log)
+def _inspect(tmp_path: Path, log: bytes, *, trial_id: str | None = None):  # type: ignore[no-untyped-def]
+    store, pointer, _ = _fixture(tmp_path, log, trial_id=trial_id)
     reservation = OutputReservation.open_existing(
         Path(pointer.session_directory),
         pointer.session_id,
@@ -225,7 +225,7 @@ def _event(kind: str, **extra: object) -> bytes:
 
 
 def _fixture(
-    tmp_path: Path, log: bytes
+    tmp_path: Path, log: bytes, *, trial_id: str | None = None
 ) -> tuple[RecoveryStore, UnfinishedSessionPointer, Path]:
     session = _id()
     controller = _id()
@@ -244,7 +244,14 @@ def _fixture(
         "session_id": session,
         "controller_generation": controller,
         "local_timezone": "UTC",
-        "trials": [{"context": {"trial_number": 1}}],
+        "trials": [
+            {
+                "context": {
+                    "trial_number": 1,
+                    **({"trial_id": trial_id} if trial_id is not None else {}),
+                }
+            }
+        ],
         "configuration": {
             "backends": [{"backend_name": "synchronization", "enabled": True}]
         },
@@ -429,10 +436,21 @@ def test_recovery_reader_rejects_zero_budget_and_nonregular_file(
 
 
 def test_prior_completed_recovery_event_is_not_duplicated(tmp_path: Path) -> None:
+    terminal = _event(
+        "recovery",
+        outcome="completed",
+        details={
+            "component": "controller",
+            "action": "startup_recovery",
+            "recovery_controller_generation": _id(),
+            "event_clock": "current_recovery_application",
+            "scientific_output_closure": "unconfirmed",
+        },
+    )
     log = (
         _event("session_started")
         + _event("session_ended", outcome="interrupted")
-        + _event("recovery", outcome="completed")
+        + terminal
     )
     _store, pointer, path = _fixture(tmp_path, log)
     held = OutputReservation.open_existing(
@@ -444,3 +462,162 @@ def test_prior_completed_recovery_event_is_not_duplicated(tmp_path: Path) -> Non
         assert inspection.unfinished_trials == ()
     finally:
         held.release()
+
+
+def test_late_finished_reconciliation_is_nonterminal_and_append_only(
+    tmp_path: Path,
+) -> None:
+    trial_id = _id()
+    reconciliation = _event(
+        "recovery",
+        trial_number=1,
+        outcome="completed",
+        details={
+            "component": "Finished",
+            "action": "reconcile exact output closure",
+            "trial_id": trial_id,
+            "backend": "acquisition",
+            "outputs": [
+                {"output_key": "camera-video", "closure": "OUTPUT_CLOSURE_CLOSED"}
+            ],
+            "initial_deadline_ns": 100,
+        },
+    )
+    log = (
+        _event("session_started")
+        + _event("trial_started", trial_number=1)
+        + reconciliation
+        + _event("trial_finished", trial_number=1, outcome="completed")
+        + _event("session_ended", outcome="completed")
+        + _event(
+            "recovery",
+            trial_number=1,
+            outcome="completed",
+            details={
+                "component": "Finished",
+                "action": "reconcile exact output closure",
+                "trial_id": trial_id,
+                "backend": "tracking",
+                "outputs": [],
+                "initial_deadline_ns": 100,
+            },
+        )
+        + _event(
+            "recovery",
+            outcome="completed",
+            details={
+                "component": "controller",
+                "action": "startup_recovery",
+                "recovery_controller_generation": _id(),
+                "event_clock": "current_recovery_application",
+                "scientific_output_closure": "unconfirmed",
+            },
+        )
+    )
+    result = _inspect(tmp_path, log, trial_id=trial_id)
+    assert result.log_identity is not None
+    assert result.session_ended
+    assert result.recovery_recorded
+    assert result.unfinished_trials == ()
+
+
+@pytest.mark.parametrize(
+    "details",
+    [
+        {"component": "Finished", "action": "unknown"},
+        {"component": "Finished", "action": "reconcile exact output closure"},
+    ],
+)
+def test_malformed_nonterminal_recovery_remains_unconfirmed(
+    tmp_path: Path, details: dict[str, object]
+) -> None:
+    event = _event("recovery", trial_number=1, outcome="completed", details=details)
+    trial_id = _id()
+    result = _inspect(
+        tmp_path,
+        _event("session_started") + _event("trial_started", trial_number=1) + event,
+        trial_id=trial_id,
+    )
+    assert result.log_identity is None
+    assert "unconfirmed" in (result.issue or "")
+
+
+def test_terminal_recovery_must_remain_last_record(tmp_path: Path) -> None:
+    terminal = _event(
+        "recovery",
+        outcome="completed",
+        details={
+            "component": "controller",
+            "action": "startup_recovery",
+            "recovery_controller_generation": _id(),
+            "event_clock": "current_recovery_application",
+            "scientific_output_closure": "unconfirmed",
+        },
+    )
+    result = _inspect(
+        tmp_path,
+        _event("session_started")
+        + _event("session_ended", outcome="interrupted")
+        + terminal
+        + _event("error"),
+    )
+    assert result.log_identity is None
+    assert "after final recovery" in (result.issue or "")
+
+
+def test_incident_reconciliation_remains_nonterminal(tmp_path: Path) -> None:
+    terminal = _event(
+        "recovery",
+        outcome="completed",
+        details={
+            "component": "controller",
+            "action": "startup_recovery",
+            "recovery_controller_generation": _id(),
+            "event_clock": "current_recovery_application",
+            "scientific_output_closure": "unconfirmed",
+        },
+    )
+    result = _inspect(
+        tmp_path,
+        _event("session_started")
+        + _event(
+            "recovery",
+            details={
+                "incident_id": _id(),
+                "resolved_by": "spikeglx_progress",
+                "recovered_monotonic_ns": 200,
+                "incident_revision": 3,
+                "affected_resources": ["recording"],
+            },
+        )
+        + _event("session_ended", outcome="completed")
+        + terminal,
+    )
+    assert result.log_identity is not None
+    assert result.recovery_recorded
+
+
+def test_finished_reconciliation_must_match_configured_trial_id(
+    tmp_path: Path,
+) -> None:
+    configured_trial_id = _id()
+    event = _event(
+        "recovery",
+        trial_number=1,
+        outcome="completed",
+        details={
+            "component": "Finished",
+            "action": "reconcile exact output closure",
+            "trial_id": _id(),
+            "backend": "acquisition",
+            "outputs": [],
+            "initial_deadline_ns": 100,
+        },
+    )
+    result = _inspect(
+        tmp_path,
+        _event("session_started") + _event("trial_started", trial_number=1) + event,
+        trial_id=configured_trial_id,
+    )
+    assert result.log_identity is None
+    assert "Finished reconciliation" in (result.issue or "")

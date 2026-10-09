@@ -63,6 +63,14 @@ class ReviewEncodingProvider(Protocol):
     ) -> ReviewEncoding: ...
 
 
+def review_capture_cpu_bytes(width: int, height: int, capture_slots: int) -> int:
+    """Bound admitted images, retained source, readback copy and row scratch."""
+    if min(width, height, capture_slots) <= 0:
+        raise ValueError("positive review capture dimensions and slots required")
+    frame_bytes = width * height * 4
+    return frame_bytes * (capture_slots + 2) + width * 4
+
+
 class NativePreparation:
     """Concrete Visual Stimulus Setup adapter retaining source owners through resource release."""
 
@@ -412,16 +420,21 @@ class NativePreparation:
                         review_encoding.composite_width
                         * review_encoding.composite_height
                     )
-                    queued_bytes = pixels * 4 * limits.capture_slots
-                    if queued_bytes > limits.recording_bytes_total:
+                    frame_bytes = pixels * 4
+                    cpu_bytes = review_capture_cpu_bytes(
+                        review_encoding.composite_width,
+                        review_encoding.composite_height,
+                        limits.capture_slots,
+                    )
+                    if cpu_bytes > limits.recording_bytes_total:
                         raise MemoryError(
                             "review capture slots exceed the recording byte budget"
                         )
                     assert self._budget is not None
                     self._budget.reserve(
                         owner=f"visual_stimulus:{trial.context.trial_id}:review-capture",
-                        cpu_bytes=0,
-                        gpu_bytes=pixels * 16 + pixels * 4 * limits.capture_slots,
+                        cpu_bytes=cpu_bytes,
+                        gpu_bytes=pixels * 16 + frame_bytes * limits.capture_slots,
                     )
                 context = CompileContext(
                     identity=identity,
