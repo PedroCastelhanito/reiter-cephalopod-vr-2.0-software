@@ -24,16 +24,6 @@ from cephvr.shared.recovery import RecoveryStore, UnfinishedSessionPointer
 from tests.controller.support_components import _id, _runtime
 
 
-def _recovery() -> StartupRecovery:
-    return StartupRecovery(
-        None,  # type: ignore[arg-type]
-        current_generation=_id(),
-        timeout_ns=2_000_000_000,
-        max_operations=8,
-        max_bytes=65_536,
-    )
-
-
 def _inspect(tmp_path: Path, log: bytes, *, trial_id: str | None = None):  # type: ignore[no-untyped-def]
     store, pointer, _ = _fixture(tmp_path, log, trial_id=trial_id)
     reservation = OutputReservation.open_existing(

@@ -18,6 +18,7 @@ def backend_command(request: Message) -> wire.BackendCommand:
         (
             wire.VisualStimulusDisplayCalibrationOpenRequest,
             wire.VisualStimulusDisplayCalibrationCloseRequest,
+            wire.VisualStimulusDisplayCalibrationUpdateRequest,
         ),
     ):
         return wire.BackendCommand(
@@ -56,6 +57,7 @@ def worker_command(request: Message) -> visual_stimulus.WorkerCommand:
             visual_stimulus.WorkerRecipePublication,
             visual_stimulus.OpenDisplayCalibrationCommand,
             visual_stimulus.CloseDisplayCalibrationCommand,
+            visual_stimulus.UpdateDisplayCalibrationCommand,
         ),
     ):
         return request.command

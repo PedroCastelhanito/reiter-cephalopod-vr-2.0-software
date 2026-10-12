@@ -373,10 +373,9 @@ class CoordinatorCleanup:
                     None,
                 )
                 if matching is not None:
-                    saved = acq.WorkerCleanupEvidence.FromString(
+                    return acq.WorkerCleanupEvidence.FromString(
                         matching.cleanup.SerializeToString(deterministic=True)
                     )
-                    return saved
                 child.updated.clear()
             remaining = remaining_seconds(deadline_ns, clock=self.clock)
             if remaining <= 0:

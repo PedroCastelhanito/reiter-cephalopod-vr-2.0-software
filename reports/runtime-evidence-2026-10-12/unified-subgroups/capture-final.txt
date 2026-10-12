@@ -1,0 +1,6 @@
+qt.qpa.fonts: Populating font family aliases took 65 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+Captured overview and unified form at 1280 and 720 pixels; no horizontal page overflow.

@@ -1,0 +1,66 @@
+........................................................................ [ 18%]
+........................................................................ [ 36%]
+....................................................................F... [ 54%]
+........................................................................ [ 72%]
+........................................................................ [ 90%]
+....................................                                     [100%]
+=================================== FAILURES ===================================
+_______________ test_protocol_program_validation_and_atomic_save _______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106bb8040>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1690/test_protocol_program_validati0')
+
+    def test_protocol_program_validation_and_atomic_save(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        import json
+    
+        source = {
+            "format_version": 2,
+            "assets": [],
+            "instances": [],
+            "input_channels": [],
+            "scenes": [
+                {
+                    "scene_id": "blank",
+                    "background_linear_rgb": [0.0, 0.0, 0.0],
+                    "arena_instance_id": None,
+                    "layer_instance_ids": [],
+                }
+            ],
+            "duration": {"kind": "explicit_epochs"},
+            "sequence": [
+                {
+                    "kind": "epoch",
+                    "epoch_id": "first",
+                    "scene_id": "blank",
+                    "duration": {"kind": "fixed", "duration": {"seconds": "60"}},
+                    "settings": [],
+                }
+            ],
+        }
+        panel = window.protocol
+        path = tmp_path / "program.json"
+        path.write_text(json.dumps(source))
+        panel.load_program(str(path))
+        assert not panel.message.isVisible()
+        path = tmp_path / "program.json"
+        panel.save_program(str(path))
+        source["sequence"][0]["batch_label"] = ""
+        source["sequence"][0]["batch_id"] = None
+>       assert json.loads(path.read_text()) == source
+E       AssertionError: assert {'format_vers...s': []}], ...} == {'format_vers...els': [], ...}
+E         
+E         Omitting 6 identical items, use -vv to show
+E         Differing items:
+E         {'sequence': [{'kind': 'epoch', 'epoch_id': 'first', 'batch_label': '', 'batch_id': None, ...}]} != {'sequence': [{'kind': 'epoch', 'epoch_id': 'first', 'scene_id': 'blank', 'duration': {'kind': 'fixed', 'duration': {'seconds': '60'}}, ...}]}
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:6144: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_protocol_program_validation_and_atomic_save
+1 failed, 395 passed in 254.46s (0:04:14)

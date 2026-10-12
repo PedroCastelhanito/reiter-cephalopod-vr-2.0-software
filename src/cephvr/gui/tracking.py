@@ -57,8 +57,8 @@ class TrackingPage(ResponsiveColumns):
         self.pipeline = combo(("Water flow", "Fin flow"))
         row.addWidget(field("Pipeline", self.pipeline), 1)
         actions = QHBoxLayout()
-        self.load_button = button("Load")
-        self.save_button = button("Save as")
+        self.load_button = button("Load…")
+        self.save_button = button("Save as…")
         self.preview_button = button("Annotate")
         self.preview_button.setToolTip(
             "Open the local reference-frame annotation window."

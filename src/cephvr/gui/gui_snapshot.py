@@ -98,6 +98,19 @@ class GuiSnapshot:
         self.experiment.validate(data["experiment"])
         validate_protocol(data["protocol"])
         self.pages.devices.microcontroller.snapshots.validate(data["microcontroller"])
+        if data["microcontroller"]["version"] == 2:
+            enabled_by_serial = {
+                item["serial"]: item["enabled"]
+                for item in data["experiment"]["cameras"]
+            }
+            if any(
+                data["microcontroller"]["camera_enabled"][camera.key]
+                != enabled_by_serial[camera.serial]
+                for camera in self.pages.devices.cameras.drafts
+            ):
+                raise ValueError(
+                    "Camera participation differs between Cameras and Microcontroller"
+                )
         self.pages.devices.spikeglx.snapshots.validate(data["spikeglx"])
         projectors = fields(
             data["projectors"],

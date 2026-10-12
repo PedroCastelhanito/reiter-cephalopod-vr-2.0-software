@@ -18,6 +18,7 @@ from cephvr.gui.managed_display_operations import (
     open_display_calibration_request,
     spikeglx_inventory_request,
     spikeglx_inventory_update_request,
+    update_display_calibration_request,
     validate_inventory_snapshot,
 )
 from cephvr.gui.tracking_frame_transport import fetch_tracking_diagnostic_frame
@@ -452,6 +453,17 @@ class ControllerBridge(QThread):
             )
             await self._track_request(
                 client, action, "OpenDisplayCalibration", open_request
+            )
+        elif action == "update_display_calibration":
+            calibration_update_request = update_display_calibration_request(
+                client,
+                expected_revision=int(options["expected_revision"]),
+                diagnostic_id=str(options["diagnostic_id"]),
+                adjustment_sequence=int(options["adjustment_sequence"]),
+                adjustments=tuple(options["adjustments"]),
+            )
+            await self._track_request(
+                client, action, "UpdateDisplayCalibration", calibration_update_request
             )
         elif action == "close_display_calibration":
             close_request = close_display_calibration_request(

@@ -765,3 +765,99 @@ async def test_controller_authorizes_firmware_only_in_idle_configuration(blocked
     finally:
         for coroutine in env.spawned:
             coroutine.close()
+
+
+@pytest.mark.asyncio
+async def test_live_calibration_update_requires_exact_leased_active_grid():
+    from cephvr.visual_stimulus.v1 import messages_pb2 as messages
+
+    env = _Env()
+    sent = []
+
+    class Backend:
+        context = pb.BackendContext(
+            backend_name="visual_stimulus", backend_generation=_id()
+        )
+
+        async def update_display_calibration(self, request, *, deadline_ns):
+            sent.append(request)
+            assert request.deadline_monotonic_ns == deadline_ns
+            return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+
+    backend = Backend()
+    display = pb.VisualStimulusDisplayView(backend=backend.context)
+    display.outputs.add(output_id="projector/main")
+    generation = _id()
+    evidence = display.calibration
+    evidence.diagnostic_id = _id()
+    evidence.configuration_revision = env.configuration.revision
+    evidence.controller_generation = generation
+    evidence.calibration_view = "frame_grid"
+    evidence.state = visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+    projections = type("Projection", (), {"display": display})()
+    projections.expect_display = lambda *_args: None
+    controller = DisplayCalibrationController(
+        lifecycle=env.lifecycle,
+        configuration=env.configuration,
+        control=env.control,
+        device=env.device,
+        backends={"visual_stimulus": cast(BackendPort, backend)},
+        projections=cast(Any, projections),
+        file_policy_loader=lambda _: {},
+        display_validator=lambda _: frozenset(),
+        display_pacing_resolver=None,
+        generation=generation,
+        limits=_limits(),
+        hooks=env.hooks,
+        maximum_asset_bytes=1_000_000,
+        clock=lambda: env.now,
+    )
+    controller._active_backend = cast(BackendPort, backend)
+    request = svc.UpdateDisplayCalibrationRequest(
+        expected_configuration_revision=env.configuration.revision,
+        diagnostic_id=evidence.diagnostic_id,
+        adjustment_sequence=1,
+    )
+    request.command.operator.command_id = _id()
+    request.adjustments.append(
+        messages.DisplayCalibrationAdjustment(
+            mapping_id="diagnostic_front",
+            destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
+        )
+    )
+    request.diagnostic_id = _id()
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+    request.diagnostic_id = evidence.diagnostic_id
+    request.adjustments[0].destination_xy[0] = float("nan")
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+    assert not sent and env.device.calibration_pending is None
+    request.adjustments[0].destination_xy[0] = 0.1
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_ACCEPTED
+    assert sent[0].diagnostic_id == evidence.diagnostic_id
+    assert sent[0].adjustment_sequence == 1
+    assert (
+        env.device.calibration_pending[4]
+        == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+    )
+    assert evidence.adjustment_sequence == 0  # Admission is not presentation.
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+    env.device.calibration_pending = None
+    evidence.adjustment_sequence = 1
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+    request.adjustment_sequence = 2
+    evidence.calibration_view = "reference_bars"
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+    evidence.calibration_view = "frame_grid"
+    env.lifecycle.session.shutdown_requested = True
+    request.command.operator.command_id = _id()
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+    assert len(sent) == 1 and env.device.calibration_pending is None
+    env.lifecycle.session.shutdown_requested = False
+    from dataclasses import replace
+
+    controller.hooks = replace(
+        env.hooks, authorized=lambda *_args, **_kwargs: "lease lost"
+    )
+    assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+    for task in env.spawned:
+        task.close()

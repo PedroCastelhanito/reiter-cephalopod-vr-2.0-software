@@ -192,6 +192,9 @@ def stylesheet() -> str:
     QScrollArea, QScrollArea > QWidget > QWidget {{ background: transparent; border: none; }}
     QScrollBar:vertical {{ width: 0px; }}
     QScrollBar:horizontal {{ height: 0px; }}
+    QScrollBar#TimelineScroll:horizontal {{ height: 10px; background: {c.input}; border-radius: 5px; }}
+    QScrollBar#TimelineScroll::handle:horizontal {{ background: {c.border}; min-width: 28px; border-radius: 5px; }}
+    QScrollBar#TimelineScroll::handle:horizontal:hover {{ background: {c.muted}; }}
     QScrollBar::add-line, QScrollBar::sub-line {{ width: 0px; height: 0px; }}
     QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
     QTableCornerButton::section {{ background: {c.active}; border: none; }}

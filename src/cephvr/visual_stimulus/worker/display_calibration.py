@@ -176,6 +176,9 @@ class DisplayCalibrationOwner:
                 self.set_display_profile(prepared.previous_display)
             self.evidence = view.DisplayCalibrationEvidence(
                 diagnostic_id=self.active_id,
+                calibration_view=self.active_profile.calibration_view
+                if self.active_profile is not None
+                else "",
                 controller_generation=self.controller.generation,
                 renderer_generation=self.worker.generation,
                 configuration_revision=job.request.command.target.configuration_revision,
@@ -268,6 +271,7 @@ class DisplayCalibrationOwner:
             self.revision = job.request.command.target.configuration_revision
             self.evidence = view.DisplayCalibrationEvidence(
                 diagnostic_id=self.active_id,
+                calibration_view=display.calibration_view,
                 controller_generation=self.controller.generation,
                 renderer_generation=self.worker.generation,
                 configuration_revision=self.revision,
@@ -286,6 +290,31 @@ class DisplayCalibrationOwner:
             self._mark_unknown(job, exc)
             self.job = None
         return None
+
+    def update(
+        self, request: messages.UpdateDisplayCalibrationCommand, deadline_ns: int
+    ) -> None:
+        from cephvr.visual_stimulus.config.calibration_adjustments import (
+            CalibrationAdjustmentRejected,
+        )
+        from cephvr.visual_stimulus.worker.calibration_adjustments import (
+            update_presentation,
+        )
+
+        if self.job is not None or self.active_id != request.diagnostic_id:
+            raise CalibrationAdjustmentRejected(
+                "Live update targets an inactive or stale calibration"
+            )
+        update_presentation(
+            request,
+            deadline_ns,
+            prepared=self.prepared,
+            display=self.active_profile,
+            evidence=self.evidence,
+            engine=self.engine,
+            clock=self.clock,
+            report=self._report,
+        )
 
     def request_cleanup(
         self, command: messages.WorkerCommand, deadline_ns: int

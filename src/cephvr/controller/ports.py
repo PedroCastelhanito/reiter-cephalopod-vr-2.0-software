@@ -79,6 +79,12 @@ class BackendPort(Protocol):
         *,
         deadline_ns: int,
     ) -> pb.CommandAdmission: ...
+    async def update_display_calibration(
+        self,
+        request: svc.VisualStimulusDisplayCalibrationUpdateRequest,
+        *,
+        deadline_ns: int,
+    ) -> pb.CommandAdmission: ...
     async def close_display_calibration(
         self,
         request: svc.VisualStimulusDisplayCalibrationCloseRequest,

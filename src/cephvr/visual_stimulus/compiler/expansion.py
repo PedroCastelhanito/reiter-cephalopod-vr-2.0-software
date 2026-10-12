@@ -18,6 +18,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
     Ref,
     Settings,
 )
+from cephvr.visual_stimulus.config.repetition_values import resolve_repetition
 
 ORDER_IMPLEMENTATION = "cephvr-order-python-v1"
 
@@ -100,7 +101,16 @@ def expand_program(
     ) -> None:
         for node in nodes:
             if isinstance(node, Epoch):
-                settings = tuple(_substitute(block, scope) for block in node.settings)
+                source_settings = (
+                    node.repetition_settings[lineage[-1].repetition_index]
+                    if node.repetition_settings
+                    else node.settings
+                )
+                settings = tuple(_substitute(block, scope) for block in source_settings)
+                if node.repetition_rules:
+                    settings = resolve_repetition(
+                        settings, node.repetition_rules, lineage[-1].repetition_index
+                    )
                 expanded.append(ExpandedEpoch(node, settings, lineage))
                 continue
             if node.order_unit == "condition_rows":

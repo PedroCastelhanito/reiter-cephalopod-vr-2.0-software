@@ -63,7 +63,7 @@ class PreviewDialog(QDialog):
         self.raise_()
         self.activateWindow()
 
-    def hideEvent(self, event: QHideEvent | None) -> None:  # noqa: N802
+    def hideEvent(self, event: QHideEvent | None) -> None:
         self.saved_geometry = self.saveGeometry()
         if self.settings is not None:
             self.settings.setValue("windows/preview-selector", self.saved_geometry)

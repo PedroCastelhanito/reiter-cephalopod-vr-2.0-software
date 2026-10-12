@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol, cast
 
 from cephvr.visual_stimulus.config.models.artifact_models import (
@@ -96,6 +96,8 @@ class PreparedCalibrationOutput:
     warp_mask_textures: dict[str, Any]
     warp_weight_textures: dict[str, Any]
     lut_texture: Any
+
+    warp_vertex_buffers: dict[str, Any] = field(default_factory=dict)
 
 
 class SceneOutputBuilder:
@@ -303,6 +305,7 @@ class SceneOutputBuilder:
             surface_textures: dict[str, Any] = {}
             surface_fbos: dict[str, Any] = {}
             warp_arrays: dict[str, Any] = {}
+            warp_vertex_buffers: dict[str, Any] = {}
             warp_mask_textures: dict[str, Any] = {}
             warp_weight_textures: dict[str, Any] = {}
             warp_program = track(
@@ -352,6 +355,7 @@ class SceneOutputBuilder:
                     output.width,
                     output.height,
                     track,
+                    vertex_buffers=warp_vertex_buffers,
                 )
                 warp_mask_textures[mapping.mapping_id] = self._make_grid_texture(
                     context, profile.mask, track
@@ -398,6 +402,7 @@ class SceneOutputBuilder:
                 warp_mask_textures,
                 warp_weight_textures,
                 lut_texture,
+                warp_vertex_buffers=warp_vertex_buffers,
             )
             del self.partial_allocations[key]
         return frames
@@ -452,6 +457,8 @@ void main() { uv = in_source; gl_Position = vec4(in_position,0.0,1.0); }
         width: int,
         height: int,
         track: Callable[[Any], Any],
+        *,
+        vertex_buffers: dict[str, Any] | None = None,
     ) -> Any:
         import numpy as np
 
@@ -471,6 +478,8 @@ void main() { uv = in_source; gl_Position = vec4(in_position,0.0,1.0); }
         vertex_buffer = track(
             context.buffer(np.asarray(vertices, dtype=np.float32).tobytes())
         )
+        if vertex_buffers is not None:
+            vertex_buffers[profile.mapping_id] = vertex_buffer
         index_buffer = track(
             context.buffer(np.asarray(indices, dtype=np.uint32).tobytes())
         )

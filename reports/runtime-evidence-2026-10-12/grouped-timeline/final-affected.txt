@@ -1,0 +1,110 @@
+..........F.......................F........................              [100%]
+=================================== FAILURES ===================================
+___________ test_protocol_cards_reflow_and_keep_properties_reachable ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1085a56c0>
+app = <PyQt6.QtWidgets.QApplication object at 0x102732560>
+
+    def test_protocol_cards_reflow_and_keep_properties_reachable(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from PyQt6.QtWidgets import QPlainTextEdit, QTableWidget
+    
+        from cephvr.gui.components import StatusColumn
+    
+        panel = window.protocol
+        window.page_buttons[1].click()
+        assert not panel.findChildren(StatusColumn)
+        assert not panel.findChildren(QPlainTextEdit)
+        assert not panel.findChildren(QTableWidget)
+        for width in (1175, 720, 1175):
+            window.resize(width, 883)
+            for _ in range(3):
+                app.processEvents()
+            editor = panel.editor
+            for action in (
+                editor.shuffle_trial_button,
+                editor.output_preview_button,
+            ):
+                assert action.width() >= action.minimumSizeHint().width()
+                assert action.width() <= action.sizeHint().width()
+            assert editor.settings_card.width() == editor.width()
+            assert editor.trial_card.y() == editor.timeline_card.y()
+            assert editor.trial_card.geometry().right() < editor.timeline_card.x()
+            assert editor.timeline_card.geometry().right() == editor.width() - 1
+            assert editor.timeline_card.height() == editor.trial_card.height()
+            assert not hasattr(panel, "selected_trial_section")
+            assert not any(
+                caption.text() in {"Selected trial", "Random seed", "Gap after trial (s)"}
+                for caption in editor.trial_card.findChildren(QLabel)
+            )
+            assert editor.sequence_summary.alignment() == Qt.AlignmentFlag.AlignCenter
+            assert editor.settings_card.y() > editor.timeline_card.geometry().bottom()
+            viewport = panel.config_scroll.viewport()
+            assert panel.config_scroll.widget().width() <= viewport.width()
+            assert set(panel.assets.folders) == {"root"}
+            assert not hasattr(panel.assets, "more")
+            if width == 1175:
+                assert panel.assets.y() == panel.program_card.y()
+                assert panel.program_card.x() < panel.assets.x()
+            panel.editor.rename_epoch()
+            app.processEvents()
+            panel.config_scroll.ensureWidgetVisible(panel.editor.duration)
+            app.processEvents()
+            point = panel.editor.duration.mapTo(viewport, QPoint())
+            assert 0 <= point.x() < viewport.width()
+            assert 0 <= point.y() < viewport.height()
+    
+        editor = panel.editor
+        original = editor.program
+        editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+        for _ in range(3):
+            app.processEvents()
+        from PyQt6.QtWidgets import QScrollArea
+    
+        height = editor.timeline_card.height()
+        position = editor.settings_card.y()
+        assert not editor.timeline_card.findChildren(QScrollArea)
+>       assert editor.timeline.height() >= 120 + sum(editor.timeline.lane_heights())
+E       assert 86 >= (120 + 152)
+E        +  where 86 = <built-in method height of ProgramTimeline object at 0x1085d4310>()
+E        +    where <built-in method height of ProgramTimeline object at 0x1085d4310> = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x1085d4310>.height
+E        +      where <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x1085d4310> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x1035cb2e0>.timeline
+E        +  and   152 = sum([38, 38, 38, 38])
+E        +    where [38, 38, 38, 38] = lane_heights()
+E        +      where lane_heights = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x1085d4310>.lane_heights
+E        +        where <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x1085d4310> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x1035cb2e0>.timeline
+
+tests/gui/test_dashboard.py:6260: AssertionError
+__________ test_first_source_epoch_fade_does_not_change_rest_of_batch __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x103275990>
+
+    def test_first_source_epoch_fade_does_not_change_rest_of_batch(window):
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        data = editor.program.model_dump(mode="json")
+        source = data["sequence"][0]
+        data["sequence"] = [
+            {
+                **source,
+                "epoch_id": f"Epoch_{i}",
+                "duration": {"kind": "fixed", "duration": {"seconds": "20"}},
+            }
+            for i in range(3)
+        ]
+        editor.set_program(validate(data))
+        editor.select_epochs(((0,),))
+>       editor.open_details("", 0)
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'open_details'
+
+tests/gui/test_dashboard.py:9417: AttributeError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_protocol_cards_reflow_and_keep_properties_reachable
+FAILED tests/gui/test_dashboard.py::test_first_source_epoch_fade_does_not_change_rest_of_batch
+2 failed, 57 passed, 347 deselected in 70.81s (0:01:10)

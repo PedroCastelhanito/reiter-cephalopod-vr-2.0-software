@@ -1,5 +1,12 @@
 # Tracking status
 
+The Oct12 model-hierarchy audit deeply traced ring sequence/private lease handling,
+the record codec, bounded writer and completion paths; coordinator, trial, method
+and feedback paths were sampled. No additional actionable Tracking defect was
+established. The [current cross-owner assessment](runtime.md#current-scope-and-review)
+records review/portable validation scope; exhaustive estimator review and native
+scientific/full-load acceptance remain outside this pass.
+
 Current Windows checkout `94285ac` passes the complete non-rig suite, all 48 Tracking
 contract cases and 19 schema matches after regenerating stale local bindings.
 [Current cross-owner results and limits](runtime.md) retain exact evidence; scientific

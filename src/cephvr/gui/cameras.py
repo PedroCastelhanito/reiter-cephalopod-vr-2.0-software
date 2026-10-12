@@ -1,9 +1,8 @@
 """Camera inventory, editable drafts and controller-backed operator intents."""
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import (
-    QAbstractItemView,
     QCheckBox,
     QGridLayout,
     QHBoxLayout,
@@ -16,9 +15,9 @@ from PyQt6.QtWidgets import (
 
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_drafts
-from cephvr.gui.components import ActionHeader, Card, StatusColumn, button, combo, field
+from cephvr.gui.camera_snapshot import CameraSnapshot
+from cephvr.gui.components import Card, StatusColumn, button, combo, field
 from cephvr.gui.formatting import metrics_text
-from cephvr.gui.icons import device_icon
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import PresetField
 from cephvr.gui.presets import trigger_hint
@@ -67,22 +66,13 @@ class CamerasPanel(ResponsiveColumns):
         self.real_devices = False
         self.managed = False
         self.operation_pending = False
-        self.has_configured_tests = False
         self.pending_enable: dict[str, bool] = {}
         self.loading = False
         self.snapshot_draft = False
         inventory = Card("Available devices")
         self.table = DataTable(len(self.drafts), 4)
-        self.refresh_button = button("", "icon", hint="Refresh available cameras")
-        self.refresh_button.setAccessibleName("Refresh available cameras")
-        self.refresh_button.setIcon(device_icon("refresh"))
-        self.refresh_button.setIconSize(QSize(16, 16))
-        self.refresh_button.setFixedSize(26, 26)
-        self.table.setHorizontalHeader(ActionHeader(self.refresh_button))
+        self.refresh_button = self.table.add_refresh_action("Refresh available cameras")
         self.table.setHorizontalHeaderLabels(["Use", "Camera", "Role", ""])
-        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setShowGrid(False)
         vertical = self.table.verticalHeader()
         header = self.table.horizontalHeader()
@@ -94,16 +84,10 @@ class CamerasPanel(ResponsiveColumns):
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        header.resizeSection(3, 36)
         self.enable_controls: list[QCheckBox] = []
         self.populate_inventory()
         inventory.body.addWidget(self.table)
         actions = QHBoxLayout()
-        self.test_button = button(
-            "Test enabled", hint="Check connections for cameras enabled for experiment"
-        )
-        self.test_button.clicked.connect(self.test_enabled)
         self.selected_test_button = button(
             "Test selected", hint="Verify the assigned camera identity without capture"
         )
@@ -113,10 +97,9 @@ class CamerasPanel(ResponsiveColumns):
         )
         self.refresh_button.clicked.connect(self.refresh_inventory)
         self.connect_button.clicked.connect(self.toggle_connection)
-        for control in (self.test_button, self.connect_button):
+        for control in (self.selected_test_button, self.connect_button):
             actions.addWidget(control)
         inventory.body.addLayout(actions)
-        inventory.body.addWidget(self.selected_test_button)
         left_layout.addWidget(inventory)
         self.configuration = Card("Camera config")
         self.role = combo((*CAMERA_ROLES, "Unassigned"))
@@ -124,6 +107,8 @@ class CamerasPanel(ResponsiveColumns):
         self.configuration.body.addWidget(field("ROLE", self.role))
         form = QGridLayout()
         self._finish_configuration(form, left_layout)
+        self.snapshots = CameraSnapshot(self)
+        self.config_files = self.snapshots.files
 
     def populate_inventory(self) -> None:
         self.enable_controls.clear()
@@ -483,19 +468,13 @@ class CamerasPanel(ResponsiveColumns):
 
     def refresh_controls(self) -> None:
         draft = self.selected
+        if hasattr(self, "config_files"):
+            self.config_files.set_enabled(self.snapshots.available())
         self.selected_test_button.setEnabled(
             self.can_operate and draft is not None and draft.role in CAMERA_ROLES
         )
         self.refresh_button.setEnabled(
             not self.operation_pending and (self.can_operate or self.managed)
-        )
-        self.test_button.setEnabled(
-            self.can_operate
-            and (
-                self.has_configured_tests
-                if self.managed
-                else any(c.enabled for c in self.drafts)
-            )
         )
         preview = next(
             (p for p in self.view.previews if draft and p.key == draft.key), None

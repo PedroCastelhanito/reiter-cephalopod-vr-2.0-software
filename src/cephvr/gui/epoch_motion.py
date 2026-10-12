@@ -8,18 +8,7 @@ from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLineEdit, QVBoxLayout, QWid
 
 from cephvr.gui.components import field, label
 from cephvr.gui.stimulus_form import ValueEditor
-
-
-def constant_rate(value: dict[str, Any]) -> float | None:
-    if value["kind"] == "hold":
-        return 0.0
-    if (
-        value["kind"] == "rate"
-        and value["function"]["kind"] == "constant"
-        and isinstance(value["function"]["value"], (float, int))
-    ):
-        return float(value["function"]["value"])
-    return None
+from cephvr.visual_stimulus.config.parameter_edits import constant_rate as constant_rate
 
 
 class EpochMotion(QWidget):

@@ -27,7 +27,7 @@ class ReviewDashboardWindow(DashboardWindow):
         super().__init__(sample=sample, settings=settings)
         self._restore_failed = False
 
-    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         if event is None:
             return
         if getattr(self, "_restore_failed", False):

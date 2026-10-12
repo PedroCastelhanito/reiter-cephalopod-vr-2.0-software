@@ -1,0 +1,109 @@
+.................................................F..........             [100%]
+=================================== FAILURES ===================================
+_ test_projector_configuration_json_restores_all_settings_without_screen_mapping _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10691dcf0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1586/test_projector_configuration_j0')
+
+    def test_projector_configuration_json_restores_all_settings_without_screen_mapping(
+        window: DashboardWindow, tmp_path: Path
+    ):
+        import json
+    
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_pb
+    
+        panel = window.devices.projectors
+        assert panel.calibration_files.load_button.text() == "Load…"
+        panel.assignments = {"current-left": "Left", "current-front": "Front"}
+        panel.participation = {"current-left": True, "current-front": False}
+        panel.keys = list(panel.assignments)
+        panel.diagram.outputs = [
+            ("2", QRect(0, 0, 1920, 1080)),
+            ("3", QRect(1920, 0, 1920, 1080)),
+        ]
+        panel.timing.set_displays(
+            [
+                ("current-left", "Display 2 · Left", True),
+                ("current-front", "Display 3 · Front", False),
+            ]
+        )
+        panel.timing.pulse.setChecked(False)
+        panel.timing.mode.setCurrentText("All displays VSync")
+        panel.timing.target.setCurrentIndex(panel.timing.target.findData("current-front"))
+        for key, value in zip(panel.timing.fields, (10, 20, 30, 40), strict=True):
+            panel.timing.fields[key].setText(str(value))
+        panel.calibration_files.profile = {
+            "mappings": [
+                {
+                    "surface_id": "front",
+                    "projector_role": "front",
+                    "geometric_profile": {"logical_path": "calibration/front.json"},
+                }
+            ],
+            "output_settings": {
+                "front": {"photometric_profile": {"logical_path": "color/front.json"}}
+            },
+        }
+        expected = panel.calibration_files.snapshot()
+        path = tmp_path / "projectors.json"
+        panel.calibration_files.save_path(str(path))
+        assert "current-front" not in path.read_text()
+        assert "current-left" not in path.read_text()
+        panel.timing.pulse.setChecked(True)
+        panel.timing.mode.setCurrentText("Selected display VSync")
+        panel.timing.fields["Width"].clear()
+        panel.assignments = {"new-left": "Left", "new-front": "Front"}
+        panel.participation = {"new-left": False, "new-front": True}
+        panel.keys = list(panel.assignments)
+        panel.timing.set_displays(
+            [
+                ("new-left", "Display 4 · Left", False),
+                ("new-front", "Display 5 · Front", True),
+            ]
+        )
+        panel.calibration_files.load_path(str(path))
+        assert panel.calibration_files.snapshot() == expected
+        assert panel.assignments == {"new-left": "Left", "new-front": "Front"}
+        assert panel.participation == {"new-left": True, "new-front": False}
+        assert panel.timing.target.currentData() == "new-front"
+        panel._profile_outputs = [
+            {"output_id": face, "device_identity": f"new-{face}", "enabled": True}
+            for face in ("left", "front")
+        ]
+        result = json.loads(
+>           panel.configuration_for_submit(visual_pb.DisplayConfiguration()).profile_json
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+
+tests/gui/test_dashboard.py:11850: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/gui/projectors.py:490: in configuration_for_submit
+    document = measured_profiles(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+document = {'mappings': [{'surface_id': 'front', 'geometric_profile': {'logical_path': 'calibration/front.json'}, 'output_id': 'f...e': {'logical_path': 'color/front.json'}}], 'presentation_mode': 'all_outputs_vsync', 'photodiode_enabled': False, ...}
+calibration = {'format': 'cephvr-rig-calibration', 'version': 4, 'values': {'rig.width': None, 'rig.depth': None, 'rig.height': None, 'rig.subject_x': None, ...}}
+asset_root = ''
+
+    def measured_profiles(
+        document: dict[str, Any], calibration: dict[str, object], asset_root: str
+    ) -> dict[str, Any]:
+        values = calibration["values"]
+        assert isinstance(values, dict)
+        outputs_by_id = {output["output_id"]: output for output in document["outputs"]}
+        bars_by_output: dict[str, dict[str, int]] = {}
+        for mapping in document["mappings"]:
+            face = mapping["surface_id"].title()
+            if face not in ("Front", "Left", "Right", "Bottom"):
+                continue
+            output = outputs_by_id[mapping["output_id"]]
+            bars = reference_bar_config(
+>               calibration, face, output["width_px"], output["height_px"]
+                                   ^^^^^^^^^^^^^^^^^^
+            )
+E           KeyError: 'width_px'
+
+src/cephvr/gui/projector_measured_profiles.py:31: KeyError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_projector_configuration_json_restores_all_settings_without_screen_mapping
+1 failed, 59 passed, 353 deselected in 42.78s

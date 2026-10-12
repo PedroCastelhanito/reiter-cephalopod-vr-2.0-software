@@ -12,6 +12,7 @@ class Selection:
     index: int
     layer: int
     screen: str = ""
+    paths: tuple[tuple[int, ...], ...] = ()
 
 
 @dataclass

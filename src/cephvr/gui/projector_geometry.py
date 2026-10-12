@@ -215,12 +215,11 @@ class ScreenGeometryEditor(Card):
         super().__init__("Screen dimensions")
         self.fields: dict[tuple[str, str], QLineEdit] = {}
         self.drafts: dict[str, dict[str, str]] = {face: {} for face in FACES}
-        self.table = DataTable(len(FACES), 5)
+        self.table = DataTable(len(FACES), 4)
         entries = (
             ("width", "WIDTH\n(mm)"),
             ("height", "HEIGHT\n(mm)"),
             ("distance", "DERIVED DIST.\n(mm)"),
-            ("throw", "THROW\nRATIO"),
         )
         self.table.setHorizontalHeaderLabels(["", *(title for _, title in entries)])
         header = self.table.horizontalHeader()
@@ -244,6 +243,14 @@ class ScreenGeometryEditor(Card):
                 )
                 self.fields[face, key] = edit
                 self.table.set_control(row, col, edit)
+        for face in FACES:
+            edit = QLineEdit(self)
+            edit.setReadOnly(True)
+            edit.hide()
+            edit.textChanged.connect(
+                lambda value, f=face: self.save_value(f, "throw", value)
+            )
+            self.fields[face, "throw"] = edit
         self.table.fit_rows()
         self.body.addWidget(self.table)
 

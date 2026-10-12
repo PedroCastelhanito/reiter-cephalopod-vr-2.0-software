@@ -88,7 +88,10 @@ class VisualStimulusCoordinatorRuntime:
                 self.state.cleanup = None
                 self.state.sealed = False
                 self.cancelled.clear()
-            elif method in {"OpenDisplayCalibration", "CloseDisplayCalibration"}:
+            elif method in {
+                "OpenDisplayCalibration",
+                "CloseDisplayCalibration",
+            }:
                 if self.state.setup is not None:
                     raise ValueError(
                         "display calibration is unavailable during a session"

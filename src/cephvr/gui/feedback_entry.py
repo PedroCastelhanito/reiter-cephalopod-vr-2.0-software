@@ -181,7 +181,7 @@ class FeedbackEntry(QWidget):
             if widget is not self.remove:
                 self.grid.setColumnStretch(col, 2 if i < 2 and not narrow else 1)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         self.arrange()
 

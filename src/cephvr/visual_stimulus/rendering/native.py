@@ -18,12 +18,14 @@ from typing import Any, cast
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile, Output
 from cephvr.visual_stimulus.rendering.native_display import (
+    DisplayUnavailableError,
     NativeRenderingError,
     attach_window_context,
     configure_window,
     idle_device_color,
     verify_framebuffer,
 )
+from cephvr.visual_stimulus.rendering.output_masks import clear_regions
 from cephvr.visual_stimulus.rendering.types import (
     DiagnosticSnapshot,
     DisplayInitialization,
@@ -95,7 +97,6 @@ class ModernGLPort:
         self._resources: dict[str, object] = {}
         self._calibration_owner: Any | None = None
         self._idle_activities: list[OutputActivity] = []
-        self._idle_linear = (0.0, 0.0, 0.0)
         self._released: list[str] = []
 
     @staticmethod
@@ -124,7 +125,7 @@ class ModernGLPort:
             == device_identity.casefold()
         ]
         if len(matches) != 1:
-            raise NativeRenderingError(
+            raise DisplayUnavailableError(
                 f"display interface {device_identity!r} matched {len(matches)} active monitors"
             )
         return matches[0]
@@ -162,8 +163,12 @@ class ModernGLPort:
         glfw = self._glfw
         created: list[_OutputContext] = []
         try:
-            for output in display.active_outputs:
-                monitor = self.monitor_resolver(output.device_identity, glfw)
+            # Resolve every saved identity before exposing any output window.
+            monitors = tuple(
+                (output, self.monitor_resolver(output.device_identity, glfw))
+                for output in display.active_outputs
+            )
+            for output, monitor in monitors:
                 self.announce(f"visual_stimulus:window:{output.output_id}", None)
                 self._window_obligations.add(output.output_id)
                 configure_window(glfw, output)
@@ -210,6 +215,12 @@ class ModernGLPort:
                 context.screen.use()
                 context.viewport = (0, 0, output.width_px, output.height_px)
                 context.clear(*color, alpha=1.0)
+                if output.blackout_zones:
+                    black = self._idle_device_color(
+                        output,
+                        display.model_copy(update={"idle_linear_rgb": (0.0, 0.0, 0.0)}),
+                    )
+                    clear_regions(context, context.clear, output.blackout_zones, black)
                 glfw.swap_buffers(window)
                 returned = self.clock_ns()
                 output_context.swap_interval = swap_interval
@@ -449,6 +460,14 @@ class ModernGLPort:
             context.context.scissor = None
             context.context.disable(self._moderngl.DEPTH_TEST | self._moderngl.BLEND)
             context.context.clear(*self._idle_device_color(output, display), alpha=1.0)
+            if output.blackout_zones:
+                black = self._idle_device_color(
+                    output,
+                    display.model_copy(update={"idle_linear_rgb": (0.0, 0.0, 0.0)}),
+                )
+                clear_regions(
+                    context.context, context.context.clear, output.blackout_zones, black
+                )
             self._glfw.swap_buffers(context.window)
             returned = self.clock_ns()
             activities.append(
@@ -496,6 +515,18 @@ class ModernGLPort:
                 OutputActivity(output_id, entry, returned, output.swap_interval, error)
             )
         return tuple(activities)
+
+    def update_display_calibration(
+        self,
+        display: DisplayProfile,
+        prepared: PreparedDisplayCalibration,
+        adjustments: dict[str, tuple[tuple[float, float], ...]],
+    ) -> tuple[OutputActivity, ...]:
+        self._assert_owner()
+        if self._display != display or self._calibration_owner is None:
+            raise NativeRenderingError("Exact active calibration owner is unavailable")
+        self._calibration_owner.update(adjustments)
+        return self.present_display_calibration(display, prepared)
 
     def close_display_calibration(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration

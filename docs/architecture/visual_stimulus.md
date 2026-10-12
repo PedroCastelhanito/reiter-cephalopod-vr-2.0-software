@@ -25,7 +25,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v01"></a>
 ### V01 — Visual Stimulus coordinator and rendering worker
 
-**Status:** Accepted · **Revision:** 15
+**Status:** Accepted · **Revision:** 18
 
 - The backend is named **Visual Stimulus**, with `visual_stimulus` as its canonical
   configuration, registration, package and protocol identifier. Use
@@ -53,10 +53,26 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   content is fingerprinted; asset-root-relative references carry bounded size and
   digest. Active requires actual presentation, and Closed requires confirmed Idle
   and resource closure; uncertain cleanup blocks Setup. Calibration-only orange
-  horizontal and green vertical reference bars span rounded native pixel boundaries
-  at 3/8 and 5/8 of each output dimension. Draw them after geometric/color output
-  correction so their measured lengths refer to raw device pixels; no trial timing,
-  recording or extra persistent GPU resource is added.
+  horizontal and green vertical reference bars use the configured whole-pixel X/Y
+  lengths carried in each output's `reference_bars`; require positive lengths within
+  the output and center them on integer pixel boundaries. Unset legacy lengths
+  retain rounded 3/8-to-5/8 spans. Draw them directly in native device-pixel space
+  so measurement is independent of geometric/color correction; no trial timing,
+  recording or extra persistent GPU resource is added. The protected display profile
+  selects reference_bars (bars only on black) or frame_grid (arena through the existing
+  V15 pipeline without reference bars); omitted selection defaults to frame_grid.
+  Both use the same diagnostic ownership, actual-presentation and cleanup guarantees.
+  Controller-leased frame/grid adjustment accepts bounded GUI affine rectangles
+  under the exact active diagnostic/revision and increasing sequence. The GL owner
+  validates the entire update before writing existing warp vertex buffers, retaining
+  base protected inputs, axis inversion and resource ownership. Reject stale,
+  nonfinite, degenerate, outside-output or non-GUI mappings. Confirm a sequence only
+  after actual presentation on every output within its original deadline; uncertain
+  GPU/presentation results become Unknown under existing cleanup. Validation
+  rejection retains the prior applied sequence and healthy projection without
+  fencing a newer diagnostic; only actual presentation commits an update. Updates are
+  Configuration-only diagnostics, not trial-time mapping or asset mutation.
+
 - Prepare the renderer's required plan/resources before Ready. After valid schedule
   and release, execute prepared stimulus timing locally against the trial clock; the
   coordinator sends no per-frame commands and relays no rendered pixels. Setup hands
@@ -137,14 +153,21 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v03"></a>
 ### V03 — Versioned JSON stimulus-program files
 
-**Status:** Accepted · **Revision:** 9
+**Status:** Accepted · **Revision:** 12
 
 - Store reusable authored programs as versioned JSON documents (scenes, epoch/group
   structure, conditions, parameter settings). Keep media external, resolved through
   E07's asset root. visual_stimulus_config.toml (settings) and visual_stimulus_policy.toml (fixed policy, E14)
   are not a second program format. Optional epoch `batch_label` is bounded authoring
-  metadata (empty when omitted), retained in source/prepared-source JSON for GUI
-  targeting; it never controls ordering, timing, state continuity or rendering.
+  metadata (empty when omitted). Optional epoch `batch_id` (null when omitted)
+  identifies one GUI generation independently of its editable label, scoped to its
+  parent group. Retain both in source/prepared-source JSON for GUI targeting; neither
+  controls ordering, timing, state continuity or rendering. Optional `subgroup_draft`
+  on the first batch member retains bounded variation controls and seeds for
+  GUI restoration; it is non-executable metadata. Canonical settings and V08 rules remain execution
+  authority, and older files without metadata retain their saved settings. V08 owns
+  optional compact `repetition_rules` and legacy concrete `repetition_settings`; these are executable source declarations,
+  distinct from the non-executable editor draft.
 - One canonical Pydantic model in the Visual Stimulus lightweight configuration module generates
   JSON Schema, with shared structural and semantic validation for GUI and headless
   use. Apply E07's edit/Setup/locking rules; JSON is not executable Python or a code
@@ -176,7 +199,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 11
+**Status:** Accepted · **Revision:** 12
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -217,6 +240,16 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   rendering thread. Video completion follows V09, timing misses V10, decode-ahead
   V11. GPU/resource ownership and presentation evidence must be explicit. Runtime
   performance and timing need full-workload rig evidence under SYS-002/E15.
+- Still images use bounded CPU/GPU residency owned by the renderer's resource
+  subsystem. Setup decodes every required unique image under E07 using bounded
+  scratch memory, retains validation/identity facts and prepares initial content;
+  it need not retain every decoded image. Share compatible immutable resources;
+  retain all unique images when budgets permit, otherwise prefetch from protected
+  sources ahead of the resolved schedule and evict only resources no active consumer
+  needs. Include source snapshots, decode/conversion/upload working memory and
+  resident pixels in admission. Validation/protection/budget failure blocks Ready
+  under existing Setup deadlines. Image-miss response and detailed readiness/
+  lookahead contracts remain Open; V11's video-specific fallback is not adopted.
 - **Contracts:** [media profiles](../../contracts/visual_stimulus/media-profiles.md);
   [color pipeline](../../contracts/visual_stimulus/color-pipeline.md);
   [asset lifetime contract](../../contracts/visual_stimulus/asset-lifetime.md);
@@ -330,7 +363,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v08"></a>
 ### V08 — Group ordering and repetition
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 5
 
 - Each group uses authored order (default) or a fresh shuffle without replacement per
   repetition. Every selected condition row or child block appears exactly once per
@@ -345,6 +378,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   separate from V06's duration sampler. A fresh shuffle may coincidentally repeat an
   earlier order. The prepared epoch plan retains the resolved occurrence order;
   rendering and reconnect never reshuffle it.
+- An epoch may store compact `uniform_grid_v1` repetition rules for numeric settings.
+  Resolve each rule by its immediate group's repetition index and source-member
+  stride/offset, independently of shuffled visit order. A persisted seed and target
+  stream select reproducible precision-grid values; shared projector rules use the
+  same stream. Rule seeds are separate from ordering/duration seeds. Check the
+  configured expanded-plan limit before resolving samples; compile the concrete
+  chosen settings into prepared occurrences. Rendering never samples.
+- Preserve legacy `repetition_settings` tables: exactly one validated full settings
+  tuple per immediate-group repetition. A table and compact rules cannot coexist.
+  Without either, use ordinary source settings. Rules must target active instances;
+  sampled settings undergo normal validation and fail Setup if invalid.
 - V06 per-occurrence durations are generated after order expansion; timeline
   boundaries derive from their integer sums. V07 continuity follows actual neighbors
   in that order; a block/repetition boundary is not by itself a reset.
@@ -545,8 +589,13 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v15"></a>
 ### V15 — Four calibrated off-axis surface views
 
-**Status:** Accepted · **Revision:** 12
+**Status:** Accepted · **Revision:** 13
 
+- Optional per-output blackout rectangles replace final mapped scene pixels with
+  linear black before output correction. Validate positive whole-pixel rectangles
+  within output bounds; do not clip/resize invalid placements. Apply after imported
+  warps/masks/weights; V22's marker remains above them. Reference-bar diagnostics
+  remain unobscured; frame/grid calibration honors zones. No extra GPU resources.
 - V01's single rendering worker renders four calibrated views for the rectangular
   rig's front, left, right and bottom screens by direct per-surface rendering with the
   generalized off-axis perspective method documented by PsychoPy (Kooima), on V04's
@@ -668,10 +717,10 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v19"></a>
 ### V19 — Uniform Idle background
 
-**Status:** Accepted · **Revision:** 4
+**Status:** Accepted · **Revision:** 5
 
 - E05's Idle presentation uses a configurable uniform background color/brightness,
-  black included, before the first trial, between trials, during finalization and
+  black included, with V15 blackout zones remaining black, before the first trial, between trials, during finalization and
   after session termination. No numeric default is selected. Startup initialization
   carries the controller-selected asset root so protected display dependencies can
   be checked before Setup; missing required dependencies fail initialization.
@@ -762,12 +811,18 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v22"></a>
 ### V22 — Photodiode frame alternation with landmarks
 
-**Status:** Accepted · **Revision:** 3
+**Status:** Accepted · **Revision:** 5
 
 - Pulse enablement and target/rectangle are operator settings independent of V20
   pacing. When disabled, retain placement but require neither target participation
   nor availability; draw no patch and emit no marker-state/submission evidence.
   When enabled, require an active target with a valid in-bounds patch at Setup.
+  New placement optionally reserves a black output-space rectangle containing a
+  pulse rectangle with independently configured relative origin, width and height. Composite the black
+  frame after spatial mapping/blackout zones and then the pulse rectangle before V23
+  correction. Preserve legacy standalone rectangles; new pulse/frame geometry
+  rejects overflow instead of clipping. The frame is trial-only and hidden with
+  the pulse; independent V15 blackout zones persist into Idle.
 - The enabled designated photodiode output shows a bright/dark frame-alternating patch with
   periodic distinctive markers. Detailed E13/V13 evidence associates intended states
   and marker positions with trial-relative output-frame identities.

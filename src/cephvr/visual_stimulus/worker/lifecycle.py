@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from concurrent.futures import Future
+from functools import partial
 from uuid import uuid4
 
 from google.protobuf.message import Message
@@ -15,7 +16,7 @@ from cephvr.visual_stimulus.config.models.program_model import Program
 from cephvr.visual_stimulus.configuration import resolve_pacing_profile
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
-from .cleanup import cleanup_resources
+from .cleanup import cleanup_resources, cleanup_unregistered_resources
 from .display_calibration import DisplayCalibrationOwner
 from .display_owner import DisplayOwner
 from .ports import EnginePort, FeedbackPort, PreparationPort, RecordingPort, ReportPort
@@ -112,6 +113,17 @@ class LifecycleDriver:
             reports=reports,
             announce=self.announce_for,
             release_resource=self.state.released_threads.add,
+            cancelled=cancelled.is_set,
+            cleanup=partial(
+                cleanup_unregistered_resources,
+                self.state,
+                worker=worker,
+                clock=clock,
+                recording=recording,
+                preparation=preparation,
+                engine=engine,
+                feedback=feedback,
+            ),
             clock=clock,
         )
         self.display_calibration = DisplayCalibrationOwner(
@@ -141,6 +153,11 @@ class LifecycleDriver:
             if self.state.setup is not None or self.state.trial is not None:
                 raise RuntimeError("display calibration cannot overlap a trial")
             return self.display_calibration.open(request, deadline_ns)
+        elif isinstance(request, visual_stimulus.UpdateDisplayCalibrationCommand):
+            if self.state.setup is not None or self.state.trial is not None:
+                raise RuntimeError("live calibration cannot overlap a trial")
+            self.display_calibration.update(request, deadline_ns)
+            return None
         elif isinstance(request, visual_stimulus.CloseDisplayCalibrationCommand):
             return self.display_calibration.close(request, deadline_ns)
         elif isinstance(request, visual_stimulus.WorkerSetup):
@@ -497,12 +514,7 @@ class LifecycleDriver:
         self.display_calibration.close_for_cleanup(command, self.deadline_ns)
         self.display_owner.cleanup_confirmed_or_unknown()
         if self.state.setup is None:
-            for key, obligation in self.state.pending_resources.items():
-                previous = self.state.resources.get(key)
-                if previous is not None and previous != obligation:
-                    raise RuntimeError("unregistered cleanup identity changed")
-                self.state.resources[key] = obligation
-            cleanup_resources(
+            cleanup_unregistered_resources(
                 self.state,
                 command,
                 worker=self.worker,
@@ -512,7 +524,6 @@ class LifecycleDriver:
                 preparation=self.preparation,
                 engine=self.engine,
                 feedback=self.feedback,
-                emit=None,
             )
             self.state.resources.clear()
             self.state.pending_resources.clear()

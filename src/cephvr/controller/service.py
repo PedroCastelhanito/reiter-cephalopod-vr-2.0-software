@@ -205,6 +205,19 @@ class ExperimentControllerService(rpc.ExperimentControllerServiceServicer):
             lambda: self.runtime.open_display_calibration(request),
         )
 
+    async def UpdateDisplayCalibration(
+        self,
+        request: svc.UpdateDisplayCalibrationRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        await self._client(context, request.command.operator.client_id)
+        return await self._commands.admit(
+            "UpdateDisplayCalibration",
+            request.command.operator.command_id,
+            request,
+            lambda: self.runtime.update_display_calibration(request),
+        )
+
     async def CloseDisplayCalibration(
         self,
         request: svc.CloseDisplayCalibrationRequest,

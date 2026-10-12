@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-12",
+  "base_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source": "Dirty shared workspace; preserve prior and concurrent changes. before-hashes.json identifies starting GUI/test files.",
+  "decisions": [
+    "G01 revision 154",
+    "V03 revision 10 (unchanged)",
+    "V08",
+    "E05",
+    "ARCH-002",
+    "E15"
+  ],
+  "scope": "Local offscreen Qt authoring, portable compiler/configuration and static checks. No Windows/DPI, native rendering, image streaming or rig acceptance.",
+  "source_hashes": {
+    "src/cephvr/gui/protocol_editor.py": "a4c7143e09ad4fd2cb7b9e2f0299c47b614c2767b4d295bc58d288bc96ff0215",
+    "src/cephvr/gui/protocol_controls.py": "1a6b0844fdd6fac236ceacc624845de8667b074a030e6c930cc3b6ea507c4bff",
+    "src/cephvr/gui/protocol_hierarchy.py": "3fa41dee0ec6feef4125e83e7e5ce46af20e294dfb14d81761e7f61b50fb11dc",
+    "src/cephvr/gui/protocol_timeline.py": "da997f8e30645eb3a3febc9ee5ebbbce89a3d9f6b68ffca7c36c3d3a4b3fd743",
+    "src/cephvr/gui/protocol.py": "bc5c7d460021c3dbf049fa060c754493eeaabaf16478a8a141ca60e11ec866fa",
+    "src/cephvr/gui/batch_create.py": "843cdfb3684489ec1d3c434404245a079fd0970f3668b3f835fb1996ec1718b6",
+    "src/cephvr/gui/epoch_selection.py": "f29f363ba4f82a7f46baac5498ccb2c9c1823b52736b9a00f1f7cc922eeb4556",
+    "src/cephvr/gui/subgroup_editor.py": "3f95416220dc45624aa67cfd9c57cad96d31dbdd0600dd2d8f70a79ec1b9284c",
+    "src/cephvr/gui/subgroup_operations.py": "7bb5a67184c333675229b445da2cb15e429a1537f07b29ae09d6ae01eeb6b0b9",
+    "src/cephvr/gui/subgroup_structure.py": "ab904970a1ea634a9b40e348f12b3b2a9dbe8d83ccd41ceb4f6d5bc8d4b1cb29",
+    "tests/gui/test_dashboard.py": "cbdea774d635bf59cfc7d011c9cce97aeb7adf3c04a7c94a94b8ab45286eb2a3"
+  },
+  "commands": {
+    "gui-final.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig'",
+    "layout-final.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -k 'unified_subgroup or protocol_cards_reflow or arena_axis_gains or proportional_header or grouped_editor or flat_group or trial_overview or review_and_runtime_share'",
+    "behavior-final.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -k 'unified_subgroup or grouped_editor or flat_group'",
+    "compiler-final.txt": ".venv/bin/python -m pytest tests/visual_stimulus/test_configuration.py tests/visual_stimulus/test_compilation.py -q",
+    "ruff-final.txt": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+    "format-final.txt": ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui",
+    "mypy-final.txt": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+    "boundaries-final.txt": ".venv/bin/python tools/check_backend_boundaries.py",
+    "capture-final.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-12/unified-subgroups/capture.py"
+  },
+  "results": {
+    "gui-final.txt": "392 passed in 282.60s (0:04:42)",
+    "layout-final.txt": "14 passed, 378 deselected in 37.41s",
+    "behavior-final.txt": "7 passed, 386 deselected in 13.77s",
+    "compiler-final.txt": "16 passed in 0.50s",
+    "ruff-final.txt": "All checks passed!",
+    "format-final.txt": "146 files already formatted",
+    "mypy-final.txt": "Success: no issues found in 144 source files",
+    "boundaries-final.txt": "Checked 653 backend modules; 0 boundary violations.",
+    "capture-final.txt": "Captured overview and unified form at 1280 and 720 pixels; no horizontal page overflow."
+  },
+  "source_stages": "The broad GUI stage passes 392 before final compact timeline/two-column header, batch navigation/duplication refinements and added file-isolation test. Final layout stage passes 14; final behavior stage passes 7 (current collection 393), including final source/template/projector/file/fade/identity behavior. Overlapping stages are not summed; no exact-final-tree full-suite pass claimed.",
+  "intermediate_results": "Initial full GUI stage: 96 failures/314 passes, chiefly assertions using removed controls. Focused migrations retain family/asset/feedback parameter coverage using an independent widget fixture; see test-migration.json for retired UI assertions. Initial pure test violated whole-trial E05 minimum; reference-only validation fixed. Initial mypy errors repaired. affected-second.txt records an abort without offscreen platform; isolated offscreen retry passes. Subsequent stages retain failures and fixes, including clock-formatted test values, active projector fixtures and action-time warnings. Source review repairs forward subgroup movement and per-epoch fade retiming; screenshot review repairs compact batch-header height.",
+  "visual": "Inspected overview/editor screenshots at 1280x1100 and720x1100. One projector form, Apply/Discard, two-column narrow header, horizontal source-timeline scrollbar contained, no horizontal page overflow. Capture uses sample textures, not prepared-image I/O or performance evidence. Existing user GUI/drafts not restarted.",
+  "cohesion": "ProtocolEditor is 436 lines coordinating document/selection/history; new focused subgroup form (175), atomic transform (199), structural helper (62) reuse existing composer/variation/insertion. No whole-runtime back-reference, schema or dependency added. Boundary advisories concern existing modules; StimulusParameters remains an unchanged family-form adapter.",
+  "documentation": "870 local links/anchors in 17 edited Markdown files pass; git diff --check passes. Concurrent repository audit entries preserved.",
+  "preview": "Editor screenshot queued in Codex task panel; actual opening not confirmed."
+}

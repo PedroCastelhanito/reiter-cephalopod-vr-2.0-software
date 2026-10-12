@@ -1,0 +1,163 @@
+{
+  "date": "2026-10-11",
+  "method": "Read-only protobuf snapshot decoding and current source trace; no native execution or performance benchmark. Historical source revision not independently established by these snapshots.",
+  "snapshots": [
+    {
+      "source": "reports/rig-wiring-evidence-2026-10-08/dummy-experiment/unpaired-run-43-setup-snapshot.pb",
+      "sha256": "ac7df457549196f98d42ed0f188a5af43e327a4907cb58d97f32d8e00c9ba419",
+      "controller_generation": "2c63039b-50c3-4d2d-a820-6a53ce29b702",
+      "session_id": "0b6ecd46-f326-4bf9-9673-3dc9199346df",
+      "presentation_mode": "all_outputs_vsync",
+      "profile_pacing_output_id": null,
+      "outputs": [
+        {
+          "output_id": "calibration_front",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_left",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_right",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_bottom",
+          "width_px": 720,
+          "height_px": 1280,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        }
+      ],
+      "retained_display_intervals": {
+        "calibration_front": 1,
+        "calibration_left": 1,
+        "calibration_right": 1,
+        "calibration_bottom": 1
+      }
+    },
+    {
+      "source": "reports/rig-wiring-evidence-2026-10-08/dummy-experiment/pre-final43-snapshot.pb",
+      "sha256": "4d1301a8711679e439cef773ed17528a275c5121c9da3a3a3897e88dfeea9201",
+      "controller_generation": "2c63039b-50c3-4d2d-a820-6a53ce29b702",
+      "session_id": "0b6ecd46-f326-4bf9-9673-3dc9199346df",
+      "presentation_mode": "all_outputs_vsync",
+      "profile_pacing_output_id": null,
+      "outputs": [
+        {
+          "output_id": "calibration_front",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_left",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_right",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_bottom",
+          "width_px": 720,
+          "height_px": 1280,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        }
+      ],
+      "retained_display_intervals": {
+        "calibration_front": 1,
+        "calibration_left": 1,
+        "calibration_right": 1,
+        "calibration_bottom": 1
+      }
+    },
+    {
+      "source": "reports/rig-wiring-evidence-2026-10-08/dummy-experiment/unpaired-run-43-final-snapshot.pb",
+      "sha256": "99b9d83e024e82acbdd5a294d07b344a1294fff9faca73e95c098e7d55dd13c4",
+      "controller_generation": "2c63039b-50c3-4d2d-a820-6a53ce29b702",
+      "session_id": "0b6ecd46-f326-4bf9-9673-3dc9199346df",
+      "presentation_mode": "all_outputs_vsync",
+      "profile_pacing_output_id": null,
+      "outputs": [
+        {
+          "output_id": "calibration_front",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_left",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_right",
+          "width_px": 1280,
+          "height_px": 720,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        },
+        {
+          "output_id": "calibration_bottom",
+          "width_px": 720,
+          "height_px": 1280,
+          "rgb_bits_per_channel": 8,
+          "refresh_numerator": 60,
+          "refresh_denominator": 1
+        }
+      ],
+      "retained_display_intervals": {
+        "calibration_front": 1,
+        "calibration_left": 1,
+        "calibration_right": 1,
+        "calibration_bottom": 1
+      }
+    }
+  ],
+  "findings": {
+    "primary_hypothesis": "Four sequential swaps on one render thread, each with requested interval 1 under all_outputs_vsync; may accumulate refresh waits. 49.2916 ms group median is near three 60 Hz periods but does not prove attribution.",
+    "secondary_hypothesis": "Render-thread RGBA32F composition plus per-frame PBO allocation/readback and CPU copy. 2560x2000x4=20,480,000 bytes per captured image; 60 fresh frames/s would require 1.2288 GB/s payload movement before further copies/encoding.",
+    "additional_risk": "Recording frame normalization occurs while holding RecordingWorker lock; admissions share it. Packed10 per-pixel Python masking is expensive in structure, but historical outputs are 8bit, so that branch cannot explain run43.",
+    "excluded_as_sufficient_explanation": [
+      "Four capture drops: 1186 groups versus1182 admissions; all admissions submitted.",
+      "Intentional 20 Hz timer: trial advance returns the current clock, with no per-group 50ms delay in the traced path.",
+      "New nominal-slot padding: implemented after the Oct8 run."
+    ],
+    "limits": "Retained display intervals are startup evidence, not per-trial swap timing. Reported Front pacer does not imply other outputs used interval0 in all_outputs_vsync. Driver override and GPU costs unmeasured."
+  },
+  "recommendation": "First inspect raw run43 evidence per-output submission entry/return timings if available on rig; otherwise measure each swap plus draw, capture enqueue and readback. Compare recording on/off with accepted pacing unchanged before proposing policy changes.",
+  "reference": "https://www.glfw.org/docs/latest/window_guide.html#buffer_swap"
+}

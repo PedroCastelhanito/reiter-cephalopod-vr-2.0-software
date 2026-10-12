@@ -1,0 +1,576 @@
+.FF...FF                                                                 [100%]
+=================================== FAILURES ===================================
+___ test_live_calibration_bind_preserves_identity_and_rejects_stale_updates ____
+
+    def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates():
+        from cephvr.visual_stimulus.transport.messages import worker_command
+    
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        state = State()
+        state.display = pb.VisualStimulusDisplayView()
+        state.display.outputs.add(output_id="projector/main")
+        evidence = state.display.calibration
+        evidence.diagnostic_id = str(uuid4())
+        evidence.configuration_revision = 4
+        evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        evidence.calibration_view = "frame_grid"
+        request = wire.VisualStimulusDisplayCalibrationUpdateRequest(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            configuration_revision=4,
+            diagnostic_id=evidence.diagnostic_id,
+            adjustment_sequence=1,
+        )
+        request.adjustments.add(
+            mapping_id="diagnostic_front",
+            destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
+        )
+>       validate(identity, state, "UpdateDisplayCalibration", request)
+
+tests/visual_stimulus/test_coordinator.py:611: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+identity = Identity(process=role: "visual_stimulus"
+generation: "86bc10ef-fa99-4f87-981e-ccd15fff0cef"
+, controller=role: "contro...-4056-807a-446853729038"
+, worker=role: "visual_stimulus_renderer"
+generation: "0f552408-ecc0-4224-b972-226318066067"
+)
+state = State(setup=None, prepared={}, links={}, reports={}, display=outputs {
+  output_id: "projector/main"
+}
+calibration {
+ ...ngress_ns=None, active_trial=None, schedule=None, release=None, recipe_results={}, cleanup=None, incident_revisions={})
+method = 'UpdateDisplayCalibration'
+request = command_id: "279dd3fc-71b2-463d-805d-55f7eca6e801"
+issuer {
+  role: "controller"
+  generation: "6c1aa29e-164f-4f7b-b89...y: 0.9
+  destination_xy: 0.1
+  destination_xy: 0.1
+  destination_xy: 0.9
+  destination_xy: 0.9
+  destination_xy: 0.9
+}
+
+
+    def validate(identity: Identity, state: State, method: str, request: Message) -> None:
+        command = backend_command(request)
+        require_uuid4(command.command_id)
+        if command.target != identity.backend:
+            raise ValueError("wrong Visual Stimulus backend generation")
+        expected = (
+            (identity.controller, identity.supervisor)
+            if method
+            in {
+                "CancelSetup",
+                "InterruptSession",
+                "Cleanup",
+                "Shutdown",
+                "StopTrial",
+                "AbortTrial",
+            }
+            else (identity.controller,)
+        )
+        if command.issuer not in expected:
+            raise ValueError("wrong Visual Stimulus authority generation")
+        recoverable_calibration = (
+            method
+            in {
+                "OpenDisplayCalibration",
+                "CloseDisplayCalibration",
+                "UpdateDisplayCalibration",
+            }
+            and state.setup is None
+        )
+        if (
+            state.interrupted
+            and method
+            not in {
+                "Cleanup",
+                "Shutdown",
+                "InterruptSession",
+                "CancelSetup",
+                "StopTrial",
+                "AbortTrial",
+                "SetupSession",
+                "InitializeDisplay",
+            }
+            and not recoverable_calibration
+        ):
+            raise ValueError("interrupted Visual Stimulus session is permanently fenced")
+        if isinstance(request, wire.SetupSessionRequest):
+            if state.setup is not None and (
+                state.cleanup is None
+                or not state.cleanup.trial_activity_stopped
+                or any(not item.released for item in state.cleanup.resources)
+                or any(
+                    item.closure
+                    not in {
+                        pb.OUTPUT_CLOSURE_CLOSED,
+                        pb.OUTPUT_CLOSURE_FAILED,
+                        pb.OUTPUT_CLOSURE_NOT_STARTED,
+                    }
+                    or not item.HasField("artifact_present")
+                    for item in state.cleanup.outputs
+                )
+            ):
+                raise ValueError("previous Visual Stimulus session has unresolved cleanup")
+            if (
+                command.work.WhichOneof("work") != "session"
+                or command.work.session != request.plan.context
+            ):
+                raise ValueError("Setup context differs from allocated session")
+            if (
+                request.settings.backend_name != "visual_stimulus"
+                or request.settings.WhichOneof("settings") != "visual_stimulus"
+            ):
+                raise ValueError("typed Visual Stimulus settings required")
+            if request.visual_stimulus_policies.contract_version != CONTRACT_VERSION:
+                raise ValueError(
+                    "Visual Stimulus file policy version differs from the loaded policy"
+                )
+            closed = request.plan.configuration.mode == pb.SESSION_MODE_CLOSED_LOOP
+            if closed != request.HasField("feedback_attachment"):
+                raise ValueError("feedback attachment must match session mode")
+        elif isinstance(request, wire.VisualStimulusDisplayInitializationRequest):
+            if state.setup is not None and state.cleanup is None:
+                raise ValueError(
+                    "display initialization forbidden during session preparation"
+                )
+        elif isinstance(request, wire.VisualStimulusDisplayCalibrationOpenRequest):
+            if state.setup is not None:
+                raise ValueError("display calibration unavailable during a session")
+            if (
+                state.display is not None
+                and state.display.HasField("calibration")
+                and state.display.calibration.state
+                != visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_IDLE
+            ):
+                raise ValueError("previous display calibration is not confirmed Idle")
+        elif isinstance(request, wire.VisualStimulusDisplayCalibrationCloseRequest):
+            if state.setup is not None:
+                raise ValueError("display calibration close unavailable during a session")
+            evidence = (
+                state.display.calibration
+                if state.display is not None and state.display.HasField("calibration")
+                else None
+            )
+            matching_open = any(
+                link.method == "OpenDisplayCalibration"
+                and link.diagnostic_id == request.diagnostic_id
+                and bool(link.output_ids)
+                for link in state.links.values()
+            )
+            projected_active = (
+                evidence is not None
+                and evidence.diagnostic_id == request.diagnostic_id
+                and evidence.state
+                in {
+                    visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE,
+                    visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+                }
+            )
+            if (
+                evidence is not None
+                and evidence.diagnostic_id == request.diagnostic_id
+                and evidence.state == visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_IDLE
+            ):
+                matching_open = False
+            if not (projected_active or matching_open):
+                raise ValueError("display calibration identity is not current")
+        elif (
+            method in {"Cleanup", "Shutdown", "InterruptSession", "CancelSetup"}
+            and state.setup is None
+        ):
+            calibration = (
+                state.display.calibration
+                if (state.display is not None and state.display.HasField("calibration"))
+                else None
+            )
+            if calibration is None or calibration.state not in {
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_PREPARING,
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_ACTIVE,
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_CLOSING,
+                visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_UNKNOWN,
+            }:
+                raise ValueError("sessionless safety command has no open calibration")
+        elif method not in {"Shutdown"}:
+            if state.setup is None:
+>               raise ValueError("Visual Stimulus session is not prepared")
+E               ValueError: Visual Stimulus session is not prepared
+
+src/cephvr/visual_stimulus/coordinator/commands.py:446: ValueError
+________ test_live_calibration_update_requires_exact_leased_active_grid ________
+
+    @pytest.mark.asyncio
+    async def test_live_calibration_update_requires_exact_leased_active_grid():
+        from cephvr.visual_stimulus.v1 import messages_pb2 as messages
+    
+        env = _Env()
+        sent = []
+    
+        class Backend:
+            context = pb.BackendContext(
+                backend_name="visual_stimulus", backend_generation=_id()
+            )
+    
+            async def update_display_calibration(self, request, *, deadline_ns):
+                sent.append(request)
+                assert request.deadline_monotonic_ns == deadline_ns
+                return pb.CommandAdmission(result=pb.COMMAND_RESULT_ACCEPTED)
+    
+        backend = Backend()
+        display = pb.VisualStimulusDisplayView(backend=backend.context)
+        display.outputs.add(output_id="projector/main")
+        generation = _id()
+        evidence = display.calibration
+        evidence.diagnostic_id = _id()
+        evidence.configuration_revision = env.configuration.revision
+        evidence.controller_generation = generation
+        evidence.calibration_view = "frame_grid"
+        evidence.state = visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+        projections = type("Projection", (), {"display": display})()
+        projections.expect_display = lambda *_args: None
+        controller = DisplayCalibrationController(
+            lifecycle=env.lifecycle,
+            configuration=env.configuration,
+            control=env.control,
+            device=env.device,
+            backends={"visual_stimulus": cast(BackendPort, backend)},
+            projections=cast(Any, projections),
+            file_policy_loader=lambda _: {},
+            display_validator=lambda _: frozenset(),
+            display_pacing_resolver=None,
+            generation=generation,
+            limits=_limits(),
+            hooks=env.hooks,
+            maximum_asset_bytes=1_000_000,
+            clock=lambda: env.now,
+        )
+        controller._active_backend = cast(BackendPort, backend)
+        request = svc.UpdateDisplayCalibrationRequest(
+            expected_configuration_revision=env.configuration.revision,
+            diagnostic_id=evidence.diagnostic_id,
+            adjustment_sequence=1,
+        )
+        request.command.operator.command_id = _id()
+        request.adjustments.append(
+            messages.DisplayCalibrationAdjustment(
+                mapping_id="diagnostic_front",
+                destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
+            )
+        )
+        request.diagnostic_id = _id()
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+        request.diagnostic_id = evidence.diagnostic_id
+        request.adjustments[0].destination_xy[0] = float("nan")
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+        assert not sent and env.device.calibration_pending is None
+        request.adjustments[0].destination_xy[0] = 0.1
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_ACCEPTED
+        assert sent[0].diagnostic_id == evidence.diagnostic_id
+        assert sent[0].adjustment_sequence == 1
+        assert (
+            env.device.calibration_pending[4]
+            == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+        )
+        assert evidence.adjustment_sequence == 0  # Admission is not presentation.
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+        env.device.calibration_pending = None
+        evidence.adjustment_sequence = 1
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+        request.adjustment_sequence = 2
+        evidence.calibration_view = "reference_bars"
+        assert (await controller.update(request)).result == pb.COMMAND_RESULT_REJECTED
+        evidence.calibration_view = "frame_grid"
+>       env.hooks.authorized = lambda *_args, **_kwargs: "lease lost"
+        ^^^^^^^^^^^^^^^^^^^^
+
+tests/controller/test_device_admission.py:851: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = DeviceHooks(admission=<bound method ControlOperations.admission of <cephvr.controller.control.operations.ControlOperat...oller.test_device_admission._Env object at 0x10f550bd0>>, spawn=<built-in method append of list object at 0x149019480>)
+name = 'authorized'
+value = <function test_live_calibration_update_requires_exact_leased_active_grid.<locals>.<lambda> at 0x10f3d56c0>
+
+>   ???
+E   dataclasses.FrozenInstanceError: cannot assign to field 'authorized'
+
+<string>:4: FrozenInstanceError
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f33a550>
+configured_bars = False, calibration_view = 'frame_grid'
+
+    @pytest.mark.parametrize("configured_bars", [False, True])
+    @pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
+    def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
+        monkeypatch: pytest.MonkeyPatch,
+        configured_bars: bool,
+        calibration_view: str,
+    ) -> None:
+        _install_fake_gl_binding(monkeypatch)
+        gl = _FakeGL()
+        moderngl = SimpleNamespace(
+            DEPTH_TEST=1,
+            CULL_FACE=2,
+            BLEND=4,
+            ONE=1,
+            TRIANGLES=5,
+            TRIANGLE_STRIP=6,
+        )
+        display = _two_output_display().model_copy(
+            update={"calibration_view": calibration_view}
+        )
+        if configured_bars:
+            raw = display.model_dump(mode="json")
+            for output in raw["outputs"]:
+                output["reference_bars"] = dict(
+                    x_length_px=max(1, output["width_px"] // 3),
+                    y_length_px=max(1, output["height_px"] // 5),
+                )
+            display = parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+            raw["outputs"][0]["reference_bars"]["x_length_px"] = (
+                raw["outputs"][0]["width_px"] + 1
+            )
+            with pytest.raises(ValueError, match="exceed"):
+                parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+        display, prepared, outputs = _native_calibration_inputs(gl, display)
+        owner = DisplayCalibrationRenderer(
+            outputs,
+            moderngl,
+            lambda *_args: None,
+            lambda *_args, **_kwargs: None,
+        )
+    
+        owner.present(display, prepared)
+    
+        draws = [event for event in gl.events if event[0] == "draw"]
+        if configured_bars and calibration_view == "reference_bars":
+            for output_id in outputs:
+                bars = [event for event in gl.events if event[:2] == ("bar", output_id)]
+                configured = next(
+                    o for o in display.active_outputs if o.output_id == output_id
+                ).reference_bars
+                assert configured is not None
+                assert bars[2][3][2] == configured.x_length_px
+                assert bars[3][3][3] == configured.y_length_px
+        assert {event[2] for event in draws} == (
+            set() if calibration_view == "reference_bars" else {"arena", "warp", "output"}
+        )
+        assert bool([e for e in gl.events if e[0] == "bar"]) == (
+            calibration_view == "reference_bars"
+        )
+        for output_id in () if calibration_view == "reference_bars" else outputs:
+            output_draws = [event for event in draws if event[1] == output_id]
+            assert any(event[2] == "arena" and "fbo:" in event[3] for event in output_draws)
+            assert any(event[2] == "warp" and "fbo:" in event[3] for event in output_draws)
+            assert any(
+                event[2] == "output" and "fbo:" in event[3] for event in output_draws
+            )
+        assert {
+            resource.context_id
+            for resource in gl.resources
+            if resource.label.startswith("vao:")
+        } == set(outputs)
+    
+        if calibration_view == "frame_grid":
+            import struct
+    
+            allocation_count = len(gl.resources)
+>           owner.update(
+                {
+                    m.mapping_id: ((0.1, 0.2), (0.8, 0.2), (0.1, 0.9), (0.8, 0.9))
+                    for m in display.active_mappings
+                }
+            )
+
+tests/visual_stimulus/test_display_calibration_rendering.py:621: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/rendering/display_calibration.py:101: in update
+    adjustments = validated_adjustments(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+items = <generator object DisplayCalibrationRenderer.update.<locals>.<genexpr> at 0x14915cd60>
+
+    def validated_adjustments(
+        items: Iterable[tuple[str, Sequence[float]]],
+    ) -> dict[str, tuple[tuple[float, float], ...]]:
+        result = {}
+        for mapping_id, coordinates in items:
+            if (
+                not mapping_id
+                or len(mapping_id) > 128
+                or mapping_id in result
+                or len(coordinates) != 8
+                or any(not math.isfinite(v) or not 0 <= v <= 1 for v in coordinates)
+            ):
+                raise ValueError("Invalid calibration adjustment identity or coordinates")
+            points = tuple((coordinates[i], coordinates[i + 1]) for i in range(0, 8, 2))
+            a, b, c, d = points
+            if (
+                a[1] != b[1]
+                or c[1] != d[1]
+                or a[0] != c[0]
+                or b[0] != d[0]
+                or a[0] == b[0]
+                or a[1] == c[1]
+            ):
+                raise ValueError(
+                    "Live calibration requires a nondegenerate affine rectangle"
+                )
+            result[mapping_id] = points
+        if not 1 <= len(result) <= 4:
+>           raise ValueError("Live calibration requires one to four mapping adjustments")
+E           ValueError: Live calibration requires one to four mapping adjustments
+
+src/cephvr/visual_stimulus/config/calibration_adjustments.py:35: ValueError
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1491e2850>
+configured_bars = True, calibration_view = 'frame_grid'
+
+    @pytest.mark.parametrize("configured_bars", [False, True])
+    @pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
+    def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
+        monkeypatch: pytest.MonkeyPatch,
+        configured_bars: bool,
+        calibration_view: str,
+    ) -> None:
+        _install_fake_gl_binding(monkeypatch)
+        gl = _FakeGL()
+        moderngl = SimpleNamespace(
+            DEPTH_TEST=1,
+            CULL_FACE=2,
+            BLEND=4,
+            ONE=1,
+            TRIANGLES=5,
+            TRIANGLE_STRIP=6,
+        )
+        display = _two_output_display().model_copy(
+            update={"calibration_view": calibration_view}
+        )
+        if configured_bars:
+            raw = display.model_dump(mode="json")
+            for output in raw["outputs"]:
+                output["reference_bars"] = dict(
+                    x_length_px=max(1, output["width_px"] // 3),
+                    y_length_px=max(1, output["height_px"] // 5),
+                )
+            display = parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+            raw["outputs"][0]["reference_bars"]["x_length_px"] = (
+                raw["outputs"][0]["width_px"] + 1
+            )
+            with pytest.raises(ValueError, match="exceed"):
+                parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+        display, prepared, outputs = _native_calibration_inputs(gl, display)
+        owner = DisplayCalibrationRenderer(
+            outputs,
+            moderngl,
+            lambda *_args: None,
+            lambda *_args, **_kwargs: None,
+        )
+    
+        owner.present(display, prepared)
+    
+        draws = [event for event in gl.events if event[0] == "draw"]
+        if configured_bars and calibration_view == "reference_bars":
+            for output_id in outputs:
+                bars = [event for event in gl.events if event[:2] == ("bar", output_id)]
+                configured = next(
+                    o for o in display.active_outputs if o.output_id == output_id
+                ).reference_bars
+                assert configured is not None
+                assert bars[2][3][2] == configured.x_length_px
+                assert bars[3][3][3] == configured.y_length_px
+        assert {event[2] for event in draws} == (
+            set() if calibration_view == "reference_bars" else {"arena", "warp", "output"}
+        )
+        assert bool([e for e in gl.events if e[0] == "bar"]) == (
+            calibration_view == "reference_bars"
+        )
+        for output_id in () if calibration_view == "reference_bars" else outputs:
+            output_draws = [event for event in draws if event[1] == output_id]
+            assert any(event[2] == "arena" and "fbo:" in event[3] for event in output_draws)
+            assert any(event[2] == "warp" and "fbo:" in event[3] for event in output_draws)
+            assert any(
+                event[2] == "output" and "fbo:" in event[3] for event in output_draws
+            )
+        assert {
+            resource.context_id
+            for resource in gl.resources
+            if resource.label.startswith("vao:")
+        } == set(outputs)
+    
+        if calibration_view == "frame_grid":
+            import struct
+    
+            allocation_count = len(gl.resources)
+>           owner.update(
+                {
+                    m.mapping_id: ((0.1, 0.2), (0.8, 0.2), (0.1, 0.9), (0.8, 0.9))
+                    for m in display.active_mappings
+                }
+            )
+
+tests/visual_stimulus/test_display_calibration_rendering.py:621: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/rendering/display_calibration.py:101: in update
+    adjustments = validated_adjustments(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+items = <generator object DisplayCalibrationRenderer.update.<locals>.<genexpr> at 0x14915d6c0>
+
+    def validated_adjustments(
+        items: Iterable[tuple[str, Sequence[float]]],
+    ) -> dict[str, tuple[tuple[float, float], ...]]:
+        result = {}
+        for mapping_id, coordinates in items:
+            if (
+                not mapping_id
+                or len(mapping_id) > 128
+                or mapping_id in result
+                or len(coordinates) != 8
+                or any(not math.isfinite(v) or not 0 <= v <= 1 for v in coordinates)
+            ):
+                raise ValueError("Invalid calibration adjustment identity or coordinates")
+            points = tuple((coordinates[i], coordinates[i + 1]) for i in range(0, 8, 2))
+            a, b, c, d = points
+            if (
+                a[1] != b[1]
+                or c[1] != d[1]
+                or a[0] != c[0]
+                or b[0] != d[0]
+                or a[0] == b[0]
+                or a[1] == c[1]
+            ):
+                raise ValueError(
+                    "Live calibration requires a nondegenerate affine rectangle"
+                )
+            result[mapping_id] = points
+        if not 1 <= len(result) <= 4:/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/_pytest/unraisableexception.py:33: RuntimeWarning: coroutine 'DisplayCalibrationController._timeout' was never awaited
+  gc.collect()
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+
+>           raise ValueError("Live calibration requires one to four mapping adjustments")
+E           ValueError: Live calibration requires one to four mapping adjustments
+
+src/cephvr/visual_stimulus/config/calibration_adjustments.py:35: ValueError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_coordinator.py::test_live_calibration_bind_preserves_identity_and_rejects_stale_updates
+FAILED tests/controller/test_device_admission.py::test_live_calibration_update_requires_exact_leased_active_grid
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-False]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-True]
+4 failed, 4 passed, 480 deselected in 2.44s

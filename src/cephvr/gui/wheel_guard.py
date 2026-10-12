@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 
 
 class WheelGuard(QObject):
-    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:  # noqa: N802
+    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
         if not isinstance(event, QWheelEvent) or not isinstance(watched, QWidget):
             return False
         target: QWidget | None = watched

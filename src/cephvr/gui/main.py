@@ -181,6 +181,9 @@ class ManagedGui(QObject):
         bridge.command_finished.connect(self.command_finished)
         bridge.command_admitted.connect(self.command_admitted)
         bridge.operation_finished.connect(self.operation_finished)
+        bridge.operation_finished.connect(self.display_operations.live.finished)
+        bridge.command_finished.connect(self.display_operations.live.command_finished)
+        bridge.connection_changed.connect(self.display_operations.live.disconnected)
         bridge.configuration_accepted.connect(self.configuration_accepted)
         bridge.spikeglx_inventory_received.connect(
             self.display_operations.install_inventory
@@ -268,7 +271,6 @@ class ManagedGui(QObject):
         except (ValueError, TypeError, AttributeError) as error:
             configuration_wired = False
             self.configuration.last_error = str(error)
-            self.configuration._installing = False
         self.reload_configuration.setEnabled(permitted and self.configuration.stale)
         view = dashboard_view(
             state,
@@ -510,8 +512,7 @@ class ManagedGui(QObject):
         self.configuration.note_installed_revision(
             state, submitted_edit_serial=submitted_edit_serial
         )
-        self.configuration.last_error = ""
-        self.reload_configuration.setEnabled(False)
+        self.reload_configuration.setEnabled(self.configuration.stale)
         self.window.dashboard.log_console.appendPlainText(
             f"Controller accepted configuration revision {revision}."
         )

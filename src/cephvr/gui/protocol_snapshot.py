@@ -6,6 +6,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 from cephvr.gui.configuration_files import JSON, envelope, fields, text
+from cephvr.gui.protocol_batches import grouped_program
 from cephvr.gui.protocol_document import TrialDraft, blank_program
 from cephvr.gui.protocol_history import EditHistory
 from cephvr.visual_stimulus.config.models.program_model import parse_program_json
@@ -64,8 +65,6 @@ def validate_protocol(value: Any, *, allow_program: bool = False) -> JSON:
 def capture_protocol(page: ProtocolPage) -> JSON:
     if not page.editor.flush_parameters():
         raise ValueError("Finish or correct the current trial edit before saving")
-    if not page._schedule_empty:
-        page.save_schedule_fields()
     return {
         "format": FORMAT,
         "version": 1,
@@ -112,7 +111,9 @@ def restore_protocol(page: ProtocolPage, data: JSON) -> None:
     page.session_mode.setCurrentText(data["mode"])
     page.assets.folders["root"].editor.setText(data["asset_root"])
     editor = page.editor
-    editor.drafts = drafts or [TrialDraft("Add a trial", blank_program())]
+    editor.drafts = drafts or [
+        TrialDraft("Add a trial", grouped_program(blank_program()))
+    ]
     editor.histories = [EditHistory() for _ in editor.drafts]
     editor.trials.blockSignals(True)
     editor.trials.clear()
@@ -122,6 +123,5 @@ def restore_protocol(page: ProtocolPage, data: JSON) -> None:
     editor.trials.setCurrentRow(editor.index)
     editor.trials.blockSignals(False)
     editor.render_selection()
-    page.load_schedule_fields(editor.index)
     editor.changed.emit()
     page._schedule_empty = editor.configuration_schedule_empty = not bool(drafts)

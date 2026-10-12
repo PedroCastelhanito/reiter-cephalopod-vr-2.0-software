@@ -7,6 +7,7 @@ from collections.abc import Callable
 from cephvr.client.session import ClientError
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.live_calibration import LiveCalibration
 from cephvr.gui.managed_display_operations import (
     capture_display_calibration_intent,
     required_inventory_roles,
@@ -34,6 +35,7 @@ class ManagedDisplayOperations:
         self.snapshot = snapshot
         self.connection_identity = connection_identity
         self.send = send
+        self.live = LiveCalibration(projectors, snapshot=snapshot, send=send)
 
     def submit_inventory(self, channels: object) -> None:
         state = self.snapshot()
@@ -117,6 +119,7 @@ class ManagedDisplayOperations:
     def install_calibration_state(
         self, state: pb.Snapshot, *, launch_eligible: bool
     ) -> None:
+        self.live.install(state)
         if not state.HasField("visual_stimulus_display"):
             self.projectors.set_calibration_presentation_state(
                 active=False, available=launch_eligible
@@ -134,9 +137,9 @@ class ManagedDisplayOperations:
             and evidence.configuration_revision == state.configuration.revision
             and bool(evidence.diagnostic_id)
         )
-        active = (
-            expected
-            and evidence.state == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+        active = expected and evidence.state in (
+            visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE,
+            visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_UNKNOWN,
         )
         pending = expected and evidence.state in (
             visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_PREPARING,
@@ -145,7 +148,14 @@ class ManagedDisplayOperations:
         available = expected and evidence.state in (
             visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE,
             visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_IDLE,
+            visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_UNKNOWN,
         )
         self.projectors.set_calibration_presentation_state(
-            active=active, available=available, pending=pending
+            active=active,
+            available=available,
+            pending=pending,
+            view=evidence.calibration_view
+            if evidence is not None
+            and evidence.state == visual_stimulus_pb.DISPLAY_CALIBRATION_STATE_ACTIVE
+            else "",
         )

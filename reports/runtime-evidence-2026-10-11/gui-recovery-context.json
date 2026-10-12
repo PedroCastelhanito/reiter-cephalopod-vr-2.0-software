@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-11",
+  "source_base": "f96286e",
+  "scope": "Local GUI error/recovery review on existing dirty workspace; only managed configuration/entry-point changes plus owning tests in this increment. No native runtime/device acceptance.",
+  "source_hashes": {
+    "src/cephvr/gui/main.py": "aa89d3ff56e0c6ed12583dfb83543a37f0403916b6b4941b7310c3dcbf1d9fb0",
+    "src/cephvr/gui/managed_configuration.py": "a7a45bef2e00b6533a532544ffb10bf4037f758659751202d79a9483ae0d0418",
+    "tests/gui/test_dashboard.py": "be11c956e5bbd9de1a26b9fe2175e413ac40d1f941e663fe96c9fe7ea55f94c8"
+  },
+  "reproduction": "Three failing cases retained in gui-recovery-before.txt; all pass after fixes.",
+  "commands": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -k 'managed or bridge or reconnect or disconnect or failure or pending or rejected_controller_configuration' --junitxml=reports/runtime-evidence-2026-10-11/gui-recovery.xml",
+    ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+    ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui",
+    ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+    ".venv/bin/python tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "result": "82 passed, 301 deselected in 38.38s; subsequent change adds only a test-local import separator. Lint/format 138 files, mypy 136 sources and boundaries 640 modules/zero violations pass. Final focused rerun retained separately.",
+  "review": "Existing scoped projection guard replaces manual reset; failed reload reports errors through existing UI path; acknowledgement retains newer-edit warning. No extra state or dependencies. Managed entry point remains orchestration and shrinks. Reconnect/command/close/device-pending paths reviewed without further actionable finding."
+}

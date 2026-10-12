@@ -75,7 +75,7 @@ class PointEditor(DataTable):
 
         self.fit_rows()
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         viewport = self.viewport()
         assert viewport is not None

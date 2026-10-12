@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from copy import deepcopy
 from unittest.mock import patch
 
 from tests.visual_stimulus.support import (
@@ -220,11 +221,124 @@ class ExpansionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "max_expanded_epochs"):
             expand_program(program, seed_decimal="1234", max_expanded_epochs=3)
 
+    def test_repetition_settings_follow_group_visit_and_validate_all_samples(
+        self,
+    ) -> None:
+        payload = json.loads(fixture_source())
+        original = payload["sequence"]
+        samples = [deepcopy(original[0]["settings"]) for _ in range(2)]
+        for sample, opacity in zip(samples, (0.2, 0.8), strict=True):
+            sample[0]["opacity"] = {"kind": "constant", "value": opacity}
+        original[0]["repetition_settings"] = samples
+        payload["sequence"] = [
+            {
+                "kind": "group",
+                "group_id": "repeat",
+                "repetitions": 2,
+                "order": "shuffle_each_repetition",
+                "order_unit": "child_blocks",
+                "conditions": None,
+                "body": original,
+            }
+        ]
+        program = self._program(payload)
+        expanded = expand_program(program, seed_decimal="42", max_expanded_epochs=8)
+        chosen = [e for e in expanded if e.source.epoch_id == original[0]["epoch_id"]]
+        self.assertEqual([e.settings[0].opacity.value for e in chosen], [0.2, 0.8])
+        self.assertEqual([e.lineage[-1].repetition_index for e in chosen], [0, 1])
+        self.assertEqual(self._program(json.loads(program.model_dump_json())), program)
+        samples.pop()
+        with self.assertRaisesRegex(ValueError, "enclosing group repetitions"):
+            self._program(payload)
+        samples.append(deepcopy(samples[0]))
+        samples[1][0]["instance_id"] = "missing"
+        with self.assertRaisesRegex(ValueError, "complete settings"):
+            self._program(payload)
+
+    def test_compact_random_rules_are_reproducible_and_bounded_only_at_expansion(
+        self,
+    ) -> None:
+        from cephvr.visual_stimulus.config.models.repetition import RepetitionRule
+        from cephvr.visual_stimulus.config.repetition_values import sample_at
+
+        rule = RepetitionRule(
+            instance_id="texture",
+            parameter="Speed",
+            minimum="0",
+            maximum="1000000",
+            precision="1",
+            seed="0" * 32,
+        )
+        self.assertEqual(
+            [sample_at(rule, i) for i in (0, 1, 1000000)],
+            ["774690", "525904", "367560"],
+        )
+        self.assertNotEqual(
+            sample_at(rule, 0),
+            sample_at(rule.model_copy(update={"stream": "other"}), 0),
+        )
+        payload = json.loads(fixture_source())
+        original = payload["sequence"]
+        original[0]["repetition_rules"] = [
+            rule.model_copy(
+                update={
+                    "instance_id": original[0]["settings"][0]["instance_id"],
+                    "parameter": "Angular speed",
+                }
+            ).model_dump(mode="json")
+        ]
+        payload["sequence"] = [
+            {
+                "kind": "group",
+                "group_id": "repeat",
+                "repetitions": 3,
+                "order": "as_listed",
+                "order_unit": "child_blocks",
+                "conditions": None,
+                "body": original,
+            }
+        ]
+        program = self._program(payload)
+        result = expand_program(program, seed_decimal="1", max_expanded_epochs=6)
+        self.assertNotEqual(result[0].settings, result[2].settings)
+        self.assertEqual(
+            result,
+            expand_program(
+                self._program(json.loads(program.model_dump_json())),
+                seed_decimal="2",
+                max_expanded_epochs=6,
+            ),
+        )
+        payload["sequence"][0]["repetitions"] = 1000000
+        large = self._program(payload)
+        self.assertLess(
+            len(large.model_dump_json()) - len(program.model_dump_json()), 16
+        )
+        with patch(
+            "cephvr.visual_stimulus.compiler.expansion.resolve_repetition"
+        ) as resolve:
+            with self.assertRaisesRegex(ValueError, "max_expanded_epochs"):
+                expand_program(large, seed_decimal="1", max_expanded_epochs=100000)
+            resolve.assert_not_called()
+
     def test_batch_labels_round_trip_without_changing_expansion(self) -> None:
         payload = json.loads(fixture_source())
         original = self._program(payload)
         self.assertEqual(original.sequence[0].batch_label, "")
         payload["sequence"][0]["batch_label"] = "Adaptation"
+        payload["sequence"][0]["subgroup_draft"] = {
+            "enabled": True,
+            "rules": [
+                {
+                    "projector": "Left",
+                    "layer": 0,
+                    "parameter": "Speed",
+                    "method": 2,
+                    "minimum": "0",
+                    "maximum": "10",
+                }
+            ],
+        }
         labelled = self._program(payload)
         reloaded = parse_program_json(labelled.model_dump_json(), max_bytes=1_000_000)
         self.assertEqual(reloaded, labelled)

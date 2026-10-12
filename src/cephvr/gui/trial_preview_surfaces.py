@@ -34,6 +34,8 @@ class PreviewCorrection:
                 "throw",
                 "reference_width_px",
                 "reference_height_px",
+                "reference_x_px",
+                "reference_y_px",
                 "reference_x_mm",
                 "reference_y_mm",
             ):
@@ -76,6 +78,8 @@ class PreviewSurface:
     height: float
     corners: tuple[tuple[float, float, float], ...] = ()
     correction: PreviewCorrection | None = None
+    blackout_zones: tuple[tuple[float, float, float, float], ...] = ()
+    marker_rect: tuple[float, float, float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -90,6 +94,14 @@ class PreviewGeometry:
         rig: RigDimensions | None,
         drafts: dict[str, dict[str, str]],
         resolutions: dict[str, tuple[int, int]] | None = None,
+        overlays: dict[
+            str,
+            tuple[
+                list[tuple[float, float, float, float]],
+                tuple[float, float, float, float] | None,
+            ],
+        ]
+        | None = None,
     ) -> "PreviewGeometry":
         resolved = resolved_screens(rig, drafts)
         result = {}
@@ -117,6 +129,8 @@ class PreviewGeometry:
                     PreviewCorrection.from_draft(
                         face, values, (resolutions or {}).get(face)
                     ),
+                    tuple((overlays or {}).get(face, ([], None))[0]),
+                    (overlays or {}).get(face, ([], None))[1],
                 )
             except (KeyError, ValueError):
                 continue

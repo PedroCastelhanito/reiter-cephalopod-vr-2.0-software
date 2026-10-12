@@ -16,8 +16,21 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 134
+**Status:** Accepted · **Revision:** 157
 
+- Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
+  Origin Y, Width and Height in pixels. Frame origins use bottom-left output
+  coordinates; Pulse origins are relative to the Frame. Both dimensions are
+  independently editable, and the Pulse must fit wholly inside its Frame.
+  Complete rectangles must fit their assigned output at submission/Setup.
+  Retain unfinished draft fields without inline errors. Portable full files version 7
+  save these fields by logical face; version 6 square Size migrates to equal Pulse
+  Width/Height, and older standalone markers retain their original rectangle until
+  Pulse fields are supplied. An independent Blackout zones table provides
+  Screen/X/Y/Width/Height and Add/remove; hide its header when empty and refit after
+  Add/remove and restore through the shared table rule. Planning preview shows final-space
+  black regions and a white pulse as placement, never optical timing.
+  V15/V19/V22 own final composition and trial/Idle behavior; both GUI modes share controls.
 - Review and managed runtime use the same DashboardWindow page construction,
   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
   supplies local fixtures or authoritative state and command availability; it never
@@ -82,7 +95,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Session config, using two columns with each checkbox beside its label. Assets are prepared externally. Tracking participation follows
   E10 without a Protocol status indicator; required acquisition/rendering is independent
   of optional video recording. Device controls stay in Devices.
-- Protocol, Microcontroller, Projectors, SpikeGLX and Tracking own reusable JSON
+- Cameras, Protocol, Microcontroller, Projectors, SpikeGLX and Tracking own reusable JSON
   Load/Save as controls; sidebar controls compose a full GUI snapshot including
   Dashboard metadata, camera drafts and recording choices. The
   [snapshot contract](../../contracts/gui-configuration-files.md) owns formats and
@@ -96,27 +109,35 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Inactive loaded Tracking drafts stay local until required. SpikeGLX files restore
   editable pulse rows for explicit Save pulse mapping; E12/E14 startup host/pairing
   values are informational references and retain their owning TOML authority.
-- Protocol uses a widened Trials column beside Trial timeline, with a full-width Epoch
-  editor below at all widths. Trials provides a selectable list and compact Add/Delete
-  controls. The timeline has no internal scroller: reserve the height needed for
-  the largest enabled-projector layer stack in the trial and keep it fixed across
-  epoch selection. Trials matches that height and scrolls its list internally.
-  Configuration continues to scroll in the page shell. Center the timeline count/duration summary.
-  Align the overview's left edge with the projector labels and its right edge with
-  the projector rows; leave a clear vertical gap before current-epoch details.
-  A single duration-proportional overview bar shows all epochs; matching ordered
-  stimulus settings, assets, projector mappings and scene background share a color,
-  ignoring epoch names, durations and scene/instance identifiers. Color is an authoring
-  cue, not a serialized epoch type. Unknown timing uses sequence order. Click selects
-  one source, Shift a range, Ctrl/Command toggles membership. Beneath the bar, show
-  the current occurrence's name/duration and one row per enabled projector, including
-  ordered layers, prepared asset names and compact parameter descriptions. Full text
-  is available on hover; batch multi-selection retains the current occurrence details.
-  Groups expand for authoring inspection; example shuffled order never chooses Setup's retained seed.
-  Repeated occurrences select their shared source and identify that edit scope. No
-  nested-scope timeline replaces the full-trial overview. No trial table, HUD/log,
-  draft badge or standalone Validate action. Configuration content scrolls within
-  the fixed navigation shell.
+- Protocol uses a widened Trials column beside a persistent Trial timeline, with a
+  full-width Sequence editor below. Trials provides a selectable list and compact
+  Add/Delete controls. Omit Seed/Gap controls and the Selected trial section;
+  preserve loaded seeds and legacy gaps under E01/E07. Setup retains seed ownership.
+  The overview shows direct source epochs and collapsed canonical groups in sequence
+  order, with name, duration and group repetition/occurrence totals. Blocks have a
+  readable minimum width and horizontal navigation; paint only visible blocks.
+  Matching epoch content shares an authoring color, never a serialized epoch type.
+  New GUI trials contain groups only; each group contains source epochs only.
+  Sequence editor opens directly on the first epoch when a supported trial is created,
+  loaded or selected; clicking a group selects its first epoch. No Trial breadcrumb
+  or back level. Put + Group and − Group beside Preview in the overview; addition
+  initializes one blank epoch and removal preserves at least one group. Inside a flat group,
+  + Epoch creates one subgroup from the current editor template and immediately
+  selects it. No nested-group creation or Group selected/Repeat-vary action is exposed.
+  Existing imported programs are preserved verbatim; unsupported legacy structure
+  is inspectable with creation controls unavailable, never flattened with an invented
+  shuffle seed. Canonical/headless V08 nesting remains supported.
+  Group name and repetitions are editable; omit the Order control and preserve imported ordering.
+  Timeline duration labels use hh:mm:ss, retaining fractional seconds when present.
+  Layer selectors use a narrow index-only column with descriptive tooltips. Subgroups are
+  separately identified batches of flat source epochs, using V03 authoring metadata;
+  equal labels do not merge batches. Clicking a batch header or any member selects
+  the complete subgroup; parameter edits affect all members and parent-group repetitions.
+  Group contents show compact source blocks; projector details live in the unified
+  form without a second summary grid. No widgets/images are allocated for repeated occurrences. Keep horizontal block scrolling and page-shell form
+  scrolling, responsive controls and centered count/duration totals. Shift/Ctrl/Command
+  select source epochs within the group. No trial table, HUD/log, draft badge or
+  standalone Validate action is introduced.
 - The design-review launcher uses simulated cameras, projector displays and a
   microcontroller inventory; review actions send no device commands. Its optional
   real-device inventory mode opens no COM port; physical pin tests and firmware
@@ -124,9 +145,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   runtime launcher starts the controller-backed GUI and discovers attached Basler
   cameras, secondary Windows displays and COM ports without assigning surfaces or
   claiming Setup readiness. Camera
-  refresh preserves drafts by serial. Managed Test enabled sends sequential A10
-  connection-only checks for enabled, assigned cameras; a running capture is reported
-  as skipped. Test selected checks the exact assigned camera without enabling it or
+  refresh preserves drafts by serial. Test selected checks the exact assigned camera
+  without enabling it or
   starting capture/pulses, preserving prior ownership. Camera roles include Eye
   tracking for third-camera preview/video only; its external trigger remains pending
   under A01/A11, while the unique Tracking role still owns locomotion input.
@@ -142,50 +162,32 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   save offers Retry or Close without saving; an unreadable previous draft is warned
   and preserved unless the operator explicitly replaces it. This local review draft
   never becomes the controller's E07 accepted configuration or authorizes Setup.
-- Epoch editor has **Batch generate** and **Batch edit** tabs within the card;
-  wheel gestures do not switch tabs.
-  Forms use the existing configuration scroller. Switching tabs preserves local
-  drafts without committing; explicit Add/Apply commits, and Discard changes resets
-  pending edit patches. The edit actions use concise Apply/Discard labels.
-  In Target epochs, Epochs, Filter and any label/index selector share one row;
-  Parameter and its duration field or projector/layer values share the next row.
-  Matching fixed durations show their actual hh:mm:ss value (including fractions);
-  mixed/variable durations show the hh:mm:ss entry format without staging a change.
-  Targeting and epoch identity fields share equal grid columns and control heights.
-  Timeline selection leaves extra space before the full form. Apply/Discard sit
-  at the card's top right, opposite the Batch generate/edit tabs, in every Batch
-  edit mode; the same buttons dispatch to the selected-source form or target patch.
-  Parameter-by-parameter editing omits the Projector column heading. Its choices
-  derive from the same per-stimulus generation columns, plus Duration and Asset;
-  exclude Opacity and unsupported family fields. Rotation keeps its canonical
-  angular-rate key. Video At end uses Loop/Hold final frame choices; arena edits
-  use the same longitudinal/lateral/angular movement gains as generation.
-  Validation follows G02 action-time warnings, without inline error text. Epoch
-  parameter warnings appear only on Add epochs or Apply edits; focus changes,
-  layer/type navigation and reference/variation preparation remain quiet and retain
-  invalid drafts. Rejected navigation preserves the current edit. Narrow
-  projector rows omit asset/numeric placeholders for empty layers.
-  Invalid input stays visible. Loss of editing authority closes
-  file pickers and disables forms. The full Timeline-selection form replaces the
-  redundant All parameters shortcut.
-  In Timeline selection, one selected source epoch uses the shared Batch generate
-  projector/layer form, populated with its authored settings, duration and batch label.
-  Apply epoch updates only that source; shared scene composition uses copy-on-write,
-  preserving sibling epochs and unaffected projector layers. Target epochs keeps the
-  parameter-by-parameter patch controls and offers All epochs, Epoch label and Epoch
-  index filters. Label selection lists the current trial's authored labels; index
-  selects one source epoch in one-based trial order, including nested groups but not
-  duplicating repeated occurrences. Invalid indices or missing label matches remain
-  quiet until Apply; its warning rejects the edit without changing the document. Returning to Timeline
-  selection restores its previous targets. Multiple timeline targets keep batch
-  patch controls rather than inventing one reference for mixed settings.
-  Batch generate owns a local reference
-  epoch with prepared assets, independent projector layers, exact duration and complete
-  family parameters. Show each enabled projector's reference layers and prepared
-  asset filename and stimulus-specific values in one compact row; full paths remain
-  available on hover. Omit the Projector heading and display Looming as the short
-  family name. The stimulus dropdown changes the selected layer's type, resetting
-  its asset; incomplete asset choices remain local drafts and block generation.
+- Sequence editor has one subgroup form, reusing the reference composer and numeric
+  variation controls with per-projector layers and parameters. No Generate/Edit tabs,
+  target filters, duplicate epoch inspector or batch selector. Stimulus mode, Duration,
+  and Name share a responsive row; Apply/Discard follow the form. Group repetitions
+  alone repeat the full sequence, equally for all epochs; no subgroup Copies control.
+  Omit epochs-per-repetition, one-repetition, edits-apply and footer count helper text.
+  Selecting a subgroup populates its first source template; unchanged parameters
+  retain each member's existing values. Explicit variation rules replace the selected
+  subgroup's pattern; retain the enabled state and rule controls after Apply, selection
+  changes, Undo and file reload. Save rules as V03 authoring metadata alongside concrete
+  settings; unchanged rules do not resample on unrelated edits or Apply.
+  + Epoch copies one current template, independent of variation rules; valid
+  pending edits are applied first. Invalid input stays visible and prevents mutation.
+  Changing selection or saving requires Apply/Discard; Undo first discards a draft.
+  Apply atomically validates the whole trial, preserving source identities and
+  unrelated epochs, projector settings and shared declarations. Incompatible layer
+  layouts reject a bulk composition edit without changing the subgroup.
+  Validation follows G02 action-time warnings. Focus changes and reference preparation
+  remain quiet and retain invalid drafts. Loss of editing authority closes file
+  pickers and disables forms. Fixed durations retain exact fractions; imported
+  variable durations are preserved. Projector-local changes use copy-on-write.
+  Show each enabled projector's selected layer, prepared asset filename and
+  stimulus-specific parameters in one compact row; full paths remain on hover.
+  Omit the Projector heading and display Looming as the short family name. The
+  stimulus dropdown resets the selected layer's asset when changing family;
+  incomplete choices remain drafts and block Apply and + Epoch.
   Share column headings, repeating parameter headings only when meanings or units
   change; reserve equal heading space to keep projector rows evenly spaced. A Layer
   dropdown per projector selects the visible asset/parameters; its ordinal follows
@@ -202,11 +204,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Image rows expose Fit (Contain/Cover/Stretch), Move speed and Direction; zero
   speed is still. Initial position and whole-image rotation sit in Advanced settings.
   These edit existing 2D object motion, never texture phase. New Images use Contain;
-  omitted legacy fit keeps Stretch under V04. Batch edit offers a Fit dropdown;
+  omitted legacy fit keeps Stretch under V04. The editor offers a Fit dropdown;
   numeric variation excludes Fit. Fitting precedes the existing geometry/calibration
   pipeline in both the planning preview and renderer.
-  Leave a clear gap below the batch tabs. Stimulus mode, Duration (hh:mm:ss),
-  Repetitions (at most three digits), Batch label and Insert share one row at wide
+  Stimulus mode, Duration (hh:mm:ss) and Name share one row at wide
   widths, with widths reflecting their values; narrow widths wrap. Leave extra
   separation before stimulus rows. Arena mode omits the redundant type selector and exposes Longitudinal/Lateral/Angular
   movement toggles and signed gains under V24 (zero gain disables an axis). Keep
@@ -250,39 +251,38 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   heights within each row. All projectors covers the enabled reference screens and
   offers common layer ordinals; explicit missing/stale targets reject generation.
   A selected local ordinal maps to the corresponding canonical instance on each
-  projector; deduplicate shared targets. Accept explicit values or bounded min/max/step
+  projector; isolate shared 2D instances for independent values. Accept explicit values or bounded min/max/step
   sweeps, or Random for numeric parameters. Random shows Minimum, Maximum,
-  Precision (positive value step). No manual resample action. Batch Repetitions
-  determines the random epoch count; no separate Epochs field. Without a fixed list,
-  generate one random epoch per repetition. With paired Values/Sweep lists, repeat
-  their ordered sequence and draw per resulting epoch, within the existing 2000
-  expanded-epoch authoring bound; do not repeat the materialized batch again.
+  Precision (positive value step), with an unchecked Share random values across projectors
+  option. Independent target draws are the default; sharing explicitly reuses one list.
+  No manual resample or count field. Without a fixed list, draw for every existing
+  subgroup source epoch (one for a new subgroup). With paired Values/Sweep lists, materialize the
+  ordered source pattern once. Draw independently for each subgroup occurrence and
+  projector across all group repetitions; independent draws may coincide by chance.
+  Keep source blocks and saved V08 seeded rules compact, without an occurrence-count
+  limit in subgroup authoring. Resolve only representative values for editing; changing
+  repetitions preserves existing seeds and the sampled prefix. Explicit source-list
+  generation and expanded previews retain their separate bounds; Setup checks its
+  configured expanded-plan limit before allocation.
   Draw uniformly with replacement from multiples of the precision inside inclusive
-  bounds; reject invalid/nonfinite ranges or an empty precision grid. Cache draws
-  while range/precision and resulting count are unchanged, so preview/commit uses the same values; input changes
-  create a new set. Persist concrete epoch values, not an
-  unresolved runtime random rule; Setup seeds and V08 shuffle ownership are unchanged.
+  bounds; reject invalid/nonfinite ranges or an empty precision grid. Persist controls
+  and seeds; edits to range, precision or targets create a new seed. V08 resolves
+  executable rules at Setup, independently of order/duration seeds; rendering never
+  samples. Retain legacy concrete repetition tables when loading existing programs.
   Pair rules by value position with equal list lengths, without Combine. Explicit
   Values remain in entered order. Parameter choices share
   the selected stimulus columns and captions, including units: Rotation replaces
   Angular speed in the UI, without changing its canonical key. Exclude Width, Height
   and Opacity. Mixed targets offer only compatible common columns; unsupported
   targets reject generation. Video At end accepts ordered categorical values, without
-  a numeric sweep. Preview count/duration before Add epochs. Materialize variants as individually
-  editable canonical source epochs; nonrandom repetitions retain listed order in V08 groups.
-  Trial-wide shuffle belongs to a separate epoch-reordering action.
-  Store the optional batch label on every generated source epoch under V03; Batch
-  edit can select all source epochs with that label, including nested groups.
-  Insert at beginning/end, before/after the selected top-level block, replace the
-  trial, or distribute one generated block after every N existing top-level blocks
-  and append the remainder. Groups count as blocks, retaining repetition semantics.
-  After label inserts an independently identified batch after every original matching
-  source epoch in its existing group scope, retaining repetition/condition semantics.
-  List labels from the current trial; missing matches or invalid results reject the
-  entire operation. Bound the expanded label-insertion result to 2000 epochs.
-  Replacement is explicit and undoable. A short reference
-  is not itself a trial: final insertion validates the complete trial and remains
-  atomic. File cancellation, invalid settings or failed insertion leave it unchanged.
+  a numeric sweep. Validate the resulting sequence on Apply. Materialize variants as
+  flat canonical source epochs edited together through their subgroup.
+  No Shuffle trial action is exposed; group-order and Setup seed ownership remain unchanged.
+  Store optional batch labels and distinct generated-batch identities under V03.
+  + Epoch appends a new subgroup; Apply changes the selected subgroup in place.
+  Hide the older insertion/replacement controls in this workflow. Bound each generation to 2000 epochs without charging
+  existing group repetitions against that source-list allowance. Validate the assembled trial
+  atomically; cancellation, invalid settings or failed insertion leave it unchanged.
 - Trial timeline has a Preview action opening a separate modeless planning window
   showing stimuli on a single rotatable 3D tank/screen view, following CephVR1.0.
   Use Devices screen placement and subject geometry. Enabled projector faces show
@@ -310,11 +310,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Load assets on demand with bounded caches and arena complexity, release inactive
   video decoders, stop playback work when paused, and release resources on close or
   loss of editing authority. Keep this separate from managed backend-owned viewers.
-- Reuse expanded timeline paths/content keys for immutable program identities in a
-  bounded four-view cache; changed programs invalidate by identity and selection
-  does not rebuild the trial. Unchanged metadata flushes preserve the program identity.
-  Keep the painted timeline and existing 2000-epoch preview bound; do not create a
-  widget or decode an asset per epoch. GUI JSON reads/saves use the existing shared
+- Cache source paths/content keys and aggregate counts/durations by immutable program
+  identity and scope in a bounded four-view cache. Selection does not expand repetitions
+  or rebuild the trial; unchanged metadata flushes preserve program identity. Keep the
+  existing 2000-occurrence bound for explicit expanded/animated previews and source-list generation,
+  without applying it to the compact overview. Do not decode assets for timeline blocks. GUI JSON reads/saves use the existing shared
   16 MiB engineering default guard; managed Setup's configured limits remain
   authoritative. Local measurements do not establish Windows/full-workload capacity.
   To fade only the first independently generated source epoch, generate with zero
@@ -334,7 +334,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   functions, state, feedback and input declarations. Replace Placement controls with
   an Opacity override; preserve loaded placement/dimensions without exposing edits.
   Local field-completion edits there keep existing validation; untouched imported values are preserved.
-- All mutation controls belong to Epoch editor, including naming, duration, layer
+- All mutation controls belong to Sequence editor, including naming, duration, layer
   management and structural controls. A first projector-local edit detaches a shared
   2D instance while retaining other projectors' identities, settings, assets and stack
   order. All projectors supports shared edits; arena remains rig-wide under V02.
@@ -343,14 +343,16 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   projectors; different boundaries remain separate epochs. No embedded rendering.
 - Existing repeat/condition groups remain editable after canonical JSON reload;
   preserve child-block versus condition-row semantics, complete settings and V07
-  continuity. Structural rename/duplicate/reorder/remove act on one source epoch;
-  multiple-source changes use the explicit batch editor. Duplicate and Delete are
-  buttons immediately before Preview in the timeline header, visible only for
-  Timeline selection. At narrow widths their row sits below the title to avoid
-  clipping. Ctrl+D and Backspace shortcuts
+  continuity. Renaming a group also remaps its condition references. Structural
+  duplicate/reorder/remove act on one source block; epoch rename acts on one source epoch;
+  multiple-source changes use the explicit batch editor. The timeline exposes
+  content-sized + Group, − Group and Preview buttons; group duplication/reordering
+  remains in the context menu.
+  Keep their natural label widths at the right. At narrow widths
+  these actions sit below the title to avoid clipping. Ctrl+D and Backspace shortcuts
   respect the same selection/authority guards and preserve Backspace text editing;
-  rename/reorder/projector selection remain in
-  its context menu. Batch edit omits the selected-epoch count line. Undo/Redo use
+  group actions target the overview, while epoch actions target group contents.
+  The subgroup form omits the selected-epoch count line. Undo/Redo use
   Ctrl+Z/Ctrl+Y (with native macOS equivalents), without menu or toolbar entries.
   Protocol Load/Save as validates complete schedules with canonical trial programs,
   mode, asset root, seeds, gaps and arena boundaries; canonical single-program import
@@ -372,19 +374,23 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Tracking methods,
   subject landmarks and analysis geometry belong to Tracking. Each setting has one
   editing home. Devices orders its icon subtabs Cameras, Microcontroller, Projectors, SpikeGLX.
-  Cameras stacks Available devices above Camera config in the left column, with
+  Each Devices tab places Load/Save in its own Configuration file card immediately
+  below the device tabs, before device connection and settings cards. Cameras then
+  stacks Available devices above Camera config in the left column, with
   its HUD/log column at the right. The inventory provides experiment enablement,
   stable identity, role, selection, refresh, connect/disconnect and external preview.
   Selection restores each camera's saved PFS, timing source and rate; the PFS field
   shows a filename with its full path in the tooltip.
-  Refresh is an icon action in the inventory header's upper-right corner. The shared
+  Camera and Projector inventories share a compact Refresh icon in the header's
+  upper-right corner, a first Use column and single-row selection. The shared
   capture action reads Connect when closed and Disconnect while capture or an
   editing connection is retained. Review simulates these states locally. Camera config omits
   the redundant selected-camera caption; identity remains in the inventory/HUD.
   The Devices footer has no draft-settings text; local fixtures remain identified
   in the review window title and activity messages.
-  Inventory actions are ordered Test enabled, Connect/Disconnect. Test enabled
-  targets enabled cameras without changing selection or connection state. Managed
+  Inventory actions are ordered Test selected, Connect/Disconnect. Test selected
+  checks only the selected assigned camera, including a disabled camera, without
+  changing experiment participation, capture or existing ownership. Managed
   role assignments commit through E07 and leave the newly assigned camera disabled.
   Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
@@ -428,18 +434,26 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   and control/connection loss cancels local timers. Firmware/edge reports do not prove
   physical receiver wiring.
 - Microcontroller owns one selected COM port for all camera triggers; Cameras has
-  no controller/port selector. Scan ports lists discovered COM-number names with
+  no controller/port selector. COM discovery uses the shared compact Refresh icon
+  beside the port selector, distinct from Test connection. Scan ports lists discovered COM-number names with
   the available device description, preserving the port identity separately and
   a still-present selection without opening devices. Do not expose
   macOS/Linux serial device names or invent a second controller in the draft.
-  Inputs precedes Outputs. Inputs lists Projector flip; Outputs lists Trial state
-  followed by configured camera roles, with no camera subsection heading or Hz column.
-  Each row contains an enable checkbox/name, pin and a Test/Stop toggle with stable
-  geometry. Camera enablement shares Cameras' experiment participation state;
-  retain disabled rows for re-enabling and preserve their pins. Fixed input/output
-  enablement is retained draft configuration in isolated review. Disabled signals have dimmed pin/test
-  controls, cannot start tests and do not participate in pin-conflict checks.
-  Omit Save pins: managed clients submit completed pin edits, selected COM ports and
+  Inputs precedes Outputs. Add input/output and row removal select only supported
+  signals. Hide empty signal-table headers (MCU Inputs/Outputs and SpikeGLX channels),
+  releasing their height; restore them when rows are added or loaded. Inventory
+  headers retain Refresh when empty. Supported choices are Projector flip input;
+  Trial state and uniquely assigned Behavior/Tracking
+  camera outputs. Each row has a supported-signal dropdown, pin, Test/Stop and remove
+  action; no free-form signal, behavior selector or duplicated camera rate. Prevent
+  duplicate active signals. Removing disables the signal and hides its row, retaining
+  its pin for Add and file round-trips. Camera enablement shares Cameras' experiment
+  participation; adding/removing a camera output enables/disables that camera. Eye
+  triggering retains A01/A11's pending integration. Fixed input/output enablement is
+  retained draft configuration in isolated review. Disabled signals cannot start tests
+  or participate in pin conflicts. Add/remove/reassignment obey editing and diagnostic
+  locks. Omit Save pins and Apply pin settings: managed clients submit completed pin
+  edits, selected COM ports and
   fixed I/O enable changes through the existing controller configuration request.
   Inventory refresh and saved-state loading are silent. Lock managed edits during
   diagnostics; connection/pin tests still require confirmed configuration.
@@ -475,25 +489,37 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   V15 owns output selection without altering calibrated surfaces.
   Below the inventory, sections are ordered Screen calibration, Synchronization,
   Rig geometry. Screen calibration uses a CephVR1.0-style per-face table containing
-  only paired scale, pixel offset and inverse-axis controls. Rig geometry owns tank
+  only paired scale, pixel offset and inverse-axis controls. Up/Down keys step scale
+  by 0.01 (two decimal places) and offsets by 0.1 px (one decimal place), using
+  the same draft/live-update path as typing. Loading preserves saved precision;
+  partial typed input is retained. Rig geometry owns tank
   dimensions and fixed subject distances labeled Subject → Left wall / Front wall /
   Bottom (mm). Perpendicular distances to Left, Front and Bottom screens sit below these
   in the Rig geometry card. The screen-dimensions table contains width, height,
-  derived read-only projector distance and effective throw ratio, with wrapped
-  headers. Per-screen measured horizontal/vertical reference bars retain native output
-  pixels and known millimetres, derive independent X/Y mm/px and full projected
+  derived read-only estimated projector distance, with wrapped headers.
+  Effective throw ratio is config-only. Pixel-to-mm calibration omits explanatory text and pixel-span columns;
+  its table has Screen, paired Measured X / Y (mm) inputs under one header, and
+  read-only X / Y (mm/px) estimates, with all three columns stretching evenly.
+  Per-screen measured horizontal/vertical reference bars retain native output
+  dimensions and config-only `reference_x_px` / `reference_y_px` lengths. These
+  lengths control the actual calibration bars and the same conversion arithmetic;
+  positive whole pixels must fit the assigned output. Older files migrate their
+  original quarter-output spans; unset lengths retain those defaults. Complete
+  measured pairs estimate mm/px independently of throw ratio; projected distance
+  additionally requires a positive throw ratio.
+  Known millimetres derive independent X/Y mm/px and full projected
   image dimensions; full projected width times throw ratio estimates ideal throw
   distance (Bottom: total folded path). Subject-to-screen distances stay independent.
   Measurements from another assigned projector are cleared; imported historical
   distances remain visible until measurements are supplied. Missing or partial
   measured pairs cannot produce a calibrated mapping. Clip/tolerance settings remain in Rig geometry without an Advanced
-  subtitle. One Load JSON / Save as action row handles the complete rig, projection
+  subtitle. One Load… / Save as… action row handles the complete rig, projection
   limits, all-screen correction/dimension values, synchronization and participation
   plus reusable runtime profile references under the
   [GUI calibration contract](../../contracts/gui-calibration.md), replacing the
   per-screen profile picker. Validate the complete bounded document before applying;
   invalid files preserve drafts. Save atomically, retain unset values, respect editing
-  authority and cancel pickers on authority loss. Version 4 retains reference
+  authority and cancel pickers on authority loss. Full version 7 retains reference
   measurements and their native output dimensions alongside the former runtime
   display-profile import into this row. Exclude physical inventory and output assignments;
   load preserves current display mappings, restores participation and pulse selection
@@ -502,23 +528,38 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   fail without guessing. Legacy full version 3 and numeric-only versions 1/2
   load with unset measurements; numeric version 3 retains them. Legacy
   runtime profiles remain loadable through the same action. Loading is not backend preparation.
-  Launch prepares calibration files before requesting output; no separate preparation
-  button is shown. Preparation uses the current four enabled face
+  Measure reference bars and Adjust frame and grid prepare calibration files before
+  requesting output; no separate preparation button is shown. Preparation uses the current four enabled face
   assignments, current rig fields and native monitor identities to export a static
   arena asset, display profile and explicitly diagnostic geometric
-  profiles into Protocol Assets. The exported mapping applies each face's scale,
-  pixel offset and inverse-axis drafts, applying measured physical screen/image
-  ratios when supplied and defaulting unmeasured values to diagnostic identity;
+  profiles into Protocol Assets. Reference measurement renders only raw-pixel bars
+  on black, ignoring stored measurements and manual corrections. Frame/grid
+  adjustment requires complete measurements matching each native mode and uses
+  mm/px directly with rig geometry; neither action requires projector distance or
+  throw ratio. The grid mapping combines measured physical screen/image ratios
+  with each face's scale, pixel offset and inverse-axis drafts;
   reject corrections extending outside the output. Submission publishes new
   content-addressed measured affine assets for GUI-owned 2×2 profiles, preserves
   originals and rejects replacing imported nonlinear/masked/weighted calibration. Reject missing or
   ambiguous monitor bindings.
   Failed preparation does not send a launch request.
   Unmeasured profiles are diagnostic placeholders; measured affine mappings
-  still require optical acceptance and do not set experiment defaults. Launch calibration targets all four assigned projectors together;
-  after confirmed output activation the same control reads Close. It returns to
-  Launch only after confirmed closure. Failed/pending commands never claim an
-  output-state change. Launch/Close controls V01's diagnostic presentation outside
+  still require optical acceptance and do not set experiment defaults. Both actions
+  target all four assigned projectors together;
+  during an active frame/grid presentation only Scale X/Y and Offset X/Y remain
+  editable. Debounce valid edits into bounded normalized mapping updates without
+  rewriting protected assets, reopening windows or changing rig/measurement state.
+  Coalesce newer edits behind one in-flight update; invalid/partial edits retain
+  the last confirmed projection. Exact active diagnostic, controller/renderer
+  generations, configuration revision and increasing adjustment sequence bind each
+  update. Lost authority/disconnection, closing/unknown state or another diagnostic
+  discard pending live intents; no stale replay. Actual all-output presentation
+  confirms the new sequence. Other projector controls stay locked until closure.
+
+  After confirmed output activation Adjust frame and grid reads Close. It returns to
+  Adjust frame and grid only after confirmed closure; Measure reference bars remains
+  disabled while presentation is active or pending. Failed/pending commands never claim an
+  output-state change. These actions and Close control V01's diagnostic presentation outside
   trial timing; preparation sends no output command.
   Retain per-face drafts without adopting measured defaults. Planar geometry
   conversion retains all four inward-facing surfaces and the fixed observer.
@@ -538,7 +579,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Diagram and projection conversion share the same corner calculation.
   Synchronization places VSync mode beside Pulse display. Pacing identity and the
   60 Hz target live in Visual Stimulus configuration only, without a GUI editor. Pulse-off dims and locks
-  all other synchronization editors while retaining independent pulse/pacing values;
+  photodiode editors while retaining independent pulse/pacing values; Blackout zones
+  remain independently editable under configuration authority;
   this editing gate does not couple their runtime ownership. Omit explanatory pulse,
   subject-offset and projected-width footer text.
   Projectors replaces its HUD with Displays layout above a tank/screen
@@ -586,7 +628,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   assignments and reports missing/duplicate identities without silently remapping.
   V15 surface/viewport/calibration ownership stays separate; no one-projector-per-
   surface constraint or output-mode changes are introduced.
-- SpikeGLX exposes local channel-mapping drafts for discovered camera roles, Trial
+- SpikeGLX connection omits explanatory prose; the read-only pairing tooltip
+  retains its owning config path. SpikeGLX exposes local channel-mapping drafts for discovered camera roles, Trial
   state, Projector flip and photodiode only while pulse generation is enabled.
   Disabled sources retain dimmed mappings; hidden photodiode mappings survive toggles.
   Each mapping has a local Use checkbox, preserving values while disabled; this
@@ -594,8 +637,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Additional named inputs may be added and removed with the row's remove action.
   Source-derived rows remain linked to their owning device and can be disabled
   rather than independently removed. All edits/removals obey Configuration authority.
-  Rows show Use, Signal, Index and Channel; Stream and Bit editors are omitted.
-  Preserve loaded stream identity as mapping metadata. Digital-bit metadata remains an E12 configuration
+  Rows show Use, Signal and Channel index; Stream, Index and Bit editors are omitted.
+  Preserve loaded stream identity/index and bit as mapping metadata. Digital-bit metadata remains an E12 configuration
   concern, not an inferred bit-zero default; camera triggers use OneBox under E12. Configuration
   authority gates edits. These drafts do not configure SpikeGLX acquisition, enumerate
   remote saved channels or prove physical recording; managed adoption/validation is pending.
@@ -680,7 +723,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   flashing. In managed mode Upload is available only in idle Configuration, with
   diagnostics stopped and all camera ownership/native cleanup released. A displayed
   MCU compatibility failure alone does not block this explicit repair operation.
-- Calibration Launch always prepares the geometry grid using saved corrections:
+- Adjust frame and grid prepares the geometry grid using measured mm/px and saved corrections:
   world-phase colored solid/dashed lines, full-face center crosses, face dimensions
   and a 50 mm ruler where it fits. Existing physical screen planes and offsets remain
   authoritative; no separate placement-only/no-grid mode is offered.
@@ -688,10 +731,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 34
+**Status:** Accepted · **Revision:** 37
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
+  File actions use Load… / Save as… captions across tabs. Devices' Configuration
+  file cards share a Load-first row with equal-width/equal-height buttons, zero
+  inner margins and the shared field gap, including Projectors.
+  Inventory Refresh shares one icon/size/accessible-name helper and header placement;
+  port discovery uses that same control beside its selector. Participation is the
+  first Use column; inventory row selection shares the same behavior. Shared table
+  fitting handles hidden signal headers without leaving an empty header gutter.
 
 - Use the current CephVR1.0 Dashboard as the visual template: dark blue/black
   surfaces, subtle bordered cards, blue primary actions, muted red stopping actions,
@@ -710,8 +760,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   pages compose them using focused data and callbacks under ARCH-002. Do not copy
   page-local styles or introduce a generic form/runtime framework.
 - Keep a common content-measured title row, with Dashboard Previews at the right.
-  Device icon subtabs occupy the top of the left content column, with configuration
-  cards below them. Subtabs expand to fill their column and align their top edge
+  Device icon subtabs occupy the top of the left content column, followed by the
+  per-device Configuration file card and then connection/settings cards. Subtabs expand to fill their column and align their top edge
   with the HUD card’s painted top border. The right HUD stays at the same top position across pages and
   device subtabs in the two-column layout. Use the existing stacked layout on narrow
   windows; tab overflow scrolls without replacing navigation with a dropdown.

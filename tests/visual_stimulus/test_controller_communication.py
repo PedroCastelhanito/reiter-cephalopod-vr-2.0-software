@@ -231,8 +231,10 @@ async def test_controller_port_queries_actual_acquisition_and_visual_stimulus_wi
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("missing_output", [False, True])
 async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
     tmp_path,
+    missing_output,
 ):
     identity = Identity(
         *(
@@ -332,6 +334,19 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
         maximum_bytes=4_000_000,
     )
     artifact = make_prepared_trial()
+
+    class StartupPreparation(Preparation):
+        def initialize_display(self, display, calibration):
+            if missing_output:
+                from cephvr.visual_stimulus.rendering.native_display import (
+                    DisplayUnavailableError,
+                )
+
+                raise DisplayUnavailableError(
+                    "saved projector matched 0 active monitors"
+                )
+            return super().initialize_display(display, calibration)
+
     owner = RenderOwner(
         lambda cancelled: LifecycleDriver(
             worker=identity.worker,
@@ -339,7 +354,7 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
             controller=identity.controller,
             policies=pb.ControlPolicies(),
             engine=Graphics(host_time_ns, artifact),
-            preparation=Preparation(artifact),
+            preparation=StartupPreparation(artifact),
             recording=Recorder(),
             reports=bridge,
             cancelled=cancelled,
@@ -379,9 +394,34 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
             await asyncio.sleep(0.005)
         display = controller.projections.display
         assert display is not None, errors
-        assert display.complete and display.HasField("applied_revision")
+        assert display.complete
+        assert display.HasField("applied_revision") is not missing_output
         assert display.source == identity.process
-        assert display.outputs[0].idle_submission == vp.SUBMISSION_OUTCOME_RETURNED
+        if missing_output:
+            assert display.issues[0].failure.code == "DISPLAY_OUTPUT_UNAVAILABLE"
+            snapshot = await controller.snapshot()
+            operation = next(
+                item
+                for item in snapshot.operations
+                if item.context.command_id == admission.command_id
+            )
+            assert operation.complete and not operation.succeeded
+            assert "Reconnect the projector" in operation.failure.message
+            assert display.resources and all(
+                item.released for item in display.resources
+            )
+        else:
+            assert display.outputs[0].idle_submission == vp.SUBMISSION_OUTCOME_RETURNED
+        for _ in range(200):
+            record = coordinator.ledger.get(admission.command_id)
+            if record is not None and record.executor_result:
+                break
+            await asyncio.sleep(0.005)
+        outcome = pb.OperationState.FromString(record.executor_result)
+        assert outcome.complete and outcome.succeeded is not missing_output
+        assert not coordinator.state.interrupted and not worker.interrupted
+        assert not owner.cancelled.is_set()
+        assert controller.lifecycle.session.phase == pb.SESSION_PHASE_CONFIGURATION
         assert controller.lifecycle.attempt is None
         assert not coordinator.state.reports
         assert not errors
@@ -398,3 +438,190 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
         await backend.channel.close()
         for peer in (controller_peer, reports, worker_peer):
             await peer.close()
+
+
+@pytest.mark.asyncio
+async def test_authenticated_live_calibration_update_transport_and_exact_receipt():
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    calls = []
+
+    import threading
+
+    class Owner:
+        def __init__(self):
+            self.cancelled = threading.Event()
+
+        async def submit(self, method, request, deadline_ns):
+            calls.append((method, request, deadline_ns))
+            if request.adjustments[0].mapping_id == "reject":
+                from cephvr.visual_stimulus.config.calibration_adjustments import (
+                    CalibrationAdjustmentRejected,
+                )
+
+                raise CalibrationAdjustmentRejected(
+                    "stale mapping rejected before GL writes"
+                )
+
+        def cancel(self):
+            self.cancelled.set()
+
+    worker = VisualStimulusWorkerRuntime(
+        visual_stimulus.WorkerContext(worker=identity.worker, owner=identity.process),
+        identity.supervisor,
+        Owner(),
+        SupervisorReceipt(),
+        command_ledger(identity.worker.generation, 10**12, 1_000_000),
+    )
+    worker_token = "live-grid-renderer-test"
+    worker_listener = await serve(
+        worker,
+        {("visual_stimulus", identity.process.generation): worker_token},
+        worker.ledger,
+        port=0,
+        max_message_bytes=1_000_000,
+        worker=True,
+        testing=True,
+    )
+    worker_peer = Peer(
+        f"127.0.0.1:{worker_listener.port}",
+        Principal("visual_stimulus", identity.process.generation, worker_token),
+        1_000_000,
+        kind="worker",
+    )
+
+    receipt = SupervisorReceipt()
+    runtime = VisualStimulusCoordinatorRuntime(
+        identity=identity,
+        worker=worker_peer,
+        controller=receipt,
+        supervisor=receipt,
+        ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+    )
+    runtime.state.display = pb.VisualStimulusDisplayView()
+    runtime.state.display.outputs.add(output_id="projector/main")
+    evidence = runtime.state.display.calibration
+    evidence.diagnostic_id = str(uuid4())
+    evidence.configuration_revision = 4
+    evidence.controller_generation = identity.controller.generation
+    evidence.renderer_generation = identity.worker.generation
+    evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+    evidence.calibration_view = "frame_grid"
+    token = "live-calibration-transport-test"
+    listener = await serve(
+        runtime,
+        {("controller", identity.controller.generation): token},
+        runtime.ledger,
+        port=0,
+        max_message_bytes=1_000_000,
+        testing=True,
+    )
+    registration = BackendRegistration(
+        "visual_stimulus",
+        identity.process.generation,
+        f"127.0.0.1:{listener.port}",
+        token,
+    )
+    port = GrpcBackendPort(
+        registration,
+        Principal("controller", identity.controller.generation, token),
+        max_message_bytes=1_000_000,
+    )
+    wrong_port = GrpcBackendPort(
+        registration,
+        Principal("controller", identity.controller.generation, "wrong-token"),
+        max_message_bytes=1_000_000,
+    )
+    deadline = host_time_ns() + 5_000_000_000
+    request = wire.VisualStimulusDisplayCalibrationUpdateRequest(
+        command_id=str(uuid4()),
+        issuer=identity.controller,
+        target=identity.backend,
+        configuration_revision=4,
+        diagnostic_id=evidence.diagnostic_id,
+        deadline_monotonic_ns=deadline,
+        adjustment_sequence=1,
+    )
+    request.adjustments.add(
+        mapping_id="diagnostic_front",
+        destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
+    )
+    try:
+        with pytest.raises(grpc.aio.AioRpcError) as wrong:
+            await wrong_port.update_display_calibration(request, deadline_ns=deadline)
+        assert wrong.value.code() == grpc.StatusCode.PERMISSION_DENIED
+        admission = await port.update_display_calibration(request, deadline_ns=deadline)
+        assert admission.result == pb.COMMAND_RESULT_ACCEPTED
+        for _ in range(200):
+            if calls:
+                break
+            await asyncio.sleep(0.005)
+        assert len(calls) == 1
+        method, child, child_deadline = calls[0]
+        assert method == "UpdateDisplayCalibration"
+        assert child.diagnostic_id == request.diagnostic_id
+        assert child.adjustment_sequence == 1
+        assert child_deadline <= deadline
+        report = pb.VisualStimulusDisplayView(
+            command_id=child.command.command_id,
+            source=identity.worker,
+            backend=identity.backend,
+            controller=identity.controller,
+            requested_revision=4,
+        )
+        report.outputs.add(output_id="projector/main")
+        report.calibration.CopyFrom(evidence)
+        report.calibration.presented = True
+        report.calibration.adjustment_sequence = 0
+        with pytest.raises(ValueError, match="sequence"):
+            await runtime.report("ReportDisplay", report, ingress_ns=host_time_ns())
+        report.calibration.adjustment_sequence = 1
+        await runtime.report("ReportDisplay", report, ingress_ns=host_time_ns())
+        await runtime.report(
+            "ReportWorkerOperation",
+            visual_stimulus.WorkerOperation(
+                source=child.command.target,
+                operation=pb.OperationState(
+                    context=pb.OperationContext(command_id=child.command.command_id),
+                    command=method,
+                    complete=True,
+                    succeeded=True,
+                ),
+            ),
+            ingress_ns=host_time_ns(),
+        )
+        assert runtime.state.display.calibration.adjustment_sequence == 1
+        request.command_id = str(uuid4())
+        rejected = await port.update_display_calibration(request, deadline_ns=deadline)
+        assert rejected.result == pb.COMMAND_RESULT_REJECTED
+        assert len(calls) == 1
+        request.command_id = str(uuid4())
+        request.adjustment_sequence = 2
+        request.adjustments[0].mapping_id = "reject"
+        await port.update_display_calibration(request, deadline_ns=deadline)
+        for _ in range(200):
+            if len(calls) == 2:
+                record = worker.ledger.get(calls[-1][1].command.command_id)
+                if record is not None and record.executor_result:
+                    break
+            await asyncio.sleep(0.005)
+        assert len(calls) == 2
+        outcome = pb.OperationState.FromString(record.executor_result)
+        assert outcome.complete and not outcome.succeeded
+        assert outcome.failure.code == "CALIBRATION_ADJUSTMENT_REJECTED"
+        assert not worker.interrupted and not worker.owner.cancelled.is_set()
+    finally:
+        await port.channel.close()
+        await wrong_port.channel.close()
+        await listener.close(host_time_ns() + 2_000_000_000)
+        await worker_peer.channel.close()
+        await worker_listener.close(host_time_ns() + 2_000_000_000)

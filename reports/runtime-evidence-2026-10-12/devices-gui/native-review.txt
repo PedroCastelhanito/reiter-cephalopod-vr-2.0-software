@@ -1,0 +1,7 @@
+PasteBoard: Error creating pasteboard: com.apple.pasteboard.clipboard [-4960]
+PasteBoard: Error creating pasteboard: com.apple.pasteboard.find [-4960]
+2026-10-12 10:14:39.348 python[69509:6955501] Connection Invalid error for service com.apple.hiservices-xpcservice.
+2026-10-12 10:14:39.348 python[69509:6955493] Error received in message reply handler: Connection invalid
+2026-10-12 10:14:39.427 python[69509:6955493] Failure on line 688 in function id scheduleApplicationNotification(LSNotificationCode, NSWorkspaceNotificationCenter *): noErr == _LSModifyNotification(notificationID, 1, &code, 0, NULL, NULL, NULL)
+qt.qpa.fonts: Populating font family aliases took 104 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+Cannot create window: no screens available

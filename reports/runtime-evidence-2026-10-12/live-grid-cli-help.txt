@@ -1,0 +1,7 @@
+usage: main.py [-h] --bootstrap-handle BOOTSTRAP_HANDLE
+
+CephVR controller supervised process
+
+options:
+  -h, --help            show this help message and exit
+  --bootstrap-handle BOOTSTRAP_HANDLE

@@ -272,38 +272,6 @@ class CommandLedger:
             self._bytes -= prior[1]
             return prior[1]
 
-    def transfer_payload(
-        self,
-        old_key: str,
-        new_key: str,
-        size: int,
-        *,
-        work_key: str,
-        priority: bool,
-    ) -> None:
-        """Atomically move reserved evidence to its terminal command scope."""
-        require_uuid4(work_key)
-        if not old_key or not new_key or size <= 0:
-            raise ValueError("payload keys and positive byte size are required")
-        with self._lock:
-            old = self._payloads.get(old_key)
-            if old is None:
-                raise KeyError(old_key)
-            if new_key != old_key and new_key in self._payloads:
-                raise CommandConflict("payload transfer destination is already used")
-            if new_key == old_key and (old[0] != work_key or old[2] != priority):
-                raise CommandConflict("payload transfer changes its owning scope")
-            byte_limit = (
-                self.max_bytes
-                if priority
-                else self.max_bytes - self.safety_reserve_bytes
-            )
-            if self._bytes - old[1] + size > byte_limit:
-                raise CommandCapacityError("retained payload byte budget exhausted")
-            self._payloads.pop(old_key)
-            self._payloads[new_key] = (work_key, size, priority)
-            self._bytes += size - old[1]
-
     def finalize_work(self, work_key: str, now_ns: int) -> None:
         """Retire one confirmed work scope, preserving other/unfinished records."""
         require_uuid4(work_key)

@@ -217,9 +217,7 @@ class RecoveryCoordinator:
         observed = {output.output_key: output for output in report.outputs}
         if expected != observed.keys() or len(observed) != len(report.outputs):
             return False
-        if any(not cleanup_output_discharged(observed[key]) for key in expected):
-            return False
-        return True
+        return all(cleanup_output_discharged(observed[key]) for key in expected)
 
     async def get_recovery_state(
         self, request: wire.RecoveryQuery

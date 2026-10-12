@@ -87,7 +87,7 @@ class TrialPreview(QDialog):
         self.owner.installEventFilter(self)
         self.update_canvases()
 
-    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:  # noqa: N802
+    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
         if (
             watched is self.owner
             and event is not None
@@ -163,7 +163,7 @@ class TrialPreview(QDialog):
         self.previous.setEnabled(self.plan.index > 0)
         self.next.setEnabled(self.plan.index < len(self.plan.epochs) - 1)
 
-    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         self.timer.stop()
         self.owner.removeEventFilter(self)
         self.media.close()

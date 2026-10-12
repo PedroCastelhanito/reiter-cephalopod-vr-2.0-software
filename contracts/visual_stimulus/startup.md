@@ -60,6 +60,16 @@ Retain cleanup blockers if release is unconfirmed. Configuration errors are dist
 from confirmed process/GPU/device failures, which retain E06/E08 handling. No automatic
 process restart, weakened failure policy or assumed resource release is introduced.
 
+Resolve all saved monitor identities before creating output windows. A missing or
+ambiguous active match is reported as `DISPLAY_OUTPUT_UNAVAILABLE` through the
+existing completed display view, with no applied revision and exact released-resource
+evidence. Confirm delivery of that view before the failed operation result. Only
+that matching sessionless startup rejection, after confirmed cleanup within its
+original deadline, avoids renderer-failure escalation. Cancellation, late completion,
+GPU failures and uncertain cleanup retain their existing failure paths. The controller
+copies the actionable field issue into the operation status shown by GUI/headless
+clients; correcting the assignment still requires explicit fresh Setup.
+
 Before accepting completion, compare generations and revision with the current
 request. Obsolete work cannot change readiness or validate a newer configuration;
 retire its resources through the same cleanup path. Shutdown cancels initialization

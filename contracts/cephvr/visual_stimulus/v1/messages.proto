@@ -38,6 +38,16 @@ message OpenDisplayCalibrationCommand {
   string arena_sha256 = 8;
   VisualStimulusFilePolicies policies = 9;
 }
+message DisplayCalibrationAdjustment {
+  string mapping_id = 1;
+  repeated double destination_xy = 2 [packed = true]; // Four row-major XY pairs.
+}
+message UpdateDisplayCalibrationCommand {
+  WorkerCommand command = 1;
+  string diagnostic_id = 2;
+  uint64 adjustment_sequence = 3;
+  repeated DisplayCalibrationAdjustment adjustments = 4;
+}
 message CloseDisplayCalibrationCommand {
   WorkerCommand command = 1;
   string diagnostic_id = 2;

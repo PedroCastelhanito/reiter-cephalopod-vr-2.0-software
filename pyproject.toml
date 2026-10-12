@@ -105,8 +105,6 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC", "RUF006", "RUF100"]
 [tool.ruff.lint.per-file-ignores]
 # Test helpers poll with bounded sleeps and read fixtures directly.
 "tests/**" = ["ASYNC"]
-# The GUI package is in active development; its stale noqa comments are not swept yet.
-"src/cephvr/gui/**" = ["RUF100"]
 
 [tool.ruff.format]
 quote-style = "double"

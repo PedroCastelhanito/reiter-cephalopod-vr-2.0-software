@@ -1,0 +1,166 @@
+F.....F.                                                                 [100%]
+=================================== FAILURES ===================================
+____________ test_batch_create_variations_preview_insert_and_reload ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10c971900>
+app = <PyQt6.QtWidgets.QApplication object at 0x1029193f0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1688/test_batch_create_variations_p0')
+
+    def test_batch_create_variations_preview_insert_and_reload(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_batch import epoch_paths
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        editor = window.protocol.editor
+        window.page_buttons[1].click()
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(blank_program()))
+        editor.enter_group()
+        editor.timeline.set_screens(("Left", "Right"))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        create = editor.subgroup
+        create.composer.set_asset_root(str(tmp_path))
+        editor.group_editor.repetitions.setText("2")
+        editor.group_editor.mark_changed()
+        assert editor.group_editor.apply()
+        original = editor.program
+        create.composer.add_file("Texture", str(path), "Left")
+        create.composer.duration.setText("00:00:05.000000001")
+        create.vary.setChecked(True)
+        create.add_variation()
+        create.rows[0].method.setCurrentIndex(1)
+        create.rows[0].values.setText("0, 1, 0.25")
+        create.refresh_preview()
+        assert create.add_button.isEnabled(), create.summary.text()
+        assert create.summary.text().startswith("5 epochs")
+        create.rows[0].method.setCurrentIndex(0)
+        create.rows[0].values.setText("10, 20, 40")
+        create.add_variation()
+        create.rows[1].parameter.setCurrentIndex(
+            create.rows[1].parameter.findData("Direction")
+        )
+        create.rows[1].values.setText("0, 180")
+        create.refresh_preview()
+        assert create.add_button.isEnabled()
+        assert create.notice.text()
+        assert create.notice.dialog is None
+        assert editor.program == original
+        create.rows[0].values.setText("10, 10, 20, 20, 40, 40")
+        create.rows[1].values.setText("0, 180, 0, 180, 0, 180")
+        assert create.parameter_fields[2].isHidden()
+        create.refresh_preview()
+        assert create.add_button.isEnabled(), create.summary.text()
+        assert create.summary.text().startswith("6 epochs")
+        assert editor.program == original
+        create.generate()
+        program = editor.program
+        assert len(epoch_paths(program)) == 6
+        assert len(expand_program(program, seed_decimal="8", max_expanded_epochs=100)) == 12
+        assert program.sequence[0].order == "as_listed"
+        assert program.sequence[0].conditions is None
+        numbers = {
+            tuple(
+                round(v, 6)
+                for v in motion_numbers(
+                    node_at(program, path).settings[0].model_dump(mode="json")
+                )[:2]
+            )
+            for path in epoch_paths(program)
+        }
+        assert numbers == {(speed, angle) for speed in (10, 20, 40) for angle in (0, 180)}
+        assert all(
+            node_at(program, p).duration.duration.ns() == 5_000_000_001
+            for p in epoch_paths(program)
+        )
+        assert parse_program_json(program.model_dump_json(), max_bytes=1_048_576) == program
+        editor.undo(False)
+>       assert editor.program == original
+E       assert Program(forma...=1.0)),)))),)) == Program(forma...ings=()),)),))
+E         
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:7117: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 61 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+________ test_unified_subgroup_asset_edit_is_projector_local_and_atomic ________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x115dfb910>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1688/test_unified_subgroup_asset_ed0')
+
+    def test_unified_subgroup_asset_edit_is_projector_local_and_atomic(window, tmp_path):
+        import copy
+    
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.projector_layers import layers_for
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        for name in ("image.png", "replacement.png"):
+            image = QImage(4, 4, QImage.Format.Format_RGB32)
+            image.fill(0)
+            assert image.save(str(tmp_path / name))
+        source = add_stimulus(blank_program(), 0, "Image", ("Left", "Right"))
+        data = source.model_dump(mode="json")
+        data["sequence"] = [copy.deepcopy(data["sequence"][0]) for _ in range(3)]
+        for i, epoch in enumerate(data["sequence"]):
+            epoch.update(epoch_id=f"Image_{i}", batch_id="image_batch")
+        original = grouped_program(validate(data))
+        editor = window.protocol.editor
+        editor.timeline.set_screens(("Left", "Right"))
+        editor.set_program(original)
+        editor.enter_group()
+        editor.select_epochs(((0, 0), (0, 1)))
+        form = editor.subgroup
+        composer = form.composer
+        composer.set_asset_root(str(tmp_path))
+        left = composer.rows["Left"].parameters
+        left.set_media_path(next(iter(left.asset_forms)), str(tmp_path / "replacement.png"))
+        right = composer.rows["Right"].parameters
+        right.fades.fade_in.setText("-1")
+        right.fades.mark_changed()
+        form.apply()
+        assert form.notice.text() and editor.program == original
+        right.fades.fade_in.setText("0")
+        right.fades.mark_changed()
+        form.apply()
+        assert not form.notice.text()
+        program = editor.program
+        assets = {asset.asset_id: asset.logical_path for asset in program.assets}
+        for epoch in program.sequence[0].body[:2]:
+            left_layer = epoch.settings[layers_for(program, epoch, "Left")[0]]
+            right_layer = epoch.settings[layers_for(program, epoch, "Right")[0]]
+            assert assets[left_layer.asset_id] == "replacement.png"
+            assert assets[right_layer.asset_id] == "image.png"
+>       assert program.sequence[0].body[2] == original.sequence[0].body[2]
+E       AssertionError: assert Epoch(kind='e...t='contain'))) == Epoch(kind='e...='contain'),))
+E         
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:12444: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_batch_create_variations_preview_insert_and_reload
+FAILED tests/gui/test_dashboard.py::test_unified_subgroup_asset_edit_is_projector_local_and_atomic
+2 failed, 6 passed, 386 deselected in 9.69s

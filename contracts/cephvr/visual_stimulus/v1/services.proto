@@ -8,6 +8,7 @@ import "cephvr/visual_stimulus/v1/messages.proto";
 service VisualStimulusWorkerService {
   rpc InitializeDisplay(cephvr.visual_stimulus.v1.InitializeDisplay) returns (cephvr.control.v1.CommandAdmission);
   rpc OpenDisplayCalibration(OpenDisplayCalibrationCommand) returns (cephvr.control.v1.CommandAdmission);
+  rpc UpdateDisplayCalibration(UpdateDisplayCalibrationCommand) returns (cephvr.control.v1.CommandAdmission);
   rpc CloseDisplayCalibration(CloseDisplayCalibrationCommand) returns (cephvr.control.v1.CommandAdmission);
   rpc SetupSession(WorkerSetup) returns (cephvr.control.v1.CommandAdmission);
   rpc CancelSetup(WorkerCommand) returns (cephvr.control.v1.CommandAdmission);

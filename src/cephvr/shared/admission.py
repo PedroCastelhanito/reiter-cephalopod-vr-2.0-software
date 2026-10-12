@@ -40,10 +40,6 @@ class CommandAdmissionTransport:
         """State validation cannot revoke an already admitted exact retry."""
         return self._ledger.get(command_id) is not None
 
-    @property
-    def outstanding_commands(self) -> tuple[str, ...]:
-        return tuple(self._inflight)
-
     async def close(self, deadline_ns: int) -> None:
         """Stop new admission and drain owned tasks through the retained deadline."""
         self._accepting = False

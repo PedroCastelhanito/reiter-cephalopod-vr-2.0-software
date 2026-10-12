@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-12",
+  "source_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "scope": "G01 revision156, V03 revision11, V08 revision4; preserve extensive pre-existing workspace edits",
+  "accepted_clarification": "Independent samples per group repetition and projector, optional projector sharing",
+  "files_sha256": {
+    "src/cephvr/gui/batch_variation.py": "434950bfd42827ec2d6116770116269828feea56f82c22e287bf21adc17b4c4f",
+    "src/cephvr/gui/batch_create.py": "eadf84589a538e4a8c1f399474de4badae3f2594375df10640b98efc432d4f4a",
+    "src/cephvr/gui/subgroup_editor.py": "189b83f786badfc376c28fce6a8c4c0bdb001f40be6885b2f944d7e24a961cf4",
+    "src/cephvr/gui/subgroup_operations.py": "590210dd8ca4d93b20dfae9df7299aea97103be4ea40ea9434dd9612415cadf3",
+    "src/cephvr/gui/subgroup_repetitions.py": "0bdc5d7af1bdca7a919e5dd7046e41e0669cbe16251977de53a02b91b117007a",
+    "src/cephvr/gui/protocol_batches.py": "e53c2065fd3094892e1bf4de0fafce8c55b0f1ce4e619d2be04a4d3e11d4d925",
+    "src/cephvr/gui/protocol_editor.py": "8c8d92b674129c49a62fa08591ce2b13caf22fab90068f135d09368b67ded343",
+    "src/cephvr/gui/protocol_groups.py": "9fc0dedc02aac0d6fd333b214e6501c0ccef4c4e81626521a7c4a492a597e4b9",
+    "src/cephvr/gui/epoch_selection.py": "ac5c6afe3322a32eaef160946df0a7ec3fc87e358e6000b384e8a4de3ad77ead",
+    "src/cephvr/visual_stimulus/config/models/authoring.py": "1c52e98ff5cc6208611f0309144491b581aa348a6a3183ce6ec5c671472fb207",
+    "src/cephvr/visual_stimulus/config/models/program_model.py": "e92ab981cd1c6b45d5e76902ceae8d29d063172ea6edc837aa84bb162916a883",
+    "src/cephvr/visual_stimulus/compiler/expansion.py": "f52e7590503c4b72d7df438a8afb6c492465362a74f164b6812d1e3b67bde9d0",
+    "tests/gui/test_dashboard.py": "98fbd4d3dfc6b0baad06606f6df7ba634cddee773aba92de6fe75d195dc3050f",
+    "tests/visual_stimulus/test_compilation.py": "0d36797d9946f138ea9840f0bad13b18fe2884e702350471b7bcd14c876f2f1d",
+    "contracts/visual_stimulus/program.schema.json": "5b7b6a712bfb410bf5090eb77bbccca89c760425811268d09427c9e8cc203604",
+    "contracts/visual_stimulus/prepared-trial.schema.json": "d95bc7dfabcd31a1f191aae6eb312aac70eb503e057cc62fbadc932f44bf450b"
+  },
+  "validation": {
+    "gui.txt": "1 failed, 395 passed in 254.46s (0:04:14)",
+    "gui-final.txt": "396 passed in 246.28s (0:04:06)",
+    "focused-final.txt": "19 passed, 376 deselected in 18.91s",
+    "mixed-final.txt": "1 passed, 394 deselected in 5.92s",
+    "visual-suite.txt": "8 failed, 224 passed, 1 deselected in 3.72s",
+    "visual-final.txt": "232 passed, 1 deselected in 2.88s",
+    "mypy.txt": "Success: no issues found in 160 source files",
+    "ruff.txt": "All checks passed!",
+    "format.txt": "163 files already formatted",
+    "boundaries.txt": "Checked 655 backend modules; 0 boundary violations.",
+    "schema.txt": "11 schemas checked; 0 needed regeneration",
+    "links.txt": "Checked 943 local links/anchors in 18 edited Markdown files",
+    "git diff --check": "passed"
+  },
+  "commands": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m \"not windows and not rig\"",
+    ".venv/bin/python -m pytest tests/visual_stimulus -q -m \"not windows and not rig\"",
+    ".venv/bin/python -m mypy --platform win32 src/cephvr/gui src/cephvr/visual_stimulus/config/models src/cephvr/visual_stimulus/compiler",
+    ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+    ".venv/bin/python tools/check_backend_boundaries.py"
+  ],
+  "limits": [
+    "GUI full stage precedes final mixed-selection metadata preservation and stale-target validation guard; final19-case focused and extended persistence case pass after these changes. Overlapping stages not summed.",
+    "Portable Qt/loopback/compiler evidence only; no native Windows, physical projector or rig acceptance",
+    "Random authoring capped at2000 subgroup occurrences; tables consume memory proportional to sampled occurrences, no loading latency guarantee",
+    "No running user GUI restarted; new code requires application restart"
+  ]
+}

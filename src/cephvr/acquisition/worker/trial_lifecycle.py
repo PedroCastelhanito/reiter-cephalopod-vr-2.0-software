@@ -75,9 +75,7 @@ class WorkerTrialLifecycle:
         self._complete_warning_scope = complete_warning_scope
         self.external_wake = external_wake
         self.recording_first_frame_callback = recording_first_frame
-        self._recording_isolated_callback = recording_isolated
         self._require_ready_session_callback = require_ready_session
-        self._capability_resource_released_callback = capability_resource_released
         self.activity = TrialActivityEvidence(
             bootstrap, state, source, report_lifecycle
         )
@@ -188,7 +186,7 @@ class WorkerTrialLifecycle:
             raise RuntimeError("worker operation has no retained absolute deadline")
         return retained.deadline_ns
 
-    def _schedule(self, request: object, deadline_ns: int) -> None:
+    def schedule(self, request: object, deadline_ns: int) -> None:
         if not isinstance(request, acq.WorkerSchedule):
             raise TypeError("schedule request has the wrong type")
         if not self.trial_state.prepared:
@@ -219,7 +217,7 @@ class WorkerTrialLifecycle:
         ):
             self.recording.schedule(request, deadline_ns=deadline_ns)
 
-    def _release(self, request: object, deadline_ns: int) -> None:
+    def release(self, request: object, deadline_ns: int) -> None:
         if not isinstance(request, acq.WorkerRelease):
             raise TypeError("release request has the wrong type")
         scheduled = self.trial_state.schedule
@@ -239,12 +237,6 @@ class WorkerTrialLifecycle:
             and not self._recording_fault.faulted_session
         ):
             self.recording.release(request, deadline_ns=deadline_ns)
-
-    def schedule(self, request: object, deadline_ns: int) -> None:
-        self._schedule(request, deadline_ns)
-
-    def release(self, request: object, deadline_ns: int) -> None:
-        self._release(request, deadline_ns)
 
     def stop_trial(self, deadline_ns: int, *, report_stopped: bool = False) -> None:
         self.stop_finalizer.stop_trial(deadline_ns, report_stopped=report_stopped)

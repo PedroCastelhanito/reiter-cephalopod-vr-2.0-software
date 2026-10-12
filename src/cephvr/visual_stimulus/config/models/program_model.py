@@ -12,7 +12,9 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from .authoring import SubgroupDraft
 from .parameter_catalogue import ConditionUnit, InputUnit, validate_settings_units
+from .repetition import RepetitionRule
 from .schema_common import (
     MINIMUM_TRIAL_DURATION_NS,
     FrameId,
@@ -460,9 +462,15 @@ class Epoch(Model):
     kind: Literal["epoch"]
     epoch_id: Id
     batch_label: str = Field(default="", max_length=128)
+    batch_id: Id | None = None
+    subgroup_draft: SubgroupDraft | None = None
     scene_id: Id
     duration: Duration
     settings: tuple[Settings, ...]
+    repetition_rules: tuple[RepetitionRule, ...] = ()
+    repetition_settings: Annotated[
+        tuple[tuple[Settings, ...], ...], Field(max_length=2000)
+    ] = ()
 
 
 class Group(Model):
@@ -538,7 +546,9 @@ class Program(Model):
                 raise ValueError("2D layers cannot contain arenas")
         node_ids: set[str] = set()
 
-        def walk(nodes: tuple[Node, ...], scope: dict[str, Conditions]) -> None:
+        def walk(
+            nodes: tuple[Node, ...], scope: dict[str, Conditions], repetitions: int = 0
+        ) -> None:
             for node in nodes:
                 nid = node.epoch_id if isinstance(node, Epoch) else node.group_id
                 if nid in node_ids:
@@ -548,7 +558,7 @@ class Program(Model):
                     child = dict(scope)
                     if node.conditions is not None:
                         child[node.group_id] = node.conditions
-                    walk(node.body, child)
+                    walk(node.body, child, node.repetitions)
                     continue
                 if node.scene_id not in scenes:
                     raise ValueError("unknown epoch scene")
@@ -556,17 +566,38 @@ class Program(Model):
                 active = set(scene.layer_instance_ids)
                 if scene.arena_instance_id:
                     active.add(scene.arena_instance_id)
-                ids = [x.instance_id for x in node.settings]
-                unique(ids)
-                if set(ids) != active:
+                if (
+                    node.repetition_settings
+                    and len(node.repetition_settings) != repetitions
+                ):
                     raise ValueError(
-                        "complete settings required for exactly active instances"
+                        "Repetition settings must match the enclosing group repetitions"
                     )
+                if node.repetition_rules:
+                    if not repetitions or node.repetition_settings:
+                        raise ValueError(
+                            "Random repetition rules need a group and cannot accompany a settings table"
+                        )
+                    keys = [(r.instance_id, r.parameter) for r in node.repetition_rules]
+                    if len(keys) != len(set(keys)) or any(
+                        r.instance_id not in active for r in node.repetition_rules
+                    ):
+                        raise ValueError(
+                            "Random rules require distinct active instance parameters"
+                        )
+                settings_sets = (node.settings, *node.repetition_settings)
+                for settings in settings_sets:
+                    ids = [x.instance_id for x in settings]
+                    unique(ids)
+                    if set(ids) != active:
+                        raise ValueError(
+                            "complete settings required for exactly active instances"
+                        )
                 if isinstance(self.duration, Explicit) and isinstance(
                     node.duration, Random
                 ):
                     raise ValueError("random duration requires target-total mode")
-                for block in node.settings:
+                for block in (b for settings in settings_sets for b in settings):
                     if inst[block.instance_id] != block.kind:
                         raise ValueError("instance/settings family mismatch")
                     sources = []

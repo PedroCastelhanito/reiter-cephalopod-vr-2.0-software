@@ -1,0 +1,5 @@
+qt.qpa.fonts: Populating font family aliases took 62 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+Saved review draft restores selected trial, first epoch, open editor and demo_assets root; no settings modified.

@@ -61,6 +61,12 @@ mean + contrast*modulation*(2*sample-1), alpha from the source times opacity. Pa
 uses the same 2D transform. Mean/modulation RGB are linear coefficients, not gamma codes.
 No stochastic texture plugin or hidden phase reset is introduced.
 
+Epoch authoring metadata includes optional `batch_label` (empty by default) and
+`batch_id` (null by default). Under [V03](../../docs/architecture/visual_stimulus.md#v03),
+the latter distinguishes GUI generation actions within a parent group even when
+labels match. Neither field changes compilation order, timing or rendering. Preserve
+both in source/prepared-source JSON; individual epoch edits retain batch membership.
+
 ## Functions, clocks and checks
 
 The four supported function variants are constant, ramp `initial+slope*u`, sine
@@ -192,3 +198,29 @@ tiled-composite review encoding covering every output when saving On (none when 
 duration and PreparedHandle content hash/generations. Check limits before materialization.
 These cross-document checks are the compiler/Ready adoption boundary, not implied by the
 structural Pydantic schema's partial validators. No arbitrary JSON payload is executable.
+
+Subgroup authoring metadata: optional `subgroup_draft` defaults to null. The GUI stores
+one record on the first member of a batch: `enabled` and up to 64 `rules`. A rule
+retains projector scope, local layer ordinal (-1 for all), parameter, method (0 Values,
+1 Sweep, 2 Random), entered values/range/precision, explicit `shared` choice, and
+seed and sample key (legacy cached values remain readable). The canonical model bounds these text/list fields. This
+metadata is not evaluated by the compiler; canonical settings and repetition rules remain authoritative.
+
+Optional epoch `repetition_settings` defaults to an empty tuple/list. A nonempty table
+contains one complete Settings list per immediate enclosing group repetition (at most
+2000 rows). Every row must match the epoch scene's active instances and pass the same
+asset, function, feedback and condition-reference validation as ordinary settings. A
+root epoch cannot carry a nonempty table. V08 expansion indexes this table by the
+immediate group's zero-based repetition index before substituting conditions; it
+does not select by shuffled visit position or use random draws at runtime.
+
+Optional epoch `repetition_rules` defaults to an empty list and cannot coexist with a
+legacy table. Each `uniform_grid_v1` rule identifies an active instance and numeric
+parameter, inclusive minimum/maximum/precision grid, 32-digit hexadecimal seed,
+stream, nonnegative offset and positive stride. For repetition r, index = r × stride
++ offset. SHA-256 of UTF-8 `cephvr.uniform-grid.v1:{seed}:{stream}:{index}` seeds
+Python Random (digest interpreted as a big-endian integer); randrange selects one
+uniform grid index. Independent targets use distinct streams; shared targets reuse
+one stream. Expansion resolves after condition substitution and validates concrete
+settings before compilation. The rule declaration is constant-size with respect to
+repetitions; Setup's configured expanded-plan limit still applies before sampling.

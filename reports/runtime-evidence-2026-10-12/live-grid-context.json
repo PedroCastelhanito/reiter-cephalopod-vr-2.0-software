@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-12",
+  "task": "live-calibration-adjustments",
+  "base_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty work preserved. Final hashes identify relevant source; checks are staged while other chats revise photodiode/Protocol code, not an exact full-final-tree suite claim.",
+  "decisions": [
+    "G01 amendment148, retained by later revisions",
+    "V01 revision18",
+    "V15 mesh constraints",
+    "E02/E03/E08 authority/identity/deadlines",
+    "ARCH-002",
+    "E15"
+  ],
+  "sha256": {
+    "src/cephvr/gui/live_calibration.py": "318e5694ca69aa18a1ef98bbb419e5cf654f7f0c1b037ac95b5226a0c98d2dcc",
+    "src/cephvr/gui/projector_calibration.py": "c6d5af2efef1080ab73654f85b150d1f95ce65d5023513742078a6416733696c",
+    "src/cephvr/gui/projectors.py": "3a42538b3a1360d1f04a08579e94f49c44716df1fcab32cf49efc6b04144f68d",
+    "src/cephvr/gui/managed_display.py": "a8578befd446f8241053ed72b30d7c1f88437750b3e68455a831a353f18c0820",
+    "src/cephvr/gui/managed_display_operations.py": "079614aeb03278ad39dafebecdaa1097e85c357057b6372a1607c69c9085e1bb",
+    "src/cephvr/gui/controller_bridge.py": "70d21ca82422a768a0b89fa299a87a485329b17713d2350c131806fc11b491d0",
+    "src/cephvr/gui/main.py": "c7fcf02c98d92ed219c03039e118b0f5e4c746330efd8d87abe98a0ce23488ef",
+    "src/cephvr/controller/device/display_adjustments.py": "678cc10a38205b0a31151220c33815330d88253ee75f11aa049c6f161ff32545",
+    "src/cephvr/controller/device/display_calibration.py": "81d116752ece3f85eada5ec75c97e0a54b40c598a9cf4a4356c2b5ed03023d97",
+    "src/cephvr/controller/device/views.py": "28f3c73f5f128fdf2cba4f92939c7c629728135de00235a577b76bae72458203",
+    "src/cephvr/controller/backend.py": "e5ed88859c3bab32c132a8e6e8d4e2d6dc185d40845f959ee725714a581ef22c",
+    "src/cephvr/controller/ports.py": "7ef1e0fe7cb96dd863d15486c4bf119f8b6b8197992ce96c73bf0531e40d496c",
+    "src/cephvr/controller/service.py": "12f694a8ee7410c52b5d6d0309a487ec159c5540b5c5dbc6e94ff1bd7d58a654",
+    "src/cephvr/controller/runtime.py": "7ee8f39ee5e1a37739f762857671fdf189e742e0ce80b4a73073ef8933443dea",
+    "src/cephvr/visual_stimulus/config/calibration_adjustments.py": "eb96d6cde79fd453d267acdffdc48243ed1a089bb837a07e0c5bb084380edc88",
+    "src/cephvr/visual_stimulus/coordinator/calibration_updates.py": "4aac4c8f4c8cf475ff76a3e6b4f6e331648187efbc3b2ecaa3cfa3787caf5a8f",
+    "src/cephvr/visual_stimulus/coordinator/commands.py": "4360d0cfcc3c4caf503630742af1a7b75d21f183eae302216598c4d6fd9fbe23",
+    "src/cephvr/visual_stimulus/coordinator/display.py": "c0d295e10dc331b26b7d666fc3a6b81cede6d981b78ee8c03f674259d5377ae9",
+    "src/cephvr/visual_stimulus/coordinator/state.py": "8c3a084d5d02c1c1d9b6c1af95427073948e75e87669e725836999237510f200",
+    "src/cephvr/visual_stimulus/runtime.py": "76ead40998b2a2a59c027ae43b94e101d766f2819d86bcd16f888665755063b6",
+    "src/cephvr/visual_stimulus/transport/boundary.py": "715121e9e6e1d4d903b2ce1dc5628fdd1ddb300448364e31b65f1bf6d64e8795",
+    "src/cephvr/visual_stimulus/transport/messages.py": "f06f1dd9945a960ca6584149d31ae44bf056df3e141898ef5e0f8988fa443838",
+    "src/cephvr/visual_stimulus/transport/services.py": "fed9beb4f8e9209bcadcd56b3b0dd3e50d74b9a181384e9d1566f48c3ca73adc",
+    "src/cephvr/visual_stimulus/worker/calibration_adjustments.py": "1c731cf36cb13a4d76020dbd8e0f9aad92913fc75226bfd2cd5cb925c5a4ed14",
+    "src/cephvr/visual_stimulus/worker/display_calibration.py": "ae2e20648af0682145aced751e85abf216499597cb3c349d4f031929e43ed2a0",
+    "src/cephvr/visual_stimulus/worker/lifecycle.py": "d655dfb11e08777b8b4573f1e28651fcdc3f59de9bac1c9d685f61eba43ab61d",
+    "src/cephvr/visual_stimulus/worker/runtime.py": "dd105c0c6a289e4c033a11753565470bd16dd461db5f66f58161ec0555b08c06",
+    "src/cephvr/visual_stimulus/worker/ports.py": "f8e429626815f852f57f9995dbaed700315d739a43238fa257523d6453a08b09",
+    "src/cephvr/visual_stimulus/rendering/display_calibration.py": "b95bd774acb373aa0437fe910cfdeef45c85a0e091f70133110534c24466441a",
+    "src/cephvr/visual_stimulus/rendering/scene_resources.py": "a516f2a71835e641eb1d11e64b06421bb6ee377ace39248f684e7c4666da54aa",
+    "src/cephvr/visual_stimulus/rendering/native.py": "5e7dfceeb5221d135b2758173b9e3e28750a715005a115584c25fbaa34e75058",
+    "src/cephvr/visual_stimulus/rendering/engine.py": "3b16949de8883c32675a11d49c652638a391485fde8161beeabd6d558cc52e92",
+    "src/cephvr/visual_stimulus/rendering/types.py": "6712bafe2f1a669624ae2bec8f468143c1c350a1b8f7aca5d21d9526a9c89400",
+    "tests/gui/test_dashboard.py": "c57b839cdfdd02d29a877bff561e11d4c501f5aee852b22d518b8e37e4fe46c6",
+    "tests/controller/test_device_admission.py": "d4493a1037f1318db861521f7ff67263c7c2c3dc86365b21b9908336b1e82815",
+    "tests/visual_stimulus/test_controller_communication.py": "6ad7a0d2dbbd94b075094b6b2629a55f384fe7aa3cc775bea6b1e8c6205cec0c",
+    "tests/visual_stimulus/test_coordinator.py": "5ca41723a482dda0a858022bfac32f52b67535cafff0a9829ce85d0863b972ed",
+    "tests/visual_stimulus/test_lifecycle.py": "b8c8abe16e1cce9f5ebef870a0d29990c904b6ccd2bcc9a336df899586dbf174",
+    "tests/visual_stimulus/test_display_calibration_rendering.py": "fa054b2a19e4e913e0027faf24712f623fc7aedceca3867ed7387f971c051f6e",
+    "contracts/cephvr/control/v1/services.proto": "afdf571ca85c4422cdb229f282c1226812e12c73d2d2902db905d0c6841827f5",
+    "contracts/cephvr/visual_stimulus/v1/messages.proto": "620831f353a2dd0a9f2191ae35548e77375f488189e596fdd2b8c0ebef10a5b0",
+    "contracts/cephvr/visual_stimulus/v1/runtime.proto": "c915525280bc8e577c853663dddc2734a428c2d25f9a2878c5d23600cd6cb607",
+    "contracts/cephvr/visual_stimulus/v1/services.proto": "480466db00413b2bb9a7fcb47d4481dc8287889a439ba5e8bb86c7bdd6bf5340"
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest tests/controller tests/visual_stimulus -q -m \"not windows and not rig\"",
+      "result": "659 passed,1 deselected,8.27s before final area/float32 guard",
+      "raw": "live-grid-backend-final.txt"
+    },
+    {
+      "command": "same full backend command after guard",
+      "result": "658 passed,1 failed(CLI --help timeout10s),1 deselected,102.52s",
+      "raw": "live-grid-backend-verified.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/controller/test_entrypoint.py -q",
+      "result": "1 passed,0.68s unchanged; preceding isolated timeout retained",
+      "raw": "live-grid-cli-final.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"projector or calibration or review_and_runtime or device_tabs_sit_above\"",
+      "result": "60 passed,335 deselected,64.76s; includes Runtime/Review parity before later concurrent photodiode/Protocol edits",
+      "raw": "live-grid-gui-final.txt"
+    },
+    {
+      "command": "focused GUI/native/lifecycle final corrections",
+      "result": "7 passed,428 deselected,4.24s; overlaps GUI/backend suites",
+      "raw": "live-grid-final-corrections.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k live_calibration",
+      "result": "Latest collection initially blocked by concurrent Protocol f-string syntax; current own live-calibration case passes1/394 deselected,1.90s",
+      "raw": "live-grid-gui-current.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_controller_communication.py -q -k authenticated_live",
+      "result": "1 passed,4 deselected,1.20s; authenticated actual coordinator/renderer services with GL submission injected, before expanded rejection assertion, which full backend run includes",
+      "raw": "live-grid-auth-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "result": "42 passed,79 subtests,0.59s",
+      "raw": "live-grid-contracts.txt"
+    },
+    {
+      "command": "Ruff check/format GUI,controller,Visual Stimulus and owning tests",
+      "result": "Passed;423 files formatted"
+    },
+    {
+      "command": "Win32 mypy GUI,controller,Visual Stimulus",
+      "result": "376 sources passed"
+    },
+    {
+      "command": "tools/check_backend_boundaries.py",
+      "result": "649 modules,zero violations;existing cohesion advisories",
+      "raw": "live-grid-boundaries-final.txt"
+    },
+    {
+      "command": "Generate contracts to isolated temp directory and byte-compare to src",
+      "result": "19 proto sources,57 generated files match,zero drift",
+      "raw": "live-grid-protobuf-check.txt"
+    },
+    {
+      "command": "contracts/visual_stimulus/generate_schemas.py --check",
+      "result": "11 schemas zero drift"
+    },
+    {
+      "command": "git diff --check",
+      "result": "Passed"
+    }
+  ],
+  "initial_stages": [
+    "Initial selection31 passed/four concurrent Blackout zones layout mismatches; final60 shared GUI cases pass after owning task corrections.",
+    "Intermediate calibration-profile mismatch while concurrent mask/type edits were changing; unchanged focused profile case passes.",
+    "Prototype tests found omitted coordinator Update admission branch, frozen-hook test assignment and eight fixture mappings above four-record bound; correct admission and fixtures without relaxing bounds.",
+    "Protobuf tag13 collision detected before generation; use14/15. Unsupported generator --check performs no validation; replace with isolated generation/byte comparison.",
+    "Initial static callback/import/call type errors corrected before final static checks.",
+    "Default sandbox loopback bind denied; rerun authorized authenticated tests with loopback access. Test-only wrong auth status and Peer/fixture setup corrected; retain raw failures.",
+    "Final backend CLI-help timeout and first isolated repeat timeout are retained; later unchanged isolated case passes. Direct --help probe exits0 and emits both required help strings; no timeout/deadline change.",
+    "Concurrent grouped-Protocol edit briefly blocks GUI collection with Python3.11 nested f-string quoting. Current source is corrected and the live-calibration case passes; preserve that chat's implementation."
+  ],
+  "ownership_review": "Focused coalescer/admission/validation/presentation helpers; native/GUI/service adapters retain their cohesive orchestration. All validated updates write existing GL buffers, no extra GPU allocation/dependency/process, no asset/window replacement. Pre-write validation rejection is nonfatal; GPU/presentation uncertainty remains Unknown and closable. Fenced updates cannot clear cancellation or disturb a newer diagnostic.",
+  "visual_check": "Isolated offscreen DashboardWindow/QSettings; active-grid cards at1175/720 inspected. Scale/offset enabled, inverse/measurements disabled, Close available. Temporary captures/settings removed.",
+  "limits": [
+    "No native Windows/DPI/GPU/optical latency/full-workload/rig acceptance.",
+    "No full GUI suite or exact-final-tree claim across concurrent user tasks.",
+    "Rig checklist retains live tuning, repeated allocation stability, visible latency, invalid/stale/lease/disconnect/closure checks."
+  ]
+}

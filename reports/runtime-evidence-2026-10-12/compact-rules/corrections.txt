@@ -1,0 +1,58 @@
+..F                                                                      [100%]
+=================================== FAILURES ===================================
+______ test_subgroup_rules_persist_and_random_projectors_are_independent _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1054bf400>
+
+    def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
+        from cephvr.gui.projector_layers import layers_for
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        editor = window.protocol.editor
+        editor.timeline.set_screens(("Left", "Right"))
+        editor.set_program(grouped_program(blank_program()))
+        editor.group_editor.repetitions.setText("3")
+        editor.group_editor.mark_changed()
+        assert editor.group_editor.apply()
+        form = editor.subgroup
+        root = Path(__file__).resolve().parents[2] / "demo_assets"
+        form.composer.set_asset_root(str(root))
+        for face in ("Left", "Right"):
+            form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)
+        form.vary.setChecked(True)
+        form.add_variation()
+        row = form.rows[0]
+        row.target.setCurrentIndex(row.target.findText("All projectors"))
+        row.parameter.setCurrentIndex(row.parameter.findData("Speed"))
+        row.values.setText("10,20,30")
+        form.apply()
+        assert not form.notice.text()
+        assert len(form.paths) == 3
+        assert not form.dirty
+        assert form.vary.isChecked() and form.rows[0].values.text() == "10,20,30"
+        editor.select_epochs(((0, 2),))
+        assert len(form.paths) == 3
+        row = form.rows[0]
+        row.method.setCurrentText("Random")
+        row.random_fields["maximum"].setText("1000000")
+        row.random.seed(42)
+        row.random_cache = None
+        form.apply()
+        assert not form.notice.text() and not form.dirty
+        first = editor.program
+>       assert len(first.sequence[0].body) == 3
+E       AssertionError: assert 1 == 3
+E        +  where 1 = len((Epoch(kind='epoch', epoch_id='Epoch_1', batch_label='', batch_id='batch_00739f3ce1dd4437aafd75b746209408', subgroup_d...0', precision='1', seed='1d5f2afe3da2b829f1d3992d498bdd1c', stream='1', offset=0, stride=1)), repetition_settings=()),))
+E        +    where (Epoch(kind='epoch', epoch_id='Epoch_1', batch_label='', batch_id='batch_00739f3ce1dd4437aafd75b746209408', subgroup_d...0', precision='1', seed='1d5f2afe3da2b829f1d3992d498bdd1c', stream='1', offset=0, stride=1)), repetition_settings=()),) = Group(kind='group', group_id='Group_1', repetitions=3, order='as_listed', order_unit='child_blocks', conditions=None, ...', precision='1', seed='1d5f2afe3da2b829f1d3992d498bdd1c', stream='1', offset=0, stride=1)), repetition_settings=()),)).body
+
+tests/gui/test_dashboard.py:12579: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_subgroup_rules_persist_and_random_projectors_are_independent
+1 failed, 2 passed, 392 deselected in 5.89s

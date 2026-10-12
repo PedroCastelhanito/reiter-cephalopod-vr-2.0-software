@@ -1,0 +1,77 @@
+..................F.F..............F.............                        [100%]
+=================================== FAILURES ===================================
+_________ test_trial_overview_selects_ranges_and_sources_across_groups _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x3064900d0>
+app = <PyQt6.QtWidgets.QApplication object at 0x10599edd0>
+
+    def test_trial_overview_selects_ranges_and_sources_across_groups(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.gui.protocol_nodes import edit_epoch
+    
+        editor = window.protocol.editor
+        window.page_buttons[1].click()
+        program, _ = edit_epoch(blank_program(), 0, "duplicate")
+        program, _ = edit_epoch(program, 1, "duplicate")
+        program, _ = make_group(program, (), 1, 2, 2, False)
+        editor.set_program(program)
+        timeline = editor.timeline
+>       assert len(timeline.nodes) == 5
+E       AssertionError: assert 2 == 5
+E        +  where 2 = len((Epoch(kind='epoch', epoch_id='Epoch_1', batch_label='', scene_id='blank', duration=Fixed(kind='fixed', duration=Time(...='Copy_2', batch_label='', scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=())))))
+E        +    where (Epoch(kind='epoch', epoch_id='Epoch_1', batch_label='', scene_id='blank', duration=Fixed(kind='fixed', duration=Time(...='Copy_2', batch_label='', scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=())))) = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x31116e440>.nodes
+
+tests/gui/test_dashboard.py:7356: AssertionError
+___________ test_timeline_overview_colors_and_current_epoch_details ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x16374c820>
+app = <PyQt6.QtWidgets.QApplication object at 0x10599edd0>
+
+    def test_timeline_overview_colors_and_current_epoch_details(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.timeline_details import stimulus_color, stimulus_key
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        program = review_program()
+        editor.set_program(program)
+        timeline = editor.timeline
+        timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+        app.processEvents()
+        assert editor.trial_card.width() == 208
+        overview = [(rect, i) for rect, i, face, _ in timeline.hits if not face]
+        assert overview[0][0].left() == 1
+>       assert overview[-1][0].right() == timeline.width() - 8
+E       assert 965.0 == (980 - 8)
+E        +  where 965.0 = <built-in method right of QRectF object at 0x10591edc0>()
+E        +    where <built-in method right of QRectF object at 0x10591edc0> = PyQt6.QtCore.QRectF(649.0, 5.0, 316.0, 60.0).right
+E        +  and   980 = <built-in method width of ProgramTimeline object at 0x3032970a0>()
+E        +    where <built-in method width of ProgramTimeline object at 0x3032970a0> = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x3032970a0>.width
+
+tests/gui/test_dashboard.py:7528: AssertionError
+____________ test_200_epoch_timeline_reuses_views_and_metadata_noop ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x316fc3a30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x31ccb7e50>
+
+    def test_200_epoch_timeline_reuses_views_and_metadata_noop(window, monkeypatch):
+        from cephvr.gui import protocol_timeline, timeline_views
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.protocol_nodes import edit_epoch_metadata
+    
+        calls = []
+>       expand = timeline_views.expand_program
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'cephvr.gui.timeline_views' has no attribute 'expand_program'
+
+tests/gui/test_dashboard.py:9424: AttributeError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_trial_overview_selects_ranges_and_sources_across_groups
+FAILED tests/gui/test_dashboard.py::test_timeline_overview_colors_and_current_epoch_details
+FAILED tests/gui/test_dashboard.py::test_200_epoch_timeline_reuses_views_and_metadata_noop
+3 failed, 46 passed, 346 deselected in 80.93s (0:01:20)

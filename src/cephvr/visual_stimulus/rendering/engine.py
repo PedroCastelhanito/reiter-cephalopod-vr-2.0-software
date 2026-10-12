@@ -190,6 +190,23 @@ class RendererEngine:
                 )
         return tuple(present(display, prepared))
 
+    def update_display_calibration(
+        self,
+        display: DisplayProfile,
+        prepared: PreparedDisplayCalibration,
+        adjustments: dict[str, tuple[tuple[float, float], ...]],
+    ) -> tuple[OutputActivity, ...]:
+        self._assert_owner()
+        if (
+            self._trial_id is not None
+            or self._display != display
+            or prepared.display != display
+        ):
+            raise RendererStateError(
+                "Live adjustment requires the exact Idle diagnostic owner"
+            )
+        return self._port.update_display_calibration(display, prepared, adjustments)
+
     def close_display_calibration(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration
     ) -> tuple[tuple[OutputActivity, ...], bool]:

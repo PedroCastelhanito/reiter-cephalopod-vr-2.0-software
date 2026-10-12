@@ -1,0 +1,18 @@
+{
+  "test_wheel_does_not_switch_epoch_tabs": "Tabs removed; unified test asserts no QTabBar.",
+  "test_batch_tabs_preserve_drafts_apply_and_phase_lock": "Replaced by unified draft/authority workflow.",
+  "test_target_epoch_filters_and_invalid_index": "Filter controls intentionally removed; timeline selects subgroup.",
+  "test_target_epoch_labels_refresh_and_preserve_other_epochs": "Filter controls removed; persistent subgroup identity covered by unified file test.",
+  "test_epoch_edit_rows_duration_format_and_action_placement": "Old bulk form removed; unified form layout covered at both widths.",
+  "test_epoch_actions_stay_fixed_and_fields_align_across_modes": "Modes removed; one Apply/Discard pair.",
+  "test_batch_edit_parameters_match_generation_and_apply_family_options": "Two forms replaced with the same composer; per-family composer cases retained.",
+  "test_selected_epoch_full_form_and_scope_switching": "Scope dropdown removed; unified dirty selection/history replaces workflow.",
+  "test_batch_edit_mixed_values_isolation_atomic_failure_and_undo": "Replaced by subgroup delta/isolation/atomic/history tests.",
+  "test_batch_media_changes_and_pending_edits_are_isolated": "Replaced by unified per-projector media/draft tests.",
+  "test_timeline_layer_actions_and_inactive_selection_menu": "Context layer submenu removed; composer layer/asset rows retained and tested.",
+  "test_compact_stimulus_inspector_preserves_hidden_settings": "Separate inspector removed; reference controls and parameter fidelity tests retained.",
+  "test_projector_lane_layers_isolate_file_motion_and_removal": "Separate inspector removed; unified per-projector isolation/media/history coverage replaces it.",
+  "test_projector_shared_file_replacement_and_stack_order": "Separate inspector removed; composer shared-source and layer ordering checks retained.",
+  "test_generated_batch_label_survives_reload_and_targets_edits": "Unified save/reload/identity test covers same-label subgroup identity without removed filters.",
+  "test_grouped_editor_restricts_creation_and_retains_generated_batches": "Replaced by unified subgroup restrictions/history/file/identity tests."
+}

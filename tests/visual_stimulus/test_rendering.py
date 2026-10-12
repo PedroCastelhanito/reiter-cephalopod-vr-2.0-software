@@ -70,6 +70,19 @@ def test_reference_bars_share_exact_pixel_spans_and_restore_scissor():
     scale = reference_scale(width, height, x / 2, y / 2, 1.5)
     assert scale.mm_per_pixel_x == scale.mm_per_pixel_y == 0.5
     assert scale.projector_distance_mm == pytest.approx(width * 0.5 * 1.5)
+    calls.clear()
+    draw_reference_bars(context, width, height, x_px=200, y_px=100)
+    assert calls[2][0][2] == 200 and calls[3][0][3] == 100
+    direct = reference_scale(width, height, 80, 60, x_px=200, y_px=100)
+    assert direct.projector_distance_mm is None
+    assert direct.projected_width_mm == pytest.approx(width * 0.4)
+    custom = reference_scale(width, height, 80, 60, 1.5, x_px=200, y_px=100)
+    assert custom.mm_per_pixel_x == pytest.approx(0.4)
+    assert custom.mm_per_pixel_y == pytest.approx(0.6)
+    assert context.scissor == (1, 2, 3, 4)
+    for length in (0, -1, 1.5, width + 1, float("nan"), float("inf")):
+        with pytest.raises(ValueError):
+            reference_lengths(width, height, length, 100)
     for invalid in (0, -1, float("nan"), float("inf")):
         with pytest.raises(ValueError):
             reference_scale(width, height, invalid, y / 2, 1.5)
@@ -79,6 +92,148 @@ def test_reference_bars_share_exact_pixel_spans_and_restore_scissor():
     with pytest.raises(RuntimeError, match="render failure"):
         draw_reference_bars(context, width, height)
     assert context.scissor == (1, 2, 3, 4)
+
+
+def test_output_blackouts_restore_scissor_on_success_and_failure():
+    from cephvr.visual_stimulus.config.models.display_profile import PixelRect
+    from cephvr.visual_stimulus.rendering.output_masks import clear_regions
+
+    context = NS(scissor=(9, 9, 2, 2))
+    calls = []
+
+    def clear(*color, alpha, viewport):
+        calls.append((context.scissor, color, alpha, viewport))
+
+    zone = PixelRect(x=1, y=2, width=3, height=4)
+    clear_regions(context, clear, (zone,))
+    assert calls == [((1, 2, 3, 4), (0, 0, 0), 1, (1, 2, 3, 4))]
+    assert context.scissor == (9, 9, 2, 2)
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("clear failed")
+
+    with pytest.raises(RuntimeError, match="clear failed"):
+        clear_regions(context, fail, (zone,))
+    assert context.scissor == (9, 9, 2, 2)
+
+
+def test_photodiode_pulse_renders_after_blackouts_and_black_frame():
+    from cephvr.visual_stimulus.config.models.display_profile import (
+        PhotodiodePatch,
+        PixelRect,
+    )
+
+    artifact = make_prepared_trial()
+    output = artifact.display.active_outputs[0]
+    zone = PixelRect(x=0, y=0, width=10, height=10)
+    patch = PhotodiodePatch(
+        rect=PixelRect(x=12, y=13, width=8, height=6),
+        background_rect=PixelRect(x=5, y=6, width=30, height=40),
+        high_linear_rgb=(1, 1, 1),
+        low_linear_rgb=(0, 0, 0),
+    )
+    display = artifact.display.model_copy(
+        update={
+            "outputs": (output.model_copy(update={"blackout_zones": (zone,)}),),
+            "photodiode_patch": patch,
+            "photodiode_output_id": output.output_id,
+        }
+    )
+    artifact = artifact.model_copy(update={"display": display})
+    calls = []
+    context = NS(scissor=None, screen=None, disable=lambda *_: None)
+    program = {
+        key: NS(value=None)
+        for key in (
+            "source_tex",
+            "lut_tex",
+            "calibrated",
+            "lut_size",
+            "marker_active",
+            "marker_rect",
+            "marker_rgb",
+        )
+    }
+    frame = NS(
+        context=context,
+        output_fbo=NS(clear=lambda *c, **kw: calls.append((c, kw["viewport"]))),
+        device_fbo=NS(use=lambda: None),
+        output_texture=NS(size=(100, 100), use=lambda *_: None),
+        lut_texture=NS(size=(2, 1), use=lambda *_: None),
+        output_program=program,
+        output_quad_array=NS(render=lambda **_: calls.append("marker/output")),
+    )
+    renderer = ModernGLSceneRenderer()
+    renderer._moderngl = NS(BLEND=1, TRIANGLE_STRIP=5)
+    renderer._apply_output(frame, artifact, output.output_id, True, 0)
+    assert calls == [
+        ((0, 0, 0), (0, 0, 10, 10)),
+        ((0, 0, 0), (5, 6, 30, 40)),
+        "marker/output",
+    ]
+    assert program["marker_rect"].value == (0.12, 0.13, 0.2, 0.19)
+    assert program["marker_rgb"].value == (1, 1, 1)
+    assert context.scissor is None
+    with pytest.raises(ValueError, match="fit inside"):
+        PhotodiodePatch.model_validate(
+            dict(patch.model_dump(), rect=dict(x=0, y=0, width=1, height=1))
+        )
+    with pytest.raises(ValueError, match="exceeds"):
+        type(output).model_validate(
+            dict(
+                output.model_dump(),
+                blackout_zones=(dict(x=99, y=0, width=2, height=2),),
+            )
+        )
+
+
+@pytest.mark.parametrize("matches", [0, 2])
+def test_saved_monitor_requires_exact_unique_active_identity(monkeypatch, matches):
+    from cephvr.platform.windows import display_identity
+    from cephvr.visual_stimulus.rendering.native import ModernGLPort
+    from cephvr.visual_stimulus.rendering.native_display import DisplayUnavailableError
+
+    monkeypatch.setattr(display_identity, "monitor_interface", lambda *_: "saved")
+    glfw = NS(
+        get_monitors=lambda: list(range(matches)),
+        get_win32_adapter=lambda monitor: monitor,
+        get_win32_monitor=lambda monitor: monitor,
+    )
+    with pytest.raises(DisplayUnavailableError, match=f"matched {matches} active"):
+        ModernGLPort._resolve_monitor("SAVED", glfw)
+    glfw.get_monitors = lambda: [17]
+    assert ModernGLPort._resolve_monitor("SAVED", glfw) == 17
+
+
+def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path):
+    from cephvr.visual_stimulus.rendering.native import ModernGLPort
+    from cephvr.visual_stimulus.rendering.native_display import DisplayUnavailableError
+    from cephvr.visual_stimulus.rendering.types import ResourceReleaseReport
+
+    display = make_prepared_trial().display
+    first = display.active_outputs[0]
+    second = first.model_copy(
+        update={"output_id": "second", "device_identity": "missing"}
+    )
+    display = display.model_copy(update={"outputs": (first, second)})
+    resolved, terminated = [], []
+
+    def resolve(identity, glfw):
+        resolved.append(identity)
+        if identity == "missing":
+            raise DisplayUnavailableError("missing saved projector")
+        return object()
+
+    port = ModernGLPort(tmp_path, announce=lambda *_: None, monitor_resolver=resolve)
+    # Any window or GL call would fail: identity preflight must precede creation.
+    port._glfw = NS(terminate=lambda: terminated.append(True))
+    port._moderngl = object()
+    with pytest.raises(DisplayUnavailableError, match="missing saved"):
+        port.initialize_display(display)
+    assert resolved == [first.device_identity, "missing"]
+    assert terminated == [True]
+    assert not port._outputs and not port._window_obligations
+    assert port.release() == ResourceReleaseReport(("visual_stimulus:glfw",))
 
 
 def test_linear_rate_integral_and_keyframe_evaluation() -> None:

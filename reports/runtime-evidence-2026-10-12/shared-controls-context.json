@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-12",
+  "task": "shared-device-controls-audit",
+  "revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Prior dirty working tree retained; no baseline source attribution is inferred from HEAD.",
+  "sha256": {
+    "src/cephvr/gui/tables.py": "160b5e45806616a8f391f43d1b890e33a928e3ba06dc161d77d2ec23a3e778e9",
+    "src/cephvr/gui/cameras.py": "f9dbda8c00a0a51971a825d84ba2e9d4b0ff04f01d1638058cb5855cedb2483f",
+    "src/cephvr/gui/projectors.py": "0e3d30dfe270e0a719d5354bb322a1f99a886c08c72b0b9628fb583307692f4c",
+    "src/cephvr/gui/microcontroller.py": "f727bebfa35e3ed1845e1869674ce7b886ad9c55fc0117de74eadd4f56b3fccf",
+    "src/cephvr/gui/microcontroller_signals.py": "ff3c55822bab31a702a7dfc6f95ba4f6c47ea90528d44d5575bf2607a3698121",
+    "src/cephvr/gui/spikeglx.py": "3b13e8c5fecc6a49397c59d04395f4c0e6965ffd0c33ea4bd786262ecdaa5242",
+    "src/cephvr/gui/device_panel.py": "492bc69093ec9a6d7e2f684a9539d6c22aaeb61689bfac4381007c7ba1f0e3dd",
+    "src/cephvr/gui/batch_variation.py": "90462ce9d7bdafa6211da988eca893e9d90ce9bdf287052c9beea34bb9e985c7",
+    "tests/gui/test_dashboard.py": "26532a4a62fcf63b7b40ad39e8e47fd20ceaf20e2daae70b3dc9d523b8b8da8c"
+  },
+  "decisions": [
+    "G01 revision 143",
+    "G02 revision 37",
+    "ARCH-002",
+    "E03",
+    "E15"
+  ],
+  "changes": [
+    "Camera and Projector inventories use DataTable.add_refresh_action, one accessible icon factory, reserved final header column and single-row selection. Projector Use moves first; Display ID/projector/resolution keep logical identity mappings.",
+    "MCU port discovery uses the same compact Refresh icon beside COM selector; Test connection retains its own action and existing locks/commands.",
+    "MCU input/output and SpikeGLX signal tables hide headers when no visible rows; shared fitting removes header height. Discovery inventory headers remain visible when empty.",
+    "Batch variation controls refit via the existing equal-row-height helper on show after ancestor style inheritance settles; no new widget state/dependency."
+  ],
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"device or projector or microcontroller or spikeglx or review_and_runtime\"",
+      "result": "77 passed, 312 deselected in 51.53s",
+      "raw": "shared-controls-tests-final.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"batch_variations_target_projectors or spikeglx_sources_preserve_maps or device_tabs_sit_above or devices_draft_icons\"",
+      "result": "4 passed, 385 deselected in 3.03s; overlapping final broad selection",
+      "raw": "shared-controls-corrections-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui",
+      "result": "140 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules/zero violations; existing cohesion advisories",
+      "raw": "shared-controls-boundaries-final.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "earlier_attempts": "Initial broad selection reports 76 passes and one Protocol variation-row height failure (remove=38 px versus parameter=36 px), raw shared-controls-tests.txt. Constructor parenting candidate fails the same case with three passes, raw shared-controls-corrections.txt; revert candidate. Local Qt probe confirms rendered min/max/sizeHint drift after style inheritance: parameter (36,36,38,36), remove (38,38,38,38); refitting gives both rendered heights 38. Refit on show resolves the existing assertion without weakening it. Initial format identifies two line wraps, corrected before final tests. One multi-file patch verification fails before mutation and is reapplied in ordered hunks; inspect files rather than assuming partial application.",
+  "cohesion": "Refresh sizing/selection and empty-header geometry live in the existing focused table owner. Large Camera/Projector/MCU modules remain assembly and device-state orchestration; reuse helper replaces existing refresh/scan/column wiring, adding no process/state owner. Existing boundary advisories remain reviewed exceptions.",
+  "visual_inspection": "Temporary local Review fixtures captured for Cameras/MCU narrow and Projectors wide/narrow. Wide populated Projectors inventory shows Use first and Refresh in header. COM icon is adjacent to selector. Narrow views retain existing independently scrolled/stacked columns; do not infer all projector controls fit simultaneously. Temporary captures and probe image removed.",
+  "limits": "Local focused Qt/offscreen validation; no native Windows/DPI, live Review/Runtime restart, device actions, full GUI suite or rig acceptance. Discovery vs connection actions keep their owning semantics."
+}

@@ -1,0 +1,97 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_authenticated_live_calibration_update_transport_and_exact_receipt ____
+
+    @pytest.mark.asyncio
+    async def test_authenticated_live_calibration_update_transport_and_exact_receipt():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        calls = []
+    
+        class Worker:
+            async def command(self, method, request, *, deadline_ns):
+                calls.append((method, request, deadline_ns))
+                return pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_ACCEPTED, command_id=request.command.command_id
+                )
+    
+        receipt = SupervisorReceipt()
+        runtime = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=Worker(),
+            controller=receipt,
+            supervisor=receipt,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+        runtime.state.display = pb.VisualStimulusDisplayView()
+        runtime.state.display.outputs.add(output_id="projector/main")
+        evidence = runtime.state.display.calibration
+        evidence.diagnostic_id = str(uuid4())
+        evidence.configuration_revision = 4
+        evidence.controller_generation = identity.controller.generation
+        evidence.renderer_generation = identity.worker.generation
+        evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        evidence.calibration_view = "frame_grid"
+        token = "live-calibration-transport-test"
+        listener = await serve(
+            runtime,
+            {("controller", identity.controller.generation): token},
+            runtime.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+        registration = BackendRegistration(
+            "visual_stimulus",
+            identity.process.generation,
+            f"127.0.0.1:{listener.port}",
+            token,
+        )
+        port = GrpcBackendPort(
+            registration,
+            Principal("controller", identity.controller.generation, token),
+            max_message_bytes=1_000_000,
+        )
+        wrong_port = GrpcBackendPort(
+            registration,
+            Principal("controller", identity.controller.generation, "wrong-token"),
+            max_message_bytes=1_000_000,
+        )
+        deadline = host_time_ns() + 5_000_000_000
+        request = wire.VisualStimulusDisplayCalibrationUpdateRequest(
+            command_id=str(uuid4()),
+            issuer=identity.controller,
+            target=identity.backend,
+            configuration_revision=4,
+            diagnostic_id=evidence.diagnostic_id,
+            deadline_monotonic_ns=deadline,
+            adjustment_sequence=1,
+        )
+        request.adjustments.add(
+            mapping_id="diagnostic_front",
+            destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
+        )
+        try:
+            with pytest.raises(grpc.aio.AioRpcError) as wrong:
+                await wrong_port.update_display_calibration(request, deadline_ns=deadline)
+>           assert wrong.value.code() == grpc.StatusCode.UNAUTHENTICATED
+E           assert <StatusCode.PERMISSION_DENIED: (7, 'permission denied')> == <StatusCode.UNAUTHENTICATED: (16, 'unauthenticated')>
+E            +  where <StatusCode.PERMISSION_DENIED: (7, 'permission denied')> = code()
+E            +    where code = <AioRpcError of RPC that terminated with:\n	status = StatusCode.PERMISSION_DENIED\n	details = "credential token mismatch"\n	debug_error_string = "PERMISSION_DENIED:credential token mismatch"\n>.code
+E            +      where <AioRpcError of RPC that terminated with:\n	status = StatusCode.PERMISSION_DENIED\n	details = "credential token mismatch"\n	debug_error_string = "PERMISSION_DENIED:credential token mismatch"\n> = <ExceptionInfo <AioRpcError of RPC that terminated with:\n	status = StatusCode.PERMISSION_DENIED\n	details = "credential token mismatch"\n	debug_error_string = "PERMISSION_DENIED:credential token mismatch"\n> tblen=5>.value
+E            +  and   <StatusCode.UNAUTHENTICATED: (16, 'unauthenticated')> = <enum 'StatusCode'>.UNAUTHENTICATED
+E            +    where <enum 'StatusCode'> = grpc.StatusCode
+
+tests/visual_stimulus/test_controller_communication.py:524: AssertionError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt
+1 failed, 4 deselected in 0.62s

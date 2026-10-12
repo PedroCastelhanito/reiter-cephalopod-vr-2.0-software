@@ -1,0 +1,41 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_authenticated_live_calibration_update_transport_and_exact_receipt ____
+
+    @pytest.mark.asyncio
+    async def test_authenticated_live_calibration_update_transport_and_exact_receipt():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        calls = []
+    
+        class Worker:
+            async def command(self, method, request, *, deadline_ns):
+                calls.append((method, request, deadline_ns))
+                return pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_ACCEPTED, command_id=request.command.command_id
+                )
+    
+        receipt = SupervisorReceipt()
+        runtime = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+>           worker=worker_peer,
+                   ^^^^^^^^^^^
+            controller=receipt,
+            supervisor=receipt,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+E       NameError: name 'worker_peer' is not defined
+
+tests/visual_stimulus/test_controller_communication.py:468: NameError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt
+1 failed, 4 deselected in 0.64s

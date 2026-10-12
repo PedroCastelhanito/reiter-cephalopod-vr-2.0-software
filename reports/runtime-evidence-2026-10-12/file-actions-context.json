@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-12",
+  "task": "consistent-file-actions",
+  "revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty tree retained.",
+  "sha256": {
+    "src/cephvr/gui/calibration_files.py": "5da5a0ae758bc16cb370b080ce12d15f8b2205e8f5b7699449062b899cb59991",
+    "src/cephvr/gui/devices.py": "c8a44e20720b490c7f87433f92324f7cc74fefc2cdae7cc676a1560da1c8d13b",
+    "src/cephvr/gui/tracking.py": "61c9087a1103bf1ac3d4d0f4bdd1f7ecc2eda8eea88129c203c84b2c7ecf8666",
+    "tests/gui/test_dashboard.py": "7936a48195e8f4a97429fb0f7245519425771289bcbe079939d4eb6d6441f1cc"
+  },
+  "decisions": [
+    "G01 revision 142",
+    "G02 revision 36",
+    "ARCH-002"
+  ],
+  "changes": "Projectors and Tracking use Load\u2026 / Save as\u2026 captions. All four Devices file-action rows use zero inner margins, shared field_x_gap and equal stretch; Load precedes Save with equal widths/heights. Keep Tracking Pipeline inline layout and shared Review/Runtime composition.",
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"device_tabs_sit_above or projector_configuration_json_restores or review_and_runtime_share_page_elements\"",
+      "result": "6 passed, 383 deselected in 10.25s",
+      "raw": "file-actions-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui/calibration_files.py src/cephvr/gui/devices.py src/cephvr/gui/tracking.py tests/gui/test_dashboard.py",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/calibration_files.py src/cephvr/gui/devices.py src/cephvr/gui/tracking.py tests/gui/test_dashboard.py",
+      "result": "4 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules/zero violations, existing cohesion advisories",
+      "raw": "file-actions-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "coverage": "Existing device-layout test checks captions, order, width/height equality, shared gap and alignment across all four tabs at 1175/720/1175 px. Four Review/Runtime parity cases and projector config round-trip pass.",
+  "limits": "Local Qt/offscreen tests only; no live restart, screenshots, native Windows/DPI, hardware action, full GUI or rig acceptance."
+}

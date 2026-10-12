@@ -1,0 +1,90 @@
+.............................F.......................................... [ 18%]
+........................................................................ [ 36%]
+........................................................................ [ 55%]
+........................................................................ [ 73%]
+........................................................................ [ 92%]
+..............................                                           [100%]
+=================================== FAILURES ===================================
+______ test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x303733c70>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1562/test_full_gui_loaded_drafts_jo0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x17dce1d90>
+
+    def test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling(
+        window: DashboardWindow, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.configuration_files import write_snapshot
+        from cephvr.gui.managed_cameras import ManagedCameras
+        from cephvr.gui.managed_configuration import (
+            ConfigurationPages,
+            ManagedConfiguration,
+        )
+        from cephvr.gui.managed_mcu import ManagedMcu
+    
+        state = pb.Snapshot(controller_generation=str(uuid4()))
+        state.configuration.revision = state.configuration_values.revision = 5
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        base = state.configuration_values.current
+        base.mode = pb.SESSION_MODE_OPEN_LOOP
+        acquisition = base.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        for draft, selected in zip(
+            window.devices.cameras.drafts,
+            (acquisition.behavioral, acquisition.tracking),
+            strict=True,
+        ):
+            selected.device.device_id = draft.serial
+            selected.enabled = False
+        desired = window.snapshots.capture()
+        desired["protocol"]["mode"] = "Open-loop"
+        for camera in desired["experiment"]["cameras"]:
+            camera["enabled"] = False
+            camera["values"] = {
+                "trigger_clock": "Internal clock",
+                "trigger_frequency_hz": "18",
+            }
+        desired["microcontroller"]["port"] = "COM93"
+        desired["microcontroller"]["trial_state"]["pin"] = "D7"
+        desired["tracking"]["distance_mm"] = (
+            ""  # Dormant, uncalibrated Tracking is a valid saved draft.
+        )
+        manager = ManagedConfiguration(
+            ConfigurationPages(
+                window.dashboard,
+                window.protocol,
+                window.recordings,
+                window.devices.cameras,
+                window.devices.projectors,
+                window.tracking,
+                window.devices.microcontroller,
+            )
+        )
+        assert manager.install(state)
+        camera_owner = ManagedCameras(
+            window.devices.cameras,
+            SimpleNamespace(request=lambda *_a, **_kw: False),
+            lambda *_: False,
+        )
+        mcu_owner = ManagedMcu(
+            window.devices.microcontroller,
+            SimpleNamespace(request=lambda *_a, **_kw: False),
+            lambda: state,
+        )
+        camera_owner.install(state)
+        mcu_owner.install(state, True)
+        path = tmp_path / "full.json"
+        write_snapshot(str(path), desired)
+>       assert window.config_files.load_path(str(path))
+E       AssertionError: assert False
+E        +  where False = load_path('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1562/test_full_gui_loaded_drafts_jo0/full.json')
+E        +    where load_path = <cephvr.gui.configuration_files.ConfigurationFiles object at 0x17dcfa170>.load_path
+E        +      where <cephvr.gui.configuration_files.ConfigurationFiles object at 0x17dcfa170> = <cephvr.gui.window.DashboardWindow object at 0x303733c70>.config_files
+E        +    and   '/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1562/test_full_gui_loaded_drafts_jo0/full.json' = str(PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1562/test_full_gui_loaded_drafts_jo0/full.json'))
+
+tests/gui/test_dashboard.py:484: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling
+1 failed, 389 passed in 401.90s (0:06:41)

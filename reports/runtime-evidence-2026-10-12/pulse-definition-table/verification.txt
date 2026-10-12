@@ -1,0 +1,4 @@
+Final affected-source hashes unchanged.
+Table-task links/anchors and decision register pass.
+Complete scan findings: ['reports/runtime.md: missing runtime-evidence-2026-10-12/live-grid-context.json', 'reports/visual_stimulus.md: missing runtime-evidence-2026-10-12/live-grid-context.json']
+git diff --check passes.

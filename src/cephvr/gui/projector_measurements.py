@@ -1,9 +1,16 @@
 """Per-face raw-pixel bar measurements and derived ideal projector scale."""
 
+import math
 from collections.abc import Mapping
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QLabel, QLineEdit, QTableWidgetItem
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QTableWidgetItem,
+    QWidget,
+)
 
 from cephvr.gui.components import Card, label
 from cephvr.gui.device_panel import entry
@@ -19,36 +26,28 @@ class ProjectorMeasurements(Card):
     changed = pyqtSignal()
 
     def __init__(self, drafts: dict[str, dict[str, str]]) -> None:
-        super().__init__("Projected reference bars")
+        super().__init__("Pixel-to-mm calibration")
         self.drafts = drafts
         self.fields: dict[tuple[str, str], QLineEdit] = {}
-        self.spans: dict[str, QLabel] = {}
         self.scales: dict[str, QLabel] = {}
-        self.body.addWidget(
-            label(
-                "Launch calibration and measure the orange horizontal and green vertical bars. "
-                "Enter their lengths in mm. Distance is an ideal throw estimate; subject distance stays separate.",
-                wrap=True,
-            )
-        )
-        self.table = DataTable(len(FACES), 5)
+        self.table = DataTable(len(FACES), 3)
         self.table.setHorizontalHeaderLabels(
             [
                 "Screen",
-                "Bar X / Y (px)",
-                "Measured X (mm)",
-                "Measured Y (mm)",
+                "Measured X / Y (mm)",
                 "X / Y (mm/px)",
             ]
         )
         for row, face in enumerate(FACES):
             self.table.setItem(row, 0, QTableWidgetItem(face))
-            self.spans[face], self.scales[face] = label("—"), label("—")
-            self.table.set_control(row, 1, self.spans[face])
-            self.table.set_control(row, 4, self.scales[face])
-            for axis, col in (("x", 2), ("y", 3)):
+            self.scales[face] = label("—")
+            self.table.set_control(row, 2, self.scales[face])
+            measured = QWidget()
+            measured_row = QHBoxLayout(measured)
+            measured_row.setContentsMargins(0, 0, 0, 0)
+            for axis in ("x", "y"):
                 key = f"reference_{axis}_mm"
-                editor = entry("Measure")
+                editor = entry(axis.upper())
                 editor.setAccessibleName(
                     f"{face} measured reference bar {axis.upper()} (mm)"
                 )
@@ -56,9 +55,10 @@ class ProjectorMeasurements(Card):
                     lambda value, f=face, k=key: self.save(f, k, value)
                 )
                 self.fields[face, key] = editor
-                self.table.set_control(row, col, editor)
+                measured_row.addWidget(editor, 1)
+            self.table.set_control(row, 1, measured)
             # Retain the actual output mode with each measurement in portable files.
-            for axis in ("width", "height"):
+            for axis in ("width", "height", "x", "y"):
                 key = f"reference_{axis}_px"
                 editor = QLineEdit(self)
                 editor.setReadOnly(True)
@@ -85,7 +85,6 @@ class ProjectorMeasurements(Card):
     ) -> None:
         for face in FACES:
             draft = self.drafts[face]
-            self.spans[face].setText("—")
             dimensions = outputs.get(face)
             measured = any(draft.get(f"reference_{a}_mm", "") for a in ("x", "y"))
             if dimensions is not None and not measured:
@@ -97,11 +96,18 @@ class ProjectorMeasurements(Card):
                     editor.setText(text)
                     editor.blockSignals(False)
                     draft[key] = text
+                lengths = reference_lengths(*dimensions)
+                for axis, length in zip(("x", "y"), lengths, strict=True):
+                    key = f"reference_{axis}_px"
+                    if not draft.get(key, ""):
+                        editor = self.fields[face, key]
+                        editor.blockSignals(True)
+                        editor.setText(str(int(length)))
+                        editor.blockSignals(False)
+                        draft[key] = str(int(length))
             try:
                 width = float(draft.get("reference_width_px", ""))
                 height = float(draft.get("reference_height_px", ""))
-                x, y = reference_lengths(width, height)
-                self.spans[face].setText(f"{x:g} / {y:g}")
                 if dimensions is not None and dimensions != (width, height):
                     raise ValueError(
                         "Reference measurements require their original output mode"
@@ -111,12 +117,26 @@ class ProjectorMeasurements(Card):
                     height,
                     float(draft.get("reference_x_mm", "")),
                     float(draft.get("reference_y_mm", "")),
-                    float(draft.get("throw", "")),
+                    x_px=float(draft["reference_x_px"])
+                    if draft.get("reference_x_px")
+                    else None,
+                    y_px=float(draft["reference_y_px"])
+                    if draft.get("reference_y_px")
+                    else None,
                 )
                 self.scales[face].setText(
                     f"{scale.mm_per_pixel_x:.6g} / {scale.mm_per_pixel_y:.6g}"
                 )
-                distance = f"{scale.projector_distance_mm:.17g}"
+                try:
+                    throw = float(draft.get("throw", ""))
+                    estimate = scale.projected_width_mm * throw
+                    if not math.isfinite(estimate) or estimate <= 0:
+                        raise ValueError(
+                            "Projected distance requires a positive throw ratio"
+                        )
+                    distance = f"{estimate:.17g}"
+                except ValueError:
+                    distance = ""
             except ValueError:
                 self.scales[face].setText("—")
                 # Preserve an imported historical distance until measurements are supplied.

@@ -83,12 +83,64 @@ def app() -> QApplication:
 def window(app: QApplication) -> Iterator[DashboardWindow]:
     result = DashboardWindow(sample=True)
     ReviewControls(result)
+    from cephvr.gui.protocol_document import review_program
+
+    result.protocol.editor.set_program(review_program())
     result.show()
     app.processEvents()
     yield result
     result.close()
     result.deleteLater()
     app.processEvents()
+
+
+class ParameterDocument:
+    """Document sink for parameter-widget tests, independent of planner navigation."""
+
+    def __init__(self, window):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_parameters import StimulusParameters
+
+        self.parameters = StimulusParameters()
+        self.parameters.setParent(window)
+        self.parameters.committed.connect(self.accept)
+        window.protocol.session_mode.currentTextChanged.connect(
+            lambda value: self.parameters.set_closed_loop(value == "Closed-loop")
+        )
+        self.parameters.set_closed_loop(
+            window.protocol.session_mode.currentText() == "Closed-loop"
+        )
+        self.set_program(blank_program())
+
+    def accept(self, program):
+        self.program = program
+        self.parameters.program = program
+
+    def set_program(self, program):
+        self.program = program
+        self.parameters.bind(program, (0,), 0 if program.sequence[0].settings else -1)
+
+    def add_stimulus(self, preset):
+        from cephvr.gui.stimulus_presets import add_stimulus
+
+        program = add_stimulus(self.program, (0,), preset, ("Left", "Right"))
+        self.program = program
+        self.parameters.bind(program, (0,), len(program.sequence[0].settings) - 1)
+
+    def remove_stimulus(self):
+        from cephvr.gui.stimulus_presets import remove_stimulus
+
+        self.set_program(
+            remove_stimulus(self.program, (0,), self.parameters.layer_index)
+        )
+
+
+def open_protocol_group(editor, *, generate=False):
+    """Put UI-control tests in the supported group editing scope."""
+    from cephvr.gui.protocol_batches import grouped_program
+
+    editor.set_program(grouped_program(editor.program))
+    editor.enter_group()
 
 
 def test_offline_frontend_cannot_request_commands(app: QApplication) -> None:
@@ -109,6 +161,8 @@ def test_offline_frontend_cannot_request_commands(app: QApplication) -> None:
 def test_protocol_config_round_trip_retains_complete_schedule(
     window: DashboardWindow, tmp_path: Path
 ) -> None:
+    import json
+
     from cephvr.gui.protocol_document import TrialDraft, blank_program
     from cephvr.gui.protocol_snapshot import (
         capture_protocol,
@@ -143,6 +197,18 @@ def test_protocol_config_round_trip_retains_complete_schedule(
     )
     assert page.config_files.load_path(str(path))
     assert capture_protocol(page) == data
+    saved = json.loads(path.read_text())
+    saved["trials"][0]["stimulus_seed_decimal"] = "0"
+    saved["trials"][1]["stimulus_seed_decimal"] = "42"
+    path.write_text(json.dumps(saved), encoding="utf-8")
+    assert page.config_files.load_path(str(path))
+    for index in (0, 1):
+        page.editor.trials.setCurrentRow(index)
+    assert page.config_files.save_path(str(path))
+    assert [
+        trial["stimulus_seed_decimal"]
+        for trial in json.loads(path.read_text())["trials"]
+    ] == ["0", "42"]
     # Existing canonical single-trial documents remain accepted by the toolbar.
     path.write_text(blank_program().model_dump_json(), encoding="utf-8")
     assert page.config_files.load_path(str(path))
@@ -151,7 +217,7 @@ def test_protocol_config_round_trip_retains_complete_schedule(
     assert page.editor.drafts[1].path == str(path)
 
 
-def test_microcontroller_config_load_is_local_and_explicit_apply_is_separate(
+def test_microcontroller_config_load_is_local_and_collects_for_normal_submission(
     window: DashboardWindow, tmp_path: Path
 ) -> None:
     panel = window.devices.microcontroller
@@ -175,9 +241,17 @@ def test_microcontroller_config_load_is_local_and_explicit_apply_is_separate(
     assert panel.config_files.load_path(str(path))
     assert panel.snapshots.capture() == data
     assert requests == []
-    panel.snapshots.apply_button.click()
-    assert len(requests) == 1
-    assert requests[0][:3] == ("COM91", "D8", False)
+    assert "Apply pin settings" not in [
+        b.text() for b in panel.findChildren(QPushButton)
+    ]
+    from cephvr.control.v1 import types_pb2 as pb
+
+    settings = pb.AcquisitionSettings()
+    panel.snapshots.collect(settings)
+    assert settings.pulses.port == "COM91"
+    assert settings.pulses.trial_state_pin == "D8"
+    assert not settings.pulses.trial_state_enabled
+    assert requests == []
 
 
 def test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity(
@@ -211,8 +285,66 @@ def test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity(
     assert actual["host_reference"] == host
     assert panel.inventory_file_sha256 == "current-controller-digest"
     assert requests == []
+    assert [
+        panel.table.horizontalHeaderItem(i).text()
+        for i in range(panel.table.columnCount())
+        if not panel.table.isColumnHidden(i)
+    ] == ["Use", "Signal", "Channel index", ""]
     panel.add_custom()
     assert len(set(panel.row_keys)) == len(panel.row_keys)
+
+
+def test_camera_config_round_trip_is_local_and_requires_matching_stopped_inventory(
+    window: DashboardWindow, tmp_path: Path
+) -> None:
+    from cephvr.gui.configuration_files import write_snapshot
+
+    panel = window.devices.cameras
+    data = panel.snapshots.capture()
+    data["cameras"][0]["values"] = {
+        "trigger_clock": "External controller",
+        "trigger_source": "Line3",
+        "trigger_frequency_hz": "30",
+    }
+    data["cameras"][1]["enabled"] = False
+    path = tmp_path / "cameras.json"
+    write_snapshot(str(path), data)
+    requests = []
+    for signal in (
+        panel.enable_requested,
+        panel.role_requested,
+        panel.settings_requested,
+    ):
+        signal.connect(lambda *args: requests.append(args))
+    panel.managed = True
+    assert panel.config_files.load_path(str(path))
+    assert panel.snapshots.capture() == data
+    assert requests == []
+    panel.table.selectRow(1)
+    tests = []
+    panel.selected_test_requested.connect(tests.append)
+    panel.selected_test_button.click()
+    assert tests == [panel.drafts[1].key]
+    assert not panel.drafts[1].enabled
+    saved = tmp_path / "saved-cameras.json"
+    assert panel.config_files.save_path(str(saved))
+    assert panel.config_files.load_path(str(saved))
+    invalid = panel.snapshots.capture()
+    invalid["cameras"][0]["serial"] = "wrong-camera"
+    with pytest.raises(ValueError, match="serials differ"):
+        panel.snapshots.validate(invalid)
+    assert panel.snapshots.capture() == data
+    panel.drafts[0].capture_running = True
+    panel.refresh_controls()
+    assert not panel.config_files.load_button.isEnabled()
+    assert not panel.snapshots.available()
+    panel.drafts[0].capture_running = False
+    panel.operation_pending = True
+    panel.refresh_controls()
+    assert not panel.snapshots.available()
+    panel.operation_pending = False
+    window.apply_view(review_view(Phase.RUNNING))
+    assert not panel.config_files.save_button.isEnabled()
 
 
 def test_full_gui_config_round_trip_restores_all_sections_without_commands(
@@ -385,6 +517,9 @@ def test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling(
             "trigger_frequency_hz": "18",
         }
     desired["microcontroller"]["port"] = "COM93"
+    desired["microcontroller"]["camera_enabled"] = {
+        key: False for key in desired["microcontroller"]["camera_enabled"]
+    }
     desired["microcontroller"]["trial_state"]["pin"] = "D7"
     desired["tracking"]["distance_mm"] = (
         ""  # Dormant, uncalibrated Tracking is a valid saved draft.
@@ -799,9 +934,7 @@ def test_managed_configuration_creates_first_run_backends_and_installs_partial_t
     assert manager.install(state)
     assert manager.revision == 1
     assert managed.tracking.source_serial == "SERIAL-1"
-    assert managed.protocol.editor.parameters.closed_loop
-    assert managed.protocol.editor.create_batch.composer.closed_loop
-    assert managed.protocol.editor.batch_edit.selection_form.composer.closed_loop
+    assert managed.protocol.editor.subgroup.composer.closed_loop
     managed.tracking.forms.preprocessing.scale.setValue(95)
     assert manager.dirty and manager.tracking_dirty
     manager.dirty = False
@@ -1432,7 +1565,10 @@ def test_devices_draft_icons_local_edits_and_command_gates(
         if panel is devices.spikeglx:
             assert not panel.action_buttons[0].isEnabled()
             continue
-        panel.action_buttons[0].click()
+        if panel is devices.projectors:
+            panel.refresh_button.click()
+        else:
+            panel.scan_button.click()
         assert "no hardware command sent" in panel.console.toPlainText()
     devices.tabs.setCurrentIndex(0)
     assert camera.fields["trigger_frequency_hz"].text() == "1234"
@@ -1445,6 +1581,10 @@ def test_devices_draft_icons_local_edits_and_command_gates(
         for panel in devices.panels[1:]:
             before = panel.console.toPlainText()
             assert not any(control.isEnabled() for control in panel.action_buttons)
+            if panel is devices.projectors:
+                assert not panel.refresh_button.isEnabled()
+            elif panel is devices.microcontroller:
+                assert not panel.scan_button.isEnabled()
             panel.request("Test connection")
             assert panel.console.toPlainText() == before
 
@@ -2108,6 +2248,8 @@ def test_all_pages_share_fitted_hud_and_expanding_log(
 def test_device_tabs_sit_above_controls_without_moving_hud(
     window: DashboardWindow, app: QApplication
 ) -> None:
+    assert window.tracking.load_button.text() == "Load…"
+    assert window.tracking.save_button.text() == "Save as…"
     window.resize(1175, 940)
     app.processEvents()
     hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
@@ -2138,6 +2280,48 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
                 )
                 assert abs(bar.mapTo(window, QPoint()).y() - border_top) <= 1
             card = left.layout().itemAt(1).widget()
+            assert card is window.devices.config_cards[index]
+            assert card.caption.text() == "Configuration file"
+            files = panel.calibration_files if index == 2 else panel.config_files
+            assert card.isAncestorOf(files.load_button)
+            assert card.isAncestorOf(files.save_button)
+            assert files.load_button.text() == "Load…"
+            assert files.save_button.text() == "Save as…"
+            assert abs(files.load_button.width() - files.save_button.width()) <= 1
+            assert files.load_button.height() == files.save_button.height()
+            load_pos = files.load_button.mapTo(card, QPoint())
+            save_pos = files.save_button.mapTo(card, QPoint())
+            assert load_pos.y() == save_pos.y()
+            assert save_pos.x() - load_pos.x() - files.load_button.width() == (
+                SIZES.field_x_gap
+            )
+            if index in (0, 2):
+                if index == 2:
+                    measurements = panel.measurements
+                    assert measurements.caption.text() == "Pixel-to-mm calibration"
+                    widths = [measurements.table.columnWidth(i) for i in range(3)]
+                    assert max(widths) - min(widths) <= 1
+                header = panel.table.horizontalHeader()
+                refresh = panel.refresh_button
+                assert refresh.parentWidget() is header.viewport()
+                assert refresh.text() == "" and not refresh.icon().isNull()
+                assert refresh.size() == QSize(26, 26)
+                assert refresh.iconSize() == QSize(16, 16)
+                assert header.viewport().rect().contains(refresh.geometry())
+                assert panel.table.horizontalHeaderItem(0).text() == "Use"
+            if index == 1:
+                assert panel.scan_button.parentWidget() is panel.port.parentWidget()
+                assert panel.scan_button.size() == QSize(26, 26)
+            if index == 1:
+                assert panel.input_table.columnWidth(
+                    1
+                ) == panel.output_table.columnWidth(1)
+                for selector in panel.signals.selectors.values():
+                    if selector.isVisible():
+                        assert selector.width() >= selector.sizeHint().width()
+                for control in panel.signals.remove_buttons.values():
+                    if control.isVisible():
+                        assert control.width() >= control.sizeHint().width()
             assert card.y() >= window.devices.navigation.height() + SIZES.card_gap
             assert (
                 window.devices.panels[index]
@@ -2162,7 +2346,7 @@ def test_camera_batch_check_preserves_selection_and_connections(
     cameras = window.devices.cameras
     cameras.enable_controls[1].setChecked(False)
     cameras.table.selectRow(1)
-    cameras.test_button.click()
+    cameras.test_enabled()
     log = cameras.console.toPlainText()
     assert "requested for Behavior cam (REVIEW-001)" in log
     assert "requested for Tracking cam" not in log
@@ -2177,13 +2361,14 @@ def test_camera_batch_check_preserves_selection_and_connections(
     assert not cameras.selected.capture_running
     assert "Disconnect; no hardware command sent" in cameras.console.toPlainText()
     cameras.enable_controls[0].setChecked(False)
-    assert not cameras.test_button.isEnabled()
+    assert cameras.selected_test_button.isEnabled()
+    assert "Test enabled" not in [b.text() for b in cameras.findChildren(QPushButton)]
     cameras.enable_controls[0].setChecked(True)
     window.apply_view(review_view(Phase.RUNNING))
     before = cameras.console.toPlainText()
     cameras.test_enabled()
     assert cameras.console.toPlainText() == before
-    assert not cameras.test_button.isEnabled()
+    assert not cameras.selected_test_button.isEnabled()
 
 
 def test_pfs_trigger_hint_and_per_camera_drafts(
@@ -2379,7 +2564,7 @@ def test_projector_refresh_preserves_assignment(
     assert not panel.enable_controls[key].isEnabled()
     panel.discover_displays()  # Runtime startup inventories while edits are locked.
     assert panel.keys and not panel.enable_controls[key].isEnabled()
-    assert "×" in panel.table.item(0, 2).text()
+    assert "×" in panel.table.item(0, 3).text()
     assert panel.diagram.outputs
 
 
@@ -2563,10 +2748,10 @@ def test_gui_display_number_is_local_and_shared_with_layout(
     monkeypatch.setattr(projectors.QGuiApplication, "primaryScreen", lambda: None)
     panel = window.devices.projectors
     panel.request("Refresh displays")
-    assert panel.table.item(0, 0).text() == "1"
+    assert panel.table.item(0, 1).text() == "1"
     assert panel.diagram.outputs[0][0] == "1"
     assert "numbers are independent" in panel.console.toPlainText()
-    assert panel.table.horizontalHeaderItem(0).text() == "Display ID"
+    assert panel.table.horizontalHeaderItem(1).text() == "Display ID"
 
 
 def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) -> None:
@@ -2594,6 +2779,113 @@ def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) 
     assert panel.console.toPlainText() == before
 
 
+@pytest.mark.parametrize(
+    "direction,key,pin",
+    [
+        ("input", "projector-flip", "D2"),
+        ("output", "trial-state", "D8"),
+    ],
+)
+def test_microcontroller_supported_signals_remove_add_and_restore_pins(
+    window: DashboardWindow, direction: str, key: str, pin: str
+) -> None:
+    panel = window.devices.microcontroller
+    editor = panel.flip_pin if direction == "input" else panel.trial_pin
+    table = panel.input_table if direction == "input" else panel.output_table
+    add = panel.signals.add_input if direction == "input" else panel.signals.add_output
+    editor.setText(pin)
+    panel.enable_controls[key].setChecked(True)
+    assert not add.isEnabled()
+    if direction == "input":
+        assert not table.horizontalHeader().isHidden()
+    panel.signals.remove_buttons[key].click()
+    assert table.isRowHidden(0)
+    if direction == "input":
+        assert table.horizontalHeader().isHidden()
+        assert table.height() == 2 * table.frameWidth()
+    assert not panel.enable_controls[key].isChecked()
+    assert editor.text() == pin
+    removed = panel.snapshots.capture()
+    add.click()
+    assert not table.isRowHidden(0)
+    if direction == "input":
+        assert not table.horizontalHeader().isHidden()
+    assert panel.enable_controls[key].isChecked()
+    assert editor.text() == pin
+    panel.snapshots.restore(panel.snapshots.validate(removed))
+    assert table.isRowHidden(0)
+    if direction == "input":
+        assert table.horizontalHeader().isHidden()
+    assert editor.text() == pin
+    window.apply_view(review_view(Phase.CONFIGURATION, observer=True))
+    panel.signals.add(direction)
+    assert not panel.enable_controls[key].isChecked()
+    assert not add.isEnabled()
+
+
+def test_microcontroller_signal_dropdown_moves_between_supported_outputs(window):
+    from PyQt6.QtCore import QCoreApplication, QEvent
+
+    panel = window.devices.microcontroller
+    panel.signals.remove("camera-1")
+    assert not window.devices.cameras.drafts[0].enabled
+    selector = panel.signals.selectors["trial-state"]
+    assert {selector.itemText(i) for i in range(selector.count())} == {
+        "Trial state",
+        "Behavior cam",
+        "Tracking cam",
+    }
+    selector.setCurrentIndex(selector.findData("camera-1"))
+    assert not panel.enable_controls["trial-state"].isChecked()
+    assert panel.enable_controls["camera-1"].isChecked()
+    assert window.devices.cameras.drafts[0].enabled
+    assert panel.output_table.isRowHidden(0)
+    assert not panel.output_table.isRowHidden(1)
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    selector = panel.signals.selectors["camera-1"]
+    assert selector.parentWidget() is panel.output_table.cellWidget(1, 1)
+    assert selector.currentData() == "camera-1"
+    panel.review_tests.add("camera-1")
+    panel.refresh_tests()
+    panel.signals.remove("camera-1")
+    assert panel.enable_controls["camera-1"].isChecked()
+    assert not panel.signals.remove_buttons["camera-1"].isEnabled()
+
+
+def test_microcontroller_file_restores_camera_output_rows_without_commands(
+    window, tmp_path
+):
+    from cephvr.gui.configuration_files import write_snapshot
+
+    panel = window.devices.microcontroller
+    cameras = window.devices.cameras
+    panel.signals.remove("camera-1")
+    data = panel.snapshots.capture()
+    assert not data["camera_enabled"]["camera-1"]
+    path = tmp_path / "signals.json"
+    write_snapshot(str(path), data)
+    panel.signals.add("output")
+    assert cameras.drafts[0].enabled
+    requests = []
+    cameras.managed = panel.managed = True
+    cameras.enable_requested.connect(lambda *args: requests.append(args))
+    panel.save_requested.connect(lambda *args: requests.append(args))
+    assert panel.config_files.load_path(str(path))
+    assert not cameras.drafts[0].enabled
+    assert panel.output_table.isRowHidden(1)
+    assert requests == []
+    assert panel.snapshots.capture() == data
+    older = dict(data, version=1)
+    older.pop("camera_enabled")
+    panel.snapshots.restore(panel.snapshots.validate(older))
+    assert not cameras.drafts[0].enabled
+    assert requests == []
+    full = window.snapshots.capture()
+    full["microcontroller"]["camera_enabled"]["camera-1"] = True
+    with pytest.raises(ValueError, match="participation differs"):
+        window.snapshots.validate(full)
+
+
 def test_local_review_microcontroller_does_not_open_serial(window, monkeypatch):
     from unittest.mock import Mock
 
@@ -2612,7 +2904,7 @@ def test_local_review_microcontroller_does_not_open_serial(window, monkeypatch):
     connections, tests = [], []
     panel.connection_requested.connect(lambda: connections.append(True))
     panel.pin_test_requested.connect(lambda key, start: tests.append((key, start)))
-    panel.action_buttons[1].click()
+    panel.test_connection_button.click()
     panel.test_buttons["trial-state"].click()
     assert connections == tests == []
     physical_port.assert_not_called()
@@ -2671,7 +2963,7 @@ def test_managed_microcontroller_emits_controller_intents(
     panel.pin_editors["camera-2"].setText("D11")
     assert saves == []  # Controller snapshots and unfinished drafts stay silent.
     panel.pin_editors["camera-2"].editingFinished.emit()
-    panel.action_buttons[1].click()
+    panel.test_connection_button.click()
     panel.test_buttons["trial-state"].click()
     panel.set_diagnostic("trial-state", True, 1)
     panel.test_buttons["trial-state"].click()
@@ -3550,7 +3842,7 @@ def test_managed_spikeglx_inventory_installs_read_only_host_settings(
     assert panel.address.isReadOnly()
     assert panel.command_port.text() == "4142"
     assert panel.command_port.isReadOnly()
-    assert "synchronization_config.toml" in panel.host_settings_note.text()
+    assert "synchronization_config.toml" in panel.pairing.toolTip()
     previous_digest = panel.inventory_file_sha256
     current.state.configuration.revision = 4
     operations.install_inventory(9, generation, response.SerializeToString())
@@ -5039,20 +5331,20 @@ def test_projectors_number_secondary_screens_by_position(
     panel.request("Refresh displays")
     assert panel.table.rowCount() == 2
     assert panel.keys == ["left|||", "right|||"]
-    assert [panel.table.item(row, 0).text() for row in range(2)] == ["1", "2"]
+    assert [panel.table.item(row, 1).text() for row in range(2)] == ["1", "2"]
     assert [index for index, _ in panel.diagram.outputs] == ["1", "2"]
     panel.projectors[panel.keys[0]].setCurrentText("Front")
     monkeypatch.setattr(
         projectors.QGuiApplication, "screens", lambda: [left, right, main]
     )
     panel.request("Refresh displays")
-    assert panel.table.item(0, 0).text() == "1"
+    assert panel.table.item(0, 1).text() == "1"
     assert panel.projectors[panel.keys[0]].currentText() == "Front"
     left.x, right.x = -1000, -3840
     panel.request("Refresh displays")
     assert panel.keys == ["right|||", "left|||"]
     assert panel.projectors["left|||"].currentText() == "Front"
-    assert panel.table.item(1, 0).text() == "2"
+    assert panel.table.item(1, 1).text() == "2"
     monkeypatch.setattr(projectors.QGuiApplication, "screens", lambda: [main])
     panel.request("Refresh displays")
     assert panel.table.rowCount() == 0
@@ -5156,6 +5448,11 @@ def test_calibration_and_screen_dimensions_retain_separate_drafts(
 def test_spikeglx_sources_preserve_maps_and_follow_enablement(window: DashboardWindow):
     devices = window.devices
     panel = devices.spikeglx
+    panel.set_sources((), frozenset())
+    assert panel.table.horizontalHeader().isHidden()
+    assert panel.table.height() == 2 * panel.table.frameWidth()
+    devices.sync_inputs()
+    assert not panel.table.horizontalHeader().isHidden()
     camera = devices.cameras.drafts[0]
     panel.rows[camera.key][3].setText("3")
     camera.enabled = False
@@ -5346,29 +5643,6 @@ def test_wheel_never_changes_input_values(
             else editor.value() == 5
         )
         assert panel.config_scroll.verticalScrollBar().value() > 0
-
-
-def test_wheel_does_not_switch_epoch_tabs(
-    window: DashboardWindow, app: QApplication
-) -> None:
-    from PyQt6.QtGui import QWheelEvent
-
-    window.page_buttons[1].click()
-    tabs = window.protocol.editor.modes
-    tabs.setCurrentIndex(0)
-    event = QWheelEvent(
-        QPoint(10, 10).toPointF(),
-        QPoint(10, 10).toPointF(),
-        QPoint(),
-        QPoint(0, -120),
-        Qt.MouseButton.NoButton,
-        Qt.KeyboardModifier.NoModifier,
-        Qt.ScrollPhase.NoScrollPhase,
-        False,
-    )
-    QApplication.sendEvent(tabs, event)
-    app.processEvents()
-    assert tabs.currentIndex() == 0
 
 
 def test_epoch_clock_duration_retains_fractional_precision() -> None:
@@ -5632,15 +5906,12 @@ def test_managed_configuration_preserves_incomplete_draft_on_new_revision(
         window.dashboard.subject_id, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier
     )
     QTest.keyClicks(window.dashboard.subject_id, "local draft")
-    window.protocol.seed_editor.setFocus()
-    QTest.keyClicks(window.protocol.seed_editor, "0")
     assert manager.dirty
     original_program = window.protocol.editor.program.model_dump_json()
 
     assert not manager.install(snapshot(2))
     assert manager.stale
     assert window.dashboard.subject_id.text() == "local draft"
-    assert window.protocol.seed_editor.text() == "0"
     assert window.protocol.editor.program.model_dump_json() == original_program
 
 
@@ -5712,6 +5983,24 @@ def test_managed_configuration_keeps_post_submit_edits_on_ack(
     assert "newer local edits" in manager.last_error
     assert editor.text() == "changed after submission"
 
+    from PyQt6.QtGui import QAction
+
+    from cephvr.gui.main import ManagedGui
+
+    reload_action = QAction(window)
+    gui = SimpleNamespace(
+        state=acknowledged,
+        configuration=manager,
+        reload_configuration=reload_action,
+        window=window,
+        _connection_epoch=1,
+        install_snapshot=lambda *_args: None,
+    )
+    ManagedGui.configuration_accepted(gui, 5, submitted_edit_serial)
+    assert manager.stale and manager.dirty
+    assert "newer local edits" in manager.last_error
+    assert reload_action.isEnabled()
+
 
 def test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack(
     window: DashboardWindow,
@@ -5738,11 +6027,12 @@ def test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack(
         )
     )
     assert manager.install(initial)
+    window.protocol.editor.enter_group()
     submitted_serial = manager.edit_serial
-    gap = window.protocol.gap_editor
-    gap.setFocus()
-    QTest.keyClick(gap, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
-    QTest.keyClicks(gap, "not a duration")
+    duration = window.protocol.editor.subgroup.composer.duration
+    duration.setFocus()
+    QTest.keyClick(duration, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    QTest.keyClicks(duration, "not a duration")
     assert manager.dirty and manager.edit_serial > submitted_serial
 
     acknowledged = control_pb.Snapshot(controller_generation=generation)
@@ -5755,14 +6045,14 @@ def test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack(
         acknowledged, submitted_edit_serial=submitted_serial
     )
     assert manager.dirty and manager.stale
-    assert gap.text() == "not a duration"
+    assert duration.text() == "not a duration"
 
     newer = control_pb.Snapshot(controller_generation=generation)
     newer.configuration.revision = 6
     newer.configuration_values.revision = 6
     newer.configuration_values.current.subject = "new controller value"
     assert not manager.install(newer)
-    assert gap.text() == "not a duration"
+    assert duration.text() == "not a duration"
 
 
 def test_protocol_participation_and_asset_pages(window: DashboardWindow) -> None:
@@ -5850,9 +6140,13 @@ def test_protocol_program_validation_and_atomic_save(
     path = tmp_path / "program.json"
     panel.save_program(str(path))
     source["sequence"][0]["batch_label"] = ""
+    source["sequence"][0]["batch_id"] = None
+    source["sequence"][0]["subgroup_draft"] = None
+    source["sequence"][0]["repetition_settings"] = []
+    source["sequence"][0]["repetition_rules"] = []
     assert json.loads(path.read_text()) == source
-    panel.editor.duration.setText("1")
-    panel.editor.edit_duration()
+    # Legacy root epochs are preserved; authoring is confined to groups.
+    assert panel.editor.subgroup.isHidden()
     assert not panel.message.isVisible()
     panel.save_program(str(path))
     assert json.loads(path.read_text()) == source
@@ -5879,26 +6173,36 @@ def test_protocol_timeline_edits_preserve_trials_and_imported_groups(
     window.page_buttons[1].click()
     panel = window.protocol
     editor = panel.editor
+    open_protocol_group(editor)
     original = editor.program
     parse_program_json(original.model_dump_json(), max_bytes=1_048_576)
-    editor.timeline.setFocus()
-    QTest.keyClick(editor.timeline, Qt.Key.Key_Right)
-    assert editor.name.text() == "Flow"
-    editor.duration.setText("21.000000001")
-    editor.edit_duration()
+    editor.hierarchy.contents.setFocus()
+    QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Right)
+    assert editor.path == (0, 1)
+    editor.subgroup.composer.duration.setText("00:00:21.000000001")
+    editor.subgroup.apply()
     edited = editor.program
-    assert edited.sequence[1].duration.duration.seconds == "21.000000001"
-    assert edited.sequence[1].settings == original.sequence[1].settings
-    editor.duration.setText("not a duration")
-    editor.edit_duration()
+    assert edited.sequence[0].body[1].duration.duration.seconds == "21.000000001"
+    assert edited.sequence[0].body[1].settings == original.sequence[0].body[1].settings
+    editor.subgroup.composer.duration.setText("not a duration")
+    editor.subgroup.apply()
     assert editor.program == edited
-    assert editor.feedback.isHidden()
-    assert editor.feedback.dialog is not None
-    editor.feedback.dialog.accept()
-    editor.duration.setText("21.000000001")
+    assert editor.subgroup.notice.isHidden()
+    assert editor.subgroup.notice.dialog is not None
+    editor.subgroup.notice.dialog.accept()
+    editor.subgroup.discard()
     editor.add_button.click()
     assert editor.index == 1
-    editor.trials.setCurrentRow(0)
+    assert not any(
+        control.text() in {"↑", "↓"}
+        for control in editor.trial_card.findChildren(QPushButton)
+    )
+    app.processEvents()
+    row_rect = editor.trials.visualItemRect(editor.trials.item(0))
+    QTest.mouseClick(
+        editor.trials.viewport(), Qt.MouseButton.LeftButton, pos=row_rect.center()
+    )
+    assert editor.index == 0
     assert editor.program == edited
     group = Group(
         kind="group",
@@ -5907,11 +6211,11 @@ def test_protocol_timeline_edits_preserve_trials_and_imported_groups(
         order="shuffle_each_repetition",
         order_unit="child_blocks",
         conditions=None,
-        body=edited.sequence,
+        body=edited.sequence[0].body,
     )
     grouped = edited.model_copy(update={"sequence": (group,)})
     editor.set_program(grouped)
-    assert editor.duration.isReadOnly()
+    assert editor.path == (0, 0) and not editor.subgroup.isHidden()
     path = tmp_path / "group.json"
     panel.save_program(str(path))
     assert parse_program_json(path.read_text(), max_bytes=1_048_576) == grouped
@@ -5937,16 +6241,29 @@ def test_protocol_cards_reflow_and_keep_properties_reachable(
     assert not panel.findChildren(StatusColumn)
     assert not panel.findChildren(QPlainTextEdit)
     assert not panel.findChildren(QTableWidget)
+    open_protocol_group(panel.editor)
     for width in (1175, 720, 1175):
         window.resize(width, 883)
         for _ in range(3):
             app.processEvents()
         editor = panel.editor
+        for action in (
+            editor.add_group_button,
+            editor.remove_group_button,
+            editor.output_preview_button,
+        ):
+            assert action.width() >= action.minimumSizeHint().width()
+            assert action.width() <= action.sizeHint().width()
         assert editor.settings_card.width() == editor.width()
         assert editor.trial_card.y() == editor.timeline_card.y()
         assert editor.trial_card.geometry().right() < editor.timeline_card.x()
         assert editor.timeline_card.geometry().right() == editor.width() - 1
         assert editor.timeline_card.height() == editor.trial_card.height()
+        assert not hasattr(panel, "selected_trial_section")
+        assert not any(
+            caption.text() in {"Selected trial", "Random seed", "Gap after trial (s)"}
+            for caption in editor.trial_card.findChildren(QLabel)
+        )
         assert editor.sequence_summary.alignment() == Qt.AlignmentFlag.AlignCenter
         assert editor.settings_card.y() > editor.timeline_card.geometry().bottom()
         viewport = panel.config_scroll.viewport()
@@ -5956,11 +6273,10 @@ def test_protocol_cards_reflow_and_keep_properties_reachable(
         if width == 1175:
             assert panel.assets.y() == panel.program_card.y()
             assert panel.program_card.x() < panel.assets.x()
-        panel.editor.rename_epoch()
         app.processEvents()
-        panel.config_scroll.ensureWidgetVisible(panel.editor.duration)
+        panel.config_scroll.ensureWidgetVisible(panel.editor.subgroup.composer.duration)
         app.processEvents()
-        point = panel.editor.duration.mapTo(viewport, QPoint())
+        point = panel.editor.subgroup.composer.duration.mapTo(viewport, QPoint())
         assert 0 <= point.x() < viewport.width()
         assert 0 <= point.y() < viewport.height()
 
@@ -5974,13 +6290,14 @@ def test_protocol_cards_reflow_and_keep_properties_reachable(
     height = editor.timeline_card.height()
     position = editor.settings_card.y()
     assert not editor.timeline_card.findChildren(QScrollArea)
-    assert editor.timeline.height() >= 120 + sum(editor.timeline.lane_heights())
+    assert editor.timeline.height() == 86
+    assert not editor.timeline.show_details
     for index in range(len(editor.timeline.nodes)):
         editor.timeline.choose(index, Qt.KeyboardModifier.NoModifier)
         app.processEvents()
         assert editor.timeline_card.height() == height
         assert editor.settings_card.y() == position
-        assert editor.timeline.height() >= 120 + sum(editor.timeline.lane_heights())
+        assert editor.timeline.height() == 86
     assert editor.program == original
 
 
@@ -6038,8 +6355,7 @@ def test_stimulus_parameter_forms_round_trip_every_family(
     from cephvr.gui.protocol_document import blank_program
     from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 
-    panel = window.protocol
-    editor = panel.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus(preset)
     program = editor.program
@@ -6047,7 +6363,7 @@ def test_stimulus_parameter_forms_round_trip_every_family(
     assert editor.parameters.apply()
     assert editor.program == program
     path = tmp_path / "program.json"
-    panel.save_program(str(path))
+    path.write_text(program.model_dump_json())
     assert parse_program_json(path.read_text(), max_bytes=1_048_576) == program
     if preset in ("Image", "Video", "3D arena", "Looming image", "Image tile"):
         assert editor.parameters.asset_forms
@@ -6060,26 +6376,30 @@ def test_stimulus_parameter_edit_invalid_guard_and_media_root(
 ) -> None:
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
-    editor.select_node(1)
+    editor = ParameterDocument(window)
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.protocol_document import review_program
+
+    data = review_program().model_dump(mode="json")
+    data["sequence"] = [data["sequence"][1]]
+    data["sequence"][0]["duration"]["duration"]["seconds"] = "60"
+    editor.set_program(validate(data))
     parameters = editor.parameters
     value = parameters.fades.fade_in
     value.setText("0.4")
     parameters.fades.mark_changed()
     parameters.mark_changed()
     assert parameters.apply()
-    assert editor.program.sequence[1].settings[0].opacity.kind == "keyframes"
+    assert editor.program.sequence[0].settings[0].opacity.kind == "keyframes"
     value.setText("-1")
     parameters.mark_changed()
     before = editor.program
-    editor.select_node(2)
-    assert editor.node_index == 1
+    assert not parameters.apply()
     assert editor.program == before
     assert parameters.dirty
     value.setText("0.9")
     parameters.fades.mark_changed()
-    editor.select_node(2)
-    assert editor.node_index == 2
+    assert parameters.apply()
     editor.set_program(blank_program())
     editor.add_stimulus("Video")
     identity = editor.program.sequence[0].settings[0].asset_id
@@ -6099,7 +6419,7 @@ def test_stimulus_parameter_edit_invalid_guard_and_media_root(
 def test_stimulus_animation_variants_reset_and_remove(window: DashboardWindow) -> None:
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Image")
     parameters = editor.parameters
@@ -6129,7 +6449,7 @@ def test_prepared_texture_bundle_and_epoch_motion(
     from cephvr.gui.epoch_motion import EpochMotion
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.parameters.asset_root = str(tmp_path)
     editor.add_stimulus("Texture")
@@ -6196,7 +6516,7 @@ def test_prepared_file_change_is_epoch_local(
 ) -> None:
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Image")
     first = editor.program.sequence[0]
@@ -6222,18 +6542,21 @@ def test_protocol_epoch_structure_actions(window: DashboardWindow) -> None:
     from cephvr.gui.protocol_document import blank_program
 
     editor = window.protocol.editor
-    editor.set_program(blank_program())
-    editor.add_epoch_button.menu().actions()[0].trigger()
-    assert len(editor.program.sequence) == 2
+    from cephvr.gui.protocol_batches import grouped_program
+
+    editor.set_program(grouped_program(blank_program()))
+    editor.enter_group()
+    editor.add_epoch_button.click()
+    assert len(editor.program.sequence[0].body) == 2
     assert editor.node_index == 1
-    added = editor.program.sequence[1].epoch_id
+    added = editor.program.sequence[0].body[1].epoch_id
     editor.edit_epoch("earlier")
-    assert editor.program.sequence[0].epoch_id == added
+    assert editor.program.sequence[0].body[0].epoch_id == added
     editor.edit_epoch("duplicate")
-    assert len(editor.program.sequence) == 3
-    assert len({node.epoch_id for node in editor.program.sequence}) == 3
+    assert len(editor.program.sequence[0].body) == 3
+    assert len({node.epoch_id for node in editor.program.sequence[0].body}) == 3
     editor.edit_epoch("remove")
-    assert len(editor.program.sequence) == 2
+    assert len(editor.program.sequence[0].body) == 2
     editor.edit_epoch("remove")
     before = editor.program
     editor.edit_epoch("remove")
@@ -6247,23 +6570,27 @@ def test_add_prepared_file_picker_does_not_create_placeholder_on_cancel(
 
     editor = window.protocol.editor
     editor.set_program(blank_program())
-    editor.parameters.asset_root = str(tmp_path)
+    open_protocol_group(editor)
+    composer = editor.subgroup.composer
+    editor.timeline.set_screens(("Left",))
+    composer.set_asset_root(str(tmp_path))
     before = editor.program
-    editor.choose_stimulus("Image")
-    assert editor.source_dialog is not None
-    editor.source_dialog.reject()
+    composer.choose("Image", "Left")
+    assert composer.picker.dialog is not None
+    composer.picker.dialog.reject()
     assert editor.program == before
     path = tmp_path / "image.png"
     path.write_bytes(b"authoring-only-file-fixture")
-    editor.add_file("Image", str(path))
-    assert len(editor.program.sequence[0].settings) == 1
+    composer.add_file("Image", str(path), "Left")
+    editor.subgroup.apply()
+    assert len(editor.program.sequence[0].body[0].settings) == 1
     assert editor.program.assets[0].logical_path == "image.png"
     before = editor.program
-    editor.add_file("Video", str(path))
+    composer.add_file("Video", str(path), "Left")
     assert editor.program == before
-    editor.choose_stimulus("Image")
+    composer.choose("Image", "Left")
     window.apply_view(review_view(Phase.RUNNING))
-    assert editor.source_dialog is None
+    assert composer.picker.dialog is None
 
 
 def test_file_first_epoch_insertion_and_history(
@@ -6272,27 +6599,38 @@ def test_file_first_epoch_insertion_and_history(
     from cephvr.gui.protocol_document import blank_program
 
     editor = window.protocol.editor
-    editor.set_program(blank_program())
-    editor.parameters.asset_root = str(tmp_path)
+    from cephvr.gui.protocol_batches import grouped_program
+
+    editor.set_program(grouped_program(blank_program()))
+    editor.enter_group()
+    composer = editor.subgroup.composer
+    editor.timeline.set_screens(("Left",))
+    composer.set_asset_root(str(tmp_path))
     original = editor.program
-    editor.choose_stimulus("Texture", new_epoch=True)
-    assert editor.source_dialog is not None
-    editor.source_dialog.reject()
+    composer.choose("Texture", "Left")
+    assert composer.picker.dialog is not None
+    composer.picker.dialog.reject()
     assert editor.program == original
     image = tmp_path / "tile.png"
     image.write_bytes(b"authoring-only fixture")
-    editor.add_file("Texture", str(image), new_epoch=True)
-    assert len(editor.program.sequence) == 2
+    editor.add_subgroup()
+    blank_added = editor.program
+    composer.add_file("Texture", str(image), "Left")
+    editor.subgroup.apply()
+    assert len(editor.program.sequence[0].body) == 2
     assert editor.node_index == 1
     added = editor.program
-    assert added.sequence[1].settings[0].pattern.kind == "image_tile"
+    assert added.sequence[0].body[1].settings[0].pattern.kind == "image_tile"
+    editor.undo()
+    assert editor.program == blank_added
     editor.undo()
     assert editor.program == original
     editor.undo(True)
+    editor.undo(True)
     assert editor.program == added
-    editor.add_file("Video", str(image), new_epoch=True)
+    composer.add_file("Video", str(image), "Left")
     assert editor.program == added
-    assert len(editor.histories[0].past) == 1
+    assert len(editor.histories[0].past) == 2
 
 
 def test_screen_overrides_and_layers_preserve_other_epochs(
@@ -6305,7 +6643,9 @@ def test_screen_overrides_and_layers_preserve_other_epochs(
     editor.set_program(blank_program())
     editor.timeline.set_screens(("Left", "Right"))
     editor.add_stimulus("Texture")
-    editor.edit_epoch("duplicate")
+    from cephvr.gui.protocol_nodes import edit_epoch as edit_source_epoch
+
+    editor.set_program(edit_source_epoch(editor.program, editor.path, "duplicate")[0])
     original = editor.program
     split = split_screens(original, 1, 0)
     assert split.sequence[0] == original.sequence[0]
@@ -6325,11 +6665,7 @@ def test_screen_overrides_and_layers_preserve_other_epochs(
     assert index == 1
     assert moved.sequence[1].settings[1] == changed.sequence[1].settings[0]
     editor.set_program(split)
-    editor.select_node(1)
     editor.timeline.set_screens(("Left",))
-    editor.select_layer(1)
-    assert editor.scope_controls.checks["right"].isChecked()
-    assert "inactive" in editor.scope_controls.checks["right"].text()
     assert editor.program == split
 
 
@@ -6344,7 +6680,9 @@ def test_repeat_variation_uses_canonical_expansion_and_preserves_choreography(
     editor.set_program(blank_program())
     editor.timeline.set_screens(("Left", "Right"))
     editor.add_stimulus("Texture")
-    editor.edit_epoch("add")
+    from cephvr.gui.protocol_nodes import edit_epoch as edit_source_epoch
+
+    editor.set_program(edit_source_epoch(editor.program, editor.path, "add")[0])
     original = editor.program
     rules = (
         Variation((0,), 0, "Speed", (10.0, 20.0)),
@@ -6404,11 +6742,27 @@ def test_nested_group_edit_and_duplicate_reference_remapping(
     editor.set_program(grouped)
     editor.enter_group()
     assert editor.scope == (0,)
-    editor.duration.setText("61")
-    editor.edit_duration()
+    editor.group_editor.repetitions.setText("0")
+    editor.group_editor.mark_changed()
+    assert editor.undo_action.isEnabled()
+    editor.undo_action.trigger()
+    assert editor.program == grouped and editor.group_editor.repetitions.text() == "2"
+    editor.group_editor.name.setText("Condition sequence")
+    editor.group_editor.mark_changed()
+    assert editor.group_editor.apply()
+    assert editor.program.sequence[0].group_id == "Condition_sequence"
+    renamed = expand_program(editor.program, seed_decimal="0", max_expanded_epochs=100)
+    assert len(renamed) == 4
+    assert all(e.lineage[0].group_id == "Condition_sequence" for e in renamed)
+    from cephvr.gui.protocol_nodes import edit_epoch_metadata
+
+    editor.commit(
+        edit_epoch_metadata(
+            editor.program, (0, 0), node_at(editor.program, (0, 0)).epoch_id, "61"
+        )
+    )
     assert node_at(editor.program, (0, 0)).duration.duration.seconds == "61"
-    editor.leave_group()
-    editor.edit_epoch("duplicate")
+    editor.edit_group("duplicate")
     assert len(editor.program.sequence) == 2
     assert editor.program.sequence[0].group_id != editor.program.sequence[1].group_id
     assert (
@@ -6425,27 +6779,23 @@ def test_nested_group_edit_and_duplicate_reference_remapping(
     assert node_at(editor.program, (0, 0)).duration.duration.seconds == "61"
 
 
-def test_group_dialog_rejects_bad_values_and_closes_on_authority_loss(
-    window: DashboardWindow,
-) -> None:
+def test_group_fields_reject_bad_values_and_lock_on_authority_loss(window):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+
     editor = window.protocol.editor
+    editor.set_program(grouped_program(blank_program()))
+    editor.enter_group()
     original = editor.program
-    editor.open_group_dialog()
-    dialog = editor.group_dialog
-    assert dialog is not None
-    dialog.repetitions.setText("0")
-    dialog.apply()
+    editor.group_editor.repetitions.setText("0")
+    editor.group_editor.mark_changed()
+    assert not editor.group_editor.apply()
     assert editor.program == original
-    assert dialog.message.text()
-    dialog.repetitions.setText("2")
-    dialog.first.setCurrentIndex(0)
-    dialog.last.setCurrentIndex(2)
-    dialog.apply()
-    assert len(editor.program.sequence) == 1
-    assert editor.program.sequence[0].repetitions == 2
-    editor.open_group_dialog()
+    editor.undo()
     window.apply_view(review_view(Phase.RUNNING))
-    assert editor.group_dialog is None
+    editor.group_editor.repetitions.setText("2")
+    assert not editor.group_editor.apply()
+    assert editor.program == original
 
 
 def test_motion_auto_commit_and_invalid_edit_undo(
@@ -6456,24 +6806,28 @@ def test_motion_auto_commit_and_invalid_edit_undo(
     editor = window.protocol.editor
     editor.set_program(blank_program())
     editor.add_stimulus("Texture")
+    editor.timeline.set_screens(("Front",))
+    open_protocol_group(editor)
     window.page_buttons[1].click()
     app.processEvents()
-    motion = editor.parameters.forms[0]
+    motion = editor.subgroup.composer.rows["Front"].parameters.forms[0]
     original = editor.program
     motion.speed.setFocus()
     motion.speed.selectAll()
     QTest.keyClicks(motion.speed, "30")
-    editor.duration.setFocus()
+    editor.subgroup.composer.duration.setFocus()
     app.processEvents()
+    assert editor.program == original
+    editor.subgroup.apply()
     assert editor.program != original
-    assert editor.program.sequence[0].settings[0].phase_x.function.value == -1.5
+    assert editor.program.sequence[0].body[0].settings[0].phase_x.function.value == -1.5
     editor.undo()
     assert editor.program == original
-    editor.duration.setText("invalid")
-    editor.edit_duration()
+    editor.subgroup.composer.duration.setText("invalid")
+    editor.subgroup.apply()
     assert not editor.flush_parameters()
     editor.undo()
-    assert editor.duration.text() == "60"
+    assert editor.subgroup.composer.duration.text() == "00:01:00"
     assert editor.program == original
 
 
@@ -6572,9 +6926,14 @@ def test_stationary_texture_speed_variation_keeps_positive_x_direction(
         10.0,
         0.0,
     )
-    editor.duration.setText("70")
-    editor.edit_duration()
-    assert editor.sequence_summary.text() == "1 epoch · 70 s"
+    from cephvr.gui.protocol_nodes import edit_epoch_metadata
+
+    editor.commit(
+        edit_epoch_metadata(
+            editor.program, editor.path, editor.program.sequence[0].epoch_id, "70"
+        )
+    )
+    assert editor.sequence_summary.text() == "1 epoch · 1 block · 00:01:10"
 
 
 def test_expanded_close_and_trial_deletion(
@@ -6609,135 +6968,6 @@ def test_expanded_close_and_trial_deletion(
     assert editor.delete_dialog is None
 
 
-def test_projector_lane_layers_isolate_file_motion_and_removal(
-    window: DashboardWindow, app: QApplication, tmp_path: Path
-) -> None:
-    from cephvr.gui.epoch_motion import EpochMotion
-    from cephvr.gui.projector_layers import layer_title, layers_for
-    from cephvr.gui.protocol_document import blank_program
-    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
-
-    editor = window.protocol.editor
-    editor.timeline.set_screens(("Left", "Right"))
-    editor.set_program(blank_program())
-    editor.add_stimulus("Texture")
-    original = editor.program
-    window.page_buttons[1].click()
-    app.processEvents()
-    hit = next(
-        rect
-        for rect, index, face, layer in editor.timeline.hits
-        if face == "Left" and layer == 0
-    )
-    QTest.mouseClick(
-        editor.timeline, Qt.MouseButton.LeftButton, pos=hit.center().toPoint()
-    )
-    assert editor.selected_paths == ((0,),)
-    assert editor.program == original
-    editor.select_projector(0, "Left", 0)  # Selection alone never clones a stimulus.
-    motion = next(
-        form for form in editor.parameters.forms if isinstance(form, EpochMotion)
-    )
-    motion.speed.setText("12")
-    motion.changed.emit()
-    assert editor.parameters.apply()
-    node = editor.program.sequence[0]
-    right = node.settings[layers_for(editor.program, node, "Right")[0]]
-    left_index = layers_for(editor.program, node, "Left")[0]
-    assert right == original.sequence[0].settings[0].model_copy(
-        update={
-            "space": original.sequence[0]
-            .settings[0]
-            .space.model_copy(
-                update={
-                    "mappings": (original.sequence[0].settings[0].space.mappings[1],)
-                }
-            )
-        }
-    )
-    assert node.settings[left_index].phase_x.function.value == -0.6
-    editor.undo()
-    assert editor.program == original
-    editor.undo(True)
-    assert editor.projector_layers.face == "Left"
-    editor.parameters.asset_root = str(tmp_path)
-    (tmp_path / "loom.png").write_bytes(b"prepared image fixture")
-    (tmp_path / "video.mp4").write_bytes(b"prepared video fixture")
-    editor.add_file("Looming image", str(tmp_path / "loom.png"))
-    node = editor.program.sequence[0]
-    assert len(layers_for(editor.program, node, "Left")) == 2
-    assert len(layers_for(editor.program, node, "Right")) == 1
-    assert layer_title(
-        editor.program, node.settings[editor.projector_layers.layer]
-    ).startswith("Looming")
-    editor.reorder_layer(-1)
-    node = editor.program.sequence[0]
-    assert node.settings[layers_for(editor.program, node, "Left")[0]].kind == "image"
-    assert node.settings[layers_for(editor.program, node, "Right")[0]] == right
-    editor.select_projector(0, "Right", -1)
-    editor.remove_stimulus()
-    assert editor.projector_layers.layer == -1
-    assert not editor.parameters.isVisible()
-    editor.add_file("Video", str(tmp_path / "video.mp4"))
-    node = editor.program.sequence[0]
-    assert node.settings[layers_for(editor.program, node, "Right")[0]].kind == "video"
-    assert len(layers_for(editor.program, node, "Left")) == 2
-    loaded = parse_program_json(editor.program.model_dump_json(), max_bytes=1_048_576)
-    editor.set_program(loaded)
-    assert editor.program == loaded
-    editor.timeline.set_screens(("Left",))
-    assert layers_for(editor.program, editor.program.sequence[0], "Right")
-    assert editor.projector_layers.face == "Right"
-
-
-def test_projector_shared_file_replacement_and_stack_order(
-    window: DashboardWindow, tmp_path: Path
-) -> None:
-    from cephvr.gui.projector_layers import layers_for
-    from cephvr.gui.protocol_document import blank_program
-
-    editor = window.protocol.editor
-    editor.timeline.set_screens(("Left", "Right"))
-    editor.set_program(blank_program())
-    editor.add_stimulus("Texture")
-    editor.add_stimulus("Image")
-    original = editor.program
-    editor.parameters.asset_root = str(tmp_path)
-    (tmp_path / "alternate.png").write_bytes(b"prepared image fixture")
-    editor.select_projector(0, "Left", 1)
-    asset_id = editor.program.sequence[0].settings[1].asset_id
-    editor.parameters.set_media_path(asset_id, str(tmp_path / "alternate.png"))
-    node = editor.program.sequence[0]
-    right_layers = [node.settings[i] for i in layers_for(editor.program, node, "Right")]
-    assert [s.instance_id for s in right_layers] == [
-        s.instance_id for s in original.sequence[0].settings
-    ]
-    assert right_layers[1].asset_id == asset_id
-    left_image = node.settings[editor.projector_layers.layer]
-    assert left_image.asset_id != asset_id
-    editor.reorder_layer(-1)
-    node = editor.program.sequence[0]
-    assert [
-        node.settings[i].kind for i in layers_for(editor.program, node, "Left")
-    ] == ["image", "texture"]
-    assert [
-        node.settings[i].kind for i in layers_for(editor.program, node, "Right")
-    ] == ["texture", "image"]
-
-    editor.add_stimulus("3D arena")
-    node = editor.program.sequence[0]
-    arena = next(
-        i for i, setting in enumerate(node.settings) if setting.kind == "arena"
-    )
-    editor.select_projector(0, "Left", arena)
-    assert not editor.parameters.isEnabled()
-    before = editor.program
-    editor.remove_stimulus()
-    assert editor.program == before
-    editor.select_layer(layers_for(editor.program, node, "Left")[1])
-    assert editor.parameters.isEnabled()
-
-
 def test_recording_checks_stay_next_to_labels(
     window: DashboardWindow, app: QApplication
 ) -> None:
@@ -6763,45 +6993,6 @@ def test_recording_checks_stay_next_to_labels(
             assert caption.height() >= caption.heightForWidth(caption.width())
 
 
-def test_compact_stimulus_inspector_preserves_hidden_settings(
-    window: DashboardWindow, app: QApplication
-) -> None:
-    from cephvr.gui.epoch_motion import EpochMotion
-    from cephvr.gui.protocol_document import blank_program
-
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    editor.timeline.set_screens(("Left", "Right"))
-    editor.set_program(blank_program())
-    editor.add_stimulus("Texture")
-    editor.select_projector(0, "Left", 0)
-    app.processEvents()
-    assert editor.settings_card.caption.text() == "Epoch editor"
-    assert not editor.timeline_card.isAncestorOf(editor.duration)
-    assert editor.settings_card.isAncestorOf(editor.name)
-    assert editor.context.text() == "Left → Texture"
-    parameters = editor.parameters
-    motion = next(f for f in parameters.forms if isinstance(f, EpochMotion))
-    assert motion.speed.isVisible() and motion.direction.isVisible()
-    assert not motion.angular.isVisible() and not motion.custom.isVisible()
-    assert not parameters.advanced.isVisible()
-    assert len(parameters.file_rows) == 1
-    assert parameters.file_rows[0].findChild(QPushButton).text() == "Replace…"
-    before = editor.program
-    parameters.more.setChecked(True)
-    assert parameters.advanced.isVisible()
-    assert not motion.custom.isVisible()
-    parameters.more.setChecked(False)
-    assert parameters.apply() and editor.program == before
-    assert editor.name.isReadOnly()
-    editor.rename_action.trigger()
-    assert not editor.name.isReadOnly()
-    editor.name.setText("Forward flow")
-    editor.edit_duration()
-    assert editor.program.sequence[0].epoch_id == "Forward_flow"
-    assert editor.name.isReadOnly()
-
-
 def test_looming_primary_controls_and_custom_size_fidelity(
     window: DashboardWindow,
 ) -> None:
@@ -6809,7 +7000,7 @@ def test_looming_primary_controls_and_custom_size_fidelity(
     from cephvr.gui.program_editing import validate
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Looming image")
     parameters = editor.parameters
@@ -6847,43 +7038,6 @@ def test_looming_primary_controls_and_custom_size_fidelity(
     assert parameters.apply() and editor.program == custom
 
 
-def test_timeline_layer_actions_and_inactive_selection_menu(
-    window: DashboardWindow, app: QApplication
-) -> None:
-    from cephvr.gui.protocol_document import blank_program
-
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    editor.timeline.set_screens(("Left", "Right"))
-    editor.set_program(blank_program())
-    editor.add_stimulus("Texture")
-    before = editor.program
-    app.processEvents()
-    rect = editor.timeline.hits[0][0]
-    QTest.mouseClick(
-        editor.timeline, Qt.MouseButton.LeftButton, pos=rect.center().toPoint()
-    )
-    assert editor.selected_paths == ((0,),)
-    assert not editor.layer_menu.isVisible()
-    assert editor.program == before
-    editor.timeline.set_screens(("Left",))
-    editor.selection_menu.populate(editor.program, editor.path, editor.timeline.screens)
-    inactive = next(
-        a.menu()
-        for a in editor.selection_menu.actions()
-        if a.text() == "Right (inactive)"
-    )
-    inactive.actions()[0].trigger()
-    assert editor.context.text().startswith("Right (inactive)")
-    assert editor.program == before
-    shared = editor.selection_menu.actions()[0].menu()
-    shared.actions()[0].trigger()
-    assert editor.projector_layers.face == ""
-    window.apply_view(review_view(Phase.RUNNING))
-    editor.layer_button.click()
-    assert not editor.layer_menu.isVisible()
-
-
 def test_batch_create_variations_preview_insert_and_reload(
     window: DashboardWindow, app: QApplication, tmp_path: Path
 ) -> None:
@@ -6898,18 +7052,23 @@ def test_batch_create_variations_preview_insert_and_reload(
 
     editor = window.protocol.editor
     window.page_buttons[1].click()
-    editor.set_program(blank_program())
+    from cephvr.gui.protocol_batches import grouped_program
+
+    editor.set_program(grouped_program(blank_program()))
+    editor.enter_group()
     editor.timeline.set_screens(("Left", "Right"))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
     image.fill(0)
     path = tmp_path / "tile.png"
     assert image.save(str(path))
-    create = editor.create_batch
+    create = editor.subgroup
     create.composer.set_asset_root(str(tmp_path))
-    editor.modes.setCurrentIndex(0)
+    editor.group_editor.repetitions.setText("2")
+    editor.group_editor.mark_changed()
+    assert editor.group_editor.apply()
     original = editor.program
     create.composer.add_file("Texture", str(path), "Left")
-    create.composer.duration.setText("00:00:02.000000001")
+    create.composer.duration.setText("00:00:05.000000001")
     create.vary.setChecked(True)
     create.add_variation()
     create.rows[0].method.setCurrentIndex(1)
@@ -6931,17 +7090,17 @@ def test_batch_create_variations_preview_insert_and_reload(
     assert editor.program == original
     create.rows[0].values.setText("10, 10, 20, 20, 40, 40")
     create.rows[1].values.setText("0, 180, 0, 180, 0, 180")
-    create.repetitions.setText("2")
+    assert create.parameter_fields[2].isHidden()
     create.refresh_preview()
     assert create.add_button.isEnabled(), create.summary.text()
-    assert create.summary.text().startswith("12 epochs")
+    assert create.summary.text().startswith("6 epochs")
     assert editor.program == original
     create.generate()
     program = editor.program
-    assert len(epoch_paths(program)) == 7
-    assert len(expand_program(program, seed_decimal="8", max_expanded_epochs=100)) == 13
-    assert program.sequence[1].order == "as_listed"
-    assert program.sequence[1].conditions is None
+    assert len(epoch_paths(program)) == 6
+    assert len(expand_program(program, seed_decimal="8", max_expanded_epochs=100)) == 12
+    assert program.sequence[0].order == "as_listed"
+    assert program.sequence[0].conditions is None
     numbers = {
         tuple(
             round(v, 6)
@@ -6949,111 +7108,26 @@ def test_batch_create_variations_preview_insert_and_reload(
                 node_at(program, path).settings[0].model_dump(mode="json")
             )[:2]
         )
-        for path in epoch_paths(program)[1:]
+        for path in epoch_paths(program)
     }
     assert numbers == {(speed, angle) for speed in (10, 20, 40) for angle in (0, 180)}
     assert all(
-        node_at(program, p).duration.duration.ns() == 2_000_000_001
-        for p in epoch_paths(program)[1:]
+        node_at(program, p).duration.duration.ns() == 5_000_000_001
+        for p in epoch_paths(program)
     )
     assert parse_program_json(program.model_dump_json(), max_bytes=1_048_576) == program
     editor.undo(False)
     assert editor.program == original
-    assert create.composer.program.sequence[0].settings
+    assert not create.composer.program.sequence[0].settings
     editor.set_program(program)
-    editor.select_epochs(((1, 5),))
+    editor.select_epochs(((0, 5),))
     before_path = editor.path
-    create.insert.setCurrentIndex(1)
-    create.generate()
-    assert len(editor.selected_paths) == 6
+    editor.add_subgroup()
+    assert len(editor.selected_paths) == 1
+    assert len(editor.program.sequence[0].body) == 7
     editor.undo(False)
     assert editor.program == program and editor.path == before_path
     app.processEvents()
-
-
-def test_batch_edit_mixed_values_isolation_atomic_failure_and_undo(
-    window: DashboardWindow, app: QApplication
-) -> None:
-    from cephvr.gui.epoch_batch import LayerTarget, apply_batch, epoch_paths
-    from cephvr.gui.projector_layers import layers_for
-    from cephvr.gui.protocol_document import blank_program
-    from cephvr.gui.protocol_groups import motion_numbers
-    from cephvr.gui.protocol_nodes import edit_epoch
-    from cephvr.gui.stimulus_presets import add_stimulus
-
-    editor = window.protocol.editor
-    editor.timeline.set_screens(("Left", "Right"))
-    program = add_stimulus(blank_program(), 0, "Texture", ("Left", "Right"))
-    program = add_stimulus(program, 0, "Looming image", ("Left",))
-    program, _ = edit_epoch(program, 0, "duplicate")
-    program = apply_batch(program, ((1,),), LayerTarget("", "Texture"), {"Speed": "12"})
-    editor.set_program(program)
-    editor.select_epochs(epoch_paths(program))
-    panel = editor.batch_edit
-    assert panel.parameter.findText("Speed") >= 0
-    assert panel.parameter.findText("Playback start") < 0
-    assert panel.targets.grid.itemAtPosition(0, 0).widget() is panel.scope_field
-    assert (
-        panel.targets.grid.itemAtPosition(0, 2).widget() is panel.targets.filter_field
-    )
-    assert panel.parameter_row.layout().itemAt(0).widget() is panel.parameter_field
-    assert panel.parameter_row.layout().itemAt(1).widget() is panel.duration_row
-    panel.parameter.setCurrentText("Start size")
-    assert panel.parameter.findText("Start size") >= 0
-    assert panel.rows["Left"].target.family == "Looming image"
-    assert panel.rows["Right"].target is None
-    panel.parameter.setCurrentText("Speed")
-    assert panel.duration_row.isHidden() and not panel.projector_host.isHidden()
-    assert panel.rows["Left"].target.family == "Texture"
-    assert panel.rows["Right"].target.family == "Texture"
-    value = panel.rows["Left"].value
-    assert value.text() == "" and value.placeholderText() == "Mixed"
-    assert not panel.dirty
-    value.setText("25")
-    value.textEdited.emit("25")
-    right_value = panel.rows["Right"].value
-    right_value.setText("30")
-    right_value.textEdited.emit("30")
-    app.processEvents()
-    assert panel.dirty and editor.program == program
-    panel.apply()
-    edited = editor.program
-    for old, new in zip(program.sequence, edited.sequence, strict=True):
-        left = new.settings[layers_for(edited, new, "Left")[0]]
-        assert motion_numbers(left.model_dump(mode="json"))[0] == pytest.approx(25)
-        right = new.settings[layers_for(edited, new, "Right")[0]]
-        assert motion_numbers(right.model_dump(mode="json"))[0] == pytest.approx(30)
-        assert new.settings[-1] == old.settings[-1]  # Looming overlay untouched.
-        assert new.duration == old.duration
-    assert len(editor.selected_paths) == 2
-    editor.undo(False)
-    assert editor.program == program
-    panel = editor.batch_edit
-    panel.parameter.setCurrentText("Speed")
-    panel.rows["Left"].value.setText("25")
-    panel.rows["Left"].value.textEdited.emit("25")
-    panel.rows["Right"].value.setText("invalid")
-    panel.rows["Right"].value.textEdited.emit("invalid")
-    panel.apply()
-    assert editor.program == program and panel.message.text()
-    panel.discard()
-    with pytest.raises(ValueError, match="no Video"):
-        apply_batch(
-            program,
-            ((0,), (1,)),
-            LayerTarget("Left", "Video"),
-            {"Duration": "10", "Speed": "2"},
-        )
-    assert editor.program == program
-    panel = editor.batch_edit
-    panel.parameter.setCurrentText("Duration")
-    assert not panel.duration_row.isHidden() and panel.projector_host.isHidden()
-    check, value = panel.fields["Duration"]
-    check.setChecked(True)
-    value.setText("-1")
-    panel.apply()
-    assert editor.program == program
-    assert panel.message.text()
 
 
 def test_trial_overview_selects_ranges_and_sources_across_groups(
@@ -7070,22 +7144,31 @@ def test_trial_overview_selects_ranges_and_sources_across_groups(
     program, _ = make_group(program, (), 1, 2, 2, False)
     editor.set_program(program)
     timeline = editor.timeline
-    assert len(timeline.nodes) == 5
+    assert len(timeline.nodes) == 2
     timeline.choose(1, Qt.KeyboardModifier.NoModifier)
     assert editor.selected_paths == ((1, 0),)
-    assert len(timeline.nodes) == 5  # Never zooms into only the selected group.
-    timeline.choose(2, Qt.KeyboardModifier.ShiftModifier)
+    assert editor.scope == (1,)
+    assert len(timeline.nodes) == 2  # Persistent collapsed trial overview.
+    contents = editor.hierarchy.contents
+    assert len(contents.nodes) == 2
+    contents.choose(1, Qt.KeyboardModifier.ShiftModifier)
     assert set(editor.selected_paths) == {(1, 0), (1, 1)}
-    timeline.choose(0, Qt.KeyboardModifier.ControlModifier)
-    assert len(editor.selected_paths) == 3
-    timeline.choose(4, Qt.KeyboardModifier.ControlModifier)
-    assert set(editor.selected_paths) == {(0,), (1, 0)}
+    assert not hasattr(editor, "back_button")
+    timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+    timeline.choose(1, Qt.KeyboardModifier.ShiftModifier)
+    assert editor.selected_paths == ((0,), (1,))
+    assert editor.subgroup.isHidden()
+    assert not hasattr(editor.hierarchy, "wrap")
     assert editor.program == program
-    assert editor.timeline_card.isAncestorOf(editor.duplicate_epoch_button)
-    assert editor.timeline_card.isAncestorOf(editor.remove_epoch_button)
+    assert not any(
+        control.text() in {"Duplicate", "Delete"}
+        for control in editor.timeline_card.findChildren(QPushButton)
+    )
     actions = editor.timeline_actions.layout()
-    assert actions.indexOf(editor.batch_edit.epoch_actions) < (
-        actions.indexOf(editor.output_preview_button)
+    assert (
+        actions.indexOf(editor.add_group_button)
+        < actions.indexOf(editor.remove_group_button)
+        < actions.indexOf(editor.output_preview_button)
     )
     assert not any(
         control.text() == "Actions…"
@@ -7093,103 +7176,9 @@ def test_trial_overview_selects_ranges_and_sources_across_groups(
     )
     window.apply_view(review_view(Phase.RUNNING))
     before = editor.program
-    editor.create_batch.generate()
-    editor.batch_edit.apply()
+    editor.subgroup.generate()
+    editor.subgroup.apply()
     assert editor.program == before
-    app.processEvents()
-
-
-def test_batch_media_changes_and_pending_edits_are_isolated(
-    window: DashboardWindow, tmp_path: Path, app: QApplication
-) -> None:
-    import json
-
-    from PyQt6.QtGui import QImage
-
-    from cephvr.gui.epoch_batch import LayerTarget, apply_batch
-    from cephvr.gui.projector_layers import layers_for
-    from cephvr.gui.protocol_document import blank_program
-    from cephvr.gui.protocol_nodes import edit_epoch
-    from cephvr.gui.stimulus_presets import add_file_stimulus
-
-    for name in ("a.png", "b.png"):
-        image = QImage(8, 8, QImage.Format.Format_RGB32)
-        image.fill(0)
-        assert image.save(str(tmp_path / name))
-    (tmp_path / "b.texture.json").write_text(
-        json.dumps(
-            {
-                "cephvr_asset_type": "texture_design",
-                "kind": "texture",
-                "params": {"tile_width_mm": 50},
-                "preview_file": "b.png",
-            }
-        )
-    )
-    program = add_file_stimulus(
-        blank_program(),
-        0,
-        "Texture",
-        ("Left", "Right"),
-        str(tmp_path),
-        str(tmp_path / "a.png"),
-    )
-    program, _ = edit_epoch(program, 0, "duplicate")
-    changed = apply_batch(
-        program,
-        ((0,), (1,)),
-        LayerTarget("Left", "Texture"),
-        {"Asset": str(tmp_path / "b.texture.json")},
-        str(tmp_path),
-    )
-    for epoch in changed.sequence:
-        left = epoch.settings[layers_for(changed, epoch, "Left")[0]]
-        right = epoch.settings[layers_for(changed, epoch, "Right")[0]]
-        assets = {a.asset_id: a.logical_path for a in changed.assets}
-        assert assets[left.pattern.asset_id] == "b.png"
-        assert assets[right.pattern.asset_id] == "a.png"
-        assert left.pattern.period_x.value == 50
-    editor = window.protocol.editor
-    editor.set_program(program)
-    editor.timeline.set_screens(("Left", "Right"))
-    window.protocol.assets.folders["root"].editor.setText(str(tmp_path))
-    editor.select_epochs(((0,),))
-    panel = editor.batch_edit
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    panel.targets.filter.setCurrentIndex(2)
-    panel.targets.index.setText("1")
-    panel.targets.index.textEdited.emit("1")
-    panel.parameter.setCurrentText("Asset")
-    left_value = panel.rows["Left"].value
-    assert left_value.text() == "a.png"
-    assert panel.rows["Right"].value.text() == "a.png"
-    left_value.setText("b.texture.json")
-    left_value.textEdited.emit("b.texture.json")
-    panel.apply()
-    updated = editor.program.sequence[0]
-    left = updated.settings[layers_for(editor.program, updated, "Left")[0]]
-    right = updated.settings[layers_for(editor.program, updated, "Right")[0]]
-    assets = {asset.asset_id: asset.logical_path for asset in editor.program.assets}
-    assert assets[left.pattern.asset_id] == "b.png"
-    assert assets[right.pattern.asset_id] == "a.png"
-    editor.set_program(program)
-    panel = editor.batch_edit
-    panel.parameter.setCurrentText("Duration")
-    check, value = panel.fields["Duration"]
-    value.setText("45")
-    value.textEdited.emit("45")
-    assert panel.dirty
-    old_parameter = panel.parameter.currentIndex()
-    panel.parameter.setCurrentText("Asset")
-    assert panel.parameter.currentIndex() == old_parameter
-    editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-    assert editor.selected_paths == ((0,),)
-    assert editor.timeline.selection == ((0,),)
-    assert editor.program == program
-    panel.reset.click()
-    assert not panel.dirty
-    editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-    assert editor.selected_paths == ((1,),)
     app.processEvents()
 
 
@@ -7204,7 +7193,7 @@ def test_review_projector_inventory_drives_devices_and_planner(
         faces = ("Front", "Left", "Right", "Bottom")
         assert panel.table.rowCount() == 4
         assert panel.enabled_screens == editor.timeline.screens == faces
-        assert [panel.table.item(i, 0).text() for i in range(4)] == ["1", "2", "3", "4"]
+        assert [panel.table.item(i, 1).text() for i in range(4)] == ["1", "2", "3", "4"]
         key = panel.keys[2]
         panel.enable_controls[key].setChecked(False)
         assert editor.timeline.screens == ("Front", "Left", "Bottom")
@@ -7240,11 +7229,8 @@ def test_timeline_overview_colors_and_current_epoch_details(
     assert editor.trial_card.width() == 208
     overview = [(rect, i) for rect, i, face, _ in timeline.hits if not face]
     assert overview[0][0].left() == 1
-    assert overview[-1][0].right() == timeline.width() - 8
-    assert (
-        timeline.hover_text[len(timeline.nodes)][0].top() - overview[0][0].bottom()
-        >= 25
-    )
+    assert overview[-1][0].right() <= timeline.width()
+    assert len(timeline.hover_text) == len(timeline.nodes)  # Compact overview.
     assert timeline.type_keys[0] == timeline.type_keys[2]
     assert timeline.type_keys[0] != timeline.type_keys[1]
     assert stimulus_color(timeline.type_keys[0]) != stimulus_color(
@@ -7263,8 +7249,7 @@ def test_timeline_overview_colors_and_current_epoch_details(
     assert editor.selected_paths == ((1,), (2,))
     assert timeline.index == 2
     assert all(rows == [(-1, "Blank")] for _, rows in timeline.detail_rows())
-    assert editor.modes.tabText(0) == "Batch generate"
-    assert editor.modes.tabText(1) == "Batch edit"
+    assert not hasattr(editor, "modes")
     assert editor.timeline_card.height() == editor.trial_card.height()
     assert editor.program == program
     node = program.sequence[1]
@@ -7282,62 +7267,6 @@ def test_timeline_overview_colors_and_current_epoch_details(
     assert stimulus_key(program, changed) != timeline.type_keys[1]
 
 
-def test_batch_tabs_preserve_drafts_apply_and_phase_lock(
-    window: DashboardWindow, app: QApplication
-) -> None:
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    original = editor.program
-    editor.modes.setCurrentIndex(0)
-    app.processEvents()
-    assert editor.create_batch.isVisible() and not editor.batch_edit.isVisible()
-    assert editor.settings_card.isAncestorOf(editor.create_batch)
-    assert editor.settings_card.isAncestorOf(editor.batch_edit)
-    assert editor.create_batch.window() is window
-    assert editor.batch_edit.window() is window
-    editor.create_batch.repetitions.setText("2")
-    editor.modes.setCurrentIndex(1)
-    assert editor.program == original
-    assert editor.batch_edit.isVisible() and not editor.create_batch.isVisible()
-    panel = editor.batch_edit
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    panel.targets.filter.setCurrentIndex(2)
-    panel.targets.index.setText("1")
-    panel.targets.index.textEdited.emit("1")
-    check, value = editor.batch_edit.fields["Duration"]
-    check.setChecked(True)
-    value.setText("00:00:12")
-    editor.modes.setCurrentIndex(0)
-    assert editor.create_batch.repetitions.text() == "2"
-    assert editor.program == original
-    editor.modes.setCurrentIndex(1)
-    assert value.text() == "00:00:12" and check.isChecked()
-    editor.batch_edit.reset.click()
-    assert not editor.batch_edit.dirty and editor.program == original
-    check, value = editor.batch_edit.fields["Duration"]
-    check.setChecked(True)
-    value.setText("-1")
-    panel.parameter.setCurrentIndex(1)
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("timeline"))
-    assert panel.parameter.currentData() == "Duration"
-    assert panel.epoch_scope.currentData() == "target"
-    assert panel.message.dialog is None
-    editor.batch_edit.apply_button.click()
-    assert panel.message.dialog is not None
-    panel.message.clear()
-    assert editor.batch_edit.isVisible() and editor.program == original
-    value.setText("00:00:12")
-    editor.batch_edit.apply_button.click()
-    assert editor.batch_edit.isVisible()
-    assert editor.program.sequence[0].duration.duration.seconds == "12"
-    window.apply_view(review_view(Phase.RUNNING))
-    assert not editor.modes.isEnabled()
-    assert not editor.create_batch.isEnabled() and not editor.batch_edit.isEnabled()
-    window.apply_view(review_view(Phase.CONFIGURATION))
-    editor.modes.setCurrentIndex(0)
-    assert editor.create_batch.isVisible() and editor.create_batch.isEnabled()
-
-
 @pytest.mark.parametrize("mode", ["generate", "selection"])
 def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mode):
     from PyQt6.QtGui import QImage
@@ -7348,9 +7277,9 @@ def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mod
     window.page_buttons[1].click()
     editor = window.protocol.editor
     editor.set_program(review_program())
+    open_protocol_group(editor)
     if mode == "generate":
-        editor.modes.setCurrentIndex(0)
-        owner = editor.create_batch
+        owner = editor.subgroup
         composer = owner.composer
         composer.set_screens(("Front", "Left", "Right", "Bottom"))
         composer.set_asset_root(str(tmp_path))
@@ -7362,10 +7291,10 @@ def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mod
         submit, notice = owner.add_button, owner.notice
     else:
         editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
-        editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-        owner = editor.batch_edit.selection_form
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        owner = editor.subgroup
         composer = owner.composer
-        submit, notice = editor.batch_edit.apply_button, owner.message
+        submit, notice = owner.add_button, owner.notice
     app.processEvents()
     row = next(row for row in composer.rows.values() if row.indices)
     parameters = row.parameters
@@ -7415,9 +7344,9 @@ def test_batch_reference_projector_parameters_and_layers(
     from cephvr.gui.stimulus_scope import surfaces
 
     editor = window.protocol.editor
-    composer = editor.create_batch.composer
+    open_protocol_group(editor)
+    composer = editor.subgroup.composer
     window.page_buttons[1].click()
-    editor.modes.setCurrentIndex(0)
     composer.set_screens(("Front", "Left", "Right", "Bottom"))
     composer.set_asset_root(str(tmp_path))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
@@ -7482,11 +7411,9 @@ def test_batch_reference_projector_parameters_and_layers(
     composer.rows["Front"].select_layer(composer.rows["Front"].indices[1])
     composer.remove_layer("Front")
     assert len(composer.value().sequence[0].settings) == 4
-    editor.create_batch.refresh_preview()
-    assert editor.create_batch.add_button.isEnabled(), (
-        editor.create_batch.summary.text()
-    )
-    generated = editor.create_batch.candidate()
+    editor.subgroup.refresh_preview()
+    assert editor.subgroup.add_button.isEnabled(), editor.subgroup.summary.text()
+    generated = editor.subgroup.candidate()
     assert generated.sequence[0].settings == composer.value().sequence[0].settings
     restored = next(
         form for form in row.parameters.forms if isinstance(form, EpochMotion)
@@ -7494,17 +7421,17 @@ def test_batch_reference_projector_parameters_and_layers(
     restored.speed.setText("invalid")
     restored.edited = True
     row.parameters.dirty = True
-    editor.create_batch.refresh_preview()
-    assert editor.create_batch.add_button.isEnabled()
-    assert editor.create_batch.notice.text()
-    assert editor.create_batch.notice.dialog is None
+    editor.subgroup.refresh_preview()
+    assert editor.subgroup.add_button.isEnabled()
+    assert not editor.subgroup.notice.text()
+    assert editor.subgroup.notice.dialog is None
     assert editor.program == before
 
 
 def test_batch_reference_picker_scope_and_lock(
     window: DashboardWindow, app: QApplication, tmp_path: Path
 ) -> None:
-    composer = window.protocol.editor.create_batch.composer
+    composer = window.protocol.editor.subgroup.composer
     composer.set_screens(("Left", "Right"))
     window.protocol.assets.folders["root"].editor.setText(str(tmp_path))
     assert all(
@@ -7537,8 +7464,8 @@ def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
 
     window.resize(1350, 900)
     window.page_buttons[1].click()
-    window.protocol.editor.modes.setCurrentIndex(0)
-    composer = window.protocol.editor.create_batch.composer
+    open_protocol_group(window.protocol.editor, generate=True)
+    composer = window.protocol.editor.subgroup.composer
     composer.set_screens(("Left", "Right"))
     composer.set_asset_root(str(tmp_path))
     path = tmp_path / "tile.png"
@@ -7617,8 +7544,8 @@ def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
 
     window.page_buttons[1].click()
     editor = window.protocol.editor
-    editor.modes.setCurrentIndex(0)
-    composer = editor.create_batch.composer
+    open_protocol_group(editor)
+    composer = editor.subgroup.composer
     composer.set_screens(("Front", "Right"))
     composer.set_asset_root(str(tmp_path))
     folder = tmp_path / "images"
@@ -7665,10 +7592,10 @@ def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
     assert all(a.logical_path == "images/tile.png" for a in composer.value().assets)
     # Another type change clears the file again, even though an asset existed.
     row.stimulus.setCurrentText("Video")
-    editor.create_batch.refresh_preview()
-    assert editor.create_batch.add_button.isEnabled()
-    assert editor.create_batch.notice.text()
-    assert editor.create_batch.notice.dialog is None
+    editor.subgroup.refresh_preview()
+    assert editor.subgroup.add_button.isEnabled()
+    assert not editor.subgroup.notice.text()
+    assert editor.subgroup.notice.dialog is None
     assert all(not f.text() for f in row.parameters.asset_forms.values())
     row.stimulus.setCurrentText("None")
     assert len(composer.value().sequence[0].settings) == 1
@@ -7721,48 +7648,6 @@ def test_batch_insertion_positions_are_atomic_and_select_new_epochs(
         insert_batch(trial, batch, (1,), Insertion("stride", 0))
 
 
-def test_generated_batch_label_survives_reload_and_targets_edits(
-    window: DashboardWindow, app: QApplication
-) -> None:
-    from cephvr.gui.epoch_batch import epoch_paths
-    from cephvr.gui.program_editing import node_at
-    from cephvr.gui.protocol_document import blank_program
-    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
-
-    editor = window.protocol.editor
-    editor.set_program(blank_program())
-    create = editor.create_batch
-    create.composer.batch_label.setText("Adaptation")
-    create.repetitions.setText("3")
-    original = editor.program
-    create.generate()
-    saved = parse_program_json(editor.program.model_dump_json(), max_bytes=1_048_576)
-    labelled = tuple(
-        p for p in epoch_paths(saved) if node_at(saved, p).batch_label == "Adaptation"
-    )
-    assert labelled and len(epoch_paths(saved)) == 2
-    editor.undo(False)
-    assert editor.program == original
-    editor.set_program(saved)
-    editor.select_epochs(((0,),))
-    edit = editor.batch_edit
-    edit.epoch_scope.setCurrentIndex(edit.epoch_scope.findData("target"))
-    edit.targets.filter.setCurrentIndex(1)
-    edit.targets.labels.setCurrentText("Adaptation")
-    assert editor.selected_paths == labelled
-    assert edit.paths == labelled
-    check, duration = edit.fields["Duration"]
-    check.setChecked(True)
-    duration.setText("00:00:07")
-    edit.targets.filter.setCurrentIndex(0)
-    assert edit.targets.filter.currentText() == "Epoch label"
-    edit.apply()
-    assert node_at(editor.program, labelled[0]).duration.duration.seconds == "7"
-    assert editor.program.sequence[0].duration.duration.seconds == "60"
-    assert node_at(editor.program, labelled[0]).batch_label == "Adaptation"
-    app.processEvents()
-
-
 def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
     import json
 
@@ -7772,8 +7657,8 @@ def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
     window.resize(1350, 900)
     window.page_buttons[1].click()
     editor = window.protocol.editor
-    editor.modes.setCurrentIndex(0)
-    batch = editor.create_batch
+    open_protocol_group(editor, generate=True)
+    batch = editor.subgroup
     composer = batch.composer
     composer.set_asset_root(str(tmp_path))
     composer.mode.setCurrentIndex(1)
@@ -7788,9 +7673,10 @@ def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
         composer.mode.mapTo(composer, QPoint()).y()
         == composer.duration.mapTo(composer, QPoint()).y()
     )
+    assert not batch.repetitions.isVisible()
     assert (
         composer.duration.mapTo(composer, QPoint()).y()
-        == batch.repetitions.mapTo(composer, QPoint()).y()
+        == composer.batch_label.mapTo(composer, QPoint()).y()
     )
     assert (
         row.mapTo(composer, QPoint()).y()
@@ -7799,7 +7685,9 @@ def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
     )
     assert (
         batch.mapTo(editor.settings_card, QPoint()).y()
-        - editor.modes.mapTo(editor.settings_card, QPoint(0, editor.modes.height())).y()
+        - editor.hierarchy.mapTo(
+            editor.settings_card, QPoint(0, editor.hierarchy.height())
+        ).y()
         >= 16
     )
     movement = next(f for f in row.parameters.forms if isinstance(f, ArenaMovement))
@@ -7833,7 +7721,7 @@ def test_arena_custom_feedback_is_preserved_and_channel_conflicts_rejected(
     from cephvr.gui.arena_movement import ArenaMovement
     from cephvr.visual_stimulus.config.models.program_model import InputChannel
 
-    composer = window.protocol.editor.create_batch.composer
+    composer = window.protocol.editor.subgroup.composer
     composer.set_asset_root(str(tmp_path))
     composer.mode.setCurrentIndex(1)
     path = tmp_path / "arena.glb"
@@ -8149,13 +8037,8 @@ def test_label_insertion_repeats_batch_in_original_scope_and_undo(window, app):
         insert_batch(original, batch, (), Insertion("label", label="Missing"))
     editor = window.protocol.editor
     editor.set_program(original)
-    create = editor.create_batch
-    create.insert.setCurrentIndex(create.insert.findData("label"))
-    create.target_label.setCurrentText("Target")
-    assert not create.target_field.isHidden()
-    assert create.label_counts["Target"] == 2
-    editor.insert_batch(batch, Insertion("label", label="Target"))
-    assert len(editor.selected_paths) == 2
+    editor.enter_group()
+    editor.commit(result, scope=(0,), selected=1, paths=((0, 1),))
     editor.undo()
     assert editor.program == original
     app.processEvents()
@@ -8171,8 +8054,8 @@ def test_visible_layer_selector_and_opacity_preserve_prepared_placement(
     window.resize(1350, 900)
     window.page_buttons[1].click()
     editor = window.protocol.editor
-    editor.modes.setCurrentIndex(0)
-    composer = editor.create_batch.composer
+    open_protocol_group(editor, generate=True)
+    composer = editor.subgroup.composer
     composer.set_screens(("Front",))
     composer.set_asset_root(str(tmp_path))
     path = tmp_path / "tile.png"
@@ -8215,10 +8098,12 @@ def test_visible_layer_selector_and_opacity_preserve_prepared_placement(
         s for s in window.findChildren(QScrollArea) if s.isAncestorOf(composer)
     )
     assert scroll.horizontalScrollBar().maximum() == 0
-    batch = editor.create_batch
-    assert (
-        batch.insert.mapTo(batch, QPoint()).y()
-        > composer.duration.mapTo(batch, QPoint()).y()
+    batch = editor.subgroup
+    assert not batch.insert.isVisible()
+    assert not batch.repetitions.isVisible()
+    assert composer.batch_label.isVisible()
+    assert composer.batch_label.mapTo(batch, QPoint()).y() >= (
+        composer.duration.mapTo(batch, QPoint()).y()
     )
 
 
@@ -8340,11 +8225,16 @@ def test_projector_codec_preserves_file_pacing_and_imported_calibration():
         presentation_mode="photodiode_only_vsync",
         pulse_patch={"rect": {"x": 0, "y": 0, "width": 3, "height": 4}},
         geometry=None,
+        blackout_zones=[dict(face="Left", x=1, y=2, width=10, height=20)],
     )
     result = json.loads(updated.profile_json)
 
     assert "pacing_output_id" not in result
     assert result["outputs"][1]["enabled"] is False
+    assert result["outputs"][1]["blackout_zones"] == [
+        dict(x=1, y=2, width=10, height=20)
+    ]
+    assert result["outputs"][0]["blackout_zones"] == []
     assert result["photodiode_enabled"] is False
     assert result["photodiode_output_id"] == "projector/bottom"
     assert result["photodiode_patch"]["rect"]["x"] == 0
@@ -8456,7 +8346,19 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path):
         MonitorBinding(f"interface-{index}", index * 1280, 0, 1280, 720, 60, 8)
         for index in range(4)
     )
+    zones = [dict(face="Front", x=10, y=20, width=100, height=80)]
     profile, meshes = diagnostic_display_profile(calibration, assignments, monitors)
+    masked_profile, _ = diagnostic_display_profile(
+        calibration, assignments, monitors, blackout_zones=zones
+    )
+    assert masked_profile.outputs[0].blackout_zones[0].x == 10
+    with pytest.raises(ValueError, match="Blackout zone exceeds"):
+        diagnostic_display_profile(
+            calibration,
+            assignments,
+            monitors,
+            blackout_zones=[dict(face="Front", x=0, y=0, width=2000, height=80)],
+        )
     assert {output.device_identity for output in profile.outputs} == {
         monitor.interface for monitor in monitors
     }
@@ -8466,6 +8368,58 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path):
     assert set(meshes) == {face.lower() for face in FACES}
     assert all(mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in meshes.values())
     assert all(mesh.orientation == "preserving" for mesh in meshes.values())
+
+    bars, bar_meshes = diagnostic_display_profile(
+        calibration, assignments, monitors, view="reference_bars"
+    )
+    assert bars.calibration_view == "reference_bars"
+    assert all(
+        mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in bar_meshes.values()
+    )
+    with pytest.raises(ValueError, match="measure both reference bars"):
+        diagnostic_display_profile(
+            calibration, assignments, monitors, view="frame_grid"
+        )
+    measured_values = dict(values)
+    for face in FACES:
+        measured_values.update(
+            {
+                f"screens.{face}.reference_width_px": 1280,
+                f"screens.{face}.reference_height_px": 720,
+                f"screens.{face}.reference_x_px": 200,
+                f"screens.{face}.reference_y_px": 100,
+                f"screens.{face}.reference_x_mm": 80,
+                f"screens.{face}.reference_y_mm": 50,
+            }
+        )
+    measured_calibration = dict(calibration, values=measured_values)
+    grid, grid_meshes = diagnostic_display_profile(
+        measured_calibration, assignments, monitors, view="frame_grid"
+    )
+    assert grid.calibration_view == "frame_grid"
+    assert grid_meshes["front"].vertices[0].xy == pytest.approx(
+        (0.5 - 90 / 512 / 2, 0.5 - 80 / 360 / 2)
+    )
+    measured_values["screens.Front.throw"] = 1.5
+    assert diagnostic_display_profile(
+        measured_calibration, assignments, monitors, view="frame_grid"
+    ) == (grid, grid_meshes)
+    measured_values["screens.Front.reference_width_px"] = 1920
+    with pytest.raises(ValueError, match="assigned output mode"):
+        diagnostic_display_profile(
+            measured_calibration, assignments, monitors, view="frame_grid"
+        )
+    # Stale measurements and invalid manual correction cannot block remeasurement.
+    measured_values["screens.Front.scale_u"] = 100
+    remeasured, remeasurement_meshes = diagnostic_display_profile(
+        measured_calibration, assignments, monitors, view="reference_bars"
+    )
+    assert remeasurement_meshes == bar_meshes
+    assert remeasured.calibration_view == "reference_bars"
+    assert all(
+        o.reference_bars.x_length_px == 200 and o.reference_bars.y_length_px == 100
+        for o in remeasured.outputs
+    )
     values["screens.Front.scale_u"] = 0.8
     values["screens.Front.offset_x"] = 40
     values["screens.Left.flip_x"] = True
@@ -8485,10 +8439,21 @@ def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path):
     values["screens.Left.flip_x"] = False
     with pytest.raises(ValueError, match="unique native monitor"):
         diagnostic_display_profile(calibration, assignments, monitors[:-1])
-    arena_path = write_diagnostic_bundle(tmp_path, calibration, assignments, monitors)
+    arena_path = write_diagnostic_bundle(
+        tmp_path, calibration, assignments, monitors, blackout_zones=zones
+    )
     assert arena_path.is_file()
     assert not (arena_path.parent / "rig_geometry_grid.program.json").exists()
     assert (arena_path.parent / "diagnostic_display_profile.json").is_file()
+    from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+
+    saved_profile = DisplayProfile.model_validate_json(
+        (arena_path.parent / "diagnostic_display_profile.json").read_text()
+    )
+    assert (
+        saved_profile.outputs[0].blackout_zones
+        == masked_profile.outputs[0].blackout_zones
+    )
     assert all(
         (arena_path.parent / f"diagnostic_{face.lower()}.json").is_file()
         for face in FACES
@@ -8504,8 +8469,8 @@ def test_calibration_button_reflects_confirmed_managed_output(
     prepared = []
     result = [arena]
 
-    def prepare():
-        prepared.append(True)
+    def prepare(**kwargs):
+        prepared.append(kwargs.get("view", "frame_grid"))
         return result[0]
 
     monkeypatch.setattr(panel, "prepare_calibration", prepare)
@@ -8515,30 +8480,41 @@ def test_calibration_button_reflects_confirmed_managed_output(
     closed: list[bool] = []
     table.launch_requested.connect(lambda: launched.append(True))
     table.close_requested.connect(lambda: closed.append(True))
-    assert table.findChildren(QPushButton) == [table.presentation_button]
+    assert set(table.findChildren(QPushButton)) == {
+        table.presentation_button,
+        table.measurement_button,
+    }
     assert not table.presentation_button.isEnabled()
     table.set_presentation_state(active=False, available=True)
     table.presentation_button.click()
     assert launched == [True]
-    assert prepared == [True]
+    assert prepared == ["frame_grid"]
     assert output_requests == [str(arena)]
-    assert table.presentation_button.text() == "Launch"
+    assert table.presentation_button.text() == "Adjust frame and grid"
     table.set_presentation_state(active=True, available=True)
     assert table.presentation_button.text() == "Close"
     table.presentation_button.click()
     assert closed == [True]
-    assert prepared == [True]
+    assert prepared == ["frame_grid"]
     assert table.presentation_button.text() == "Close"
     table.set_presentation_state(active=True, available=True, pending=True)
     assert not table.presentation_button.isEnabled()
     table.set_presentation_state(active=False, available=False)
-    assert table.presentation_button.text() == "Launch"
+    assert table.presentation_button.text() == "Adjust frame and grid"
     assert not table.presentation_button.isEnabled()
     result[0] = None
     table.set_presentation_state(active=False, available=True)
     table.presentation_button.click()
-    assert prepared == [True, True]
+    assert prepared == ["frame_grid", "frame_grid"]
     assert output_requests == [str(arena)]  # Failed preparation never requests output.
+    result[0] = arena
+    table.measurement_button.click()
+    assert prepared[-1] == "reference_bars"
+    assert output_requests == [str(arena), str(arena)]
+    table.set_presentation_state(active=True, available=True)
+    assert not table.measurement_button.isEnabled()
+    table.measurement_button.click()
+    assert len(prepared) == 3
 
 
 def test_managed_first_use_calibration_launches_before_display_initialization(
@@ -8579,7 +8555,7 @@ def test_managed_first_use_calibration_launches_before_display_initialization(
     panel = window.devices.projectors
     arena = tmp_path / "rig_geometry_grid.glb"
     arena.write_bytes(b"arena")
-    monkeypatch.setattr(panel, "prepare_calibration", lambda: arena)
+    monkeypatch.setattr(panel, "prepare_calibration", lambda **kwargs: arena)
     output_requests: list[str] = []
     panel.calibration_launch_requested.connect(output_requests.append)
     operations = ManagedDisplayOperations(
@@ -8618,7 +8594,7 @@ def test_unified_feedback_input_mapping_and_retain_state(window, app):
     from cephvr.gui.protocol_document import blank_program
     from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Texture")
     parameters = editor.parameters
@@ -8701,7 +8677,7 @@ def test_unified_feedback_input_mapping_and_retain_state(window, app):
 def test_arena_feedback_and_axis_editors_stay_synchronized(window, tmp_path):
     from cephvr.gui.arena_movement import ArenaMovement
 
-    composer = window.protocol.editor.create_batch.composer
+    composer = window.protocol.editor.subgroup.composer
     composer.set_asset_root(str(tmp_path))
     composer.mode.setCurrentIndex(1)
     path = tmp_path / "arena.glb"
@@ -8732,10 +8708,10 @@ def test_arena_feedback_and_axis_editors_stay_synchronized(window, tmp_path):
 
 def test_stimulus_mode_and_duration_use_proportional_header_widths(window, app):
     window.page_buttons[1].click()
-    batch = window.protocol.editor.create_batch
+    open_protocol_group(window.protocol.editor, generate=True)
+    batch = window.protocol.editor.subgroup
     for width in (1350, 720):
         window.resize(width, 900)
-        window.protocol.editor.modes.setCurrentIndex(0)
         app.processEvents()
         if width == 1350:
             assert batch.composer.mode.width() > batch.composer.duration.width()
@@ -8753,7 +8729,7 @@ def test_new_stimuli_retain_state_without_changing_imported_reset(window, app):
     for preset in PRESETS:
         program = add_stimulus(blank_program(), 0, preset, ("Front",))
         assert not program.sequence[0].settings[0].reset
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     program = add_stimulus(blank_program(), 0, "Texture", ("Front",))
     epoch = program.sequence[0]
     setting = epoch.settings[0].model_copy(update={"reset": True})
@@ -8771,10 +8747,10 @@ def test_reference_advanced_controls_align_to_layer_and_retain_first(window, app
     window.page_buttons[1].click()
     editor = window.protocol.editor
     editor.set_program(blank_program())
-    composer = editor.create_batch.composer
+    open_protocol_group(editor, generate=True)
+    composer = editor.subgroup.composer
     composer.set_screens(("Front", "Bottom"))
     composer.change_type("Front", "Texture")
-    editor.modes.setCurrentIndex(0)
     row = composer.rows["Front"]
     row.advanced.setChecked(True)
     for width in (1350, 720):
@@ -8808,7 +8784,7 @@ def test_reference_advanced_controls_align_to_layer_and_retain_first(window, app
 def test_control_dialog_does_not_expand_projector_row_and_cancels(window, app):
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Texture")
     params = editor.parameters
@@ -8845,7 +8821,7 @@ def test_control_dialog_does_not_expand_projector_row_and_cancels(window, app):
 def test_control_action_is_limited_to_closed_loop_texture_and_looming(window):
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     window.protocol.session_mode.setCurrentText("Closed-loop")
     for kind in ("Texture", "Looming image", "Image", "Video", "3D arena"):
         editor.set_program(blank_program())
@@ -8860,7 +8836,7 @@ def test_fades_render_and_retime_without_changing_motion(window):
     from cephvr.gui.protocol_document import blank_program
     from cephvr.visual_stimulus.rendering.motion import evaluate_function
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Texture")
     params = editor.parameters
@@ -8894,7 +8870,7 @@ def test_reference_fades_follow_batch_duration_and_new_rows(window, tmp_path):
 
     editor = window.protocol.editor
     editor.set_program(blank_program())
-    composer = editor.create_batch.composer
+    composer = editor.subgroup.composer
     composer.set_screens(("Front",))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
     image.fill(0)
@@ -8925,7 +8901,7 @@ def test_imported_opacity_curve_is_preserved_and_not_editable(window):
     from cephvr.gui.program_editing import validate
     from cephvr.gui.protocol_document import blank_program
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Texture")
     data = editor.program.model_dump(mode="json")
@@ -8950,7 +8926,7 @@ def test_blank_layer_then_family_keeps_each_projector_layer_configuration(
     from cephvr.gui.looming_size import LoomingSize
     from cephvr.gui.protocol_groups import motion_numbers
 
-    composer = window.protocol.editor.create_batch.composer
+    composer = window.protocol.editor.subgroup.composer
     composer.set_screens(("Front", "Right"))
     composer.set_asset_root(str(tmp_path))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
@@ -8960,7 +8936,7 @@ def test_blank_layer_then_family_keeps_each_projector_layer_configuration(
     row = composer.rows["Front"]
     before = composer.program
     row.add.trigger()
-    assert row.layer.currentText() == "1 · Empty"
+    assert row.layer.currentText() == "1"
     assert row.stimulus.currentText() == "None"
     assert composer.program is before and composer.picker.dialog is None
     row.stimulus.setCurrentText("Texture")
@@ -8977,7 +8953,7 @@ def test_blank_layer_then_family_keeps_each_projector_layer_configuration(
         composer.program.sequence[0].settings[row.parameters.layer_index].instance_id
     )
     row.add.trigger()
-    assert row.layer.currentText() == "2 · Empty"
+    assert row.layer.currentText() == "2"
     row.stimulus.setCurrentText("Looming")
     row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
     looming = next(f for f in row.parameters.forms if isinstance(f, LoomingSize))
@@ -9027,14 +9003,15 @@ def test_first_source_epoch_fade_does_not_change_rest_of_batch(window):
         for i in range(3)
     ]
     editor.set_program(validate(data))
-    editor.select_epochs(((0,),))
-    editor.open_details("", 0)
-    parameters = editor.parameters
+    open_protocol_group(editor)
+    editor.select_epochs(((0, 0),))
+    parameters = editor.subgroup.composer.rows["Front"].parameters
     parameters.more.setChecked(True)
     parameters.fades.fade_in.setText("2")
     parameters.fades.mark_changed()
     assert parameters.apply()
-    epochs = editor.program.sequence
+    editor.subgroup.apply()
+    epochs = editor.program.sequence[0].body
     assert epochs[0].settings[0].opacity.kind == "keyframes"
     assert all(e.settings[0].opacity.kind == "constant" for e in epochs[1:])
 
@@ -9045,13 +9022,13 @@ def test_200_epoch_timeline_reuses_views_and_metadata_noop(window, monkeypatch):
     from cephvr.gui.protocol_nodes import edit_epoch_metadata
 
     calls = []
-    expand = timeline_views.expand_program
+    source_nodes = timeline_views.nodes_at
 
-    def counted(program, **kwargs):
+    def counted(program, scope=()):
         calls.append(program)
-        return expand(program, **kwargs)
+        return source_nodes(program, scope)
 
-    monkeypatch.setattr(timeline_views, "expand_program", counted)
+    monkeypatch.setattr(timeline_views, "nodes_at", counted)
     base = review_program()
     program = base.model_copy(
         update={
@@ -9149,8 +9126,7 @@ def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
     window.page_buttons[1].click()
     window.protocol.session_mode.setCurrentText("Closed-loop")
     editor = window.protocol.editor
-    editor.modes.setCurrentIndex(0)
-    composer = editor.create_batch.composer
+    composer = editor.subgroup.composer
     composer.set_screens(("Front", "Right"))
     composer.set_asset_root(str(tmp_path))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
@@ -9159,8 +9135,8 @@ def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
     assert image.save(str(path))
     composer.add_file("Texture", str(path), "Front")
     composer.rows["Front"].advanced.setChecked(True)
-    editor.create_batch.vary.setChecked(True)
-    editor.create_batch.add_variation()
+    editor.subgroup.vary.setChecked(True)
+    editor.subgroup.add_variation()
     window.resize(720, 900)
     QTest.qWait(30)
     app.processEvents()
@@ -9177,7 +9153,7 @@ def test_batch_variations_target_projectors_and_local_layer_ordinals(
     from cephvr.visual_stimulus.compiler.expansion import expand_program
 
     window.page_buttons[1].click()
-    create = window.protocol.editor.create_batch
+    create = window.protocol.editor.subgroup
     create.composer.set_screens(("Left", "Right"))
     create.composer.set_asset_root(str(tmp_path))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
@@ -9212,7 +9188,6 @@ def test_batch_variations_target_projectors_and_local_layer_ordinals(
     assert row.target_indices() == [2, 3]
     for width in (1350, 720):
         window.resize(width, 900)
-        window.protocol.editor.modes.setCurrentIndex(0)
         app.processEvents()
         assert (
             row.remove.mapTo(row, QPoint()).y()
@@ -9232,7 +9207,7 @@ def test_layer_actions_offer_up_down_and_preserve_projector_values(
     from cephvr.gui.projector_layers import layers_for
 
     window.page_buttons[1].click()
-    composer = window.protocol.editor.create_batch.composer
+    composer = window.protocol.editor.subgroup.composer
     composer.set_screens(("Left", "Right"))
     composer.set_asset_root(str(tmp_path))
     image = QImage(8, 8, QImage.Format.Format_RGB32)
@@ -9713,7 +9688,10 @@ def test_random_batch_values_stay_fixed_across_preview_and_save(window, app, tmp
     from cephvr.visual_stimulus.config.models.program_model import Program
 
     window.page_buttons[1].click()
-    create = window.protocol.editor.create_batch
+    from cephvr.gui.batch_create import BatchCreate
+
+    create = BatchCreate()
+    create.setParent(window)
     from PyQt6.QtGui import QImage
 
     create.composer.set_screens(("Front",))
@@ -9775,35 +9753,45 @@ def test_random_batch_values_stay_fixed_across_preview_and_save(window, app, tmp
         assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
 
 
-def test_timeline_epoch_buttons_and_keyboard_history(window, app):
+def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
     window.page_buttons[1].click()
     editor = window.protocol.editor
+    from cephvr.gui.protocol_batches import grouped_program
+
+    editor.set_program(grouped_program(editor.program))
+    editor.enter_group()
     original = editor.program
-    editor.timeline.setFocus()
+    editor.hierarchy.contents.setFocus()
     app.processEvents()
-    QTest.keyClick(editor.timeline, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
+    QTest.keyClick(
+        editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+    )
     duplicate = editor.program
-    assert len(duplicate.sequence) == len(original.sequence) + 1
-    editor.timeline.setFocus()
+    assert len(duplicate.sequence[0].body) == len(original.sequence[0].body) + 1
+    editor.hierarchy.contents.setFocus()
     app.processEvents()
-    QTest.keyClick(editor.timeline, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier)
+    QTest.keyClick(
+        editor.hierarchy.contents, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier
+    )
     assert editor.program == original
-    QTest.keyClick(editor.timeline, Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier)
+    QTest.keyClick(
+        editor.hierarchy.contents, Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier
+    )
     assert editor.program == duplicate
-    QTest.keyClick(editor.timeline, Qt.Key.Key_Backspace)
-    assert len(editor.program.sequence) == len(original.sequence)
+    QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Backspace)
+    assert len(editor.program.sequence[0].body) == len(original.sequence[0].body)
     assert not any(
         action.text() in {"Undo", "Redo"} for action in editor.epoch_menu.actions()
     )
-    editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
-    editor.timeline.choose(1, Qt.KeyboardModifier.ShiftModifier)
-    assert not editor.duplicate_epoch_button.isEnabled()
-    assert not editor.remove_epoch_button.isEnabled()
+    editor.hierarchy.contents.choose(0, Qt.KeyboardModifier.NoModifier)
+    editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.ShiftModifier)
     before = editor.program
-    QTest.keyClick(editor.timeline, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
-    QTest.keyClick(editor.timeline, Qt.Key.Key_Backspace)
+    QTest.keyClick(
+        editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+    )
+    QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Backspace)
     assert editor.program == before
-    text_field = editor.batch_edit.duration
+    text_field = editor.subgroup.composer.duration
     text_field.setText("123")
     text_field.setFocus()
     text_field.setCursorPosition(3)
@@ -9812,6 +9800,11 @@ def test_timeline_epoch_buttons_and_keyboard_history(window, app):
     QTest.keyClick(text_field, Qt.Key.Key_Backspace)
     assert text_field.text() == "12"
     assert editor.program == before
+    editor.subgroup.discard()
+    window.apply_view(review_view(Phase.RUNNING))
+    for operation in ("duplicate", "remove"):
+        editor.edit_epoch(operation)
+    assert editor.program == before
 
 
 def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
@@ -9819,7 +9812,7 @@ def test_image_fit_and_motion_are_saved_without_texture_phase(window, app):
     from cephvr.gui.protocol_document import blank_program
     from cephvr.visual_stimulus.config.models.program_model import parse_program_json
 
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(blank_program())
     editor.add_stimulus("Image")
     parameters = editor.parameters
@@ -9852,7 +9845,7 @@ def test_family_advanced_controls_preserve_hidden_state(window, app, preset, res
     program = program.model_copy(
         update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
     )
-    editor = window.protocol.editor
+    editor = ParameterDocument(window)
     editor.set_program(program)
     parameters = editor.parameters
     parameters.more.setChecked(True)
@@ -9879,11 +9872,10 @@ def test_family_advanced_controls_preserve_hidden_state(window, app, preset, res
     assert parameters.apply()
     assert editor.program.sequence[0].settings[0].reset == reset
     if preset == "3D arena":
-        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
-        row = editor.batch_edit.selection_form.composer.rows[""]
-        assert row.parameters.retain.isHidden()
-        editor.create_batch.composer.mode.setCurrentIndex(1)
-        assert editor.create_batch.composer.rows[""].parameters.retain.isHidden()
+        real_editor = window.protocol.editor
+        real_editor.set_program(program)
+        open_protocol_group(real_editor)
+        assert real_editor.subgroup.composer.rows[""].parameters.retain.isHidden()
 
 
 def test_image_fit_preview_contains_crops_and_stretches(app):
@@ -9946,52 +9938,6 @@ def test_batch_fit_choice_and_legacy_image_appearance(app):
     app.processEvents()
 
 
-def test_selected_epoch_full_form_and_scope_switching(window, app):
-    from cephvr.gui.program_editing import node_at
-    from cephvr.gui.protocol_document import review_program
-
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    editor.set_program(review_program())
-    editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
-    editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-    app.processEvents()
-    panel = editor.batch_edit
-    form = panel.selection_form
-    original = editor.program
-    assert form.isVisible() and panel.parameter_field.isHidden()
-    assert panel.duplicate_epoch_button.isVisible()
-    assert form.composer.program.sequence[0].settings == original.sequence[1].settings
-    form.composer.batch_label.setText("Pending label")
-    form.mark_changed()
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    assert panel.epoch_scope.currentData() == "timeline"
-    assert form.composer.batch_label.text() == "Pending label"
-    panel.reset.click()
-    assert form.composer.batch_label.text() == original.sequence[1].batch_label
-    form.composer.duration.setText("00:00:24")
-    form.mark_changed()
-    panel.apply_button.click()
-    assert not form.message.text()
-    changed = editor.program
-    assert changed.sequence[1].duration.duration.seconds == "24"
-    assert changed.sequence[1].epoch_id == original.sequence[1].epoch_id
-    assert changed.sequence[1].settings == original.sequence[1].settings
-    assert changed.sequence[0] == original.sequence[0]
-    assert changed.sequence[2] == original.sequence[2]
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    app.processEvents()
-    assert form.isHidden() and panel.parameter_field.isVisible()
-    assert panel.epoch_actions.isHidden()
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("timeline"))
-    app.processEvents()
-    assert editor.selected_paths == ((1,),)
-    assert form.isVisible() and panel.duplicate_epoch_button.isVisible()
-    assert node_at(form.composer.program, (0,)).epoch_id == changed.sequence[1].epoch_id
-    editor.undo()
-    assert editor.program == original
-
-
 def test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs(window):
     from cephvr.gui.program_editing import node_at
     from cephvr.gui.projector_layers import layers_for
@@ -10000,230 +9946,20 @@ def test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs(win
     editor = window.protocol.editor
     editor.set_program(review_program())
     editor.timeline.set_screens(("Left", "Right"))
-    editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
+    open_protocol_group(editor)
+    editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
     original = editor.program
-    form = editor.batch_edit.selection_form
+    form = editor.subgroup
     form.composer.change_type("Left", "None")
     form.apply()
-    assert not form.message.text()
+    assert not form.notice.text()
     updated = editor.program
-    node = node_at(updated, (1,))
+    node = node_at(updated, (0, 1))
     assert layers_for(updated, node, "Left") == []
     assert len(layers_for(updated, node, "Right")) == 1
-    assert updated.sequence[0] == original.sequence[0]
-    assert updated.sequence[2] == original.sequence[2]
-    assert node.epoch_id == original.sequence[1].epoch_id
-
-
-def test_target_epoch_filters_and_invalid_index(window, app):
-    from cephvr.gui.program_editing import node_at
-    from cephvr.gui.protocol_document import review_program
-
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    original = review_program()
-    editor.set_program(original)
-    editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-    panel = editor.batch_edit
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    targets = panel.targets
-    assert panel.epoch_scope.currentText() == "Target epochs"
-    assert editor.selected_paths == ((0,), (1,), (2,))
-    assert targets.label_field.isHidden() and targets.index_field.isHidden()
-    targets.filter.setCurrentIndex(2)
-    assert targets.index_field.isVisible() and targets.label_field.isHidden()
-    assert panel.apply_button.isEnabled()
-    targets.index.setText("2")
-    targets.index.textEdited.emit("2")
-    assert editor.selected_paths == ((1,),)
-    assert panel.apply_button.isEnabled()
-    check, duration = panel.fields["Duration"]
-    check.setChecked(True)
-    duration.setText("00:00:24")
-    panel.apply()
-    assert node_at(editor.program, (1,)).duration.duration.seconds == "24"
-    assert editor.program.sequence[0] == original.sequence[0]
-    assert editor.program.sequence[2] == original.sequence[2]
-    current = editor.program
-    for invalid in ("4", "0", "-1", "1.5", "abc", ""):
-        targets.index.setText(invalid)
-        targets.index.textEdited.emit(invalid)
-        assert not targets.message.text()
-        assert panel.apply_button.isEnabled()
-        assert panel.message.dialog is None
-        panel.apply_button.click()
-        assert panel.message.dialog is not None
-        assert panel.message.dialog.text()
-        panel.message.dialog.accept()
-        assert editor.program == current
-    targets.index.setText("3")
-    targets.index.textEdited.emit("3")
-    assert not targets.message.text()
-    assert editor.selected_paths == ((2,),)
-    targets.filter.setCurrentIndex(0)
-    assert editor.selected_paths == ((0,), (1,), (2,))
-    assert panel.apply_button.isEnabled()
-    app.processEvents()
-
-
-def test_target_epoch_labels_refresh_and_preserve_other_epochs(window):
-    from cephvr.gui.program_editing import validate
-    from cephvr.gui.protocol_document import review_program
-
-    editor = window.protocol.editor
-    data = review_program().model_dump(mode="json")
-    data["sequence"][0]["batch_label"] = "Rest"
-    data["sequence"][1]["batch_label"] = "Flow"
-    data["sequence"][2]["batch_label"] = "Rest"
-    original = validate(data)
-    editor.set_program(original)
-    editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-    panel = editor.batch_edit
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    targets = panel.targets
-    targets.filter.setCurrentIndex(1)
-    assert [targets.labels.itemText(i) for i in range(targets.labels.count())] == [
-        "Flow",
-        "Rest",
-    ]
-    targets.labels.setCurrentText("Rest")
-    assert panel.paths == ((0,), (2,))
-    check, duration = panel.fields["Duration"]
-    check.setChecked(True)
-    duration.setText("00:00:30")
-    panel.apply()
-    assert editor.program.sequence[0].duration.duration.seconds == "30"
-    assert editor.program.sequence[2].duration.duration.seconds == "30"
-    assert editor.program.sequence[1] == original.sequence[1]
-    editor.set_program(review_program())
-    assert targets.labels.count() == 0
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    assert not targets.message.text()
-    assert targets.message.isHidden()
-    assert panel.message.dialog is None
-    assert panel.apply_button.isEnabled()
-    panel.apply_button.click()
-    assert panel.message.dialog is not None
-    assert "No epochs" in panel.message.dialog.text()
-    panel.message.dialog.accept()
-
-
-def test_epoch_edit_rows_duration_format_and_action_placement(window, app):
-    from cephvr.gui.protocol_document import review_program
-
-    window.resize(1280, 1050)
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    editor.set_program(review_program())
-    editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
-    editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-    panel = editor.batch_edit
-    form = panel.selection_form
-    app.processEvents()
-    assert panel.apply_button.text() == "Apply"
-    assert panel.reset.text() == "Discard"
-    assert panel.apply_button.mapTo(editor.settings_card, QPoint()).y() < (
-        form.composer.rows["Front"].mapTo(editor.settings_card, QPoint()).y()
-    )
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    panel.targets.filter.setCurrentIndex(2)
-    panel.targets.index.setText("2")
-    panel.targets.index.textEdited.emit("2")
-    app.processEvents()
-    positions = [
-        control.mapTo(panel, QPoint(0, 0)).y()
-        for control in (panel.epoch_scope, panel.targets.filter, panel.targets.index)
-    ]
-    assert max(positions) - min(positions) <= 1
-    assert panel.parameter.mapTo(panel, QPoint(0, 0)).y() == (
-        panel.duration.mapTo(panel, QPoint(0, 0)).y()
-    )
-    assert panel.duration.text() == "00:00:20"
-    panel.targets.filter.setCurrentIndex(0)
-    assert panel.duration.text() == ""
-    assert panel.duration.placeholderText() == "hh:mm:ss"
-    assert "Mixed durations" in panel.duration.toolTip()
-    assert not panel.dirty
-    assert panel.apply_button.text() == "Apply" and panel.reset.text() == "Discard"
-    panel.duration.setText("00:00:20.125")
-    panel.duration.textEdited.emit("00:00:20.125")
-    panel.apply()
-    assert not panel.message.text()
-    assert all(
-        epoch.duration.duration.seconds == "20.125" for epoch in editor.program.sequence
-    )
-
-
-def test_epoch_actions_stay_fixed_and_fields_align_across_modes(window, app):
-    from cephvr.gui.program_editing import validate
-    from cephvr.gui.protocol_document import review_program
-
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    data = review_program().model_dump(mode="json")
-    data["sequence"][1]["batch_label"] = "Flow"
-    editor.set_program(validate(data))
-    editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
-    for width in (1280, 720):
-        window.resize(width, 1050)
-        editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
-        app.processEvents()
-        panel = editor.batch_edit
-        assert panel.batch_actions.parentWidget() is editor.settings_card
-        assert (
-            abs(
-                panel.apply_button.mapTo(editor.settings_card, QPoint()).y()
-                - editor.modes.mapTo(editor.settings_card, QPoint()).y()
-            )
-            <= 2
-        )
-        assert not any(
-            button.text() == "All parameters…"
-            for button in panel.findChildren(QPushButton)
-        )
-        assert not any(
-            label.text() == "Projector"
-            for label in panel.projector_header.findChildren(QLabel)
-        )
-        position = panel.apply_button.mapTo(editor.settings_card, QPoint(0, 0))
-        reset_position = panel.reset.mapTo(editor.settings_card, QPoint(0, 0))
-        for mode in (0, 1, 2):
-            panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-            panel.targets.filter.setCurrentIndex(mode)
-            if mode == 2:
-                panel.targets.index.setText("2")
-                panel.targets.index.textEdited.emit("2")
-            app.processEvents()
-            assert (
-                panel.apply_button.mapTo(editor.settings_card, QPoint(0, 0)) == position
-            )
-            assert (
-                panel.reset.mapTo(editor.settings_card, QPoint(0, 0)) == reset_position
-            )
-            if mode:
-                choice = panel.targets.labels if mode == 1 else panel.targets.index
-                assert panel.epoch_scope.height() == choice.height()
-                assert (
-                    choice.mapTo(panel, QPoint()).x()
-                    - (
-                        panel.targets.filter.mapTo(panel, QPoint()).x()
-                        + panel.targets.filter.width()
-                    )
-                    >= 12
-                )
-                assert panel.epoch_scope.mapTo(panel, QPoint(0, 0)).y() == (
-                    choice.mapTo(panel, QPoint(0, 0)).y()
-                )
-        panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("timeline"))
-        app.processEvents()
-        form = panel.selection_form
-        assert panel.apply_button.mapTo(editor.settings_card, QPoint(0, 0)) == position
-        assert panel.reset.mapTo(editor.settings_card, QPoint(0, 0)) == reset_position
-        assert form.composer.batch_label.height() == panel.epoch_scope.height()
-        assert form.composer.mode.mapTo(panel, QPoint(0, 0)).x() == (
-            panel.epoch_scope.mapTo(panel, QPoint(0, 0)).x()
-        )
-        assert form.width() <= window.protocol.config_scroll.viewport().width()
+    assert updated.sequence[0].body[0] == original.sequence[0].body[0]
+    assert updated.sequence[0].body[2] == original.sequence[0].body[2]
+    assert node.epoch_id == original.sequence[0].body[1].epoch_id
 
 
 def test_managed_mcu_pending_completion_and_final_status(
@@ -10470,75 +10206,6 @@ def test_managed_camera_projection_distinguishes_open_capture_and_cleanup(
     panel.connect_button.click()
     assert calls[-1][1]["kind"] == rpc.CAMERA_COMMAND_KIND_STOP_PREVIEW
     binding.disconnected()
-
-
-@pytest.mark.parametrize(
-    ("preset", "expected"),
-    (
-        ("Texture", {"Duration", "Asset", "Speed", "Direction", "Rotation"}),
-        ("Image", {"Duration", "Asset", "Fit", "Speed", "Direction"}),
-        (
-            "Looming image",
-            {"Duration", "Asset", "Start size", "End size", "Growth duration"},
-        ),
-        ("Video", {"Duration", "Asset", "Playback start", "At end"}),
-        ("3D arena", {"Duration", "Asset", "Longitudinal", "Lateral", "Angular"}),
-    ),
-)
-def test_batch_edit_parameters_match_generation_and_apply_family_options(
-    window, app, preset, expected
-):
-    from cephvr.gui.epoch_batch import parameter_value
-    from cephvr.gui.protocol_document import blank_program
-    from cephvr.gui.protocol_nodes import edit_epoch
-    from cephvr.gui.stimulus_presets import add_stimulus
-
-    window.page_buttons[1].click()
-    editor = window.protocol.editor
-    program = add_stimulus(
-        blank_program(), 0, preset, () if preset == "3D arena" else ("Left",)
-    )
-    program, _ = edit_epoch(program, 0, "duplicate")
-    editor.set_program(program)
-    panel = editor.batch_edit
-    panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
-    panel.targets.filter.setCurrentIndex(2)
-    panel.targets.index.setText("1")
-    panel.targets.index.textEdited.emit("1")
-    assert {
-        panel.parameter.itemText(i) for i in range(panel.parameter.count())
-    } == expected
-    assert panel.parameter.findText("Opacity") < 0
-    assert panel.parameter.findText("Angular speed") < 0
-    if preset == "Video":
-        panel.parameter.setCurrentText("At end")
-        row = panel.rows["Left"]
-        assert row.fit.isVisible() and row.value.isHidden()
-        row.fit.setCurrentText("Hold final frame")
-        panel.apply_button.click()
-        assert editor.program.sequence[0].settings[0].end_behavior == "hold_final_frame"
-        assert editor.program.sequence[1] == program.sequence[1]
-    elif preset == "3D arena":
-        for name, gain in (
-            ("Longitudinal", "0.5"),
-            ("Lateral", "0.25"),
-            ("Angular", "2"),
-        ):
-            panel.parameter.setCurrentText(name)
-            row = panel.rows[""]
-            row.value.setText(gain)
-            row.value.textEdited.emit(gain)
-            panel.apply_button.click()
-            assert not panel.message.text()
-            assert parameter_value(
-                editor.program.sequence[0].settings[0].model_dump(mode="json"), name
-            ) == float(gain)
-            assert editor.program.sequence[1] == program.sequence[1]
-        assert {c.channel_id for c in editor.program.input_channels} == {
-            "forward_drive",
-            "sideways_drive",
-            "turn_drive",
-        }
 
 
 @pytest.mark.parametrize("holder", ["", "other-client", "this-gui"])
@@ -11045,9 +10712,15 @@ def test_older_tracking_crop_fields_migrate_without_losing_annotations(
 
 
 @pytest.mark.parametrize("width", [1280, 720])
+@pytest.mark.parametrize("runtime_authority", [False, True])
 def test_review_and_runtime_share_page_elements_and_card_layouts(
-    app: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+    app: QApplication,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    width: int,
+    runtime_authority: bool,
 ) -> None:
+    from PyQt6.QtCore import QCoreApplication, QEvent
     from PyQt6.QtWidgets import QAbstractButton, QComboBox, QLineEdit
 
     from cephvr.gui.cameras import CamerasPanel
@@ -11063,14 +10736,21 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
     # Exercise both real composition paths, without SDK discovery or controller work.
     monkeypatch.setattr(CamerasPanel, "refresh_inventory", lambda self: None)
     monkeypatch.setattr(MicrocontrollerPanel, "scan_ports", lambda self: None)
-    monkeypatch.setattr(ProjectorsPanel, "discover_displays", lambda self: None)
+    discover_displays = ProjectorsPanel.discover_displays
+    monkeypatch.setattr(
+        ProjectorsPanel,
+        "discover_displays",
+        lambda self: (
+            discover_displays(self) if self.review_displays is not None else None
+        ),
+    )
     monkeypatch.setattr(ControllerBridge, "start", lambda self: None)
     review = ReviewDashboardWindow(
         sample=True,
         settings=QSettings(str(tmp_path / "review.ini"), QSettings.Format.IniFormat),
     )
     runtime = ManagedDashboardWindow(
-        sample=True,
+        sample=False,
         settings=QSettings(str(tmp_path / "runtime.ini"), QSettings.Format.IniFormat),
     )
     controls = ReviewControls(review, simulate_projectors=True)
@@ -11078,16 +10758,28 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
         Principal("gui", str(uuid4()), "test-token"), 50051, 1024, (0,)
     )
     manager = ManagedGui(runtime, bridge)
+    runtime.devices.cameras.drafts = [
+        replace(camera, values=dict(camera.values))
+        for camera in review.devices.cameras.drafts
+    ]
+    runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
     projectors = runtime.devices.projectors
     projectors.review_displays = review.devices.projectors.review_displays
     projectors.assignments.update(review.devices.projectors.assignments)
     projectors.request("Refresh displays")
-    runtime.apply_view(review.dashboard.view)
+    for panel in (review.devices.projectors, projectors):
+        for key in panel.keys:
+            panel.set_participation(key, True)
 
     def signature(page: QWidget) -> tuple:
         return (
             tuple(card.caption.text() for card in page.findChildren(Card)),
-            tuple(control.text() for control in page.findChildren(QAbstractButton)),
+            tuple(
+                control.text()
+                for control in page.findChildren(QAbstractButton)
+                if control is not runtime.dashboard.control_button
+                and control is not review.dashboard.control_button
+            ),
             tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
             tuple(
                 tuple(editor.itemText(i) for i in range(editor.count()))
@@ -11096,17 +10788,41 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
         )
 
     try:
+        runtime.devices.cameras.populate_inventory()
+        runtime.devices.cameras.load_selected()
+        runtime.devices.sync_cameras()
+        runtime.snapshots.restore(
+            runtime.snapshots.validate(review.snapshots.capture())
+        )
+        runtime.apply_view(
+            replace(review.dashboard.view, sample=False, connected=True)
+            if runtime_authority
+            else review.dashboard.view
+        )
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         for window in (review, runtime):
             window.resize(width, 940)
             window.show()
+        assert not review.dashboard.control_button.isVisible()
+        assert runtime.dashboard.control_button.isVisible() == runtime_authority
+        if runtime_authority:
+            assert runtime.dashboard.control_button.text() == "Control held"
+            assert not runtime.dashboard.control_button.isEnabled()
         assert [b.text() for b in review.page_buttons] == [
             b.text() for b in runtime.page_buttons
         ]
-        assert signature(review.centralWidget()) == signature(runtime.centralWidget())
+        for review_items, runtime_items in zip(
+            signature(review.centralWidget()),
+            signature(runtime.centralWidget()),
+            strict=True,
+        ):
+            assert len(review_items) == len(runtime_items)
+            assert [
+                (left, right)
+                for left, right in zip(review_items, runtime_items, strict=True)
+                if left != right
+            ] == []
         selections = [(0, None, None)]
-        selections += [
-            (1, None, i) for i in range(review.protocol.editor.modes.count())
-        ]
         selections += [(3, None, i) for i in range(review.tracking.tabs.count())]
         selections += [(2, i, None) for i in range(4)]
         selections += [
@@ -11119,9 +10835,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
                     window.devices.tabs.setCurrentIndex(subtab)
                 if inner_tab is not None:
                     tabs = (
-                        window.protocol.editor.modes
-                        if page == 1
-                        else window.tracking.tabs
+                        window.tracking.tabs
                         if page == 3
                         else window.devices.projectors.setup_tabs
                     )
@@ -11135,14 +10849,28 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
             )
             assert signature(review_page) == signature(runtime_page)
 
-            def visible_cards(parent: QWidget) -> list:
+            def visible_cards(parent: QWidget, page_index: int) -> list:
                 return [
-                    (card.caption.text(), card.geometry())
+                    (
+                        card.caption.text(),
+                        # Runtime authority controls add height only to Dashboard's
+                        # left column; compare the remaining cards in their own frame.
+                        QRect(card.x(), 0, card.width(), card.height())
+                        if runtime_authority
+                        and page_index == 0
+                        and card in parent.columns[0].findChildren(Card)
+                        else card.geometry(),
+                    )
                     for card in parent.findChildren(Card)
                     if card.isVisible()
+                    and not (
+                        runtime_authority
+                        and page_index == 0
+                        and card.caption.text() == "System controls"
+                    )
                 ]
 
-            assert visible_cards(review_page) == visible_cards(runtime_page)
+            assert visible_cards(review_page, page) == visible_cards(runtime_page, page)
     finally:
         # Avoid persistence/controller shutdown dialogs in this isolated layout check.
         review.tracking.annotation.close()
@@ -11435,6 +11163,7 @@ def test_projector_configuration_json_restores_all_settings_without_screen_mappi
     from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_pb
 
     panel = window.devices.projectors
+    assert panel.calibration_files.load_button.text() == "Load…"
     panel.assignments = {"current-left": "Left", "current-front": "Front"}
     panel.participation = {"current-left": True, "current-front": False}
     panel.keys = list(panel.assignments)
@@ -11530,12 +11259,165 @@ def test_projector_configuration_invalid_settings_preserve_complete_draft(
         }
     text = json.dumps(payload)
     if invalid == "duplicate":
-        text = text.replace('"version": 4', '"version": 4, "version": 4')
+        version = payload["version"]
+        text = text.replace(
+            f'"version": {version}', f'"version": {version}, "version": {version}'
+        )
     path = tmp_path / "invalid.json"
     path.write_text(text)
     panel.calibration_files.load_path(str(path))
     assert panel.calibration_files.snapshot() == before
     assert "load failed" in panel.console.toPlainText()
+
+
+def test_photodiode_frame_pulse_and_blackout_files_preserve_old_drafts(
+    window, tmp_path
+):
+    panel = window.devices.projectors
+    timing = panel.timing
+    assert timing.blackouts.table.horizontalHeader().isHidden()
+    timing.pulse.setChecked(True)
+    for key, value in dict(X=100, Y=200, Width=180, Height=120).items():
+        timing.fields[key].setText(str(value))
+    for key, value in dict(X=20, Y=30, Width=40, Height=30).items():
+        timing.pulse_fields[key].setText(str(value))
+    timing.blackouts.add(dict(face="Front", x=10, y=20, width=100, height=50))
+    assert not timing.blackouts.table.horizontalHeader().isHidden()
+    expected = panel.calibration_files.snapshot()
+    path = tmp_path / "overlays.json"
+    panel.calibration_files.save_path(str(path))
+    assert path.is_file()
+    timing.blackouts.remove(timing.blackouts.rows[0])
+    assert timing.blackouts.table.horizontalHeader().isHidden()
+    timing.pulse_fields["Width"].clear()
+    panel.calibration_files.load_path(str(path))
+    assert not timing.blackouts.table.horizontalHeader().isHidden()
+    assert panel.calibration_files.snapshot() == expected
+    patch = timing.patch_draft()
+    assert patch == {
+        "background_rect": dict(x=100, y=200, width=180, height=120),
+        "rect": dict(x=120, y=230, width=40, height=30),
+    }
+    overlays = timing.preview_overlays({"Front": (1000, 1000)}, "Front")
+    assert overlays["Front"][0] == [(0.01, 0.02, 0.1, 0.05), (0.1, 0.2, 0.18, 0.12)]
+    assert overlays["Front"][1] == (0.12, 0.23, 0.04, 0.03)
+    timing.pulse_fields["Width"].setText("200")
+    with pytest.raises(ValueError, match="fit inside"):
+        timing.patch_draft()
+    with pytest.raises(ValueError, match="fit inside"):
+        panel.calibration_files.validate(panel.calibration_files.snapshot())
+    legacy_square = dict(expected, version=6, settings=dict(expected["settings"]))
+    legacy_square["settings"]["pulse_rect"] = legacy_square["settings"].pop(
+        "frame_rect"
+    )
+    legacy_square["settings"]["pulse_square"] = dict(X=20, Y=30, Size=40)
+    panel.calibration_files.apply_snapshot(legacy_square)
+    assert timing.pulse_fields["Width"].text() == "40"
+    assert timing.pulse_fields["Height"].text() == "40"
+    before = panel.calibration_files.snapshot()
+    legacy_square["settings"]["pulse_square"]["Size"] = 200
+    with pytest.raises(ValueError, match="fit inside"):
+        panel.calibration_files.apply_snapshot(legacy_square)
+    assert panel.calibration_files.snapshot() == before
+    legacy = dict(expected, version=5, settings=dict(expected["settings"]))
+    legacy["settings"]["pulse_rect"] = legacy["settings"].pop("frame_rect")
+    legacy["settings"].pop("blackout_zones")
+    panel.calibration_files.apply_snapshot(legacy)
+    assert not timing.blackouts.rows
+    assert timing.blackouts.table.horizontalHeader().isHidden()
+    assert timing.patch_draft() == {
+        "rect": dict(x=100, y=200, width=180, height=120),
+        "background_rect": None,
+    }
+    window.apply_view(review_view(Phase.RUNNING))
+    timing.blackouts.add()
+    assert not timing.blackouts.rows
+
+
+@pytest.mark.parametrize("width", [1280, 720])
+def test_photodiode_controls_fit_with_growing_blackouts(window, app, width):
+    panel = window.devices.projectors
+    window.page_buttons[2].click()
+    window.devices.tabs.setCurrentIndex(2)
+    panel.setup_tabs.setCurrentIndex(1)
+    panel.timing.pulse.setChecked(True)
+    definition = panel.timing.definition
+    assert definition.columnCount() == 5
+    assert definition.rowCount() == 2
+    assert [definition.horizontalHeaderItem(i).text() for i in range(1, 5)] == [
+        "Origin X",
+        "Origin Y",
+        "Width",
+        "Height",
+    ]
+    assert [definition.item(i, 0).text() for i in range(2)] == [
+        "Frame",
+        "Pulse",
+    ]
+    window.resize(width, 940)
+    for count in (0, 6):
+        for _ in range(count):
+            panel.timing.blackouts.add(
+                dict(face="Front", x=0, y=0, width=10, height=10)
+            )
+        for _ in range(5):
+            app.processEvents()
+        for editor in (
+            panel.timing.target,
+            panel.timing.mode,
+            *panel.timing.fields.values(),
+            *panel.timing.pulse_fields.values(),
+        ):
+            assert editor.parentWidget().rect().contains(editor.geometry())
+        page = panel.setup_pages.currentWidget()
+        assert page.height() >= page.minimumSizeHint().height()
+
+
+def test_planning_preview_keeps_square_visible_over_blackout(app):
+    from PyQt6.QtGui import QColor
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.trial_preview_canvas import PreviewCanvas
+    from cephvr.gui.trial_preview_media import PreviewMedia
+    from cephvr.gui.trial_preview_surfaces import PreviewGeometry, PreviewSurface
+
+    surface = PreviewSurface(
+        100,
+        100,
+        blackout_zones=((0.1, 0.1, 0.8, 0.8),),
+        marker_rect=(0.4, 0.4, 0.2, 0.2),
+    )
+    canvas = PreviewCanvas(
+        "Front",
+        PreviewMedia(blank_program(), "", None),
+        PreviewGeometry({"Front": surface}, None),
+    )
+    canvas.background = QColor("red")
+    image = canvas.frame_image()
+    assert image.pixelColor(image.width() // 2, image.height() // 2) == QColor("white")
+    assert image.pixelColor(image.width() // 4, image.height() // 2) == QColor("black")
+    assert image.pixelColor(0, 0) == QColor("red")
+    canvas.deleteLater()
+    app.processEvents()
+
+
+def test_authoritative_photodiode_area_installs_relative_square_and_zones(window):
+    timing = window.devices.projectors.timing
+    patch = dict(
+        background_rect=dict(x=100, y=200, width=180, height=120),
+        rect=dict(x=120, y=230, width=40, height=40),
+    )
+    timing.install_overlays(
+        {"photodiode_patch": patch},
+        {"output": "Front"},
+        {"output": {"blackout_zones": [dict(x=5, y=10, width=15, height=20)]}},
+    )
+    assert timing.patch_draft() == patch
+    assert timing.blackouts.snapshot() == [
+        dict(face="Front", x=5, y=10, width=15, height=20)
+    ]
+    with pytest.raises(ValueError, match="positive"):
+        timing.preview_overlays({"Front": (0, 0)}, None)
 
 
 def test_legacy_numeric_projector_json_preserves_synchronization(
@@ -11554,7 +11436,7 @@ def test_legacy_numeric_projector_json_preserves_synchronization(
     assert panel.rig_editor.fields["width"].text() == "200"
     assert panel.timing.pulse.isChecked()
     assert panel.timing.mode.currentText() == "All displays VSync"
-    assert panel.calibration_files.snapshot()["version"] == 4
+    assert panel.calibration_files.snapshot()["version"] == 7
 
 
 def test_portable_screen_profile_rebinds_native_properties_and_preserves_coverage(
@@ -11610,8 +11492,32 @@ def test_authoritative_projector_install_clears_previous_profile_on_empty_state(
     assert panel._profile_outputs == []
 
 
-def test_projector_reference_measurements_derive_distance_and_roundtrip(window):
+def test_projector_reference_measurements_derive_distance_and_roundtrip(
+    window, tmp_path
+):
+    import json
+
+    from cephvr.gui.calibration_profile import reference_bar_config
+
     panel = window.devices.projectors
+    table = panel.measurements.table
+    assert panel.screen_editor.fields["Front", "throw"].isHidden()
+    assert panel.screen_editor.fields["Front", "throw"].isReadOnly()
+    assert panel.screen_editor.table.columnCount() == 4
+    assert [
+        table.horizontalHeaderItem(i).text() for i in range(table.columnCount())
+    ] == [
+        "Screen",
+        "Measured X / Y (mm)",
+        "X / Y (mm/px)",
+    ]
+    assert not any(
+        "Launch calibration and measure" in caption.text()
+        for caption in panel.measurements.findChildren(QLabel)
+    )
+    x_field = panel.measurements.fields["Front", "reference_x_mm"]
+    y_field = panel.measurements.fields["Front", "reference_y_mm"]
+    assert x_field.parentWidget() is y_field.parentWidget()
     panel.display_pixels = {"reference-test": (1280, 720)}
     panel.assignments["reference-test"] = "Front"
     panel.screen_editor.fields["Front", "throw"].setText("1.5")
@@ -11623,13 +11529,50 @@ def test_projector_reference_measurements_derive_distance_and_roundtrip(window):
     assert float(distance.text()) == pytest.approx(960)
     assert panel.measurements.scales["Front"].text() == "0.5 / 0.5"
     snapshot = panel.calibration_files.snapshot()
-    assert snapshot["version"] == 4
+    assert snapshot["version"] == 7
     assert snapshot["values"]["screens.Front.reference_width_px"] == 1280
     panel.measurements.fields["Front", "reference_x_mm"].setText("200")
     panel.calibration_files.apply_snapshot(snapshot)
     panel.update_geometry()
     assert float(distance.text()) == pytest.approx(960)
     assert panel.calibration_files.snapshot() == snapshot
+    configured = json.loads(json.dumps(snapshot))
+    configured["values"]["screens.Front.reference_x_px"] = 200
+    configured["values"]["screens.Front.reference_y_px"] = 100
+    path = tmp_path / "bars.json"
+    path.write_text(json.dumps(configured), encoding="utf-8")
+    panel.calibration_files.load_path(str(path))
+    assert reference_bar_config(
+        panel.calibration_files.calibration_snapshot(), "Front", 1280, 720
+    ) == {
+        "x_length_px": 200,
+        "y_length_px": 100,
+    }
+    assert panel.measurements.scales["Front"].text() == "0.8 / 0.9"
+    assert float(distance.text()) == pytest.approx(1536)
+    panel.screen_editor.fields["Front", "throw"].clear()
+    assert panel.measurements.scales["Front"].text() == "0.8 / 0.9"
+    assert distance.text() == ""
+    legacy = json.loads(json.dumps(snapshot))
+    legacy["version"] = 4
+    legacy["settings"]["pulse_rect"] = legacy["settings"].pop("frame_rect")
+    legacy["settings"].pop("blackout_zones")
+    legacy["values"] = {
+        key: value
+        for key, value in legacy["values"].items()
+        if key.rsplit(".", 1)[-1] not in {"reference_x_px", "reference_y_px"}
+    }
+    panel.calibration_files.apply_snapshot(legacy)
+    panel.update_geometry()
+    assert panel.calibration_files.snapshot() == snapshot
+    for invalid_length in (1.5, 1281):
+        invalid = json.loads(json.dumps(snapshot))
+        invalid["values"]["screens.Front.reference_x_px"] = invalid_length
+        with pytest.raises(ValueError):
+            panel.calibration_files.apply_snapshot(invalid)
+        assert panel.calibration_files.snapshot() == snapshot
+    panel.calibration_files.apply_snapshot(snapshot)
+    panel.update_geometry()
     panel.display_pixels["reference-test"] = (1920, 1080)
     panel.update_geometry()
     assert distance.text() == ""
@@ -11645,6 +11588,8 @@ def test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fiel
     panel = window.devices.projectors
     old = panel.calibration_files.snapshot()
     old["version"] = 3
+    old["settings"]["pulse_rect"] = old["settings"].pop("frame_rect")
+    old["settings"].pop("blackout_zones")
     old["values"] = {
         key: value
         for key, value in old["values"].items()
@@ -11709,6 +11654,8 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
     for key, value in dict(
         reference_width_px=1280,
         reference_height_px=720,
+        reference_x_px=200,
+        reference_y_px=100,
         reference_x_mm=160,
         reference_y_mm=90,
         throw=1.5,
@@ -11717,12 +11664,16 @@ def test_measured_affine_profiles_preserve_assets_and_match_preview(tmp_path):
     document = measured_profiles(
         profile.model_dump(mode="json"), calibration, str(tmp_path)
     )
+    front_output = next(
+        o for o in document["outputs"] if o["output_id"] == "calibration_front"
+    )
+    assert front_output["reference_bars"] == {"x_length_px": 200, "y_length_px": 100}
     front = next(m for m in document["mappings"] if m["surface_id"] == "front")
     generated = tmp_path / front["geometric_profile"]["logical_path"]
     assert generated != original
     mesh = json.loads(generated.read_text(encoding="utf-8"))
     assert mesh["vertices"][0]["xy"] == pytest.approx(
-        [0.5 - 90 / 640 / 2, 0.5 - 80 / 360 / 2]
+        [0.5 - 90 / 1024 / 2, 0.5 - 80 / 648 / 2]
     )
     draft = {
         k.removeprefix("screens.Front."): str(v)
@@ -11792,3 +11743,972 @@ async def test_gui_firmware_dispatch_pins_selected_sketch_or_image(tmp_path, suf
     assert request.expected_configuration_revision == 4
     assert request.firmware_path == str(path)
     assert request.firmware_sha256 == expected.digest
+
+
+def test_group_actions_preserve_contents_selection_and_history(window, tmp_path):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(review_program()))
+    original = editor.program
+    assert editor.path == (0, 0)
+    editor.add_group_button.click()
+    assert len(editor.program.sequence) == 2 and editor.path == (1, 0)
+    assert editor.program.sequence[0] == original.sequence[0]
+    added = editor.snapshot()
+    editor.remove_group_button.click()
+    assert editor.program.sequence == original.sequence
+    assert editor.path == (0, 0)
+    editor.undo()
+    assert editor.snapshot() == added
+    path = tmp_path / "groups.json"
+    window.protocol.save_program(str(path))
+    assert parse_program_json(path.read_text(), max_bytes=1_048_576) == added.program
+    editor.undo()
+    assert editor.program == original
+
+
+def test_group_actions_obey_authority_and_pending_validation(window):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.protocol_nodes import edit_epoch
+
+    editor = window.protocol.editor
+    editor.set_program(edit_epoch(grouped_program(review_program()), 0, "duplicate")[0])
+    original = editor.program
+    editor.setEnabled(False)
+    editor.edit_group("remove")
+    editor.add_group()
+    assert editor.program == original
+    editor.setEnabled(True)
+    editor.subgroup.composer.duration.setText("invalid")
+    editor.edit_group("remove")
+    editor.add_group()
+    assert editor.program == original
+    assert not editor.histories[editor.index].past
+
+
+def test_group_actions_keep_one_group_and_noop_history(window):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(review_program()))
+    original = editor.snapshot()
+    assert not hasattr(editor, "shuffle_trial_button")
+    assert not editor.remove_group_button.isEnabled()
+    editor.edit_group("earlier")
+    assert editor.snapshot() == original
+    assert not editor.histories[editor.index].past
+
+
+@pytest.mark.parametrize("reload", [False, True])
+def test_rejected_controller_configuration_restores_edit_tracking(window, reload):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_configuration import (
+        ConfigurationPages,
+        ManagedConfiguration,
+    )
+
+    manager = ManagedConfiguration(
+        ConfigurationPages(
+            window.dashboard,
+            window.protocol,
+            window.recordings,
+            window.devices.cameras,
+            window.devices.projectors,
+            window.tracking,
+        )
+    )
+    state = pb.Snapshot(controller_generation="controller")
+    state.configuration.revision = state.configuration_values.revision = 1
+    assert manager.install(state)
+    broken = pb.Snapshot.FromString(state.SerializeToString())
+    broken.configuration.revision = broken.configuration_values.revision = 2
+    broken.configuration_values.current.trials.add(
+        trial_number=1
+    ).stimulus.program.program_json = "invalid"
+    original = window.protocol.editor.program
+    if reload:
+        manager.stale = True
+        assert not manager.reload(broken)
+        assert "Trial 1 source is invalid" in manager.last_error
+    else:
+        with pytest.raises(ValueError, match="Trial 1 source is invalid"):
+            manager.install(broken)
+    assert not manager._installing
+    assert manager.revision == 1
+    assert window.protocol.editor.program == original
+    before = manager.edit_serial
+    window.dashboard.subject_id.textEdited.emit("still editable")
+    assert manager.dirty and manager.edit_serial == before + 1
+    assert manager.reload(state)
+    assert not manager.stale and not manager.dirty and not manager.last_error
+
+
+def test_calibration_adjustment_steps_preserve_drafts(app):
+    from cephvr.gui.projector_calibration import CalibrationTable
+    from cephvr.gui.projector_geometry import FACES
+
+    drafts = {face: {} for face in FACES}
+    table = CalibrationTable(drafts)
+    edits = []
+    table.adjustments_changed.connect(lambda face, key: edits.append((face, key)))
+    for key, initial, increased, decreased in (
+        ("scale_u", "1", "1.01", "1.00"),
+        ("scale_v", "0.8", "0.81", "0.80"),
+        ("offset_x", "0", "0.1", "0.0"),
+        ("offset_y", "-1.2", "-1.1", "-1.2"),
+    ):
+        editor = table.controls["Front", key]
+        editor.setText(initial)
+        QTest.keyClick(editor, Qt.Key.Key_Up)
+        assert editor.text() == increased
+        assert drafts["Front"][key] == increased
+        assert edits[-1] == ("Front", key)
+        QTest.keyClick(editor, Qt.Key.Key_Down)
+        assert editor.text() == decreased
+    scale = table.controls["Front", "scale_u"]
+    scale.setText("0.812345")
+    assert scale.text() == "0.812345"  # Loading does not round saved precision.
+    for partial in ("-", "nan", "inf"):
+        scale.setText(partial)
+        count = len(edits)
+        QTest.keyClick(scale, Qt.Key.Key_Up)
+        assert scale.text() == partial and len(edits) == count
+    scale.setText("0.01")
+    QTest.keyClick(scale, Qt.Key.Key_Down)
+    assert scale.text() == "0.01"
+    scale.setReadOnly(True)
+    QTest.keyClick(scale, Qt.Key.Key_Up)
+    assert scale.text() == "0.01"
+    table.close()
+
+
+def test_live_calibration_coalesces_edits_and_retains_last_valid_projection(window):
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.live_calibration import LiveCalibration
+    from cephvr.gui.projector_geometry import FACES
+    from cephvr.visual_stimulus.v1 import messages_pb2 as messages
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    panel = window.devices.projectors
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    for face in FACES:
+        for key, value in (("width", "90"), ("height", "80")):
+            panel.screen_editor.fields[face, key].setText(value)
+        for key, value in (
+            ("reference_width_px", "1280"),
+            ("reference_height_px", "720"),
+            ("reference_x_mm", "160"),
+            ("reference_y_mm", "90"),
+        ):
+            panel.measurements.fields[face, key].setText(value)
+    state = pb.Snapshot(controller_generation=str(uuid4()))
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = 4
+    evidence = state.visual_stimulus_display.calibration
+    evidence.controller_generation = state.controller_generation
+    evidence.configuration_revision = 4
+    evidence.diagnostic_id = str(uuid4())
+    evidence.calibration_view = "frame_grid"
+    evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+    sent = []
+    live = LiveCalibration(
+        panel,
+        snapshot=lambda: state,
+        send=lambda action, **options: sent.append((action, options)) or True,
+    )
+    live.install(state)
+    panel.set_calibration_presentation_state(
+        active=True, available=True, view="frame_grid"
+    )
+    assert panel.calibration.controls["Front", "scale_u"].isEnabled()
+    assert not panel.calibration.controls["Front", "flip_x"].isEnabled()
+    assert not panel.measurements.isEnabled()
+    assert not panel.rig_editor.isEnabled()
+    offset = panel.calibration.controls["Front", "offset_x"]
+    offset.setText("16")
+    QTest.keyClick(offset, Qt.Key.Key_Up)
+    live.flush()
+    assert len(sent) == 1
+    action, first = sent[0]
+    assert action == "update_display_calibration"
+    assert first["adjustment_sequence"] == 1
+    assert first["diagnostic_id"] == evidence.diagnostic_id
+    adjustment = messages.DisplayCalibrationAdjustment.FromString(
+        first["adjustments"][0]
+    )
+    assert adjustment.mapping_id == "diagnostic_front"
+    assert adjustment.destination_xy[0] == pytest.approx(
+        0.5 - 90 / 640 / 2 + 16.1 / 1280
+    )
+    offset.setText("32")
+    offset.textEdited.emit("32")
+    live.flush()
+    assert len(sent) == 1  # One RPC in flight; retain latest edit.
+    evidence.adjustment_sequence = 1
+    live.install(state)
+    live.flush()
+    assert len(sent) == 2 and sent[-1][1]["adjustment_sequence"] == 2
+    evidence.adjustment_sequence = 2
+    live.install(state)
+    offset.clear()
+    offset.textEdited.emit("")
+    live.flush()
+    assert len(sent) == 2
+    offset.setText("10000")
+    offset.textEdited.emit("10000")
+    live.flush()
+    assert len(sent) == 2  # Outside output leaves the confirmed frame unchanged.
+    offset.setText("40")
+    offset.textEdited.emit("40")
+    evidence.state = vp.DISPLAY_CALIBRATION_STATE_IDLE
+    live.install(state)
+    live.flush()
+    assert len(sent) == 2 and not live.dirty and not live.inflight
+    evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+    evidence.calibration_view = "reference_bars"
+    live.edited()
+    live.flush()
+    assert len(sent) == 2
+    evidence.calibration_view = "frame_grid"
+    panel.apply_view(review_view(Phase.CONFIGURATION, observer=True))
+    live.edited()
+    live.flush()
+    assert len(sent) == 2 and not offset.isEnabled()
+    live.reset()
+
+    # Unknown presentation remains closable, with all tuning disabled.
+    from cephvr.gui.managed_display import ManagedDisplayOperations
+
+    panel.apply_view(review_view(Phase.CONFIGURATION))
+    evidence.state = vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+    operations = ManagedDisplayOperations(
+        panel,
+        window.devices.spikeglx,
+        snapshot=lambda: state,
+        connection_identity=lambda: (1, state.controller_generation),
+        send=lambda *_args, **_kwargs: True,
+    )
+    operations.install_calibration_state(state, launch_eligible=True)
+    assert panel.calibration.presentation_button.text() == "Close"
+    assert panel.calibration.presentation_button.isEnabled()
+    assert not offset.isEnabled()
+    operations.live.reset()
+
+
+def test_grouped_editor_pair_creation_repeat_scope_and_history(window, tmp_path, app):
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_nodes import edit_epoch
+    from cephvr.visual_stimulus.config.models.program_model import (
+        Group,
+        parse_program_json,
+    )
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    pair, _ = edit_epoch(blank_program(), 0, "duplicate")
+    from cephvr.gui.protocol_batches import grouped_program
+
+    editor.set_program(grouped_program(pair))
+    editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+    assert editor.scope == (0,) and len(editor.timeline.nodes) == 1
+    assert len(editor.hierarchy.contents.nodes) == 2
+    group = editor.program.sequence[0]
+    assert isinstance(group, Group) and group.body == pair.sequence
+    fields = editor.group_editor
+    fields.name.setText("Image Grey")
+    fields.repetitions.setText("300")
+    fields.mark_changed()
+    assert fields.apply()
+    assert editor.program.sequence[0].group_id == "Image_Grey"
+    assert editor.program.sequence[0].repetitions == 300
+    assert "600 epochs" in editor.sequence_summary.text()
+    assert len(editor.hierarchy.contents.nodes) == 2
+    fields.mark_changed()  # A pending field commit must preserve the clicked selection.
+    editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+    assert editor.path == (0, 1)
+    assert editor.hierarchy.contents.index == editor.hierarchy.contents.anchor == 1
+    editor.subgroup.composer.duration.setText("00:00:02")
+    editor.subgroup.apply()
+    assert editor.program.sequence[0].body[1].duration.duration.seconds == "2"
+    assert editor.program.sequence[0].repetitions == 300
+    path = tmp_path / "grouped.json"
+    window.protocol.save_program(str(path))
+    saved = parse_program_json(path.read_text(), max_bytes=1_048_576)
+    assert saved == editor.program
+    editor.undo()
+    assert editor.program.sequence[0].body[1].duration.duration.seconds == "60"
+    editor.undo()
+    assert editor.program.sequence[0].repetitions == 1
+    editor.undo(True)
+    assert editor.scope == (0,)
+    editor.timeline.context_selected.emit(((0,),))
+    assert editor.path == (0, 0) and editor.scope == (0,)
+    assert not editor.subgroup.isHidden()
+    editor.edit_group("duplicate")
+    assert len(editor.program.sequence) == 2
+    assert all(isinstance(n, Group) for n in editor.program.sequence)
+    editor.undo()
+    editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+    assert editor.scope == (0,)
+    app.processEvents()
+    for width in (1280, 720):
+        window.resize(width, 1000)
+        for _ in range(3):
+            app.processEvents()
+        assert fields.repetitions.width() >= 40
+        assert not hasattr(fields, "order")
+        assert editor.hierarchy.add_epoch.isVisible()
+        assert editor.hierarchy.contents.isVisible()
+
+
+@pytest.mark.parametrize(
+    "mode", ["append", "start", "before", "after", "replace", "stride", "label"]
+)
+def test_grouped_batch_insertion_stays_inside_open_group(mode):
+    from cephvr.gui.batch_insertion import Insertion, insert_batch
+    from cephvr.gui.program_editing import data_node, validate
+    from cephvr.gui.protocol_document import blank_program, review_program
+    from cephvr.gui.protocol_groups import make_group
+
+    program, _ = make_group(review_program(), (), 0, 1, 300, False)
+    data = program.model_dump(mode="json")
+    data_node(data, (0, 0))["batch_label"] = "target"
+    data_node(data, (1,))["batch_label"] = "target"
+    program = validate(data)
+    result, paths = insert_batch(
+        program, blank_program(), (0, 0), Insertion(mode, 1, "target"), scope=(0,)
+    )
+    assert result.sequence[1] == program.sequence[1]
+    assert result.sequence[0].group_id == program.sequence[0].group_id
+    assert result.sequence[0].repetitions == 300
+    assert paths and all(p[0] == 0 for p in paths)
+    assert len(result.sequence[0].body) == (1 if mode == "replace" else 3)
+
+
+def test_grouped_timeline_large_repeat_and_visible_paint_are_bounded(
+    window, app, monkeypatch
+):
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.protocol_groups import make_group
+    from cephvr.visual_stimulus.compiler import expansion
+
+    program, _ = make_group(review_program(), (), 0, 1, 50_000, False)
+    editor = window.protocol.editor
+    editor.set_program(program)
+    monkeypatch.setattr(
+        expansion,
+        "expand_program",
+        lambda *a, **k: pytest.fail("Timeline expanded repetitions"),
+    )
+    editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+    assert len(editor.timeline.nodes) == len(editor.hierarchy.contents.nodes) == 2
+    assert "100,001 epochs" in editor.timeline.summary()
+    source = review_program()
+    many = source.model_copy(
+        update={
+            "sequence": tuple(
+                source.sequence[0].model_copy(update={"epoch_id": f"Epoch_{i}"})
+                for i in range(5000)
+            )
+        }
+    )
+    # No backend preparation, image loading or occurrence expansion is needed to paint.
+    timeline = editor.timeline
+    timeline.set_program(many, 4999)
+    timeline.resize(400, timeline.height())
+    timeline.reveal_selection()
+    timeline.grab()
+    assert len(timeline.hits) <= 4
+    assert any(i == 4999 for _, i, _, _ in timeline.hits)
+
+
+def test_flat_group_initial_trials_and_legacy_imports(app):
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.protocol_groups import make_group
+    from cephvr.visual_stimulus.config.models.program_model import Epoch, Group
+
+    window = DashboardWindow(sample=True)
+    ReviewControls(window)
+    window.show()
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    assert all(isinstance(n, Group) for n in editor.program.sequence)
+    assert all(isinstance(n, Epoch) for n in editor.program.sequence[0].body)
+    before = editor.program
+    editor.edit_epoch("add")
+    assert len(editor.program.sequence[0].body) == len(before.sequence[0].body) + 1
+    assert editor.selected_paths == ((0, 3),)
+    editor.feedback.clear()
+    editor.timeline.context_selected.emit(((0,),))
+    window.activateWindow()
+    editor.timeline.setFocus()
+    app.processEvents()
+    QTest.keyClick(editor.timeline, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
+    assert len(editor.program.sequence) == 2
+    assert all(isinstance(n, Group) for n in editor.program.sequence)
+    editor.add_trial()
+    assert isinstance(editor.program.sequence[0], Group)
+    nested, _ = make_group(review_program(), (), 0, 1, 3, True)
+    nested, _ = make_group(nested, (), 0, 1, 2, False)
+    editor.set_program(nested)
+    editor.enter_group()
+    assert editor.program == nested  # Never resolve imported shuffle while loading.
+    assert editor.add_group_button.isVisible()
+    assert editor.hierarchy.add_epoch.isHidden()
+    assert editor.subgroup.isHidden()
+    editor.subgroup.generate()
+    assert editor.program == nested
+    editor.add_group()
+    assert editor.program.sequence[:-1] == nested.sequence
+    window.close()
+    window.deleteLater()
+    app.processEvents()
+
+
+def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_path):
+    from PyQt6.QtWidgets import QTabBar
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(review_program()))
+    editor.timeline.set_screens(("Left", "Right"))
+    editor.enter_group()
+    editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+    form = editor.subgroup
+    original = editor.program
+    template = original.sequence[0].body[1]
+    assert not editor.settings_card.findChildren(QTabBar)
+    assert not hasattr(editor.hierarchy, "batch_picker")
+    assert not hasattr(editor, "batch_edit")
+    assert editor.add_epoch_button.menu() is None
+    editor.add_epoch_button.click()
+    assert editor.selected_paths == ((0, 3),)
+    created = editor.program.sequence[0].body[3]
+    assert created.settings[0].model_dump(exclude={"instance_id"}) == template.settings[
+        0
+    ].model_dump(exclude={"instance_id"})
+    assert created.duration == template.duration
+    assert created.batch_id and created.epoch_id != template.epoch_id
+    assert form.parameter_fields[2].isHidden()
+    form.composer.duration.setText("00:00:12")
+    form.composer.batch_label.setText("Flow copies")
+    form.add_button.click()
+    assert not form.notice.text()
+    assert editor.selected_paths == ((0, 3),)
+    assert editor.program.sequence[0].body[:3] == original.sequence[0].body
+    assert all(
+        n.duration.duration.seconds == "12" for n in editor.program.sequence[0].body[3:]
+    )
+    assert len({n.batch_id for n in editor.program.sequence[0].body[3:]}) == 1
+    applied = editor.program
+    editor.undo()
+    assert len(editor.program.sequence[0].body) == 4
+    editor.undo(True)
+    assert editor.program == applied
+    form.composer.duration.setText("invalid")
+    form.add_button.click()
+    assert editor.program == applied
+    form.notice.clear()
+    form.reset.click()
+    path = tmp_path / "unified.json"
+    window.protocol.save_program(str(path))
+    loaded = parse_program_json(path.read_text(), max_bytes=1_048_576)
+    assert loaded == applied
+    editor.set_program(loaded)
+    editor.enter_group()
+    editor.select_epochs(((0, 3),))
+    assert form.parameter_fields[2].isHidden()
+    assert form.summary.isHidden()
+    assert form.composer.batch_label.text() == "Flow copies"
+    for width in (1280, 720):
+        window.resize(width, 1100)
+        app.processEvents()
+        assert form.isVisible()
+        assert form.add_button.text() == "Apply"
+        contents = editor.hierarchy.contents
+        assert not contents.show_details
+        assert contents.scrollbar.geometry().bottom() < contents.height()
+        assert form.composer.rows["Left"].isVisible()
+        assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+    window.apply_view(review_view(Phase.RUNNING))
+    before = editor.program
+    form.apply()
+    editor.add_subgroup()
+    assert editor.program == before
+
+
+def test_unified_subgroup_patch_preserves_variants_and_shared_sources():
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.subgroup_operations import update_subgroup
+    from cephvr.gui.subgroup_structure import edit_subgroup
+
+    source = review_program()
+    epoch = source.sequence[1]
+    data = source.model_dump(mode="json")
+    data["sequence"] = [epoch.model_dump(mode="json") for _ in range(3)]
+    for i, e in enumerate(data["sequence"]):
+        e["epoch_id"] = f"Flow_{i}"
+        e["batch_id"] = "batch_flow"
+        e["settings"][0]["contrast"]["value"] = (i + 1) / 3
+    program = grouped_program(validate(data))
+    paths = ((0, 0), (0, 1))
+    before = program.model_copy(update={"sequence": (program.sequence[0].body[0],)})
+    edit = before.model_dump(mode="json")
+    edit["sequence"][0]["settings"][0]["reset"] = False
+    from cephvr.visual_stimulus.config.models.program_model import Epoch
+
+    reference = before.model_copy(
+        update={
+            "sequence": (
+                Epoch.model_validate_json(
+                    __import__("json").dumps(edit["sequence"][0])
+                ),
+            )
+        }
+    )
+    changed, selected = update_subgroup(program, paths, before, reference, 2)
+    assert selected == paths
+    for old, new in zip(
+        program.sequence[0].body[:2], changed.sequence[0].body[:2], strict=True
+    ):
+        assert old.epoch_id == new.epoch_id
+        assert old.settings[0].instance_id == new.settings[0].instance_id
+        assert old.settings[0].contrast == new.settings[0].contrast
+        assert new.settings[0].reset is False
+    assert changed.sequence[0].body[2] == program.sequence[0].body[2]
+    copied, selected = edit_subgroup(changed, paths, "duplicate")
+    assert len(selected) == 2
+    assert copied.sequence[0].body[2].batch_id != "batch_flow"
+    moved, selected = edit_subgroup(copied, selected, "earlier")
+    assert selected == ((0, 0), (0, 1))
+    removed, _ = edit_subgroup(moved, selected, "remove")
+    assert removed.sequence == changed.sequence
+
+
+def test_unified_subgroup_preserves_projector_variants_and_guards_drafts(window):
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.projector_layers import layers_for
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+
+    data = review_program().model_dump(mode="json")
+    source = data["sequence"][1]
+    import copy
+
+    data["sequence"] = [copy.deepcopy(source) for _ in range(3)]
+    for i, epoch in enumerate(data["sequence"]):
+        epoch.update(epoch_id=f"Flow_{i}", batch_id="shared_batch")
+        epoch["duration"]["duration"]["seconds"] = "60"
+        epoch["settings"][0]["contrast"]["value"] = (i + 1) / 4
+    editor = window.protocol.editor
+    editor.timeline.set_screens(("Left", "Right"))
+    editor.set_program(grouped_program(validate(data)))
+    editor.enter_group()
+    editor.select_epochs(((0, 0), (0, 1), (0, 2)))
+    form = editor.subgroup
+    parameters = form.composer.rows["Left"].parameters
+    parameters.retain.setChecked(True)
+    parameters.mark_changed()
+    form.apply()
+    assert not form.notice.text()
+    for i, epoch in enumerate(editor.program.sequence[0].body):
+        left = epoch.settings[layers_for(editor.program, epoch, "Left")[0]]
+        right = epoch.settings[layers_for(editor.program, epoch, "Right")[0]]
+        assert left.reset is False and right.reset is True
+        assert left.contrast.value == right.contrast.value == (i + 1) / 4
+    form.composer.duration.setText("00:01:05")
+    editor.add_subgroup()
+    assert editor.selected_paths == ((0, 3),)
+    body = editor.program.sequence[0].body
+    assert all(epoch.duration.duration.seconds == "65" for epoch in body)
+    assert body[3].batch_id != body[0].batch_id
+    assert form.repetitions.text() == "1"
+    saved = editor.program
+    form.composer.duration.setText("invalid")
+    editor.add_subgroup()
+    editor.select_epochs(((0, 0),))
+    assert editor.program == saved and editor.selected_paths == ((0, 3),)
+    assert form.composer.duration.text() == "invalid"
+    form.discard()
+    editor.select_epochs(((0, 0),))
+    assert editor.path == (0, 0)
+
+
+def test_unified_subgroup_duration_preserves_each_fade_and_batch_identity():
+    import copy
+    import json
+
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+    from cephvr.gui.stimulus_fades import envelope, fade_values, retime_fades
+    from cephvr.gui.subgroup_operations import update_subgroup
+    from cephvr.gui.subgroup_structure import edit_subgroup
+    from cephvr.visual_stimulus.config.models.program_model import Epoch
+
+    data = review_program().model_dump(mode="json")
+    source = data["sequence"][1]
+    data["sequence"] = [copy.deepcopy(source) for _ in range(3)]
+    for i, epoch in enumerate(data["sequence"]):
+        epoch.update(epoch_id=f"Fade_{i}", batch_id=f"batch_{i}")
+        epoch["duration"]["duration"]["seconds"] = str(60 + i * 10)
+        epoch["settings"][0]["opacity"] = envelope(
+            (i + 1) * 1_000_000_000, 2_000_000_000, 1, (60 + i * 10) * 1_000_000_000
+        )
+    program = grouped_program(validate(data))
+    before = program.model_copy(update={"sequence": (program.sequence[0].body[0],)})
+    edited = before.sequence[0].model_dump(mode="json")
+    edited["duration"]["duration"]["seconds"] = "80"
+    retime_fades(edited["settings"], 60_000_000_000, 80_000_000_000)
+    reference = before.model_copy(
+        update={"sequence": (Epoch.model_validate_json(json.dumps(edited)),)}
+    )
+    paths = ((0, 0), (0, 1), (0, 2))
+    result, _ = update_subgroup(program, paths, before, reference, 3)
+    for i, epoch in enumerate(result.sequence[0].body):
+        assert epoch.batch_id == f"batch_{i}"
+        assert epoch.duration.duration.seconds == "80"
+        assert fade_values(
+            epoch.settings[0].opacity.model_dump(mode="json"), 80_000_000_000
+        )[:2] == ((i + 1) * 1_000_000_000, 2_000_000_000)
+    with pytest.raises(ValueError, match="one subgroup"):
+        update_subgroup(program, paths, before, reference, 4)
+    duplicate, copied_paths = edit_subgroup(result, paths, "duplicate")
+    assert len({duplicate.sequence[0].body[p[-1]].batch_id for p in copied_paths}) == 3
+    assert not {duplicate.sequence[0].body[p[-1]].batch_id for p in copied_paths} & {
+        "batch_0",
+        "batch_1",
+        "batch_2",
+    }
+    moved, selected = edit_subgroup(result, ((0, 0),), "later")
+    assert selected == ((0, 1),)
+    restored, _ = edit_subgroup(moved, selected, "earlier")
+    assert restored == result
+
+
+def test_unified_subgroup_asset_edit_is_projector_local_and_atomic(window, tmp_path):
+    import copy
+
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.projector_layers import layers_for
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    for name in ("image.png", "replacement.png"):
+        image = QImage(4, 4, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(tmp_path / name))
+    source = add_stimulus(blank_program(), 0, "Image", ("Left", "Right"))
+    data = source.model_dump(mode="json")
+    data["sequence"] = [copy.deepcopy(data["sequence"][0]) for _ in range(3)]
+    for i, epoch in enumerate(data["sequence"]):
+        epoch.update(epoch_id=f"Image_{i}", batch_id="image_batch")
+    original = grouped_program(validate(data))
+    editor = window.protocol.editor
+    editor.timeline.set_screens(("Left", "Right"))
+    editor.set_program(original)
+    editor.enter_group()
+    editor.select_epochs(((0, 0), (0, 1)))
+    form = editor.subgroup
+    composer = form.composer
+    composer.set_asset_root(str(tmp_path))
+    left = composer.rows["Left"].parameters
+    left.set_media_path(next(iter(left.asset_forms)), str(tmp_path / "replacement.png"))
+    right = composer.rows["Right"].parameters
+    right.fades.fade_in.setText("-1")
+    right.fades.mark_changed()
+    form.apply()
+    assert form.notice.text() and editor.program == original
+    right.fades.fade_in.setText("0")
+    right.fades.mark_changed()
+    form.apply()
+    assert not form.notice.text()
+    program = editor.program
+    assets = {asset.asset_id: asset.logical_path for asset in program.assets}
+    for epoch in program.sequence[0].body:
+        left_layer = epoch.settings[layers_for(program, epoch, "Left")[0]]
+        right_layer = epoch.settings[layers_for(program, epoch, "Right")[0]]
+        assert assets[left_layer.asset_id] == "replacement.png"
+        assert assets[right_layer.asset_id] == "image.png"
+    assert len(editor.selected_paths) == 3
+    editor.undo()
+    assert editor.program == original
+
+
+def test_direct_group_editor_starts_open_and_uses_only_group_repetitions(
+    window, app, tmp_path
+):
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_snapshot import (
+        capture_protocol,
+        restore_protocol,
+        validate_protocol,
+    )
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(blank_program()))
+    assert editor.path == (0, 0) and editor.subgroup.isVisible()
+    assert not hasattr(editor, "back_button") and not hasattr(editor, "breadcrumb")
+    assert not hasattr(editor, "shuffle_trial_button")
+    editor.subgroup.composer.duration.setText("00:00:01")
+    editor.group_editor.repetitions.setText("300")
+    editor.group_editor.mark_changed()
+    assert editor.group_editor.apply()
+    assert editor.subgroup.composer.duration.text() == "00:00:01"
+    editor.subgroup.apply()
+    editor.add_epoch_button.click()
+    assert editor.path == (0, 1)
+    assert len(editor.program.sequence[0].body) == 2
+    assert (
+        len(expand_program(editor.program, seed_decimal="0", max_expanded_epochs=1000))
+        == 600
+    )
+    assert editor.subgroup.parameter_fields[2].isHidden()
+    assert editor.subgroup.summary.isHidden()
+    assert editor.group_editor.summary.isHidden()
+    assert editor.hierarchy.scope_note.isHidden()
+    assert editor.hierarchy.contents_title.text() == "Epochs"
+    saved = capture_protocol(window.protocol)
+    editor.add_trial()
+    assert editor.path == (0, 0)
+    restore_protocol(window.protocol, validate_protocol(saved))
+    assert editor.path == (0, 0) and editor.subgroup.isVisible()
+    for width in (1280, 720):
+        window.resize(width, 1100)
+        app.processEvents()
+        for control in (
+            editor.add_group_button,
+            editor.remove_group_button,
+            editor.output_preview_button,
+        ):
+            assert (
+                control.isVisible()
+                and control.width() >= control.minimumSizeHint().width()
+            )
+        assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+
+
+def test_demo_assets_can_be_selected_and_review_path_restores(window):
+    import json
+
+    from PyQt6.QtGui import QImage
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.stimulus_files import resolve_stimulus_file
+
+    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    manifest = json.loads((root / "manifest.json").read_text())
+    for path in manifest["images"]:
+        assert not QImage(str(root / path)).isNull()
+        assert (
+            resolve_stimulus_file(str(root), str(root / path), texture=False).path
+            == path
+        )
+    for path in manifest["textures"]:
+        selected = resolve_stimulus_file(str(root), str(root / path), texture=True)
+        assert selected.tile_width_mm == selected.tile_height_mm == 40
+        assert not QImage(str(root / selected.path)).isNull()
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(blank_program()))
+    editor.timeline.set_screens(("Left",))
+    window.protocol.assets.folders["root"].editor.setText(str(root))
+    form = editor.subgroup
+    form.composer.add_file("Texture", str(root / manifest["textures"][0]), "Left")
+    form.apply()
+    assert not form.notice.text()
+    assert editor.program.assets[0].logical_path == "textures/checkerboard.png"
+
+
+def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
+    from cephvr.gui.projector_layers import layers_for
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_groups import motion_numbers
+    from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+
+    editor = window.protocol.editor
+    editor.timeline.set_screens(("Left", "Right"))
+    editor.set_program(grouped_program(blank_program()))
+    editor.group_editor.repetitions.setText("3")
+    editor.group_editor.mark_changed()
+    assert editor.group_editor.apply()
+    form = editor.subgroup
+    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    form.composer.set_asset_root(str(root))
+    for face in ("Left", "Right"):
+        form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)
+    form.vary.setChecked(True)
+    form.add_variation()
+    row = form.rows[0]
+    row.target.setCurrentIndex(row.target.findText("All projectors"))
+    row.parameter.setCurrentIndex(row.parameter.findData("Speed"))
+    row.values.setText("10,20,30")
+    form.apply()
+    assert not form.notice.text()
+    assert len(form.paths) == 3
+    assert not form.dirty
+    assert form.vary.isChecked() and form.rows[0].values.text() == "10,20,30"
+    editor.select_epochs(((0, 2),))
+    assert len(form.paths) == 3
+    row = form.rows[0]
+    row.method.setCurrentText("Random")
+    row.random_fields["maximum"].setText("1000000")
+    row.random.seed(42)
+    row.random_cache = None
+    form.apply()
+    assert not form.notice.text() and not form.dirty
+    first = editor.program
+    assert len(first.sequence[0].body) == 3
+
+    def speeds(program, face):
+        return [
+            motion_numbers(
+                e.settings[layers_for(program, e, face)[0]].model_dump(mode="json")
+            )[0]
+            for e in program.sequence[0].body
+        ]
+
+    assert speeds(first, "Left") != speeds(first, "Right")
+    from cephvr.visual_stimulus.compiler.expansion import expand_program
+
+    expanded = expand_program(first, seed_decimal="1", max_expanded_epochs=100)
+    assert len(expanded) == 9
+    assert expanded[0].settings != expanded[3].settings != expanded[6].settings
+    assert all(
+        e.repetition_rules and not e.repetition_settings for e in first.sequence[0].body
+    )
+    assert expand_program(first, seed_decimal="2", max_expanded_epochs=100) == expanded
+    form.apply()
+    assert editor.program == first
+    restored = parse_program_json(first.model_dump_json(), max_bytes=1048576)
+    editor.set_program(restored)
+    assert form.vary.isChecked() and form.rows[0].method.currentText() == "Random"
+    assert not form.dirty
+    form.composer.duration.setText("00:00:30")
+    form.apply()
+    assert not form.notice.text()
+    assert all(
+        e.duration.duration.ns() == 30_000_000_000
+        for e in editor.program.sequence[0].body
+    )
+    assert speeds(editor.program, "Left") == speeds(first, "Left")
+    assert [e.repetition_settings for e in editor.program.sequence[0].body] == [
+        e.repetition_settings for e in first.sequence[0].body
+    ]
+    form.rows[0].shared.setChecked(True)
+    form.apply()
+    assert not form.notice.text()
+    assert speeds(editor.program, "Left") == speeds(editor.program, "Right")
+    editor.undo()
+    assert not form.rows[0].shared.isChecked()
+    assert speeds(editor.program, "Left") == speeds(first, "Left")
+
+    editor.group_editor.repetitions.setText("5")
+    editor.group_editor.mark_changed()
+    assert editor.group_editor.apply()
+    assert all(
+        e.repetition_rules and not e.repetition_settings
+        for e in editor.program.sequence[0].body
+    )
+    assert (
+        len(expand_program(editor.program, seed_decimal="1", max_expanded_epochs=100))
+        == 15
+    )
+    assert form.rows[0].method.currentText() == "Random"
+    assert not form.dirty
+
+    editor.add_subgroup()
+    assert len(form.paths) == 1 and not form.vary.isChecked()
+    added = editor.program.sequence[0].body[-1]
+    assert added.subgroup_draft is None and not added.repetition_settings
+    form.vary.setChecked(True)
+    form.add_variation()
+    form.rows[0].method.setCurrentText("Random")
+    form.rows[0].random_fields["minimum"].setText("2000001")
+    form.rows[0].random_fields["maximum"].setText("3000000")
+    form.apply()
+    assert not form.notice.text()
+    drafts = [e.subgroup_draft for e in editor.program.sequence[0].body]
+    editor.select_epochs(((0, 0), (0, 3)))
+    form.composer.duration.setText("00:00:20")
+    form.apply()
+    assert not form.notice.text()
+    assert [e.subgroup_draft for e in editor.program.sequence[0].body] == drafts
+    assert all(
+        e.duration.duration.ns() == 20_000_000_000
+        for e in editor.program.sequence[0].body
+    )
+
+
+def test_large_random_group_stays_compact_and_layer_controls_are_indices(window, app):
+    from unittest.mock import patch
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.visual_stimulus.config.repetition_values import resolve_repetition
+
+    editor = window.protocol.editor
+    window.page_buttons[1].click()
+    editor.timeline.set_screens(("Left", "Right"))
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    form.composer.set_asset_root(str(root))
+    for face in ("Left", "Right"):
+        form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)
+    form.vary.setChecked(True)
+    form.add_variation()
+    row = form.rows[0]
+    row.target.setCurrentIndex(row.target.findText("All projectors"))
+    row.method.setCurrentText("Random")
+    row.random_fields["maximum"].setText("1000000")
+    form.apply()
+    assert not form.notice.text() and not form.dirty
+    small = editor.program
+    initial_rules = small.sequence[0].body[0].repetition_rules
+    for repetitions in (10000, 1000000):
+        with patch(
+            "cephvr.gui.subgroup_repetitions.resolve_repetition",
+            wraps=resolve_repetition,
+        ) as sampled:
+            editor.group_editor.repetitions.setText(str(repetitions))
+            editor.group_editor.mark_changed()
+            assert editor.group_editor.apply()
+            assert sampled.call_count == 1
+        app.processEvents()
+        program = editor.program
+        epoch = program.sequence[0].body[0]
+        assert epoch.repetition_rules == initial_rules
+        assert len(program.model_dump_json()) < len(small.model_dump_json()) + 128
+        assert not epoch.repetition_settings
+        assert len(editor.hierarchy.contents.nodes) == len(editor.timeline.nodes) == 1
+        assert resolve_repetition(
+            epoch.settings, epoch.repetition_rules, repetitions - 1
+        ) != resolve_repetition(epoch.settings, epoch.repetition_rules, 0)
+        assert not form.dirty
+    assert not hasattr(editor.group_editor, "order")
+    for row in form.composer.rows.values():
+        if row.face:
+            assert row.layer.itemText(0) == "1" and row.layer.maximumWidth() <= 72
+    assert form.rows[0].layer.itemText(0) == "1"
+    assert form.rows[0].layer.minimumWidth() == 64
+    assert " s" not in editor.sequence_summary.text()
+    assert ":" in editor.sequence_summary.text()

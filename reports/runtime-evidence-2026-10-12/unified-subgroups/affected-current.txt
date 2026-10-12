@@ -1,0 +1,2014 @@
+FFFFF........F...FFFFFFFFFFF.FFF.FF..FF.F............F....F.FFFFFFFFFFFF [ 93%]
+FFF..                                                                    [100%]
+=================================== FAILURES ===================================
+_ test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking _
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking(
+        app: QApplication,
+    ) -> None:
+        from cephvr.control.v1 import types_pb2 as control_pb
+        from cephvr.gui.camera_inventory import CameraDraft
+        from cephvr.gui.managed_configuration import (
+            ConfigurationPages,
+            ManagedConfiguration,
+        )
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+    
+        managed = ManagedDashboardWindow(sample=False)
+        managed.apply_view(
+            DashboardView(
+                phase=Phase.CONFIGURATION,
+                connected=True,
+                has_control=True,
+                configuration_wired=True,
+            )
+        )
+        camera = CameraDraft("tracking-1", "Tracking cam", "SERIAL-1", "Basler")
+        managed.devices.cameras.drafts = [camera]
+        managed.devices.cameras.populate_inventory()
+        managed.devices.cameras.drafts_changed.emit()
+        generation = str(uuid4())
+        state = control_pb.Snapshot(controller_generation=generation)
+        state.session.phase = control_pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = 1
+        state.configuration_values.revision = 1
+        state.configuration_values.current.mode = control_pb.SESSION_MODE_CLOSED_LOOP
+        backend = state.configuration_values.current.backends.add(backend_name="tracking")
+        backend.tracking.SetInParent()
+        manager = ManagedConfiguration(
+            ConfigurationPages(
+                managed.dashboard,
+                managed.protocol,
+                managed.recordings,
+                managed.devices.cameras,
+                managed.devices.projectors,
+                managed.tracking,
+            )
+        )
+        assert manager.install(state)
+        assert manager.revision == 1
+        assert managed.tracking.source_serial == "SERIAL-1"
+>       assert managed.protocol.editor.parameters.closed_loop
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:934: AttributeError
+----------------------------- Captured stderr call -----------------------------
+qt.qpa.fonts: Populating font family aliases took 61 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____ test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1060d1bd0>
+
+    def test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.control.v1 import types_pb2 as control_pb
+        from cephvr.gui.managed_configuration import (
+            ConfigurationPages,
+            ManagedConfiguration,
+        )
+    
+        generation = str(uuid4())
+        initial = control_pb.Snapshot(controller_generation=generation)
+        initial.configuration.revision = 4
+        initial.configuration_values.revision = 4
+        initial.configuration_values.current.mode = control_pb.SESSION_MODE_OPEN_LOOP
+        manager = ManagedConfiguration(
+            ConfigurationPages(
+                window.dashboard,
+                window.protocol,
+                window.recordings,
+                window.devices.cameras,
+                window.devices.projectors,
+                window.tracking,
+            )
+        )
+        assert manager.install(initial)
+        submitted_serial = manager.edit_serial
+        pass  # Unified editor has no mode switch.
+>       duration = window.protocol.editor.batch_edit.selection_form.composer.duration
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'batch_edit'
+
+tests/gui/test_dashboard.py:6033: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______________ test_protocol_program_validation_and_atomic_save _______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10c810ee0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_protocol_program_validati0')
+
+    def test_protocol_program_validation_and_atomic_save(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        import json
+    
+        source = {
+            "format_version": 2,
+            "assets": [],
+            "instances": [],
+            "input_channels": [],
+            "scenes": [
+                {
+                    "scene_id": "blank",
+                    "background_linear_rgb": [0.0, 0.0, 0.0],
+                    "arena_instance_id": None,
+                    "layer_instance_ids": [],
+                }
+            ],
+            "duration": {"kind": "explicit_epochs"},
+            "sequence": [
+                {
+                    "kind": "epoch",
+                    "epoch_id": "first",
+                    "scene_id": "blank",
+                    "duration": {"kind": "fixed", "duration": {"seconds": "60"}},
+                    "settings": [],
+                }
+            ],
+        }
+        panel = window.protocol
+        path = tmp_path / "program.json"
+        path.write_text(json.dumps(source))
+        panel.load_program(str(path))
+        assert not panel.message.isVisible()
+        path = tmp_path / "program.json"
+        panel.save_program(str(path))
+        source["sequence"][0]["batch_label"] = ""
+        source["sequence"][0]["batch_id"] = None
+        assert json.loads(path.read_text()) == source
+>       panel.editor.duration.setText("1")
+        ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'duration'
+
+tests/gui/test_dashboard.py:6146: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______ test_protocol_timeline_edits_preserve_trials_and_imported_groups _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10c842dd0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_protocol_timeline_edits_p0')
+
+    def test_protocol_timeline_edits_preserve_trials_and_imported_groups(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        panel = window.protocol
+        editor = panel.editor
+        original = editor.program
+        parse_program_json(original.model_dump_json(), max_bytes=1_048_576)
+        editor.timeline.setFocus()
+        QTest.keyClick(editor.timeline, Qt.Key.Key_Right)
+>       assert editor.name.text() == "Flow"
+               ^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'name'
+
+tests/gui/test_dashboard.py:6178: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___________ test_protocol_cards_reflow_and_keep_properties_reachable ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106041900>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_protocol_cards_reflow_and_keep_properties_reachable(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from PyQt6.QtWidgets import QPlainTextEdit, QTableWidget
+    
+        from cephvr.gui.components import StatusColumn
+    
+        panel = window.protocol
+        window.page_buttons[1].click()
+        assert not panel.findChildren(StatusColumn)
+        assert not panel.findChildren(QPlainTextEdit)
+        assert not panel.findChildren(QTableWidget)
+        for width in (1175, 720, 1175):
+            window.resize(width, 883)
+            for _ in range(3):
+                app.processEvents()
+            editor = panel.editor
+            for action in (
+                editor.shuffle_trial_button,
+                editor.output_preview_button,
+            ):
+                assert action.width() >= action.minimumSizeHint().width()
+                assert action.width() <= action.sizeHint().width()
+            assert editor.settings_card.width() == editor.width()
+            assert editor.trial_card.y() == editor.timeline_card.y()
+            assert editor.trial_card.geometry().right() < editor.timeline_card.x()
+            assert editor.timeline_card.geometry().right() == editor.width() - 1
+            assert editor.timeline_card.height() == editor.trial_card.height()
+            assert not hasattr(panel, "selected_trial_section")
+            assert not any(
+                caption.text() in {"Selected trial", "Random seed", "Gap after trial (s)"}
+                for caption in editor.trial_card.findChildren(QLabel)
+            )
+            assert editor.sequence_summary.alignment() == Qt.AlignmentFlag.AlignCenter
+            assert editor.settings_card.y() > editor.timeline_card.geometry().bottom()
+            viewport = panel.config_scroll.viewport()
+            assert panel.config_scroll.widget().width() <= viewport.width()
+            assert set(panel.assets.folders) == {"root"}
+            assert not hasattr(panel.assets, "more")
+            if width == 1175:
+                assert panel.assets.y() == panel.program_card.y()
+                assert panel.program_card.x() < panel.assets.x()
+>           panel.editor.rename_epoch()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'ProtocolEditor' object has no attribute 'rename_epoch'
+
+tests/gui/test_dashboard.py:6271: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_stimulus_parameter_edit_invalid_guard_and_media_root ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108f3bd90>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_stimulus_parameter_edit_i0')
+
+    def test_stimulus_parameter_edit_invalid_guard_and_media_root(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+>       editor.select_node(1)
+        ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'select_node'
+
+tests/gui/test_dashboard.py:6378: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____________________ test_protocol_epoch_structure_actions _____________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b683ac0>
+
+    def test_protocol_epoch_structure_actions(window: DashboardWindow) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(blank_program()))
+        editor.enter_group()
+>       editor.add_epoch_button.menu().actions()[0].trigger()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'actions'
+
+tests/gui/test_dashboard.py:6546: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____ test_add_prepared_file_picker_does_not_create_placeholder_on_cancel ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108f072e0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_add_prepared_file_picker_0')
+
+    def test_add_prepared_file_picker_does_not_create_placeholder_on_cancel(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.parameters.asset_root = str(tmp_path)
+        ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:6570: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________________ test_file_first_epoch_insertion_and_history __________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x105fd3c70>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_file_first_epoch_insertio0')
+
+    def test_file_first_epoch_insertion_and_history(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(blank_program()))
+        editor.enter_group()
+>       editor.parameters.asset_root = str(tmp_path)
+        ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:6599: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____________ test_screen_overrides_and_layers_preserve_other_epochs ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108fdb490>
+
+    def test_screen_overrides_and_layers_preserve_other_epochs(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_scope import change_scope, move_layer, split_screens
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.timeline.set_screens(("Left", "Right"))
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:6630: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__ test_repeat_variation_uses_canonical_expansion_and_preserves_choreography ___
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b640040>
+
+    def test_repeat_variation_uses_canonical_expansion_and_preserves_choreography(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.timeline.set_screens(("Left", "Right"))
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:6671: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___________ test_nested_group_edit_and_duplicate_reference_remapping ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b66f490>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_nested_group_edit_and_dup0')
+
+    def test_nested_group_edit_and_duplicate_reference_remapping(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:6727: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+________________ test_motion_auto_commit_and_invalid_edit_undo _________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108f4b760>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_motion_auto_commit_and_invalid_edit_undo(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:6793: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____________ test_saved_variations_reopen_as_speed_direction_lists _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10604b5b0>
+
+    def test_saved_variations_reopen_as_speed_direction_lists(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.gui.condition_values import ConditionValues
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group, update_group
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:6826: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___________________ test_variation_bounds_and_preview_limit ____________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106003d90>
+
+    def test_variation_bounds_and_preview_limit(window: DashboardWindow) -> None:
+        from cephvr.gui.group_editor import ExpandedPreview
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.add_stimulus("Image")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:6865: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______ test_stationary_texture_speed_variation_keeps_positive_x_direction ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x105f7b0a0>
+
+    def test_stationary_texture_speed_variation_keeps_positive_x_direction(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group, motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:6897: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____________________ test_expanded_close_and_trial_deletion ____________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b6b2f80>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_expanded_close_and_trial_0')
+
+    def test_expanded_close_and_trial_deletion(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtWidgets import QMessageBox
+    
+        editor = window.protocol.editor
+        editor.open_preview()
+>       preview = editor.expanded_preview
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'expanded_preview'
+
+tests/gui/test_dashboard.py:6922: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+____________ test_batch_create_variations_preview_insert_and_reload ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b0cf400>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_batch_create_variations_p0')
+
+    def test_batch_create_variations_preview_insert_and_reload(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_batch import epoch_paths
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        editor = window.protocol.editor
+        window.page_buttons[1].click()
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(blank_program()))
+        editor.enter_group()
+        editor.timeline.set_screens(("Left", "Right"))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        create = editor.subgroup
+        create.composer.set_asset_root(str(tmp_path))
+        pass  # Unified editor has no mode switch.
+        original = editor.program
+        create.composer.add_file("Texture", str(path), "Left")
+        create.composer.duration.setText("00:00:02.000000001")
+        create.vary.setChecked(True)
+        create.add_variation()
+        create.rows[0].method.setCurrentIndex(1)
+        create.rows[0].values.setText("0, 1, 0.25")
+        create.refresh_preview()
+        assert create.add_button.isEnabled(), create.summary.text()
+>       assert create.summary.text().startswith("5 epochs")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x10b6e4730>('5 epochs')
+E        +    where <built-in method startswith of str object at 0x10b6e4730> = '1 selected · Apply updates this subgroup'.startswith
+E        +      where '1 selected · Apply updates this subgroup' = <built-in method text of QLabel object at 0x10b0f25f0>()
+E        +        where <built-in method text of QLabel object at 0x10b0f25f0> = <PyQt6.QtWidgets.QLabel object at 0x10b0f25f0>.text
+E        +          where <PyQt6.QtWidgets.QLabel object at 0x10b0f25f0> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x10b065ab0>.summary
+
+tests/gui/test_dashboard.py:7061: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________ test_trial_overview_selects_ranges_and_sources_across_groups _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108eae290>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_trial_overview_selects_ranges_and_sources_across_groups(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.gui.protocol_nodes import edit_epoch
+    
+        editor = window.protocol.editor
+        window.page_buttons[1].click()
+        program, _ = edit_epoch(blank_program(), 0, "duplicate")
+        program, _ = edit_epoch(program, 1, "duplicate")
+        program, _ = make_group(program, (), 1, 2, 2, False)
+        editor.set_program(program)
+        timeline = editor.timeline
+        assert len(timeline.nodes) == 2
+        timeline.choose(1, Qt.KeyboardModifier.NoModifier)
+        assert editor.selected_paths == ((1, 0),)
+        assert editor.scope == (1,)
+        assert len(timeline.nodes) == 2  # Persistent collapsed trial overview.
+        contents = editor.hierarchy.contents
+        assert len(contents.nodes) == 2
+        contents.choose(1, Qt.KeyboardModifier.ShiftModifier)
+        assert set(editor.selected_paths) == {(1, 0), (1, 1)}
+        editor.leave_group()
+        assert editor.scope == ()
+        timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        timeline.choose(1, Qt.KeyboardModifier.ShiftModifier)
+        assert editor.selected_paths == ((0,), (1,))
+>       assert set(editor.selected_epoch_paths) == {(0,), (1, 0), (1, 1)}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'selected_epoch_paths'
+
+tests/gui/test_dashboard.py:7146: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___________ test_timeline_overview_colors_and_current_epoch_details ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b60c670>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_timeline_overview_colors_and_current_epoch_details(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.timeline_details import stimulus_color, stimulus_key
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        program = review_program()
+        editor.set_program(program)
+        timeline = editor.timeline
+        timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+        app.processEvents()
+        assert editor.trial_card.width() == 208
+        overview = [(rect, i) for rect, i, face, _ in timeline.hits if not face]
+        assert overview[0][0].left() == 1
+        assert overview[-1][0].right() <= timeline.width()
+        assert len(timeline.hover_text) == len(timeline.nodes)  # Compact overview.
+        assert timeline.type_keys[0] == timeline.type_keys[2]
+        assert timeline.type_keys[0] != timeline.type_keys[1]
+        assert stimulus_color(timeline.type_keys[0]) != stimulus_color(
+            timeline.type_keys[1]
+        )
+        assert all(rows == [(-1, "Blank")] for _, rows in timeline.detail_rows())
+        bar = next(rect for rect, i, face, layer in timeline.hits if i == 1 and face == "")
+        QTest.mouseClick(timeline, Qt.MouseButton.LeftButton, pos=bar.center().toPoint())
+        app.processEvents()
+        assert timeline.index == 1 and editor.selected_paths == ((1,),)
+        rows = dict(timeline.detail_rows())
+        assert rows["Front"] == rows["Bottom"] == [(-1, "Blank")]
+        assert "Texture" in rows["Left"][0][1]
+        assert rows["Left"] == rows["Right"]
+        timeline.choose(2, Qt.KeyboardModifier.ShiftModifier)
+        assert editor.selected_paths == ((1,), (2,))
+        assert timeline.index == 2
+        assert all(rows == [(-1, "Blank")] for _, rows in timeline.detail_rows())
+>       assert editor.modes.tabText(0) == "Generate epochs"
+               ^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'modes'
+
+tests/gui/test_dashboard.py:7238: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________ test_epoch_parameter_warnings_wait_for_submission[selection] _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108f15240>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_epoch_parameter_warnings_1')
+mode = 'selection'
+
+    @pytest.mark.parametrize("mode", ["generate", "selection"])
+    def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mode):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.notices import FormNotice
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(review_program())
+        open_protocol_group(editor)
+        if mode == "generate":
+            pass  # Unified editor has no mode switch.
+            owner = editor.subgroup
+            composer = owner.composer
+            composer.set_screens(("Front", "Left", "Right", "Bottom"))
+            composer.set_asset_root(str(tmp_path))
+            image = QImage(8, 8, QImage.Format.Format_RGB32)
+            image.fill(0)
+            path = tmp_path / "tile.png"
+            assert image.save(str(path))
+            composer.add_file("Texture", str(path), "Front")
+            submit, notice = owner.add_button, owner.notice
+        else:
+            editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+            editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+>           owner = editor.batch_edit.selection_form
+                    ^^^^^^^^^^^^^^^^^
+E           AttributeError: 'ProtocolEditor' object has no attribute 'batch_edit'
+
+tests/gui/test_dashboard.py:7285: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____________ test_batch_reference_projector_parameters_and_layers _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108e86d40>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_batch_reference_projector0')
+
+    def test_batch_reference_projector_parameters_and_layers(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_motion import EpochMotion
+        from cephvr.gui.looming_size import LoomingSize
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.gui.stimulus_scope import surfaces
+    
+        editor = window.protocol.editor
+        composer = editor.subgroup.composer
+        window.page_buttons[1].click()
+        pass  # Unified editor has no mode switch.
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        for kind, face in (
+            ("Texture", "Front"),
+            ("Looming image", "Left"),
+            ("Image", "Right"),
+        ):
+            composer.add_file(kind, str(path), face)
+        video = tmp_path / "clip.mp4"
+        video.touch()  # Authoring checks a file reference, not video decoding.
+        composer.add_file("Video", str(video), "Bottom")
+        app.processEvents()
+        assert all(not composer.rows[face].isHidden() for face in composer.screens)
+        assert composer.rows[""].isHidden()
+        assert composer.rows["Bottom"].parameters.primary.count() == 1
+        front = composer.rows["Front"].parameters
+        left = composer.rows["Left"].parameters
+        motion = next(form for form in front.forms if isinstance(form, EpochMotion))
+        looming = next(form for form in left.forms if isinstance(form, LoomingSize))
+        before = editor.program
+        # Keep two rows dirty together: accepting one must not discard the other's draft.
+        motion.speed.setText("24")
+        motion.direction.setText("90")
+        motion.edited = True
+        front.dirty = True
+        looming.end.setText("72")
+        looming.edited = True
+        left.dirty = True
+        assert front.apply()
+        assert left.dirty and looming.end.text() == "72"
+        program = composer.value()
+        assert editor.program == before
+        settings = program.sequence[0].settings
+        assert motion_numbers(settings[0].model_dump(mode="json"))[:2] == pytest.approx(
+            (24, 90)
+        )
+        assert settings[1].width.knots[-1].value == 72
+        assert [surfaces(s.model_dump(mode="json")) for s in settings] == [
+            ["front"],
+            ["left"],
+            ["right"],
+            ["bottom"],
+        ]
+        # Add a foreground layer, then return to the existing texture's values.
+        composer.add_file("Looming image", str(path), "Front")
+        row = composer.rows["Front"]
+        assert len(row.indices) == 2
+        row.select_layer(row.indices[0])
+        restored = next(
+            form for form in row.parameters.forms if isinstance(form, EpochMotion)
+        )
+        assert float(restored.speed.text()) == pytest.approx(24)
+        composer.set_screens(("Front", "Left", "Bottom"))
+        assert composer.rows["Right"].caption.text() == "Right (inactive)"
+        assert not composer.rows["Right"].add.isEnabled()
+        assert len(composer.value().sequence[0].settings) == 5
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        composer.rows["Front"].select_layer(composer.rows["Front"].indices[1])
+        composer.remove_layer("Front")
+        assert len(composer.value().sequence[0].settings) == 4
+        editor.subgroup.refresh_preview()
+        assert editor.subgroup.add_button.isEnabled(), (
+            editor.subgroup.summary.text()
+        )
+        generated = editor.subgroup.candidate()
+        assert generated.sequence[0].settings == composer.value().sequence[0].settings
+        restored = next(
+            form for form in row.parameters.forms if isinstance(form, EpochMotion)
+        )
+        restored.speed.setText("invalid")
+        restored.edited = True
+        row.parameters.dirty = True
+        editor.subgroup.refresh_preview()
+        assert editor.subgroup.add_button.isEnabled()
+>       assert editor.subgroup.notice.text()
+E       AssertionError: assert ''
+E        +  where '' = text()
+E        +    where text = <cephvr.gui.notices.FormNotice object at 0x10b60f2e0>.text
+E        +      where <cephvr.gui.notices.FormNotice object at 0x10b60f2e0> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x10b0eb640>.notice
+E        +        where <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x10b0eb640> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x10b0e8430>.subgroup
+
+tests/gui/test_dashboard.py:7418: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______ test_reference_type_change_clears_asset_and_switches_stimulus_mode ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b6805e0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_reference_type_change_cle0')
+
+    def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        pass  # Unified editor has no mode switch.
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        folder = tmp_path / "images"
+        folder.mkdir()
+        path = folder / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Image", str(path), "Right")
+        row = composer.rows["Front"]
+        before = editor.program
+        row.stimulus.setCurrentText("Looming")
+        assert row.stimulus.currentText() == "Looming"
+        assert all(not field.text() for field in row.parameters.asset_forms.values())
+        assert all(not h.text() for h in row.headings[:1])
+        with pytest.raises(ValueError, match="Choose an asset"):
+            composer.value()
+        asset_id = next(iter(row.parameters.asset_forms))
+        row.parameters.set_media_path(asset_id, str(path))
+        assert not composer.pending_assets
+        field = next(iter(row.parameters.asset_forms.values()))
+        assert field.text() == "images/tile.png" and field.filename_only
+        assert field.toolTip() == "images/tile.png"
+        assert {s.kind for s in composer.value().sequence[0].settings} == {"image"}
+        assert editor.program == before
+        # Keep the 2D draft when selecting a rig-wide arena, but do not generate it.
+        composer.mode.setCurrentIndex(1)
+        assert composer.rows["Front"].isHidden()
+        assert not composer.rows[""].isHidden()
+        with pytest.raises(ValueError, match="Choose an asset"):
+            composer.value()
+        arena = tmp_path / "arena.glb"
+        arena.touch()  # Asset authoring, no GLB decoding or rendering.
+        arena_row = composer.rows[""]
+        arena_row.parameters.set_media_path(
+            next(iter(arena_row.parameters.asset_forms)), str(arena)
+        )
+        program = composer.value()
+        assert [s.kind for s in program.sequence[0].settings] == ["arena"]
+        assert [a.logical_path for a in program.assets] == ["arena.glb"]
+        composer.mode.setCurrentIndex(0)
+        assert len(composer.value().sequence[0].settings) == 2
+        assert all(a.logical_path == "images/tile.png" for a in composer.value().assets)
+        # Another type change clears the file again, even though an asset existed.
+        row.stimulus.setCurrentText("Video")
+        editor.subgroup.refresh_preview()
+        assert editor.subgroup.add_button.isEnabled()
+>       assert editor.subgroup.notice.text()
+E       AssertionError: assert ''
+E        +  where '' = text()
+E        +    where text = <cephvr.gui.notices.FormNotice object at 0x108e5f910>.text
+E        +      where <cephvr.gui.notices.FormNotice object at 0x108e5f910> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x108e5c700>.notice
+E        +        where <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x108e5c700> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x108e165f0>.subgroup
+
+tests/gui/test_dashboard.py:7589: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_arena_axis_gains_roundtrip_and_editor_spacing ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108dee5f0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_arena_axis_gains_roundtri0')
+
+    def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
+        import json
+    
+        from cephvr.gui.arena_movement import ArenaMovement
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor, generate=True)
+        pass  # Unified editor has no mode switch.
+        batch = editor.subgroup
+        composer = batch.composer
+        composer.set_asset_root(str(tmp_path))
+        composer.mode.setCurrentIndex(1)
+        path = tmp_path / "arena.glb"
+        path.touch()
+        row = composer.rows[""]
+        row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
+        app.processEvents()
+        assert row.stimulus.isHidden()
+        assert "Stimulus" not in row.signature
+        assert (
+            composer.mode.mapTo(composer, QPoint()).y()
+            == composer.duration.mapTo(composer, QPoint()).y()
+        )
+        assert (
+            composer.duration.mapTo(composer, QPoint()).y()
+            == batch.repetitions.mapTo(composer, QPoint()).y()
+        )
+        assert (
+            row.mapTo(composer, QPoint()).y()
+            - batch.generation_controls.geometry().bottom()
+            >= 24
+        )
+        assert (
+            batch.mapTo(editor.settings_card, QPoint()).y()
+>           - editor.modes.mapTo(editor.settings_card, QPoint(0, editor.modes.height())).y()
+              ^^^^^^^^^^^^
+            >= 16
+        )
+E       AttributeError: 'ProtocolEditor' object has no attribute 'modes'
+
+tests/gui/test_dashboard.py:7682: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+________ test_label_insertion_repeats_batch_in_original_scope_and_undo _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b6c69e0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_label_insertion_repeats_batch_in_original_scope_and_undo(window, app):
+        from cephvr.gui.batch_insertion import Insertion, insert_batch
+        from cephvr.gui.epoch_batch import epoch_paths
+        from cephvr.gui.program_editing import node_at, validate
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import make_group
+    
+        base = blank_program()
+        data = base.model_dump(mode="json")
+        first = data["sequence"][0]
+        data["sequence"] = [
+            dict(first, epoch_id="a", batch_label="Target"),
+            dict(first, epoch_id="b", batch_label="Other"),
+            dict(first, epoch_id="c", batch_label="Target"),
+        ]
+        original, _ = make_group(validate(data), (), 0, 1, 2, False, (), False)
+        batch = base.model_copy(
+            update={
+                "sequence": (base.sequence[0].model_copy(update={"batch_label": "Target"}),)
+            }
+        )
+        result, paths = insert_batch(
+            original, batch, (), Insertion("label", label="Target")
+        )
+        assert len(paths) == 2  # The newly inserted matching labels are not targeted again.
+        assert paths == ((0, 1), (2,))
+        assert result.sequence[0].repetitions == 2
+        assert len(result.sequence[0].body) == 3
+        assert len({node_at(result, p).epoch_id for p in epoch_paths(result)}) == 5
+        assert len(epoch_paths(original)) == 3
+        with pytest.raises(ValueError, match="label"):
+            insert_batch(original, batch, (), Insertion("label", label="Missing"))
+        editor = window.protocol.editor
+        editor.set_program(original)
+        editor.enter_group()
+        create = editor.subgroup
+        create.insert.setCurrentIndex(create.insert.findData("label"))
+        create.target_label.setCurrentText("Target")
+        assert (
+            create.target_field.isHidden()
+        )  # GUI generation appends; source insertion remains tested above.
+>       assert create.label_counts["Target"] == 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Target'
+
+tests/gui/test_dashboard.py:8039: KeyError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_first_source_epoch_fade_does_not_change_rest_of_batch __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106042b00>
+
+    def test_first_source_epoch_fade_does_not_change_rest_of_batch(window):
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:9002: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_timeline_epoch_shortcuts_and_keyboard_history ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x105f79630>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(editor.program))
+        editor.enter_group()
+        original = editor.program
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+        )
+        duplicate = editor.program
+        assert len(duplicate.sequence[0].body) == len(original.sequence[0].body) + 1
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier
+        )
+        assert editor.program == original
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier
+        )
+        assert editor.program == duplicate
+        QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Backspace)
+        assert len(editor.program.sequence[0].body) == len(original.sequence[0].body)
+        assert not any(
+            action.text() in {"Undo", "Redo"} for action in editor.epoch_menu.actions()
+        )
+        editor.hierarchy.contents.choose(0, Qt.KeyboardModifier.NoModifier)
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.ShiftModifier)
+        before = editor.program
+        QTest.keyClick(
+            editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+        )
+        QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Backspace)
+        assert editor.program == before
+>       text_field = editor.batch_edit.duration
+                     ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'batch_edit'
+
+tests/gui/test_dashboard.py:9800: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______ test_family_advanced_controls_preserve_hidden_state[True-Video] ________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106065bd0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>, preset = 'Video'
+reset = True
+
+    @pytest.mark.parametrize("preset", ["Video", "Looming image", "3D arena"])
+    @pytest.mark.parametrize("reset", [True, False])
+    def test_family_advanced_controls_preserve_hidden_state(window, app, preset, reset):
+        from cephvr.gui.advanced_appearance import AdvancedAppearance
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        program = add_stimulus(blank_program(), 0, preset, ("Front",))
+        epoch = program.sequence[0]
+        imported = epoch.settings[0].model_copy(update={"reset": reset})
+        program = program.model_copy(
+            update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
+        )
+        editor = window.protocol.editor
+        editor.set_program(program)
+>       parameters = editor.parameters
+                     ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:9872: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_family_advanced_controls_preserve_hidden_state[True-Looming image] ____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b69b760>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+preset = 'Looming image', reset = True
+
+    @pytest.mark.parametrize("preset", ["Video", "Looming image", "3D arena"])
+    @pytest.mark.parametrize("reset", [True, False])
+    def test_family_advanced_controls_preserve_hidden_state(window, app, preset, reset):
+        from cephvr.gui.advanced_appearance import AdvancedAppearance
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        program = add_stimulus(blank_program(), 0, preset, ("Front",))
+        epoch = program.sequence[0]
+        imported = epoch.settings[0].model_copy(update={"reset": reset})
+        program = program.model_copy(
+            update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
+        )
+        editor = window.protocol.editor
+        editor.set_program(program)
+>       parameters = editor.parameters
+                     ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:9872: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______ test_family_advanced_controls_preserve_hidden_state[True-3D arena] ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108e163b0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>, preset = '3D arena'
+reset = True
+
+    @pytest.mark.parametrize("preset", ["Video", "Looming image", "3D arena"])
+    @pytest.mark.parametrize("reset", [True, False])
+    def test_family_advanced_controls_preserve_hidden_state(window, app, preset, reset):
+        from cephvr.gui.advanced_appearance import AdvancedAppearance
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        program = add_stimulus(blank_program(), 0, preset, ("Front",))
+        epoch = program.sequence[0]
+        imported = epoch.settings[0].model_copy(update={"reset": reset})
+        program = program.model_copy(
+            update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
+        )
+        editor = window.protocol.editor
+        editor.set_program(program)
+>       parameters = editor.parameters
+                     ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:9872: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______ test_family_advanced_controls_preserve_hidden_state[False-Video] _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10a9bd510>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>, preset = 'Video'
+reset = False
+
+    @pytest.mark.parametrize("preset", ["Video", "Looming image", "3D arena"])
+    @pytest.mark.parametrize("reset", [True, False])
+    def test_family_advanced_controls_preserve_hidden_state(window, app, preset, reset):
+        from cephvr.gui.advanced_appearance import AdvancedAppearance
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        program = add_stimulus(blank_program(), 0, preset, ("Front",))
+        epoch = program.sequence[0]
+        imported = epoch.settings[0].model_copy(update={"reset": reset})
+        program = program.model_copy(
+            update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
+        )
+        editor = window.protocol.editor
+        editor.set_program(program)
+>       parameters = editor.parameters
+                     ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:9872: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_family_advanced_controls_preserve_hidden_state[False-Looming image] ___
+
+window = <cephvr.gui.window.DashboardWindow object at 0x105fd1fc0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+preset = 'Looming image', reset = False
+
+    @pytest.mark.parametrize("preset", ["Video", "Looming image", "3D arena"])
+    @pytest.mark.parametrize("reset", [True, False])
+    def test_family_advanced_controls_preserve_hidden_state(window, app, preset, reset):
+        from cephvr.gui.advanced_appearance import AdvancedAppearance
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        program = add_stimulus(blank_program(), 0, preset, ("Front",))
+        epoch = program.sequence[0]
+        imported = epoch.settings[0].model_copy(update={"reset": reset})
+        program = program.model_copy(
+            update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
+        )
+        editor = window.protocol.editor
+        editor.set_program(program)
+>       parameters = editor.parameters
+                     ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:9872: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____ test_family_advanced_controls_preserve_hidden_state[False-3D arena] ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10b66d000>
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>, preset = '3D arena'
+reset = False
+
+    @pytest.mark.parametrize("preset", ["Video", "Looming image", "3D arena"])
+    @pytest.mark.parametrize("reset", [True, False])
+    def test_family_advanced_controls_preserve_hidden_state(window, app, preset, reset):
+        from cephvr.gui.advanced_appearance import AdvancedAppearance
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        program = add_stimulus(blank_program(), 0, preset, ("Front",))
+        epoch = program.sequence[0]
+        imported = epoch.settings[0].model_copy(update={"reset": reset})
+        program = program.model_copy(
+            update={"sequence": (epoch.model_copy(update={"settings": (imported,)}),)}
+        )
+        editor = window.protocol.editor
+        editor.set_program(program)
+>       parameters = editor.parameters
+                     ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'parameters'
+
+tests/gui/test_dashboard.py:9872: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs ___
+
+window = <cephvr.gui.window.DashboardWindow object at 0x108e26a70>
+
+    def test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs(window):
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.projector_layers import layers_for
+        from cephvr.gui.protocol_document import review_program
+    
+        editor = window.protocol.editor
+        editor.set_program(review_program())
+        editor.timeline.set_screens(("Left", "Right"))
+        editor.timeline.choose(1, Qt.KeyboardModifier.NoModifier)
+        original = editor.program
+>       form = editor.batch_edit.selection_form
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'batch_edit'
+
+tests/gui/test_dashboard.py:9976: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_review_and_runtime_share_page_elements_and_card_layouts[False-1280] ___
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_review_and_runtime_share_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1094cbc90>
+width = 1280, runtime_authority = False
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    @pytest.mark.parametrize("runtime_authority", [False, True])
+    def test_review_and_runtime_share_page_elements_and_card_layouts(
+        app: QApplication,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        width: int,
+        runtime_authority: bool,
+    ) -> None:
+        from PyQt6.QtCore import QCoreApplication, QEvent
+        from PyQt6.QtWidgets import QAbstractButton, QComboBox, QLineEdit
+    
+        from cephvr.gui.cameras import CamerasPanel
+        from cephvr.gui.components import Card
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.gui.main import ManagedGui
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+        from cephvr.gui.microcontroller import MicrocontrollerPanel
+        from cephvr.gui.projectors import ProjectorsPanel
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.shared.auth import Principal
+    
+        # Exercise both real composition paths, without SDK discovery or controller work.
+        monkeypatch.setattr(CamerasPanel, "refresh_inventory", lambda self: None)
+        monkeypatch.setattr(MicrocontrollerPanel, "scan_ports", lambda self: None)
+        discover_displays = ProjectorsPanel.discover_displays
+        monkeypatch.setattr(
+            ProjectorsPanel,
+            "discover_displays",
+            lambda self: (
+                discover_displays(self) if self.review_displays is not None else None
+            ),
+        )
+        monkeypatch.setattr(ControllerBridge, "start", lambda self: None)
+        review = ReviewDashboardWindow(
+            sample=True,
+            settings=QSettings(str(tmp_path / "review.ini"), QSettings.Format.IniFormat),
+        )
+        runtime = ManagedDashboardWindow(
+            sample=False,
+            settings=QSettings(str(tmp_path / "runtime.ini"), QSettings.Format.IniFormat),
+        )
+        controls = ReviewControls(review, simulate_projectors=True)
+        bridge = ControllerBridge(
+            Principal("gui", str(uuid4()), "test-token"), 50051, 1024, (0,)
+        )
+        manager = ManagedGui(runtime, bridge)
+        runtime.devices.cameras.drafts = [
+            replace(camera, values=dict(camera.values))
+            for camera in review.devices.cameras.drafts
+        ]
+        runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
+        projectors = runtime.devices.projectors
+        projectors.review_displays = review.devices.projectors.review_displays
+        projectors.assignments.update(review.devices.projectors.assignments)
+        projectors.request("Refresh displays")
+        for panel in (review.devices.projectors, projectors):
+            for key in panel.keys:
+                panel.set_participation(key, True)
+    
+        def signature(page: QWidget) -> tuple:
+            return (
+                tuple(card.caption.text() for card in page.findChildren(Card)),
+                tuple(
+                    control.text()
+                    for control in page.findChildren(QAbstractButton)
+                    if control is not runtime.dashboard.control_button
+                    and control is not review.dashboard.control_button
+                ),
+                tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
+                tuple(
+                    tuple(editor.itemText(i) for i in range(editor.count()))
+                    for editor in page.findChildren(QComboBox)
+                ),
+            )
+    
+        try:
+            runtime.devices.cameras.populate_inventory()
+            runtime.devices.cameras.load_selected()
+            runtime.devices.sync_cameras()
+            runtime.snapshots.restore(
+                runtime.snapshots.validate(review.snapshots.capture())
+            )
+            runtime.apply_view(
+                replace(review.dashboard.view, sample=False, connected=True)
+                if runtime_authority
+                else review.dashboard.view
+            )
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            for window in (review, runtime):
+                window.resize(width, 940)
+                window.show()
+            assert not review.dashboard.control_button.isVisible()
+            assert runtime.dashboard.control_button.isVisible() == runtime_authority
+            if runtime_authority:
+                assert runtime.dashboard.control_button.text() == "Control held"
+                assert not runtime.dashboard.control_button.isEnabled()
+            assert [b.text() for b in review.page_buttons] == [
+                b.text() for b in runtime.page_buttons
+            ]
+            for review_items, runtime_items in zip(
+                signature(review.centralWidget()),
+                signature(runtime.centralWidget()),
+                strict=True,
+            ):
+                assert len(review_items) == len(runtime_items)
+                assert [
+                    (left, right)
+                    for left, right in zip(review_items, runtime_items, strict=True)
+                    if left != right
+                ] == []
+            selections = [(0, None, None)]
+            selections += [
+>               (1, None, i) for i in range(review.protocol.editor.modes.count())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            ]
+E           AttributeError: 'ProtocolEditor' object has no attribute 'modes'
+
+tests/gui/test_dashboard.py:10861: AttributeError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_review_and_runtime_share_page_elements_and_card_layouts[False-720] ____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_review_and_runtime_share_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c8aab10>
+width = 720, runtime_authority = False
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    @pytest.mark.parametrize("runtime_authority", [False, True])
+    def test_review_and_runtime_share_page_elements_and_card_layouts(
+        app: QApplication,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        width: int,
+        runtime_authority: bool,
+    ) -> None:
+        from PyQt6.QtCore import QCoreApplication, QEvent
+        from PyQt6.QtWidgets import QAbstractButton, QComboBox, QLineEdit
+    
+        from cephvr.gui.cameras import CamerasPanel
+        from cephvr.gui.components import Card
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.gui.main import ManagedGui
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+        from cephvr.gui.microcontroller import MicrocontrollerPanel
+        from cephvr.gui.projectors import ProjectorsPanel
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.shared.auth import Principal
+    
+        # Exercise both real composition paths, without SDK discovery or controller work.
+        monkeypatch.setattr(CamerasPanel, "refresh_inventory", lambda self: None)
+        monkeypatch.setattr(MicrocontrollerPanel, "scan_ports", lambda self: None)
+        discover_displays = ProjectorsPanel.discover_displays
+        monkeypatch.setattr(
+            ProjectorsPanel,
+            "discover_displays",
+            lambda self: (
+                discover_displays(self) if self.review_displays is not None else None
+            ),
+        )
+        monkeypatch.setattr(ControllerBridge, "start", lambda self: None)
+        review = ReviewDashboardWindow(
+            sample=True,
+            settings=QSettings(str(tmp_path / "review.ini"), QSettings.Format.IniFormat),
+        )
+        runtime = ManagedDashboardWindow(
+            sample=False,
+            settings=QSettings(str(tmp_path / "runtime.ini"), QSettings.Format.IniFormat),
+        )
+        controls = ReviewControls(review, simulate_projectors=True)
+        bridge = ControllerBridge(
+            Principal("gui", str(uuid4()), "test-token"), 50051, 1024, (0,)
+        )
+        manager = ManagedGui(runtime, bridge)
+        runtime.devices.cameras.drafts = [
+            replace(camera, values=dict(camera.values))
+            for camera in review.devices.cameras.drafts
+        ]
+        runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
+        projectors = runtime.devices.projectors
+        projectors.review_displays = review.devices.projectors.review_displays
+        projectors.assignments.update(review.devices.projectors.assignments)
+        projectors.request("Refresh displays")
+        for panel in (review.devices.projectors, projectors):
+            for key in panel.keys:
+                panel.set_participation(key, True)
+    
+        def signature(page: QWidget) -> tuple:
+            return (
+                tuple(card.caption.text() for card in page.findChildren(Card)),
+                tuple(
+                    control.text()
+                    for control in page.findChildren(QAbstractButton)
+                    if control is not runtime.dashboard.control_button
+                    and control is not review.dashboard.control_button
+                ),
+                tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
+                tuple(
+                    tuple(editor.itemText(i) for i in range(editor.count()))
+                    for editor in page.findChildren(QComboBox)
+                ),
+            )
+    
+        try:
+            runtime.devices.cameras.populate_inventory()
+            runtime.devices.cameras.load_selected()
+            runtime.devices.sync_cameras()
+            runtime.snapshots.restore(
+                runtime.snapshots.validate(review.snapshots.capture())
+            )
+            runtime.apply_view(
+                replace(review.dashboard.view, sample=False, connected=True)
+                if runtime_authority
+                else review.dashboard.view
+            )
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            for window in (review, runtime):
+                window.resize(width, 940)
+                window.show()
+            assert not review.dashboard.control_button.isVisible()
+            assert runtime.dashboard.control_button.isVisible() == runtime_authority
+            if runtime_authority:
+                assert runtime.dashboard.control_button.text() == "Control held"
+                assert not runtime.dashboard.control_button.isEnabled()
+            assert [b.text() for b in review.page_buttons] == [
+                b.text() for b in runtime.page_buttons
+            ]
+            for review_items, runtime_items in zip(
+                signature(review.centralWidget()),
+                signature(runtime.centralWidget()),
+                strict=True,
+            ):
+                assert len(review_items) == len(runtime_items)
+                assert [
+                    (left, right)
+                    for left, right in zip(review_items, runtime_items, strict=True)
+                    if left != right
+                ] == []
+            selections = [(0, None, None)]
+            selections += [
+>               (1, None, i) for i in range(review.protocol.editor.modes.count())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            ]
+E           AttributeError: 'ProtocolEditor' object has no attribute 'modes'
+
+tests/gui/test_dashboard.py:10861: AttributeError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_review_and_runtime_share_page_elements_and_card_layouts[True-1280] ____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_review_and_runtime_share_2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c184750>
+width = 1280, runtime_authority = True
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    @pytest.mark.parametrize("runtime_authority", [False, True])
+    def test_review_and_runtime_share_page_elements_and_card_layouts(
+        app: QApplication,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        width: int,
+        runtime_authority: bool,
+    ) -> None:
+        from PyQt6.QtCore import QCoreApplication, QEvent
+        from PyQt6.QtWidgets import QAbstractButton, QComboBox, QLineEdit
+    
+        from cephvr.gui.cameras import CamerasPanel
+        from cephvr.gui.components import Card
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.gui.main import ManagedGui
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+        from cephvr.gui.microcontroller import MicrocontrollerPanel
+        from cephvr.gui.projectors import ProjectorsPanel
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.shared.auth import Principal
+    
+        # Exercise both real composition paths, without SDK discovery or controller work.
+        monkeypatch.setattr(CamerasPanel, "refresh_inventory", lambda self: None)
+        monkeypatch.setattr(MicrocontrollerPanel, "scan_ports", lambda self: None)
+        discover_displays = ProjectorsPanel.discover_displays
+        monkeypatch.setattr(
+            ProjectorsPanel,
+            "discover_displays",
+            lambda self: (
+                discover_displays(self) if self.review_displays is not None else None
+            ),
+        )
+        monkeypatch.setattr(ControllerBridge, "start", lambda self: None)
+        review = ReviewDashboardWindow(
+            sample=True,
+            settings=QSettings(str(tmp_path / "review.ini"), QSettings.Format.IniFormat),
+        )
+        runtime = ManagedDashboardWindow(
+            sample=False,
+            settings=QSettings(str(tmp_path / "runtime.ini"), QSettings.Format.IniFormat),
+        )
+        controls = ReviewControls(review, simulate_projectors=True)
+        bridge = ControllerBridge(
+            Principal("gui", str(uuid4()), "test-token"), 50051, 1024, (0,)
+        )
+        manager = ManagedGui(runtime, bridge)
+        runtime.devices.cameras.drafts = [
+            replace(camera, values=dict(camera.values))
+            for camera in review.devices.cameras.drafts
+        ]
+        runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
+        projectors = runtime.devices.projectors
+        projectors.review_displays = review.devices.projectors.review_displays
+        projectors.assignments.update(review.devices.projectors.assignments)
+        projectors.request("Refresh displays")
+        for panel in (review.devices.projectors, projectors):
+            for key in panel.keys:
+                panel.set_participation(key, True)
+    
+        def signature(page: QWidget) -> tuple:
+            return (
+                tuple(card.caption.text() for card in page.findChildren(Card)),
+                tuple(
+                    control.text()
+                    for control in page.findChildren(QAbstractButton)
+                    if control is not runtime.dashboard.control_button
+                    and control is not review.dashboard.control_button
+                ),
+                tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
+                tuple(
+                    tuple(editor.itemText(i) for i in range(editor.count()))
+                    for editor in page.findChildren(QComboBox)
+                ),
+            )
+    
+        try:
+            runtime.devices.cameras.populate_inventory()
+            runtime.devices.cameras.load_selected()
+            runtime.devices.sync_cameras()
+            runtime.snapshots.restore(
+                runtime.snapshots.validate(review.snapshots.capture())
+            )
+            runtime.apply_view(
+                replace(review.dashboard.view, sample=False, connected=True)
+                if runtime_authority
+                else review.dashboard.view
+            )
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            for window in (review, runtime):
+                window.resize(width, 940)
+                window.show()
+            assert not review.dashboard.control_button.isVisible()
+            assert runtime.dashboard.control_button.isVisible() == runtime_authority
+            if runtime_authority:
+                assert runtime.dashboard.control_button.text() == "Control held"
+                assert not runtime.dashboard.control_button.isEnabled()
+            assert [b.text() for b in review.page_buttons] == [
+                b.text() for b in runtime.page_buttons
+            ]
+            for review_items, runtime_items in zip(
+                signature(review.centralWidget()),
+                signature(runtime.centralWidget()),
+                strict=True,
+            ):
+                assert len(review_items) == len(runtime_items)
+                assert [
+                    (left, right)
+                    for left, right in zip(review_items, runtime_items, strict=True)
+                    if left != right
+                ] == []
+            selections = [(0, None, None)]
+            selections += [
+>               (1, None, i) for i in range(review.protocol.editor.modes.count())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            ]
+E           AttributeError: 'ProtocolEditor' object has no attribute 'modes'
+
+tests/gui/test_dashboard.py:10861: AttributeError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____ test_review_and_runtime_share_page_elements_and_card_layouts[True-720] ____
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_review_and_runtime_share_3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10a904990>
+width = 720, runtime_authority = True
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    @pytest.mark.parametrize("runtime_authority", [False, True])
+    def test_review_and_runtime_share_page_elements_and_card_layouts(
+        app: QApplication,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        width: int,
+        runtime_authority: bool,
+    ) -> None:
+        from PyQt6.QtCore import QCoreApplication, QEvent
+        from PyQt6.QtWidgets import QAbstractButton, QComboBox, QLineEdit
+    
+        from cephvr.gui.cameras import CamerasPanel
+        from cephvr.gui.components import Card
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.gui.main import ManagedGui
+        from cephvr.gui.managed_window import ManagedDashboardWindow
+        from cephvr.gui.microcontroller import MicrocontrollerPanel
+        from cephvr.gui.projectors import ProjectorsPanel
+        from cephvr.gui.review import ReviewDashboardWindow
+        from cephvr.shared.auth import Principal
+    
+        # Exercise both real composition paths, without SDK discovery or controller work.
+        monkeypatch.setattr(CamerasPanel, "refresh_inventory", lambda self: None)
+        monkeypatch.setattr(MicrocontrollerPanel, "scan_ports", lambda self: None)
+        discover_displays = ProjectorsPanel.discover_displays
+        monkeypatch.setattr(
+            ProjectorsPanel,
+            "discover_displays",
+            lambda self: (
+                discover_displays(self) if self.review_displays is not None else None
+            ),
+        )
+        monkeypatch.setattr(ControllerBridge, "start", lambda self: None)
+        review = ReviewDashboardWindow(
+            sample=True,
+            settings=QSettings(str(tmp_path / "review.ini"), QSettings.Format.IniFormat),
+        )
+        runtime = ManagedDashboardWindow(
+            sample=False,
+            settings=QSettings(str(tmp_path / "runtime.ini"), QSettings.Format.IniFormat),
+        )
+        controls = ReviewControls(review, simulate_projectors=True)
+        bridge = ControllerBridge(
+            Principal("gui", str(uuid4()), "test-token"), 50051, 1024, (0,)
+        )
+        manager = ManagedGui(runtime, bridge)
+        runtime.devices.cameras.drafts = [
+            replace(camera, values=dict(camera.values))
+            for camera in review.devices.cameras.drafts
+        ]
+        runtime.apply_view(replace(review.dashboard.view, sample=False, connected=True))
+        projectors = runtime.devices.projectors
+        projectors.review_displays = review.devices.projectors.review_displays
+        projectors.assignments.update(review.devices.projectors.assignments)
+        projectors.request("Refresh displays")
+        for panel in (review.devices.projectors, projectors):
+            for key in panel.keys:
+                panel.set_participation(key, True)
+    
+        def signature(page: QWidget) -> tuple:
+            return (
+                tuple(card.caption.text() for card in page.findChildren(Card)),
+                tuple(
+                    control.text()
+                    for control in page.findChildren(QAbstractButton)
+                    if control is not runtime.dashboard.control_button
+                    and control is not review.dashboard.control_button
+                ),
+                tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
+                tuple(
+                    tuple(editor.itemText(i) for i in range(editor.count()))
+                    for editor in page.findChildren(QComboBox)
+                ),
+            )
+    
+        try:
+            runtime.devices.cameras.populate_inventory()
+            runtime.devices.cameras.load_selected()
+            runtime.devices.sync_cameras()
+            runtime.snapshots.restore(
+                runtime.snapshots.validate(review.snapshots.capture())
+            )
+            runtime.apply_view(
+                replace(review.dashboard.view, sample=False, connected=True)
+                if runtime_authority
+                else review.dashboard.view
+            )
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            for window in (review, runtime):
+                window.resize(width, 940)
+                window.show()
+            assert not review.dashboard.control_button.isVisible()
+            assert runtime.dashboard.control_button.isVisible() == runtime_authority
+            if runtime_authority:
+                assert runtime.dashboard.control_button.text() == "Control held"
+                assert not runtime.dashboard.control_button.isEnabled()
+            assert [b.text() for b in review.page_buttons] == [
+                b.text() for b in runtime.page_buttons
+            ]
+            for review_items, runtime_items in zip(
+                signature(review.centralWidget()),
+                signature(runtime.centralWidget()),
+                strict=True,
+            ):
+                assert len(review_items) == len(runtime_items)
+                assert [
+                    (left, right)
+                    for left, right in zip(review_items, runtime_items, strict=True)
+                    if left != right
+                ] == []
+            selections = [(0, None, None)]
+            selections += [
+>               (1, None, i) for i in range(review.protocol.editor.modes.count())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            ]
+E           AttributeError: 'ProtocolEditor' object has no attribute 'modes'
+
+tests/gui/test_dashboard.py:10861: AttributeError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_trial_shuffle_preserves_groups_selection_and_history ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1060d1c60>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x105f89750>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_trial_shuffle_preserves_g0')
+
+    def test_trial_shuffle_preserves_groups_selection_and_history(
+        window, monkeypatch, tmp_path
+    ):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        monkeypatch.setattr(
+            "cephvr.gui.protocol_nodes.SystemRandom.shuffle",
+            lambda self, order: order.reverse(),
+        )
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+>       editor.add_stimulus("Texture")
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'add_stimulus'
+
+tests/gui/test_dashboard.py:11800: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_trial_shuffle_obeys_authority_and_pending_validation ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x105eb8040>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b5db8d0>
+
+    def test_trial_shuffle_obeys_authority_and_pending_validation(window, monkeypatch):
+        from cephvr.gui.protocol_document import review_program
+    
+        monkeypatch.setattr(
+            "cephvr.gui.protocol_nodes.SystemRandom.shuffle",
+            lambda self, order: order.reverse(),
+        )
+        editor = window.protocol.editor
+        editor.set_program(review_program())
+        original = editor.program
+        editor.setEnabled(False)
+        editor.shuffle_trial()
+        assert editor.program == original
+        editor.setEnabled(True)
+>       editor.duration.setText("invalid")
+        ^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'duration'
+
+tests/gui/test_dashboard.py:11850: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_grouped_editor_pair_creation_repeat_scope_and_history __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10c8e0940>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1671/test_grouped_editor_pair_creat0')
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_grouped_editor_pair_creation_repeat_scope_and_history(window, tmp_path, app):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_nodes import edit_epoch
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        pair, _ = edit_epoch(blank_program(), 0, "duplicate")
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(pair))
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        assert editor.scope == (0,) and len(editor.timeline.nodes) == 1
+        assert len(editor.hierarchy.contents.nodes) == 2
+        group = editor.program.sequence[0]
+        assert isinstance(group, Group) and group.body == pair.sequence
+        fields = editor.group_editor
+        fields.name.setText("Image Grey")
+        fields.repetitions.setText("300")
+        fields.mark_changed()
+        assert fields.apply()
+        assert editor.program.sequence[0].group_id == "Image_Grey"
+        assert editor.program.sequence[0].repetitions == 300
+        assert "600 epochs" in editor.sequence_summary.text()
+        assert len(editor.hierarchy.contents.nodes) == 2
+        fields.mark_changed()  # A pending field commit must preserve the clicked selection.
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        assert editor.path == (0, 1)
+        assert editor.hierarchy.contents.index == editor.hierarchy.contents.anchor == 1
+>       editor.duration.setText("2")
+        ^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'duration'
+
+tests/gui/test_dashboard.py:12104: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_flat_group_initial_trials_and_legacy_imports _______________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1060d3b50>
+
+    def test_flat_group_initial_trials_and_legacy_imports(app):
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.visual_stimulus.config.models.program_model import Epoch, Group
+    
+        window = DashboardWindow(sample=True)
+        ReviewControls(window)
+        window.show()
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        assert all(isinstance(n, Group) for n in editor.program.sequence)
+        assert all(isinstance(n, Epoch) for n in editor.program.sequence[0].body)
+        before = editor.program
+>       editor.edit_epoch("add")
+        ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'edit_epoch'
+
+tests/gui/test_dashboard.py:12214: AttributeError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_managed_configuration_creates_first_run_backends_and_installs_partial_tracking
+FAILED tests/gui/test_dashboard.py::test_managed_configuration_keeps_invalid_newer_epoch_draft_after_ack
+FAILED tests/gui/test_dashboard.py::test_protocol_program_validation_and_atomic_save
+FAILED tests/gui/test_dashboard.py::test_protocol_timeline_edits_preserve_trials_and_imported_groups
+FAILED tests/gui/test_dashboard.py::test_protocol_cards_reflow_and_keep_properties_reachable
+FAILED tests/gui/test_dashboard.py::test_stimulus_parameter_edit_invalid_guard_and_media_root
+FAILED tests/gui/test_dashboard.py::test_protocol_epoch_structure_actions - A...
+FAILED tests/gui/test_dashboard.py::test_add_prepared_file_picker_does_not_create_placeholder_on_cancel
+FAILED tests/gui/test_dashboard.py::test_file_first_epoch_insertion_and_history
+FAILED tests/gui/test_dashboard.py::test_screen_overrides_and_layers_preserve_other_epochs
+FAILED tests/gui/test_dashboard.py::test_repeat_variation_uses_canonical_expansion_and_preserves_choreography
+FAILED tests/gui/test_dashboard.py::test_nested_group_edit_and_duplicate_reference_remapping
+FAILED tests/gui/test_dashboard.py::test_motion_auto_commit_and_invalid_edit_undo
+FAILED tests/gui/test_dashboard.py::test_saved_variations_reopen_as_speed_direction_lists
+FAILED tests/gui/test_dashboard.py::test_variation_bounds_and_preview_limit
+FAILED tests/gui/test_dashboard.py::test_stationary_texture_speed_variation_keeps_positive_x_direction
+FAILED tests/gui/test_dashboard.py::test_expanded_close_and_trial_deletion - ...
+FAILED tests/gui/test_dashboard.py::test_batch_create_variations_preview_insert_and_reload
+FAILED tests/gui/test_dashboard.py::test_trial_overview_selects_ranges_and_sources_across_groups
+FAILED tests/gui/test_dashboard.py::test_timeline_overview_colors_and_current_epoch_details
+FAILED tests/gui/test_dashboard.py::test_epoch_parameter_warnings_wait_for_submission[selection]
+FAILED tests/gui/test_dashboard.py::test_batch_reference_projector_parameters_and_layers
+FAILED tests/gui/test_dashboard.py::test_reference_type_change_clears_asset_and_switches_stimulus_mode
+FAILED tests/gui/test_dashboard.py::test_arena_axis_gains_roundtrip_and_editor_spacing
+FAILED tests/gui/test_dashboard.py::test_label_insertion_repeats_batch_in_original_scope_and_undo
+FAILED tests/gui/test_dashboard.py::test_first_source_epoch_fade_does_not_change_rest_of_batch
+FAILED tests/gui/test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history
+FAILED tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[True-Video]
+FAILED tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[True-Looming image]
+FAILED tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[True-3D arena]
+FAILED tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[False-Video]
+FAILED tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[False-Looming image]
+FAILED tests/gui/test_dashboard.py::test_family_advanced_controls_preserve_hidden_state[False-3D arena]
+FAILED tests/gui/test_dashboard.py::test_selected_epoch_type_change_keeps_other_projector_and_sibling_epochs
+FAILED tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]
+FAILED tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[False-720]
+FAILED tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[True-1280]
+FAILED tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[True-720]
+FAILED tests/gui/test_dashboard.py::test_trial_shuffle_preserves_groups_selection_and_history
+FAILED tests/gui/test_dashboard.py::test_trial_shuffle_obeys_authority_and_pending_validation
+FAILED tests/gui/test_dashboard.py::test_grouped_editor_pair_creation_repeat_scope_and_history
+FAILED tests/gui/test_dashboard.py::test_flat_group_initial_trials_and_legacy_imports
+42 failed, 35 passed, 313 deselected in 80.27s (0:01:20)

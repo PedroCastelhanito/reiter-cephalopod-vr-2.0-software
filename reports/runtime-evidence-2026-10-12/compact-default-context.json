@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-12",
+  "task": "protocol-default-and-compact-actions",
+  "revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Prior dirty working tree retained.",
+  "sha256": {
+    "src/cephvr/gui/protocol_controls.py": "e5184fa63147d9539efe49a3c5fe6efac04cd4d30468f3689eea0ffad37b7439",
+    "src/cephvr/gui/calibration_files.py": "52a4891b4c593685bea83958702fb59d40ede6c15f0b5617e86ee654e6219ac5",
+    "tests/gui/test_dashboard.py": "2623fbf43237fc48a63a928623168eb1468f64c997599b3a0258f467ae48adeb"
+  },
+  "decisions": [
+    "G01 revision 140",
+    "G02 revision 35",
+    "ARCH-002",
+    "E15"
+  ],
+  "changes": "Shuffle/Preview use natural button widths and a maximum-sized right-aligned action group. Preserve header/body relocation at narrow width and remove redundant same-position grid rebuilding. Planner defaults to Batch generate; explicit timeline selection still switches to Batch edit. Projector calibration configuration load caption becomes Load. No command/settings/authority change or new dependencies.",
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"protocol_cards_reflow or batch_tabs_preserve or projector_configuration_json_restores or review_and_runtime_share_page_elements or managed_configuration_keeps_invalid_newer or trial_shuffle or timeline_epoch_shortcuts\"",
+      "result": "12 passed, 377 deselected in 13.22s",
+      "raw": "compact-default-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/protocol_controls.py src/cephvr/gui/calibration_files.py tests/gui/test_dashboard.py",
+      "result": "3 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules, zero violations; existing cohesion advisories",
+      "raw": "compact-default-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "visual_inspection": "Wide 1280x940 and narrow 720x940 local Review fixture captures inspected. Shuffle/Preview readable at natural widths and aligned right; Batch generate visible on startup. Temporary captures removed.",
+  "attempts": "One incomplete apply_patch hunk was rejected without mutation; retry with complete hunks succeeds. No failing test/static/capture execution.",
+  "limits": "Local Qt/offscreen focused tests only. No live application restart, native Windows/DPI, device action, full GUI regression or rig acceptance."
+}

@@ -204,9 +204,7 @@ class CommandAdmissionGate:
                 current_work = self._work.current_work_key()
                 if current_work is not None:
                     self._session_work_key = current_work
-            elif name == "ExecuteCameraCommand":
-                self._camera_work_keys.add(work_key)
-            elif name == "ExecuteMicrocontrollerCommand":
+            elif name in {"ExecuteCameraCommand", "ExecuteMicrocontrollerCommand"}:
                 self._camera_work_keys.add(work_key)
             else:
                 current_work = self._work.current_work_key()

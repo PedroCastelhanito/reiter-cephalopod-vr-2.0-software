@@ -7,6 +7,7 @@ from typing import Any
 from PyQt6.QtGui import QColor
 
 from cephvr.gui.epoch_batch import parameter_value
+from cephvr.gui.formatting import clock_duration
 from cephvr.gui.projector_layers import layer_title, layers_for
 from cephvr.gui.protocol_document import duration
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program, Settings
@@ -50,7 +51,7 @@ def stimulus_color(key: str) -> QColor:
 
 def epoch_heading(epoch: Epoch, index: int) -> str:
     seconds = duration(epoch)
-    timing = f"{seconds:g} s" if seconds is not None else "Variable duration"
+    timing = clock_duration(seconds) if seconds is not None else "Variable duration"
     return f"{index + 1} · {epoch.epoch_id.replace('_', ' ')} · {timing}"
 
 

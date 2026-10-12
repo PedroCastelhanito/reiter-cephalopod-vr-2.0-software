@@ -51,7 +51,7 @@ class ProjectorReference(QWidget):
         self.caption = label(face or "Rig-wide", "label")
         self.caption.setWordWrap(True)
         self.layer = combo(())
-        self.layer.setMinimumWidth(0)
+        self.layer.setFixedWidth(64)
         self.layer.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.layer.setAccessibleName(f"{face or 'Rig-wide'} layer")
         self.layer.currentIndexChanged.connect(
@@ -95,7 +95,7 @@ class ProjectorReference(QWidget):
         self.advanced.toggled.connect(self.parameters.more.setChecked)
         self.parameters.bound.connect(self.render_fields)
 
-    def minimumSizeHint(self) -> QSize:  # noqa: N802
+    def minimumSizeHint(self) -> QSize:
         size = super().minimumSizeHint()
         size.setWidth(0)
         return size
@@ -178,7 +178,7 @@ class ProjectorReference(QWidget):
             ):
                 self.grid.setColumnMinimumWidth(col, width)
             if self.face:
-                self.grid.setColumnMinimumWidth(1, 130)
+                self.grid.setColumnMinimumWidth(1, 64)
                 self.grid.setColumnMinimumWidth(2, 115)
             self.grid.setColumnMinimumWidth(asset_column, 160)
             self.grid.setColumnStretch(asset_column, 1)
@@ -214,7 +214,7 @@ class ProjectorReference(QWidget):
             inset, margins.top(), margins.right(), margins.bottom()
         )
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         if (self.width() < 900) != self.narrow:
             self.arrange()
@@ -272,7 +272,8 @@ class ProjectorReference(QWidget):
                 if index >= 0
                 else "Empty"
             )
-            self.layer.addItem(f"{position + 1} · {title}", identity)
+            self.layer.addItem(str(position + 1), identity)
+            self.layer.setItemData(position, title, Qt.ItemDataRole.ToolTipRole)
         if not self.slots.order:
             self.layer.addItem("—", "")
         self.layer.setCurrentIndex(max(0, self.layer.findData(self.slots.selected)))

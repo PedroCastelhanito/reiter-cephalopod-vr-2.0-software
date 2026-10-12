@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-12",
+  "task": "protocol-config-only-seed",
+  "revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty tree retained.",
+  "sha256": {
+    "src/cephvr/gui/protocol.py": "703496db47c47c69c815d261b748c16b86987127dbd3a69520bbd0d889e2d24f",
+    "src/cephvr/gui/protocol_snapshot.py": "1cca57ae1a368c7847d2f55bb0a5ecdabf9b323d95acd6d4a96d4f55337d4ca0",
+    "tests/gui/test_dashboard.py": "c626e2f4c81bf32658d4eb5a0c26b575c1c9cecde198273a9b57b6c42f59d9d5"
+  },
+  "decision": "G01 revision 139 supersedes the Selected trial fields; E01/E07 schedule/seed semantics retained.",
+  "changes": "Remove Gap/Seed widgets, Selected trial section and their synchronization. Retain existing per-trial stimulus_seed_decimal in Protocol JSON, loaded gap compatibility and authoritative schedule validation. No new config key/format version, default, policy or runtime seed owner.",
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"protocol_config_round_trip or managed_protocol_roundtrips_ordered or protocol_cards_reflow or review_and_runtime_share_page_elements or managed_configuration_preserves_incomplete or managed_configuration_keeps_invalid_newer or empty_schedule_first_add\"",
+      "result": "10 passed, 379 deselected in 11.78s",
+      "raw": "config-seed-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/protocol.py src/cephvr/gui/protocol_snapshot.py tests/gui/test_dashboard.py",
+      "result": "3 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules/zero violations, existing cohesion advisories",
+      "raw": "config-seed-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "coverage": "Edit seeds to zero/42 directly in saved Protocol JSON, reload, switch rows, resave and preserve values. Existing seed/gap managed round-trip remains. Replace removed-widget draft-retention input with the existing epoch Duration field, preserving invalid/newer-edit scenario. Wide/narrow layouts and four Review/Runtime parity variants pass.",
+  "initial_check": "Initial format check requests splitting one test expression; correct after tests, verify AST equivalence and rerun lint/format. No behavioral failure.",
+  "limits": "Local focused Qt/offscreen tests only; no live GUI restart, native Windows/DPI, pixel inspection, device commands, full GUI suite or rig acceptance."
+}

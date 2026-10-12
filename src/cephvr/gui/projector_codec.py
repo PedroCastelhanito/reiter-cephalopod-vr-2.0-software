@@ -51,6 +51,7 @@ def merge_projector_draft(
     presentation_mode: str,
     pulse_patch: Mapping[str, Any] | None,
     geometry: Mapping[str, object] | None,
+    blackout_zones: list[dict[str, Any]] | None = None,
 ) -> runtime_pb2.DisplayConfiguration:
     """Update this page's fields without normalizing unrelated calibration data."""
     document = display_document(base)
@@ -112,6 +113,24 @@ def merge_projector_draft(
         document["photodiode_patch"] = merged_patch
     if geometry is not None:
         document["geometry"] = dict(geometry)
+    if blackout_zones is not None:
+        from cephvr.gui.projector_blackouts import BlackoutZones
+
+        BlackoutZones.validate(blackout_zones)
+        by_id = {output["output_id"]: output for output in outputs_by_identity.values()}
+        for output in by_id.values():
+            output["blackout_zones"] = []
+        for zone in blackout_zones:
+            output_id = face_outputs.get(zone["face"].lower())
+            if output_id is None or any(
+                zone[key] is None for key in ("x", "y", "width", "height")
+            ):
+                raise ValueError(
+                    "Blackout zone requires an assigned screen and complete pixel rectangle"
+                )
+            by_id[output_id]["blackout_zones"].append(
+                {k: zone[k] for k in ("x", "y", "width", "height")}
+            )
 
     result = runtime_pb2.DisplayConfiguration()
     result.profile_json = json.dumps(document, allow_nan=False, separators=(",", ":"))

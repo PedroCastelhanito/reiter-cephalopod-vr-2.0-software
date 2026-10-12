@@ -98,7 +98,6 @@ class ManagedCameras(QObject):
         self.panel.operation_pending = False
         self.panel.pending_enable.clear()
         self.configured_tests.clear()
-        self.panel.has_configured_tests = False
 
     def test_enabled(self) -> None:
         if self.configured_tests:
@@ -154,7 +153,6 @@ class ManagedCameras(QObject):
             if camera_settings is not None
             else []
         )
-        cameras.has_configured_tests = bool(self.configured_tests)
         camera_config_changed = state.configuration.revision != self._camera_revision
         draft_changed = camera_config_changed
         selected_config_changed = camera_config_changed

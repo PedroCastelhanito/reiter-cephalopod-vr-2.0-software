@@ -16,10 +16,10 @@ class DisplayLayout(QWidget):
         self.setMinimumHeight(80)
         self.setAccessibleName("Displays layout")
 
-    def sizeHint(self) -> QSize:  # noqa: N802
+    def sizeHint(self) -> QSize:
         return QSize(260, 145)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(QColor(COLORS.muted))

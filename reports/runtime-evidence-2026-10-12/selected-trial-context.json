@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-12",
+  "task": "selected-trial-fields-layout",
+  "revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty working tree retained.",
+  "sha256": {
+    "src/cephvr/gui/protocol.py": "99ea201dbbdd0e623c5ad5e1d89788cb7c4ee5f98256621c209a99347a1bd909",
+    "src/cephvr/gui/protocol_controls.py": "9b21f4159194f88c487da26568c4319e9bd019eaf268adc170e471d57134f41d",
+    "tests/gui/test_dashboard.py": "a0e4a9b5f9f00e377a37637b5013e827e3451b3c388527815b1c4fc16bcda4af"
+  },
+  "decision": "G01 revision 138; shared Review/Runtime layout under G02, existing schedule ownership under E01/E03; ARCH-002 reuses shared field widgets and existing layout owner.",
+  "changes": "Place persistent Selected trial heading and stacked full-width Random seed/Gap after trial (s) fields below Trials list/actions. Keep optional draft values/validation. Disable final-trial gap. Refit both cards to timeline content or Trials minimum to avoid clipping when timeline is short. Replace timeline-height cache with height equality check; no new state or dependency.",
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"protocol_cards_reflow or managed_protocol_roundtrips_ordered or protocol_timeline_edits_preserve_trials or empty_schedule_first_add or protocol_config_round_trip or review_and_runtime_share_page_elements\"",
+      "result": "9 passed, 380 deselected in 22.01s",
+      "raw": "selected-trial-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/protocol.py src/cephvr/gui/protocol_controls.py tests/gui/test_dashboard.py",
+      "result": "3 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules, zero violations; existing cohesion advisories",
+      "raw": "selected-trial-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "initial_checks": "Initial format check requests joining one test assertion line; apply that formatting only after tests finish and verify AST equality before final static checks. No behavioral test failure.",
+  "visual_inspection": "Qt offscreen captures at 1280x940 and 720x940, plus 720x940 blank program/no assigned outputs, visually inspected. List, labels, fields and actions remain readable inside matched-height cards. Temporary captures removed.",
+  "limits": "Local focused/offscreen validation only. No native Windows/DPI, live Review/Runtime restart, hardware commands, full GUI regression or rig acceptance."
+}

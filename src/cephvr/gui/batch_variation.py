@@ -4,13 +4,15 @@ from decimal import Decimal, InvalidOperation
 from random import Random
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QGridLayout, QLineEdit, QSizePolicy, QWidget
+from PyQt6.QtGui import QShowEvent
+from PyQt6.QtWidgets import QCheckBox, QGridLayout, QLineEdit, QSizePolicy, QWidget
 
 from cephvr.gui.batch_random import random_values
 from cephvr.gui.batch_values import ValueRule
 from cephvr.gui.components import button, combo, equal_row_height, label
 from cephvr.gui.epoch_batch import END_BEHAVIORS
 from cephvr.gui.stimulus_columns import stimulus_columns
+from cephvr.visual_stimulus.config.models.authoring import VariationDraft
 from cephvr.visual_stimulus.config.models.program_model import Settings
 
 
@@ -30,6 +32,8 @@ class BatchVariationRow(QWidget):
         row = QGridLayout(self)
         self.random_cache: tuple[tuple[str, ...], tuple[str, ...]] | None = None
         self.random = Random()
+        self.random_seed = ""
+        self.seed_key: tuple[str, ...] = ()
         row.setContentsMargins(0, 0, 0, 0)
         self.target = combo(())
         if "Rig-wide" not in self.projectors:
@@ -59,7 +63,8 @@ class BatchVariationRow(QWidget):
             caption_widget.setBuddy(control)
             row.addWidget(caption_widget, 0, column)
             row.addWidget(control, 1, column)
-            row.setColumnStretch(column, 1)
+            row.setColumnStretch(column, 0 if column == 1 else 1)
+        self.layer.setFixedWidth(64)
         self.remove = button("×", hint="Remove variation")
         self.remove.setFixedWidth(32)
         row.addWidget(self.remove, 1, 3)
@@ -107,6 +112,20 @@ class BatchVariationRow(QWidget):
             "Value resolution: 1 for whole numbers, 0.1 for one decimal place. "
             "Values are multiples of this step within the range; repeats are allowed."
         )
+        self.shared = QCheckBox("Share random values across projectors")
+        self.shared.toggled.connect(self.changed)
+        self.value_grid.addWidget(self.shared, 2, 0, 1, 4)
+        self.fit_control_heights()
+        self.target.currentIndexChanged.connect(self.refresh_layers)
+        self.layer.currentIndexChanged.connect(self.refresh)
+        self.method.currentIndexChanged.connect(self.update_hint)
+        self.parameter.currentIndexChanged.connect(self.update_hint)
+        for control in (self.target, self.layer, self.parameter, self.method):
+            control.currentIndexChanged.connect(self.changed)
+        self.values.textChanged.connect(self.changed)
+        self.refresh_layers()
+
+    def fit_control_heights(self) -> None:
         equal_row_height(
             self.target,
             self.layer,
@@ -116,14 +135,11 @@ class BatchVariationRow(QWidget):
             self.remove,
             *self.random_fields.values(),
         )
-        self.target.currentIndexChanged.connect(self.refresh_layers)
-        self.layer.currentIndexChanged.connect(self.refresh)
-        self.method.currentIndexChanged.connect(self.update_hint)
-        self.parameter.currentIndexChanged.connect(self.update_hint)
-        for control in (self.target, self.layer, self.parameter, self.method):
-            control.currentIndexChanged.connect(self.changed)
-        self.values.textChanged.connect(self.changed)
-        self.refresh_layers()
+
+    def showEvent(self, event: QShowEvent | None) -> None:
+        super().showEvent(event)
+        # Ancestor styles settle after insertion; fit again before the row is shown.
+        self.fit_control_heights()
 
     def selected_projectors(self) -> list[str]:
         face = self.target.currentData()
@@ -136,14 +152,9 @@ class BatchVariationRow(QWidget):
         faces = self.selected_projectors()
         count = min((len(self.projectors[f]) for f in faces), default=0)
         for ordinal in range(count):
-            if len(faces) == 1:
-                caption = self.targets[self.projectors[faces[0]][ordinal]][0]
-                caption = caption.split(" · ", 1)[-1]
-                self.layer.addItem(f"{ordinal + 1} · {caption}", ordinal)
-            else:
-                self.layer.addItem(f"Layer {ordinal + 1}", ordinal)
+            self.layer.addItem(str(ordinal + 1), ordinal)
         if count > 1:
-            self.layer.addItem("All layers", -1)
+            self.layer.addItem("All", -1)
         self.layer.setCurrentIndex(max(0, self.layer.findData(previous)))
         self.layer.blockSignals(False)
         self.refresh()
@@ -196,15 +207,23 @@ class BatchVariationRow(QWidget):
         self.parameter.blockSignals(False)
         self.update_hint()
 
-    def sampled_values(self, count: int) -> tuple[str, ...]:
+    def sampled_values(
+        self, count: int, target_key: str = "", streams: int = 1
+    ) -> tuple[str, ...]:
         inputs = (
             *[edit.text().strip() for edit in self.random_fields.values()],
             str(count),
+            target_key,
+            str(streams),
         )
         if self.random_cache is None or self.random_cache[0] != inputs:
-            minimum, maximum, precision, size = inputs
-            values = random_values(
-                minimum, maximum, precision, size, self.random.randrange
+            minimum, maximum, precision, size, _, _ = inputs
+            values = tuple(
+                value
+                for _ in range(streams)
+                for value in random_values(
+                    minimum, maximum, precision, size, self.random.randrange
+                )
             )
             self.random_cache = (inputs, values)
         return self.random_cache[1]
@@ -215,6 +234,7 @@ class BatchVariationRow(QWidget):
         if categorical:
             self.method.setCurrentIndex(0)
         random_method = self.method.currentIndex() == 2
+        self.shared.setVisible(random_method and len(self.selected_projectors()) > 1)
         for control in (*self.random_fields.values(), *self.random_captions):
             control.setVisible(random_method)
         if random_method:
@@ -235,6 +255,8 @@ class BatchVariationRow(QWidget):
     def read_rules(self, random_count: int = 1) -> tuple[ValueRule, ...]:
         if not self.targets:
             raise ValueError("Add a stimulus before creating a variation")
+        if self.target.currentIndex() < 0 or self.layer.currentIndex() < 0:
+            raise ValueError("A saved variation target is unavailable")
         parameter = self.parameter.currentData()
         if not parameter:
             raise ValueError("Selected layers have no common variation parameter")
@@ -247,7 +269,31 @@ class BatchVariationRow(QWidget):
                 for value in values:
                     float(value)
         elif self.method.currentIndex() == 2:
-            values = self.sampled_values(random_count)
+            indices = self.target_indices()
+            independent = not self.shared.isChecked()
+            draws = self.sampled_values(
+                random_count,
+                repr(
+                    (
+                        self.target.currentData(),
+                        self.layer.currentData(),
+                        indices,
+                        independent,
+                    )
+                ),
+                len(indices) if independent else 1,
+            )
+            return tuple(
+                ValueRule(
+                    self.targets[index][1],
+                    self.targets[index][2],
+                    parameter,
+                    draws[position * random_count : (position + 1) * random_count]
+                    if independent
+                    else draws,
+                )
+                for position, index in enumerate(indices)
+            )
         else:
             try:
                 start, stop, step = (
@@ -274,3 +320,38 @@ class BatchVariationRow(QWidget):
             )
             for i in self.target_indices()
         )
+
+    def draft(self) -> VariationDraft:
+        return VariationDraft(
+            projector=self.target.currentData() or "",
+            projectors=tuple(self.projectors),
+            layer=self.layer.currentData()
+            if self.layer.currentData() is not None
+            else 0,
+            parameter=self.parameter.currentData() or "",
+            method=self.method.currentIndex(),
+            values=self.values.text(),
+            minimum=self.random_fields["minimum"].text(),
+            maximum=self.random_fields["maximum"].text(),
+            precision=self.random_fields["precision"].text(),
+            shared=self.shared.isChecked(),
+            seed=self.random_seed,
+            sample_key=self.seed_key
+            if self.random_seed
+            else self.random_cache[0]
+            if self.random_cache
+            else (),
+            samples=self.random_cache[1] if self.random_cache else (),
+        )
+
+    def restore(self, draft: VariationDraft) -> None:
+        self.target.setCurrentIndex(self.target.findData(draft.projector))
+        self.layer.setCurrentIndex(self.layer.findData(draft.layer))
+        self.parameter.setCurrentIndex(self.parameter.findData(draft.parameter))
+        self.method.setCurrentIndex(draft.method)
+        self.values.setText(draft.values)
+        for key, edit in self.random_fields.items():
+            edit.setText(getattr(draft, key))
+        self.shared.setChecked(draft.shared)
+        self.random_seed, self.seed_key = draft.seed, draft.sample_key
+        self.random_cache = (draft.sample_key, draft.samples) if draft.samples else None

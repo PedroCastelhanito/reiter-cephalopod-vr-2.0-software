@@ -1,0 +1,128 @@
+F...F....F                                                               [100%]
+=================================== FAILURES ===================================
+_______ test_protocol_timeline_edits_preserve_trials_and_imported_groups _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106c6a0e0>
+app = <PyQt6.QtWidgets.QApplication object at 0x106c6add0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1673/test_protocol_timeline_edits_p0')
+
+    def test_protocol_timeline_edits_preserve_trials_and_imported_groups(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        panel = window.protocol
+        editor = panel.editor
+        open_protocol_group(editor)
+        original = editor.program
+        parse_program_json(original.model_dump_json(), max_bytes=1_048_576)
+        editor.hierarchy.contents.setFocus()
+        QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Right)
+        assert editor.path == (0, 1)
+        editor.subgroup.composer.duration.setText("21.000000001")
+        editor.subgroup.apply()
+        edited = editor.program
+>       assert edited.sequence[0].body[1].duration.duration.seconds == "21.000000001"
+E       AssertionError: assert '20' == '21.000000001'
+E         
+E         - 21.000000001
+E         + 20
+
+tests/gui/test_dashboard.py:6182: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 60 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+________________ test_motion_auto_commit_and_invalid_edit_undo _________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10a9aef80>
+app = <PyQt6.QtWidgets.QApplication object at 0x106c6add0>
+
+    def test_motion_auto_commit_and_invalid_edit_undo(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        open_protocol_group(editor)
+        window.page_buttons[1].click()
+        app.processEvents()
+>       motion = editor.subgroup.composer.rows["Left"].parameters.forms[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Left'
+
+tests/gui/test_dashboard.py:6810: KeyError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_grouped_editor_pair_creation_repeat_scope_and_history __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10a8f7c70>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1673/test_grouped_editor_pair_creat0')
+app = <PyQt6.QtWidgets.QApplication object at 0x106c6add0>
+
+    def test_grouped_editor_pair_creation_repeat_scope_and_history(window, tmp_path, app):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_nodes import edit_epoch
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        pair, _ = edit_epoch(blank_program(), 0, "duplicate")
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(pair))
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        assert editor.scope == (0,) and len(editor.timeline.nodes) == 1
+        assert len(editor.hierarchy.contents.nodes) == 2
+        group = editor.program.sequence[0]
+        assert isinstance(group, Group) and group.body == pair.sequence
+        fields = editor.group_editor
+        fields.name.setText("Image Grey")
+        fields.repetitions.setText("300")
+        fields.mark_changed()
+        assert fields.apply()
+        assert editor.program.sequence[0].group_id == "Image_Grey"
+        assert editor.program.sequence[0].repetitions == 300
+        assert "600 epochs" in editor.sequence_summary.text()
+        assert len(editor.hierarchy.contents.nodes) == 2
+        fields.mark_changed()  # A pending field commit must preserve the clicked selection.
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        assert editor.path == (0, 1)
+        assert editor.hierarchy.contents.index == editor.hierarchy.contents.anchor == 1
+        editor.subgroup.composer.duration.setText("00:00:2")
+        editor.subgroup.apply()
+>       assert editor.program.sequence[0].body[1].duration.duration.seconds == "2"
+E       AssertionError: assert '60' == '2'
+E         
+E         - 2
+E         + 60
+
+tests/gui/test_dashboard.py:12060: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_protocol_timeline_edits_preserve_trials_and_imported_groups
+FAILED tests/gui/test_dashboard.py::test_motion_auto_commit_and_invalid_edit_undo
+FAILED tests/gui/test_dashboard.py::test_grouped_editor_pair_creation_repeat_scope_and_history
+3 failed, 7 passed, 380 deselected in 13.86s

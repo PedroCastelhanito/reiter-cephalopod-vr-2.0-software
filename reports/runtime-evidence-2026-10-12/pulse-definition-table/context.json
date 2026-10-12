@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-12",
+  "task": "photodiode-definition-table",
+  "source_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "working_tree": "Existing dirty work and concurrent live-calibration changes preserved. HEAD is not the patch revision.",
+  "decisions": [
+    "G01 revision 150",
+    "V22 revision 5",
+    "ARCH-002",
+    "E15"
+  ],
+  "implementation": "Shared DataTable has read-only Frame/Pulse labels and four parameter columns: Origin X, Origin Y, Width, Height. Reuse existing input and table fitting; Frame uses bottom-left output pixels, Pulse origins are relative to Frame. Independent rectangular dimensions retain containment/bounds; no shader/resource/sequence changes. Full-file v7 uses frame_rect and pulse_rect; v6 Size becomes equal Width/Height; v3/4/5 retain standalone markers; numeric v4 unchanged. One focused migration helper validates before mutation.",
+  "source_sha256": {
+    "src/cephvr/gui/projector_timing.py": "08f56b4ab4c16ae48fb8e1d5f1d3ba72ba2d6c8dc154b4646ba080d40f04a050",
+    "src/cephvr/gui/projector_files.py": "8a1112e765d9847205357feeed91e61304ee6f41a8f7ef0d7b43f4f36b81f3a3",
+    "src/cephvr/visual_stimulus/config/models/display_profile.py": "bc71145801e9eb3c2e41cf986ff2a0dab0812deb484b2f03013907fdc6ff6f99",
+    "tests/gui/test_dashboard.py": "60ba7b7e7094ec1f80f127d5487eda6cf7539b6bfcda693442a50a04df8e95d9",
+    "tests/visual_stimulus/test_rendering.py": "ce1964ac45671f6ad207621af605ef4f09a78638d0b961530a7a00508a102099"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py tests/visual_stimulus/test_rendering.py -q -k \"photodiode or projector or share_page or reference_measurements\"",
+      "result": "50 passed, 371 deselected in 180.83s",
+      "raw": "tests.txt",
+      "stage": "Before replacing initially inspected vertical labels with the existing read-only cell-label pattern; file/model behavior final."
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py tests/visual_stimulus/test_rendering.py -q -k \"photodiode or share_page\"",
+      "result": "9 passed, 412 deselected in 88.21s",
+      "raw": "final-tests.txt",
+      "stage": "Final source: v7 roundtrip, v6 square migration and invalid-file atomicity, v5 standalone retention, independent Pulse dimensions/containment, native-fake rectangular marker order, authoritative restoration, 1280/720 table fit and Runtime/Review parity."
+    },
+    {
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus -q",
+      "result": "42 passed, 79 subtests passed in 12.51s",
+      "raw": "contracts.txt"
+    }
+  ],
+  "static_checks": {
+    "Ruff": "All checks passed; lint-final.txt",
+    "format": "289 files already formatted; format-final.txt",
+    "mypy": "Win32 target, 271 source files, no issues; mypy-final.txt",
+    "schemas": "11 checked, zero regeneration; schemas.txt",
+    "boundaries": "649 modules, zero violations; boundaries.txt",
+    "cohesion": "Extend cohesive timing/file and rectangle-model owners, replace the larger form and single-Size inventory, centralize version migration. Existing large GUI/render orchestrators unchanged; no dependency/state/GL allocation added."
+  },
+  "visual_inspection": {
+    "method": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-12/pulse-definition-table/capture.py",
+    "files": [
+      "controls-720.png",
+      "controls-1280.png",
+      "capture-final.txt"
+    ],
+    "scope": "Shared Synchronization page, isolated fixture devices/QSettings and illustrative values. Both widths inspected with unclipped editors and readable labels. Initial vertical-header candidate has rounded internal corners; replace with standard DataTable cell labels without local/global theme overrides."
+  },
+  "limits": "Local offscreen/fake-render checks; no new native Windows/DPI/optical/physical-timing/rig acceptance. Existing open Review imports retain previous code; it was not closed, preserving unsaved edits. Reopening loads the table. No failing tests or static checks in this increment. The complete document-link scan currently reports two concurrent live-grid-context.json references awaiting that chat evidence; all table-task references/anchors pass.",
+  "documentation_checks": {
+    "owned_references": "pass",
+    "complete_scan_findings": [
+      "reports/runtime.md: missing runtime-evidence-2026-10-12/live-grid-context.json",
+      "reports/visual_stimulus.md: missing runtime-evidence-2026-10-12/live-grid-context.json"
+    ],
+    "assessment": "Only pending evidence links introduced by the concurrent live-calibration chat are missing. Its existing TODO remains in progress; do not modify or fabricate its evidence."
+  }
+}

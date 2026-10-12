@@ -11,8 +11,8 @@ Every format uses an exact field inventory and typed values. Unknown versions,
 duplicate JSON members, nonfinite constants, incompatible identities and malformed
 sections reject loading before any widget changes. Empty text/unset values remain
 unset; draft structural validity does not prove runnable scientific configuration.
-Save uses an atomic replacement, preserving the destination on failure. Protocol,
-Microcontroller, SpikeGLX and full GUI files are bounded to 32 MiB on read and write.
+Save uses an atomic replacement, preserving the destination on failure. Cameras,
+Protocol, Microcontroller, SpikeGLX and full GUI files are bounded to 32 MiB on read and write.
 Tracking retains its 1,000,000-byte bound and owning draft migrations; Projectors
 retains its existing [calibration format](gui-calibration.md) and 1 MiB limit.
 File choosers are nonmodal, follow editing authority and close when authority or
@@ -28,21 +28,44 @@ Root: `format: "cephvr-protocol-config"`, integer `version: 1`, `mode`
 Each trial has exactly `name`, `path` (logical source reference), `program`
 (canonical nested program object), `stimulus_seed_decimal`, `gap_after_seconds`
 and `arena_boundaries_json` (text; nonempty boundaries must parse). Seeds/gaps
-retain draft text; E07 submission checks their experiment meaning. Reload resets
-edit histories and transient epoch selection while retaining trial selection/order.
+retain draft text; E07 submission checks their experiment meaning.
+Seed is config-only: set a trial's `stimulus_seed_decimal` to a canonical nonnegative
+decimal integer string, for example `"42"`; `""` leaves seed selection to Setup.
+The GUI exposes no Seed or Gap editor. Existing `gap_after_seconds` remains in the
+file for lossless compatibility with saved schedules and retains E01/E07 validation.
+Reload resets edit histories and transient epoch selection while retaining trial
+selection/order. Canonical subgroup authoring metadata retains applied variation
+controls and compact random seeds (including legacy cached samples) across protocol/full-GUI save/load.
 An empty schedule remains empty rather than inserting an executable trial. The
 toolbar also accepts canonical single-program documents into the selected trial,
 retaining the loaded path; existing per-trial source APIs remain available.
 
+## Cameras
+
+Root: `format: "cephvr-cameras-config"`, integer `version: 1`, and ordered `cameras`.
+Each camera has exactly nonempty text `serial`, known `role`, boolean `enabled` and
+text-valued `values`, with the same inventory/role validation as full GUI files.
+The serial set must match the current inventory; assigned roles are unique.
+Load/Save requires editing authority, no pending camera operation and stopped,
+disconnected cameras. Loading restores drafts without submitting settings or
+opening cameras; imported PFS provenance still requires A10's SDK import.
+
 ## Microcontroller
 
-Root: `format: "cephvr-microcontroller-config"`, integer `version: 1`, `port`,
+Root: `format: "cephvr-microcontroller-config"`, integer `version: 2`, `port`,
 `firmware_path` (text), `trial_state` and `projector_flip` (objects with text `pin`
-and boolean `enabled`), and `camera_pins` (current camera key → text pin).
-The complete camera-key inventory must match; camera participation/rates belong
-to Cameras. Restore blocks port/toggle command signals and never uploads firmware.
-Loaded pins enter the normal GUI configuration proposal. Apply pin settings also
-offers the existing explicit controller pin-save action during Configuration.
+and boolean `enabled`), `camera_pins` (current camera key → text pin), and
+`camera_enabled` (current camera key → boolean). The complete camera-key inventories
+must match. Camera participation still belongs to Cameras; loading these saved output
+flags restores that owner's local draft without sending enable commands. Version 1
+files omit `camera_enabled` and preserve current camera participation. Loading requires
+stopped/disconnected cameras and no pending camera operation. Restore blocks port/toggle
+command signals and never uploads firmware.
+Loaded pins enter the normal GUI configuration proposal; no Apply pin settings
+action remains. Supported-signal Add/remove maps to existing enable flags (camera
+participation stays in Cameras and is retained in v2 files), preserving pin values.
+No arbitrary I/O definitions
+or new firmware behavior are encoded.
 
 ## SpikeGLX
 
@@ -58,7 +81,9 @@ unique; noncustom pulse roles are unique; custom rows have the Custom role and a
 `custom:` key. Empty numeric text remains editable. Loading replaces prior custom
 rows, restores dormant values and leaves the current controller file digest/required
 role inventory unchanged. Current source participation/required-role rules still
-apply. Save pulse mapping validates numeric channels/source IDs and publishes
+apply. Only Channel index is visible/editable alongside Use and Signal; stream family,
+stream index and digital bit remain saved metadata. Save pulse mapping validates
+numeric channels/source IDs and publishes
 through the existing E12 controller-owned file operation.
 
 ## Tracking and Projectors
@@ -70,7 +95,7 @@ and acquired-source lineage. Source mismatch invalidates spatial calibration as
 required by T20/G01. Inactive loaded drafts survive local submission until Tracking
 is enabled, when ordinary strict encoding/validation applies.
 
-Projector-only Load JSON/Save as keeps portable full version 4/numeric version 3,
+Projector-only Load…/Save as… keeps portable full version 7/numeric version 4,
 older format migrations and calibration/profile references under
 [its contract](gui-calibration.md). It does not replace physical display assignments.
 
@@ -96,7 +121,9 @@ the portable projector format.
 
 All sections are validated before restoring any of them. Camera roles/settings
 remain pending local drafts; polling continues to report actual capture ownership.
-Accepted SDK preset baselines follow their serial when roles change; a different
+Full v2 MCU camera enable flags must agree with the experiment camera flags; mismatches
+reject the entire load before mutation. Accepted SDK preset baselines follow their
+serial when roles change; a different
 or unimported PFS path requires the existing camera SDK import before submission.
 Saved `pfs_imported` text cannot establish that provenance. MCU pins and camera
 settings join the same normal proposal as protocol, projection and enabled Tracking.

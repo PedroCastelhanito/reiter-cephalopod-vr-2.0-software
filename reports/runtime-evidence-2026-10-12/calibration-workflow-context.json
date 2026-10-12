@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-12",
+  "task": "two-stage-projector-calibration",
+  "base_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty working tree preserved; hashes identify local implementation.",
+  "decisions": [
+    "G01 revision146",
+    "V01 revision17",
+    "ARCH-002",
+    "E15"
+  ],
+  "owner_request": "Separate Measure reference bars and Adjust frame and grid; direct mm/px mapping; no throw launch requirement; config-only throw estimate.",
+  "sha256": {
+    "src/cephvr/gui/projector_calibration.py": "8cc8b8290f2926e443e463ea2068a8e2a46fc4ef772b21041b2bb0c5ff133829",
+    "src/cephvr/gui/projectors.py": "656153a1073faa0376d1194eb1e8ea02e852e8632578a7c82c86db67c6e3261d",
+    "src/cephvr/gui/projector_geometry.py": "84761220c4a02c9812b366aae0bd5067e01751f92fe62050d56de2dc8f1debc5",
+    "src/cephvr/gui/projector_measurements.py": "1b9c82b5b53974a39a4f89a85a7e91a215aca74af17bad678177894ec4385d3f",
+    "src/cephvr/gui/calibration_profile.py": "3ed4e2aca1e704a25476c184f7479cdf8c5948ba0106f79ee872b1e9d004a3c9",
+    "src/cephvr/visual_stimulus/config/calibration_bars.py": "bdf60c8bcb92bde2e702904abce267148c67e63c7115aea8d5149371f6ff8cb0",
+    "src/cephvr/visual_stimulus/config/models/display_profile.py": "b4c6d3024c15a5d2c62c32a1f5d0dbc9a5edfc157d319652e9a781771c944762",
+    "src/cephvr/visual_stimulus/rendering/display_calibration.py": "14edc13b10e874dba31d675d1906357ebf81f513c7cf7a23561d2001a358ef34",
+    "tests/gui/test_dashboard.py": "c532f334faa17bdbb9056f45a58b6eda0736d694ca78a10b883e07d10abc275c",
+    "tests/visual_stimulus/test_rendering.py": "5104ce70c08d0ecd16dca148e0831a8811f1e65cedcc7db4224e501372b752a2",
+    "tests/visual_stimulus/test_display_calibration_rendering.py": "35cc1d5fe769998ed2ef3c459e18dcaedbe6e59ce63cda73d31c51013c51c28b",
+    "contracts/visual_stimulus/display-profile.schema.json": "e0c1098abda52b7aa7a9ad75c2874feff61de3af1f2cc8ec2d2c1d78a8960573",
+    "contracts/visual_stimulus/prepared-trial.schema.json": "efba45626f699d1416edba87696256d5c18760c4c780ea63da6c285c636b18df"
+  },
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_configuration.py -q -k \"projector or calibration or reference_bars or measured_affine or review_and_runtime or device_tabs_sit_above\"",
+      "raw": "calibration-workflow-tests-final.txt",
+      "result": "74 passed,359 deselected,72.31s"
+    },
+    {
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "result": "42 passed,79 subtests,0.69s",
+      "raw": "calibration-workflow-contracts.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui src/cephvr/visual_stimulus tests/gui tests/visual_stimulus",
+      "result": "Passed"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui src/cephvr/visual_stimulus tests/gui tests/visual_stimulus",
+      "result": "283 files formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui src/cephvr/visual_stimulus",
+      "result": "265 sources passed"
+    },
+    {
+      "command": ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+      "result": "11 schemas zero drift; two regenerated owning files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules zero violations; existing cohesion advisories",
+      "raw": "calibration-workflow-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "Passed"
+    }
+  ],
+  "prior_stages": [
+    {
+      "raw": "calibration-workflow-tests.txt",
+      "result": "74 passed,359 deselected,66.07s; preceding expanded assertions."
+    },
+    {
+      "raw": "calibration-workflow-added-tests.txt",
+      "result": "73 passed,one failed,359 deselected,69.02s; test incorrectly compared configured200/100 pixel bars to previous default lengths. Correct expectation retains configured lengths and checks unchanged identity meshes, without relaxing behavior."
+    }
+  ],
+  "initial_static_correction": "Mypy caught omitted distance argument during optional-throw refactor; restore ReferenceScale distance before testing.",
+  "visual_check": "Isolated offscreen DashboardWindow QSettings, Projectors card grabs at1175/720 window widths inspected. Buttons equal widths218/217 and236/236; captions/cells fit. Temporary captures removed.",
+  "ownership_review": "Reuse existing managed protected profile/arena fingerprints and one diagnostic Active/Closed owner; mode is data in DisplayProfile, no extra process/state owner. Native framebuffer branch leaves preparation/resource release in existing owner. Focused calibration/measurement/model helpers carry changes; large Projectors panel adds wiring only.",
+  "limits": [
+    "No full GUI/backend regression or native Windows/DPI/GPU/optical/rig acceptance.",
+    "Grid physical scale is a local affine approximation pending existing optical rig checklist.",
+    "Close confirms release before switching or relaunching changed corrections; no live mutation of protected active input."
+  ]
+}

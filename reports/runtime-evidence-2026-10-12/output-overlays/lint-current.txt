@@ -1,0 +1,30 @@
+F821 Undefined name `worker_peer`
+   --> tests/visual_stimulus/test_controller_communication.py:468:16
+    |
+466 |     runtime = VisualStimulusCoordinatorRuntime(
+467 |         identity=identity,
+468 |         worker=worker_peer,
+    |                ^^^^^^^^^^^
+469 |         controller=receipt,
+470 |         supervisor=receipt,
+    |
+
+F821 Undefined name `worker_peer`
+   --> tests/visual_stimulus/test_controller_communication.py:574:15
+    |
+572 |         await wrong_port.channel.close()
+573 |         await listener.close(host_time_ns() + 2_000_000_000)
+574 |         await worker_peer.channel.close()
+    |               ^^^^^^^^^^^
+575 |         await worker_listener.close(host_time_ns() + 2_000_000_000)
+    |
+
+F821 Undefined name `worker_listener`
+   --> tests/visual_stimulus/test_controller_communication.py:575:15
+    |
+573 |         await listener.close(host_time_ns() + 2_000_000_000)
+574 |         await worker_peer.channel.close()
+575 |         await worker_listener.close(host_time_ns() + 2_000_000_000)
+    |               ^^^^^^^^^^^^^^^
+
+Found 3 errors.

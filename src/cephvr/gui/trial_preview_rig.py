@@ -37,7 +37,7 @@ class PreviewRig(TankDiagram):
         # Home view keeps the rig’s Left/Right identities on their familiar image sides.
         self.azimuth = 25.0
 
-    def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:
         super().mouseDoubleClickEvent(event)
         if event is not None and event.button() == Qt.MouseButton.LeftButton:
             self.azimuth = 25.0
@@ -89,7 +89,7 @@ class PreviewRig(TankDiagram):
         )
         painter.restore()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         # Rotation reuses composed frames; only playback/media/seek invalidates them.
         for face, canvas in self.canvases.items():
             if face not in self.frames:

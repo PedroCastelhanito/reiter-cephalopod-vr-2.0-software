@@ -91,6 +91,4 @@ def _loopback_endpoint(endpoint: str) -> bool:
     host, separator, port = endpoint.rpartition(":")
     if not separator or not port.isdecimal() or not 0 < int(port) <= 65535:
         return False
-    if host in {"127.0.0.1", "localhost", "[::1]"}:
-        return True
-    return False
+    return host in {"127.0.0.1", "localhost", "[::1]"}

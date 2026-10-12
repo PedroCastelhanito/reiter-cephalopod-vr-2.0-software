@@ -1,0 +1,262 @@
+....FF                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x102265210>
+configured_bars = False, calibration_view = 'frame_grid'
+
+    @pytest.mark.parametrize("configured_bars", [False, True])
+    @pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
+    def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
+        monkeypatch: pytest.MonkeyPatch,
+        configured_bars: bool,
+        calibration_view: str,
+    ) -> None:
+        _install_fake_gl_binding(monkeypatch)
+        gl = _FakeGL()
+        moderngl = SimpleNamespace(
+            DEPTH_TEST=1,
+            CULL_FACE=2,
+            BLEND=4,
+            ONE=1,
+            TRIANGLES=5,
+            TRIANGLE_STRIP=6,
+        )
+        display = _two_output_display().model_copy(
+            update={"calibration_view": calibration_view}
+        )
+        if configured_bars:
+            raw = display.model_dump(mode="json")
+            for output in raw["outputs"]:
+                output["reference_bars"] = dict(
+                    x_length_px=max(1, output["width_px"] // 3),
+                    y_length_px=max(1, output["height_px"] // 5),
+                )
+            display = parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+            raw["outputs"][0]["reference_bars"]["x_length_px"] = (
+                raw["outputs"][0]["width_px"] + 1
+            )
+            with pytest.raises(ValueError, match="exceed"):
+                parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+        display, prepared, outputs = _native_calibration_inputs(gl, display)
+        owner = DisplayCalibrationRenderer(
+            outputs,
+            moderngl,
+            lambda *_args: None,
+            lambda *_args, **_kwargs: None,
+        )
+    
+        owner.present(display, prepared)
+    
+        draws = [event for event in gl.events if event[0] == "draw"]
+        if configured_bars and calibration_view == "reference_bars":
+            for output_id in outputs:
+                bars = [event for event in gl.events if event[:2] == ("bar", output_id)]
+                configured = next(
+                    o for o in display.active_outputs if o.output_id == output_id
+                ).reference_bars
+                assert configured is not None
+                assert bars[2][3][2] == configured.x_length_px
+                assert bars[3][3][3] == configured.y_length_px
+        assert {event[2] for event in draws} == (
+            set() if calibration_view == "reference_bars" else {"arena", "warp", "output"}
+        )
+        assert bool([e for e in gl.events if e[0] == "bar"]) == (
+            calibration_view == "reference_bars"
+        )
+        for output_id in () if calibration_view == "reference_bars" else outputs:
+            output_draws = [event for event in draws if event[1] == output_id]
+            assert any(event[2] == "arena" and "fbo:" in event[3] for event in output_draws)
+            assert any(event[2] == "warp" and "fbo:" in event[3] for event in output_draws)
+            assert any(
+                event[2] == "output" and "fbo:" in event[3] for event in output_draws
+            )
+        assert {
+            resource.context_id
+            for resource in gl.resources
+            if resource.label.startswith("vao:")
+        } == set(outputs)
+    
+        if calibration_view == "frame_grid":
+            import struct
+    
+            allocation_count = len(gl.resources)
+>           owner.update(
+                {
+                    m.mapping_id: ((0.1, 0.2), (0.8, 0.2), (0.1, 0.9), (0.8, 0.9))
+                    for m in display.active_mappings
+                }
+            )
+
+tests/visual_stimulus/test_display_calibration_rendering.py:621: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/rendering/display_calibration.py:101: in update
+    adjustments = validated_adjustments(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+items = <generator object DisplayCalibrationRenderer.update.<locals>.<genexpr> at 0x102259030>
+
+    def validated_adjustments(
+        items: Iterable[tuple[str, Sequence[float]]],
+    ) -> dict[str, tuple[tuple[float, float], ...]]:
+        result = {}
+        for mapping_id, coordinates in items:
+            if (
+                not mapping_id
+                or len(mapping_id) > 128
+                or mapping_id in result
+                or len(coordinates) != 8
+                or any(not math.isfinite(v) or not 0 <= v <= 1 for v in coordinates)
+            ):
+                raise ValueError("Invalid calibration adjustment identity or coordinates")
+            points = tuple((coordinates[i], coordinates[i + 1]) for i in range(0, 8, 2))
+            a, b, c, d = points
+            if (
+                a[1] != b[1]
+                or c[1] != d[1]
+                or a[0] != c[0]
+                or b[0] != d[0]
+                or a[0] == b[0]
+                or a[1] == c[1]
+            ):
+                raise ValueError(
+                    "Live calibration requires a nondegenerate affine rectangle"
+                )
+            result[mapping_id] = points
+        if not 1 <= len(result) <= 4:
+>           raise ValueError("Live calibration requires one to four mapping adjustments")
+E           ValueError: Live calibration requires one to four mapping adjustments
+
+src/cephvr/visual_stimulus/config/calibration_adjustments.py:35: ValueError
+_ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110b5a490>
+configured_bars = True, calibration_view = 'frame_grid'
+
+    @pytest.mark.parametrize("configured_bars", [False, True])
+    @pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
+    def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
+        monkeypatch: pytest.MonkeyPatch,
+        configured_bars: bool,
+        calibration_view: str,
+    ) -> None:
+        _install_fake_gl_binding(monkeypatch)
+        gl = _FakeGL()
+        moderngl = SimpleNamespace(
+            DEPTH_TEST=1,
+            CULL_FACE=2,
+            BLEND=4,
+            ONE=1,
+            TRIANGLES=5,
+            TRIANGLE_STRIP=6,
+        )
+        display = _two_output_display().model_copy(
+            update={"calibration_view": calibration_view}
+        )
+        if configured_bars:
+            raw = display.model_dump(mode="json")
+            for output in raw["outputs"]:
+                output["reference_bars"] = dict(
+                    x_length_px=max(1, output["width_px"] // 3),
+                    y_length_px=max(1, output["height_px"] // 5),
+                )
+            display = parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+            raw["outputs"][0]["reference_bars"]["x_length_px"] = (
+                raw["outputs"][0]["width_px"] + 1
+            )
+            with pytest.raises(ValueError, match="exceed"):
+                parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+        display, prepared, outputs = _native_calibration_inputs(gl, display)
+        owner = DisplayCalibrationRenderer(
+            outputs,
+            moderngl,
+            lambda *_args: None,
+            lambda *_args, **_kwargs: None,
+        )
+    
+        owner.present(display, prepared)
+    
+        draws = [event for event in gl.events if event[0] == "draw"]
+        if configured_bars and calibration_view == "reference_bars":
+            for output_id in outputs:
+                bars = [event for event in gl.events if event[:2] == ("bar", output_id)]
+                configured = next(
+                    o for o in display.active_outputs if o.output_id == output_id
+                ).reference_bars
+                assert configured is not None
+                assert bars[2][3][2] == configured.x_length_px
+                assert bars[3][3][3] == configured.y_length_px
+        assert {event[2] for event in draws} == (
+            set() if calibration_view == "reference_bars" else {"arena", "warp", "output"}
+        )
+        assert bool([e for e in gl.events if e[0] == "bar"]) == (
+            calibration_view == "reference_bars"
+        )
+        for output_id in () if calibration_view == "reference_bars" else outputs:
+            output_draws = [event for event in draws if event[1] == output_id]
+            assert any(event[2] == "arena" and "fbo:" in event[3] for event in output_draws)
+            assert any(event[2] == "warp" and "fbo:" in event[3] for event in output_draws)
+            assert any(
+                event[2] == "output" and "fbo:" in event[3] for event in output_draws
+            )
+        assert {
+            resource.context_id
+            for resource in gl.resources
+            if resource.label.startswith("vao:")
+        } == set(outputs)
+    
+        if calibration_view == "frame_grid":
+            import struct
+    
+            allocation_count = len(gl.resources)
+>           owner.update(
+                {
+                    m.mapping_id: ((0.1, 0.2), (0.8, 0.2), (0.1, 0.9), (0.8, 0.9))
+                    for m in display.active_mappings
+                }
+            )
+
+tests/visual_stimulus/test_display_calibration_rendering.py:621: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/rendering/display_calibration.py:101: in update
+    adjustments = validated_adjustments(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+items = <generator object DisplayCalibrationRenderer.update.<locals>.<genexpr> at 0x1022598a0>
+
+    def validated_adjustments(
+        items: Iterable[tuple[str, Sequence[float]]],
+    ) -> dict[str, tuple[tuple[float, float], ...]]:
+        result = {}
+        for mapping_id, coordinates in items:
+            if (
+                not mapping_id
+                or len(mapping_id) > 128
+                or mapping_id in result
+                or len(coordinates) != 8
+                or any(not math.isfinite(v) or not 0 <= v <= 1 for v in coordinates)
+            ):
+                raise ValueError("Invalid calibration adjustment identity or coordinates")
+            points = tuple((coordinates[i], coordinates[i + 1]) for i in range(0, 8, 2))
+            a, b, c, d = points
+            if (
+                a[1] != b[1]
+                or c[1] != d[1]
+                or a[0] != c[0]
+                or b[0] != d[0]
+                or a[0] == b[0]
+                or a[1] == c[1]
+            ):
+                raise ValueError(
+                    "Live calibration requires a nondegenerate affine rectangle"
+                )
+            result[mapping_id] = points
+        if not 1 <= len(result) <= 4:
+>           raise ValueError("Live calibration requires one to four mapping adjustments")
+E           ValueError: Live calibration requires one to four mapping adjustments
+
+src/cephvr/visual_stimulus/config/calibration_adjustments.py:35: ValueError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-False]
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[frame_grid-True]
+2 failed, 4 passed, 426 deselected in 4.06s

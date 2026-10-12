@@ -124,29 +124,12 @@ class BatchEdit(QWidget):
         self.asset_picker.selected.connect(self.set_asset)
         self.message = FormNotice()
         body.addWidget(self.message)
-        self.epoch_actions = QWidget()
-        epoch_actions = QHBoxLayout(self.epoch_actions)
-        epoch_actions.setContentsMargins(0, 0, 0, 0)
-        epoch_actions.addStretch()
-        self.duplicate_epoch_button = button("Duplicate")
-        self.remove_epoch_button = button("Delete")
-        for control, operation, key in (
-            (self.duplicate_epoch_button, "duplicate", "Ctrl+D"),
-            (self.remove_epoch_button, "remove", "Backspace"),
-        ):
-            control.setToolTip(f"{control.text()} selected epoch ({key})")
-            control.clicked.connect(
-                lambda checked=False, op=operation: self.epoch_action.emit(op)
-            )
-            epoch_actions.addWidget(control)
         equal_row_height(
             self.epoch_scope,
             self.parameter,
             self.targets.filter,
             self.targets.labels,
             self.targets.index,
-            self.duplicate_epoch_button,
-            self.remove_epoch_button,
         )
         actions = QHBoxLayout()
         actions.setContentsMargins(0, 0, 0, 0)
@@ -221,12 +204,11 @@ class BatchEdit(QWidget):
         self.rebuild_rows()
         self.show_parameter()
         self.refresh_epoch_actions()
-        if self.epoch_scope.currentData() == "timeline" and len(paths) == 1:
+        if self.epoch_scope.currentData() == "timeline" and paths:
             self.selection_form.bind(program, paths[0], screens)
 
     def refresh_epoch_actions(self) -> None:
         timeline = self.epoch_scope.currentData() == "timeline"
-        self.epoch_actions.setVisible(timeline)
         self.targets.set_timeline(timeline)
         self.targets.message.setVisible(
             not timeline and bool(self.targets.message.text())
@@ -235,8 +217,15 @@ class BatchEdit(QWidget):
         self.selection_form.setVisible(single)
         self.parameter_field.setVisible(not single)
         self.parameter_row.setVisible(not single)
-        for control in (self.duplicate_epoch_button, self.remove_epoch_button):
-            control.setEnabled(timeline and len(self.paths) == 1)
+
+    def request_epoch_action(self, operation: str) -> None:
+        """Keep keyboard structural edits scoped to one selected source epoch."""
+        if (
+            self.isEnabled()
+            and self.epoch_scope.currentData() == "timeline"
+            and len(self.paths) == 1
+        ):
+            self.epoch_action.emit(operation)
 
     def discard(self) -> None:
         if self.program is not None:

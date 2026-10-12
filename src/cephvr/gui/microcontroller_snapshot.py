@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtWidgets import QHBoxLayout
-
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.gui.components import button
 from cephvr.gui.configuration_files import (
     JSON,
     ConfigurationFiles,
     boolean,
-    envelope,
     fields,
     text,
 )
@@ -25,6 +22,7 @@ class MicrocontrollerSnapshot:
     def __init__(self, panel: MicrocontrollerPanel) -> None:
         self.panel = panel
         self.draft_loaded = False
+        self.camera_available: Callable[[], bool] = lambda: True
         self.files = ConfigurationFiles(
             panel,
             "Microcontroller",
@@ -35,40 +33,29 @@ class MicrocontrollerSnapshot:
             available=self.available,
         )
         self.files.message.connect(panel.console.appendPlainText)
-        row = QHBoxLayout()
-        row.addWidget(self.files.load_button)
-        row.addWidget(self.files.save_button)
-        panel.configuration.body.insertLayout(1, row)
-        self.apply_button = button("Apply pin settings", "secondary")
-        self.apply_button.setToolTip(
-            "Submit the current pin draft through controller validation"
-        )
-        self.apply_button.clicked.connect(panel.save_pins)
-        panel.configuration.body.addWidget(self.apply_button)
 
     def available(self) -> bool:
         panel = self.panel
-        return panel.can_review and not (
-            panel.review_tests
-            or panel.managed_test_key
-            or panel.pending_test_key
-            or panel.connection_pending
-            or panel.upload_pending
+        return (
+            panel.can_review
+            and self.camera_available()
+            and not (
+                panel.review_tests
+                or panel.managed_test_key
+                or panel.pending_test_key
+                or panel.connection_pending
+                or panel.upload_pending
+            )
         )
 
     def refresh(self) -> None:
         self.files.set_enabled(self.available())
-        self.apply_button.setEnabled(
-            self.available()
-            and self.panel.managed
-            and bool(self.panel.port.currentData())
-        )
 
     def capture(self) -> JSON:
         panel = self.panel
         return {
             "format": "cephvr-microcontroller-config",
-            "version": 1,
+            "version": 2,
             "port": str(panel.port.currentData() or ""),
             "firmware_path": panel.firmware.editor.text(),
             "trial_state": {
@@ -83,14 +70,31 @@ class MicrocontrollerSnapshot:
                 camera.key: panel.pin_editors[camera.key].text()
                 for camera in panel.camera_rows
             },
+            "camera_enabled": {
+                camera.key: camera.enabled for camera in panel.camera_rows
+            },
         }
 
     def validate(self, value: Any) -> JSON:
-        data = envelope(
-            value,
-            "cephvr-microcontroller-config",
-            {"port", "firmware_path", "trial_state", "projector_flip", "camera_pins"},
-        )
+        if (
+            not isinstance(value, dict)
+            or value.get("format") != "cephvr-microcontroller-config"
+            or type(value.get("version")) is not int
+            or value["version"] not in (1, 2)
+        ):
+            raise ValueError("Unsupported cephvr-microcontroller-config format/version")
+        keys = {
+            "format",
+            "version",
+            "port",
+            "firmware_path",
+            "trial_state",
+            "projector_flip",
+            "camera_pins",
+        }
+        if value["version"] == 2:
+            keys.add("camera_enabled")
+        data = fields(value, keys, "Microcontroller settings")
         for key in ("port", "firmware_path"):
             text(data[key], key)
         for key in ("trial_state", "projector_flip"):
@@ -104,6 +108,11 @@ class MicrocontrollerSnapshot:
         )
         for key, pin in pins.items():
             text(pin, key)
+        if data["version"] == 2:
+            for key, enabled in fields(
+                data["camera_enabled"], set(pins), "Camera output participation"
+            ).items():
+                boolean(enabled, key)
         return data
 
     def restore(self, data: JSON) -> None:
@@ -117,6 +126,8 @@ class MicrocontrollerSnapshot:
         for key, pin in data["camera_pins"].items():
             panel.pins[key] = pin
             panel.pin_editors[key].setText(pin)
+        if data["version"] == 2:
+            panel.camera_draft_loaded.emit(data["camera_enabled"])
         panel.refresh_tests()
 
     def collect(self, settings: pb.AcquisitionSettings) -> None:

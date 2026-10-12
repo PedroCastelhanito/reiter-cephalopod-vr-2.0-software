@@ -8,6 +8,7 @@ import "cephvr/acquisition/v1/camera.proto";
 import "cephvr/acquisition/v1/microcontroller.proto";
 import "cephvr/acquisition/v1/runtime.proto";
 import "cephvr/visual_stimulus/v1/runtime.proto";
+import "cephvr/visual_stimulus/v1/messages.proto";
 import "cephvr/tracking/v1/methods.proto";
 import "cephvr/tracking/v1/preparation.proto";
 import "cephvr/synchronization/v1/spikeglx.proto";
@@ -19,6 +20,7 @@ service ExperimentControllerService {
   rpc ReportDataPreparation(DataPreparationReport) returns (ReportReceipt);
   rpc ReportVisualStimulusDisplay(VisualStimulusDisplayView) returns (ReportReceipt);
   rpc OpenDisplayCalibration(OpenDisplayCalibrationRequest) returns (CommandAdmission);
+  rpc UpdateDisplayCalibration(UpdateDisplayCalibrationRequest) returns (CommandAdmission);
   rpc CloseDisplayCalibration(CloseDisplayCalibrationRequest) returns (CommandAdmission);
   rpc GetSnapshot(SnapshotRequest) returns (Snapshot);
   rpc WatchState(WatchRequest) returns (stream Snapshot);
@@ -82,6 +84,7 @@ service SupervisorService {
 service VisualStimulusConfigurationService {
   rpc InitializeDisplay(VisualStimulusDisplayInitializationRequest) returns (CommandAdmission);
   rpc OpenDisplayCalibration(VisualStimulusDisplayCalibrationOpenRequest) returns (CommandAdmission);
+  rpc UpdateDisplayCalibration(VisualStimulusDisplayCalibrationUpdateRequest) returns (CommandAdmission);
   rpc CloseDisplayCalibration(VisualStimulusDisplayCalibrationCloseRequest) returns (CommandAdmission);
 }
 message OpenDisplayCalibrationRequest {
@@ -92,6 +95,23 @@ message OpenDisplayCalibrationRequest {
   string arena_asset_reference = 5; // Relative to the adopted asset root.
   string expected_profile_sha256 = 6;
   string expected_arena_sha256 = 7;
+}
+message UpdateDisplayCalibrationRequest {
+  OperatorCommand command = 1;
+  uint64 expected_configuration_revision = 2;
+  string diagnostic_id = 3;
+  uint64 adjustment_sequence = 4;
+  repeated cephvr.visual_stimulus.v1.DisplayCalibrationAdjustment adjustments = 5;
+}
+message VisualStimulusDisplayCalibrationUpdateRequest {
+  string command_id = 1;
+  ProcessIdentity issuer = 2;
+  BackendContext target = 3;
+  uint64 configuration_revision = 4;
+  string diagnostic_id = 5;
+  int64 deadline_monotonic_ns = 6;
+  uint64 adjustment_sequence = 7;
+  repeated cephvr.visual_stimulus.v1.DisplayCalibrationAdjustment adjustments = 8;
 }
 message CloseDisplayCalibrationRequest {
   OperatorCommand command = 1;

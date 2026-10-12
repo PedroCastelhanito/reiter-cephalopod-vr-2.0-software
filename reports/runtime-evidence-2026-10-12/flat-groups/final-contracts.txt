@@ -1,0 +1,5 @@
+Command: .venv/bin/python -m pytest tests/visual_stimulus/test_configuration.py tests/visual_stimulus/test_compilation.py contracts/visual_stimulus/tests -q
+58 passed, 79 subtests passed in 1.15s
+Command: .venv/bin/python contracts/visual_stimulus/generate_schemas.py --check
+11 schemas checked; 0 needed regeneration
+Results transcribed from tool output; earlier separate raw outputs are compiler-tests.txt and contracts.txt.

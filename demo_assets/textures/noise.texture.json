@@ -1,0 +1,9 @@
+{
+  "cephvr_asset_type": "texture_design",
+  "kind": "texture",
+  "preview_file": "noise.png",
+  "params": {
+    "tile_width_mm": 40,
+    "tile_height_mm": 40
+  }
+}

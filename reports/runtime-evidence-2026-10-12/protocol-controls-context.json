@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-12",
+  "task": "protocol-controls-simplification",
+  "revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Dirty working tree including concurrent Devices edits; existing changes preserved.",
+  "sha256": {
+    "src/cephvr/gui/protocol_controls.py": "d158adb5cd29afe948b8f8508b747483aa2f01e77807c381694c17d8988aada7",
+    "src/cephvr/gui/protocol_editor.py": "4da8b397b8174181510280a99e84b462a200b0e3e79f8291b8ff92e205ca0f24",
+    "src/cephvr/gui/batch_edit.py": "15f7dcbac316154fc00fb7335ce2748701cffc01ff5ac0db0774834b4edd69b4",
+    "tests/gui/test_dashboard.py": "a5e3ae1749b3c1973dd59cbdb047d068691370762477688cc47c2f232b6a3977"
+  },
+  "decisions": [
+    "G01 revision 137",
+    "G02 revision 35",
+    "ARCH-002",
+    "E03",
+    "E15"
+  ],
+  "changes": "Remove Trials up/down widgets and unused move_trial implementation. Remove timeline Duplicate/Delete widgets and empty action container. Keep Shuffle/Preview reflow and replace hidden button-based shortcuts with focused BatchEdit.request_epoch_action guard, preserving single-selection/scope/authority checks. Seed/Gap placement remains a recommendation only.",
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"protocol_timeline_edits_preserve_trials or protocol_cards_reflow or trial_overview_selects or timeline_epoch_shortcuts or selected_epoch_full_form or epoch_actions_stay_fixed or epoch_edit_rows_duration or review_and_runtime_share_page_elements\"",
+      "result": "11 passed, 377 deselected in 48.13s",
+      "raw": "protocol-controls-tests.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k timeline_epoch_shortcuts",
+      "result": "1 passed, 387 deselected in 4.16s",
+      "raw": "protocol-controls-authority.txt",
+      "scope": "Runs after adding explicit Running-phase direct-request authority assertions; overlap with the preceding selection."
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/protocol_controls.py src/cephvr/gui/protocol_editor.py src/cephvr/gui/batch_edit.py tests/gui/test_dashboard.py",
+      "result": "4 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules, 0 boundary violations; existing cohesion advisories",
+      "raw": "protocol-controls-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "visual_inspection": "Temporary offscreen captures of Protocol at 1280x940 and 720x940 reviewed: no Trials arrows or timeline Duplicate/Delete, remaining controls readable. Test captures use local fixtures; temporary capture files removed after inspection.",
+  "limitations": "No native Windows/DPI, live GUI restart, hardware, managed commands or full GUI suite rerun. Existing cohesion advisories belong to established owners; edited oversized ProtocolEditor shrinks rather than gaining responsibilities. Full tests include concurrent Devices source at collection; results do not establish native acceptance."
+}

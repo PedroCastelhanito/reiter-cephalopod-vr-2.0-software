@@ -35,6 +35,13 @@ class EnginePort(Protocol):
     def present_display_calibration(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration
     ) -> tuple[OutputActivity, ...]: ...
+    def update_display_calibration(
+        self,
+        display: DisplayProfile,
+        prepared: PreparedDisplayCalibration,
+        adjustments: dict[str, tuple[tuple[float, float], ...]],
+    ) -> tuple[OutputActivity, ...]: ...
+
     def close_display_calibration(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration
     ) -> tuple[tuple[OutputActivity, ...], bool]: ...

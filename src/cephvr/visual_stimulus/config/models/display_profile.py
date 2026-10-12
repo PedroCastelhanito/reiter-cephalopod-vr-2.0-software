@@ -120,6 +120,11 @@ class Geometry(Model):
         return self
 
 
+class ReferenceBars(Model):
+    x_length_px: PositiveInt
+    y_length_px: PositiveInt
+
+
 class Output(Model):
     enabled: bool = True
     output_id: OutputId
@@ -132,6 +137,23 @@ class Output(Model):
     refresh_denominator: PositiveInt
     rgb_bits_per_channel: RGBBits
     photometric_profile: AssetRef | None = None
+    reference_bars: ReferenceBars | None = None
+    blackout_zones: tuple[PixelRect, ...] = ()
+
+    @model_validator(mode="after")
+    def reference_bars_fit(self) -> Self:
+        for rect in self.blackout_zones:
+            if (
+                rect.x + rect.width > self.width_px
+                or rect.y + rect.height > self.height_px
+            ):
+                raise ValueError("Blackout zone exceeds the output dimensions")
+        if self.reference_bars is not None and (
+            self.reference_bars.x_length_px > self.width_px
+            or self.reference_bars.y_length_px > self.height_px
+        ):
+            raise ValueError("Reference bar lengths exceed the output dimensions")
+        return self
 
 
 class Mapping(Model):
@@ -145,11 +167,21 @@ class Mapping(Model):
 
 class PhotodiodePatch(Model):
     rect: PixelRect
+    background_rect: PixelRect | None = None
     high_linear_rgb: Vec3
     low_linear_rgb: Vec3
 
     @model_validator(mode="after")
     def distinct_levels(self) -> Self:
+        if self.background_rect is not None:
+            area, pulse = self.background_rect, self.rect
+            if (
+                pulse.x < area.x
+                or pulse.y < area.y
+                or pulse.x + pulse.width > area.x + area.width
+                or pulse.y + pulse.height > area.y + area.height
+            ):
+                raise ValueError("Photodiode Pulse must fit inside its Frame")
         if self.high_linear_rgb == self.low_linear_rgb:
             raise ValueError(
                 "photodiode levels must differ; prepared codes must also differ"
@@ -158,6 +190,7 @@ class PhotodiodePatch(Model):
 
 
 class DisplayProfile(Model):
+    calibration_view: Literal["reference_bars", "frame_grid"] = "frame_grid"
     format_version: Version1
     geometry: Geometry
     outputs: Annotated[tuple[Output, ...], Field(min_length=1)]
@@ -277,6 +310,11 @@ class DisplayProfile(Model):
             self._check_rect(
                 self.photodiode_patch.rect, outputs[self.photodiode_output_id]
             )
+            if self.photodiode_patch.background_rect is not None:
+                self._check_rect(
+                    self.photodiode_patch.background_rect,
+                    outputs[self.photodiode_output_id],
+                )
         return self
 
     @staticmethod

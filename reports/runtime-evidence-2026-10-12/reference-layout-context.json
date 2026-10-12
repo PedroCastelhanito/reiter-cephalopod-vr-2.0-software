@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-12",
+  "task": "reference-scale-card-layout",
+  "base_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty tree preserved.",
+  "sha256": {
+    "src/cephvr/gui/projector_measurements.py": "d1b826c959d8bc4fdc911f1d6ac9777cae2b8c664f2aa6bea2bdbb51a70f3f37",
+    "src/cephvr/gui/spikeglx.py": "7e1893e45ead3cd2fb33d935ec578703e1c3c35d4f565c0691544244b662ceda",
+    "tests/gui/test_dashboard.py": "890a1fd6561b478da89a85361b196b6d59456203b667b0128225490f9daef16d"
+  },
+  "decision": "G01 revision145; ARCH-002 reuses DataTable stretch default and removes prose widget.",
+  "checks": {
+    "pytest": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"device_tabs_sit_above or managed_spikeglx_inventory or projector_reference_measurements or calibration_identity_profiles or review_and_runtime_share_page_elements\": 8 passed,381 deselected,16.10s; raw reference-layout-tests.txt",
+    "ruff": "GUI/tests passed; format140 files",
+    "mypy": "Win32 GUI138 sources passed",
+    "boundaries": "642 modules zero violations; raw reference-layout-boundaries.txt",
+    "whitespace": "git diff --check passed"
+  },
+  "inspection": "Existing width/re-expand layout test checks three columns within1px at1175 and720; shared Runtime/Review structure, readonly SpikeGLX host installation, no-distance native calibration profile generation and distance updates covered.",
+  "initial_static_findings": "Retain QLabel import used by signal rows; initial missing import then ordering corrected before final static pass. Import-order correction occurred after tests; no behavior change.",
+  "limits": "No full GUI regression/native Windows/DPI/physical output acceptance. Launch and conversion behavior unchanged. Applying measured affine correction currently requires positive throw ratio, although geometric scale does not need it."
+}

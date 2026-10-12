@@ -6,6 +6,7 @@ import math
 from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
+from typing import Any, Literal
 
 from cephvr.gui.calibration_arena import (
     Point,
@@ -13,9 +14,15 @@ from cephvr.gui.calibration_arena import (
     make_calibration_glb,
 )
 from cephvr.gui.projector_geometry import FACES
-from cephvr.visual_stimulus.config.calibration_bars import reference_scale
+from cephvr.visual_stimulus.config.calibration_bars import (
+    reference_lengths,
+    reference_scale,
+)
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
-from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
+from cephvr.visual_stimulus.config.models.display_profile import (
+    DisplayProfile,
+    PixelRect,
+)
 
 
 @dataclass(frozen=True)
@@ -27,6 +34,20 @@ class MonitorBinding:
     height: int
     refresh_hz: int
     rgb_bits: int
+
+
+def reference_bar_config(
+    calibration: dict[str, object], face: str, width: int, height: int
+) -> dict[str, int]:
+    values = calibration["values"]
+    assert isinstance(values, dict)
+    lengths = reference_lengths(
+        width,
+        height,
+        values.get(f"screens.{face}.reference_x_px"),
+        values.get(f"screens.{face}.reference_y_px"),
+    )
+    return dict(x_length_px=int(lengths[0]), y_length_px=int(lengths[1]))
 
 
 @dataclass(frozen=True)
@@ -135,7 +156,8 @@ def face_mapping(
             monitor.height,
             number("reference_x_mm", 0),
             number("reference_y_mm", 0),
-            number("throw", 0),
+            x_px=values.get(f"screens.{face}.reference_x_px"),
+            y_px=values.get(f"screens.{face}.reference_y_px"),
         )
         sx *= number("width", 0, positive=True) / measured.projected_width_mm
         sy *= number("height", 0, positive=True) / measured.projected_height_mm
@@ -156,6 +178,9 @@ def diagnostic_display_profile(
     calibration: dict[str, object],
     assignments: tuple[AssignedDisplay, ...],
     monitors: tuple[MonitorBinding, ...],
+    *,
+    view: Literal["reference_bars", "frame_grid"] | None = None,
+    blackout_zones: list[dict[str, Any]] | None = None,
 ) -> tuple[DisplayProfile, dict[str, GeometricProfile]]:
     """Bind four assigned faces to native interfaces and per-face correction meshes."""
     rig, screens = geometry_from_calibration(calibration)
@@ -187,6 +212,14 @@ def diagnostic_display_profile(
     outputs = []
     mappings = []
     profiles: dict[str, GeometricProfile] = {}
+    zones: dict[str, list[PixelRect]] = {face: [] for face in FACES}
+    for zone in blackout_zones or []:
+        if zone["face"] not in zones:
+            raise ValueError("Blackout zone requires an assigned screen")
+        zone_rect = PixelRect.model_validate(
+            {key: zone[key] for key in ("x", "y", "width", "height")}
+        )
+        zones[zone["face"]].append(zone_rect)
     for face in FACES:
         monitor = matched[face]
         face_id = face.lower()
@@ -202,6 +235,10 @@ def diagnostic_display_profile(
                 refresh_numerator=monitor.refresh_hz,
                 refresh_denominator=1,
                 rgb_bits_per_channel=monitor.rgb_bits,
+                blackout_zones=tuple(zones[face]),
+                reference_bars=reference_bar_config(
+                    calibration, face, monitor.width, monitor.height
+                ),
             )
         )
         logical_path = f"calibration/{mapping_id}.json"
@@ -214,7 +251,24 @@ def diagnostic_display_profile(
                 geometric_profile=dict(logical_path=logical_path),
             )
         )
-        vertices, mirrored = face_mapping(calibration, face, monitor)
+        if view == "reference_bars":
+            vertices = tuple(
+                dict(uv=(x, y), xy=(x, y))
+                for y, x in ((0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0))
+            )
+            mirrored = False
+        else:
+            if view == "frame_grid":
+                values = calibration["values"]
+                assert isinstance(values, dict)
+                if any(
+                    values.get(f"screens.{face}.reference_{axis}_mm") is None
+                    for axis in ("x", "y")
+                ):
+                    raise ValueError(
+                        f"{face}: measure both reference bars before adjusting frame and grid"
+                    )
+            vertices, mirrored = face_mapping(calibration, face, monitor)
         corners = tuple(vertices[index]["xy"] for index in (0, 1, 3, 2))
         if mirrored:
             corners = tuple(reversed(corners))
@@ -265,6 +319,7 @@ def diagnostic_display_profile(
             ),
             outputs=tuple(outputs),
             mappings=tuple(mappings),
+            calibration_view=view or "frame_grid",
             presentation_mode="all_outputs_vsync",
             photometric_mode="uncalibrated",
             idle_linear_rgb=(0.0, 0.0, 0.0),
@@ -279,12 +334,17 @@ def write_diagnostic_bundle(
     calibration: dict[str, object],
     assignments: tuple[AssignedDisplay, ...],
     monitors: tuple[MonitorBinding, ...],
+    *,
+    view: Literal["reference_bars", "frame_grid"] | None = None,
+    blackout_zones: list[dict[str, Any]] | None = None,
 ) -> Path:
     """Write a calibration GLB and explicit diagnostic geometric profiles."""
 
     if not asset_root.is_dir():
         raise ValueError("Choose an existing Assets folder")
-    profile, meshes = diagnostic_display_profile(calibration, assignments, monitors)
+    profile, meshes = diagnostic_display_profile(
+        calibration, assignments, monitors, view=view, blackout_zones=blackout_zones
+    )
     rig, screens = geometry_from_calibration(calibration)
     glb = make_calibration_glb(rig, screens)
     destination = asset_root / "calibration"

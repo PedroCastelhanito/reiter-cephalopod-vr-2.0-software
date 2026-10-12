@@ -12,6 +12,7 @@ from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandLedger
 from cephvr.shared.identity import require_uuid4
 from cephvr.visual_stimulus.coordinator.ports import PeerPort
+from cephvr.visual_stimulus.rendering.native_display import DisplayUnavailableError
 from cephvr.visual_stimulus.transport.messages import worker_command
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 
@@ -96,6 +97,7 @@ class VisualStimulusWorkerRuntime:
                 "Shutdown",
                 "OpenDisplayCalibration",
                 "CloseDisplayCalibration",
+                "UpdateDisplayCalibration",
             }
             and command.target.work != self.context.work
         ):
@@ -113,6 +115,7 @@ class VisualStimulusWorkerRuntime:
                 "Shutdown",
                 "OpenDisplayCalibration",
                 "CloseDisplayCalibration",
+                "UpdateDisplayCalibration",
             }
             and not (command.issuer == self.supervisor and method in SAFETY)
             and not sessionless_diagnostic_safety
@@ -138,7 +141,10 @@ class VisualStimulusWorkerRuntime:
         if method in {"InitializeDisplay", "SetupSession"}:
             self.context.CopyFrom(command.target)
             self.interrupted = False
-        elif method in {"OpenDisplayCalibration", "CloseDisplayCalibration"}:
+        elif method in {
+            "OpenDisplayCalibration",
+            "CloseDisplayCalibration",
+        }:
             self.interrupted = False
             self.owner.cancelled.clear()
         try:
@@ -151,8 +157,19 @@ class VisualStimulusWorkerRuntime:
                 succeeded=True,
             )
         except Exception as exc:
-            self.interrupted = True
-            self.owner.cancel()
+            unavailable = method == "InitializeDisplay" and isinstance(
+                exc, DisplayUnavailableError
+            )
+            from cephvr.visual_stimulus.config.calibration_adjustments import (
+                CalibrationAdjustmentRejected,
+            )
+
+            rejected_adjustment = method == "UpdateDisplayCalibration" and isinstance(
+                exc, CalibrationAdjustmentRejected
+            )
+            if not unavailable and not rejected_adjustment:
+                self.interrupted = True
+                self.owner.cancel()
             outcome = pb.OperationState(
                 context=pb.OperationContext(command_id=command.command_id),
                 command=method,
@@ -160,7 +177,12 @@ class VisualStimulusWorkerRuntime:
                 complete=True,
                 succeeded=False,
                 failure=pb.Failure(
-                    code="VISUAL_STIMULUS_OPERATION", message=str(exc)[:2048]
+                    code=DisplayUnavailableError.code
+                    if unavailable
+                    else "CALIBRATION_ADJUSTMENT_REJECTED"
+                    if rejected_adjustment
+                    else "VISUAL_STIMULUS_OPERATION",
+                    message=str(exc)[:2048],
                 ),
             )
         self.ledger.complete_executor(

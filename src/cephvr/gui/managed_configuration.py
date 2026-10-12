@@ -100,7 +100,9 @@ class ManagedConfiguration:
         self.pages.protocol.editor.changed.connect(changed)
         self.pages.recordings.changed.connect(changed)
         self.pages.projectors.outputs_changed.connect(changed)
+        self.pages.projectors.timing.blackouts.changed.connect(changed)
         self.pages.protocol.config_files.loaded.connect(changed)
+        self.pages.cameras.config_files.loaded.connect(changed)
         self.pages.projectors.calibration_files.loaded.connect(changed)
         self.pages.tracking.config_files.loaded.connect(tracking_changed)
         if self.pages.microcontroller is not None:
@@ -174,81 +176,83 @@ class ManagedConfiguration:
             # submessage cannot leave the other pages half-installed.
             self.pages.tracking.configuration_draft(tracking, source_serial=serial)
 
-        self._installing = True
-        self.pages.cameras.snapshot_draft = False
-        self.pages.tracking.snapshot_draft = False
-        if self.pages.microcontroller is not None:
-            self.pages.microcontroller.snapshots.draft_loaded = False
-        dashboard = self.pages.dashboard
-        self.pages.protocol.install_configuration(base)
-        self.pages.projectors.asset_root = (
-            base.asset_root if base.HasField("asset_root") else ""
-        )
-        install_subject_metadata(dashboard, base)
-        stimulus = (
-            stimulus_backend.visual_stimulus
-            if stimulus_backend is not None
-            and stimulus_backend.HasField("visual_stimulus")
-            else None
-        )
-        acquisition = (
-            acquisition_backend.acquisition
-            if acquisition_backend is not None
-            and acquisition_backend.HasField("acquisition")
-            else None
-        )
-        tracking = (
-            tracking_backend.tracking
-            if tracking_backend is not None and tracking_backend.HasField("tracking")
-            else None
-        )
-        recording_values: dict[str, bool | None] = {
-            key: None for key in self.pages.recordings.record
-        }
-        if stimulus is not None and stimulus.HasField("save_visual_stimulus_data"):
-            recording_values["stimulus"] = stimulus.save_visual_stimulus_data
-        if acquisition is not None:
-            for camera in self.pages.cameras.drafts:
-                role = camera.role.casefold()
-                target = (
-                    acquisition.eye_tracking
-                    if "eye" in role
-                    else acquisition.behavioral
-                    if "behavior" in role
-                    else acquisition.tracking
-                    if "tracking" in role
-                    else None
+        with self.installing_projection():
+            self.pages.cameras.snapshot_draft = False
+            self.pages.tracking.snapshot_draft = False
+            if self.pages.microcontroller is not None:
+                self.pages.microcontroller.snapshots.draft_loaded = False
+            dashboard = self.pages.dashboard
+            self.pages.protocol.install_configuration(base)
+            self.pages.projectors.asset_root = (
+                base.asset_root if base.HasField("asset_root") else ""
+            )
+            install_subject_metadata(dashboard, base)
+            stimulus = (
+                stimulus_backend.visual_stimulus
+                if stimulus_backend is not None
+                and stimulus_backend.HasField("visual_stimulus")
+                else None
+            )
+            acquisition = (
+                acquisition_backend.acquisition
+                if acquisition_backend is not None
+                and acquisition_backend.HasField("acquisition")
+                else None
+            )
+            tracking = (
+                tracking_backend.tracking
+                if tracking_backend is not None
+                and tracking_backend.HasField("tracking")
+                else None
+            )
+            recording_values: dict[str, bool | None] = {
+                key: None for key in self.pages.recordings.record
+            }
+            if stimulus is not None and stimulus.HasField("save_visual_stimulus_data"):
+                recording_values["stimulus"] = stimulus.save_visual_stimulus_data
+            if acquisition is not None:
+                for camera in self.pages.cameras.drafts:
+                    role = camera.role.casefold()
+                    target = (
+                        acquisition.eye_tracking
+                        if "eye" in role
+                        else acquisition.behavioral
+                        if "behavior" in role
+                        else acquisition.tracking
+                        if "tracking" in role
+                        else None
+                    )
+                    if target is not None and target.HasField("save_video"):
+                        recording_values[camera.key] = target.save_video
+            if tracking is not None and tracking.HasField("save_tracking_data"):
+                recording_values["velocities"] = tracking.save_tracking_data
+            self.pages.recordings.install_values(recording_values)
+            display = (
+                stimulus.display
+                if stimulus is not None and stimulus.HasField("display")
+                else None
+            )
+            self.pages.projectors.install_configuration(
+                display
+                if display is not None
+                else visual_stimulus_pb.DisplayConfiguration()
+            )
+            restored_assignments = (
+                not self.generation
+                and snapshot.session.phase
+                in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_READY)
+                and self.pages.projectors.restore_assignment_draft()
+            )
+            if tracking is not None and serial:
+                self.pages.tracking.install_configuration(
+                    tracking, source_serial=serial
                 )
-                if target is not None and target.HasField("save_video"):
-                    recording_values[camera.key] = target.save_video
-        if tracking is not None and tracking.HasField("save_tracking_data"):
-            recording_values["velocities"] = tracking.save_tracking_data
-        self.pages.recordings.install_values(recording_values)
-        display = (
-            stimulus.display
-            if stimulus is not None and stimulus.HasField("display")
-            else None
-        )
-        self.pages.projectors.install_configuration(
-            display
-            if display is not None
-            else visual_stimulus_pb.DisplayConfiguration()
-        )
-        restored_assignments = (
-            not self.generation
-            and snapshot.session.phase
-            in (pb.SESSION_PHASE_CONFIGURATION, pb.SESSION_PHASE_READY)
-            and self.pages.projectors.restore_assignment_draft()
-        )
-        if tracking is not None and serial:
-            self.pages.tracking.install_configuration(tracking, source_serial=serial)
-        self.generation, self.revision = generation, revision
-        self._installed_base.CopyFrom(base)
-        self.stale = False
-        self.last_error = ""
-        self.dirty = bool(restored_assignments)
-        self.tracking_dirty = False
-        self._installing = False
+            self.generation, self.revision = generation, revision
+            self._installed_base.CopyFrom(base)
+            self.stale = False
+            self.last_error = ""
+            self.dirty = bool(restored_assignments)
+            self.tracking_dirty = False
         return True
 
     def _tracking_serial(self) -> str:
@@ -435,4 +439,9 @@ class ManagedConfiguration:
         )
 
     def reload(self, snapshot: pb.Snapshot) -> bool:
-        return self.install(snapshot, force=True)
+        try:
+            return self.install(snapshot, force=True)
+        except (ValueError, TypeError, AttributeError) as error:
+            self.stale = True
+            self.last_error = str(error)
+            return False

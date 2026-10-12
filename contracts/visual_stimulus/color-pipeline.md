@@ -73,9 +73,12 @@ conversion. Predictable excursions warn during Setup; they do not rewrite progra
 2. Apply the [imported static geometric meshes](geometric-correction.md), optional
    masks and overlap weights in linear space to assemble the physical output image.
    This follows V15's off-axis views; it does not replace the physical geometry.
-3. Overlay the reserved photodiode patch in final output coordinates using its
+3. Replace configured output-space blackout rectangles with linear black. On trials,
+   clear the optional reserved photodiode background to linear black, then overlay
+   the reserved photodiode patch in final output coordinates using its
    explicit linear RGB high/low levels and opaque coverage. It follows scene/spatial
-   masking so a scene cannot obscure it. Outside trials use V19's uniform Idle.
+   masking/blackout zones so a scene cannot obscure it. Outside trials use V19's
+   Idle background with static blackout zones and no photodiode frame/pulse.
 4. Clamp finite composed RGB to [0,1] at `linear_output`, retaining V21 evidence.
    Do not normalize the frame, invent headroom or alter the authored contrast.
 5. In Calibrated mode, apply each output's measured inverse-response table once.

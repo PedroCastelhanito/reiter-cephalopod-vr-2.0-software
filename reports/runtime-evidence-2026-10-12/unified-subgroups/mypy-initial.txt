@@ -1,0 +1,9 @@
+src/cephvr/gui/subgroup_structure.py:45: error: Incompatible types in assignment (expression has type "Any | None", variable has type "str")  [assignment]
+src/cephvr/gui/subgroup_structure.py:51: error: Incompatible types in assignment (expression has type "Any | None", variable has type "str")  [assignment]
+src/cephvr/gui/subgroup_operations.py:41: error: Returning Any from function declared to return "str"  [no-any-return]
+src/cephvr/gui/subgroup_operations.py:84: error: Item "Group" of "Epoch | Group" has no attribute "batch_id"  [union-attr]
+src/cephvr/gui/subgroup_editor.py:34: error: Item "None" of "QLayout | None" has no attribute "itemAt"  [union-attr]
+src/cephvr/gui/subgroup_editor.py:34: error: Item "None" of "QLayoutItem | Any | None" has no attribute "layout"  [union-attr]
+src/cephvr/gui/subgroup_editor.py:34: error: Item "None" of "QLayout | None" has no attribute "count"  [union-attr]
+src/cephvr/gui/protocol_editor.py:172: error: Argument 1 to "get" of "dict" has incompatible type "Any | None"; expected "str"  [arg-type]
+Found 8 errors in 4 files (checked 144 source files)

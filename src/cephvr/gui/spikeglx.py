@@ -38,13 +38,6 @@ class SpikeGLXPanel(DevicePanel):
         )
         self.pairing.setEnabled(False)
         self.configuration.body.insertWidget(1, self.pairing)
-        self.host_settings_note = QLabel(
-            "Pairing and endpoint are read-only here; change them in "
-            "config/backends/synchronization_config.toml."
-        )
-        self.host_settings_note.setWordWrap(True)
-        self.host_settings_note.setToolTip(self.pairing.toolTip())
-        self.configuration.body.insertWidget(2, self.host_settings_note)
         self.form.setContentsMargins(0, SIZES.section_toggle_gap, 0, 0)
         self.address = entry("Not loaded")
         self.address.setReadOnly(True)
@@ -57,15 +50,18 @@ class SpikeGLXPanel(DevicePanel):
         self.mapping = Card("Input channels")
         self.table = DataTable(0, 7)
         self.table.setHorizontalHeaderLabels(
-            ["Use", "Signal", "Stream", "Index", "Channel", "Bit", ""]
+            ["Use", "Signal", "Stream", "Index", "Channel index", "Bit", ""]
         )
-        self.table.setColumnHidden(2, True)
+        for column in (2, 3, 5):
+            self.table.setColumnHidden(column, True)
         header = self.table.horizontalHeader()
         assert header is not None
         for column, width in ((0, 42), (2, 102), (3, 58), (4, 82), (5, 48), (6, 40)):
             header.setSectionResizeMode(column, QHeaderView.ResizeMode.Fixed)
             header.resizeSection(column, width)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.fit_rows(hide_empty_header=True)
         self.mapping.body.addWidget(self.table)
         self.row_keys: list[str] = []
         self.rows: dict[str, tuple[QWidget, ...]] = {}
@@ -129,7 +125,7 @@ class SpikeGLXPanel(DevicePanel):
             )
         for col, control in enumerate(self.rows[key], 1):
             self.table.set_control(row, col, control)
-        self.table.fit_rows()
+        self.table.fit_rows(hide_empty_header=True)
 
     def add_custom(self) -> None:
         if not self.can_review:
@@ -163,7 +159,7 @@ class SpikeGLXPanel(DevicePanel):
         self.row_source_ids.pop(key, None)
         self.table.removeRow(self.row_keys.index(key))
         self.row_keys.remove(key)
-        self.table.fit_rows()
+        self.table.fit_rows(hide_empty_header=True)
 
     def set_sources(
         self, sources: tuple[tuple[str, str, bool], ...], camera_keys: frozenset[str]
@@ -204,7 +200,7 @@ class SpikeGLXPanel(DevicePanel):
             for control in (*controls, self.enable_controls[key]):
                 control.setVisible(shown)
             self.table.setRowHidden(row, not shown)
-        self.table.fit_rows()
+        self.table.fit_rows(hide_empty_header=True)
         self.refresh_controls()
 
     def refresh_controls(self) -> None:

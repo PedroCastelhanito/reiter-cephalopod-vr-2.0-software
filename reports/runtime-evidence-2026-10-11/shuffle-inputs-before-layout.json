@@ -1,0 +1,7 @@
+{
+  "src/cephvr/gui/protocol_controls.py": "dbd88a37d2d84ea2e26e2a99b81484123e88ce2a6cd81fadd4ceb016bd6c2124",
+  "src/cephvr/gui/protocol_editor.py": "a615961d41f34ff3e645a85754692f34bb6f57b97d6ac2bb1dd519822137b6ea",
+  "src/cephvr/gui/protocol_nodes.py": "fd2c3ac9df84f1608f23a477b0606a4c0f73dd1c611477a2ba5417cc5d508712",
+  "src/cephvr/gui/protocol_history.py": "b0429bfcc0872d58aa9caaf1839d91df9a75d4874a016985fd4442455d609965",
+  "tests/gui/test_dashboard.py": "ccb3877476e29b21b8c22dd147d5c474e7106e6c611ba77a3b167a450e0dbf94"
+}

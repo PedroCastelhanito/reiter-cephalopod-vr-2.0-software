@@ -1,5 +1,34 @@
 # Acquisition status
 
+The Oct12 model-hierarchy audit deeply traced capture/source identity, cutoff,
+shared-ring synchronization and terminal recording/flush/close paths, and sampled
+manual devices, sessions and pixel adapters. No additional actionable acquisition
+defect was established. The [current cross-owner assessment](runtime.md#current-scope-and-review)
+records source provenance, review coverage and portable checks; native camera,
+encoder and full-workload acceptance remain in the [rig checklist](rig-verification.md).
+
+Oct11–12 behavior-preserving cleanup under [ARCH-002](../architecture.md#arch-002)
+removes unused acquisition diagnostic state left over from MCU ownership, unused
+capture/Basler/recording accessors and thread-identity bookkeeping. A11 diagnostics
+remain controller-owned. Worker Schedule/Release now call the existing trial owner
+directly; its implementation bodies are AST-identical after removing forwarding
+layers. First-record accounting still invokes its callback once with the observed
+clock value, without a redundant retained copy. Remove unused completion-result
+locals, callback references and a queue forwarding lambda. One obsolete test-fixture
+assignment is removed; all assertions and scenarios remain.
+
+The earlier branch/return cleanup and worker stop-delegate removal preserve
+A02/E08 authority, original deadlines, locking, capture clock checks and copied
+cleanup evidence. SDK, recording, dispatch and lifecycle owners retain their focused
+responsibilities and shrink; no new dependency, state owner or contract. Final Oct12
+acquisition/Visual Stimulus/controller camera-and-MCU selection passes **795 tests,
+five skips and three Windows/rig deselections**, including authenticated communication.
+Ruff/format passes 874 files, Win32 mypy passes 311 affected backend sources, and
+boundaries check 640 modules with zero violations. An initial invalid test filename
+ran no tests; the corrected selection above passed. The owner requested removal of
+both cleanup passes' raw logs and hash manifests on Oct12; these are historical
+result summaries, separate from native camera/Windows/rig acceptance.
+
 Oct9 optional-I/O work is stopped at the owner's request while leaving the rig.
 Existing signal roles retain independent Use/pin controls under
 [A11 revision 43](../docs/architecture/acquisition.md#a11); the disconnected projector

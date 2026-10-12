@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-12",
+  "task": "photodiode-frame-and-blackout-zones",
+  "source_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "working_tree": "Existing dirty tree and concurrent live-calibration chat preserved; HEAD does not represent these edits.",
+  "governing_decisions": [
+    "G01 photodiode amendment revision 147, retained in current revision 148",
+    "V15 revision 13",
+    "V19 revision 5",
+    "V22 revision 4",
+    "ARCH-002",
+    "E15"
+  ],
+  "legacy_reference": {
+    "root": "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-software",
+    "revision": "914ecbc12566e31d130d79066e635a3255bb276a",
+    "source_sha256": {
+      "protocol/src/protocol/gui/experiment_window.py": "8f8e76cc9db64ddcb5422b6204603134106ff76090bc237da208446829aa4fea",
+      "protocol/src/vr_backend/runtime/manager/_render.py": "e370b60da11f10cae08c8f97a8f24ba286de905939ba6668c6e20be2e132ce7b",
+      "protocol/src/vr_backend/runtime/overlay_masks.py": "439fde98bf18e0504683c226f957da17effca46783d048da37be34b9d3272e0d"
+    },
+    "assessment": "Adopt separate black-area/square placement, static final output masks and marker priority. Preserve CephVR2 bottom-left pixel convention and reject invalid bounds instead of legacy clamping."
+  },
+  "broad_validation": {
+    "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui tests/visual_stimulus contracts/visual_stimulus -q -m \"not windows and not rig\"",
+    "result": "665 passed, 1 deselected, 79 subtests passed in 377.33s",
+    "raw": "tests-current.txt",
+    "scope": "Local offscreen/portable and authenticated loopback tests. Broad run began before final automatic page sizing, zone propagation into diagnostic bundle and expanded assertions. Source changed concurrently; this is a passing integration stage, not an exact-final-tree full-suite claim."
+  },
+  "final_affected_validation": {
+    "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py -q -k \"photodiode or blackout or square_renders or planning_preview_keeps or share_page or legacy_numeric_projector or old_projector_snapshot or reference_measurements or calibration_identity or projector_codec or reference_bars or grid\"",
+    "result": "21 passed, 413 deselected in 18.66s",
+    "raw": "affected-final.txt",
+    "source_hashes": "source-final.json",
+    "scope": "Final owned source: rectangle containment/output bounds, native-fake trial and grid mask order, raw-bar exemption, scissor restoration on error, placement pixels, portable files, authoritative import, merge mapping, 1280/720 Runtime-Review parity, growing table and unclipped controls."
+  },
+  "static_validation": {
+    "lint": "All checks passed; lint-finish.txt",
+    "format": "289 files already formatted; format-finish.txt",
+    "mypy": "Win32 target: 271 source files, no issues; mypy-finish.txt",
+    "schemas": "11 checked, zero regeneration; schemas-finish.txt",
+    "boundaries": "649 modules, zero violations; boundaries-finish.txt",
+    "cohesion": "Retain native/scene and Projectors orchestration; separate blackout editing and region clearing, move photodiode draft/install operations into timing helper, remove duplicate output lookup and stale fixed-height selection. No GPU allocations, shader changes, dependencies or processes introduced.",
+    "documentation": "Edited-document links/anchors and git diff --check pass; final-verification.txt. Final affected-source hashes remain unchanged after report/tracking edits."
+  },
+  "captures": {
+    "method": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-12/output-overlays/capture.py",
+    "files": [
+      "controls-1280.png",
+      "controls-720.png",
+      "capture-geometry.txt"
+    ],
+    "scope": "Shared Synchronization page with isolated QSettings, fixture displays and illustrative values. Parent palette set for screenshot background only; product widget geometry unchanged. Inspected both widths. No native window/device commands."
+  },
+  "failed_attempts": [
+    "First broad sandbox run: 10 failed/651 passed/1 deselected/79 subtests. Three obsolete full-version fixture assumptions corrected; seven authenticated socket tests blocked by sandbox loopback binding. Retried with approved loopback access.",
+    "Next broad stage: 5 failed/657 passed/1 deselected/79 subtests. Four parity failures revealed fresh-versus-loaded empty blackout-table height; constructor fitting fixed. Synthetic old-v4 fixture dropped fields unavailable in v4. All five corrected cases passed focused rerun; final broad stage passes.",
+    "Focused early stages corrected fixture expectations for save_path returning None, misplaced older assertion and strict tuple inputs; preserved raw focused.txt and tool-stage outputs where retained.",
+    "Visual capture exposed clipped controls from stale fixed setup-page height. Temporary options/field minimum policies did not help and were removed. Automatic stack sizing fixes clipping; growing-table test needs queued layout events to settle (2 failed then 2 passed).",
+    "Diagnostic export integration initially supplied list instead of strict tuple (20 passed/1 failed), then added zones to an original profile used by a no-zone equality assertion (20 passed/1 failed). Use tuple of PixelRect and separate masked comparison; final 21 pass. Mypy flagged a reused rect variable, renamed zone_rect.",
+    "One lint snapshot caught undefined peers in concurrently edited communication tests; no changes made to that work. Final broad lint passes after its owning chat edit."
+  ],
+  "limits": "No native Windows/WGL/DPI, projector optical/electrical timing, calibrated black-level/placement, recorded GPU pixels, throughput or rig acceptance. Existing reports/rig-verification.md retains these checks. Planning preview is placement-only and always draws its marker white; trial alternation remains renderer-owned."
+}

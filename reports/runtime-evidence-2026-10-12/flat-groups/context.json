@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-12",
+  "base_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source": "Dirty shared workspace; pre-existing and concurrent work preserved. before-hashes.json records starting GUI/test files.",
+  "decisions": [
+    "G01 revision 153",
+    "V03 revision 10",
+    "V08",
+    "ARCH-002"
+  ],
+  "scope": "Local offscreen Qt, portable configuration/compiler/contract tests and static checks. No native Windows/DPI, optical, image residency or rig acceptance.",
+  "source_hashes": {
+    "src/cephvr/gui/protocol_batches.py": "6f7c3ed6b5af1fbcc28c88df8756033c1a2f0a3bf7aff56011f825fe6f74434e",
+    "src/cephvr/gui/protocol_hierarchy.py": "f97361f9010ecf3ef402faf53fa7cf3f2c0e377bf53d507e2169ebda0bb6feae",
+    "src/cephvr/gui/protocol_controls.py": "2da32949efc7dadc6be1f1ba0503543f84d61ebabd719a642fc9a6def39bba5a",
+    "src/cephvr/gui/protocol_editor.py": "b44c1493e4c3387c0e6e2f1e71e9eaa6a8308b12e9b40523e0a65a9c02cfeb30",
+    "src/cephvr/gui/planner_popups.py": "4e84b6f872667768fd7e2e2715345e75268a732855661f1fcb85080a1ddd3f82",
+    "src/cephvr/gui/batch_create.py": "3588903f99f75fbcddc191f868d82729506947631ebdd3ae28460588b6e699b5",
+    "src/cephvr/gui/epoch_targets.py": "5364a4127b753e5a7ba89e90e9a557de1acfa5c0e598820d944b0800bb121007",
+    "src/cephvr/gui/timeline_views.py": "120739c28c31ed8f485faf2ef184ea3e9dd4b2dc639d632c28538e4e99267c86",
+    "src/cephvr/gui/protocol_timeline.py": "cd283f4bc47ac91ffca6209ce0e5ccc8fe0b6a36d8355d8235ff95a0b23b54c2",
+    "src/cephvr/gui/group_editor.py": "6a37256bb1b26e2ef5ae8e158305546c50c95842fc2e4e0e7a2fb45863e9fbbe",
+    "src/cephvr/gui/epoch_selection.py": "b864469350c8f2a3f87cc42f48008cf7ab59238ba705d141719a13f01222cc46",
+    "src/cephvr/gui/batch_edit.py": "669a3727d936d5b5721b82d78c41685516d1821613b78ff411378679deff7e23",
+    "src/cephvr/gui/protocol_snapshot.py": "92f8c23a1a596213c7d3bd100e54ab52a65a1476daeafca0ab5f94d348ff7f0d",
+    "src/cephvr/visual_stimulus/config/models/program_model.py": "fbb4a927addd4f536f31f5074defcade3a3e31dc3a9bef39b812af26f7e045f4",
+    "tests/gui/test_dashboard.py": "57982663b175b40f314b9907092615f9ccaf44a278677332407fc831fbc19360",
+    "contracts/visual_stimulus/program.schema.json": "68ebf624d027c28d256c9be925f07bf68d9058956f894e5c402b947a91de8bd8",
+    "contracts/visual_stimulus/prepared-trial.schema.json": "5a391723b98704e7bab04fe99b4fda02aa9cef071c4d86a584600a97979ae95d"
+  },
+  "removed": [
+    "src/cephvr/gui/group_dialog.py"
+  ],
+  "commands": {
+    "final-gui-tests.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig'",
+    "final-targets.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig' -k 'target_epoch or flat_group or grouped_editor or review_and_runtime_share'",
+    "final-contracts.txt": ".venv/bin/python -m pytest tests/visual_stimulus/test_configuration.py tests/visual_stimulus/test_compilation.py contracts/visual_stimulus/tests -q; schema generator --check",
+    "capture.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-12/flat-groups/capture.py",
+    "final-affected-tests.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig' -k 'protocol or batch or group or timeline or target_epoch or compact_reference or visible_layer or proportional_header or reference_advanced or selected_epoch_full or epoch_actions_stay or review_and_runtime_share'",
+    "final-corrections.txt": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig' -k 'batch_tabs_preserve or timeline_epoch_shortcuts or flat_group or grouped_editor'"
+  },
+  "intermediate_results": "Initial full stage: 26 failed,381 passed. Most failures asserted obsolete root editing/nested generation. Hidden single-source editor binding after restoration was also repaired. Focused stages preserve failures and corrections, including modal focus restoration in the new root keyboard test. layout-corrections.txt passes6; focused-final.txt passes12. Overlapping checks are not summed.",
+  "visual": "Offscreen edit/generation screenshots inspected at 1280x1100 and720x1100. Generation fields reflow; timeline scroll shows selected batches. Labels Images/Uniform in capture are placeholders on blank epochs, not image-loading evidence. Capture exits0; user GUI and unsaved drafts were not restarted.",
+  "source_stages": "The full GUI stage started before whitespace-only snapshot formatting, EpochTargets wording and the final shortcut guard. The affected run includes the guard. The final corrections run includes the corrected default-tab assertion and all final source. Earlier overlapping counts are not summed; no exact-final-tree full-suite pass is claimed. Source review, not the sole full-suite test failure, identified the shortcut guard issue.",
+  "static": "Ruff/format144 files pass; Win32 mypy142 sources pass; boundaries650 modules/zero violations with existing cohesion advisories; contracts58 tests/79 subtests pass; 11 schemas have zero drift.",
+  "results": {
+    "final-gui-tests.txt": "407 passed,1 failed in328.73s. Sole failure expected Generate by default after entering a group; corrected to Edit then explicitly open Generate.",
+    "final-affected-tests.txt": "71 passed,1 failed,336 deselected in81.12s; same stale tab assertion. Includes final keyboard guard.",
+    "final-corrections.txt": "5 passed,403 deselected in7.78s, including corrected tab/draft/authority test, keyboard and flat/grouped batch editing.",
+    "final-targets.txt": "9 passed,399 deselected in18.06s; targeting, grouped behavior and Runtime/Review restoration.",
+    "keyboard-final.txt": "2 passed,406 deselected in5.87s",
+    "final-contracts.txt": "58 passed,79 subtests passed in1.15s;11 schemas checked,0 needed regeneration."
+  },
+  "documentation": "599 edited-record local links/anchors checked, no issues; git diff --check passed."
+}

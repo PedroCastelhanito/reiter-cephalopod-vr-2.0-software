@@ -1,0 +1,61 @@
+.F.......F.                                                              [100%]
+=================================== FAILURES ===================================
+__________ test_grouped_editor_pair_creation_repeat_scope_and_history __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10853fd90>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1653/test_grouped_editor_pair_creat0')
+app = <PyQt6.QtWidgets.QApplication object at 0x10260c790>
+
+    def test_grouped_editor_pair_creation_repeat_scope_and_history(window, tmp_path, app):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_nodes import edit_epoch
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        pair, _ = edit_epoch(blank_program(), 0, "duplicate")
+        editor.set_program(pair)
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        editor.timeline.choose(0, Qt.KeyboardModifier.ControlModifier)
+        assert editor.timeline.selection == editor.selected_paths == ((0,),)
+        editor.timeline.choose(1, Qt.KeyboardModifier.ShiftModifier)
+        editor.hierarchy.wrap.click()
+>       assert editor.scope == (0,) and len(editor.timeline.nodes) == 1
+E       assert (() == (0,)
+E         
+E         Right contains one more item: 0
+E         Use -v to get more diff)
+
+tests/gui/test_dashboard.py:12784: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+_______ test_grouped_editor_nested_creation_batch_destination_and_locks ________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1059c8d30>
+app = <PyQt6.QtWidgets.QApplication object at 0x10260c790>
+
+    def test_grouped_editor_nested_creation_batch_destination_and_locks(window, app):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.visual_stimulus.config.models.program_model import Group
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.hierarchy.add_group.click()
+        assert editor.scope == (1,)
+        editor.hierarchy.add_group.click()
+>       assert editor.scope == (1, 1)
+E       assert (1,) == (1, 1)
+E         
+E         Right contains one more item: 1
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:12870: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_grouped_editor_pair_creation_repeat_scope_and_history
+FAILED tests/gui/test_dashboard.py::test_grouped_editor_nested_creation_batch_destination_and_locks
+2 failed, 9 passed, 395 deselected in 9.27s

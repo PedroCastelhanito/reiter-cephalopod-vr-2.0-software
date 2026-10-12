@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import Future
+from typing import Protocol
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.shared.clock import host_time_ns
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.configuration import resolve_pacing_profile
+from cephvr.visual_stimulus.rendering.native_display import DisplayUnavailableError
 from cephvr.visual_stimulus.rendering.types import DisplayInitialization
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
@@ -18,6 +20,12 @@ from cephvr.visual_stimulus.worker.display_initialization import (
     complete_display_preparation,
 )
 from cephvr.visual_stimulus.worker.ports import EnginePort, PreparationPort, ReportPort
+
+
+class DisplayCleanup(Protocol):
+    def __call__(
+        self, command: visual_stimulus.WorkerCommand, *, deadline_ns: int
+    ) -> pb.CleanupReport: ...
 
 
 class DisplayOwner:
@@ -36,6 +44,8 @@ class DisplayOwner:
             [visual_stimulus.WorkerCommand | None, int, str, str | None], None
         ],
         release_resource: Callable[[str], None],
+        cleanup: DisplayCleanup,
+        cancelled: Callable[[], bool],
         clock: Callable[[], int] = host_time_ns,
     ) -> None:
         self.worker = worker
@@ -46,6 +56,8 @@ class DisplayOwner:
         self.reports = reports
         self.announce = announce
         self.release_resource = release_resource
+        self.cleanup = cleanup
+        self.cancelled = cancelled
         self.clock = clock
         self.job: DisplayPreparationJob | None = None
         self.ready = False
@@ -108,12 +120,61 @@ class DisplayOwner:
                 return windows_active, now_ns + 1_000_000
             self.release_resource(job.resource_key)
             self.job = None
-        except BaseException:
+        except BaseException as exc:
             if job.thread is None or not job.thread.is_alive():
                 self.release_resource(job.resource_key)
             self.job = None
-            raise
+            if isinstance(exc, DisplayUnavailableError):
+                try:
+                    self._reject_unavailable(job, exc)
+                except BaseException as failure:
+                    job.completion.set_exception(failure)
+                    raise
+            else:
+                job.completion.set_exception(exc)
+                raise
         return windows_active, None
+
+    def _reject_unavailable(
+        self, job: DisplayPreparationJob, error: DisplayUnavailableError
+    ) -> None:
+        # Only verified sessionless cleanup makes this a configuration rejection.
+        self.ready = False
+        if self.cancelled():
+            raise InterruptedError("display initialization was cancelled")
+        if self.clock() >= job.deadline_ns:
+            raise TimeoutError("display rejection missed its retained deadline")
+        released = self.cleanup(job.request.command, deadline_ns=job.deadline_ns)
+        # Retain discharged obligations until Setup promotes them or shutdown
+        # retires them: native owners can repeat their exact release receipts.
+        if self.clock() >= job.deadline_ns:
+            raise TimeoutError("display cleanup missed its retained deadline")
+        if self.cancelled():
+            raise InterruptedError(
+                "display initialization was cancelled during cleanup"
+            )
+        view = pb.VisualStimulusDisplayView(
+            source=self.worker,
+            backend=self.backend,
+            controller=self.controller,
+            command_id=job.request.command.command_id,
+            requested_revision=job.request.command.target.configuration_revision,
+            observed_monotonic_ns=self.clock(),
+            complete=True,
+            resources=released.resources,
+        )
+        view.issues.add(
+            component="visual_stimulus",
+            field_path="backends.visual_stimulus.display.profile_json",
+            failure=pb.Failure(
+                code=error.code,
+                message=f"{error}. Reconnect the projector or correct its assignment, then run Setup.",
+            ),
+        )
+        # The coordinator must retain exact rejection/closure before operation failure.
+        self.reports.confirm("ReportDisplay", view, job.deadline_ns)
+        self.profile = None
+        job.completion.set_exception(error)
 
     def invalidate_for_setup(self) -> None:
         self.ready = False

@@ -43,6 +43,7 @@ class CommandLink:
     deadline_ns: int
     diagnostic_id: str = ""
     output_ids: frozenset[str] = frozenset()
+    adjustment_sequence: int = 0
 
 
 @dataclass

@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-12",
+  "task": "blackout-empty-header",
+  "decisions": [
+    "G01 revision 149",
+    "ARCH-002"
+  ],
+  "change": "Use existing DataTable.fit_rows(hide_empty_header=True) for initial, add, remove and restored Blackout zones; no new state or helper. Shared by Review and Runtime.",
+  "tests": {
+    "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"photodiode_frame_square_and_blackout or photodiode_controls_fit or review_and_runtime_share_page\"",
+    "result": "7 passed, 388 deselected in 19.12s",
+    "raw": "tests.txt"
+  },
+  "checks": [
+    "GUI/test Ruff passes",
+    "Scoped format: 2 files already formatted",
+    "Win32 GUI mypy: 140 source files, no issues",
+    "Boundary checker: 649 modules, zero violations; boundaries.txt",
+    "git diff --check passes"
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/projector_blackouts.py": "7563202d1d48db79451829967a6b8da73344e5de9cb9eda730bff5ecbf3db5a9",
+    "tests/gui/test_dashboard.py": "4146ecc559849a3055da18bc115a27402e5cf79ad3c0a92086e0b0e0a2183278"
+  },
+  "limits": "Local offscreen checks only. Existing running Review process retains its previously imported code and was not closed, preserving any unsaved review edits. Reopening loads the header change. No new native/DPI or rig acceptance."
+}

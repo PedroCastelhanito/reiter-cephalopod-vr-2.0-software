@@ -40,6 +40,17 @@ in V13's replay manifest in `_stimulus_LOG.json`, which is retained even with sa
 Off; saving Off adds no detailed evidence history.
 Source protection does not prove source suitability or sustained decode throughput.
 
+V04's bounded still-image residency separates successful Setup validation from
+decoded-pixel retention. Validate each unique source/interpretation with bounded
+scratch memory; keep its manifest facts after releasing temporary pixels. When
+later scheduled reads are needed, use the streamed protected-source lifetime above
+even for a small individual image. Evicting decoded pixels or GPU textures never
+releases protection needed by later consumers. Compatible immutable content can be
+shared across trials; active consumer ownership prevents premature eviction.
+Initial residency and subsequent prefetch include transient decode/conversion/upload
+memory in admission. Image-miss response and detailed lookahead/readiness bindings
+remain Open; this declaration does not implement an image scheduler.
+
 ## Windows handle binding
 
 For a local source use `CreateFileW` with `GENERIC_READ`, `FILE_SHARE_READ`,

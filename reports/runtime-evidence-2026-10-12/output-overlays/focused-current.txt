@@ -1,0 +1,80 @@
+.....FF.......                                                           [100%]
+=================================== FAILURES ===================================
+__________ test_photodiode_controls_fit_with_growing_blackouts[1280] ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x107d3fc70>
+app = <PyQt6.QtWidgets.QApplication object at 0x104e58550>, width = 1280
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    def test_photodiode_controls_fit_with_growing_blackouts(window, app, width):
+        panel = window.devices.projectors
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel.setup_tabs.setCurrentIndex(1)
+        panel.timing.pulse.setChecked(True)
+        window.resize(width, 940)
+        for count in (0, 6):
+            for _ in range(count):
+                panel.timing.blackouts.add(
+                    dict(face="Front", x=0, y=0, width=10, height=10)
+                )
+            app.processEvents()
+            for editor in (
+                panel.timing.target,
+                panel.timing.mode,
+                *panel.timing.fields.values(),
+                *panel.timing.square_fields.values(),
+            ):
+                assert editor.parentWidget().rect().contains(editor.geometry())
+            page = panel.setup_pages.currentWidget()
+>           assert page.height() >= page.minimumSizeHint().height()
+E           assert 720 >= 885
+E            +  where 720 = <built-in method height of QWidget object at 0x104644b80>()
+E            +    where <built-in method height of QWidget object at 0x104644b80> = <PyQt6.QtWidgets.QWidget object at 0x104644b80>.height
+E            +  and   885 = <built-in method height of QSize object at 0x1052a9c40>()
+E            +    where <built-in method height of QSize object at 0x1052a9c40> = PyQt6.QtCore.QSize(273, 885).height
+E            +      where PyQt6.QtCore.QSize(273, 885) = <built-in method minimumSizeHint of QWidget object at 0x104644b80>()
+E            +        where <built-in method minimumSizeHint of QWidget object at 0x104644b80> = <PyQt6.QtWidgets.QWidget object at 0x104644b80>.minimumSizeHint
+
+tests/gui/test_dashboard.py:12035: AssertionError
+___________ test_photodiode_controls_fit_with_growing_blackouts[720] ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x107d3ecb0>
+app = <PyQt6.QtWidgets.QApplication object at 0x104e58550>, width = 720
+
+    @pytest.mark.parametrize("width", [1280, 720])
+    def test_photodiode_controls_fit_with_growing_blackouts(window, app, width):
+        panel = window.devices.projectors
+        window.page_buttons[2].click()
+        window.devices.tabs.setCurrentIndex(2)
+        panel.setup_tabs.setCurrentIndex(1)
+        panel.timing.pulse.setChecked(True)
+        window.resize(width, 940)
+        for count in (0, 6):
+            for _ in range(count):
+                panel.timing.blackouts.add(
+                    dict(face="Front", x=0, y=0, width=10, height=10)
+                )
+            app.processEvents()
+            for editor in (
+                panel.timing.target,
+                panel.timing.mode,
+                *panel.timing.fields.values(),
+                *panel.timing.square_fields.values(),
+            ):
+                assert editor.parentWidget().rect().contains(editor.geometry())
+            page = panel.setup_pages.currentWidget()
+>           assert page.height() >= page.minimumSizeHint().height()
+E           assert 720 >= 885
+E            +  where 720 = <built-in method height of QWidget object at 0x1091c7880>()
+E            +    where <built-in method height of QWidget object at 0x1091c7880> = <PyQt6.QtWidgets.QWidget object at 0x1091c7880>.height
+E            +  and   885 = <built-in method height of QSize object at 0x1046061f0>()
+E            +    where <built-in method height of QSize object at 0x1046061f0> = PyQt6.QtCore.QSize(273, 885).height
+E            +      where PyQt6.QtCore.QSize(273, 885) = <built-in method minimumSizeHint of QWidget object at 0x1091c7880>()
+E            +        where <built-in method minimumSizeHint of QWidget object at 0x1091c7880> = <PyQt6.QtWidgets.QWidget object at 0x1091c7880>.minimumSizeHint
+
+tests/gui/test_dashboard.py:12035: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[1280]
+FAILED tests/gui/test_dashboard.py::test_photodiode_controls_fit_with_growing_blackouts[720]
+2 failed, 12 passed, 407 deselected in 37.73s

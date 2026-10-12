@@ -118,7 +118,7 @@ class TrackingDiagnosticViewer(QDialog):
         self.status.setText(status)
         self.timing.setText("Last — · maximum —")
 
-    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         self.detached.emit()
         super().closeEvent(event)
 

@@ -112,9 +112,9 @@ class ResponsiveColumns(QWidget):
                 self.grid.addWidget(widget, index, 0)
             self.grid.setColumnStretch(0, 1)
 
-    def minimumSizeHint(self) -> QSize:  # noqa: N802
+    def minimumSizeHint(self) -> QSize:
         return QSize(0, 0)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         self.arrange(self.width())

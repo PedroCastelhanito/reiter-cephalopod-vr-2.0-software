@@ -94,7 +94,12 @@ async def test_idle_renderer_heartbeat_carries_lifecycle_to_supervisor():
     "method", ["InitializeDisplay", "PrepareTrial", "SetupSession"]
 )
 @pytest.mark.parametrize("succeeded", [True, False])
-async def test_worker_completion_routes_only_setup_to_controller(method, succeeded):
+@pytest.mark.parametrize(
+    "display_rejection", [None, "confirmed", "unreleased", "stale"]
+)
+async def test_worker_completion_routes_only_setup_to_controller(
+    method, succeeded, display_rejection
+):
     clock = Clock()
     identity = Identity(
         *(
@@ -137,6 +142,21 @@ async def test_worker_completion_routes_only_setup_to_controller(method, succeed
         clock(),
     )
     reports = Reports(identity, state, ledger, controller, supervisor, clock)
+    if display_rejection is not None:
+        state.display = pb.VisualStimulusDisplayView(
+            command_id=str(uuid4())
+            if display_rejection == "stale"
+            else parent.command_id,
+            complete=True,
+            issues=[
+                pb.FieldIssue(failure=pb.Failure(code="DISPLAY_OUTPUT_UNAVAILABLE"))
+            ],
+            resources=[
+                pb.ResourceRelease(
+                    resource="display:main", released=display_rejection != "unreleased"
+                )
+            ],
+        )
     await reports.operation(
         visual_stimulus.WorkerOperation(
             source=child.target,
@@ -144,7 +164,13 @@ async def test_worker_completion_routes_only_setup_to_controller(method, succeed
                 context=pb.OperationContext(command_id=child.command_id),
                 complete=True,
                 succeeded=succeeded,
-                failure=pb.Failure(code="TEST_FAILURE") if not succeeded else None,
+                failure=pb.Failure(
+                    code="DISPLAY_OUTPUT_UNAVAILABLE"
+                    if display_rejection
+                    else "TEST_FAILURE"
+                )
+                if not succeeded
+                else None,
             ),
         )
     )
@@ -155,8 +181,11 @@ async def test_worker_completion_routes_only_setup_to_controller(method, succeed
             == parent.command_id
         )
         assert controller.reports[0][1].operation.operation.work == parent.work
-    assert len(supervisor.reports) == int(not succeeded)
-    assert state.interrupted == (not succeeded)
+    recovered_display = (
+        method == "InitializeDisplay" and display_rejection == "confirmed"
+    )
+    assert len(supervisor.reports) == int(not succeeded and not recovered_display)
+    assert state.interrupted is (not succeeded and not recovered_display)
 
 
 async def recipe_fixture(tmp_path):
@@ -543,3 +572,63 @@ async def test_started_evidence_preserves_exact_trial_preparation_parent():
     assert peer.reports[-1][1].started.context.operation.command_id == prepare_id
     assert ("started", prepare_id) in state.reports
     assert ("started", schedule_id) not in state.reports
+
+
+def test_live_calibration_bind_preserves_identity_and_rejects_stale_updates():
+    from cephvr.visual_stimulus.transport.messages import worker_command
+
+    identity = Identity(
+        *(
+            pb.ProcessIdentity(role=role, generation=str(uuid4()))
+            for role in (
+                "visual_stimulus",
+                "controller",
+                "supervisor",
+                "visual_stimulus_renderer",
+            )
+        )
+    )
+    state = State()
+    state.display = pb.VisualStimulusDisplayView()
+    state.display.outputs.add(output_id="projector/main")
+    evidence = state.display.calibration
+    evidence.diagnostic_id = str(uuid4())
+    evidence.configuration_revision = 4
+    evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+    evidence.calibration_view = "frame_grid"
+    request = wire.VisualStimulusDisplayCalibrationUpdateRequest(
+        command_id=str(uuid4()),
+        issuer=identity.controller,
+        target=identity.backend,
+        configuration_revision=4,
+        diagnostic_id=evidence.diagnostic_id,
+        adjustment_sequence=1,
+    )
+    request.adjustments.add(
+        mapping_id="diagnostic_front",
+        destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9],
+    )
+    validate(identity, state, "UpdateDisplayCalibration", request)
+    child, link = bind_command(
+        identity, state, "UpdateDisplayCalibration", request, 123456
+    )
+    assert isinstance(child, visual_stimulus.UpdateDisplayCalibrationCommand)
+    assert child.diagnostic_id == evidence.diagnostic_id
+    assert worker_command(child).target.configuration_revision == 4
+    assert link.deadline_ns == 123456 and link.adjustment_sequence == 1
+    assert link.output_ids == frozenset({"projector/main"})
+    evidence.adjustment_sequence = 1
+    with pytest.raises(ValueError, match="stale"):
+        bind_command(identity, state, "UpdateDisplayCalibration", request, 123456)
+    request.adjustment_sequence = 2
+    request.issuer.CopyFrom(identity.supervisor)
+    with pytest.raises(ValueError, match="authority"):
+        validate(identity, state, "UpdateDisplayCalibration", request)
+    request.issuer.CopyFrom(identity.controller)
+    evidence.calibration_view = "reference_bars"
+    with pytest.raises(ValueError, match="inactive"):
+        bind_command(identity, state, "UpdateDisplayCalibration", request, 123456)
+    evidence.calibration_view = "frame_grid"
+    state.interrupted = True
+    with pytest.raises(ValueError, match="fenced"):
+        validate(identity, state, "UpdateDisplayCalibration", request)

@@ -3,10 +3,9 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import product
-from math import atan2, cos, degrees, hypot, isfinite, radians, sin
+from math import isfinite
 from typing import Any
 
-from cephvr.gui.epoch_motion import constant_rate
 from cephvr.gui.program_editing import (
     NodePath,
     data_node,
@@ -15,6 +14,11 @@ from cephvr.gui.program_editing import (
     validate,
 )
 from cephvr.visual_stimulus.config.models.program_model import Program
+from cephvr.visual_stimulus.config.parameter_edits import assign_ref as assign_ref
+from cephvr.visual_stimulus.config.parameter_edits import (
+    motion_numbers as motion_numbers,
+)
+from cephvr.visual_stimulus.config.parameter_edits import varied_fields as varied_fields
 
 
 @dataclass(frozen=True)
@@ -23,100 +27,6 @@ class Variation:
     layer: int
     parameter: str
     values: tuple[float, ...]
-
-
-def motion_numbers(setting: dict[str, Any]) -> tuple[float, float, float]:
-    texture = setting["kind"] == "texture"
-    if texture:
-        pattern = setting["pattern"]
-        if pattern["kind"] != "image_tile" or any(
-            pattern[k]["kind"] != "constant"
-            or not isinstance(pattern[k]["value"], (int, float))
-            for k in ("period_x", "period_y")
-        ):
-            raise ValueError(
-                "Speed/direction variations need an image tile with constant dimensions"
-            )
-        if any(setting["motion"][k]["kind"] != "hold" for k in ("x", "y")):
-            raise ValueError(
-                "Speed variations cannot replace simultaneous texture translation"
-            )
-        x, y = [constant_rate(setting[f"phase_{axis}"]) for axis in ("x", "y")]
-        if x is not None and y is not None:
-            x, y = -x * pattern["period_x"]["value"], -y * pattern["period_y"]["value"]
-    else:
-        x, y = [constant_rate(setting["motion"][axis]) for axis in ("x", "y")]
-    angular = constant_rate(
-        setting["motion"]["yaw" if setting["kind"] == "arena" else "rotation"]
-    )
-    if x is None or y is None or angular is None:
-        raise ValueError("Choose constant motion before varying speed/direction")
-    return hypot(x, y), degrees(atan2(y, x)) if x or y else 0.0, angular
-
-
-def varied_fields(
-    setting: dict[str, Any], values: dict[str, float]
-) -> dict[tuple[str, ...], tuple[float, str]]:
-    result: dict[tuple[str, ...], tuple[float, str]] = {}
-    length = (
-        "mm"
-        if setting["kind"] == "arena" or setting["space"]["kind"] == "physical_surface"
-        else "deg"
-    )
-    if any(key in values for key in ("Speed", "Direction", "Angular speed")):
-        speed, angle, angular = motion_numbers(setting)
-        speed, angle, angular = (
-            values.get("Speed", speed),
-            values.get("Direction", angle),
-            values.get("Angular speed", angular),
-        )
-        if speed < 0:
-            raise ValueError("Speed must be nonnegative")
-        if "Speed" in values or "Direction" in values:
-            x, y = speed * cos(radians(angle)), speed * sin(radians(angle))
-            for axis, value in (("x", x), ("y", y)):
-                if setting["kind"] == "texture":
-                    result[(f"phase_{axis}", "function", "value")] = (
-                        -value / setting["pattern"][f"period_{axis}"]["value"],
-                        "cycle/s",
-                    )
-                else:
-                    result[("motion", axis, "function", "value")] = (
-                        value,
-                        f"{length}/s",
-                    )
-        if "Angular speed" in values:
-            result[
-                (
-                    "motion",
-                    "yaw" if setting["kind"] == "arena" else "rotation",
-                    "function",
-                    "value",
-                )
-            ] = (angular, "deg/s")
-    for name, key in (("Width", "width"), ("Height", "height"), ("Opacity", "opacity")):
-        if name in values:
-            if key not in setting:
-                raise ValueError(f"{name} is not available for this stimulus")
-            result[(key, "value")] = (values[name], "1" if key == "opacity" else length)
-    return result
-
-
-def assign_ref(
-    setting: dict[str, Any], path: tuple[str, ...], ref: dict[str, str] | float
-) -> None:
-    if path[0] == "motion":
-        setting["motion"][path[1]] = {
-            "kind": "rate",
-            "function": {"kind": "constant", "value": ref},
-        }
-    elif path[0].startswith("phase_"):
-        setting[path[0]] = {
-            "kind": "rate",
-            "function": {"kind": "constant", "value": ref},
-        }
-    else:
-        setting[path[0]] = {"kind": "constant", "value": ref}
 
 
 def make_group(
@@ -210,14 +120,53 @@ def update_group(
     repetitions: int,
     shuffle: bool,
     conditions: object,
+    name: str | None = None,
 ) -> Program:
     data = program.model_dump(mode="json")
     node = data_node(data, path)
     if node["kind"] != "group":
         raise ValueError("Select a group")
+    if node["repetitions"] != repetitions:
+        editable_batches = {
+            child.get("batch_id")
+            for child in node["body"]
+            if child.get("subgroup_draft") is not None
+        }
+        for child in node["body"]:
+            if child["kind"] == "epoch":
+                if (
+                    child.get("repetition_settings")
+                    and child.get("batch_id") not in editable_batches
+                ):
+                    raise ValueError(
+                        "Imported repetition settings have no editable variation rules"
+                    )
+                child["repetition_settings"] = []
     node.update(
         repetitions=repetitions,
         order="shuffle_each_repetition" if shuffle else "as_listed",
         conditions=conditions,
     )
-    return validate(data)
+    if name is not None:
+        original = node["group_id"]
+        identity = name.strip().replace(" ", "_")
+        node["group_id"] = identity
+
+        def rename_references(value: object) -> None:
+            if isinstance(value, dict):
+                if (
+                    value.get("kind") == "condition"
+                    and value.get("group_id") == original
+                ):
+                    value["group_id"] = identity
+                for child in value.values():
+                    rename_references(child)
+            elif isinstance(value, list):
+                for child in value:
+                    rename_references(child)
+
+        rename_references(data)
+    result = validate(data)
+    from cephvr.gui.subgroup_repetitions import rebuild_repetitions
+
+    return rebuild_repetitions(result, (path,) if isinstance(path, int) else path)

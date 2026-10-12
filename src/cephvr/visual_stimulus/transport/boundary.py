@@ -137,6 +137,10 @@ class Boundary:
                 if native.deadline_monotonic_ns <= 0:
                     raise ValueError("positive original command deadline required")
                 deadline = min(deadline, native.deadline_monotonic_ns)
+            if isinstance(request, wire.VisualStimulusDisplayCalibrationUpdateRequest):
+                if request.deadline_monotonic_ns <= 0:
+                    raise ValueError("positive original update deadline required")
+                deadline = min(deadline, request.deadline_monotonic_ns)
             if not self.admission.is_retained(native.command_id):
                 self.operations.validate_command(method, request)
         except (DeadlineMetadataError, ValueError) as exc:

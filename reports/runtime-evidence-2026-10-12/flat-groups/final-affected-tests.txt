@@ -1,0 +1,32 @@
+.....................F.................................................. [100%]
+=================================== FAILURES ===================================
+_____________ test_batch_tabs_preserve_drafts_apply_and_phase_lock _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x3184f31c0>
+app = <PyQt6.QtWidgets.QApplication object at 0x10284cca0>
+
+    def test_batch_tabs_preserve_drafts_apply_and_phase_lock(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(editor.program))
+        editor.enter_group()
+        original = editor.program
+>       assert editor.modes.currentIndex() == 0
+E       assert 1 == 0
+E        +  where 1 = <built-in method currentIndex of QTabBar object at 0x308fe7010>()
+E        +    where <built-in method currentIndex of QTabBar object at 0x308fe7010> = <PyQt6.QtWidgets.QTabBar object at 0x308fe7010>.currentIndex
+E        +      where <PyQt6.QtWidgets.QTabBar object at 0x308fe7010> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x3027c9e10>.modes
+
+tests/gui/test_dashboard.py:7619: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_batch_tabs_preserve_drafts_apply_and_phase_lock
+1 failed, 71 passed, 336 deselected in 81.12s (0:01:21)

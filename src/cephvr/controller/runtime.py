@@ -426,6 +426,11 @@ class ControllerRuntime:
     ) -> pb.CommandAdmission:
         return await self.display_calibration.open(request)
 
+    async def update_display_calibration(
+        self, request: svc.UpdateDisplayCalibrationRequest
+    ) -> pb.CommandAdmission:
+        return await self.display_calibration.update(request)
+
     async def close_display_calibration(
         self, request: svc.CloseDisplayCalibrationRequest
     ) -> pb.CommandAdmission:

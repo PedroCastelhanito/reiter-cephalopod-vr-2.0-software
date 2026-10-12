@@ -5,12 +5,20 @@ from typing import Any
 from cephvr.visual_stimulus.config.calibration_bars import reference_lengths
 
 
-def draw_reference_bars(context: Any, width: int, height: int) -> None:
+def draw_reference_bars(
+    context: Any,
+    width: int,
+    height: int,
+    *,
+    x_px: int | None = None,
+    y_px: int | None = None,
+) -> None:
     """Clear bounded device-framebuffer rectangles; create no additional GL resource."""
-    x_length, y_length = reference_lengths(width, height)
+    x_length, y_length = reference_lengths(width, height, x_px, y_px)
     # Endpoints are integer pixel boundaries so measured spans are exact pixels.
-    x0, x1 = round(width * 0.375), round(width * 0.375) + int(x_length)
-    y0, y1 = round(height * 0.375), round(height * 0.375) + int(y_length)
+    x0 = round(width * 0.375) if x_px is None else round((width - x_length) / 2)
+    y0 = round(height * 0.375) if y_px is None else round((height - y_length) / 2)
+    x1, y1 = x0 + int(x_length), y0 + int(y_length)
     cx, cy = width // 2, height // 2
     previous = context.scissor
     try:

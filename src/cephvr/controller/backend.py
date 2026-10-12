@@ -283,6 +283,18 @@ class GrpcBackendPort:
             self.visual_stimulus.OpenDisplayCalibration, request, deadline_ns
         )
 
+    async def update_display_calibration(
+        self,
+        request: svc.VisualStimulusDisplayCalibrationUpdateRequest,
+        *,
+        deadline_ns: int,
+    ) -> pb.CommandAdmission:
+        if self.visual_stimulus is None:
+            raise RuntimeError("Visual Stimulus configuration endpoint unavailable")
+        return await self._admission(
+            self.visual_stimulus.UpdateDisplayCalibration, request, deadline_ns
+        )
+
     async def close_display_calibration(
         self,
         request: svc.VisualStimulusDisplayCalibrationCloseRequest,

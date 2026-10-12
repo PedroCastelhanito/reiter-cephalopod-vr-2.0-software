@@ -8,6 +8,7 @@ from typing import Any
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.rendering.arena_gpu import ArenaGPUSet, upload_arena
+from cephvr.visual_stimulus.rendering.output_masks import clear_regions
 from cephvr.visual_stimulus.rendering.reference_bars import draw_reference_bars
 from cephvr.visual_stimulus.rendering.scene_resources import (
     PreparedCalibrationOutput,
@@ -81,12 +82,115 @@ class DisplayCalibrationRenderer:
             display, prepared.display_calibration, self.outputs, self.gpu_resources
         )
 
+    def update(self, adjustments: dict[str, tuple[tuple[float, float], ...]]) -> None:
+        """Validate all rectangles before writing the already-owned GL buffers."""
+        import struct
+
+        from cephvr.visual_stimulus.config.calibration_adjustments import (
+            CalibrationAdjustmentRejected,
+        )
+
+        if (
+            self.display is None
+            or self.prepared is None
+            or self.display.calibration_view != "frame_grid"
+        ):
+            raise CalibrationAdjustmentRejected(
+                "Live adjustment requires an active frame/grid presentation"
+            )
+        from cephvr.visual_stimulus.config.calibration_adjustments import (
+            validated_adjustments,
+        )
+
+        adjustments = validated_adjustments(
+            (key, tuple(coordinate for point in points for coordinate in point))
+            for key, points in adjustments.items()
+        )
+        mappings = {item.mapping_id: item for item in self.display.active_mappings}
+        writes = []
+        for mapping_id, points in adjustments.items():
+            if mapping_id not in mappings:
+                raise CalibrationAdjustmentRejected(
+                    "Live adjustment targets an unknown calibration mapping"
+                )
+            mapping = mappings[mapping_id]
+            profile = self.prepared.display_calibration.content[mapping_id]
+            if (
+                not isinstance(profile, GeometricProfile)
+                or profile.rows != 2
+                or profile.columns != 2
+                or not profile.calibration_id.startswith("diagnostic_")
+                or profile.mask is not None
+                or profile.weight is not None
+            ):
+                raise CalibrationAdjustmentRejected(
+                    "Live adjustment requires a GUI diagnostic affine mapping"
+                )
+            if (points[1][0] - points[0][0]) * (
+                profile.vertices[1].xy[0] - profile.vertices[0].xy[0]
+            ) <= 0 or (points[2][1] - points[0][1]) * (
+                profile.vertices[2].xy[1] - profile.vertices[0].xy[1]
+            ) <= 0:
+                raise CalibrationAdjustmentRejected(
+                    "Live adjustment cannot change axis inversion"
+                )
+            area = (
+                abs((points[1][0] - points[0][0]) * (points[2][1] - points[0][1])) / 2
+            )
+            if area <= profile.triangle_area_tolerance:
+                raise CalibrationAdjustmentRejected(
+                    "Live adjustment violates the protected mesh area tolerance"
+                )
+            frame = self.frames[mapping.output_id]
+            coordinates: list[float] = []
+            for original, (x, y) in zip(profile.vertices, points, strict=True):
+                coordinates.extend(
+                    (
+                        original.uv[0],
+                        original.uv[1],
+                        2
+                        * (mapping.viewport.x + x * mapping.viewport.width)
+                        / frame.width
+                        - 1,
+                        2
+                        * (mapping.viewport.y + y * mapping.viewport.height)
+                        / frame.height
+                        - 1,
+                    )
+                )
+            data = struct.pack("16f", *coordinates)
+            encoded = struct.unpack("16f", data)
+            if encoded[2] == encoded[6] or encoded[3] == encoded[11]:
+                raise CalibrationAdjustmentRejected(
+                    "Live adjustment collapses at GPU vertex precision"
+                )
+            writes.append((frame, frame.warp_vertex_buffers[mapping_id], data))
+        for frame, buffer, data in writes:
+            frame.activate()
+            buffer.write(data)
+
     def _render(
         self, display: DisplayProfile, prepared: PreparedDisplayCalibration
     ) -> None:
+        output_specs = {output.output_id: output for output in display.active_outputs}
         for output_id, frame in self.frames.items():
             frame.activate()
             context = frame.context
+            if display.calibration_view == "reference_bars":
+                frame.device_fbo.use()
+                context.viewport = (0, 0, frame.width, frame.height)
+                context.scissor = None
+                context.disable(self.moderngl.BLEND)
+                frame.device_fbo.clear(0.0, 0.0, 0.0, 1.0)
+                bars = output_specs[output_id].reference_bars
+                draw_reference_bars(
+                    context,
+                    frame.width,
+                    frame.height,
+                    x_px=None if bars is None else bars.x_length_px,
+                    y_px=None if bars is None else bars.y_length_px,
+                )
+                continue
             from OpenGL import GL
 
             frame.diagnostic_flags.write(bytes(16))
@@ -141,6 +245,12 @@ class DisplayCalibrationRenderer:
                     mode=self.moderngl.TRIANGLES
                 )
 
+            if output_specs[output_id].blackout_zones:
+                clear_regions(
+                    context,
+                    frame.output_fbo.clear,
+                    output_specs[output_id].blackout_zones,
+                )
             frame.device_fbo.use()
             context.disable(self.moderngl.BLEND)
             frame.output_program["source_tex"].value = 0
@@ -155,7 +265,6 @@ class DisplayCalibrationRenderer:
             frame.output_texture.use(0)
             frame.lut_texture.use(1)
             frame.output_quad_array.render(mode=self.moderngl.TRIANGLE_STRIP)
-            draw_reference_bars(context, frame.width, frame.height)
             screen = getattr(context, "screen", None)
             if screen is not None:
                 context.copy_framebuffer(screen, frame.device_fbo)

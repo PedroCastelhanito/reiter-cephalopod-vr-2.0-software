@@ -119,7 +119,6 @@ class VideoPlayback:
         self._workers: list[threading.Thread] = []
         self._started = False
         self._cancelled = False
-        self._next_id = 0
         self._initialized: set[str] = set()
 
     def register(

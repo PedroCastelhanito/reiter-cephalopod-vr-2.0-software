@@ -17,6 +17,56 @@ from cephvr.visual_stimulus.config.models.program_model import Epoch, Fixed, Pro
 class SelectionComposer(EpochComposer):
     variable_duration = False
 
+    def bind_epoch(
+        self, program: Program, path: tuple[int, ...], screens: tuple[str, ...]
+    ) -> None:
+        epoch = node_at(program, path)
+        assert isinstance(epoch, Epoch)
+        fixed = isinstance(epoch.duration, Fixed)
+        self.variable_duration = not fixed
+        self.duration.setReadOnly(not fixed)
+        self.duration.setText(
+            clock_duration(epoch.duration.duration.seconds)
+            if isinstance(epoch.duration, Fixed)
+            else "Variable"
+        )
+        duration = self.duration_value()
+        self.reference_duration_ns = duration.duration.ns()
+        self.batch_label.setText(epoch.batch_label or "")
+        # A reference is not a complete trial; keep its placeholder valid under E05.
+        blank = blank_program().sequence[0]
+        assert isinstance(blank, Epoch)
+        placeholder = blank.duration
+        self.program = program.model_copy(
+            update={
+                "sequence": (
+                    epoch.model_copy(
+                        update={
+                            "duration": placeholder,
+                            "repetition_settings": (),
+                            "repetition_rules": (),
+                        }
+                    ),
+                )
+            }
+        )
+        self.pending_assets.clear()
+        arena = any(setting.kind == "arena" for setting in epoch.settings)
+        self.mode.blockSignals(True)
+        self.mode.setCurrentIndex(int(arena))
+        self.active_mode = int(arena)
+        self.mode.blockSignals(False)
+        for setting in epoch.settings:
+            if setting.kind != "arena":
+                for face in surfaces(setting.model_dump(mode="json")):
+                    name = face.title()
+                    if name not in self.rows:
+                        self.add_row(name)
+        self.set_screens(screens)
+        for row in self.rows.values():
+            row.parameters.duration_override = duration
+        self.refresh_rows()
+
     def duration_value(self) -> Fixed:
         if self.variable_duration:
             return Fixed.model_validate(
@@ -115,42 +165,7 @@ class EpochSelection(QWidget):
         self._binding = True
         self.source, self.path = program, path
         self.composer.close_file_dialogs()
-        epoch = node_at(program, path)
-        assert isinstance(epoch, Epoch)
-        fixed = isinstance(epoch.duration, Fixed)
-        self.composer.variable_duration = not fixed
-        self.composer.duration.setReadOnly(not fixed)
-        self.composer.duration.setText(
-            clock_duration(epoch.duration.duration.seconds)
-            if isinstance(epoch.duration, Fixed)
-            else "Variable"
-        )
-        duration = self.composer.duration_value()
-        self.composer.reference_duration_ns = duration.duration.ns()
-        self.composer.batch_label.setText(epoch.batch_label or "")
-        # A reference is not a complete trial; keep its placeholder valid under E05.
-        blank = blank_program().sequence[0]
-        assert isinstance(blank, Epoch)
-        placeholder = blank.duration
-        self.composer.program = program.model_copy(
-            update={"sequence": (epoch.model_copy(update={"duration": placeholder}),)}
-        )
-        self.composer.pending_assets.clear()
-        arena = any(setting.kind == "arena" for setting in epoch.settings)
-        self.composer.mode.blockSignals(True)
-        self.composer.mode.setCurrentIndex(int(arena))
-        self.composer.active_mode = int(arena)
-        self.composer.mode.blockSignals(False)
-        for setting in epoch.settings:
-            if setting.kind != "arena":
-                for face in surfaces(setting.model_dump(mode="json")):
-                    name = face.title()
-                    if name not in self.composer.rows:
-                        self.composer.add_row(name)
-        self.composer.set_screens(screens)
-        for row in self.composer.rows.values():
-            row.parameters.duration_override = duration
-        self.composer.refresh_rows()
+        self.composer.bind_epoch(program, path, screens)
         self.message.clear()
         self._dirty = False
         self._binding = False
@@ -171,6 +186,7 @@ class EpochSelection(QWidget):
             incoming = reference.model_dump(mode="json")
             epoch = incoming["sequence"][0]
             epoch["epoch_id"] = source.epoch_id
+            epoch["batch_id"] = source.batch_id
             epoch["duration"] = (
                 self.composer.duration_value()
                 if isinstance(source.duration, Fixed)

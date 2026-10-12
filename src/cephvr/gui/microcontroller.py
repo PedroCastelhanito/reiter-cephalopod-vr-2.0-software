@@ -20,9 +20,11 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import Card, button, combo, equal_row_height, field
 from cephvr.gui.device_panel import DevicePanel, entry
+from cephvr.gui.microcontroller_signals import MicrocontrollerSignals
 from cephvr.gui.microcontroller_snapshot import MicrocontrollerSnapshot
 from cephvr.gui.paths import PathField
-from cephvr.gui.tables import DataTable
+from cephvr.gui.tables import DataTable, refresh_button
+from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
 
 
@@ -37,6 +39,7 @@ class CameraTrigger:
 
 class MicrocontrollerPanel(DevicePanel):
     camera_enable_requested = pyqtSignal(str, bool)
+    camera_draft_loaded = pyqtSignal(object)
     connection_requested = pyqtSignal()
     firmware_requested = pyqtSignal(str)
     save_requested = pyqtSignal(str, str, bool, str, bool, object, object)
@@ -46,11 +49,20 @@ class MicrocontrollerPanel(DevicePanel):
         super().__init__(
             "Microcontroller connection",
             "PORT        —\nFIRMWARE    —\nTRIGGER TEST Not tested",
-            ("Scan ports", "Test connection"),
+            ("Test connection",),
         )
         self.port = combo(())
         self.port.setPlaceholderText("Scan for ports")
-        self.add("COM PORT", self.port)
+        self.scan_button = refresh_button("Refresh available COM ports")
+        self.scan_button.clicked.connect(lambda: self.request("Scan ports"))
+        self.test_connection_button = self.action_buttons[0]
+        port_row = QWidget()
+        port_layout = QHBoxLayout(port_row)
+        port_layout.setContentsMargins(0, 0, 0, 0)
+        port_layout.setSpacing(SIZES.field_x_gap)
+        port_layout.addWidget(self.port, 1)
+        port_layout.addWidget(self.scan_button)
+        self.add("COM PORT", port_row)
         port_item = self.form.itemAtPosition(0, 0)
         assert port_item is not None
         port_field = port_item.widget()
@@ -119,6 +131,8 @@ class MicrocontrollerPanel(DevicePanel):
         self.port.currentIndexChanged.connect(self.port_changed)
         self.snapshots = MicrocontrollerSnapshot(self)
         self.config_files = self.snapshots.files
+        self.signals = MicrocontrollerSignals(self)
+        self.refresh_tests()
 
     def request_upload(self) -> None:
         if self.upload.isEnabled():
@@ -328,6 +342,7 @@ class MicrocontrollerPanel(DevicePanel):
     def set_cameras(self, cameras: tuple[CameraTrigger, ...]) -> None:
         if cameras == self.camera_rows:
             return
+        self.signals.invalidate()
         self.stop_review_tests({c.key for c in self.camera_rows})
         for camera in self.camera_rows:
             self.test_buttons.pop(camera.key, None)
@@ -383,8 +398,8 @@ class MicrocontrollerPanel(DevicePanel):
             else "Firmware upload requires the managed runtime"
         )
         self.port.setEnabled(self.can_review and not active)
-        self.action_buttons[0].setEnabled(self.can_review and not active)
-        self.action_buttons[1].setEnabled(
+        self.scan_button.setEnabled(self.can_review and not active)
+        self.test_connection_button.setEnabled(
             self.can_review and not active and bool(self.port.currentData())
         )
         for control in self.enable_controls.values():
@@ -420,6 +435,11 @@ class MicrocontrollerPanel(DevicePanel):
                 and (not exclusive_active or camera.key == self.managed_test_key)
                 and bool(self.port.currentData())
                 and bool(editor.text().strip())
+            )
+
+        if hasattr(self, "signals"):
+            self.signals.refresh(
+                self.can_review and not active and not self.upload_pending
             )
 
     def port_changed(self) -> None:

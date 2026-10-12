@@ -53,7 +53,6 @@ class ManualDeviceStatusReporter:
                 camera.CAMERA_ROLE_EYE_TRACKING,
             )
         }
-        self._diagnostic: control.MicrocontrollerDiagnosticView | None = None
         self._reports: dict[str, tuple[bytes, wire.AcquisitionDeviceStatusReport]] = {}
 
     def reserve(self, command: wire.BackendCommand) -> None:
@@ -117,7 +116,7 @@ class ManualDeviceStatusReporter:
         self._views[role] = view
 
     def owns_hardware(self) -> bool:
-        return bool(self._diagnostic is not None and self._diagnostic.active) or any(
+        return any(
             view.device_open or view.preview_running or view.cleanup_pending
             for view in self._views.values()
         )
@@ -200,18 +199,6 @@ class ManualDeviceStatusReporter:
                 receipt.failure.message or "Preview visibility was rejected"
             )
 
-    def set_diagnostic(self, signal: int, pin: str, active: bool, edges: int) -> None:
-        self._diagnostic = control.MicrocontrollerDiagnosticView(
-            active=active,
-            signal=cast(control.MicrocontrollerSignalKind, signal),
-            pin=pin,
-            rising_edges=edges,
-            observed_monotonic_ns=self.clock(),
-        )
-
-    def clear_diagnostic(self) -> None:
-        self._diagnostic = None
-
     async def report(
         self,
         command: wire.BackendCommand,
@@ -274,8 +261,6 @@ class ManualDeviceStatusReporter:
             target.CopyFrom(retained_view)
         if self.pulse.observation is not None:
             views.pulses.CopyFrom(self.pulse.observation)
-        if self._diagnostic is not None:
-            views.diagnostic.CopyFrom(self._diagnostic)
         status = wire.AcquisitionDeviceStatusReport(
             views=views,
             work=command.work,

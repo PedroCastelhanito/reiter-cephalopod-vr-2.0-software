@@ -1,0 +1,22 @@
+{
+  "src/cephvr/gui/projector_blackouts.py": "eb193c1f88f274f5c6d3ae858d4e9ee9fc5036d4fff6a73479337f0f6173aa00",
+  "src/cephvr/gui/projector_timing.py": "71dcc5e88348efa83e8edde085e0117d456d9135dccff709c15ea8066898923b",
+  "src/cephvr/gui/projectors.py": "3a42538b3a1360d1f04a08579e94f49c44716df1fcab32cf49efc6b04144f68d",
+  "src/cephvr/gui/projector_files.py": "e852d35735a89736845b2f07aaaa3bbd2f7c684c9e92d2b26305a78772e6eb97",
+  "src/cephvr/gui/projector_codec.py": "a92817dcc8aaa2c2d4b463fe035cba60867a83aa5580dd0bca42f350bc9a3518",
+  "src/cephvr/gui/calibration_profile.py": "a19680c0927dad47b00c3dcdc266322daf0e2a3610ca7f76e82d97d2b0cfc35d",
+  "src/cephvr/gui/managed_configuration.py": "0e7db3f28cda3f539e9f7046dc16528c805a0a756e980625318bb6596a8d04c3",
+  "src/cephvr/gui/trial_preview_surfaces.py": "056c9ad663a850e9679266c3872d6f9e1a90281df3b70c858dd016ba9e14404c",
+  "src/cephvr/gui/trial_preview_canvas.py": "949e0dbc282f70cd0931c927810c1f2f885f67c086589c23a28079e32a462ace",
+  "src/cephvr/gui/window.py": "b183a0383b7a8ad36655041e6804222813488ea92d407ee00d38826e5ca5fbd3",
+  "src/cephvr/visual_stimulus/config/models/display_profile.py": "33517745ca141ba0993f3ac494de261195074f16bc901ea1d65bae49a9590625",
+  "src/cephvr/visual_stimulus/rendering/output_masks.py": "5d5d06d081b7763540d07d1a8b456907810da2d1f1b06f41dc43470608297075",
+  "src/cephvr/visual_stimulus/rendering/scene.py": "0fc9ddde16a0ba9eb1683abab0e51bf363bcafbfd7e5b20eaeaa5fd09aeefbf5",
+  "src/cephvr/visual_stimulus/rendering/native.py": "5e7dfceeb5221d135b2758173b9e3e28750a715005a115584c25fbaa34e75058",
+  "src/cephvr/visual_stimulus/rendering/display_calibration.py": "b3453b74f729dbcfb91462452af4ec263ac5e59b72d581d5bf2ccdc4f3c3c499",
+  "tests/gui/test_dashboard.py": "e14547d8b58433e815991febdd8b7ac9fc63a488f7fd25b5ad3f5dbf0eeb2802",
+  "tests/visual_stimulus/test_rendering.py": "0eca93cac3211686f4da53a0a107494e496c00f71c19fcd402dbf2485f33d6b6",
+  "tests/visual_stimulus/test_display_calibration_rendering.py": "63f182ff44767700735190027644a93d1cb5848765b6c75c9eb8fbca81a439e5",
+  "contracts/visual_stimulus/display-profile.schema.json": "10c1e5aaa9c4bde2a0294be7f366a230b38763cbdb9a60517008b43a443eccc1",
+  "contracts/visual_stimulus/prepared-trial.schema.json": "d2c19b4b83952ea23a3779e4d2022b25959fea7a4d3d7a60699f488599e5e8b0"
+}

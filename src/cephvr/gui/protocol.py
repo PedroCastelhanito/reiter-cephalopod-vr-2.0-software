@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QGridLayout,
     QHBoxLayout,
-    QLineEdit,
     QScrollArea,
     QSizePolicy,
     QVBoxLayout,
@@ -20,6 +19,7 @@ from cephvr.gui.components import Card, button, combo, equal_row_height
 from cephvr.gui.configuration_files import ConfigurationFiles
 from cephvr.gui.layouts import column
 from cephvr.gui.notices import FormNotice
+from cephvr.gui.protocol_batches import grouped_program
 from cephvr.gui.protocol_document import TrialDraft, blank_program
 from cephvr.gui.protocol_editor import ProtocolEditor
 from cephvr.gui.protocol_history import EditHistory
@@ -95,34 +95,8 @@ class ProtocolPage(QWidget):
         self.editor = ProtocolEditor(sample=sample)
         self._schedule_empty = False
         self.editor.changed.connect(self.mark_changed)
-        self.editor.trials.currentRowChanged.connect(self.load_schedule_fields)
-        schedule = QHBoxLayout()
-        self.seed_editor = QLineEdit()
-        self.seed_editor.setPlaceholderText("Seed")
-        self.gap_editor = QLineEdit()
-        self.gap_editor.setPlaceholderText("Gap (s)")
-        self.seed_editor.setAccessibleName("Selected trial seed")
-        self.gap_editor.setAccessibleName("Gap after selected trial")
-        self.seed_editor.setToolTip("Optional nonnegative integer seed for this trial")
-        self.gap_editor.setToolTip(
-            "Optional nonnegative gap after this trial, in seconds; the final trial has no gap"
-        )
-        schedule.addWidget(self.seed_editor, 1)
-        schedule.addWidget(self.gap_editor, 1)
-        self.editor.trial_card.body.insertLayout(0, schedule)
-        self.seed_editor.editingFinished.connect(self.save_schedule_fields)
-        self.gap_editor.editingFinished.connect(self.save_schedule_fields)
         self.assets.folders["root"].editor.textChanged.connect(
-            lambda path: setattr(self.editor.parameters, "asset_root", path)
-        )
-        self.assets.folders["root"].editor.textChanged.connect(
-            self.editor.create_batch.composer.set_asset_root
-        )
-        self.assets.folders["root"].editor.textChanged.connect(
-            self.editor.batch_edit.selection_form.composer.set_asset_root
-        )
-        self.assets.folders["root"].editor.textChanged.connect(
-            lambda path: setattr(self.editor.batch_edit, "asset_root", path)
+            self.editor.subgroup.composer.set_asset_root
         )
         self.session_mode.currentTextChanged.connect(self.update_control_mode)
         self.update_control_mode()
@@ -152,11 +126,9 @@ class ProtocolPage(QWidget):
 
     def update_control_mode(self) -> None:
         closed = self.session_mode.currentText() == "Closed-loop"
-        self.editor.parameters.set_closed_loop(closed)
-        self.editor.create_batch.composer.set_closed_loop(closed)
-        self.editor.batch_edit.selection_form.composer.set_closed_loop(closed)
+        self.editor.subgroup.composer.set_closed_loop(closed)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         wide = self.width() >= 650
         self.top_grid.removeWidget(self.assets)
@@ -179,28 +151,6 @@ class ProtocolPage(QWidget):
         self._schedule_empty = False
         self.message.clear()
         self.message.hide()
-
-    def load_schedule_fields(self, index: int) -> None:
-        if index < 0 or index >= len(self.editor.drafts):
-            self.seed_editor.clear()
-            self.gap_editor.clear()
-            return
-        draft = self.editor.drafts[index]
-        for editor, value in (
-            (self.seed_editor, draft.stimulus_seed_decimal),
-            (self.gap_editor, draft.gap_after_seconds),
-        ):
-            editor.blockSignals(True)
-            editor.setText(value)
-            editor.blockSignals(False)
-
-    def save_schedule_fields(self) -> None:
-        if not self.can_edit or not (0 <= self.editor.index < len(self.editor.drafts)):
-            return
-        draft = self.editor.drafts[self.editor.index]
-        draft.stimulus_seed_decimal = self.seed_editor.text().strip()
-        draft.gap_after_seconds = self.gap_editor.text().strip()
-        self.editor.changed.emit()
 
     def install_configuration(self, configuration: object) -> None:
         """Install only the session protocol fields from an authoritative config."""
@@ -246,7 +196,7 @@ class ProtocolPage(QWidget):
                 )
             )
         if not drafts:
-            drafts = [TrialDraft("Add a trial", blank_program())]
+            drafts = [TrialDraft("Add a trial", grouped_program(blank_program()))]
         seen_gaps: set[int] = set()
         for gap in configuration.gaps:
             if (
@@ -290,7 +240,6 @@ class ProtocolPage(QWidget):
         editor.trials.blockSignals(False)
         editor.render_selection()
         editor.blockSignals(False)
-        self.load_schedule_fields(0)
 
     def apply_schedule(
         self, configuration: object, *, flush_parameters: bool = True
@@ -437,12 +386,6 @@ class ProtocolPage(QWidget):
         self.can_edit = view.can_edit
         self.config_files.set_enabled(self.can_edit)
         if not self.can_edit:
-            self.editor.parameters.close_file_dialog()
-            self.editor.create_batch.composer.close_file_dialogs()
-            self.editor.batch_edit.selection_form.composer.close_file_dialogs()
-            batch_picker = self.editor.batch_edit.asset_picker
-            if batch_picker.dialog is not None:
-                batch_picker.dialog.reject()
             self.editor.close_source_dialog()
             if self.save_dialog is not None:
                 self.save_dialog.reject()
@@ -450,5 +393,4 @@ class ProtocolPage(QWidget):
                 self.load_dialog.reject()
         self.program_card.setEnabled(self.can_edit)
         self.editor.setEnabled(self.can_edit)
-        self.editor.create_batch.setEnabled(self.can_edit)
-        self.editor.batch_edit.setEnabled(self.can_edit)
+        self.editor.subgroup.setEnabled(self.can_edit)

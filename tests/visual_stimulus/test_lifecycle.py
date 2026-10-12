@@ -245,6 +245,135 @@ def test_file_pacing_identity_reaches_both_startup_preparation_owners():
     assert preparation.cpu_display.marker_output_id is None
 
 
+@pytest.mark.parametrize(
+    "failure", ["missing", "cleanup", "gpu", "deadline", "cancelled"]
+)
+def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(failure):
+    from cephvr.visual_stimulus.rendering.native_display import (
+        DisplayUnavailableError,
+        NativeRenderingError,
+    )
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    clock, reports = Clock(), Reports()
+    owner, worker, controller = (
+        pb.ProcessIdentity(role=role, generation=str(uuid4()))
+        for role in ("visual_stimulus", "visual_stimulus_renderer", "controller")
+    )
+    session = pb.SessionContext(
+        controller_generation=controller.generation, session_id=str(uuid4())
+    )
+    trial = pb.TrialContext(session=session, trial_id=str(uuid4()))
+    artifact = make_prepared_trial(
+        session_id=session.session_id, trial_id=trial.trial_id
+    )
+    cleanup_deadlines = []
+
+    class MissingOutput(Preparation):
+        def prepare_display(self, request, announce, deadline_ns):
+            announce("previous-profile:asset", None)
+            return super().prepare_display(request, announce, deadline_ns)
+
+        def initialize_display(self, display, calibration):
+            if failure == "gpu":
+                raise NativeRenderingError("wrong GPU")
+            if failure == "cancelled":
+                driver.cancelled.set()
+            raise DisplayUnavailableError("saved projector matched 0 active monitors")
+
+        def cleanup(self, deadline_ns):
+            cleanup_deadlines.append(deadline_ns)
+            if failure == "deadline":
+                clock.value = deadline_ns
+            return ResourceReleaseReport(
+                ("previous-profile:asset",),
+                ("protected source",) if failure == "cleanup" else (),
+            )
+
+    driver = LifecycleDriver(
+        worker=worker,
+        owner=owner,
+        controller=controller,
+        policies=pb.ControlPolicies(recovery_ns=10_000_000),
+        engine=Graphics(clock, artifact),
+        preparation=MissingOutput(artifact),
+        recording=Recorder(),
+        reports=reports,
+        cancelled=threading.Event(),
+        clock=clock,
+        shutdown=lambda: pytest.fail("configuration rejection must not shut down"),
+    )
+    deadline = clock() + 100_000_000
+    command = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=owner,
+        target=visual_stimulus.WorkerContext(
+            worker=worker, owner=owner, configuration_revision=1
+        ),
+        deadline_monotonic_ns=deadline,
+    )
+    request = visual_stimulus.InitializeDisplay(
+        command=command,
+        display=vp.DisplayConfiguration(profile_json=valid_display_json()),
+        limits=vp.ResourceLimits(max_document_bytes=1_000_000),
+    )
+    completion = driver.execute("InitializeDisplay", request, deadline)
+    for _ in range(100):
+        driver.advance(clock())
+        if completion.done():
+            break
+        threading.Event().wait(0.001)
+    expected = DisplayUnavailableError if failure == "missing" else Exception
+    with pytest.raises(expected):
+        completion.result(timeout=1)
+    errors = [
+        message for method, message, _ in reports.records if method == "ReportError"
+    ]
+    views = [
+        message for method, message, _ in reports.records if method == "ReportDisplay"
+    ]
+    if failure != "missing":
+        assert errors and not views and driver.cancelled.is_set()
+        if failure == "cleanup":
+            assert driver.state.pending_resources
+        if failure == "cancelled":
+            assert not cleanup_deadlines
+        return
+    assert cleanup_deadlines == [deadline]
+    assert not errors and not driver.cancelled.is_set()
+    assert not driver.display_owner.ready and driver.display_owner.profile is None
+    assert driver.state.pending_resources.keys() == driver.state.resources.keys()
+    view = views[0]
+    assert view.command_id == command.command_id and view.requested_revision == 1
+    assert view.complete and not view.HasField("applied_revision")
+    assert view.issues[0].failure.code == DisplayUnavailableError.code
+    assert {item.resource for item in view.resources} == {
+        "display:projector/main",
+        "display:preparation",
+        "previous-profile:asset",
+    }
+    assert all(item.released for item in view.resources)
+    # A fresh explicit Setup can reuse the resident owner after correction.
+    setup = visual_stimulus.WorkerSetup(command=command)
+    setup.command.command_id = str(uuid4())
+    setup.command.target.work.session.CopyFrom(session)
+    setup.command.target.configuration_revision = 2
+    setup.session.context.CopyFrom(session)
+    setup.session.trials.add(context=trial)
+    setup.settings.display.profile_json = valid_display_json()
+    setup.policies.limits.max_document_bytes = 1_000_000
+    fresh = driver.execute("SetupSession", setup, deadline)
+    for _ in range(100):
+        driver.advance(clock())
+        if fresh.done():
+            break
+        threading.Event().wait(0.001)
+    fresh.result(timeout=1)
+    assert not driver.state.interrupted
+    driver.cleanup(setup.command)
+    assert driver.state.cleaned
+
+
 def test_pre_setup_display_resources_are_local_then_promoted_by_setup():
     clock, reports, recorder = Clock(), Reports(), Recorder()
     owner, worker, controller = (
@@ -385,7 +514,10 @@ def test_pre_setup_display_cleanup_retains_resources_when_release_is_unknown():
     assert not driver.state.cleaned
 
 
-def test_sessionless_display_calibration_requires_presentation_then_closed_idle():
+@pytest.mark.parametrize("fail_update", [False, True])
+def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
+    fail_update,
+):
     import hashlib
     from types import SimpleNamespace
 
@@ -421,6 +553,15 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
         def present_display_calibration(self, selected, asset):
             assert selected == profile and asset is prepared
             return (OutputActivity("projector/main", 10, 11, 1),)
+
+        def update_display_calibration(self, selected, asset, adjustments):
+            assert selected == profile and asset is prepared
+            assert "front" in adjustments
+            return (
+                OutputActivity(
+                    "projector/main", 11, 12, 1, "swap failed" if fail_update else None
+                ),
+            )
 
         def close_display_calibration(self, selected, asset):
             assert selected == profile and asset is prepared
@@ -481,6 +622,41 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
     assert reports.records[-1][1].calibration.diagnostic_id == opened.diagnostic_id
     assert reports.records[-1][1].calibration.renderer_generation == worker.generation
 
+    update = visual_stimulus.UpdateDisplayCalibrationCommand(
+        command=command, diagnostic_id=opened.diagnostic_id, adjustment_sequence=1
+    )
+    update.adjustments.add(
+        mapping_id="front", destination_xy=[0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9, 0.9]
+    )
+    if fail_update:
+        with pytest.raises(RuntimeError, match="presentation evidence"):
+            owner.update(update, command.deadline_monotonic_ns)
+        assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+        assert not owner.evidence.presented
+        assert owner.evidence.adjustment_sequence == 0
+        assert owner.prepared is prepared
+    else:
+        owner.update(update, command.deadline_monotonic_ns)
+        assert owner.prepared is prepared
+        assert owner.evidence.adjustment_sequence == 1
+        assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        with pytest.raises(ValueError, match="stale"):
+            owner.update(update, command.deadline_monotonic_ns)
+        update.adjustment_sequence = 2
+        update.diagnostic_id = str(uuid4())
+        with pytest.raises(ValueError, match="stale"):
+            owner.update(update, command.deadline_monotonic_ns)
+        update.diagnostic_id = opened.diagnostic_id
+        update.adjustments[0].destination_xy[0] = -1
+        with pytest.raises(ValueError):
+            owner.update(update, command.deadline_monotonic_ns)
+        assert owner.evidence.state == vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        assert owner.evidence.adjustment_sequence == 1
+        assert owner.evidence.failure_code == "CALIBRATION_ADJUSTMENT_REJECTED"
+        update.adjustments[0].destination_xy[0] = 0.1
+        owner.update(update, command.deadline_monotonic_ns)
+        assert owner.evidence.adjustment_sequence == 2
+        assert not owner.evidence.failure_code
     close_command = visual_stimulus.WorkerCommand(
         command_id=str(uuid4()),
         issuer=coordinator,
@@ -499,6 +675,9 @@ def test_sessionless_display_calibration_requires_presentation_then_closed_idle(
     assert owner.evidence.resources_closed is True
     assert retained_profile[0] is None
     assert reports.records[-1][1].command_id == close_command.command_id
+
+    with pytest.raises(ValueError, match="inactive"):
+        owner.update(update, command.deadline_monotonic_ns)
 
 
 def test_display_calibration_cleanup_retains_and_releases_late_prepare():

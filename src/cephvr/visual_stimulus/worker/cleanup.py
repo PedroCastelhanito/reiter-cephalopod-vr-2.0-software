@@ -22,7 +22,7 @@ def cleanup_resources(
     engine: EnginePort,
     feedback: FeedbackPort | None,
     emit: Callable[[pb.LifecycleReport, int], None] | None,
-) -> None:
+) -> pb.CleanupReport:
     keys: set[str] = set(state.released_threads)
     failures: list[str] = []
     recording_released = False
@@ -97,3 +97,39 @@ def cleanup_resources(
             [*failures, *(f"release unconfirmed: {key}" for key in missing)]
         )
         raise RuntimeError(f"renderer native cleanup remains unconfirmed: {details}")
+    return cleanup
+
+
+def cleanup_unregistered_resources(
+    state: DriverState,
+    command: visual_stimulus.WorkerCommand,
+    *,
+    worker: pb.ProcessIdentity,
+    deadline_ns: int,
+    clock: Callable[[], int],
+    recording: RecordingPort,
+    preparation: PreparationPort,
+    engine: EnginePort,
+    feedback: FeedbackPort | None,
+) -> pb.CleanupReport:
+    """Release sessionless obligations; retain the catalogue on any uncertainty."""
+    if state.setup is not None:
+        raise RuntimeError("sessionless cleanup cannot release registered session work")
+    for key, obligation in state.pending_resources.items():
+        previous = state.resources.get(key)
+        if previous is not None and previous != obligation:
+            raise RuntimeError("unregistered cleanup identity changed")
+        state.resources[key] = obligation
+    result = cleanup_resources(
+        state,
+        command,
+        worker=worker,
+        deadline_ns=deadline_ns,
+        clock=clock,
+        recording=recording,
+        preparation=preparation,
+        engine=engine,
+        feedback=feedback,
+        emit=None,
+    )
+    return result

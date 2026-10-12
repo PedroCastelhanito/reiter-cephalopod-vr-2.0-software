@@ -67,6 +67,6 @@ class AdvancedAppearance(QWidget):
         self.grid.activate()
         self.setMinimumHeight(self.grid.minimumSize().height())
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         self.arrange()

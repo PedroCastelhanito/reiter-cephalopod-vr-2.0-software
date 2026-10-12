@@ -12,6 +12,12 @@ class NativeRenderingError(RuntimeError):
     pass
 
 
+class DisplayUnavailableError(ValueError):
+    """A saved output has no unique active monitor; no fallback is permitted."""
+
+    code = "DISPLAY_OUTPUT_UNAVAILABLE"
+
+
 def attach_window_context(moderngl: Any) -> Any:
     """Load the current context while GLFW keeps sole native lifetime ownership."""
     # Detect-mode glcontext wrappers delete WGL contexts when released. The

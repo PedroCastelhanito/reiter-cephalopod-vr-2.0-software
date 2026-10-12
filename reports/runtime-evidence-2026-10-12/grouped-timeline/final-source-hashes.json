@@ -1,0 +1,13 @@
+{
+  "src/cephvr/gui/timeline_views.py": "d90f63b27d7186d2ceb766ceb2f689b937babca85beb014a974b4c043d0932ba",
+  "src/cephvr/gui/protocol_timeline.py": "1240346f24b5d99544bd33bf14fab9e7896d89da6a408542afbb10c73ed51903",
+  "src/cephvr/gui/protocol_hierarchy.py": "6e7ea2a31adec5f8897635d807a9941b9f21446237261fb826e6618e6cbfd643",
+  "src/cephvr/gui/group_editor.py": "b736aac205cf45b19ab954e0e2993f4d7a82cefff7ad43539ef075ffa71b809c",
+  "src/cephvr/gui/protocol_groups.py": "cbd879f91a03050bbb3db61ceb9bce91cc615a06a400786084f118131ecb00ff",
+  "src/cephvr/gui/batch_insertion.py": "b92cce74acefb9128dba1cbab205d064ded5eec76d8cae4ec26f59a2ee554fc3",
+  "src/cephvr/gui/batch_create.py": "f12035a7d1128020d1855b635ee779a10ceaafd2b968cd6828b11602568d912c",
+  "src/cephvr/gui/protocol_controls.py": "e83513b1b44381c23812981d55822d5747563f0d02fe4d1f5cdc7ba2476fd65f",
+  "src/cephvr/gui/protocol_editor.py": "ddc1e581c739ae8de4bdbdc69aa3e68c5742eba970af80a0bed7aea3886cdd58",
+  "src/cephvr/gui/theme.py": "11252e62b69f2134c485734f1a851d4f7c3e433c8a5e85be8f6ab38fc105a6b5",
+  "tests/gui/test_dashboard.py": "b56d9647755b7366a42e3f37370f4346e18b5c840f849b531c96af4a537f22ab"
+}

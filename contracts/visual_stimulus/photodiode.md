@@ -35,7 +35,14 @@ Stop at the actual trial cutoff even if the final landmark is incomplete.
 
 ## Ownership and frame association
 
-Use one configured output-space patch on the designated photodiode projector. Patch
+Use one configured output-space patch on the designated photodiode projector.
+`photodiode_patch.rect` remains the absolute bottom-left pixel rectangle. Optional
+`background_rect` reserves a black area; when present, `rect` must be a pulse rectangle fully
+contained by it. GUI Pulse origins are relative to that area and resolve to absolute
+coordinates before submission. Omitted background retains the legacy patch exactly.
+During trials, clear the area to linear black after per-output blackout zones and
+before the pulse; the shared output correction still follows both. Neither frame
+nor pulse is drawn in Idle. Independent blackout zones persist there under V19. Patch
 geometry, bright/dark levels and the versioned pattern definition resolve during
 Setup; validate that the patch is visible within that output and has distinct finite
 levels. Do not inherit a particular face, channel or patch rectangle

@@ -1,0 +1,71 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_authenticated_live_calibration_update_transport_and_exact_receipt ____
+
+    @pytest.mark.asyncio
+    async def test_authenticated_live_calibration_update_transport_and_exact_receipt():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        calls = []
+    
+        import threading
+    
+        from cephvr.visual_stimulus.v1 import services_pb2_grpc as visual_rpc
+    
+        class Owner:
+            def __init__(self):
+                self.cancelled = threading.Event()
+    
+            async def submit(self, method, request, deadline_ns):
+                calls.append((method, request, deadline_ns))
+    
+            def cancel(self):
+                self.cancelled.set()
+    
+        worker = VisualStimulusWorkerRuntime(
+            visual_stimulus.WorkerContext(worker=identity.worker, owner=identity.process),
+            identity.supervisor,
+            Owner(),
+            SupervisorReceipt(),
+            command_ledger(identity.worker.generation, 10**12, 1_000_000),
+        )
+        worker_token = "live-grid-renderer-test"
+        worker_listener = await serve(
+            worker,
+            {("visual_stimulus", identity.process.generation): worker_token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            worker=True,
+            testing=True,
+        )
+>       worker_peer = Peer(
+            f"127.0.0.1:{worker_listener.port}",
+            Principal("visual_stimulus", identity.process.generation, worker_token),
+            visual_rpc.VisualStimulusWorkerServiceStub,
+            max_message_bytes=1_000_000,
+        )
+E       TypeError: Peer.__init__() got an unexpected keyword argument 'max_message_bytes'
+
+tests/visual_stimulus/test_controller_communication.py:489: TypeError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt
+1 failed, 4 deselected in 0.73s
+Exception ignored in: <function Server.__del__ at 0x1022b6840>
+Traceback (most recent call last):
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/site-packages/grpc/aio/_server.py", line 219, in __del__
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/common.pyx.pxi", line 121, in grpc._cython.cygrpc.schedule_coro_threadsafe
+  File "src/python/grpcio/grpc/_cython/_cygrpc/aio/common.pyx.pxi", line 113, in grpc._cython.cygrpc.schedule_coro_threadsafe
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/asyncio/base_events.py", line 435, in create_task
+  File "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/.venv/lib/python3.11/asyncio/base_events.py", line 520, in _check_closed
+RuntimeError: Event loop is closed
+sys:1: RuntimeWarning: coroutine 'AioServer.shutdown' was never awaited

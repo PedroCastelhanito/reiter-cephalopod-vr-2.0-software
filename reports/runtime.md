@@ -1,16 +1,264 @@
 # Controller and supervisor status
 
-Latest Oct9 optional-I/O/all-VSync changes are stopped at the owner's request.
-[Current evidence](review-evidence-2026-10-09/mcu-configurable-context.json) retains
-300 affected passes/one privilege skip and passing full static checks. Full regression
-reports 1,858 passes, one timeout, five privilege skips and one rig deselection;
-the two parametrized exact-completion cases pass focused rerun without code/deadline
-changes. A full passing rerun and declaration reconciliation remain pending.
-Native startup with disconnected projectors reports a saved DLP interface matching
-zero monitors and closes the runtime. Investigate its V19 configuration-error/fatal
-classification; no corrective code is written before the stop request. Native MCU
-settings save and a new experiment remain unverified. Earlier firmware compilation,
-CephVR2 upload/connection and namespace replacement results retain their original scope.
+Oct12 [G01 revision 151](../docs/architecture/gui.md#g01) adds Up/Down stepping to
+shared Runtime/Review calibration inputs: scale 0.01 with two decimal places,
+offset 0.1 px with one. The existing text draft/serialization and live user-edit
+path remain authoritative; imported precision and partial typed input are preserved.
+ARCH-002 review keeps this small input behavior in the focused calibration widget,
+without new dependencies or state ownership. Five offscreen stepping/live/file/draft
+cases pass, with scoped Ruff/format, GUI Win32 mypy (141 sources), boundaries
+(650 modules/zero violations; existing cohesion advisories) and whitespace checks.
+[Dated commands and source hashes](runtime-evidence-2026-10-12/calibration-steps/context.json)
+record the local scope; no new native/optical/rig acceptance is claimed.
+
+Oct12 [G01 revision 150](../docs/architecture/gui.md#g01) presents photodiode
+placement as Frame/Pulse rows with Origin X, Origin Y, Width and Height. Frame
+origins remain bottom-left output pixels; Pulse origins are relative to Frame, with
+independent dimensions and strict containment. Both GUI modes use the shared table,
+existing authority/pulse gates and planning preview. Full Projectors JSON version 7
+migrates version-6 squares into equal Pulse dimensions and preserves older standalone
+rectangles; numeric calibration remains version 4. Blackout zones retain the shared
+empty-header rule. [Visual Stimulus](visual_stimulus.md) owns rectangular-pulse
+validation and final composition. Fifty affected cases and 42 contract tests with
+79 subtests pass; nine final presentation/file/render/parity checks also pass.
+Ruff/format (289 files), Win32 mypy (271 sources), 11 schemas/zero drift, boundaries
+(649 modules/zero violations) and whitespace pass. Both-width captures are inspected;
+[current evidence](runtime-evidence-2026-10-12/pulse-definition-table/context.json).
+Earlier [665-case integration evidence](runtime-evidence-2026-10-12/output-overlays/context.json)
+and [empty-header evidence](runtime-evidence-2026-10-12/blackout-header/context.json)
+retain their source stages and native limits. Existing open Review imports require
+reopening to load this update; unsaved edits are left intact.
+
+Oct12 [G01 revision 148](../docs/architecture/gui.md#g01) /
+[V01 revision 18](../docs/architecture/visual_stimulus.md#v01) implement live Scale
+X/Y and Offset X/Y in the active frame/grid diagnostic. Debounced edits coalesce
+behind one in-flight, sequence-bound leased update; only actual all-output presentation
+confirms it. Invalid/partial typing retains the last valid projection. Rejecting a
+stale or malformed update before GL writes keeps the diagnostic healthy and reports
+failed adjustment; GPU/presentation uncertainty retains Unknown and exact Close.
+Other projector settings remain locked, and control loss/disconnect/change of
+identity discards queued intents. Protected assets, windows, configuration revision
+and original cleanup owners/deadlines stay intact; these are Configuration diagnostics.
+
+ARCH-002 extracts focused GUI coalescing, controller admission, coordinator validation
+and worker presentation helpers; the existing GL owner updates retained warp buffers.
+Controller/Visual Stimulus suites pass 659 tests/one deselection before the final
+mesh-precision guard, including the
+real authenticated coordinator/renderer update services with display hardware injected.
+The final guard run passes 658 cases and hits one CLI-help timeout; that unchanged
+CLI case passes a targeted rerun. Sixty affected GUI cases pass, including
+Runtime/Review parity; seven focused final
+GUI/render cases overlap. Ruff/format (423 files), Win32 mypy (376 sources), boundaries
+(649 modules/zero violations), 11-schema drift, 57 generated binding matches and
+whitespace pass. [Dated methods, stages, hashes and limits](runtime-evidence-2026-10-12/live-grid-context.json)
+retain staged validation and repaired attempts, rather than a full exact-final-tree
+claim while other chats update Protocol/photodiode code. Active-grid controls are visually
+inspected offscreen at wide/narrow widths. Concurrent Blackout zones parity and
+calibration-profile comparison failures are retained as intermediate results; final
+shared GUI checks pass after that task's corrections. No full GUI regression or
+native Windows/DPI/GPU/optical/rig acceptance is claimed.
+
+Oct12 [G01 revision 146](../docs/architecture/gui.md#g01) implements the owner's
+separate Measure reference bars and Adjust frame and grid actions. Bars ignore prior
+measurements/manual corrections; grid requires mode-matched pairs and maps mm/px
+directly onto physical rig screens with manual scale/offset/inversion. Throw ratio
+is config-only and produces the distance estimate; neither launch nor measured
+mapping requires it. Existing protected managed launch/Close, authority and pending
+locks remain. [Visual Stimulus](visual_stimulus.md) owns current workflow evidence:
+74 affected tests and 42 contract cases/79 subtests pass, with local static checks
+and wide/narrow card inspection. Native Windows/DPI/optical acceptance remains open.
+
+Oct12 [G01 revision 145](../docs/architecture/gui.md#g01) names the shared card
+Pixel-to-mm calibration and lets all three columns stretch equally through the
+existing DataTable default. Remove the SpikeGLX connection explanatory paragraph,
+retaining the config-path tooltip and read-only host controls. ARCH-002 removes the
+local header override/widget rather than introducing another layout owner.
+Projector distance is not an input to diagnostic launch; complete measured pairs
+update ideal distance from native width × X mm/px × positive throw ratio. The later revision 146 removes the historical measured-mapping dependency on
+throw ratio; revision 145 itself changes only presentation.
+[Current layout evidence](runtime-evidence-2026-10-12/reference-layout-context.json)
+records local checks; native Windows/DPI and physical acceptance remain pending.
+
+Oct12 Projectors refinement under [G01 revision 144](../docs/architecture/gui.md#g01)
+and [V01 revision 16](../docs/architecture/visual_stimulus.md#v01) removes explanatory
+text and pixel columns, pairs measured X/Y millimetres under one header and shows
+mm/px estimates independently of throw ratio. Config-only pixel lengths control
+actual native bars, conversion and planning preview. Full/numeric file versions
+5/4 retain them with legacy migration and atomic invalid-length rejection.
+[Visual Stimulus](visual_stimulus.md) owns implementation and evidence: 71 affected
+checks, 42 contract cases/79 subtests and local static checks pass. Wide/narrow
+shared Runtime/Review card inspection passes offscreen; native/optical acceptance
+remains in the existing rig worklist.
+
+Oct12 [G01 revision 139](../docs/architecture/gui.md#g01) removes Gap/Seed controls and
+the Selected trial section in both GUI modes. Per-trial Seed is config-only through
+the existing Protocol JSON `stimulus_seed_decimal` field. Load/save preserves edited
+seeds, including zero, and existing gap values; managed submission retains E01/E07
+validation and timing. ARCH-002 deletes the widget/synchronization plumbing instead
+of introducing another seed setting or state owner. Ten focused file-round-trip,
+schedule, draft-retention, layout and parity checks pass. GUI Ruff, scoped format,
+Win32 mypy (138 sources), boundaries (642 modules/zero violations), references and
+whitespace pass. [Current hashes, commands and raw results](runtime-evidence-2026-10-12/config-seed-context.json)
+record local scope and a formatting-only test-line correction. Native Windows/DPI,
+live restart and full GUI/rig acceptance remain untested in this increment.
+
+Oct12 Devices refinement under [G01/G02](../docs/architecture/gui.md#g01) puts a
+Configuration file card first beneath each device tab row, including camera-only
+files. The shared file rows use Load… / Save as… captions, equal-sized buttons and the
+same field gap across all four Devices tabs under G01 revision 142/G02 revision 36;
+Tracking captions match while retaining its Pipeline layout. Six focused layout/
+file/parity checks and static checks pass; [current file-action evidence](runtime-evidence-2026-10-12/file-actions-context.json)
+retains local methods, hashes and limits.
+G01 revision 143/G02 revision 37 unify inventory Refresh through one accessible
+icon/header helper, Use-first columns and single-row selection. MCU discovery uses
+that icon beside COM selection, with Test connection separate. Empty MCU Inputs/
+Outputs and SpikeGLX channel headers share visibility/height fitting; empty discovery
+inventories retain Refresh. Protocol variation rows refit the shared control height
+after ancestor styles settle, correcting an observed 38/36 px mismatch. Seventy-seven
+affected checks pass, including discovery/identity/authority, file/layout and GUI
+parity; GUI static checks and boundaries pass. [Current audit evidence](runtime-evidence-2026-10-12/shared-controls-context.json)
+preserves initial failures, corrected measurements and final hashes/raw results.
+Wide populated Projectors and narrow device views are inspected locally; existing
+scrolling remains necessary. Native Windows/DPI/live restart/device/full GUI and rig
+acceptance remain untested in this increment.
+Cameras replaces the visible batch identity action with Test selected beside
+Connect. MCU omits Apply pin settings and adds supported-signal dropdowns with
+Add/remove: Projector flip input, Trial state and assigned Behavior/Tracking outputs.
+Removal disables the owning signal while retaining its pin; camera participation
+continues to belong to Cameras. MCU v2 files retain output enablement, load v1 files
+without changing camera participation, and reject inconsistent full-GUI enable flags
+before mutation. Load restores local drafts without device commands. SpikeGLX shows
+only Use, Signal and Channel index while preserving stream/index/bit metadata under
+the [snapshot contract](../contracts/gui-configuration-files.md).
+
+ARCH-002 reuses camera serialization for camera-only/full files and keeps supported
+MCU row editing in a focused GUI helper. Remove obsolete batch-button state and
+embedded file-toolbar/Apply wiring; no backend protocol, firmware or dependency changes.
+The large camera/MCU panels retain orchestration with small helper bindings, rather
+than accumulating snapshot or signal-table implementation. Existing owner tests
+cover saves, v1 compatibility, invalid-file atomicity, disabled-camera identity,
+diagnostic/authority locks, narrow controls and Runtime/Review parity. All **390 GUI
+tests pass in 353.58 s**, including the concurrent Protocol refinement; exact source
+hashes still match. Ruff/format (140 files), Win32 mypy (138 sources), boundaries
+(642 modules/zero violations) and whitespace pass. Wide/narrow offscreen captures
+are inspected. The first suite rejects an inconsistent older fixture; correcting
+both camera enable inventories preserves its scenario and the validation guarantee.
+[Methods, hashes, captures and raw results](runtime-evidence-2026-10-12/devices-gui/context.json)
+retain failed attempts and the hash-confirmed redundant rerun cancellation, including
+the Qt abort during that deliberate interrupt; it is excluded from passing evidence.
+Desktop Review launch required screen access; its subsequent UI inspection timed
+out, so no native visual/Windows/DPI/device acceptance is claimed. Existing
+[rig checks](rig-verification.md) remain open.
+
+Oct12 Protocol presentation under [G01 revision 140](../docs/architecture/gui.md#g01)
+defaults to Batch generate and uses natural-width Shuffle/Preview buttons at the
+right, with the existing narrow-width reflow. Source selection still opens Batch
+edit and tab switches preserve drafts. Projectors' configuration button reads Load….
+Trials arrows and timeline Delete/Duplicate buttons remain absent; mouse selection,
+guarded keyboard edits, history and authority are preserved. ARCH-002 removes
+redundant grid rebuilding and uses existing components without new state/dependencies.
+Twelve focused layout/default-tab/file/keyboard/shuffle/draft/parity checks pass.
+GUI Ruff, scoped format, Win32 mypy (138 sources), boundaries (642 modules/zero
+violations), references and whitespace pass; wide/narrow offscreen captures are
+inspected. [Current methods, hashes and raw results](runtime-evidence-2026-10-12/compact-default-context.json)
+retain local limits. Native Windows/DPI, live restart and full GUI/rig acceptance
+remain outside this increment.
+
+Oct12 Runtime/Review parity review under [G01/G02](../docs/architecture/gui.md#g01)
+finds no unintended page-layout differences. Both entry points reuse DashboardWindow
+and the application theme. Strengthen the existing owning parity test to construct
+runtime with `sample=False`, restore matching validated settings and populated camera/
+projector fixtures, and exercise actual runtime authority presentation at 1280/720 px.
+All pages and nested tabs match in control inventory and card geometry; only runtime
+lease controls and their Dashboard left-column displacement are excluded explicitly.
+Review inspection/runtime authority menus retain their G01/E03 purpose. No production
+code or dependencies change; ARCH-002 retains the existing behavior test module.
+Five focused parity/editor cases pass; GUI Ruff/format (138 files), Windows-target
+mypy (136 sources), boundaries (640 modules/zero violations) and whitespace pass.
+[Methods, tested hashes, setup failures and results](runtime-evidence-2026-10-12/gui-parity-context.json)
+record local offscreen Configuration scope. No native Windows/DPI/pixel or rig
+acceptance is claimed; existing [rig checks](rig-verification.md) remain open.
+
+Oct11 repository cleanup under [ARCH-002](../architecture.md#arch-002) removes
+unreferenced shared context protocols/validators, the unused payload-transfer and
+admission-inspection methods, and an unused startup-recovery test helper. Equivalent
+device-admission branches and the supervisor cleanup predicate are simplified;
+E08 identity, retention, ownership and deadline checks on active paths are unchanged.
+Remove 51 stale GUI naming suppressions and their obsolete Ruff exception; all 25
+edited GUI modules have identical before/after ASTs. Across the cleanup, 37 Python
+files lose 119 net lines. Existing uncommitted repairs are preserved.
+
+Owner tests pass 1,032 cases; integration passes 424 in the sandbox, with 27 localhost
+bind failures/errors resolved by a permitted communication-module rerun (43 passes).
+Together these cover 1,483 distinct passing cases, six skips and eight Windows/rig
+deselections. GUI behavioral tests were not rerun for comment-only edits. Repository
+Ruff/format passes 874 files, Win32 mypy passes 735 sources, and boundaries report
+640 modules with zero violations. Existing cohesion advisories remain; this cleanup
+adds no dependencies or responsibilities. Remove 74 untracked generated cache
+directories (51,093,992 bytes), preserving environment, bindings, saved settings and
+dated evidence. The owner subsequently requested removal of this cleanup's raw logs
+and hash manifest on Oct12; the counts above remain historical summaries, including
+the initial sandbox limitation. These checks do not close E15 rig work.
+
+Oct11 sequential local repairs (working tree based on `f96286e`): the V19
+missing/ambiguous saved-output startup failure now retains Configuration with an
+actionable issue only after exact sessionless cleanup and confirmed evidence delivery
+within the original deadline. GPU errors, cancellation, deadlines and uncertain
+cleanup remain failures. All output identities are resolved before exposing windows.
+[V19 implementation and limits](visual_stimulus.md) and the
+[startup contract](../contracts/visual_stimulus/startup.md) own the details.
+ARCH-002 reuses the resource ledger and extracts sessionless cleanup/display report
+handling into focused owners; no new dependency or runtime state owner is introduced.
+
+Portable/offscreen full regression passes **1,861 tests, six skips, eight Windows/rig
+deselections** in 307.43 s, including authenticated controller/worker communication.
+This covers the startup repair and prior optional-I/O/all-VSync implementation,
+before the subsequent GUI shuffle changes. It does not establish a cause or Windows
+resolution for Oct9's exact-completion timeout. Contracts pass 48 Tracking/42 Visual
+cases; generated schemas (19/11) and 57 protobuf bindings match. Static analysis,
+declarations and dependency checks pass. [Raw full-suite evidence](runtime-evidence-2026-10-11/startup-full.txt)
+and [tested input hashes](runtime-evidence-2026-10-11/startup-inputs.json) retain local
+scope; native MCU Apply and all-output VSync remain pending.
+
+GUI **Shuffle trial** follows the owner-approved [G01 revision 135](../docs/architecture/gui.md#g01):
+it permutes top-level blocks as a normal source edit, retaining each group's nested
+objects, repetitions and condition references. Current nested/multiple selection
+moves with its blocks; undo/redo restores selection and source order, and saved files
+retain the permutation. Existing edit authority and pending-validation gates apply;
+Setup seeds and V08 runtime shuffle remain unchanged. ARCH-002 keeps the pure reorder
+in the existing node-editing helper and selection snapshots in the history owner;
+the editor remains GUI orchestration without new dependencies or runtime references.
+The GUI owner suite passes 381 cases; the subsequent two-row narrow-action layout
+passes five focused shuffle/layout cases. Final lint/format, Win32 mypy (735 sources)
+and boundaries (640 modules, zero violations) pass. Wide/narrow offscreen screenshots
+are visually checked, and all four timeline actions meet their minimum label widths.
+The initial screenshot helper exits 138 during teardown; explicit deferred widget
+destruction in the final helper exits normally. This does not establish native Windows
+teardown or DPI acceptance. [Methods, source hashes, raw results and limits](runtime-evidence-2026-10-11/context.json)
+keep each validation stage separate.
+
+Oct11 GUI error/recovery review under [G01/E03](../docs/architecture/gui.md#g01)
+and E07 fixes two configuration-recovery paths. An earlier accepted submission no
+longer clears the explanation for newer unsent edits. Configuration installation
+uses the existing scoped projection guard, restoring edit tracking even on rejection;
+explicit failed Reload returns an actionable error instead of escaping the GUI slot.
+Subsequent valid reload clears stale/error state. ARCH-002 removes the entry point's
+private-state repair and keeps errors with the focused configuration owner; no new
+state, dependency or architecture rule. Three regressions fail before the repair and
+pass afterward. The broader managed/recovery selection passes 82 cases; GUI static
+checks and boundaries pass. Command failure, stale queue, reconnect review,
+close/save and device pending-state review finds no further actionable defect.
+[Source hashes, methods and raw outcomes](runtime-evidence-2026-10-11/gui-recovery-context.json)
+retain local scope; native managed-GUI acceptance remains in the rig checklist.
+
+Current [managed bindings](../src/cephvr/gui/main.py) connect configuration/Protocol,
+camera controls/previews, MCU, Tracking diagnostics, projector calibration and
+SpikeGLX operations. Older incremental statements below are historical. The explicit
+remaining capture implementation gate is
+[Eye external triggering](../src/cephvr/acquisition/config/validation_pulse.py).
+Controlled stimulus throughput diagnosis, paired SpikeGLX, scientific Tracking/feedback,
+calibration, native GUI/DPI, electrical timing and fault cleanup retain their existing
+[rig checks](rig-verification.md). No new native runtime/device execution is claimed.
 
 Oct9 Eye role/connect recovery (working tree based on `94285ac`) extends common
 three-camera configuration/process/output evidence under
@@ -56,7 +304,7 @@ cover the final runtime source, with 295 focused integration cases passing and o
 privilege skip. [Runtime namespace evidence](review-evidence-2026-10-09/runtime-root-context.json)
 records preservation, live Y/N replacement, physical path visibility and limits.
 
-Updated: 2026-10-09. Implementation/source review is recorded for the controller,
+Updated: 2026-10-11. Implementation/source review is recorded for the controller,
 supervisor, launcher, headless client and shared/native helpers. Local results below
 have their original scope; Windows and full-workload acceptance remain pending.
 [ARCH-001/002](../architecture.md#arch-001) owns scope and structure;
@@ -110,6 +358,134 @@ and SpikeGLX pairing were disabled. Remaining acceptance lives in the
 [rig checklist](rig-verification.md).
 
 ## Current scope and review
+
+Current model-hierarchy audit (`hierarchy-audit-20261012`) starts from
+`f96286e86dc9af334da78ab55a8c14ec111c6184` plus existing uncommitted source,
+contracts and reports. Concurrent unified subgroup work is preserved and has its
+own assessment below. Two fresh-context `gpt-6-luna` high auditors performed one
+bounded responsibility pass; `gpt-6.1-sol` high independently reviewed evidence and
+routine dispositions, and `gpt-6-astra` low reviewed the proposed change.
+
+| Responsibility | Source-review coverage in this audit |
+| --- | --- |
+| Controller/shared | Deep calibration/shutdown admission, shared identity/command retention, Start activation/evidence waits; sampled metadata/reservation and snapshot projections. |
+| Acquisition | Deep source identity, cutoff/capture, ring synchronization and recording terminal/flush/close; sampled manual devices, sessions and pixel adapters. |
+| Supervisor/launcher/platform | Deep launcher replacement identity and atomics; sampled registration/recovery/exit, Windows jobs, pipes, guards and security. |
+| Tracking | Deep ring sequence/private lease, record codec, bounded writer and completion; sampled coordinator, trials, methods and feedback. |
+| Visual Stimulus | Deep live-calibration identity/sequence/deadline, validation versus uncertain GPU failure, all-output presentation/closure and blackout ordering; sampled compiler, media, recording and feedback. |
+| GUI | Deep bounded/atomic JSON and full configuration imports, camera/protocol restoration and source transforms; sampled dashboard, device/projector codecs and widgets. Concurrent subgroup changes were read only. |
+| SpikeGLX/MCU/tooling | Deep serialized SpikeGLX SDK/lifecycle paths; sampled MCU timers/parser, policy/configuration, packaging and schema-generation tools. |
+
+This is not an exhaustive branch review. Detailed scientific algorithms, full
+compiler/media/encoder behavior and every widget remain sampled or unreviewed.
+Native Windows, CUDA/Pylon/OpenGL, DPI, electrical/optical behavior and full-load
+performance require the existing [rig checklist](rig-verification.md).
+
+The sole material candidate is **RT-001** (controller correctness/reliability):
+`device/display_adjustments.py` omitted the shutdown flag from its locked admission
+predicate. `lifecycle/commands.py` sets that flag before asynchronous shutdown
+cleanup; ordinary lease authorization and retained active-grid evidence still allow
+a fresh update. Luna reproduced Accepted plus one backend dispatch with shutdown
+already requested; Sol independently verified reachability and Astra approved the
+smallest guard and existing-module regression. The implementation adds the shutdown
+flag to the existing locked rejection predicate; an otherwise-valid fresh update
+now rejects without dispatch or pending state. The regression preserves successful
+updates and resets shutdown before the independent lease-loss assertion. Confidence
+is high; this is a defect in the pre-audit dirty tree, not an audit-introduced
+regression. Sol accepts the final patch after one test-isolation revision; Luna's
+final quality pass found no further justified edits. Astra independently inspected
+the final source, test, surrounding admission/shutdown behavior and assessment, then
+granted final acceptance: **RT-001 approved and implemented**. This is the complete
+candidate list; no rejected/deferred candidate was manufactured.
+[V01](../docs/architecture/visual_stimulus.md#v01),
+[E06/E08](../docs/architecture/system-contracts.md#e08) already require closure and
+fencing; no architecture revision or broader authorization abstraction is needed.
+No other material candidate or measured optimization was established; no speculative
+refactor/performance improvement is claimed. Oversized-file warnings remain review
+prompts, not a reason to split cohesive owners or weaken their guarantees.
+
+Verification uses the repository Python 3.11 environment and preserves E15:
+baseline portable non-GUI pytest passes **1,492 / six skips / eight deselections**
+after permitting authenticated loopback sockets. The sandbox-only attempt had 28
+socket-bind failures/errors, not evidence of a product defect. After the final
+patch and Luna quality pass, `pytest tests/controller tests/visual_stimulus -q
+-m "not windows and not rig" -p no:cacheprovider` passes **659 / one deselection**
+in 10.56 s. The focused admission case also passes; overlapping runs are not added.
+Final Ruff check/format `src tests tools scripts` passes (865 files), Win32 mypy
+`src/cephvr` passes (748 sources), boundaries pass (653 modules, zero violations)
+and whitespace passes. No new responsibility or dependency is added to the focused
+adjustment helper; its surrounding calibration owner and existing size advisories
+retain their established ownership. Full offscreen GUI verification passes **393**
+in 246.07 s with `QT_QPA_PLATFORM=offscreen`; all 146 GUI source/test Python files
+remained unchanged during that run. This is portable widget evidence, not native
+Windows/DPI/optical acceptance.
+
+Contract unittest discovery passes Tracking 48 and Visual Stimulus 42; schema checks
+match 19/11 models. Isolated generation matches all 57 binding files from 19 Protobuf
+sources. No contract/config/package input changed during this audit, so those checks
+remain applicable; no package build is required by the one-line runtime fix.
+Final source/test/contract/config/tool input provenance is 1,025 sorted paths with
+SHA-256 `4ef69d74b7bd741e6991dc0b6722b3b4840424676af2137beeb093189057ea8b`
+(hash concatenated relative-path, NUL, bytes, NUL for `.py/.pyi/.proto/.toml/.json/
+.ps1/.c/.h/.cpp/.glsl`, excluding bytecode, plus root `pyproject.toml`). The only
+non-GUI runtime/test changes since the initial inventory are RT-001's helper and
+owning test. Raw task evidence is disposable at the owner's request; retain this
+assessment and results, preserving all pre-existing and concurrent evidence.
+The requested model hierarchy ran without substitution; token/cost metrics were
+unavailable. The bounded audit's independent work is complete, with no user decision
+required. Existing rig-dependent and explicitly deferred work remains open. Exact
+task-owned test directories and generated temporary bindings are removed; existing
+caches, raw evidence and user work are preserved. The temporary inventory is removed
+last after the lightweight status/reference check; no task background process remains.
+
+Oct12 subgroup editing follows [G01 revision157](../docs/architecture/gui.md#g01),
+[V03 revision12](../docs/architecture/visual_stimulus.md#v03) and
+[V08 revision5](../docs/architecture/visual_stimulus.md#v08). Clicking any member selects
+its complete subgroup; parameter edits affect all members/repetitions. One composer
+retains variation controls through Apply, selection, Undo and file reload. + Epoch
+copies one template without inheriting rules. Order is removed; imported ordering
+is preserved. Layer selectors show only indices at 64 px; timeline durations use
+hh:mm:ss with fractional precision retained.
+
+Random rules now store compact executable seeded declarations; the earlier 2000
+random-occurrence authoring limit is removed. GUI work samples only representative
+source settings. Changing repetitions retains rules/seeds and the existing sampled
+prefix. Random access uses the immediate-group repetition index and source-member
+stride/offset, independently of shuffle; target streams default to independent
+projector values, with explicit sharing. Independent draws may coincide. Setup
+checks its configured expanded-plan bound (currently 100,000 epochs) before resolving
+rules to validated concrete settings; rendering does not sample. Legacy concrete
+tables remain readable. Explicit source-list generation and expanded/animated
+previews retain their separate 2000-item limits.
+
+ARCH-002 extracts existing pure numeric setting patches and precision-grid sampling
+into Visual Stimulus configuration helpers, reused by GUI and compiler. The compact
+rule model and random-access resolver have focused ownership; no new dependency,
+process or renderer changes. Canonical schema validation remains a cohesive owner
+with an existing size advisory. Source/prepared schemas match their models. Structural
+checks at 10,000 and 1,000,000 repetitions confirm unchanged rules, one source block,
+one representative resolution per edit and essentially constant serialized size.
+This does not establish full-workload latency or memory guarantees: Setup's concrete
+plan still scales with expanded epochs; image streaming remains separate pending work.
+
+The [demo assets](../demo_assets/manifest.json) and local review assets root remain.
+Inspected 1280/720 offscreen captures show image/gray ×10,000, clock labels, no Order,
+narrow readable indices and no horizontal page overflow. A first capture exposed a
+minimum-width reset hiding the variation index; moving the fixed-width assignment
+after common control setup corrected it. Existing review instances require reopening;
+this increment did not restart the user's application.
+
+Current evidence is in the [manifest](runtime-evidence-2026-10-12/compact-rules/context.json).
+Visual Stimulus passes 233/one deselection with loopback access; compilation passes 11.
+The full GUI stage passes 396 with one obsolete index-label expectation failing;
+the final 12 focused cases pass after migrating that assertion
+and the final layer-width correction. Earlier focused failures identified strict
+settings conversion and random-only source-count preservation; both were corrected.
+Tests cover golden deterministic samples, source round-trip, group-count bounds before
+sampling, independent/shared values, retained rules, and compact million-repeat edits.
+Ruff/format (171 files), Win32 mypy (168 sources), all 11 generated schemas
+and dependency boundaries (659 modules, zero violations) pass. Stages overlap and are not summed as a single exact-final-tree run.
+Native Windows/DPI/rig acceptance remains in the [rig checklist](rig-verification.md).
 
 Reusable configuration files (2026-10-08, `gui-configuration-snapshots`):
 [G01](../docs/architecture/gui.md#g01) revision 132 and the
@@ -914,6 +1290,17 @@ test), the authority-loss/evidence/recovery-inspection state machines and the Op
 fail-closed dependencies were intentionally left alone.
 
 ## Unresolved findings and limitations
+
+Oct12 `long-protocol-resource-scaling`: the authorized GUI portion now uses compact
+source groups, scoped editing and viewport-only block painting under
+[G01 revision 153](../docs/architecture/gui.md#g01). It no longer expands repetitions
+for timeline loading/selection. Source JSON parsing, canonical validation and source
+metadata traversal remain synchronous; this change does not establish latency bounds
+for huge numbers of independently authored epochs. Explicit expanded/animated previews
+and batch generation retain their 2000-occurrence engineering limits. The initial
+CephVR1.0 concern was assessed by source review, not reproduced or benchmarked.
+Image residency/readiness/miss behavior remains the separate
+[Visual Stimulus follow-up](visual_stimulus.md#validation-limits).
 
 The Oct8 missing application-shutdown history save is repaired and locally/native
 verified in the current scope above under [E07](../docs/architecture/experiment.md#e07).
@@ -1891,78 +2278,16 @@ survive camera disablement. Device control remains in Devices. The review fixtur
 explicitly starts velocity saving Off without changing T14's saved/file default On.
 
 The planner places a 208-pixel Trials list beside the fixed-height Trial timeline, with
-full-width Epoch editor with inline Batch generate / Batch edit tabs below. Add/Delete sit at the foot of the trial list; draft
-selection and existing deletion confirmation/history semantics are preserved.
-
-- **Trial timeline:** a single full-program bar shows duration-proportional expanded
-  epochs. Matching ordered stimulus settings, resolved asset records, projector mappings
-  and background share a deterministic muted color; names/durations and scene/instance
-  identifiers are excluded. Colors are visual cues, not new serialized types. Below,
-  the overview spans from the projector labels to the right edge of their rows,
-  with 16 additional logical pixels before current-epoch details. The
-  current-occurrence name/duration precedes one row per enabled projector with ordered
-  layers, asset names and compact motion/size/playback descriptions. Blank backgrounds
-  are explicit, custom motion is labeled and elided text has full hover text.
-  Click/Shift/Ctrl-or-Command select one/range/multiple source epochs across groups. No creation or parameter controls remain in this card. Repeated occurrences
-  select the shared source, identified by the editor; example shuffle uses authoring
-  seed zero, never Setup's retained seed. Unresolved timing shows sequence order.
-  The card stays 366 logical pixels high, including its centered count/duration footer;
-  additional layers scroll internally. The old resize grip and its unused helper were removed.
-  Overview expansion is bounded to 2000 occurrences; exceeding this reports the limit
-  rather than silently truncating. No enabled outputs shows an All row for offline inspection.
-- **Batch generate tab:** local reference composition supports prepared files,
-  a compact reference grid per projector with independently selected layers/assets,
-  family-specific motion, looming or playback cells, exact duration and optional
-  numeric variation rows with explicit lists or bounded sweeps. Paired lists or crossed combinations generate individually
-  editable canonical source epochs with an optional persisted batch label.
-  Repetition uses listed V08 child-block groups; count/duration preview precedes
-  explicit insertion. Beginning/end, before/after a selected top-level block,
-  replacement and interval distribution preserve groups, remap imported identities
-  and validate the resulting trial
-  atomically. Short reference durations do not prematurely apply E05's whole-trial
-  minimum; final trial validation still enforces it. Generation supports at most 512
-  condition combinations and 2000 expanded occurrences per operation. These are GUI
-  operation bounds, not runtime policy. Variation rules target explicit reference
-  layers and reject stale targets after composition changes.
-  The authoring controls now place stimulus mode beside clock-formatted duration,
-  compact three-digit repetitions, label and insertion; generation has no Order
-  control. Epoch tab wheel gestures are ignored. The compact projector asset field
-  accepts a pasted path from another row, validates it within the Assets folder and
-  shows the full path while focused. File selection no longer leaves a success line;
-  redundant section headings were removed. This follows G01 revision 72 and
-  keeps the CephVR1 reference/variation/options and explicit batch-edit target flow.
-  Windows traces found unparented reference-grid labels and projector dropdowns being
-  shown as transient top-level windows. The grid now parents labels/controls before
-  showing them and does not show projector selectors early. A visible launch with four
-  simulated projectors, followed by mode and value updates, traced only Dashboard.
-- **Batch edit tab:** Epochs and Parameter share a row. Duration has one epoch-wide
-  clock value without a projector or layer selector. For stimulus parameters, each
-  projector row has its own layer selector and corresponding value or asset picker;
-  the arena uses one rig-wide row. Targets can be the timeline selection, all source
-  epochs or a saved batch label. Mixed values are labeled; only edited projector
-  rows change on one atomic Apply.
-  Supported batch fields are
-  shared duration, prepared asset, family-appropriate speed/direction/angular motion,
-  playback start, opacity and symmetric linear looming start/end/growth duration.
-  Batch file replacement supports texture exports and preserves physical speed when
-  their declared tile dimensions change. Missing layers, incompatible units or invalid
-  values reject the operation without partially committing earlier epochs. Untouched
-  settings, overlays and other projector content remain intact. Pending changes block
-  target/selection changes and saving until applied/discarded. One-source All parameters
-  retains the complete custom function/state/feedback/input editors; complex imported
-  functions remain intact rather than being approximated by the compact fields.
-
-Structural Actions and layer controls stay in Epoch editor. Rename/duplicate/reorder/
-remove require a single source; bulk parameter edits use Edit selected. Projector-local
-mutations detach shared 2D content without changing remaining projector identities or
-stack order. Arena remains rig-wide. Shared epoch boundaries and physical geometry are
-unchanged. Group controls still support existing nested repeat/condition programs,
-paired/product generation and reloadable custom condition values. V07 reset/continuity
-settings are preserved; new independent instances do not promise inherited phase.
-Undo/Redo keeps bounded per-trial history (40 snapshots) inside Actions. Trial deletion
-confirms the named local draft, preserves files and leaves a blank draft when deleting
-the last. Expanded sequence has Close. No table authoring, HUD/log, embedded rendering,
-texture-design form, additional serialized grammar or backend dependency was added.
+full-width Sequence editor inside the open group. Add/Delete sit at the foot of
+the trial list. The current subgroup workflow and validation are described above
+under G01 revision157. Existing reference composition supports prepared assets,
+projector-local layers, exact duration, family parameters and bounded variation.
+Source blocks keep horizontal navigation and visible-range painting; group repetition
+counts do not allocate repeated occurrences. Explicit previews remain bounded.
+Structural actions duplicate, remove and move selected subgroup sources; Undo/Redo
+retains bounded per-trial history. Imported nested/condition source programs remain
+preserved. Shared epoch boundaries, physical geometry and runtime ownership are
+unchanged; no new serialized hierarchy or dependency is introduced.
 
 CephVR1.0 source at `38f728291ed551a332392dc2c7b6897e8428b060`,
 `protocol/src/protocol/gui/trial_planner_window_v3.py` (1490–1540, 1645–1718,
@@ -2033,7 +2358,7 @@ Batch edit targeting after JSON reload, including nested groups. Insertion suppo
 every-N-blocks and After label. Label choices come from the current trial. A fresh
 batch is inserted after each original matching source epoch inside its existing
 group scope; new matching labels are not targeted recursively. Instance/asset/group
-identities are remapped, the expanded result is bounded to 2000 epochs and failures
+identities are remapped, newly generated content is bounded to 2000 occurrences and failures
 leave the trial unchanged. Interval insertion consumes
 one generated block per interval, appends remaining blocks, and counts top-level
 repeat groups as blocks; it never flattens their scheduling semantics. New source

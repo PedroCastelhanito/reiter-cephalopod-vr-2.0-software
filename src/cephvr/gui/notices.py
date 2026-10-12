@@ -38,13 +38,13 @@ class FormNotice(QWidget):
         self.dialog: QMessageBox | None = None
         self.hide()
 
-    def setVisible(self, visible: bool) -> None:  # noqa: N802
+    def setVisible(self, visible: bool) -> None:
         super().setVisible(False)
 
     def text(self) -> str:
         return self._text
 
-    def setText(self, text: str | None) -> None:  # noqa: N802
+    def setText(self, text: str | None) -> None:
         self._text = text or ""
 
     def clear(self) -> None:
@@ -84,7 +84,7 @@ class FormNotice(QWidget):
         if owner is not None:
             QApplication.sendEvent(owner, StatusEvent(text))
 
-    def changeEvent(self, event: QEvent | None) -> None:  # noqa: N802
+    def changeEvent(self, event: QEvent | None) -> None:
         super().changeEvent(event)
         if not self.isEnabled() and self.dialog is not None:
             self.dialog.reject()

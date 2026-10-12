@@ -36,7 +36,8 @@ class DevicePanel(ResponsiveColumns):
             control.clicked.connect(lambda checked=False, name=text: self.request(name))
             action_row.addWidget(control)
             self.action_buttons.append(control)
-        self.configuration.body.addLayout(action_row)
+        if actions:
+            self.configuration.body.addLayout(action_row)
         left_layout.addWidget(self.configuration)
         left_layout.addStretch()
         self.status_column = right

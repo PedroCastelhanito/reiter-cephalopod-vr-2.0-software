@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-12",
+  "task": "projected-bars-measurement-table",
+  "base_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty working tree preserved; source hashes identify local checks, not a committed revision.",
+  "owner_choice": "Config pixel lengths control actual projected bars.",
+  "decisions": [
+    "G01 revision 144",
+    "G02 revision 37 (unchanged)",
+    "V01 revision 16",
+    "ARCH-002",
+    "E15"
+  ],
+  "sha256": {
+    "src/cephvr/gui/projector_measurements.py": "35ba98aa8f9bc42b20d670169ec43396670fd070157df1bf96d934ef9b4df874",
+    "src/cephvr/gui/calibration_files.py": "c7ecea259129ef45e36bef8f92ccde9f2c60514f6302283eed3c60eb16703447",
+    "src/cephvr/gui/projector_files.py": "5786317cf02a4b130c25e356ae7262857137d4155e4661a6cfce9df1bd41c5f5",
+    "src/cephvr/gui/calibration_profile.py": "3d366e22eee5de88ea96fd3fb9e534289cbb5ac32f1a4024ad4dd41f2c06ca7d",
+    "src/cephvr/gui/projector_measured_profiles.py": "e7f198fd250bb4b56c9a39fdf355c5ea37216bbe59a27bfea246d794c63e163e",
+    "src/cephvr/gui/trial_preview_surfaces.py": "e44daa3a2bee01c5317b743fdb9d5a59de5e71e3b211accde51f50188dc8dcd5",
+    "src/cephvr/visual_stimulus/config/calibration_bars.py": "ac890a991aedb25b42c606d8759998c90d7f2c8105b0d5b9a1e50f6b16aed042",
+    "src/cephvr/visual_stimulus/config/models/display_profile.py": "3e1111c0ccbd125636418b0eee03336f4bef12dc8af96b593399b5236d8302bb",
+    "src/cephvr/visual_stimulus/rendering/reference_bars.py": "40cad6ca20600f27c6357880a3f891b159af44d6f5f467ca7a69f85248e8bf71",
+    "src/cephvr/visual_stimulus/rendering/display_calibration.py": "0284e2e8542520f6309ac7d872b7d422b02a1c27407f014502a694a24f3483fb",
+    "tests/gui/test_dashboard.py": "5ae129fbb1bb7a1dbd7178fd35d26dfab4ff9037985ca766ea5893a575f3c6ba",
+    "tests/visual_stimulus/test_rendering.py": "2942c8f4e5de3d97b19fdbd386d7c72576f98795f90b78a02971dd5a9a443389",
+    "tests/visual_stimulus/test_display_calibration_rendering.py": "d516088b2187805bf2c06e4742a23e69df8350211dd7ea583f88dcfb14982892",
+    "contracts/visual_stimulus/display-profile.schema.json": "4f47856b02ce386640c37dd135b46a27a631a668f98caef798ec83d764cb0b32",
+    "contracts/visual_stimulus/prepared-trial.schema.json": "4f8991c4af74613d73b46856a5ba493afeff5b0109884ac189c0f9e18911ea05"
+  },
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_display_calibration_rendering.py tests/visual_stimulus/test_configuration.py -q -k \"projector or calibration or reference_bars or measured_affine or review_and_runtime\"",
+      "result": "71 passed, 360 deselected, 41.62 s",
+      "raw": "projected-bars-integrated-final.txt"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"projector_reference_measurements or old_projector_snapshot or measured_affine or device_tabs_sit_above or review_and_runtime_share_page_elements\"",
+      "result": "8 passed, 381 deselected, 8.44 s; preceding additional migration assertions, overlaps final selection",
+      "raw": "projected-bars-layout-final.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "result": "42 passed, 79 subtests, 0.42 s",
+      "raw": "projected-bars-contracts.txt"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_configuration.py -q",
+      "result": "7 passed; overlaps final selection",
+      "raw": "projected-bars-config-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui src/cephvr/visual_stimulus tests/gui tests/visual_stimulus",
+      "result": "Passed"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui src/cephvr/visual_stimulus tests/gui tests/visual_stimulus",
+      "result": "283 files formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui src/cephvr/visual_stimulus",
+      "result": "265 source files passed"
+    },
+    {
+      "command": ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+      "result": "11 schemas checked, zero drift"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules, zero violations; existing cohesion advisories",
+      "raw": "projected-bars-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "Passed"
+    }
+  ],
+  "initial_failures": [
+    "First selection: 59 passes/one failure from incomplete legacy output dimensions. Explicit configured bars now require dimensions; otherwise incomplete drafts remain supported.",
+    "Initial integrated selection: 70 passes/one failure from oversized configured test bars on tiny fixture outputs. Correct fixture values within bounds, preserving strict rejection.",
+    "Attempted nonexistent contracts/visual_stimulus/check_contracts.py; no validation performed. Replaced with actual contract pytest directory.",
+    "Initial Ruff import/format and three mypy errors corrected before final passes."
+  ],
+  "visual_check": {
+    "method": "Isolated ReviewWindow QSettings, assigned simulated output1280x720; config200/100 pixels and measured80/60 mm produce0.4/0.6 mm/px; card QWidget grabs at window widths1280/720 inspected.",
+    "result": "No explanatory text/pixel column; paired inputs share header, labels and estimates unclipped. Temporary PNG/settings removed after inspection."
+  },
+  "limits": [
+    "Offscreen Qt and fake GL verify local layout/config/render commands, not actual physical projection.",
+    "No full GUI suite, native Windows/DPI/live restart/GPU/optical or rig acceptance in this increment.",
+    "Existing projector-calibration-launch and rig worklist retain native/optical acceptance."
+  ]
+}

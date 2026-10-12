@@ -115,7 +115,6 @@ class RecordingSession:
         self._scheduled: acq.WorkerSchedule | None = None
         self._released = False
         self._started = False
-        self._started_observation_ns: int | None = None
         self._release_deadline_ns: int | None = None
         self._active_io_deadline_ns: int | None = None
         self._finished = False
@@ -217,11 +216,6 @@ class RecordingSession:
             )
         self._released = True
         self._release_deadline_ns = deadline_ns
-
-    @property
-    def started_observation_ns(self) -> int | None:
-        """First real in-trial record accounting; launch/header creation is insufficient."""
-        return self._started_observation_ns
 
     def process_available(self, *, timeout: float = 0.0, max_entries: int = 64) -> int:
         """Process ordered queue entries; no capture or control thread performs I/O."""
@@ -500,8 +494,7 @@ class RecordingSession:
         def start_accounting() -> None:
             if not self._started:
                 self._started = True
-                self._started_observation_ns = self.clock_ns()
-                self.started_observed(self._started_observation_ns)
+                self.started_observed(self.clock_ns())
 
         def record_diagnostics(record: FrameRecord) -> None:
             for diagnostic in record.diagnostics:

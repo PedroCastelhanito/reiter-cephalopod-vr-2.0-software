@@ -5,7 +5,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from cephvr.gui.calibration_profile import MonitorBinding, face_mapping
+from cephvr.gui.calibration_profile import (
+    MonitorBinding,
+    face_mapping,
+    reference_bar_config,
+)
 from cephvr.visual_stimulus.config.models.artifact_models import GeometricProfile
 from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
 from cephvr.visual_stimulus.config.models.schema_common import parse_json
@@ -16,6 +20,31 @@ def measured_profiles(
 ) -> dict[str, Any]:
     values = calibration["values"]
     assert isinstance(values, dict)
+    outputs_by_id = {output["output_id"]: output for output in document["outputs"]}
+    bars_by_output: dict[str, dict[str, int]] = {}
+    for mapping in document["mappings"]:
+        face = mapping["surface_id"].title()
+        if face not in ("Front", "Left", "Right", "Bottom"):
+            continue
+        output = outputs_by_id[mapping["output_id"]]
+        if "width_px" not in output or "height_px" not in output:
+            if any(
+                values.get(f"screens.{face}.reference_{axis}_px") is not None
+                for axis in ("x", "y")
+            ):
+                raise ValueError(
+                    "Reference bar configuration requires native output dimensions"
+                )
+            continue
+        bars = reference_bar_config(
+            calibration, face, output["width_px"], output["height_px"]
+        )
+        previous = bars_by_output.setdefault(output["output_id"], bars)
+        if previous != bars:
+            raise ValueError(
+                "Shared output reference bars require matching lengths for all faces"
+            )
+        output["reference_bars"] = bars
     selected = {
         face
         for face in ("Front", "Left", "Right", "Bottom")

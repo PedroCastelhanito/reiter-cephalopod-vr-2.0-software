@@ -1,23 +1,127 @@
 # Visual Stimulus status
 
-Oct9 [V20/V15](../docs/architecture/visual_stimulus.md#v20) now permits the owner's
-all-projector VSync mode without a designated pacer. [E13 revision 21](../docs/architecture/visual_stimulus.md#e13)
-derives recording cadence from the common exact nominal enabled-output rate and
-records null pacing identity; differing rates reject. Mixed mode still requires
-its selected pacer. Fixed policy/config version 9 and the canonical prepared schema
-bind this behavior. The focused profile/pacing/encoding owners reuse existing
-state and dependencies under ARCH-002. The 300-case affected suite passes with one
-privilege skip; 42 Visual contracts and full static checks pass. The latest full
-suite has 1,858 passes and one exact-completion timeout, which passes focused rerun;
-this is not a full-suite pass. [Current evidence](review-evidence-2026-10-09/mcu-configurable-context.json).
+Oct12 subgroup variations implement [V03 revision12](../docs/architecture/visual_stimulus.md#v03)
+and [V08 revision5](../docs/architecture/visual_stimulus.md#v08): compact seeded rules
+replace eager new repetition tables. Setup resolves by immediate-group repetition
+index after condition substitution and validates concrete settings; it checks the
+configured expanded-plan limit before sampling. Legacy tables remain supported.
+No renderer RNG or device ownership changes. GUI authoring is compact at 10,000 and
+1,000,000 repetitions; concrete Setup plans still scale with expanded epochs and
+remain bounded (currently 100,000). The [current GUI/compiler assessment](runtime.md#current-scope-and-review)
+records source/schema changes, 233 passing Visual Stimulus tests/one deselection,
+layout evidence and native/rig limits.
 
-Native startup reaches display identity validation, then reports zero active matches
-for a saved DLP output and shuts down. The owner confirms the projectors were
-disconnected and requests stopping work while leaving the rig. V19 requires missing
-startup settings to leave configuration editing available; investigate this observed
-failure classification before claiming that behavior. No fix or native MCU Apply,
-new rendering/recording run, optical or throughput acceptance is claimed. Work remains
-deferred in TODO, with no new runtime left by this attempt.
+The Oct12 model-hierarchy audit deeply traced live-calibration identities, sequence,
+deadline, validation versus uncertain GPU failure, presentation/closure and blackout
+ordering, with sampled compiler/media/recording/feedback paths. RT-001 identifies a
+controller admission omission during application shutdown; the
+[current cross-owner assessment](runtime.md#current-scope-and-review) owns its disposition
+and verification. No renderer change or measured performance improvement is justified
+by this pass. Native optical/GPU/full-load acceptance remains in the
+[rig checklist](rig-verification.md).
+
+Oct12 live frame/grid adjustment follows [V01 revision 18](../docs/architecture/visual_stimulus.md#v01)
+and [G01 revision 148](../docs/architecture/gui.md#g01). A leased UpdateDisplayCalibration
+carries bounded affine rectangles for the exact active diagnostic/revision and an
+increasing sequence. Validate the whole request before writing existing GL-owner
+warp buffers; render and present all outputs without asset replacement/window reopening.
+The protected base profile/arena and inversion remain fixed. Evidence confirms the
+sequence only after all outputs present; pre-write rejection retains the healthy
+prior projection/sequence and reports failed update, while GPU/presentation uncertainty
+remains Unknown with exact closure available. Fenced sessions never resume through
+an adjustment. GUI partial/invalid edits send nothing; coalesce behind one update.
+
+ARCH-002 keeps admission/validation/presentation in focused helpers and existing
+renderer resource ownership. Buffer references alias existing tracked resources;
+there is no additional GPU allocation or dependency. Affected backend suites
+pass 659 tests/one deselection before the final mesh-precision guard, including authenticated controller-port/coordinator/
+renderer transport with hardware injected. The final guard run passes 658 and
+times out in one CLI-help case; the unchanged case passes an isolated rerun. Sixty GUI cases and seven final correction
+cases pass (overlapping); source/static/contract checks and wide/narrow active-control
+inspection pass. [Current dated evidence](runtime-evidence-2026-10-12/live-grid-context.json)
+retains scope, failures and staged source context, without claiming full exact-final
+coverage of concurrent Protocol/photodiode edits. Older workflow evidence below
+remains distinct. Native GPU/Windows/DPI, optical correctness/latency and repeated
+live-edit/closure acceptance remain in the [rig checklist](rig-verification.md).
+
+Oct12 [V15](../docs/architecture/visual_stimulus.md#v15),
+[V19](../docs/architecture/visual_stimulus.md#v19) and
+[V22](../docs/architecture/visual_stimulus.md#v22) implement owner-requested
+CephVR1.0-style output masks and photodiode placement. Optional output rectangles
+clear mapped scene pixels to linear black before existing color correction; an
+optional black marker area contains a separately positioned rectangular Pulse drawn above the
+zones. Static zones persist in Idle and frame/grid diagnostics, including GUI bundle
+export; raw measurement bars remain unobscured. The marker Frame/Pulse remains
+trial-only, with the existing alternation and landmarks. Legacy patch rectangles
+remain valid; positive integer rectangles must fit, with no clipping or resizing.
+Planning preview illustrates placement with a white pulse. G01 revision150/V22
+revision5 use a Frame/Pulse table with independent width/height and relative Pulse
+origins. Full Projectors files are version 7; version-6 Size migrates into equal
+dimensions and older standalone rectangles remain valid. Numeric calibration remains
+version 4. Fifty affected cases, nine final presentation/file/render/parity cases
+and 42 contract cases/79 subtests pass;
+[current table evidence](runtime-evidence-2026-10-12/pulse-definition-table/context.json)
+records the source stages, both-width captures and passing Ruff/format (289 files),
+Win32 mypy (271 sources), 11 schemas/zero drift and boundaries (649 modules/zero violations).
+Existing shared DataTable and rectangle/file owners replace the form/single Size
+controls without new dependencies, rendering resources or runtime state.
+
+ARCH-002 isolates zone editing and scissor-preserving clearing, keeps rendering and
+calibration ownership intact, and moves photodiode draft/import operations out of
+the large Projectors panel. Remove duplicate output lookup and fixed-page-height
+plumbing. Native/scene size advisories retain cohesive rendering/resource ownership;
+no shader, dependency, process or persistent GPU resource is added. The earlier local
+GUI/Visual Stimulus/contract integration stage passes 665 tests, one Windows/rig deselection
+and 79 contract subtests. Its 21-case final affected selection covers the initial
+layout/export changes; these cover file migration, submission mapping, output bounds,
+marker-over-zone order, grid/raw-bars behavior, scissor restoration, preview pixels,
+growing tables and 1280/720 Runtime/Review parity. Ruff/format (289 files), Win32 mypy
+(271 sources), schemas (11, zero drift), boundaries (649 modules, zero violations)
+and whitespace pass. [Current source-stage context and raw evidence](runtime-evidence-2026-10-12/output-overlays/context.json)
+retain corrected fixtures, observed layout defects and loopback-permission retry.
+Both-width offscreen captures are inspected. Native Windows/WGL/DPI, optical black
+levels/placement/timing, recorded GPU pixels and throughput remain unverified in this
+increment; the existing [rig checklist](rig-verification.md) owns those checks.
+
+Oct12 cleanup removes three constructor fields with no readers: the decoder's unused
+ID counter, the scene renderer's unused clipping set, and the native port's unused
+Idle color cache. Active state and evidence remain with their existing V01/V11/V19/V21
+owners. Under ARCH-002 these cohesive modules shrink without new dependencies or
+responsibilities. Final cross-owner selection passes 795 tests; affected Win32 mypy,
+repository lint/format and boundaries pass. Raw cleanup logs and hash manifests were
+removed at the owner's request on Oct12; these results remain historical summaries.
+This establishes no new optical, native GPU,
+throughput or rig acceptance.
+
+Oct11 startup repair follows existing [V19](../docs/architecture/visual_stimulus.md#v19)
+and E06/E08. Missing or ambiguous saved monitor identities produce a typed
+configuration rejection only after exact sessionless resource release and confirmed
+display evidence delivery within the original deadline. Controller/GUI operation
+status exposes the corrective issue; Configuration remains available and a fresh
+Setup can reuse the worker. Every identity is resolved before any window opens.
+GPU/context errors, cancellation, expired deadlines, uncertain cleanup and failed
+evidence delivery retain the existing failure path. The
+[startup contract](../contracts/visual_stimulus/startup.md) records the evidence order.
+
+ARCH-002 extracts coordinator display-report handling and the existing sessionless
+cleanup helper. Native renderer and lifecycle files remain cohesive ownership
+orchestrators; no new dependency, process or policy choice is introduced. Owning
+renderer/lifecycle/coordinator/authenticated-controller cases cover missing/ambiguous
+identities, complete versus stale/unreleased proof, cleanup/GPU/deadline/cancellation
+failure and fresh Setup. The full portable suite passes 1,861 tests with six skips
+and eight Windows/rig deselections; [current results](runtime.md) retain source and
+validation scope. Native disconnected/reconnected startup acceptance remains in the
+[rig checklist](rig-verification.md); this is not optical/throughput evidence.
+
+Oct9 [V20/V15](../docs/architecture/visual_stimulus.md#v20) permits all-projector VSync
+without a designated pacer. [E13](../docs/architecture/visual_stimulus.md#e13) derives
+recording cadence from the common exact nominal enabled-output rate and records
+null pacing identity; differing rates reject. Mixed mode still requires its selected
+pacer. Policy/config version 9 and the prepared schema bind this behavior. Oct11
+local regression/contracts/declarations cover it. The Oct9 Windows full-suite timeout
+and passing focused rerun remain [historical evidence](review-evidence-2026-10-09/mcu-configurable-context.json);
+its native cause is not proven fixed by the Mac pass. Native MCU Apply and a new
+rendering/recording run remain pending.
 
 Earlier Windows checkout `94285ac` passes the complete non-rig suite, all 42 stimulus
 contract cases and 11 schema matches after regenerating stale local bindings.
@@ -31,32 +135,48 @@ configuration cases pass. Visual Stimulus contract discovery passes 42 tests and
 records full local validation; native presentation/encoding throughput, scientific
 timing and owner-deferred encoder acceptance remain in the [rig checklist](rig-verification.md).
 
-Measured-reference implementation (2026-10-08, `physical-reference-calibration`)
-follows [G01](../docs/architecture/gui.md#g01),
-[V01/V15](../docs/architecture/visual_stimulus.md#v15) and
-[V24](../docs/architecture/visual_stimulus.md#v24). Untimed calibration draws orange
-horizontal and green vertical native-pixel bars after geometric/color correction.
-Their measured mm spans derive X/Y scale and full image dimensions; the GUI derives
-ideal read-only throw distance from width × effective throw ratio. Physical screen
-dimensions and subject-to-screen distances remain independent. Portable full JSON 4
-and numeric 3 retain measurements/native dimensions; legacy files load with unset
-measurements. Output-mode mismatch invalidates scale without changing provenance.
-Export/submission applies physical screen/full-image ratios with existing offsets/
-inversions, creating new content-addressed 2×2 GUI affine assets. Original assets and
-imported nonlinear/masked/weighted calibration are preserved; automatic replacement
-of those imported corrections rejects explicitly. Planning preview shares the mapping.
+Measured-reference baseline (Oct12, `two-stage-projector-calibration`)
+follows [G01 revision 146](../docs/architecture/gui.md#g01),
+[V01 revision 17](../docs/architecture/visual_stimulus.md#v01),
+[V15](../docs/architecture/visual_stimulus.md#v15) and
+[V24](../docs/architecture/visual_stimulus.md#v24). The owner explicitly selects
+config-controlled actual projected lengths. Per-screen `reference_x_px` /
+`reference_y_px` resolve into output `reference_bars`, shared by native calibration,
+measurement conversion and planning preview. Positive whole-pixel lengths must fit
+the output; faces sharing an output must agree. Unset values retain the original
+rounded quarter-output spans. Measure reference bars selects the protected `reference_bars` view: bars only on
+black in exact native pixels, independent of prior measurements or corrections.
+Adjust frame and grid selects `frame_grid`: complete mode-matched measurements
+produce physical screen/image ratios combined with manual scale/offset/inversion.
+Neither action requires throw ratio or projector distance. Both retain the same
+V01 protected-input, GL ownership, Active/Closed evidence and deadline/cleanup paths;
+Close must confirm release before switching views. The frame/grid uses V15 and does
+not draw measurement bars; normal trial rendering ignores diagnostic selection.
 
-ARCH-002 extracts focused bar/measurement/profile helpers; the 806-line projector
-panel remains orchestration with existing draft ownership, while new numeric/file
-responsibilities live outside it. No new dependency, process or persistent GPU resource.
-Affected tests pass 658 plus the post-review checks described in the
-[Tracking assessment](tracking.md); two concurrent temporary-pacing assertions remain
-excluded and raw failures retained. Lint/format, Win32 mypy, schema drift and boundary
-checks pass. [Offscreen card preview](tracking-evidence-2026-10-08/physical-reference-gui.png)
-is visually inspected; [methods/source context](tracking-evidence-2026-10-08/physical-reference-context.json)
-records limits. Local affine scale/ideal throw estimates require optical rig acceptance,
-including current zoom/keystone/fold and depth/distortion. No projector or hardware
-session is launched by this task. [Remaining acceptance](rig-verification.md).
+Runtime and Review share the Pixel-to-mm calibration card with three equally
+stretched columns and no explanatory text or pixel columns: Screen, paired Measured X / Y (mm), and read-only X / Y (mm/px).
+Measured pairs derive scale independently of throw ratio; ideal read-only projector
+distance additionally uses a positive config-only effective throw ratio. Physical screen
+and subject distances remain independent. Full Projectors JSON version 7 / numeric
+version 4 preserve lengths and measurements. Legacy full versions 3/4/5/6 and numeric
+versions 1/2/3 migrate without changing prior spans or unmeasured historical distance.
+Invalid lengths reject before draft mutation. Output-mode mismatch invalidates scale
+without replacing measurement provenance. Export/submission preserves original
+assets and creates content-addressed GUI affine corrections; imported nonlinear,
+masked or weighted corrections still reject automatic replacement.
+
+ARCH-002 retains focused measurement/file/profile helpers and existing native
+render ownership, adding no dependency, process or persistent GPU resource. The
+existing projector panel remains orchestration; boundary cohesion advisories retain
+their established owners. Final affected GUI/config/render/preview selection passes
+74 tests; separate contract discovery passes 42 tests with 79 subtests. Ruff/format,
+Win32 mypy (265 sources), 11-schema drift and boundaries (642 modules/zero violations)
+pass. Wide/narrow two-action card captures are visually inspected offscreen.
+[Current workflow methods, hashes, failures and raw results](runtime-evidence-2026-10-12/calibration-workflow-context.json)
+preserve local scope; [earlier measured-bar evidence](runtime-evidence-2026-10-12/projected-bars-context.json)
+remains historical. No native Windows/GPU, optical, full GUI regression or rig
+acceptance is claimed. Current zoom/keystone/fold, bar spans and physical mapping
+remain in the [rig checklist](rig-verification.md).
 
 Oct8 unpaired dummy execution uses all four saved active projector identities,
 isolated **uncalibrated** geometry/color profiles and a 60-second procedural grating.
@@ -152,6 +272,29 @@ drops do not explain the render-rate gap; this does not rule out recording-relat
 CPU/GPU contention. [Retained arithmetic and limits](review-evidence-2026-10-09/nongui-throughput-assessment.json)
 require controlled per-stage rig measurements. Padding preserves review duration;
 physical presentations and encoder/toolchain acceptance remain separate.
+
+Oct11 source trace strengthens the multi-output pacing hypothesis. Decoding the
+retained run43 Setup, pre-final and final snapshots gives the same controller/session,
+`all_outputs_vsync`, four 60 Hz 8-bit outputs, and four retained requested swap intervals
+of 1. The earlier Front-pacer description must not be read as interval 0 on the other
+outputs: all-output mode requests VSync on each regardless of the selected pacer.
+The current native presenter swaps all windows sequentially on one GL thread. The
+49.29 ms median is near three refresh periods; accumulated swap waits are a leading
+hypothesis, not measured causality. Retained display intervals are startup evidence,
+not per-trial swap durations. [GLFW semantics](https://www.glfw.org/docs/latest/window_guide.html#buffer_swap)
+allow driver overrides, so requested settings alone cannot establish actual waits.
+
+Recording remains a second candidate: shared-context ordering, RGBA32F composition,
+per-frame PBO allocation, readback and the completed CPU copy run on the GL thread.
+Each 2560×2000 capture carries 20.48 MB; 60 fresh captures/s means 1.2288 GB/s of
+payload before extra copies/encoding. This is arithmetic, not a measured bandwidth
+limit. Recording normalization also holds the lock shared with capture admission.
+The packed-10-bit Python mask loop is irrelevant to this 8-bit run. The trial loop
+has no intentional 50 ms pacing delay, and later nominal-slot padding cannot cause
+the historical run. Preserve accepted pacing; inspect raw submission entry/return
+records first, then measure draw/capture/readback and recording on/off on the rig.
+[Snapshot hashes, extracted settings and limits](runtime-evidence-2026-10-11/throughput-source-trace.json)
+retain this investigation without claiming a backend fix or native benchmark.
 
 Projector configuration JSON (2026-10-08) under [G01](../docs/architecture/gui.md#g01)
 now combines all Projectors GUI experiment settings with reusable runtime profile
@@ -632,6 +775,44 @@ and final-frame-duration feasibility deferrals remain. No runtime output-file va
 new overload policy, original-pixel equality claim or measured speedup is introduced.
 
 ## Validation limits
+
+Oct12 `long-protocol-resource-scaling` source assessment (dirty working tree based
+on `f96286e`): [session preparation](../src/cephvr/visual_stimulus/resources/session.py)
+calls resource preparation for every trial and retains its bundle;
+[asset acquisition](../src/cephvr/visual_stimulus/resources/assets.py) reads/hashes
+declared files and snapshots static sources, while
+[resource preparation](../src/cephvr/visual_stimulus/resources/prepare.py) decodes
+and retains each declared image with aggregate CPU/GPU reservations. These bounds
+prevent unbounded admission but do not provide bounded moving image residency.
+Review reuse of compatible resources under [V07](../docs/architecture/visual_stimulus.md#v07)
+and digest caching under [V13](../docs/architecture/visual_stimulus.md#v13).
+The owner accepts bounded image residency under
+[V04 revision 12](../docs/architecture/visual_stimulus.md#v04), preserving
+[E07](../docs/architecture/experiment.md#e07) whole-session validation and immutable
+source protection. The asset-lifetime contract distinguishes decoded-pixel eviction
+from protected-source release. Image-miss behavior and readiness contracts need explicit design;
+[V11](../docs/architecture/visual_stimulus.md#v11) currently specifies video only.
+The residency design is accepted but unimplemented. The grouped GUI is implemented
+under [G01 revision 153](../docs/architecture/gui.md#g01), with flat group authoring
+and distinct editable generated batches. [V03 revision 10](../docs/architecture/visual_stimulus.md#v03)
+adds optional parent-scoped epoch batch identity; Program/PreparedTrial schemas are
+regenerated. The source model remains the cohesive grammar owner under ARCH-002;
+its size advisory does not require a separate runtime batch abstraction. Omitted
+identity defaults to null; this metadata changes no expansion or presentation semantics.
+Local configuration/compiler and contract checks pass 58 tests/79 subtests, and
+11 generated schemas have zero drift. GUI validation is recorded in
+[the runtime report](runtime.md#current-scope-and-review). No image-preparation timing,
+memory benchmark, native presentation or rig test ran for this assessment.
+For the owner's threading/ring-buffer question, recommend a bounded renderer-owned
+read/decode worker pool feeding a byte-budgeted reusable image cache keyed by
+compatible content/interpretation, with active resources pinned and upcoming work
+prioritized by resolved presentation deadlines. A strict FIFO ring is sufficient
+for single-use sequential content but does not itself handle unequal image sizes,
+repeated assets, simultaneous consumers or GPU completion. Keep GL work with its
+context owner and release slots only after consumers finish. Pool size, detailed
+scheduler bindings and image-miss handling remain undecided; no throughput gain is
+measured. Existing imagecodecs native calls support threaded work, but disk/CPU/GPU
+contention still requires the existing full-workload rig checks.
 
 The current checks exercise application behavior and authenticated transport on this
 host. They do not establish native runtime or rig equivalence. Keep pending native/rendering/encoding, optical,

@@ -7,11 +7,12 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
     QPlainTextEdit,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
-from cephvr.gui.components import button, combo, field, label
+from cephvr.gui.components import button, field, label
 from cephvr.gui.condition_values import ConditionValues
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.program_editing import NodePath, node_at
@@ -26,7 +27,7 @@ from cephvr.visual_stimulus.config.models.program_model import (
 
 class GroupEditor(QWidget):
     committed = pyqtSignal(object)
-    enter = pyqtSignal()
+    changed = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -37,16 +38,20 @@ class GroupEditor(QWidget):
         self.body = QVBoxLayout(self)
         self.body.setContentsMargins(0, 0, 0, 0)
         self.repetitions = QLineEdit()
-        self.order = combo(("As listed", "Shuffle each repetition"))
+        self.name = QLineEdit()
+        self.name.setAccessibleName("Group name")
         row = QHBoxLayout()
-        row.addWidget(field("Repeat count", self.repetitions))
-        row.addWidget(field("Order", self.order))
+        for caption, control, stretch in (
+            ("Group name", self.name, 2),
+            ("Repetitions", self.repetitions, 1),
+        ):
+            control.setMinimumWidth(0)
+            widget = field(caption, control)
+            widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
+            row.addWidget(widget, stretch)
         self.body.addLayout(row)
         self.summary = label("", wrap=True)
         self.body.addWidget(self.summary)
-        enter = button("Edit epochs in group")
-        enter.clicked.connect(self.enter)
-        self.body.addWidget(enter)
         self.more = button("Edit condition values…")
         self.more.setCheckable(True)
         self.more.toggled.connect(self.show_conditions)
@@ -57,11 +62,13 @@ class GroupEditor(QWidget):
         self.apply_button.clicked.connect(self.apply)
         self.body.addWidget(self.apply_button)
         self.repetitions.textEdited.connect(self.mark_changed)
-        self.order.currentIndexChanged.connect(self.mark_changed)
+        self.name.textEdited.connect(self.mark_changed)
+        self.name.editingFinished.connect(self.apply_if_dirty)
         self.repetitions.editingFinished.connect(self.apply_if_dirty)
-        self.order.activated.connect(self.apply_if_dirty)
 
     def bind(self, program: Program, path: NodePath) -> None:
+        if self.program is program and self.path == path and not self.dirty:
+            return
         self.program, self.path = program, path
         node = node_at(program, path)
         self.setVisible(isinstance(node, Group))
@@ -73,10 +80,11 @@ class GroupEditor(QWidget):
             self.conditions.deleteLater()
             self.conditions = None
         self.repetitions.setText(str(node.repetitions))
-        self.order.setCurrentIndex(node.order != "as_listed")
+        self.name.setText(node.group_id.replace("_", " "))
         self.refresh_summary(node)
         self.more.setChecked(False)
         self.more.setVisible(node.conditions is not None)
+        self.apply_button.setVisible(node.conditions is not None)
         if node.conditions:
             self.conditions = ConditionValues(node)
             self.conditions.changed.connect(self.mark_changed)
@@ -86,9 +94,11 @@ class GroupEditor(QWidget):
         self.message.clear()
 
     def refresh_summary(self, node: Group) -> None:
-        count = len(node.conditions.rows) if node.conditions else len(node.body)
+        self.summary.setVisible(node.conditions is not None)
         self.summary.setText(
-            f"{count} {'conditions; each runs the full sequence' if node.conditions else 'child blocks; shuffle changes their order'} · {len(node.body)} authored blocks"
+            f"{len(node.conditions.rows)} conditions · Each runs the full sequence"
+            if node.conditions
+            else ""
         )
 
     def show_conditions(self, checked: bool) -> None:
@@ -97,6 +107,7 @@ class GroupEditor(QWidget):
 
     def mark_changed(self) -> None:
         self.dirty = True
+        self.changed.emit()
 
     def apply_if_dirty(self) -> None:
         if self.dirty:
@@ -106,12 +117,16 @@ class GroupEditor(QWidget):
         if not self.isEnabled() or self.program is None:
             return False
         try:
+            node = node_at(self.program, self.path)
+            if not isinstance(node, Group):
+                raise ValueError("Select a group")
             program = update_group(
                 self.program,
                 self.path,
                 int(self.repetitions.text()),
-                self.order.currentIndex() == 1,
+                node.order == "shuffle_each_repetition",
                 self.conditions.read() if self.conditions else None,
+                self.name.text(),
             )
         except (ValueError, TypeError) as error:
             self.message.warn(str(error))

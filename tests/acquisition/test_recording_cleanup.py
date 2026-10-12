@@ -550,7 +550,6 @@ def test_recording_session_pads_and_closes_with_original_tail_deadline(
     session._frame_log = frame_log
     session._prepared_buffer = bytearray(4)
     session._started = False
-    session._started_observation_ns = None
     session.started_observed = lambda _observed_ns: None
     session._watchdog = EncoderProgressWatchdog(
         encoder,

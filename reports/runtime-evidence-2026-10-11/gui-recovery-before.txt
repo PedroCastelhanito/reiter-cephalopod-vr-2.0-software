@@ -1,0 +1,244 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+__________ test_managed_configuration_keeps_post_submit_edits_on_ack ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x107e72680>
+
+    def test_managed_configuration_keeps_post_submit_edits_on_ack(
+        window: DashboardWindow,
+    ) -> None:
+        from cephvr.control.v1 import types_pb2 as control_pb
+        from cephvr.gui.managed_configuration import (
+            ConfigurationPages,
+            ManagedConfiguration,
+        )
+    
+        window.apply_view(review_view(Phase.CONFIGURATION))
+        generation = str(uuid4())
+        initial = control_pb.Snapshot(controller_generation=generation)
+        initial.configuration.revision = 4
+        initial.configuration_values.revision = 4
+        initial.configuration_values.current.mode = control_pb.SESSION_MODE_OPEN_LOOP
+        from tests.visual_stimulus.support import valid_display_json
+    
+        visual = initial.configuration_values.current.backends.add(
+            backend_name="visual_stimulus", enabled=True
+        )
+        visual.visual_stimulus.display.profile_json = valid_display_json()
+        manager = ManagedConfiguration(
+            ConfigurationPages(
+                window.dashboard,
+                window.protocol,
+                window.recordings,
+                window.devices.cameras,
+                window.devices.projectors,
+                window.tracking,
+            )
+        )
+        assert manager.install(initial)
+        window.protocol.editor.add_button.click()
+        submitted = manager.collect(initial.configuration_values.current)
+        submitted_edit_serial = manager.edit_serial
+        acknowledged = control_pb.Snapshot(controller_generation=generation)
+        acknowledged.configuration.revision = 5
+        acknowledged.configuration_values.revision = 5
+        acknowledged.configuration_values.current.CopyFrom(submitted)
+    
+        editor = window.dashboard.subject_id
+        editor.setFocus()
+        QTest.keyClick(editor, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+        QTest.keyClicks(editor, "changed after submission")
+        manager.note_installed_revision(
+            acknowledged, submitted_edit_serial=submitted_edit_serial
+        )
+        assert manager.stale
+        assert "newer local edits" in manager.last_error
+        assert editor.text() == "changed after submission"
+    
+        from PyQt6.QtGui import QAction
+        from cephvr.gui.main import ManagedGui
+    
+        reload_action = QAction(window)
+        gui = SimpleNamespace(
+            state=acknowledged,
+            configuration=manager,
+            reload_configuration=reload_action,
+            window=window,
+            _connection_epoch=1,
+            install_snapshot=lambda *_args: None,
+        )
+        ManagedGui.configuration_accepted(gui, 5, submitted_edit_serial)
+        assert manager.stale and manager.dirty
+>       assert "newer local edits" in manager.last_error
+E       AssertionError: assert 'newer local edits' in ''
+E        +  where '' = <cephvr.gui.managed_configuration.ManagedConfiguration object at 0x11d819350>.last_error
+
+tests/gui/test_dashboard.py:5729: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 61 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+_____ test_rejected_controller_configuration_restores_edit_tracking[False] _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x107e84af0>
+reload = False
+
+    @pytest.mark.parametrize("reload", [False, True])
+    def test_rejected_controller_configuration_restores_edit_tracking(window, reload):
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_configuration import ConfigurationPages, ManagedConfiguration
+    
+        manager = ManagedConfiguration(ConfigurationPages(
+            window.dashboard, window.protocol, window.recordings,
+            window.devices.cameras, window.devices.projectors, window.tracking,
+        ))
+        state = pb.Snapshot(controller_generation="controller")
+        state.configuration.revision = state.configuration_values.revision = 1
+        assert manager.install(state)
+        broken = pb.Snapshot.FromString(state.SerializeToString())
+        broken.configuration.revision = broken.configuration_values.revision = 2
+        broken.configuration_values.current.trials.add(trial_number=1).stimulus.program.program_json = "invalid"
+        original = window.protocol.editor.program
+        if reload:
+            manager.stale = True
+            assert not manager.reload(broken)
+            assert "Trial 1 source is invalid" in manager.last_error
+        else:
+            with pytest.raises(ValueError, match="Trial 1 source is invalid"):
+                manager.install(broken)
+>       assert not manager._installing
+E       assert not True
+E        +  where True = <cephvr.gui.managed_configuration.ManagedConfiguration object at 0x107c1b4d0>._installing
+
+tests/gui/test_dashboard.py:11929: AssertionError
+_____ test_rejected_controller_configuration_restores_edit_tracking[True] ______
+
+self = <cephvr.gui.protocol.ProtocolPage object at 0x107c52cb0>
+configuration = trials {
+  trial_number: 1
+  stimulus {
+    program {
+      program_json: "invalid"
+    }
+  }
+}
+
+
+    def install_configuration(self, configuration: object) -> None:
+        """Install only the session protocol fields from an authoritative config."""
+        from cephvr.control.v1 import types_pb2 as control_pb
+    
+        if not isinstance(configuration, control_pb.ExperimentConfiguration):
+            raise TypeError("Expected an ExperimentConfiguration")
+        drafts = []
+        for index, trial in enumerate(configuration.trials):
+            stimulus = trial.stimulus
+            try:
+>               program = parse_program_json(
+                    stimulus.program.program_json,
+                    max_bytes=DEFAULT_DOCUMENT_BYTES,
+                )
+
+src/cephvr/gui/protocol.py:215: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/config/models/program_model.py:669: in parse_program_json
+    return parse_json(
+src/cephvr/visual_stimulus/config/models/schema_common.py:138: in parse_json
+    json.loads(source, object_pairs_hook=unique, parse_constant=invalid)
+.venv/lib/python3.11/json/__init__.py:359: in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0x107c0dd90>, s = 'invalid', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+.venv/lib/python3.11/json/decoder.py:355: JSONDecodeError
+
+The above exception was the direct cause of the following exception:
+
+window = <cephvr.gui.window.DashboardWindow object at 0x107b924d0>
+reload = True
+
+    @pytest.mark.parametrize("reload", [False, True])
+    def test_rejected_controller_configuration_restores_edit_tracking(window, reload):
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.managed_configuration import ConfigurationPages, ManagedConfiguration
+    
+        manager = ManagedConfiguration(ConfigurationPages(
+            window.dashboard, window.protocol, window.recordings,
+            window.devices.cameras, window.devices.projectors, window.tracking,
+        ))
+        state = pb.Snapshot(controller_generation="controller")
+        state.configuration.revision = state.configuration_values.revision = 1
+        assert manager.install(state)
+        broken = pb.Snapshot.FromString(state.SerializeToString())
+        broken.configuration.revision = broken.configuration_values.revision = 2
+        broken.configuration_values.current.trials.add(trial_number=1).stimulus.program.program_json = "invalid"
+        original = window.protocol.editor.program
+        if reload:
+            manager.stale = True
+>           assert not manager.reload(broken)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gui/test_dashboard.py:11924: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/gui/managed_configuration.py:438: in reload
+    return self.install(snapshot, force=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/cephvr/gui/managed_configuration.py:183: in install
+    self.pages.protocol.install_configuration(base)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.gui.protocol.ProtocolPage object at 0x107c52cb0>
+configuration = trials {
+  trial_number: 1
+  stimulus {
+    program {
+      program_json: "invalid"
+    }
+  }
+}
+
+
+    def install_configuration(self, configuration: object) -> None:
+        """Install only the session protocol fields from an authoritative config."""
+        from cephvr.control.v1 import types_pb2 as control_pb
+    
+        if not isinstance(configuration, control_pb.ExperimentConfiguration):
+            raise TypeError("Expected an ExperimentConfiguration")
+        drafts = []
+        for index, trial in enumerate(configuration.trials):
+            stimulus = trial.stimulus
+            try:
+                program = parse_program_json(
+                    stimulus.program.program_json,
+                    max_bytes=DEFAULT_DOCUMENT_BYTES,
+                )
+            except (ValueError, UnicodeError) as error:
+>               raise ValueError(
+                    f"Trial {index + 1} source is invalid: {error}"
+                ) from error
+E               ValueError: Trial 1 source is invalid: Expecting value: line 1 column 1 (char 0)
+
+src/cephvr/gui/protocol.py:220: ValueError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_managed_configuration_keeps_post_submit_edits_on_ack
+FAILED tests/gui/test_dashboard.py::test_rejected_controller_configuration_restores_edit_tracking[False]
+FAILED tests/gui/test_dashboard.py::test_rejected_controller_configuration_restores_edit_tracking[True]
+3 failed, 379 deselected in 5.52s

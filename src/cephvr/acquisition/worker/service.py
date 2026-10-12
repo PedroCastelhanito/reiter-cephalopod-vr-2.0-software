@@ -145,11 +145,9 @@ class AcquisitionWorkerService(rpc.AcquisitionWorkerServiceServicer):
                 "request targets another worker generation",
             )
         safety = name in _SAFETY_METHODS
-        if command.issuer == self.state.context.owner:
-            pass
-        elif safety and command.issuer == self.state.supervisor:
-            pass
-        else:
+        if command.issuer != self.state.context.owner and not (
+            safety and command.issuer == self.state.supervisor
+        ):
             return _rejected(
                 command.command_id,
                 "UNAUTHORIZED",

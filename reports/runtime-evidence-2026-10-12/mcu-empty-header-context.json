@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-12",
+  "task": "mcu-empty-input-header",
+  "revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Existing dirty tree retained.",
+  "sha256": {
+    "src/cephvr/gui/microcontroller_signals.py": "ed32831256329c84f88fb62955c65a907c10f9d492ea69c10fe5095397a36026",
+    "src/cephvr/gui/tables.py": "39941f27390c5627df5f398e170f585cf3cc84f10ef33d433d0a01adfa5cf14e",
+    "tests/gui/test_dashboard.py": "17510c7e2d2b2425c203b7e01a56b910d975f8a2282f83349f7681487fc191d3"
+  },
+  "decision": "G01 revision 141; ARCH-002 focused signal and shared table owners.",
+  "changes": "Inputs header visible exactly when a supported input row is present. Existing refresh path covers Add/remove/snapshot load. Shared DataTable fitting excludes explicitly hidden header height; no empty header gap. Outputs are unaffected.",
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k \"microcontroller or microcontroller_row_heights or review_and_runtime_share_page_elements\"",
+      "result": "18 passed, 371 deselected in 16.78s",
+      "raw": "mcu-empty-header-tests.txt"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui/microcontroller_signals.py src/cephvr/gui/tables.py tests/gui/test_dashboard.py",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/microcontroller_signals.py src/cephvr/gui/tables.py tests/gui/test_dashboard.py",
+      "result": "3 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "642 modules, zero violations; existing cohesion advisories",
+      "raw": "mcu-empty-header-boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "limits": "Local Qt/offscreen focused validation; no native Windows/DPI, live application restart, device commands, screenshots or full GUI/rig acceptance."
+}

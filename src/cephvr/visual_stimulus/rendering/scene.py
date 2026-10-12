@@ -21,6 +21,7 @@ from cephvr.visual_stimulus.rendering.layer_projection import (
     angular_corners,
     physical_corners,
 )
+from cephvr.visual_stimulus.rendering.output_masks import clear_regions
 from cephvr.visual_stimulus.rendering.scene_resources import (
     PreparedSceneOutput as _OutputScene,
 )
@@ -53,7 +54,6 @@ class ModernGLSceneRenderer:
         self._resources: dict[str, dict[str, Any]] = {}
         self._gpu_resources: dict[str, dict[str, Any]] = {}
         self._moderngl: Any | None = None
-        self._clipped: set[tuple[str, str]] = set()
         from cephvr.visual_stimulus.rendering.capture import ReviewCapture
 
         self._review_capture = ReviewCapture()
@@ -452,6 +452,21 @@ class ModernGLSceneRenderer:
     ) -> None:
         context = frame.context
         assert self._moderngl is not None
+        output = next(
+            item
+            for item in artifact.display.active_outputs
+            if item.output_id == output_id
+        )
+        patch = artifact.display.photodiode_patch
+        regions = list(output.blackout_zones)
+        if (
+            output_id == artifact.display.marker_output_id
+            and patch is not None
+            and patch.background_rect is not None
+        ):
+            regions.append(patch.background_rect)
+        if regions:
+            clear_regions(context, frame.output_fbo.clear, regions)
         frame.device_fbo.use()
         context.viewport = (
             0,
@@ -466,17 +481,11 @@ class ModernGLSceneRenderer:
             artifact.display.photometric_mode == "calibrated"
         )
         frame.output_program["lut_size"].value = max(2, frame.lut_texture.size[0])
-        patch = artifact.display.photodiode_patch
         marker_output = output_id == artifact.display.marker_output_id
         frame.output_program["marker_active"].value = float(
             marker_output and patch is not None
         )
         if patch is not None:
-            output = next(
-                item
-                for item in artifact.display.active_outputs
-                if item.output_id == output_id
-            )
             low, high = patch.rect.x / output.width_px, patch.rect.y / output.height_px
             right = (patch.rect.x + patch.rect.width) / output.width_px
             top = (patch.rect.y + patch.rect.height) / output.height_px

@@ -184,6 +184,25 @@
             }
           ],
           "default": null
+        },
+        "reference_bars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReferenceBars"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "blackout_zones": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PixelRect"
+          },
+          "title": "Blackout Zones",
+          "type": "array"
         }
       },
       "required": [
@@ -203,6 +222,17 @@
       "properties": {
         "rect": {
           "$ref": "#/$defs/PixelRect"
+        },
+        "background_rect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PixelRect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "high_linear_rgb": {
           "maxItems": 3,
@@ -278,6 +308,27 @@
         "height"
       ],
       "title": "PixelRect",
+      "type": "object"
+    },
+    "ReferenceBars": {
+      "additionalProperties": false,
+      "properties": {
+        "x_length_px": {
+          "exclusiveMinimum": 0,
+          "title": "X Length Px",
+          "type": "integer"
+        },
+        "y_length_px": {
+          "exclusiveMinimum": 0,
+          "title": "Y Length Px",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "x_length_px",
+        "y_length_px"
+      ],
+      "title": "ReferenceBars",
       "type": "object"
     },
     "Surface": {
@@ -375,6 +426,15 @@
   },
   "additionalProperties": false,
   "properties": {
+    "calibration_view": {
+      "default": "frame_grid",
+      "enum": [
+        "reference_bars",
+        "frame_grid"
+      ],
+      "title": "Calibration View",
+      "type": "string"
+    },
     "format_version": {
       "const": 1,
       "title": "Format Version",

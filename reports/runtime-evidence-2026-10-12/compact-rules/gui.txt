@@ -1,0 +1,46 @@
+........................................................................ [ 18%]
+........................................................................ [ 36%]
+........................................................................ [ 54%]
+......................................................................F. [ 72%]
+........................................................................ [ 90%]
+.....................................                                    [100%]
+=================================== FAILURES ===================================
+____ test_blank_layer_then_family_keeps_each_projector_layer_configuration _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x35925c3a0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1210fc790>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1700/test_blank_layer_then_family_k0')
+
+    def test_blank_layer_then_family_keeps_each_projector_layer_configuration(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_motion import EpochMotion
+        from cephvr.gui.looming_size import LoomingSize
+        from cephvr.gui.protocol_groups import motion_numbers
+    
+        composer = window.protocol.editor.subgroup.composer
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        row = composer.rows["Front"]
+        before = composer.program
+        row.add.trigger()
+>       assert row.layer.currentText() == "1 · Empty"
+E       AssertionError: assert '1' == '1 · Empty'
+E         
+E         - 1 · Empty
+E         + 1
+
+tests/gui/test_dashboard.py:8939: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_blank_layer_then_family_keeps_each_projector_layer_configuration
+1 failed, 396 passed in 246.42s (0:04:06)

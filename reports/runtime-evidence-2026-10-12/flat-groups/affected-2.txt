@@ -1,0 +1,114 @@
+................F.......................F..................              [100%]
+=================================== FAILURES ===================================
+____________ test_batch_create_variations_preview_insert_and_reload ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x110d42a70>
+app = <PyQt6.QtWidgets.QApplication object at 0x103fd6050>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1657/test_batch_create_variations_p0')
+
+    def test_batch_create_variations_preview_insert_and_reload(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_batch import epoch_paths
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        editor = window.protocol.editor
+        window.page_buttons[1].click()
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(blank_program()))
+        editor.enter_group()
+        editor.timeline.set_screens(("Left", "Right"))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        create = editor.create_batch
+        create.composer.set_asset_root(str(tmp_path))
+        editor.modes.setCurrentIndex(0)
+        original = editor.program
+        create.composer.add_file("Texture", str(path), "Left")
+        create.composer.duration.setText("00:00:02.000000001")
+        create.vary.setChecked(True)
+        create.add_variation()
+        create.rows[0].method.setCurrentIndex(1)
+        create.rows[0].values.setText("0, 1, 0.25")
+        create.refresh_preview()
+        assert create.add_button.isEnabled(), create.summary.text()
+        assert create.summary.text().startswith("5 epochs")
+        create.rows[0].method.setCurrentIndex(0)
+        create.rows[0].values.setText("10, 20, 40")
+        create.add_variation()
+        create.rows[1].parameter.setCurrentIndex(
+            create.rows[1].parameter.findData("Direction")
+        )
+        create.rows[1].values.setText("0, 180")
+        create.refresh_preview()
+        assert create.add_button.isEnabled()
+        assert create.notice.text()
+        assert create.notice.dialog is None
+        assert editor.program == original
+        create.rows[0].values.setText("10, 10, 20, 20, 40, 40")
+        create.rows[1].values.setText("0, 180, 0, 180, 0, 180")
+        create.repetitions.setText("2")
+        create.refresh_preview()
+        assert create.add_button.isEnabled(), create.summary.text()
+        assert create.summary.text().startswith("12 epochs")
+        assert editor.program == original
+        create.generate()
+        program = editor.program
+        assert len(epoch_paths(program)) == 13
+        assert len(expand_program(program, seed_decimal="8", max_expanded_epochs=100)) == 13
+>       assert program.sequence[1].order == "as_listed"
+               ^^^^^^^^^^^^^^^^^^^
+E       IndexError: tuple index out of range
+
+tests/gui/test_dashboard.py:7249: IndexError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_timeline_epoch_shortcuts_and_keyboard_history ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x110ab3400>
+app = <PyQt6.QtWidgets.QApplication object at 0x103fd6050>
+
+            assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+    
+    
+    def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(editor.program))
+        editor.enter_group()
+        original = editor.program
+        editor.hierarchy.contents.setFocus()
+        app.processEvents()
+        QTest.keyClick(
+>           editor.hierarchy.contents, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier
+        )
+E       AssertionError: assert 3 == (3 + 1)
+E        +  where 3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())))
+E        +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())) = Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None, ...ch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))).body
+E        +  and   3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())))
+E        +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())) = Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None, ...ch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))).body
+
+tests/gui/test_dashboard.py:10204: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_batch_create_variations_preview_insert_and_reload
+FAILED tests/gui/test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history
+2 failed, 57 passed, 347 deselected in 65.93s (0:01:05)

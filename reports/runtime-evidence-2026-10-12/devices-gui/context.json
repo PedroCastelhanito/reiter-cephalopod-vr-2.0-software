@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-12",
+  "task": "devices-config-and-signal-editing",
+  "source_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Pre-existing dirty tree and concurrent Protocol work preserved. Exact final GUI/test hashes are in tests-final-result.json and still match current files.",
+  "decisions": [
+    "G01 Devices amendment revision 136 preserved within current revision 137",
+    "G02 revision 35",
+    "ARCH-002",
+    "E03",
+    "A10",
+    "A11",
+    "E15"
+  ],
+  "scope": "Shared device-file cards first; camera-only files/reused serialization and selected identity UI; supported MCU dropdowns/add/remove with saved pin/enable flags, v1 compatibility and no commands on load; visible SpikeGLX channel index with preserved stream/index/bit metadata.",
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m \"not windows and not rig\"",
+      "exit_code": 0,
+      "result": "390 passed in 353.58s",
+      "raw": "tests-final.txt",
+      "hashes": "tests-final-result.json"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "exit_code": 0,
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui",
+      "exit_code": 0,
+      "result": "140 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "exit_code": 0,
+      "result": "Success: no issues found in 138 source files"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "exit_code": 0,
+      "result": "642 modules; zero violations; existing cohesion advisories",
+      "raw": "boundaries.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    {
+      "command": "Local Markdown reference/anchor, evidence-path and final tested-hash checks",
+      "exit_code": 0,
+      "result": "178 local links/anchors, added evidence paths, and current GUI/test hashes verified"
+    }
+  ],
+  "earlier_checks": "15 focused cases pass before MCU v2 file participation; 25 pass after v2/identity-cache repair; nine pass after populated-dropdown/layout refinement; final ten focused cases pass before the full suite. Selections overlap and are not additive.",
+  "failed_attempts": [
+    "Initial full GUI selection: 389 passed/one failure in 401.90 s. The older full-config test fixture changed experiment camera enables but left its newly captured MCU v2 enable flags inconsistent. Update both inventories; keep explicit inconsistent-file rejection coverage. Raw: tests.txt.",
+    "An attempted multi-file patch failed to match formatted test lines and made no edits; apply the exact formatted changes.",
+    "Offscreen visual QA found an initially clipped channel heading and MCU signal/remove cells. Use content-measured headers and AdjustToContents; final tests assert controls fit and both MCU tables align. Flush Qt deferred deletions for faithful screenshots.",
+    "Sandbox native Review launch failed because no desktop screens were available. Desktop-access launch starts successfully, but cua.getApp(Python) times out (-10005) after 2669.5972 s. No native window content is verified.",
+    "After the UI timeout, an unnecessary repeat was started to reconcile Protocol work. SHA-256 comparison then proved the first full pass already included every current GUI/test file. Signal only the uniquely matched redundant pytest command with SIGINT. That deliberate interrupt exits -6 with a Qt abort; preserve tests-current.txt/tests-current-result.json, exclude it from passing evidence and do not interpret it as an unprompted regression."
+  ],
+  "screenshots": {
+    "method": "capture.py; isolated fixture/settings; 1280 and 720 px; explicit Qt DeferredDelete flushing",
+    "files": [
+      "cameras-1280.png",
+      "cameras-720.png",
+      "microcontroller-1280.png",
+      "microcontroller-720.png",
+      "projectors-1280.png",
+      "projectors-720.png",
+      "spikeglx-1280.png",
+      "spikeglx-720.png"
+    ],
+    "scope": "Offscreen top-level device pages visually inspected, plus geometry/control tests. Narrow lower controls remain reachable through the existing scroller; no native Windows/DPI proof."
+  },
+  "limits": "No Windows managed launch, hardware/serial/camera/projector actions, firmware, remote SpikeGLX or full-load/rig acceptance. No new backend policy/contract protocol or dependency. Native desktop inspection timed out; existing rig tasks remain open."
+}

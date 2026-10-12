@@ -1,0 +1,540 @@
+...F.........F....FF...F..........F..FF..............F.................. [ 93%]
+.F...                                                                    [100%]
+=================================== FAILURES ===================================
+_______ test_protocol_timeline_edits_preserve_trials_and_imported_groups _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x127140a60>
+app = <PyQt6.QtWidgets.QApplication object at 0x106525d80>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_protocol_timeline_edits_p0')
+
+    def test_protocol_timeline_edits_preserve_trials_and_imported_groups(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        panel = window.protocol
+        editor = panel.editor
+        open_protocol_group(editor)
+        original = editor.program
+        parse_program_json(original.model_dump_json(), max_bytes=1_048_576)
+        editor.hierarchy.contents.setFocus()
+        QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Right)
+        assert editor.path == (0, 1)
+        editor.subgroup.composer.duration.setText("21.000000001")
+        editor.subgroup.apply()
+        edited = editor.program
+>       assert edited.sequence[0].body[1].duration.duration.seconds == "21.000000001"
+E       AssertionError: assert '20' == '21.000000001'
+E         
+E         - 21.000000001
+E         + 20
+
+tests/gui/test_dashboard.py:6182: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+__________ test_stimulus_parameter_edit_invalid_guard_and_media_root ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x116ff1510>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_stimulus_parameter_edit_i0')
+
+    def test_stimulus_parameter_edit_invalid_guard_and_media_root(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = ParameterDocument(window)
+        from cephvr.gui.protocol_document import review_program
+    
+        editor.set_program(review_program())
+        editor.set_program(
+            editor.program.model_copy(update={"sequence": (editor.program.sequence[1],)})
+        )
+        parameters = editor.parameters
+        value = parameters.fades.fade_in
+        value.setText("0.4")
+        parameters.fades.mark_changed()
+        parameters.mark_changed()
+>       assert parameters.apply()
+E       assert False
+E        +  where False = apply()
+E        +    where apply = <cephvr.gui.stimulus_parameters.StimulusParameters object at 0x13358dd80>.apply
+
+tests/gui/test_dashboard.py:6388: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____ test_add_prepared_file_picker_does_not_create_placeholder_on_cancel ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1336a7be0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_add_prepared_file_picker_0')
+
+    def test_add_prepared_file_picker_does_not_create_placeholder_on_cancel(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        open_protocol_group(editor)
+        composer = editor.subgroup.composer
+        composer.set_asset_root(str(tmp_path))
+        before = editor.program
+        composer.choose("Image", "Left")
+        assert composer.picker.dialog is not None
+        composer.picker.dialog.reject()
+        assert editor.program == before
+        path = tmp_path / "image.png"
+        path.write_bytes(b"authoring-only-file-fixture")
+        composer.add_file("Image", str(path), "Left")
+        editor.subgroup.apply()
+>       assert len(editor.program.sequence[0].body[0].settings) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = len(())
+E        +    where () = Epoch(kind='epoch', epoch_id='Epoch_1', batch_label='', batch_id='batch_d54f6954c3e048fb9a9d58bff12233e4', scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=()).settings
+
+tests/gui/test_dashboard.py:6581: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________________ test_file_first_epoch_insertion_and_history __________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x127190af0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_file_first_epoch_insertio0')
+
+    def test_file_first_epoch_insertion_and_history(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(blank_program()))
+        editor.enter_group()
+        composer = editor.subgroup.composer
+        composer.set_asset_root(str(tmp_path))
+        original = editor.program
+        composer.choose("Texture", "Left")
+        assert composer.picker.dialog is not None
+        composer.picker.dialog.reject()
+        assert editor.program == original
+        image = tmp_path / "tile.png"
+        image.write_bytes(b"authoring-only fixture")
+        editor.add_subgroup()
+        blank_added = editor.program
+        composer.add_file("Texture", str(image), "Left")
+        editor.subgroup.apply()
+        assert len(editor.program.sequence[0].body) == 2
+        assert editor.node_index == 1
+        added = editor.program
+>       assert added.sequence[0].body[1].settings[0].pattern.kind == "image_tile"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: tuple index out of range
+
+tests/gui/test_dashboard.py:6617: IndexError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+________________ test_motion_auto_commit_and_invalid_edit_undo _________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x13357dab0>
+app = <PyQt6.QtWidgets.QApplication object at 0x106525d80>
+
+    def test_motion_auto_commit_and_invalid_edit_undo(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        open_protocol_group(editor)
+        window.page_buttons[1].click()
+        app.processEvents()
+>       motion = editor.subgroup.composer.rows["Left"].parameters.forms[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Left'
+
+tests/gui/test_dashboard.py:6807: KeyError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____________ test_batch_reference_projector_parameters_and_layers _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1575cac20>
+app = <PyQt6.QtWidgets.QApplication object at 0x106525d80>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_batch_reference_projector0')
+
+    def test_batch_reference_projector_parameters_and_layers(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_motion import EpochMotion
+        from cephvr.gui.looming_size import LoomingSize
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.gui.stimulus_scope import surfaces
+    
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        composer = editor.subgroup.composer
+        window.page_buttons[1].click()
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        for kind, face in (
+            ("Texture", "Front"),
+            ("Looming image", "Left"),
+            ("Image", "Right"),
+        ):
+            composer.add_file(kind, str(path), face)
+        video = tmp_path / "clip.mp4"
+        video.touch()  # Authoring checks a file reference, not video decoding.
+        composer.add_file("Video", str(video), "Bottom")
+        app.processEvents()
+        assert all(not composer.rows[face].isHidden() for face in composer.screens)
+        assert composer.rows[""].isHidden()
+        assert composer.rows["Bottom"].parameters.primary.count() == 1
+        front = composer.rows["Front"].parameters
+        left = composer.rows["Left"].parameters
+        motion = next(form for form in front.forms if isinstance(form, EpochMotion))
+        looming = next(form for form in left.forms if isinstance(form, LoomingSize))
+        before = editor.program
+        # Keep two rows dirty together: accepting one must not discard the other's draft.
+        motion.speed.setText("24")
+        motion.direction.setText("90")
+        motion.edited = True
+        front.dirty = True
+        looming.end.setText("72")
+        looming.edited = True
+        left.dirty = True
+        assert front.apply()
+        assert left.dirty and looming.end.text() == "72"
+        program = composer.value()
+        assert editor.program == before
+        settings = program.sequence[0].settings
+        assert motion_numbers(settings[0].model_dump(mode="json"))[:2] == pytest.approx(
+            (24, 90)
+        )
+        assert settings[1].width.knots[-1].value == 72
+        assert [surfaces(s.model_dump(mode="json")) for s in settings] == [
+            ["front"],
+            ["left"],
+            ["right"],
+            ["bottom"],
+        ]
+        # Add a foreground layer, then return to the existing texture's values.
+        composer.add_file("Looming image", str(path), "Front")
+        row = composer.rows["Front"]
+        assert len(row.indices) == 2
+        row.select_layer(row.indices[0])
+        restored = next(
+            form for form in row.parameters.forms if isinstance(form, EpochMotion)
+        )
+        assert float(restored.speed.text()) == pytest.approx(24)
+        composer.set_screens(("Front", "Left", "Bottom"))
+        assert composer.rows["Right"].caption.text() == "Right (inactive)"
+        assert not composer.rows["Right"].add.isEnabled()
+        assert len(composer.value().sequence[0].settings) == 5
+        composer.set_screens(("Front", "Left", "Right", "Bottom"))
+        composer.rows["Front"].select_layer(composer.rows["Front"].indices[1])
+        composer.remove_layer("Front")
+        assert len(composer.value().sequence[0].settings) == 4
+        editor.subgroup.refresh_preview()
+        assert editor.subgroup.add_button.isEnabled(), editor.subgroup.summary.text()
+        generated = editor.subgroup.candidate()
+        assert generated.sequence[0].settings == composer.value().sequence[0].settings
+        restored = next(
+            form for form in row.parameters.forms if isinstance(form, EpochMotion)
+        )
+        restored.speed.setText("invalid")
+        restored.edited = True
+        row.parameters.dirty = True
+        editor.subgroup.refresh_preview()
+        assert editor.subgroup.add_button.isEnabled()
+>       assert editor.subgroup.notice.text()
+E       AssertionError: assert ''
+E        +  where '' = text()
+E        +    where text = <cephvr.gui.notices.FormNotice object at 0x16a077f40>.text
+E        +      where <cephvr.gui.notices.FormNotice object at 0x16a077f40> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x16a074d30>.notice
+E        +        where <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x16a074d30> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x16a08ac20>.subgroup
+
+tests/gui/test_dashboard.py:7416: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______ test_reference_type_change_clears_asset_and_switches_stimulus_mode ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x157547d00>
+app = <PyQt6.QtWidgets.QApplication object at 0x106525d80>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_reference_type_change_cle0')
+
+    def test_reference_type_change_clears_asset_and_switches_stimulus_mode(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        folder = tmp_path / "images"
+        folder.mkdir()
+        path = folder / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Image", str(path), "Right")
+        row = composer.rows["Front"]
+        before = editor.program
+        row.stimulus.setCurrentText("Looming")
+        assert row.stimulus.currentText() == "Looming"
+        assert all(not field.text() for field in row.parameters.asset_forms.values())
+        assert all(not h.text() for h in row.headings[:1])
+        with pytest.raises(ValueError, match="Choose an asset"):
+            composer.value()
+        asset_id = next(iter(row.parameters.asset_forms))
+        row.parameters.set_media_path(asset_id, str(path))
+        assert not composer.pending_assets
+        field = next(iter(row.parameters.asset_forms.values()))
+        assert field.text() == "images/tile.png" and field.filename_only
+        assert field.toolTip() == "images/tile.png"
+        assert {s.kind for s in composer.value().sequence[0].settings} == {"image"}
+        assert editor.program == before
+        # Keep the 2D draft when selecting a rig-wide arena, but do not generate it.
+        composer.mode.setCurrentIndex(1)
+        assert composer.rows["Front"].isHidden()
+        assert not composer.rows[""].isHidden()
+        with pytest.raises(ValueError, match="Choose an asset"):
+            composer.value()
+        arena = tmp_path / "arena.glb"
+        arena.touch()  # Asset authoring, no GLB decoding or rendering.
+        arena_row = composer.rows[""]
+        arena_row.parameters.set_media_path(
+            next(iter(arena_row.parameters.asset_forms)), str(arena)
+        )
+        program = composer.value()
+        assert [s.kind for s in program.sequence[0].settings] == ["arena"]
+        assert [a.logical_path for a in program.assets] == ["arena.glb"]
+        composer.mode.setCurrentIndex(0)
+        assert len(composer.value().sequence[0].settings) == 2
+        assert all(a.logical_path == "images/tile.png" for a in composer.value().assets)
+        # Another type change clears the file again, even though an asset existed.
+        row.stimulus.setCurrentText("Video")
+        editor.subgroup.refresh_preview()
+        assert editor.subgroup.add_button.isEnabled()
+>       assert editor.subgroup.notice.text()
+E       AssertionError: assert ''
+E        +  where '' = text()
+E        +    where text = <cephvr.gui.notices.FormNotice object at 0x15764c040>.text
+E        +      where <cephvr.gui.notices.FormNotice object at 0x15764c040> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x1576c2cb0>.notice
+E        +        where <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x1576c2cb0> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x1576c0af0>.subgroup
+
+tests/gui/test_dashboard.py:7587: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_arena_axis_gains_roundtrip_and_editor_spacing ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x15760d510>
+app = <PyQt6.QtWidgets.QApplication object at 0x106525d80>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_arena_axis_gains_roundtri0')
+
+    def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
+        import json
+    
+        from cephvr.gui.arena_movement import ArenaMovement
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor, generate=True)
+        batch = editor.subgroup
+        composer = batch.composer
+        composer.set_asset_root(str(tmp_path))
+        composer.mode.setCurrentIndex(1)
+        path = tmp_path / "arena.glb"
+        path.touch()
+        row = composer.rows[""]
+        row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
+        app.processEvents()
+        assert row.stimulus.isHidden()
+        assert "Stimulus" not in row.signature
+        assert (
+            composer.mode.mapTo(composer, QPoint()).y()
+            == composer.duration.mapTo(composer, QPoint()).y()
+        )
+        assert (
+            composer.duration.mapTo(composer, QPoint()).y()
+            == batch.repetitions.mapTo(composer, QPoint()).y()
+        )
+        assert (
+            row.mapTo(composer, QPoint()).y()
+            - batch.generation_controls.geometry().bottom()
+            >= 24
+        )
+>       assert (
+            batch.mapTo(editor.settings_card, QPoint()).y()
+            - editor.hierarchy.mapTo(
+                editor.settings_card, QPoint(0, editor.hierarchy.height())
+            ).y()
+            >= 16
+        )
+E       assert (406 - 396) >= 16
+E        +  where 406 = <built-in method y of QPoint object at 0x13364f610>()
+E        +    where <built-in method y of QPoint object at 0x13364f610> = PyQt6.QtCore.QPoint(16, 406).y
+E        +      where PyQt6.QtCore.QPoint(16, 406) = <built-in method mapTo of SubgroupEditor object at 0x157596f80>(<cephvr.gui.components.Card object at 0x157596680>, PyQt6.QtCore.QPoint())
+E        +        where <built-in method mapTo of SubgroupEditor object at 0x157596f80> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x157596f80>.mapTo
+E        +        and   <cephvr.gui.components.Card object at 0x157596680> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x179df9c60>.settings_card
+E        +        and   PyQt6.QtCore.QPoint() = QPoint()
+E        +  and   396 = <built-in method y of QPoint object at 0x13364f530>()
+E        +    where <built-in method y of QPoint object at 0x13364f530> = PyQt6.QtCore.QPoint(16, 396).y
+E        +      where PyQt6.QtCore.QPoint(16, 396) = <built-in method mapTo of ProtocolHierarchy object at 0x17c5d49d0>(<cephvr.gui.components.Card object at 0x157596680>, PyQt6.QtCore.QPoint(0, 352))
+E        +        where <built-in method mapTo of ProtocolHierarchy object at 0x17c5d49d0> = <cephvr.gui.protocol_hierarchy.ProtocolHierarchy object at 0x17c5d49d0>.mapTo
+E        +          where <cephvr.gui.protocol_hierarchy.ProtocolHierarchy object at 0x17c5d49d0> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x179df9c60>.hierarchy
+E        +        and   <cephvr.gui.components.Card object at 0x157596680> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x179df9c60>.settings_card
+E        +        and   PyQt6.QtCore.QPoint(0, 352) = QPoint(0, 352)
+E        +          where 352 = <built-in method height of ProtocolHierarchy object at 0x17c5d49d0>()
+E        +            where <built-in method height of ProtocolHierarchy object at 0x17c5d49d0> = <cephvr.gui.protocol_hierarchy.ProtocolHierarchy object at 0x17c5d49d0>.height
+E        +              where <cephvr.gui.protocol_hierarchy.ProtocolHierarchy object at 0x17c5d49d0> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x179df9c60>.hierarchy
+
+tests/gui/test_dashboard.py:7675: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_first_source_epoch_fade_does_not_change_rest_of_batch __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x136eb1120>
+
+    def test_first_source_epoch_fade_does_not_change_rest_of_batch(window):
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        data = editor.program.model_dump(mode="json")
+        source = data["sequence"][0]
+        data["sequence"] = [
+            {
+                **source,
+                "epoch_id": f"Epoch_{i}",
+                "duration": {"kind": "fixed", "duration": {"seconds": "20"}},
+            }
+            for i in range(3)
+        ]
+        editor.set_program(validate(data))
+        open_protocol_group(editor)
+        editor.select_epochs(((0, 0),))
+>       parameters = editor.subgroup.composer.rows["Left"].parameters
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'Left'
+
+tests/gui/test_dashboard.py:8996: KeyError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_grouped_editor_pair_creation_repeat_scope_and_history __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x136e3bb50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1672/test_grouped_editor_pair_creat0')
+app = <PyQt6.QtWidgets.QApplication object at 0x106525d80>
+
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.protocol_nodes import edit_epoch
+    from cephvr.visual_stimulus.config.models.program_model import (
+        Group,
+        parse_program_json,
+    )
+    
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    pair, _ = edit_epoch(blank_program(), 0, "duplicate")
+    from cephvr.gui.protocol_batches import grouped_program
+    
+    editor.set_program(grouped_program(pair))
+    editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+    assert editor.scope == (0,) and len(editor.timeline.nodes) == 1
+    assert len(editor.hierarchy.contents.nodes) == 2
+    group = editor.program.sequence[0]
+    assert isinstance(group, Group) and group.body == pair.sequence
+    fields = editor.group_editor
+    fields.name.setText("Image Grey")
+    fields.repetitions.setText("300")
+    fields.mark_changed()
+    assert fields.apply()
+    assert editor.program.sequence[0].group_id == "Image_Grey"
+    assert editor.program.sequence[0].repetitions == 300
+    assert "600 epochs" in editor.sequence_summary.text()
+    assert len(editor.hierarchy.contents.nodes) == 2
+    fields.mark_changed()  # A pending field commit must preserve the clicked selection.
+    editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+    assert editor.path == (0, 1)
+    assert editor.hierarchy.contents.index == editor.hierarchy.contents.anchor == 1
+    editor.subgroup.composer.duration.setText("2")
+    editor.subgroup.apply()
+    assert editor.program.sequence[0].body[1].duration.duration.seconds == "2"
+>   assert editor.program.sequence[0].repetitions == 300
+E   AssertionError: assert '60' == '2'
+E     
+E     - 2
+E     + 60
+
+tests/gui/test_dashboard.py:12057: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_protocol_timeline_edits_preserve_trials_and_imported_groups
+FAILED tests/gui/test_dashboard.py::test_stimulus_parameter_edit_invalid_guard_and_media_root
+FAILED tests/gui/test_dashboard.py::test_add_prepared_file_picker_does_not_create_placeholder_on_cancel
+FAILED tests/gui/test_dashboard.py::test_file_first_epoch_insertion_and_history
+FAILED tests/gui/test_dashboard.py::test_motion_auto_commit_and_invalid_edit_undo
+FAILED tests/gui/test_dashboard.py::test_batch_reference_projector_parameters_and_layers
+FAILED tests/gui/test_dashboard.py::test_reference_type_change_clears_asset_and_switches_stimulus_mode
+FAILED tests/gui/test_dashboard.py::test_arena_axis_gains_roundtrip_and_editor_spacing
+FAILED tests/gui/test_dashboard.py::test_first_source_epoch_fade_does_not_change_rest_of_batch
+FAILED tests/gui/test_dashboard.py::test_grouped_editor_pair_creation_repeat_scope_and_history
+10 failed, 67 passed, 313 deselected in 77.02s (0:01:17)

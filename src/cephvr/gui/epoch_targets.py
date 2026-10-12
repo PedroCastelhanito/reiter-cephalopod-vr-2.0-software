@@ -1,4 +1,4 @@
-"""Trial-local source-epoch filters for batch patches."""
+"""Scoped source-epoch filters for batch patches."""
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QGridLayout, QLineEdit, QSizePolicy, QWidget
@@ -19,13 +19,14 @@ class EpochTargets(QWidget):
         row = self.grid
         row.setHorizontalSpacing(12)
         self.timeline = True
+        self.scope: tuple[int, ...] = ()
         row.setContentsMargins(0, 0, 0, 0)
         self.filter = combo(("All epochs", "Epoch label", "Epoch index"))
         self.labels = combo(())
         self.index = QLineEdit()
         self.index.setPlaceholderText("1")
         self.index.setToolTip(
-            "One-based source epoch index in trial order; repeated occurrences "
+            "One-based source epoch index in the open group; repeated occurrences "
             "share the same source epoch."
         )
         self.label_field = field("Epoch label", self.labels)
@@ -72,7 +73,8 @@ class EpochTargets(QWidget):
             {
                 epoch.batch_label
                 for path in epoch_paths(program)
-                if isinstance(epoch := node_at(program, path), Epoch)
+                if path[: len(self.scope)] == self.scope
+                and isinstance(epoch := node_at(program, path), Epoch)
                 and epoch.batch_label
             }
         )
@@ -83,7 +85,9 @@ class EpochTargets(QWidget):
         self.labels.blockSignals(False)
 
     def resolve(self, program: Program) -> tuple[tuple[int, ...], ...]:
-        paths = epoch_paths(program)
+        paths = tuple(
+            p for p in epoch_paths(program) if p[: len(self.scope)] == self.scope
+        )
         if self.filter.currentIndex() == 0:
             result = paths
         elif self.filter.currentIndex() == 1:
@@ -99,7 +103,7 @@ class EpochTargets(QWidget):
                 else ()
             )
             if not result:
-                raise ValueError("No epochs with the selected label in this trial")
+                raise ValueError("No epochs with the selected label in this sequence")
         else:
             text = self.index.text().strip()
             if not text.isascii() or not text.isdecimal():
@@ -107,11 +111,11 @@ class EpochTargets(QWidget):
             index = int(text)
             if not 1 <= index <= len(paths):
                 raise ValueError(
-                    f"Epoch index {index} is outside this trial (1–{len(paths)})"
+                    f"Epoch index {index} is outside this sequence (1–{len(paths)})"
                 )
             result = (paths[index - 1],)
         if not result:
-            raise ValueError("This trial has no source epochs to edit")
+            raise ValueError("This sequence has no source epochs to edit")
         return result
 
     def accept(self) -> None:

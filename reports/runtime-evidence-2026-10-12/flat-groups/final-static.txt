@@ -1,0 +1,8 @@
+All checks passed!
+144 files already formatted
+
+.venv/bin/python -m mypy --platform win32 src/cephvr/gui src/cephvr/visual_stimulus/config/models/program_model.py
+Success: no issues found in 142 source files
+
+.venv/bin/python tools/check_backend_boundaries.py
+Checked 650 backend modules; 0 boundary violations. Existing source-size advisories reviewed; see report.

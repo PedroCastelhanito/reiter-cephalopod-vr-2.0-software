@@ -1,60 +1,80 @@
-"""Bounded immutable authoring views; selection never expands the same trial twice."""
+"""Compact source-node views; repetitions never allocate presentation nodes."""
 
 from collections import OrderedDict
 from dataclasses import dataclass
 
-from cephvr.gui.epoch_batch import epoch_paths
-from cephvr.gui.program_editing import node_at
+from cephvr.gui.program_editing import nodes_at
+from cephvr.gui.protocol_document import duration
 from cephvr.gui.timeline_details import stimulus_key
-from cephvr.visual_stimulus.compiler.expansion import expand_program
-from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
+from cephvr.visual_stimulus.config.models.program_model import Epoch, Node, Program
+
+
+def epoch_count(node: Node) -> int:
+    if isinstance(node, Epoch):
+        return 1
+    return (
+        sum(epoch_count(child) for child in node.body)
+        * node.repetitions
+        * (len(node.conditions.rows) if node.conditions else 1)
+    )
 
 
 @dataclass(frozen=True)
 class TimelineView:
     program: Program
-    sources: tuple[tuple[int, ...], ...]
     paths: tuple[tuple[int, ...], ...]
-    nodes: tuple[Epoch, ...]
+    nodes: tuple[Node, ...]
     keys: tuple[str, ...]
-    error: str
+    counts: tuple[int, ...]
+    durations: tuple[float | None, ...]
+    batch_runs: tuple[tuple[int, int, str] | None, ...]
 
 
 class TimelineViews:
     def __init__(self) -> None:
-        self.entries: OrderedDict[int, TimelineView] = OrderedDict()
+        self.entries: OrderedDict[tuple[int, tuple[int, ...]], TimelineView] = (
+            OrderedDict()
+        )
 
-    def get(self, program: Program) -> TimelineView:
-        """Cache by immutable object identity; entries retain their program references."""
-        identity = id(program)
+    def get(self, program: Program, scope: tuple[int, ...] = ()) -> TimelineView:
+        """Retain at most four immutable program/scope views, including source owners."""
+        identity = (id(program), scope)
         if identity in self.entries:
             self.entries.move_to_end(identity)
             return self.entries[identity]
-        sources = epoch_paths(program)
-        by_id = {}
-        for path in sources:
-            source = node_at(program, path)
-            assert isinstance(source, Epoch)
-            by_id[source.epoch_id] = path
-        error = ""
-        try:
-            expanded = expand_program(
-                program, seed_decimal="0", max_expanded_epochs=2000
+        nodes = nodes_at(program, scope)
+        runs: list[tuple[int, int, str] | None] = [None] * len(nodes)
+        numbers: dict[str, int] = {}
+        start = 0
+        while start < len(nodes):
+            node = nodes[start]
+            if not isinstance(node, Epoch) or not node.batch_id:
+                start += 1
+                continue
+            number = numbers.setdefault(node.batch_id, len(numbers) + 1)
+            end = start + 1
+            while (
+                end < len(nodes)
+                and isinstance(next_node := nodes[end], Epoch)
+                and next_node.batch_id == node.batch_id
+            ):
+                end += 1
+            title = f"Batch {number}" + (
+                f" · {node.batch_label}" if node.batch_label else ""
             )
-            nodes = tuple(
-                e.source.model_copy(update={"settings": e.settings}) for e in expanded
-            )
-            paths = tuple(by_id[e.source.epoch_id] for e in expanded)
-        except ValueError as failure:
-            nodes, paths = (), ()
-            error = str(failure)
+            runs[start:end] = [(start, end, title)] * (end - start)
+            start = end
         view = TimelineView(
             program,
-            sources,
-            paths,
+            tuple((*scope, i) for i in range(len(nodes))),
             nodes,
-            tuple(stimulus_key(program, n) for n in nodes),
-            error,
+            tuple(
+                stimulus_key(program, n) if isinstance(n, Epoch) else "group"
+                for n in nodes
+            ),
+            tuple(epoch_count(n) for n in nodes),
+            tuple(duration(n) for n in nodes),
+            tuple(runs),
         )
         self.entries[identity] = view
         if len(self.entries) > 4:

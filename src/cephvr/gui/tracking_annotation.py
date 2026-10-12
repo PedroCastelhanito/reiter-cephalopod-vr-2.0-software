@@ -71,7 +71,7 @@ class AnnotationCanvas(QWidget):
             ),
         )
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event is None or event.button() != Qt.MouseButton.LeftButton:
             return
         point = self.coordinate(event.position())
@@ -91,7 +91,7 @@ class AnnotationCanvas(QWidget):
         self.changed.emit()
         self.update()
 
-    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
         if event is None or self.origin is None:
             return
         end = self.coordinate(event.position())
@@ -108,7 +108,7 @@ class AnnotationCanvas(QWidget):
             self.changed.emit()
             self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(COLORS.input))
         if self.image.isNull():

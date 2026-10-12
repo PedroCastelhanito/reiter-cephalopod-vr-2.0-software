@@ -1,0 +1,87 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_authenticated_live_calibration_update_transport_and_exact_receipt ____
+
+    @pytest.mark.asyncio
+    async def test_authenticated_live_calibration_update_transport_and_exact_receipt():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        calls = []
+    
+        class Worker:
+            async def command(self, method, request, *, deadline_ns):
+                calls.append((method, request, deadline_ns))
+                return pb.CommandAdmission(
+                    result=pb.COMMAND_RESULT_ACCEPTED, command_id=request.command.command_id
+                )
+    
+        receipt = SupervisorReceipt()
+        runtime = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=Worker(),
+            controller=receipt,
+            supervisor=receipt,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+        runtime.state.display = pb.VisualStimulusDisplayView()
+        runtime.state.display.outputs.add(output_id="projector/main")
+        evidence = runtime.state.display.calibration
+        evidence.diagnostic_id = str(uuid4())
+        evidence.configuration_revision = 4
+        evidence.controller_generation = identity.controller.generation
+        evidence.renderer_generation = identity.worker.generation
+        evidence.state = vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        evidence.calibration_view = "frame_grid"
+        token = "live-calibration-transport-test"
+>       listener = await serve(
+            runtime,
+            {("controller", identity.controller.generation): token},
+            runtime.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:483: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:24:07.255373 7222055 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_controller_communication.py::test_authenticated_live_calibration_update_transport_and_exact_receipt
+1 failed, 4 deselected in 0.73s

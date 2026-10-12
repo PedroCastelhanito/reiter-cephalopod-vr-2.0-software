@@ -17,7 +17,7 @@ class ManagedDashboardWindow(DashboardWindow):
         super().__init__(sample=sample, settings=settings)
         self._close_after_save = False
 
-    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         if event is None:
             return
         if self._close_after_save:

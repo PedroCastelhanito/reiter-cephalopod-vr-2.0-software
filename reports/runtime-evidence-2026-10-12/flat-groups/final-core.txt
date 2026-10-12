@@ -1,0 +1,41 @@
+............F                                                            [100%]
+=================================== FAILURES ===================================
+______________ test_flat_group_initial_trials_and_legacy_imports _______________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x117b1f490>
+
+    def test_flat_group_initial_trials_and_legacy_imports(app):
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.visual_stimulus.config.models.program_model import Epoch, Group
+    
+        window = DashboardWindow(sample=True)
+        ReviewControls(window)
+        window.show()
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        assert all(isinstance(n, Group) for n in editor.program.sequence)
+        assert all(isinstance(n, Epoch) for n in editor.program.sequence[0].body)
+        before = editor.program
+        editor.edit_epoch("add")
+        assert editor.program == before
+        editor.timeline.context_selected.emit(((0,),))
+        editor.timeline.setFocus()
+        app.processEvents()
+        QTest.keyClick(editor.timeline, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
+>       assert len(editor.program.sequence) == 2
+E       AssertionError: assert 1 == 2
+E        +  where 1 = len((Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None,..._label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),))
+E        +    where (Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None,..._label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),) = Program(format_version=2, assets=(), instances=(Instance(instance_id='flow', family='texture'),), scenes=(Scene(scene_...label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),)).sequence
+E        +      where Program(format_version=2, assets=(), instances=(Instance(instance_id='flow', family='texture'),), scenes=(Scene(scene_...label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),)) = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x117768820>.program
+
+tests/gui/test_dashboard.py:13059: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_flat_group_initial_trials_and_legacy_imports
+1 failed, 12 passed, 394 deselected in 10.20s

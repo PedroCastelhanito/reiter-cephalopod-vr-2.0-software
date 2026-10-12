@@ -1,0 +1,50 @@
+............F                                                            [100%]
+=================================== FAILURES ===================================
+_______ test_grouped_timeline_large_repeat_and_visible_paint_are_bounded _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x105813d90>
+app = <PyQt6.QtWidgets.QApplication object at 0x10b9d6830>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x105c5b050>
+
+    def test_grouped_timeline_large_repeat_and_visible_paint_are_bounded(
+        window, app, monkeypatch
+    ):
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.visual_stimulus.compiler import expansion
+    
+        program, _ = make_group(review_program(), (), 0, 1, 50_000, False)
+        editor = window.protocol.editor
+        editor.set_program(program)
+        monkeypatch.setattr(
+            expansion,
+            "expand_program",
+            lambda *a, **k: pytest.fail("Timeline expanded repetitions"),
+        )
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        assert len(editor.timeline.nodes) == len(editor.hierarchy.contents.nodes) == 2
+        assert "100,001 epochs" in editor.timeline.summary()
+        source = review_program()
+        many = source.model_copy(
+            update={
+                "sequence": tuple(
+                    source.sequence[0].model_copy(update={"epoch_id": f"Epoch_{i}"})
+                    for i in range(5000)
+                )
+            }
+        )
+        # No backend preparation, image loading or occurrence expansion is needed to paint.
+        timeline = editor.timeline
+        timeline.set_program(many, 4999)
+        timeline.resize(400, timeline.height())
+        timeline.reveal_selection()
+        timeline.grab()
+        assert len(timeline.hits) <= 4
+>       assert any(i == 4999 for _, i, _, _ in timeline.hits)
+E       assert False
+E        +  where False = any(<generator object test_grouped_timeline_large_repeat_and_visible_paint_are_bounded.<locals>.<genexpr> at 0x10b736020>)
+
+tests/gui/test_dashboard.py:12870: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_grouped_timeline_large_repeat_and_visible_paint_are_bounded
+1 failed, 12 passed, 392 deselected in 24.70s

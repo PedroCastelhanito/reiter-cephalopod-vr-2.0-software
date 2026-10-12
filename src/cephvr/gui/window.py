@@ -143,11 +143,11 @@ class DashboardWindow(QMainWindow):
         self.navigation.idClicked.connect(self.select_page)
         self.apply_view(DashboardView())
 
-    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         self.tracking.annotation.close()
         super().closeEvent(event)
 
-    def customEvent(self, event: QEvent | None) -> None:  # noqa: N802
+    def customEvent(self, event: QEvent | None) -> None:
         if isinstance(event, StatusEvent):
             self.dashboard.log_console.appendPlainText(event.text)
         else:
@@ -175,18 +175,22 @@ class DashboardWindow(QMainWindow):
             return
         editor = self.protocol.editor
         projectors = self.devices.projectors
-        geometry = PreviewGeometry.from_drafts(
-            projectors.rig_editor.dimensions(),
-            projectors.screen_editor.drafts,
-            {
-                projectors.assignments[key]: (rect.width(), rect.height())
-                for key, (_, rect) in zip(
-                    projectors.keys, projectors.diagram.outputs, strict=True
-                )
-                if projectors.assignments.get(key) in editor.timeline.screens
-            },
-        )
+        resolutions = {
+            projectors.assignments[key]: (rect.width(), rect.height())
+            for key, (_, rect) in zip(
+                projectors.keys, projectors.diagram.outputs, strict=True
+            )
+            if projectors.assignments.get(key) in editor.timeline.screens
+        }
         try:
+            geometry = PreviewGeometry.from_drafts(
+                projectors.rig_editor.dimensions(),
+                projectors.screen_editor.drafts,
+                resolutions,
+                projectors.timing.preview_overlays(
+                    resolutions, projectors.pulse_face()
+                ),
+            )
             self.trial_preview = TrialPreview(
                 editor.program,
                 editor.timeline.screens,

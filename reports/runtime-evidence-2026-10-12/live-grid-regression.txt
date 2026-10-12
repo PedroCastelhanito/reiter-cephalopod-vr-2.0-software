@@ -1,0 +1,125 @@
+........F...............................                                 [100%]
+=================================== FAILURES ===================================
+________ test_calibration_identity_profiles_bind_unique_native_monitors ________
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1612/test_calibration_identity_prof0')
+
+    def test_calibration_identity_profiles_bind_unique_native_monitors(tmp_path):
+        from cephvr.gui.calibration_profile import (
+            AssignedDisplay,
+            MonitorBinding,
+            diagnostic_display_profile,
+            write_diagnostic_bundle,
+        )
+        from cephvr.gui.projector_geometry import FACES
+    
+        values = {
+            "rig.width": 120,
+            "rig.depth": 166,
+            "rig.height": 110,
+            "rig.subject_x": 60,
+            "rig.subject_y": 93,
+            "rig.subject_z": 53,
+        }
+        for face in FACES:
+            values[f"screens.{face}.width"] = 90
+            values[f"screens.{face}.height"] = 80
+            if face != "Right":
+                values[f"screens.{face}.subject_distance"] = 50
+        calibration = {"format": "cephvr-rig-calibration", "version": 2, "values": values}
+        assignments = tuple(
+            AssignedDisplay(face, index * 1280, 0, 1280, 720, True)
+            for index, face in enumerate(FACES)
+        )
+        monitors = tuple(
+            MonitorBinding(f"interface-{index}", index * 1280, 0, 1280, 720, 60, 8)
+            for index in range(4)
+        )
+        zones = [dict(face="Front", x=10, y=20, width=100, height=80)]
+        profile, meshes = diagnostic_display_profile(
+            calibration, assignments, monitors, blackout_zones=zones
+        )
+        assert profile.outputs[0].blackout_zones[0].x == 10
+        with pytest.raises(ValueError, match="Blackout zone exceeds"):
+            diagnostic_display_profile(
+                calibration,
+                assignments,
+                monitors,
+                blackout_zones=[dict(face="Front", x=0, y=0, width=2000, height=80)],
+            )
+        assert {output.device_identity for output in profile.outputs} == {
+            monitor.interface for monitor in monitors
+        }
+        assert profile.photometric_mode == "uncalibrated"
+        assert profile.presentation_mode == "all_outputs_vsync"
+        assert profile.geometry.near_mm < 1 < profile.geometry.far_mm
+        assert set(meshes) == {face.lower() for face in FACES}
+        assert all(mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in meshes.values())
+        assert all(mesh.orientation == "preserving" for mesh in meshes.values())
+    
+        bars, bar_meshes = diagnostic_display_profile(
+            calibration, assignments, monitors, view="reference_bars"
+        )
+        assert bars.calibration_view == "reference_bars"
+        assert all(
+            mesh.vertices[0].uv == mesh.vertices[0].xy for mesh in bar_meshes.values()
+        )
+        with pytest.raises(ValueError, match="measure both reference bars"):
+            diagnostic_display_profile(
+                calibration, assignments, monitors, view="frame_grid"
+            )
+        measured_values = dict(values)
+        for face in FACES:
+            measured_values.update(
+                {
+                    f"screens.{face}.reference_width_px": 1280,
+                    f"screens.{face}.reference_height_px": 720,
+                    f"screens.{face}.reference_x_px": 200,
+                    f"screens.{face}.reference_y_px": 100,
+                    f"screens.{face}.reference_x_mm": 80,
+                    f"screens.{face}.reference_y_mm": 50,
+                }
+            )
+        measured_calibration = dict(calibration, values=measured_values)
+        grid, grid_meshes = diagnostic_display_profile(
+            measured_calibration, assignments, monitors, view="frame_grid"
+        )
+        assert grid.calibration_view == "frame_grid"
+        assert grid_meshes["front"].vertices[0].xy == pytest.approx(
+            (0.5 - 90 / 512 / 2, 0.5 - 80 / 360 / 2)
+        )
+        measured_values["screens.Front.throw"] = 1.5
+        assert diagnostic_display_profile(
+            measured_calibration, assignments, monitors, view="frame_grid"
+        ) == (grid, grid_meshes)
+        measured_values["screens.Front.reference_width_px"] = 1920
+        with pytest.raises(ValueError, match="assigned output mode"):
+            diagnostic_display_profile(
+                measured_calibration, assignments, monitors, view="frame_grid"
+            )
+        # Stale measurements and invalid manual correction cannot block remeasurement.
+        measured_values["screens.Front.scale_u"] = 100
+        remeasured, remeasurement_meshes = diagnostic_display_profile(
+            measured_calibration, assignments, monitors, view="reference_bars"
+        )
+        assert remeasurement_meshes == bar_meshes
+        assert remeasured.calibration_view == "reference_bars"
+        assert all(
+            o.reference_bars.x_length_px == 200 and o.reference_bars.y_length_px == 100
+            for o in remeasured.outputs
+        )
+        values["screens.Front.scale_u"] = 0.8
+        values["screens.Front.offset_x"] = 40
+        values["screens.Left.flip_x"] = True
+        adjusted, adjusted_meshes = diagnostic_display_profile(
+            calibration, assignments, monitors
+        )
+>       assert adjusted == profile
+E       assert DisplayProfil...de_patch=None) == DisplayProfil...de_patch=None)
+E         
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:8828: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_calibration_identity_profiles_bind_unique_native_monitors
+1 failed, 39 passed, 451 deselected in 11.67s

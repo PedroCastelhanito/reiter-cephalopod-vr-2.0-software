@@ -73,7 +73,7 @@ def build_recording_settings(
 
     depth = _recording_depth(selected, resolved)
     queue_frames = _queue_capacity(settings, nominal_frame_rate_hz)
-    result = acq.RecordingSettings(
+    return acq.RecordingSettings(
         ffmpeg_executable=_resolve_executable("ffmpeg", executable_lookup),
         ffprobe_executable=_resolve_executable("ffprobe", executable_lookup),
         ffmpeg_args=selected.ffmpeg_args.values,
@@ -88,7 +88,6 @@ def build_recording_settings(
         recording_queue_frames=queue_frames,
         recording_bit_depth=depth,
     )
-    return result
 
 
 def _selected_camera(

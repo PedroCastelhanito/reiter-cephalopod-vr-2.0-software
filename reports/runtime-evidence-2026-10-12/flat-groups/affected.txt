@@ -1,0 +1,509 @@
+........F...F.F.F...FF........FF........F.....F.F..........              [100%]
+=================================== FAILURES ===================================
+_______________ test_protocol_program_validation_and_atomic_save _______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x114baedd0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1656/test_protocol_program_validati0')
+
+    def test_protocol_program_validation_and_atomic_save(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        import json
+    
+        source = {
+            "format_version": 2,
+            "assets": [],
+            "instances": [],
+            "input_channels": [],
+            "scenes": [
+                {
+                    "scene_id": "blank",
+                    "background_linear_rgb": [0.0, 0.0, 0.0],
+                    "arena_instance_id": None,
+                    "layer_instance_ids": [],
+                }
+            ],
+            "duration": {"kind": "explicit_epochs"},
+            "sequence": [
+                {
+                    "kind": "epoch",
+                    "epoch_id": "first",
+                    "scene_id": "blank",
+                    "duration": {"kind": "fixed", "duration": {"seconds": "60"}},
+                    "settings": [],
+                }
+            ],
+        }
+        panel = window.protocol
+        path = tmp_path / "program.json"
+        path.write_text(json.dumps(source))
+        panel.load_program(str(path))
+        assert not panel.message.isVisible()
+        path = tmp_path / "program.json"
+        panel.save_program(str(path))
+        source["sequence"][0]["batch_label"] = ""
+>       assert json.loads(path.read_text()) == source
+E       AssertionError: assert {'format_vers...s': []}], ...} == {'format_vers...els': [], ...}
+E         
+E         Omitting 6 identical items, use -vv to show
+E         Differing items:
+E         {'sequence': [{'kind': 'epoch', 'epoch_id': 'first', 'batch_label': '', 'batch_id': None, ...}]} != {'sequence': [{'kind': 'epoch', 'epoch_id': 'first', 'scene_id': 'blank', 'duration': {'kind': 'fixed', 'duration': {'seconds': '60'}}, ...}]}
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:6119: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____________________ test_protocol_epoch_structure_actions _____________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x300f185e0>
+
+    def test_protocol_epoch_structure_actions(window: DashboardWindow) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_epoch_button.menu().actions()[0].trigger()
+>       assert len(editor.program.sequence) == 2
+E       AssertionError: assert 1 == 2
+E        +  where 1 = len((Epoch(kind='epoch', epoch_id='Epoch_1', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=()),))
+E        +    where (Epoch(kind='epoch', epoch_id='Epoch_1', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=()),) = Program(format_version=2, assets=(), instances=(), scenes=(Scene(scene_id='blank', background_linear_rgb=(0.0, 0.0, 0....h_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=()),)).sequence
+E        +      where Program(format_version=2, assets=(), instances=(), scenes=(Scene(scene_id='blank', background_linear_rgb=(0.0, 0.0, 0....h_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=()),)) = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x300f8aef0>.program
+
+tests/gui/test_dashboard.py:6514: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+______ test_group_dialog_rejects_bad_values_and_closes_on_authority_loss _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x117accaf0>
+
+    def test_group_dialog_rejects_bad_values_and_closes_on_authority_loss(
+        window: DashboardWindow,
+    ) -> None:
+        editor = window.protocol.editor
+        original = editor.program
+        editor.open_group_dialog()
+        dialog = editor.group_dialog
+>       assert dialog is not None
+E       assert None is not None
+
+tests/gui/test_dashboard.py:6734: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+____________ test_batch_create_variations_preview_insert_and_reload ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x117a4c670>
+app = <PyQt6.QtWidgets.QApplication object at 0x10249cee0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1656/test_batch_create_variations_p0')
+
+    def test_batch_create_variations_preview_insert_and_reload(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_batch import epoch_paths
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import motion_numbers
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        editor = window.protocol.editor
+        window.page_buttons[1].click()
+        editor.set_program(blank_program())
+        editor.timeline.set_screens(("Left", "Right"))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "tile.png"
+        assert image.save(str(path))
+        create = editor.create_batch
+        create.composer.set_asset_root(str(tmp_path))
+        editor.modes.setCurrentIndex(0)
+        original = editor.program
+        create.composer.add_file("Texture", str(path), "Left")
+        create.composer.duration.setText("00:00:02.000000001")
+        create.vary.setChecked(True)
+        create.add_variation()
+        create.rows[0].method.setCurrentIndex(1)
+        create.rows[0].values.setText("0, 1, 0.25")
+        create.refresh_preview()
+        assert create.add_button.isEnabled(), create.summary.text()
+        assert create.summary.text().startswith("5 epochs")
+        create.rows[0].method.setCurrentIndex(0)
+        create.rows[0].values.setText("10, 20, 40")
+        create.add_variation()
+        create.rows[1].parameter.setCurrentIndex(
+            create.rows[1].parameter.findData("Direction")
+        )
+        create.rows[1].values.setText("0, 180")
+        create.refresh_preview()
+        assert create.add_button.isEnabled()
+        assert create.notice.text()
+        assert create.notice.dialog is None
+        assert editor.program == original
+        create.rows[0].values.setText("10, 10, 20, 20, 40, 40")
+        create.rows[1].values.setText("0, 180, 0, 180, 0, 180")
+        create.repetitions.setText("2")
+        create.refresh_preview()
+        assert create.add_button.isEnabled(), create.summary.text()
+        assert create.summary.text().startswith("12 epochs")
+        assert editor.program == original
+        create.generate()
+        program = editor.program
+>       assert len(epoch_paths(program)) == 7
+E       AssertionError: assert 1 == 7
+E        +  where 1 = len(((0,),))
+E        +    where ((0,),) = <function epoch_paths at 0x114612b60>(Program(format_version=2, assets=(), instances=(), scenes=(Scene(scene_id='blank', background_linear_rgb=(0.0, 0.0, 0....h_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='60')), settings=()),)))
+
+tests/gui/test_dashboard.py:7240: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+___________ test_timeline_overview_colors_and_current_epoch_details ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x310e809d0>
+app = <PyQt6.QtWidgets.QApplication object at 0x10249cee0>
+
+    def test_timeline_overview_colors_and_current_epoch_details(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.timeline_details import stimulus_color, stimulus_key
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        program = review_program()
+        editor.set_program(program)
+        timeline = editor.timeline
+        timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+        app.processEvents()
+        assert editor.trial_card.width() == 208
+        overview = [(rect, i) for rect, i, face, _ in timeline.hits if not face]
+        assert overview[0][0].left() == 1
+        assert overview[-1][0].right() <= timeline.width()
+        assert len(timeline.hover_text) == len(timeline.nodes)  # Compact overview.
+        assert timeline.type_keys[0] == timeline.type_keys[2]
+        assert timeline.type_keys[0] != timeline.type_keys[1]
+        assert stimulus_color(timeline.type_keys[0]) != stimulus_color(
+            timeline.type_keys[1]
+        )
+        assert all(rows == [(-1, "Blank")] for _, rows in timeline.detail_rows())
+        bar = next(rect for rect, i, face, layer in timeline.hits if i == 1 and face == "")
+        QTest.mouseClick(timeline, Qt.MouseButton.LeftButton, pos=bar.center().toPoint())
+        app.processEvents()
+        assert timeline.index == 1 and editor.selected_paths == ((1,),)
+        rows = dict(timeline.detail_rows())
+        assert rows["Front"] == rows["Bottom"] == [(-1, "Blank")]
+        assert "Texture" in rows["Left"][0][1]
+        assert rows["Left"] == rows["Right"]
+        timeline.choose(2, Qt.KeyboardModifier.ShiftModifier)
+        assert editor.selected_paths == ((1,), (2,))
+        assert timeline.index == 2
+        assert all(rows == [(-1, "Blank")] for _, rows in timeline.detail_rows())
+>       assert editor.modes.tabText(0) == "Batch generate"
+E       AssertionError: assert 'Generate epochs' == 'Batch generate'
+E         
+E         - Batch generate
+E         + Generate epochs
+
+tests/gui/test_dashboard.py:7570: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____________ test_batch_tabs_preserve_drafts_apply_and_phase_lock _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x30a7c5f30>
+app = <PyQt6.QtWidgets.QApplication object at 0x10249cee0>
+
+    def test_batch_tabs_preserve_drafts_apply_and_phase_lock(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        original = editor.program
+        assert editor.modes.currentIndex() == 0
+        app.processEvents()
+>       assert editor.create_batch.isVisible() and not editor.batch_edit.isVisible()
+E       assert (False)
+E        +  where False = <built-in method isVisible of BatchCreate object at 0x310e84af0>()
+E        +    where <built-in method isVisible of BatchCreate object at 0x310e84af0> = <cephvr.gui.batch_create.BatchCreate object at 0x310e84af0>.isVisible
+E        +      where <cephvr.gui.batch_create.BatchCreate object at 0x310e84af0> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x310e82c20>.create_batch
+
+tests/gui/test_dashboard.py:7597: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________ test_generated_batch_label_survives_reload_and_targets_edits _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x30a81e3b0>
+app = <PyQt6.QtWidgets.QApplication object at 0x10249cee0>
+
+    def test_generated_batch_label_survives_reload_and_targets_edits(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.epoch_batch import epoch_paths
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        create = editor.create_batch
+        create.composer.batch_label.setText("Adaptation")
+        create.repetitions.setText("3")
+        original = editor.program
+        create.generate()
+        saved = parse_program_json(editor.program.model_dump_json(), max_bytes=1_048_576)
+        labelled = tuple(
+            p for p in epoch_paths(saved) if node_at(saved, p).batch_label == "Adaptation"
+        )
+>       assert labelled and len(epoch_paths(saved)) == 2
+E       assert (())
+
+tests/gui/test_dashboard.py:8047: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+________ test_label_insertion_repeats_batch_in_original_scope_and_undo _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x30a80fd90>
+app = <PyQt6.QtWidgets.QApplication object at 0x10249cee0>
+
+    def test_label_insertion_repeats_batch_in_original_scope_and_undo(window, app):
+        from cephvr.gui.batch_insertion import Insertion, insert_batch
+        from cephvr.gui.epoch_batch import epoch_paths
+        from cephvr.gui.program_editing import node_at, validate
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import make_group
+    
+        base = blank_program()
+        data = base.model_dump(mode="json")
+        first = data["sequence"][0]
+        data["sequence"] = [
+            dict(first, epoch_id="a", batch_label="Target"),
+            dict(first, epoch_id="b", batch_label="Other"),
+            dict(first, epoch_id="c", batch_label="Target"),
+        ]
+        original, _ = make_group(validate(data), (), 0, 1, 2, False, (), False)
+        batch = base.model_copy(
+            update={
+                "sequence": (base.sequence[0].model_copy(update={"batch_label": "Target"}),)
+            }
+        )
+        result, paths = insert_batch(
+            original, batch, (), Insertion("label", label="Target")
+        )
+        assert len(paths) == 2  # The newly inserted matching labels are not targeted again.
+        assert paths == ((0, 1), (2,))
+        assert result.sequence[0].repetitions == 2
+        assert len(result.sequence[0].body) == 3
+        assert len({node_at(result, p).epoch_id for p in epoch_paths(result)}) == 5
+        assert len(epoch_paths(original)) == 3
+        with pytest.raises(ValueError, match="label"):
+            insert_batch(original, batch, (), Insertion("label", label="Missing"))
+        editor = window.protocol.editor
+        editor.set_program(original)
+        create = editor.create_batch
+        create.insert.setCurrentIndex(create.insert.findData("label"))
+        create.target_label.setCurrentText("Target")
+>       assert not create.target_field.isHidden()
+E       assert not True
+E        +  where True = <built-in method isHidden of QWidget object at 0x310ef93f0>()
+E        +    where <built-in method isHidden of QWidget object at 0x310ef93f0> = <PyQt6.QtWidgets.QWidget object at 0x310ef93f0>.isHidden
+E        +      where <PyQt6.QtWidgets.QWidget object at 0x310ef93f0> = <cephvr.gui.batch_create.BatchCreate object at 0x17edc4ca0>.target_field
+
+tests/gui/test_dashboard.py:8459: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_timeline_epoch_shortcuts_and_keyboard_history ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x17ed35ea0>
+app = <PyQt6.QtWidgets.QApplication object at 0x10249cee0>
+
+    def test_timeline_epoch_shortcuts_and_keyboard_history(window, app):
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        original = editor.program
+        editor.timeline.setFocus()
+        app.processEvents()
+        QTest.keyClick(editor.timeline, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
+        duplicate = editor.program
+>       assert len(duplicate.sequence) == len(original.sequence) + 1
+E       AssertionError: assert 3 == (3 + 1)
+E        +  where 3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())))
+E        +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())) = Program(format_version=2, assets=(), instances=(Instance(instance_id='flow', family='texture'),), scenes=(Scene(scene_...ch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))).sequence
+E        +  and   3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())))
+E        +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed'...tch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=())) = Program(format_version=2, assets=(), instances=(Instance(instance_id='flow', family='texture'),), scenes=(Scene(scene_...ch_label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))).sequence
+
+tests/gui/test_dashboard.py:10181: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+_ test_batch_edit_parameters_match_generation_and_apply_family_options[Video-expected3] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x137ced120>
+app = <PyQt6.QtWidgets.QApplication object at 0x10249cee0>, preset = 'Video'
+expected = {'Asset', 'At end', 'Duration', 'Playback start'}
+
+    @pytest.mark.parametrize(
+        ("preset", "expected"),
+        (
+            ("Texture", {"Duration", "Asset", "Speed", "Direction", "Rotation"}),
+            ("Image", {"Duration", "Asset", "Fit", "Speed", "Direction"}),
+            (
+                "Looming image",
+                {"Duration", "Asset", "Start size", "End size", "Growth duration"},
+            ),
+            ("Video", {"Duration", "Asset", "Playback start", "At end"}),
+            ("3D arena", {"Duration", "Asset", "Longitudinal", "Lateral", "Angular"}),
+        ),
+    )
+    def test_batch_edit_parameters_match_generation_and_apply_family_options(
+        window, app, preset, expected
+    ):
+        from cephvr.gui.epoch_batch import parameter_value
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_nodes import edit_epoch
+        from cephvr.gui.stimulus_presets import add_stimulus
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        program = add_stimulus(
+            blank_program(), 0, preset, () if preset == "3D arena" else ("Left",)
+        )
+        program, _ = edit_epoch(program, 0, "duplicate")
+        editor.set_program(program)
+        panel = editor.batch_edit
+        panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
+        panel.targets.filter.setCurrentIndex(2)
+        panel.targets.index.setText("1")
+        panel.targets.index.textEdited.emit("1")
+        assert {
+            panel.parameter.itemText(i) for i in range(panel.parameter.count())
+        } == expected
+        assert panel.parameter.findText("Opacity") < 0
+        assert panel.parameter.findText("Angular speed") < 0
+        if preset == "Video":
+            panel.parameter.setCurrentText("At end")
+            row = panel.rows["Left"]
+>           assert row.fit.isVisible() and row.value.isHidden()
+E           assert (False)
+E            +  where False = <built-in method isVisible of SelectionBox object at 0x117adab90>()
+E            +    where <built-in method isVisible of SelectionBox object at 0x117adab90> = <cephvr.gui.components.SelectionBox object at 0x117adab90>.isVisible
+E            +      where <cephvr.gui.components.SelectionBox object at 0x117adab90> = <cephvr.gui.batch_edit_rows.ProjectorEditRow object at 0x117ada9e0>.fit
+
+tests/gui/test_dashboard.py:10919: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_trial_shuffle_preserves_groups_selection_and_history ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x310eec280>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x17e516810>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1656/test_trial_shuffle_preserves_g0')
+
+    def test_trial_shuffle_preserves_groups_selection_and_history(
+        window, monkeypatch, tmp_path
+    ):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        monkeypatch.setattr(
+            "cephvr.gui.protocol_nodes.SystemRandom.shuffle",
+            lambda self, order: order.reverse(),
+        )
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        editor.edit_epoch("duplicate")
+        editor.edit_epoch("duplicate")
+>       original, _ = make_group(
+            editor.program,
+            (),
+            0,
+            1,
+            3,
+            False,
+            (Variation((1,), 0, "Speed", (10.0, 20.0)),),
+        )
+
+tests/gui/test_dashboard.py:12505: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+program = Program(format_version=2, assets=(Asset(asset_id='stimulus_1', logical_path='texture.png', color_override=None, profil...linear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),)),))
+scope = (), first = 0, last = 1, repetitions = 3, shuffle = False
+rules = (Variation(path=(1,), layer=0, parameter='Speed', values=(10.0, 20.0)),)
+combinations = False
+
+    def make_group(
+        program: Program,
+        scope: tuple[int, ...],
+        first: int,
+        last: int,
+        repetitions: int,
+        shuffle: bool,
+        rules: tuple[Variation, ...] = (),
+        combinations: bool = False,
+    ) -> tuple[Program, int]:
+        data = program.model_dump(mode="json")
+        sequence = data_nodes(data, scope)
+        if not 0 <= first <= last < len(sequence):
+>           raise ValueError("Select a valid consecutive range")
+E           ValueError: Select a valid consecutive range
+
+src/cephvr/gui/protocol_groups.py:135: ValueError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_protocol_program_validation_and_atomic_save
+FAILED tests/gui/test_dashboard.py::test_protocol_epoch_structure_actions - A...
+FAILED tests/gui/test_dashboard.py::test_group_dialog_rejects_bad_values_and_closes_on_authority_loss
+FAILED tests/gui/test_dashboard.py::test_batch_create_variations_preview_insert_and_reload
+FAILED tests/gui/test_dashboard.py::test_timeline_overview_colors_and_current_epoch_details
+FAILED tests/gui/test_dashboard.py::test_batch_tabs_preserve_drafts_apply_and_phase_lock
+FAILED tests/gui/test_dashboard.py::test_generated_batch_label_survives_reload_and_targets_edits
+FAILED tests/gui/test_dashboard.py::test_label_insertion_repeats_batch_in_original_scope_and_undo
+FAILED tests/gui/test_dashboard.py::test_timeline_epoch_shortcuts_and_keyboard_history
+FAILED tests/gui/test_dashboard.py::test_batch_edit_parameters_match_generation_and_apply_family_options[Video-expected3]
+FAILED tests/gui/test_dashboard.py::test_trial_shuffle_preserves_groups_selection_and_history
+11 failed, 48 passed, 347 deselected in 62.36s (0:01:02)

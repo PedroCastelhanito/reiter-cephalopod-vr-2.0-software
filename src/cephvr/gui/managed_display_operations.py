@@ -167,6 +167,43 @@ def close_display_calibration_request(
     )
 
 
+def update_display_calibration_request(
+    client: HeadlessClient,
+    *,
+    expected_revision: int,
+    diagnostic_id: str,
+    adjustment_sequence: int,
+    adjustments: tuple[bytes, ...],
+) -> rpc.UpdateDisplayCalibrationRequest:
+    from cephvr.visual_stimulus.config.calibration_adjustments import (
+        validated_adjustments,
+    )
+    from cephvr.visual_stimulus.v1 import messages_pb2 as messages
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    close = close_display_calibration_request(
+        client, expected_revision=expected_revision, diagnostic_id=diagnostic_id
+    )
+    evidence = client.snapshot.visual_stimulus_display.calibration
+    if (
+        evidence.state != vp.DISPLAY_CALIBRATION_STATE_ACTIVE
+        or evidence.calibration_view != "frame_grid"
+        or adjustment_sequence <= evidence.adjustment_sequence
+    ):
+        raise ClientError("Live adjustment targets a stale or inactive grid")
+    values = tuple(
+        messages.DisplayCalibrationAdjustment.FromString(raw) for raw in adjustments
+    )
+    validated_adjustments((item.mapping_id, item.destination_xy) for item in values)
+    return rpc.UpdateDisplayCalibrationRequest(
+        command=close.command,
+        expected_configuration_revision=expected_revision,
+        diagnostic_id=diagnostic_id,
+        adjustment_sequence=adjustment_sequence,
+        adjustments=values,
+    )
+
+
 def validate_inventory_snapshot(
     snapshot: rpc.SpikeGLXInventorySnapshot, expected_revision: int
 ) -> None:

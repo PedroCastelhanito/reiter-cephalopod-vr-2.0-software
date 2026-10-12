@@ -320,6 +320,7 @@ class _GLResource:
 
     def write(self, _data: bytes) -> None:
         assert self.gl.current_context == self.context_id
+        self.last_write = _data
 
 
 class _Uniform:
@@ -348,6 +349,8 @@ class _GLFramebuffer(_GLResource):
 
     def clear(self, *_args, **_kwargs) -> None:
         assert self.gl.current_context == self.context_id
+        if "viewport" in _kwargs:
+            self.gl.events.append(("mask", self.context_id, _args, _kwargs["viewport"]))
 
 
 class _GLVertexArray(_GLResource):
@@ -416,6 +419,8 @@ class _FakeContext:
 
     def clear(self, *_args, **_kwargs) -> None:
         self._assert_current()
+        if "viewport" in _kwargs:
+            self.gl.events.append(("bar", self.context_id, _args, _kwargs["viewport"]))
 
     def copy_framebuffer(self, _destination, _source) -> None:
         self._assert_current()
@@ -471,7 +476,7 @@ def _geometric_profiles(display: DisplayProfile) -> dict[str, object]:
         profiles[mapping.mapping_id] = GeometricProfile.model_validate(
             {
                 "format_version": 1,
-                "calibration_id": "calibration-test",
+                "calibration_id": "diagnostic_test",
                 "mapping_id": mapping.mapping_id,
                 "surface_id": mapping.surface_id,
                 "output_id": output.output_id,
@@ -499,8 +504,8 @@ def _geometric_profiles(display: DisplayProfile) -> dict[str, object]:
     return profiles
 
 
-def _native_calibration_inputs(gl: _FakeGL):
-    display = _two_output_display()
+def _native_calibration_inputs(gl: _FakeGL, display: DisplayProfile | None = None):
+    display = display or _two_output_display()
     outputs = {}
     for output in display.active_outputs:
         context_id = output.output_id
@@ -539,8 +544,12 @@ def _install_fake_gl_binding(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "OpenGL", opengl)
 
 
+@pytest.mark.parametrize("configured_bars", [False, True])
+@pytest.mark.parametrize("calibration_view", ["reference_bars", "frame_grid"])
 def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
     monkeypatch: pytest.MonkeyPatch,
+    configured_bars: bool,
+    calibration_view: str,
 ) -> None:
     _install_fake_gl_binding(monkeypatch)
     gl = _FakeGL()
@@ -552,7 +561,27 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
         TRIANGLES=5,
         TRIANGLE_STRIP=6,
     )
-    display, prepared, outputs = _native_calibration_inputs(gl)
+    display = _two_output_display().model_copy(
+        update={"calibration_view": calibration_view}
+    )
+    masked = display.model_dump(mode="json")
+    for output in masked["outputs"]:
+        output["blackout_zones"] = [dict(x=5, y=6, width=4, height=4)]
+    display = parse_display_json(json.dumps(masked), max_bytes=1_000_000)
+    if configured_bars:
+        raw = display.model_dump(mode="json")
+        for output in raw["outputs"]:
+            output["reference_bars"] = dict(
+                x_length_px=max(1, output["width_px"] // 3),
+                y_length_px=max(1, output["height_px"] // 5),
+            )
+        display = parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+        raw["outputs"][0]["reference_bars"]["x_length_px"] = (
+            raw["outputs"][0]["width_px"] + 1
+        )
+        with pytest.raises(ValueError, match="exceed"):
+            parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+    display, prepared, outputs = _native_calibration_inputs(gl, display)
     owner = DisplayCalibrationRenderer(
         outputs,
         moderngl,
@@ -563,8 +592,29 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
     owner.present(display, prepared)
 
     draws = [event for event in gl.events if event[0] == "draw"]
-    assert {event[2] for event in draws} == {"arena", "warp", "output"}
-    for output_id in outputs:
+    masks = [event for event in gl.events if event[0] == "mask"]
+    assert len(masks) == (0 if calibration_view == "reference_bars" else len(outputs))
+    for mask in masks:
+        assert mask[2:] == ((0.0, 0.0, 0.0), (5, 6, 4, 4))
+        output_draw = next(e for e in draws if e[1:3] == (mask[1], "output"))
+        assert gl.events.index(mask) < gl.events.index(output_draw)
+    assert all(output.context.scissor is None for output in outputs.values())
+    if configured_bars and calibration_view == "reference_bars":
+        for output_id in outputs:
+            bars = [event for event in gl.events if event[:2] == ("bar", output_id)]
+            configured = next(
+                o for o in display.active_outputs if o.output_id == output_id
+            ).reference_bars
+            assert configured is not None
+            assert bars[2][3][2] == configured.x_length_px
+            assert bars[3][3][3] == configured.y_length_px
+    assert {event[2] for event in draws} == (
+        set() if calibration_view == "reference_bars" else {"arena", "warp", "output"}
+    )
+    assert bool([e for e in gl.events if e[0] == "bar"]) == (
+        calibration_view == "reference_bars"
+    )
+    for output_id in () if calibration_view == "reference_bars" else outputs:
         output_draws = [event for event in draws if event[1] == output_id]
         assert any(event[2] == "arena" and "fbo:" in event[3] for event in output_draws)
         assert any(event[2] == "warp" and "fbo:" in event[3] for event in output_draws)
@@ -576,6 +626,79 @@ def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
         for resource in gl.resources
         if resource.label.startswith("vao:")
     } == set(outputs)
+
+    if calibration_view == "frame_grid":
+        import struct
+
+        allocation_count = len(gl.resources)
+        owner.update(
+            {
+                m.mapping_id: ((0.1, 0.2), (0.8, 0.2), (0.1, 0.9), (0.8, 0.9))
+                for m in display.active_mappings[:4]
+            }
+        )
+        owner.present(display, prepared)
+        assert len(gl.resources) == allocation_count
+        for mapping in display.active_mappings[:4]:
+            data = (
+                owner.frames[mapping.output_id]
+                .warp_vertex_buffers[mapping.mapping_id]
+                .last_write
+            )
+            expected_x = (
+                2
+                * (mapping.viewport.x + 0.1 * mapping.viewport.width)
+                / owner.frames[mapping.output_id].width
+                - 1
+            )
+            assert struct.unpack("16f", data)[2] == pytest.approx(expected_x)
+        first_mapping = display.active_mappings[0]
+        first_buffer = owner.frames[first_mapping.output_id].warp_vertex_buffers[
+            first_mapping.mapping_id
+        ]
+        last_valid = first_buffer.last_write
+        with pytest.raises(ValueError, match="unknown"):
+            owner.update(
+                {
+                    first_mapping.mapping_id: (
+                        (0.2, 0.2),
+                        (0.8, 0.2),
+                        (0.2, 0.8),
+                        (0.8, 0.8),
+                    ),
+                    "unknown": ((0, 0), (1, 0), (0, 1), (1, 1)),
+                }
+            )
+        assert first_buffer.last_write == last_valid
+        with pytest.raises(ValueError, match="area tolerance"):
+            owner.update(
+                {
+                    first_mapping.mapping_id: (
+                        (0.1, 0.1),
+                        (0.100000000001, 0.1),
+                        (0.1, 0.9),
+                        (0.100000000001, 0.9),
+                    )
+                }
+            )
+        assert first_buffer.last_write == last_valid
+        with pytest.raises(ValueError, match="unknown"):
+            owner.update({"unknown": ((0, 0), (1, 0), (0, 1), (1, 1))})
+        with pytest.raises(ValueError):
+            owner.update(
+                {
+                    display.active_mappings[0].mapping_id: (
+                        (-1, 0),
+                        (1, 0),
+                        (-1, 1),
+                        (1, 1),
+                    )
+                }
+            )
+        assert len(gl.resources) == allocation_count
+    else:
+        with pytest.raises(ValueError, match="frame/grid"):
+            owner.update({})
 
     assert owner.release() == ()
     assert all(

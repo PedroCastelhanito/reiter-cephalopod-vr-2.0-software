@@ -1,0 +1,122 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+______________ test_arena_axis_gains_roundtrip_and_editor_spacing ______________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10e1b9510>
+app = <PyQt6.QtWidgets.QApplication object at 0x1074253f0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1686/test_arena_axis_gains_roundtri0')
+
+    def test_arena_axis_gains_roundtrip_and_editor_spacing(window, app, tmp_path):
+        import json
+    
+        from cephvr.gui.arena_movement import ArenaMovement
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor, generate=True)
+        batch = editor.subgroup
+        composer = batch.composer
+        composer.set_asset_root(str(tmp_path))
+        composer.mode.setCurrentIndex(1)
+        path = tmp_path / "arena.glb"
+        path.touch()
+        row = composer.rows[""]
+        row.parameters.set_media_path(next(iter(row.parameters.asset_forms)), str(path))
+        app.processEvents()
+        assert row.stimulus.isHidden()
+        assert "Stimulus" not in row.signature
+        assert (
+            composer.mode.mapTo(composer, QPoint()).y()
+            == composer.duration.mapTo(composer, QPoint()).y()
+        )
+>       assert batch.repetitions.isHidden()
+E       assert False
+E        +  where False = <built-in method isHidden of QLineEdit object at 0x10e2c8040>()
+E        +    where <built-in method isHidden of QLineEdit object at 0x10e2c8040> = <PyQt6.QtWidgets.QLineEdit object at 0x10e2c8040>.isHidden
+E        +      where <PyQt6.QtWidgets.QLineEdit object at 0x10e2c8040> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x10e2b5c60>.repetitions
+
+tests/gui/test_dashboard.py:7673: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 84 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____ test_visible_layer_selector_and_opacity_preserve_prepared_placement ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x11ecfd990>
+app = <PyQt6.QtWidgets.QApplication object at 0x1074253f0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1686/test_visible_layer_selector_an0')
+
+    def test_visible_layer_selector_and_opacity_preserve_prepared_placement(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.stimulus_form import ValueEditor
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor, generate=True)
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front",))
+        composer.set_asset_root(str(tmp_path))
+        path = tmp_path / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Looming image", str(path), "Front")
+        app.processEvents()
+        row = composer.rows["Front"]
+        assert row.layer.count() == 2
+        assert row.layer.isVisible() and row.layer.isEnabled()
+        assert "Layer" in row.signature
+        row.layer.setCurrentIndex(0)
+        app.processEvents()
+        assert row.stimulus.currentText() == "Texture"
+        before = composer.program.sequence[0].settings[0].model_dump(mode="json")
+        assert not hasattr(row.parameters, "tabs")
+        assert not any(
+            isinstance(f, ValueEditor) and "opacity" in f.children_by_key
+            for f in row.parameters.forms
+        )
+        row.parameters.retain.setChecked(False)
+        assert row.parameters.apply()
+        after = composer.program.sequence[0].settings[0].model_dump(mode="json")
+        assert after["opacity"] == before["opacity"]
+        assert all(
+            after[key] == before[key] for key in ("space", "initial", "width", "height")
+        )
+        row.layer.setCurrentIndex(1)
+        app.processEvents()
+        assert row.stimulus.currentText() == "Looming"
+        assert row.parameters.layer_index == row.indices[1]
+        from PyQt6.QtWidgets import QScrollArea
+    
+        window.resize(720, 800)
+        for _ in range(4):
+            app.processEvents()
+        scroll = next(
+            s for s in window.findChildren(QScrollArea) if s.isAncestorOf(composer)
+        )
+        assert scroll.horizontalScrollBar().maximum() == 0
+        batch = editor.subgroup
+        assert not batch.insert.isVisible()
+>       assert batch.repetitions.isHidden()
+E       assert False
+E        +  where False = <built-in method isHidden of QLineEdit object at 0x12f00f400>()
+E        +    where <built-in method isHidden of QLineEdit object at 0x12f00f400> = <PyQt6.QtWidgets.QLineEdit object at 0x12f00f400>.isHidden
+E        +      where <PyQt6.QtWidgets.QLineEdit object at 0x12f00f400> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x12f00d090>.repetitions
+
+tests/gui/test_dashboard.py:8100: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_arena_axis_gains_roundtrip_and_editor_spacing
+FAILED tests/gui/test_dashboard.py::test_visible_layer_selector_and_opacity_preserve_prepared_placement
+2 failed, 392 deselected in 4.65s

@@ -60,6 +60,21 @@ semantics fail Setup. Release decoder/importer consumers before closing protecte
 
 ## Geometry and per-output presentation
 
+The protected DisplayProfile includes `calibration_view`, either `reference_bars`
+or `frame_grid` (default). It affects only V01 sessionless calibration. Reference
+view clears the native device framebuffer to black and draws output `reference_bars`
+in exact device pixels without arena/warp/color draws. Frame/grid view renders the
+prepared arena through V15 without reference bars. Both retain the existing protected
+profile fingerprint, GL-owner resource lifetime and presentation/closure evidence;
+normal trial rendering ignores this diagnostic selection.
+UpdateDisplayCalibration is an untimed Configuration command, scoped to exact
+active frame/grid identity/revision and a strictly increasing sequence. Its bounded
+mapping records change only normalized affine destination XY in the GL owner's
+retained vertex buffers. Protected base profile/arena identities remain unchanged;
+retain command payloads and confirm the applied sequence in calibration evidence
+only after all-output presentation. Close/safety cleanup owns the same resources.
+
+
 [GeometricProfile](geometric-profile.schema.json) binds the regular grid, bottom-left
 source UV/destination XY, explicit mirror orientation, BL-to-TR cell diagonal, bilinear
 mask/weight grids and intended coverage polygon. Shared vertices are single array entries.

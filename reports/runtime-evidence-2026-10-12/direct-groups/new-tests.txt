@@ -1,0 +1,36 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_demo_assets_can_be_selected_and_review_path_restores ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10cb6f9a0>
+
+    def test_demo_assets_can_be_selected_and_review_path_restores(window):
+        import json
+    
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_files import resolve_stimulus_file
+    
+        root = Path(__file__).resolve().parents[2] / "demo_assets"
+        manifest = json.loads((root / "manifest.json").read_text())
+        for path in manifest["images"]:
+            assert not QImage(str(root / path)).isNull()
+            assert (
+                resolve_stimulus_file(
+                    str(root), str(root / path), texture=False
+>               ).logical_path
+                  ^^^^^^^^^^^^
+                == path
+            )
+E           AttributeError: 'StimulusFile' object has no attribute 'logical_path'
+
+tests/gui/test_dashboard.py:12518: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_demo_assets_can_be_selected_and_review_path_restores
+1 failed, 1 passed, 393 deselected in 4.43s

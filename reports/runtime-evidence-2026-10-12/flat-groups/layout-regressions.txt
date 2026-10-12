@@ -1,0 +1,313 @@
+...F.FFF.F......F                                                        [100%]
+=================================== FAILURES ===================================
+____ test_compact_reference_rows_share_headers_and_commit_relocated_fields _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10c5e9b40>
+app = <PyQt6.QtWidgets.QApplication object at 0x106618f70>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1661/test_compact_reference_rows_sh0')
+
+    def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_motion import EpochMotion
+        from cephvr.gui.protocol_groups import motion_numbers
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        window.protocol.editor.modes.setCurrentIndex(0)
+        composer = window.protocol.editor.create_batch.composer
+        composer.set_screens(("Left", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        path = tmp_path / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Left")
+        composer.add_file("Texture", str(path), "Right")
+        app.processEvents()
+        left, right = composer.rows["Left"], composer.rows["Right"]
+>       assert not left.narrow
+E       assert not True
+E        +  where True = <cephvr.gui.projector_reference.ProjectorReference object at 0x10c5f8790>.narrow
+
+tests/gui/test_dashboard.py:7881: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_____ test_visible_layer_selector_and_opacity_preserve_prepared_placement ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10c2f5cf0>
+app = <PyQt6.QtWidgets.QApplication object at 0x106618f70>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1661/test_visible_layer_selector_an0')
+
+    def test_visible_layer_selector_and_opacity_preserve_prepared_placement(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.stimulus_form import ValueEditor
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor, generate=True)
+        editor.modes.setCurrentIndex(0)
+        composer = editor.create_batch.composer
+        composer.set_screens(("Front",))
+        composer.set_asset_root(str(tmp_path))
+        path = tmp_path / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Looming image", str(path), "Front")
+        app.processEvents()
+        row = composer.rows["Front"]
+        assert row.layer.count() == 2
+        assert row.layer.isVisible() and row.layer.isEnabled()
+        assert "Layer" in row.signature
+        row.layer.setCurrentIndex(0)
+        app.processEvents()
+        assert row.stimulus.currentText() == "Texture"
+        before = composer.program.sequence[0].settings[0].model_dump(mode="json")
+        assert not hasattr(row.parameters, "tabs")
+        assert not any(
+            isinstance(f, ValueEditor) and "opacity" in f.children_by_key
+            for f in row.parameters.forms
+        )
+        row.parameters.retain.setChecked(False)
+        assert row.parameters.apply()
+        after = composer.program.sequence[0].settings[0].model_dump(mode="json")
+        assert after["opacity"] == before["opacity"]
+        assert all(
+            after[key] == before[key] for key in ("space", "initial", "width", "height")
+        )
+        row.layer.setCurrentIndex(1)
+        app.processEvents()
+        assert row.stimulus.currentText() == "Looming"
+        assert row.parameters.layer_index == row.indices[1]
+        from PyQt6.QtWidgets import QScrollArea
+    
+        window.resize(720, 800)
+        for _ in range(4):
+            app.processEvents()
+        scroll = next(
+            s for s in window.findChildren(QScrollArea) if s.isAncestorOf(composer)
+        )
+        assert scroll.horizontalScrollBar().maximum() == 0
+        batch = editor.create_batch
+>       assert (
+            batch.insert.mapTo(batch, QPoint()).y()
+            > composer.duration.mapTo(batch, QPoint()).y()
+        )
+E       assert 0 > 20
+E        +  where 0 = <built-in method y of QPoint object at 0x10c386500>()
+E        +    where <built-in method y of QPoint object at 0x10c386500> = PyQt6.QtCore.QPoint().y
+E        +      where PyQt6.QtCore.QPoint() = <built-in method mapTo of SelectionBox object at 0x10c592c20>(<cephvr.gui.batch_create.BatchCreate object at 0x10c590820>, PyQt6.QtCore.QPoint())
+E        +        where <built-in method mapTo of SelectionBox object at 0x10c592c20> = <cephvr.gui.components.SelectionBox object at 0x10c592c20>.mapTo
+E        +          where <cephvr.gui.components.SelectionBox object at 0x10c592c20> = <cephvr.gui.batch_create.BatchCreate object at 0x10c590820>.insert
+E        +        and   PyQt6.QtCore.QPoint() = QPoint()
+E        +  and   20 = <built-in method y of QPoint object at 0x10c386880>()
+E        +    where <built-in method y of QPoint object at 0x10c386880> = PyQt6.QtCore.QPoint(165, 20).y
+E        +      where PyQt6.QtCore.QPoint(165, 20) = <built-in method mapTo of QLineEdit object at 0x10c590a60>(<cephvr.gui.batch_create.BatchCreate object at 0x10c590820>, PyQt6.QtCore.QPoint())
+E        +        where <built-in method mapTo of QLineEdit object at 0x10c590a60> = <PyQt6.QtWidgets.QLineEdit object at 0x10c590a60>.mapTo
+E        +          where <PyQt6.QtWidgets.QLineEdit object at 0x10c590a60> = <cephvr.gui.epoch_composer.EpochComposer object at 0x10c590940>.duration
+E        +        and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests/gui/test_dashboard.py:8556: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+QWidget::mapTo(): parent must be in parent hierarchy
+________ test_stimulus_mode_and_duration_use_proportional_header_widths ________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10c5925f0>
+app = <PyQt6.QtWidgets.QApplication object at 0x106618f70>
+
+    def test_stimulus_mode_and_duration_use_proportional_header_widths(window, app):
+        window.page_buttons[1].click()
+        batch = window.protocol.editor.create_batch
+        for width in (1350, 720):
+            window.resize(width, 900)
+            window.protocol.editor.modes.setCurrentIndex(0)
+            app.processEvents()
+            if width == 1350:
+                assert batch.composer.mode.width() > batch.composer.duration.width()
+>           assert batch.composer.mode.width() > 0 and batch.composer.duration.width() > 0
+E           assert (200 > 0 and 0 > 0)
+E            +  where 200 = <built-in method width of SelectionBox object at 0x10c60c550>()
+E            +    where <built-in method width of SelectionBox object at 0x10c60c550> = <cephvr.gui.components.SelectionBox object at 0x10c60c550>.width
+E            +      where <cephvr.gui.components.SelectionBox object at 0x10c60c550> = <cephvr.gui.epoch_composer.EpochComposer object at 0x10c60c1f0>.mode
+E            +        where <cephvr.gui.epoch_composer.EpochComposer object at 0x10c60c1f0> = <cephvr.gui.batch_create.BatchCreate object at 0x10c416d40>.composer
+E            +  and   0 = <built-in method width of QLineEdit object at 0x10c60c3a0>()
+E            +    where <built-in method width of QLineEdit object at 0x10c60c3a0> = <PyQt6.QtWidgets.QLineEdit object at 0x10c60c3a0>.width
+E            +      where <PyQt6.QtWidgets.QLineEdit object at 0x10c60c3a0> = <cephvr.gui.epoch_composer.EpochComposer object at 0x10c60c1f0>.duration
+E            +        where <cephvr.gui.epoch_composer.EpochComposer object at 0x10c60c1f0> = <cephvr.gui.batch_create.BatchCreate object at 0x10c416d40>.composer
+
+tests/gui/test_dashboard.py:9170: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______ test_reference_advanced_controls_align_to_layer_and_retain_first _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10bfe1000>
+app = <PyQt6.QtWidgets.QApplication object at 0x106618f70>
+
+    def test_reference_advanced_controls_align_to_layer_and_retain_first(window, app):
+        from cephvr.gui.protocol_document import blank_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor, generate=True)
+        editor.set_program(blank_program())
+        composer = editor.create_batch.composer
+        composer.set_screens(("Front", "Bottom"))
+        composer.change_type("Front", "Texture")
+        editor.modes.setCurrentIndex(0)
+        row = composer.rows["Front"]
+        row.advanced.setChecked(True)
+        for width in (1350, 720):
+            window.resize(width, 900)
+            app.processEvents()
+            row.align_advanced()
+            QTest.qWait(10)
+            app.processEvents()
+            params = row.parameters
+            assert params.extra_body.itemAt(1).widget() is params.retain
+            appearance = params.extra_body.itemAt(2).widget()
+            assert appearance is not None
+            assert params.fades is not None
+            for control in (params.fades.fade_in, params.fades.fade_out):
+                bottom = control.mapTo(appearance, QPoint(0, control.height())).y()
+                assert bottom <= appearance.height()
+>           assert (
+                params.advanced_card.mapTo(row, QPoint()).x()
+                == row.layer.mapTo(row, QPoint()).x()
+            )
+E           assert 0 == 201
+E            +  where 0 = <built-in method x of QPoint object at 0x10afae490>()
+E            +    where <built-in method x of QPoint object at 0x10afae490> = PyQt6.QtCore.QPoint(0, 403).x
+E            +      where PyQt6.QtCore.QPoint(0, 403) = <built-in method mapTo of Card object at 0x10a3b15a0>(<cephvr.gui.projector_reference.ProjectorReference object at 0x10a3f3880>, PyQt6.QtCore.QPoint())
+E            +        where <built-in method mapTo of Card object at 0x10a3b15a0> = <cephvr.gui.components.Card object at 0x10a3b15a0>.mapTo
+E            +          where <cephvr.gui.components.Card object at 0x10a3b15a0> = <cephvr.gui.stimulus_parameters.StimulusParameters object at 0x10a3b1090>.advanced_card
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+E            +  and   201 = <built-in method x of QPoint object at 0x10afae730>()
+E            +    where <built-in method x of QPoint object at 0x10afae730> = PyQt6.QtCore.QPoint(201, 20).x
+E            +      where PyQt6.QtCore.QPoint(201, 20) = <built-in method mapTo of SelectionBox object at 0x10a3b0dc0>(<cephvr.gui.projector_reference.ProjectorReference object at 0x10a3f3880>, PyQt6.QtCore.QPoint())
+E            +        where <built-in method mapTo of SelectionBox object at 0x10a3b0dc0> = <cephvr.gui.components.SelectionBox object at 0x10a3b0dc0>.mapTo
+E            +          where <cephvr.gui.components.SelectionBox object at 0x10a3b0dc0> = <cephvr.gui.projector_reference.ProjectorReference object at 0x10a3f3880>.layer
+E            +        and   PyQt6.QtCore.QPoint() = QPoint()
+
+tests/gui/test_dashboard.py:9223: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________________ test_target_epoch_filters_and_invalid_index __________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x109ae5ea0>
+app = <PyQt6.QtWidgets.QApplication object at 0x106618f70>
+
+    def test_target_epoch_filters_and_invalid_index(window, app):
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        original = review_program()
+        editor.set_program(original)
+        open_protocol_group(editor)
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        panel = editor.batch_edit
+        panel.epoch_scope.setCurrentIndex(panel.epoch_scope.findData("target"))
+        targets = panel.targets
+        assert panel.epoch_scope.currentText() == "Target epochs"
+        assert editor.selected_paths == ((0, 0), (0, 1), (0, 2))
+        assert targets.label_field.isHidden() and targets.index_field.isHidden()
+        targets.filter.setCurrentIndex(2)
+        assert targets.index_field.isVisible() and targets.label_field.isHidden()
+        assert panel.apply_button.isEnabled()
+        targets.index.setText("2")
+        targets.index.textEdited.emit("2")
+        assert editor.selected_paths == ((0, 1),)
+        assert panel.apply_button.isEnabled()
+        check, duration = panel.fields["Duration"]
+        check.setChecked(True)
+        duration.setText("00:00:24")
+        panel.apply()
+>       assert node_at(editor.program, (1,)).duration.duration.seconds == "24"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gui/test_dashboard.py:10501: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+program = Program(format_version=2, assets=(), instances=(Instance(instance_id='flow', family='texture'),), scenes=(Scene(scene_...label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),))
+path = (1,)
+
+    def node_at(program: Program, path: NodePath) -> Node:
+        indexes = path_tuple(path)
+>       return nodes_at(program, indexes[:-1])[indexes[-1]]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: tuple index out of range
+
+src/cephvr/gui/program_editing.py:34: IndexError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_flat_group_initial_trials_and_legacy_imports _______________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x106618f70>
+
+    def test_flat_group_initial_trials_and_legacy_imports(app):
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.visual_stimulus.config.models.program_model import Epoch, Group
+    
+        window = DashboardWindow(sample=True)
+        ReviewControls(window)
+        window.show()
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        assert all(isinstance(n, Group) for n in editor.program.sequence)
+        assert all(isinstance(n, Epoch) for n in editor.program.sequence[0].body)
+        before = editor.program
+        editor.edit_epoch("add")
+        assert editor.program == before
+        editor.feedback.clear()
+        editor.timeline.context_selected.emit(((0,),))
+        editor.timeline.setFocus()
+        app.processEvents()
+        QTest.keyClick(editor.timeline, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
+>       assert len(editor.program.sequence) == 2
+E       AssertionError: assert 1 == 2
+E        +  where 1 = len((Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None,..._label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),))
+E        +    where (Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None,..._label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),) = Program(format_version=2, assets=(), instances=(Instance(instance_id='flow', family='texture'),), scenes=(Scene(scene_...label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),)).sequence
+E        +      where Program(format_version=2, assets=(), instances=(Instance(instance_id='flow', family='texture'),), scenes=(Scene(scene_...label='', batch_id=None, scene_id='blank', duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=()))),)) = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x10b4120e0>.program
+
+tests/gui/test_dashboard.py:13085: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields
+FAILED tests/gui/test_dashboard.py::test_visible_layer_selector_and_opacity_preserve_prepared_placement
+FAILED tests/gui/test_dashboard.py::test_stimulus_mode_and_duration_use_proportional_header_widths
+FAILED tests/gui/test_dashboard.py::test_reference_advanced_controls_align_to_layer_and_retain_first
+FAILED tests/gui/test_dashboard.py::test_target_epoch_filters_and_invalid_index
+FAILED tests/gui/test_dashboard.py::test_flat_group_initial_trials_and_legacy_imports
+6 failed, 11 passed, 390 deselected in 33.51s

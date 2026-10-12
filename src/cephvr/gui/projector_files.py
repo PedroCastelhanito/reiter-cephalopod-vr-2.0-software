@@ -38,26 +38,45 @@ class ProjectorFiles(CalibrationFiles):
     def snapshot(self) -> dict[str, object]:
         result = self.calibration_snapshot()
         result.update(
-            version=4,
+            version=7,
             settings={
                 "enabled_screens": self.read_participation(),
                 "photodiode_enabled": self.timing.pulse.isChecked(),
                 "pulse_screen": self.target_face(),
                 "vsync_mode": self.timing.mode.currentText(),
-                "pulse_rect": {
+                "frame_rect": {
                     key: int(edit.text()) if edit.text().strip() else None
                     for key, edit in self.timing.fields.items()
                 },
+                "pulse_rect": {
+                    key: int(edit.text()) if edit.text().strip() else None
+                    for key, edit in self.timing.pulse_fields.items()
+                },
+                "blackout_zones": self.timing.blackouts.snapshot(),
             },
             screen_profile=copy.deepcopy(self.profile),
         )
         self.validate(result)
         return result
 
+    @staticmethod
+    def _placement(
+        settings: dict[str, Any], version: int
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Migrate legacy standalone rectangles and version-6 square drafts."""
+        if version == 7:
+            return settings["frame_rect"], settings["pulse_rect"]
+        square = settings.get("pulse_square", dict(X=None, Y=None, Size=None))
+        if not isinstance(square, dict) or set(square) != {"X", "Y", "Size"}:
+            raise ValueError("Expected legacy photodiode square fields")
+        return settings["pulse_rect"], dict(
+            X=square["X"], Y=square["Y"], Width=square["Size"], Height=square["Size"]
+        )
+
     def validate(self, payload: object) -> dict[str, object]:
         if (
             isinstance(payload, dict)
-            and payload.get("version") in (3, 4)
+            and payload.get("version") in (3, 4, 5, 6, 7)
             and "settings" in payload
         ):
             if type(payload["version"]) is not int or set(payload) != {
@@ -71,18 +90,23 @@ class ProjectorFiles(CalibrationFiles):
             values = super().validate(
                 {
                     "format": payload["format"],
-                    "version": payload["version"] - 1,
+                    "version": min(payload["version"] - 1, 4),
                     "values": payload["values"],
                 }
             )
             settings = payload["settings"]
-            if not isinstance(settings, dict) or set(settings) != {
+            setting_keys = {
                 "enabled_screens",
                 "photodiode_enabled",
                 "pulse_screen",
                 "vsync_mode",
                 "pulse_rect",
-            }:
+            }
+            if payload["version"] == 6:
+                setting_keys.update(("pulse_square", "blackout_zones"))
+            elif payload["version"] == 7:
+                setting_keys.update(("frame_rect", "blackout_zones"))
+            if not isinstance(settings, dict) or set(settings) != setting_keys:
                 raise ValueError("Expected all projector synchronization settings")
             enabled = settings["enabled_screens"]
             if not isinstance(enabled, dict) or any(
@@ -101,18 +125,29 @@ class ProjectorFiles(CalibrationFiles):
                 "All displays VSync",
             ):
                 raise ValueError("Unsupported VSync mode")
-            rect = settings["pulse_rect"]
-            if not isinstance(rect, dict) or set(rect) != set(self.timing.fields):
-                raise ValueError("Expected all pulse rectangle fields")
-            for key, value in rect.items():
-                if value is not None and (
-                    type(value) is not int
-                    or value < 0
-                    or (key in ("Width", "Height") and value == 0)
+            frame, pulse = self._placement(settings, payload["version"])
+            for title, rect in (("Frame", frame), ("Pulse", pulse)):
+                if not isinstance(rect, dict) or set(rect) != set(self.timing.fields):
+                    raise ValueError(f"Expected all {title} rectangle fields")
+                for key, value in rect.items():
+                    if value is not None and (
+                        type(value) is not int
+                        or value < 0
+                        or (key in ("Width", "Height") and value == 0)
+                    ):
+                        raise ValueError(
+                            f"{title} {key}: expected valid integer pixels or null"
+                        )
+            if all(v is not None for v in pulse.values()) and all(
+                v is not None for v in frame.values()
+            ):
+                if (
+                    pulse["X"] + pulse["Width"] > frame["Width"]
+                    or pulse["Y"] + pulse["Height"] > frame["Height"]
                 ):
-                    raise ValueError(
-                        f"Pulse {key}: expected valid integer pixels or null"
-                    )
+                    raise ValueError("Photodiode Pulse must fit inside its Frame")
+            if payload["version"] >= 6:
+                self.timing.blackouts.validate(settings["blackout_zones"])
             profile = payload["screen_profile"]
             if profile is not None:
                 if (
@@ -130,7 +165,7 @@ class ProjectorFiles(CalibrationFiles):
         if isinstance(payload, dict) and "outputs" in payload and "mappings" in payload:
             profile = portable_profile(payload)
             converted = super().snapshot()
-            converted.update(version=4, screen_profile=profile)
+            converted.update(version=7, screen_profile=profile)
             outputs = payload["outputs"]
             if not isinstance(outputs, list) or any(
                 not isinstance(o, dict) for o in outputs
@@ -154,7 +189,8 @@ class ProjectorFiles(CalibrationFiles):
                 patch_config.get("rect", {}), dict
             ):
                 raise ValueError("Photodiode patch requires an object rectangle")
-            patch = patch_config.get("rect", {})
+            patch = patch_config.get("background_rect") or patch_config.get("rect", {})
+            pulse = patch_config.get("rect", {})
             converted["settings"] = {
                 "enabled_screens": {
                     face: next(
@@ -174,16 +210,39 @@ class ProjectorFiles(CalibrationFiles):
                 "vsync_mode": "All displays VSync"
                 if payload.get("presentation_mode") == "all_outputs_vsync"
                 else "Selected display VSync",
-                "pulse_rect": {
+                "frame_rect": {
                     key: patch.get(key.lower()) for key in self.timing.fields
                 },
+                "pulse_rect": dict(
+                    zip(
+                        ("X", "Y", "Width", "Height"),
+                        (
+                            pulse["x"] - patch["x"],
+                            pulse["y"] - patch["y"],
+                            pulse["width"],
+                            pulse["height"],
+                        )
+                        if patch_config.get("background_rect")
+                        else (None, None, None, None),
+                        strict=True,
+                    )
+                ),
+                "blackout_zones": [
+                    dict(face=face, **rect)
+                    for face, oid in face_outputs.items()
+                    for output in outputs
+                    if output.get("output_id") == oid
+                    for rect in output.get("blackout_zones", [])
+                ],
             }
             payload = converted
         self.validate(payload)
         assert isinstance(payload, dict)
         numeric = {key: payload[key] for key in ("format", "version", "values")}
         numeric["version"] = (
-            payload["version"] - 1 if "settings" in payload else payload["version"]
+            min(payload["version"] - 1, 4)
+            if "settings" in payload
+            else payload["version"]
         )
         super().apply_snapshot(numeric)
         if "settings" in payload:
@@ -192,6 +251,12 @@ class ProjectorFiles(CalibrationFiles):
             self.apply_participation(settings["enabled_screens"])
             self.timing.pulse.setChecked(settings["photodiode_enabled"])
             self.timing.mode.setCurrentText(settings["vsync_mode"])
-            for key, value in settings["pulse_rect"].items():
-                self.timing.fields[key].setText("" if value is None else str(value))
+            frame, pulse = self._placement(settings, payload["version"])
+            for values, fields in (
+                (frame, self.timing.fields),
+                (pulse, self.timing.pulse_fields),
+            ):
+                for key, value in values.items():
+                    fields[key].setText("" if value is None else str(value))
+            self.timing.blackouts.restore(settings.get("blackout_zones", []))
             self.select_target(settings["pulse_screen"])

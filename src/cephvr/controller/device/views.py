@@ -219,6 +219,7 @@ class DeviceViews:
                         ) == len(output_ids)
                         successful = (
                             outputs_match
+                            and not evidence.failure_code
                             and evidence.state == expected_state
                             and (
                                 evidence.HasField("presented") and evidence.presented
@@ -289,7 +290,13 @@ class DeviceViews:
                             progress="Idle output confirmed"
                             if successful
                             else "display initialization failed",
-                            error="required Idle output evidence incomplete"
+                            error=(
+                                "; ".join(
+                                    issue.failure.message
+                                    for issue in display_view.issues
+                                )[:2048]
+                                or "required Idle output evidence incomplete"
+                            )
                             if not successful
                             else "",
                         )

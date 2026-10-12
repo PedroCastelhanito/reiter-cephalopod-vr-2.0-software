@@ -61,9 +61,7 @@ class CoordinatorQueries:
             connected=bool(self.workers),
             health="interrupted" if session and session.interrupted else "healthy",
         )
-        if session is None:
-            participant.session_phase = control.SESSION_PHASE_CONFIGURATION
-        elif session.cleanup_complete:
+        if session is None or session.cleanup_complete:
             participant.session_phase = control.SESSION_PHASE_CONFIGURATION
         elif session.interrupted or session.setup_cancelled:
             participant.session_phase = control.SESSION_PHASE_FINALIZING

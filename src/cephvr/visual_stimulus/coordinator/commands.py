@@ -19,6 +19,7 @@ from cephvr.visual_stimulus.transport.messages import backend_command
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus
 from cephvr.visual_stimulus.v1 import runtime_pb2 as visual_stimulus_runtime
 
+from .calibration_updates import validate_live_update
 from .state import CommandLink, Identity, State
 
 
@@ -59,6 +60,7 @@ def bind_command(
             wire.VisualStimulusDisplayInitializationRequest,
             wire.VisualStimulusDisplayCalibrationOpenRequest,
             wire.VisualStimulusDisplayCalibrationCloseRequest,
+            wire.VisualStimulusDisplayCalibrationUpdateRequest,
         ),
     ):
         parent = wire.BackendCommand(
@@ -107,6 +109,7 @@ def bind_command(
                 (
                     wire.VisualStimulusDisplayCalibrationOpenRequest,
                     wire.VisualStimulusDisplayCalibrationCloseRequest,
+                    wire.VisualStimulusDisplayCalibrationUpdateRequest,
                 ),
             )
             else ""
@@ -172,6 +175,19 @@ def bind_command(
             arena_size_bytes=request.arena_size_bytes,
             arena_sha256=request.arena_sha256,
             policies=request.policies,
+        ), link
+    if isinstance(request, wire.VisualStimulusDisplayCalibrationUpdateRequest):
+        validate_live_update(
+            request, display=state.display, session_active=state.setup is not None
+        )
+        assert state.display is not None
+        link.output_ids = frozenset(item.output_id for item in state.display.outputs)
+        link.adjustment_sequence = request.adjustment_sequence
+        return visual_stimulus.UpdateDisplayCalibrationCommand(
+            command=child,
+            diagnostic_id=request.diagnostic_id,
+            adjustment_sequence=request.adjustment_sequence,
+            adjustments=request.adjustments,
         ), link
     if isinstance(request, wire.VisualStimulusDisplayCalibrationCloseRequest):
         if state.setup is not None:
@@ -356,6 +372,10 @@ def validate(identity: Identity, state: State, method: str, request: Message) ->
             != visual_stimulus_runtime.DISPLAY_CALIBRATION_STATE_IDLE
         ):
             raise ValueError("previous display calibration is not confirmed Idle")
+    elif isinstance(request, wire.VisualStimulusDisplayCalibrationUpdateRequest):
+        validate_live_update(
+            request, display=state.display, session_active=state.setup is not None
+        )
     elif isinstance(request, wire.VisualStimulusDisplayCalibrationCloseRequest):
         if state.setup is not None:
             raise ValueError("display calibration close unavailable during a session")

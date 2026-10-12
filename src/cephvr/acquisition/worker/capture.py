@@ -115,10 +115,6 @@ class CameraCaptureLoop:
         return self._last_native_counter
 
     @property
-    def last_receipt_ns(self) -> int:
-        return self._last_receipt_ns
-
-    @property
     def last_usable_ns(self) -> int:
         return self._last_usable_ns
 

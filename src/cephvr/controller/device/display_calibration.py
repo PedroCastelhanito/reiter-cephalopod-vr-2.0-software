@@ -393,6 +393,28 @@ class DisplayCalibrationController:
         self.hooks.spawn(self._timeout(command_id, deadline))
         return self.hooks.admission(command_id)
 
+    async def update(
+        self, request: svc.UpdateDisplayCalibrationRequest
+    ) -> pb.CommandAdmission:
+        from cephvr.controller.device.display_adjustments import update_calibration
+
+        return await update_calibration(
+            request,
+            lifecycle=self.lifecycle,
+            configuration=self.configuration,
+            device=self.device,
+            projections=self.projections,
+            backend=self._active_backend,
+            generation=self.generation,
+            limits=self.limits,
+            hooks=self.hooks,
+            clock=self.clock,
+            dispatch_lock=self._dispatch_lock,
+            track=self._track_backend_call,
+            failed=self._admission_failed,
+            expire=self._timeout,
+        )
+
     async def close(
         self, request: svc.CloseDisplayCalibrationRequest
     ) -> pb.CommandAdmission:

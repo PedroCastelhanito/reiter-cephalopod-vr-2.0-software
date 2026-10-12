@@ -62,16 +62,12 @@ def complete_display_preparation(
     """Finish CPU validation and issue Idle only from the calling GL owner."""
     if not job.result.done() or (job.thread is not None and job.thread.is_alive()):
         return False
-    try:
-        if now_ns >= job.deadline_ns:
-            raise TimeoutError("display preparation missed its retained deadline")
-        prepared_display, calibration = job.result.result()
-        if prepared_display != job.display:
-            raise ValueError("prepared display changed during protected loading")
-        observation = preparation.initialize_display(job.display, calibration)
-        report(job.display, observation)
-        job.completion.set_result(None)
-    except BaseException as exc:
-        job.completion.set_exception(exc)
-        raise
+    if now_ns >= job.deadline_ns:
+        raise TimeoutError("display preparation missed its retained deadline")
+    prepared_display, calibration = job.result.result()
+    if prepared_display != job.display:
+        raise ValueError("prepared display changed during protected loading")
+    observation = preparation.initialize_display(job.display, calibration)
+    report(job.display, observation)
+    job.completion.set_result(None)
     return True

@@ -40,7 +40,7 @@ class TankDiagram(QWidget):
         self.setAccessibleName("Tank, screens and projector footprints")
         self.setCursor(Qt.CursorShape.OpenHandCursor)
 
-    def sizeHint(self) -> QSize:  # noqa: N802
+    def sizeHint(self) -> QSize:
         return QSize(260, 265)
 
     def set_element_visible(self, key: str, visible: bool) -> None:
@@ -159,7 +159,7 @@ class TankDiagram(QWidget):
         self.setToolTip("\n".join(descriptions))
         self.update()
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event is None:
             return
         if event.button() == Qt.MouseButton.LeftButton:
@@ -169,7 +169,7 @@ class TankDiagram(QWidget):
         else:
             super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         if event is None:
             return
         if self.drag_origin is not None:
@@ -182,7 +182,7 @@ class TankDiagram(QWidget):
         else:
             super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
         if event is None:
             return
         if event.button() == Qt.MouseButton.LeftButton:
@@ -192,7 +192,7 @@ class TankDiagram(QWidget):
         else:
             super().mouseReleaseEvent(event)
 
-    def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
+    def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:
         if event is None:
             return
         if event.button() == Qt.MouseButton.LeftButton:
@@ -209,7 +209,7 @@ class TankDiagram(QWidget):
         painter.setPen(QColor(COLORS.accent))
         painter.drawPolygon(polygon)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(QColor(COLORS.muted))

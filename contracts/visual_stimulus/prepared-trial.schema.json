@@ -1061,6 +1061,15 @@
     "DisplayProfile": {
       "additionalProperties": false,
       "properties": {
+        "calibration_view": {
+          "default": "frame_grid",
+          "enum": [
+            "reference_bars",
+            "frame_grid"
+          ],
+          "title": "Calibration View",
+          "type": "string"
+        },
         "format_version": {
           "const": 1,
           "title": "Format Version",
@@ -1195,6 +1204,31 @@
           "title": "Batch Label",
           "type": "string"
         },
+        "batch_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Batch Id"
+        },
+        "subgroup_draft": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubgroupDraft"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "scene_id": {
           "maxLength": 128,
           "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
@@ -1246,6 +1280,48 @@
             ]
           },
           "title": "Settings",
+          "type": "array"
+        },
+        "repetition_rules": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/RepetitionRule"
+          },
+          "title": "Repetition Rules",
+          "type": "array"
+        },
+        "repetition_settings": {
+          "default": [],
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "arena": "#/$defs/ArenaSettings",
+                  "image": "#/$defs/ImageSettings",
+                  "texture": "#/$defs/TextureSettings",
+                  "video": "#/$defs/VideoSettings"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ImageSettings"
+                },
+                {
+                  "$ref": "#/$defs/VideoSettings"
+                },
+                {
+                  "$ref": "#/$defs/TextureSettings"
+                },
+                {
+                  "$ref": "#/$defs/ArenaSettings"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "maxItems": 2000,
+          "title": "Repetition Settings",
           "type": "array"
         }
       },
@@ -2621,6 +2697,25 @@
             }
           ],
           "default": null
+        },
+        "reference_bars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReferenceBars"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "blackout_zones": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PixelRect"
+          },
+          "title": "Blackout Zones",
+          "type": "array"
         }
       },
       "required": [
@@ -2640,6 +2735,17 @@
       "properties": {
         "rect": {
           "$ref": "#/$defs/PixelRect"
+        },
+        "background_rect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PixelRect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "high_linear_rgb": {
           "maxItems": 3,
@@ -3111,6 +3217,108 @@
       "title": "Ref",
       "type": "object"
     },
+    "ReferenceBars": {
+      "additionalProperties": false,
+      "properties": {
+        "x_length_px": {
+          "exclusiveMinimum": 0,
+          "title": "X Length Px",
+          "type": "integer"
+        },
+        "y_length_px": {
+          "exclusiveMinimum": 0,
+          "title": "Y Length Px",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "x_length_px",
+        "y_length_px"
+      ],
+      "title": "ReferenceBars",
+      "type": "object"
+    },
+    "RepetitionRule": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "uniform_grid_v1",
+          "default": "uniform_grid_v1",
+          "title": "Kind",
+          "type": "string"
+        },
+        "instance_id": {
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "parameter": {
+          "enum": [
+            "Speed",
+            "Direction",
+            "Angular speed",
+            "Start size",
+            "End size",
+            "Growth duration",
+            "Playback start",
+            "Longitudinal",
+            "Lateral",
+            "Angular"
+          ],
+          "title": "Parameter",
+          "type": "string"
+        },
+        "minimum": {
+          "maxLength": 64,
+          "title": "Minimum",
+          "type": "string"
+        },
+        "maximum": {
+          "maxLength": 64,
+          "title": "Maximum",
+          "type": "string"
+        },
+        "precision": {
+          "maxLength": 64,
+          "title": "Precision",
+          "type": "string"
+        },
+        "seed": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Seed",
+          "type": "string"
+        },
+        "stream": {
+          "default": "",
+          "maxLength": 128,
+          "title": "Stream",
+          "type": "string"
+        },
+        "offset": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "stride": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Stride",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "instance_id",
+        "parameter",
+        "minimum",
+        "maximum",
+        "precision",
+        "seed"
+      ],
+      "title": "RepetitionRule",
+      "type": "object"
+    },
     "Resource": {
       "additionalProperties": false,
       "properties": {
@@ -3481,6 +3689,27 @@
         "phase_cycles"
       ],
       "title": "Sine",
+      "type": "object"
+    },
+    "SubgroupDraft": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "rules": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/VariationDraft"
+          },
+          "maxItems": 64,
+          "title": "Rules",
+          "type": "array"
+        }
+      },
+      "title": "SubgroupDraft",
       "type": "object"
     },
     "Surface": {
@@ -4244,6 +4473,102 @@
         "kind"
       ],
       "title": "UnrestrictedRegion",
+      "type": "object"
+    },
+    "VariationDraft": {
+      "additionalProperties": false,
+      "properties": {
+        "projector": {
+          "maxLength": 4096,
+          "title": "Projector",
+          "type": "string"
+        },
+        "projectors": {
+          "default": [],
+          "items": {
+            "maxLength": 4096,
+            "type": "string"
+          },
+          "title": "Projectors",
+          "type": "array"
+        },
+        "layer": {
+          "minimum": -1,
+          "title": "Layer",
+          "type": "integer"
+        },
+        "parameter": {
+          "maxLength": 4096,
+          "title": "Parameter",
+          "type": "string"
+        },
+        "method": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Method",
+          "type": "integer"
+        },
+        "values": {
+          "default": "",
+          "maxLength": 4096,
+          "title": "Values",
+          "type": "string"
+        },
+        "minimum": {
+          "default": "0",
+          "maxLength": 4096,
+          "title": "Minimum",
+          "type": "string"
+        },
+        "maximum": {
+          "default": "100",
+          "maxLength": 4096,
+          "title": "Maximum",
+          "type": "string"
+        },
+        "precision": {
+          "default": "1",
+          "maxLength": 4096,
+          "title": "Precision",
+          "type": "string"
+        },
+        "shared": {
+          "default": false,
+          "title": "Shared",
+          "type": "boolean"
+        },
+        "seed": {
+          "default": "",
+          "title": "Seed",
+          "type": "string"
+        },
+        "sample_key": {
+          "default": [],
+          "items": {
+            "maxLength": 4096,
+            "type": "string"
+          },
+          "title": "Sample Key",
+          "type": "array"
+        },
+        "samples": {
+          "default": [],
+          "items": {
+            "maxLength": 4096,
+            "type": "string"
+          },
+          "maxItems": 32000,
+          "title": "Samples",
+          "type": "array"
+        }
+      },
+      "required": [
+        "projector",
+        "layer",
+        "parameter",
+        "method"
+      ],
+      "title": "VariationDraft",
       "type": "object"
     },
     "VideoSettings": {

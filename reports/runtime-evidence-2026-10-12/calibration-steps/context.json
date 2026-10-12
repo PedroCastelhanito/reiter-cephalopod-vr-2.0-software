@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-12",
+  "scope": "Local Qt offscreen keyboard steps, live intent and file compatibility; no native/rig acceptance",
+  "source_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "dirty_tree": true,
+  "commands": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/gui/test_dashboard.py",
+        "-q",
+        "-k",
+        "calibration_adjustment_steps or live_calibration_coalesces or all_screen_calibration_json_roundtrip or calibration_and_screen_dimensions_retain or projector_config_tabs_keep"
+      ],
+      "exit_code": 0,
+      "output": "check-0.txt"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "src/cephvr/gui/projector_calibration.py",
+        "tests/gui/test_dashboard.py"
+      ],
+      "exit_code": 0,
+      "output": "check-1.txt"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src/cephvr/gui/projector_calibration.py",
+        "tests/gui/test_dashboard.py"
+      ],
+      "exit_code": 0,
+      "output": "check-2.txt"
+    }
+  ],
+  "hashes": {
+    "src/cephvr/gui/projector_calibration.py": "16f3161b02d28b50cdc6239d63e08f03f924fcfc339b9a2b136f39930f6928b7",
+    "tests/gui/test_dashboard.py": "cfa47050ded4bfe1ee64632798534ce0d969851f0a879f6e92d41f6ea825bdee"
+  },
+  "additional_checks": "Win32 GUI mypy: 141 sources pass; backend boundaries: 650 modules/zero violations with existing cohesion advisories."
+}

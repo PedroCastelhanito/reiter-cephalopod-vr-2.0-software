@@ -62,7 +62,7 @@ def equal_row_height(*controls: QWidget) -> None:
 class SelectionBox(QComboBox):
     """Draw a consistent dropdown affordance across native widget styles."""
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -147,7 +147,7 @@ class Card(QFrame):
         self.header.addStretch()
         self.body.addLayout(self.header)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -176,7 +176,7 @@ class StatusIndicator(QRadioButton):
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.set_status("Unavailable")
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         option = QStyleOptionButton()
         self.initStyleOption(option)
         style = self.style()
@@ -195,7 +195,7 @@ class StatusIndicator(QRadioButton):
         self.setToolTip(description)
         self.setAccessibleName(description)
 
-    def nextCheckState(self) -> None:  # noqa: N802
+    def nextCheckState(self) -> None:
         pass
 
 
@@ -215,7 +215,7 @@ class Console(QPlainTextEdit):
             QSizePolicy.Policy.Expanding if grow else QSizePolicy.Policy.Fixed,
         )
 
-    def sizeHint(self) -> QSize:  # noqa: N802
+    def sizeHint(self) -> QSize:
         size = super().sizeHint()
         size.setHeight(self.minimumHeight())
         return size
@@ -242,7 +242,7 @@ class FittedConsole(Console):
         if self.height() != target:
             self.setFixedHeight(target)
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         self.fit_height()
 
@@ -255,7 +255,7 @@ class LogConsole(Console):
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
 
-    def appendPlainText(self, text: str | None) -> None:  # noqa: N802
+    def appendPlainText(self, text: str | None) -> None:
         if not text:
             return
         vertical = self.verticalScrollBar()
@@ -321,6 +321,6 @@ class ActionHeader(QHeaderView):
                 (self.height() - self.action.height()) // 2,
             )
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         self.place_action()

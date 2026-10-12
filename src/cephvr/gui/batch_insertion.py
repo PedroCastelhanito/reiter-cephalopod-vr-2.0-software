@@ -1,10 +1,10 @@
-"""Atomic placement of a generated batch within the current trial."""
+"""Atomic placement of a generated batch within the current sequence."""
 
 from dataclasses import dataclass
 
 from cephvr.gui.epoch_batch import append_template, epoch_paths
-from cephvr.gui.program_editing import data_node, node_at, validate
-from cephvr.visual_stimulus.compiler.expansion import expand_program
+from cephvr.gui.program_editing import data_node, data_nodes, node_at, validate
+from cephvr.gui.timeline_views import epoch_count
 from cephvr.visual_stimulus.config.models.program_model import Epoch, Program
 
 
@@ -16,17 +16,28 @@ class Insertion:
 
 
 def insert_batch(
-    program: Program, template: Program, selected: tuple[int, ...], placement: Insertion
+    program: Program,
+    template: Program,
+    selected: tuple[int, ...],
+    placement: Insertion,
+    *,
+    scope: tuple[int, ...] = (),
 ) -> tuple[Program, tuple[tuple[int, ...], ...]]:
     if placement.mode == "label":
-        return insert_after_label(program, template, placement.label)
-    if placement.mode == "replace":
+        return insert_after_label(program, template, placement.label, scope=scope)
+    if placement.mode == "replace" and not scope:
         candidate = validate(template.model_dump(mode="json"))
         return candidate, epoch_paths(candidate)
     merged, start = append_template(program, template)
-    old, incoming = list(merged.sequence[:start]), list(merged.sequence[start:])
+    data = merged.model_dump(mode="json")
+    incoming = data["sequence"][start:]
+    del data["sequence"][start:]
+    old = list(data_nodes(data, scope))
     indices: list[int] = []
-    if placement.mode == "stride":
+    if placement.mode == "replace":
+        result = incoming
+        indices = list(range(len(incoming)))
+    elif placement.mode == "stride":
         if not 1 <= placement.stride <= 2000:
             raise ValueError("Use an insertion interval between 1 and 2000 blocks")
         result = []
@@ -43,33 +54,40 @@ def insert_batch(
         positions = {
             "append": len(old),
             "start": 0,
-            "before": selected[0] if selected else 0,
-            "after": selected[0] + 1 if selected else 0,
+            "before": selected[len(scope)] if len(selected) > len(scope) else 0,
+            "after": selected[len(scope)] + 1 if len(selected) > len(scope) else 0,
         }
         if placement.mode not in positions:
             raise ValueError("Unknown insertion mode")
         at = positions[placement.mode]
         indices = list(range(at, at + len(incoming)))
         result = old[:at] + incoming + old[at:]
-    data = merged.model_dump(mode="json")
-    data["sequence"] = [node.model_dump(mode="json") for node in result]
+    data_nodes(data, scope)[:] = result
     candidate = validate(data)
-    return candidate, tuple(p for p in epoch_paths(candidate) if p[0] in indices)
+    return candidate, tuple(
+        p
+        for p in epoch_paths(candidate)
+        if p[: len(scope)] == scope and p[len(scope)] in indices
+    )
 
 
 def insert_after_label(
-    program: Program, template: Program, label: str
+    program: Program,
+    template: Program,
+    label: str,
+    *,
+    scope: tuple[int, ...] = (),
 ) -> tuple[Program, tuple[tuple[int, ...], ...]]:
     """Insert a fresh batch after each original matching source, retaining group scope."""
     matches = []
     for path in epoch_paths(program):
         epoch = node_at(program, path)
         assert isinstance(epoch, Epoch)
-        if label and epoch.batch_label == label:
+        if path[: len(scope)] == scope and label and epoch.batch_label == label:
             matches.append(path)
     if not matches:
-        raise ValueError("Choose a label that exists in the current trial")
-    size = len(expand_program(template, seed_decimal="0", max_expanded_epochs=2000))
+        raise ValueError("Choose a label that exists in the current sequence")
+    size = sum(epoch_count(n) for n in template.sequence)
     if size * len(matches) > 2000:
         raise ValueError("Label insertion exceeds 2000 generated epochs")
     result = program
@@ -90,7 +108,6 @@ def insert_after_label(
         )
         siblings[path[-1] + 1 : path[-1] + 1] = incoming
         result = validate(data)
-    expand_program(result, seed_decimal="0", max_expanded_epochs=2000)
     selected = []
     for path in epoch_paths(result):
         epoch = node_at(result, path)

@@ -6,7 +6,7 @@ from collections.abc import Callable
 from concurrent.futures import Future
 from dataclasses import dataclass
 from queue import Full, Queue
-from threading import Lock, Thread, get_ident
+from threading import Lock, Thread
 from typing import Generic, TypeVar
 
 from cephvr.acquisition.recording.session import RecordingSession
@@ -36,16 +36,11 @@ class RecordingOwnerThread:
         self._queue: Queue[_Call[object] | None] = Queue(maxsize=capacity)
         self._thread: Thread | None = None
         self._session: RecordingSession | None = None
-        self._thread_id: int | None = None
         self._closed = False
         self._finished = False
         self._state_lock = Lock()
         self._closing = False
         self._shutdown_enqueued = False
-
-    @property
-    def thread_id(self) -> int | None:
-        return self._thread_id
 
     def start(self) -> None:
         if self._thread is not None or self._closed:
@@ -166,10 +161,7 @@ class RecordingOwnerThread:
             if self._thread is None or self._closed or self._closing:
                 raise RuntimeError("recording owner thread is not active")
             result: Future[_T] = Future()
-            call = _Call(
-                lambda session: operation(session),
-                result,
-            )
+            call = _Call(operation, result)
             try:
                 self._queue.put_nowait(call)  # type: ignore[arg-type]
             except Full as exc:
@@ -177,7 +169,6 @@ class RecordingOwnerThread:
         return result
 
     def _run(self) -> None:
-        self._thread_id = get_ident()
         while True:
             call = self._queue.get()
             if call is None:

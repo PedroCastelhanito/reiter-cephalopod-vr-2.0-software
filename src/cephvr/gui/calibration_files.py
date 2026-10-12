@@ -8,6 +8,8 @@ from PyQt6.QtCore import QEvent, QIODevice, QSaveFile, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QFileDialog, QHBoxLayout, QLineEdit, QWidget
 
 from cephvr.gui.components import button
+from cephvr.gui.theme import SIZES
+from cephvr.visual_stimulus.config.calibration_bars import reference_lengths
 
 
 def _unique_members(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -29,10 +31,11 @@ class CalibrationFiles(QWidget):
         self.dialog: QFileDialog | None = None
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
-        self.load_button = button("Load JSON…")
+        row.setSpacing(SIZES.field_x_gap)
+        self.load_button = button("Load…")
         self.save_button = button("Save as…")
-        row.addWidget(self.load_button)
-        row.addWidget(self.save_button)
+        row.addWidget(self.load_button, 1)
+        row.addWidget(self.save_button, 1)
         self.load_button.clicked.connect(lambda: self.choose(save=False))
         self.save_button.clicked.connect(lambda: self.choose(save=True))
 
@@ -44,7 +47,7 @@ class CalibrationFiles(QWidget):
             else:
                 text = editor.text().strip()
                 values[key] = float(text) if text else None
-        result = {"format": "cephvr-rig-calibration", "version": 3, "values": values}
+        result = {"format": "cephvr-rig-calibration", "version": 4, "values": values}
         self.validate(result)
         return result
 
@@ -58,7 +61,7 @@ class CalibrationFiles(QWidget):
         if (
             payload["format"] != "cephvr-rig-calibration"
             or type(payload["version"]) is not int
-            or payload["version"] not in (1, 2, 3)
+            or payload["version"] not in (1, 2, 3, 4)
         ):
             raise ValueError("Unsupported calibration format/version")
         values = payload["values"]
@@ -97,6 +100,26 @@ class CalibrationFiles(QWidget):
             if set(values) != set(self.fields) - references:
                 raise ValueError("Legacy calibration has an invalid field inventory")
             values.update(dict.fromkeys(references))
+        if payload["version"] == 3 and isinstance(values, dict):
+            pixel_lengths = {
+                key
+                for key in self.fields
+                if key.endswith(("reference_x_px", "reference_y_px"))
+            }
+            if set(values) != set(self.fields) - pixel_lengths:
+                raise ValueError("Legacy calibration has an invalid field inventory")
+            values = dict(values)
+            for face in ("Front", "Left", "Right", "Bottom"):
+                ref_width = values.get(f"screens.{face}.reference_width_px")
+                ref_height = values.get(f"screens.{face}.reference_height_px")
+                lengths = (
+                    reference_lengths(ref_width, ref_height)
+                    if isinstance(ref_width, (int, float))
+                    and isinstance(ref_height, (int, float))
+                    else (None, None)
+                )
+                for axis, length in zip(("x", "y"), lengths, strict=True):
+                    values[f"screens.{face}.reference_{axis}_px"] = length
         if not isinstance(values, dict) or set(values) != set(self.fields):
             raise ValueError(
                 "Calibration must contain every rig, projection and screen field"
@@ -110,6 +133,11 @@ class CalibrationFiles(QWidget):
                     raise ValueError(f"{key}: expected a finite number or null")
                 name = key.rsplit(".", 1)[-1]
                 if (
+                    name in ("reference_x_px", "reference_y_px")
+                    and not float(value).is_integer()
+                ):
+                    raise ValueError(f"{key}: must be a whole pixel length")
+                if (
                     name
                     not in (
                         "offset_x",
@@ -121,6 +149,18 @@ class CalibrationFiles(QWidget):
                     and value <= 0
                 ):
                     raise ValueError(f"{key}: must be positive")
+        for face in ("Front", "Left", "Right", "Bottom"):
+            ref_width = values.get(f"screens.{face}.reference_width_px")
+            ref_height = values.get(f"screens.{face}.reference_height_px")
+            if isinstance(ref_width, (int, float)) and isinstance(
+                ref_height, (int, float)
+            ):
+                reference_lengths(
+                    ref_width,
+                    ref_height,
+                    values.get(f"screens.{face}.reference_x_px"),
+                    values.get(f"screens.{face}.reference_y_px"),
+                )
         return values
 
     def apply_snapshot(self, payload: object) -> None:
@@ -210,7 +250,7 @@ class CalibrationFiles(QWidget):
             self.dialog = None
         dialog.deleteLater()
 
-    def changeEvent(self, event: QEvent | None) -> None:  # noqa: N802
+    def changeEvent(self, event: QEvent | None) -> None:
         super().changeEvent(event)
         if (
             event is not None

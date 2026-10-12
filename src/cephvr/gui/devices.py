@@ -2,13 +2,16 @@
 
 from PyQt6.QtCore import QSettings, QSize, Qt
 from PyQt6.QtWidgets import (
+    QHBoxLayout,
     QStackedWidget,
     QTabBar,
     QVBoxLayout,
     QWidget,
 )
 
+from cephvr.gui.camera_snapshot import capture_cameras, restore_cameras
 from cephvr.gui.cameras import CamerasPanel
+from cephvr.gui.components import Card
 from cephvr.gui.icons import device_icon
 from cephvr.gui.layouts import column
 from cephvr.gui.microcontroller import CameraTrigger, MicrocontrollerPanel
@@ -40,6 +43,10 @@ class DevicesPage(QWidget):
         self.microcontroller = MicrocontrollerPanel(settings=settings)
         self.cameras.drafts_changed.connect(self.sync_cameras)
         self.microcontroller.camera_enable_requested.connect(self.set_camera_enabled)
+        self.microcontroller.camera_draft_loaded.connect(self.restore_camera_enabled)
+        self.microcontroller.snapshots.camera_available = (
+            self.cameras.snapshots.available
+        )
         self.sync_cameras()
         self.projectors = ProjectorsPanel(settings=settings)
         self.spikeglx = SpikeGLXPanel()
@@ -56,12 +63,31 @@ class DevicesPage(QWidget):
         self.sync_inputs()
         self.microcontroller.config_files.loaded.connect(self.sync_inputs)
         self.spikeglx.config_files.loaded.connect(self.sync_inputs)
+        self.config_cards: list[Card] = []
         for name, icon, panel in zip(
             ("Cameras", "Microcontroller", "Projectors", "SpikeGLX"),
             ("camera", "board", "projector", "signal"),
             self.panels,
             strict=True,
         ):
+            config_card = Card("Configuration file")
+            self.config_cards.append(config_card)
+            if isinstance(panel, ProjectorsPanel):
+                config_card.body.addWidget(panel.calibration_files)
+            else:
+                assert isinstance(
+                    panel, (CamerasPanel, MicrocontrollerPanel, SpikeGLXPanel)
+                )
+                files = panel.config_files
+                row = QHBoxLayout()
+                row.setContentsMargins(0, 0, 0, 0)
+                row.setSpacing(SIZES.field_x_gap)
+                row.addWidget(files.load_button, 1)
+                row.addWidget(files.save_button, 1)
+                config_card.body.addLayout(row)
+            left = panel.columns[0].layout()
+            assert isinstance(left, QVBoxLayout)
+            left.insertWidget(0, config_card)
             self.tabs.addWidget(panel)
             self.tab_bar.addTab(device_icon(icon), name)
         self.navigation, navigation_layout = column()
@@ -82,6 +108,12 @@ class DevicesPage(QWidget):
             if camera.key == key:
                 self.cameras.set_participation(row, enabled)
                 return
+
+    def restore_camera_enabled(self, enabled: dict[str, bool]) -> None:
+        data = capture_cameras(self.cameras)
+        for camera, values in zip(self.cameras.drafts, data, strict=True):
+            values["enabled"] = enabled[camera.key]
+        restore_cameras(self.cameras, data)
 
     def sync_cameras(self) -> None:
         self.microcontroller.set_cameras(

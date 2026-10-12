@@ -105,6 +105,13 @@ class ConfigurationService(rpc.VisualStimulusConfigurationServiceServicer):
     ) -> pb.CommandAdmission:
         return await self.boundary.command("OpenDisplayCalibration", request, context)
 
+    async def UpdateDisplayCalibration(
+        self,
+        request: wire.VisualStimulusDisplayCalibrationUpdateRequest,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("UpdateDisplayCalibration", request, context)
+
     async def CloseDisplayCalibration(
         self,
         request: wire.VisualStimulusDisplayCalibrationCloseRequest,
@@ -137,6 +144,13 @@ class WorkerService(visual_stimulus_rpc.VisualStimulusWorkerServiceServicer):
         context: grpc.aio.ServicerContext,
     ) -> pb.CommandAdmission:
         return await self.boundary.command("OpenDisplayCalibration", request, context)
+
+    async def UpdateDisplayCalibration(
+        self,
+        request: visual_stimulus.UpdateDisplayCalibrationCommand,
+        context: grpc.aio.ServicerContext,
+    ) -> pb.CommandAdmission:
+        return await self.boundary.command("UpdateDisplayCalibration", request, context)
 
     async def CloseDisplayCalibration(
         self,

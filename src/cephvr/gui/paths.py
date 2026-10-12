@@ -26,7 +26,7 @@ class PathEdit(QLineEdit):
         self.filename_only = filename_only
         self.textChanged.connect(self.setToolTip)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         if (self.hasFocus() and not self.isReadOnly()) or not self.text():
             super().paintEvent(event)
             return

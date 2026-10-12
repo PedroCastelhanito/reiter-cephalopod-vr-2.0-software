@@ -1,0 +1,405 @@
+...............FF..F..F.................................FF........FF.... [100%]
+=================================== FAILURES ===================================
+_______ test_protocol_timeline_edits_preserve_trials_and_imported_groups _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x3031639a0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1020911b0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1679/test_protocol_timeline_edits_p0')
+
+    def test_protocol_timeline_edits_preserve_trials_and_imported_groups(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        panel = window.protocol
+        editor = panel.editor
+        open_protocol_group(editor)
+        original = editor.program
+        parse_program_json(original.model_dump_json(), max_bytes=1_048_576)
+        editor.hierarchy.contents.setFocus()
+        QTest.keyClick(editor.hierarchy.contents, Qt.Key.Key_Right)
+        assert editor.path == (0, 1)
+        editor.subgroup.composer.duration.setText("00:00:21.000000001")
+        editor.subgroup.apply()
+        edited = editor.program
+        assert edited.sequence[0].body[1].duration.duration.seconds == "21.000000001"
+        assert edited.sequence[0].body[1].settings == original.sequence[0].body[1].settings
+        editor.subgroup.composer.duration.setText("not a duration")
+        editor.subgroup.apply()
+        assert editor.program == edited
+        assert editor.subgroup.notice.isHidden()
+        assert editor.subgroup.notice.dialog is not None
+        editor.subgroup.notice.dialog.accept()
+        editor.subgroup.discard()
+        editor.add_button.click()
+        assert editor.index == 1
+        assert not any(
+            control.text() in {"↑", "↓"}
+            for control in editor.trial_card.findChildren(QPushButton)
+        )
+        app.processEvents()
+        row_rect = editor.trials.visualItemRect(editor.trials.item(0))
+        QTest.mouseClick(
+            editor.trials.viewport(), Qt.MouseButton.LeftButton, pos=row_rect.center()
+        )
+        assert editor.index == 0
+        assert editor.program == edited
+        group = Group(
+            kind="group",
+            group_id="repeat",
+            repetitions=2,
+            order="shuffle_each_repetition",
+            order_unit="child_blocks",
+            conditions=None,
+            body=edited.sequence[0].body,
+        )
+        grouped = edited.model_copy(update={"sequence": (group,)})
+        editor.set_program(grouped)
+>       assert editor.subgroup.isHidden()
+E       assert False
+E        +  where False = <built-in method isHidden of SubgroupEditor object at 0x30313b2e0>()
+E        +    where <built-in method isHidden of SubgroupEditor object at 0x30313b2e0> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x30313b2e0>.isHidden
+E        +      where <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x30313b2e0> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x30313bf40>.subgroup
+
+tests/gui/test_dashboard.py:6215: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+___________ test_protocol_cards_reflow_and_keep_properties_reachable ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x30311b520>
+app = <PyQt6.QtWidgets.QApplication object at 0x1020911b0>
+
+    def test_protocol_cards_reflow_and_keep_properties_reachable(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from PyQt6.QtWidgets import QPlainTextEdit, QTableWidget
+    
+        from cephvr.gui.components import StatusColumn
+    
+        panel = window.protocol
+        window.page_buttons[1].click()
+        assert not panel.findChildren(StatusColumn)
+        assert not panel.findChildren(QPlainTextEdit)
+        assert not panel.findChildren(QTableWidget)
+        open_protocol_group(panel.editor)
+        for width in (1175, 720, 1175):
+            window.resize(width, 883)
+            for _ in range(3):
+                app.processEvents()
+            editor = panel.editor
+            for action in (
+>               editor.shuffle_trial_button,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                editor.output_preview_button,
+            ):
+E           AttributeError: 'ProtocolEditor' object has no attribute 'shuffle_trial_button'
+
+tests/gui/test_dashboard.py:6248: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___________ test_nested_group_edit_and_duplicate_reference_remapping ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x16ff89e10>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1679/test_nested_group_edit_and_dup0')
+
+    def test_nested_group_edit_and_duplicate_reference_remapping(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        from cephvr.gui.program_editing import node_at
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group
+        from cephvr.visual_stimulus.compiler.expansion import expand_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        grouped, _ = make_group(
+            editor.program, (), 0, 0, 2, False, (Variation((0,), 0, "Speed", (10.0, 20.0)),)
+        )
+        editor.set_program(grouped)
+        editor.enter_group()
+        assert editor.scope == (0,)
+        editor.group_editor.repetitions.setText("0")
+        editor.group_editor.mark_changed()
+        assert editor.undo_action.isEnabled()
+        editor.undo_action.trigger()
+        assert editor.program == grouped and editor.group_editor.repetitions.text() == "2"
+        editor.group_editor.name.setText("Condition sequence")
+        editor.group_editor.mark_changed()
+        assert editor.group_editor.apply()
+        assert editor.program.sequence[0].group_id == "Condition_sequence"
+        renamed = expand_program(editor.program, seed_decimal="0", max_expanded_epochs=100)
+        assert len(renamed) == 4
+        assert all(e.lineage[0].group_id == "Condition_sequence" for e in renamed)
+        from cephvr.gui.protocol_nodes import edit_epoch_metadata
+    
+        editor.commit(
+            edit_epoch_metadata(
+                editor.program, (0, 0), node_at(editor.program, (0, 0)).epoch_id, "61"
+            )
+        )
+        assert node_at(editor.program, (0, 0)).duration.duration.seconds == "61"
+        editor.leave_group()
+        editor.edit_epoch("duplicate")
+>       assert len(editor.program.sequence) == 2
+E       AssertionError: assert 1 == 2
+E        +  where 1 = len((Group(kind='group', group_id='Condition_sequence', repetitions=2, order='as_listed', order_unit='condition_rows', con...inear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),)))),))
+E        +    where (Group(kind='group', group_id='Condition_sequence', repetitions=2, order='as_listed', order_unit='condition_rows', con...inear_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),)))),) = Program(format_version=2, assets=(Asset(asset_id='stimulus_1', logical_path='texture.png', color_override=None, profil...near_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),)))),)).sequence
+E        +      where Program(format_version=2, assets=(Asset(asset_id='stimulus_1', logical_path='texture.png', color_override=None, profil...near_rgb=(0.5, 0.5, 0.5), modulation_linear_rgb=(0.5, 0.5, 0.5), contrast=Constant(kind='constant', value=1.0)),)))),)) = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x177687eb0>.program
+
+tests/gui/test_dashboard.py:6763: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________ test_trial_overview_selects_ranges_and_sources_across_groups _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1776e2f80>
+app = <PyQt6.QtWidgets.QApplication object at 0x1020911b0>
+
+    def test_trial_overview_selects_ranges_and_sources_across_groups(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.gui.protocol_nodes import edit_epoch
+    
+        editor = window.protocol.editor
+        window.page_buttons[1].click()
+        program, _ = edit_epoch(blank_program(), 0, "duplicate")
+        program, _ = edit_epoch(program, 1, "duplicate")
+        program, _ = make_group(program, (), 1, 2, 2, False)
+        editor.set_program(program)
+        timeline = editor.timeline
+        assert len(timeline.nodes) == 2
+        timeline.choose(1, Qt.KeyboardModifier.NoModifier)
+        assert editor.selected_paths == ((1, 0),)
+        assert editor.scope == (1,)
+        assert len(timeline.nodes) == 2  # Persistent collapsed trial overview.
+        contents = editor.hierarchy.contents
+        assert len(contents.nodes) == 2
+        contents.choose(1, Qt.KeyboardModifier.ShiftModifier)
+        assert set(editor.selected_paths) == {(1, 0), (1, 1)}
+        editor.leave_group()
+>       assert editor.scope == ()
+E       assert (1,) == ()
+E         
+E         Left contains one more item: 1
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:7151: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_trial_shuffle_preserves_groups_selection_and_history ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x306beb6d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x300c51dd0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1679/test_trial_shuffle_preserves_g0')
+
+    def test_trial_shuffle_preserves_groups_selection_and_history(
+        window, monkeypatch, tmp_path
+    ):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_groups import Variation, make_group
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        monkeypatch.setattr(
+            "cephvr.gui.protocol_nodes.SystemRandom.shuffle",
+            lambda self, order: order.reverse(),
+        )
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        from cephvr.gui.protocol_nodes import edit_epoch as edit_source_epoch
+    
+        editor.set_program(edit_source_epoch(editor.program, editor.path, "duplicate")[0])
+        from cephvr.gui.protocol_nodes import edit_epoch as edit_source_epoch
+    
+        editor.set_program(edit_source_epoch(editor.program, editor.path, "duplicate")[0])
+        original, _ = make_group(
+            editor.program,
+            (),
+            0,
+            1,
+            3,
+            False,
+            (Variation((1,), 0, "Speed", (10.0, 20.0)),),
+        )
+        editor.set_program(original)
+        editor.scope, editor.node_index = (0,), 0
+        editor.selected_paths = ((0, 0), (0, 1))
+        editor.render_selection()
+        before = editor.snapshot()
+>       editor.shuffle_trial_button.click()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProtocolEditor' object has no attribute 'shuffle_trial_button'
+
+tests/gui/test_dashboard.py:11770: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_grouped_editor_pair_creation_repeat_scope_and_history __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1177f3b50>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1679/test_grouped_editor_pair_creat0')
+app = <PyQt6.QtWidgets.QApplication object at 0x1020911b0>
+
+    def test_grouped_editor_pair_creation_repeat_scope_and_history(window, tmp_path, app):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_nodes import edit_epoch
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        pair, _ = edit_epoch(blank_program(), 0, "duplicate")
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(pair))
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        assert editor.scope == (0,) and len(editor.timeline.nodes) == 1
+        assert len(editor.hierarchy.contents.nodes) == 2
+        group = editor.program.sequence[0]
+        assert isinstance(group, Group) and group.body == pair.sequence
+        fields = editor.group_editor
+        fields.name.setText("Image Grey")
+        fields.repetitions.setText("300")
+        fields.mark_changed()
+        assert fields.apply()
+        assert editor.program.sequence[0].group_id == "Image_Grey"
+        assert editor.program.sequence[0].repetitions == 300
+        assert "600 epochs" in editor.sequence_summary.text()
+        assert len(editor.hierarchy.contents.nodes) == 2
+        fields.mark_changed()  # A pending field commit must preserve the clicked selection.
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        assert editor.path == (0, 1)
+        assert editor.hierarchy.contents.index == editor.hierarchy.contents.anchor == 1
+        editor.subgroup.composer.duration.setText("00:00:02")
+        editor.subgroup.apply()
+        assert editor.program.sequence[0].body[1].duration.duration.seconds == "2"
+        assert editor.program.sequence[0].repetitions == 300
+        path = tmp_path / "grouped.json"
+        window.protocol.save_program(str(path))
+        saved = parse_program_json(path.read_text(), max_bytes=1_048_576)
+        assert saved == editor.program
+        editor.undo()
+        assert editor.program.sequence[0].body[1].duration.duration.seconds == "60"
+        editor.undo()
+        assert editor.program.sequence[0].repetitions == 1
+        editor.undo(True)
+        assert editor.scope == (0,)
+        editor.timeline.context_selected.emit(((0,),))
+>       assert editor.path == (0,) and editor.scope == ()
+E       assert ((0, 0) == (0,)
+E         
+E         Left contains one more item: 0
+E         Use -v to get more diff)
+
+tests/gui/test_dashboard.py:12073: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______________ test_flat_group_initial_trials_and_legacy_imports _______________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1020911b0>
+
+    def test_flat_group_initial_trials_and_legacy_imports(app):
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.gui.protocol_groups import make_group
+        from cephvr.visual_stimulus.config.models.program_model import Epoch, Group
+    
+        window = DashboardWindow(sample=True)
+        ReviewControls(window)
+        window.show()
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        assert all(isinstance(n, Group) for n in editor.program.sequence)
+        assert all(isinstance(n, Epoch) for n in editor.program.sequence[0].body)
+        before = editor.program
+        editor.edit_epoch("add")
+>       assert editor.program == before
+E       assert Program(forma...tings=()))),)) == Program(forma...tings=()))),))
+E         
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:12167: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+__________ test_unified_subgroup_template_add_apply_history_and_files __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x30bcb6c20>
+app = <PyQt6.QtWidgets.QApplication object at 0x1020911b0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1679/test_unified_subgroup_template0')
+
+    def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_path):
+        from PyQt6.QtWidgets import QTabBar
+    
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import review_program
+        from cephvr.visual_stimulus.config.models.program_model import parse_program_json
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(grouped_program(review_program()))
+        editor.timeline.set_screens(("Left", "Right"))
+        editor.enter_group()
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        form = editor.subgroup
+        original = editor.program
+        template = original.sequence[0].body[1]
+        assert not editor.settings_card.findChildren(QTabBar)
+        assert not hasattr(editor.hierarchy, "batch_picker")
+        assert not hasattr(editor, "batch_edit")
+        assert editor.add_epoch_button.menu() is None
+        editor.add_epoch_button.click()
+        assert editor.selected_paths == ((0, 3),)
+        created = editor.program.sequence[0].body[3]
+        assert created.settings[0].model_dump(exclude={"instance_id"}) == template.settings[
+            0
+        ].model_dump(exclude={"instance_id"})
+        assert created.duration == template.duration
+        assert created.batch_id and created.epoch_id != template.epoch_id
+        form.repetitions.setText("3")
+        form.composer.duration.setText("00:00:12")
+        form.composer.batch_label.setText("Flow copies")
+        form.add_button.click()
+        assert not form.notice.text()
+>       assert editor.selected_paths == ((0, 3), (0, 4), (0, 5))
+E       assert ((0, 3),) == ((0, 3), (0, 4), (0, 5))
+E         
+E         Right contains 2 more items, first extra item: (0, 4)
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:12227: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_protocol_timeline_edits_preserve_trials_and_imported_groups
+FAILED tests/gui/test_dashboard.py::test_protocol_cards_reflow_and_keep_properties_reachable
+FAILED tests/gui/test_dashboard.py::test_nested_group_edit_and_duplicate_reference_remapping
+FAILED tests/gui/test_dashboard.py::test_trial_overview_selects_ranges_and_sources_across_groups
+FAILED tests/gui/test_dashboard.py::test_trial_shuffle_preserves_groups_selection_and_history
+FAILED tests/gui/test_dashboard.py::test_grouped_editor_pair_creation_repeat_scope_and_history
+FAILED tests/gui/test_dashboard.py::test_flat_group_initial_trials_and_legacy_imports
+FAILED tests/gui/test_dashboard.py::test_unified_subgroup_template_add_apply_history_and_files
+8 failed, 64 passed, 321 deselected in 58.63s

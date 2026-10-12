@@ -1,0 +1,707 @@
+........................................................................ [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 32%]
+........................................................................ [ 43%]
+........................................................................ [ 54%]
+.................F..FF..........................FFF..................... [ 65%]
+........................................................................ [ 76%]
+........................................................................ [ 87%]
+.....................................FFFF............................................                                                     [100%]
+=================================== FAILURES ===================================
+_________ test_legacy_numeric_projector_json_preserves_synchronization _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x333aa1360>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1601/test_legacy_numeric_projector_0')
+
+    def test_legacy_numeric_projector_json_preserves_synchronization(
+        window: DashboardWindow, tmp_path: Path
+    ):
+        import json
+    
+        panel = window.devices.projectors
+        numeric = panel.calibration_files.calibration_snapshot()
+        numeric["values"]["rig.width"] = 200
+        panel.timing.pulse.setChecked(True)
+        panel.timing.mode.setCurrentText("All displays VSync")
+        path = tmp_path / "legacy-calibration.json"
+        path.write_text(json.dumps(numeric))
+        panel.calibration_files.load_path(str(path))
+        assert panel.rig_editor.fields["width"].text() == "200"
+        assert panel.timing.pulse.isChecked()
+        assert panel.timing.mode.currentText() == "All displays VSync"
+>       assert panel.calibration_files.snapshot()["version"] == 5
+E       assert 6 == 5
+
+tests/gui/test_dashboard.py:12029: AssertionError
+_____ test_projector_reference_measurements_derive_distance_and_roundtrip ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x32a7392d0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1601/test_projector_reference_measu0')
+
+    def test_projector_reference_measurements_derive_distance_and_roundtrip(
+        window, tmp_path
+    ):
+        import json
+    
+        from cephvr.gui.calibration_profile import reference_bar_config
+    
+        panel = window.devices.projectors
+        table = panel.measurements.table
+        assert panel.screen_editor.fields["Front", "throw"].isHidden()
+        assert panel.screen_editor.fields["Front", "throw"].isReadOnly()
+        assert panel.screen_editor.table.columnCount() == 4
+        assert [
+            table.horizontalHeaderItem(i).text() for i in range(table.columnCount())
+        ] == [
+            "Screen",
+            "Measured X / Y (mm)",
+            "X / Y (mm/px)",
+        ]
+        assert not any(
+            "Launch calibration and measure" in caption.text()
+            for caption in panel.measurements.findChildren(QLabel)
+        )
+        x_field = panel.measurements.fields["Front", "reference_x_mm"]
+        y_field = panel.measurements.fields["Front", "reference_y_mm"]
+        assert x_field.parentWidget() is y_field.parentWidget()
+        panel.display_pixels = {"reference-test": (1280, 720)}
+        panel.assignments["reference-test"] = "Front"
+        panel.screen_editor.fields["Front", "throw"].setText("1.5")
+        panel.measurements.fields["Front", "reference_x_mm"].setText("160")
+        assert panel.screen_editor.fields["Front", "distance"].text() == ""
+        panel.measurements.fields["Front", "reference_y_mm"].setText("90")
+        distance = panel.screen_editor.fields["Front", "distance"]
+        assert distance.isReadOnly()
+        assert float(distance.text()) == pytest.approx(960)
+        assert panel.measurements.scales["Front"].text() == "0.5 / 0.5"
+        snapshot = panel.calibration_files.snapshot()
+>       assert snapshot["version"] == 5
+E       assert 6 == 5
+
+tests/gui/test_dashboard.py:12122: AssertionError
+_ test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x333a532e0>
+
+    def test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields(
+        window,
+    ):
+        import copy
+    
+        panel = window.devices.projectors
+        old = panel.calibration_files.snapshot()
+        old["version"] = 3
+        old["values"] = {
+            key: value
+            for key, value in old["values"].items()
+            if not key.rsplit(".", 1)[-1].startswith("reference_")
+        }
+        old["values"]["screens.Front.distance"] = 500
+>       panel.calibration_files.apply_snapshot(old)
+
+tests/gui/test_dashboard.py:12185: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/gui/projector_files.py:236: in apply_snapshot
+    self.validate(payload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <cephvr.gui.projector_files.ProjectorFiles object at 0x333abc040>
+payload = {'format': 'cephvr-rig-calibration', 'version': 3, 'values': {'rig.width': None, 'rig.depth': None, 'rig.height': None...led_screens': {}, 'photodiode_enabled': False, 'pulse_screen': None, 'vsync_mode': 'Selected display VSync', ...}, ...}
+
+    def validate(self, payload: object) -> dict[str, object]:
+        if (
+            isinstance(payload, dict)
+            and payload.get("version") in (3, 4, 5, 6)
+            and "settings" in payload
+        ):
+            if type(payload["version"]) is not int or set(payload) != {
+                "format",
+                "version",
+                "values",
+                "settings",
+                "screen_profile",
+            }:
+                raise ValueError("Expected complete projector configuration")
+            values = super().validate(
+                {
+                    "format": payload["format"],
+                    "version": min(payload["version"] - 1, 4),
+                    "values": payload["values"],
+                }
+            )
+            settings = payload["settings"]
+            setting_keys = {
+                "enabled_screens",
+                "photodiode_enabled",
+                "pulse_screen",
+                "vsync_mode",
+                "pulse_rect",
+            }
+            if payload["version"] == 6:
+                setting_keys.update(("pulse_square", "blackout_zones"))
+            if not isinstance(settings, dict) or set(settings) != setting_keys:
+>               raise ValueError("Expected all projector synchronization settings")
+E               ValueError: Expected all projector synchronization settings
+
+src/cephvr/gui/projector_files.py:94: ValueError
+_ test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware _
+
+    @pytest.mark.asyncio
+    async def test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware():
+        from cephvr.acquisition.transport.services import AcquisitionBackendService
+        from cephvr.shared.admission import CommandAdmissionTransport
+    
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "authenticated-backend-query"
+        credentials = {("controller", identity.controller.generation): token}
+        acquisition = acquisition_runtime(identity)
+        admission = CommandAdmissionTransport(acquisition.commands)
+        acq_server = grpc.aio.server()
+        rpc.add_BackendServiceServicer_to_server(
+            AcquisitionBackendService(acquisition, credentials, admission), acq_server
+        )
+>       acq_port = acq_server.add_insecure_port("127.0.0.1:0")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/visual_stimulus/test_controller_communication.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:12:12.146382 7201846 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[False] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1601/test_controller_initialize_dis0')
+missing_output = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("missing_output", [False, True])
+    async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
+        tmp_path,
+        missing_output,
+    ):
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "loopback-test-credential"
+        sink = SupervisorReceipt()
+        pending = PendingPeer()
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=pending,
+            controller=sink,
+            supervisor=sink,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+>       listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:12:12.205641 7201846 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_ test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[True] _
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1601/test_controller_initialize_dis1')
+missing_output = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("missing_output", [False, True])
+    async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
+        tmp_path,
+        missing_output,
+    ):
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "loopback-test-credential"
+        sink = SupervisorReceipt()
+        pending = PendingPeer()
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=pending,
+            controller=sink,
+            supervisor=sink,
+            ledger=command_ledger(identity.process.generation, 10**12, 1_000_000),
+        )
+>       listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_controller_communication.py:260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:12:12.219573 7201846 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+______ test_authenticated_first_use_calibration_repeat_and_close_recovery ______
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1601/test_authenticated_first_use_c0')
+
+    @pytest.mark.asyncio
+    async def test_authenticated_first_use_calibration_repeat_and_close_recovery(tmp_path):
+        import hashlib
+        from types import SimpleNamespace
+    
+        from cephvr.shared.transport_deadlines import deadline_metadata
+        from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+        from cephvr.visual_stimulus.rendering.types import (
+            OutputActivity,
+            ResourceReleaseReport,
+        )
+        from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+        from cephvr.visual_stimulus.worker.reporting import ReportBridge
+    
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "sessionless-calibration-test"
+        sink = ReportSink()
+        provisional = Peer(
+            "127.0.0.1:1",
+            Principal("visual_stimulus", identity.process.generation, token),
+            2_000_000,
+            kind="worker",
+        )
+        command_ledger = ledger(identity.process.generation)
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=provisional,
+            controller=sink,
+            supervisor=sink,
+            ledger=command_ledger,
+        )
+>       coordinator_listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=2_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_transport.py:214: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:12:13.378306 7201846 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_____ test_authenticated_coordinator_renderer_replay_and_stale_generation ______
+
+    @pytest.mark.asyncio
+    async def test_authenticated_coordinator_renderer_replay_and_stale_generation():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "local-test-secret"
+        sink = ReportSink()
+        provisional = Peer(
+            "127.0.0.1:1",
+            Principal("visual_stimulus", identity.process.generation, token),
+            1_000_000,
+            kind="worker",
+        )
+        coordinator = VisualStimulusCoordinatorRuntime(
+            identity=identity,
+            worker=provisional,
+            controller=sink,
+            supervisor=sink,
+            ledger=ledger(identity.process.generation),
+        )
+>       listener = await serve(
+            coordinator,
+            {
+                ("controller", identity.controller.generation): token,
+                ("visual_stimulus_renderer", identity.worker.generation): token,
+            },
+            coordinator.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            testing=True,
+        )
+
+tests/visual_stimulus/test_transport.py:581: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:12:13.421049 7201846 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+____ test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state ____
+
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1601/test_authenticated_supervisor_0')
+
+    @pytest.mark.asyncio
+    async def test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state(
+        tmp_path,
+    ):
+        from tests.supervisor.support import make_runtime
+    
+        from cephvr.supervisor.outbound import GrpcOutbound
+    
+        supervisor, native, _, _ = make_runtime(tmp_path)
+        identity = Identity(
+            pb.ProcessIdentity(role="visual_stimulus", generation=str(uuid4())),
+            supervisor.controller,
+            supervisor.identity,
+            pb.ProcessIdentity(role="visual_stimulus_renderer", generation=str(uuid4())),
+        )
+        token = "local-test-secret"
+        sink = ReportSink()
+        session = pb.SessionContext(
+            controller_generation=identity.controller.generation, session_id=str(uuid4())
+        )
+        work = pb.WorkContext(session=session)
+        context = visual_stimulus.WorkerContext(
+            worker=identity.worker,
+            owner=identity.process,
+            work=work,
+            configuration_revision=7,
+        )
+        device = Device()
+        owner = RenderOwner(lambda _: device)
+        worker = VisualStimulusWorkerRuntime(
+            context,
+            identity.supervisor,
+            owner,
+            sink,
+            ledger(identity.worker.generation),
+        )
+>       listener = await serve(
+            worker,
+            {("supervisor", identity.supervisor.generation): token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=1_000_000,
+            worker=True,
+        )
+
+tests/visual_stimulus/test_transport.py:723: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:12:13.587389 7201846 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+_____ test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial _____
+
+    @pytest.mark.asyncio
+    async def test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial():
+        identity = Identity(
+            *(
+                pb.ProcessIdentity(role=role, generation=str(uuid4()))
+                for role in (
+                    "visual_stimulus",
+                    "controller",
+                    "supervisor",
+                    "visual_stimulus_renderer",
+                )
+            )
+        )
+        token = "prepared-handoff-test"
+        revision = 11
+        session = pb.SessionContext(
+            controller_generation=identity.controller.generation, session_id=str(uuid4())
+        )
+        trial = pb.TrialContext(session=session, trial_id=str(uuid4()))
+        work = pb.WorkContext(session=session)
+        context = visual_stimulus.WorkerContext(
+            worker=identity.worker,
+            owner=identity.process,
+            work=work,
+            configuration_revision=revision,
+        )
+        artifact = make_prepared_trial(
+            session_id=session.session_id, trial_id=trial.trial_id
+        )
+        reports = LifecycleReports()
+        recorder = Recorder()
+        graphics_clock = Clock()
+        graphics = Graphics(graphics_clock, artifact)
+        driver = LifecycleDriver(
+            worker=identity.worker,
+            owner=identity.process,
+            controller=identity.controller,
+            policies=pb.ControlPolicies(
+                start_evidence_allowance_ns=1_000_000,
+                stop_evidence_allowance_ns=1_000_000,
+                recovery_ns=10_000_000,
+            ),
+            engine=graphics,
+            preparation=Preparation(artifact),
+            recording=recorder,
+            reports=reports,
+            cancelled=threading.Event(),
+            clock=host_time_ns,
+            shutdown=lambda: None,
+        )
+        device = LifecycleDevice(driver)
+        owner = RenderOwner(lambda _: device)
+        worker = VisualStimulusWorkerRuntime(
+            context,
+            identity.supervisor,
+            owner,
+            reports,
+            ledger(identity.worker.generation),
+        )
+>       listener = await serve(
+            worker,
+            {("visual_stimulus", identity.process.generation): token},
+            worker.ledger,
+            port=0,
+            max_message_bytes=2_000_000,
+            worker=True,
+        )
+
+tests/visual_stimulus/test_transport.py:862: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/transport/server.py:79: in serve
+    bound = server.add_insecure_port(f"127.0.0.1:{port}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/grpc/aio/_server.py:128: in add_insecure_port
+    return _common.validate_port_binding_result(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = '127.0.0.1:0', port = 0
+
+    def validate_port_binding_result(address: str, port: int) -> int:
+        """Validates if the port binding succeed.
+    
+        If the port returned by Core is 0, the binding is failed. However, in that
+        case, the Core API doesn't return a detailed failing reason. The best we
+        can do is raising an exception to prevent further confusion.
+    
+        Args:
+            address: The address string to be bound.
+            port: An int returned by core
+        """
+        if port == 0:
+            # The Core API doesn't return a failure message. The best we can do
+            # is raising an exception to prevent further confusion.
+>           raise RuntimeError(_ERROR_MESSAGE_PORT_BINDING_FAILED % address)
+E           RuntimeError: Failed to bind to address 127.0.0.1:0; set GRPC_VERBOSITY=debug environment variable to see detailed error message.
+
+.venv/lib/python3.11/site-packages/grpc/_common.py:179: RuntimeError
+----------------------------- Captured stderr call -----------------------------
+E1012 14:12:13.615115 7201846 add_port.cc:83] Failed to add port to server: No address added out of total 1 resolved for '127.0.0.1:0' (Error in bind for address '127.0.0.1:0': Operation not permitted)
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_legacy_numeric_projector_json_preserves_synchronization
+FAILED tests/gui/test_dashboard.py::test_projector_reference_measurements_derive_distance_and_roundtrip
+FAILED tests/gui/test_dashboard.py::test_old_projector_snapshot_retains_unmeasured_distance_and_rejects_new_fields
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_port_queries_actual_acquisition_and_visual_stimulus_without_hardware
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[False]
+FAILED tests/visual_stimulus/test_controller_communication.py::test_controller_initialize_display_retains_confirmed_idle_separately_from_ready[True]
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_first_use_calibration_repeat_and_close_recovery
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_coordinator_renderer_replay_and_stale_generation
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_supervisor_interrupt_cleanup_and_exact_worker_state
+FAILED tests/visual_stimulus/test_transport.py::test_authenticated_setup_compiles_and_hands_off_exact_prepared_trial
+10 failed, 651 passed, 1 deselected, 79 subtests passed in 321.18s (0:05:21)

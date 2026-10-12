@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-11",
+  "source_base_revision": "f96286e86dc9af334da78ab55a8c14ec111c6184",
+  "source_state": "Uncommitted startup repair and G01 shuffle changes; exact input hashes retained.",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests -q -m 'not windows and not rig' --junitxml=reports/runtime-evidence-2026-10-11/startup-full.xml",
+      "result": "1861 passed, 6 skipped, 8 deselected in 307.43s",
+      "inputs": "startup-inputs.json",
+      "scope": "Startup and prior optional-I/O/all-VSync code; before GUI shuffle changes. Startup contract prose updated after hash capture; runtime/test inputs unchanged during execution. Loopback permitted."
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig' --junitxml=reports/runtime-evidence-2026-10-11/shuffle-gui.xml",
+      "result": "381 passed in 284.12s",
+      "inputs": "shuffle-inputs-before-layout.json",
+      "scope": "Shuffle behavior and full GUI regression before final responsive-grid adjustment."
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'trial_shuffle or protocol_cards_reflow or variation_controls_fit_narrow' --junitxml=reports/runtime-evidence-2026-10-11/shuffle-final.xml",
+      "result": "5 passed, 375 deselected in 7.74s",
+      "inputs": "final-inputs.json",
+      "scope": "Final shuffle and responsive-layout change, including button minimum-width checks."
+    },
+    {
+      "commands": [
+        ".venv/bin/python -m ruff check src tests",
+        ".venv/bin/python -m ruff format --check src tests",
+        ".venv/bin/python -m mypy --platform win32 src/cephvr",
+        ".venv/bin/python tools/check_backend_boundaries.py",
+        "git diff --check"
+      ],
+      "result": "Pass: 845 formatted files, 735 mypy sources, 640 backend modules and zero boundary violations. Existing cohesion warnings reviewed for affected files."
+    },
+    {
+      "result": "48 Tracking and 42 Visual contract tests; 19 Tracking/11 Visual schema matches; 57 regenerated protobuf files match. 19 TOMLs parse; 8 policy/config version pairs and 107 register revisions match; pip check passes."
+    }
+  ],
+  "visual_review": {
+    "method": "Offscreen DashboardWindow sample at 1175x883 and 720x883; final action-width assertions and image inspection",
+    "result": "Final screenshots readable at both sizes; helper with explicit deferred widget destruction exits 0. Initial helper exited 138 during teardown after captures; no native Windows teardown fix is claimed.",
+    "images": [
+      "shuffle-final-1175.png",
+      "shuffle-final-720.png"
+    ]
+  },
+  "limitations": [
+    "No Windows or rig/device execution. Six skips comprise Windows-native collection and five Win32 atomic ring tests.",
+    "Prior Windows exact-completion timeout cause remains unresolved; Mac full pass is distinct evidence.",
+    "Native disconnected/reconnected display startup, MCU Apply/all-VSync, electrical/optical/DPI acceptance remain pending.",
+    "Throughput measurements, Eye source/rate/wiring integration, paired SpikeGLX, scientific Tracking and deferred encoder acceptance remain in reports/rig-verification.md."
+  ]
+}

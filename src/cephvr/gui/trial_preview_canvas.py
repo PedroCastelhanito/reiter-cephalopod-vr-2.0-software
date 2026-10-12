@@ -88,7 +88,7 @@ class PreviewCanvas(QWidget):
         self.setMinimumSize(180, 130)
         self.setAccessibleName(f"{face} stimulus preview")
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor("#090f15"))
         surface = self.rig_geometry.surfaces.get(self.face)
@@ -117,7 +117,34 @@ class PreviewCanvas(QWidget):
         painter = QPainter(image)
         self.draw_content(painter, QRectF(0, 0, image.width(), image.height()))
         painter.end()
-        return self.correct_frame(image)
+        output = self.correct_frame(image)
+        surface = self.rig_geometry.surfaces.get(self.face)
+        if surface is not None:
+            painter = QPainter(output)
+            for x, y, mask_width, mask_height in surface.blackout_zones:
+                painter.fillRect(
+                    QRectF(
+                        x * output.width(),
+                        (1 - y - mask_height) * output.height(),
+                        mask_width * output.width(),
+                        mask_height * output.height(),
+                    ),
+                    QColor("black"),
+                )
+            if surface.marker_rect is not None:
+                # Placement illustration; submission-index alternation is renderer-owned.
+                x, y, mask_width, mask_height = surface.marker_rect
+                painter.fillRect(
+                    QRectF(
+                        x * output.width(),
+                        (1 - y - mask_height) * output.height(),
+                        mask_width * output.width(),
+                        mask_height * output.height(),
+                    ),
+                    QColor("white"),
+                )
+            painter.end()
+        return output
 
     def correct_frame(self, image: QImage) -> QImage:
         surface = self.rig_geometry.surfaces.get(self.face)

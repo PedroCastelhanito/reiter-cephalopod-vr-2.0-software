@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit
+from PyQt6.QtWidgets import QComboBox, QLabel, QLineEdit
 
 from cephvr.gui.configuration_files import (
     JSON,
@@ -46,10 +46,6 @@ class SpikeGLXSnapshot:
             available=lambda: panel.can_review,
         )
         self.files.message.connect(panel.console.appendPlainText)
-        row = QHBoxLayout()
-        row.addWidget(self.files.load_button)
-        row.addWidget(self.files.save_button)
-        panel.configuration.body.insertLayout(1, row)
 
     def host(self) -> JSON:
         panel = self.panel

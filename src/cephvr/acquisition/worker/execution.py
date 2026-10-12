@@ -195,9 +195,9 @@ class WorkerOperationExecutor:
             elif name == "PrepareTrial":
                 self.preparation.prepare_trial(request, deadline_ns, self.trial)
             elif name == "ScheduleTrial":
-                self._schedule(request, deadline_ns)
+                self.trial.schedule(request, deadline_ns)
             elif name == "ReleaseTrial":
-                self._release(request, deadline_ns)
+                self.trial.release(request, deadline_ns)
             elif name == "RecordPulseEvidence":
                 self.trial.record_pulse_evidence(request)
             elif name == "StopTrial":
@@ -239,7 +239,7 @@ class WorkerOperationExecutor:
             )
             failure = control.Failure(code=_failure_code(exc), message=str(exc)[:2048])
         now_ns = host_time_ns()
-        operation = self.state.complete_operation(
+        self.state.complete_operation(
             command.command_id,
             succeeded=success,
             progress="complete" if success else "failed",
@@ -247,7 +247,6 @@ class WorkerOperationExecutor:
             failure=failure,
             retained_result=report,
         )
-        _ = operation
         self._report(report, deadline_ns)
         finalize_scope = success and (
             name in {"Cleanup", "Shutdown"}
@@ -257,7 +256,7 @@ class WorkerOperationExecutor:
             )
         )
         if finalize_scope:
-            self._finalize_work_scope(command.target.work)
+            self.state.finalize_scope(command.target.work, host_time_ns())
             if name in {"Cleanup", "Shutdown"}:
                 self.state.finalize_terminal_command(command.command_id, host_time_ns())
 
@@ -270,7 +269,7 @@ class WorkerOperationExecutor:
                 code="WORKER_OWNER_FAILURE", message=str(exc)[:2048]
             )
             command_id = operation.context.command_id
-            done = self.state.complete_operation(
+            self.state.complete_operation(
                 command_id,
                 succeeded=False,
                 progress="owner_failed",
@@ -285,28 +284,15 @@ class WorkerOperationExecutor:
             ):
                 report = acq.WorkerOperationReport.FromString(retained.result)
                 self._report(report, retained.deadline_ns)
-            _ = done
 
     def owner_failed(self, exc: BaseException) -> None:
         self.health.owner_failed(exc)
-
-    def _schedule(self, request: object, deadline_ns: int) -> None:
-        self.trial.schedule(request, deadline_ns)
-
-    def _release(self, request: object, deadline_ns: int) -> None:
-        self.trial.release(request, deadline_ns)
-
-    def _stop_trial(self, deadline_ns: int) -> None:
-        self.trial.stop_trial(deadline_ns)
 
     def _operation_deadline(self, command_id: str) -> int:
         retained = self.state.commands.get(command_id)
         if retained is None or retained.deadline_ns is None:
             raise RuntimeError("worker operation has no retained absolute deadline")
         return retained.deadline_ns
-
-    def _finalize_work_scope(self, work: control.WorkContext) -> None:
-        self.state.finalize_scope(work, host_time_ns())
 
     def _request_shutdown(self, deadline_ns: int) -> None:
         self.shutdown_deadline(deadline_ns)

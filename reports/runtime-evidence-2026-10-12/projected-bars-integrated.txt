@@ -1,0 +1,104 @@
+.................................................................F.....  [100%]
+=================================== FAILURES ===================================
+__ test_native_calibration_owner_uses_surface_warp_and_output_pipeline[True] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1080e8750>
+configured_bars = True
+
+    @pytest.mark.parametrize("configured_bars", [False, True])
+    def test_native_calibration_owner_uses_surface_warp_and_output_pipeline(
+        monkeypatch: pytest.MonkeyPatch,
+        configured_bars: bool,
+    ) -> None:
+        _install_fake_gl_binding(monkeypatch)
+        gl = _FakeGL()
+        moderngl = SimpleNamespace(
+            DEPTH_TEST=1,
+            CULL_FACE=2,
+            BLEND=4,
+            ONE=1,
+            TRIANGLES=5,
+            TRIANGLE_STRIP=6,
+        )
+        display = _two_output_display()
+        if configured_bars:
+            raw = display.model_dump(mode="json")
+            for output in raw["outputs"]:
+                output["reference_bars"] = dict(x_length_px=200, y_length_px=100)
+>           display = parse_display_json(json.dumps(raw), max_bytes=1_000_000)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/visual_stimulus/test_display_calibration_rendering.py:564: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/cephvr/visual_stimulus/config/models/display_profile.py:319: in parse_display_json
+    return parse_json(DisplayProfile, source, max_bytes=max_bytes, max_depth=32)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model = <class 'cephvr.visual_stimulus.config.models.display_profile.DisplayProfile'>
+source = '{"format_version": 1, "geometry": {"frame_id": "frame", "observer_mm": [0.0, 0.0, 0.0], "near_mm": 1.0, "far_mm": 100...: {"x": 0, "y": 0, "width": 10, "height": 10}, "high_linear_rgb": [1.0, 1.0, 1.0], "low_linear_rgb": [0.0, 0.0, 0.0]}}'
+max_bytes = 1000000, max_depth = 32
+
+    def parse_json(
+        model: type[T], source: str, *, max_bytes: int, max_depth: int = 64
+    ) -> T:
+        if (
+            type(max_bytes) is not int
+            or type(max_depth) is not int
+            or min(max_bytes, max_depth) <= 0
+        ):
+            raise ValueError("positive integer JSON limits required")
+        if not isinstance(source, str):
+            raise ValueError("UTF-8 JSON text required")
+        if len(source.encode("utf8")) > max_bytes:
+            raise ValueError("document exceeds byte budget")
+        depth = 0
+        quoted = False
+        escaped = False
+        for ch in source:
+            if quoted:
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == '"':
+                    quoted = False
+            elif ch == '"':
+                quoted = True
+            elif ch in "[{":
+                depth += 1
+                if depth > max_depth:
+                    raise ValueError("document exceeds nesting budget")
+            elif ch in "]}":
+                depth -= 1
+    
+        def unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+            result: dict[str, Any] = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError(f"duplicate JSON key: {key}")
+                result[key] = value
+            return result
+    
+        def invalid(value: str) -> NoReturn:
+            raise ValueError(f"nonfinite JSON constant: {value}")
+    
+        # This preflight checks duplicate keys; it is not a second schema definition.
+        json.loads(source, object_pairs_hook=unique, parse_constant=invalid)
+>       return model.model_validate_json(source, strict=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for DisplayProfile
+E       outputs.0
+E         Value error, Reference bar lengths exceed the output dimensions [type=value_error, input_value={'enabled': True, 'output...00, 'y_length_px': 100}}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/value_error
+E       outputs.1
+E         Value error, Reference bar lengths exceed the output dimensions [type=value_error, input_value={'enabled': True, 'output...00, 'y_length_px': 100}}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/value_error
+E       outputs
+E         Tuple should have at least 1 item after validation, not 0 [type=too_short, input_value=[{'enabled': True, 'outpu...0, 'y_length_px': 100}}], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_short
+
+src/cephvr/visual_stimulus/config/models/schema_common.py:139: ValidationError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_display_calibration_rendering.py::test_native_calibration_owner_uses_surface_warp_and_output_pipeline[True]
+1 failed, 70 passed, 360 deselected in 38.43s

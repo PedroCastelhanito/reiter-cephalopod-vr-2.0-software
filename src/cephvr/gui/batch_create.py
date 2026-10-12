@@ -22,7 +22,7 @@ from cephvr.gui.epoch_batch import epoch_paths
 from cephvr.gui.epoch_composer import EpochComposer
 from cephvr.gui.notices import FormNotice, passive_validation
 from cephvr.gui.program_editing import node_at
-from cephvr.gui.projector_layers import layer_title, layers_for
+from cephvr.gui.projector_layers import detach_layer, layer_title, layers_for
 from cephvr.gui.protocol_groups import make_group
 from cephvr.gui.stimulus_scope import surfaces
 from cephvr.gui.theme import SIZES
@@ -36,14 +36,25 @@ from cephvr.visual_stimulus.config.models.program_model import (
 
 
 class BatchCreate(QWidget):
+    compact_random = False
     generated = pyqtSignal(object, object)
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        append_only: bool = False,
+        composer: EpochComposer | None = None,
+        show_copies: bool = True,
+    ) -> None:
         super().__init__()
         body = QVBoxLayout(self)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(16)
-        self.composer = EpochComposer()
+        self.append_only = append_only
+        self.show_copies = show_copies
+        self.destination = "trial"
+        self._bound_scope: tuple[int, tuple[int, ...]] | None = None
+        self.composer = composer if composer is not None else EpochComposer()
         body.addWidget(self.composer)
         self.vary = QCheckBox("Enable")
         self.variation_host = Card("Variation rules", compact=True)
@@ -99,7 +110,7 @@ class BatchCreate(QWidget):
         for caption, control in (
             ("Stimulus mode", self.composer.mode),
             ("Duration (hh:mm:ss)", self.composer.duration),
-            ("Repetitions", self.repetitions),
+            ("Copies" if append_only else "Repetitions", self.repetitions),
             ("Batch label", self.composer.batch_label),
             ("Insert", self.insert),
         ):
@@ -142,7 +153,7 @@ class BatchCreate(QWidget):
         self.refresh_preview()
 
     def arrange_insertion(self) -> None:
-        mode = self.insert.currentData()
+        mode = "append" if self.append_only else self.insert.currentData()
         self.stride_field.setVisible(mode == "stride")
         self.target_field.setVisible(mode == "label")
         self.insertion_hint.setVisible(
@@ -153,49 +164,81 @@ class BatchCreate(QWidget):
             if mode == "label"
             else "Insert one generated block per interval; append any remaining blocks. Groups count as one block."
             if mode == "stride"
-            else "Replace all epochs in the current trial. Use Ctrl+Z to undo."
+            else f"Replace all blocks in the current {self.destination}. Use Ctrl+Z to undo."
             if mode == "replace"
-            else "An epoch inside a group selects its whole top-level group for insertion."
+            else "Insert beside the selected block in this sequence."
         )
-        self.add_button.setText("Replace trial" if mode == "replace" else "Add epochs")
+        self.add_button.setText(
+            f"Replace {self.destination}"
+            if mode == "replace"
+            else "Generate epochs"
+            if self.append_only
+            else f"Add to this {self.destination}"
+        )
         self.arrange_fields()
 
     def arrange_fields(self) -> None:
-        fields = self.parameter_fields + (
-            [self.stride_field]
-            if self.insert.currentData() == "stride"
-            else [self.target_field]
-            if self.insert.currentData() == "label"
-            else []
+        fields = (
+            self.parameter_fields[:4]
+            if self.append_only
+            else self.parameter_fields
+            + (
+                [self.stride_field]
+                if self.insert.currentData() == "stride"
+                else [self.target_field]
+                if self.insert.currentData() == "label"
+                else []
+            )
         )
+        if not self.show_copies:
+            fields = [
+                widget for widget in fields if widget is not self.parameter_fields[2]
+            ]
+        for widget in self.parameter_fields:
+            widget.setVisible(widget in fields)
         while self.generation_grid.count():
             self.generation_grid.takeAt(0)
         for col in range(6):
             self.generation_grid.setColumnStretch(col, 0)
-        columns = 3 if self.width() < 760 else len(fields)
+        columns = (2 if self.append_only else 3) if self.width() < 760 else len(fields)
         weights = (3, 2, 1, 3, 3, 2)
         for i, widget in enumerate(fields):
             self.generation_grid.addWidget(
                 widget,
                 i // columns,
                 i % columns,
+                1,
+                2
+                if not self.show_copies and columns == 2 and i == len(fields) - 1
+                else 1,
                 alignment=Qt.AlignmentFlag.AlignBottom,
             )
             self.generation_grid.setColumnStretch(
-                i % columns, weights[i] if columns > 3 else 1
+                i % columns,
+                weights[self.parameter_fields.index(widget)]
+                if self.width() >= 760 and widget in self.parameter_fields
+                else 1,
             )
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         super().resizeEvent(event)
         self.arrange_fields()
 
-    def bind_trial(self, program: Program) -> None:
+    def bind_trial(self, program: Program, scope: tuple[int, ...] = ()) -> None:
+        identity = (id(program), scope)
+        if identity == self._bound_scope:
+            return
+        self._bound_scope = identity
+        self.destination = "group" if scope else "trial"
+        self.insert.setItemText(
+            self.insert.findData("replace"), f"Replace {self.destination}"
+        )
         previous = self.target_label.currentText()
         counts: dict[str, int] = {}
         for path in epoch_paths(program):
             epoch = node_at(program, path)
             assert isinstance(epoch, Epoch)
-            if epoch.batch_label:
+            if path[: len(scope)] == scope and epoch.batch_label:
                 counts[epoch.batch_label] = counts.get(epoch.batch_label, 0) + 1
         self.label_counts = counts
         self.target_label.blockSignals(True)
@@ -214,6 +257,19 @@ class BatchCreate(QWidget):
         except ValueError as error:
             self.notice.setText(str(error))
             return
+        self.add_variation_from(reference)
+
+    def add_variation_from(self, reference: Program) -> None:
+        original_reference = reference
+        # Local instances allow independent per-projector values even for imported shared layers.
+        for face in self.composer.screens:
+            node = reference.sequence[0]
+            assert isinstance(node, Epoch)
+            for layer in reversed(layers_for(reference, node, face)):
+                reference, _ = detach_layer(reference, (0,), layer, face)
+        if reference is not original_reference:
+            self.composer.program = reference
+            self.composer.refresh_rows()
         node = reference.sequence[0]
         assert isinstance(node, Epoch)
         targets: list[tuple[str, tuple[int, ...], int, str]] = [
@@ -252,6 +308,12 @@ class BatchCreate(QWidget):
         row.deleteLater()
         self.queue_preview()
 
+    def random_factor(self) -> int:
+        return 1
+
+    def random_count(self) -> int:
+        return 1
+
     def candidate(self) -> Program:
         program = self.composer.value()
         repetitions = int(self.repetitions.text())
@@ -265,20 +327,25 @@ class BatchCreate(QWidget):
             if row not in random_rows
             for rule in row.read_rules()
         )
-        if random_rows:
+        if random_rows and not self.compact_random:
             counts = {len(rule.values) for rule in rules}
             if len(counts) > 1 or 0 in counts:
                 raise ValueError(
                     "Paired variations require equally long, nonempty value lists"
                 )
-            count = next(iter(counts), 1) * repetitions
+            count = (
+                next(iter(counts), self.random_count())
+                * repetitions
+                * self.random_factor()
+            )
             if count > 2000:
                 raise ValueError(
                     "The authoring editor supports at most 2000 expanded epochs"
                 )
             # Sample each repeated epoch once; fixed lists retain their batch order.
             rules = tuple(
-                replace(rule, values=rule.values * repetitions) for rule in rules
+                replace(rule, values=rule.values * repetitions * self.random_factor())
+                for rule in rules
             )
             rules += tuple(
                 rule for row in random_rows for rule in row.read_rules(count)
@@ -372,6 +439,8 @@ class BatchCreate(QWidget):
         self.generated.emit(
             program,
             Insertion(
-                self.insert.currentData(), stride, self.target_label.currentText()
+                "append" if self.append_only else self.insert.currentData(),
+                stride,
+                self.target_label.currentText(),
             ),
         )

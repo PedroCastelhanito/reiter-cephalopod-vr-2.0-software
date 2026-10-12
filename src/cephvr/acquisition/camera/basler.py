@@ -132,11 +132,6 @@ class BaslerCameraAdapter:
         except Exception as exc:
             raise _sdk_error("read_device_identity", exc) from exc
 
-    @property
-    def is_grabbing(self) -> bool:
-        """Whether this adapter currently owns an active acquisition stream."""
-        return self._grabbing
-
     def capabilities(self) -> CameraCapabilities:
         camera, _ = self._require_open()
         try:
