@@ -1,0 +1,55 @@
+.....................F........                                           [100%]
+=================================== FAILURES ===================================
+______________ test_flat_group_initial_trials_and_legacy_imports _______________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x1161e0ca0>
+
+    from cephvr.gui.protocol_groups import make_group
+    from cephvr.visual_stimulus.config.models.program_model import Epoch, Group
+    
+    window = DashboardWindow(sample=True)
+    ReviewControls(window)
+    window.show()
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    assert all(isinstance(n, Group) for n in editor.program.sequence)
+    assert all(isinstance(n, Epoch) for n in editor.program.sequence[0].body)
+    before = editor.program
+    editor.edit_epoch("add")
+    assert len(editor.program.sequence[0].body) == len(before.sequence[0].body) + 1
+    assert editor.selected_paths == ((0, 3),)
+    editor.feedback.clear()
+    editor.timeline.context_selected.emit(((0,),))
+    window.activateWindow()
+    editor.timeline.setFocus()
+    app.processEvents()
+    QTest.keyClick(editor.timeline, Qt.Key.Key_D, Qt.KeyboardModifier.ControlModifier)
+    assert len(editor.program.sequence) == 2
+    assert all(isinstance(n, Group) for n in editor.program.sequence)
+    editor.add_trial()
+    assert isinstance(editor.program.sequence[0], Group)
+    nested, _ = make_group(review_program(), (), 0, 1, 3, True)
+    nested, _ = make_group(nested, (), 0, 1, 2, False)
+    editor.set_program(nested)
+    editor.enter_group()
+    assert editor.program == nested  # Never resolve imported shuffle while loading.
+    assert editor.timeline.actions.enabled
+    assert editor.hierarchy.contents.actions.add.isHidden()
+    assert editor.subgroup.isHidden()
+>   editor.subgroup.generate()
+E   assert False
+E    +  where False = <built-in method isHidden of QPushButton object at 0x1161e1510>()
+E    +    where <built-in method isHidden of QPushButton object at 0x1161e1510> = <PyQt6.QtWidgets.QPushButton object at 0x1161e1510>.isHidden
+E    +      where <PyQt6.QtWidgets.QPushButton object at 0x1161e1510> = <cephvr.gui.timeline_actions.TimelineActions object at 0x1161e39a0>.add
+E    +        where <cephvr.gui.timeline_actions.TimelineActions object at 0x1161e39a0> = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x1161e20e0>.actions
+E    +          where <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x1161e20e0> = <cephvr.gui.protocol_hierarchy.ProtocolHierarchy object at 0x1161e3370>.contents
+E    +            where <cephvr.gui.protocol_hierarchy.ProtocolHierarchy object at 0x1161e3370> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x1161e2c20>.hierarchy
+
+tests/gui/test_dashboard.py:12157: AssertionError
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_flat_group_initial_trials_and_legacy_imports
+1 failed, 29 passed, 367 deselected in 29.88s

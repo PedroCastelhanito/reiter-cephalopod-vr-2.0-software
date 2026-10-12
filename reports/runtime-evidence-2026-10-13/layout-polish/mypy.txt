@@ -1,0 +1,5 @@
+src/cephvr/gui/batch_variation.py:142: error: Item "None" of "QLayoutItem | None" has no attribute "widget"  [union-attr]
+src/cephvr/gui/variation_table.py:54: error: Item "None" of "QHeaderView | None" has no attribute "length"  [union-attr]
+src/cephvr/gui/variation_table.py:54: error: Item "None" of "QWidget | None" has no attribute "width"  [union-attr]
+src/cephvr/gui/variation_table.py:62: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+Found 4 errors in 2 files (checked 148 source files)

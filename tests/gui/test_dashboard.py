@@ -262,6 +262,7 @@ def test_spikeglx_config_replaces_custom_rows_preserves_host_and_file_identity(
     from cephvr.gui.configuration_files import write_snapshot
 
     panel = window.devices.spikeglx
+    assert not hasattr(panel, "save_inventory")
     panel.add_custom()
     key = panel.row_keys[-1]
     signal, stream, index, channel, bit = panel.rows[key]
@@ -6240,18 +6241,14 @@ def test_protocol_cards_reflow_and_keep_properties_reachable(
     window.page_buttons[1].click()
     assert not panel.findChildren(StatusColumn)
     assert not panel.findChildren(QPlainTextEdit)
-    assert not panel.findChildren(QTableWidget)
+    assert panel.findChildren(QTableWidget) == [panel.editor.subgroup.variation_table]
     open_protocol_group(panel.editor)
     for width in (1175, 720, 1175):
         window.resize(width, 883)
         for _ in range(3):
             app.processEvents()
         editor = panel.editor
-        for action in (
-            editor.add_group_button,
-            editor.remove_group_button,
-            editor.output_preview_button,
-        ):
+        for action in (editor.output_preview_button,):
             assert action.width() >= action.minimumSizeHint().width()
             assert action.width() <= action.sizeHint().width()
         assert editor.settings_card.width() == editor.width()
@@ -6546,7 +6543,7 @@ def test_protocol_epoch_structure_actions(window: DashboardWindow) -> None:
 
     editor.set_program(grouped_program(blank_program()))
     editor.enter_group()
-    editor.add_epoch_button.click()
+    editor.hierarchy.contents.block_actions.add.click()
     assert len(editor.program.sequence[0].body) == 2
     assert editor.node_index == 1
     added = editor.program.sequence[0].body[1].epoch_id
@@ -6952,13 +6949,13 @@ def test_expanded_close_and_trial_deletion(
     window.protocol.save_program(str(saved))
     original = editor.program
     editor.add_trial()
-    editor.delete_trial_button.click()
+    editor.trials.delete_requested.emit(editor.index)
     editor.delete_dialog.button(QMessageBox.StandardButton.Cancel).click()
     assert len(editor.drafts) == 2
-    editor.delete_trial_button.click()
+    editor.trials.delete_requested.emit(editor.index)
     editor.delete_dialog.button(QMessageBox.StandardButton.Yes).click()
     assert len(editor.drafts) == 1 and editor.program == original
-    editor.delete_trial_button.click()
+    editor.trials.delete_requested.emit(editor.index)
     editor.delete_dialog.button(QMessageBox.StandardButton.Yes).click()
     assert len(editor.drafts) == 1 and editor.program != original
     assert saved.exists()
@@ -7069,7 +7066,6 @@ def test_batch_create_variations_preview_insert_and_reload(
     original = editor.program
     create.composer.add_file("Texture", str(path), "Left")
     create.composer.duration.setText("00:00:05.000000001")
-    create.vary.setChecked(True)
     create.add_variation()
     create.rows[0].method.setCurrentIndex(1)
     create.rows[0].values.setText("0, 1, 0.25")
@@ -7165,11 +7161,8 @@ def test_trial_overview_selects_ranges_and_sources_across_groups(
         for control in editor.timeline_card.findChildren(QPushButton)
     )
     actions = editor.timeline_actions.layout()
-    assert (
-        actions.indexOf(editor.add_group_button)
-        < actions.indexOf(editor.remove_group_button)
-        < actions.indexOf(editor.output_preview_button)
-    )
+    assert actions.count() == 1
+    assert actions.indexOf(editor.output_preview_button) == 0
     assert not any(
         control.text() == "Actions…"
         for control in editor.settings_card.findChildren(QPushButton)
@@ -8480,17 +8473,23 @@ def test_calibration_button_reflects_confirmed_managed_output(
     closed: list[bool] = []
     table.launch_requested.connect(lambda: launched.append(True))
     table.close_requested.connect(lambda: closed.append(True))
-    assert set(table.findChildren(QPushButton)) == {
-        table.presentation_button,
-        table.measurement_button,
-    }
+    assert set(table.findChildren(QPushButton)) == {table.presentation_button}
+    assert not table.isAncestorOf(panel.measurements)
+    assert panel.measurements.isAncestorOf(table.measurement_button)
+    assert table.body.indexOf(table.presentation_button) < table.body.indexOf(
+        table.table
+    )
+    assert panel.measurements.body.indexOf(
+        table.measurement_button
+    ) < panel.measurements.body.indexOf(panel.measurements.table)
+    assert table.measurement_button.text() == "Launch reference calibration"
     assert not table.presentation_button.isEnabled()
     table.set_presentation_state(active=False, available=True)
     table.presentation_button.click()
     assert launched == [True]
     assert prepared == ["frame_grid"]
     assert output_requests == [str(arena)]
-    assert table.presentation_button.text() == "Adjust frame and grid"
+    assert table.presentation_button.text() == "Launch projection calibration"
     table.set_presentation_state(active=True, available=True)
     assert table.presentation_button.text() == "Close"
     table.presentation_button.click()
@@ -8500,7 +8499,7 @@ def test_calibration_button_reflects_confirmed_managed_output(
     table.set_presentation_state(active=True, available=True, pending=True)
     assert not table.presentation_button.isEnabled()
     table.set_presentation_state(active=False, available=False)
-    assert table.presentation_button.text() == "Adjust frame and grid"
+    assert table.presentation_button.text() == "Launch projection calibration"
     assert not table.presentation_button.isEnabled()
     result[0] = None
     table.set_presentation_state(active=False, available=True)
@@ -9126,6 +9125,7 @@ def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
     window.page_buttons[1].click()
     window.protocol.session_mode.setCurrentText("Closed-loop")
     editor = window.protocol.editor
+    open_protocol_group(editor)
     composer = editor.subgroup.composer
     composer.set_screens(("Front", "Right"))
     composer.set_asset_root(str(tmp_path))
@@ -9134,13 +9134,30 @@ def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
     path = tmp_path / "a_prepared_texture_with_a_long_filename.png"
     assert image.save(str(path))
     composer.add_file("Texture", str(path), "Front")
+    composer.add_file("Texture", str(path), "Front")
     composer.rows["Front"].advanced.setChecked(True)
-    editor.subgroup.vary.setChecked(True)
-    editor.subgroup.add_variation()
-    window.resize(720, 900)
-    QTest.qWait(30)
-    app.processEvents()
-    assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+    form = editor.subgroup
+    assert not hasattr(form, "vary") and form.add_rule.isVisible()
+    form.add_rule.click()
+    row = form.rows[0]
+    row.layer.setCurrentIndex(row.layer.findData(-1))
+    assert row.layer.currentText() == "All"
+    for width in (1280, 720):
+        window.resize(width, 1000)
+        for method in ("Values", "Sweep (min, max, step)", "Random"):
+            row.method.setCurrentText(method)
+            QTest.qWait(30)
+            app.processEvents()
+            assert row.layer.width() == 64
+            table = form.variation_table
+            assert table.columnCount() == 6
+            assert table.columnViewportPosition(2) >= table.columnViewportPosition(
+                1
+            ) + table.columnWidth(1)
+            assert row.target.height() == row.layer.height() == row.parameter.height()
+            assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+    form.remove_variation(row)
+    assert not form.rows and form.add_rule.isVisible()
 
 
 def test_batch_variations_target_projectors_and_local_layer_ordinals(
@@ -9163,7 +9180,6 @@ def test_batch_variations_target_projectors_and_local_layer_ordinals(
     for face in ("Left", "Right"):
         for _ in range(2):
             create.composer.add_file("Texture", str(path), face)
-    create.vary.setChecked(True)
     create.add_variation()
     row = create.rows[0]
     assert isinstance(create.variation_host, Card)
@@ -9261,7 +9277,6 @@ def test_variations_use_stimulus_columns_and_materialize_looming_and_video(
     create.composer.set_asset_root(str(tmp_path))
     create.composer.set_screens(("Left",))
     create.composer.add_file("Looming image", str(path), "Left")
-    create.vary.setChecked(True)
     create.add_variation()
     row = create.rows[0]
     columns = stimulus_columns(create.composer.program.sequence[0].settings[0])
@@ -9701,7 +9716,6 @@ def test_random_batch_values_stay_fixed_across_preview_and_save(window, app, tmp
     path = tmp_path / "tile.png"
     assert image.save(str(path))
     create.composer.add_file("Texture", str(path), "Front")
-    create.vary.setChecked(True)
     create.add_variation()
     row = create.rows[0]
     row.random.seed(42)
@@ -11754,11 +11768,11 @@ def test_group_actions_preserve_contents_selection_and_history(window, tmp_path)
     editor.set_program(grouped_program(review_program()))
     original = editor.program
     assert editor.path == (0, 0)
-    editor.add_group_button.click()
+    editor.timeline.block_actions.add.click()
     assert len(editor.program.sequence) == 2 and editor.path == (1, 0)
     assert editor.program.sequence[0] == original.sequence[0]
     added = editor.snapshot()
-    editor.remove_group_button.click()
+    editor.remove_block(((editor.path[0],),))
     assert editor.program.sequence == original.sequence
     assert editor.path == (0, 0)
     editor.undo()
@@ -11798,7 +11812,7 @@ def test_group_actions_keep_one_group_and_noop_history(window):
     editor.set_program(grouped_program(review_program()))
     original = editor.snapshot()
     assert not hasattr(editor, "shuffle_trial_button")
-    assert not editor.remove_group_button.isEnabled()
+    assert not hasattr(editor, "remove_group_button")
     editor.edit_group("earlier")
     assert editor.snapshot() == original
     assert not editor.histories[editor.index].past
@@ -12062,7 +12076,7 @@ def test_grouped_editor_pair_creation_repeat_scope_and_history(window, tmp_path,
             app.processEvents()
         assert fields.repetitions.width() >= 40
         assert not hasattr(fields, "order")
-        assert editor.hierarchy.add_epoch.isVisible()
+        assert editor.hierarchy.contents.block_actions.enabled
         assert editor.hierarchy.contents.isVisible()
 
 
@@ -12158,8 +12172,8 @@ def test_flat_group_initial_trials_and_legacy_imports(app):
     editor.set_program(nested)
     editor.enter_group()
     assert editor.program == nested  # Never resolve imported shuffle while loading.
-    assert editor.add_group_button.isVisible()
-    assert editor.hierarchy.add_epoch.isHidden()
+    assert editor.timeline.block_actions.enabled
+    assert not editor.hierarchy.contents.block_actions.enabled
     assert editor.subgroup.isHidden()
     editor.subgroup.generate()
     assert editor.program == nested
@@ -12189,8 +12203,8 @@ def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_
     assert not editor.settings_card.findChildren(QTabBar)
     assert not hasattr(editor.hierarchy, "batch_picker")
     assert not hasattr(editor, "batch_edit")
-    assert editor.add_epoch_button.menu() is None
-    editor.add_epoch_button.click()
+    assert editor.hierarchy.contents.block_actions.add.menu() is None
+    editor.hierarchy.contents.block_actions.add.click()
     assert editor.selected_paths == ((0, 3),)
     created = editor.program.sequence[0].body[3]
     assert created.settings[0].model_dump(exclude={"instance_id"}) == template.settings[
@@ -12473,7 +12487,7 @@ def test_direct_group_editor_starts_open_and_uses_only_group_repetitions(
     assert editor.group_editor.apply()
     assert editor.subgroup.composer.duration.text() == "00:00:01"
     editor.subgroup.apply()
-    editor.add_epoch_button.click()
+    editor.hierarchy.contents.block_actions.add.click()
     assert editor.path == (0, 1)
     assert len(editor.program.sequence[0].body) == 2
     assert (
@@ -12493,11 +12507,7 @@ def test_direct_group_editor_starts_open_and_uses_only_group_repetitions(
     for width in (1280, 720):
         window.resize(width, 1100)
         app.processEvents()
-        for control in (
-            editor.add_group_button,
-            editor.remove_group_button,
-            editor.output_preview_button,
-        ):
+        for control in (editor.output_preview_button,):
             assert (
                 control.isVisible()
                 and control.width() >= control.minimumSizeHint().width()
@@ -12555,7 +12565,6 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
     form.composer.set_asset_root(str(root))
     for face in ("Left", "Right"):
         form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)
-    form.vary.setChecked(True)
     form.add_variation()
     row = form.rows[0]
     row.target.setCurrentIndex(row.target.findText("All projectors"))
@@ -12565,7 +12574,7 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
     assert not form.notice.text()
     assert len(form.paths) == 3
     assert not form.dirty
-    assert form.vary.isChecked() and form.rows[0].values.text() == "10,20,30"
+    assert form.rows and form.rows[0].values.text() == "10,20,30"
     editor.select_epochs(((0, 2),))
     assert len(form.paths) == 3
     row = form.rows[0]
@@ -12600,8 +12609,14 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
     assert editor.program == first
     restored = parse_program_json(first.model_dump_json(), max_bytes=1048576)
     editor.set_program(restored)
-    assert form.vary.isChecked() and form.rows[0].method.currentText() == "Random"
+    assert form.rows and form.rows[0].method.currentText() == "Random"
     assert not form.dirty
+    form.remove_variation(form.rows[0])
+    form.apply()
+    assert not form.notice.text() and not form.rows
+    assert all(not e.repetition_rules for e in editor.program.sequence[0].body)
+    editor.undo()
+    assert editor.program == restored and len(form.rows) == 1
     form.composer.duration.setText("00:00:30")
     form.apply()
     assert not form.notice.text()
@@ -12636,10 +12651,9 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
     assert not form.dirty
 
     editor.add_subgroup()
-    assert len(form.paths) == 1 and not form.vary.isChecked()
+    assert len(form.paths) == 1 and not form.rows
     added = editor.program.sequence[0].body[-1]
     assert added.subgroup_draft is None and not added.repetition_settings
-    form.vary.setChecked(True)
     form.add_variation()
     form.rows[0].method.setCurrentText("Random")
     form.rows[0].random_fields["minimum"].setText("2000001")
@@ -12674,7 +12688,6 @@ def test_large_random_group_stays_compact_and_layer_controls_are_indices(window,
     form.composer.set_asset_root(str(root))
     for face in ("Left", "Right"):
         form.composer.add_file("Texture", str(root / "textures/checkerboard.png"), face)
-    form.vary.setChecked(True)
     form.add_variation()
     row = form.rows[0]
     row.target.setCurrentIndex(row.target.findText("All projectors"))
@@ -12712,3 +12725,157 @@ def test_large_random_group_stays_compact_and_layer_controls_are_indices(window,
     assert form.rows[0].layer.minimumWidth() == 64
     assert " s" not in editor.sequence_summary.text()
     assert ":" in editor.sequence_summary.text()
+
+
+def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, app):
+    from PyQt6.QtTest import QTest
+    from PyQt6.QtWidgets import QPushButton
+
+    from cephvr.gui.program_editing import validate
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import review_program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    data = grouped_program(review_program()).model_dump(mode="json")
+    data["sequence"][0]["repetitions"] = 10
+    for epoch in data["sequence"][0]["body"][:2]:
+        epoch["batch_id"] = "batch_pair"
+    editor.set_program(validate(data))
+    window.resize(1280, 1100)
+    app.processEvents()
+    contents = editor.hierarchy.contents
+    before = editor.program
+    assert not any(
+        control.text() in ("+ Group", "− Group", "+ Epoch")
+        for control in editor.findChildren(QPushButton)
+    )
+    # Selection alone has no cross; hovering reveals a standard compact control.
+    QTest.mouseMove(editor.group_editor.name)
+    app.processEvents()
+    assert not any(c.isVisible() for c in contents.block_actions.removers)
+    QTest.mouseMove(contents, contents.batch_hits[0][0].center().toPoint())
+    app.processEvents()
+    # One cross removes the complete selected batch, preserving the remaining source.
+    remove = next(c for c in contents.block_actions.removers if c.isVisible())
+    assert remove.property("role") == "compact" and not remove.styleSheet()
+    assert remove.property("paths") == ((0, 0), (0, 1))
+    assert remove.isEnabled()
+    assert not editor.subgroup.dirty
+    QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
+    assert len(editor.program.sequence[0].body) == 1, editor.feedback.text()
+    editor.undo()
+    assert editor.program == before
+    app.processEvents()
+    QTest.mouseClick(contents.block_actions.add, Qt.MouseButton.LeftButton)
+    assert editor.path == (0, 3)
+    assert len(editor.program.sequence[0].body) == 4
+    # Add always appends, even when an earlier group is selected.
+    editor.timeline.block_actions.add.click()
+    editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+    editor.timeline.block_actions.add.click()
+    assert editor.path == (2, 0) and len(editor.program.sequence) == 3
+    app.processEvents()
+    timeline = editor.timeline
+    first_rect = next(rect for rect, i, _, _ in timeline.hits if i == 0)
+    QTest.mouseMove(timeline, first_rect.center().toPoint())
+    app.processEvents()
+    remove = next(
+        c
+        for c in timeline.block_actions.removers
+        if c.isVisible() and c.property("paths") == ((0,),)
+    )
+    before_delete = editor.program
+    QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
+    assert editor.program.sequence == before_delete.sequence[1:]
+    editor.undo()
+    assert editor.program == before_delete
+    # A bad draft must block deletion without changing document or selection.
+    app.processEvents()
+    editor.subgroup.composer.duration.setText("invalid")
+    snapshot = editor.snapshot()
+    editor.remove_block(((0,),))
+    assert editor.snapshot() == snapshot
+    editor.subgroup.discard()
+    editor.setEnabled(False)
+    editor.remove_block(((0,),))
+    editor.timeline.block_actions.add.click()
+    assert editor.program == before_delete
+    editor.setEnabled(True)
+    # Trailing plus remains reachable after horizontal scrolling.
+    for _ in range(8):
+        editor.add_group()
+    app.processEvents()
+    timeline.scrollbar.setValue(timeline.scrollbar.maximum())
+    app.processEvents()
+    assert timeline.block_actions.add.isVisible()
+    assert timeline.rect().contains(timeline.block_actions.add.geometry())
+    assert (
+        len(timeline.block_actions.removers) <= 9
+    )  # Only visible blocks allocate controls.
+
+
+def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+    from PyQt6.QtWidgets import QMessageBox
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    open_protocol_group(editor)
+    trials = editor.trials
+    window.resize(1280, 1100)
+    app.processEvents()
+    assert editor.trial_card.height() >= 320
+    assert editor.group_editor.parentWidget() is editor.timeline_card
+    assert editor.group_editor.geometry().bottom() < editor.timeline.y()
+    QTest.mouseMove(editor.group_editor.name)
+    app.processEvents()
+    assert not any(c.isVisible() for c in trials.removers)
+    assert not hasattr(editor, "delete_trial_button")
+    assert trials.add.height() == trials.visualItemRect(trials.item(0)).height()
+    assert trials.add.y() > trials.visualItemRect(trials.item(0)).bottom()
+    QTest.mouseClick(trials.add, Qt.MouseButton.LeftButton)
+    editor.add_trial()
+    assert editor.index == 2
+    app.processEvents()
+    rect = trials.visualItemRect(trials.item(0))
+    QTest.mouseMove(trials.viewport(), rect.center())
+    app.processEvents()
+    remove = next(
+        c for c in trials.removers if c.isVisible() and c.property("trial_row") == 0
+    )
+    selected = editor.drafts[2]
+    QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
+    assert editor.drafts[0].name in editor.delete_dialog.text()
+    editor.delete_dialog.button(QMessageBox.StandardButton.Cancel).click()
+    assert editor.drafts[editor.index] is selected and len(editor.drafts) == 3
+    remove.click()
+    editor.delete_dialog.button(QMessageBox.StandardButton.Yes).click()
+    assert editor.drafts[editor.index] is selected and len(editor.drafts) == 2
+    for _ in range(8):
+        editor.add_trial()
+    for width in (1280, 720):
+        window.resize(width, 1100)
+        QTest.qWait(30)
+        app.processEvents()
+        trials.verticalScrollBar().setValue(trials.verticalScrollBar().maximum())
+        app.processEvents()
+        assert trials.add.isVisible()
+        assert trials.viewport().rect().contains(trials.add.geometry())
+        assert (
+            trials.add.y()
+            > trials.visualItemRect(trials.item(trials.count() - 1)).bottom()
+        )
+        assert editor.trial_card.y() == editor.timeline_card.y()
+        assert (
+            editor.trial_card.caption.geometry().center().y()
+            == editor.timeline_card.caption.geometry().center().y()
+        )
+        assert editor.trial_card.height() == editor.timeline_card.height()
+        assert window.protocol.config_scroll.horizontalScrollBar().maximum() == 0
+    previous = len(editor.drafts)
+    QTest.mouseClick(trials.add, Qt.MouseButton.LeftButton)
+    assert len(editor.drafts) == previous + 1 and editor.index == previous
+    editor.setEnabled(False)
+    trials.add.click()
+    editor.delete_trial(0)
+    assert len(editor.drafts) == previous + 1 and editor.delete_dialog is None

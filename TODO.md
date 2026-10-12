@@ -28,9 +28,14 @@ Recheck source findings before implementation; local completion does not close r
 
 
 
+
+
+
+
+
 ## Next
 
-- [ ] `long-protocol-resource-scaling` [visual_stimulus] Complete bounded image readiness/lookahead and image-miss response contracts before runtime implementation. Grouped GUI with compact persistent variation rules is locally complete under G01 revision157; image residency remains accepted but unimplemented. — [GUI evidence](reports/runtime-evidence-2026-10-12/compact-rules/context.json), [Image assessment](reports/visual_stimulus.md#validation-limits)
+- [ ] `long-protocol-resource-scaling` [visual_stimulus] Complete bounded image readiness/lookahead and image-miss response contracts before runtime implementation. Grouped GUI with compact persistent variation rules is locally complete under G01 revision162; image residency remains accepted but unimplemented. — [GUI evidence](reports/runtime-evidence-2026-10-12/compact-rules/context.json), [Image assessment](reports/visual_stimulus.md#validation-limits)
 
 
 - [ ] `mcu-managed-connection-and-io` [gui] [controller] [acquisition] Complete electrical D2 source/receiver/LOW correlation, original-boundary/watchdog latency under load and recoverable interrupted-upload/uncertain-cleanup injection. Oct8 native compile/verified upload, generated D9/D10/D11 counts, compiler-error preservation, active-D9 control release and exact shutdown/COM release pass. Oct9 actual Browse/ino selection/GUI Upload and connection retest pass after fault-recovery repair; COM8 reports protocol 3 with stopped camera outputs. Generated counts/readback do not prove voltage or timing. Repaired GUI remains open in Configuration. — [Current firmware evidence](reports/review-evidence-2026-10-09/firmware-picker-context.json), [Earlier rig evidence](reports/rig-wiring-evidence-2026-10-08/README.md)

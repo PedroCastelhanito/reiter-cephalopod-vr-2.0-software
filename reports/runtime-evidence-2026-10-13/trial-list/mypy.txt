@@ -1,0 +1,9 @@
+src/cephvr/gui/trial_list.py:41: error: Item "None" of "QScrollBar | None" has no attribute "valueChanged"  [union-attr]
+src/cephvr/gui/trial_list.py:49: error: Item "None" of "QScrollBar | None" has no attribute "value"  [union-attr]
+src/cephvr/gui/trial_list.py:53: error: Item "None" of "QScrollBar | None" has no attribute "setMaximum"  [union-attr]
+src/cephvr/gui/trial_list.py:54: error: Item "None" of "QWidget | None" has no attribute "height"  [union-attr]
+src/cephvr/gui/trial_list.py:64: error: Item "None" of "QWidget | None" has no attribute "width"  [union-attr]
+src/cephvr/gui/trial_list.py:65: error: Item "None" of "QWidget | None" has no attribute "height"  [union-attr]
+src/cephvr/gui/trial_list.py:71: error: Item "None" of "QWidget | None" has no attribute "rect"  [union-attr]
+src/cephvr/gui/trial_list.py:75: error: Item "None" of "QListWidgetItem | None" has no attribute "text"  [union-attr]
+Found 8 errors in 1 file (checked 147 source files)

@@ -2,7 +2,7 @@
 
 from math import ceil
 
-from PyQt6.QtCore import QRectF, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QPointF, QRectF, Qt, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
     QKeyEvent,
@@ -19,6 +19,7 @@ from cephvr.gui.formatting import clock_duration
 from cephvr.gui.projector_layers import layers_for
 from cephvr.gui.protocol_document import node_name
 from cephvr.gui.theme import COLORS
+from cephvr.gui.timeline_actions import TimelineActions
 from cephvr.gui.timeline_details import (
     epoch_heading,
     layer_description,
@@ -43,6 +44,8 @@ class ProgramTimeline(QWidget):
     def __init__(self, *, details: bool = True) -> None:
         super().__init__()
         self.show_details = details
+        self.block_actions = TimelineActions(self)
+        self.hover_position = QPointF(-1, -1)
         self.program: Program | None = None
         self.views = TimelineViews()
         self.index = 0
@@ -88,7 +91,7 @@ class ProgramTimeline(QWidget):
         self.nodes, self.paths, self.type_keys = view.nodes, view.paths, view.keys
         self.counts, self.durations = view.counts, view.durations
         self.batch_runs = view.batch_runs
-        self.batch_offset = 26 if scope and any(view.batch_runs) else 0
+        self.batch_offset = 40 if scope and any(view.batch_runs) else 0
         self.index = max(0, min(index, len(self.nodes) - 1))
         self.selection = (self.paths[self.index],) if self.paths else ()
         self.anchor = self.index
@@ -110,12 +113,25 @@ class ProgramTimeline(QWidget):
         return summary
 
     def block_width(self) -> float:
-        return max(150.0, (self.width() - 8) / max(1, len(self.nodes)))
+        return max(
+            150.0,
+            (self.width() - 8 - (48 if self.block_actions.enabled else 0))
+            / max(1, len(self.nodes)),
+        )
 
     def fit_scroll(self) -> None:
         self.scrollbar.setGeometry(0, 70 + self.batch_offset, self.width(), 14)
         self.scrollbar.setRange(
-            0, max(0, ceil(len(self.nodes) * self.block_width() - self.width() + 8))
+            0,
+            max(
+                0,
+                ceil(
+                    len(self.nodes) * self.block_width()
+                    - self.width()
+                    + 8
+                    + (48 if self.block_actions.enabled else 0)
+                ),
+            ),
         )
         self.scrollbar.setPageStep(self.width())
         self.scrollbar.setSingleStep(150)
@@ -226,6 +242,9 @@ class ProgramTimeline(QWidget):
         self.hits.clear()
         self.batch_hits.clear()
         self.hover_text.clear()
+        self.block_actions.begin()
+        if self.program is None or not self.nodes or self.error:
+            self.block_actions.finish(self.width(), 0, self.width())
         if self.program is None:
             return
         if self.error:
@@ -250,22 +269,28 @@ class ProgramTimeline(QWidget):
                 right = min(
                     float(self.width() - 1), end * width - self.scrollbar.value() - 7
                 )
-                band = QRectF(left, 0, right - left, 23)
+                band = QRectF(left, 0, right - left, 36)
                 painter.setBrush(QColor(COLORS.selection))
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawRoundedRect(band, 4, 4)
                 painter.setPen(QColor(COLORS.accent))
                 painter.drawText(
-                    band.adjusted(8, 0, -8, 0),
+                    band.adjusted(8, 0, -44, 0),
                     Qt.AlignmentFlag.AlignVCenter,
                     self.fontMetrics().elidedText(
                         title,
                         Qt.TextElideMode.ElideRight,
-                        max(1, int(band.width()) - 16),
+                        max(1, int(band.width()) - 52),
                     ),
                 )
                 assert isinstance(node, Epoch) and node.batch_id is not None
                 self.batch_hits.append((band, node.batch_id))
+                paths = self.paths[start:end]
+                area = QRectF(band.left(), 0, band.width(), 65 + self.batch_offset)
+                if self.block_actions.enabled and (area.contains(self.hover_position)):
+                    self.block_actions.place(
+                        band, paths, enabled=len(paths) < len(self.paths)
+                    )
                 self.hover_text.append((band, title + " · Click to edit this batch"))
             rect = QRectF(
                 i * width - self.scrollbar.value() + 1,
@@ -292,16 +317,29 @@ class ProgramTimeline(QWidget):
                 )
             for offset, text in ((5, name), (29, summary)):
                 painter.drawText(
-                    rect.adjusted(8, offset, -8, 0),
+                    rect.adjusted(8, offset, -44 if offset == 5 else -8, 0),
                     Qt.AlignmentFlag.AlignTop,
                     self.fontMetrics().elidedText(
                         text,
                         Qt.TextElideMode.ElideRight,
-                        max(1, int(rect.width()) - 16),
+                        max(1, int(rect.width()) - (52 if offset == 5 else 16)),
                     ),
+                )
+            if (
+                self.block_actions.enabled
+                and not run
+                and rect.contains(self.hover_position)
+            ):
+                self.block_actions.place(
+                    rect, (self.paths[i],), enabled=len(self.paths) > 1
                 )
             self.hits.append((rect, i, "", -1))
             self.hover_text.append((rect, name + "\n" + summary))
+        self.block_actions.finish(
+            len(self.nodes) * width - self.scrollbar.value() + 4,
+            5 + self.batch_offset,
+            self.width(),
+        )
         if not self.show_details:
             return
         node = self.nodes[self.index]
@@ -351,6 +389,8 @@ class ProgramTimeline(QWidget):
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         if event is not None:
+            self.hover_position = event.position()
+            self.update()
             text = next(
                 (
                     text
@@ -361,6 +401,15 @@ class ProgramTimeline(QWidget):
             )
             self.setToolTip(text)
         super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event: QEvent | None) -> None:
+        # Child action buttons remain inside the timeline; their hover must not hide them.
+        from PyQt6.QtGui import QCursor
+
+        if not self.rect().contains(self.mapFromGlobal(QCursor.pos())):
+            self.hover_position = QPointF(-1, -1)
+            self.update()
+        super().leaveEvent(event)
 
     def choose(self, index: int, modifiers: Qt.KeyboardModifier) -> None:
         if not self.paths:

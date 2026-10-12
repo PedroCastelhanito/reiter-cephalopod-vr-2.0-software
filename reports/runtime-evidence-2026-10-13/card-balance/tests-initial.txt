@@ -1,0 +1,43 @@
+......................................F.                                 [100%]
+=================================== FAILURES ===================================
+_____ test_inline_timeline_actions_target_blocks_append_and_preserve_undo ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x128f05e10>
+app = <PyQt6.QtWidgets.QApplication object at 0x10c8fd750>
+
+    def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, app):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QPushButton
+    
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        data = grouped_program(review_program()).model_dump(mode="json")
+        data["sequence"][0]["repetitions"] = 10
+        for epoch in data["sequence"][0]["body"][:2]:
+            epoch["batch_id"] = "batch_pair"
+        editor.set_program(validate(data))
+        window.resize(1280, 1100)
+        app.processEvents()
+        contents = editor.hierarchy.contents
+        before = editor.program
+        assert not any(
+            control.text() in ("+ Group", "− Group", "+ Epoch")
+            for control in editor.findChildren(QPushButton)
+        )
+        # Selection alone has no cross; hovering reveals a standard compact control.
+>       QTest.mouseMove(editor.group_editor.name)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests/gui/test_dashboard.py:12743: StopIteration
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo
+1 failed, 39 passed, 359 deselected in 42.15s

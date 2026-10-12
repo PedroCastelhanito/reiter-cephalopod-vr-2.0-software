@@ -82,9 +82,9 @@ unique; noncustom pulse roles are unique; custom rows have the Custom role and a
 rows, restores dormant values and leaves the current controller file digest/required
 role inventory unchanged. Current source participation/required-role rules still
 apply. Only Channel index is visible/editable alongside Use and Signal; stream family,
-stream index and digital bit remain saved metadata. Save pulse mapping validates
-numeric channels/source IDs and publishes
-through the existing E12 controller-owned file operation.
+stream index and digital bit remain saved metadata. GUI Save/Load persists these drafts; it does not publish controller inventory
+changes. There is no separate Save pulse mapping button. The E12 controller-owned
+file operation retains validation of numeric channels/source IDs.
 
 ## Tracking and Projectors
 

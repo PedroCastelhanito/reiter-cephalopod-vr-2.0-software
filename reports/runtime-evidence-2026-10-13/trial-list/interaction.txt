@@ -1,0 +1,47 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1151f9c60>
+app = <PyQt6.QtWidgets.QApplication object at 0x106151510>
+
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        trials = editor.trials
+        window.resize(1280, 1100)
+        app.processEvents()
+        assert editor.trial_card.height() >= 320
+        assert not hasattr(editor, "delete_trial_button")
+        assert trials.add.y() > trials.visualItemRect(trials.item(0)).bottom()
+        QTest.mouseClick(trials.add, Qt.MouseButton.LeftButton)
+        editor.add_trial()
+        assert editor.index == 2
+        app.processEvents()
+        rect = trials.visualItemRect(trials.item(0))
+        QTest.mouseMove(trials.viewport(), rect.center())
+        app.processEvents()
+        remove = next(
+            c for c in trials.removers if c.isVisible() and c.property("trial_row") == 0
+        )
+        selected = editor.drafts[2]
+        QTest.mouseClick(remove, Qt.MouseButton.LeftButton)
+>       assert "Trial 1" in editor.delete_dialog.text()
+E       assert 'Trial 1' in 'Delete "Optic flow · sample" from the planner? Saved files are kept.'
+E        +  where 'Delete "Optic flow · sample" from the planner? Saved files are kept.' = <built-in method text of QMessageBox object at 0x11534f490>()
+E        +    where <built-in method text of QMessageBox object at 0x11534f490> = <PyQt6.QtWidgets.QMessageBox object at 0x11534f490>.text
+E        +      where <PyQt6.QtWidgets.QMessageBox object at 0x11534f490> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x1153f6950>.delete_dialog
+
+tests/gui/test_dashboard.py:12823: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 61 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards
+1 failed, 398 deselected in 3.65s

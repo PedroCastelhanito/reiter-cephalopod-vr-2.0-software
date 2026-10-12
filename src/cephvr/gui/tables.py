@@ -74,7 +74,9 @@ class DataTable(QTableWidget):
             ),
         )
 
-    def fit_rows(self, *, hide_empty_header: bool = False) -> None:
+    def fit_rows(
+        self, *, hide_empty_header: bool = False, extra_height: int = 0
+    ) -> None:
         # Persistent editors need their styled height plus the item insets.
         self.ensurePolished()
         for child in self.findChildren(QWidget):
@@ -101,4 +103,5 @@ class DataTable(QTableWidget):
                 if not self.isRowHidden(row)
             )
             + 2 * self.frameWidth()
+            + extra_height
         )

@@ -178,7 +178,7 @@ def stylesheet() -> str:
         font-family: 'Consolas', 'Courier New', monospace;
         font-size: {s.console_font}px; padding: 8px; }}
     QListWidget[role='trials'] {{ background: transparent; border: none; outline: none; }}
-    QListWidget[role='trials']::item {{ color: {c.text}; padding: 12px 8px; border-radius: 6px; }}
+    QListWidget[role='trials']::item {{ color: {c.text}; padding: 12px 40px 12px 8px; border-radius: 6px; }}
     QListWidget[role='trials']::item:selected {{ background: {c.selection}; }}
     QTableWidget {{ background: {c.input}; border: 1px solid {c.input_border};
                    border-radius: {s.field_radius}px; gridline-color: transparent; }}

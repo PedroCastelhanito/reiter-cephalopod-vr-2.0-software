@@ -1,0 +1,54 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_inline_timeline_actions_target_blocks_append_and_preserve_undo ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1081dcc10>
+app = <PyQt6.QtWidgets.QApplication object at 0x108151240>
+
+    def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, app):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QPushButton
+    
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        data = grouped_program(review_program()).model_dump(mode="json")
+        for epoch in data["sequence"][0]["body"][:2]:
+            epoch["batch_id"] = "batch_pair"
+        editor.set_program(validate(data))
+        window.resize(1280, 1100)
+        app.processEvents()
+        contents = editor.hierarchy.contents
+        before = editor.program
+        assert not any(
+            control.text() in ("+ Group", "− Group", "+ Epoch")
+            for control in editor.findChildren(QPushButton)
+        )
+        # One cross removes the complete selected batch, preserving the remaining source.
+        remove = next(c for c in contents.block_actions.removers if c.isVisible())
+        assert remove.property("paths") == ((0, 0), (0, 1))
+        assert remove.isEnabled()
+        assert not editor.subgroup.dirty
+        remove.click()
+>       assert len(editor.program.sequence[0].body) == 1, editor.feedback.text()
+E       AssertionError: 1 validation error for Program
+E           Value error, explicit trial duration is below the E05 minimum trial duration [type=value_error, input_value={'format_version': 2, 'as...ition_settings': []}]}]}, input_type=dict]
+E             For further information visit https://errors.pydantic.dev/2.13/v/value_error
+E       assert 3 == 1
+E        +  where 3 = len((Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id='batch_pair', subgroup_draft=None, scene_id='blank'..., duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())))
+E        +    where (Epoch(kind='epoch', epoch_id='Baseline', batch_label='', batch_id='batch_pair', subgroup_draft=None, scene_id='blank'..., duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=())) = Group(kind='group', group_id='Group_1', repetitions=1, order='as_listed', order_unit='child_blocks', conditions=None, ... duration=Fixed(kind='fixed', duration=Time(seconds='35')), settings=(), repetition_rules=(), repetition_settings=()))).body
+
+tests/gui/test_dashboard.py:12734: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 65 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+----------------------------- Captured stderr call -----------------------------
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_inline_timeline_actions_target_blocks_append_and_preserve_undo
+1 failed, 396 deselected in 3.68s

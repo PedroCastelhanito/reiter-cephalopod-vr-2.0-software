@@ -3,9 +3,16 @@
 from decimal import Decimal, InvalidOperation
 from random import Random
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QShowEvent
-from PyQt6.QtWidgets import QCheckBox, QGridLayout, QLineEdit, QSizePolicy, QWidget
+from PyQt6.QtCore import QEvent, pyqtSignal
+from PyQt6.QtGui import QEnterEvent, QShowEvent
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QGridLayout,
+    QLineEdit,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 from cephvr.gui.batch_random import random_values
 from cephvr.gui.batch_values import ValueRule
@@ -24,12 +31,21 @@ class BatchVariationRow(QWidget):
         targets: list[tuple[str, tuple[int, ...], int, str]],
         projectors: dict[str, list[int]] | None = None,
         settings: tuple[Settings, ...] = (),
+        *,
+        table_mode: bool = False,
     ) -> None:
         super().__init__()
+        self.table_mode = table_mode
         self.targets = targets
         self.settings = settings
         self.projectors = projectors or {"Rig-wide": list(range(len(targets)))}
-        row = QGridLayout(self)
+        body = QVBoxLayout(self)
+        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(8)
+        target_host = QWidget()
+        row = QGridLayout(target_host)
+        row.setHorizontalSpacing(8)
+        body.addWidget(target_host)
         self.random_cache: tuple[tuple[str, ...], tuple[str, ...]] | None = None
         self.random = Random()
         self.random_seed = ""
@@ -64,13 +80,18 @@ class BatchVariationRow(QWidget):
             row.addWidget(caption_widget, 0, column)
             row.addWidget(control, 1, column)
             row.setColumnStretch(column, 0 if column == 1 else 1)
+        self.layer.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.layer.setFixedWidth(64)
-        self.remove = button("×", hint="Remove variation")
-        self.remove.setFixedWidth(32)
+        row.setColumnMinimumWidth(1, 64)
+        self.remove = button("×", "compact", hint="Remove variation")
+        policy = self.remove.sizePolicy()
+        policy.setRetainSizeWhenHidden(True)
+        self.remove.setSizePolicy(policy)
+        self.remove.hide()
         row.addWidget(self.remove, 1, 3)
         value_host = QWidget()
         self.value_grid = QGridLayout(value_host)
-        self.value_grid.setContentsMargins(0, 8, 0, 0)
+        self.value_grid.setContentsMargins(0, 0, 0, 0)
         self.value_grid.setHorizontalSpacing(8)
         self.value_grid.setColumnStretch(0, 1)
         for column, (caption, value_control) in enumerate(
@@ -86,7 +107,7 @@ class BatchVariationRow(QWidget):
             self.value_grid.addWidget(value_control, 1, column)
             if caption == "Values":
                 self.values_caption = text
-        row.addWidget(value_host, 2, 0, 1, 4)
+        body.addWidget(value_host)
         self.random_fields: dict[str, QLineEdit] = {}
         self.random_captions: list[QWidget] = []
         for column, (key, caption, value) in enumerate(
@@ -115,6 +136,15 @@ class BatchVariationRow(QWidget):
         self.shared = QCheckBox("Share random values across projectors")
         self.shared.toggled.connect(self.changed)
         self.value_grid.addWidget(self.shared, 2, 0, 1, 4)
+        if table_mode:
+            target_host.hide()
+            self.value_grid.removeWidget(self.method)
+            method_item = self.value_grid.itemAtPosition(0, 0)
+            assert method_item is not None
+            method_caption = method_item.widget()
+            if method_caption is not None:
+                method_caption.hide()
+            self.value_grid.setColumnStretch(0, 0)
         self.fit_control_heights()
         self.target.currentIndexChanged.connect(self.refresh_layers)
         self.layer.currentIndexChanged.connect(self.refresh)
@@ -124,6 +154,15 @@ class BatchVariationRow(QWidget):
             control.currentIndexChanged.connect(self.changed)
         self.values.textChanged.connect(self.changed)
         self.refresh_layers()
+
+    def enterEvent(self, event: QEnterEvent | None) -> None:
+        self.remove.show()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent | None) -> None:
+        if not self.table_mode:
+            self.remove.hide()
+        super().leaveEvent(event)
 
     def fit_control_heights(self) -> None:
         equal_row_height(

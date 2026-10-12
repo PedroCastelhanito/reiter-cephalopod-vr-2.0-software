@@ -165,7 +165,7 @@ class ProjectorsPanel(DevicePanel):
         self.timing = ProjectorTiming()
         self.calibration = CalibrationTable(self.screen_editor.drafts)
         self.measurements = ProjectorMeasurements(self.screen_editor.drafts)
-        self.calibration.body.addWidget(self.measurements)
+        self.measurements.body.insertWidget(1, self.calibration.measurement_button)
         self.measurements.changed.connect(self._mark_geometry_dirty)
         self.calibration.launch_requested.connect(self.launch_calibration)
         self.calibration.measurement_requested.connect(
@@ -229,8 +229,15 @@ class ProjectorsPanel(DevicePanel):
         synchronization_layout.addWidget(self.timing)
         synchronization_layout.addWidget(self.timing.blackouts)
         synchronization_layout.addStretch()
+        calibration_page = QWidget()
+        calibration_layout = QVBoxLayout(calibration_page)
+        calibration_layout.setContentsMargins(0, 0, 0, 0)
+        calibration_layout.setSpacing(SIZES.card_gap)
+        calibration_layout.addWidget(self.calibration)
+        calibration_layout.addWidget(self.measurements)
+        calibration_layout.addStretch()
         for title, card in (
-            ("Screen calibration", self.calibration),
+            ("Screen calibration", calibration_page),
             ("Synchronization", synchronization),
             ("Rig geometry", self.rig_page),
         ):

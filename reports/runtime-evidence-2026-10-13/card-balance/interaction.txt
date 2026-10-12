@@ -1,0 +1,36 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x112addbd0>
+app = <PyQt6.QtWidgets.QApplication object at 0x112addd80>
+
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        trials = editor.trials
+        window.resize(1280, 1100)
+        app.processEvents()
+        assert editor.trial_card.height() >= 320
+        assert editor.group_editor.parentWidget() is editor.timeline_card
+>       assert editor.group_editor.geometry().bottom() < editor.timeline.y()
+E       assert 479 < 62
+E        +  where 479 = <built-in method bottom of QRect object at 0x106d05380>()
+E        +    where <built-in method bottom of QRect object at 0x106d05380> = PyQt6.QtCore.QRect(0, 0, 640, 480).bottom
+E        +      where PyQt6.QtCore.QRect(0, 0, 640, 480) = <built-in method geometry of GroupEditor object at 0x106d94d30>()
+E        +        where <built-in method geometry of GroupEditor object at 0x106d94d30> = <cephvr.gui.group_editor.GroupEditor object at 0x106d94d30>.geometry
+E        +          where <cephvr.gui.group_editor.GroupEditor object at 0x106d94d30> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x106d941f0>.group_editor
+E        +  and   62 = <built-in method y of ProgramTimeline object at 0x106d95990>()
+E        +    where <built-in method y of ProgramTimeline object at 0x106d95990> = <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x106d95990>.y
+E        +      where <cephvr.gui.protocol_timeline.ProgramTimeline object at 0x106d95990> = <cephvr.gui.protocol_editor.ProtocolEditor object at 0x106d941f0>.timeline
+
+tests/gui/test_dashboard.py:12817: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards
+1 failed, 1 passed, 397 deselected in 6.83s

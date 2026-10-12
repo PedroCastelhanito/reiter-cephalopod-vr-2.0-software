@@ -77,9 +77,6 @@ class SpikeGLXPanel(DevicePanel):
         self.add_input = button("Add input", "secondary")
         self.add_input.clicked.connect(self.add_custom)
         self.mapping.body.addWidget(self.add_input)
-        self.save_inventory = button("Save pulse mapping", "secondary")
-        self.save_inventory.clicked.connect(self.request_inventory_update)
-        self.mapping.body.addWidget(self.save_inventory)
         layout = self.columns[0].layout()
         assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(1, self.mapping)
@@ -206,7 +203,6 @@ class SpikeGLXPanel(DevicePanel):
     def refresh_controls(self) -> None:
         self.config_files.set_enabled(self.can_review)
         self.add_input.setEnabled(self.can_review)
-        self.save_inventory.setEnabled(self.can_review)
         for key, controls in self.rows.items():
             toggle = self.enable_controls[key]
             role = self.row_roles.get(key)

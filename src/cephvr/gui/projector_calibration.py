@@ -116,19 +116,16 @@ class CalibrationTable(Card):
                 self.table.set_control(row, col, cell)
         self.table.fit_rows()
         self.body.addWidget(self.table)
-        self.presentation_button = button("Adjust frame and grid")
+        self.presentation_button = button("Launch projection calibration")
         self.presentation_button.setToolTip(
             "Prepare calibration files and launch with a connected managed Visual Stimulus renderer"
         )
         self.presentation_button.setEnabled(False)
         self.presentation_button.clicked.connect(self.request_presentation)
-        self.measurement_button = button("Measure reference bars")
+        self.measurement_button = button("Launch reference calibration")
         self.measurement_button.setEnabled(False)
         self.measurement_button.clicked.connect(self.request_measurement)
-        actions = QHBoxLayout()
-        actions.addWidget(self.measurement_button)
-        actions.addWidget(self.presentation_button)
-        self.body.addLayout(actions)
+        self.body.insertWidget(1, self.presentation_button)
         self.presentation_view = ""
         self.presentation_active = False
         self.presentation_available = False
@@ -158,6 +155,8 @@ class CalibrationTable(Card):
         self.presentation_active = active
         self.presentation_available = available
         self.presentation_pending = pending
-        self.presentation_button.setText("Close" if active else "Adjust frame and grid")
+        self.presentation_button.setText(
+            "Close" if active else "Launch projection calibration"
+        )
         self.presentation_button.setEnabled(available and not pending)
         self.measurement_button.setEnabled(available and not pending and not active)

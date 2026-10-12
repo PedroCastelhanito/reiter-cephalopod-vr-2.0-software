@@ -46,13 +46,13 @@ class ProtocolEditor(PlannerControls):
         self.trials.setCurrentRow(0)
         self.trials.currentRowChanged.connect(self.select_trial)
         self.add_button.clicked.connect(self.add_trial)
-        self.delete_trial_button.clicked.connect(self.delete_trial)
+        self.trials.delete_requested.connect(self.delete_trial)
         self.undo_action.triggered.connect(lambda: self.undo(False))
         self.redo_action.triggered.connect(lambda: self.undo(True))
-        self.add_group_button.clicked.connect(self.add_group)
-        self.remove_group_button.clicked.connect(lambda: self.edit_group("remove"))
+        self.timeline.block_actions.add.clicked.connect(self.add_group)
         self.group_action.connect(self.edit_group)
         for timeline in (self.timeline, self.hierarchy.contents):
+            timeline.block_actions.remove_requested.connect(self.remove_block)
             timeline.epochs_selected.connect(self.select_epochs)
             timeline.context_selected.connect(
                 lambda paths: self.select_epochs(paths, open_group=False)
@@ -131,10 +131,6 @@ class ProtocolEditor(PlannerControls):
             if isinstance(root, Group):
                 self.scope, self.node_index = (self.node_index,), 0
                 self.selected_paths = (self.path,)
-        self.remove_group_button.setEnabled(
-            len(self.program.sequence) > 1
-            and isinstance(self.program.sequence[self.path[0]], Group)
-        )
         try:
             valid = self.path in self.selected_paths
             for path in self.selected_paths:
@@ -152,6 +148,9 @@ class ProtocolEditor(PlannerControls):
         self.refresh_history()
 
     def update_timelines(self) -> None:
+        self.timeline.block_actions.enabled = all(
+            isinstance(node, Group) for node in self.program.sequence
+        )
         self.timeline.set_program(self.program, self.path[0])
         self.timeline.set_selection(
             tuple(dict.fromkeys((p[0],) for p in self.selected_paths))
@@ -290,6 +289,21 @@ class ProtocolEditor(PlannerControls):
         except (ValueError, TypeError) as error:
             self.error(error)
 
+    def remove_block(self, paths: tuple[tuple[int, ...], ...]) -> None:
+        if not self.isEnabled() or not self.flush_parameters():
+            return
+        try:
+            if len(paths[0]) == 1:
+                program, index = edit_epoch(self.program, paths[0], "remove")
+                self.commit(program, scope=(), selected=index, paths=((index,),))
+            else:
+                program, selected = edit_subgroup(
+                    self.program, subgroup_paths(self.program, paths), "remove"
+                )
+                self.commit_subgroup(program, selected)
+        except (ValueError, TypeError, IndexError) as error:
+            self.error(error)
+
     def edit_group(self, operation: str) -> None:
         if not self.isEnabled() or not self.flush_parameters():
             return
@@ -319,10 +333,15 @@ class ProtocolEditor(PlannerControls):
         if self.delete_dialog is not None:
             self.delete_dialog.reject()
 
-    def delete_trial(self) -> None:
+    def delete_trial(self, target: int | None = None) -> None:
         if not self.isEnabled() or self.delete_dialog is not None:
             return
-        draft = self.drafts[self.index]
+        target = self.index if target is None else target
+        if not 0 <= target < len(self.drafts):
+            return
+        if target != self.index and not self.flush_parameters():
+            return
+        draft = self.drafts[target]
         dialog = QMessageBox(
             QMessageBox.Icon.Question,
             "Delete trial",
@@ -337,12 +356,15 @@ class ProtocolEditor(PlannerControls):
             if (
                 result != int(QMessageBox.StandardButton.Yes)
                 or not self.isEnabled()
-                or self.drafts[self.index] is not draft
+                or not any(item is draft for item in self.drafts)
             ):
                 return
             self.close_source_dialog()
-            self.drafts.pop(self.index)
-            self.histories.pop(self.index)
+            removed = next(i for i, item in enumerate(self.drafts) if item is draft)
+            self.drafts.pop(removed)
+            self.histories.pop(removed)
+            if removed < self.index:
+                self.index -= 1
             if not self.drafts:
                 self.drafts.append(
                     TrialDraft("Trial 1", grouped_program(blank_program()))
@@ -401,7 +423,9 @@ class ProtocolEditor(PlannerControls):
         if not self.isEnabled() or not self.flush_parameters():
             return
         try:
-            program, index = edit_epoch(self.program, (self.path[0],), "add")
+            program, index = edit_epoch(
+                self.program, (len(self.program.sequence) - 1,), "add"
+            )
             program, index = make_group(program, (), index, index, 1, False)
             self.commit(
                 program,

@@ -1,0 +1,46 @@
+.........................F..................                             [100%]
+=================================== FAILURES ===================================
+__________ test_calibration_button_reflects_confirmed_managed_output ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10bbb1510>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c11bd90>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1715/test_calibration_button_reflec0')
+
+    def test_calibration_button_reflects_confirmed_managed_output(
+        window, monkeypatch, tmp_path
+    ):
+        panel = window.devices.projectors
+        table = panel.calibration
+        arena = tmp_path / "rig_geometry_grid.glb"
+        prepared = []
+        result = [arena]
+    
+        def prepare(**kwargs):
+            prepared.append(kwargs.get("view", "frame_grid"))
+            return result[0]
+    
+        monkeypatch.setattr(panel, "prepare_calibration", prepare)
+        output_requests = []
+        panel.calibration_launch_requested.connect(output_requests.append)
+        launched: list[bool] = []
+        closed: list[bool] = []
+        table.launch_requested.connect(lambda: launched.append(True))
+        table.close_requested.connect(lambda: closed.append(True))
+>       assert set(table.findChildren(QPushButton)) == {
+            table.presentation_button,
+            table.measurement_button,
+        }
+E       assert {<PyQt6.QtWid... 0x10b393eb0>} == {<PyQt6.QtWid... 0x10b393f40>}
+E         
+E         Extra items in the right set:
+E         <PyQt6.QtWidgets.QPushButton object at 0x10b393f40>
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:8475: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_calibration_button_reflects_confirmed_managed_output
+1 failed, 43 passed, 355 deselected in 30.30s

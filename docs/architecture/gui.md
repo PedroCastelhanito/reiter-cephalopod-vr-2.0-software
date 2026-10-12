@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 157
+**Status:** Accepted · **Revision:** 162
 
 - Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
   Origin Y, Width and Height in pixels. Frame origins use bottom-left output
@@ -107,11 +107,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   E07 submission/Setup validates runnable settings; loaded camera/MCU drafts survive
   polling and enter the normal configuration proposal. SDK PFS import remains A10-owned.
   Inactive loaded Tracking drafts stay local until required. SpikeGLX files restore
-  editable pulse rows for explicit Save pulse mapping; E12/E14 startup host/pairing
+  editable pulse rows without a separate Save pulse mapping button; GUI Save/Load
+  persists drafts without writing the controller inventory. E12/E14 startup host/pairing
   values are informational references and retain their owning TOML authority.
 - Protocol uses a widened Trials column beside a persistent Trial timeline, with a
-  full-width Sequence editor below. Trials provides a selectable list and compact
-  Add/Delete controls. Omit Seed/Gap controls and the Selected trial section;
+  full-width Sequence editor below. Trials and timeline use matching top borders,
+  title heights and a taller shared minimum card height (320 logical pixels). Trials
+  provides a selectable scrolling list: show × only on hovered rows and a +
+  immediately below the last row, reachable by scrolling. Remove the separate
+  bottom Add/Delete toolbar. Deletion confirms the targeted trial, preserves saved
+  files and replaces the final deleted trial with a blank trial; retain edit authority
+  and pending-draft checks. Omit Seed/Gap controls and the Selected trial section;
   preserve loaded seeds and legacy gaps under E01/E07. Setup retains seed ownership.
   The overview shows direct source epochs and collapsed canonical groups in sequence
   order, with name, duration and group repetition/occurrence totals. Blocks have a
@@ -120,14 +126,24 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   New GUI trials contain groups only; each group contains source epochs only.
   Sequence editor opens directly on the first epoch when a supported trial is created,
   loaded or selected; clicking a group selects its first epoch. No Trial breadcrumb
-  or back level. Put + Group and − Group beside Preview in the overview; addition
-  initializes one blank epoch and removal preserves at least one group. Inside a flat group,
-  + Epoch creates one subgroup from the current editor template and immediately
-  selects it. No nested-group creation or Group selected/Repeat-vary action is exposed.
+  or back level. Match trailing + heights to their trial row or epoch block.
+  Put a trailing + after the final group and subgroup blocks;
+  group addition appends one blank epoch in a new group, while subgroup addition
+  copies the current editor template. Immediately select the new block. Show a ×
+  only at each hovered group/subgroup top-right; subgroup deletion removes
+  all its source members. Preserve at least one group and one subgroup per group,
+  showing the final delete action disabled. Keep Preview in the header, removing
+  the separate + Group, − Group and + Epoch controls. Reuse draft validation and
+  Undo; inline actions respect edit authority and remain reachable by horizontal scrolling. No nested-group creation or Group selected/Repeat-vary action is exposed.
   Existing imported programs are preserved verbatim; unsupported legacy structure
   is inspectable with creation controls unavailable, never flattened with an invented
   shuffle seed. Canonical/headless V08 nesting remains supported.
-  Group name and repetitions are editable; omit the Order control and preserve imported ordering.
+  Place the selected group name and repetitions inside the timeline card above its
+  blocks, keeping the Sequence editor for subgroup controls. Balance card spacing
+  without duplicating these fields. Omit Order and preserve imported ordering.
+  Protocol removal buttons (trials, groups, subgroups and variation rows) appear
+  only while hovering their item, use the same compact × button role as MCU signal
+  tables, and reserve enough space for centered glyphs and consistent insets.
   Timeline duration labels use hh:mm:ss, retaining fractional seconds when present.
   Layer selectors use a narrow index-only column with descriptive tooltips. Subgroups are
   separately identified batches of flat source epochs, using V03 authoring metadata;
@@ -170,10 +186,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Omit epochs-per-repetition, one-repetition, edits-apply and footer count helper text.
   Selecting a subgroup populates its first source template; unchanged parameters
   retain each member's existing values. Explicit variation rules replace the selected
-  subgroup's pattern; retain the enabled state and rule controls after Apply, selection
+  subgroup's pattern; retain active rule controls after Apply, selection
   changes, Undo and file reload. Save rules as V03 authoring metadata alongside concrete
   settings; unchanged rules do not resample on unrelated edits or Apply.
-  + Epoch copies one current template, independent of variation rules; valid
+  The trailing subgroup + copies one current template, independent of variation rules; valid
   pending edits are applied first. Invalid input stays visible and prevents mutation.
   Changing selection or saving requires Apply/Discard; Undo first discards a draft.
   Apply atomically validates the whole trial, preserving source identities and
@@ -243,12 +259,13 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   the other mode's draft while generating only the selected mode. Keep projector
   edits independent and retain inactive-projector content. Narrow windows stack
   the same controls with labels.
-  Optional variations use one shared-style card with an Enable checkbox
-  first inside its body. Each rule separates Projectors (one or All projectors), Layer (local
-  ordinal or All layers) and Parameter on the first row, with removal aligned to
-  those controls. Put Method and all value-related controls on the second row;
-  Random groups Minimum/Maximum/Precision with Method. Match
-  heights within each row. All projectors covers the enabled reference screens and
+  Optional variations use one shared-style card with an always-visible Add variation
+  rule button and no Enable checkbox. Added rules are active; removing the last rule
+  leaves only the add button. Do not activate legacy disabled drafts on load.
+  Rules share table columns for Projectors, Layer, Parameter, Method, Values / range
+  and hover-only removal. Keep Layer narrow, reserve full control widths and align
+  cells across rules. Values / range grows on wide windows; the table scrolls
+  horizontally on narrow windows without widening the page. All projectors covers the enabled reference screens and
   offers common layer ordinals; explicit missing/stale targets reject generation.
   A selected local ordinal maps to the corresponding canonical instance on each
   projector; isolate shared 2D instances for independent values. Accept explicit values or bounded min/max/step
@@ -279,7 +296,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   flat canonical source epochs edited together through their subgroup.
   No Shuffle trial action is exposed; group-order and Setup seed ownership remain unchanged.
   Store optional batch labels and distinct generated-batch identities under V03.
-  + Epoch appends a new subgroup; Apply changes the selected subgroup in place.
+  The trailing + appends a new subgroup; Apply changes the selected subgroup in place.
   Hide the older insertion/replacement controls in this workflow. Bound each generation to 2000 epochs without charging
   existing group repetitions against that source-list allowance. Validate the assembled trial
   atomically; cancellation, invalid settings or failed insertion leave it unchanged.
@@ -497,6 +514,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Bottom (mm). Perpendicular distances to Left, Front and Bottom screens sit below these
   in the Rig geometry card. The screen-dimensions table contains width, height,
   derived read-only estimated projector distance, with wrapped headers.
+  Screen calibration and Pixel-to-mm calibration are sibling cards, without nesting.
+  Put Launch projection calibration above the correction table and Launch reference
+  calibration above the measurement table.
   Effective throw ratio is config-only. Pixel-to-mm calibration omits explanatory text and pixel-span columns;
   its table has Screen, paired Measured X / Y (mm) inputs under one header, and
   read-only X / Y (mm/px) estimates, with all three columns stretching evenly.
@@ -528,7 +548,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   fail without guessing. Legacy full version 3 and numeric-only versions 1/2
   load with unset measurements; numeric version 3 retains them. Legacy
   runtime profiles remain loadable through the same action. Loading is not backend preparation.
-  Measure reference bars and Adjust frame and grid prepare calibration files before
+  Launch reference calibration and Launch projection calibration prepare calibration files before
   requesting output; no separate preparation button is shown. Preparation uses the current four enabled face
   assignments, current rig fields and native monitor identities to export a static
   arena asset, display profile and explicitly diagnostic geometric
@@ -556,8 +576,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   discard pending live intents; no stale replay. Actual all-output presentation
   confirms the new sequence. Other projector controls stay locked until closure.
 
-  After confirmed output activation Adjust frame and grid reads Close. It returns to
-  Adjust frame and grid only after confirmed closure; Measure reference bars remains
+  After confirmed output activation Launch projection calibration reads Close. It returns to
+  Launch projection calibration only after confirmed closure; Launch reference calibration remains
   disabled while presentation is active or pending. Failed/pending commands never claim an
   output-state change. These actions and Close control V01's diagnostic presentation outside
   trial timing; preparation sends no output command.
@@ -723,7 +743,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   flashing. In managed mode Upload is available only in idle Configuration, with
   diagnostics stopped and all camera ownership/native cleanup released. A displayed
   MCU compatibility failure alone does not block this explicit repair operation.
-- Adjust frame and grid prepares the geometry grid using measured mm/px and saved corrections:
+- Launch projection calibration prepares the geometry grid using measured mm/px and saved corrections:
   world-phase colored solid/dashed lines, full-face center crosses, face dimensions
   and a 50 mm ruler where it fits. Existing physical screen planes and offsets remain
   authoritative; no separate placement-only/no-grid mode is offered.

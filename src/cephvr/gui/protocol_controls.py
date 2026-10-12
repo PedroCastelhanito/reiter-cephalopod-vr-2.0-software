@@ -1,20 +1,20 @@
 """Responsive planner controls; program and history are owned by ProtocolEditor."""
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QKeySequence, QResizeEvent, QShortcut
+from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
-    QListWidget,
     QMenu,
     QWidget,
 )
 
-from cephvr.gui.components import Card, button, equal_row_height, label
+from cephvr.gui.components import Card, button, label
 from cephvr.gui.notices import FormNotice
 from cephvr.gui.protocol_hierarchy import ProtocolHierarchy
 from cephvr.gui.protocol_timeline import ProgramTimeline
 from cephvr.gui.subgroup_editor import SubgroupEditor
+from cephvr.gui.trial_list import TrialList
 
 
 class PlannerControls(QWidget):
@@ -28,27 +28,9 @@ class PlannerControls(QWidget):
         self.grid.setSpacing(14)
         self.trial_card = Card("Trials")
         self.trial_card.setFixedWidth(208)
-        self.trials = QListWidget()
-        self.trials.setProperty("role", "trials")
-        self.trials.setAccessibleName("Trials")
-        self.trials.setMinimumWidth(0)
-        self.trials.setMinimumHeight(44)
-        self.trials.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.trials = TrialList()
         self.trial_card.body.addWidget(self.trials, 1)
-        self.add_button = button("+")
-        self.delete_trial_button = button("−")
-        for control, title in (
-            (self.add_button, "New trial"),
-            (self.delete_trial_button, "Delete trial"),
-        ):
-            control.setAccessibleName(title)
-            control.setToolTip(title)
-            control.setMinimumWidth(0)
-        actions = QHBoxLayout()
-        actions.addWidget(self.add_button, 1)
-        actions.addWidget(self.delete_trial_button, 1)
-        equal_row_height(self.add_button, self.delete_trial_button)
-        self.trial_card.body.addLayout(actions)
+        self.add_button = self.trials.add
         self.undo_action, self.redo_action = (
             QAction("Undo", self),
             QAction("Redo", self),
@@ -62,15 +44,15 @@ class PlannerControls(QWidget):
             self.addAction(action)
         self.timeline_card = Card("Trial timeline")
         self.output_preview_button = button("Preview")
-        self.add_group_button = button("+ Group")
-        self.remove_group_button = button("− Group")
-        self.remove_group_button.setToolTip("Remove the selected group")
         self.hierarchy = ProtocolHierarchy()
-        self.add_epoch_button = self.hierarchy.add_epoch
         self.group_editor = self.hierarchy.group
         self.timeline = ProgramTimeline(details=False)
+        self.timeline_card.body.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.timeline_card.body.addWidget(self.group_editor)
         self.timeline_card.body.addWidget(self.timeline)
         self.timeline.height_changed.connect(self.fit_timeline_card)
+        self.group_editor.more.toggled.connect(self.fit_timeline_card)
+        self.group_editor.changed.connect(self.fit_timeline_card)
         self.sequence_summary = label("")
         self.sequence_summary.setAlignment(Qt.AlignmentFlag.AlignCenter)
         actions = QHBoxLayout()
@@ -86,11 +68,8 @@ class PlannerControls(QWidget):
         self.timeline_actions = QWidget()
         actions = QHBoxLayout(self.timeline_actions)
         actions.setContentsMargins(0, 0, 0, 0)
-        actions.addWidget(self.add_group_button)
-        actions.addWidget(self.remove_group_button)
         actions.addWidget(self.output_preview_button)
         self.timeline_card.header.addWidget(self.timeline_actions)
-        self._timeline_actions_stacked = False
         for operation, keys in (
             ("duplicate", ("Ctrl+D", "Meta+D")),
             ("remove", ("Backspace",)),
@@ -115,23 +94,6 @@ class PlannerControls(QWidget):
         size.setWidth(0)
         return size
 
-    def resizeEvent(self, event: QResizeEvent | None) -> None:
-        super().resizeEvent(event)
-        # Keep all timeline actions readable when the slim Trials column leaves less room.
-        stacked = self.width() < 700
-        if stacked == self._timeline_actions_stacked:
-            return
-        self._timeline_actions_stacked = stacked
-        if stacked:
-            self.timeline_card.header.removeWidget(self.timeline_actions)
-            self.timeline_card.body.insertWidget(
-                1, self.timeline_actions, alignment=Qt.AlignmentFlag.AlignRight
-            )
-        else:
-            self.timeline_card.body.removeWidget(self.timeline_actions)
-            self.timeline_card.header.addWidget(self.timeline_actions)
-        self.fit_timeline_card()
-
     def fit_timeline_card(self) -> None:
         """Keep aligned cards tall enough for all trial projector/layer details."""
         self.timeline_card.ensurePolished()
@@ -139,7 +101,11 @@ class PlannerControls(QWidget):
         self.sequence_summary.ensurePolished()
         self.timeline_card.body.invalidate()
         self.trial_card.body.invalidate()
+        header_height = self.output_preview_button.sizeHint().height()
+        self.trial_card.caption.setFixedHeight(header_height)
+        self.timeline_card.caption.setFixedHeight(header_height)
         height = max(
+            320,
             self.timeline_card.body.sizeHint().height(),
             self.trial_card.body.minimumSize().height(),
         )
@@ -148,7 +114,9 @@ class PlannerControls(QWidget):
                 card.setFixedHeight(height)
 
     def install_menus(self) -> None:
-        self.add_epoch_button.clicked.connect(lambda: self.epoch_action.emit("add"))
+        self.hierarchy.contents.block_actions.add.clicked.connect(
+            lambda: self.epoch_action.emit("add")
+        )
         self.epoch_menu = QMenu(self.timeline)
         for caption, operation in (
             ("Duplicate", "duplicate"),

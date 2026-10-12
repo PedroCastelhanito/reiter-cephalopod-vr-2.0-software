@@ -2664,3 +2664,52 @@ This log starts on 2026-09-30; it is not a reconstruction of earlier repository 
 - `compact-long-protocol-rules` completed [gui] [visual_stimulus]: G01 revision157, V03 revision12 and V08 revision5/root register replace eager new sample tables with compact seeded random-access rules. Group repetition edits retain seeds and source blocks; Setup resolves concrete settings after its configured plan-size check. Independent projector streams and explicit sharing remain. Legacy tables load unchanged. GUI random authoring no longer has a2000-occurrence cap; separate source-list/expanded-preview bounds and Setup's100,000 default remain explicit.
 - Remove Order without changing imported ordering; narrow Layer selectors to index-only64px and format timeline durations as hh:mm:ss. ARCH-002 extracts existing pure parameter patches/grid sampling into backend configuration helpers; no GUI dependency in compiler, renderer RNG or new dependency. Inspect1280/720 offscreen image/gray×10,000 captures; fix common widget initialization overriding minimum width. Preserve unrelated work and running review process.
 - Validation: Visual Stimulus233 passes/one deselection with loopback access; compiler11 passes; full GUI stage396 passes/one obsolete label assertion, then all12 affected subgroup/timeline/layout cases pass after its migration and width correction. Million-repeat structural regression verifies one representative sample per edit, unchanged rules/source blocks and near-constant JSON size. Initial strict settings conversion and random-only source-count failures were corrected and retained as staged evidence. Ruff/format171 files, Win32 mypy168 sources, boundaries659 modules/zero violations and11 schema checks pass. No claim of full-workload performance or native Windows/rig acceptance; image readiness remains pending. [Evidence](reports/runtime-evidence-2026-10-12/compact-rules/context.json).
+
+## 2026-10-13 — Inline timeline actions started
+
+- `inline-timeline-actions` [gui]: user requests block-local hover/selection deletion and trailing additions, removing toolbar Group/Epoch actions. ARCH-002 review reuses existing structural transactions/history and visible-block painting; a focused control helper owns only button presentation, with path signals back to the editor. No repetition expansion or dependencies.
+
+## 2026-10-13 — Inline timeline actions completed
+
+- `inline-timeline-actions` completed [gui]: G01 revision158/root register replaces the separate + Group, − Group and + Epoch buttons with trailing + controls and hover/selection × controls. Add appends and selects; subgroup delete removes all source members, with existing draft validation, authority, minimum-duration checks and Undo. Disable deletion of the last group/subgroup. Preserve imported structures and the user's running application.
+- ARCH-002 keeps canonical mutation/history in ProtocolEditor and adds a focused presentation helper with explicit paths and reused visible-block buttons. Remove obsolete header-action stacking; no per-repetition widgets, dependencies or backend behavior changes. Inspect offscreen1280/720 image/gray×10,000 captures with readable crosses, trailing additions and no page overflow.
+- Validation: final full GUI suite398 passes; focused31 passes. Ruff/format148 files, Win32 mypy146 GUI sources, boundaries660 modules/zero violations, local links and whitespace pass. Tests exercise hover-target deletion, whole-batch removal, Undo, append ordering, pending-invalid/disabled guards and scroll reachability. Initial QWidget.actions naming collision, clipped button padding and an invalid minimum-duration test fixture were corrected; retain diagnostic evidence. Native Windows/DPI/rig acceptance remains separate. [Evidence](reports/runtime-evidence-2026-10-13/inline-actions/context.json).
+
+## 2026-10-13 — Variation rule simplification started
+
+- `variation-rule-layout` [gui]: user requests only Add variation rule, without Enable, and a Layer layout correction. ARCH-002 review removes duplicated activation state from widgets and separates target/value layout sizing; reuse canonical drafts and existing parameter controls. Preserve legacy inactive drafts without activating them on load.
+
+## 2026-10-13 — Variation rule simplification completed
+
+- `variation-rule-layout` completed [gui]: G01 revision159/root register removes Enable from the variation card. Add is always visible; existing rows define active rules. Apply/reload retain rules, removing the last rule clears compact variations, and Undo restores them. Legacy inactive drafts are not activated on load. No schema or sampler change.
+- Fix Layer overlap by separating target/value layouts and reserving64px with a Fixed size policy and grid-column minimum. The prior Ignored policy allowed Parameter to overlap the physically wider Layer widget. Extend owning layout/persistence regressions for All layers, Values/Sweep/Random,1280/720 widths, removal and Undo. Inspect both capture sizes: no overlapping controls or horizontal page overflow.
+- Final40 focused GUI tests pass; Ruff/format148 files, Win32 mypy146 sources, dependency boundaries660 modules/zero violations and links/whitespace pass. Initial hidden-editor fixture and real overlap failures are retained with corrections in [evidence](reports/runtime-evidence-2026-10-13/variation-layout/context.json). No new full-suite or native Windows/DPI/rig claim; previous full GUI run belongs to inline-action evidence.
+
+## 2026-10-13 — Trial list controls started
+
+- `trial-list-inline-controls` [gui]: move trial deletion onto hovered/selected rows and addition below the last row, make Trials taller and align card borders/titles. ARCH-002 retains QListWidget selection/model and existing trial confirmation, using a focused list subclass for viewport controls rather than a sentinel trial or per-row widget model.
+
+## 2026-10-13 — Trial list controls completed
+
+- `trial-list-inline-controls` completed [gui]: G01 revision160/root register makes Trials/timeline cards at least320px tall with matched caption heights and top borders. Trial rows expose hover/selected ×; the scrolling + follows the last real trial, replacing bottom toolbar controls. Keep existing confirmation, saved-file preservation and final-trial blank replacement. Hover deletion targets the clicked identity and retains another selected trial; invalid drafts and disabled authority remain guarded.
+- ARCH-002 adds a focused TrialList subclass with the existing selection model and two reusable deletion controls; no sentinel model row or per-trial widget allocation. Inspect1280/720 three-trial captures for alignment and trailing +. Focused12 tests pass, with final interaction1 passing after typed Qt attribute cleanup; no new full-suite claim. Ruff/format149 files, Win32 mypy147 GUI sources and dependency boundaries661 modules/zero violations pass; local links/whitespace checked. Initial Optional/Qt method-name typing errors and a fixture-name expectation were corrected. Native Windows/DPI remains unverified. [Evidence](reports/runtime-evidence-2026-10-13/trial-list/context.json).
+
+## 2026-10-13 — Protocol card balance started
+
+- `protocol-card-balance` [gui]: owner requests group fields in timeline card, more even filling and hover-only remove controls matching MCU outputs. ARCH-002 reuses the existing compact button role instead of custom miniature styles; retain group binding/history while reparenting its form.
+
+## 2026-10-13 — Protocol card balance completed
+
+- `protocol-card-balance` completed [gui]: G01 revision161/root register places selected group fields above timeline blocks, balancing the taller cards and shortening Sequence editor. Reparent the existing form, retaining canonical edits/history and condition-expansion sizing.
+- Make trial/group/subgroup/variation removal hover-only; reuse the MCU output table's existing compact × role, removing custom22px overrides. Fit natural button sizes with consistent insets and text clearance; increase subgroup header height to fit controls and retain hidden variation-button space. Simplify trial removal to one reusable hover button. No new style, dependency or runtime behavior.
+- Final53 focused GUI tests pass, including hover-target deletion, trial confirmation, Undo, group field placement, responsive alignment and MCU controls. Ruff/format149 files, Win32 mypy147 GUI sources, boundaries661 modules/zero violations and links/whitespace pass. Inspect1280/720 captures with fields above timeline, evenly filled cards and hovered compact controls. Initial selected-button/hidden-fixture expectations were corrected. No new full-suite or native Windows/DPI/rig claim. [Evidence](reports/runtime-evidence-2026-10-13/card-balance/context.json).
+
+## 2026-10-13 — Configuration layout polish started
+
+- `configuration-layout-polish` [gui]: authorized layout refinements reuse existing row controls, calibration actions and GUI file saving. Save pulse mapping is a separate controller inventory-write action; removing its button does not introduce automatic writes or change controller inventory ownership. ARCH-002 uses a focused variation table presentation helper, retaining authoring/model behavior.
+
+## 2026-10-13 — Configuration layout polish completed
+
+- `configuration-layout-polish` completed [gui]: G01 revision162/root register matches trailing + heights to trial rows/epoch blocks. Variation rules use shared Projectors/Layer/Parameter/Method/Values columns, with horizontal table scrolling on narrow windows. Reuse rule controls, validation and persistence in a focused table helper under ARCH-002.
+- Remove SpikeGLX Save pulse mapping, formerly a separate controller inventory-write action; preserve GUI file Save/Load and no automatic controller writes. Flatten Screen/Pixel-to-mm calibration into sibling cards and place Launch projection calibration / Launch reference calibration above their tables. Preserve confirmed Close lifecycle and authority/edit locks.
+- Final45 focused GUI tests pass; Ruff/format150 files, Win32 mypy148 sources, boundaries662 modules/zero violations pass. Initial old control-ownership and layout assertions were updated; retained failed-run evidence is superseded by final passing checks. Inspected1280/720 protocol captures and1280 calibration layout. Native Windows/DPI/rig remains unverified. [Evidence](reports/runtime-evidence-2026-10-13/layout-polish/context.json).

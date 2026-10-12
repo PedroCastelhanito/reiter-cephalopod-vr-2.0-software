@@ -1,0 +1,101 @@
+........................F.F................                              [100%]
+=================================== FAILURES ===================================
+__________ test_calibration_button_reflects_confirmed_managed_output ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x171957760>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x16d818bd0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1714/test_calibration_button_reflec0')
+
+    def test_calibration_button_reflects_confirmed_managed_output(
+        window, monkeypatch, tmp_path
+    ):
+        panel = window.devices.projectors
+        table = panel.calibration
+        arena = tmp_path / "rig_geometry_grid.glb"
+        prepared = []
+        result = [arena]
+    
+        def prepare(**kwargs):
+            prepared.append(kwargs.get("view", "frame_grid"))
+            return result[0]
+    
+        monkeypatch.setattr(panel, "prepare_calibration", prepare)
+        output_requests = []
+        panel.calibration_launch_requested.connect(output_requests.append)
+        launched: list[bool] = []
+        closed: list[bool] = []
+        table.launch_requested.connect(lambda: launched.append(True))
+        table.close_requested.connect(lambda: closed.append(True))
+>       assert set(table.findChildren(QPushButton)) == {
+            table.presentation_button,
+            table.measurement_button,
+        }
+E       assert {<PyQt6.QtWid... 0x17192edd0>} == {<PyQt6.QtWid... 0x17192ca60>}
+E         
+E         Extra items in the right set:
+E         <PyQt6.QtWidgets.QPushButton object at 0x17192ca60>
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:8475: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____ test_variation_controls_fit_narrow_protocol_without_horizontal_scroll _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x1719dd5a0>
+app = <PyQt6.QtWidgets.QApplication object at 0x117ffdea0>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1714/test_variation_controls_fit_na0')
+
+    def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        window.page_buttons[1].click()
+        window.protocol.session_mode.setCurrentText("Closed-loop")
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "a_prepared_texture_with_a_long_filename.png"
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Texture", str(path), "Front")
+        composer.rows["Front"].advanced.setChecked(True)
+        form = editor.subgroup
+        assert not hasattr(form, "vary") and form.add_rule.isVisible()
+        form.add_rule.click()
+        row = form.rows[0]
+        row.layer.setCurrentIndex(row.layer.findData(-1))
+        assert row.layer.currentText() == "All"
+        for width in (1280, 720):
+            window.resize(width, 1000)
+            for method in ("Values", "Sweep (min, max, step)", "Random"):
+                row.method.setCurrentText(method)
+                QTest.qWait(30)
+                app.processEvents()
+                assert row.layer.width() == 64
+>               assert 0 < row.parameter.x() - row.layer.geometry().right() <= 12
+E               assert 0 < (0 - 63)
+E                +  where 0 = <built-in method x of SelectionBox object at 0x175c9df30>()
+E                +    where <built-in method x of SelectionBox object at 0x175c9df30> = <cephvr.gui.components.SelectionBox object at 0x175c9df30>.x
+E                +      where <cephvr.gui.components.SelectionBox object at 0x175c9df30> = <cephvr.gui.batch_variation.BatchVariationRow object at 0x175c9f760>.parameter
+E                +  and   63 = <built-in method right of QRect object at 0x1719b1380>()
+E                +    where <built-in method right of QRect object at 0x1719b1380> = PyQt6.QtCore.QRect(0, 10, 64, 36).right
+E                +      where PyQt6.QtCore.QRect(0, 10, 64, 36) = <built-in method geometry of SelectionBox object at 0x175c9dea0>()
+E                +        where <built-in method geometry of SelectionBox object at 0x175c9dea0> = <cephvr.gui.components.SelectionBox object at 0x175c9dea0>.geometry
+E                +          where <cephvr.gui.components.SelectionBox object at 0x175c9dea0> = <cephvr.gui.batch_variation.BatchVariationRow object at 0x175c9f760>.layer
+
+tests/gui/test_dashboard.py:9145: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_calibration_button_reflects_confirmed_managed_output
+FAILED tests/gui/test_dashboard.py::test_variation_controls_fit_narrow_protocol_without_horizontal_scroll
+2 failed, 41 passed, 356 deselected in 30.72s

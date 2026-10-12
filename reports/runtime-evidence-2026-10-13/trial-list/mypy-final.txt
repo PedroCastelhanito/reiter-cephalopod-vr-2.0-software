@@ -1,0 +1,10 @@
+src/cephvr/gui/trial_list.py:23: error: Cannot assign to a method  [method-assign]
+src/cephvr/gui/trial_list.py:23: error: Incompatible types in assignment (expression has type "QScrollBar | None", variable has type overloaded function)  [assignment]
+src/cephvr/gui/trial_list.py:44: error: overloaded function has no attribute "valueChanged"  [attr-defined]
+src/cephvr/gui/trial_list.py:52: error: overloaded function has no attribute "value"  [attr-defined]
+src/cephvr/gui/trial_list.py:56: error: overloaded function has no attribute "setMaximum"  [attr-defined]
+src/cephvr/gui/trial_list.py:56: error: Item "None" of "QWidget | None" has no attribute "height"  [union-attr]
+src/cephvr/gui/trial_list.py:65: error: Item "None" of "QWidget | None" has no attribute "width"  [union-attr]
+src/cephvr/gui/trial_list.py:66: error: Item "None" of "QWidget | None" has no attribute "height"  [union-attr]
+src/cephvr/gui/trial_list.py:72: error: Item "None" of "QWidget | None" has no attribute "rect"  [union-attr]
+Found 9 errors in 1 file (checked 147 source files)

@@ -75,7 +75,7 @@ class SubgroupEditor(BatchCreate):
                 rule.model_copy(update={"sample_key": (), "samples": ()})
                 for rule in rules
             )
-        return SubgroupDraft(enabled=self.vary.isChecked(), rules=rules)
+        return SubgroupDraft(enabled=bool(rules), rules=rules)
 
     @property
     def dirty(self) -> bool:
@@ -95,7 +95,6 @@ class SubgroupEditor(BatchCreate):
         self._binding = True
         self.source, self.paths = program, paths
         self.composer.close_file_dialogs()
-        self.vary.setChecked(False)
         for row in tuple(self.rows):
             self.remove_variation(row)
         if paths:
@@ -109,10 +108,9 @@ class SubgroupEditor(BatchCreate):
             self._texts = self.text_values()
             assert isinstance(epoch, Epoch)
             draft = epoch.subgroup_draft or SubgroupDraft()
-            for rule in draft.rules:
+            for rule in draft.rules if draft.enabled else ():
                 self.add_variation_from(composer.program)
                 self.rows[-1].restore(rule)
-            self.vary.setChecked(draft.enabled)
             self._rules = self.rule_draft(samples=False)
         self.notice.clear()
         self._binding = False
@@ -126,7 +124,7 @@ class SubgroupEditor(BatchCreate):
     def refresh_preview(self) -> None:
         if self._binding:
             return
-        if self.vary.isChecked():
+        if self.rows:
             self._previewing = True
             try:
                 super().refresh_preview()
@@ -172,7 +170,7 @@ class SubgroupEditor(BatchCreate):
             return
         try:
             reference = self.reference()
-            candidate = self.candidate() if self.vary.isChecked() else None
+            candidate = self.candidate() if self.rows else None
             variants = (
                 generated_batch(candidate)
                 if candidate is not None

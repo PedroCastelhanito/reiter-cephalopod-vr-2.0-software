@@ -59,7 +59,7 @@ shared GUI checks pass after that task's corrections. No full GUI regression or
 native Windows/DPI/GPU/optical/rig acceptance is claimed.
 
 Oct12 [G01 revision 146](../docs/architecture/gui.md#g01) implements the owner's
-separate Measure reference bars and Adjust frame and grid actions. Bars ignore prior
+separate Launch reference calibration and Launch projection calibration actions. Bars ignore prior
 measurements/manual corrections; grid requires mode-matched pairs and maps mm/px
 directly onto physical rig screens with manual scale/offset/inversion. Throw ratio
 is config-only and produces the distance estimate; neither launch nor measured
@@ -438,14 +438,93 @@ task-owned test directories and generated temporary bindings are removed; existi
 caches, raw evidence and user work are preserved. The temporary inventory is removed
 last after the lightweight status/reference check; no task background process remains.
 
-Oct12 subgroup editing follows [G01 revision157](../docs/architecture/gui.md#g01),
+Oct13 subgroup editing follows [G01 revision162](../docs/architecture/gui.md#g01),
 [V03 revision12](../docs/architecture/visual_stimulus.md#v03) and
 [V08 revision5](../docs/architecture/visual_stimulus.md#v08). Clicking any member selects
 its complete subgroup; parameter edits affect all members/repetitions. One composer
-retains variation controls through Apply, selection, Undo and file reload. + Epoch
-copies one template without inheriting rules. Order is removed; imported ordering
+retains variation controls through Apply, selection, Undo and file reload. The trailing
+subgroup + copies one template without inheriting rules. Order is removed; imported ordering
 is preserved. Layer selectors show only indices at 64 px; timeline durations use
 hh:mm:ss with fractional precision retained.
+
+Current layout polish matches + heights to trial rows and timeline blocks, uses a
+shared-column variation table, and separates correction/measurement calibration
+cards with their launch actions above each table. Remove the separate SpikeGLX
+inventory-save button; GUI file saving remains local and does not implicitly publish
+controller inventory changes. ARCH-002 keeps row validation in BatchVariationRow,
+with a focused VariationTable presentation helper and no new dependency. Existing
+large GUI owner modules retain their responsibilities; no runtime ownership changes.
+[Layout polish evidence](runtime-evidence-2026-10-13/layout-polish/context.json)
+records 45 passing focused GUI checks, Ruff/format150 files, Win32 mypy148 sources,
+and662 modules with zero boundary violations. Inspect1280/720 protocol captures and
+1280 calibration cards; local rendering does not establish native Windows/DPI acceptance.
+
+The selected group's name/repetitions now sit above the blocks inside Trial timeline;
+Sequence editor begins with subgroup blocks. Reparent the existing GroupEditor and
+retain its binding/history, including resizing for imported condition controls.
+Removal controls in the protocol use the same `button("×", "compact")` role as the
+MCU outputs table, replacing custom 22 px padding overrides. Natural control sizing,
+consistent insets, a taller subgroup header and reserved text space avoid clipping
+or collision. Trial/group/subgroup and variation-row removal is hover-only; selection
+alone shows no cross. The variation row reserves hidden-button space to avoid jumps.
+[Card balance evidence](runtime-evidence-2026-10-13/card-balance/context.json) records
+53 passing focused GUI checks (including trial/group interactions, layout and MCU
+controls), Ruff/format 149 files, Win32 mypy 147 GUI sources, 661 modules with zero
+boundary violations and inspected 1280/720 captures. Initial tests relying on selected
+crosses or a hidden ungrouped fixture were migrated to explicit hover/group setup.
+ARCH-002 keeps
+canonical edits unchanged and reuses existing styling instead of adding a new button
+style. Native Windows/DPI appearance remains unverified.
+
+Trials and Trial timeline now share a 320 px minimum height and matched caption/header
+heights, aligning their painted top borders despite the Preview button. Trials keeps
+QListWidget selection and indices, adding a trailing + inside its scrollable viewport
+and one reusable × control for the hovered row. No sentinel trial or per-trial
+widget allocation is introduced. Existing deletion confirmation now targets the
+clicked trial identity, retaining the selected trial when another row is removed.
+Saved files, final-trial replacement and authority checks remain unchanged; invalid
+pending edits block deletion of another trial. The focused TrialList module owns
+presentation only (ARCH-002). [Trial-list evidence](runtime-evidence-2026-10-13/trial-list/context.json)
+records 12 passing focused tests and a final interaction rerun, Ruff/format 149 files,
+Win32 mypy 147 GUI sources and 661 modules with zero boundary violations. Inspected
+1280/720 captures show three trial rows,
+trailing addition and aligned borders. Native Windows/DPI checks remain outstanding.
+
+Variation rules now have an always-visible Add variation rule button without an
+Enable checkbox. The presence of rows determines active authoring rules; Apply and
+reload preserve them, and removing the last rule clears compact execution rules on
+Apply. Legacy inactive drafts do not silently become active on load. No schema or
+runtime sampler change is needed. ARCH-002 removes redundant widget activation state
+and uses shared table columns with horizontally scrollable narrow layouts. The
+Layer control retains a Fixed size policy and 64 px width: an Ignored policy previously
+allowed the grid to allocate less than its actual width, overlapping Parameter.
+The owning layout regression checks adjacent geometry, equal heights, All layers,
+Values/Sweep/Random and 1280/720 widths; persistence checks cover last-rule removal
+and Undo. [Variation layout evidence](runtime-evidence-2026-10-13/variation-layout/context.json)
+records 40 passing focused GUI tests, Ruff/format (148 files), Win32 mypy (146 sources),
+660 modules with zero dependency-boundary violations and inspected 1280/720 offscreen
+captures. These checks cover this increment; the preceding full GUI run is historical. An initial
+layout test inspected a hidden legacy editor; opening its group exposed and verified
+the actual column-overlap fix. Native Windows/DPI acceptance remains unverified.
+
+Inline group/subgroup actions replace the + Group, − Group and + Epoch toolbar
+buttons. A trailing + appends and selects; a top-right × appears only on hover
+and targets that block, independently of prior selection. Subgroup deletion removes
+all members; final-block removal remains disabled. Existing draft-validation,
+authority, minimum-duration validation and Undo transactions remain authoritative.
+ARCH-002 uses a focused presentation helper with explicit path signals and a small
+reused button pool sized to visible blocks. No widgets are allocated per repetition.
+The obsolete responsive header-action stacking is removed now that only Preview
+remains. Offscreen 1280/720 captures show readable crosses and trailing additions with
+no horizontal page overflow; no native interaction or rig validation is implied.
+[Oct13 evidence](runtime-evidence-2026-10-13/inline-actions/context.json) records
+31 focused passing cases and the final full GUI suite with 398 passes. Ruff and
+format (148 files), Win32 mypy (146 GUI sources), dependency boundaries (660 modules,
+zero violations), local links and whitespace checks pass. Initial checks
+caught a QWidget.actions name collision, clipped cross padding and a deletion test
+fixture violating the retained minimum trial duration; all were corrected without
+weakening runtime validation. Earlier compact-rule evidence below remains historical
+for the execution path, which this UI increment does not change.
 
 Random rules now store compact executable seeded declarations; the earlier 2000
 random-occurrence authoring limit is removed. GUI work samples only representative
@@ -496,7 +575,8 @@ existing files. Full files retain metadata, recording choices, camera serials/ro
 and explicit display assignments; incompatible inventories reject before restore.
 Loaded camera/MCU values survive polling and join ordinary E07 proposals; changed
 PFS paths require A10 SDK import. Inactive Tracking remains a local pending draft
-until enabled. SpikeGLX rows require explicit Save pulse mapping; saved host/pairing
+until enabled. SpikeGLX rows persist through GUI Save/Load without a separate
+pulse-mapping save button or automatic controller inventory writes; saved host/pairing
 references cannot override startup TOML or current file digest. Firmware, camera
 capture and projector output never start on load. Local validation completes:
 initial full GUI run passes 368; final full run passes 367 with two outdated

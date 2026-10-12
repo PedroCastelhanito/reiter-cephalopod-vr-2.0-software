@@ -1,0 +1,43 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_variation_controls_fit_narrow_protocol_without_horizontal_scroll _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x11d1f57e0>
+app = <PyQt6.QtWidgets.QApplication object at 0x11d1f5630>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1707/test_variation_controls_fit_na0')
+
+    def test_variation_controls_fit_narrow_protocol_without_horizontal_scroll(
+        window, app, tmp_path
+    ):
+        from PyQt6.QtGui import QImage
+    
+        window.page_buttons[1].click()
+        window.protocol.session_mode.setCurrentText("Closed-loop")
+        editor = window.protocol.editor
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        path = tmp_path / "a_prepared_texture_with_a_long_filename.png"
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Front")
+        composer.add_file("Texture", str(path), "Front")
+        composer.rows["Front"].advanced.setChecked(True)
+        form = editor.subgroup
+>       assert not hasattr(form, "vary") and form.add_rule.isVisible()
+E       AssertionError: assert (not False and False)
+E        +  where False = hasattr(<cephvr.gui.subgroup_editor.SubgroupEditor object at 0x1062c4280>, 'vary')
+E        +  and   False = <built-in method isVisible of QPushButton object at 0x1062c6320>()
+E        +    where <built-in method isVisible of QPushButton object at 0x1062c6320> = <PyQt6.QtWidgets.QPushButton object at 0x1062c6320>.isVisible
+E        +      where <PyQt6.QtWidgets.QPushButton object at 0x1062c6320> = <cephvr.gui.subgroup_editor.SubgroupEditor object at 0x1062c4280>.add_rule
+
+tests/gui/test_dashboard.py:9132: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 61 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_variation_controls_fit_narrow_protocol_without_horizontal_scroll
+1 failed, 1 passed, 396 deselected in 7.05s
