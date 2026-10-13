@@ -1,0 +1,3 @@
+ExecuteCameraCommand 4463074f-6c9a-4f3b-a2b3-595cd7d23149 failed: PREVIEW_START_FAILED: Microcontroller operation is unavailable or pending
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

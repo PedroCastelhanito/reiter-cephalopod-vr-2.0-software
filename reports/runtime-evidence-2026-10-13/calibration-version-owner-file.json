@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-13",
+  "scope": "original owner file read-only, isolated Qt load/migration, synthetic monitor bindings; no display/device command",
+  "input": "C:\\Users\\ReiterU_PC\\Desktop\\rig_cal.json",
+  "input_sha256": "afc843442c1e95f8e8607c1474848fbae589002015fa38778c5aabb20f213cd7",
+  "input_version": 3,
+  "calibration_snapshot_version": 4,
+  "projector_snapshot_version": 7,
+  "output_arena": "reports\\runtime-evidence-2026-10-13\\calibration-version-bundle\\calibration\\rig_geometry_grid.glb",
+  "physical_screen_count": 4,
+  "glb_nodes": 1,
+  "outcome": "load, migration, reference-bar bundle and backend GLB parsing passed"
+}

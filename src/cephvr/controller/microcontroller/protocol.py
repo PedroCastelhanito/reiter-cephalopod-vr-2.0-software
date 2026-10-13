@@ -1,4 +1,4 @@
-"""Strict bounded ASCII protocol-v3 parsing for the pulse microcontroller (A11)."""
+"""Strict bounded ASCII protocol-v4 parsing for the pulse microcontroller (A11)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
 MAX_LINE_BYTES = 512
-PROTOCOL_VERSION = 3
+PROTOCOL_VERSION = 4
 FREQUENCY_STEP = Decimal("0.1")
 _TOKEN = re.compile(r"^[!-~]+$")
 _UINT = re.compile(r"^[0-9]+$")
@@ -16,11 +16,11 @@ _FREQUENCY = re.compile(r"^[0-9]+\.[0-9]$")
 _APPLIED_FREQUENCY = re.compile(
     r"^(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$"
 )
-ROLES = ("behavioral", "tracking")
+ROLES = ("behavioral", "tracking", "eye_tracking")
 
 
 class ProtocolError(ValueError):
-    """The complete serial line is malformed or incompatible with protocol v2."""
+    """The complete serial line is malformed or incompatible with protocol v4."""
 
 
 @dataclass(frozen=True)
@@ -196,7 +196,7 @@ def parse_diagnostic(reply: Reply) -> tuple[bool, str, str, int]:
     _require_ok(reply, {"active", "kind", "pin", "edges"})
     active = _bool(reply.fields["active"], "active")
     kind = reply.fields["kind"]
-    if kind not in {"trial_state", "projector_flip", "behavioral", "tracking"}:
+    if kind not in {"trial_state", "projector_flip", *ROLES}:
         raise ProtocolError("diagnostic kind is unsupported")
     pin = _required_token(reply.fields["pin"], "pin")
     edges = _uint(reply.fields["edges"], 32, "edges")
@@ -232,7 +232,7 @@ def _require_ok(
     missing = required - reply.fields.keys()
     if unknown or missing:
         raise ProtocolError(
-            f"reply fields differ from protocol v2; missing={sorted(missing)}, unknown={sorted(unknown)}"
+            f"reply fields differ from protocol v4; missing={sorted(missing)}, unknown={sorted(unknown)}"
         )
 
 

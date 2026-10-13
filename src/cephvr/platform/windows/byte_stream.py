@@ -153,8 +153,16 @@ class OverlappedPipe:
                 "nonblocking pipe writes require a nonempty contiguous buffer"
             )
         amount = min(len(view), _MAX_DWORD)
-        backing = bytearray(view[:amount])
-        buffer = (ctypes.c_char * amount).from_buffer(backing)
+        if view.readonly:
+            backing = bytearray(view[:amount])
+            buffer = (ctypes.c_char * amount).from_buffer(backing)
+        else:
+            backing = bytearray(amount)
+            buffer = (ctypes.c_char * amount).from_buffer(backing)
+            source = (ctypes.c_char * amount).from_buffer(view)
+            # ctypes releases the GIL during this native copy. Retain the same
+            # private, pinned bytes before the caller may reuse its storage.
+            ctypes.memmove(buffer, source, amount)
         if time.perf_counter_ns() >= deadline_ns:
             raise TimeoutError("native pipe write deadline already expired")
         api = native_api()

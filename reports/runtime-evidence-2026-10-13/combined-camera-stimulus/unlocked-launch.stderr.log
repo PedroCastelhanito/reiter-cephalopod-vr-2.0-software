@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_WORKER_FAILURE: ReportDisplay: VISUAL_STIMULUS_EVIDENCE: ReportVisualStimulusDisplay: EVIDENCE: display result is stale or its original deadline elapsed
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

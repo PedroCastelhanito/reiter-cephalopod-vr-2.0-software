@@ -83,6 +83,7 @@ def collect_camera_snapshot(
             target.device.frame_timing = pb.FRAME_TIMING_FREE_RUNNING
             target.device.unaligned_free_running = True
             target.device.settings.ClearField("trigger_source")
+            target.device.settings.ClearField("trigger_activation")
         elif draft.enabled:
             raise _invalid(
                 role,

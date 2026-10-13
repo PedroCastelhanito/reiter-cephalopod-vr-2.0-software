@@ -132,6 +132,9 @@ def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_
     preparation = NativePreparation(
         object(), renderer_generation=str(uuid4()), clock_ns=clock
     )
+    preparation._registered_announce(lambda *_: None, "prior")("asset", None)
+    assert preparation.cleanup().released == ("prior:asset",)
+    assert preparation.cleanup().released == ("prior:asset",)
     setup = visual_stimulus.WorkerSetup()
     setup.session.configuration.asset_root = str(tmp_path)
     setup.session.trials.add().definition.stimulus.SetInParent()
@@ -159,6 +162,8 @@ def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_
     assert preparation.video_session is not None
     assert preparation.engine._video_provider is None
     assert preparation.engine._video_reset is None
+    preparation._registered_announce(lambda *_: None, "current")("asset", None)
+    assert preparation.cleanup(clock() + 10**9).released == ("current:asset",)
 
 
 def test_file_pacing_identity_reaches_both_startup_preparation_owners():
@@ -248,8 +253,12 @@ def test_file_pacing_identity_reaches_both_startup_preparation_owners():
 @pytest.mark.parametrize(
     "failure", ["missing", "cleanup", "gpu", "deadline", "cancelled"]
 )
-def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(failure):
+@pytest.mark.parametrize("wrong_adapter", [False, True])
+def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(
+    failure, wrong_adapter
+):
     from cephvr.visual_stimulus.rendering.native_display import (
+        DisplayGpuUnavailableError,
         DisplayUnavailableError,
         NativeRenderingError,
     )
@@ -276,9 +285,11 @@ def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(failure)
 
         def initialize_display(self, display, calibration):
             if failure == "gpu":
-                raise NativeRenderingError("wrong GPU")
+                raise NativeRenderingError("GPU operation failed")
             if failure == "cancelled":
                 driver.cancelled.set()
+            if wrong_adapter:
+                raise DisplayGpuUnavailableError("OpenGL context uses AMD Radeon")
             raise DisplayUnavailableError("saved projector matched 0 active monitors")
 
         def cleanup(self, deadline_ns):
@@ -347,6 +358,9 @@ def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(failure)
     assert view.command_id == command.command_id and view.requested_revision == 1
     assert view.complete and not view.HasField("applied_revision")
     assert view.issues[0].failure.code == DisplayUnavailableError.code
+    if wrong_adapter:
+        assert "cephvr-python.exe" in view.issues[0].failure.message
+        assert "RTX 5060 Ti" in view.issues[0].failure.message
     assert {item.resource for item in view.resources} == {
         "display:projector/main",
         "display:preparation",

@@ -1,0 +1,1523 @@
+diff --git a/architecture.md b/architecture.md
+index 9f3ac52..ab7120c 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -63,7 +63,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 24 |
+ | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
+-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 162 |
++| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 173 |
+ | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 37 |
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+@@ -71,7 +71,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 88 |
+ | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
+ | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 77 |
+-| <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 59 |
++| <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 60 |
+ | <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 170 |
+ | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
+ | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
+@@ -80,17 +80,17 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | <a id="e13"></a>[E13](docs/architecture/visual_stimulus.md#e13) | Save Visual Stimulus data | Accepted | 21 |
+ | <a id="e14"></a>[E14](docs/architecture/system-contracts.md#e14) | Backend configuration files | Accepted | 207 |
+ | <a id="e15"></a>[E15](docs/architecture/system-contracts.md#e15) | Contract artifacts and verification | Accepted | 9 |
+-| <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 17 |
++| <a id="a01"></a>[A01](docs/architecture/acquisition.md#a01) | Camera acquisition and recording ownership | Accepted | 18 |
+ | <a id="a02"></a>[A02](docs/architecture/acquisition.md#a02) | Acquisition service and camera workers | Accepted | 31 |
+ | <a id="a03"></a>[A03](docs/architecture/acquisition.md#a03) | Frame transfer between processes | Accepted | 32 |
+ | <a id="a04"></a>[A04](docs/architecture/acquisition.md#a04) | Frame delivery and consumer overload | Accepted | 20 |
+ | <a id="a05"></a>[A05](docs/architecture/system-contracts.md#a05) | Acquisition-to-Visual Stimulus delay measurement | Accepted | 6 |
+ | <a id="a06"></a>[A06](docs/architecture/tracking.md#a06) | Tracking-result delivery to Visual Stimulus | Accepted | 14 |
+-| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 60 |
++| <a id="a07"></a>[A07](docs/architecture/acquisition.md#a07) | Recording frame log and crash behavior | Accepted | 61 |
+ | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 50 |
+ | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 12 |
+ | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 58 |
+-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 43 |
++| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 44 |
+ | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 18 |
+ | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 12 |
+ | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 12 |
+@@ -109,7 +109,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | <a id="v16"></a>[V16](docs/architecture/visual_stimulus.md#v16) | Explicit simple arena movement boundaries | Accepted | 4 |
+ | <a id="v17"></a>[V17](docs/architecture/visual_stimulus.md#v17) | Unlit arena appearance | Accepted | 4 |
+ | <a id="v18"></a>[V18](docs/architecture/visual_stimulus.md#v18) | Externally prepared arena assets | Accepted | 2 |
+-| <a id="v19"></a>[V19](docs/architecture/visual_stimulus.md#v19) | Uniform Idle background | Accepted | 5 |
++| <a id="v19"></a>[V19](docs/architecture/visual_stimulus.md#v19) | Uniform Idle background | Accepted | 6 |
+ | <a id="v20"></a>[V20](docs/architecture/visual_stimulus.md#v20) | Configurable projector presentation pacing | Accepted | 8 |
+ | <a id="v21"></a>[V21](docs/architecture/visual_stimulus.md#v21) | Output-range clipping with evidence | Accepted | 2 |
+ | <a id="v22"></a>[V22](docs/architecture/visual_stimulus.md#v22) | Photodiode frame alternation with landmarks | Accepted | 5 |
+diff --git a/config/backends/acquisition_config.toml b/config/backends/acquisition_config.toml
+index b16b4a0..e41bba9 100644
+--- a/config/backends/acquisition_config.toml
++++ b/config/backends/acquisition_config.toml
+@@ -24,7 +24,8 @@ pulse_frequency_hz = 30.0
+ # compatible HEVC settings and rig verification, not an automatic recording crop.
+ # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
+ # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
+-# Rig-specific value intentionally unset; unknown does not mean zero.
++# Owner-selected 2026-10-13 after bounded drain measurements; full-load acceptance pending.
++post_cutoff_drain_margin_ms = 125
+ # Independently configurable SDK image-buffer pool; validate before session locking.
+ # Additional to recording/tracking rings and working copies; no growth while running.
+ # Initial value awaits rig verification; this is not a bound on all driver/device RAM.
+@@ -83,6 +84,8 @@ ffmpeg_args = [
+ [cameras.eye_tracking]
+ # Assign the third camera serial, trigger pin/rate and required drain allowance explicitly.
+ # Eye role provides preview/video only; it does not select the locomotion pipeline.
++# Owner-selected 2026-10-13 for all cameras; Eye timing remains unmeasured/disabled.
++post_cutoff_drain_margin_ms = 125
+ sdk_buffer_count = 10
+ frame_timing = "external_trigger"
+ unaligned_free_running = false
+@@ -111,7 +114,8 @@ pulse_frequency_hz = 60.0
+ # Owner-assigned 2026-09-29. Resolution and source/recording depth remain unset.
+ # File-only post_cutoff_drain_margin_ms: set for active capture before Setup.
+ # Must cover confirmed exposure + rig transport/SDK delivery bound + one frame period.
+-# Rig-specific value intentionally unset; unknown does not mean zero.
++# Owner-selected 2026-10-13 after bounded drain measurements; full-load acceptance pending.
++post_cutoff_drain_margin_ms = 125
+ # Independently configurable SDK image-buffer pool; validate before session locking.
+ # Additional to recording/tracking rings and working copies; no growth while running.
+ # Initial value awaits rig verification; this is not a bound on all driver/device RAM.
+diff --git a/contracts/acquisition/diagnostics.md b/contracts/acquisition/diagnostics.md
+index db631ed..82bb2b9 100644
+--- a/contracts/acquisition/diagnostics.md
++++ b/contracts/acquisition/diagnostics.md
+@@ -91,6 +91,11 @@ adds its own BackendContext, not a new scientific/event transport. Snapshot warn
+ reuse those same Warning objects. Backend GetState and worker GetState retain the
+ matching views for reconciliation, including empty views when a scope has no warnings.
+ 
++Final coalesced warnings, including the post-stop transport summary, are flushed
++and acknowledged before Finished within its original absolute deadline. Stopped
++and heartbeat reporting bypass this final-warning ordering gate. Session reset
++does not relax producer, scope or revision validation.
++
+ ReportReceipt means accepted state, not a new occurrence or file durability. Duplicate
+ revision/payload is idempotent; stale revisions cannot regress counts, changed payload
+ under the same revision is rejected. Do not add counts on retries. Reports from a
+diff --git a/docs/architecture/acquisition.md b/docs/architecture/acquisition.md
+index 0443c35..fb5034b 100644
+--- a/docs/architecture/acquisition.md
++++ b/docs/architecture/acquisition.md
+@@ -27,7 +27,7 @@ is not runtime or rig validation (E15).
+ <a id="a01"></a>
+ ### A01 — Camera acquisition and recording ownership
+ 
+-**Status:** Accepted · **Revision:** 17
++**Status:** Accepted · **Revision:** 18
+ 
+ - The acquisition backend owns camera capture, video encoding and camera video files,
+   including trial-bound recording and verified file closure under E05/E11. The
+@@ -75,8 +75,9 @@ is not runtime or rig validation (E15).
+   duplicate assignments before capture; initially no camera stream is shared across
+   behavioral/tracking/eye-tracking roles. Eye tracking is a third preview/video role;
+   it supplies no eye-position analysis or locomotion input. Its required external
+-  trigger wiring/source/rate remain unset; capture is blocked until trigger
+-  integration and rig verification are completed under A11/E15.
++  trigger wiring/source/rate remain explicit operator inputs; missing inputs block
++  capture. A11 supplies its independent protocol-4 MCU output; electrical/timing
++  and actual camera acceptance remain separate rig checks under E15.
+ - Assignments are configurable under E07 before the session and locked during it;
+   changing a prepared assignment invalidates Ready and requires fresh Setup. Supplied
+   owner assignments live in the acquisition configuration; discovery/readback alone
+@@ -303,7 +304,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
+ <a id="a07"></a>
+ ### A07 — Recording frame log and crash behavior
+ 
+-**Status:** Accepted · **Revision:** 60
++**Status:** Accepted · **Revision:** 61
+ 
+ **Files**
+ 
+@@ -385,7 +386,10 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
+   failures.
+ - At finalization, including Interrupted trials, drain admitted frames, reconcile the
+   final count/cutoff, complete encoding, write the completion line, sync and close
+-  both files before Finished. No completed-file integrity scan, MP4 inspection or
++  both files and deliver final coalesced operational warnings before Finished,
++  within the original finalization deadline. Stopped and health delivery remain
++  independent; late warning delivery must not target a reset session. No
++  completed-file integrity scan, MP4 inspection or
+   decoding pass gates trials/sessions; Closed is closure evidence, not a
+   file-integrity certificate.
+ - If valid images were acquired but every recording frame dropped, close the frame
+@@ -893,7 +897,7 @@ hardware information and later implementation; no new deferral is implied.
+ <a id="a11"></a>
+ ### A11 — Microcontroller command protocol
+ 
+-**Status:** Accepted · **Revision:** 43
++**Status:** Accepted · **Revision:** 44
+ 
+ **Board and firmware**
+ 
+@@ -918,13 +922,15 @@ hardware information and later implementation; no new deferral is implied.
+   or pulses. Failed/uncertain upload reports failure; unresolved helper cleanup blocks
+   Setup and manual device access until exact cleanup succeeds. Setup still rejects
+   incompatible firmware. Native flashing and electrical acceptance remain E15 rig work.
+-- Serial protocol version is integer **3**, separate from firmware release, and must
++- Serial protocol version is integer **4**, separate from firmware release, and must
+   match exactly at Setup; future wire changes increment published versions. Firmware,
+   not host monitoring alone, implements A10's watchdog.
+-- Version 3 controls Behavioral and Tracking outputs. Eye tracking requires external
+-  triggering, but its wiring/source/rate are not yet specified. Do not map Eye onto
+-  either existing output, add an independent output or flash firmware by inference.
+-  A01 blocks its capture pending that input and the corresponding integration.
++- Version 4 controls independent Behavioral, Tracking and Eye tracking outputs.
++  Eye requires an explicit unique pin, camera FrameStart line and rate; never map
++  it onto another camera output or choose these values by discovery. Host masks,
++  readback, diagnostic identity, boundary evidence and cleanup include Eye.
++  Firmware upload remains explicit/manual; protocol-3 firmware rejects until
++  upgraded. Electrical/timing and camera acceptance remain E15 rig work.
+ 
+ **Connection**
+ 
+diff --git a/src/cephvr/acquisition/coordinator/trial_pulses.py b/src/cephvr/acquisition/coordinator/trial_pulses.py
+index da6e423..67fc03e 100644
+--- a/src/cephvr/acquisition/coordinator/trial_pulses.py
++++ b/src/cephvr/acquisition/coordinator/trial_pulses.py
+@@ -26,7 +26,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
+ from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.shared.clock import host_time_ns
+-from cephvr.shared.deadlines import remaining_seconds
++from cephvr.shared.deadlines import wait_until_ns
+ 
+ 
+ class TrialPulseBoundaries:
+@@ -77,7 +77,11 @@ class TrialPulseBoundaries:
+         off_deadline_ns = min(deadline_ns, now + self.serial_ack_timeout_ns)
+         invalidate_released_idle_proof(self.pulse)
+         off = await self.serial.off(
+-            (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING),
++            (
++                camera.CAMERA_ROLE_BEHAVIORAL,
++                camera.CAMERA_ROLE_TRACKING,
++                camera.CAMERA_ROLE_EYE_TRACKING,
++            ),
+             scheduled_boundary_ns=None,
+             stop_issued_ns=now,
+             deadline_ns=off_deadline_ns,
+@@ -101,9 +105,7 @@ class TrialPulseBoundaries:
+         command: mcu.PulseBoundaryCommand,
+         boundary_ns: int,
+     ) -> None:
+-        remaining = remaining_seconds(boundary_ns, clock=self.clock)
+-        if remaining:
+-            await asyncio.sleep(remaining)
++        await wait_until_ns(boundary_ns, clock=self.clock)
+         cancelled_on = command == mcu.PULSE_BOUNDARY_COMMAND_ON and (
+             session.interrupted or trial.interrupted or session.setup_cancelled
+         )
+@@ -229,6 +231,7 @@ def _failure_evidence(
+         command=command,
+         behavioral_selected=(camera.CAMERA_ROLE_BEHAVIORAL in selected_roles),
+         tracking_selected=(camera.CAMERA_ROLE_TRACKING in selected_roles),
++        eye_tracking_selected=(camera.CAMERA_ROLE_EYE_TRACKING in selected_roles),
+         scheduled_boundary_monotonic_ns=boundary_ns,
+         outcome=outcome,
+     )
+@@ -239,5 +242,5 @@ def _outputs_proven_off(state: mcu.MicrocontrollerState) -> bool:
+         state.HasField(role)
+         and getattr(state, role).HasField("running")
+         and not getattr(state, role).running
+-        for role in ("behavioral", "tracking")
++        for role in ("behavioral", "tracking", "eye_tracking")
+     )
+diff --git a/src/cephvr/acquisition/coordinator/trial_termination.py b/src/cephvr/acquisition/coordinator/trial_termination.py
+index 3ee9e15..fea5f78 100644
+--- a/src/cephvr/acquisition/coordinator/trial_termination.py
++++ b/src/cephvr/acquisition/coordinator/trial_termination.py
+@@ -35,7 +35,7 @@ from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
+ from cephvr.control.v1 import services_pb2 as wire
+ from cephvr.control.v1 import types_pb2 as control
+ from cephvr.shared.clock import host_time_ns
+-from cephvr.shared.deadlines import remaining_seconds
++from cephvr.shared.deadlines import wait_until_ns
+ 
+ 
+ class PulseBoundaryRunner(Protocol):
+@@ -402,7 +402,7 @@ class TrialTermination:
+         end = trial.end_monotonic_ns
+         if end is None:
+             raise ValueError("normal end has no retained schedule")
+-        await asyncio.sleep(remaining_seconds(end, clock=self.clock))
++        await wait_until_ns(end, clock=self.clock)
+         if trial.pulse_off_task is not None:
+             await trial.pulse_off_task
+         if (
+diff --git a/src/cephvr/acquisition/worker/execution.py b/src/cephvr/acquisition/worker/execution.py
+index 4d82184..5750b72 100644
+--- a/src/cephvr/acquisition/worker/execution.py
++++ b/src/cephvr/acquisition/worker/execution.py
+@@ -314,8 +314,13 @@ class WorkerOperationExecutor:
+         evidence.operation.command_id = command.command_id
+         evidence.state_revision = self.state.state_revision + 1
+         self.state.retain_lifecycle(evidence)
++        if evidence.HasField("ready"):
++            # Publish the new owner scope before Ready permits scheduling it.
++            self._refresh_health_snapshot()
+         if command.command_id in self.state.supervisor_command_ids:
+             return
++        if evidence.HasField("finished"):
++            self.health.flush(deadline_ns)
+         self.report_dispatcher.lifecycle(evidence, deadline_ns)
+ 
+     def advance_due_stages(self) -> None:
+diff --git a/src/cephvr/acquisition/worker/health_snapshot.py b/src/cephvr/acquisition/worker/health_snapshot.py
+index ea26dd4..501b537 100644
+--- a/src/cephvr/acquisition/worker/health_snapshot.py
++++ b/src/cephvr/acquisition/worker/health_snapshot.py
+@@ -23,7 +23,9 @@ def refresh_health_snapshot(
+ ) -> None:
+     if state.health_active_error is not None:
+         state.update_continuing_snapshot(trial.continuing_functions(clock_ns()))
+-    schedule = trial.scheduled
++    schedule = trial.scheduled or trial.trial_state.stopped_schedule
++    if _work_closed(state, latest_work):
++        schedule = None
+     last_progress_ns: int | None = None
+     capture = captures.capture
+     if capture is not None and capture.last_usable_ns > 0:
+@@ -43,20 +45,7 @@ def refresh_health_snapshot(
+     else:
+         work = latest_work
+         trial_phase = None
+-    closed = work is not None and (
+-        state.health_work == work
+-        and state.health_session_phase == control.SESSION_PHASE_ENDED
+-        or any(
+-            evidence.source.work == work
+-            and evidence.WhichOneof("evidence") == "cleanup"
+-            and evidence.cleanup.resources
+-            and all(
+-                item.released and not item.HasField("failure")
+-                for item in evidence.cleanup.resources
+-            )
+-            for evidence in state.lifecycle.values()
+-        )
+-    )
++    closed = _work_closed(state, work)
+     session_phase = (
+         control.SESSION_PHASE_ENDED
+         if closed
+@@ -76,3 +65,20 @@ def refresh_health_snapshot(
+         last_progress_ns=last_progress_ns,
+         observed_ns=clock_ns(),
+     )
++
++
++def _work_closed(state: WorkerState, work: control.WorkContext | None) -> bool:
++    return work is not None and (
++        state.health_work == work
++        and state.health_session_phase == control.SESSION_PHASE_ENDED
++        or any(
++            evidence.source.work == work
++            and evidence.WhichOneof("evidence") == "cleanup"
++            and evidence.cleanup.resources
++            and all(
++                item.released and not item.HasField("failure")
++                for item in evidence.cleanup.resources
++            )
++            for evidence in state.lifecycle.values()
++        )
++    )
+diff --git a/src/cephvr/acquisition/worker/pulse_evidence.py b/src/cephvr/acquisition/worker/pulse_evidence.py
+index 2f60731..f42356c 100644
+--- a/src/cephvr/acquisition/worker/pulse_evidence.py
++++ b/src/cephvr/acquisition/worker/pulse_evidence.py
+@@ -57,6 +57,10 @@ class TrialPulseEvidence:
+             pulse.behavioral_selected
+             if camera_role == camera.CAMERA_ROLE_BEHAVIORAL
+             else pulse.tracking_selected
++            if camera_role == camera.CAMERA_ROLE_TRACKING
++            else pulse.eye_tracking_selected
++            if camera_role == camera.CAMERA_ROLE_EYE_TRACKING
++            else False
+         )
+         if (
+             not pulse.connection_id
+@@ -141,7 +145,9 @@ class TrialPulseEvidence:
+             )
+         else:
+             raise ValueError("pulse boundary command is unspecified")
+-        encoded = request.SerializeToString(deterministic=True)
++        # Forwarding commands may be fresh; the retained MCU outcome itself
++        # must remain identical after the trial/camera checks above.
++        encoded = pulse.SerializeToString(deterministic=True)
+         prior = (
+             self._on_wire
+             if pulse.command == mcu.PULSE_BOUNDARY_COMMAND_ON
+diff --git a/src/cephvr/acquisition/worker/reports.py b/src/cephvr/acquisition/worker/reports.py
+index c101f49..a0d2016 100644
+--- a/src/cephvr/acquisition/worker/reports.py
++++ b/src/cephvr/acquisition/worker/reports.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import asyncio
+ from typing import Any, cast
+ 
+ import grpc
+@@ -35,6 +36,7 @@ class CoordinatorReportClient:
+         )
+         self._stub = rpc.AcquisitionCoordinatorServiceStub(self._channel)  # type: ignore[no-untyped-call]
+         self._principal = principal
++        self._warning_delivery = asyncio.Lock()
+ 
+     async def report_operation(
+         self, request: acq.WorkerOperationReport, *, deadline_ns: int
+@@ -50,6 +52,17 @@ class CoordinatorReportClient:
+ 
+     async def report_lifecycle(
+         self, request: acq.WorkerLifecycleEvidence, *, deadline_ns: int
++    ) -> control.ReportReceipt:
++        if request.HasField("finished"):
++            # Final warning delivery precedes Finished; safety/heartbeat traffic
++            # bypasses this gate and the original absolute deadline still applies.
++            async with asyncio.timeout(remaining_seconds(deadline_ns)):
++                async with self._warning_delivery:
++                    return await self._send_lifecycle(request, deadline_ns)
++        return await self._send_lifecycle(request, deadline_ns)
++
++    async def _send_lifecycle(
++        self, request: acq.WorkerLifecycleEvidence, deadline_ns: int
+     ) -> control.ReportReceipt:
+         return cast(
+             control.ReportReceipt,
+@@ -63,14 +76,19 @@ class CoordinatorReportClient:
+     async def report_warnings(
+         self, request: acq.WorkerWarningReport, *, deadline_ns: int
+     ) -> control.ReportReceipt:
+-        return cast(
+-            control.ReportReceipt,
+-            await cast(Any, self._stub).ReportWorkerWarnings(
+-                request,
+-                metadata=(*self._principal.metadata(), deadline_metadata(deadline_ns)),
+-                timeout=remaining_seconds(deadline_ns),
+-            ),
+-        )
++        async with asyncio.timeout(remaining_seconds(deadline_ns)):
++            async with self._warning_delivery:
++                return cast(
++                    control.ReportReceipt,
++                    await cast(Any, self._stub).ReportWorkerWarnings(
++                        request,
++                        metadata=(
++                            *self._principal.metadata(),
++                            deadline_metadata(deadline_ns),
++                        ),
++                        timeout=remaining_seconds(deadline_ns),
++                    ),
++                )
+ 
+     async def report_heartbeat(
+         self, request: control.HeartbeatReport, *, deadline_ns: int
+diff --git a/src/cephvr/controller/lifecycle/trials.py b/src/cephvr/controller/lifecycle/trials.py
+index 42b6db4..494de94 100644
+--- a/src/cephvr/controller/lifecycle/trials.py
++++ b/src/cephvr/controller/lifecycle/trials.py
+@@ -32,7 +32,7 @@ from cephvr.controller.state import (
+     LimitsState,
+     TrialClosureState,
+ )
+-from cephvr.shared.deadlines import remaining_seconds
++from cephvr.shared.deadlines import remaining_seconds, wait_until_ns
+ 
+ 
+ @dataclass(frozen=True)
+@@ -329,7 +329,7 @@ class TrialExecution:
+     ) -> None:
+         target = schedule.target_ns
+         end = schedule.end_ns
+-        await asyncio.sleep(remaining_seconds(target, clock=self.clock))
++        await wait_until_ns(target, clock=self.clock)
+         async with self.lifecycle.lock:
+             self.lifecycle.trial.phase = pb.TRIAL_PHASE_RUNNING
+             self.publisher.publish()
+@@ -348,7 +348,7 @@ class TrialExecution:
+             target + self.limit_state.current.start_evidence_ns,
+             attempt,
+         )
+-        await asyncio.sleep(remaining_seconds(end, clock=self.clock))
++        await wait_until_ns(end, clock=self.clock)
+         async with self.lifecycle.lock:
+             self.lifecycle.trial.phase = pb.TRIAL_PHASE_FINALIZING
+             attempt.finished_deadline_ns = end + self.limit_state.current.finished_ns
+@@ -387,7 +387,7 @@ class TrialExecution:
+             ),
+             0,
+         )
+-        await asyncio.sleep(remaining_seconds(end + gap, clock=self.clock))
++        await wait_until_ns(end + gap, clock=self.clock)
+ 
+     async def trial_command_with_retry(
+         self,
+diff --git a/src/cephvr/platform/windows/byte_stream.py b/src/cephvr/platform/windows/byte_stream.py
+index cb8cea9..67f5f40 100644
+--- a/src/cephvr/platform/windows/byte_stream.py
++++ b/src/cephvr/platform/windows/byte_stream.py
+@@ -153,8 +153,16 @@ class OverlappedPipe:
+                 "nonblocking pipe writes require a nonempty contiguous buffer"
+             )
+         amount = min(len(view), _MAX_DWORD)
+-        backing = bytearray(view[:amount])
+-        buffer = (ctypes.c_char * amount).from_buffer(backing)
++        if view.readonly:
++            backing = bytearray(view[:amount])
++            buffer = (ctypes.c_char * amount).from_buffer(backing)
++        else:
++            backing = bytearray(amount)
++            buffer = (ctypes.c_char * amount).from_buffer(backing)
++            source = (ctypes.c_char * amount).from_buffer(view)
++            # ctypes releases the GIL during this native copy. Retain the same
++            # private, pinned bytes before the caller may reuse its storage.
++            ctypes.memmove(buffer, source, amount)
+         if time.perf_counter_ns() >= deadline_ns:
+             raise TimeoutError("native pipe write deadline already expired")
+         api = native_api()
+diff --git a/src/cephvr/shared/deadlines.py b/src/cephvr/shared/deadlines.py
+index 2ee299a..5c6eb98 100644
+--- a/src/cephvr/shared/deadlines.py
++++ b/src/cephvr/shared/deadlines.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import asyncio
+ from collections.abc import Callable
+ from dataclasses import dataclass
+ from decimal import Decimal, InvalidOperation
+@@ -39,6 +40,15 @@ def remaining_seconds(
+     return remaining_ns(deadline_ns, clock=clock) / 1_000_000_000
+ 
+ 
++async def wait_until_ns(
++    boundary_ns: int, *, clock: Callable[[], int] = host_time_ns
++) -> None:
++    """Wait for the original host boundary even if an async timer wakes early."""
++    # This is a timer correction, not state polling that an Event could replace.
++    while remaining := remaining_seconds(boundary_ns, clock=clock):  # noqa: ASYNC110
++        await asyncio.sleep(remaining)
++
++
+ @dataclass(frozen=True)
+ class Deadline:
+     absolute_ns: int
+diff --git a/src/cephvr/visual_stimulus/recording/capture.py b/src/cephvr/visual_stimulus/recording/capture.py
+index 4252a95..4d3687a 100644
+--- a/src/cephvr/visual_stimulus/recording/capture.py
++++ b/src/cephvr/visual_stimulus/recording/capture.py
+@@ -295,8 +295,18 @@ class RecordingWorker:
+             frame = self._active_frame
+             if frame is None:
+                 return False
+-            if not self._active_normalized:
+-                frame = _ffmpeg_input_order(frame)
++            normalize = not self._active_normalized
++            offset = self._active_offset
++        # Only the recording thread changes the active pixels. Admission and
++        # accounting must remain available while the native row copies run.
++        if normalize:
++            normalized_frame = _ffmpeg_input_order(frame)
++            with self._lock:
++                if self._active_frame is not frame or self._active_offset != offset:
++                    raise RuntimeError(
++                        "recording frame ownership changed during normalization"
++                    )
++                frame = normalized_frame
+                 self._active_frame = frame
+                 self._active_normalized = True
+                 if (
+@@ -304,9 +314,8 @@ class RecordingWorker:
+                     and self._pending_real.pixels is frame.pixels
+                 ):
+                     self._pending_real_normalized = True
+-            offset = self._active_offset
+-            end = min(len(frame.pixels), offset + self.max_encoder_write_chunk)
+-            chunk = memoryview(frame.pixels)[offset:end]
++        end = min(len(frame.pixels), offset + self.max_encoder_write_chunk)
++        chunk = memoryview(frame.pixels)[offset:end]
+         consumed = self.encoder.write_chunk(chunk)
+         if consumed < 0 or consumed > len(chunk):
+             raise RuntimeError("encoder input returned an invalid write count")
+@@ -394,22 +403,24 @@ class RecordingWorker:
+ 
+ def _ffmpeg_input_order(frame: CompositeFrame) -> CompositeFrame:
+     """Flip bottom-up capture rows and normalize the packed 10-bit X bits."""
+-    row_bytes = frame.width * 4
++    import numpy as np
++
+     normalized = (
+         frame.pixels if isinstance(frame.pixels, bytearray) else bytearray(frame.pixels)
+     )
+     if frame.height > 1:
+-        view = memoryview(normalized)
+-        row_buffer = bytearray(row_bytes)
+-        for row in range(frame.height // 2):
+-            top = row * row_bytes
+-            bottom = (frame.height - row - 1) * row_bytes
+-            row_buffer[:] = view[top : top + row_bytes]
+-            view[top : top + row_bytes] = view[bottom : bottom + row_bytes]
+-            view[bottom : bottom + row_bytes] = row_buffer
++        # Native copies release the GIL while the GL owner continues presenting.
++        # Only half a frame is temporary; odd-height middle rows stay in place.
++        rows = np.frombuffer(normalized, dtype=np.uint8).reshape(frame.height, -1)
++        half = frame.height // 2
++        top = rows[:half]
++        bottom = rows[-half:][::-1]
++        saved = top.copy()
++        np.copyto(top, bottom)
++        np.copyto(bottom, saved)
+     if frame.pixel_format == "r10g10b10a2_le_bottom_up":
+-        for index in range(3, len(normalized), 4):
+-            normalized[index] &= 0x3F
++        x_bytes = np.frombuffer(normalized, dtype=np.uint8)[3::4]
++        np.bitwise_and(x_bytes, 0x3F, out=x_bytes)
+     return CompositeFrame(
+         group_id=frame.group_id,
+         video_frame_index=frame.video_frame_index,
+diff --git a/src/cephvr/visual_stimulus/rendering/capture.py b/src/cephvr/visual_stimulus/rendering/capture.py
+index a62c6c4..c025ce2 100644
+--- a/src/cephvr/visual_stimulus/rendering/capture.py
++++ b/src/cephvr/visual_stimulus/rendering/capture.py
+@@ -37,7 +37,7 @@ class ReviewCapture:
+     def __init__(self) -> None:
+         self._pending: list[_Pending] = []
+         self._context: Any | None = None
+-        self._dimensions: tuple[int, int] | None = None
++        self._dimensions: tuple[int, int, str] | None = None
+         self._shared: tuple[Any, ...] = ()
+ 
+     def capture(
+@@ -59,7 +59,7 @@ class ReviewCapture:
+         if context is None:
+             raise RuntimeError("review output texture has no owning GL context")
+         width, height = encoding.composite_width, encoding.composite_height
+-        self._ensure_compositor(context, width, height)
++        self._ensure_compositor(context, width, height, encoding.native_pixel_format)
+         if self._context is not context:
+             raise RuntimeError("review capture must use one shared GL context")
+         _texture, framebuffer, program, _buffer, array = self._shared
+@@ -107,16 +107,24 @@ class ReviewCapture:
+                 GL.glDeleteBuffers(1, [pbo])
+             raise
+ 
+-    def _ensure_compositor(self, context: Any, width: int, height: int) -> None:
++    def _ensure_compositor(
++        self, context: Any, width: int, height: int, pixel_format: str
++    ) -> None:
++        if pixel_format not in {"rgba8_bottom_up", "r10g10b10a2_le_bottom_up"}:
++            raise ValueError("unsupported review-composite pixel format")
++        dimensions = (width, height, pixel_format)
+         if self._shared:
+-            if self._context is not context or self._dimensions != (width, height):
++            if self._context is not context or self._dimensions != dimensions:
+                 raise RuntimeError(
+                     "review compositor cannot change context or dimensions"
+                 )
+             return
+         created: list[Any] = []
+         try:
+-            texture = context.texture((width, height), 4, dtype="f4")
++            # Match the already selected 8-bit recording representation before
++            # readback; float-to-byte glReadPixels stalls the native driver.
++            dtype = "f1" if pixel_format == "rgba8_bottom_up" else "f4"
++            texture = context.texture((width, height), 4, dtype=dtype)
+             created.append(texture)
+             framebuffer = context.framebuffer(color_attachments=(texture,))
+             created.append(framebuffer)
+@@ -133,10 +141,10 @@ class ReviewCapture:
+                 resource.release()
+             raise
+         self._context = context
+-        self._dimensions = (width, height)
++        self._dimensions = dimensions
+         self._shared = tuple(created)
+ 
+-    def poll(self, pending: object) -> bytes | None:
++    def poll(self, pending: object) -> bytearray | None:
+         if not isinstance(pending, _Pending) or pending not in self._pending:
+             raise TypeError("invalid pending review capture")
+         gl = pending.gl
+@@ -146,12 +154,27 @@ class ReviewCapture:
+                 raise RuntimeError("review-composite readback fence failed")
+             return None
+         gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, pending.pbo)
+-        pixels = gl.glGetBufferSubData(gl.GL_PIXEL_PACK_BUFFER, 0, pending.byte_count)
++        pointer = gl.glMapBufferRange(
++            gl.GL_PIXEL_PACK_BUFFER, 0, pending.byte_count, gl.GL_MAP_READ_BIT
++        )
++        address = ctypes.cast(pointer, ctypes.c_void_p).value
++        if address is None:
++            raise RuntimeError("review-composite readback mapping failed")
++        try:
++            # The signalled fence covers every byte. Copy from the completed
++            # mapped buffer once, without first zeroing another full frame.
++            pixels = bytearray(
++                (ctypes.c_ubyte * pending.byte_count).from_address(address)
++            )
++        finally:
++            unmapped = gl.glUnmapBuffer(gl.GL_PIXEL_PACK_BUFFER)
++        if not unmapped:
++            raise RuntimeError("review-composite readback mapping was corrupted")
+         gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, 0)
+         gl.glDeleteSync(pending.sync)
+         gl.glDeleteBuffers(1, [pending.pbo])
+         self._pending.remove(pending)
+-        return bytes(pixels)
++        return pixels
+ 
+     def cancel(self, pending: object) -> bool:
+         """Delete GL-owned capture objects on the owner thread.
+diff --git a/src/cephvr/visual_stimulus/rendering/native.py b/src/cephvr/visual_stimulus/rendering/native.py
+index 50655a3..2967ba3 100644
+--- a/src/cephvr/visual_stimulus/rendering/native.py
++++ b/src/cephvr/visual_stimulus/rendering/native.py
+@@ -18,8 +18,10 @@ from typing import Any, cast
+ from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
+ from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile, Output
+ from cephvr.visual_stimulus.rendering.native_display import (
++    DisplayGpuUnavailableError,
+     DisplayUnavailableError,
+     NativeRenderingError,
++    activate_window,
+     attach_window_context,
+     configure_window,
+     idle_device_color,
+@@ -101,9 +103,15 @@ class ModernGLPort:
+ 
+     @staticmethod
+     def _verify_render_gpu(renderer: str, vendor: str) -> str:
+-        from cephvr.platform.windows.nvidia_device import verify_opengl_rendering_device
++        from cephvr.platform.windows.nvidia_device import (
++            OpenGLAdapterMismatch,
++            verify_opengl_rendering_device,
++        )
+ 
+-        device = verify_opengl_rendering_device(renderer, vendor)
++        try:
++            device = verify_opengl_rendering_device(renderer, vendor)
++        except OpenGLAdapterMismatch as exc:
++            raise DisplayGpuUnavailableError(str(exc)) from exc
+         return f"nvidia_uuid:{device.uuid}"
+ 
+     def _assert_owner(self) -> None:
+@@ -194,7 +202,7 @@ class ModernGLPort:
+                     output.rgb_bits_per_channel,
+                     0,
+                     context.screen,
+-                    partial(glfw.make_context_current, window),
++                    partial(activate_window, glfw, window),
+                 )
+                 created.append(output_context)
+                 self._outputs[output.output_id] = output_context
+@@ -558,13 +566,16 @@ class ModernGLPort:
+         order_shared_outputs(self._outputs, self._capture_fences)
+         return self.scene_renderer.capture_review_composite(slot, outputs, encoding)
+ 
+-    def poll_review_capture(self, pending: object) -> bytes | None:
++    def poll_review_capture(self, pending: object) -> bytes | bytearray | None:
+         self._assert_owner()
+         first = next(iter(self._outputs.values()))
+-        self._glfw.make_context_current(first.window)
++        activate_window(self._glfw, first.window)
+         if self.scene_renderer is None:
+             raise NativeRenderingError("capture pipeline missing")
+-        return cast(bytes | None, self.scene_renderer.poll_review_capture(pending))
++        return cast(
++            bytes | bytearray | None,
++            self.scene_renderer.poll_review_capture(pending),
++        )
+ 
+     def cancel_review_capture(self, pending: object) -> bool:
+         self._assert_owner()
+diff --git a/src/cephvr/visual_stimulus/rendering/native_display.py b/src/cephvr/visual_stimulus/rendering/native_display.py
+index 877c27b..9a09a78 100644
+--- a/src/cephvr/visual_stimulus/rendering/native_display.py
++++ b/src/cephvr/visual_stimulus/rendering/native_display.py
+@@ -1,5 +1,6 @@
+ """GLFW window configuration, actual framebuffer checks and calibrated Idle values."""
+ 
++import ctypes
+ from collections.abc import Callable
+ from typing import Any
+ 
+@@ -8,14 +9,36 @@ from cephvr.visual_stimulus.config.models.photometric_profile import Photometric
+ from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
+ 
+ 
++def activate_window(glfw: Any, window: Any) -> None:
++    """Avoid a redundant driver rebind; inspect the actual thread-local context."""
++    current = glfw.get_current_context()
++    if (
++        current
++        and ctypes.cast(current, ctypes.c_void_p).value
++        == ctypes.cast(window, ctypes.c_void_p).value
++    ):
++        return
++    glfw.make_context_current(window)
++
++
+ class NativeRenderingError(RuntimeError):
+     pass
+ 
+ 
+ class DisplayUnavailableError(ValueError):
+-    """A saved output has no unique active monitor; no fallback is permitted."""
++    """Required output placement is unavailable; no fallback is permitted."""
+ 
+     code = "DISPLAY_OUTPUT_UNAVAILABLE"
++    remedy = "Reconnect the projector or correct its assignment, then run Setup."
++
++
++class DisplayGpuUnavailableError(DisplayUnavailableError):
++    """A healthy context has the wrong adapter, rather than a GPU operation fault."""
++
++    remedy = (
++        "Set Windows Graphics preference for the managed cephvr-python.exe to "
++        "the RTX 5060 Ti, then close and reopen Runtime GUI."
++    )
+ 
+ 
+ def attach_window_context(moderngl: Any) -> Any:
+diff --git a/src/cephvr/visual_stimulus/resources/session.py b/src/cephvr/visual_stimulus/resources/session.py
+index 7d6cd00..763ea32 100644
+--- a/src/cephvr/visual_stimulus/resources/session.py
++++ b/src/cephvr/visual_stimulus/resources/session.py
+@@ -64,11 +64,11 @@ class ReviewEncodingProvider(Protocol):
+ 
+ 
+ def review_capture_cpu_bytes(width: int, height: int, capture_slots: int) -> int:
+-    """Bound admitted images, retained source, readback copy and row scratch."""
++    """Bound slots, retained padding, readback copy, pipe copy and row scratch."""
+     if min(width, height, capture_slots) <= 0:
+         raise ValueError("positive review capture dimensions and slots required")
+     frame_bytes = width * height * 4
+-    return frame_bytes * (capture_slots + 2) + width * 4
++    return frame_bytes * (capture_slots + 3) + (height // 2) * width * 4
+ 
+ 
+ class NativePreparation:
+@@ -145,6 +145,16 @@ class NativePreparation:
+ 
+         return register
+ 
++    def _begin_resource_scope(self) -> None:
++        # Idempotent cleanup receipts belong to the retired preparation. Never
++        # discard them while a source/consumer still needs cleanup retries.
++        if (
++            not self._resource_keys
++            and not self._protected_sources
++            and self.video_playback is None
++        ):
++            self._released_resource_keys.clear()
++
+     def prepare_display(
+         self,
+         request: visual_stimulus_messages.InitializeDisplay,
+@@ -153,6 +163,7 @@ class NativePreparation:
+     ) -> tuple[DisplayProfile, PreparedCalibration]:
+         """Protect and validate display correction files without touching GL."""
+         self._check(deadline_ns)
++        self._begin_resource_scope()
+         if not request.asset_root:
+             raise ValueError("display calibration requires the adopted asset_root")
+         display = parse_display_json(
+@@ -290,6 +301,7 @@ class NativePreparation:
+             )
+         self._check(deadline_ns)
+         self._deadline_ns = deadline_ns
++        self._begin_resource_scope()
+         if not request.HasField("session") or not request.session.HasField(
+             "configuration"
+         ):
+diff --git a/tests/acquisition/test_pulse_evidence.py b/tests/acquisition/test_pulse_evidence.py
+index a54d7bd..4f87481 100644
+--- a/tests/acquisition/test_pulse_evidence.py
++++ b/tests/acquisition/test_pulse_evidence.py
+@@ -162,6 +162,7 @@ class _StatusSerial:
+         assert selected_roles == (
+             camera.CAMERA_ROLE_BEHAVIORAL,
+             camera.CAMERA_ROLE_TRACKING,
++            camera.CAMERA_ROLE_EYE_TRACKING,
+         )
+         assert scheduled_boundary_ns is None
+         assert stop_issued_ns is not None
+@@ -173,6 +174,7 @@ class _StatusSerial:
+         )
+         result.behavioral.running = False
+         result.tracking.running = False
++        result.eye_tracking.running = False
+         return mcu.PulseCommandEvidence(
+             connection_id=self.observation.connection_id,
+             request_id="off-1",
+@@ -242,10 +244,14 @@ def _schedule(work: control.WorkContext) -> acq.WorkerSchedule:
+ 
+ 
+ def _pulse(
+-    work: control.WorkContext, *, applied: bool, command_id: str
++    work: control.WorkContext,
++    *,
++    applied: bool,
++    command_id: str,
++    role: int = camera.CAMERA_ROLE_BEHAVIORAL,
+ ) -> acq.WorkerPulseEvidence:
+     request = acq.WorkerPulseEvidence(
+-        camera=camera.CAMERA_ROLE_BEHAVIORAL,
++        camera=role,
+         command=acq.WorkerCommand(command_id=command_id),
+     )
+     request.command.target.work.CopyFrom(work)
+@@ -257,7 +263,9 @@ def _pulse(
+         if applied
+         else mcu.PULSE_COMMAND_OUTCOME_REJECTED
+     )
+-    request.evidence.behavioral_selected = True
++    request.evidence.behavioral_selected = role == camera.CAMERA_ROLE_BEHAVIORAL
++    request.evidence.tracking_selected = role == camera.CAMERA_ROLE_TRACKING
++    request.evidence.eye_tracking_selected = role == camera.CAMERA_ROLE_EYE_TRACKING
+     request.evidence.scheduled_boundary_monotonic_ns = 100
+     request.evidence.dispatched_monotonic_ns = 90
+     request.evidence.acknowledged_monotonic_ns = 95
+@@ -265,21 +273,47 @@ def _pulse(
+     return request
+ 
+ 
+-def test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it() -> None:
++@pytest.mark.parametrize(
++    "role",
++    [
++        camera.CAMERA_ROLE_BEHAVIORAL,
++        camera.CAMERA_ROLE_TRACKING,
++        camera.CAMERA_ROLE_EYE_TRACKING,
++    ],
++)
++@pytest.mark.parametrize(
++    "boundary", [mcu.PULSE_BOUNDARY_COMMAND_ON, mcu.PULSE_BOUNDARY_COMMAND_OFF]
++)
++def test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it(
++    role: int,
++    boundary: int,
++) -> None:
+     work = _trial_work()
+     schedule = _schedule(work)
+-    accepted = _pulse(work, applied=True, command_id="first-command")
++    accepted = _pulse(work, applied=True, command_id="first-command", role=role)
++    if boundary == mcu.PULSE_BOUNDARY_COMMAND_OFF:
++        accepted.evidence.command = boundary
++        accepted.evidence.scheduled_boundary_monotonic_ns = schedule.end_monotonic_ns
++        accepted.evidence.dispatched_monotonic_ns = schedule.end_monotonic_ns
++        accepted.evidence.acknowledged_monotonic_ns = schedule.end_monotonic_ns + 5
+     tracker = TrialPulseEvidence()
+     tracker.reset(required=True)
+-    tracker.record(accepted, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
++    tracker.record(accepted, schedule, role)
+     retained = tracker.combined()
+ 
+-    tracker.record(accepted, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
++    tracker.record(accepted, schedule, role)
++    assert tracker.combined() == retained
++
++    forwarded = acq.WorkerPulseEvidence.FromString(accepted.SerializeToString())
++    forwarded.command.command_id = "fresh-forwarding-command"
++    tracker.record(forwarded, schedule, role)
+     assert tracker.combined() == retained
+ 
+-    conflict = _pulse(work, applied=False, command_id="changed-command")
++    conflict = acq.WorkerPulseEvidence.FromString(forwarded.SerializeToString())
++    conflict.evidence.outcome = mcu.PULSE_COMMAND_OUTCOME_REJECTED
++    conflict.evidence.applied = False
+     with pytest.raises(ValueError, match="terminal pulse evidence changed"):
+-        tracker.record(conflict, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
++        tracker.record(conflict, schedule, role)
+     assert tracker.combined() == retained
+     assert tracker.connection_id == "mcu-generation"
+ 
+diff --git a/tests/acquisition/test_worker_admission.py b/tests/acquisition/test_worker_admission.py
+index ba0b30b..c221be8 100644
+--- a/tests/acquisition/test_worker_admission.py
++++ b/tests/acquisition/test_worker_admission.py
+@@ -29,6 +29,41 @@ from cephvr.shared.clock import host_time_ns
+ from cephvr.shared.commands import CommandCapacityError, CommandLedger
+ 
+ 
++def test_canceled_schedule_keeps_trial_health_until_session_cleanup() -> None:
++    from cephvr.acquisition.worker.health_snapshot import refresh_health_snapshot
++
++    session = control.WorkContext(session=control.SessionContext(session_id="session"))
++    work = control.WorkContext(
++        trial=control.TrialContext(session=session.session, trial_id="trial")
++    )
++    state = WorkerState(
++        acq.WorkerContext(),
++        control.ProcessIdentity(),
++        CommandLedger(
++            str(uuid4()),
++            max_records=16,
++            max_bytes=65536,
++            retention_ns=1_000_000_000,
++            result_reservation_bytes=4096,
++        ),
++    )
++    state.registered = True
++    trial = object.__new__(WorkerTrialLifecycle)
++    schedule = acq.WorkerSchedule()
++    schedule.command.target.work.CopyFrom(work)
++    trial.trial_state = WorkerTrialState(stopped_schedule=schedule)
++    captures = SimpleNamespace(capture=None, active=False)
++    refresh_health_snapshot(state, trial, captures, session, False)
++    assert state.health_work == work
++    cleanup = acq.WorkerLifecycleEvidence()
++    cleanup.source.work.CopyFrom(session)
++    cleanup.cleanup.resources.add(released=True)
++    state.lifecycle[("cleanup", "cleanup")] = cleanup
++    refresh_health_snapshot(state, trial, captures, session, False)
++    assert state.health_work == session
++    assert state.health_session_phase == control.SESSION_PHASE_ENDED
++
++
+ @pytest.mark.parametrize("trial", [False, True])
+ async def test_warning_flush_binds_each_view_to_its_exact_work(trial: bool) -> None:
+     from cephvr.acquisition.worker.health import WorkerHealthReporter
+@@ -99,6 +134,80 @@ def _scope(
+     return scope
+ 
+ 
++@pytest.mark.parametrize("expire", [False, True])
++async def test_finished_waits_for_warning_delivery_without_blocking_stopped(
++    expire: bool,
++) -> None:
++    from cephvr.acquisition.worker.reports import CoordinatorReportClient
++    from cephvr.shared.auth import Principal
++
++    entered, release = asyncio.Event(), asyncio.Event()
++    delivered = []
++
++    async def warnings(request, **kwargs):
++        entered.set()
++        await release.wait()
++        delivered.append("warning")
++        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
++
++    async def lifecycle(request, **kwargs):
++        delivered.append("finished" if request.HasField("finished") else "stopped")
++        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
++
++    client = CoordinatorReportClient.__new__(CoordinatorReportClient)
++    client._warning_delivery = asyncio.Lock()
++    client._principal = Principal("acquisition_tracking_worker", str(uuid4()), "token")
++    client._stub = SimpleNamespace(  # type: ignore[assignment]
++        ReportWorkerWarnings=warnings, ReportWorkerLifecycle=lifecycle
++    )
++    deadline = host_time_ns() + 1_000_000_000
++    warning_task = asyncio.create_task(
++        client.report_warnings(acq.WorkerWarningReport(), deadline_ns=deadline)
++    )
++    await entered.wait()
++    finished = acq.WorkerLifecycleEvidence()
++    finished.finished.activity_stopped = True
++    finished_task = asyncio.create_task(
++        client.report_lifecycle(
++            finished,
++            deadline_ns=host_time_ns() + 20_000_000 if expire else deadline,
++        )
++    )
++    stopped = acq.WorkerLifecycleEvidence()
++    stopped.stopped.activity_stopped = True
++    await client.report_lifecycle(stopped, deadline_ns=deadline)
++    assert delivered == ["stopped"]
++    if expire:
++        with pytest.raises(TimeoutError):
++            await finished_task
++    release.set()
++    await warning_task
++    if not expire:
++        await finished_task
++    assert delivered == ["stopped", "warning"] + ([] if expire else ["finished"])
++
++
++def test_ready_publishes_owner_health_before_lifecycle_dispatch(monkeypatch) -> None:
++    events = []
++    executor = WorkerOperationExecutor.__new__(WorkerOperationExecutor)
++    executor.state = SimpleNamespace(  # type: ignore[assignment]
++        state_revision=0,
++        supervisor_command_ids=set(),
++        retain_lifecycle=lambda evidence: events.append("retained"),
++    )
++    monkeypatch.setattr(executor, "_source", lambda target: target)
++    monkeypatch.setattr(
++        executor, "_refresh_health_snapshot", lambda: events.append("health")
++    )
++    executor.report_dispatcher = SimpleNamespace(  # type: ignore[assignment]
++        lifecycle=lambda evidence, deadline: events.append("ready")
++    )
++    evidence = acq.WorkerLifecycleEvidence()
++    evidence.ready.required_checks_passed = True
++    executor._report_lifecycle(acq.WorkerCommand(command_id="prepare"), evidence, 100)
++    assert events == ["retained", "health", "ready"]
++
++
+ def _setup_payload(
+     *, omit_recording_output_from_capture: bool = False
+ ) -> tuple[acq.CameraWorkerSetupPayload, acq.WorkerContext]:
+diff --git a/tests/platform/test_byte_stream.py b/tests/platform/test_byte_stream.py
+index 1262064..775f865 100644
+--- a/tests/platform/test_byte_stream.py
++++ b/tests/platform/test_byte_stream.py
+@@ -156,6 +156,32 @@ def _read_three_bytes(
+ FAR = 2**63 - 1
+ 
+ 
++@pytest.mark.parametrize("readonly", [False, True])
++def test_nonblocking_write_owns_pixels_before_caller_can_reuse_storage(
++    monkeypatch: pytest.MonkeyPatch,
++    readonly: bool,
++) -> None:
++    from cephvr.platform.windows import security
++
++    fake = Mock()
++    fake.CreateEventW.return_value = 71
++    fake.WriteFile.return_value = True
++    monkeypatch.setattr(byte_stream, "native_api", lambda: fake)
++    monkeypatch.setattr(
++        security,
++        "owner_only_security_attributes",
++        lambda access: (security.SecurityAttributes(), None),
++    )
++    pixels = bytearray(b"abcdefgh")
++    data = memoryview(bytes(pixels) if readonly else pixels)
++    pipe = byte_stream.OverlappedPipe(41, writable=True, maximum_read_bytes=8)
++    pipe.begin_write(data, deadline_ns=FAR)
++    pixels[:] = b"XXXXXXXX"
++    assert pipe._pending is not None
++    assert pipe._pending.backing == b"abcdefgh"
++    assert ctypes.string_at(fake.WriteFile.call_args.args[1], 8) == b"abcdefgh"
++
++
+ def _pipe(monkeypatch: pytest.MonkeyPatch, fake: Mock, **kw: Any) -> Any:
+     monkeypatch.setattr(byte_stream, "native_api", lambda: fake)
+     return byte_stream.OverlappedPipe(9, writable=True, maximum_read_bytes=8, **kw)
+diff --git a/tests/shared/test_invariants.py b/tests/shared/test_invariants.py
+index bbfa2b2..8e10ef5 100644
+--- a/tests/shared/test_invariants.py
++++ b/tests/shared/test_invariants.py
+@@ -159,6 +159,27 @@ def test_deadline_does_not_renew_or_round() -> None:
+         duration_ns(0.0000000001, "s")
+ 
+ 
++async def test_boundary_wait_rechecks_early_wakes_without_renewing_target(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    from cephvr.shared import deadlines
++
++    now = 0
++    sleeps = []
++
++    async def early_sleep(seconds: float) -> None:
++        nonlocal now
++        sleeps.append(seconds)
++        now += 40_000_000
++
++    monkeypatch.setattr(deadlines.asyncio, "sleep", early_sleep)
++    await deadlines.wait_until_ns(100_000_000, clock=lambda: now)
++    assert sleeps == [0.1, 0.06, 0.02]
++    assert now == 120_000_000
++    await deadlines.wait_until_ns(100_000_000, clock=lambda: now)
++    assert len(sleeps) == 3
++
++
+ def test_deadline_metadata_requires_one_positive_int64_decimal_value() -> None:
+     encoded = deadline_metadata(1_000_000_000)
+     assert parse_deadline_metadata((encoded,)) == 1_000_000_000
+diff --git a/tests/visual_stimulus/test_lifecycle.py b/tests/visual_stimulus/test_lifecycle.py
+index 3b8b11a..f923942 100644
+--- a/tests/visual_stimulus/test_lifecycle.py
++++ b/tests/visual_stimulus/test_lifecycle.py
+@@ -132,6 +132,9 @@ def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_
+     preparation = NativePreparation(
+         object(), renderer_generation=str(uuid4()), clock_ns=clock
+     )
++    preparation._registered_announce(lambda *_: None, "prior")("asset", None)
++    assert preparation.cleanup().released == ("prior:asset",)
++    assert preparation.cleanup().released == ("prior:asset",)
+     setup = visual_stimulus.WorkerSetup()
+     setup.session.configuration.asset_root = str(tmp_path)
+     setup.session.trials.add().definition.stimulus.SetInParent()
+@@ -159,6 +162,8 @@ def test_native_cpu_preparation_reaches_program_validation_without_gl_calls(tmp_
+     assert preparation.video_session is not None
+     assert preparation.engine._video_provider is None
+     assert preparation.engine._video_reset is None
++    preparation._registered_announce(lambda *_: None, "current")("asset", None)
++    assert preparation.cleanup(clock() + 10**9).released == ("current:asset",)
+ 
+ 
+ def test_file_pacing_identity_reaches_both_startup_preparation_owners():
+@@ -248,8 +253,12 @@ def test_file_pacing_identity_reaches_both_startup_preparation_owners():
+ @pytest.mark.parametrize(
+     "failure", ["missing", "cleanup", "gpu", "deadline", "cancelled"]
+ )
+-def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(failure):
++@pytest.mark.parametrize("wrong_adapter", [False, True])
++def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(
++    failure, wrong_adapter
++):
+     from cephvr.visual_stimulus.rendering.native_display import (
++        DisplayGpuUnavailableError,
+         DisplayUnavailableError,
+         NativeRenderingError,
+     )
+@@ -276,9 +285,11 @@ def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(failure)
+ 
+         def initialize_display(self, display, calibration):
+             if failure == "gpu":
+-                raise NativeRenderingError("wrong GPU")
++                raise NativeRenderingError("GPU operation failed")
+             if failure == "cancelled":
+                 driver.cancelled.set()
++            if wrong_adapter:
++                raise DisplayGpuUnavailableError("OpenGL context uses AMD Radeon")
+             raise DisplayUnavailableError("saved projector matched 0 active monitors")
+ 
+         def cleanup(self, deadline_ns):
+@@ -347,6 +358,9 @@ def test_startup_missing_output_is_recoverable_only_after_exact_cleanup(failure)
+     assert view.command_id == command.command_id and view.requested_revision == 1
+     assert view.complete and not view.HasField("applied_revision")
+     assert view.issues[0].failure.code == DisplayUnavailableError.code
++    if wrong_adapter:
++        assert "cephvr-python.exe" in view.issues[0].failure.message
++        assert "RTX 5060 Ti" in view.issues[0].failure.message
+     assert {item.resource for item in view.resources} == {
+         "display:projector/main",
+         "display:preparation",
+diff --git a/tests/visual_stimulus/test_recording.py b/tests/visual_stimulus/test_recording.py
+index a268c4c..d3be4eb 100644
+--- a/tests/visual_stimulus/test_recording.py
++++ b/tests/visual_stimulus/test_recording.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import hashlib
++import threading
+ from pathlib import Path
+ from types import SimpleNamespace as NS
+ 
+@@ -93,6 +94,44 @@ def test_pending_encoder_write_preserves_normalized_row_order() -> None:
+     assert worker.counts().input_submitted_count == 1
+ 
+ 
++def test_pixel_normalization_does_not_hold_capture_admission_lock(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    from cephvr.visual_stimulus.recording import capture
++
++    entered, release = threading.Event(), threading.Event()
++    original = capture._ffmpeg_input_order
++
++    def normalize(frame: CompositeFrame) -> CompositeFrame:
++        entered.set()
++        assert release.wait(2)
++        return original(frame)
++
++    monkeypatch.setattr(capture, "_ffmpeg_input_order", normalize)
++    worker = RecordingWorker(
++        capture_slots=2,
++        evidence=EvidenceWriter(max_pending_bytes=4096),
++        encoder=_DelayedInput(),
++        video_start_ns=0,
++        video_rate_hz=1,
++    )
++    worker.offer(CompositeFrame(0, 0, 1, 2, "rgba8_bottom_up", b"bottom!!"))
++    recording = threading.Thread(target=worker.drain_once)
++    recording.start()
++    try:
++        assert entered.wait(2)
++        assert worker._lock.acquire(timeout=0.1)
++        worker._lock.release()
++        reservation, disposition, _ = worker.classify_and_reserve(1, 1_000_000_000)
++        assert reservation is not None and disposition == "admitted"
++        worker.cancel_reservation(reservation)
++    finally:
++        release.set()
++        recording.join(2)
++    assert not recording.is_alive()
++    assert worker.drain_once()
++
++
+ def test_recipe_publication_is_precomputed_and_never_overwrites(tmp_path: Path) -> None:
+     data = b'{"format_version":2}\n'
+     digest = hashlib.sha256(data).hexdigest()
+@@ -205,18 +244,27 @@ def test_recording_worker_copies_frames_and_prioritizes_evidence(
+ 
+ 
+ @pytest.mark.parametrize(
+-    ("pixel_format", "pixels", "expected"),
++    ("pixel_format", "pixels", "expected", "width", "height"),
+     [
+-        ("rgba8_bottom_up", b"downUP!!", b"UP!!down"),
++        ("rgba8_bottom_up", b"downUP!!", b"UP!!down", 1, 2),
++        (
++            "rgba8_bottom_up",
++            b"abcdefghijklmnopqrstuvwx",
++            b"qrstuvwxijklmnopabcdefgh",
++            2,
++            3,
++        ),
+         (
+             "r10g10b10a2_le_bottom_up",
+             b"\x01\x02\x03\xff\x04\x05\x06\xc0",
+             b"\x04\x05\x06\x00\x01\x02\x03\x3f",
++            1,
++            2,
+         ),
+     ],
+ )
+ def test_rawvideo_abi_flips_rows_and_clears_packed_x_bits(
+-    pixel_format: str, pixels: bytes, expected: bytes
++    pixel_format: str, pixels: bytes, expected: bytes, width: int, height: int
+ ) -> None:
+     writer = EvidenceWriter(max_pending_bytes=64)
+     encoder = _Input()
+@@ -227,12 +275,14 @@ def test_rawvideo_abi_flips_rows_and_clears_packed_x_bits(
+         video_start_ns=0,
+         video_rate_hz=1,
+     )
++    source = bytearray(pixels)
+     assert worker.offer(
+-        CompositeFrame(0, 0, 1, 2, pixel_format, pixels)  # type: ignore[arg-type]
++        CompositeFrame(0, 0, width, height, pixel_format, source)  # type: ignore[arg-type]
+     ).admitted
+     while worker.drain_once():
+         pass
+     assert bytes(encoder.data) == expected
++    assert source == pixels
+     writer.close()
+ 
+ 
+diff --git a/tests/visual_stimulus/test_rendering.py b/tests/visual_stimulus/test_rendering.py
+index c2b7634..87eef99 100644
+--- a/tests/visual_stimulus/test_rendering.py
++++ b/tests/visual_stimulus/test_rendering.py
+@@ -236,6 +236,56 @@ def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path):
+     assert port.release() == ResourceReleaseReport(("visual_stimulus:glfw",))
+ 
+ 
++@pytest.mark.parametrize("cleanup_fails", [False, True])
++def test_wrong_adapter_rejection_requires_native_context_and_window_release(
++    monkeypatch, tmp_path, cleanup_fails
++):
++    from cephvr.platform.windows import nvidia_device
++    from cephvr.visual_stimulus.rendering import native
++    from cephvr.visual_stimulus.rendering.native_display import (
++        DisplayGpuUnavailableError,
++        NativeRenderingError,
++    )
++
++    selected = nvidia_device.NvidiaDevice(0, "GPU-board", "NVIDIA GeForce RTX 5060 Ti")
++    monkeypatch.setattr(nvidia_device, "sys", NS(platform="win32"))
++    monkeypatch.setattr(nvidia_device, "_enumerate_cuda_devices", lambda: [selected])
++    released, destroyed, terminated = [], [], []
++
++    def release():
++        released.append(True)
++        if cleanup_fails and len(released) == 1:
++            raise RuntimeError("context release unconfirmed")
++
++    context = NS(
++        info={"GL_VENDOR": "ATI Technologies Inc.", "GL_RENDERER": "AMD Radeon"},
++        screen=object(),
++        release=release,
++    )
++    monkeypatch.setattr(native, "attach_window_context", lambda _: context)
++    monkeypatch.setattr(native, "configure_window", lambda *_: None)
++    port = native.ModernGLPort(
++        tmp_path, announce=lambda *_: None, monitor_resolver=lambda *_: object()
++    )
++    port._glfw = NS(
++        create_window=lambda *_: object(),
++        get_current_context=lambda: None,
++        make_context_current=lambda *_: None,
++        destroy_window=destroyed.append,
++        terminate=lambda: terminated.append(True),
++    )
++    port._moderngl = object()
++    expected = NativeRenderingError if cleanup_fails else DisplayGpuUnavailableError
++    with pytest.raises(expected, match="AMD Radeon") as failure:
++        port.initialize_display(make_prepared_trial().display)
++    assert isinstance(failure.value, DisplayGpuUnavailableError) is not cleanup_fails
++    assert bool(port._outputs) is cleanup_fails
++    if cleanup_fails:
++        assert not destroyed and not terminated
++        assert not port.release().outstanding
++    assert destroyed and terminated and not port._outputs
++
++
+ def test_linear_rate_integral_and_keyframe_evaluation() -> None:
+     ramp = NS(kind="ramp", initial=0.0, slope_per_s=0.5)
+     assert integrate_function(ramp, 0, 2_000_000_000) == pytest.approx(1.0)
+@@ -704,6 +754,7 @@ def test_native_failed_gpu_release_keeps_context_for_cleanup_retry():
+     port = ModernGLPort(Path("."), announce=lambda *_: None)
+     port._glfw = NS(
+         make_context_current=lambda _: None,
++        get_current_context=lambda: None,
+         destroy_window=lambda _: calls.append("window"),
+         terminate=lambda: calls.append("glfw"),
+     )
+@@ -770,7 +821,13 @@ def test_shared_context_wait_uses_unsigned_64_bit_ignored_timeout(monkeypatch):
+     assert not pending
+ 
+ 
+-def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
++@pytest.mark.parametrize(
++    ("pixel_format", "dtype"),
++    [("rgba8_bottom_up", "f1"), ("r10g10b10a2_le_bottom_up", "f4")],
++)
++def test_review_capture_clears_framebuffer_in_creation_order(
++    monkeypatch, pixel_format, dtype
++):
+     from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+ 
+     gl = ModuleType("OpenGL.GL")
+@@ -793,8 +850,14 @@ def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
+     fbo = NS(
+         use=lambda: events.append("use"), clear=lambda *_args: events.append("clear")
+     )
++    texture_types = []
++
++    def allocate_texture(*_args, **kwargs):
++        texture_types.append(kwargs["dtype"])
++        return texture
++
+     context = NS(
+-        texture=lambda *_args, **_kwargs: texture,
++        texture=allocate_texture,
+         framebuffer=lambda **_kwargs: fbo,
+         program=lambda **_kwargs: {"source_tex": NS(value=None)},
+         buffer=lambda *_args: NS(),
+@@ -804,6 +867,105 @@ def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
+     with pytest.raises(RuntimeError, match="reached PBO allocation"):
+         capture.capture(
+             (NS(output_id="one", texture_handle=NS(ctx=context)),),
+-            NS(composite_width=2, composite_height=2, tiles=()),
++            NS(
++                composite_width=2,
++                composite_height=2,
++                tiles=(),
++                native_pixel_format=pixel_format,
++            ),
+         )
+     assert events == ["use", "clear"]
++    assert texture_types == [dtype]
++    capture._ensure_compositor(context, 2, 2, pixel_format)
++    assert texture_types == [dtype]
++    other = (
++        "r10g10b10a2_le_bottom_up"
++        if pixel_format == "rgba8_bottom_up"
++        else "rgba8_bottom_up"
++    )
++    with pytest.raises(RuntimeError, match="cannot change"):
++        capture._ensure_compositor(context, 2, 2, other)
++    with pytest.raises(ValueError, match="unsupported"):
++        capture._ensure_compositor(context, 2, 2, "unknown")
++
++
++@pytest.mark.parametrize("mapping", ["valid", "missing", "corrupted"])
++def test_review_capture_polls_fence_then_fills_owned_host_buffer(mapping):
++    import ctypes
++
++    from cephvr.visual_stimulus.rendering.capture import ReviewCapture, _Pending
++
++    events = []
++    signaled = False
++
++    expected = b"\x00\x01\x7f\xff\x02\x03\x80\xfe"
++    storage = (ctypes.c_ubyte * 8).from_buffer_copy(expected)
++
++    def read(target, offset, size, flags):
++        assert (target, offset, size, flags) == (1, 0, 8, 16)
++        events.append("map")
++        return None if mapping == "missing" else ctypes.addressof(storage)
++
++    def unmap(target):
++        assert target == 1
++        events.append("unmap")
++        storage[:] = bytes(8)
++        return mapping != "corrupted"
++
++    gl = NS(
++        GL_PIXEL_PACK_BUFFER=1,
++        GL_ALREADY_SIGNALED=2,
++        GL_CONDITION_SATISFIED=3,
++        GL_WAIT_FAILED=4,
++        GL_MAP_READ_BIT=16,
++        glClientWaitSync=lambda *_args: 2 if signaled else 0,
++        glBindBuffer=lambda *_args: None,
++        glMapBufferRange=read,
++        glUnmapBuffer=unmap,
++        glDeleteSync=lambda *_args: events.append("fence"),
++        glDeleteBuffers=lambda *_args: events.append("buffer"),
++    )
++    capture = ReviewCapture()
++    pending = _Pending(gl, 7, 8, 8)
++    capture._pending.append(pending)
++    assert capture.poll(pending) is None
++    assert not events
++    signaled = True
++    if mapping != "valid":
++        with pytest.raises(RuntimeError, match="mapping"):
++            capture.poll(pending)
++        assert capture._pending == [pending]
++        capture.release()
++        assert not capture._pending
++        assert events[-2:] == ["fence", "buffer"]
++        return
++    pixels = capture.poll(pending)
++    assert isinstance(pixels, bytearray)
++    assert pixels == expected
++    assert events == ["map", "unmap", "fence", "buffer"]
++    assert not capture._pending
++    with pytest.raises(TypeError, match="invalid pending"):
++        capture.poll(pending)
++
++
++def test_context_activation_checks_actual_pointer_before_skipping_rebind():
++    import ctypes
++
++    from cephvr.visual_stimulus.rendering.native_display import activate_window
++
++    target = ctypes.pointer(ctypes.c_int(1))
++    other = ctypes.pointer(ctypes.c_int(2))
++    current = ctypes.cast(target, ctypes.POINTER(ctypes.c_int))
++    bindings = []
++    glfw = NS(
++        get_current_context=lambda: current,
++        make_context_current=bindings.append,
++    )
++    activate_window(glfw, target)
++    assert not bindings
++    current = other
++    activate_window(glfw, target)
++    assert bindings == [target]
++    current = None
++    activate_window(glfw, target)
++    assert bindings == [target, target]
+diff --git a/tests/visual_stimulus/test_resources.py b/tests/visual_stimulus/test_resources.py
+index 6f4d067..273a01c 100644
+--- a/tests/visual_stimulus/test_resources.py
++++ b/tests/visual_stimulus/test_resources.py
+@@ -96,8 +96,9 @@ def test_resource_budget_replacement_is_atomic() -> None:
+ def test_review_capture_cpu_budget_includes_fixed_copy_and_row_scratch() -> None:
+     frame_bytes = 1920 * 1080 * 4
+     row_bytes = 1920 * 4
+-    assert review_capture_cpu_bytes(1920, 1080, 1) == 3 * frame_bytes + row_bytes
+-    assert review_capture_cpu_bytes(1920, 1080, 3) == 5 * frame_bytes + row_bytes
++    assert review_capture_cpu_bytes(1920, 1080, 1) == 4 * frame_bytes + 540 * row_bytes
++    assert review_capture_cpu_bytes(1920, 1080, 3) == 6 * frame_bytes + 540 * row_bytes
++    assert review_capture_cpu_bytes(2, 3, 1) == 4 * 24 + 8
+     with pytest.raises(ValueError, match="positive review capture"):
+         review_capture_cpu_bytes(0, 1080, 1)
+ 

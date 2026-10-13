@@ -11,6 +11,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from cephvr.client.session import ClientError, HeadlessClient, loopback_channel
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.gui.camera_action_submission import prepare_camera
 from cephvr.gui.managed_configuration_transport import submit_configuration
 from cephvr.gui.managed_device_commands import dispatch_device_action
 from cephvr.gui.managed_display_operations import (
@@ -21,6 +22,7 @@ from cephvr.gui.managed_display_operations import (
     update_display_calibration_request,
     validate_inventory_snapshot,
 )
+from cephvr.gui.mcu_action_submission import prepare_mcu_test
 from cephvr.gui.tracking_frame_transport import fetch_tracking_diagnostic_frame
 from cephvr.shared.auth import Principal
 from cephvr.synchronization.v1 import spikeglx_pb2
@@ -37,6 +39,7 @@ class ControllerBridge(QThread):
     spikeglx_inventory_received = pyqtSignal(int, str, bytes)
     tracking_frame_received = pyqtSignal(int, str, bytes)
     configuration_accepted = pyqtSignal(int, int)
+    camera_configuration_accepted = pyqtSignal(int, bytes)
     _MAX_PENDING = 32
     _ORDINARY_PENDING = 24
 
@@ -291,7 +294,10 @@ class ControllerBridge(QThread):
             options["dispatch_identity"] = (epoch, generation)
             if action in {
                 "save_camera_settings",
+                "prepare_camera",
+                "prepare_mcu_test",
                 "save_mcu_pins",
+                "add_mcu_output",
                 "set_camera_enabled",
                 "assign_camera_role",
                 "submit_configuration",
@@ -402,6 +408,49 @@ class ControllerBridge(QThread):
     async def _dispatch(
         self, client: HeadlessClient, action: str, options: dict[str, Any]
     ) -> None:
+        if action == "prepare_mcu_test":
+            base_revision = int(options["base_revision"])
+            await prepare_mcu_test(client, options)
+            confirmed_revision = client.snapshot.configuration.revision
+            self.camera_configuration_accepted.emit(
+                base_revision, client.snapshot.SerializeToString()
+            )
+            mcu_result = await dispatch_device_action(
+                client,
+                "mcu",
+                dict(options, confirmed_revision=confirmed_revision),
+                self.principal,
+            )
+            assert mcu_result is not None
+            self.command_finished.emit(action, *mcu_result)
+            return
+        if action == "prepare_camera":
+            base_revision = int(options["base_revision"])
+
+            def camera_accepted(state: pb.Snapshot) -> None:
+                nonlocal base_revision
+                if (
+                    state.controller_generation == options["generation"]
+                    and state.configuration.revision != base_revision
+                ):
+                    self.camera_configuration_accepted.emit(
+                        base_revision, state.SerializeToString()
+                    )
+                    base_revision = state.configuration.revision
+
+            await prepare_camera(client, options, camera_accepted)
+            try:
+                camera_result = await dispatch_device_action(
+                    client,
+                    "camera",
+                    dict(options, role=options["camera_role"]),
+                    self.principal,
+                )
+            finally:
+                camera_accepted(client.snapshot)
+            assert camera_result is not None
+            self.command_finished.emit(action, *camera_result)
+            return
         device_result = await dispatch_device_action(
             client, action, options, self.principal
         )

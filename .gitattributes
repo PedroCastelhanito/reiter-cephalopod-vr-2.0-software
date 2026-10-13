@@ -1,1 +1,5 @@
 * text=auto eol=lf
+
+# Captured diagnostic bytes and patch context retain original whitespace.
+reports/*evidence*/** -whitespace
+reports/**/*.pb binary

@@ -32,6 +32,26 @@ class TrialDraft:
     stimulus_seed_decimal: str = ""
     gap_after_seconds: str = ""
     arena_boundaries_json: str = ""
+    source_program: Program | None = None
+
+    def group_for_editing(self) -> None:
+        """Expose flat saved schedules through the shared group/subgroup controls."""
+        from cephvr.gui.protocol_batches import grouped_program
+
+        if all(isinstance(node, Epoch) for node in self.program.sequence):
+            self.source_program = self.program
+            self.program = grouped_program(self.program)
+
+    @property
+    def exported_program(self) -> Program:
+        """Keep the original source when its presentation group has no edits."""
+        from cephvr.gui.protocol_batches import grouped_program
+
+        if self.source_program is not None and self.program == grouped_program(
+            self.source_program
+        ):
+            return self.source_program
+        return self.program
 
 
 def blank_program() -> Program:

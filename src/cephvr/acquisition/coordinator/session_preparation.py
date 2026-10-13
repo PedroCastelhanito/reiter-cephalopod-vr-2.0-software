@@ -82,6 +82,7 @@ class SessionPreparation:
             for role, item in (
                 (camera.CAMERA_ROLE_BEHAVIORAL, settings.behavioral),
                 (camera.CAMERA_ROLE_TRACKING, settings.tracking),
+                (camera.CAMERA_ROLE_EYE_TRACKING, settings.eye_tracking),
             )
             if item.HasField("enabled")
             and item.enabled
@@ -118,6 +119,7 @@ class SessionPreparation:
             requested=settings.pulses,
             behavioral_active=camera.CAMERA_ROLE_BEHAVIORAL in active_roles,
             tracking_active=camera.CAMERA_ROLE_TRACKING in active_roles,
+            eye_tracking_active=camera.CAMERA_ROLE_EYE_TRACKING in active_roles,
             applied=applied,
         )
         if self.session_slot.current is not None:
@@ -315,6 +317,7 @@ def _running_roles(observation: object) -> tuple[int, ...]:
         for role, output in (
             (camera.CAMERA_ROLE_BEHAVIORAL, state.behavioral),
             (camera.CAMERA_ROLE_TRACKING, state.tracking),
+            (camera.CAMERA_ROLE_EYE_TRACKING, state.eye_tracking),
         )
         if output.HasField("enabled") and output.enabled
     )

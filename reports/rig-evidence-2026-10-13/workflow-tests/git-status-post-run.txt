@@ -1,0 +1,175 @@
+ M .gitignore
+ M LOG.md
+ M TODO.md
+ M architecture.md
+ M config/backends/microcontroller_config.toml
+ M contracts/acquisition/README.md
+ M contracts/acquisition/microcontroller.md
+ M contracts/cephvr/acquisition/v1/microcontroller.proto
+ M contracts/cephvr/control/v1/services.proto
+ M contracts/cephvr/control/v1/types.proto
+ M contracts/policy/microcontroller_policy.toml
+ M contracts/visual_stimulus/startup.md
+ M docs/architecture/acquisition.md
+ M docs/architecture/experiment.md
+ M docs/architecture/gui.md
+ M docs/architecture/visual_stimulus.md
+ M firmware/uno/README.md
+ M firmware/uno/cephvr2_mcu/cephvr2_mcu.ino
+ M reports/acquisition.md
+ M reports/rig-verification.md
+ M reports/runtime.md
+ M reports/tracking.md
+ M reports/visual_stimulus.md
+ M src/cephvr/acquisition/config/validation_pulse.py
+ M src/cephvr/acquisition/coordinator/cleanup.py
+ M src/cephvr/acquisition/coordinator/manual_device_recovery.py
+ M src/cephvr/acquisition/coordinator/manual_devices.py
+ M src/cephvr/acquisition/coordinator/manual_preview.py
+ M src/cephvr/acquisition/coordinator/manual_preview_start.py
+ M src/cephvr/acquisition/coordinator/manual_pulse_observation.py
+ M src/cephvr/acquisition/coordinator/manual_pulses.py
+ M src/cephvr/acquisition/coordinator/session.py
+ M src/cephvr/acquisition/coordinator/session_payloads.py
+ M src/cephvr/acquisition/coordinator/session_preparation.py
+ M src/cephvr/acquisition/coordinator/session_validation.py
+ M src/cephvr/acquisition/coordinator/sessionless_cleanup.py
+ M src/cephvr/acquisition/coordinator/trial_pulses.py
+ M src/cephvr/acquisition/microcontroller_client.py
+ M src/cephvr/acquisition/worker/pulse_evidence.py
+ M src/cephvr/controller/control/owned_camera_edits.py
+ M src/cephvr/controller/device/readback.py
+ M src/cephvr/controller/microcontroller/channel.py
+ M src/cephvr/controller/microcontroller/config.py
+ M src/cephvr/controller/microcontroller/device.py
+ M src/cephvr/controller/microcontroller/firmware_operation.py
+ M src/cephvr/controller/microcontroller/health.py
+ M src/cephvr/controller/microcontroller/owner.py
+ M src/cephvr/controller/microcontroller/protocol.py
+ M src/cephvr/controller/microcontroller/pulses.py
+ M src/cephvr/controller/projections.py
+ M src/cephvr/controller/resolution.py
+ M src/cephvr/gui/calibration_arena.py
+ M src/cephvr/gui/calibration_files.py
+ M src/cephvr/gui/camera_snapshot_settings.py
+ M src/cephvr/gui/cameras.py
+ M src/cephvr/gui/configuration_files.py
+ M src/cephvr/gui/controller_bridge.py
+ M src/cephvr/gui/dashboard.py
+ M src/cephvr/gui/devices.py
+ M src/cephvr/gui/main.py
+ M src/cephvr/gui/managed_cameras.py
+ M src/cephvr/gui/managed_close.py
+ M src/cephvr/gui/managed_configuration.py
+ M src/cephvr/gui/managed_device_commands.py
+ M src/cephvr/gui/managed_display.py
+ M src/cephvr/gui/managed_mcu.py
+ M src/cephvr/gui/managed_window.py
+ M src/cephvr/gui/microcontroller.py
+ M src/cephvr/gui/microcontroller_signals.py
+ M src/cephvr/gui/microcontroller_snapshot.py
+ M src/cephvr/gui/paths.py
+ M src/cephvr/gui/prepared_file_picker.py
+ M src/cephvr/gui/protocol.py
+ M src/cephvr/gui/review_draft.py
+ M src/cephvr/gui/spikeglx_snapshot.py
+ M src/cephvr/gui/stimulus_parameters.py
+ M src/cephvr/platform/windows/nvidia_device.py
+ M src/cephvr/visual_stimulus/rendering/native.py
+ M src/cephvr/visual_stimulus/rendering/native_display.py
+ M src/cephvr/visual_stimulus/worker/display_owner.py
+ M tests/acquisition/test_configuration.py
+ M tests/acquisition/test_manual_devices.py
+ M tests/acquisition/test_manual_preview.py
+ M tests/acquisition/test_pulse_evidence.py
+ M tests/controller/test_camera_evidence.py
+ M tests/controller/test_handoffs.py
+ M tests/controller/test_microcontroller_owner.py
+ M tests/controller/test_microcontroller_protocol.py
+ M tests/gui/test_dashboard.py
+ M tests/platform/test_nvidia_device.py
+ M tests/visual_stimulus/test_controller_communication.py
+ M tests/visual_stimulus/test_lifecycle.py
+ M tests/visual_stimulus/test_rendering.py
+?? .local-calibration-version-tests/
+?? .local-explorer-corrected-no-fault/
+?? .local-explorer-final-native/
+?? .local-explorer-final-tests/
+?? .local-explorer-native-tests/
+?? .local-eye-selection-broad/
+?? .local-eye-selection-permitted/
+?? .local-eye-selection-tests/
+?? .local-workflow-gui/
+?? .local-workflow-tests/
+?? reports/emergency-1966562731500-14701e56-80de-4520-b6e3-24349f556024.json
+?? reports/emergency-2196713510700-ff408b33-3c66-47d4-836a-e79c97b88ef8.json
+?? reports/emergency-326315093549600-bfcc8937-616b-4120-a549-f94a53042485.json
+?? reports/emergency-327657018982300-ea2d15ce-35e5-4fc6-ab94-9ea57410b840.json
+?? reports/emergency-328494867654500-500f6310-e26f-453c-be55-81996dc33dd2.json
+?? reports/emergency-328763941422600-cc8b402d-c96c-42d3-82f2-d2c3ee11b8f0.json
+?? reports/emergency-329719180281500-94113fef-9a83-4e54-891a-d3fe7519775b.json
+?? reports/rig-evidence-2026-10-13/
+?? reports/runtime-evidence-2026-10-13/calibration-version-bundle/
+?? reports/runtime-evidence-2026-10-13/calibration-version-context.json
+?? reports/runtime-evidence-2026-10-13/calibration-version-owner-file.json
+?? reports/runtime-evidence-2026-10-13/calibration-version-tests.xml
+?? reports/runtime-evidence-2026-10-13/camera-action-broad.xml
+?? reports/runtime-evidence-2026-10-13/camera-action-context.json
+?? reports/runtime-evidence-2026-10-13/camera-action-focused.xml
+?? reports/runtime-evidence-2026-10-13/controller-exit/
+?? reports/runtime-evidence-2026-10-13/disabled-controls-shutdown.json
+?? reports/runtime-evidence-2026-10-13/disabled-controls-shutdown.py
+?? reports/runtime-evidence-2026-10-13/disabled-controls.json
+?? reports/runtime-evidence-2026-10-13/disabled-controls.py
+?? reports/runtime-evidence-2026-10-13/eye-selection-broad.xml
+?? reports/runtime-evidence-2026-10-13/eye-selection-context.json
+?? reports/runtime-evidence-2026-10-13/eye-selection-final.xml
+?? reports/runtime-evidence-2026-10-13/eye-selection-read.json
+?? reports/runtime-evidence-2026-10-13/eye-selection-read.py
+?? reports/runtime-evidence-2026-10-13/eye-selection-regression.xml
+?? reports/runtime-evidence-2026-10-13/eye-trigger-backend.xml
+?? reports/runtime-evidence-2026-10-13/eye-trigger-compile.log
+?? reports/runtime-evidence-2026-10-13/eye-trigger-context.json
+?? reports/runtime-evidence-2026-10-13/eye-trigger-gui.xml
+?? reports/runtime-evidence-2026-10-13/eye-trigger/
+?? reports/runtime-evidence-2026-10-13/ffmpeg/
+?? reports/runtime-evidence-2026-10-13/gpu-selection/
+?? reports/runtime-evidence-2026-10-13/internal-trigger-adapter.xml
+?? reports/runtime-evidence-2026-10-13/internal-trigger-context.json
+?? reports/runtime-evidence-2026-10-13/internal-trigger-focused.xml
+?? reports/runtime-evidence-2026-10-13/native-chooser/
+?? reports/runtime-evidence-2026-10-13/pin-manual-click.log
+?? reports/runtime-evidence-2026-10-13/pin-manual-click.xml
+?? reports/runtime-evidence-2026-10-13/pin-numbers-context.json
+?? reports/runtime-evidence-2026-10-13/pin-numbers-final.log
+?? reports/runtime-evidence-2026-10-13/pin-numbers-final.xml
+?? reports/runtime-evidence-2026-10-13/pin-numbers-verified.log
+?? reports/runtime-evidence-2026-10-13/pin-numbers-verified.xml
+?? reports/runtime-evidence-2026-10-13/pin-numbers.log
+?? reports/runtime-evidence-2026-10-13/pin-numbers.xml
+?? reports/runtime-evidence-2026-10-13/pin-test-spikeglx-status.json
+?? reports/runtime-evidence-2026-10-13/pin-test/
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-boundaries.log
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-context.json
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-final-all-pages.log
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-final-all-pages.xml
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-final.log
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-final.xml
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-focused-native.log
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-focused-native.xml
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-focused.log
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity-focused.xml
+?? reports/runtime-evidence-2026-10-13/runtime-review-parity.patch
+?? reports/runtime-evidence-2026-10-13/settings-retention-broad.log
+?? reports/runtime-evidence-2026-10-13/settings-retention-context.json
+?? reports/runtime-evidence-2026-10-13/settings-retention-native.log
+?? reports/runtime-evidence-2026-10-13/settings-retention-native.xml
+?? reports/runtime-evidence-2026-10-13/settings-retention-offscreen.xml
+?? reports/runtime-evidence-2026-10-13/settings-retention-permitted.log
+?? reports/runtime-evidence-2026-10-13/tab-config-buttons.xml
+?? reports/runtime-evidence-2026-10-13/tab-config-context.json
+?? reports/runtime-evidence-2026-10-13/tab-config-regression.xml
+?? src/cephvr/gui/camera_action_submission.py
+?? src/cephvr/gui/file_dialogs.py
+?? src/cephvr/gui/gui_history.py
+?? src/cephvr/gui/pin_numbers.py

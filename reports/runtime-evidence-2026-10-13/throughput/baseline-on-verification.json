@@ -1,0 +1,257 @@
+{
+  "session": {
+    "phase": "SESSION_PHASE_ENDED",
+    "context": {
+      "controller_generation": "7d4e901e-8de4-4480-98d6-9de412ff531e",
+      "session_id": "bfcb5e41-7a7c-42ef-a3c0-0871820929c3"
+    },
+    "outcome": "SESSION_OUTCOME_COMPLETED",
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504",
+    "trial_count": 1,
+    "activated": true,
+    "cleanup_confirmed": true
+  },
+  "trial": {
+    "context": {
+      "session": {
+        "controller_generation": "7d4e901e-8de4-4480-98d6-9de412ff531e",
+        "session_id": "bfcb5e41-7a7c-42ef-a3c0-0871820929c3"
+      },
+      "trial_id": "78817ed6-c5f5-48d9-a932-f59bdaf59be4",
+      "trial_number": 1
+    },
+    "phase": "TRIAL_PHASE_ENDED",
+    "outcome": "TRIAL_OUTCOME_COMPLETED",
+    "start_monotonic_ns": "6378115923700",
+    "scheduled_end_monotonic_ns": "6438115923700",
+    "actual_end_monotonic_ns": "6438115923700"
+  },
+  "reservation": {
+    "session": {
+      "controller_generation": "7d4e901e-8de4-4480-98d6-9de412ff531e",
+      "session_id": "bfcb5e41-7a7c-42ef-a3c0-0871820929c3"
+    },
+    "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504"
+  },
+  "metadata": [
+    {
+      "operation": {
+        "command_id": "77b3c54a-2d68-4784-9a7e-c378033d8e00"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504\\protocol-data\\SESSION_CONFIG.json"
+    },
+    {
+      "operation": {
+        "command_id": "16f2ee6e-c244-4482-845c-fec9271001f0"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504\\protocol-data\\SCHEMA.json"
+    },
+    {
+      "operation": {
+        "command_id": "488c72be-3364-4228-b2a8-0947ff32f14d"
+      },
+      "state": "METADATA_PERSISTENCE_SYNCED",
+      "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504\\protocol-data\\SESSION_LOG.jsonl"
+    }
+  ],
+  "tools": {
+    "ffmpeg": {
+      "path": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+      "sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec"
+    },
+    "ffprobe": {
+      "path": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+      "sha256": "f0d36ecbbdd3bcfac3efa078c96c7271c2e68b3810595552ac3b7f17e9a65c52"
+    }
+  },
+  "videos": {
+    "DUMMY_125506_stimulus.mp4": {
+      "ffprobe_command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+        "-v",
+        "error",
+        "-count_frames",
+        "-show_streams",
+        "-show_format",
+        "-of",
+        "json",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504\\protocol-data\\DUMMY_125506_stimulus.mp4"
+      ],
+      "ffprobe_exit": 0,
+      "ffprobe": {
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "High 4:4:4 Predictive",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "mime_codec_string": "avc1.f40034",
+            "width": 2560,
+            "height": 2000,
+            "coded_width": 2560,
+            "coded_height": 2000,
+            "has_b_frames": 0,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "32:25",
+            "pix_fmt": "yuvj444p",
+            "level": 52,
+            "color_range": "pc",
+            "color_space": "bt709",
+            "chroma_location": "left",
+            "field_order": "progressive",
+            "refs": 3,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "id": "0x1",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "60/1",
+            "time_base": "1/15360",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 921600,
+            "duration": "60.000000",
+            "bit_rate": "741727",
+            "bits_per_raw_sample": "8",
+            "nb_read_frames": "3600",
+            "extradata_size": 65,
+            "disposition": {
+              "default": 1,
+              "dub": 0,
+              "original": 0,
+              "comment": 0,
+              "lyrics": 0,
+              "karaoke": 0,
+              "forced": 0,
+              "hearing_impaired": 0,
+              "visual_impaired": 0,
+              "clean_effects": 0,
+              "attached_pic": 0,
+              "timed_thumbnails": 0,
+              "non_diegetic": 0,
+              "captions": 0,
+              "descriptions": 0,
+              "metadata": 0,
+              "dependent": 0,
+              "still_image": 0,
+              "multilayer": 0
+            },
+            "tags": {
+              "language": "und",
+              "handler_name": "VideoHandler",
+              "encoder": "Lavc63.1.102 h264_nvenc"
+            }
+          }
+        ],
+        "format": {
+          "filename": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504\\protocol-data\\DUMMY_125506_stimulus.mp4",
+          "nb_streams": 1,
+          "nb_programs": 0,
+          "nb_stream_groups": 0,
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "format_long_name": "QuickTime / MOV",
+          "start_time": "0.000000",
+          "duration": "60.000000",
+          "size": "5586042",
+          "bit_rate": "744805",
+          "probe_score": 100,
+          "tags": {
+            "major_brand": "iso5",
+            "minor_version": "512",
+            "compatible_brands": "iso5iso6mp41",
+            "encoder": "Lavf63.1.102"
+          }
+        }
+      },
+      "decode_command": [
+        "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+        "-v",
+        "error",
+        "-hwaccel",
+        "none",
+        "-i",
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125504\\protocol-data\\DUMMY_125506_stimulus.mp4",
+        "-map",
+        "0:v:0",
+        "-f",
+        "null",
+        "-"
+      ],
+      "decode_exit": 0,
+      "decode_stderr": "",
+      "trial_duration_s": 60.0,
+      "render_groups": 1808,
+      "render_groups_per_s": 30.133333333333333,
+      "group_intervals": {
+        "median_ms": 32.1903,
+        "max_ms": 66.2261,
+        "mean_ms": 33.20073193137797
+      },
+      "swap_durations": {
+        "calibration_bottom": {
+          "median_ms": 0.32075,
+          "max_ms": 3.1364,
+          "mean_ms": 0.34102638274336283
+        },
+        "calibration_front": {
+          "median_ms": 0.83,
+          "max_ms": 4.5471,
+          "mean_ms": 0.8709439159292035
+        },
+        "calibration_left": {
+          "median_ms": 0.37865000000000004,
+          "max_ms": 1.5532,
+          "mean_ms": 0.41018423672566373
+        },
+        "calibration_right": {
+          "median_ms": 0.3432,
+          "max_ms": 1.2628,
+          "mean_ms": 0.3791216261061947
+        }
+      },
+      "summed_swap_durations": {
+        "median_ms": 1.9475000000000002,
+        "max_ms": 5.7317,
+        "mean_ms": 2.0012761615044248
+      },
+      "capture_dispositions": {
+        "admitted": 1796,
+        "capacity_drop": 12
+      },
+      "completion_records": [
+        {
+          "kind": "encoder_outcome",
+          "admitted_count": 1796,
+          "input_submitted_count": 3600,
+          "capacity_drop_count": 12,
+          "selected_real_count": 1796,
+          "same_slot_omission_count": 0,
+          "encoded_frame_count": 3600,
+          "duplicate_frame_count": 1804,
+          "final_input_group_id": 1807,
+          "cutoff_host_ns": 6438115923700,
+          "exit_code": 0,
+          "eof_sent": true,
+          "drain_confirmed": true
+        },
+        {
+          "kind": "completion",
+          "cutoff_host_ns": 6438115923700,
+          "last_group_id": 1807,
+          "state_count": 1808,
+          "submission_attempt_count": 7232,
+          "capture_admission_count": 1796,
+          "capture_drop_count": 12,
+          "same_slot_omission_count": 0,
+          "unresolved_attempt_count": 0,
+          "outcome": "completed"
+        }
+      ],
+      "recipe_digest_matches": true
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-13",
+  "revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "working_tree": "dirty; concurrent prior GUI/rig documentation retained",
+  "governing_decisions": [
+    "G01 revision 165",
+    "E07 revision 60",
+    "ARCH-002",
+    "E03",
+    "E15"
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/gui_history.py": "438d043bc58ca7920f0b456ed4d29513fa37619fdb295b413f829d1d4acbea09",
+    "src/cephvr/gui/main.py": "6c136b135f93dd92780078ef3c23d2abb32f9690bb65bd6f92c6c19f341ab614",
+    "src/cephvr/gui/managed_close.py": "2922619e9ad3830b22d493793c6d929cdea781cd3dc7967c7ac97e1aee81b38f",
+    "src/cephvr/gui/managed_window.py": "5dd0badf2d51b46e2efdd9412ded0619212bfb07603eaec1ab4c5fa9a8695d1b",
+    "src/cephvr/gui/managed_display.py": "74cdda718767849b6faf9d97038418bb97a52d8fa991a1463a48cd355b5c0776",
+    "src/cephvr/gui/spikeglx_snapshot.py": "7e16e6fc2147c4d2fd2c443e22c377bd1399579c26c27e5c7ca522d91e3c5462",
+    "tests/gui/test_dashboard.py": "e66606727959febb11edabfad0d2cf1626a1c71c16484ea1c393df8f65b1fede"
+  },
+  "checks": {
+    "native": {
+      "selection": "runtime_gui or managed_close or save_failure or full_gui_loaded or spikeglx_config or immutable_phase or initial_and_reopened or review_draft or review_window or invalid_review or saved_projector_assignments or runtime_review",
+      "platform": "Windows Qt native; isolated inventory/transport fixtures",
+      "passed": 27,
+      "deselected": 374,
+      "seconds": 18.27
+    },
+    "offscreen": {
+      "selection": "configuration or snapshot or draft or close or save or runtime_review",
+      "passed": 106,
+      "failed": 2,
+      "deselected": 293,
+      "seconds": 51.18,
+      "failures": "existing projector overflow at 1175px (15px horizontal range)"
+    },
+    "static": [
+      "ruff check src/cephvr/gui tests/gui",
+      "ruff format --check src/cephvr/gui tests/gui",
+      "mypy --platform win32 src/cephvr/gui",
+      "tools/check_backend_boundaries.py (665 modules, zero violations)",
+      "git diff --check"
+    ]
+  },
+  "failed_attempts": [
+    "initial write script used Windows default encoding; UTF-8 contents repaired before final checks",
+    "initial round-trip exposed synchronous Qt close suppression; repaired",
+    "sandbox broad/native stalls; broad faulthandler traces Windows fallback_socketpair accept; exact owned processes stopped; unchanged tests rerun with permitted loopback"
+  ],
+  "limits": [
+    "original warning text unavailable",
+    "no real controller/device/experiment relaunch",
+    "normal close only; forced termination not guaranteed",
+    "active controller synchronization takes precedence; previous file preserved when not restored",
+    "unavailable inventory identity remains an explicit restoration error"
+  ]
+}

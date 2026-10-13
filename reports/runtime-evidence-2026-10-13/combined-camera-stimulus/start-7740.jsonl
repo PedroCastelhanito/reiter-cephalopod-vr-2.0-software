@@ -1,0 +1,35 @@
+{"kind": "instrumentation", "host_ns": 16640563564000, "argv": ["-m", "cephvr.acquisition.worker.main", "--bootstrap-handle", "668"]}
+{"kind": "execute_begin", "host_ns": 16640634738000, "detail": "ResolveCameraConfiguration"}
+{"kind": "execute_end", "host_ns": 16642121247200}
+{"kind": "execute_begin", "host_ns": 16642172205900, "detail": "SetupSession"}
+{"kind": "execute_end", "host_ns": 16642739882800}
+{"kind": "execute_begin", "host_ns": 16643608996900, "detail": "PrepareTrial"}
+{"kind": "execute_end", "host_ns": 16643658841500}
+{"kind": "execute_begin", "host_ns": 16643810228500, "detail": "ScheduleTrial"}
+{"kind": "execute_end", "host_ns": 16643875106100}
+{"kind": "execute_begin", "host_ns": 16643877102100, "detail": "ReleaseTrial"}
+{"kind": "execute_end", "host_ns": 16643877883500}
+{"kind": "start_begin", "host_ns": 16644318882600, "detail": ""}
+{"kind": "start_end", "host_ns": 16644319496300}
+{"kind": "execute_begin", "host_ns": 16644333102400, "detail": "RecordPulseEvidence"}
+{"kind": "execute_end", "host_ns": 16644333914500}
+{"kind": "camera_first_frame_begin", "host_ns": 16644374893300, "detail": "FrameRecord(frame_id=0, acquisition_time_ns=16644371887500, camera_frame_counter=0, camera_timestamp_ns=None, valid_image=True, invalid_code=None, diagnostics=(FrameDiagnostic(code='NATIVE_TIMESTAMP_UNAVAILABLE', native_code=None, details='optional native timestamp is unavailable'),))"}
+{"kind": "camera_first_frame_end", "host_ns": 16644375314300}
+{"kind": "recording_first_frame_begin", "host_ns": 16644376295300, "detail": "16644375860800"}
+{"kind": "recording_first_frame_end", "host_ns": 16644377770800}
+{"kind": "execute_begin", "host_ns": 16704299815900, "detail": "RecordPulseEvidence"}
+{"kind": "execute_end", "host_ns": 16704301152100}
+{"kind": "execute_begin", "host_ns": 16704318806100, "detail": "StopTrial"}
+{"kind": "execute_end", "host_ns": 16704389474800}
+{"kind": "execute_begin", "host_ns": 16704390191000, "detail": "RecordPulseEvidence"}
+{"kind": "execute_end", "host_ns": 16704394289300}
+{"kind": "execute_begin", "host_ns": 16704565578000, "detail": "InterruptSession"}
+{"kind": "execute_end", "host_ns": 16704566419000}
+{"kind": "execute_begin", "host_ns": 16714579664500, "detail": "InterruptSession"}
+{"kind": "execute_end", "host_ns": 16714580280800}
+{"kind": "execute_begin", "host_ns": 16744556369500, "detail": "Cleanup"}
+{"kind": "execute_end", "host_ns": 16744557173100}
+{"kind": "execute_begin", "host_ns": 16744625464600, "detail": "Cleanup"}
+{"kind": "execute_end", "host_ns": 16744626628800}
+{"kind": "execute_begin", "host_ns": 16756341000400, "detail": "Cleanup"}
+{"kind": "execute_end", "host_ns": 16756342450500}

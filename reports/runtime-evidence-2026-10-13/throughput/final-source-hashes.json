@@ -1,0 +1,7 @@
+{
+  "src\\cephvr\\visual_stimulus\\rendering\\capture.py": "65cd21e68a10cac7a6e8de7f18c6f5e934429dba1b06a5722bc212c0d2248b1c",
+  "src\\cephvr\\visual_stimulus\\rendering\\types.py": "4cdb4360f1bed24f5d16635bab442b455c4e1faa872ca26f80c7fe562dbf6aa5",
+  "src\\cephvr\\visual_stimulus\\rendering\\scene.py": "eba3aed36663a2f6318d89ad068f02a265636f34d5b4ab0217f81bf066a6e8f5",
+  "src\\cephvr\\visual_stimulus\\rendering\\native.py": "664788e5078fdd01148fe15dd055bd28bf415aff1878861b4a6da557ef4f9d1a",
+  "tests\\visual_stimulus\\test_rendering.py": "911dc42b50d5caa6c53d47fb1a6640c4f998c518b33800dcc4b41f7889f441bb"
+}

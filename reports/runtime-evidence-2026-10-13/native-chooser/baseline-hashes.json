@@ -1,0 +1,5 @@
+{
+  "src/cephvr/gui/configuration_files.py": "366ffeee74764eecb37dd454288e59e432ebed885e5f8938b5185370f60312bf",
+  "tests/gui/test_dashboard.py": "1e67daa546be414d29a272c9ff51a206fa0bdc16928cbf25952fa899bf59eff1",
+  "src/cephvr/gui/window.py": "b183a0383b7a8ad36655041e6804222813488ea92d407ee00d38826e5ca5fbd3"
+}

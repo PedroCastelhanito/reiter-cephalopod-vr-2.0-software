@@ -26,7 +26,7 @@ from cephvr.acquisition.v1 import messages_pb2 as acq
 from cephvr.acquisition.v1 import microcontroller_pb2 as mcu
 from cephvr.control.v1 import types_pb2 as control
 from cephvr.shared.clock import host_time_ns
-from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.deadlines import wait_until_ns
 
 
 class TrialPulseBoundaries:
@@ -77,7 +77,11 @@ class TrialPulseBoundaries:
         off_deadline_ns = min(deadline_ns, now + self.serial_ack_timeout_ns)
         invalidate_released_idle_proof(self.pulse)
         off = await self.serial.off(
-            (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING),
+            (
+                camera.CAMERA_ROLE_BEHAVIORAL,
+                camera.CAMERA_ROLE_TRACKING,
+                camera.CAMERA_ROLE_EYE_TRACKING,
+            ),
             scheduled_boundary_ns=None,
             stop_issued_ns=now,
             deadline_ns=off_deadline_ns,
@@ -101,9 +105,7 @@ class TrialPulseBoundaries:
         command: mcu.PulseBoundaryCommand,
         boundary_ns: int,
     ) -> None:
-        remaining = remaining_seconds(boundary_ns, clock=self.clock)
-        if remaining:
-            await asyncio.sleep(remaining)
+        await wait_until_ns(boundary_ns, clock=self.clock)
         cancelled_on = command == mcu.PULSE_BOUNDARY_COMMAND_ON and (
             session.interrupted or trial.interrupted or session.setup_cancelled
         )
@@ -229,6 +231,7 @@ def _failure_evidence(
         command=command,
         behavioral_selected=(camera.CAMERA_ROLE_BEHAVIORAL in selected_roles),
         tracking_selected=(camera.CAMERA_ROLE_TRACKING in selected_roles),
+        eye_tracking_selected=(camera.CAMERA_ROLE_EYE_TRACKING in selected_roles),
         scheduled_boundary_monotonic_ns=boundary_ns,
         outcome=outcome,
     )
@@ -239,5 +242,5 @@ def _outputs_proven_off(state: mcu.MicrocontrollerState) -> bool:
         state.HasField(role)
         and getattr(state, role).HasField("running")
         and not getattr(state, role).running
-        for role in ("behavioral", "tracking")
+        for role in ("behavioral", "tracking", "eye_tracking")
     )

@@ -1,0 +1,1 @@
+{"kind": "instrumentation", "host_ns": 10687837169600, "pid": 6548, "argv": ["-m", "cephvr.acquisition.main", "--bootstrap-handle", "808"], "observation_ms": 2000}

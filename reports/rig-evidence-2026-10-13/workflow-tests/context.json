@@ -1,0 +1,38 @@
+{
+  "date_jst": "2026-10-13",
+  "head": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "provenance": "Source hashes/patch captured after tests; working tree initially dirty and concurrent GUI calibration edits were observed. Not an exact test-time clean revision.",
+  "method": "Authenticated managed rig commands through same controller RPCs as GUI; native HighGUI preview status, projector swap evidence and actual NVENC stimulus encoding. No visual/optical camera assessment or native GUI-button acceptance claimed.",
+  "tests": {
+    "component": {
+      "passed": 213,
+      "junit": "component.xml",
+      "log": "component.log"
+    },
+    "gui_offscreen": {
+      "passed": 62,
+      "deselected": 380,
+      "junit": "gui.xml",
+      "log": "gui.log"
+    }
+  },
+  "commands": [
+    ".venv/Scripts/python.exe -m pytest tests/acquisition/test_manual_devices.py tests/acquisition/test_manual_preview.py tests/acquisition/test_recording_capabilities.py tests/acquisition/test_recording_negotiation.py tests/acquisition/test_recording_cleanup.py tests/acquisition/test_recording_paths.py tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_lifecycle.py -q --basetemp=.local-workflow-tests --junitxml=reports/rig-evidence-2026-10-13/workflow-tests/component.xml",
+    "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"calibration or preview or protocol_controls or camera_action or internal_trigger\" --basetemp=.local-workflow-gui --junitxml=reports/rig-evidence-2026-10-13/workflow-tests/gui.xml",
+    ".venv/Scripts/python.exe reports/rig-evidence-2026-10-13/workflow-tests/probe.py <calibration|cameras|protocol|restore|recover|stimulus|shutdown>",
+    ".venv/Scripts/python.exe reports/rig-evidence-2026-10-13/workflow-tests/verify.py"
+  ],
+  "source_hash_count": 816,
+  "temporary_audit_profile_removed_after_confirmed_closure": true,
+  "scope": "No production code/config TOML/firmware/wiring changes. Runtime test configuration restored; outputs retained. Eye disabled, Tracking computation/SpikeGLX disabled for diagnostic protocol. No combined-camera recording passed because Setup failed on intentionally unset drain policy.",
+  "failures": [
+    "normal calibration pacing asset validation",
+    "combined Setup missing camera drain policy",
+    "failed-Setup renderer cleanup command unknown and automatic shutdown",
+    "stimulus real render cadence30.33fps/15 captures dropped",
+    "normal shutdown acquisition Close RPC traceback"
+  ],
+  "assessment": "../runtime.md owns current failure/remedy narrative; raw records preserve failed and successful checks."
+}

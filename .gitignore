@@ -24,7 +24,11 @@ __pycache__/
 # Mutable local history and recordings, not operator defaults or evidence reports.
 /config/last_configuration.json
 /config/review_draft.json
+/config/runtime_gui.json
 /cephvr-data/
+
+# Raw rig evidence videos remain local; dated manifests retain identity and hashes.
+/reports/**/*.mp4
 /.local-spikeglx-sdk/
 /.local-spikeglx-pytest/
 /.local-spikeglx-rpc-*/

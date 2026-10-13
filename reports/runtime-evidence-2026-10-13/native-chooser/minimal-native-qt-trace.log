@@ -1,0 +1,10 @@
+0 create
+0 open
+0 reject
+0 destroy parent
+Windows fatal exception: access violation
+
+Thread 0x000068e4 (most recent call first):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-13\native-chooser\reproduce.py", line 44 in <module>
+0 parent events returned
+completed 1

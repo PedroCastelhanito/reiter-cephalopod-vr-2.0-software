@@ -257,6 +257,7 @@ def test_camera_readback_is_atomic_and_preserves_requested_pulse_frequency() -> 
     report.pulses.requested.CopyFrom(backend.acquisition.pulses)
     report.pulses.behavioral_active = True
     report.pulses.tracking_active = False
+    report.pulses.eye_tracking_active = False
     report.pulses.applied.SetInParent()
     expected = dict(
         source=source,

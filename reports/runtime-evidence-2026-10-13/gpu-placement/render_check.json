@@ -1,0 +1,161 @@
+{
+  "scope": "actual managed executable; bounded output initialization/Idle and release; no camera/recording",
+  "executable": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+  "cuda_devices": [
+    {
+      "ordinal": 0,
+      "uuid": "GPU-77642118-1623-48dd-3686-1014aa86b818",
+      "name": "NVIDIA GeForce RTX 5060 Ti"
+    },
+    {
+      "ordinal": 1,
+      "uuid": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+      "name": "NVIDIA GeForce RTX 2080 Ti"
+    }
+  ],
+  "contexts": [
+    {
+      "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+      "vendor": "NVIDIA Corporation",
+      "verified_identity": "nvidia_uuid:GPU-77642118-1623-48dd-3686-1014aa86b818"
+    },
+    {
+      "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+      "vendor": "NVIDIA Corporation",
+      "verified_identity": "nvidia_uuid:GPU-77642118-1623-48dd-3686-1014aa86b818"
+    },
+    {
+      "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+      "vendor": "NVIDIA Corporation",
+      "verified_identity": "nvidia_uuid:GPU-77642118-1623-48dd-3686-1014aa86b818"
+    },
+    {
+      "renderer": "NVIDIA GeForce RTX 5060 Ti/PCIe/SSE2",
+      "vendor": "NVIDIA Corporation",
+      "verified_identity": "nvidia_uuid:GPU-77642118-1623-48dd-3686-1014aa86b818"
+    }
+  ],
+  "initialization": {
+    "output_ids": [
+      "calibration_front",
+      "calibration_left",
+      "calibration_right",
+      "calibration_bottom"
+    ],
+    "observed_rgb_bits": [
+      [
+        "calibration_front",
+        8,
+        8,
+        8
+      ],
+      [
+        "calibration_left",
+        8,
+        8,
+        8
+      ],
+      [
+        "calibration_right",
+        8,
+        8,
+        8
+      ],
+      [
+        "calibration_bottom",
+        8,
+        8,
+        8
+      ]
+    ],
+    "framebuffer_sizes": [
+      [
+        "calibration_front",
+        1280,
+        720
+      ],
+      [
+        "calibration_left",
+        1280,
+        720
+      ],
+      [
+        "calibration_right",
+        1280,
+        720
+      ],
+      [
+        "calibration_bottom",
+        720,
+        1280
+      ]
+    ],
+    "requested_swap_intervals": [
+      [
+        "calibration_front",
+        1
+      ],
+      [
+        "calibration_left",
+        1
+      ],
+      [
+        "calibration_right",
+        1
+      ],
+      [
+        "calibration_bottom",
+        1
+      ]
+    ],
+    "idle_activity": [
+      {
+        "output_id": "calibration_front",
+        "swap_entry_ns": 6344022195800,
+        "swap_return_ns": 6344022495100,
+        "requested_swap_interval": 1,
+        "error": null
+      },
+      {
+        "output_id": "calibration_left",
+        "swap_entry_ns": 6344120189800,
+        "swap_return_ns": 6344120227100,
+        "requested_swap_interval": 1,
+        "error": null
+      },
+      {
+        "output_id": "calibration_right",
+        "swap_entry_ns": 6344159611600,
+        "swap_return_ns": 6344159656300,
+        "requested_swap_interval": 1,
+        "error": null
+      },
+      {
+        "output_id": "calibration_bottom",
+        "swap_entry_ns": 6344196239800,
+        "swap_return_ns": 6344196277400,
+        "requested_swap_interval": 1,
+        "error": null
+      }
+    ]
+  },
+  "render_pass": true,
+  "release": {
+    "released": [
+      "visual_stimulus:window:calibration_bottom",
+      "display:calibration_bottom",
+      "visual_stimulus:window:calibration_right",
+      "display:calibration_right",
+      "visual_stimulus:window:calibration_left",
+      "display:calibration_left",
+      "visual_stimulus:window:calibration_front",
+      "display:calibration_front",
+      "visual_stimulus:window:calibration_right",
+      "visual_stimulus:window:calibration_left",
+      "visual_stimulus:window:calibration_bottom",
+      "visual_stimulus:window:calibration_front",
+      "visual_stimulus:glfw"
+    ],
+    "outstanding": []
+  }
+}

@@ -291,7 +291,7 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
 <a id="e07"></a>
 ### E07 — Configuration and protocol preparation
 
-**Status:** Accepted · **Revision:** 59
+**Status:** Accepted · **Revision:** 60
 
 #### Sources and loading
 
@@ -336,8 +336,11 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
 #### Configuration history
 
 - The controller is the sole writer of configuration history,
-  `config/last_configuration.json`. Normal GUI closure requests a save of the
-  controller's current reusable configuration; application shutdown uses the same
+  `config/last_configuration.json`. G01 retains the complete local GUI draft before
+  normal closure; when connected the GUI also requests a save of the controller's
+  current reusable configuration, without submitting edits as a closure side effect.
+  A rejected/unconfirmed controller save is reported separately and cannot discard
+  the confirmed local GUI save or block closure. Application shutdown uses the same
   mechanism. Serialize writes outside the lifecycle state-processing loop using the
   existing atomic save procedure. GUIs read the file when initializing a new
   configuration but never overwrite it.
@@ -352,7 +355,7 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
   queueing and the save operation, owned by `experiment_config.toml` and separate
   from session metadata timing. On failure or timeout, preserve the previous saved
   configuration and warn that recent changes were not saved.
-- Interactive GUI closure then offers Retry or Close without saving. Unattended
+- G01's local GUI save failure offers Retry or Close without saving. Unattended
   headless shutdown reports the failure and finishes graceful shutdown without
   waiting for operator input.
 - A history-save failure alone does not interrupt an ongoing experiment; full

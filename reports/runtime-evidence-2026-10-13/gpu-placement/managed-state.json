@@ -1,0 +1,132 @@
+{
+  "controller_generation": "c3532451-334e-4874-beaa-3e181be7bc2d",
+  "configuration": {
+    "revision": "1",
+    "locked": true,
+    "edit_validation": [
+      {
+        "configuration_revision": "1",
+        "completed": true,
+        "valid": true,
+        "component": "experiment",
+        "configuration_module_version": "experiment-v1"
+      },
+      {
+        "configuration_revision": "1",
+        "completed": true,
+        "valid": true,
+        "component": "acquisition",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "1",
+        "completed": true,
+        "valid": true,
+        "component": "synchronization",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "1",
+        "completed": true,
+        "valid": true,
+        "component": "tracking",
+        "configuration_module_version": "inactive"
+      },
+      {
+        "configuration_revision": "1",
+        "completed": true,
+        "valid": true,
+        "component": "visual_stimulus",
+        "configuration_module_version": "visual-stimulus-config-v2"
+      }
+    ]
+  },
+  "session": {
+    "phase": "SESSION_PHASE_RUNNING",
+    "context": {
+      "controller_generation": "c3532451-334e-4874-beaa-3e181be7bc2d",
+      "session_id": "4d1f5c92-649c-49d0-94df-49eeb2a54fcb"
+    },
+    "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\throughput\\recordings\\20261013_throughput_probe_on\\DUMMY-125856",
+    "trial_count": 1,
+    "activated": true
+  },
+  "visual_stimulus_display": {
+    "source": {
+      "role": "visual_stimulus",
+      "generation": "98e37fe4-e743-4b6e-9f9b-e2285d5c8aff"
+    },
+    "backend": {
+      "backend_name": "visual_stimulus",
+      "backend_generation": "98e37fe4-e743-4b6e-9f9b-e2285d5c8aff"
+    },
+    "controller": {
+      "role": "controller",
+      "generation": "c3532451-334e-4874-beaa-3e181be7bc2d"
+    },
+    "command_id": "04115d8e-08f7-4d97-b782-f8dbd1fed89c",
+    "requested_revision": "1",
+    "applied_revision": "1",
+    "outputs": [
+      {
+        "output_id": "calibration_front",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "6588426915900",
+        "idle_swap_return_ns": "6588427209400",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_left",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "6588536425200",
+        "idle_swap_return_ns": "6588536463500",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_right",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "6588581913400",
+        "idle_swap_return_ns": "6588581955200",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      },
+      {
+        "output_id": "calibration_bottom",
+        "resources_ready": true,
+        "requested_rgb_bits": 8,
+        "observed_rgb_bits": [
+          8,
+          8,
+          8
+        ],
+        "requested_swap_interval": 1,
+        "idle_swap_entry_ns": "6588629291500",
+        "idle_swap_return_ns": "6588629397600",
+        "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+      }
+    ],
+    "observed_monotonic_ns": "6588629468900",
+    "complete": true
+  },
+  "acquisition_devices": null
+}

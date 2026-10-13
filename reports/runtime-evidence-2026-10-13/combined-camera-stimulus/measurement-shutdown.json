@@ -1,0 +1,16 @@
+[
+  {
+    "label": "generation",
+    "value": "90828389-d71a-4056-a2ba-8d80c5c2c51e"
+  },
+  {
+    "label": "shutdown",
+    "value": {
+      "command_id": "b1812b7f-f1e8-44a7-b86d-3b0385890da9",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    }
+  }
+]

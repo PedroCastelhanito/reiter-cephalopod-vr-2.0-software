@@ -1,0 +1,365 @@
+{
+  "date": "2026-10-13",
+  "method": "SHA-256 streamed from complete original bytes before Git sync; no media removed or modified",
+  "storage": "Local files at the recorded repository-relative paths; excluded from Git by /reports/**/*.mp4. A remote checkout contains this manifest and associated reports/logs, not the video bytes.",
+  "original_unpushed_commit": "8bc7349a14c3481f7e10dc4b5ea64d8eb9442fe2",
+  "files": [
+    {
+      "path": "reports/rig-evidence-2026-10-13/workflow-tests/recordings/20261013_workflow_audit_stimulus/DUMMY-114724/protocol-data/DUMMY_114725_stimulus.mp4",
+      "bytes": 5499417,
+      "sha256": "02e86cc4283c306c4f1cd7d911c65d318aeef7ecb92f2630749b5e5164c43fc7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_behavioral_cam.mp4",
+      "bytes": 596225038,
+      "sha256": "9f68a00f65f7a0dfb6b9970ebedce1449435bb36bde057d3ddab58494abdb48b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_stimulus.mp4",
+      "bytes": 6353680,
+      "sha256": "8dc07d8eb4c2dc96fad9f5a6d2b244df3087a1bf11788a7bd574c31b47a413b5"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141404/protocol-data/DUMMY_141408_tracking_cam.mp4",
+      "bytes": 23009490,
+      "sha256": "c34a14948617aeb1a67d33fc77be52df06ef9397ead186f74c57c2daef0c7c66"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_behavioral_cam.mp4",
+      "bytes": 596391104,
+      "sha256": "b452a79c1936769fdf4815008c2efd4de824c00b81771e2e2075395197bcc4d3"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_stimulus.mp4",
+      "bytes": 6242034,
+      "sha256": "28256fe04f9d74e6e46587747f1d5b7e0722bde9cf14eeb31e099663dc348f24"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-141832/protocol-data/DUMMY_141837_tracking_cam.mp4",
+      "bytes": 22977148,
+      "sha256": "2b901213947e2f598d2bc14eb67a576c4c70a58c1545ffa0aff2714414c09681"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_behavioral_cam.mp4",
+      "bytes": 596261340,
+      "sha256": "c19ae26b714558b8a1faab5b04db44200d3033ac150388e71e053fe8bfea0fbf"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_stimulus.mp4",
+      "bytes": 6276485,
+      "sha256": "675dea42246b1c4d3c9708a6815fb25e643d165610f6a2a81e7f548ca018e741"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-142957/protocol-data/DUMMY_143001_tracking_cam.mp4",
+      "bytes": 22915236,
+      "sha256": "95dc08308ca4785d9f2e7679f2738bb0d2d0a32d9c4c2ec2437a74f9fdf0139f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_behavioral_cam.mp4",
+      "bytes": 598785253,
+      "sha256": "0187076131cbe427f888cba3025d8eb12707cc4693e6b688474095d27eafc8e2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_stimulus.mp4",
+      "bytes": 6506939,
+      "sha256": "d557396f5e8d9821e27e723661947512d229bd23aa195b2a97be7129b57a71a4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143423/protocol-data/DUMMY_143428_tracking_cam.mp4",
+      "bytes": 22926767,
+      "sha256": "326c5194e722ef7432c515c79cee49c42cce03cfee5a519ddac0d24cd14f5ed6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_behavioral_cam.mp4",
+      "bytes": 597131194,
+      "sha256": "ce62da7f56e2e33bf2c6c36224a37cb2e09c75c11dc67e1accc8db66d8aa99ab"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_stimulus.mp4",
+      "bytes": 7021351,
+      "sha256": "de5e53e9caf39977bd1a8afa7db76ca3e5365a79d69e16e69c688bdb104c7127"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-143928/protocol-data/DUMMY_143933_tracking_cam.mp4",
+      "bytes": 22977123,
+      "sha256": "f84061bd844a12b683e5fe385784d32400354679127d1b86fae406b4a7b97aff"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_behavioral_cam.mp4",
+      "bytes": 596566638,
+      "sha256": "33a626cb57c44105e27be9a3acb6a6aa6caefcefbbfa47365af117f59f8bbb6e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_stimulus.mp4",
+      "bytes": 6473771,
+      "sha256": "f9d2a287db273b82bddf1243a997fa9ebfba9f96bfb85f306e4079ae423d02d4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144236/protocol-data/DUMMY_144240_tracking_cam.mp4",
+      "bytes": 22950433,
+      "sha256": "e7a89f1d7358421f1a6dfb909217237cade951f7fe091a2454645a24b05dfb4e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_behavioral_cam.mp4",
+      "bytes": 596886997,
+      "sha256": "8eb4577a7717035d896e4aee0cc0896477bce31aa3adc0af5f011aeb1a3b216f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_stimulus.mp4",
+      "bytes": 6482486,
+      "sha256": "e22643c98cf02f93f0f1aac282b936846e4c706602383e796357017408be28ea"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-144955/protocol-data/DUMMY_144959_tracking_cam.mp4",
+      "bytes": 22943250,
+      "sha256": "1ec6f9a1809a7f61b42f4d1fafef936efa84b376f48b81fb31ebf0566f486d3d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_behavioral_cam.mp4",
+      "bytes": 595496654,
+      "sha256": "821c60eb51cd33495ddf9273c8b0de128c0f6977d3b875c39f085dd74a8d80e9"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_stimulus.mp4",
+      "bytes": 6522380,
+      "sha256": "0e74b0067c538f58c93bb5dce0ecd2e00d41d849a21a73e59a453dc547a8633e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-145648/protocol-data/DUMMY_145652_tracking_cam.mp4",
+      "bytes": 22909229,
+      "sha256": "c1a5a78381511eef5c31af5f44ebf6b0cb767f5cf84321eed59afd0d8df91db4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-150752/protocol-data/DUMMY_150757_stimulus.mp4",
+      "bytes": 23957,
+      "sha256": "272a9dab9df8976085ac82127990a7ed314490601cedfd8b386fdac3da16b601"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152012/protocol-data/DUMMY_152017_stimulus.mp4",
+      "bytes": 23929,
+      "sha256": "386f5b10a571bda9c54bb914d2a2dd6b5b2e94bfdd674b67afc52e52996d44c4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_behavioral_cam.mp4",
+      "bytes": 601547802,
+      "sha256": "2cde9e1ef46940691a7eafe258d6fc3cd542ef0e9bd73ab9f15b8bd87dcce6d2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_stimulus.mp4",
+      "bytes": 5799098,
+      "sha256": "48d50a304ea045402b48bd2e055c52e7a8184fae9fcedb2b7e221081c23ab53a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-152947/protocol-data/DUMMY_152951_tracking_cam.mp4",
+      "bytes": 22832329,
+      "sha256": "1b5ca3aa5e69c6b37e16e04a194f5e947d5cfe855d98974766b403e49eee3b3d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153427/protocol-data/DUMMY_153432_stimulus.mp4",
+      "bytes": 23957,
+      "sha256": "272a9dab9df8976085ac82127990a7ed314490601cedfd8b386fdac3da16b601"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_behavioral_cam.mp4",
+      "bytes": 598524732,
+      "sha256": "a50bc70fc92b16d77c4b90e1f3e5c4aaa98cc9eccbbba53169a2ad29eaacd361"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_stimulus.mp4",
+      "bytes": 5612226,
+      "sha256": "0c125270d0171fd8505e80c6b9ce8bc9a2b541ac77b48c6c04eba3614750c98e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-153851/protocol-data/DUMMY_153856_tracking_cam.mp4",
+      "bytes": 22889758,
+      "sha256": "90ef9ff1429e0cb229f741c6a825d59818249e1e3af1a58b780ef576a9a9f3c1"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_behavioral_cam.mp4",
+      "bytes": 602160124,
+      "sha256": "12a77cca58c2dd1c286780b0d1c6c53ac70917be0175cdb04e064b03d5c1aa3a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_stimulus.mp4",
+      "bytes": 4128610,
+      "sha256": "fe80c743b28512c565391f664a752d20d7f0f5aec72b8ff3f9fcc2d4445f9acf"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154142/protocol-data/DUMMY_154147_tracking_cam.mp4",
+      "bytes": 22898288,
+      "sha256": "06fa1f64cb3f9415c5045c6fece130ab70b8894dae971037a82895668218aff7"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_behavioral_cam.mp4",
+      "bytes": 2294,
+      "sha256": "83a58002911477ae695f58c39165501198129ff9bd3e8de570b104f9b4574b78"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_stimulus.mp4",
+      "bytes": 23929,
+      "sha256": "386f5b10a571bda9c54bb914d2a2dd6b5b2e94bfdd674b67afc52e52996d44c4"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154309/protocol-data/DUMMY_154314_tracking_cam.mp4",
+      "bytes": 2284,
+      "sha256": "7435c426c9f841f280314287ce996c309c314ac9098e4aa4ecbc451f7146d17b"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_behavioral_cam.mp4",
+      "bytes": 603648408,
+      "sha256": "e9d46d71af013f3a73c3867e392e053ff01a8d3b5aac09d7a70e73a3aed3dcc6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_stimulus.mp4",
+      "bytes": 4145729,
+      "sha256": "d12e5067c4cdcdbb1381674fabcfd480ca53a17882497422a852cd0a7a4095ac"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-154607/protocol-data/DUMMY_154612_tracking_cam.mp4",
+      "bytes": 22909195,
+      "sha256": "dbbdea1462011986e2883e03f93c399d0be137f825eb352e88351307100fa929"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_behavioral_cam.mp4",
+      "bytes": 602050957,
+      "sha256": "7149cb64c8ee32af24ed13913f05200cba46ff3fe54c03ede9573f7e3e7e0675"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_stimulus.mp4",
+      "bytes": 4317080,
+      "sha256": "af42b09ab82ce18abe26bee5d11e78336781baa87012a3fb6493ed1ec5817bac"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155043/protocol-data/DUMMY_155048_tracking_cam.mp4",
+      "bytes": 22892389,
+      "sha256": "88686bae5dfd2a7ce99ca4f9382e13e672253161608945cb32664cf32e08f7c6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_behavioral_cam.mp4",
+      "bytes": 600500945,
+      "sha256": "0b19b2f1630869f9b1f040d18d5f198a622331b6e6f31d3bd37a78f9a28c7fad"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_stimulus.mp4",
+      "bytes": 4154325,
+      "sha256": "a769aca8c740022771963437364b26e4ebf0f8868a2ec22dcef0dd2aa14999fb"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155218/protocol-data/DUMMY_155223_tracking_cam.mp4",
+      "bytes": 22779513,
+      "sha256": "98487cb0fc69ca6ff4d4c107e0c398f9e16540d9eba2603954448f93d8e75e8a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_behavioral_cam.mp4",
+      "bytes": 599472870,
+      "sha256": "53c9c6e25565b943bfe0c1398250872d29a88348fc735d18cbfad53a6c03667e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_stimulus.mp4",
+      "bytes": 4251648,
+      "sha256": "b66b2d44a22b501ad0b6253b3f587632a0071476b000450e13b4cefce08253dc"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-155759/protocol-data/DUMMY_155804_tracking_cam.mp4",
+      "bytes": 22939663,
+      "sha256": "240d78a646ee88d620df79f056cb265ff5ae22d0ee7008ed196db033801a8603"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_behavioral_cam.mp4",
+      "bytes": 600502852,
+      "sha256": "43de3a83c91268da9727c3fa2591a184897f2c144db4a8a0c8fecc0373836702"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_stimulus.mp4",
+      "bytes": 4296469,
+      "sha256": "4e9488fca651c252f2ba88df60ae2bcaf046d587f5006517b8024128eaa6b110"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/combined-camera-stimulus/recordings/20261013_combined_gpu_probe_20261013/DUMMY-160003/protocol-data/DUMMY_160007_tracking_cam.mp4",
+      "bytes": 22931689,
+      "sha256": "c53ccce1feac0eed484a3b250a40d30747fffd29dd1ded3b27718b1d026f07cc"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/ffmpeg/synthetic-behavioral-current.mp4",
+      "bytes": 951577,
+      "sha256": "880431654df626887f6b5d7bac68db4ee6d55e24e09cdb13b880d09625e3808a"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/ffmpeg/synthetic-v2-behavioral-current.mp4",
+      "bytes": 951577,
+      "sha256": "2638eb5d3132df657f2fb82db7fdbae2818badb29fbc855ba74c4f01086fde94"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/ffmpeg/synthetic-v2-behavioral-reference_adapted_not_applied.mp4",
+      "bytes": 333397,
+      "sha256": "01f73b4258fe654698bd26f97306da1bd5377ad17ecb39efc07b94d4f7cf01c6"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/ffmpeg/synthetic-v2-stimulus-current.mp4",
+      "bytes": 910327,
+      "sha256": "c96e25e6988dd6fa964c2564ffc50c8a049719948d3f42c2003fe18266575ebd"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/ffmpeg/synthetic-v2-tracking-current.mp4",
+      "bytes": 98398,
+      "sha256": "acffb7221cfddfc02304d93646aa662dc9eced13b80c44d0553a4914abbf337d"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/ffmpeg/synthetic-v2-tracking-reference_adapted_not_applied.mp4",
+      "bytes": 31906,
+      "sha256": "7bf74e445c87b0f05d3d01c1e99c2dfb8dba546e3efc629aa67917ef92cb95ab"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/gpu-placement/synthetic-gpu-check-1791863811027265800-behavioral.mp4",
+      "bytes": 88,
+      "sha256": "a0a7a96330b3440e3bc4fddf5250dcd5f3da48e1d3c9c14563b70f0a85f530ed"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/gpu-placement/synthetic-gpu-check-1791863826171646200-behavioral.mp4",
+      "bytes": 25862,
+      "sha256": "c101e0b0bce7a54b3490a51f623cd19c1cd6acef77a917e31833dc9f424ec47c"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/gpu-placement/synthetic-gpu-check-1791863826171646200-eye_tracking.mp4",
+      "bytes": 12721,
+      "sha256": "d3d74d994b7f3420c09aeeb6ad8acf0fd2cbe00496fd1ef7f584f44dd968df5f"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/gpu-placement/synthetic-gpu-check-1791863826171646200-tracking.mp4",
+      "bytes": 12039,
+      "sha256": "1ff799379e1d82304429a95c093b94086794381769a19baa8368cd54e7ea4669"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/gpu-placement/synthetic-gpu-check-behavioral.mp4",
+      "bytes": 88,
+      "sha256": "a0a7a96330b3440e3bc4fddf5250dcd5f3da48e1d3c9c14563b70f0a85f530ed"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125333/protocol-data/DUMMY_125335_stimulus.mp4",
+      "bytes": 5371561,
+      "sha256": "fc13e77f784b1e867abc271d44934ed6613e3cb2b10035526321466f1ae0f79e"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125504/protocol-data/DUMMY_125506_stimulus.mp4",
+      "bytes": 5586042,
+      "sha256": "1b9a42241be3ce54fe598b438f73d5bc099ef266d75f083e3c9472421d64bfb2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-125856/protocol-data/DUMMY_125857_stimulus.mp4",
+      "bytes": 7570052,
+      "sha256": "942d9a49d7d6c9774eec20ac7377b3b5fcf251bf52af9bb3cc635c6a101a9193"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130319/protocol-data/DUMMY_130320_stimulus.mp4",
+      "bytes": 8284928,
+      "sha256": "3b44b6949f6a30936fdae2ba581f952feb6356b13b11340e31124208f41ae6f2"
+    },
+    {
+      "path": "reports/runtime-evidence-2026-10-13/throughput/recordings/20261013_throughput_probe_on/DUMMY-130558/protocol-data/DUMMY_130559_stimulus.mp4",
+      "bytes": 8222279,
+      "sha256": "c75b6f8b832fd94147bb41a7fb3640ff080686d3bf1f722f690b20bcbfabec50"
+    }
+  ],
+  "total_files": 71,
+  "total_bytes": 10081381328
+}

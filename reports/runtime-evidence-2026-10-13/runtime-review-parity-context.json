@@ -1,0 +1,38 @@
+{
+  "date_jst": "2026-10-13",
+  "task_id": "runtime-review-layout-parity",
+  "head": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "decisions": [
+    "G01 revision 163",
+    "G02",
+    "E03",
+    "ARCH-002"
+  ],
+  "change": "Remove Runtime-only Dashboard control button/hint/signal and unused forwarder; retain existing Runtime Control menu and truthful HUD. Shared page construction is unchanged.",
+  "simplification": "36 production lines removed; no dependencies, new state owner, widgets or layout abstraction.",
+  "validation": {
+    "focused_final": "8 passed, 389 deselected in 6.40s",
+    "coverage": "All Dashboard/Protocol/Devices/Projectors/Tracking pages and subtabs at 1280/720 widths, matched drafts, both Runtime authority modes, exact full card geometry without exceptions; Take/Release and denied/confirmed takeover dispatch; HUD/control/reconnect guards.",
+    "ruff": "src/cephvr/gui tests/gui passed",
+    "format": "150 files passed",
+    "mypy": "--platform win32 src/cephvr/gui: 148 source files passed",
+    "boundaries": "663 modules; zero violations; existing cohesion advisories retained"
+  },
+  "failed_attempt": "Initial sandbox selection: 4 passed, 4 temp-fixture errors, 389 deselected. Identical selection then passed under approved native execution; no assertions weakened.",
+  "limits": "Offscreen focused implementation/layout coverage. No new full GUI suite, native chooser, native narrow/DPI, rig/device or scientific acceptance. Existing native crash, projector overflow and encoding findings remain queued; hardware deferrals preserved.",
+  "files": {
+    "src/cephvr/gui/dashboard.py": "8705318c144fe7af97981cef8cd195164ef41b07219fd32414925f356a7042f0",
+    "src/cephvr/gui/main.py": "fdde5e3d63b25d12cecc71c9c612066af74a00f19e64404038dabc09cd1f3fb6",
+    "tests/gui/test_dashboard.py": "1e67daa546be414d29a272c9ff51a206fa0bdc16928cbf25952fa899bf59eff1",
+    "docs/architecture/gui.md": "43a22bfa96589eee282a3690786426f6b3eb93760d45d56137c328a94e2bdb11",
+    "architecture.md": "aadf9553684029cc9620d393e73c7fb466a0deee12f210c6ea7f9bde37cfbbdd"
+  },
+  "commands": [
+    "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"review_and_runtime_share or dashboard_control_status or explicit_gui_release or reconnect or unheld_control\" --junitxml=reports/runtime-evidence-2026-10-13/runtime-review-parity-final-all-pages.xml",
+    ".venv/Scripts/python.exe -m ruff check src/cephvr/gui tests/gui",
+    ".venv/Scripts/python.exe -m ruff format --check src/cephvr/gui tests/gui",
+    ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/gui",
+    ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+    "git diff --check"
+  ]
+}

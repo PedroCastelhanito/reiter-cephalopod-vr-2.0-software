@@ -5,6 +5,8 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QFileDialog, QWidget
 
+from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
+
 
 class PreparedFilePicker(QObject):
     selected = pyqtSignal(str, str, bool)
@@ -21,7 +23,7 @@ class PreparedFilePicker(QObject):
             return
         parent = self.parent()
         assert isinstance(parent, QWidget)
-        dialog = QFileDialog(
+        dialog = file_dialog(
             parent,
             f"Select prepared {preset.lower().replace('looming image', 'looming')}",
             root,
@@ -41,4 +43,4 @@ class PreparedFilePicker(QObject):
         dialog.finished.connect(lambda: setattr(self, "dialog", None))
         dialog.finished.connect(dialog.deleteLater)
         self.dialog = dialog
-        dialog.open()
+        open_file_dialog(dialog)

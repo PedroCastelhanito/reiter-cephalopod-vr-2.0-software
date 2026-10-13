@@ -1,6 +1,6 @@
 # CephVR2 Arduino Uno firmware
 
-`cephvr2_mcu/cephvr2_mcu.ino` implements the controller-owned A11 serial protocol v3
+`cephvr2_mcu/cephvr2_mcu.ino` implements the controller-owned A11 serial protocol v4
 for the Arduino Uno. Owner-authorized manual uploads to COM8 ran on 2026-10-05
 and 2026-10-07. The current protocol-3 image, pre-upload flash backup, verified
 upload and matching board CAPS are recorded in
@@ -9,7 +9,7 @@ The [earlier protocol-2 evidence](../../reports/mcu-evidence-2026-10-05/README.m
 retains its original image and flash readback.
 
 Keep each independent sketch in its own directory. Select
-`cephvr2_mcu/cephvr2_mcu.ino` for this GUI's protocol-3 backend.
+`cephvr2_mcu/cephvr2_mcu.ino` for this GUI's protocol-4 backend.
 `cephvr1_mcu/cephvr1_mcu.ino` is the legacy program; its required
 `projector_clock.h` is beside it. It compiles for Uno but lacks the CAPS protocol
 required by CephVR2. Both sketches must not share one sketch directory: Arduino
@@ -30,8 +30,13 @@ counts actual generated output rising transitions, including the initial HIGH;
 Trial state's held-HIGH test counts one. Camera counters increment at the timer's
 HIGH writes, not from requested rate or elapsed time. Input diagnostics count
 observed rising edges. Counts persist after Stop until a new test, with atomic
-readback and uint32 saturation. Protocol 3 requires a matching firmware image
-before the updated host can connect; the prior uploaded image was protocol 2.
+readback and uint32 saturation. Protocol 4 requires a matching firmware image
+before the updated host can connect; the previously uploaded image is protocol 3.
+The new third Eye output is compiled locally; upload remains manual. Assign an Eye
+camera in Cameras, select External controller and the actual FrameStart source/rate,
+then set its unique pin in Microcontroller. Projector flip is available through Add
+input. Pin/rate changes after this firmware update use serial configuration and
+do not require reflashing.
 The managed GUI provides explicit Configuration Upload for a selected `.ino` sketch
 or compiled application `.hex`. For `.ino`, controller snapshots the sketch and its
 companion sources, compiles for Uno with installed Arduino CLI, validates the generated
@@ -55,10 +60,11 @@ need rig verification.
 | Signal | Uno side | Other side | Current status |
 | --- | --- | --- | --- |
 | Host serial | COM8 USB | Rig PC USB | Protocol-3 CAPS/STATUS verified 2026-10-07 |
-| Trial state | D9 output and GND | Recorder digital input and signal ground | Pin assigned; destination channel and 5 V tolerance unconfirmed |
+| Trial state | D12 output and GND | Recorder digital input and signal ground | Pin assigned; destination channel and 5 V tolerance unconfirmed |
 | Projector flip | D2 input and GND | Projector flip source and signal ground | Pin assigned; bounded input test counted zero edges; source voltage unconfirmed |
 | Behavioral trigger | D10 output and GND | Behavioral camera trigger input and signal ground | Pin assigned; electrical test and preview pending |
 | Tracking trigger | D11 output and GND | Tracking camera trigger input and signal ground | Pin assigned; electrical test and preview pending |
+| Eye trigger | Explicit unique output pin and GND | Eye camera FrameStart input and signal ground | Pin/source/rate unset; protocol-4 upload and rig acceptance pending |
 
 Confirm the destination input tolerates the Uno's 5 V logic and the flip source
 is safe for an Uno input before attaching signal wires. Save the actual pin

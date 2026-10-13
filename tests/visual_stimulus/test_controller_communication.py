@@ -231,11 +231,12 @@ async def test_controller_port_queries_actual_acquisition_and_visual_stimulus_wi
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("missing_output", [False, True])
+@pytest.mark.parametrize("startup_issue", [None, "monitor", "adapter"])
 async def test_controller_initialize_display_retains_confirmed_idle_separately_from_ready(
     tmp_path,
-    missing_output,
+    startup_issue,
 ):
+    missing_output = startup_issue is not None
     identity = Identity(
         *(
             pb.ProcessIdentity(role=role, generation=str(uuid4()))
@@ -339,9 +340,12 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
         def initialize_display(self, display, calibration):
             if missing_output:
                 from cephvr.visual_stimulus.rendering.native_display import (
+                    DisplayGpuUnavailableError,
                     DisplayUnavailableError,
                 )
 
+                if startup_issue == "adapter":
+                    raise DisplayGpuUnavailableError("OpenGL context uses AMD Radeon")
                 raise DisplayUnavailableError(
                     "saved projector matched 0 active monitors"
                 )
@@ -406,7 +410,11 @@ async def test_controller_initialize_display_retains_confirmed_idle_separately_f
                 if item.context.command_id == admission.command_id
             )
             assert operation.complete and not operation.succeeded
-            assert "Reconnect the projector" in operation.failure.message
+            assert (
+                "RTX 5060 Ti"
+                if startup_issue == "adapter"
+                else "Reconnect the projector"
+            ) in operation.failure.message
             assert display.resources and all(
                 item.released for item in display.resources
             )

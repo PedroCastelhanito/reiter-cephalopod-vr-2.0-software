@@ -1,0 +1,15 @@
+{
+  "controller_generation": "b548914b-5470-4ad8-8944-a1998b2438cc",
+  "receipt": {
+    "controller_generation": "b548914b-5470-4ad8-8944-a1998b2438cc",
+    "supervisor_generation": "4fc6753e-40f4-4c6b-a6e4-b17c909d076f",
+    "observed_monotonic_ns": 326830302838100,
+    "all_owned_processes_absent": true,
+    "format_version": 1,
+    "controller_channel_loss": "eof"
+  },
+  "guard_free": true,
+  "saved_history_matches_original_adopted_configuration": true,
+  "exclusive_com8_open": true,
+  "com8_probe_closed": true
+}

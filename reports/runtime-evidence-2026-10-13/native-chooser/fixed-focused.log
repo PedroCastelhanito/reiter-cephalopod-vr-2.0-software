@@ -1,0 +1,22 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software
+configfile: pyproject.toml
+plugins: asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 402 items / 392 deselected / 10 selected
+
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-protocol] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-tracking] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-microcontroller] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-spikeglx] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-gui] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-protocol] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-tracking] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-microcontroller] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-spikeglx] PASSED
+tests/gui/test_dashboard.py::test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-gui] PASSED
+
+- generated xml file: C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-13\native-chooser\fixed-focused.xml -
+===================== 10 passed, 392 deselected in 7.39s ======================

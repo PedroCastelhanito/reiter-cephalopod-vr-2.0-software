@@ -103,10 +103,17 @@ class ManagedConfiguration:
         self.pages.projectors.timing.blackouts.changed.connect(changed)
         self.pages.protocol.config_files.loaded.connect(changed)
         self.pages.cameras.config_files.loaded.connect(changed)
+
+        def camera_draft_changed() -> None:
+            if self.pages.cameras.snapshot_draft:
+                changed()
+
+        self.pages.cameras.drafts_changed.connect(camera_draft_changed)
         self.pages.projectors.calibration_files.loaded.connect(changed)
         self.pages.tracking.config_files.loaded.connect(tracking_changed)
         if self.pages.microcontroller is not None:
             self.pages.microcontroller.config_files.loaded.connect(changed)
+            self.pages.microcontroller.draft_changed.connect(changed)
         for signal_name in (
             "points_changed",
             "distance_changed",
@@ -259,7 +266,7 @@ class ManagedConfiguration:
         matches = [
             camera.serial
             for camera in self.pages.cameras.drafts
-            if "tracking" in camera.role.casefold() and camera.serial
+            if camera.role == "Tracking cam" and camera.serial
         ]
         return matches[0] if len(matches) == 1 else ""
 
@@ -437,6 +444,20 @@ class ManagedConfiguration:
                 "Reload before submitting again."
             )
         )
+
+    def note_camera_revision(self, snapshot: pb.Snapshot, base_revision: int) -> bool:
+        """Adopt an explicit camera update without discarding any local page drafts."""
+        if (
+            self.generation != snapshot.controller_generation
+            or self.revision != base_revision
+        ):
+            return False
+        base = self._base(snapshot)
+        self.revision = snapshot.configuration.revision
+        self._installed_base.CopyFrom(base)
+        self.stale = False
+        self.last_error = ""
+        return True
 
     def reload(self, snapshot: pb.Snapshot) -> bool:
         try:

@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.components import button, equal_row_height
+from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 from cephvr.gui.theme import SIZES
 
 
@@ -76,7 +77,7 @@ class PathField(QWidget):
             self.dialog.raise_()
             return
         current = Path(self.editor.text()).expanduser()
-        dialog = QFileDialog(self, self.title)
+        dialog = file_dialog(self, self.title)
         if self.file_filter:
             dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
             dialog.setNameFilter(self.file_filter)
@@ -94,7 +95,7 @@ class PathField(QWidget):
         dialog.finished.connect(self.finished)
         dialog.finished.connect(dialog.deleteLater)
         self.dialog = dialog
-        dialog.open()
+        open_file_dialog(dialog)
 
     def select_path(self, path: str) -> None:
         if self.isEnabled() and path:

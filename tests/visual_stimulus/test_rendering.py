@@ -236,6 +236,56 @@ def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path):
     assert port.release() == ResourceReleaseReport(("visual_stimulus:glfw",))
 
 
+@pytest.mark.parametrize("cleanup_fails", [False, True])
+def test_wrong_adapter_rejection_requires_native_context_and_window_release(
+    monkeypatch, tmp_path, cleanup_fails
+):
+    from cephvr.platform.windows import nvidia_device
+    from cephvr.visual_stimulus.rendering import native
+    from cephvr.visual_stimulus.rendering.native_display import (
+        DisplayGpuUnavailableError,
+        NativeRenderingError,
+    )
+
+    selected = nvidia_device.NvidiaDevice(0, "GPU-board", "NVIDIA GeForce RTX 5060 Ti")
+    monkeypatch.setattr(nvidia_device, "sys", NS(platform="win32"))
+    monkeypatch.setattr(nvidia_device, "_enumerate_cuda_devices", lambda: [selected])
+    released, destroyed, terminated = [], [], []
+
+    def release():
+        released.append(True)
+        if cleanup_fails and len(released) == 1:
+            raise RuntimeError("context release unconfirmed")
+
+    context = NS(
+        info={"GL_VENDOR": "ATI Technologies Inc.", "GL_RENDERER": "AMD Radeon"},
+        screen=object(),
+        release=release,
+    )
+    monkeypatch.setattr(native, "attach_window_context", lambda _: context)
+    monkeypatch.setattr(native, "configure_window", lambda *_: None)
+    port = native.ModernGLPort(
+        tmp_path, announce=lambda *_: None, monitor_resolver=lambda *_: object()
+    )
+    port._glfw = NS(
+        create_window=lambda *_: object(),
+        get_current_context=lambda: None,
+        make_context_current=lambda *_: None,
+        destroy_window=destroyed.append,
+        terminate=lambda: terminated.append(True),
+    )
+    port._moderngl = object()
+    expected = NativeRenderingError if cleanup_fails else DisplayGpuUnavailableError
+    with pytest.raises(expected, match="AMD Radeon") as failure:
+        port.initialize_display(make_prepared_trial().display)
+    assert isinstance(failure.value, DisplayGpuUnavailableError) is not cleanup_fails
+    assert bool(port._outputs) is cleanup_fails
+    if cleanup_fails:
+        assert not destroyed and not terminated
+        assert not port.release().outstanding
+    assert destroyed and terminated and not port._outputs
+
+
 def test_linear_rate_integral_and_keyframe_evaluation() -> None:
     ramp = NS(kind="ramp", initial=0.0, slope_per_s=0.5)
     assert integrate_function(ramp, 0, 2_000_000_000) == pytest.approx(1.0)
@@ -704,6 +754,7 @@ def test_native_failed_gpu_release_keeps_context_for_cleanup_retry():
     port = ModernGLPort(Path("."), announce=lambda *_: None)
     port._glfw = NS(
         make_context_current=lambda _: None,
+        get_current_context=lambda: None,
         destroy_window=lambda _: calls.append("window"),
         terminate=lambda: calls.append("glfw"),
     )
@@ -770,7 +821,13 @@ def test_shared_context_wait_uses_unsigned_64_bit_ignored_timeout(monkeypatch):
     assert not pending
 
 
-def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
+@pytest.mark.parametrize(
+    ("pixel_format", "dtype"),
+    [("rgba8_bottom_up", "f1"), ("r10g10b10a2_le_bottom_up", "f4")],
+)
+def test_review_capture_clears_framebuffer_in_creation_order(
+    monkeypatch, pixel_format, dtype
+):
     from cephvr.visual_stimulus.rendering.capture import ReviewCapture
 
     gl = ModuleType("OpenGL.GL")
@@ -793,8 +850,14 @@ def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
     fbo = NS(
         use=lambda: events.append("use"), clear=lambda *_args: events.append("clear")
     )
+    texture_types = []
+
+    def allocate_texture(*_args, **kwargs):
+        texture_types.append(kwargs["dtype"])
+        return texture
+
     context = NS(
-        texture=lambda *_args, **_kwargs: texture,
+        texture=allocate_texture,
         framebuffer=lambda **_kwargs: fbo,
         program=lambda **_kwargs: {"source_tex": NS(value=None)},
         buffer=lambda *_args: NS(),
@@ -804,6 +867,105 @@ def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
     with pytest.raises(RuntimeError, match="reached PBO allocation"):
         capture.capture(
             (NS(output_id="one", texture_handle=NS(ctx=context)),),
-            NS(composite_width=2, composite_height=2, tiles=()),
+            NS(
+                composite_width=2,
+                composite_height=2,
+                tiles=(),
+                native_pixel_format=pixel_format,
+            ),
         )
     assert events == ["use", "clear"]
+    assert texture_types == [dtype]
+    capture._ensure_compositor(context, 2, 2, pixel_format)
+    assert texture_types == [dtype]
+    other = (
+        "r10g10b10a2_le_bottom_up"
+        if pixel_format == "rgba8_bottom_up"
+        else "rgba8_bottom_up"
+    )
+    with pytest.raises(RuntimeError, match="cannot change"):
+        capture._ensure_compositor(context, 2, 2, other)
+    with pytest.raises(ValueError, match="unsupported"):
+        capture._ensure_compositor(context, 2, 2, "unknown")
+
+
+@pytest.mark.parametrize("mapping", ["valid", "missing", "corrupted"])
+def test_review_capture_polls_fence_then_fills_owned_host_buffer(mapping):
+    import ctypes
+
+    from cephvr.visual_stimulus.rendering.capture import ReviewCapture, _Pending
+
+    events = []
+    signaled = False
+
+    expected = b"\x00\x01\x7f\xff\x02\x03\x80\xfe"
+    storage = (ctypes.c_ubyte * 8).from_buffer_copy(expected)
+
+    def read(target, offset, size, flags):
+        assert (target, offset, size, flags) == (1, 0, 8, 16)
+        events.append("map")
+        return None if mapping == "missing" else ctypes.addressof(storage)
+
+    def unmap(target):
+        assert target == 1
+        events.append("unmap")
+        storage[:] = bytes(8)
+        return mapping != "corrupted"
+
+    gl = NS(
+        GL_PIXEL_PACK_BUFFER=1,
+        GL_ALREADY_SIGNALED=2,
+        GL_CONDITION_SATISFIED=3,
+        GL_WAIT_FAILED=4,
+        GL_MAP_READ_BIT=16,
+        glClientWaitSync=lambda *_args: 2 if signaled else 0,
+        glBindBuffer=lambda *_args: None,
+        glMapBufferRange=read,
+        glUnmapBuffer=unmap,
+        glDeleteSync=lambda *_args: events.append("fence"),
+        glDeleteBuffers=lambda *_args: events.append("buffer"),
+    )
+    capture = ReviewCapture()
+    pending = _Pending(gl, 7, 8, 8)
+    capture._pending.append(pending)
+    assert capture.poll(pending) is None
+    assert not events
+    signaled = True
+    if mapping != "valid":
+        with pytest.raises(RuntimeError, match="mapping"):
+            capture.poll(pending)
+        assert capture._pending == [pending]
+        capture.release()
+        assert not capture._pending
+        assert events[-2:] == ["fence", "buffer"]
+        return
+    pixels = capture.poll(pending)
+    assert isinstance(pixels, bytearray)
+    assert pixels == expected
+    assert events == ["map", "unmap", "fence", "buffer"]
+    assert not capture._pending
+    with pytest.raises(TypeError, match="invalid pending"):
+        capture.poll(pending)
+
+
+def test_context_activation_checks_actual_pointer_before_skipping_rebind():
+    import ctypes
+
+    from cephvr.visual_stimulus.rendering.native_display import activate_window
+
+    target = ctypes.pointer(ctypes.c_int(1))
+    other = ctypes.pointer(ctypes.c_int(2))
+    current = ctypes.cast(target, ctypes.POINTER(ctypes.c_int))
+    bindings = []
+    glfw = NS(
+        get_current_context=lambda: current,
+        make_context_current=bindings.append,
+    )
+    activate_window(glfw, target)
+    assert not bindings
+    current = other
+    activate_window(glfw, target)
+    assert bindings == [target]
+    current = None
+    activate_window(glfw, target)
+    assert bindings == [target, target]

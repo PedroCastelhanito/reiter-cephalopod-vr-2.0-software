@@ -36,6 +36,7 @@ ROW_KEYS = {
 class SpikeGLXSnapshot:
     def __init__(self, panel: SpikeGLXPanel) -> None:
         self.panel = panel
+        self.draft_loaded = False
         self.files = ConfigurationFiles(
             panel,
             "SpikeGLX",
@@ -133,6 +134,7 @@ class SpikeGLXSnapshot:
 
     def restore(self, data: JSON) -> None:
         panel = self.panel
+        self.draft_loaded = True
         if data["host_reference"] != self.host():
             panel.console.appendPlainText(
                 "Loaded pulse mapping; saved host reference differs. The current startup host/pairing settings remain authoritative."

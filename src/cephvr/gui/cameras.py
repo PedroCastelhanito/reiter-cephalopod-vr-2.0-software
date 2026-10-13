@@ -332,6 +332,8 @@ class CamerasPanel(ResponsiveColumns):
         draft = self.selected
         if self.loading or not self.managed or not self.can_operate or draft is None:
             return
+        if self.snapshot_draft:
+            return
         if draft.role == "Unassigned":
             return
         clock = draft.values.get("trigger_clock", "")
@@ -361,13 +363,18 @@ class CamerasPanel(ResponsiveColumns):
 
     def set_participation(self, row: int, enabled: bool) -> None:
         draft = self.drafts[row]
-        if self.managed and self.can_operate and draft.role != "Unassigned":
+        if (
+            self.managed
+            and not self.snapshot_draft
+            and self.can_operate
+            and draft.role != "Unassigned"
+        ):
             self.pending_enable[draft.serial] = enabled
             self.enable_requested.emit(draft.serial, enabled)
             self.console.appendPlainText(
                 f"Requested {draft.role} {'enable' if enabled else 'disable'}; awaiting controller confirmation."
             )
-        elif self.can_edit:
+        elif self.can_edit_camera_settings:
             draft.enabled = enabled
             self.participation_changed.emit()
             self.drafts_changed.emit()
@@ -387,7 +394,7 @@ class CamerasPanel(ResponsiveColumns):
                 "Role unchanged: already assigned to another camera."
             )
             return
-        if self.managed:
+        if self.managed and not self.snapshot_draft:
             self.role_requested.emit(draft.serial, role)
             return
         draft.role = role
@@ -482,7 +489,13 @@ class CamerasPanel(ResponsiveColumns):
         self.connect_button.setEnabled(
             self.can_operate
             and draft is not None
-            and (not self.managed or bool(preview and preview.active))
+            and (
+                not self.managed
+                or bool(preview and preview.active)
+                or self.snapshot_draft
+                and draft.enabled
+                and draft.role in CAMERA_ROLES
+            )
         )
         self.connect_button.setText(
             "Disconnect" if draft and draft.connected else "Connect"

@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: EVIDENCE: warning producer/scope/revision differs
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

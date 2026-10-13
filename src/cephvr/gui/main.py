@@ -15,9 +15,10 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.controller_bridge import ControllerBridge
+from cephvr.gui.gui_history import GuiHistory, history_path
 from cephvr.gui.layouts import fit_window_to_screen
 from cephvr.gui.managed_cameras import ManagedCameras
-from cephvr.gui.managed_close import request_managed_close, save_failure_choice
+from cephvr.gui.managed_close import save_failure_choice
 from cephvr.gui.managed_configuration import ConfigurationPages, ManagedConfiguration
 from cephvr.gui.managed_configuration_transport import configuration_update_plan
 from cephvr.gui.managed_display import ManagedDisplayOperations
@@ -39,7 +40,11 @@ class ManagedGui(QObject):
     """Project authoritative state and forward explicit user intents."""
 
     def __init__(
-        self, window: ManagedDashboardWindow, bridge: ControllerBridge
+        self,
+        window: ManagedDashboardWindow,
+        bridge: ControllerBridge,
+        *,
+        gui_history_path: Path | None = None,
     ) -> None:
         super().__init__(window)
         self.window = window
@@ -54,6 +59,7 @@ class ManagedGui(QObject):
         self.control_ready = False
         self.auto_control_attempted = False
         self.close_pending = False
+        self.history = GuiHistory(window.snapshots, gui_history_path or history_path())
         self.state: pb.Snapshot | None = None
         self._inventory_identity: tuple[str, int] | None = None
         self.display_operations = ManagedDisplayOperations(
@@ -131,6 +137,7 @@ class ManagedGui(QObject):
             bridge,
             self.preview_viewers.viewer_state,
             lambda: preview_window_placement(window).SerializeToString(),
+            self.camera_submission_options,
         )
         cameras.inventory_refreshed.connect(self.refresh_camera_state)
         cameras.preview_requested.connect(self.preview_viewers.preview_visibility)
@@ -174,7 +181,6 @@ class ManagedGui(QObject):
         window.dashboard.preview_requested.connect(
             self.preview_viewers.preview_visibility
         )
-        window.dashboard.control_requested.connect(self.request_control)
         window.dashboard.action_requested.connect(self.request_dashboard_action)
         bridge.snapshot_received.connect(self.install_snapshot)
         bridge.connection_changed.connect(self.connection_changed)
@@ -185,6 +191,7 @@ class ManagedGui(QObject):
         bridge.command_finished.connect(self.display_operations.live.command_finished)
         bridge.connection_changed.connect(self.display_operations.live.disconnected)
         bridge.configuration_accepted.connect(self.configuration_accepted)
+        bridge.camera_configuration_accepted.connect(self.camera_configuration_accepted)
         bridge.spikeglx_inventory_received.connect(
             self.display_operations.install_inventory
         )
@@ -226,7 +233,10 @@ class ManagedGui(QObject):
         self.tracking_diagnostics.install_snapshot(None)
         if self.close_pending:
             self.close_pending = False
-            self._save_failed(reason or "Controller connection lost during save.")
+            self.window.dashboard.log_console.appendPlainText(
+                "GUI configuration saved; controller disconnected during history save."
+            )
+            self.window.finish_close()
             return
         if self.connected_once:
             QMessageBox.warning(
@@ -283,6 +293,40 @@ class ManagedGui(QObject):
         self.window.apply_view(view)
         self.tracking_diagnostics.install_snapshot(state)
         self.mcu.install(state, held and permitted)
+        if configuration_wired and not self.history.restore_attempted:
+            if state.session.phase in (
+                pb.SESSION_PHASE_CONFIGURATION,
+                pb.SESSION_PHASE_READY,
+            ):
+                try:
+                    restored = self.history.restore()
+                except (
+                    OSError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    IndexError,
+                    AttributeError,
+                ) as error:
+                    QMessageBox.warning(
+                        self.window,
+                        "GUI configuration not restored",
+                        f"Previous GUI configuration was preserved at {self.history.path}: {error}",
+                    )
+                else:
+                    if restored:
+                        self.configuration.dirty = True
+                        self.configuration.tracking_dirty = True
+                        self.configuration.edit_serial += 1
+                        self.window.dashboard.log_console.appendPlainText(
+                            "Previous GUI configuration restored as a local draft."
+                        )
+            else:
+                self.history.restore_attempted = True
+                self.history.restore_failed = self.history.path.exists()
+                self.window.dashboard.log_console.appendPlainText(
+                    "Controller session is active; previous GUI draft is preserved on disk."
+                )
         self.display_operations.install_calibration_state(
             state, launch_eligible=self._calibration_launch_eligible(state)
         )
@@ -392,13 +436,6 @@ class ManagedGui(QObject):
                     self.state.controller_generation,
                     self.state.SerializeToString(),
                 )
-        if (
-            action == "submit_configuration"
-            and self.close_pending
-            and status != "completed"
-        ):
-            self.close_pending = False
-            self._save_failed(message)
 
     def _calibration_launch_eligible(self, state: pb.Snapshot) -> bool:
         """Allow first-use calibration from accepted Configuration without renderer state."""
@@ -522,6 +559,44 @@ class ManagedGui(QObject):
             state.SerializeToString(),
         )
 
+    def camera_submission_options(self, key: str) -> dict[str, object]:
+        state = self.state
+        if (
+            state is None
+            or self.configuration.stale
+            or self.configuration.revision != state.configuration.revision
+        ):
+            raise ValueError("Camera configuration changed; reload before retrying.")
+        panel = self.window.devices.microcontroller
+        return {
+            "generation": state.controller_generation,
+            "base_revision": state.configuration.revision,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "pin": panel.pin_editors[key].text().strip(),
+            "port": str(panel.port.currentData() or ""),
+        }
+
+    def camera_configuration_accepted(self, base_revision: int, payload: bytes) -> None:
+        state = pb.Snapshot.FromString(payload)
+        if self.state is None or (
+            self.state.controller_generation != state.controller_generation
+            or self.state.configuration.revision > state.configuration.revision
+        ):
+            return
+        if not self.configuration.note_camera_revision(state, base_revision):
+            return
+        if (
+            self.state.configuration.revision == state.configuration.revision
+            and self.state.state_revision >= state.state_revision
+        ):
+            state = self.state
+            payload = state.SerializeToString()
+        self.install_snapshot(
+            self._connection_epoch, state.controller_generation, payload
+        )
+
     def reload_controller_configuration(self) -> None:
         if self.state is None or not self.configuration.stale:
             return
@@ -539,6 +614,8 @@ class ManagedGui(QObject):
             )
             return
         self.reload_configuration.setEnabled(False)
+        self.window.devices.spikeglx.snapshots.draft_loaded = False
+        self._inventory_identity = None
         self.install_snapshot(
             self._connection_epoch,
             self.state.controller_generation,
@@ -556,15 +633,6 @@ class ManagedGui(QObject):
         ):
             self.bridge.request("take_control", takeover=True)
 
-    def request_control(self) -> None:
-        state = self.state
-        if state is None:
-            return
-        if state.control.holder_client_id:
-            self.confirm_takeover()
-        else:
-            self.bridge.request("take_control")
-
     def refresh_camera_state(self) -> None:
         if self.state is not None:
             self.cameras._camera_revision = -1
@@ -578,7 +646,13 @@ class ManagedGui(QObject):
     def command_finished(self, action: str, success: bool, message: str) -> None:
         rendered = f"{action}: {message}" if success else f"{action} failed: {message}"
         self.window.dashboard.log_console.appendPlainText(rendered)
-        if action in {"mcu", "mcu_upload", "save_mcu_pins"}:
+        if action in {
+            "mcu",
+            "prepare_mcu_test",
+            "mcu_upload",
+            "save_mcu_pins",
+            "add_mcu_output",
+        }:
             self.mcu.finished(action, success, message)
             if action == "save_mcu_pins" and self.state is not None:
                 self.mcu.revision = -1
@@ -595,6 +669,8 @@ class ManagedGui(QObject):
             "save_camera_settings",
             "set_camera_enabled",
             "assign_camera_role",
+            "prepare_camera",
+            "add_mcu_output",
         }:
             self.refresh_camera_state()
         if action == "spikeglx_connection":
@@ -612,45 +688,35 @@ class ManagedGui(QObject):
             if success:
                 self.window.finish_close()
             else:
-                self._save_failed(message)
+                self.window.dashboard.log_console.appendPlainText(
+                    f"GUI configuration saved; controller history save failed: {message}"
+                )
+                self.window.finish_close()
 
     def request_close(self) -> None:
         if self.close_pending:
             return
-        result = request_managed_close(
-            self.state,
-            self.configuration,
-            send=self.bridge.request,
-            confirm_discard=self.confirm_discard_local_draft,
-            log=self.window.dashboard.log_console.appendPlainText,
-        )
-        if result.kind == "failed":
-            self._save_failed(result.message)
-            return
-        if result.kind == "cancelled":
-            return
-        self.close_pending = True
-
-    def confirm_discard_local_draft(self) -> bool:
-        dialog = QMessageBox(self.window)
-        dialog.setIcon(QMessageBox.Icon.Warning)
-        dialog.setWindowTitle("Unsent configuration draft")
-        dialog.setText("Closing now discards the local configuration draft.")
-        dialog.setInformativeText(
-            "The controller history will contain only its last accepted configuration."
-        )
-        discard = dialog.addButton(
-            "Close and discard draft", QMessageBox.ButtonRole.DestructiveRole
-        )
-        dialog.addButton("Keep editing", QMessageBox.ButtonRole.RejectRole)
-        dialog.exec()
-        return dialog.clickedButton() is discard
-
-    def _save_failed(self, reason: str) -> None:
-        choice = save_failure_choice(self.window, reason)
-        if choice == "retry":
-            self.request_close()
-        elif choice == "discard":
+        while True:
+            try:
+                self.history.save()
+                break
+            except (
+                OSError,
+                ValueError,
+                TypeError,
+                KeyError,
+                IndexError,
+                AttributeError,
+            ) as error:
+                choice = save_failure_choice(self.window, str(error))
+                if choice == "retry":
+                    continue
+                if choice == "discard":
+                    self.window.finish_close()
+                return
+        if self.state is not None and self.bridge.request("save_configuration_history"):
+            self.close_pending = True
+        else:
             self.window.finish_close()
 
     def shutdown(self) -> None:

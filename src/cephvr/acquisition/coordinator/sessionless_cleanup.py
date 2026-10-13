@@ -182,7 +182,11 @@ class SessionlessCleanup:
             invalidate_released_idle_proof(self.pulse)
             await self.serial.cancel_on_reservations(deadline_ns=deadline_ns)
             evidence = await self.serial.off(
-                (camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING),
+                (
+                    camera.CAMERA_ROLE_BEHAVIORAL,
+                    camera.CAMERA_ROLE_TRACKING,
+                    camera.CAMERA_ROLE_EYE_TRACKING,
+                ),
                 scheduled_boundary_ns=None,
                 stop_issued_ns=self.clock(),
                 deadline_ns=deadline_ns,
@@ -220,7 +224,7 @@ def _outputs_off(state: mcu.MicrocontrollerState) -> bool:
         state.HasField(role)
         and getattr(state, role).HasField("running")
         and not getattr(state, role).running
-        for role in ("behavioral", "tracking")
+        for role in ("behavioral", "tracking", "eye_tracking")
     )
 
 

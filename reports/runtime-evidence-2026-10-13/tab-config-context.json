@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-13",
+  "scope": "verify existing per-tab Save/Load and full GUI configuration; no production changes",
+  "governing_decisions": [
+    "G01",
+    "E03",
+    "E07",
+    "ARCH-002"
+  ],
+  "base_git_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "worktree_state": "uncommitted; concurrent unrelated edits retained",
+  "test_source_sha256": "0c3e0914299b17c450ae16ce8f89fd57d3921acd8dff619df5468b0db1358b0b",
+  "method": "Windows Python3.11/PyQt6 with QT_QPA_PLATFORM=offscreen; click actual Save/Load buttons, select temporary UTF-8 JSON paths, accept Qt widget dialogs, load into fresh matching-inventory GUI",
+  "owners": [
+    "Protocol",
+    "Cameras",
+    "Microcontroller",
+    "Projectors",
+    "SpikeGLX",
+    "Tracking",
+    "full GUI/sidebar including Dashboard"
+  ],
+  "eye_projector_flip": "Three synthetic camera identities including Eye tracking; pin8 and enabled Projector flip pin2 survive MCU and full GUI file round trips",
+  "checks": {
+    "buttons": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "19",
+      "time": "12.972",
+      "timestamp": "2026-10-13T11:04:00.421711+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "regression": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "54",
+      "time": "29.094",
+      "timestamp": "2026-10-13T11:05:18.423459+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    }
+  },
+  "static": "Ruff check/format owning test module, boundaries666/zero violations and whitespace pass; existing cohesion advisories reviewed without production changes",
+  "limits": "No real controller, COM/firmware/camera/SpikeGLX commands; no native desktop file-dialog visual acceptance. Existing authority, active-device, inventory matching and informational SpikeGLX startup-host semantics remain unchanged."
+}

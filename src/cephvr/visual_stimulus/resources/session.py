@@ -64,11 +64,11 @@ class ReviewEncodingProvider(Protocol):
 
 
 def review_capture_cpu_bytes(width: int, height: int, capture_slots: int) -> int:
-    """Bound admitted images, retained source, readback copy and row scratch."""
+    """Bound slots, retained padding, readback copy, pipe copy and row scratch."""
     if min(width, height, capture_slots) <= 0:
         raise ValueError("positive review capture dimensions and slots required")
     frame_bytes = width * height * 4
-    return frame_bytes * (capture_slots + 2) + width * 4
+    return frame_bytes * (capture_slots + 3) + (height // 2) * width * 4
 
 
 class NativePreparation:
@@ -145,6 +145,16 @@ class NativePreparation:
 
         return register
 
+    def _begin_resource_scope(self) -> None:
+        # Idempotent cleanup receipts belong to the retired preparation. Never
+        # discard them while a source/consumer still needs cleanup retries.
+        if (
+            not self._resource_keys
+            and not self._protected_sources
+            and self.video_playback is None
+        ):
+            self._released_resource_keys.clear()
+
     def prepare_display(
         self,
         request: visual_stimulus_messages.InitializeDisplay,
@@ -153,6 +163,7 @@ class NativePreparation:
     ) -> tuple[DisplayProfile, PreparedCalibration]:
         """Protect and validate display correction files without touching GL."""
         self._check(deadline_ns)
+        self._begin_resource_scope()
         if not request.asset_root:
             raise ValueError("display calibration requires the adopted asset_root")
         display = parse_display_json(
@@ -290,6 +301,7 @@ class NativePreparation:
             )
         self._check(deadline_ns)
         self._deadline_ns = deadline_ns
+        self._begin_resource_scope()
         if not request.HasField("session") or not request.session.HasField(
             "configuration"
         ):

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// A11 protocol v3 for the COM8 Arduino Uno. Installation is manual.
+// A11 protocol v4 for the COM8 Arduino Uno. Installation is manual.
 // Timer1 owns camera edges; serial parsing and diagnostics stay in loop().
 namespace {
 
@@ -23,8 +23,9 @@ struct Output {
   float appliedHz;
 };
 
-Output outputs[2] = {{0, 0, 0, false, false, false, 0, 0},
-                     {0, 0, 0, false, false, false, 0, 0}};
+constexpr uint8_t kOutputCount = 3;
+const char *const kRoles[kOutputCount] = {"behavioral", "tracking", "eye_tracking"};
+Output outputs[kOutputCount] = {};
 char line[kLineLimit];
 size_t lineLength = 0;
 bool discarding = false;
@@ -44,7 +45,7 @@ void countDiagnosticRise() {
 }
 
 ISR(TIMER1_COMPA_vect) {
-  for (uint8_t i = 0; i < 2; ++i) {
+  for (uint8_t i = 0; i < kOutputCount; ++i) {
     Output &out = outputs[i];
     if (!out.running) continue;
     out.phase += out.step;
@@ -81,6 +82,7 @@ void stopDiagnostic() {
   if (!diagnosticActive) return;
   if (strcmp(diagnosticKind, "behavioral") == 0) stopOutput(0);
   if (strcmp(diagnosticKind, "tracking") == 0) stopOutput(1);
+  if (strcmp(diagnosticKind, "eye_tracking") == 0) stopOutput(2);
   if (strcmp(diagnosticKind, "trial_state") == 0) digitalWrite(diagnosticPin, LOW);
   if (strcmp(diagnosticKind, "projector_flip") == 0)
     detachInterrupt(digitalPinToInterrupt(diagnosticPin));
@@ -95,6 +97,7 @@ void serviceDiagnostic() {
 void stopAll() {
   stopOutput(0);
   stopOutput(1);
+  stopOutput(2);
   stopDiagnostic();
 }
 
@@ -143,50 +146,72 @@ const char *field(char *const *keys, char *const *values, uint8_t count,
   return nullptr;
 }
 
+class ReplySize : public Print {
+ public:
+  size_t count = 0;
+  size_t write(uint8_t) override { ++count; return 1; }
+};
+
 void error(const char *id, const __FlashStringHelper *code) {
+  ReplySize size;
+  size.print(F("ERR"));
+  if (id) { size.print(F(" id=")); size.print(id); }
+  size.print(F(" code=")); size.println(code);
+  if (size.count > kLineLimit) {
+    Serial.println(F("ERR code=REPLY_TOO_LONG")); return;
+  }
   Serial.print(F("ERR"));
   if (id) { Serial.print(F(" id=")); Serial.print(id); }
   Serial.print(F(" code=")); Serial.println(code);
 }
 
-void prefix(const char *id) { Serial.print(F("OK id=")); Serial.print(id); }
+void prefix(const char *id, Print &sink = Serial) { sink.print(F("OK id=")); sink.print(id); }
 
-void compact(const char *id) {
-  prefix(id);
-  Serial.print(F(" behavioral_running=")); Serial.print(outputs[0].running ? 1 : 0);
-  Serial.print(F(" tracking_running=")); Serial.print(outputs[1].running ? 1 : 0);
-  Serial.print(F(" watchdog_stopped=")); Serial.println(watchdogStopped ? 1 : 0);
+
+
+void compact(const char *id, Print &sink = Serial) {
+  prefix(id, sink);
+  sink.print(F(" behavioral_running=")); sink.print(outputs[0].running ? 1 : 0);
+  sink.print(F(" tracking_running=")); sink.print(outputs[1].running ? 1 : 0);
+  sink.print(F(" eye_tracking_running=")); sink.print(outputs[2].running ? 1 : 0);
+  sink.print(F(" watchdog_stopped=")); sink.println(watchdogStopped ? 1 : 0);
 }
 
-void status(const char *id) {
-  prefix(id);
-  Serial.print(F(" valid=")); Serial.print(configured ? 1 : 0);
-  Serial.print(F(" watchdog_stopped=")); Serial.print(watchdogStopped ? 1 : 0);
-  Serial.print(F(" watchdog_ms=")); Serial.print(configured ? watchdogMs : 0);
-  for (uint8_t i = 0; i < 2; ++i) {
-    Serial.print(i ? F(" tracking_enabled=") : F(" behavioral_enabled="));
-    Serial.print(outputs[i].enabled ? 1 : 0);
-    Serial.print(i ? F(" tracking_running=") : F(" behavioral_running="));
-    Serial.print(outputs[i].running ? 1 : 0);
-    if (outputs[i].enabled) {
-      Serial.print(i ? F(" tracking_pin=D") : F(" behavioral_pin=D"));
-      Serial.print(outputs[i].pin);
-      Serial.print(i ? F(" tracking_applied_hz=") : F(" behavioral_applied_hz="));
-      Serial.print(outputs[i].appliedHz, 9);
+void status(const char *id, Print &sink = Serial, const Output *state = outputs,
+            bool valid = configured, uint32_t timeout = watchdogMs) {
+  prefix(id, sink);
+  sink.print(F(" valid=")); sink.print(valid ? 1 : 0);
+  sink.print(F(" watchdog_stopped=")); sink.print(watchdogStopped ? 1 : 0);
+  sink.print(F(" watchdog_ms=")); sink.print(valid ? timeout : 0);
+  for (uint8_t i = 0; i < kOutputCount; ++i) {
+    sink.print(' '); sink.print(kRoles[i]); sink.print(F("_enabled="));
+    sink.print(state[i].enabled ? 1 : 0);
+    sink.print(' '); sink.print(kRoles[i]); sink.print(F("_running="));
+    sink.print(state[i].running ? 1 : 0);
+    if (state[i].enabled) {
+      sink.print(' '); sink.print(kRoles[i]); sink.print(F("_pin=D"));
+      sink.print(state[i].pin);
+      sink.print(' '); sink.print(kRoles[i]); sink.print(F("_applied_hz="));
+      sink.print(state[i].appliedHz, 9);
     }
   }
-  Serial.println();
+  sink.println();
+}
+
+void diagnosticFields(const char *id, Print &sink, bool active,
+                      const char *kind, uint8_t pin, uint32_t edges) {
+  prefix(id, sink);
+  sink.print(F(" active=")); sink.print(active ? 1 : 0);
+  sink.print(F(" kind=")); sink.print(kind);
+  sink.print(F(" pin=D")); sink.print(pin);
+  sink.print(F(" edges=")); sink.println(edges);
 }
 
 void diagnosticReply(const char *id) {
   noInterrupts();
   const uint32_t edges = diagnosticEdges;
   interrupts();
-  prefix(id);
-  Serial.print(F(" active=")); Serial.print(diagnosticActive ? 1 : 0);
-  Serial.print(F(" kind=")); Serial.print(diagnosticKind);
-  Serial.print(F(" pin=D")); Serial.print(diagnosticPin);
-  Serial.print(F(" edges=")); Serial.println(edges);
+  diagnosticFields(id, Serial, diagnosticActive, diagnosticKind, diagnosticPin, edges);
 }
 
 bool knownFields(char *const *keys, uint8_t count, const char *const *allowed,
@@ -216,17 +241,22 @@ void command(char *buffer) {
   }
   const char *id = field(keys, values, count, "id");
   if (!id) { error(nullptr, F("MISSING_FIELD")); return; }
-  if (strlen(id) > 240) { error(nullptr, F("REPLY_TOO_LONG")); return; }
+
   if (strcmp(verb, "CAPS") == 0) {
     const char *allowed[] = {"id"};
     if (!knownFields(keys, count, allowed, 1)) { error(id, F("UNKNOWN_FIELD")); return; }
+    ReplySize size; prefix(id, size); size.println(F(" protocol=4 firmware=cephvr2_uno_3 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     lastRequestMs = millis(); prefix(id);
-    Serial.println(F(" protocol=3 firmware=cephvr2_uno_2 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
+    Serial.println(F(" protocol=4 firmware=cephvr2_uno_3 pins=D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12,D13 input_pins=D2,D3 min_hz=0.1 max_hz=100.0 watchdog_min_ms=500 watchdog_max_ms=10000"));
     return;
   }
   if (strcmp(verb, "STATUS") == 0 || strcmp(verb, "PING") == 0) {
     const char *allowed[] = {"id"};
     if (!knownFields(keys, count, allowed, 1)) { error(id, F("UNKNOWN_FIELD")); return; }
+    ReplySize size;
+    if (strcmp(verb, "STATUS") == 0) status(id, size); else compact(id, size);
+    if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     lastRequestMs = millis();
     if (strcmp(verb, "STATUS") == 0) status(id); else compact(id);
     return;
@@ -234,8 +264,8 @@ void command(char *buffer) {
   if (strcmp(verb, "CONFIGURE") == 0) {
     const char *allowed[] = {"id", "watchdog_ms", "behavioral_enabled",
       "behavioral_pin", "behavioral_hz", "tracking_enabled", "tracking_pin",
-      "tracking_hz"};
-    if (!knownFields(keys, count, allowed, 8) || diagnosticActive) {
+      "tracking_hz", "eye_tracking_enabled", "eye_tracking_pin", "eye_tracking_hz"};
+    if (!knownFields(keys, count, allowed, 11) || diagnosticActive) {
       error(id, F("UNKNOWN_FIELD")); return;
     }
     const char *watchdog = field(keys, values, count, "watchdog_ms");
@@ -244,53 +274,63 @@ void command(char *buffer) {
         requestedWatchdog < 500 || requestedWatchdog > 10000) {
       error(id, F("INVALID_WATCHDOG")); return;
     }
-    uint8_t requestedPin[2] = {0, 0};
-    uint32_t requestedStep[2] = {0, 0};
-    float requestedRate[2] = {0, 0};
-    bool requestedEnabled[2] = {false, false};
-    for (uint8_t i = 0; i < 2; ++i) {
-      const char *enabledName = i ? "tracking_enabled" : "behavioral_enabled";
-      const char *pinName = i ? "tracking_pin" : "behavioral_pin";
-      const char *rateName = i ? "tracking_hz" : "behavioral_hz";
+    Output requested[kOutputCount] = {};
+    for (uint8_t i = 0; i < kOutputCount; ++i) {
+      char enabledName[32];
+      snprintf(enabledName, sizeof(enabledName), "%s_enabled", kRoles[i]);
+      char pinName[32];
+      snprintf(pinName, sizeof(pinName), "%s_pin", kRoles[i]);
+      char rateName[32];
+      snprintf(rateName, sizeof(rateName), "%s_hz", kRoles[i]);
       const char *enabled = field(keys, values, count, enabledName);
       const char *pinText = field(keys, values, count, pinName);
       const char *rateText = field(keys, values, count, rateName);
       if (!enabled || (strcmp(enabled, "0") && strcmp(enabled, "1"))) {
         error(id, F("BAD_VALUE")); return;
       }
-      requestedEnabled[i] = strcmp(enabled, "1") == 0;
-      if (requestedEnabled[i]) {
-        if (!parsePin(pinText, requestedPin[i]) ||
-            !parseRate(rateText, requestedRate[i], requestedStep[i])) {
+      requested[i].enabled = strcmp(enabled, "1") == 0;
+      if (requested[i].enabled) {
+        if (!parsePin(pinText, requested[i].pin) ||
+            !parseRate(rateText, requested[i].requestedHz, requested[i].step)) {
           error(id, F("INVALID_PIN")); return;
         }
       } else if (pinText || rateText) { error(id, F("BAD_VALUE")); return; }
     }
-    if (requestedEnabled[0] && requestedEnabled[1] &&
-        requestedPin[0] == requestedPin[1]) { error(id, F("TIMER_CONFLICT")); return; }
-    const bool resume[2] = {outputs[0].running && requestedEnabled[0],
-                            outputs[1].running && requestedEnabled[1]};
+    for (uint8_t i = 0; i < kOutputCount; ++i)
+      requested[i].appliedHz = float(double(requested[i].step) * kTickHz / 4294967296.0);
+    ReplySize size; status(id, size, requested, true, requestedWatchdog);
+    if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
+    bool resume[kOutputCount] = {};
+    for (uint8_t i = 0; i < kOutputCount; ++i) {
+      resume[i] = outputs[i].running && requested[i].enabled;
+      for (uint8_t j = 0; j < i; ++j)
+        if (requested[i].enabled && requested[j].enabled && requested[i].pin == requested[j].pin) {
+          error(id, F("TIMER_CONFLICT")); return;
+        }
+    }
     stopAll();
-    for (uint8_t i = 0; i < 2; ++i) {
-      outputs[i].enabled = requestedEnabled[i];
-      outputs[i].pin = requestedPin[i];
-      outputs[i].step = requestedStep[i];
-      outputs[i].requestedHz = requestedRate[i];
-      outputs[i].appliedHz = float(double(requestedStep[i]) * kTickHz / 4294967296.0);
-      if (requestedEnabled[i]) {
-        pinMode(requestedPin[i], OUTPUT);
-        digitalWrite(requestedPin[i], LOW);
+    for (uint8_t i = 0; i < kOutputCount; ++i) {
+      outputs[i].enabled = requested[i].enabled;
+      outputs[i].pin = requested[i].pin;
+      outputs[i].step = requested[i].step;
+      outputs[i].requestedHz = requested[i].requestedHz;
+      outputs[i].appliedHz = float(double(requested[i].step) * kTickHz / 4294967296.0);
+      if (requested[i].enabled) {
+        pinMode(requested[i].pin, OUTPUT);
+        digitalWrite(requested[i].pin, LOW);
       }
     }
     watchdogMs = requestedWatchdog; configured = true; watchdogStopped = false;
     lastRequestMs = millis();
-    for (uint8_t i = 0; i < 2; ++i) if (resume[i]) startOutput(i);
+    for (uint8_t i = 0; i < kOutputCount; ++i) if (resume[i]) startOutput(i);
     status(id); return;
   }
   if (strcmp(verb, "DIAG_STATUS") == 0 || strcmp(verb, "DIAG_STOP") == 0) {
     const char *allowed[] = {"id"};
     if (!knownFields(keys, count, allowed, 1)) { error(id, F("UNKNOWN_FIELD")); return; }
     if (!*diagnosticKind) { error(id, F("NOT_CONFIGURED")); return; }
+    ReplySize size; diagnosticFields(id, size, diagnosticActive, diagnosticKind, diagnosticPin, UINT32_MAX);
+    if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     lastRequestMs = millis();
     if (strcmp(verb, "DIAG_STOP") == 0) stopDiagnostic();
     else serviceDiagnostic();
@@ -308,11 +348,12 @@ void command(char *buffer) {
     const char *hz = field(keys, values, count, "hz");
     uint8_t pin = 0;
     if (!kind || !parsePin(pinText, pin) || !duration || strcmp(duration, "2000") ||
-        diagnosticActive || outputs[0].running || outputs[1].running) {
+        diagnosticActive || outputs[0].running || outputs[1].running || outputs[2].running) {
       error(id, F("BAD_VALUE")); return;
     }
     const int role = strcmp(kind, "behavioral") == 0 ? 0 :
-                     strcmp(kind, "tracking") == 0 ? 1 : -1;
+                     strcmp(kind, "tracking") == 0 ? 1 :
+                     strcmp(kind, "eye_tracking") == 0 ? 2 : -1;
     float rate = 0; uint32_t step = 0;
     if ((role >= 0 && !parseRate(hz, rate, step)) || (role < 0 && hz)) {
       error(id, F("BAD_VALUE")); return;
@@ -328,10 +369,12 @@ void command(char *buffer) {
     if (strcmp(kind, "projector_flip") == 0 && pin != 2 && pin != 3) {
       error(id, F("INVALID_PIN")); return;
     }
-    for (uint8_t i = 0; i < 2; ++i)
+    for (uint8_t i = 0; i < kOutputCount; ++i)
       if (outputs[i].enabled && outputs[i].pin == pin && role != i) {
         error(id, F("INVALID_PIN")); return;
       }
+    ReplySize size; diagnosticFields(id, size, true, kind, pin, UINT32_MAX);
+    if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
     strncpy(diagnosticKind, kind, sizeof(diagnosticKind) - 1);
     diagnosticKind[sizeof(diagnosticKind) - 1] = '\0';
     diagnosticPin = pin;
@@ -351,34 +394,35 @@ void command(char *buffer) {
     diagnosticReply(id);
     return;
   }
-  if (strcmp(verb, "OFF") == 0) {
-    const char *allowed[] = {"id", "behavioral_selected", "tracking_selected"};
-    if (!knownFields(keys, count, allowed, 3)) { error(id, F("UNKNOWN_FIELD")); return; }
-    const char *b = field(keys, values, count, "behavioral_selected");
-    const char *t = field(keys, values, count, "tracking_selected");
-    if (!b || !t || (strcmp(b, "0") && strcmp(b, "1")) ||
-        (strcmp(t, "0") && strcmp(t, "1")) || (!strcmp(b, "0") && !strcmp(t, "0"))) {
-      error(id, F("BAD_VALUE")); return;
+  if (strcmp(verb, "OFF") == 0 || strcmp(verb, "ON") == 0) {
+    const bool start = strcmp(verb, "ON") == 0;
+    ReplySize size; compact(id, size);
+    if (size.count > kLineLimit) { error(id, F("REPLY_TOO_LONG")); return; }
+    const char *allowed[] = {"id", "behavioral_selected", "tracking_selected", "eye_tracking_selected"};
+    if (!knownFields(keys, count, allowed, 4)) { error(id, F("UNKNOWN_FIELD")); return; }
+    bool selected[kOutputCount] = {};
+    bool any = false;
+    for (uint8_t i = 0; i < kOutputCount; ++i) {
+      char name[32];
+      snprintf(name, sizeof(name), "%s_selected", kRoles[i]);
+      const char *value = field(keys, values, count, name);
+      if (!value || (strcmp(value, "0") && strcmp(value, "1"))) {
+        error(id, F("BAD_VALUE")); return;
+      }
+      selected[i] = strcmp(value, "1") == 0;
+      any = any || selected[i];
+      if (start && selected[i] && !outputs[i].enabled) {
+        error(id, F("NOT_CONFIGURED")); return;
+      }
     }
-    if (!strcmp(b, "1")) stopOutput(0);
-    if (!strcmp(t, "1")) stopOutput(1);
-    lastRequestMs = millis(); compact(id); return;
-  }
-  if (strcmp(verb, "ON") == 0) {
-    const char *allowed[] = {"id", "behavioral_selected", "tracking_selected"};
-    if (!knownFields(keys, count, allowed, 3)) { error(id, F("UNKNOWN_FIELD")); return; }
-    const char *b = field(keys, values, count, "behavioral_selected");
-    const char *t = field(keys, values, count, "tracking_selected");
-    if (!configured || watchdogStopped || diagnosticActive || !b || !t ||
-        (strcmp(b, "0") && strcmp(b, "1")) ||
-        (strcmp(t, "0") && strcmp(t, "1")) ||
-        (!strcmp(b, "0") && !strcmp(t, "0")) ||
-        (!strcmp(b, "1") && !outputs[0].enabled) ||
-        (!strcmp(t, "1") && !outputs[1].enabled)) {
+    if (!any || (start && (!configured || watchdogStopped || diagnosticActive))) {
       error(id, F("NOT_CONFIGURED")); return;
     }
-    if (!strcmp(b, "1") && outputs[0].enabled && !outputs[0].running) startOutput(0);
-    if (!strcmp(t, "1") && outputs[1].enabled && !outputs[1].running) startOutput(1);
+    for (uint8_t i = 0; i < kOutputCount; ++i) {
+      if (!selected[i]) continue;
+      if (!start) stopOutput(i);
+      else if (!outputs[i].running) startOutput(i);
+    }
     lastRequestMs = millis(); compact(id); return;
   }
   error(id, F("BAD_COMMAND"));
@@ -388,7 +432,8 @@ void command(char *buffer) {
 
 void setup() {
   Serial.begin(115200);
-  for (uint8_t pin = 2; pin <= 13; ++pin) { pinMode(pin, OUTPUT); digitalWrite(pin, LOW); }
+  // Unassigned pins may be external inputs; only CONFIGURE/DIAG_START drives outputs.
+  for (uint8_t pin = 2; pin <= 13; ++pin) { pinMode(pin, INPUT); digitalWrite(pin, LOW); }
   TCCR1A = 0; TCCR1B = 0; TCNT1 = 0; OCR1A = kTickTop;
   TCCR1B = _BV(WGM12) | _BV(CS11);
   TIMSK1 = _BV(OCIE1A);

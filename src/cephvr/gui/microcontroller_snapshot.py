@@ -13,6 +13,7 @@ from cephvr.gui.configuration_files import (
     fields,
     text,
 )
+from cephvr.gui.pin_numbers import firmware_pin
 
 if TYPE_CHECKING:
     from cephvr.gui.microcontroller import MicrocontrollerPanel
@@ -59,15 +60,15 @@ class MicrocontrollerSnapshot:
             "port": str(panel.port.currentData() or ""),
             "firmware_path": panel.firmware.editor.text(),
             "trial_state": {
-                "pin": panel.trial_pin.text(),
+                "pin": firmware_pin(panel.trial_pin.text()),
                 "enabled": panel.enable_controls["trial-state"].isChecked(),
             },
             "projector_flip": {
-                "pin": panel.flip_pin.text(),
+                "pin": firmware_pin(panel.flip_pin.text()),
                 "enabled": panel.enable_controls["projector-flip"].isChecked(),
             },
             "camera_pins": {
-                camera.key: panel.pin_editors[camera.key].text()
+                camera.key: firmware_pin(panel.pin_editors[camera.key].text())
                 for camera in panel.camera_rows
             },
             "camera_enabled": {
@@ -148,19 +149,23 @@ class MicrocontrollerSnapshot:
                 "projector_flip_enabled",
             ),
         ):
-            pin = editor.text().strip()
+            pin = firmware_pin(editor.text())
             if pin:
                 setattr(pulses, pin_name, pin)
             else:
                 pulses.ClearField(pin_name)
             setattr(pulses, enable_name, panel.enable_controls[key].isChecked())
         for camera in panel.camera_rows:
-            if camera.role not in ("Behavior cam", "Tracking cam"):
+            if camera.role not in ("Behavior cam", "Tracking cam", "Eye tracking"):
                 continue
             pulse = (
-                pulses.behavioral if camera.role == "Behavior cam" else pulses.tracking
+                pulses.behavioral
+                if camera.role == "Behavior cam"
+                else pulses.tracking
+                if camera.role == "Tracking cam"
+                else pulses.eye_tracking
             )
-            pin = panel.pin_editors[camera.key].text().strip()
+            pin = firmware_pin(panel.pin_editors[camera.key].text())
             if pin:
                 pulse.pin = pin
             else:

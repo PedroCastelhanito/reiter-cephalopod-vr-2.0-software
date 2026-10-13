@@ -9,6 +9,7 @@ from typing import Any
 from PyQt6.QtCore import QIODevice, QSaveFile
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QLineEdit
 
+from cephvr.gui.pin_numbers import firmware_pin, pin_number
 from cephvr.gui.protocol_document import TrialDraft
 from cephvr.gui.protocol_history import EditHistory
 from cephvr.gui.window import DashboardWindow
@@ -52,7 +53,7 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
                 "enabled": camera.enabled,
                 "values": dict(camera.values),
                 "record": window.recordings.record[camera.key].isChecked(),
-                "pin": mcu.pins.get(camera.key, ""),
+                "pin": firmware_pin(mcu.pins.get(camera.key, "")),
             }
             for camera in cameras.drafts
         ],
@@ -199,7 +200,7 @@ def _restore(
         draft.role = item["role"]
         draft.enabled = item["enabled"]
         draft.values = dict(item["values"])
-        mcu.pins[draft.key] = item["pin"]
+        mcu.pins[draft.key] = pin_number(item["pin"])
     cameras.populate_inventory()
     if cameras.drafts:
         cameras.table.selectRow(0)

@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_status": "dirty shared working tree; source hashes identify edited files",
+  "source_sha256": {
+    "src/cephvr/gui/calibration_arena.py": "87d8f5e366ce17696ee6cf479cdbd85a08e780a456cc546442c2c2a4ef121d06",
+    "tests/gui/test_dashboard.py": "eeac3617a40fed8516a49e505c4b29110ca32d583d30a09c659741829ba25ca8"
+  },
+  "governing_decisions": [
+    "G01",
+    "V15",
+    "ARCH-002"
+  ],
+  "method": "isolated offscreen Qt version3 owner-file load to calibration4/wrapper7; synthetic monitor bindings; reference-bar diagnostic bundle and backend GLB parsing",
+  "regression_command": "pytest tests/gui/test_dashboard.py -q -k \"calibration_arena_uses or calibration_identity_profiles or old_projector_snapshot or measured_affine_profiles\"",
+  "result": "8 passed,434 deselected,2.82s",
+  "checks": [
+    "ruff check/format2 files passed",
+    "Win32 mypy exporter passed",
+    "backend boundaries667/zero violations",
+    "git diff --check passed"
+  ],
+  "limits": [
+    "Owner source file unchanged",
+    "No runtime restart/display command",
+    "No native/optical calibration acceptance"
+  ],
+  "artifacts": [
+    "calibration-version-tests.xml",
+    "calibration-version-owner-file.json",
+    "calibration-version-bundle/calibration/rig_geometry_grid.glb"
+  ]
+}

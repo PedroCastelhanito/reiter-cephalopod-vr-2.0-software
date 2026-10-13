@@ -197,6 +197,8 @@ class ProtocolPage(QWidget):
             )
         if not drafts:
             drafts = [TrialDraft("Add a trial", grouped_program(blank_program()))]
+        for draft in drafts:
+            draft.group_for_editing()
         seen_gaps: set[int] = set()
         for gap in configuration.gaps:
             if (
@@ -233,6 +235,8 @@ class ProtocolPage(QWidget):
         editor.configuration_schedule_empty = self._schedule_empty
         editor.histories = [EditHistory() for _ in drafts]
         editor.index = editor.node_index = 0
+        editor.scope = ()
+        editor.selected_paths = ()
         editor.trials.blockSignals(True)
         editor.trials.clear()
         editor.trials.addItems([draft.name for draft in drafts])
@@ -273,7 +277,9 @@ class ProtocolPage(QWidget):
         del configuration.gaps[:]
         for number, draft in enumerate(self.editor.drafts, start=1):
             trial = configuration.trials.add(trial_number=number)
-            trial.stimulus.program.program_json = draft.program.model_dump_json()
+            trial.stimulus.program.program_json = (
+                draft.exported_program.model_dump_json()
+            )
             if draft.path:
                 trial.stimulus.program.logical_source_reference = draft.path
             seed = draft.stimulus_seed_decimal.strip()
@@ -361,7 +367,10 @@ class ProtocolPage(QWidget):
             return
         try:
             program = parse_program_json(
-                self.editor.program.model_dump_json(), max_bytes=DEFAULT_DOCUMENT_BYTES
+                self.editor.drafts[
+                    self.editor.index
+                ].exported_program.model_dump_json(),
+                max_bytes=DEFAULT_DOCUMENT_BYTES,
             )
             data = program.model_dump_json(indent=2).encode("utf-8")
             if len(data) > DEFAULT_DOCUMENT_BYTES:

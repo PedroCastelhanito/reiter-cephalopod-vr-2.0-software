@@ -1,0 +1,10 @@
+{
+  "method": "same native compositor shader; RGBA32F versus RGBA8 framebuffer followed by byte read; 256 code levels and512 fractional samples",
+  "equal": false,
+  "bytes": 3072,
+  "max_byte_difference": 1,
+  "hashes": [
+    "074c0197a3b4ea6b51030b2d27a4d4d361e9f180bbd8ac99dde125e16d05c1a0",
+    "7ee63647648e50329db9edb11adb32a70d1c58bbe66c065387aabe78452d3361"
+  ]
+}

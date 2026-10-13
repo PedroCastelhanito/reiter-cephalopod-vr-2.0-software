@@ -1,0 +1,4 @@
+# GPU Session    Process   Codec       H       V Average     Average
+# Idx      Id         Id    Type     Res     Res     FPS Latency(us)
+    1       -          -       -       -       -       -           -
+    1       8      16940   H.264    1920    1200       0           0

@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "working_tree": "dirty, preceding tasks and concurrent Eye/MCU implementation preserved",
+  "reference": {
+    "path": "C:\\Users\\ReiterU_PC\\Desktop\\checkthis_for_recorder_parameters.html",
+    "sha256": "dbcece51487ed9175c8a7a1fad45ca5ff2898efca0df7ab0aa5ba75a3323e19b",
+    "assessment": "PylonRecorder guide and reported ant-rig observations; not CephVR rig acceptance, not adopted defaults. CQ/CRF size ratios and AQ/preset results are footage/device specific; conventional MP4 warning does not describe this application hybrid/fragmented MP4 lifecycle."
+  },
+  "archive": {
+    "url": "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip",
+    "published_checksum_url": "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip.sha256",
+    "verified_sha256": "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba"
+  },
+  "execution": "five sequential synthetic-only cases, eight frames each; current Behavior/Tracking/stimulus plus two reference-adapted camera proposals. No camera or PFS/exposure/ROI/rate or saved encoding changes. No full-load/quality/throughput acceptance.",
+  "failed_probe_attempts": "incorrect helper import name, omitted optional synthetic clock availability, strict Pydantic JSON tuple restoration, equivalent full-range yuvj descriptor assertion; corrected in probe only. Initial install path guard failed before mutation; corrected root depth. No production defect attributed to these probe mistakes.",
+  "files": {
+    "audit.json": "fcc223e35149715bbbc6b7837490e0475323d69ba60839d065a35bc6dbb6b0db",
+    "audit.py": "9f16612ae948a6cdd79ef0eee9a31c0e12e3d27cda04640e11419f5b686c19b9",
+    "install.json": "6ebc73ce3b11cc0402e6f7412100b378563bc6df37a96f06b36fe7ad3c8ba82f",
+    "install.ps1": "6c14ce2dafa8cf1421ff167699b179c22458d76963011f09a316d2746fbbfb48",
+    "installed.json": "69229a27e0163d551bdadc565817bdb486ff87cbf7b7d5f71849b1366a38559e",
+    "reference-text.txt": "c26cdbcb27971544f83a5d65fe3e2a6c1c5c00ab0518bf3287a83c9f1ecb527d",
+    "smoke.json": "7104b14f0cb52e7e6c9b632b93b21f3a3e465e81e4e632b1905472f626b6cd83",
+    "smoke.py": "f0429c4040c7f44b6e102e27d8a913bf685541e140d79ee91e04646d15f0cb81"
+  }
+}

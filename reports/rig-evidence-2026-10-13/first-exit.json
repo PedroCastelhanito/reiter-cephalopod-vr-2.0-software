@@ -1,0 +1,12 @@
+{
+  "controller_generation": "e1c2ebdb-8084-4659-83c7-47ebe2aa9d8e",
+  "receipt": {
+    "controller_generation": "e1c2ebdb-8084-4659-83c7-47ebe2aa9d8e",
+    "supervisor_generation": "9d71bb33-762b-4704-ab9f-ff34d071de36",
+    "observed_monotonic_ns": 326325283791400,
+    "all_owned_processes_absent": true,
+    "format_version": 1,
+    "controller_channel_loss": "eof"
+  },
+  "guard_free": true
+}

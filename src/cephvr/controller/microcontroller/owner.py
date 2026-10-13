@@ -157,6 +157,7 @@ class SerialOwner:
                 fields = {
                     "behavioral_selected": "1" if "behavioral" in running else "0",
                     "tracking_selected": "1" if "tracking" in running else "0",
+                    "eye_tracking_selected": "1" if "eye_tracking" in running else "0",
                 }
                 self._channel.request("OFF", fields, deadline_ns)
                 status_exchange = self._channel.probe("STATUS", deadline_ns)
@@ -192,7 +193,7 @@ class SerialOwner:
         *,
         active_roles: Iterable[int | str],
     ) -> microcontroller_pb2.MicrocontrollerObservation:
-        """Apply both output roles from complete settings plus an explicit active mask."""
+        """Apply all output roles from complete settings plus an explicit active mask."""
         self._require_connected()
         active = normalize_roles(active_roles)
         if requested.HasField("port") and requested.port != self.port_name:

@@ -1,0 +1,211 @@
+{
+  "scope": "owner-requested Trial state output on pin 12, manual SpikeGLX observation; no camera capture, flash, Setup, recording or SpikeGLX mutation",
+  "events": [
+    {
+      "name": "controller_generation",
+      "value": "d9973ed6-9eb4-49be-a029-4387eac51bb8"
+    },
+    {
+      "name": "original_trial_pin",
+      "value": "D12"
+    },
+    {
+      "name": "confirmed_trial_pin",
+      "value": "D12"
+    },
+    {
+      "name": "saved_history",
+      "value": true
+    },
+    {
+      "name": "connected_mcu",
+      "value": {
+        "observation": {
+          "port": "COM8",
+          "connection_id": "70627500-1e3a-46f6-ba4e-511a33d417a0",
+          "request_id": "70627500-1e3a-46f6-ba4e-511a33d417a0-7",
+          "observed_monotonic_ns": "330805999675000",
+          "state": {
+            "configuration_valid": false,
+            "watchdog_stopped": false,
+            "watchdog_ms": 0,
+            "behavioral": {
+              "enabled": false,
+              "running": false
+            },
+            "tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 3,
+            "firmware": "cephvr2_uno_2",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "330805979272800"
+        }
+      }
+    },
+    {
+      "name": "test_start_request",
+      "value": "Trial state pin 12 HIGH for up to 2000 ms; observe SpikeGLX"
+    },
+    {
+      "name": "started_mcu",
+      "value": {
+        "observation": {
+          "port": "COM8",
+          "connection_id": "70627500-1e3a-46f6-ba4e-511a33d417a0",
+          "request_id": "70627500-1e3a-46f6-ba4e-511a33d417a0-7",
+          "observed_monotonic_ns": "330805999675000",
+          "state": {
+            "configuration_valid": false,
+            "watchdog_stopped": false,
+            "watchdog_ms": 0,
+            "behavioral": {
+              "enabled": false,
+              "running": false
+            },
+            "tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 3,
+            "firmware": "cephvr2_uno_2",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "330805979272800"
+        },
+        "diagnostic": {
+          "active": true,
+          "signal": "MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE",
+          "pin": "D12",
+          "rising_edges": 1,
+          "observed_monotonic_ns": "330806028510400"
+        }
+      }
+    },
+    {
+      "name": "finished_mcu",
+      "value": {
+        "observation": {
+          "port": "COM8",
+          "connection_id": "70627500-1e3a-46f6-ba4e-511a33d417a0",
+          "request_id": "70627500-1e3a-46f6-ba4e-511a33d417a0-7",
+          "observed_monotonic_ns": "330805999675000",
+          "state": {
+            "configuration_valid": false,
+            "watchdog_stopped": false,
+            "watchdog_ms": 0,
+            "behavioral": {
+              "enabled": false,
+              "running": false
+            },
+            "tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 3,
+            "firmware": "cephvr2_uno_2",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "330805979272800"
+        },
+        "diagnostic": {
+          "active": false,
+          "signal": "MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE",
+          "pin": "D12",
+          "rising_edges": 1,
+          "observed_monotonic_ns": "330808269016900"
+        }
+      }
+    },
+    {
+      "name": "firmware_test_confirmed",
+      "value": true
+    },
+    {
+      "name": "physical_reception",
+      "value": "await owner observation in SpikeGLX; MCU evidence is not receiver proof"
+    },
+    {
+      "name": "shutdown_result",
+      "value": {
+        "succeeded": true,
+        "failure": ""
+      }
+    },
+    {
+      "name": "all_owned_absent",
+      "value": "ApplicationExitReceipt(controller_generation='d9973ed6-9eb4-49be-a029-4387eac51bb8', supervisor_generation='2e76ca20-4240-496d-b29d-1c222ef6edef', observed_monotonic_ns=330818442617200, all_owned_processes_absent=True, format_version=1, controller_channel_loss='eof')"
+    }
+  ]
+}

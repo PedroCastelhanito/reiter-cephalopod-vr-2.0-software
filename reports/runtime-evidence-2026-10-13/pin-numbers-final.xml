@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="29" time="20.152" timestamp="2026-10-13T10:07:36.365850+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_config_load_is_local_and_collects_for_normal_submission" time="0.828" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_full_gui_config_changes_no_section[microcontroller]" time="0.530" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[load-microcontroller]" time="0.588" /><testcase classname="tests.gui.test_dashboard" name="test_config_chooser_closes_on_authority_loss_and_rechecks_load[save-microcontroller]" time="0.541" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling" time="0.713" /><testcase classname="tests.gui.test_dashboard" name="test_full_gui_snapshot_cannot_load_during_device_work[mcu]" time="0.600" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_camera_rows_and_discovery" time="0.632" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_fixed_signal_tests_and_layout" time="0.513" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_supported_signals_remove_add_and_restore_pins[input-projector-flip-D2]" time="0.549"><failure message="AssertionError: assert '2' == 'D2'&#10;  &#10;  - D2&#10;  + 2">window = &lt;cephvr.gui.window.DashboardWindow object at 0x00000292462A7D00&gt;
+direction = 'input', key = 'projector-flip', pin = 'D2'
+
+    @pytest.mark.parametrize(
+        "direction,key,pin",
+        [
+            ("input", "projector-flip", "D2"),
+            ("output", "trial-state", "D8"),
+        ],
+    )
+    def test_microcontroller_supported_signals_remove_add_and_restore_pins(
+        window: DashboardWindow, direction: str, key: str, pin: str
+    ) -&gt; None:
+        panel = window.devices.microcontroller
+        editor = panel.flip_pin if direction == "input" else panel.trial_pin
+        table = panel.input_table if direction == "input" else panel.output_table
+        add = panel.signals.add_input if direction == "input" else panel.signals.add_output
+        editor.setText(pin)
+        panel.enable_controls[key].setChecked(True)
+        assert not add.isEnabled()
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        panel.signals.remove_buttons[key].click()
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+            assert table.height() == 2 * table.frameWidth()
+        assert not panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        removed = panel.snapshots.capture()
+        add.click()
+        assert not table.isRowHidden(0)
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        assert panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        panel.snapshots.restore(panel.snapshots.validate(removed))
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+&gt;       assert editor.text() == pin
+E       AssertionError: assert '2' == 'D2'
+E         
+E         - D2
+E         + 2
+
+tests\gui\test_dashboard.py:2826: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_supported_signals_remove_add_and_restore_pins[output-trial-state-D8]" time="0.585"><failure message="AssertionError: assert '8' == 'D8'&#10;  &#10;  - D8&#10;  + 8">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002924612EB90&gt;
+direction = 'output', key = 'trial-state', pin = 'D8'
+
+    @pytest.mark.parametrize(
+        "direction,key,pin",
+        [
+            ("input", "projector-flip", "D2"),
+            ("output", "trial-state", "D8"),
+        ],
+    )
+    def test_microcontroller_supported_signals_remove_add_and_restore_pins(
+        window: DashboardWindow, direction: str, key: str, pin: str
+    ) -&gt; None:
+        panel = window.devices.microcontroller
+        editor = panel.flip_pin if direction == "input" else panel.trial_pin
+        table = panel.input_table if direction == "input" else panel.output_table
+        add = panel.signals.add_input if direction == "input" else panel.signals.add_output
+        editor.setText(pin)
+        panel.enable_controls[key].setChecked(True)
+        assert not add.isEnabled()
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        panel.signals.remove_buttons[key].click()
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+            assert table.height() == 2 * table.frameWidth()
+        assert not panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        removed = panel.snapshots.capture()
+        add.click()
+        assert not table.isRowHidden(0)
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        assert panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        panel.snapshots.restore(panel.snapshots.validate(removed))
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+&gt;       assert editor.text() == pin
+E       AssertionError: assert '8' == 'D8'
+E         
+E         - D8
+E         + 8
+
+tests\gui\test_dashboard.py:2826: AssertionError</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_signal_dropdown_moves_between_supported_outputs" time="0.706" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_file_restores_camera_output_rows_without_commands" time="0.549" /><testcase classname="tests.gui.test_dashboard" name="test_local_review_microcontroller_does_not_open_serial" time="0.497" /><testcase classname="tests.gui.test_dashboard" name="test_managed_microcontroller_emits_controller_intents" time="0.508" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_save_includes_camera_output_pins[D]" time="0.002" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_save_includes_camera_output_pins[]" time="0.001" /><testcase classname="tests.gui.test_dashboard" name="test_managed_microcontroller_forwards_only_saved_pin" time="0.528" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_does_not_alias_unsupported_camera_to_tracking[Eye tracking]" time="0.543" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_does_not_alias_unsupported_camera_to_tracking[Unassigned]" time="0.588" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_close_reopen_preserves_full_draft[False]" time="1.254" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_close_reopen_preserves_full_draft[True]" time="1.330" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_save_failure_keeps_window_open_and_previous_file" time="0.533" /><testcase classname="tests.gui.test_dashboard" name="test_runtime_gui_unrestored_file_is_preserved" time="0.501" /><testcase classname="tests.gui.test_dashboard" name="test_review_draft_restores_local_configuration[False]" time="1.050" /><testcase classname="tests.gui.test_dashboard" name="test_review_draft_restores_local_configuration[True]" time="1.034" /><testcase classname="tests.gui.test_dashboard" name="test_invalid_review_draft_is_not_replaced_during_load" time="0.464" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_enablement_preserves_pins_and_syncs_cameras" time="0.564" /><testcase classname="tests.gui.test_dashboard" name="test_microcontroller_row_heights_match" time="0.532" /><testcase classname="tests.gui.test_dashboard" name="test_managed_mcu_pending_completion_and_final_status" time="0.518" /></testsuite></testsuites>

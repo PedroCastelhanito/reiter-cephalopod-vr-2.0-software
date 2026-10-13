@@ -1,0 +1,3 @@
+CephVR supervisor shutdown: VISUAL_STIMULUS_RENDERER: cleanup returned an unregistered resource
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

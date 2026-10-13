@@ -1,0 +1,71 @@
+{
+  "date_jst": "2026-10-13",
+  "task_id": "native-configuration-chooser-teardown",
+  "head": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "platform": "real Windows GUI platform; QT_QPA_PLATFORM removed for all native runs",
+  "qt_runtime": "6.11.2",
+  "pyqt": "6.11.0",
+  "decisions": [
+    "G01 revision 164",
+    "E03",
+    "ARCH-002"
+  ],
+  "diagnosis": {
+    "baseline_native": "five authority-loss cases terminate 0xC0000005",
+    "minimal_native": "standalone ConfigurationFiles/window immediate open/reject/delete/event processing terminates 0xC0000005",
+    "plain_native": "unwrapped QFileDialog reproduces 0xC0000005 too, without application callbacks",
+    "source_mechanism": "Qt Windows helper schedules modal-open launch via zero-delay timer; hide clears the native dialog without stopping the pending timer. This matches the reproduced path; no C++ instruction-pointer dump was obtained.",
+    "source_url": "https://github.com/qt/qtbase/blob/v6.11.2/src/plugins/platforms/windows/qwindowsdialoghelpers.cpp#L188-L284",
+    "documentation_url": "https://doc.qt.io/qt-6/qfiledialog.html#Option-enum"
+  },
+  "comparisons": {
+    "100ms_delay": "20 cycles exit zero but emit 28 access-violation notices; not a fix",
+    "force_child_deletion_first": "20 cycles/no notices; not used in production finished callbacks",
+    "qt_widget_mode": "20 cycles/no notices"
+  },
+  "implementation": "One factory selects DontUseNativeDialog before configuration/showing; reused by five asynchronous picker owners. Keep existing ownership, immediate cancellation, path/filter/schema checks and stale callbacks; no sleep, global setting or nested event-loop pumping. Synchronous Tracking model/reference-image dialogs are unchanged because they use exec, which stops the native launch timer.",
+  "validation": {
+    "original_reproducer_fixed": "50 cycles/no delay/no notices/exit zero",
+    "native_focused_initial": "10 passed, 392 deselected; original window fixture teardown unchanged",
+    "broad_native_stage": "401 passed, 2 failed, 186.89s; completed without fatal exception. Stage predates final stimulus-media adoption and cancellation-test refinement.",
+    "final_affected_native": "20 passed, 382 deselected, 16.56s; covers configuration Load/Save, folders/PFS, projector calibration, prepared assets, stimulus media and Runtime/Review parity",
+    "isolated_hover": "2 failed, 400 deselected, 2.23s; repeat with constructor counter: 2 failed/zero QFileDialog constructions",
+    "ruff": "151 source/test files; passed",
+    "format": "151 files; passed",
+    "mypy": "--platform win32 src/cephvr/gui; 149 sources; passed",
+    "boundaries": "664 modules; zero violations; existing cohesion advisories"
+  },
+  "failures": [
+    {
+      "classname": "tests.gui.test_dashboard",
+      "name": "test_inline_timeline_actions_target_blocks_append_and_preserve_undo",
+      "time": "0.531"
+    },
+    {
+      "classname": "tests.gui.test_dashboard",
+      "name": "test_trial_row_actions_scroll_target_and_align_cards",
+      "time": "0.490"
+    }
+  ],
+  "final_hashes": {
+    "src/cephvr/gui/file_dialogs.py": "a63536c9811f7e814d71c303335071657314ee273f1de75495ca7c12769c907a",
+    "src/cephvr/gui/configuration_files.py": "f34f77380aaaaccee9898c1e47fe8e3ef712f295c709b29b08d4f2e2199a901f",
+    "src/cephvr/gui/calibration_files.py": "23fe3301aca5837d982c8914829809d46cb260bf051c07b49a9f13ca0333d48d",
+    "src/cephvr/gui/paths.py": "26e0cb7016068c9032c6f169d01e03254c447aee9138a5c44bb76f04ebb322b1",
+    "src/cephvr/gui/prepared_file_picker.py": "f6f421b075e557787cc5736e971d7580fd5a572320146eb66bfc0e17894f0434",
+    "src/cephvr/gui/stimulus_parameters.py": "7c672a5a6e43d493d0d93e8f46130c6f798c8203cd93136b890acdb01e911e53",
+    "tests/gui/test_dashboard.py": "d1763753b1208170f33086600741fe274e59a1fb5965577d26fec6ee9d931460",
+    "docs/architecture/gui.md": "8d79e7d9c2fc58df5256b2d6a893b754247c5f8e7855eb963743d4d6a2898f6a",
+    "architecture.md": "9b6f2a594142b0c81001cfde7006aa54c2d2028eeee109efcf41e3d8dd314972"
+  },
+  "limits": "No exact-final-tree full GUI pass, complete native UI acceptance, rig/device/scientific/full-workload acceptance or fix of the Qt library itself is claimed. Existing projector-overflow, encoder and other rig findings remain open. Hardware deferrals and pre-existing workspace work are preserved.",
+  "commands": [
+    ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -vv -s -k config_chooser",
+    ".venv/Scripts/python.exe -X faulthandler reports/runtime-evidence-2026-10-13/native-chooser/reproduce.py",
+    ".venv/Scripts/python.exe -m pytest tests/gui -vv --junitxml=reports/runtime-evidence-2026-10-13/native-chooser/gui-native-fixed.xml",
+    ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"config_chooser or picker or stimulus_parameter_edit_invalid_guard_and_media_root or calibration_dialog_closes or review_and_runtime_share\" --junitxml=reports/runtime-evidence-2026-10-13/native-chooser/final-focused.xml",
+    ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -p hover_scope_plugin -k \"inline_timeline_actions_target_blocks_append_and_preserve_undo or trial_row_actions_scroll_target_and_align_cards\""
+  ],
+  "new_factory_source": "\"\"\"Shared file selection without the Windows shell's deferred-launch race.\"\"\"\n\nfrom PyQt6.QtWidgets import QFileDialog, QWidget\n\n\ndef file_dialog(parent: QWidget, title: str, directory: str = \"\") -> QFileDialog:\n    dialog = QFileDialog(parent, title, directory)\n    # Set before configuring/showing: immediate reject must cancel all UI work.\n    dialog.setOption(QFileDialog.Option.DontUseNativeDialog)\n    return dialog\n",
+  "documentation_checks": "594 local links/anchors resolved; final git diff --check passes. Corrected invalid CP1252 bytes in the new TODO line and subsequently normalized doubled CRLF with byte writes; preserved concurrent settings-warning entries."
+}

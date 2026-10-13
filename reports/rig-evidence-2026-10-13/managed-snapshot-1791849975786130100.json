@@ -1,0 +1,101 @@
+{
+  "scope": "snapshot",
+  "eye": "excluded",
+  "checks": {
+    "session": {
+      "phase": "SESSION_PHASE_CONFIGURATION"
+    },
+    "visual_stimulus_display": {
+      "source": {
+        "role": "visual_stimulus",
+        "generation": "b0d73e4d-c501-4670-b141-400f580780b7"
+      },
+      "backend": {
+        "backend_name": "visual_stimulus",
+        "backend_generation": "b0d73e4d-c501-4670-b141-400f580780b7"
+      },
+      "controller": {
+        "role": "controller",
+        "generation": "b548914b-5470-4ad8-8944-a1998b2438cc"
+      },
+      "command_id": "8824aac4-4f0f-4638-93f1-9b715367660d",
+      "requested_revision": "1",
+      "applied_revision": "1",
+      "outputs": [
+        {
+          "output_id": "calibration_front"
+        },
+        {
+          "output_id": "calibration_left"
+        },
+        {
+          "output_id": "calibration_right"
+        },
+        {
+          "output_id": "calibration_bottom"
+        }
+      ],
+      "observed_monotonic_ns": "326480647200500",
+      "complete": true,
+      "calibration": {
+        "diagnostic_id": "ee2f0d93-fbe0-4e0f-97cd-e003eb46a4ac",
+        "controller_generation": "b548914b-5470-4ad8-8944-a1998b2438cc",
+        "renderer_generation": "a7170489-0c08-4bc6-854a-98c72778eff9",
+        "configuration_revision": "1",
+        "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+        "observed_monotonic_ns": "326480647180400",
+        "profile_sha256": "50d49f99b3eb75bed46384dd4a9a41de850d8468b5dccb17d6a2cd33d2e1c621",
+        "arena_sha256": "822218d45bb7333a473b0906ff13e3c86d7ef72a01f16fb53a91a958e3b1f073",
+        "presented": false,
+        "idle": true,
+        "resources_closed": true,
+        "adjustment_sequence": "2",
+        "calibration_view": "frame_grid"
+      }
+    },
+    "acquisition_devices": {},
+    "configuration": {
+      "revision": "3",
+      "edit_validation": [
+        {
+          "configuration_revision": "3",
+          "completed": true,
+          "valid": true,
+          "component": "experiment",
+          "configuration_module_version": "experiment-v1"
+        },
+        {
+          "configuration_revision": "3",
+          "completed": true,
+          "valid": true,
+          "component": "acquisition",
+          "configuration_module_version": "acquisition-config-v1"
+        },
+        {
+          "configuration_revision": "3",
+          "completed": true,
+          "valid": true,
+          "component": "synchronization",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "3",
+          "completed": true,
+          "valid": true,
+          "component": "tracking",
+          "configuration_module_version": "inactive"
+        },
+        {
+          "configuration_revision": "3",
+          "completed": true,
+          "valid": true,
+          "component": "visual_stimulus",
+          "configuration_module_version": "visual-stimulus-config-v2"
+        }
+      ]
+    },
+    "warnings": [],
+    "errors": []
+  },
+  "controller_generation": "b548914b-5470-4ad8-8944-a1998b2438cc"
+}

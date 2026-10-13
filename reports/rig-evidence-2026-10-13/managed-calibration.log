@@ -1,0 +1,32 @@
+session {"phase": "SESSION_PHASE_CONFIGURATION"}
+visual_stimulus_display {"source": {"role": "visual_stimulus", "generation": "b0d73e4d-c501-4670-b141-400f580780b7"}, "backend": {"backend_name": "visual_stimulus", "backend_generation": "b0d73e4d-c501-4670-b141-400f580780b7"}, "controller": {"role": "controller", "generation": "b548914b-5470-4ad8-8944-a1998b2438cc"}, "command_id": "604953a8-85f8-4b9b-9474-c63b2eb9464e", "requested_revision": "1", "applied_revision": "1", "outputs": [{"output_id": "calibration_front", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "326353867944000", "idle_swap_return_ns": "326353868270600", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}, {"output_id": "calibration_left", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "326353983281000", "idle_swap_return_ns": "326353983341200", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}, {"output_id": "calibration_right", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "326354026541400", "idle_swap_return_ns": "326354026625800", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}, {"output_id": "calibration_bottom", "resources_ready": true, "requested_rgb_bits": 8, "observed_rgb_bits": [8, 8, 8], "requested_swap_interval": 1, "idle_swap_entry_ns": "326354067926900", "idle_swap_return_ns": "326354067970700", "idle_submission": "SUBMISSION_OUTCOME_RETURNED"}], "observed_monotonic_ns": "326354068036900", "complete": true}
+acquisition_devices {}
+configuration {"revision": "1"}
+warnings []
+errors []
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-evidence-2026-10-13\managed_probe.py", line 135, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-evidence-2026-10-13\managed_probe.py", line 73, in main
+    opened = await asyncio.wait_for(client.execute("OpenDisplayCalibration", request), 90)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 274, in execute
+    admission = await self._admit(
+                ^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\src\cephvr\client\session.py", line 173, in _admit
+    raise ClientError(
+cephvr.client.session.ClientError: REJECTED: display calibration assets rejected: 1 validation error for DisplayProfile
+  Value error, mixed pacing requires an explicit pacing output [type=value_error, input_value={'format_version': 1, 'ge...photodiode_patch': None}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/value_error

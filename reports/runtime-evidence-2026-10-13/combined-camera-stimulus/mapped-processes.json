@@ -1,0 +1,98 @@
+[
+  {
+    "ProcessId": 292,
+    "ParentProcessId": 25444,
+    "CreationDate": "2026-10-13T14:49:43.302447+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" scripts/start_runtime_gui.py"
+  },
+  {
+    "ProcessId": 24228,
+    "ParentProcessId": 292,
+    "CreationDate": "2026-10-13T14:49:43.337515+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe"
+  },
+  {
+    "ProcessId": 16404,
+    "ParentProcessId": 24228,
+    "CreationDate": "2026-10-13T14:49:43.343241+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" -m cephvr.launcher.main --software-root C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software --supervisor-config C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\config\\backends\\supervisor_config.toml --python C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\python.exe"
+  },
+  {
+    "ProcessId": 7728,
+    "ParentProcessId": 16404,
+    "CreationDate": "2026-10-13T14:49:43.63203+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.supervisor.main --bootstrap-handle 524 --launcher-control-handle 660 --launcher-controller-control-handle 696 --launcher-ack-handle 664"
+  },
+  {
+    "ProcessId": 3644,
+    "ParentProcessId": 7728,
+    "CreationDate": "2026-10-13T14:49:43.888406+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.controller.main --bootstrap-handle 736"
+  },
+  {
+    "ProcessId": 28880,
+    "ParentProcessId": 7728,
+    "CreationDate": "2026-10-13T14:49:43.895585+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.main --bootstrap-handle 788"
+  },
+  {
+    "ProcessId": 24280,
+    "ParentProcessId": 7728,
+    "CreationDate": "2026-10-13T14:49:43.900543+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.visual_stimulus.main --bootstrap-handle 736"
+  },
+  {
+    "ProcessId": 27060,
+    "ParentProcessId": 7728,
+    "CreationDate": "2026-10-13T14:49:43.905498+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.tracking.main --bootstrap-handle 844"
+  },
+  {
+    "ProcessId": 10540,
+    "ParentProcessId": 7728,
+    "CreationDate": "2026-10-13T14:49:43.910472+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.gui.main --bootstrap-handle 868"
+  },
+  {
+    "ProcessId": 18976,
+    "ParentProcessId": 24280,
+    "CreationDate": "2026-10-13T14:49:44.312954+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.visual_stimulus.worker.main --bootstrap-handle 904"
+  },
+  {
+    "ProcessId": 29584,
+    "ParentProcessId": 15848,
+    "CreationDate": "2026-10-13T14:49:54.814878+09:00",
+    "CommandLine": "\"C:\\Users\\ReiterU_PC\\miniforge3\\envs\\CephVR\\python.exe\" reports/runtime-evidence-2026-10-13/combined-camera-stimulus/run.py"
+  },
+  {
+    "ProcessId": 27876,
+    "ParentProcessId": 28880,
+    "CreationDate": "2026-10-13T14:49:55.789279+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 1016"
+  },
+  {
+    "ProcessId": 25400,
+    "ParentProcessId": 28880,
+    "CreationDate": "2026-10-13T14:49:55.796299+09:00",
+    "CommandLine": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe -m cephvr.platform.windows.python_entry cephvr.acquisition.worker.main --bootstrap-handle 404"
+  },
+  {
+    "ProcessId": 25196,
+    "ParentProcessId": 18976,
+    "CreationDate": "2026-10-13T14:49:59.131959+09:00",
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe -hide_banner -nostdin -progress pipe:1 -f rawvideo -pix_fmt rgba -s 2560x2000 -framerate 60/1 -i - -map 0:v:0 -an -sn -dn -c:v h264_nvenc -pix_fmt +yuv444p -vf scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p -color_range pc -colorspace bt709 -preset p4 -rc vbr -cq 18 -b:v 0 -rc-lookahead 0 -gpu 1 -bf 0 -force_key_frames expr:if(isnan(prev_forced_t),1,gte(t,prev_forced_t+1)) -fps_mode:v passthrough -map_metadata -1 -movflags +frag_keyframe+empty_moov+default_base_moof -forced-idr 1 -n -f mp4 C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-144955\\protocol-data\\DUMMY_144959_stimulus.mp4"
+  },
+  {
+    "ProcessId": 21236,
+    "ParentProcessId": 27876,
+    "CreationDate": "2026-10-13T14:49:59.143843+09:00",
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe -hide_banner -nostdin -progress pipe:1 -f rawvideo -pix_fmt rgb24 -s 1760x3000 -framerate 30 -i - -map 0:v:0 -an -sn -dn -c:v h264_nvenc -pix_fmt +yuv444p -vf scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p -color_range pc -colorspace bt709 -preset p4 -rc vbr -cq 18 -b:v 0 -rc-lookahead 0 -gpu 1 -bf 0 -force_key_frames expr:if(isnan(prev_forced_t),1,gte(t,prev_forced_t+1)) -fps_mode:v passthrough -map_metadata -1 -movflags +hybrid_fragmented+frag_keyframe+use_metadata_tags -n -forced-idr 1 -metadata:g cephvr_identity_version=1 -metadata:g cephvr_session_id=350e005a-a25d-44cb-9bdd-8c14694cec48 -metadata:g cephvr_trial_id=23b52765-b9f6-43de-9849-84c971a8221a -metadata:g cephvr_camera_role=behavioral -metadata:g cephvr_device_id=40065509 -f mp4 C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-144955\\protocol-data\\DUMMY_144959_behavioral_cam.mp4"
+  },
+  {
+    "ProcessId": 5816,
+    "ParentProcessId": 25400,
+    "CreationDate": "2026-10-13T14:49:59.156829+09:00",
+    "CommandLine": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe -hide_banner -nostdin -progress pipe:1 -f rawvideo -pix_fmt gray -s 1588x1344 -framerate 60 -i - -map 0:v:0 -an -sn -dn -c:v h264_nvenc -pix_fmt +yuv444p -vf scale=w=iw:h=ih:in_range=full:out_range=full:out_color_matrix=bt709,format=pix_fmts=yuv444p -color_range pc -colorspace bt709 -preset p4 -rc vbr -cq 18 -b:v 0 -rc-lookahead 0 -gpu 1 -bf 0 -force_key_frames expr:if(isnan(prev_forced_t),1,gte(t,prev_forced_t+1)) -fps_mode:v passthrough -map_metadata -1 -movflags +hybrid_fragmented+frag_keyframe+use_metadata_tags -n -forced-idr 1 -metadata:g cephvr_identity_version=1 -metadata:g cephvr_session_id=350e005a-a25d-44cb-9bdd-8c14694cec48 -metadata:g cephvr_trial_id=23b52765-b9f6-43de-9849-84c971a8221a -metadata:g cephvr_camera_role=tracking -metadata:g cephvr_device_id=40747103 -f mp4 C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-144955\\protocol-data\\DUMMY_144959_tracking_cam.mp4"
+  }
+]

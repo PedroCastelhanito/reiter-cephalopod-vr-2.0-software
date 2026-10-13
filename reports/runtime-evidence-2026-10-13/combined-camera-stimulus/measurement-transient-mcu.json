@@ -1,0 +1,69 @@
+[
+  {
+    "label": "generation",
+    "value": "03bfca30-df03-45fa-8dc7-013a729d9635"
+  },
+  {
+    "label": "0-40065509-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40065509-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40747103-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "0-40747103-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40065509-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40065509-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40747103-start",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "1-40747103-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  },
+  {
+    "label": "2-40065509-stop",
+    "value": [
+      true,
+      "Completed"
+    ]
+  }
+]

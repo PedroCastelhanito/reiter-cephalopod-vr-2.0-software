@@ -15,7 +15,6 @@ from cephvr.gui.components import (
     button,
     combo,
     field,
-    label,
 )
 from cephvr.gui.dialogs import StopDialog
 from cephvr.gui.formatting import duration, metrics_text
@@ -38,7 +37,6 @@ ACTION_PHASES = {
 class Dashboard(ResponsiveColumns):
     action_requested = pyqtSignal(str)
     preview_requested = pyqtSignal(str, bool)
-    control_requested = pyqtSignal()
 
     def __init__(
         self, *, sample: bool = False, settings: QSettings | None = None
@@ -93,13 +91,6 @@ class Dashboard(ResponsiveColumns):
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
         card.body.addLayout(grid)
-        self.control_button = button("Take control", "secondary")
-        self.control_button.clicked.connect(self.control_requested.emit)
-        card.body.addWidget(self.control_button)
-        self.control_hint = label(
-            "Waiting for a controller connection.", "muted", wrap=True
-        )
-        card.body.addWidget(self.control_hint)
         return card
 
     def build_subject(self, sample: bool) -> Card:
@@ -209,11 +200,6 @@ class Dashboard(ResponsiveColumns):
 
     def apply_view(self, view: DashboardView) -> None:
         self.view = view
-        self.control_button.setVisible(not view.sample)
-        self.control_button.setEnabled(view.connected and not view.has_control)
-        self.control_button.setText(
-            "Control held" if view.has_control else "Take control"
-        )
         self.preview_dialog.apply_views(
             view.previews,
             allowed=view.has_control and (view.connected or view.sample),
@@ -239,18 +225,6 @@ class Dashboard(ResponsiveColumns):
             self.stop_dialog.update_actions(self.stop_choices())
         for editor in self.subject_editors:
             editor.setEnabled(view.can_edit)
-        self.control_hint.setText(
-            "Local review · buttons report intent only."
-            if view.sample and view.has_control
-            else "Review observer · editing and commands unavailable."
-            if view.sample
-            else "Control held · camera and microcontroller actions are available in Configuration."
-            if view.connected and view.has_control
-            else "Observer · take control to edit settings and test devices."
-            if view.connected
-            else "Waiting for a controller connection."
-        )
-        self.control_hint.setVisible(not view.sample)
         rows = (
             ("PHASE", view.phase.value),
             (

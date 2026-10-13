@@ -136,7 +136,7 @@ class ProjectionStore:
             or report.work != self.work
         ):
             raise ProjectionError("device status revision/time/work differs")
-        for device in (view.behavioral, view.tracking):
+        for device in (view.behavioral, view.tracking, view.eye_tracking):
             # An explicit empty ID confirms a released run; active runs need a UUID.
             if (
                 device.preview_run_id

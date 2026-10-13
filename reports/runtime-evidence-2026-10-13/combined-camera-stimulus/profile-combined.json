@@ -1,0 +1,436 @@
+{
+  "scope": "real configured cameras plus stimulus recording; unpaired60s; original settings restored",
+  "checks": {
+    "file_policies": {
+      "contract_version": 1,
+      "cameras": [
+        {
+          "frame_silence_timeout_ns": "1000000000",
+          "camera": "CAMERA_ROLE_BEHAVIORAL",
+          "post_cutoff_drain_margin_ns": "125000000"
+        },
+        {
+          "frame_silence_timeout_ns": "1000000000",
+          "camera": "CAMERA_ROLE_TRACKING",
+          "post_cutoff_drain_margin_ns": "125000000"
+        },
+        {
+          "frame_silence_timeout_ns": "1000000000",
+          "camera": "CAMERA_ROLE_EYE_TRACKING",
+          "post_cutoff_drain_margin_ns": "125000000"
+        }
+      ],
+      "video_sync_interval_ns": "1000000000",
+      "fragment_target_ns": "1000000000",
+      "encoder_stall_timeout_ns": "10000000000",
+      "serial_baud_rate": 115200,
+      "serial_ack_timeout_ns": "100000000",
+      "serial_keepalive_interval_ns": "1000000000",
+      "serial_communication_timeout_ns": "3000000000",
+      "serial_stop_completion_margin_ns": "50000000",
+      "frame_log_sync_interval_ns": "1000000000"
+    },
+    "active_cameras": [
+      "behavioral",
+      "tracking"
+    ],
+    "configuration": {
+      "command_id": "87748bdb-1aff-43a4-9674-0492ad36c6a2",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "setup": {
+      "command_id": "779fe9da-9a74-45a3-9d67-9e9d2ddd9576",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "setup_state": {
+      "session": {
+        "phase": "SESSION_PHASE_READY",
+        "context": {
+          "controller_generation": "94986966-747e-472b-9a50-2e18d4f83e4e",
+          "session_id": "f18e0e72-6e46-480c-a400-49bdd6431ed6"
+        },
+        "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-141832",
+        "trial_count": 1
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "2",
+        "edit_validation": [
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "experiment",
+            "configuration_module_version": "experiment-v1"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "acquisition",
+            "configuration_module_version": "acquisition-config-v1"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "synchronization",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "tracking",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "visual_stimulus",
+            "configuration_module_version": "visual-stimulus-config-v2"
+          }
+        ]
+      },
+      "reservation": {
+        "session": {
+          "controller_generation": "94986966-747e-472b-9a50-2e18d4f83e4e",
+          "session_id": "f18e0e72-6e46-480c-a400-49bdd6431ed6"
+        },
+        "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-141832",
+        "lock_held": true,
+        "ready_for_outputs": true
+      },
+      "acquisition_devices": {},
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "b8072f37-8600-47a7-bd9f-b27bb0e0ad3b"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "b8072f37-8600-47a7-bd9f-b27bb0e0ad3b"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "94986966-747e-472b-9a50-2e18d4f83e4e"
+        },
+        "command_id": "91d77601-420a-4066-8096-7b57711ddd03",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11371872183400",
+            "idle_swap_return_ns": "11371872555700",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_left",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11371972313600",
+            "idle_swap_return_ns": "11371972431300",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_right",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11372016890200",
+            "idle_swap_return_ns": "11372016942600",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_bottom",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11372063945400",
+            "idle_swap_return_ns": "11372063997200",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          }
+        ],
+        "observed_monotonic_ns": "11372064063700",
+        "complete": true
+      },
+      "errors": [],
+      "prompts": 0
+    },
+    "start": {
+      "command_id": "f0538a7d-e13a-44e7-805e-e67f20e358b9",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "gpu_samples": [
+      {
+        "host_monotonic_ns": 11393257091900,
+        "queries": {
+          "nvidia-smi --query-compute-apps=pid,gpu_uuid,process_name --format=csv,noheader": {
+            "stdout": "9864, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n10268, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Windows\\explorer.exe\n3908, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe\n9864, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n25596, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n9508, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n19096, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n",
+            "stderr": "",
+            "returncode": 0
+          },
+          "nvidia-smi encodersessions -i GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+            "stdout": "# GPU Session    Process   Codec       H       V Average     Average\n# Idx      Id         Id    Type     Res     Res     FPS Latency(us)\n    1      15      25596   H.264    1588    1344       0           0\n    1      16       9508   H.264    2560    2000       0           0\n    1      17      19096   H.264    1760    3000      30        6270\n    1      15      25596   H.264    1588    1344      60        4204\n    1      16       9508   H.264    2560    2000      58        5451\n    1      17      19096   H.264    1760    3000      31        6235\n",
+            "stderr": "",
+            "bounded_continuous_sample": true
+          }
+        }
+      },
+      {
+        "host_monotonic_ns": 11403438542200,
+        "queries": {
+          "nvidia-smi --query-compute-apps=pid,gpu_uuid,process_name --format=csv,noheader": {
+            "stdout": "9864, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n10268, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Windows\\explorer.exe\n3908, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe\n9864, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n25596, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n9508, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n19096, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n",
+            "stderr": "",
+            "returncode": 0
+          },
+          "nvidia-smi encodersessions -i GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+            "stdout": "# GPU Session    Process   Codec       H       V Average     Average\n# Idx      Id         Id    Type     Res     Res     FPS Latency(us)\n    1      15      25596   H.264    1588    1344       0           0\n    1      16       9508   H.264    2560    2000       0           0\n    1      17      19096   H.264    1760    3000      30        6835\n    1      15      25596   H.264    1588    1344      60        4127\n    1      16       9508   H.264    2560    2000       0           0\n    1      17      19096   H.264    1760    3000      30        6906\n",
+            "stderr": "",
+            "bounded_continuous_sample": true
+          }
+        }
+      },
+      {
+        "host_monotonic_ns": 11420547695300,
+        "queries": {
+          "nvidia-smi --query-compute-apps=pid,gpu_uuid,process_name --format=csv,noheader": {
+            "stdout": "9864, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n10268, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Windows\\explorer.exe\n3908, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe\n9864, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n25596, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n9508, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n19096, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n",
+            "stderr": "",
+            "returncode": 0
+          },
+          "nvidia-smi encodersessions -i GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+            "stdout": "# GPU Session    Process   Codec       H       V Average     Average\n# Idx      Id         Id    Type     Res     Res     FPS Latency(us)\n    1      15      25596   H.264    1588    1344      60        4260\n    1      16       9508   H.264    2560    2000      58        5767\n    1      17      19096   H.264    1760    3000      31        6574\n    1      15      25596   H.264    1588    1344       0           0\n    1      16       9508   H.264    2560    2000      60        5875\n    1      17      19096   H.264    1760    3000      30        6471\n",
+            "stderr": "",
+            "bounded_continuous_sample": true
+          }
+        }
+      },
+      {
+        "host_monotonic_ns": 11437714760500,
+        "queries": {
+          "nvidia-smi --query-compute-apps=pid,gpu_uuid,process_name --format=csv,noheader": {
+            "stdout": "9864, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n10268, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Windows\\explorer.exe\n3908, GPU-77642118-1623-48dd-3686-1014aa86b818, C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe\n9864, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\n25596, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n9508, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n19096, GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc, C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe\n",
+            "stderr": "",
+            "returncode": 0
+          },
+          "nvidia-smi encodersessions -i GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc": {
+            "stdout": "# GPU Session    Process   Codec       H       V Average     Average\n# Idx      Id         Id    Type     Res     Res     FPS Latency(us)\n    1      15      25596   H.264    1588    1344      60        4517\n    1      16       9508   H.264    2560    2000      60        5575\n    1      17      19096   H.264    1760    3000      30        6218\n    1      15      25596   H.264    1588    1344       0           0\n    1      16       9508   H.264    2560    2000      57        5330\n    1      17      19096   H.264    1760    3000      30        5989\n",
+            "stderr": "",
+            "bounded_continuous_sample": true
+          }
+        }
+      }
+    ],
+    "final": {
+      "session": {
+        "phase": "SESSION_PHASE_ENDED",
+        "context": {
+          "controller_generation": "94986966-747e-472b-9a50-2e18d4f83e4e",
+          "session_id": "f18e0e72-6e46-480c-a400-49bdd6431ed6"
+        },
+        "outcome": "SESSION_OUTCOME_COMPLETED",
+        "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-141832",
+        "trial_count": 1,
+        "activated": true,
+        "cleanup_confirmed": true
+      },
+      "trial": {
+        "context": {
+          "session": {
+            "controller_generation": "94986966-747e-472b-9a50-2e18d4f83e4e",
+            "session_id": "f18e0e72-6e46-480c-a400-49bdd6431ed6"
+          },
+          "trial_id": "141800e5-dfbd-4ba6-9478-d771307eec14",
+          "trial_number": 1
+        },
+        "phase": "TRIAL_PHASE_ENDED",
+        "outcome": "TRIAL_OUTCOME_COMPLETED",
+        "start_monotonic_ns": "11388912288900",
+        "scheduled_end_monotonic_ns": "11448912288900",
+        "actual_end_monotonic_ns": "11448912288900"
+      },
+      "configuration": {
+        "revision": "2",
+        "locked": true,
+        "edit_validation": [
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "experiment",
+            "configuration_module_version": "experiment-v1"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "acquisition",
+            "configuration_module_version": "acquisition-config-v1"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "synchronization",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "tracking",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "2",
+            "completed": true,
+            "valid": true,
+            "component": "visual_stimulus",
+            "configuration_module_version": "visual-stimulus-config-v2"
+          }
+        ]
+      },
+      "reservation": {
+        "session": {
+          "controller_generation": "94986966-747e-472b-9a50-2e18d4f83e4e",
+          "session_id": "f18e0e72-6e46-480c-a400-49bdd6431ed6"
+        },
+        "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-141832"
+      },
+      "acquisition_devices": {},
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "b8072f37-8600-47a7-bd9f-b27bb0e0ad3b"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "b8072f37-8600-47a7-bd9f-b27bb0e0ad3b"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "94986966-747e-472b-9a50-2e18d4f83e4e"
+        },
+        "command_id": "91d77601-420a-4066-8096-7b57711ddd03",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11371872183400",
+            "idle_swap_return_ns": "11371872555700",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_left",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11371972313600",
+            "idle_swap_return_ns": "11371972431300",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_right",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11372016890200",
+            "idle_swap_return_ns": "11372016942600",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_bottom",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "11372063945400",
+            "idle_swap_return_ns": "11372063997200",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          }
+        ],
+        "observed_monotonic_ns": "11372064063700",
+        "complete": true
+      },
+      "errors": [],
+      "prompts": 0
+    },
+    "new_session": {
+      "command_id": "0f90a0df-3a74-4e24-83b0-8864261868a8",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "restore": {
+      "command_id": "61599311-f891-4c3c-9bf7-e820da68f7e7",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "configuration_restored": true
+  }
+}

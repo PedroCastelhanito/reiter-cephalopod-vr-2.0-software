@@ -280,13 +280,18 @@ class ManualPreview:
                 "CAMERA_ASSIGNMENT",
                 "preview camera has no assigned device",
             )
-        if role == camera.CAMERA_ROLE_EYE_TRACKING:
+        if role == camera.CAMERA_ROLE_EYE_TRACKING and (
+            setting.device.frame_timing != camera.FRAME_TIMING_EXTERNAL_TRIGGER
+            or not setting.device.settings.trigger_source
+            or not self.configuration.settings.pulses.eye_tracking.HasField("pin")
+            or not self.configuration.settings.pulses.eye_tracking.HasField(
+                "requested_frequency_hz"
+            )
+        ):
             return _rejected(
                 command.command_id,
-                "EYE_TRIGGER_PENDING",
-                "Eye tracking capture requires wired external triggering; "
-                "its source, rate and controller integration remain pending. "
-                "Test connection can verify camera identity without capture.",
+                "EYE_TRIGGER_REQUIRED",
+                "Set Eye external FrameStart source, independent pin and rate before capture.",
             )
         if not request.HasField(
             "preview_output_bit_depth"

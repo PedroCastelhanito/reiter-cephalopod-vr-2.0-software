@@ -96,8 +96,9 @@ def test_resource_budget_replacement_is_atomic() -> None:
 def test_review_capture_cpu_budget_includes_fixed_copy_and_row_scratch() -> None:
     frame_bytes = 1920 * 1080 * 4
     row_bytes = 1920 * 4
-    assert review_capture_cpu_bytes(1920, 1080, 1) == 3 * frame_bytes + row_bytes
-    assert review_capture_cpu_bytes(1920, 1080, 3) == 5 * frame_bytes + row_bytes
+    assert review_capture_cpu_bytes(1920, 1080, 1) == 4 * frame_bytes + 540 * row_bytes
+    assert review_capture_cpu_bytes(1920, 1080, 3) == 6 * frame_bytes + 540 * row_bytes
+    assert review_capture_cpu_bytes(2, 3, 1) == 4 * 24 + 8
     with pytest.raises(ValueError, match="positive review capture"):
         review_capture_cpu_bytes(0, 1080, 1)
 

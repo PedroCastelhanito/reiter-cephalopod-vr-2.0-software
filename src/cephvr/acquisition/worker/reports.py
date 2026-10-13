@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, cast
 
 import grpc
@@ -35,6 +36,7 @@ class CoordinatorReportClient:
         )
         self._stub = rpc.AcquisitionCoordinatorServiceStub(self._channel)  # type: ignore[no-untyped-call]
         self._principal = principal
+        self._warning_delivery = asyncio.Lock()
 
     async def report_operation(
         self, request: acq.WorkerOperationReport, *, deadline_ns: int
@@ -51,6 +53,17 @@ class CoordinatorReportClient:
     async def report_lifecycle(
         self, request: acq.WorkerLifecycleEvidence, *, deadline_ns: int
     ) -> control.ReportReceipt:
+        if request.HasField("finished"):
+            # Final warning delivery precedes Finished; safety/heartbeat traffic
+            # bypasses this gate and the original absolute deadline still applies.
+            async with asyncio.timeout(remaining_seconds(deadline_ns)):
+                async with self._warning_delivery:
+                    return await self._send_lifecycle(request, deadline_ns)
+        return await self._send_lifecycle(request, deadline_ns)
+
+    async def _send_lifecycle(
+        self, request: acq.WorkerLifecycleEvidence, deadline_ns: int
+    ) -> control.ReportReceipt:
         return cast(
             control.ReportReceipt,
             await cast(Any, self._stub).ReportWorkerLifecycle(
@@ -63,14 +76,19 @@ class CoordinatorReportClient:
     async def report_warnings(
         self, request: acq.WorkerWarningReport, *, deadline_ns: int
     ) -> control.ReportReceipt:
-        return cast(
-            control.ReportReceipt,
-            await cast(Any, self._stub).ReportWorkerWarnings(
-                request,
-                metadata=(*self._principal.metadata(), deadline_metadata(deadline_ns)),
-                timeout=remaining_seconds(deadline_ns),
-            ),
-        )
+        async with asyncio.timeout(remaining_seconds(deadline_ns)):
+            async with self._warning_delivery:
+                return cast(
+                    control.ReportReceipt,
+                    await cast(Any, self._stub).ReportWorkerWarnings(
+                        request,
+                        metadata=(
+                            *self._principal.metadata(),
+                            deadline_metadata(deadline_ns),
+                        ),
+                        timeout=remaining_seconds(deadline_ns),
+                    ),
+                )
 
     async def report_heartbeat(
         self, request: control.HeartbeatReport, *, deadline_ns: int

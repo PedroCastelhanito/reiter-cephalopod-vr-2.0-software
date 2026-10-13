@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "working_tree": "dirty; existing GUI/rig/GPU changes preserved",
+  "governing_decisions": [
+    "G01 revision 166",
+    "A11",
+    "E14",
+    "ARCH-002"
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/pin_numbers.py": "22e92c05f17ddef2c673cab764b53e637b6b48aafe4724463c92a30cb010e019",
+    "src/cephvr/gui/microcontroller.py": "fe7503894ab3a37d83eddf27ede8a9acc53046a08f0a84bcc407089a690f1e67",
+    "src/cephvr/gui/microcontroller_snapshot.py": "9474f0b53062e1e1ada18ebb5ffb29c68142e3e9061e73f415a65d32c62e3f19",
+    "src/cephvr/gui/managed_mcu.py": "b7f1c6b684052b7bffb7cefce2f098bc41e8af10e3d5b37238c83fcf5f9f621f",
+    "src/cephvr/gui/managed_device_commands.py": "d08afb276557819bbac86634732885c0aeaaa9e82521575a0ae52f7c68cbfc92",
+    "src/cephvr/gui/review_draft.py": "6a08b347ffa80c35b0c7cf9c34abe300f26cbdff907aa87a46d5bf794f07ffec",
+    "tests/gui/test_dashboard.py": "b76aa81a6915a93f7882739482f6ac6f3bf5840a2c9cc28244ae1ea592f67303"
+  },
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"microcontroller or mcu or full_gui_loaded or review_draft or runtime_gui\"",
+    "platform": "native Windows; isolated fixtures; no device output in this regression suite",
+    "passed": 29,
+    "deselected": 373,
+    "seconds": 20.09
+  },
+  "static": [
+    "ruff check src/cephvr/gui tests/gui: pass",
+    "ruff format --check src/cephvr/gui tests/gui: 153 files pass",
+    "mypy --platform win32 src/cephvr/gui: 151 source files pass",
+    "tools/check_backend_boundaries.py: 666 modules, zero violations; pre-existing size/cohesion advisories",
+    "microcontroller TOML parsed by owning loader; pin D12 is listed in native firmware capabilities",
+    "git diff --check: pass"
+  ],
+  "initial_repairs": [
+    "Qt setText override accepts str|None to match base interface",
+    "preserve canonical tokens in saved files while changing widget text; update display expectations",
+    "review restore normalizes the retained camera pin dictionary",
+    "sort review_draft imports; no additional behavior change after final native test"
+  ],
+  "manual_button_test": {
+    "command": "pytest tests/gui/test_dashboard.py -q -k managed_microcontroller_forwards_only_saved_pin",
+    "passed": 1,
+    "deselected": 401,
+    "seconds": 2.98,
+    "scope": "actual GUI button clicks against isolated controller; numeric 12 matches canonical D12; stale edit still rejected; no Arduino output"
+  }
+}

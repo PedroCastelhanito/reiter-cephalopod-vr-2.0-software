@@ -1,0 +1,4 @@
+acquisition_behavioral_worker StopPreview ea7cb982-0c06-4638-a584-92996c148cd1 failed: RingError: shared ring admission is sealed or retired
+ExecuteCameraCommand 2f8af452-fed6-4969-af82-f05dc9d73b00 failed: PREVIEW_STOP_FAILED: manual preview worker cleanup failed
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

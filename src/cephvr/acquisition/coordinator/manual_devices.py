@@ -227,6 +227,7 @@ class ManualDevices:
                 {
                     int(camera.CAMERA_ROLE_BEHAVIORAL),
                     int(camera.CAMERA_ROLE_TRACKING),
+                    int(camera.CAMERA_ROLE_EYE_TRACKING),
                 }
                 if expected_pulses
                 else set(active_roles).union(requested_active_roles)
@@ -236,6 +237,8 @@ class ManualDevices:
                 != (camera.CAMERA_ROLE_BEHAVIORAL in requested_active_roles)
                 or request.pulses.tracking_active
                 != (camera.CAMERA_ROLE_TRACKING in requested_active_roles)
+                or request.pulses.eye_tracking_active
+                != (camera.CAMERA_ROLE_EYE_TRACKING in requested_active_roles)
             ):
                 raise ValueError(
                     "pulse active mask differs from running external previews"
@@ -370,6 +373,9 @@ class ManualDevices:
                         ),
                         tracking_active=(
                             camera.CAMERA_ROLE_TRACKING in requested_active_roles
+                        ),
+                        eye_tracking_active=(
+                            camera.CAMERA_ROLE_EYE_TRACKING in requested_active_roles
                         ),
                         applied=observation,
                     ),

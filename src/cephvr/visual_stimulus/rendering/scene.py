@@ -509,7 +509,7 @@ class ModernGLSceneRenderer:
         del slot
         return self._review_capture.capture(outputs, encoding)
 
-    def poll_review_capture(self, pending: object) -> bytes | None:
+    def poll_review_capture(self, pending: object) -> bytes | bytearray | None:
         return self._review_capture.poll(pending)
 
     def cancel_review_capture(self, pending: object) -> bool:

@@ -1,0 +1,252 @@
+diff --git a/architecture.md b/architecture.md
+index 9f3ac52..3cf7a2d 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -63,7 +63,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 24 |
+ | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
+-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 162 |
++| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 163 |
+ | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 37 |
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+diff --git a/docs/architecture/gui.md b/docs/architecture/gui.md
+index 7f9ec6b..5aa6043 100644
+--- a/docs/architecture/gui.md
++++ b/docs/architecture/gui.md
+@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ <a id="g01"></a>
+ ### G01 — GUI navigation and settings ownership
+ 
+-**Status:** Accepted · **Revision:** 162
++**Status:** Accepted · **Revision:** 163
+ 
+ - Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
+   Origin Y, Width and Height in pixels. Frame origins use bottom-left output
+@@ -34,7 +34,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ - Review and managed runtime use the same DashboardWindow page construction,
+   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
+   supplies local fixtures or authoritative state and command availability; it never
+-  adds a separate page layout. Review-only inspection menus and runtime authority
++  adds a separate page layout. Dashboard cards have identical geometry in both modes:
++  no Runtime-only control button or hint row. Take control, confirmed Take over and
++  Release remain in Runtime's Control menu; the HUD reports actual authority.
++  Review-only inspection menus and runtime authority
+   actions retain their distinct purpose. Older saved review drafts migrate through
+   the owning validators without discarding valid settings or changing source files
+   during load; genuine invalid drafts remain preserved and explicitly reported.
+diff --git a/src/cephvr/gui/dashboard.py b/src/cephvr/gui/dashboard.py
+index 5c1e779..a314ccd 100644
+--- a/src/cephvr/gui/dashboard.py
++++ b/src/cephvr/gui/dashboard.py
+@@ -15,7 +15,6 @@ from cephvr.gui.components import (
+     button,
+     combo,
+     field,
+-    label,
+ )
+ from cephvr.gui.dialogs import StopDialog
+ from cephvr.gui.formatting import duration, metrics_text
+@@ -38,7 +37,6 @@ ACTION_PHASES = {
+ class Dashboard(ResponsiveColumns):
+     action_requested = pyqtSignal(str)
+     preview_requested = pyqtSignal(str, bool)
+-    control_requested = pyqtSignal()
+ 
+     def __init__(
+         self, *, sample: bool = False, settings: QSettings | None = None
+@@ -93,13 +91,6 @@ class Dashboard(ResponsiveColumns):
+         grid.setColumnStretch(0, 1)
+         grid.setColumnStretch(1, 1)
+         card.body.addLayout(grid)
+-        self.control_button = button("Take control", "secondary")
+-        self.control_button.clicked.connect(self.control_requested.emit)
+-        card.body.addWidget(self.control_button)
+-        self.control_hint = label(
+-            "Waiting for a controller connection.", "muted", wrap=True
+-        )
+-        card.body.addWidget(self.control_hint)
+         return card
+ 
+     def build_subject(self, sample: bool) -> Card:
+@@ -209,11 +200,6 @@ class Dashboard(ResponsiveColumns):
+ 
+     def apply_view(self, view: DashboardView) -> None:
+         self.view = view
+-        self.control_button.setVisible(not view.sample)
+-        self.control_button.setEnabled(view.connected and not view.has_control)
+-        self.control_button.setText(
+-            "Control held" if view.has_control else "Take control"
+-        )
+         self.preview_dialog.apply_views(
+             view.previews,
+             allowed=view.has_control and (view.connected or view.sample),
+@@ -239,18 +225,6 @@ class Dashboard(ResponsiveColumns):
+             self.stop_dialog.update_actions(self.stop_choices())
+         for editor in self.subject_editors:
+             editor.setEnabled(view.can_edit)
+-        self.control_hint.setText(
+-            "Local review · buttons report intent only."
+-            if view.sample and view.has_control
+-            else "Review observer · editing and commands unavailable."
+-            if view.sample
+-            else "Control held · camera and microcontroller actions are available in Configuration."
+-            if view.connected and view.has_control
+-            else "Observer · take control to edit settings and test devices."
+-            if view.connected
+-            else "Waiting for a controller connection."
+-        )
+-        self.control_hint.setVisible(not view.sample)
+         rows = (
+             ("PHASE", view.phase.value),
+             (
+diff --git a/src/cephvr/gui/main.py b/src/cephvr/gui/main.py
+index b8b3398..ee19d12 100644
+--- a/src/cephvr/gui/main.py
++++ b/src/cephvr/gui/main.py
+@@ -174,7 +174,6 @@ class ManagedGui(QObject):
+         window.dashboard.preview_requested.connect(
+             self.preview_viewers.preview_visibility
+         )
+-        window.dashboard.control_requested.connect(self.request_control)
+         window.dashboard.action_requested.connect(self.request_dashboard_action)
+         bridge.snapshot_received.connect(self.install_snapshot)
+         bridge.connection_changed.connect(self.connection_changed)
+@@ -556,15 +555,6 @@ class ManagedGui(QObject):
+         ):
+             self.bridge.request("take_control", takeover=True)
+ 
+-    def request_control(self) -> None:
+-        state = self.state
+-        if state is None:
+-            return
+-        if state.control.holder_client_id:
+-            self.confirm_takeover()
+-        else:
+-            self.bridge.request("take_control")
+-
+     def refresh_camera_state(self) -> None:
+         if self.state is not None:
+             self.cameras._camera_revision = -1
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index e5ab380..2a655b1 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -3069,26 +3069,6 @@ def test_managed_camera_enable_accepts_missing_external_input(
+     assert "awaiting controller confirmation" in panel.console.toPlainText()
+ 
+ 
+-def test_managed_dashboard_exposes_explicit_control_acquisition(
+-    window: DashboardWindow,
+-) -> None:
+-    requested: list[bool] = []
+-    window.dashboard.control_requested.connect(lambda: requested.append(True))
+-    window.apply_view(
+-        DashboardView(connected=True, has_control=False, configuration_wired=False)
+-    )
+-    assert window.dashboard.control_button.isVisible()
+-    assert window.dashboard.control_button.isEnabled()
+-    assert "take control" in window.dashboard.control_hint.text().lower()
+-    window.dashboard.control_button.click()
+-    assert requested == [True]
+-    window.apply_view(
+-        DashboardView(connected=True, has_control=True, configuration_wired=False)
+-    )
+-    assert not window.dashboard.control_button.isEnabled()
+-    assert "control held" in window.dashboard.control_hint.text().lower()
+-
+-
+ def test_managed_camera_settings_submit_pfs_source_and_rate(
+     window: DashboardWindow,
+     tmp_path: Path,
+@@ -10788,12 +10768,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+     def signature(page: QWidget) -> tuple:
+         return (
+             tuple(card.caption.text() for card in page.findChildren(Card)),
+-            tuple(
+-                control.text()
+-                for control in page.findChildren(QAbstractButton)
+-                if control is not runtime.dashboard.control_button
+-                and control is not review.dashboard.control_button
+-            ),
++            tuple(control.text() for control in page.findChildren(QAbstractButton)),
+             tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
+             tuple(
+                 tuple(editor.itemText(i) for i in range(editor.count()))
+@@ -10817,11 +10792,6 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+         for window in (review, runtime):
+             window.resize(width, 940)
+             window.show()
+-        assert not review.dashboard.control_button.isVisible()
+-        assert runtime.dashboard.control_button.isVisible() == runtime_authority
+-        if runtime_authority:
+-            assert runtime.dashboard.control_button.text() == "Control held"
+-            assert not runtime.dashboard.control_button.isEnabled()
+         assert [b.text() for b in review.page_buttons] == [
+             b.text() for b in runtime.page_buttons
+         ]
+@@ -10836,7 +10806,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+                 for left, right in zip(review_items, runtime_items, strict=True)
+                 if left != right
+             ] == []
+-        selections = [(0, None, None)]
++        selections = [(0, None, None), (1, None, None)]
+         selections += [(3, None, i) for i in range(review.tracking.tabs.count())]
+         selections += [(2, i, None) for i in range(4)]
+         selections += [
+@@ -10863,28 +10833,40 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+             )
+             assert signature(review_page) == signature(runtime_page)
+ 
+-            def visible_cards(parent: QWidget, page_index: int) -> list:
++            def visible_cards(parent: QWidget) -> list:
+                 return [
+                     (
+                         card.caption.text(),
+-                        # Runtime authority controls add height only to Dashboard's
+-                        # left column; compare the remaining cards in their own frame.
+-                        QRect(card.x(), 0, card.width(), card.height())
+-                        if runtime_authority
+-                        and page_index == 0
+-                        and card in parent.columns[0].findChildren(Card)
+-                        else card.geometry(),
++                        card.geometry(),
+                     )
+                     for card in parent.findChildren(Card)
+                     if card.isVisible()
+-                    and not (
+-                        runtime_authority
+-                        and page_index == 0
+-                        and card.caption.text() == "System controls"
+-                    )
+                 ]
+ 
+-            assert visible_cards(review_page, page) == visible_cards(runtime_page, page)
++            assert visible_cards(review_page) == visible_cards(runtime_page)
++        # Authority stays in the Runtime menu without changing any page geometry.
++        requests = []
++        monkeypatch.setattr(
++            bridge,
++            "request",
++            lambda action, **options: requests.append((action, options)),
++        )
++        for action in (manager.take, manager.release, manager.takeover):
++            action.setEnabled(True)
++        manager.take.trigger()
++        manager.release.trigger()
++        from PyQt6.QtWidgets import QMessageBox
++
++        for answer in (QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes):
++            monkeypatch.setattr(
++                QMessageBox, "question", lambda *args, response=answer: response
++            )
++            manager.takeover.trigger()
++        assert requests == [
++            ("take_control", {}),
++            ("release_control", {}),
++            ("take_control", {"takeover": True}),
++        ]
+     finally:
+         # Avoid persistence/controller shutdown dialogs in this isolated layout check.
+         review.tracking.annotation.close()

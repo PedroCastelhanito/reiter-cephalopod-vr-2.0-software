@@ -314,8 +314,13 @@ class WorkerOperationExecutor:
         evidence.operation.command_id = command.command_id
         evidence.state_revision = self.state.state_revision + 1
         self.state.retain_lifecycle(evidence)
+        if evidence.HasField("ready"):
+            # Publish the new owner scope before Ready permits scheduling it.
+            self._refresh_health_snapshot()
         if command.command_id in self.state.supervisor_command_ids:
             return
+        if evidence.HasField("finished"):
+            self.health.flush(deadline_ns)
         self.report_dispatcher.lifecycle(evidence, deadline_ns)
 
     def advance_due_stages(self) -> None:

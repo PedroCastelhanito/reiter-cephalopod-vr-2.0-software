@@ -1,5 +1,6 @@
 """GLFW window configuration, actual framebuffer checks and calibrated Idle values."""
 
+import ctypes
 from collections.abc import Callable
 from typing import Any
 
@@ -8,14 +9,36 @@ from cephvr.visual_stimulus.config.models.photometric_profile import Photometric
 from cephvr.visual_stimulus.resources.calibration import PreparedCalibration
 
 
+def activate_window(glfw: Any, window: Any) -> None:
+    """Avoid a redundant driver rebind; inspect the actual thread-local context."""
+    current = glfw.get_current_context()
+    if (
+        current
+        and ctypes.cast(current, ctypes.c_void_p).value
+        == ctypes.cast(window, ctypes.c_void_p).value
+    ):
+        return
+    glfw.make_context_current(window)
+
+
 class NativeRenderingError(RuntimeError):
     pass
 
 
 class DisplayUnavailableError(ValueError):
-    """A saved output has no unique active monitor; no fallback is permitted."""
+    """Required output placement is unavailable; no fallback is permitted."""
 
     code = "DISPLAY_OUTPUT_UNAVAILABLE"
+    remedy = "Reconnect the projector or correct its assignment, then run Setup."
+
+
+class DisplayGpuUnavailableError(DisplayUnavailableError):
+    """A healthy context has the wrong adapter, rather than a GPU operation fault."""
+
+    remedy = (
+        "Set Windows Graphics preference for the managed cephvr-python.exe to "
+        "the RTX 5060 Ti, then close and reopen Runtime GUI."
+    )
 
 
 def attach_window_context(moderngl: Any) -> Any:

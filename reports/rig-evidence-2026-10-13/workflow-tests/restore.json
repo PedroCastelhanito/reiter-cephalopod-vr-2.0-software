@@ -1,0 +1,131 @@
+{
+  "method": "authenticated managed controller; real hardware; no firmware upload",
+  "checks": {
+    "before": {
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "1"
+      },
+      "acquisition_devices": {},
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88"
+        },
+        "command_id": "b1ec5cf9-8254-4a68-9ad4-49eaaad670c6",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264571833000",
+            "idle_swap_return_ns": "2264572122100",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_left",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264667777000",
+            "idle_swap_return_ns": "2264667816900",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_right",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264705507400",
+            "idle_swap_return_ns": "2264705599400",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_bottom",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264740595600",
+            "idle_swap_return_ns": "2264740675700",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          }
+        ],
+        "observed_monotonic_ns": "2264740734600",
+        "complete": true
+      },
+      "reservation": {},
+      "errors": [],
+      "warnings": [
+        {
+          "warning_id": "3e253335-2b32-42af-b2fb-01cdb985f6ce",
+          "component": "startup_recovery",
+          "message": "Recover unfinished session at C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_protocol\\DUMMY-114520. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\reports\\\\rig-evidence-2026-10-13\\\\workflow-tests\\\\recordings\\\\20261013_workflow_audit_protocol\\\\DUMMY-114520\\\\protocol-data\\\\SESSION_CONFIG.json' Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect/stop that exact remote run manually before another paired session."
+        }
+      ],
+      "prompts": [
+        {
+          "prompt_id": "04deb610-f05a-4f50-9391-afd5f1457846",
+          "setup": {
+            "controller_generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7",
+            "session_id": "8d4c7d73-ae4b-4702-a4b7-5d56d15f1807"
+          },
+          "operation": {
+            "command_id": "063dedcf-dacb-4706-8882-7134f8d98805"
+          },
+          "explanation": "Recover unfinished session at C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_protocol\\DUMMY-114520. administrative log/configuration inspection unconfirmed: [WinError 2] The system cannot find the file specified: 'C:\\\\Dev\\\\projects\\\\reiter-cephalopod-vr\\\\reiter-cephalopod-vr-2.0-software\\\\reports\\\\rig-evidence-2026-10-13\\\\workflow-tests\\\\recordings\\\\20261013_workflow_audit_protocol\\\\DUMMY-114520\\\\protocol-data\\\\SESSION_CONFIG.json' Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker. SpikeGLX stopping remains unconfirmed for endpoint unknown, run unknown; inspect/stop that exact remote run manually before another paired session.",
+          "permitted_choices": [
+            "continue",
+            "cancel"
+          ]
+        }
+      ],
+      "metadata": [],
+      "recoveries": []
+    },
+    "restore": {
+      "command_id": "471e7656-9aec-4c0a-b689-6895ca89cdcc",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "configuration_restored": true
+  },
+  "controller_generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88"
+}

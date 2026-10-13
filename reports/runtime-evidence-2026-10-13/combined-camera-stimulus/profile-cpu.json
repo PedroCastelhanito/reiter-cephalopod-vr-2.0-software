@@ -1,0 +1,200 @@
+{
+  "elapsed_s": 5.1713613,
+  "logical_cpus": 32,
+  "before": [
+    {
+      "pid": 24740,
+      "cpu_s": 0.03125,
+      "threads": 4,
+      "working_bytes": 16039936
+    },
+    {
+      "pid": 29396,
+      "cpu_s": 0.015625,
+      "threads": 1,
+      "working_bytes": 4378624
+    },
+    {
+      "pid": 24408,
+      "cpu_s": 0.296875,
+      "threads": 6,
+      "working_bytes": 49410048
+    },
+    {
+      "pid": 16940,
+      "cpu_s": 3.53125,
+      "threads": 24,
+      "working_bytes": 45137920
+    },
+    {
+      "pid": 24952,
+      "cpu_s": 1.359375,
+      "threads": 31,
+      "working_bytes": 67727360
+    },
+    {
+      "pid": 6312,
+      "cpu_s": 0.734375,
+      "threads": 25,
+      "working_bytes": 50401280
+    },
+    {
+      "pid": 13956,
+      "cpu_s": 0.5625,
+      "threads": 25,
+      "working_bytes": 57180160
+    },
+    {
+      "pid": 25056,
+      "cpu_s": 0.5625,
+      "threads": 48,
+      "working_bytes": 76054528
+    },
+    {
+      "pid": 7972,
+      "cpu_s": 2.640625,
+      "threads": 55,
+      "working_bytes": 221859840
+    },
+    {
+      "pid": 3908,
+      "cpu_s": 24.765625,
+      "threads": 214,
+      "working_bytes": 856813568
+    },
+    {
+      "pid": 11828,
+      "cpu_s": 0.34375,
+      "threads": 25,
+      "working_bytes": 42876928
+    },
+    {
+      "pid": 25388,
+      "cpu_s": 14.703125,
+      "threads": 69,
+      "working_bytes": 283041792
+    },
+    {
+      "pid": 19796,
+      "cpu_s": 6.75,
+      "threads": 69,
+      "working_bytes": 171696128
+    },
+    {
+      "pid": 9508,
+      "cpu_s": 31.609375,
+      "threads": 50,
+      "working_bytes": 417705984
+    },
+    {
+      "pid": 25596,
+      "cpu_s": 14.515625,
+      "threads": 50,
+      "working_bytes": 278155264
+    },
+    {
+      "pid": 19096,
+      "cpu_s": 12.234375,
+      "threads": 50,
+      "working_bytes": 439824384
+    }
+  ],
+  "after": [
+    {
+      "pid": 24740,
+      "cpu_s": 0.03125,
+      "threads": 4,
+      "working_bytes": 16039936
+    },
+    {
+      "pid": 29396,
+      "cpu_s": 0.015625,
+      "threads": 1,
+      "working_bytes": 4378624
+    },
+    {
+      "pid": 24408,
+      "cpu_s": 0.296875,
+      "threads": 6,
+      "working_bytes": 49410048
+    },
+    {
+      "pid": 16940,
+      "cpu_s": 3.875,
+      "threads": 24,
+      "working_bytes": 45187072
+    },
+    {
+      "pid": 24952,
+      "cpu_s": 1.453125,
+      "threads": 31,
+      "working_bytes": 67727360
+    },
+    {
+      "pid": 6312,
+      "cpu_s": 0.765625,
+      "threads": 25,
+      "working_bytes": 50409472
+    },
+    {
+      "pid": 13956,
+      "cpu_s": 0.578125,
+      "threads": 25,
+      "working_bytes": 57180160
+    },
+    {
+      "pid": 25056,
+      "cpu_s": 0.5625,
+      "threads": 48,
+      "working_bytes": 76054528
+    },
+    {
+      "pid": 7972,
+      "cpu_s": 2.78125,
+      "threads": 55,
+      "working_bytes": 221577216
+    },
+    {
+      "pid": 3908,
+      "cpu_s": 30.796875,
+      "threads": 214,
+      "working_bytes": 919207936
+    },
+    {
+      "pid": 11828,
+      "cpu_s": 0.40625,
+      "threads": 25,
+      "working_bytes": 42876928
+    },
+    {
+      "pid": 25388,
+      "cpu_s": 18.015625,
+      "threads": 69,
+      "working_bytes": 277954560
+    },
+    {
+      "pid": 19796,
+      "cpu_s": 8.328125,
+      "threads": 69,
+      "working_bytes": 173240320
+    },
+    {
+      "pid": 9508,
+      "cpu_s": 38.09375,
+      "threads": 50,
+      "working_bytes": 417705984
+    },
+    {
+      "pid": 25596,
+      "cpu_s": 18.453125,
+      "threads": 50,
+      "working_bytes": 278155264
+    },
+    {
+      "pid": 19096,
+      "cpu_s": 16.46875,
+      "threads": 50,
+      "working_bytes": 439955456
+    }
+  ]
+}

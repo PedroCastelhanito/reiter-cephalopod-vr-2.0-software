@@ -333,6 +333,7 @@ message AcquisitionCameraSettingsCommand {
   // Batch changed roles under one revision so readback adoption stays atomic.
 }
 message PulseSettingsApplication {
+  optional bool eye_tracking_active = 5;
   cephvr.acquisition.v1.CameraPulseConfiguration requested = 1;
   optional bool behavioral_active = 2;
   optional bool tracking_active = 3;

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import threading
 from pathlib import Path
 from types import SimpleNamespace as NS
 
@@ -91,6 +92,44 @@ def test_pending_encoder_write_preserves_normalized_row_order() -> None:
     assert worker.drain_once()
     assert encoder.data == b"om!!bott"
     assert worker.counts().input_submitted_count == 1
+
+
+def test_pixel_normalization_does_not_hold_capture_admission_lock(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.visual_stimulus.recording import capture
+
+    entered, release = threading.Event(), threading.Event()
+    original = capture._ffmpeg_input_order
+
+    def normalize(frame: CompositeFrame) -> CompositeFrame:
+        entered.set()
+        assert release.wait(2)
+        return original(frame)
+
+    monkeypatch.setattr(capture, "_ffmpeg_input_order", normalize)
+    worker = RecordingWorker(
+        capture_slots=2,
+        evidence=EvidenceWriter(max_pending_bytes=4096),
+        encoder=_DelayedInput(),
+        video_start_ns=0,
+        video_rate_hz=1,
+    )
+    worker.offer(CompositeFrame(0, 0, 1, 2, "rgba8_bottom_up", b"bottom!!"))
+    recording = threading.Thread(target=worker.drain_once)
+    recording.start()
+    try:
+        assert entered.wait(2)
+        assert worker._lock.acquire(timeout=0.1)
+        worker._lock.release()
+        reservation, disposition, _ = worker.classify_and_reserve(1, 1_000_000_000)
+        assert reservation is not None and disposition == "admitted"
+        worker.cancel_reservation(reservation)
+    finally:
+        release.set()
+        recording.join(2)
+    assert not recording.is_alive()
+    assert worker.drain_once()
 
 
 def test_recipe_publication_is_precomputed_and_never_overwrites(tmp_path: Path) -> None:
@@ -205,18 +244,27 @@ def test_recording_worker_copies_frames_and_prioritizes_evidence(
 
 
 @pytest.mark.parametrize(
-    ("pixel_format", "pixels", "expected"),
+    ("pixel_format", "pixels", "expected", "width", "height"),
     [
-        ("rgba8_bottom_up", b"downUP!!", b"UP!!down"),
+        ("rgba8_bottom_up", b"downUP!!", b"UP!!down", 1, 2),
+        (
+            "rgba8_bottom_up",
+            b"abcdefghijklmnopqrstuvwx",
+            b"qrstuvwxijklmnopabcdefgh",
+            2,
+            3,
+        ),
         (
             "r10g10b10a2_le_bottom_up",
             b"\x01\x02\x03\xff\x04\x05\x06\xc0",
             b"\x04\x05\x06\x00\x01\x02\x03\x3f",
+            1,
+            2,
         ),
     ],
 )
 def test_rawvideo_abi_flips_rows_and_clears_packed_x_bits(
-    pixel_format: str, pixels: bytes, expected: bytes
+    pixel_format: str, pixels: bytes, expected: bytes, width: int, height: int
 ) -> None:
     writer = EvidenceWriter(max_pending_bytes=64)
     encoder = _Input()
@@ -227,12 +275,14 @@ def test_rawvideo_abi_flips_rows_and_clears_packed_x_bits(
         video_start_ns=0,
         video_rate_hz=1,
     )
+    source = bytearray(pixels)
     assert worker.offer(
-        CompositeFrame(0, 0, 1, 2, pixel_format, pixels)  # type: ignore[arg-type]
+        CompositeFrame(0, 0, width, height, pixel_format, source)  # type: ignore[arg-type]
     ).admitted
     while worker.drain_once():
         pass
     assert bytes(encoder.data) == expected
+    assert source == pixels
     writer.close()
 
 

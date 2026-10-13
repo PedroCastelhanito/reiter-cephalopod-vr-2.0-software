@@ -38,7 +38,7 @@ def test_defaults_bind_owner_assigned_mcu_pins() -> None:
     assert settings.pulses.behavioral.HasField("requested_frequency_hz")
     assert settings.pulses.behavioral.pin == "D10"
     assert settings.pulses.tracking.pin == "D11"
-    assert settings.pulses.trial_state_pin == "D9"
+    assert settings.pulses.trial_state_pin == "D12"
     assert settings.pulses.trial_state_enabled
     assert settings.pulses.projector_flip_pin == "D2"
     assert not settings.pulses.projector_flip_enabled
@@ -56,7 +56,7 @@ def test_defaults_bind_owner_assigned_mcu_pins() -> None:
     assert not settings.pulses.eye_tracking.HasField("requested_frequency_hz")
 
 
-def test_eye_capture_blocks_until_external_trigger_integration() -> None:
+def test_eye_capture_requires_explicit_external_trigger_settings() -> None:
     candidate = types_pb2.ExperimentConfiguration()
     backend = candidate.backends.add(backend_name="acquisition", enabled=True)
     backend.acquisition.CopyFrom(load_defaults(_ROOT))
@@ -65,7 +65,61 @@ def test_eye_capture_blocks_until_external_trigger_integration() -> None:
     result = validate_configuration(candidate)
     assert not result.valid
     codes = {entry.failure.code for entry in result.issues}
-    assert {"EYE_TRIGGER_PENDING", "PIN_REQUIRED", "RATE_REQUIRED"} <= codes
+    assert {"TRIGGER_SOURCE_REQUIRED", "PIN_REQUIRED", "RATE_REQUIRED"} <= codes
+
+
+async def test_eye_setup_uses_independent_pulse_mask_and_applied_rate() -> None:
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    from cephvr.acquisition.coordinator.session_payloads import nominal_frame_rate
+    from cephvr.acquisition.coordinator.session_preparation import SessionPreparation
+    from cephvr.acquisition.state import PulseRecord
+
+    request = wire.SetupSessionRequest()
+    settings = request.settings.acquisition
+    settings.eye_tracking.enabled = True
+    settings.eye_tracking.device.frame_timing = camera.FRAME_TIMING_EXTERNAL_TRIGGER
+    settings.pulses.port = "COM8"
+    settings.pulses.eye_tracking.pin = "D8"
+    settings.pulses.eye_tracking.requested_frequency_hz = 45
+    request.plan.configuration_revision = 7
+    observation = mcu.MicrocontrollerObservation(connection_id="eye-connection")
+    observation.state.eye_tracking.enabled = True
+    observation.state.eye_tracking.running = False
+    observation.state.eye_tracking.pin = "D8"
+    observation.state.eye_tracking.applied_frequency_hz = 45
+    observation.state.tracking.applied_frequency_hz = 60
+    session = SimpleNamespace(pulse_resolution=None)
+    owner = object.__new__(SessionPreparation)
+    owner.session_slot = SimpleNamespace(current=session)
+    owner.identity = SimpleNamespace(process=control.ProcessIdentity())
+    owner.catalogue = SimpleNamespace(declare_resource=AsyncMock())
+    owner.pulse = PulseRecord()
+    owner.serial = SimpleNamespace(
+        connect=AsyncMock(return_value=observation),
+        configure=AsyncMock(return_value=observation),
+    )
+    await owner.configure_pulses(request, 1000)
+    call = owner.serial.configure.await_args
+    assert call.args[0] == settings.pulses
+    assert call.kwargs == {
+        "active_roles": (camera.CAMERA_ROLE_EYE_TRACKING,),
+        "deadline_ns": 1000,
+    }
+    resolution = session.pulse_resolution
+    assert resolution.eye_tracking_active
+    assert not resolution.behavioral_active and not resolution.tracking_active
+    assert resolution.requested_configuration_revision == 7
+    assert (
+        nominal_frame_rate(
+            camera.CAMERA_ROLE_EYE_TRACKING,
+            settings.eye_tracking,
+            camera.CameraResolvedState(),
+            resolution,
+        )
+        == 45
+    )
 
 
 def test_microcontroller_io_pin_validation_keeps_disabled_drafts() -> None:
@@ -137,7 +191,9 @@ def test_pfs_source_filename_is_provenance_only_and_is_not_opened(
     assert not device.HasField("pfs_baseline")
 
 
-def test_file_policies_resolve_exact_units_and_preserve_deferred_margin() -> None:
+def test_file_policies_resolve_exact_units_and_preserve_missing_margin(
+    tmp_path: Path,
+) -> None:
     policies = load_file_policies(_ROOT)
 
     assert policies.contract_version == 1
@@ -149,7 +205,22 @@ def test_file_policies_resolve_exact_units_and_preserve_deferred_margin() -> Non
         if item.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
     )
     assert behavioral.frame_silence_timeout_ns == 1_000_000_000
-    assert not behavioral.HasField("post_cutoff_drain_margin_ns")
+    assert behavioral.post_cutoff_drain_margin_ns == 125_000_000
+
+    root = _copy_configuration(tmp_path)
+    config_path = root / "config/backends/acquisition_config.toml"
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace(
+            "post_cutoff_drain_margin_ms = 125\n", "", 1
+        ),
+        encoding="utf-8",
+    )
+    missing = next(
+        item
+        for item in load_file_policies(root).cameras
+        if item.camera == camera_pb2.CAMERA_ROLE_BEHAVIORAL
+    )
+    assert not missing.HasField("post_cutoff_drain_margin_ns")
 
 
 def test_validation_rejects_duplicate_active_pin_and_empty_encoder_list() -> None:

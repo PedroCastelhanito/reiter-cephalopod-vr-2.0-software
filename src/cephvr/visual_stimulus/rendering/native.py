@@ -18,8 +18,10 @@ from typing import Any, cast
 from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile, Output
 from cephvr.visual_stimulus.rendering.native_display import (
+    DisplayGpuUnavailableError,
     DisplayUnavailableError,
     NativeRenderingError,
+    activate_window,
     attach_window_context,
     configure_window,
     idle_device_color,
@@ -101,9 +103,15 @@ class ModernGLPort:
 
     @staticmethod
     def _verify_render_gpu(renderer: str, vendor: str) -> str:
-        from cephvr.platform.windows.nvidia_device import verify_opengl_rendering_device
+        from cephvr.platform.windows.nvidia_device import (
+            OpenGLAdapterMismatch,
+            verify_opengl_rendering_device,
+        )
 
-        device = verify_opengl_rendering_device(renderer, vendor)
+        try:
+            device = verify_opengl_rendering_device(renderer, vendor)
+        except OpenGLAdapterMismatch as exc:
+            raise DisplayGpuUnavailableError(str(exc)) from exc
         return f"nvidia_uuid:{device.uuid}"
 
     def _assert_owner(self) -> None:
@@ -194,7 +202,7 @@ class ModernGLPort:
                     output.rgb_bits_per_channel,
                     0,
                     context.screen,
-                    partial(glfw.make_context_current, window),
+                    partial(activate_window, glfw, window),
                 )
                 created.append(output_context)
                 self._outputs[output.output_id] = output_context
@@ -558,13 +566,16 @@ class ModernGLPort:
         order_shared_outputs(self._outputs, self._capture_fences)
         return self.scene_renderer.capture_review_composite(slot, outputs, encoding)
 
-    def poll_review_capture(self, pending: object) -> bytes | None:
+    def poll_review_capture(self, pending: object) -> bytes | bytearray | None:
         self._assert_owner()
         first = next(iter(self._outputs.values()))
-        self._glfw.make_context_current(first.window)
+        activate_window(self._glfw, first.window)
         if self.scene_renderer is None:
             raise NativeRenderingError("capture pipeline missing")
-        return cast(bytes | None, self.scene_renderer.poll_review_capture(pending))
+        return cast(
+            bytes | bytearray | None,
+            self.scene_renderer.poll_review_capture(pending),
+        )
 
     def cancel_review_capture(self, pending: object) -> bool:
         self._assert_owner()

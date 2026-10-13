@@ -100,7 +100,7 @@ class FirmwareUpdate:
                 observation.state.HasField(role)
                 and getattr(observation.state, role).HasField("running")
                 and not getattr(observation.state, role).running
-                for role in ("behavioral", "tracking")
+                for role in ("behavioral", "tracking", "eye_tracking")
             ):
                 raise RuntimeError(
                     "Firmware verification did not confirm stopped camera outputs"

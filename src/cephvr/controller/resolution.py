@@ -83,6 +83,7 @@ def resolved_configuration(
             or pulses.requested != settings.pulses
             or not pulses.HasField("behavioral_active")
             or not pulses.HasField("tracking_active")
+            or not pulses.HasField("eye_tracking_active")
             or not pulses.HasField("applied")
         ):
             raise ProjectionError("pulse readback cannot replace requested timing")

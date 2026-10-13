@@ -1,0 +1,60 @@
+{
+  "method": "isolated identical executable without GPU preference; actual ModernGLPort/context cleanup",
+  "executable": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-gpu-probe.exe",
+  "records": [
+    {
+      "cycle": 0,
+      "error": "OpenGL context 'ATI Technologies Inc.'/'AMD Radeon(TM) Graphics' does not resolve to 'NVIDIA GeForce RTX 5060 Ti'",
+      "remedy": "Set Windows Graphics preference for the managed cephvr-python.exe to the RTX 5060 Ti, then close and reopen Runtime GUI.",
+      "announced": [
+        "visual_stimulus:glfw",
+        "visual_stimulus:window:calibration_front"
+      ],
+      "release": {
+        "released": [
+          "visual_stimulus:window:calibration_front",
+          "display:calibration_front",
+          "visual_stimulus:window:calibration_front",
+          "visual_stimulus:glfw"
+        ],
+        "outstanding": []
+      }
+    },
+    {
+      "cycle": 1,
+      "error": "OpenGL context 'ATI Technologies Inc.'/'AMD Radeon(TM) Graphics' does not resolve to 'NVIDIA GeForce RTX 5060 Ti'",
+      "remedy": "Set Windows Graphics preference for the managed cephvr-python.exe to the RTX 5060 Ti, then close and reopen Runtime GUI.",
+      "announced": [
+        "visual_stimulus:glfw",
+        "visual_stimulus:window:calibration_front"
+      ],
+      "release": {
+        "released": [
+          "visual_stimulus:window:calibration_front",
+          "display:calibration_front",
+          "visual_stimulus:window:calibration_front",
+          "visual_stimulus:glfw"
+        ],
+        "outstanding": []
+      }
+    },
+    {
+      "cycle": 2,
+      "error": "OpenGL context 'ATI Technologies Inc.'/'AMD Radeon(TM) Graphics' does not resolve to 'NVIDIA GeForce RTX 5060 Ti'",
+      "remedy": "Set Windows Graphics preference for the managed cephvr-python.exe to the RTX 5060 Ti, then close and reopen Runtime GUI.",
+      "announced": [
+        "visual_stimulus:glfw",
+        "visual_stimulus:window:calibration_front"
+      ],
+      "release": {
+        "released": [
+          "visual_stimulus:window:calibration_front",
+          "display:calibration_front",
+          "visual_stimulus:window:calibration_front",
+          "visual_stimulus:glfw"
+        ],
+        "outstanding": []
+      }
+    }
+  ]
+}

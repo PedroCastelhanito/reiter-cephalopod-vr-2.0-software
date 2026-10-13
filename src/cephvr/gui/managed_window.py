@@ -25,6 +25,9 @@ class ManagedDashboardWindow(DashboardWindow):
             return
         event.ignore()
         self.close_requested.emit()
+        if self._close_after_save:
+            event.accept()
+            super().closeEvent(event)
 
     def finish_close(self) -> None:
         self._close_after_save = True

@@ -1,0 +1,41 @@
+{
+  "scope": "read-only, no control claim or device commands",
+  "generation": "3ab08526-e59c-4280-a0e3-3a709392082a",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "revision": 2,
+  "roles": {
+    "behavioral": {
+      "serial": "40065509",
+      "enabled": true,
+      "pin": "D11"
+    },
+    "tracking": {
+      "serial": "40747103",
+      "enabled": true,
+      "pin": "D10"
+    },
+    "eye_tracking": {
+      "serial": "",
+      "enabled": false,
+      "pin": ""
+    }
+  },
+  "control_holder_role": "gui",
+  "local_gui_roles": [
+    {
+      "serial": "40065509",
+      "role": "Behavior cam",
+      "enabled": true
+    },
+    {
+      "serial": "40278236",
+      "role": "Unassigned",
+      "enabled": false
+    },
+    {
+      "serial": "40747103",
+      "role": "Tracking cam",
+      "enabled": true
+    }
+  ]
+}

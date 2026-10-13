@@ -205,6 +205,12 @@ class OwnedCameraEdits:
                 and proposed.tracking.device.frame_timing
                 == camera.FRAME_TIMING_EXTERNAL_TRIGGER
             )
+            pulse.eye_tracking_active = bool(
+                views is not None
+                and views.eye_tracking.preview_running
+                and proposed.eye_tracking.device.frame_timing
+                == camera.FRAME_TIMING_EXTERNAL_TRIGGER
+            )
         try:
             admission = await asyncio.wait_for(
                 self.backend.apply_camera_settings(

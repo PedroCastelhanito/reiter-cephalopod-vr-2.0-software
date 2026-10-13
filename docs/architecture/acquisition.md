@@ -27,7 +27,7 @@ is not runtime or rig validation (E15).
 <a id="a01"></a>
 ### A01 — Camera acquisition and recording ownership
 
-**Status:** Accepted · **Revision:** 17
+**Status:** Accepted · **Revision:** 18
 
 - The acquisition backend owns camera capture, video encoding and camera video files,
   including trial-bound recording and verified file closure under E05/E11. The
@@ -75,8 +75,9 @@ is not runtime or rig validation (E15).
   duplicate assignments before capture; initially no camera stream is shared across
   behavioral/tracking/eye-tracking roles. Eye tracking is a third preview/video role;
   it supplies no eye-position analysis or locomotion input. Its required external
-  trigger wiring/source/rate remain unset; capture is blocked until trigger
-  integration and rig verification are completed under A11/E15.
+  trigger wiring/source/rate remain explicit operator inputs; missing inputs block
+  capture. A11 supplies its independent protocol-4 MCU output; electrical/timing
+  and actual camera acceptance remain separate rig checks under E15.
 - Assignments are configurable under E07 before the session and locked during it;
   changing a prepared assignment invalidates Ready and requires fresh Setup. Supplied
   owner assignments live in the acquisition configuration; discovery/readback alone
@@ -303,7 +304,7 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
 <a id="a07"></a>
 ### A07 — Recording frame log and crash behavior
 
-**Status:** Accepted · **Revision:** 60
+**Status:** Accepted · **Revision:** 61
 
 **Files**
 
@@ -385,7 +386,10 @@ tracking-reset/Visual Stimulus response contracts; these do not reopen acquisiti
   failures.
 - At finalization, including Interrupted trials, drain admitted frames, reconcile the
   final count/cutoff, complete encoding, write the completion line, sync and close
-  both files before Finished. No completed-file integrity scan, MP4 inspection or
+  both files and deliver final coalesced operational warnings before Finished,
+  within the original finalization deadline. Stopped and health delivery remain
+  independent; late warning delivery must not target a reset session. No
+  completed-file integrity scan, MP4 inspection or
   decoding pass gates trials/sessions; Closed is closure evidence, not a
   file-integrity certificate.
 - If valid images were acquired but every recording frame dropped, close the frame
@@ -893,7 +897,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 43
+**Status:** Accepted · **Revision:** 44
 
 **Board and firmware**
 
@@ -918,13 +922,15 @@ hardware information and later implementation; no new deferral is implied.
   or pulses. Failed/uncertain upload reports failure; unresolved helper cleanup blocks
   Setup and manual device access until exact cleanup succeeds. Setup still rejects
   incompatible firmware. Native flashing and electrical acceptance remain E15 rig work.
-- Serial protocol version is integer **3**, separate from firmware release, and must
+- Serial protocol version is integer **4**, separate from firmware release, and must
   match exactly at Setup; future wire changes increment published versions. Firmware,
   not host monitoring alone, implements A10's watchdog.
-- Version 3 controls Behavioral and Tracking outputs. Eye tracking requires external
-  triggering, but its wiring/source/rate are not yet specified. Do not map Eye onto
-  either existing output, add an independent output or flash firmware by inference.
-  A01 blocks its capture pending that input and the corresponding integration.
+- Version 4 controls independent Behavioral, Tracking and Eye tracking outputs.
+  Eye requires an explicit unique pin, camera FrameStart line and rate; never map
+  it onto another camera output or choose these values by discovery. Host masks,
+  readback, diagnostic identity, boundary evidence and cleanup include Eye.
+  Firmware upload remains explicit/manual; protocol-3 firmware rejects until
+  upgraded. Electrical/timing and camera acceptance remain E15 rig work.
 
 **Connection**
 

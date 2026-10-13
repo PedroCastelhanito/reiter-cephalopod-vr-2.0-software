@@ -1,5 +1,131 @@
 # Visual Stimulus status
 
+Oct13 owner-authorized combined rendering/reset repair verifies two consecutive
+normal60s Behavior/Tracking recordings at3602/3601 actual render groups
+(60.0333/60.0167 groups/s), improving the combined baseline39.47/s. Renderer GPU0
+and both camera/review NVENC GPU1 are confirmed by exact live PIDs/UUIDs in four
+samples per trial. All six videos externally count/fully decode; both sessions close,
+reset and restore original settings in the same live generation.
+
+Under [V12](../docs/architecture/visual_stimulus.md#v12)/
+[E13](../docs/architecture/visual_stimulus.md#e13), native row conversion, completed
+PBO mapping/private copy, actual-context no-op checks, normalization outside admission
+lock and private native pipe copying remove recording contention. Original ownership,
+slot bounds, precision and encoder settings remain. Preparation release receipts are
+retained for cleanup retry until all source/consumer ownership closes, then retired at
+new preparation; this fixes the reproduced On-to-On unknown-resource shutdown.
+The owning CPU budget includes padding, readback/pipe copies and half-frame scratch.
+ARCH-002 keeps the existing cohesive native/preparation owners with small helpers,
+no new dependency/process or whole-runtime reference.1123 regressions pass/3 skip/
+6 deselect, native pipe14 pass, Ruff/static mypy427/boundaries667 pass.
+
+Nominal60fps is not uniform frame timing or optical proof: repeat p9927.56ms,
+max37.88ms. Review fidelity remains limited:1176 real samples/2367 capacity drops/
+58 same-slot omissions and2424 explicit duplicates in3600 encoded frames. Dedicated
+Save On-to-Off native verification, Eye/locomotion Tracking and paired/optical
+acceptance remain open. Original GUI/settings are restored. Historical stimulus-only
+measurements below remain distinct from this combined result.
+[Dated raw evidence, verification and limits](runtime-evidence-2026-10-13/combined-camera-stimulus/context.json)
+
+Oct13 `stimulus-throughput-repair` implements the measured review-capture fix under
+[V12](../docs/architecture/visual_stimulus.md#v12)/
+[V20](../docs/architecture/visual_stimulus.md#v20)/
+[E13](../docs/architecture/visual_stimulus.md#e13). Matched native60s trials on four
+RGB8/all-output-VSync outputs show Save On30.13 real groups/s versus Save Off60.03/s.
+Save Off's trial completes but session cleanup fails on an unregistered resource
+after the preceding Save On session; this pre-change transition defect stays open.
+Mean float-composite glReadPixels12.98ms and capture polling6.54ms dominate the
+recording cost. Use an RGBA8 compositor for the already selected8-bit review path,
+retaining float32 for packed10-bit, and fill a fresh host bytearray directly instead
+of allocating a NumPy result then copying to bytes. The recording owner still copies
+that buffer into its own bounded slot; deadlines, source/output rendering precision,
+all-output VSync, trial timing and admitted-sample accounting are unchanged.
+
+The first framebuffer-only run completes at50.42 real groups/s. The final instrumented
+recorded run completes3600 real groups/60s (60.0/s),3422 real captures,178 padding
+duplicates,166 same-slot omissions and12 capacity drops; all stimulus outputs close,
+metadata syncs, reservation unlocks and external decode/recipe verification pass.
+Mean readback submission falls to0.736ms and capture polling to3.40ms. These are
+inclusive diagnostic timings, not optical measurements. A native768-pixel comparison
+of the same compositor shader observes at most one8-bit code difference from the
+former float-to-byte rounding; review video is not bit-exact, while physical
+rendering and V13 input precision are unchanged. Final uninstrumented confirmation
+also completes3600 real groups/60s (60.0/s):3423 real captures,177 duplicates,
+169 same-slot omissions and eight capacity drops. All outputs close, metadata syncs
+and original configuration restores; external count/full decode/recipe verification
+passes for both final runs. The normal
+uninstrumented GUI/runtime is left open in Configuration. Sustained simultaneous
+camera/Tracking work and optical timing remain unverified.
+
+ARCH-002 review keeps the implementation in the focused existing capture owner,
+with no dependency/process or policy change. Native/scene modules receive only
+transfer-type annotations; their existing cohesive size advisories remain reviewed.
+Extend the owning rendering behavior module for8/10-bit retention, representation
+locking, zero-wait fence polling and exact caller-owned host writes. Owning suite
+passes244; Ruff check/format152 files, Win32 mypy136 sources and boundaries667/
+zero violations pass. Retain failed diagnostic bootstrap/interrupted attempts,
+concurrent GPU-placement context and complete native runs separately in the
+[throughput methods/results](runtime-evidence-2026-10-13/throughput/context.json).
+
+Oct13 owner-authorized GPU placement repair is now natively verified under
+[SYS-002](../architecture.md#sys-002)/V19. Through NVIDIA Control Panel, add the
+exact managed .venv/Scripts/cephvr-python.exe program and set OpenGL rendering GPU
+explicitly to RTX5060Ti, then Apply. The previous generic Windows GpuPreference=2
+entry and inherited NVIDIA global choice were insufficient proof of the actual
+context. Leave CUDA GPUs at All and other driver/encoding settings unchanged.
+The managed-image native renderer now verifies all four contexts against
+GPU-77642118-1623-48dd-3686-1014aa86b818 (CUDA ordinal0), initializes actual assigned
+RGB8 output modes/Idle and releases every native obligation. The owner's exact
+Miniforge-base start_runtime_gui.py launch subsequently confirms all four outputs
+ready without display issues in generationc3532451-334e-4874-beaa-3e181be7bc2d.
+Leave that runtime/GUI open; no existing session is interrupted by this task.
+These checks establish placement/startup, not optical correctness or sustained
+presentation/encoding throughput. A separate concurrent throughput task remains open.
+[Methods/raw GPU evidence](runtime-evidence-2026-10-13/gpu-placement/context.json).
+
+Oct13 renewed owner screenshot/live read-only snapshot confirms a current AMD
+adapter rejection, not only an old popup: controller generation10dc50d5-98da-463f-9bb9-02516f041026,
+InitializeDisplay commande9933d53-eec0-4ec9-afa2-e04f8a1e3532 reports AMD Radeon
+instead of RTX5060Ti, with all listed display resources released. The screenshot
+shows the VS Code start_runtime_gui.py route and a visible Behavior preview;
+read-only process paths confirm managed cephvr-python.exe children. Its exact
+HKCU UserGpuPreferences entry already contains GpuPreference=2. That registry value
+does not establish the requested actual context, and repeating the generic remedy
+is not a verified repair. That earlier read-only investigation prompted the explicit
+program-setting change and successful native checks above, which now close adapter
+selection. Its prior matched RTX startup runs remain historical evidence.
+[Controller assessment](runtime.md).
+
+Oct13 fresh workflow audit: normal calibration assets fail pacing validation; a
+separate profile using current accepted all-output VSync passes native grid Open,
+two adjustments and confirmed Idle/closure. Regenerate the ordinary diagnostic
+bundle before retesting its GUI path (V01/V19/V20). Independent open-loop60s
+stimulus recording completes and externally decodes:3600 encoded frames/60s,
+1820 real render groups (30.33/s),1805 captured groups,1795 duplicates and15 drops.
+Median group interval32.18ms; median summed four-output swap durations2.42ms.
+This run does not support the older sequential-swap bottleneck hypothesis as its
+dominant explanation; capture/draw/context/transfer costs still need stage timing
+and a matched Save-Off comparison. Padded60fps video is not60Hz optical evidence.
+Combined camera recording cannot start with unset drain policy, and its failed-Setup
+cleanup crashes the renderer on an unknown cleanup command link. Preserve that
+separate E06/E08 failure for repair; normal stimulus-only closure and final exact
+application shutdown pass. [Failure/remedy inventory](runtime.md),
+[raw and external verification](rig-evidence-2026-10-13/workflow-tests/).
+
+Oct13 Windows rig: V19 startup confirms four 60 Hz RGB8 outputs with requested
+interval-1 swaps. A V01 native grid diagnostic using retained dummy geometry and a
+separate all-output-VSync profile passes Open, live adjustments at sequences 1/2,
+and Close with confirmed Idle/resource closure; accepted configuration is unchanged.
+No optical accuracy, physical timing, mixed-DPI, reference-bar measurement or sustained
+presentation-rate claim follows. The earlier native chooser crash is repaired under
+G01; native GUI now completes with two separate hover-test failures, while the earlier
+offscreen stage retains three projector-layout failures. The cross-owner assessment
+below records exact stages and remaining limits.
+The initial FFmpeg/ffprobe 4.3.2 incompatibility is resolved by the later matched 9.0.2
+upgrade and synthetic composite closure check on RTX 2080 Ti (see runtime.md).
+Recording/full-load acceptance remains open. [Current cross-owner assessment](runtime.md),
+[raw evidence](rig-evidence-2026-10-13/) and [remaining rig checks](rig-verification.md).
+
 Oct12 subgroup variations implement [V03 revision12](../docs/architecture/visual_stimulus.md#v03)
 and [V08 revision5](../docs/architecture/visual_stimulus.md#v08): compact seeded rules
 replace eager new repetition tables. Setup resolves by immediate-group repetition
@@ -831,3 +957,35 @@ the left using equal tank-wall offsets, as explicitly confirmed by the owner;
 o independent right distance remains in GUI calibration JSON v2. It shares corner generation with the schematic; backend
 corner schema/rendering is unchanged. Physical placement and managed profile adoption
 remain unverified. Local geometry tests cover independent planes and invalid distances.
+## Startup GPU placement and closure
+
+Oct13 actual launches record AMD Radeon OpenGL contexts rejected against the
+required RTX 5060 Ti under [SYS-002](../architecture.md#sys-002). Evidence includes
+[09:35 emergency](emergency-328494867654500-500f6310-e26f-453c-be55-81996dc33dd2.json)
+and [screenshot-associated emergency](emergency-328763941422600-cc8b402d-c96c-42d3-82f2-d2c3ee11b8f0.json).
+A task-owned identical executable with no Windows GPU preference reproduces AMD
+on all four configured projectors. The existing configured managed executable
+(`GpuPreference=2`) uses the RTX 5060 Ti in direct probes and two fresh managed
+launches. Relocating GLFW's bootstrap does not correct the default selection; that
+probe workaround is not adopted. The original failing launch route remains unknown.
+No production Windows preference or driver was changed.
+
+Under [V19 revision 6](../docs/architecture/visual_stimulus.md#v19), the startup
+closure defect is repaired: narrowly classify a healthy wrong-adapter context as
+unavailable output placement, reuse exact sessionless cleanup/rejection delivery,
+and expose the managed executable's Windows Graphics remedy. No wrong-GPU rendering,
+Idle/Ready claim, fallback or retry is allowed. CUDA driver/API failures, actual GPU
+operation failures, cancellation, lateness and uncertain cleanup retain E06/E08
+escalation. ARCH-002 adds only focused error classification/remedy to existing
+owners; no new process, dependency or lifecycle state. The existing native renderer
+cohesion advisory remains; window/context ownership stays together.
+
+Final affected checks: 249 Visual Stimulus/platform tests pass (including authenticated
+controller wrong-adapter rejection and fault/deadline/cleanup gates), Ruff/format
+154 files, Win32 mypy 137 sources and boundaries 665 modules/zero violations pass.
+Three actual isolated AMD contexts are rejected with exact native window/context/GLFW
+release. Final managed GUI launch confirms all four outputs initialized, revision 1,
+Configuration phase and no warnings/errors; it remains open for the owner. This
+launch passed the existing exact RTX 5060 Ti verification. No camera, recording,
+optical, electrical or full-load acceptance is implied. Raw methods/results and
+source hashes: [GPU evidence](runtime-evidence-2026-10-13/gpu-selection/context.json).

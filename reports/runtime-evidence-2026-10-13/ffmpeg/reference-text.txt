@@ -1,0 +1,268 @@
+The PylonRecorder Waterworks
+PylonRecorder2 · Parameter Field Guide
+The PylonRecorder Waterworks
+Think of every recording as water moving through a plant: the camera is a pump
+drawing raw water, the encoder is a press that squeezes it into concentrate, and your disk is the
+reservoir at the end of the line. Every flag on the command line is a fitting somewhere on this
+pipeline — and each one trades between how pure the water stays (quality),
+how much volume reaches the reservoir (file size), and whether any
+spills on the way (dropped frames).
+Water = pixel data
+Pipe bore = data rate (MB/s)
+The press = video encoder
+Reservoir = your disk
+A spill = a dropped frame
+Chips show what happens when you turn that knob up:
+Quality
+File size
+Throughput / safety
+Neutral
+Station 01 — set in Pylon Viewer / .pfs, loaded with --cfg
+The Pump House · camera sensor
+The sensor is the pump. Nothing downstream can add water the pump
+didn't deliver — quality is capped here; every station after this one only decides how
+much to throw away. Raw flow = width × height × fps × bytes-per-pixel.
+Resolution / ROI
+Quality ▲Size ▲▲
+Pipe bore. The single fattest lever: halving
+both width and height cuts the raw flow to a quarter. Cropping the ROI to just the
+arena is volume you never have to pump, squeeze, or store.
+Frame rate
+Quality ▲ (temporal)Size ▲
+Pump strokes per second. Perfectly linear:
+2× fps = 2× water. Buys temporal resolution (smooth motion for tracking), not sharper pixels.
+Pixel format
+Bandwidth ↔ CPU
+Bayer RG8 ships one pipe of concentrate
+that must be diluted (debayered) at the plant — ⅓ the transport bandwidth, more processing
+later. RGB8 ships three pipes of finished water — 3× the
+bandwidth on the USB/GigE hose, zero work downstream.
+Exposure / gain
+Size ▲ (hidden!)
+Murky water is hard to press. High-gain sensor
+noise looks like fine detail to the encoder, so grainy footage swells the file at the same
+quality setting. Good lighting is free compression.
+Station 02 — between pump and plant
+The Bucket Brigade · capture buffers
+Spare buckets carried between the pump and the press. When the press
+hiccups — an OS stall, a busy moment — full buckets wait in line instead of spilling.
+These knobs never change what a saved frame looks like; they decide whether
+every frame arrives at all.
+--max-num-buffer
+Safety ▲RAM ▲
+default 0 = keep SDK/.pfs value
+Number of buckets on the line. More buckets
+absorb longer stalls before water spills (a dropped frame). Costs only RAM.
+--usbtweaks
+Safety ▲
+Wider hose fittings for USB cameras — bigger
+transfer buffers so the hose itself doesn't become the choke point.
+Station 03 — choose your plant
+The Treatment Plant · codec & backend
+Which press the water runs through — or whether it runs through one at all.
+This choice sets the order of magnitude of your file size before any fine-tuning.
+--gpu <n>
+Throughput ▲Size ≈
+default -1 = OpenCV/CPU path
+Which press does the work. -1 = the CPU
+squeezes (OpenCV recorder). 0+ = a dedicated industrial press on that graphics card
+(FFmpeg + NVENC) — it doesn't steal workers from the camera line, so high frame rates stay
+safe. All --ffmpeg-* valves below only exist on
+this path.
+--codec none
+Quality: perfectSize ▲▲▲
+No plant at all — raw water straight into
+bottles. Perfect fidelity; the reservoir takes the full pump rate (hundreds of GB/hour
+at machine-vision rates).
+--codec mjpeg
+Quality ▲Size ▲▲
+Every bucket squeezed on its own (each frame is
+its own JPEG). A decent ~10× squeeze and every frame stands alone — easy seeking, one bad
+bucket never spoils its neighbours — but it never exploits that consecutive buckets look
+nearly identical.
+--codec h264
+Size ▼▼▼
+default
+Squeeze each bucket and ship only the difference
+from the one before. On a mostly-static scene — an ant arena where only the ants move —
+almost every frame is "same as before", so H.264 lands 50–400× smaller at the same visual
+quality.
+--compression <0-100>
+Quality ▲Size ▲
+default -1 = codec default · OpenCV path only
+The squeeze dial on the CPU press. Higher =
+gentler squeeze = better-looking, bigger frames. The FFmpeg path ignores this and uses
+--ffmpeg-crf instead.
+Station 04 — FFmpeg / NVENC path (--gpu ≥ 0)
+The Press Room · how hard & how smart
+Inside the plant. These dials set how much water gets squeezed out of every
+litre — and how cleverly the press decides where to squeeze.
+--ffmpeg-crf
+Quality ▼Size ▼▼
+lower = better · +6 ≈ half the flow
+The master press dial. CRF/CQ means "hold this
+visual quality, use whatever flow that takes." It is the quality-vs-size trade —
+every other dial in this room only refines it. On NVENC it becomes CQ (with VBR) or QP
+(with constqp).
+--ffmpeg-preset
+Size ▼ (slower presets)Throughput ▼
+NVENC default: hp (high performance)
+How carefully the press works. Slow presets
+search harder for redundancy — a smaller file at the same quality — but need more
+machine time per bucket. The default hp is deliberately fast so the press never becomes
+the bottleneck at high frame rates.
+--ffmpeg-rc
+Policy
+auto: constqp, or vbr when CRF is set
+The valve policy. constqp: fixed squeeze
+pressure, output flow floats freely. vbr: aim for a target flow but flex when the scene
+demands. cbr: a fixed output diameter no matter what — predictable flow, wasteful on
+quiet scenes, starves busy ones.
+--ffmpeg-gop / --ffmpeg-gop-sec
+Size ▼ (longer)Seek/recovery ▼
+default 60 seconds
+How often a complete bucket is bottled
+(a keyframe) instead of a difference top-up. Longer gaps = smaller files, but playback can
+only start pouring from a full bucket — the 60 s default means seek points (and crash-recovery
+points) a full minute apart.
+--ffmpeg-rc-lookahead
+Quality ▲Latency/VRAM ▲
+A periscope looking N buckets downstream so the
+valve can brace for what's coming — flow gets allocated where it will be needed instead of
+reactively.
+--ffmpeg-spatial-aq--ffmpeg-aq-strength
+Size ▲▲ on flat scenes!
+strength 1–15, needs spatial-aq on
+Smart nozzles across the frame — but NVENC
+aims them at flat regions (it lowers QP there to prevent banding). On a bright,
+uniform arena that is the whole frame: in the 2026-07-13 field test below, spatial AQ
+quadrupled the bitrate at the same CQ. Useful for scenes with mixed detail;
+counterproductive for flat lab arenas.
+--ffmpeg-temporal-aq
+≈ no effect (measured)
+Smart nozzles across time — spend more on the
+frames where things move. On mostly-static footage the field test measured no meaningful
+change on top of spatial AQ.
+Station 05 — FFmpeg / NVENC path
+Flow Regulation · caps & the surge tank
+After the press, valves that bound the outflow. Mostly irrelevant under
+constqp; they define the contract under vbr and cbr.
+--ffmpeg-bitrate-mbps
+Quality ▲Size ▲ (directly)
+The target flow. Under vbr/cbr this is the pipe
+diameter you're paying for. It literally is the file size: Mbps × seconds ÷ 8 = bytes.
+--ffmpeg-maxrate-mbps
+Size capQuality ▼ in bursts
+The pressure-relief cap — flow may never exceed
+this even in a burst. Protects the drain (disk) from spikes; squeezes quality harder when the
+scene explodes with motion.
+--ffmpeg-bufsize-mbps
+Quality ▲ through bursts
+The surge tank (VBV). Absorbs a short burst —
+sudden motion, a lighting change — so the cap is honored on average without instantly
+crushing quality. Bigger tank = smoother quality, wobblier instantaneous flow.
+--ffmpeg-surfaces
+Throughput ▲VRAM ▲
+Parallel press basins — how many buckets the
+press juggles at once. Pure pipeline depth: affects keeping-up, never the file.
+Station 06 — end of the line
+Bottling & the Reservoir · container & disk
+The compressed trickle gets bottled and stored. Nothing here changes quality
+or size meaningfully — these fittings decide whether the water survives storage.
+--video-format mkv|mp4
+Crash safety (mkv)
+default mkv
+The bottle. mkv keeps its seal even if
+the line crashes mid-fill — the file stays readable up to the last written data. mp4
+needs the cap screwed on at the end (finalization); a crash can cost you the whole bottle.
+--avio-buffer-mb
+Write smoothness ▲
+default 4 MiB
+The holding tank above the drain — collects the
+compressed trickle into efficient gulps so the disk sees fewer, larger writes.
+--min-free-space-gb--disk-check-ms
+Safety ▲
+defaults: 20 GB, checked every 1000 ms
+The float switch in the reservoir. Checks the
+water level every second and shuts the whole line down cleanly before the reservoir
+overflows.
+Not on the quality/size ledger but on the flow ledger: --frames caps how
+long the pump runs (burst length), --stopline is the emergency shut-off lever wired to a camera
+line, and the burst-mode trigger flip is the pump's ignition quirk — one extra trigger pulse at
+start-up is expected, not a leak.
+Flow Gauge · ballpark GB per hour
+Set the pump and the press, watch the pipes. The raw pipe is what the camera delivers;
+the output pipe is what reaches the disk. Output bore is drawn on a square-root scale so a 200×
+squeeze stays visible.
+Width px
+Height px
+Frame rate
+Pixel format
+Bayer / Mono 8 (1 B/px)
+RGB 8 (3 B/px)
+Codec (plant)
+h264 — difference press
+mjpeg — per-bucket press
+none — raw, no plant
+CRF / CQ press dial · 23
+Scene motion
+Calm — static arena, few movers
+Typical — steady activity
+Busy — most of the frame moves
+Raw pipe
+— from the pump
+Output pipe
+— to the reservoir
+Squeeze factor
+—
+Reservoir fill
+— GB/hour
+1 TB lasts
+—
+Ballpark only — the H.264 squeeze factor is modelled as
+scene-base × 2^((CRF−23)/6); real footage varies with noise, lighting, and motion. Raw and MJPEG
+numbers are close to exact. Verify on a short test recording before committing a disk budget.
+If files are too big, turn these — in this order
+Use the difference press. --gpu 0 --codec h264 — the order-of-magnitude
+decision; everything else is fine-tuning.
+Shrink the pump. Crop the ROI and lower fps in Pylon Viewer (save the .pfs, load with
+--cfg). Volume you never pump is free.
+Turn the press dial. Raise --ffmpeg-crf in steps of 2–3; each +6 roughly
+halves the flow. Stop when your tracker starts to complain, not your eyes.
+Slower preset, if the press has headroom. In the field test, p4 at the
+same CQ produced ~35% less flow than p3 at identical SSIM — but it raises NVENC
+load, so only where utilization allows. Do not add
+--ffmpeg-spatial-aq/--ffmpeg-temporal-aq on flat bright arenas —
+measured 2–4× size increase (see Station 04).
+Then the fittings. GOP is already cheap at 60 s (keyframes were 0.8% of the field-test
+file), rate caps only if a downstream pipe (disk, network) demands a hard ceiling.
+Field test · 26-camera ant rig, 2026-07-13
+A 60 s mid-recording segment
+(acA4024-29uc, 4024×3036 mono, 24 fps hardware trigger, NVENC h264, CQ 30, preset p3) was
+re-encoded through a 10-config matrix. Keyframes were 0.8% of the bits — the file is almost
+entirely difference-frames re-describing sensor grain and floor texture. Relative results
+(second-generation re-encode on a newer GPU, so ratios transfer, absolute numbers flatter):
+Config
+Flow vs CQ30
+SSIM-Y
+Verdict
+cq 330.47×0.9853Recommended — visually near-identical
+cq 360.25×0.9835Aggressive — validate against tracker
+p4 + cq 330.31×0.9848Free size win where NVENC has headroom
+cq 30 + spatial-aq4.4×—Harmful on flat arenas — avoid
+-b:v 6M (vbr)4.0×0.9919Missed its own 6 Mbps target 3× — avoid
+hevc cq 330.36×0.985223% below h264 cq 33 — needs app support
+cq 33 · colony cam0.57×0.9879Dense-colony validation (cam02): fiducial tags pixel-equivalent in 100% crops; tags legible even at cq 36
+CQ mode holds quantization
+constant and lets flow float, so busy colony cameras automatically spend more bits at the same CQ
+(3.30 vs 2.19 Mbit/s at cq 33 in the test) — dense scenes are not starved; the coarsening lands on
+background grain, not on ants or ID tags.
+Live A/B pilot, 2026-07-14 (first-generation encodes, all 26 cams): fleet bitrate fell from
+271 to 51 Mbit/s — 0.20×, far beyond the re-encode prediction, because at cq 30 the
+quantizer sat below the sensor-noise floor and paid for grain; cq 33 crossed above it. Colony cams
+0.27×, quiet cams down to 0.07–0.17×. All 52 diagnostics healthy with clean closes. Tags equally
+decodable in matched 100% crops; retained temporal noise on empty floor halved (YAVG diff
+0.411 → 0.205). A ~450 GB block becomes ~90–130 GB.
+Pipeline: Capture → CameraEngine → Recorder (FfmpegRecorder when --gpu ≥ 0, OpenCVRecorder otherwise).
+Camera-side valves live in the .pfs config (Pylon Viewer), plant-side valves on the PylonRecorder
+command line. Defaults shown are from main.cpp as of July 2026.

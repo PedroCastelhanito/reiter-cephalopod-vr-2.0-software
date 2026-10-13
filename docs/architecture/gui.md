@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 162
+**Status:** Accepted · **Revision:** 174
 
 - Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
   Origin Y, Width and Height in pixels. Frame origins use bottom-left output
@@ -34,7 +34,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Review and managed runtime use the same DashboardWindow page construction,
   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
   supplies local fixtures or authoritative state and command availability; it never
-  adds a separate page layout. Review-only inspection menus and runtime authority
+  adds a separate page layout. Dashboard cards have identical geometry in both modes:
+  no Runtime-only control button or hint row. Take control, confirmed Take over and
+  Release remain in Runtime's Control menu; the HUD reports actual authority.
+  Review-only inspection menus and runtime authority
   actions retain their distinct purpose. Older saved review drafts migrate through
   the owning validators without discarding valid settings or changing source files
   during load; genuine invalid drafts remain preserved and explicitly reported.
@@ -100,12 +103,31 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Dashboard metadata, camera drafts and recording choices. The
   [snapshot contract](../../contracts/gui-configuration-files.md) owns formats and
   inventories. Validate all sections before restoring local drafts, save atomically,
-  preserve unset/dormant settings and close choosers on authority loss. Full files
+  preserve unset/dormant settings and close choosers on authority loss. Asynchronous
+  file/folder pickers use the normal native Windows Explorer dialog through the
+  shared queued modal execution; cancellation before startup stops the owned launch
+  timer, and native execution stops the Windows helper's pending timer. Keep immediate
+  rejection, existing owner/path validation, stale-result fencing and deferred deletion;
+  no arbitrary delay or global dialog setting. Full files
   retain explicit rig identities and require matching inventories; projector-only
   files remain portable under the calibration contract. Loading starts no device,
   uploads no firmware and restores no runtime status, ownership or credentials.
   E07 submission/Setup validates runnable settings; loaded camera/MCU drafts survive
   polling and enter the normal configuration proposal. SDK PFS import remains A10-owned.
+  Role, participation and pin edits to loaded camera/MCU drafts remain local until
+  submission; update camera rows and supported outputs together. Selected-camera
+  Test and Connect submit that camera's current assignment, timing, PFS and pulse
+  parameters first, then continue only after controller acceptance and required SDK
+  import/cleanup; no Setup is required. Serialize the chain with configuration edits,
+  reject changed bases, and preserve unrelated local drafts while adopting confirmed
+  camera revisions. Failure or lost authority prevents the subsequent camera action.
+  Microcontroller Test submits the selected diagnostic pin/rate and COM port when
+  they differ from confirmed settings, then starts only after exact controller
+  acceptance. Preserve other local drafts; a changed base or rejection prevents
+  the diagnostic and reports its reason. Log a sent test only after dispatch.
+  Internal clock omits external TriggerSource and TriggerActivation requests in both
+  immediate camera settings and loaded proposals; retain explicit edge choices for
+  External controller and preserve strict SDK capability validation.
   Inactive loaded Tracking drafts stay local until required. SpikeGLX files restore
   editable pulse rows without a separate Save pulse mapping button; GUI Save/Load
   persists drafts without writing the controller inventory. E12/E14 startup host/pairing
@@ -124,6 +146,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   readable minimum width and horizontal navigation; paint only visible blocks.
   Matching epoch content shares an authoring color, never a serialized epoch type.
   New GUI trials contain groups only; each group contains source epochs only.
+  Flat controller and saved-schedule trials use a single listed, once-only group
+  for editing so runtime and Review expose the same subgroup controls. Preserve
+  the original source on submission/export until the program is edited; Undo back
+  to that source restores its original representation. Retain nested/mixed imports.
   Sequence editor opens directly on the first epoch when a supported trial is created,
   loaded or selected; clicking a group selects its first epoch. No Trial breadcrumb
   or back level. Match trailing + heights to their trial row or epoch block.
@@ -178,6 +204,19 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   save offers Retry or Close without saving; an unreadable previous draft is warned
   and preserved unless the operator explicitly replaces it. This local review draft
   never becomes the controller's E07 accepted configuration or authorizes Setup.
+- Runtime saves its complete editable GUI configuration to `config/runtime_gui.json`
+  atomically, with read-back verification, before normal closure. Reuse the full GUI
+  snapshot validators and inventory identities; controller connectivity, lease and
+  experiment validity are not prerequisites for this local save. A failed local save
+  keeps the window open unless the operator explicitly chooses Close without saving.
+  Restore once after initial inventory/base installation in Configuration/Ready,
+  marking restored settings as local edits subject to E07 validation. Later snapshots
+  and delayed SpikeGLX inventory replies preserve those drafts; explicit controller
+  reload discards them. An unreadable/incompatible or not-yet-restored previous file
+  is preserved, with a clear reason; active-session synchronization takes precedence
+  and retains the previous file. Runtime and Review keep separate local files.
+  E07 alone owns accepted controller history; startup-only SpikeGLX host references
+  remain read-only under E12. Local retention grants no Setup, Start or device action.
 - Sequence editor has one subgroup form, reusing the reference composer and numeric
   variation controls with per-projector layers and parameters. No Generate/Edit tabs,
   target filters, duplicate epoch inspector or batch selector. Stimulus mode, Duration,
@@ -460,13 +499,17 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   signals. Hide empty signal-table headers (MCU Inputs/Outputs and SpikeGLX channels),
   releasing their height; restore them when rows are added or loaded. Inventory
   headers retain Refresh when empty. Supported choices are Projector flip input;
-  Trial state and uniquely assigned Behavior/Tracking
+  Trial state and uniquely assigned Behavior/Tracking/Eye
   camera outputs. Each row has a supported-signal dropdown, pin, Test/Stop and remove
   action; no free-form signal, behavior selector or duplicated camera rate. Prevent
   duplicate active signals. Removing disables the signal and hides its row, retaining
   its pin for Add and file round-trips. Camera enablement shares Cameras' experiment
   participation; adding/removing a camera output enables/disables that camera. Eye
-  triggering retains A01/A11's pending integration. Fixed input/output enablement is
+  has an independent A11 output; its pin/rate remain explicit and rig acceptance
+  does not follow from adding the GUI row. Managed Add collects an unset camera
+  pin before submitting pin and participation together under the existing revision
+  and configuration-dispatch lock; role/inventory or authority loss closes the
+  dialog. Cameras still owns source/rate. Fixed input/output enablement is
   retained draft configuration in isolated review. Disabled signals cannot start tests
   or participate in pin conflicts. Add/remove/reassignment obey editing and diagnostic
   locks. Omit Save pins and Apply pin settings: managed clients submit completed pin
@@ -474,6 +517,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   fixed I/O enable changes through the existing controller configuration request.
   Inventory refresh and saved-state loading are silent. Lock managed edits during
   diagnostics; connection/pin tests still require confirmed configuration.
+  Pin editors display decimal numbers without a D prefix and accept numeric entry.
+  Existing D-prefixed saved/controller pins restore as numbers; submission encodes
+  the same canonical firmware token under A11/E14. This presentation change never
+  flashes firmware or changes physical pin ownership/test behavior.
   Disabling a signal stops its active diagnostic; editing authority gates enablement.
   In the explicit local real-device diagnostic mode, Test connection and per-pin
   Test/Stop use A11's exclusive

@@ -20,6 +20,10 @@ class NvidiaDevice:
     name: str
 
 
+class OpenGLAdapterMismatch(WindowsLaunchError):
+    """A live context uses a different adapter from the discovered render board."""
+
+
 class _CudaUuid(ctypes.Structure):
     _fields_ = [("bytes", ctypes.c_ubyte * 16)]
 
@@ -56,7 +60,7 @@ def verify_opengl_rendering_device(renderer: str, vendor: str) -> NvidiaDevice:
         )
     selected = matches[0]
     if "NVIDIA" not in vendor.upper() or selected.name not in renderer:
-        raise WindowsLaunchError(
+        raise OpenGLAdapterMismatch(
             f"OpenGL context {vendor!r}/{renderer!r} does not resolve to {selected.name!r}"
         )
     return selected

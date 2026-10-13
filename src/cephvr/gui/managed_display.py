@@ -102,7 +102,9 @@ class ManagedDisplayOperations:
                 return
             validate_inventory_snapshot(inventory, state.configuration.revision)
             self.spikeglx.install_inventory(
-                tuple(inventory.pulse_channels),
+                ()
+                if self.spikeglx.snapshots.draft_loaded
+                else tuple(inventory.pulse_channels),
                 inventory.file_sha256,
                 required_roles=required_inventory_roles(
                     state.configuration_values.current

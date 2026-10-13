@@ -23,7 +23,9 @@ def refresh_health_snapshot(
 ) -> None:
     if state.health_active_error is not None:
         state.update_continuing_snapshot(trial.continuing_functions(clock_ns()))
-    schedule = trial.scheduled
+    schedule = trial.scheduled or trial.trial_state.stopped_schedule
+    if _work_closed(state, latest_work):
+        schedule = None
     last_progress_ns: int | None = None
     capture = captures.capture
     if capture is not None and capture.last_usable_ns > 0:
@@ -43,20 +45,7 @@ def refresh_health_snapshot(
     else:
         work = latest_work
         trial_phase = None
-    closed = work is not None and (
-        state.health_work == work
-        and state.health_session_phase == control.SESSION_PHASE_ENDED
-        or any(
-            evidence.source.work == work
-            and evidence.WhichOneof("evidence") == "cleanup"
-            and evidence.cleanup.resources
-            and all(
-                item.released and not item.HasField("failure")
-                for item in evidence.cleanup.resources
-            )
-            for evidence in state.lifecycle.values()
-        )
-    )
+    closed = _work_closed(state, work)
     session_phase = (
         control.SESSION_PHASE_ENDED
         if closed
@@ -75,4 +64,21 @@ def refresh_health_snapshot(
         progress_required=captures.active,
         last_progress_ns=last_progress_ns,
         observed_ns=clock_ns(),
+    )
+
+
+def _work_closed(state: WorkerState, work: control.WorkContext | None) -> bool:
+    return work is not None and (
+        state.health_work == work
+        and state.health_session_phase == control.SESSION_PHASE_ENDED
+        or any(
+            evidence.source.work == work
+            and evidence.WhichOneof("evidence") == "cleanup"
+            and evidence.cleanup.resources
+            and all(
+                item.released and not item.HasField("failure")
+                for item in evidence.cleanup.resources
+            )
+            for evidence in state.lifecycle.values()
+        )
     )

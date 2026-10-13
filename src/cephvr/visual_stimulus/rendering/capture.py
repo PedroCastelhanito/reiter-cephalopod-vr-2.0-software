@@ -37,7 +37,7 @@ class ReviewCapture:
     def __init__(self) -> None:
         self._pending: list[_Pending] = []
         self._context: Any | None = None
-        self._dimensions: tuple[int, int] | None = None
+        self._dimensions: tuple[int, int, str] | None = None
         self._shared: tuple[Any, ...] = ()
 
     def capture(
@@ -59,7 +59,7 @@ class ReviewCapture:
         if context is None:
             raise RuntimeError("review output texture has no owning GL context")
         width, height = encoding.composite_width, encoding.composite_height
-        self._ensure_compositor(context, width, height)
+        self._ensure_compositor(context, width, height, encoding.native_pixel_format)
         if self._context is not context:
             raise RuntimeError("review capture must use one shared GL context")
         _texture, framebuffer, program, _buffer, array = self._shared
@@ -107,16 +107,24 @@ class ReviewCapture:
                 GL.glDeleteBuffers(1, [pbo])
             raise
 
-    def _ensure_compositor(self, context: Any, width: int, height: int) -> None:
+    def _ensure_compositor(
+        self, context: Any, width: int, height: int, pixel_format: str
+    ) -> None:
+        if pixel_format not in {"rgba8_bottom_up", "r10g10b10a2_le_bottom_up"}:
+            raise ValueError("unsupported review-composite pixel format")
+        dimensions = (width, height, pixel_format)
         if self._shared:
-            if self._context is not context or self._dimensions != (width, height):
+            if self._context is not context or self._dimensions != dimensions:
                 raise RuntimeError(
                     "review compositor cannot change context or dimensions"
                 )
             return
         created: list[Any] = []
         try:
-            texture = context.texture((width, height), 4, dtype="f4")
+            # Match the already selected 8-bit recording representation before
+            # readback; float-to-byte glReadPixels stalls the native driver.
+            dtype = "f1" if pixel_format == "rgba8_bottom_up" else "f4"
+            texture = context.texture((width, height), 4, dtype=dtype)
             created.append(texture)
             framebuffer = context.framebuffer(color_attachments=(texture,))
             created.append(framebuffer)
@@ -133,10 +141,10 @@ class ReviewCapture:
                 resource.release()
             raise
         self._context = context
-        self._dimensions = (width, height)
+        self._dimensions = dimensions
         self._shared = tuple(created)
 
-    def poll(self, pending: object) -> bytes | None:
+    def poll(self, pending: object) -> bytearray | None:
         if not isinstance(pending, _Pending) or pending not in self._pending:
             raise TypeError("invalid pending review capture")
         gl = pending.gl
@@ -146,12 +154,27 @@ class ReviewCapture:
                 raise RuntimeError("review-composite readback fence failed")
             return None
         gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, pending.pbo)
-        pixels = gl.glGetBufferSubData(gl.GL_PIXEL_PACK_BUFFER, 0, pending.byte_count)
+        pointer = gl.glMapBufferRange(
+            gl.GL_PIXEL_PACK_BUFFER, 0, pending.byte_count, gl.GL_MAP_READ_BIT
+        )
+        address = ctypes.cast(pointer, ctypes.c_void_p).value
+        if address is None:
+            raise RuntimeError("review-composite readback mapping failed")
+        try:
+            # The signalled fence covers every byte. Copy from the completed
+            # mapped buffer once, without first zeroing another full frame.
+            pixels = bytearray(
+                (ctypes.c_ubyte * pending.byte_count).from_address(address)
+            )
+        finally:
+            unmapped = gl.glUnmapBuffer(gl.GL_PIXEL_PACK_BUFFER)
+        if not unmapped:
+            raise RuntimeError("review-composite readback mapping was corrupted")
         gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, 0)
         gl.glDeleteSync(pending.sync)
         gl.glDeleteBuffers(1, [pending.pbo])
         self._pending.remove(pending)
-        return bytes(pixels)
+        return pixels
 
     def cancel(self, pending: object) -> bool:
         """Delete GL-owned capture objects on the owner thread.

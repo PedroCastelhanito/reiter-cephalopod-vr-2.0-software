@@ -1,0 +1,23 @@
+{
+  "generation": "449c9382-c65d-4ed8-ae4e-393490ce9085",
+  "session": {
+    "phase": "SESSION_PHASE_CONFIGURATION"
+  },
+  "prompts": [
+    {
+      "prompt_id": "f86a3e9e-012b-43a2-819d-d911fecc7976",
+      "setup": {
+        "controller_generation": "10a243c5-72df-427f-8e53-c04283615021",
+        "session_id": "e2b751e8-beae-43c8-94ab-d990ecb2ee3c"
+      },
+      "operation": {
+        "command_id": "9d68d9c4-d973-408b-82b5-57eba0adc71b"
+      },
+      "explanation": "Recover unfinished session at C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\runtime-evidence-2026-10-13\\combined-camera-stimulus\\recordings\\20261013_combined_gpu_probe_20261013\\DUMMY-155218. Intact administrative logs can receive evidence-based terminal recovery events. Continue preserves scientific files, writes a recovery report and completes only the reservation marker; it does not certify unknown outputs or resume the experiment. Cancel preserves the blocker.",
+      "permitted_choices": [
+        "continue",
+        "cancel"
+      ]
+    }
+  ]
+}

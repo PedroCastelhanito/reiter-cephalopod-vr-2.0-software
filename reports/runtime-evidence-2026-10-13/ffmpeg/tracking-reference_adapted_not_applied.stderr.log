@@ -1,0 +1,20 @@
+Input #0, rawvideo, from 'fd:':
+  Duration: N/A, start: 0.000000, bitrate: 1024450 kb/s
+  Stream #0:0: Video: rawvideo (Y800 / 0x30303859), gray, 1588x1344, 1024450 kb/s, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (rawvideo (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-13\ffmpeg\synthetic-v2-tracking-reference_adapted_not_applied.mp4':
+  Metadata:
+    cephvr_identity_version: 1
+    cephvr_session_id: d7fd95b4-bda7-436f-9605-dbf88f13ec88
+    cephvr_trial_id : 6456c68a-efad-4601-8b6b-5bc36ba28a17
+    cephvr_camera_role: tracking
+    cephvr_device_id: synthetic-only
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (Main) (avc1 / 0x31637661), yuv420p(pc, bt709/unknown/unknown, progressive), 1588x1344, q=2-31, 60 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 150000000/0/0 buffer size: 0 vbv_delay: N/A
+[out#0/mp4 @ 000001415894ca00] video:29KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 8.472156%
+frame=    8 fps=0.0 q=26.0 Lsize=      31KiB time=00:00:00.13 bitrate=1914.4kbits/s speed=0.735x elapsed=0:00:00.18    

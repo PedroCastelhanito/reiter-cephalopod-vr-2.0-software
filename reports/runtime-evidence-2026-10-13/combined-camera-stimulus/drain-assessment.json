@@ -1,0 +1,597 @@
+{
+  "method": "Sessionless managed previews; successful two-second observations only, exclude initial failed wrapper. ON-dispatch to first SDK receipt is a conservative combined latency including serial/trigger phase, exposure and delivery; direct SDK retrieval/release for 2s after confirmed OFF and AcquisitionStop. Per-frame diagnostic file append adds overhead. No recording, stimulus or concurrent-camera load; empirical observations, not guaranteed worst-case bounds. Diagnostic tail frames are raw observations, outside production accounting.",
+  "coordinator_pids": [
+    6828,
+    28296,
+    28364
+  ],
+  "samples": {
+    "40065509": [
+      {
+        "first_receipt_from_on_dispatch_ms": 67.1745,
+        "post_off_receipts": 1,
+        "last_receipt_after_off_ms": 17.3572,
+        "observation_duration_ms": 2022.6153,
+        "frames": 93,
+        "readback": [
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          }
+        ],
+        "applied_trigger_hz": 30.0
+      },
+      {
+        "first_receipt_from_on_dispatch_ms": 67.4401,
+        "post_off_receipts": 1,
+        "last_receipt_after_off_ms": 17.0299,
+        "observation_duration_ms": 2020.228,
+        "frames": 93,
+        "readback": [
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          }
+        ],
+        "applied_trigger_hz": 30.0
+      },
+      {
+        "first_receipt_from_on_dispatch_ms": 67.3688,
+        "post_off_receipts": 2,
+        "last_receipt_after_off_ms": 36.0479,
+        "observation_duration_ms": 2037.0995,
+        "frames": 93,
+        "readback": [
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 25000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          }
+        ],
+        "applied_trigger_hz": 30.0
+      }
+    ],
+    "40747103": [
+      {
+        "first_receipt_from_on_dispatch_ms": 23.426,
+        "post_off_receipts": 0,
+        "last_receipt_after_off_ms": 0,
+        "observation_duration_ms": 2005.3848,
+        "frames": 183,
+        "readback": [
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          }
+        ],
+        "applied_trigger_hz": 60.0
+      },
+      {
+        "first_receipt_from_on_dispatch_ms": 22.9092,
+        "post_off_receipts": 0,
+        "last_receipt_after_off_ms": 0,
+        "observation_duration_ms": 2003.9288,
+        "frames": 184,
+        "readback": [
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          }
+        ],
+        "applied_trigger_hz": 60.0
+      },
+      {
+        "first_receipt_from_on_dispatch_ms": 23.1558,
+        "post_off_receipts": 0,
+        "last_receipt_after_off_ms": 0,
+        "observation_duration_ms": 2002.3603,
+        "frames": 184,
+        "readback": [
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          {
+            "exposure_us": 5000.0,
+            "gain": {
+              "value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          }
+        ],
+        "applied_trigger_hz": 60.0
+      }
+    ]
+  },
+  "summary": {
+    "40065509": {
+      "cycles": 3,
+      "first_receipt_ms": {
+        "count": 3,
+        "min": 67.1745,
+        "median": 67.3688,
+        "max": 67.4401
+      },
+      "last_post_off_receipt_ms": {
+        "count": 3,
+        "min": 17.0299,
+        "median": 17.3572,
+        "max": 36.0479
+      },
+      "late_frames": 4
+    },
+    "40747103": {
+      "cycles": 3,
+      "first_receipt_ms": {
+        "count": 3,
+        "min": 22.9092,
+        "median": 23.1558,
+        "max": 23.426
+      },
+      "last_post_off_receipt_ms": {
+        "count": 3,
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "late_frames": 0
+    }
+  },
+  "proposed_allowances": {
+    "40065509": {
+      "exposure_ms": 25.0,
+      "frame_period_ms": 33.333333333333336,
+      "conservative_empirical_delivery_component_ms": 42.4401,
+      "empirical_total_plus_one_period_ms": 100.77343333333334,
+      "proposed_margin_ms": 125,
+      "status": "PROPOSED; owner approval required; file values remain unset; empirical measurements do not establish guaranteed maximum or full-load acceptance"
+    },
+    "40747103": {
+      "exposure_ms": 5.0,
+      "frame_period_ms": 16.666666666666668,
+      "conservative_empirical_delivery_component_ms": 18.426,
+      "empirical_total_plus_one_period_ms": 40.092666666666666,
+      "proposed_margin_ms": 50,
+      "status": "PROPOSED; owner approval required; file values remain unset; empirical measurements do not establish guaranteed maximum or full-load acceptance"
+    }
+  },
+  "provenance": {
+    "date": "2026-10-13",
+    "head": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+    "working_tree": "concurrently dirty; no production source modified by timing measurement",
+    "methods_sha256": {
+      "measure.py": "9cb57d95ddf939df999582f437f080c98add70ad210625da79279fd95788bdb8",
+      "assess_measurement.py": "3352d629182379b503978ec20f456e6f79cd2e8f20e713e57653784c9a1f65d8",
+      "drain-instrumentation/sitecustomize.py": "78db8980f893efa6fd316e4abc5846d85c45d8a15f6473418ee4d5656321bd3b"
+    },
+    "failed_attempts": "Initial wrapper sent excluded preview frame to sealed ring; corrected to raw SDK release. Early repeat client raced credential directory creation; corrected to wait for controller listener. Repeated MCU preview start returned unavailable/pending and later bounded command record byte budget exhaustion; further 12-cycle plan curtailed, three successful two-second observations per camera collected across two generations. Exact stopped-generation receipts/native inventory verified before launcher-remnant cleanup. Automatic review initially rejected broad cleanup; approved after exact absence proof and abort guards."
+  }
+}

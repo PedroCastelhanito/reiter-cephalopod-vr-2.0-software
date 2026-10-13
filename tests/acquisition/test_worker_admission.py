@@ -29,6 +29,41 @@ from cephvr.shared.clock import host_time_ns
 from cephvr.shared.commands import CommandCapacityError, CommandLedger
 
 
+def test_canceled_schedule_keeps_trial_health_until_session_cleanup() -> None:
+    from cephvr.acquisition.worker.health_snapshot import refresh_health_snapshot
+
+    session = control.WorkContext(session=control.SessionContext(session_id="session"))
+    work = control.WorkContext(
+        trial=control.TrialContext(session=session.session, trial_id="trial")
+    )
+    state = WorkerState(
+        acq.WorkerContext(),
+        control.ProcessIdentity(),
+        CommandLedger(
+            str(uuid4()),
+            max_records=16,
+            max_bytes=65536,
+            retention_ns=1_000_000_000,
+            result_reservation_bytes=4096,
+        ),
+    )
+    state.registered = True
+    trial = object.__new__(WorkerTrialLifecycle)
+    schedule = acq.WorkerSchedule()
+    schedule.command.target.work.CopyFrom(work)
+    trial.trial_state = WorkerTrialState(stopped_schedule=schedule)
+    captures = SimpleNamespace(capture=None, active=False)
+    refresh_health_snapshot(state, trial, captures, session, False)
+    assert state.health_work == work
+    cleanup = acq.WorkerLifecycleEvidence()
+    cleanup.source.work.CopyFrom(session)
+    cleanup.cleanup.resources.add(released=True)
+    state.lifecycle[("cleanup", "cleanup")] = cleanup
+    refresh_health_snapshot(state, trial, captures, session, False)
+    assert state.health_work == session
+    assert state.health_session_phase == control.SESSION_PHASE_ENDED
+
+
 @pytest.mark.parametrize("trial", [False, True])
 async def test_warning_flush_binds_each_view_to_its_exact_work(trial: bool) -> None:
     from cephvr.acquisition.worker.health import WorkerHealthReporter
@@ -97,6 +132,80 @@ def _scope(
     if lifecycle_source is not None:
         scope.lifecycle_sources.append(lifecycle_source)
     return scope
+
+
+@pytest.mark.parametrize("expire", [False, True])
+async def test_finished_waits_for_warning_delivery_without_blocking_stopped(
+    expire: bool,
+) -> None:
+    from cephvr.acquisition.worker.reports import CoordinatorReportClient
+    from cephvr.shared.auth import Principal
+
+    entered, release = asyncio.Event(), asyncio.Event()
+    delivered = []
+
+    async def warnings(request, **kwargs):
+        entered.set()
+        await release.wait()
+        delivered.append("warning")
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    async def lifecycle(request, **kwargs):
+        delivered.append("finished" if request.HasField("finished") else "stopped")
+        return control.ReportReceipt(result=control.COMMAND_RESULT_ACCEPTED)
+
+    client = CoordinatorReportClient.__new__(CoordinatorReportClient)
+    client._warning_delivery = asyncio.Lock()
+    client._principal = Principal("acquisition_tracking_worker", str(uuid4()), "token")
+    client._stub = SimpleNamespace(  # type: ignore[assignment]
+        ReportWorkerWarnings=warnings, ReportWorkerLifecycle=lifecycle
+    )
+    deadline = host_time_ns() + 1_000_000_000
+    warning_task = asyncio.create_task(
+        client.report_warnings(acq.WorkerWarningReport(), deadline_ns=deadline)
+    )
+    await entered.wait()
+    finished = acq.WorkerLifecycleEvidence()
+    finished.finished.activity_stopped = True
+    finished_task = asyncio.create_task(
+        client.report_lifecycle(
+            finished,
+            deadline_ns=host_time_ns() + 20_000_000 if expire else deadline,
+        )
+    )
+    stopped = acq.WorkerLifecycleEvidence()
+    stopped.stopped.activity_stopped = True
+    await client.report_lifecycle(stopped, deadline_ns=deadline)
+    assert delivered == ["stopped"]
+    if expire:
+        with pytest.raises(TimeoutError):
+            await finished_task
+    release.set()
+    await warning_task
+    if not expire:
+        await finished_task
+    assert delivered == ["stopped", "warning"] + ([] if expire else ["finished"])
+
+
+def test_ready_publishes_owner_health_before_lifecycle_dispatch(monkeypatch) -> None:
+    events = []
+    executor = WorkerOperationExecutor.__new__(WorkerOperationExecutor)
+    executor.state = SimpleNamespace(  # type: ignore[assignment]
+        state_revision=0,
+        supervisor_command_ids=set(),
+        retain_lifecycle=lambda evidence: events.append("retained"),
+    )
+    monkeypatch.setattr(executor, "_source", lambda target: target)
+    monkeypatch.setattr(
+        executor, "_refresh_health_snapshot", lambda: events.append("health")
+    )
+    executor.report_dispatcher = SimpleNamespace(  # type: ignore[assignment]
+        lifecycle=lambda evidence, deadline: events.append("ready")
+    )
+    evidence = acq.WorkerLifecycleEvidence()
+    evidence.ready.required_checks_passed = True
+    executor._report_lifecycle(acq.WorkerCommand(command_id="prepare"), evidence, 100)
+    assert events == ["retained", "health", "ready"]
 
 
 def _setup_payload(

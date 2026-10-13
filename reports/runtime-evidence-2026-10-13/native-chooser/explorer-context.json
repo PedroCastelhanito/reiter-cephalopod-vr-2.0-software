@@ -1,0 +1,17 @@
+{
+  "date_jst": "2026-10-13",
+  "task_id": "native-explorer-file-browsers",
+  "head": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "method": "Native Windows pytest tests/gui/test_dashboard.py selection: native_file_picker_immediate_cancel, config_chooser_closes_on_authority_loss, folder_picker_selection, camera_pfs_picker, calibration_dialog_closes, add_prepared_file_picker, prepared_file_change, tab_configuration; workspace basetemp; no hardware",
+  "result": "21 passed, 399 deselected, 22.18s; exit 0",
+  "limitations": "COM 0x8001010d diagnostic retained in log; no visual/DPI or hardware acceptance; sandbox temporary-directory attempt failed",
+  "source_hashes": {
+    "src/cephvr/gui/file_dialogs.py": "57A67EC0996179EF42A1EB7F453F161096C648AD77D3C263AD12698D77AA5E54",
+    "src/cephvr/gui/configuration_files.py": "8F9A8401274E7240217005F23EFB816EB082DB939DFEF6368307C6F22501BAB0",
+    "src/cephvr/gui/calibration_files.py": "3F87727800423DBB8D4AD5253C8C02A52A30B10B18301E51C333AD8656F2FB7C",
+    "src/cephvr/gui/paths.py": "C8701254D8C8A74AAD5A3D97BC695B6E8D07AC23A4E8EAB834D8ACC241DFE91D",
+    "src/cephvr/gui/prepared_file_picker.py": "71046BC679EC2459135A0BE2773419B593F67B8BE7731AF7F2D4892C8EBFBD77",
+    "src/cephvr/gui/stimulus_parameters.py": "13C49CCC69E129FC564FD436CBF244E9FC29980965359F3552A8973F8FFD305D",
+    "tests/gui/test_dashboard.py": "7284CA5CB645C1632A973A3DE61D87E8AE8EE062E6617C7B1D8BAFD19880AC7A"
+  }
+}

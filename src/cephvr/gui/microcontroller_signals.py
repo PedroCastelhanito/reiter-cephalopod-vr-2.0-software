@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QSignalBlocker
 from PyQt6.QtGui import QStandardItemModel
-from PyQt6.QtWidgets import QComboBox, QHeaderView, QPushButton
+from PyQt6.QtWidgets import QComboBox, QDialog, QHeaderView, QInputDialog, QPushButton
 
 from cephvr.gui.components import button, combo
 
@@ -21,6 +21,7 @@ class MicrocontrollerSignals:
         self.selectors: dict[str, QComboBox] = {}
         self.remove_buttons: dict[str, QPushButton] = {}
         self.output_identity: tuple[tuple[str, str], ...] | None = None
+        self.add_dialog: QInputDialog | None = None
         self.add_input = button("Add input", "secondary")
         self.add_output = button("Add output", "secondary")
         self.add_input.clicked.connect(lambda: self.add("input"))
@@ -39,12 +40,17 @@ class MicrocontrollerSignals:
         if direction == "input":
             return (("projector-flip", "Projector flip"),)
         return (("trial-state", "Trial state"),) + tuple(
-            (camera.key, camera.role)
+            (
+                camera.key,
+                "Eye camera trigger" if camera.role == "Eye tracking" else camera.role,
+            )
             for camera in self.panel.camera_rows
-            if camera.role in ("Behavior cam", "Tracking cam")
+            if camera.role in ("Behavior cam", "Tracking cam", "Eye tracking")
         )
 
     def invalidate(self) -> None:
+        if self.add_dialog is not None:
+            self.add_dialog.reject()
         self.output_identity = None
 
     def install(self, table: DataTable, row: int, key: str, direction: str) -> None:
@@ -66,6 +72,8 @@ class MicrocontrollerSignals:
 
     def refresh(self, editable: bool) -> None:
         panel = self.panel
+        if not editable and self.add_dialog is not None:
+            self.add_dialog.reject()
         if panel.output_table.rowCount() != len(panel.camera_rows) + 1:
             return
         keys = tuple(camera.key for camera in panel.camera_rows)
@@ -76,7 +84,7 @@ class MicrocontrollerSignals:
             self.install(panel.input_table, 0, "projector-flip", "input")
             self.install(panel.output_table, 0, "trial-state", "output")
             for row, camera in enumerate(panel.camera_rows, 1):
-                if camera.role in ("Behavior cam", "Tracking cam"):
+                if camera.role in ("Behavior cam", "Tracking cam", "Eye tracking"):
                     self.install(panel.output_table, row, camera.key, "output")
             self.output_identity = identity
         for direction, table, add in (
@@ -114,7 +122,18 @@ class MicrocontrollerSignals:
                         assert isinstance(model, QStandardItemModel)
                         item = model.item(selector.count() - 1)
                         assert item is not None
-                        item.setEnabled(candidate == key or candidate in missing)
+                        needs_pin = (
+                            panel.managed
+                            and candidate in panel.pin_editors
+                            and not panel.pin_editors[candidate].text().strip()
+                        )
+                        item.setEnabled(
+                            candidate == key or (candidate in missing and not needs_pin)
+                        )
+                        if needs_pin:
+                            item.setToolTip(
+                                "Use Add output to assign this camera's pin first."
+                            )
                     selector.setCurrentIndex(selector.findData(key))
                 selector.setEnabled(editable)
                 self.remove_buttons[key].setEnabled(editable)
@@ -142,8 +161,45 @@ class MicrocontrollerSignals:
             return
         for key, _ in self.supported(direction):
             if not self.panel.enable_controls[key].isChecked():
+                if self.panel.managed and key in self.panel.pin_editors:
+                    self.add_camera(key)
+                    return
                 self.panel.enable_controls[key].setChecked(True)
                 return
+
+    def add_camera(self, key: str) -> None:
+        if self.add_dialog is not None:
+            return
+        pin = self.panel.pin_editors[key].text().strip()
+        if pin:
+            self.panel.camera_output_requested.emit(key, pin)
+            return
+        dialog = QInputDialog(self.panel)
+        dialog.setWindowTitle("Add camera trigger output")
+        name = dict(self.supported("output"))[key]
+        dialog.setLabelText(f"{name} output pin (2–13):")
+        dialog.setTextValue("")
+        self.add_dialog = dialog
+
+        def finish(result: int) -> None:
+            self.add_dialog = None
+            value = dialog.textValue().strip()
+            if result == QDialog.DialogCode.Accepted and self.editable():
+                if (
+                    len(value) <= 2
+                    and value.isascii()
+                    and value.isdecimal()
+                    and 2 <= int(value) <= 13
+                ):
+                    self.panel.camera_output_requested.emit(key, str(int(value)))
+                else:
+                    self.panel.console.appendPlainText(
+                        "Enter an output pin from 2 to 13."
+                    )
+            dialog.deleteLater()
+
+        dialog.finished.connect(finish)
+        dialog.open()
 
     def remove(self, key: str) -> None:
         if self.editable() and key in self.selectors:
@@ -157,6 +213,16 @@ class MicrocontrollerSignals:
             or new not in dict(self.supported(direction))
             or self.panel.enable_controls[new].isChecked()
         ):
+            return
+        if (
+            self.panel.managed
+            and new in self.panel.pin_editors
+            and not self.panel.pin_editors[new].text().strip()
+        ):
+            self.panel.console.appendPlainText(
+                "Use Add output to assign the camera's pin first."
+            )
+            self.refresh(self.editable())
             return
         self.panel.enable_controls[old].setChecked(False)
         self.panel.enable_controls[new].setChecked(True)

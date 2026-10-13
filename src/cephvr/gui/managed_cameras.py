@@ -26,12 +26,14 @@ class ManagedCameras(QObject):
         bridge: ControllerBridge,
         viewer_state: Callable[[int, bool, str], bool],
         preview_placement: Callable[[], bytes] | None = None,
+        submission_options: Callable[[str], dict[str, object]] | None = None,
     ) -> None:
         super().__init__(panel)
         self.panel = panel
         self.bridge = bridge
         self.viewer_state = viewer_state
         self.preview_placement = preview_placement
+        self.submission_options = submission_options
         self._camera_revision = -1
         self.pending = ""
         self.configured_tests: list[tuple[int, str]] = []
@@ -104,6 +106,9 @@ class ManagedCameras(QObject):
             self.queue("test_cameras", cameras=list(self.configured_tests))
 
     def test_selected(self, key: str) -> None:
+        if self.submission_options is not None:
+            self.prepare_action(key, rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION)
+            return
         if self.panel.snapshot_draft:
             self.panel.console.appendPlainText(
                 "Submit the camera assignment before testing its identity."
@@ -285,6 +290,9 @@ class ManagedCameras(QObject):
         self.install(state)
 
     def camera_connection(self, key: str, start: bool) -> None:
+        if start and self.submission_options is not None:
+            self.prepare_action(key, rpc.CAMERA_COMMAND_KIND_START_PREVIEW)
+            return
         if start and self.panel.snapshot_draft:
             self.panel.console.appendPlainText(
                 "Submit the loaded GUI camera draft before starting capture."
@@ -327,6 +335,41 @@ class ManagedCameras(QObject):
             else rpc.CAMERA_COMMAND_KIND_FINISH_EDITING,
             **options,
         )
+
+    def prepare_action(self, key: str, kind: int) -> None:
+        draft = next((draft for draft in self.panel.drafts if draft.key == key), None)
+        role = self.role(key)
+        if draft is None or role is None or self.submission_options is None:
+            return
+        try:
+            options = self.submission_options(key)
+            options.update(
+                serial=draft.serial,
+                role=draft.role,
+                camera_role=role,
+                clock=draft.values.get("trigger_clock", ""),
+                source=draft.values.get("trigger_source", ""),
+                preset=draft.values.get("preset", ""),
+                rate=draft.values.get("trigger_frequency_hz", ""),
+                enabled=draft.enabled,
+                kind=kind,
+            )
+            if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW:
+                options["show_preview"] = True
+                if self.preview_placement is not None:
+                    options["placement"] = self.preview_placement()
+        except (ValueError, RuntimeError) as error:
+            self.panel.console.appendPlainText(str(error))
+            return
+        if self.queue("prepare_camera", **options):
+            self.panel.console.appendPlainText(
+                f"Submitting {draft.role} parameters before "
+                + (
+                    "Connect."
+                    if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                    else "Test."
+                )
+            )
 
     def set_camera_enabled(self, serial: str, enabled: bool) -> None:
         if not self.queue("set_camera_enabled", serial=serial, enabled=enabled):

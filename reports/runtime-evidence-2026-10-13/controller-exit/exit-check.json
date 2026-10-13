@@ -1,0 +1,96 @@
+{
+  "controller_generation": "bd671b0f-8e9d-497f-86ce-e7c2f619fe56",
+  "method": "terminate exact controller PID+creation-time; observe retained handles and generation-bound application exit receipt",
+  "owned_before": [
+    [
+      23512,
+      134363260542540016,
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+    ],
+    [
+      27476,
+      134363260545541212,
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+    ],
+    [
+      20976,
+      134363260545634793,
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+    ],
+    [
+      26684,
+      134363260545752811,
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+    ],
+    [
+      23848,
+      134363260545887494,
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+    ],
+    [
+      24404,
+      134363260550367219,
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+    ]
+  ],
+  "terminated_controller": [
+    27476,
+    134363260545541212,
+    "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+  ],
+  "observations": [
+    {
+      "elapsed_s": 0.0,
+      "alive_pids": [
+        23512,
+        27476,
+        20976,
+        26684,
+        23848,
+        24404
+      ]
+    },
+    {
+      "elapsed_s": 0.109,
+      "alive_pids": [
+        23512,
+        20976,
+        26684,
+        23848,
+        24404
+      ]
+    },
+    {
+      "elapsed_s": 1.937,
+      "alive_pids": [
+        23512,
+        20976,
+        26684,
+        24404
+      ]
+    },
+    {
+      "elapsed_s": 2.328,
+      "alive_pids": [
+        23512,
+        20976,
+        24404
+      ]
+    },
+    {
+      "elapsed_s": 2.531,
+      "alive_pids": [
+        23512,
+        20976
+      ]
+    },
+    {
+      "elapsed_s": 3.343,
+      "alive_pids": []
+    }
+  ],
+  "all_retained_owned_absent": true,
+  "application_exit_receipt": "ApplicationExitReceipt(controller_generation='bd671b0f-8e9d-497f-86ce-e7c2f619fe56', supervisor_generation='2fd9f3b7-69ba-4170-9847-41ab656ca30e', observed_monotonic_ns=329722461652800, all_owned_processes_absent=True, format_version=1, controller_channel_loss='eof')",
+  "elapsed_s": 3.453,
+  "application_guard_available": true
+}

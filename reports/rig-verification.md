@@ -1,9 +1,119 @@
 # Rig verification — outstanding checks
 
+Oct13 final combined repair verifies two consecutive normal60s Behavior/Tracking
+recordings at60.0333/60.0167 actual render groups/s. Renderer RTX5060Ti/GPU0 and
+camera/review NVENC RTX2080Ti/GPU1 are proven with exact live PID/UUID samples;
+all six videos externally count and fully decode. Trial/output/metadata closure,
+two NewSession/config restores, original settings and released cameras pass in one
+generation, without shutdown. Owner-selected125ms drain margins remain all roles.
+This closes the reproduced warning/boundary/On-to-On receipt-reuse failures within
+this scope. Nominal cadence is not uniform16.67ms or optical proof (repeat p9927.56ms,
+max37.88ms). Repeat camera queues drop6/19 and review has2367 capacity drops/
+2424 identified duplicates: zero-loss recording remains open. Eye/locomotion
+Tracking/paired/optical/electrical acceptance and dedicated Save On-to-Off native
+verification remain outstanding.
+[Dated raw evidence, verification and limits](runtime-evidence-2026-10-13/combined-camera-stimulus/context.json)
+
+Oct13 later throughput repair achieves60.0 real render groups/s in a recorded
+four-output60s stimulus-only test, after a30.13/s instrumented baseline. Float-to-byte
+readback submission falls from12.98ms to0.736ms; final outputs/video/evidence/metadata
+close and external decode passes. Review padding/omissions remain explicit and the
+same-shader byte comparison differs by at most one8-bit code. Final uninstrumented
+confirmation also completes3600groups/60s (60.0/s),3423 real captures/177 duplicates,
+eight capture drops and169 same-slot omissions, with normal cleanup/restored settings;
+optical and simultaneous camera/Tracking workload acceptance
+remain open. Save On→Save Off exposes a pre-change cleanup/catalogue failure despite
+the complete60s Save-Off presentation; retain that separate reuse check. See the
+[current stimulus assessment](visual_stimulus.md) and
+[throughput evidence](runtime-evidence-2026-10-13/throughput/).
+
+Oct13 later owner-requested workflow audit supersedes the earlier basic camera
+preview failure within its bounded scope: both enabled cameras connect, show usable
+preview and stop/release. Eye remains disabled. Normal calibration bundle pacing
+validation fails, while a separate current-profile grid lifecycle passes. Combined
+recording is blocked by unset camera drain margins; failed-Setup cleanup additionally
+exits the renderer on an unknown cleanup command. A separate unpaired stimulus-only
+60s trial completes, video fully decodes and outputs close, with30.33 real render
+groups/s and60fps video padding. Exact final application absence and configuration
+restoration pass. See the [current failure/remedy inventory](runtime.md) and
+[new raw evidence](rig-evidence-2026-10-13/workflow-tests/); previous results below
+retain their historical scopes.
+
+- [ ] Regenerate ordinary calibration assets with current accepted all-output VSync;
+  retest normal GUI Open/update/Close and then measured optical calibration.
+- [ ] Extend A10 drain/full-load verification to Eye when enabled and remaining
+  scientific workloads. Owner125ms values/Behavior and Tracking bounded observations
+  plus combined online closure now pass; worst-case/full scientific bound unproven.
+- [ ] Repair/retest failed-Setup renderer cleanup identity/link retention under
+  E06/E08, including prior closed calibration and supervisor cleanup. Confirm
+  no process crash, truthful closure and normal reuse; inspect recovery's missing
+  unstarted-session config/unknown remote warning separately.
+- [ ] Compare identical Save On/Off stimulus runs and measure draw/context/capture/
+  readback/transfer/encoding stages under simultaneous camera/Tracking load. The
+  stimulus-only comparison/readback repair is complete at60.0 real groups/s;
+  combined camera recording currently39.47/s. Diagnose/repair and verify60fps with
+  truthful review/camera omission accounting, original timing and precision.
+- [ ] Repair/retest repeated completed combined session NewSession/restore warning
+  producer/scope/revision rejection and resulting full runtime shutdown.
+- [ ] Repair/retest the observed pre-change Save On→Save Off session-cleanup failure
+  (`cleanup returned an unregistered resource`) under exact catalogue ownership;
+  the60s presentation completed but its session could not finish cleanly.
+
+Oct13 Eye output source and host are implemented/locally verified for protocol4.
+Owner explicitly keeps upload manual: install the updated Uno sketch (or retained
+application HEX), then verify CAPS protocol4/cephvr2_uno_3 and all three outputs
+stopped before any test. Assign the actual Eye camera, external FrameStart line,
+unique output pin and rate explicitly; GUI Add output collects an unset pin.
+Verify Eye Test/Stop and watchdog LOW electrically, passive Projector flip edges,
+three independent camera rates under load, preview/stop/reuse, Eye video/frame-log
+identity and exact all-three cleanup. Existing capture/electrical deferrals remain;
+compile/local fixtures do not close them. [Current evidence](runtime.md).
+
+Oct13 Trial state pin-12 tests have bounded firmware start/stop evidence through COM8.
+The owner clarifies manual GUI triggering; Runtime is reopened ready for that Test
+click, with no receiver pass or wiring failure inferred. Other
+camera/Eye/electrical deferrals and full-load acceptance remain unchanged. The
+[current MCU assessment](runtime.md) retains methods, failed probe usage and limits.
+
+Oct13 Configuration-only abrupt controller-exit check passes: all six retained owned
+processes, including the renderer, are absent and the launcher confirms its outer
+Job empty within 3.453 s; the application guard is available. This does not close
+activated/recording/paired/full-load authority-loss acceptance. See the
+[current ownership assessment and exact evidence](runtime.md).
+
+Oct13 current rig verification: static/contracts/schema/package checks pass after
+regenerating stale local bindings; isolated backend/native suite passes 1,520 with
+five skips. Earlier combined/isolated native GUI runs crash with `0xC0000005` during
+chooser-test fixture teardown. The later G01 Qt-widget picker repair passes the original
+50-cycle reproducer and 20 final affected native cases; fixture teardown is unchanged.
+The broad native GUI stage finishes 401 passed/two hover-test failures, before the last
+media-picker refinement. Those failures repeat in isolation without constructing any
+file dialogs. Full GUI acceptance remains open; see the [current assessment](runtime.md).
+Read-only inventory sees four 60 Hz projectors, both NVIDIA GPUs and idle SpikeGLX
+at its saved endpoint. Native V19 startup Idle and V01 grid Open/live sequences 1/2/
+Close pass with all-output VSync and confirmed resource closure. The actual Behavior
+GUI Connect attempt fails with no usable frame by its deadline; exact shutdown is
+confirmed. Offscreen GUI completes with 396 passes/three projector horizontal-range
+failures; a desktop drag does not resize the window, so native narrow acceptance is
+still open. COM8 Connect confirms protocol 3 and stopped camera outputs. The installed
+Initial FFmpeg/ffprobe 4.3.2 lacks `hybrid_fragmented`; the later matched 9.0.2
+upgrade resolves tool compatibility and passes short sequential synthetic encodes.
+Actual-footage quality/conversion, interrupted files and simultaneous sustained
+workload acceptance remain open; see the current FFmpeg assessment in runtime.md.
+The owner defers Eye, further camera capture, pulse mappings and electrical measurements
+today. A missing-identity configuration-update probe is inconclusive: V19 startup
+initialization is not rerun by that command. Exact configuration restoration is
+independently confirmed; physical disconnected/reconnected startup remains pending.
+Final normal shutdown confirms exact all-owned absence, free guard, exclusive COM8
+release and saved history equal to the original adopted configuration. Retain
+[raw current evidence](rig-evidence-2026-10-13/); these results do not close optical,
+electrical, paired-session or full-load acceptance.
+
 Oct9 camera-role check: real GUI identity tests for 40065509/40747103 pass; third
 Basler serial 40278236 is discovered. Eye preview/video admission is pending external
-wiring, source/rate and trigger integration under [A11](../docs/architecture/acquisition.md#a11).
-Do not use an internal clock or assume a third MCU output. The owner selects
+wiring and source/rate under [A11](../docs/architecture/acquisition.md#a11).
+Protocol4 now provides the owner-requested independent third output; do not use
+an internal clock or assume the update is installed. The owner selects
 all-projector VSync without a pacer; local V20/E13 validation now supports it.
 Reconnect required outputs and verify native MCU Apply before another dummy run.
 Oct11 repairs the V19 startup classification locally; native acceptance remains
@@ -320,7 +430,7 @@ Existing operating-point/throughput deferrals below remain separate.
 | Check | Evidence required |
 | --- | --- |
 | Final camera operating points | Under A10, choose the owner-deferred ROI/source/recording precision, then re-read payload, chunks, transport limits and applicable resulting-rate nodes. Resolve behavioral 30 Hz's saved 368,640,000 B/s payload demand versus 360,000,000 B/s limit explicitly; no guessed higher limit or lower cadence. Verify simultaneous externally triggered 30/60 Hz capture with native counters and saved pulse evidence. Different USB host controllers and tracking's 71.803 Hz estimate do not prove sustained rates. |
-| Production encoder/tool combination | Under A08/E13/SYS-003, resolve a deliberate compatible FFmpeg/ffprobe pair on the fresh environment PATH. The tested FFmpeg 7.1 / ffprobe 4.3.2 combination is not that deployment baseline. Verify final camera post-filter and Visual Stimulus composite dimensions/depth on the RTX 2080 Ti; retain the handoff's H.264 width/10-bit and AV1 failures. Run both cameras plus composite with rendering/tracking, measuring drops, transfer cost, queue occupancy and finalization. Three static frames and small concurrent sessions do not close this check. |
+| Production encoder/tool combination | Under A08/E13/SYS-003, the Oct13 matched 9.0.2 PATH pair passes build/device and five short sequential synthetic cases. The tested FFmpeg 7.1 / ffprobe 4.3.2 combination is not that deployment baseline. Verify final camera post-filter and Visual Stimulus composite dimensions/depth on the RTX 2080 Ti; retain the handoff's H.264 width/10-bit and AV1 failures. Run both cameras plus composite with rendering/tracking, measuring drops, transfer cost, queue occupancy and finalization. Three static frames and small concurrent sessions do not close this check. |
 | Pulse inventory and wiring | Under E12/SYS-004, fill `[pulse_inventory]` from the actual OneBox wiring and verify each camera trigger and the photodiode appears on its mapped saved channel/bit, including edge polarity and a reassigned-role Setup. The Setup check proves configuration only. |
 | Visual Stimulus multi-output lifecycle/pacing | Under V15/V20/E05, measure both configured presentation modes with all outputs and full tracking/recording load. Verify per-output Started evidence within the existing 250 ms allowance, Idle transitions and late/in-flight submission handling; software swaps are not optical proof. |
 | Visual Stimulus startup Idle | Under V19/E08, check valid saved settings, first-run/missing outputs or profiles, partial window/context failure and cleanup, stale configuration results, Setup reuse/replacement and GUI/headless issue visibility. No guessed black/default calibration or false session Ready. |

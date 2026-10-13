@@ -1,0 +1,18 @@
+{
+  "method": "injected missing saved native interface; no physical unplug",
+  "controller_generation": "b548914b-5470-4ad8-8944-a1998b2438cc",
+  "missing_update": {
+    "command_id": "cbafefdb-1bcc-4e47-a14f-11feeec208f2",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  },
+  "restored_update": {
+    "command_id": "988b271b-9d3a-4719-b1ad-48893c55480a",
+    "complete": true,
+    "succeeded": true,
+    "needs_input": false,
+    "failure": ""
+  }
+}

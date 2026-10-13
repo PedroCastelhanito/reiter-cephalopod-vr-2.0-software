@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_status": "dirty shared working tree; affected source hashes retained",
+  "source_sha256": {
+    "src/cephvr/gui/managed_device_commands.py": "badfe88160bda84cfed70e53879724b3088a353a94b22cd668c1553b508ed774",
+    "src/cephvr/gui/camera_snapshot_settings.py": "14396f604755e4b5da51f21f748cb6b452722e7c7afb6ab53bb04a85eaac3b3d",
+    "tests/gui/test_dashboard.py": "73aeb745100a9c3bfa4eed9bcf8480d3245e38bb1b06e2e4be710c20e3b4b76d"
+  },
+  "owner_report": "prepare_camera: OPERATION_FAILED: value 'rising_edge' is not an advertised TriggerActivation choice",
+  "pfs_source": {
+    "path": "C:\\Data\\projects\\reiter-cephalopod-vr\\cephvr-assets\\camera-configs\\a2A1920-160ucPRO_40278236_Eye.pfs",
+    "sha256": "bdeaca7f8e517614ab0c2faf70f271acb4b21c5011516db16d5b6525f4f046e0",
+    "observed_frame_start_mode": "Off",
+    "observed_frame_start_source": "Software",
+    "scope": "file inspection, not fresh SDK readback"
+  },
+  "fix": "Internal clock clears external trigger activation/source in immediate and loaded GUI requests; external edge preservation and strict SDK validation remain",
+  "method": "isolated Windows/offscreen fake controller regression and adapter contract tests, no hardware",
+  "commands": [
+    "pytest tests/gui/test_dashboard.py -q -k \"camera_action_submits or applicable_activation or loaded_camera_presets\"",
+    "pytest tests/acquisition/test_camera_adapter_contracts.py -q -m \"not windows and not rig\"",
+    "ruff check src/cephvr/gui tests/gui/test_dashboard.py",
+    "ruff format --check src/cephvr/gui tests/gui/test_dashboard.py",
+    "mypy --platform win32 src/cephvr/gui",
+    "python tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "results": {
+    "gui": "13 passed,425 deselected,2.71s",
+    "adapter": "40 passed,0.15s",
+    "static": "ruff153 files/mypy152 sources/boundaries667 zero violations passed"
+  },
+  "artifacts": [
+    "internal-trigger-focused.xml",
+    "internal-trigger-adapter.xml"
+  ],
+  "limitations": [
+    "Physical post-fix acceptance pending",
+    "No device command, restart or firmware upload"
+  ]
+}

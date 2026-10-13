@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="0" skipped="0" tests="3" time="3.547" timestamp="2026-10-13T08:50:53.873303+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="" name="tests.visual_stimulus.test_controller_communication" time="0.000"><error message="collection failure">tests\visual_stimulus\test_controller_communication.py:22: in &lt;module&gt;
+    from cephvr.visual_stimulus.main import command_ledger
+src\cephvr\visual_stimulus\main.py:20: in &lt;module&gt;
+    from cephvr.visual_stimulus.runtime import VisualStimulusCoordinatorRuntime
+src\cephvr\visual_stimulus\runtime.py:16: in &lt;module&gt;
+    from cephvr.visual_stimulus.coordinator.commands import (
+src\cephvr\visual_stimulus\coordinator\commands.py:22: in &lt;module&gt;
+    from .calibration_updates import validate_live_update
+src\cephvr\visual_stimulus\coordinator\calibration_updates.py:10: in &lt;module&gt;
+    request: wire.VisualStimulusDisplayCalibrationUpdateRequest,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'VisualStimulusDisplayCalibrationUpdateRequest'</error></testcase><testcase classname="" name="tests.visual_stimulus.test_coordinator" time="0.000"><error message="collection failure">tests\visual_stimulus\test_coordinator.py:14: in &lt;module&gt;
+    from cephvr.visual_stimulus.coordinator.commands import bind_command, validate
+src\cephvr\visual_stimulus\coordinator\commands.py:22: in &lt;module&gt;
+    from .calibration_updates import validate_live_update
+src\cephvr\visual_stimulus\coordinator\calibration_updates.py:10: in &lt;module&gt;
+    request: wire.VisualStimulusDisplayCalibrationUpdateRequest,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'VisualStimulusDisplayCalibrationUpdateRequest'</error></testcase><testcase classname="" name="tests.visual_stimulus.test_transport" time="0.000"><error message="collection failure">tests\visual_stimulus\test_transport.py:30: in &lt;module&gt;
+    from cephvr.visual_stimulus.runtime import VisualStimulusCoordinatorRuntime
+src\cephvr\visual_stimulus\runtime.py:16: in &lt;module&gt;
+    from cephvr.visual_stimulus.coordinator.commands import (
+src\cephvr\visual_stimulus\coordinator\commands.py:22: in &lt;module&gt;
+    from .calibration_updates import validate_live_update
+src\cephvr\visual_stimulus\coordinator\calibration_updates.py:10: in &lt;module&gt;
+    request: wire.VisualStimulusDisplayCalibrationUpdateRequest,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'cephvr.control.v1.services_pb2' has no attribute 'VisualStimulusDisplayCalibrationUpdateRequest'</error></testcase></testsuite></testsuites>

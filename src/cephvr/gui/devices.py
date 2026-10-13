@@ -116,6 +116,8 @@ class DevicesPage(QWidget):
         restore_cameras(self.cameras, data)
 
     def sync_cameras(self) -> None:
+        if self.cameras.snapshot_draft:
+            self.microcontroller.snapshots.draft_loaded = True
         self.microcontroller.set_cameras(
             tuple(
                 CameraTrigger(

@@ -1,4 +1,5 @@
 {
+  "calibration_view": "reference_bars",
   "format_version": 1,
   "geometry": {
     "frame_id": "rig-mm",
@@ -10,7 +11,7 @@
     "near_mm": 0.8302710400826949,
     "far_mm": 248.98192705495714,
     "positional_tolerance_mm": 0.000166,
-    "orthogonality_tolerance": 1e-06,
+    "orthogonality_tolerance": 1e-6,
     "surfaces": [
       {
         "surface_id": "front",
@@ -116,7 +117,12 @@
       "refresh_numerator": 60,
       "refresh_denominator": 1,
       "rgb_bits_per_channel": 8,
-      "photometric_profile": null
+      "photometric_profile": null,
+      "reference_bars": {
+        "x_length_px": 320,
+        "y_length_px": 180
+      },
+      "blackout_zones": []
     },
     {
       "enabled": true,
@@ -127,7 +133,12 @@
       "refresh_numerator": 60,
       "refresh_denominator": 1,
       "rgb_bits_per_channel": 8,
-      "photometric_profile": null
+      "photometric_profile": null,
+      "reference_bars": {
+        "x_length_px": 320,
+        "y_length_px": 180
+      },
+      "blackout_zones": []
     },
     {
       "enabled": true,
@@ -138,7 +149,12 @@
       "refresh_numerator": 60,
       "refresh_denominator": 1,
       "rgb_bits_per_channel": 8,
-      "photometric_profile": null
+      "photometric_profile": null,
+      "reference_bars": {
+        "x_length_px": 320,
+        "y_length_px": 180
+      },
+      "blackout_zones": []
     },
     {
       "enabled": true,
@@ -149,7 +165,12 @@
       "refresh_numerator": 60,
       "refresh_denominator": 1,
       "rgb_bits_per_channel": 8,
-      "photometric_profile": null
+      "photometric_profile": null,
+      "reference_bars": {
+        "x_length_px": 180,
+        "y_length_px": 320
+      },
+      "blackout_zones": []
     }
   ],
   "mappings": [
@@ -210,7 +231,7 @@
       }
     }
   ],
-  "presentation_mode": "photodiode_only_vsync",
+  "presentation_mode": "all_outputs_vsync",
   "photometric_mode": "uncalibrated",
   "idle_linear_rgb": [
     0.0,

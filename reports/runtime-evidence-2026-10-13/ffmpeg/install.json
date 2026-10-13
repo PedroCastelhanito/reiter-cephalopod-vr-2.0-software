@@ -1,0 +1,20 @@
+{
+  "method": "Explicit owner-authorized matched pair upgrade at existing PATH location; no environment/recording-settings change",
+  "backup": "C:\\Dev\\software\\ffmpeg-backup-20261013",
+  "package": "C:\\Dev\\software\\ffmpeg-9.0.2-essentials_build",
+  "active_bin": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin",
+  "files": [
+    {
+      "name": "ffmpeg",
+      "path": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.exe",
+      "before_sha256": "9a9857068c7dd2e10ddb799d6a9f07d88c8a475a7e4d57c49b5f575dc9c5876c",
+      "after_sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec"
+    },
+    {
+      "name": "ffprobe",
+      "path": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.exe",
+      "before_sha256": "6c2b149e7ca76b2dbbe9e924969d84ffc7790b9cf702292c2622a3e962134f75",
+      "after_sha256": "f0d36ecbbdd3bcfac3efa078c96c7271c2e68b3810595552ac3b7f17e9a65c52"
+    }
+  ]
+}

@@ -199,7 +199,7 @@ def test_initial_camera_warning_scope_matches_loaded_configuration(
         runtime.projections.accept_warnings(report)
 
 
-@pytest.mark.parametrize("version", [2, 3])
+@pytest.mark.parametrize("version", [3, 4])
 async def test_microcontroller_status_completes_exact_operator_operation(
     tmp_path: Path,
     version: int,
@@ -231,6 +231,7 @@ async def test_microcontroller_status_completes_exact_operator_operation(
     status.views.pulses.capabilities.protocol_version = version
     status.views.pulses.state.behavioral.running = False
     status.views.pulses.state.tracking.running = False
+    status.views.pulses.state.eye_tracking.running = False
     status.operation.command_id = child
     status.result.context.command_id = child
     status.result.complete = True
@@ -239,7 +240,7 @@ async def test_microcontroller_status_completes_exact_operator_operation(
     receipt = await runtime.report_projection("devices", status, ingress_ns=900)
 
     assert receipt.result == pb.COMMAND_RESULT_ACCEPTED
-    assert runtime.control.operations[parent].succeeded == (version == 3)
+    assert runtime.control.operations[parent].succeeded == (version == 4)
     assert runtime.device_state.camera_operation is None
     assert runtime.projections.devices.pulses.capabilities.protocol_version == version
 

@@ -91,6 +91,11 @@ adds its own BackendContext, not a new scientific/event transport. Snapshot warn
 reuse those same Warning objects. Backend GetState and worker GetState retain the
 matching views for reconciliation, including empty views when a scope has no warnings.
 
+Final coalesced warnings, including the post-stop transport summary, are flushed
+and acknowledged before Finished within its original absolute deadline. Stopped
+and heartbeat reporting bypass this final-warning ordering gate. Session reset
+does not relax producer, scope or revision validation.
+
 ReportReceipt means accepted state, not a new occurrence or file durability. Duplicate
 revision/payload is idempotent; stale revisions cannot regress counts, changed payload
 under the same revision is rejected. Do not add counts on retries. Reports from a

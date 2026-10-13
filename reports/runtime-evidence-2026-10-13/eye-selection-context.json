@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_status": "dirty shared working tree; hashes identify affected source",
+  "source_sha256": {
+    "src/cephvr/gui/cameras.py": "9ff86799bf836fd740ed06257a751a06bea6b295172cc1b6c868cba2b4889651",
+    "src/cephvr/gui/devices.py": "a0219eeecedbdfdca28ac1d7349854597552077a242d08867b619f805a9e526e",
+    "src/cephvr/gui/microcontroller.py": "c169def0762f9a32788f5cb334c38444903fec0c537afd3a50bfa999d10b30ee",
+    "src/cephvr/gui/managed_mcu.py": "b719ebd2a5642f975f81e23964b93644b63083dd0a3bcec21ff05444aad11924",
+    "src/cephvr/gui/managed_configuration.py": "ca1ce03621044ca8abe62e604713d12e93ae43186a1b3deee6a79535e41ee103",
+    "tests/gui/test_dashboard.py": "75dbd91127d5b7c677a92c80b8442986ce1b89646fda1c981a632fb3ed7c68bb"
+  },
+  "scope": "read-only live inspection, isolated offscreen GUI behavior; no live restart or hardware commands",
+  "focused_result": "5 passed, 416 deselected",
+  "broad_result": "94 passed, 1 pre-existing projector overflow failure, 326 deselected",
+  "checks": [
+    "ruff check/format 6 files passed",
+    "mypy --platform win32 GUI 151 sources passed",
+    "backend boundaries 666 modules, zero violations",
+    "git diff --check passed"
+  ],
+  "artifacts": [
+    "eye-selection-read.json",
+    "eye-selection-final.xml",
+    "eye-selection-broad.xml"
+  ]
+}

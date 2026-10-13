@@ -1,0 +1,11 @@
+{
+  "purpose": "read-only manual GUI readiness; no control claim or pin command",
+  "controller_generation": "0e840cb1-69d9-47f9-accd-bbc777eb62f3",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "port": "COM8",
+  "trial_pin": "D12",
+  "trial_enabled": true,
+  "diagnostic_active": false,
+  "has_control_holder": true,
+  "control_holder_role": "gui"
+}

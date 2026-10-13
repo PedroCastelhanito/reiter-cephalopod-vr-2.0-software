@@ -57,6 +57,10 @@ class TrialPulseEvidence:
             pulse.behavioral_selected
             if camera_role == camera.CAMERA_ROLE_BEHAVIORAL
             else pulse.tracking_selected
+            if camera_role == camera.CAMERA_ROLE_TRACKING
+            else pulse.eye_tracking_selected
+            if camera_role == camera.CAMERA_ROLE_EYE_TRACKING
+            else False
         )
         if (
             not pulse.connection_id
@@ -141,7 +145,9 @@ class TrialPulseEvidence:
             )
         else:
             raise ValueError("pulse boundary command is unspecified")
-        encoded = request.SerializeToString(deterministic=True)
+        # Forwarding commands may be fresh; the retained MCU outcome itself
+        # must remain identical after the trial/camera checks above.
+        encoded = pulse.SerializeToString(deterministic=True)
         prior = (
             self._on_wire
             if pulse.command == mcu.PULSE_BOUNDARY_COMMAND_ON

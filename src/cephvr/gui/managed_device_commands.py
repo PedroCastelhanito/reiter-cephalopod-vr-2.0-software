@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
 from typing import Any, cast
 
@@ -17,6 +18,7 @@ from cephvr.gui.device_requests import (
     import_camera_preset,
     test_camera_connections,
 )
+from cephvr.gui.pin_numbers import firmware_pin
 from cephvr.shared.auth import Principal
 
 
@@ -42,7 +44,9 @@ async def dispatch_device_action(
                 raise ClientError(str(exc)) from exc
         request = rpc.MicrocontrollerCommandRequest(
             command=client.operator_command(),
-            expected_configuration_revision=state.configuration.revision,
+            expected_configuration_revision=options.get(
+                "confirmed_revision", state.configuration.revision
+            ),
             kind=cast(
                 Any,
                 rpc.MICROCONTROLLER_COMMAND_KIND_UPLOAD_FIRMWARE
@@ -92,7 +96,7 @@ async def dispatch_device_action(
             ("projector_flip_pin", options["flip_pin"]),
         ):
             if value:
-                setattr(pulses, field, value)
+                setattr(pulses, field, firmware_pin(value))
             else:
                 pulses.ClearField(field)
         pulses.trial_state_enabled = options["trial_enabled"]
@@ -100,14 +104,40 @@ async def dispatch_device_action(
         for pulse, value in (
             (pulses.behavioral, options["behavioral_pin"]),
             (pulses.tracking, options["tracking_pin"]),
+            (pulses.eye_tracking, options.get("eye_tracking_pin")),
         ):
             if value is None:
                 continue
             if value:
-                pulse.pin = value
+                pulse.pin = firmware_pin(value)
             else:
                 pulse.ClearField("pin")
         await _update_configuration(client, state, proposed, "MCU pin settings")
+        return True, "Completed"
+    if action == "add_mcu_output":
+        state = client.snapshot
+        proposed = pb.ExperimentConfiguration.FromString(
+            state.configuration_values.current.SerializeToString()
+        )
+        backend = next(
+            (item for item in proposed.backends if item.backend_name == "acquisition"),
+            None,
+        )
+        role = str(options["role"])
+        if backend is None or role not in {"behavioral", "tracking", "eye_tracking"}:
+            raise ClientError("Select an assigned camera output.")
+        settings = backend.acquisition
+        selected = getattr(settings, role)
+        if selected.device.frame_timing != camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER:
+            raise ClientError(
+                "Select External controller in Cameras before adding a trigger output."
+            )
+        getattr(settings.pulses, role).pin = firmware_pin(str(options["pin"]))
+        selected.enabled = True
+        backend.enabled = True
+        await _update_configuration(
+            client, state, proposed, "Camera output pin and enablement"
+        )
         return True, "Completed"
     if action == "assign_camera_role":
         await assign_camera_role(client, options)
@@ -191,12 +221,27 @@ async def _camera(
 
 
 async def _save_camera_settings(
-    client: HeadlessClient, options: dict[str, Any]
+    client: HeadlessClient,
+    options: dict[str, Any],
+    *,
+    accepted: Callable[[pb.Snapshot], None] | None = None,
 ) -> None:
     state = client.snapshot
     proposed = type(state.configuration_values.current)()
     proposed.CopyFrom(state.configuration_values.current)
     acquisition, selected, pulse = _assigned_camera(proposed, str(options["serial"]))
+    if options.get("prepare_action"):
+        selected.enabled = bool(options["enabled"])
+        acquisition.enabled = True
+        if options.get("pin"):
+            pulse.pin = firmware_pin(str(options["pin"]))
+        else:
+            pulse.ClearField("pin")
+        if options.get("clock") == "External controller":
+            if options.get("port"):
+                acquisition.acquisition.pulses.port = str(options["port"])
+            else:
+                acquisition.acquisition.pulses.ClearField("port")
     clock = str(options["clock"])
     if clock == "External controller":
         source = str(options["source"]).strip()
@@ -211,6 +256,7 @@ async def _save_camera_settings(
         selected.device.frame_timing = camera_pb2.FRAME_TIMING_FREE_RUNNING
         selected.device.unaligned_free_running = True
         selected.device.settings.ClearField("trigger_source")
+        selected.device.settings.ClearField("trigger_activation")
     else:
         raise ClientError("Select a camera trigger source before saving.")
     preset = str(options["preset"]).strip()
@@ -233,6 +279,8 @@ async def _save_camera_settings(
         selected.device.pfs_source_filename = preset
     else:
         selected.device.ClearField("pfs_source_filename")
+        if options.get("prepare_action"):
+            selected.device.ClearField("pfs_baseline")
     rate = str(options["rate"]).strip()
     if rate:
         try:
@@ -242,7 +290,11 @@ async def _save_camera_settings(
         if not frequency.is_finite() or frequency <= 0 or frequency % Decimal("0.1"):
             raise ClientError("Camera trigger rate must use a positive 0.1 Hz grid.")
         pulse.requested_frequency_hz = float(frequency)
+    elif options.get("prepare_action"):
+        pulse.ClearField("requested_frequency_hz")
     await _update_configuration(client, state, proposed, "Camera settings")
+    if accepted is not None:
+        accepted(client.snapshot)
     if import_preset:
         role = next(
             role
@@ -250,7 +302,11 @@ async def _save_camera_settings(
             if getattr(acquisition.acquisition, name).device.device_id
             == str(options["serial"])
         )
-        await import_camera_preset(client, role, preset)
+        try:
+            await import_camera_preset(client, role, preset)
+        finally:
+            if accepted is not None:
+                accepted(client.snapshot)
 
 
 async def _update_configuration(

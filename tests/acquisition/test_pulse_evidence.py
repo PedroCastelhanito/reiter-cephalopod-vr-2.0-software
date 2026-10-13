@@ -162,6 +162,7 @@ class _StatusSerial:
         assert selected_roles == (
             camera.CAMERA_ROLE_BEHAVIORAL,
             camera.CAMERA_ROLE_TRACKING,
+            camera.CAMERA_ROLE_EYE_TRACKING,
         )
         assert scheduled_boundary_ns is None
         assert stop_issued_ns is not None
@@ -173,6 +174,7 @@ class _StatusSerial:
         )
         result.behavioral.running = False
         result.tracking.running = False
+        result.eye_tracking.running = False
         return mcu.PulseCommandEvidence(
             connection_id=self.observation.connection_id,
             request_id="off-1",
@@ -242,10 +244,14 @@ def _schedule(work: control.WorkContext) -> acq.WorkerSchedule:
 
 
 def _pulse(
-    work: control.WorkContext, *, applied: bool, command_id: str
+    work: control.WorkContext,
+    *,
+    applied: bool,
+    command_id: str,
+    role: int = camera.CAMERA_ROLE_BEHAVIORAL,
 ) -> acq.WorkerPulseEvidence:
     request = acq.WorkerPulseEvidence(
-        camera=camera.CAMERA_ROLE_BEHAVIORAL,
+        camera=role,
         command=acq.WorkerCommand(command_id=command_id),
     )
     request.command.target.work.CopyFrom(work)
@@ -257,7 +263,9 @@ def _pulse(
         if applied
         else mcu.PULSE_COMMAND_OUTCOME_REJECTED
     )
-    request.evidence.behavioral_selected = True
+    request.evidence.behavioral_selected = role == camera.CAMERA_ROLE_BEHAVIORAL
+    request.evidence.tracking_selected = role == camera.CAMERA_ROLE_TRACKING
+    request.evidence.eye_tracking_selected = role == camera.CAMERA_ROLE_EYE_TRACKING
     request.evidence.scheduled_boundary_monotonic_ns = 100
     request.evidence.dispatched_monotonic_ns = 90
     request.evidence.acknowledged_monotonic_ns = 95
@@ -265,21 +273,47 @@ def _pulse(
     return request
 
 
-def test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it() -> None:
+@pytest.mark.parametrize(
+    "role",
+    [
+        camera.CAMERA_ROLE_BEHAVIORAL,
+        camera.CAMERA_ROLE_TRACKING,
+        camera.CAMERA_ROLE_EYE_TRACKING,
+    ],
+)
+@pytest.mark.parametrize(
+    "boundary", [mcu.PULSE_BOUNDARY_COMMAND_ON, mcu.PULSE_BOUNDARY_COMMAND_OFF]
+)
+def test_terminal_pulse_retry_is_idempotent_and_conflict_cannot_replace_it(
+    role: int,
+    boundary: int,
+) -> None:
     work = _trial_work()
     schedule = _schedule(work)
-    accepted = _pulse(work, applied=True, command_id="first-command")
+    accepted = _pulse(work, applied=True, command_id="first-command", role=role)
+    if boundary == mcu.PULSE_BOUNDARY_COMMAND_OFF:
+        accepted.evidence.command = boundary
+        accepted.evidence.scheduled_boundary_monotonic_ns = schedule.end_monotonic_ns
+        accepted.evidence.dispatched_monotonic_ns = schedule.end_monotonic_ns
+        accepted.evidence.acknowledged_monotonic_ns = schedule.end_monotonic_ns + 5
     tracker = TrialPulseEvidence()
     tracker.reset(required=True)
-    tracker.record(accepted, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
+    tracker.record(accepted, schedule, role)
     retained = tracker.combined()
 
-    tracker.record(accepted, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
+    tracker.record(accepted, schedule, role)
     assert tracker.combined() == retained
 
-    conflict = _pulse(work, applied=False, command_id="changed-command")
+    forwarded = acq.WorkerPulseEvidence.FromString(accepted.SerializeToString())
+    forwarded.command.command_id = "fresh-forwarding-command"
+    tracker.record(forwarded, schedule, role)
+    assert tracker.combined() == retained
+
+    conflict = acq.WorkerPulseEvidence.FromString(forwarded.SerializeToString())
+    conflict.evidence.outcome = mcu.PULSE_COMMAND_OUTCOME_REJECTED
+    conflict.evidence.applied = False
     with pytest.raises(ValueError, match="terminal pulse evidence changed"):
-        tracker.record(conflict, schedule, camera.CAMERA_ROLE_BEHAVIORAL)
+        tracker.record(conflict, schedule, role)
     assert tracker.combined() == retained
     assert tracker.connection_id == "mcu-generation"
 

@@ -1,0 +1,104 @@
+........FF...................                                            [100%]
+================================== FAILURES ===================================
+_ test_microcontroller_supported_signals_remove_add_and_restore_pins[input-projector-flip-D2] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x00000292462A7D00>
+direction = 'input', key = 'projector-flip', pin = 'D2'
+
+    @pytest.mark.parametrize(
+        "direction,key,pin",
+        [
+            ("input", "projector-flip", "D2"),
+            ("output", "trial-state", "D8"),
+        ],
+    )
+    def test_microcontroller_supported_signals_remove_add_and_restore_pins(
+        window: DashboardWindow, direction: str, key: str, pin: str
+    ) -> None:
+        panel = window.devices.microcontroller
+        editor = panel.flip_pin if direction == "input" else panel.trial_pin
+        table = panel.input_table if direction == "input" else panel.output_table
+        add = panel.signals.add_input if direction == "input" else panel.signals.add_output
+        editor.setText(pin)
+        panel.enable_controls[key].setChecked(True)
+        assert not add.isEnabled()
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        panel.signals.remove_buttons[key].click()
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+            assert table.height() == 2 * table.frameWidth()
+        assert not panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        removed = panel.snapshots.capture()
+        add.click()
+        assert not table.isRowHidden(0)
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        assert panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        panel.snapshots.restore(panel.snapshots.validate(removed))
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+>       assert editor.text() == pin
+E       AssertionError: assert '2' == 'D2'
+E         
+E         - D2
+E         + 2
+
+tests\gui\test_dashboard.py:2826: AssertionError
+_ test_microcontroller_supported_signals_remove_add_and_restore_pins[output-trial-state-D8] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000002924612EB90>
+direction = 'output', key = 'trial-state', pin = 'D8'
+
+    @pytest.mark.parametrize(
+        "direction,key,pin",
+        [
+            ("input", "projector-flip", "D2"),
+            ("output", "trial-state", "D8"),
+        ],
+    )
+    def test_microcontroller_supported_signals_remove_add_and_restore_pins(
+        window: DashboardWindow, direction: str, key: str, pin: str
+    ) -> None:
+        panel = window.devices.microcontroller
+        editor = panel.flip_pin if direction == "input" else panel.trial_pin
+        table = panel.input_table if direction == "input" else panel.output_table
+        add = panel.signals.add_input if direction == "input" else panel.signals.add_output
+        editor.setText(pin)
+        panel.enable_controls[key].setChecked(True)
+        assert not add.isEnabled()
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        panel.signals.remove_buttons[key].click()
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+            assert table.height() == 2 * table.frameWidth()
+        assert not panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        removed = panel.snapshots.capture()
+        add.click()
+        assert not table.isRowHidden(0)
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        assert panel.enable_controls[key].isChecked()
+        assert editor.text() == pin.removeprefix("D")
+        panel.snapshots.restore(panel.snapshots.validate(removed))
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+>       assert editor.text() == pin
+E       AssertionError: assert '8' == 'D8'
+E         
+E         - D8
+E         + 8
+
+tests\gui\test_dashboard.py:2826: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_microcontroller_supported_signals_remove_add_and_restore_pins[input-projector-flip-D2]
+FAILED tests/gui/test_dashboard.py::test_microcontroller_supported_signals_remove_add_and_restore_pins[output-trial-state-D8]
+2 failed, 27 passed, 373 deselected in 20.19s

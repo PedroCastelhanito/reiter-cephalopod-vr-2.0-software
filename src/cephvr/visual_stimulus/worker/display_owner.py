@@ -168,7 +168,7 @@ class DisplayOwner:
             field_path="backends.visual_stimulus.display.profile_json",
             failure=pb.Failure(
                 code=error.code,
-                message=f"{error}. Reconnect the projector or correct its assignment, then run Setup.",
+                message=f"{error}. {error.remedy}",
             ),
         )
         # The coordinator must retain exact rejection/closure before operation failure.

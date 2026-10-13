@@ -1,0 +1,4 @@
+ExecuteCameraCommand 0b42ec7f-310e-4e58-bdbb-f52b07a0352f failed: PREVIEW_START_FAILED: 
+CephVR supervisor shutdown: WORKER_OWNER_FAILURE: manual preview produced no usable frame by its deadline
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

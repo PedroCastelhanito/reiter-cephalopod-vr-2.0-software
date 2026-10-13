@@ -11,6 +11,7 @@ from PyQt6.QtCore import QIODevice, QObject, QSaveFile, pyqtSignal
 from PyQt6.QtWidgets import QFileDialog, QPushButton, QWidget
 
 from cephvr.gui.components import button
+from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 
 JSON = dict[str, Any]
 SNAPSHOT_LIMIT = 32 * 1024 * 1024
@@ -142,7 +143,7 @@ class ConfigurationFiles(QObject):
         if self.dialog is not None:
             self.dialog.raise_()
             return
-        dialog = QFileDialog(
+        dialog = file_dialog(
             self.parent_widget, f"{'Save' if save else 'Load'} {self.title}"
         )
         dialog.setNameFilter(f"{self.title} configuration (*.json)")
@@ -161,7 +162,7 @@ class ConfigurationFiles(QObject):
         )
         dialog.finished.connect(lambda: self.finish(dialog))
         self.dialog = dialog
-        dialog.open()
+        open_file_dialog(dialog)
 
     def finish(self, dialog: QFileDialog) -> None:
         if self.dialog is dialog:

@@ -1,0 +1,4 @@
+{"monotonic_ns":6871896848000,"wall_time":"2026-10-13T13:03:20.063650+09:00","event_type":"session_started","source":"controller"}
+{"monotonic_ns":6872407397000,"wall_time":"2026-10-13T13:03:20.574199+09:00","event_type":"trial_started","source":"controller","trial_number":1}
+{"monotonic_ns":6932407397000,"wall_time":"2026-10-13T13:04:20.574199+09:00","event_type":"trial_finished","source":"controller","trial_number":1,"outcome":"completed"}
+{"monotonic_ns":6932580478300,"wall_time":"2026-10-13T13:04:20.747280+09:00","event_type":"session_ended","source":"controller","outcome":"completed"}

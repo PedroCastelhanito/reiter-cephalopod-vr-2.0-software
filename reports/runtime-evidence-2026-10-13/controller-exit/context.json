@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-13",
+  "revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_status": "dirty working tree; concurrent GPU/picker/settings changes preserved; no production source changed in this increment",
+  "governing_decisions": [
+    "E08",
+    "E03",
+    "E15",
+    "ARCH-002"
+  ],
+  "source_sha256": {
+    "src/cephvr/launcher/main.py": "a7819bfaa73ef6e39ab8488dfc9134fc5a0fba32705b68d6e2d83f165d299d2d",
+    "src/cephvr/launcher/decisions.py": "42e8df8f4bd516548a092cab932124b0fd7b6b226c0e8212c5d149bd8ed108db",
+    "src/cephvr/supervisor/health.py": "a2618c4b9eca5db48e620a6c82d6e18a942b0e15c4ccc769f9175fbc3482b22c",
+    "src/cephvr/supervisor/shutdown.py": "8a977f8c49096297e4efa6810883956fe85b6e62582f0250ff1987c2ec784051",
+    "src/cephvr/supervisor/process_exit.py": "c46ea677cbb9f2a07f3578dc84a0b4848ead877cd099b840f69c71e0b26ead00",
+    "src/cephvr/platform/windows/jobs.py": "3dcbdf45725ebe4f55decbba63b42ebc01a90649e334373484d0ea6c433e4619"
+  },
+  "method": "Authenticated read-only Configuration/device preflight, retain exact native PID/creation-time/image handles, terminate only controller, observe all retained processes and generation-bound launcher outer-job absence receipt, recheck managed executable inventory and application guard",
+  "result": {
+    "controller_generation": "bd671b0f-8e9d-497f-86ce-e7c2f619fe56",
+    "method": "terminate exact controller PID+creation-time; observe retained handles and generation-bound application exit receipt",
+    "owned_before": [
+      [
+        23512,
+        134363260542540016,
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+      ],
+      [
+        27476,
+        134363260545541212,
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+      ],
+      [
+        20976,
+        134363260545634793,
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+      ],
+      [
+        26684,
+        134363260545752811,
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+      ],
+      [
+        23848,
+        134363260545887494,
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+      ],
+      [
+        24404,
+        134363260550367219,
+        "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+      ]
+    ],
+    "terminated_controller": [
+      27476,
+      134363260545541212,
+      "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe"
+    ],
+    "observations": [
+      {
+        "elapsed_s": 0.0,
+        "alive_pids": [
+          23512,
+          27476,
+          20976,
+          26684,
+          23848,
+          24404
+        ]
+      },
+      {
+        "elapsed_s": 0.109,
+        "alive_pids": [
+          23512,
+          20976,
+          26684,
+          23848,
+          24404
+        ]
+      },
+      {
+        "elapsed_s": 1.937,
+        "alive_pids": [
+          23512,
+          20976,
+          26684,
+          24404
+        ]
+      },
+      {
+        "elapsed_s": 2.328,
+        "alive_pids": [
+          23512,
+          20976,
+          24404
+        ]
+      },
+      {
+        "elapsed_s": 2.531,
+        "alive_pids": [
+          23512,
+          20976
+        ]
+      },
+      {
+        "elapsed_s": 3.343,
+        "alive_pids": []
+      }
+    ],
+    "all_retained_owned_absent": true,
+    "application_exit_receipt": "ApplicationExitReceipt(controller_generation='bd671b0f-8e9d-497f-86ce-e7c2f619fe56', supervisor_generation='2fd9f3b7-69ba-4170-9847-41ab656ca30e', observed_monotonic_ns=329722461652800, all_owned_processes_absent=True, format_version=1, controller_channel_loss='eof')",
+    "elapsed_s": 3.453,
+    "application_guard_available": true
+  },
+  "isolated_checks": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/launcher tests/supervisor/test_shutdown.py tests/supervisor/test_health.py tests/platform/test_windows_native_on_rig.py -q -m \"not rig\"",
+    "passed": 95,
+    "skipped": 1,
+    "seconds": 7.63,
+    "skip_reason": "Windows symlink privilege or Developer Mode unavailable"
+  },
+  "emergency_report": "reports/emergency-329719180281500-94113fef-9a83-4e54-891a-d3fe7519775b.json",
+  "failed_attempts": [
+    "read-only preflight initially referenced nonexistent display_calibration field; corrected to visual_stimulus_display; temporary CLI credentials removed both times",
+    "initial combined documentation patch did not match a LOG heading and applied no edits; corrected focused updates"
+  ],
+  "limits": [
+    "Configuration-only actual controller exit; no active recording/paired/full-load acceptance",
+    "GUI closure is intentionally distinct from actual controller/launcher death",
+    "exact user closure route not supplied; no wrapper/terminal-death defect inferred",
+    "not a recording-finalization certificate; emergency evidence preserved"
+  ]
+}

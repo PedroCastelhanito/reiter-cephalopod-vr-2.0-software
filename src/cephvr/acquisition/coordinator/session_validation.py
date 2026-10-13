@@ -48,11 +48,6 @@ def validate_setup_request(
     ):
         raise ValueError("acquisition file policy version differs from loaded policy")
     active = enabled_cameras_from_settings(settings)
-    if camera.CAMERA_ROLE_EYE_TRACKING in active:
-        raise ValueError(
-            "Eye tracking capture requires wired external triggering; "
-            "source, rate and controller integration remain pending"
-        )
     if not active:
         raise ValueError("acquisition Setup requires at least one enabled camera")
     tracking_required = tracking_backend_enabled(request.plan)

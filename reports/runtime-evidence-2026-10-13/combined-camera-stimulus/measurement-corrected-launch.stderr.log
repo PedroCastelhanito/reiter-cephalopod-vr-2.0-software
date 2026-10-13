@@ -1,0 +1,4 @@
+ExecuteCameraCommand 64fbf29c-73ce-43ce-a045-c52979e16a45 failed: PREVIEW_START_FAILED: Microcontroller operation is unavailable or pending
+ExecuteCameraCommand aea2255d-2627-4ea3-bba4-f4d0e22174b3 failed: PREVIEW_START_FAILED: INVALID_REQUEST: command record byte budget exhausted
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEvent, QIODevice, QSaveFile, pyqtSignal
 from PyQt6.QtWidgets import QCheckBox, QFileDialog, QHBoxLayout, QLineEdit, QWidget
 
 from cephvr.gui.components import button
+from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 from cephvr.gui.theme import SIZES
 from cephvr.visual_stimulus.config.calibration_bars import reference_lengths
 
@@ -220,7 +221,7 @@ class CalibrationFiles(QWidget):
         if self.dialog is not None:
             self.dialog.raise_()
             return
-        dialog = QFileDialog(
+        dialog = file_dialog(
             self,
             "Save projector configuration" if save else "Load projector configuration",
         )
@@ -243,7 +244,7 @@ class CalibrationFiles(QWidget):
         )
         dialog.finished.connect(lambda _: self.finish(dialog))
         self.dialog = dialog
-        dialog.open()
+        open_file_dialog(dialog)
 
     def finish(self, dialog: QFileDialog) -> None:
         if self.dialog is dialog:

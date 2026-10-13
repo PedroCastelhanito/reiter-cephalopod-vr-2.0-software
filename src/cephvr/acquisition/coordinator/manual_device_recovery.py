@@ -120,6 +120,8 @@ class ManualDeviceRecovery:
                     state.behavioral
                     if role == camera.CAMERA_ROLE_BEHAVIORAL
                     else state.tracking
+                    if role == camera.CAMERA_ROLE_TRACKING
+                    else state.eye_tracking
                 )
                 if not output.HasField("running") or output.running:
                     return False

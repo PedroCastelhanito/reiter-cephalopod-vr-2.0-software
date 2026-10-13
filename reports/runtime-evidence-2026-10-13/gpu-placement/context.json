@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "working_tree": "dirty shared tree; no production code edited for this placement repair",
+  "authorization": "Owner: Use my computer and make sure GPU selection is properly done and rendering + camera encoding is using the proper GPU index",
+  "decisions": [
+    "SYS-002",
+    "V19",
+    "A08",
+    "E15"
+  ],
+  "setting": {
+    "ui": "NVIDIA Control Panel, Manage 3D settings, Program Settings",
+    "program": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\.venv\\Scripts\\cephvr-python.exe",
+    "feature": "OpenGL rendering GPU",
+    "before": "no dedicated managed-program entry; inherited global RTX5060Ti choice, exact Windows GpuPreference=2 already present",
+    "after": "explicit NVIDIA GeForce RTX5060Ti selection for managed executable, Apply clicked and setting read back",
+    "unchanged": "global settings, CUDA GPUs All, scientific/camera/encoding settings, firmware"
+  },
+  "gpu_mapping": [
+    {
+      "ordinal": 0,
+      "uuid": "GPU-77642118-1623-48dd-3686-1014aa86b818",
+      "name": "NVIDIA GeForce RTX 5060 Ti"
+    },
+    {
+      "ordinal": 1,
+      "uuid": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+      "name": "NVIDIA GeForce RTX 2080 Ti"
+    }
+  ],
+  "render_verification": {
+    "method": "actual managed executable, existing ModernGLPort, all four assigned native contexts; hardware identity enforced by SYS-002 verifier",
+    "result": "all four RTX5060Ti, RGB8 and Idle initialized; exact release has no outstanding obligations",
+    "raw": "render_check.json"
+  },
+  "camera_encoder_verification": {
+    "method": "fresh native capability resolution; production acquisition build_command at saved dimensions/args; actual FFmpeg processes with live nvidia-smi NVENC-session PID queried by physical UUID; generated raw input only",
+    "gpu_uuid": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+    "ordinal": 1,
+    "roles": [
+      "behavioral",
+      "tracking",
+      "eye_tracking"
+    ],
+    "frames_per_role": 4,
+    "external_check": "ffprobe confirms all four frames and metadata",
+    "raw": "encoder_check.json"
+  },
+  "managed_launch": {
+    "command": "C:/Users/ReiterU_PC/miniforge3/python.exe scripts/start_runtime_gui.py",
+    "generation": "c3532451-334e-4874-beaa-3e181be7bc2d",
+    "result": "all four outputs resources_ready, Idle return confirmed, complete, no display issues",
+    "raw": "managed-state.json",
+    "final_state": "runtime GUI left open; no takeover or active session interruption by this task"
+  },
+  "diagnostic_attempts": [
+    "Installed NVIDIA Control Panel direct launch refused by ShellExecute; owner opened it and UI work continued",
+    "Initial render probe omitted required announce callback; corrected before native context work",
+    "nvidia-smi encodersessions continuously samples; initial five-second query timeout killed only diagnostic encoder; later bounded samples corrected",
+    "Second sampler corrected bytes/string timeout output; failed synthetic files/logs retained",
+    "A separate already-ended runtime generation disappeared during inspection; no shutdown command from this task; original launch then verified successfully"
+  ],
+  "limitations": [
+    "Generated encoder inputs are not camera footage or conversion verification",
+    "No sustained simultaneous camera/rendering throughput or optical acceptance",
+    "No camera/MCU/firmware/SpikeGLX commands in this task"
+  ],
+  "artifacts_sha256": {
+    "1791863811027265800-behavioral-encoder.stderr.log": "8a5c0a7a89c07dc8db847ad9d12bbad4daad60d3a540f3fb85fe266656c29ef7",
+    "1791863811027265800-behavioral-encoder.stdout.log": "c39d474c06ac221ca6a0a564b589cd81779b5a3b68e80d0e3344c9e806ad12e1",
+    "1791863826171646200-behavioral-encoder.stderr.log": "0c77169681bdd72540943ddc8334ab4795407490ef345bda78a124e2f2d729bf",
+    "1791863826171646200-behavioral-encoder.stdout.log": "e06250e76c98baa4a94bbf2fc3d59c6a94303d363fa09a7e99eba75c274b3cc2",
+    "1791863826171646200-eye_tracking-encoder.stderr.log": "c831b500d1e6d4aa3110ca4013eaaef621484da2c46fa3727fdd1e3a92ba6467",
+    "1791863826171646200-eye_tracking-encoder.stdout.log": "8d160428b579785fc9b24348455e835fbcd3946c0662e1bb3d61fd799bc04130",
+    "1791863826171646200-tracking-encoder.stderr.log": "81d174b13d441953cdde0d645b497fc35f1afa45421eaa9ef0e15375a698345d",
+    "1791863826171646200-tracking-encoder.stdout.log": "134bbfd67a93be3b570b9e01c3710bfe404c9fd179b53b21cd0510aad5dff5ff",
+    "behavioral-encoder.stderr.log": "94a5375c922ac3118bd1ab92392be2eab890c14f350c55c7b21cdaeee0db4856",
+    "behavioral-encoder.stdout.log": "651d69adf4f223af8f46e58ca5deab8ac8f34bdf031f98601a7a71c59f12797f",
+    "behavioral-nvenc-session.txt": "18ad758bcb4c50fd9b2419922cee2c8206780268a2d59f2a6ffa021b0cfdb258",
+    "encoder_check.json": "a291686108d8c29823126f9bad4b17e6cf6f696c3eafef6215475cac6526db8e",
+    "encoder_check.py": "d2d2270c7e1d8afb580c35f2730277438f7903b66acc29da051c95e90ff098c6",
+    "eye_tracking-nvenc-session.txt": "e52320c17df9b2695389fe82bf82a51d126d7d60b02398eef49de24fcb67dc5c",
+    "managed-state.json": "61e53eb2730d751ae8c04bfa7eb8c76b814ce9fdc537c98e9b9672babe273f9b",
+    "render_check.json": "4c257f2ccbc128a3d443e8c4ddaa957efebc35b71f9bf252c0e8a9edeffdab40",
+    "render_check.py": "4d4e38303c2ecaf11c025ad481e4b51b5af0600ab80b79e3f358d5848ad04c0d",
+    "synthetic-gpu-check-1791863811027265800-behavioral.mp4": "a0a7a96330b3440e3bc4fddf5250dcd5f3da48e1d3c9c14563b70f0a85f530ed",
+    "synthetic-gpu-check-1791863826171646200-behavioral.mp4": "c101e0b0bce7a54b3490a51f623cd19c1cd6acef77a917e31833dc9f424ec47c",
+    "synthetic-gpu-check-1791863826171646200-eye_tracking.mp4": "d3d74d994b7f3420c09aeeb6ad8acf0fd2cbe00496fd1ef7f584f44dd968df5f",
+    "synthetic-gpu-check-1791863826171646200-tracking.mp4": "1ff799379e1d82304429a95c093b94086794381769a19baa8368cd54e7ea4669",
+    "synthetic-gpu-check-behavioral.mp4": "a0a7a96330b3440e3bc4fddf5250dcd5f3da48e1d3c9c14563b70f0a85f530ed",
+    "tracking-nvenc-session.txt": "ab31e1474ba056461960fd6b98fdfc6a86a2f7288022c2ea9d1039f8eb7512c6"
+  }
+}

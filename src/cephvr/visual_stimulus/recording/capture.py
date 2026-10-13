@@ -295,8 +295,18 @@ class RecordingWorker:
             frame = self._active_frame
             if frame is None:
                 return False
-            if not self._active_normalized:
-                frame = _ffmpeg_input_order(frame)
+            normalize = not self._active_normalized
+            offset = self._active_offset
+        # Only the recording thread changes the active pixels. Admission and
+        # accounting must remain available while the native row copies run.
+        if normalize:
+            normalized_frame = _ffmpeg_input_order(frame)
+            with self._lock:
+                if self._active_frame is not frame or self._active_offset != offset:
+                    raise RuntimeError(
+                        "recording frame ownership changed during normalization"
+                    )
+                frame = normalized_frame
                 self._active_frame = frame
                 self._active_normalized = True
                 if (
@@ -304,9 +314,8 @@ class RecordingWorker:
                     and self._pending_real.pixels is frame.pixels
                 ):
                     self._pending_real_normalized = True
-            offset = self._active_offset
-            end = min(len(frame.pixels), offset + self.max_encoder_write_chunk)
-            chunk = memoryview(frame.pixels)[offset:end]
+        end = min(len(frame.pixels), offset + self.max_encoder_write_chunk)
+        chunk = memoryview(frame.pixels)[offset:end]
         consumed = self.encoder.write_chunk(chunk)
         if consumed < 0 or consumed > len(chunk):
             raise RuntimeError("encoder input returned an invalid write count")
@@ -394,22 +403,24 @@ class RecordingWorker:
 
 def _ffmpeg_input_order(frame: CompositeFrame) -> CompositeFrame:
     """Flip bottom-up capture rows and normalize the packed 10-bit X bits."""
-    row_bytes = frame.width * 4
+    import numpy as np
+
     normalized = (
         frame.pixels if isinstance(frame.pixels, bytearray) else bytearray(frame.pixels)
     )
     if frame.height > 1:
-        view = memoryview(normalized)
-        row_buffer = bytearray(row_bytes)
-        for row in range(frame.height // 2):
-            top = row * row_bytes
-            bottom = (frame.height - row - 1) * row_bytes
-            row_buffer[:] = view[top : top + row_bytes]
-            view[top : top + row_bytes] = view[bottom : bottom + row_bytes]
-            view[bottom : bottom + row_bytes] = row_buffer
+        # Native copies release the GIL while the GL owner continues presenting.
+        # Only half a frame is temporary; odd-height middle rows stay in place.
+        rows = np.frombuffer(normalized, dtype=np.uint8).reshape(frame.height, -1)
+        half = frame.height // 2
+        top = rows[:half]
+        bottom = rows[-half:][::-1]
+        saved = top.copy()
+        np.copyto(top, bottom)
+        np.copyto(bottom, saved)
     if frame.pixel_format == "r10g10b10a2_le_bottom_up":
-        for index in range(3, len(normalized), 4):
-            normalized[index] &= 0x3F
+        x_bytes = np.frombuffer(normalized, dtype=np.uint8)[3::4]
+        np.bitwise_and(x_bytes, 0x3F, out=x_bytes)
     return CompositeFrame(
         group_id=frame.group_id,
         video_frame_index=frame.video_frame_index,

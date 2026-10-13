@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="4" failures="0" skipped="0" tests="8" time="2.376" timestamp="2026-10-13T09:16:49.688625+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_dashboard_control_status_matches_connection_and_authority" time="0.387" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_auto_claims_only_unheld_control_once[]" time="0.064" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_auto_claims_only_unheld_control_once[other-client]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_managed_gui_auto_claims_only_unheld_control_once[this-gui]" time="0.000" /><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]" time="0.014"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[False-720]" time="0.011"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_review_and_runtime_share_page_elements_and_card_layouts[False-720]&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[True-1280]" time="0.011"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_review_and_runtime_share_page_elements_and_card_layouts[True-1280]&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase><testcase classname="tests.gui.test_dashboard" name="test_review_and_runtime_share_page_elements_and_card_layouts[True-720]" time="0.010"><error message="failed on setup with &quot;OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries&quot;">fixturedef = &lt;FixtureDef argname='tmp_path' scope='function' baseid=''&gt;
+request = &lt;SubRequest 'tmp_path' for &lt;Function test_review_and_runtime_share_page_elements_and_card_layouts[True-720]&gt;&gt;
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&gt; object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+&gt;               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError</error></testcase></testsuite></testsuites>

@@ -865,6 +865,7 @@ enum MicrocontrollerSignalKind {
   MICROCONTROLLER_SIGNAL_KIND_PROJECTOR_FLIP = 2;
   MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL = 3;
   MICROCONTROLLER_SIGNAL_KIND_TRACKING = 4;
+  MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING = 5;
 }
 message TrialPulseEvidence {
   WorkContext work = 1; // Exact original trial; never relabel historical observations.

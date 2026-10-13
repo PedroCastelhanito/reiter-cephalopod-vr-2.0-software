@@ -917,7 +917,7 @@ async def test_unwired_eye_preview_rejects_before_worker_or_serial_access():
         wire.AcquisitionCameraCommand(camera=camera.CAMERA_ROLE_EYE_TRACKING), 100
     )
     assert result.result == control.COMMAND_RESULT_REJECTED
-    assert result.failure.code == "EYE_TRIGGER_PENDING"
+    assert result.failure.code == "EYE_TRIGGER_REQUIRED"
     # No workers/serial owner are installed: rejection must precede device access.
 
 
@@ -1619,9 +1619,11 @@ async def test_preview_disconnect_releases_only_last_external_camera_claim(
     )
     pulse.observation.state.behavioral.running = True
     pulse.observation.state.tracking.running = remaining_external
+    pulse.observation.state.eye_tracking.running = False
     result_state = mcu.MicrocontrollerState()
     result_state.behavioral.running = False
     result_state.tracking.running = False
+    result_state.eye_tracking.running = False
     evidence = mcu.PulseCommandEvidence(
         connection_id="connection",
         request_id="connection-1",
@@ -1738,6 +1740,7 @@ async def test_uncertain_preview_stop_switches_external_output_off_before_cleanu
         state = mcu.MicrocontrollerState()
         state.behavioral.running = False
         state.tracking.running = False
+        state.eye_tracking.running = False
         return mcu.PulseCommandEvidence(
             connection_id="connection",
             request_id="off",
@@ -1928,6 +1931,7 @@ async def test_failed_idle_claim_release_retains_camera_cleanup_evidence():
     )
     pulse.observation.state.behavioral.running = False
     pulse.observation.state.tracking.running = False
+    pulse.observation.state.eye_tracking.running = False
     with pytest.raises(RuntimeError, match="unconfirmed"):
         await release_idle_claim(pulse, serial, deadline_ns=1000)
     assert (
@@ -1993,6 +1997,7 @@ async def test_normal_stop_reports_camera_closed_when_claim_close_fails(
     )
     pulse.observation.state.behavioral.running = False
     pulse.observation.state.tracking.running = False
+    pulse.observation.state.eye_tracking.running = False
     worker_registry = SimpleNamespace(workers={role: worker})
     states: list[dict[str, object]] = []
 

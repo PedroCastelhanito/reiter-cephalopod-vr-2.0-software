@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "working_tree": "dirty; includes preceding tasks and concurrent GUI retention changes",
+  "scope": "V19 sessionless startup adapter mismatch handling; actual launch uses existing Windows preference",
+  "tests": {
+    "focused": 73,
+    "owner": 249,
+    "native_AMD_rejection_cycles": 3,
+    "static": "Ruff/format154, Win32 mypy137, boundaries665 zero violations"
+  },
+  "native_method": "identical task-owned cephvr-gpu-probe.exe without per-executable Windows GPU preference; real ModernGLPort initialize/release",
+  "managed_baseline": "four outputs initialized; no warnings/errors; normal authenticated shutdown succeeded",
+  "managed_final": "four outputs initialized; revision1; Configuration; no warnings/errors; exact RTX5060Ti verifier passed; left open",
+  "limits": "Original failing launch route unknown. No Windows production preference/driver change. No camera/recording/optical/electrical/full-load acceptance. Relocating GLFW helper did not fix default GPU selection and was not adopted.",
+  "sha256": {
+    "src/cephvr/platform/windows/nvidia_device.py": "ce0b5d232fa32d88d8242f14b701d7e3c44c73b6ae634ce99d3b8ceedaa3f8e9",
+    "src/cephvr/visual_stimulus/rendering/native.py": "737821e6d6999ee47b1049733ddf5b43d9dbac6bb5b7fa3be52ee80f8cadf3c7",
+    "src/cephvr/visual_stimulus/rendering/native_display.py": "0ebb012289ee701b972b32257c08febb8891d8cb93c284500751c10f09925962",
+    "src/cephvr/visual_stimulus/worker/display_owner.py": "642c6736dc8b77acb84856921f119d3e03bd3ef819ba39e69601a75adbf50338",
+    "tests/platform/test_nvidia_device.py": "1084938de665024233a7dcdc977932c2db25892ef18e0478be6f95d380d0a20f",
+    "tests/visual_stimulus/test_rendering.py": "71b11c4707f0f5bb8467fdfd92355b6971a5047f452745ac0ad9298dd8de8d3c",
+    "tests/visual_stimulus/test_lifecycle.py": "3f67cd3d3d7669611c92462f9f856dd9b47718f52c095e2ab0242e742092c8e1",
+    "tests/visual_stimulus/test_controller_communication.py": "9d69b36a0344a29b5fce5392ca5385d45de21ed51e40c27f12362901c7a0bdc2",
+    "docs/architecture/visual_stimulus.md": "ca953b290718af9289fba2f7e719e563f1cb5a99f08202635087d8ae23199055",
+    "contracts/visual_stimulus/startup.md": "697ae6168164cdb2dbe9b33add5fa5abd068c3de03940257215983df2509ede6"
+  }
+}

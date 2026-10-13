@@ -1,0 +1,191 @@
+{
+  "date_jst": "2026-10-13",
+  "head": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "working_tree": "dirty shared tree; hash/patch of final affected source captured before final native trials and unchanged afterward",
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "authorization": "Owner: lets try to fix the stimulus throughput",
+  "decisions": [
+    "ARCH-002",
+    "SYS-002",
+    "V12",
+    "V20",
+    "E13",
+    "E15"
+  ],
+  "changes": [
+    "RGBA8 compositor only for declared8-bit review pixels; packed10-bit retainsRGBA32F",
+    "Caller-owned bytearray glGetBufferSubData output eliminates NumPy-result-to-bytes copy; recorder still takes its own copy",
+    "Context/dimensions/representation locked until release; native/scene/protocol return annotations support bytearray"
+  ],
+  "results": {
+    "baseline-on": {
+      "groups_per_s": 30.133333333333333,
+      "render_groups": 1808,
+      "group_intervals": {
+        "median_ms": 32.1903,
+        "max_ms": 66.2261,
+        "mean_ms": 33.20073193137797
+      },
+      "video_frames": 3600,
+      "video_duration_s": 60.0,
+      "closure_decode_recipe_metadata": "passed",
+      "capture_dispositions": {
+        "admitted": 1796,
+        "capacity_drop": 12
+      },
+      "encoder": {
+        "kind": "encoder_outcome",
+        "admitted_count": 1796,
+        "input_submitted_count": 3600,
+        "capacity_drop_count": 12,
+        "selected_real_count": 1796,
+        "same_slot_omission_count": 0,
+        "encoded_frame_count": 3600,
+        "duplicate_frame_count": 1804,
+        "final_input_group_id": 1807,
+        "cutoff_host_ns": 6438115923700,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      }
+    },
+    "first-optimized-on": {
+      "groups_per_s": 50.416666666666664,
+      "render_groups": 3025,
+      "group_intervals": {
+        "median_ms": 18.465600000000002,
+        "max_ms": 46.7234,
+        "mean_ms": 19.840024669312168
+      },
+      "video_frames": 3600,
+      "video_duration_s": 60.0,
+      "closure_decode_recipe_metadata": "passed",
+      "capture_dispositions": {
+        "admitted": 2988,
+        "same_slot_omission": 28,
+        "capacity_drop": 9
+      },
+      "encoder": {
+        "kind": "encoder_outcome",
+        "admitted_count": 2988,
+        "input_submitted_count": 3600,
+        "capacity_drop_count": 9,
+        "selected_real_count": 2988,
+        "same_slot_omission_count": 28,
+        "encoded_frame_count": 3600,
+        "duplicate_frame_count": 612,
+        "final_input_group_id": 3024,
+        "cutoff_host_ns": 6669449721100,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      }
+    },
+    "final-timed-on": {
+      "groups_per_s": 60.0,
+      "render_groups": 3600,
+      "group_intervals": {
+        "median_ms": 16.465,
+        "max_ms": 40.9097,
+        "mean_ms": 16.668683828841345
+      },
+      "video_frames": 3600,
+      "video_duration_s": 60.0,
+      "closure_decode_recipe_metadata": "passed",
+      "capture_dispositions": {
+        "admitted": 3422,
+        "capacity_drop": 12,
+        "same_slot_omission": 166
+      },
+      "encoder": {
+        "kind": "encoder_outcome",
+        "admitted_count": 3422,
+        "input_submitted_count": 3600,
+        "capacity_drop_count": 12,
+        "selected_real_count": 3422,
+        "same_slot_omission_count": 166,
+        "encoded_frame_count": 3600,
+        "duplicate_frame_count": 178,
+        "final_input_group_id": 3599,
+        "cutoff_host_ns": 6932407397000,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      }
+    },
+    "on": {
+      "groups_per_s": 60.0,
+      "render_groups": 3600,
+      "group_intervals": {
+        "median_ms": 16.4686,
+        "max_ms": 40.5756,
+        "mean_ms": 16.66751592108919
+      },
+      "video_frames": 3600,
+      "video_duration_s": 60.0,
+      "closure_decode_recipe_metadata": "passed",
+      "capture_dispositions": {
+        "admitted": 3423,
+        "same_slot_omission": 169,
+        "capacity_drop": 8
+      },
+      "encoder": {
+        "kind": "encoder_outcome",
+        "admitted_count": 3423,
+        "input_submitted_count": 3600,
+        "capacity_drop_count": 8,
+        "selected_real_count": 3423,
+        "same_slot_omission_count": 169,
+        "encoded_frame_count": 3600,
+        "duplicate_frame_count": 177,
+        "final_input_group_id": 3599,
+        "cutoff_host_ns": 7091460000700,
+        "exit_code": 0,
+        "eof_sent": true,
+        "drain_confirmed": true
+      }
+    }
+  },
+  "stage_metrics_files": [
+    "baseline-stages.json",
+    "final-stages.json"
+  ],
+  "timing_method": "Temporary stage wrappers only in instrumented managed renderer; nested inclusive measurements, bounded in-memory samples. Final on trial uses normal runtime without injection.",
+  "precision_comparison": {
+    "method": "same native compositor shader; RGBA32F versus RGBA8 framebuffer followed by byte read; 256 code levels and512 fractional samples",
+    "equal": false,
+    "bytes": 3072,
+    "max_byte_difference": 1,
+    "hashes": [
+      "074c0197a3b4ea6b51030b2d27a4d4d361e9f180bbd8ac99dde125e16d05c1a0",
+      "7ee63647648e50329db9edb11adb32a70d1c58bbe66c065387aabe78452d3361"
+    ]
+  },
+  "checks": {
+    "pytest_command": ".venv/Scripts/python.exe -m pytest tests/visual_stimulus -q --basetemp=.local-throughput-suite --junitxml=reports/runtime-evidence-2026-10-13/throughput/regression.xml",
+    "pytest_passed": 244,
+    "ruff": "check/format152 files passed",
+    "mypy": "--platform win32 src/cephvr/visual_stimulus;136 sources passed",
+    "boundaries": "667 backend modules; zero violations; existing cohesive size advisories",
+    "source_hashes": "passed unchanged",
+    "history_semantic_equality": "passed",
+    "final_live_configuration": "passed"
+  },
+  "baseline_off": "3602 real groups/60s; trial completed but session Interrupted during pre-change cleanup on unregistered resource. Raw baseline-off.json, baseline-stages.json and timed-launch.stderr.log; exact baseline-exit receipt retained.",
+  "diagnostic_attempts": [
+    "First sitecustomize import before native DLL bootstrap failed; corrected diagnostic setup uses the existing prepared manifest",
+    "First uninstrumented test was accidentally shut down early; interrupted logs retained, not used as throughput result",
+    "GPU-placement task concurrently starts runtime; attempted optimized launch declines, framebuffer-only native run completes on its generation. That task completed before isolated final timed and normal tests",
+    "Native pixel comparison is not exact: maximum one8-bit code change in review-only rounding; physical outputs/source precision remain unchanged"
+  ],
+  "scope_limits": [
+    "Four RGB8 outputs, all-output VSync,60s simple open-loop grating protocol; rendering placement5060Ti and encoding2080Ti under existing checks",
+    "No camera capture/recording, Tracking computation, paired SpikeGLX or optical timing acceptance in these benchmarks",
+    "Residual final review padding177, same-slot omissions169, capacity drops8 remain explicitly recorded",
+    "Save On-to-Off cleanup finding is separate and unmodified",
+    "No driver/preference/firmware/scientific settings change by this throughput task; GPU-placement repair belongs to other chat"
+  ],
+  "final_state": "Uninstrumented GUI/runtime left open in Configuration; original configuration and saved history restored",
+  "assessment": "Current owning reports/visual_stimulus.md and reports/runtime.md"
+}

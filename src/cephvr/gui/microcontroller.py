@@ -19,10 +19,11 @@ from PyQt6.QtWidgets import (
 )
 
 from cephvr.gui.components import Card, button, combo, equal_row_height, field
-from cephvr.gui.device_panel import DevicePanel, entry
+from cephvr.gui.device_panel import DevicePanel
 from cephvr.gui.microcontroller_signals import MicrocontrollerSignals
 from cephvr.gui.microcontroller_snapshot import MicrocontrollerSnapshot
 from cephvr.gui.paths import PathField
+from cephvr.gui.pin_numbers import PinNumber
 from cephvr.gui.tables import DataTable, refresh_button
 from cephvr.gui.theme import SIZES
 from cephvr.gui.view import DashboardView, Phase
@@ -38,11 +39,13 @@ class CameraTrigger:
 
 
 class MicrocontrollerPanel(DevicePanel):
+    draft_changed = pyqtSignal()
     camera_enable_requested = pyqtSignal(str, bool)
+    camera_output_requested = pyqtSignal(str, str)
     camera_draft_loaded = pyqtSignal(object)
     connection_requested = pyqtSignal()
     firmware_requested = pyqtSignal(str)
-    save_requested = pyqtSignal(str, str, bool, str, bool, object, object)
+    save_requested = pyqtSignal(str, str, bool, str, bool, object, object, object)
     pin_test_requested = pyqtSignal(str, bool)
 
     def __init__(self, *, settings: QSettings | None = None) -> None:
@@ -56,7 +59,7 @@ class MicrocontrollerPanel(DevicePanel):
         self.scan_button = refresh_button("Refresh available COM ports")
         self.scan_button.clicked.connect(lambda: self.request("Scan ports"))
         self.test_connection_button = self.action_buttons[0]
-        port_row = QWidget()
+        self.port_row = port_row = QWidget()
         port_layout = QHBoxLayout(port_row)
         port_layout.setContentsMargins(0, 0, 0, 0)
         port_layout.setSpacing(SIZES.field_x_gap)
@@ -115,14 +118,14 @@ class MicrocontrollerPanel(DevicePanel):
             self.output_table, 0, "trial-state", "Trial state"
         )
         self.trial_pin.setToolTip("Trial state output is always active-high")
-        self.trial_pin.setPlaceholderText("D2–D13")
+        self.trial_pin.setPlaceholderText("2–13")
         self.io = Card("Inputs", compact=True)
         self.input_table = self.pin_table("Input")
         self.flip_pin = self.add_pin_row(
             self.input_table, 0, "projector-flip", "Projector flip"
         )
         self.flip_pin.setToolTip("Projector flip input always detects rising edges")
-        self.flip_pin.setPlaceholderText("D2 or D3")
+        self.flip_pin.setPlaceholderText("2 or 3")
         self.io.body.addWidget(self.input_table)
         layout = self.columns[0].layout()
         assert isinstance(layout, QVBoxLayout)
@@ -149,7 +152,7 @@ class MicrocontrollerPanel(DevicePanel):
         return table
 
     def add_pin_row(self, table: DataTable, row: int, key: str, name: str) -> QLineEdit:
-        pin = entry("Pin")
+        pin = PinNumber()
         pin.setAccessibleName(f"{name} pin")
         pin.setMinimumWidth(70)
         test = button("Test", "compact")
@@ -258,6 +261,9 @@ class MicrocontrollerPanel(DevicePanel):
             or self.upload_pending
         ):
             return
+        if self.snapshots.draft_loaded:
+            self.draft_changed.emit()
+            return
         port = str(self.port.currentData() or "")
         if not port:
             return
@@ -274,6 +280,7 @@ class MicrocontrollerPanel(DevicePanel):
             self.enable_controls["projector-flip"].isChecked(),
             camera_pins.get("Behavior cam"),
             camera_pins.get("Tracking cam"),
+            camera_pins.get("Eye tracking"),
         )
 
     def set_saved_pins(
@@ -358,6 +365,7 @@ class MicrocontrollerPanel(DevicePanel):
             control.setChecked(camera.enabled)
             control.blockSignals(False)
             pin.setText(self.pins.get(camera.key, ""))
+            self.pins[camera.key] = pin.text()
             pin.setToolTip("Set External controller in Cameras to use a trigger pin")
             pin.textChanged.connect(
                 lambda value, key=camera.key: self.pins.__setitem__(key, value)
@@ -397,6 +405,7 @@ class MicrocontrollerPanel(DevicePanel):
             if self.managed
             else "Firmware upload requires the managed runtime"
         )
+        self.port_row.setEnabled(self.can_review and not active)
         self.port.setEnabled(self.can_review and not active)
         self.scan_button.setEnabled(self.can_review and not active)
         self.test_connection_button.setEnabled(
@@ -425,7 +434,7 @@ class MicrocontrollerPanel(DevicePanel):
             external = (
                 camera.enabled
                 and camera.source == "External controller"
-                and camera.role in ("Behavior cam", "Tracking cam")
+                and camera.role in ("Behavior cam", "Tracking cam", "Eye tracking")
             )
             editor.setEnabled(self.can_review and external and not active)
             self.test_buttons[camera.key].setEnabled(
@@ -532,7 +541,6 @@ class MicrocontrollerPanel(DevicePanel):
             description = f"Projector flip: pin {pin}, rising-edge input observation"
         if self.managed:
             self.pin_test_requested.emit(key, True)
-            self.console.appendPlainText(f"Requested {description} through controller.")
             return
         self.review_tests.add(key)
         self.update_test_button(key)

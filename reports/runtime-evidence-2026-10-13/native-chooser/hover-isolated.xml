@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="2.199" timestamp="2026-10-13T09:31:18.422760+09:00" hostname="DESKTOP-MSOH8EL"><testcase classname="tests.gui.test_dashboard" name="test_inline_timeline_actions_target_blocks_append_and_preserve_undo" time="0.799"><failure message="StopIteration">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002065C2CB400&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000002065985E9E0&gt;
+
+    def test_inline_timeline_actions_target_blocks_append_and_preserve_undo(window, app):
+        from PyQt6.QtTest import QTest
+        from PyQt6.QtWidgets import QPushButton
+    
+        from cephvr.gui.program_editing import validate
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        data = grouped_program(review_program()).model_dump(mode="json")
+        data["sequence"][0]["repetitions"] = 10
+        for epoch in data["sequence"][0]["body"][:2]:
+            epoch["batch_id"] = "batch_pair"
+        editor.set_program(validate(data))
+        window.resize(1280, 1100)
+        app.processEvents()
+        contents = editor.hierarchy.contents
+        before = editor.program
+        assert not any(
+            control.text() in ("+ Group", "− Group", "+ Epoch")
+            for control in editor.findChildren(QPushButton)
+        )
+        # Selection alone has no cross; hovering reveals a standard compact control.
+        QTest.mouseMove(editor.group_editor.name)
+        app.processEvents()
+        assert not any(c.isVisible() for c in contents.block_actions.removers)
+        QTest.mouseMove(contents, contents.batch_hits[0][0].center().toPoint())
+        app.processEvents()
+        # One cross removes the complete selected batch, preserving the remaining source.
+&gt;       remove = next(c for c in contents.block_actions.removers if c.isVisible())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests\gui\test_dashboard.py:12751: StopIteration</failure></testcase><testcase classname="tests.gui.test_dashboard" name="test_trial_row_actions_scroll_target_and_align_cards" time="0.561"><failure message="StopIteration">window = &lt;cephvr.gui.window.DashboardWindow object at 0x000002065BF045E0&gt;
+app = &lt;PyQt6.QtWidgets.QApplication object at 0x000002065985E9E0&gt;
+
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        trials = editor.trials
+        window.resize(1280, 1100)
+        app.processEvents()
+        assert editor.trial_card.height() &gt;= 320
+        assert editor.group_editor.parentWidget() is editor.timeline_card
+        assert editor.group_editor.geometry().bottom() &lt; editor.timeline.y()
+        QTest.mouseMove(editor.group_editor.name)
+        app.processEvents()
+        assert not any(c.isVisible() for c in trials.removers)
+        assert not hasattr(editor, "delete_trial_button")
+        assert trials.add.height() == trials.visualItemRect(trials.item(0)).height()
+        assert trials.add.y() &gt; trials.visualItemRect(trials.item(0)).bottom()
+        QTest.mouseClick(trials.add, Qt.MouseButton.LeftButton)
+        editor.add_trial()
+        assert editor.index == 2
+        app.processEvents()
+        rect = trials.visualItemRect(trials.item(0))
+        QTest.mouseMove(trials.viewport(), rect.center())
+        app.processEvents()
+&gt;       remove = next(
+            c for c in trials.removers if c.isVisible() and c.property("trial_row") == 0
+        )
+E       StopIteration
+
+tests\gui\test_dashboard.py:12834: StopIteration</failure></testcase></testsuite></testsuites>

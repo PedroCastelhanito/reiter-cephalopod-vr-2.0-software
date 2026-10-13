@@ -16,6 +16,7 @@ from cephvr.shared.transport_deadlines import deadline_metadata
 _ROLES = {
     "behavioral": camera.CAMERA_ROLE_BEHAVIORAL,
     "tracking": camera.CAMERA_ROLE_TRACKING,
+    "eye_tracking": camera.CAMERA_ROLE_EYE_TRACKING,
 }
 
 

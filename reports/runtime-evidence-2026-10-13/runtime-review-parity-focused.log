@@ -1,0 +1,112 @@
+....EEEE                                                                 [100%]
+=================================== ERRORS ====================================
+_ ERROR at setup of test_review_and_runtime_share_page_elements_and_card_layouts[False-1280] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+_ ERROR at setup of test_review_and_runtime_share_page_elements_and_card_layouts[False-720] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_review_and_runtime_share_page_elements_and_card_layouts[False-720]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+_ ERROR at setup of test_review_and_runtime_share_page_elements_and_card_layouts[True-1280] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_review_and_runtime_share_page_elements_and_card_layouts[True-1280]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+_ ERROR at setup of test_review_and_runtime_share_page_elements_and_card_layouts[True-720] _
+
+fixturedef = <FixtureDef argname='tmp_path' scope='function' baseid=''>
+request = <SubRequest 'tmp_path' for <Function test_review_and_runtime_share_page_elements_and_card_layouts[True-720]>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+>               return (yield)
+                        ^^^^^
+E               OSError: could not create numbered dir with prefix pytest- in C:\Users\ReiterU_PC\AppData\Local\Packages\sandbox.{66477389-de30-4877-9a37-9cb91a903370}\AC\Temp\pytest-of-ReiterU_PC after 10 tries
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: OSError
+=========================== short test summary info ===========================
+ERROR tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[False-1280]
+ERROR tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[False-720]
+ERROR tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[True-1280]
+ERROR tests/gui/test_dashboard.py::test_review_and_runtime_share_page_elements_and_card_layouts[True-720]
+4 passed, 389 deselected, 4 errors in 2.40s

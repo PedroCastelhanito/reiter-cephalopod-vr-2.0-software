@@ -30,6 +30,7 @@ class BoundaryReservation:
     command: microcontroller_pb2.PulseBoundaryCommand
     behavioral_selected: bool
     tracking_selected: bool
+    eye_tracking_selected: bool
 
 
 class PulseExecutor:
@@ -66,8 +67,10 @@ class PulseExecutor:
             raise ValueError("empty pulse masks do not create a reservation")
         if self._reservations:
             existing = next(iter(self._reservations.values()))
-            if existing.behavioral_selected != ("behavioral" in roles) or (
-                existing.tracking_selected != ("tracking" in roles)
+            if (
+                existing.behavioral_selected != ("behavioral" in roles)
+                or (existing.tracking_selected != ("tracking" in roles))
+                or (existing.eye_tracking_selected != ("eye_tracking" in roles))
             ):
                 raise ValueError("current-trial ON and OFF masks must match")
         if boundary_ns in self._reservations:
@@ -121,6 +124,7 @@ class PulseExecutor:
             command,
             "behavioral" in roles,
             "tracking" in roles,
+            "eye_tracking" in roles,
         )
         self._reservations[boundary_ns] = reservation
         return reservation
@@ -163,6 +167,7 @@ class PulseExecutor:
             command=command,
             behavioral_selected="behavioral" in roles,
             tracking_selected="tracking" in roles,
+            eye_tracking_selected="eye_tracking" in roles,
             outcome=microcontroller_pb2.PULSE_COMMAND_OUTCOME_NOT_DISPATCHED,
         )
         if boundary_ns is not None:
@@ -188,6 +193,7 @@ class PulseExecutor:
         fields = {
             "behavioral_selected": "1" if "behavioral" in roles else "0",
             "tracking_selected": "1" if "tracking" in roles else "0",
+            "eye_tracking_selected": "1" if "eye_tracking" in roles else "0",
         }
         before_exchange = self._channel.last_exchange
         next_state = current_state
@@ -285,6 +291,8 @@ def normalize_roles(values: Iterable[int | str]) -> set[str]:
             name = "behavioral"
         elif type(value) is int and value == camera_pb2.CAMERA_ROLE_TRACKING:
             name = "tracking"
+        elif type(value) is int and value == camera_pb2.CAMERA_ROLE_EYE_TRACKING:
+            name = "eye_tracking"
         else:
             raise ValueError(f"unknown or unspecified camera role {value!r}")
         if name in names:
@@ -303,6 +311,7 @@ def _matches_reservation(
         and item.command == command
         and item.behavioral_selected == ("behavioral" in roles)
         and item.tracking_selected == ("tracking" in roles)
+        and item.eye_tracking_selected == ("eye_tracking" in roles)
     )
 
 

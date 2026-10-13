@@ -77,7 +77,7 @@ def capture_protocol(page: ProtocolPage) -> JSON:
             {
                 "name": trial.name,
                 "path": trial.path,
-                "program": trial.program.model_dump(mode="json"),
+                "program": trial.exported_program.model_dump(mode="json"),
                 "stimulus_seed_decimal": trial.stimulus_seed_decimal,
                 "gap_after_seconds": trial.gap_after_seconds,
                 "arena_boundaries_json": trial.arena_boundaries_json,
@@ -108,6 +108,8 @@ def restore_protocol(page: ProtocolPage, data: JSON) -> None:
         )
         for trial in data["trials"]
     ]
+    for draft in drafts:
+        draft.group_for_editing()
     page.session_mode.setCurrentText(data["mode"])
     page.assets.folders["root"].editor.setText(data["asset_root"])
     editor = page.editor

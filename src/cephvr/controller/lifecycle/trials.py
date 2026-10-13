@@ -32,7 +32,7 @@ from cephvr.controller.state import (
     LimitsState,
     TrialClosureState,
 )
-from cephvr.shared.deadlines import remaining_seconds
+from cephvr.shared.deadlines import remaining_seconds, wait_until_ns
 
 
 @dataclass(frozen=True)
@@ -329,7 +329,7 @@ class TrialExecution:
     ) -> None:
         target = schedule.target_ns
         end = schedule.end_ns
-        await asyncio.sleep(remaining_seconds(target, clock=self.clock))
+        await wait_until_ns(target, clock=self.clock)
         async with self.lifecycle.lock:
             self.lifecycle.trial.phase = pb.TRIAL_PHASE_RUNNING
             self.publisher.publish()
@@ -348,7 +348,7 @@ class TrialExecution:
             target + self.limit_state.current.start_evidence_ns,
             attempt,
         )
-        await asyncio.sleep(remaining_seconds(end, clock=self.clock))
+        await wait_until_ns(end, clock=self.clock)
         async with self.lifecycle.lock:
             self.lifecycle.trial.phase = pb.TRIAL_PHASE_FINALIZING
             attempt.finished_deadline_ns = end + self.limit_state.current.finished_ns
@@ -387,7 +387,7 @@ class TrialExecution:
             ),
             0,
         )
-        await asyncio.sleep(remaining_seconds(end + gap, clock=self.clock))
+        await wait_until_ns(end + gap, clock=self.clock)
 
     async def trial_command_with_retry(
         self,

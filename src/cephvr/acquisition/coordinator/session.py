@@ -390,6 +390,7 @@ def _running_roles(observation: object) -> tuple[int, ...]:
     for role, value in (
         (camera.CAMERA_ROLE_BEHAVIORAL, state.behavioral),
         (camera.CAMERA_ROLE_TRACKING, state.tracking),
+        (camera.CAMERA_ROLE_EYE_TRACKING, state.eye_tracking),
     ):
         if value.HasField("enabled") and value.enabled:
             result.append(role)

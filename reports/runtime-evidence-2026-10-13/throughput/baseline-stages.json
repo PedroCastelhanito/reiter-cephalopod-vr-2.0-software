@@ -1,0 +1,200 @@
+{
+  "method": "temporary stage wrappers; nested inclusive timings; bounded in-memory samples",
+  "argv": [
+    "cephvr.visual_stimulus.worker.main",
+    "--bootstrap-handle",
+    "892"
+  ],
+  "trials": {
+    "78817ed6-c5f5-48d9-a932-f59bdaf59be4": {
+      "recording_before": {
+        "count": 1808,
+        "total_ms": 16618.169699999984,
+        "mean_ms": 9.191465542035399,
+        "median_ms": 9.2714,
+        "p95_ms": 10.56,
+        "max_ms": 30.1208
+      },
+      "context_switch": {
+        "count": 32475,
+        "total_ms": 7036.343699999971,
+        "mean_ms": 0.2166695519630485,
+        "median_ms": 0.0647,
+        "p95_ms": 0.626,
+        "max_ms": 24.0479
+      },
+      "scene_draw": {
+        "count": 1808,
+        "total_ms": 8658.196699999993,
+        "mean_ms": 4.7888256084070795,
+        "median_ms": 4.466200000000001,
+        "p95_ms": 6.3641,
+        "max_ms": 29.3792
+      },
+      "swap": {
+        "count": 7236,
+        "total_ms": 3599.458999999999,
+        "mean_ms": 0.4974376727473742,
+        "median_ms": 0.4044,
+        "p95_ms": 0.9933,
+        "max_ms": 4.5429
+      },
+      "present": {
+        "count": 1808,
+        "total_ms": 4307.243300000007,
+        "mean_ms": 2.3823248340707965,
+        "median_ms": 2.2733,
+        "p95_ms": 3.3862,
+        "max_ms": 13.6983
+      },
+      "engine_tick": {
+        "count": 1808,
+        "total_ms": 13155.249299999989,
+        "mean_ms": 7.276133462389381,
+        "median_ms": 6.9595,
+        "p95_ms": 9.4533,
+        "max_ms": 32.4191
+      },
+      "pbo_read_submit": {
+        "count": 1796,
+        "total_ms": 23304.155300000024,
+        "mean_ms": 12.975587583518932,
+        "median_ms": 12.91825,
+        "p95_ms": 16.0893,
+        "max_ms": 29.1027
+      },
+      "capture_submit": {
+        "count": 1796,
+        "total_ms": 24160.469299999946,
+        "mean_ms": 13.452377115812917,
+        "median_ms": 13.3844,
+        "p95_ms": 16.6354,
+        "max_ms": 36.3101
+      },
+      "recording_rendered": {
+        "count": 1808,
+        "total_ms": 25426.627599999978,
+        "mean_ms": 14.063400221238938,
+        "median_ms": 14.00695,
+        "p95_ms": 17.4277,
+        "max_ms": 36.9706
+      },
+      "events": {
+        "count": 1808,
+        "total_ms": 634.321399999999,
+        "mean_ms": 0.35084148230088497,
+        "median_ms": 0.2139,
+        "p95_ms": 0.529,
+        "max_ms": 19.8846
+      },
+      "diagnostics_poll": {
+        "count": 1808,
+        "total_ms": 3610.3658000000114,
+        "mean_ms": 1.9968837389380532,
+        "median_ms": 0.998,
+        "p95_ms": 5.0055,
+        "max_ms": 14.2208
+      },
+      "pbo_copy": {
+        "count": 1795,
+        "total_ms": 5076.9060000000045,
+        "mean_ms": 2.8283598885793872,
+        "median_ms": 2.6329,
+        "p95_ms": 3.7637,
+        "max_ms": 22.5081
+      },
+      "capture_poll": {
+        "count": 1795,
+        "total_ms": 11745.895900000021,
+        "mean_ms": 6.543674596100279,
+        "median_ms": 6.6524,
+        "p95_ms": 7.4901,
+        "max_ms": 26.5197
+      },
+      "trial_advance": {
+        "count": 1807,
+        "total_ms": 59205.9429000001,
+        "mean_ms": 32.764771942446046,
+        "median_ms": 31.9217,
+        "p95_ms": 40.2405,
+        "max_ms": 65.9545
+      }
+    },
+    "null": {
+      "trial_advance": {
+        "count": 2,
+        "total_ms": 114.7005,
+        "mean_ms": 57.35025,
+        "median_ms": 57.35025,
+        "p95_ms": 41.0038,
+        "max_ms": 73.6967
+      }
+    },
+    "9dcd0ad8-621a-4daf-8148-dbd9a154280d": {
+      "context_switch": {
+        "count": 43228,
+        "total_ms": 2229.7337000000184,
+        "mean_ms": 0.05158077403534746,
+        "median_ms": 0.0391,
+        "p95_ms": 0.1259,
+        "max_ms": 0.5113
+      },
+      "scene_draw": {
+        "count": 3602,
+        "total_ms": 2674.179199999994,
+        "mean_ms": 0.7424151027207108,
+        "median_ms": 0.68025,
+        "p95_ms": 1.4194,
+        "max_ms": 2.7976
+      },
+      "swap": {
+        "count": 14412,
+        "total_ms": 54243.68099999984,
+        "mean_ms": 3.7637858034970857,
+        "median_ms": 0.21605,
+        "p95_ms": 15.1935,
+        "max_ms": 25.7021
+      },
+      "present": {
+        "count": 3602,
+        "total_ms": 55300.8660999999,
+        "mean_ms": 15.352822348695168,
+        "median_ms": 15.4686,
+        "p95_ms": 16.2605,
+        "max_ms": 26.9978
+      },
+      "engine_tick": {
+        "count": 3602,
+        "total_ms": 58151.725099999734,
+        "mean_ms": 16.144287923375902,
+        "median_ms": 16.2272,
+        "p95_ms": 16.7798,
+        "max_ms": 28.5829
+      },
+      "events": {
+        "count": 3602,
+        "total_ms": 79.58420000000083,
+        "mean_ms": 0.022094447529150473,
+        "median_ms": 0.0098,
+        "p95_ms": 0.0681,
+        "max_ms": 0.5733
+      },
+      "diagnostics_poll": {
+        "count": 3602,
+        "total_ms": 1574.4498000000035,
+        "mean_ms": 0.43710433092726264,
+        "median_ms": 0.30865,
+        "p95_ms": 1.1698,
+        "max_ms": 1.9704
+      },
+      "trial_advance": {
+        "count": 3601,
+        "total_ms": 59820.9490999999,
+        "mean_ms": 16.61231577339628,
+        "median_ms": 16.628,
+        "p95_ms": 17.1016,
+        "max_ms": 29.5581
+      }
+    }
+  }
+}

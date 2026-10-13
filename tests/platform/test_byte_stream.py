@@ -156,6 +156,32 @@ def _read_three_bytes(
 FAR = 2**63 - 1
 
 
+@pytest.mark.parametrize("readonly", [False, True])
+def test_nonblocking_write_owns_pixels_before_caller_can_reuse_storage(
+    monkeypatch: pytest.MonkeyPatch,
+    readonly: bool,
+) -> None:
+    from cephvr.platform.windows import security
+
+    fake = Mock()
+    fake.CreateEventW.return_value = 71
+    fake.WriteFile.return_value = True
+    monkeypatch.setattr(byte_stream, "native_api", lambda: fake)
+    monkeypatch.setattr(
+        security,
+        "owner_only_security_attributes",
+        lambda access: (security.SecurityAttributes(), None),
+    )
+    pixels = bytearray(b"abcdefgh")
+    data = memoryview(bytes(pixels) if readonly else pixels)
+    pipe = byte_stream.OverlappedPipe(41, writable=True, maximum_read_bytes=8)
+    pipe.begin_write(data, deadline_ns=FAR)
+    pixels[:] = b"XXXXXXXX"
+    assert pipe._pending is not None
+    assert pipe._pending.backing == b"abcdefgh"
+    assert ctypes.string_at(fake.WriteFile.call_args.args[1], 8) == b"abcdefgh"
+
+
 def _pipe(monkeypatch: pytest.MonkeyPatch, fake: Mock, **kw: Any) -> Any:
     monkeypatch.setattr(byte_stream, "native_api", lambda: fake)
     return byte_stream.OverlappedPipe(9, writable=True, maximum_read_bytes=8, **kw)

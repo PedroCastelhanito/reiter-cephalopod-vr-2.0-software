@@ -273,7 +273,7 @@ supplies inventory and bounded probes; remaining workload/behavior checks stay i
 | Encoding validation and keyframe scheduling | Declared in encoding-options.md; input-format/throughput feasibility retains its separate rig deferral. | A08 |
 | Rig board, trigger pins/lines and device/interface identities | Camera serials/roles and 30/60 Hz owner rates are supplied; Arduino Uno/COM8 is inventory only. Trigger pins/lines, firmware, electrical behavior and final image/transport settings remain unresolved; do not infer them from snapshots. | A01/A10/A11 |
 | Host services, device adapters, native Windows wrappers and writers | Current authorized implementation stage; acceptance is tracked in the implementation review. | ARCH-001, SYS-003, E15 |
-| MCU firmware implementation and installation | Outside the current host implementation stage; the host enforces the accepted protocol and fails explicitly when firmware is incompatible. | A11, E15 |
+| MCU firmware implementation and installation | Owner-authorized protocol-4 Eye output is implemented and compiled; installation remains explicit/manual, with electrical/camera acceptance pending. | A11, E15 |
 | Encoder raw-input format and throughput | Bounded generated-frame probes are recorded in the handoff; production native conversion, simultaneous full workload and failure behavior remain unverified. | A08/E15, rig verification list |
 | Timing/performance, startup-buffer behavior, hardware/electrical checks, crash/durability tests | Rig validation after the main architecture is established; retain evidence and failure limits. | E15 |
 | Projector-locked camera pulses and assisted firmware flashing | Explicitly deferred features; no current implementation authority. | A10/A11 |

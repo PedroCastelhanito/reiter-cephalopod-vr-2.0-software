@@ -11,7 +11,7 @@ from cephvr.shared.config import (
     policy_digest,
 )
 
-_POLICY_SHA256 = "b343c4b860f27c77843cb846b5d293fb3e2107b5a5598aef1051bffd99b1051f"
+_POLICY_SHA256 = "fb451678424002dfd35eaab0804afac0902ea6ad88c9c09a842815741febc750"
 
 _CONFIG_KEYS = frozenset(
     [
@@ -63,7 +63,7 @@ _EXPECTED: dict[str, object] = {
     "microcontroller.pulse_polarity": "active_high",
     "microcontroller.inactive_level": "low",
     "microcontroller.protocol_compatibility": "exact_version",
-    "microcontroller.protocol_version": 3,
+    "microcontroller.protocol_version": 4,
     "microcontroller.capability_source": "firmware",
     "microcontroller.capability_query": "CAPS",
     "microcontroller.capability_reply": "single_bounded_reply",
@@ -106,11 +106,11 @@ def load_microcontroller_pair(root: Path) -> LoadedPair:
         allowed_policy_keys=frozenset(_EXPECTED),
         expected_policy=_EXPECTED,
     )
-    if pair.policy_version != 1:
-        raise ConfigurationError("Microcontroller policy_version must be 1")
+    if pair.policy_version != 2:
+        raise ConfigurationError("Microcontroller policy_version must be 2")
     if policy_digest(pair.policy) != _POLICY_SHA256:
         raise ConfigurationError(
-            "Microcontroller fixed-policy declarations differ from version 1"
+            "Microcontroller fixed-policy declarations differ from version 2"
         )
     return pair
 

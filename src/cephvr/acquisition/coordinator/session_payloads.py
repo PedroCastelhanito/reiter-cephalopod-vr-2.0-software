@@ -251,6 +251,8 @@ def nominal_frame_rate(
             pulse_resolution.applied.state.behavioral
             if role == camera.CAMERA_ROLE_BEHAVIORAL
             else pulse_resolution.applied.state.tracking
+            if role == camera.CAMERA_ROLE_TRACKING
+            else pulse_resolution.applied.state.eye_tracking
         )
         if output.HasField("applied_frequency_hz") and output.applied_frequency_hz > 0:
             return float(output.applied_frequency_hz)

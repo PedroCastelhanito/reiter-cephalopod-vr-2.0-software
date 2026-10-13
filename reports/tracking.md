@@ -1,5 +1,11 @@
 # Tracking status
 
+Oct13 native NVIDIA same-image flow/lease smoke passes within the Windows backend
+selection (1,520 passes/five symlink-privilege skips across owners). This checks native
+lease/readback/closure, not scientific accuracy or camera/full-load feedback. Further
+camera capture is owner-deferred today. [Current assessment](runtime.md),
+[dated evidence](rig-evidence-2026-10-13/) and [remaining checks](rig-verification.md).
+
 The Oct12 model-hierarchy audit deeply traced ring sequence/private lease handling,
 the record codec, bounded writer and completion paths; coordinator, trial, method
 and feedback paths were sampled. No additional actionable Tracking defect was

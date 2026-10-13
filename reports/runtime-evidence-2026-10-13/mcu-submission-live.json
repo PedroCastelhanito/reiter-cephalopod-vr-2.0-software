@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-13",
+  "method": "authenticated read-only controller status; no hardware command",
+  "controller_generation": "04afb7ac-8774-4a0b-8380-41f21c6fca3f",
+  "revision": "1",
+  "phase": "SESSION_PHASE_CONFIGURATION",
+  "eye_pin": null,
+  "eye_requested_hz": 60.0,
+  "eye_enabled": false,
+  "eye_timing": "FRAME_TIMING_FREE_RUNNING",
+  "microcontroller_observed": false
+}

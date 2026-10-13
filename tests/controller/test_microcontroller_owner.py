@@ -420,6 +420,7 @@ def test_reconnect_explicitly_stops_running_outputs_and_reads_back_status() -> N
     assert port.fields[2] == {
         "behavioral_selected": "1",
         "tracking_selected": "0",
+        "eye_tracking_selected": "0",
     }
     assert observation.state.behavioral.running is False
     assert observation.state.tracking.running is False
@@ -481,11 +482,14 @@ def test_flip_input_requires_firmware_advertised_interrupt_pin() -> None:
     assert port.verbs == ["CAPS", "STATUS"]
 
 
-def test_old_firmware_is_rejected_before_output_diagnostics() -> None:
+@pytest.mark.parametrize("version", [2, 3])
+def test_old_firmware_is_rejected_before_output_diagnostics(version: int) -> None:
     clock = _Clock(10)
-    port = _ScriptedPort(statuses=[_status()], protocol_version=2)
+    port = _ScriptedPort(statuses=[_status()], protocol_version=version)
     owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
-    with pytest.raises(SerialOwnerError, match="incompatible MCU protocol version 2"):
+    with pytest.raises(
+        SerialOwnerError, match=f"incompatible MCU protocol version {version}"
+    ):
         owner.connect(deadline_ns=10_000)
     assert port.verbs == ["CAPS"]
     assert port.closed
@@ -503,7 +507,7 @@ def test_legacy_firmware_caps_rejection_stops_probe_and_closes_port() -> None:
     clock = _Clock(10)
     port = LegacyPort(statuses=[])
     owner = SerialOwner("COM7", _policies(), clock=clock, serial_port=port)
-    with pytest.raises(ChannelIncompatibleFirmware, match="required protocol 3"):
+    with pytest.raises(ChannelIncompatibleFirmware, match="required protocol 4"):
         owner.connect(deadline_ns=10_000)
     assert port.verbs == ["CAPS"]
     assert port.closed
@@ -566,7 +570,7 @@ def _status(*, behavioral_running: bool = False) -> bytes:
             if behavioral_running
             else ""
         )
-        + " tracking_enabled=0 tracking_running=0"
+        + " tracking_enabled=0 tracking_running=0 eye_tracking_enabled=0 eye_tracking_running=0"
     )
     return ("valid=0 watchdog_stopped=0 watchdog_ms=1000 " + role_fields).encode(
         "ascii"
@@ -582,7 +586,7 @@ class _Clock:
 
 
 class _ScriptedPort:
-    def __init__(self, *, statuses: list[bytes], protocol_version: int = 3) -> None:
+    def __init__(self, *, statuses: list[bytes], protocol_version: int = 4) -> None:
         self._statuses = deque(statuses)
         self._protocol_version = protocol_version
         self._incoming: deque[int] = deque()
@@ -608,7 +612,7 @@ class _ScriptedPort:
         elif verb == "STATUS":
             body = self._statuses.popleft().decode("ascii")
         elif verb == "OFF":
-            body = "watchdog_stopped=0 behavioral_running=0 tracking_running=0"
+            body = "watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0"
         elif verb.startswith("DIAG_"):
             body = (
                 "active=0" if verb == "DIAG_STOP" else "active=1"
@@ -1069,6 +1073,7 @@ async def test_firmware_upload_hands_off_serial_without_resuming_outputs(
             result = mcu.MicrocontrollerObservation(connection_id="new")
             result.state.behavioral.running = False
             result.state.tracking.running = False
+            result.state.eye_tracking.running = False
             return result
 
     settings = control.AcquisitionSettings()
@@ -1276,6 +1281,20 @@ async def test_firmware_cancellation_waits_for_tool_and_preserves_serial_handoff
         ),
         (control.MICROCONTROLLER_SIGNAL_KIND_TRACKING, "tracking", "D11", 60.0, False),
         (
+            control.MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING,
+            "eye_tracking",
+            "D8",
+            45.0,
+            False,
+        ),
+        (
+            control.MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING,
+            "eye_tracking",
+            "D8",
+            45.0,
+            True,
+        ),
+        (
             control.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL,
             "behavioral",
             "D10",
@@ -1361,8 +1380,9 @@ async def test_manual_mcu_connect_then_start_uses_controller_selected_pin(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("running", [False, True, None])
+@pytest.mark.parametrize("role", ["behavioral", "eye_tracking"])
 async def test_connection_only_keepalive_requires_proven_stopped_outputs(
-    monkeypatch: pytest.MonkeyPatch, running: bool | None
+    monkeypatch: pytest.MonkeyPatch, running: bool | None, role: str
 ) -> None:
     shutdown = asyncio.Event()
     observation = microcontroller_pb2.MicrocontrollerObservation(
@@ -1371,8 +1391,10 @@ async def test_connection_only_keepalive_requires_proven_stopped_outputs(
     observation.state.configuration_valid = False
     observation.state.watchdog_ms = 0
     if running is not None:
-        observation.state.behavioral.running = running
+        observation.state.behavioral.running = False
         observation.state.tracking.running = False
+        observation.state.eye_tracking.running = False
+        getattr(observation.state, role).running = running
     failures = []
     waits = []
 
@@ -1581,6 +1603,7 @@ async def test_failed_controller_close_stays_fenced_until_exact_release(
     stopped = mcu.MicrocontrollerState()
     stopped.behavioral.running = False
     stopped.tracking.running = False
+    stopped.eye_tracking.running = False
     serial.off.return_value = mcu.PulseCommandEvidence(
         outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
     )
@@ -1593,6 +1616,11 @@ async def test_failed_controller_close_stays_fenced_until_exact_release(
     serial.close.side_effect = None
     await owner.close(deadline_ns=deadline, permanent=False)
     assert serial.off.await_count == 1
+    assert serial.off.await_args.args[0] == (
+        camera.CAMERA_ROLE_BEHAVIORAL,
+        camera.CAMERA_ROLE_TRACKING,
+        camera.CAMERA_ROLE_EYE_TRACKING,
+    )
     assert serial.diagnostic_stop.await_count == int(diagnostic_active)
     assert owner.cleanup_complete and not owner.snapshot_view().cleanup_pending
     assert [call.kwargs["deadline_ns"] for call in serial.close.await_args_list] == [

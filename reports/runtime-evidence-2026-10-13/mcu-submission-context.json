@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-13",
+  "task": "mcu-pin-test-submission",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_state": "Dirty workspace with pre-existing changes; hashes identify reviewed final files.",
+  "source_sha256": {
+    "src/cephvr/gui/mcu_action_submission.py": "cc16a6f08d3f6116c38d35b5ffa78b339e501e82084b5905a6702abd6c9b81ae",
+    "src/cephvr/gui/managed_mcu.py": "3fe89ce1b880f91fd1e31826c1c023ba1ecc1a50960ea1f152995ef41a6aee21",
+    "src/cephvr/gui/controller_bridge.py": "d4f2ad465cf7e7ac5d5ea9e9ec9afe1789199900f55a64287c044bb20874885a",
+    "src/cephvr/gui/managed_device_commands.py": "abba3dc81f5e715fffde07e658bbe1117b5ebacd21d2a9eafc8464c76a236092",
+    "src/cephvr/gui/microcontroller.py": "9278ac22f1d3d62bf39cdf12554d4f660ba3e99303664cf828d7f1eccbc65fed",
+    "src/cephvr/gui/main.py": "e94603fd01ba86b6ef66007bc47d8df30de7ecedd922b0104fca7d9d3bebfcc8",
+    "tests/gui/test_dashboard.py": "426275c23537fc9fb22d6d4b49d93ca3b789631dfe144b6daef0be900acd6b1e"
+  },
+  "tests": {
+    "gui": {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -k \"mcu or microcontroller or pin_test\" --basetemp=.local-mcu-submission-verified --junitxml=reports/runtime-evidence-2026-10-13/mcu-submission-verified.xml",
+      "result": "30 passed, 417 deselected; permitted execution"
+    },
+    "controller": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/controller/test_microcontroller_owner.py -q -m \"not windows and not rig\" --basetemp=.local-mcu-submission-controller --junitxml=reports/runtime-evidence-2026-10-13/mcu-submission-controller.xml",
+      "result": "76 passed, 1 skipped; permitted execution"
+    }
+  },
+  "static": {
+    "ruff_check": "GUI/tests, pass",
+    "ruff_format": "155 GUI/test files, pass after formatting",
+    "mypy": "--platform win32 src/cephvr/gui:153 source files pass",
+    "boundaries": "668 modules, zero violations; existing cohesion advisories",
+    "whitespace": "git diff --check passed before final bookkeeping"
+  },
+  "initial_attempts": [
+    "Read-only status and two sandboxed Qt pytest invocations stalled; exact task-owned sessions interrupted. Permitted replacements passed.",
+    "Initial Ruff import order and mypy variable collision corrected before final verification.",
+    "Patch context mismatch caused no mutation; corrected patch applied."
+  ],
+  "scope": "G01 revision174; explicit Test submits selected pin/rate/COM port through existing configuration owner, then executes only against confirmed revision. Other camera/device settings and local drafts retained.",
+  "limits": "Live controller read-only evidence confirms Eye pin unset and requested60Hz; no firmware observation. No hardware command, upload, camera acquisition, GUI restart or physical acceptance performed. Fresh GUI and actual Eye pin9/60Hz diagnostic remain pending."
+}

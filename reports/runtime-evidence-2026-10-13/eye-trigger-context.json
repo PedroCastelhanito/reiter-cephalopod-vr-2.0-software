@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-13",
+  "scope": "owner-authorized independent Eye output and Projector flip GUI input; manual upload only",
+  "base_git_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_state": "uncommitted workspace, includes concurrent unrelated work; hashes identify affected protocol/firmware sources",
+  "source_sha256": {
+    "firmware/uno/cephvr2_mcu/cephvr2_mcu.ino": "46e2907bafb80baaf83b6f2059adc190d10fd12a77db57311581df1c25581d15",
+    "contracts/policy/microcontroller_policy.toml": "cb4a7587886de8b8f53df6c522de79e757c7feaa077e527c9b4f0bfdff2f0994",
+    "contracts/cephvr/acquisition/v1/microcontroller.proto": "6ce487f3a3723f802fafca78ad8da66a4f53e8469ff2f02c11fa3c1668fbb077",
+    "contracts/cephvr/control/v1/services.proto": "01c2ed65404a818d9e566fde1f662e2ae7aa1071383e326dd5644cd06258d9d3",
+    "contracts/cephvr/control/v1/types.proto": "2f8718b7a2d744a5fd351d8e2f9e92352ffd719307a7e87cc29a6df19b53237c"
+  },
+  "compiled_hex_sha256": "e04f86c3de83bb9a86cdd765c95621393ba35d9242deb7bb95aa03a985661eae",
+  "compile": {
+    "command": "arduino-cli compile --fqbn arduino:avr:uno --build-path reports/runtime-evidence-2026-10-13/eye-trigger-build firmware/uno/cephvr2_mcu",
+    "outcome": "pass",
+    "flash_bytes": 13922,
+    "global_sram_bytes": 1214,
+    "remaining_local_sram_bytes": 834
+  },
+  "test_xml": {
+    "backend": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "3",
+      "tests": "837",
+      "time": "7.673",
+      "timestamp": "2026-10-13T10:49:22.008777+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    },
+    "gui": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "38",
+      "time": "17.902",
+      "timestamp": "2026-10-13T10:59:40.286273+09:00",
+      "hostname": "DESKTOP-MSOH8EL"
+    }
+  },
+  "static": {
+    "ruff": "pass",
+    "ruff_format": "494 files, pass; final edited GUI files formatted with the same tool",
+    "mypy": "Win32, 440 sources, pass",
+    "boundaries": "666 modules, zero violations; pre-existing cohesive size advisories reviewed"
+  },
+  "initial_attempts": "Obsolete two-output protocol/state fixtures, owner-reassigned Trial default and incomplete Add fixture were corrected. Failed outputs are retained in conversation tool results; this context is an assessment, not reconstructed raw logs. Final XML replaces the prior intermediate XML.",
+  "limits": "No physical COM access, upload, pin pulses, camera acquisition, SpikeGLX mutation or native GUI acceptance. Owner chooses Eye physical pin/FrameStart source/rate; manual upload/electrical/three-camera-load acceptance remains pending.",
+  "gui_add": "New nonblocking pin-first Add submits pin and camera participation together. Authority/role changes cancel, oversized pin text rejects without integer conversion or command."
+}

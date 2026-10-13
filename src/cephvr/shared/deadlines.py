@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -37,6 +38,15 @@ def remaining_seconds(
 ) -> float:
     """Return nonnegative time to a deadline in seconds."""
     return remaining_ns(deadline_ns, clock=clock) / 1_000_000_000
+
+
+async def wait_until_ns(
+    boundary_ns: int, *, clock: Callable[[], int] = host_time_ns
+) -> None:
+    """Wait for the original host boundary even if an async timer wakes early."""
+    # This is a timer correction, not state polling that an Event could replace.
+    while remaining := remaining_seconds(boundary_ns, clock=clock):  # noqa: ASYNC110
+        await asyncio.sleep(remaining)
 
 
 @dataclass(frozen=True)

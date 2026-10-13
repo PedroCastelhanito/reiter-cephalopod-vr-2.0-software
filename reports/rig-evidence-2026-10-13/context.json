@@ -1,0 +1,130 @@
+{
+  "date_jst": "2026-10-13",
+  "head": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "python": "3.11.15 | packaged by conda-forge | (main, Mar  5 2026, 16:36:00) [MSC v.1944 64 bit (AMD64)]",
+  "eye_checks": "owner deferred",
+  "paired_pulse_mapping": "owner deferred",
+  "electrical_measurement": "owner deferred; no instrumentation",
+  "baseline": "clean before TODO/LOG edits; stale ignored Protobuf bindings regenerated",
+  "hash_count": 1003,
+  "native_gui_failure": "0xC0000005 during chooser fixture teardown; cause unconfirmed",
+  "tests": {
+    "backend": {
+      "passed": 1520,
+      "skipped": 5,
+      "duration_s": 20.32,
+      "native_gpu_smoke": "passed",
+      "command": ".venv/Scripts/python.exe -m pytest tests --ignore=tests/gui -q --junitxml=reports/rig-evidence-2026-10-13/backend.xml"
+    },
+    "gui_offscreen": {
+      "passed": 396,
+      "failed": 3,
+      "duration_s": 146.59,
+      "command": "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui -q --junitxml=reports/rig-evidence-2026-10-13/gui-offscreen.xml"
+    },
+    "combined_native": "0xC0000005 access violation; no passing total",
+    "gui_native": "0xC0000005 during chooser fixture teardown; cause unconfirmed"
+  },
+  "limits": "No optical/electrical/scientific/full-load acceptance",
+  "skips": [
+    {
+      "classname": "tests.controller.test_configuration_transactions",
+      "name": "test_setup_rejects_unset_or_invalid_recording_root[symlink]",
+      "time": "0.003",
+      "skip": "Windows account lacks symlink creation privilege"
+    },
+    {
+      "classname": "tests.controller.test_microcontroller_owner",
+      "name": "test_uno_sketch_digest_pins_companions_and_rejects_links",
+      "time": "0.015",
+      "skip": "Windows symlink privilege or Developer Mode is unavailable"
+    },
+    {
+      "classname": "tests.controller.test_storage",
+      "name": "test_existing_lock_symlink_is_never_followed",
+      "time": "0.003",
+      "skip": "symlink creation unavailable on this host"
+    },
+    {
+      "classname": "tests.platform.test_windows_native_on_rig",
+      "name": "test_reparse_lock_target_is_rejected_when_symlinks_are_available",
+      "time": "0.003",
+      "skip": "Windows symlink privilege or Developer Mode is unavailable"
+    },
+    {
+      "classname": "tests.shared.test_recovery",
+      "name": "test_unverified_exit_and_unsafe_pointer_cannot_authorize_recovery",
+      "time": "0.003",
+      "skip": "Windows account lacks symlink creation privilege"
+    }
+  ],
+  "gui_failures": [
+    {
+      "classname": "tests.gui.test_dashboard",
+      "name": "test_devices_draft_reflows_without_horizontal_clipping[1175]",
+      "time": "0.413"
+    },
+    {
+      "classname": "tests.gui.test_dashboard",
+      "name": "test_device_tabs_sit_above_controls_without_moving_hud",
+      "time": "0.407"
+    },
+    {
+      "classname": "tests.gui.test_dashboard",
+      "name": "test_configuration_scroll_keeps_projector_status_fixed",
+      "time": "0.404"
+    }
+  ],
+  "owner_deferrals": [
+    "all Eye checks",
+    "further camera capture today",
+    "actual SpikeGLX pulse mapping",
+    "electrical measurements; no instrumentation"
+  ],
+  "native_results": {
+    "startup": "four actual outputs; resources ready; RGB8 observed; requested swap interval 1; software Idle confirmed",
+    "grid": "Open, live adjustment sequences 1/2 and Close succeeded; presented/Idle/resources_closed confirmed; saved configuration unchanged; retained dummy geometry",
+    "mcu": "COM8 Connect; protocol 3 / cephvr2_uno_2; camera outputs stopped",
+    "behavior_connect": "actual GUI button; no usable frame before deadline; WORKER_OWNER_FAILURE; exact shutdown verified",
+    "spikeglx": "read-only connection; v20251218 api v4.1.3; idle/not saving; no remote mutation",
+    "encoding": "PATH FFmpeg/ffprobe 4.3.2; MP4 help lacks hybrid_fragmented; no full-load approval",
+    "display_fault_probe": "inconclusive method: configuration update does not rerun startup InitializeDisplay; both updates succeeded; independent exact restoration proved",
+    "native_resize": "desktop drag had no effect; narrow/DPI unverified",
+    "shutdown": {
+      "controller_generation": "b548914b-5470-4ad8-8944-a1998b2438cc",
+      "receipt": {
+        "controller_generation": "b548914b-5470-4ad8-8944-a1998b2438cc",
+        "supervisor_generation": "4fc6753e-40f4-4c6b-a6e4-b17c909d076f",
+        "observed_monotonic_ns": 326830302838100,
+        "all_owned_processes_absent": true,
+        "format_version": 1,
+        "controller_channel_loss": "eof"
+      },
+      "guard_free": true,
+      "saved_history_matches_original_adopted_configuration": true,
+      "exclusive_com8_open": true,
+      "com8_probe_closed": true
+    }
+  },
+  "method_corrections": [
+    "stale ignored bindings regenerated from 19 authoritative inputs",
+    "sandbox CIM/temp limitations avoided through approved native execution",
+    "inactive diagnostic STATUS rejected as designed",
+    "historical mixed-pacing diagnostic profile rejected; separate all-output-VSync profile used",
+    "initial final guard probe was too early; later durable receipt/free guard/COM proof passed",
+    "initial help-log UTF-16 read failed; corrected UTF-8 read confirmed missing flag"
+  ],
+  "scope": "No production code, architectural rule, operator TOML, firmware or encoder installation changed. No camera/optical/electrical/scientific/full-load approval. Probe profile removed only after exact closure; dated content copy retained.",
+  "runner_command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/test_on_rig.ps1 -Rig -OutputDirectory reports/rig-evidence-2026-10-13/native",
+  "followups": [
+    "native-configuration-chooser-teardown",
+    "devices-narrow-overflow",
+    "encoder-toolchain-owner-review",
+    "rig-acceptance",
+    "projector-calibration-launch",
+    "camera-preview-gui-binding",
+    "spikeglx-controller-integration"
+  ],
+  "input_changes_after_hash_capture": {},
+  "history_note": "Normal E07 launch/shutdown adopts reusable settings and saves that configuration; final semantic equality to the original adopted configuration is verified. Metadata history file byte identity to the pre-launch file is not claimed."
+}

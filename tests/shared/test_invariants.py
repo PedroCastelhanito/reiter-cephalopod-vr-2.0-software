@@ -159,6 +159,27 @@ def test_deadline_does_not_renew_or_round() -> None:
         duration_ns(0.0000000001, "s")
 
 
+async def test_boundary_wait_rechecks_early_wakes_without_renewing_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cephvr.shared import deadlines
+
+    now = 0
+    sleeps = []
+
+    async def early_sleep(seconds: float) -> None:
+        nonlocal now
+        sleeps.append(seconds)
+        now += 40_000_000
+
+    monkeypatch.setattr(deadlines.asyncio, "sleep", early_sleep)
+    await deadlines.wait_until_ns(100_000_000, clock=lambda: now)
+    assert sleeps == [0.1, 0.06, 0.02]
+    assert now == 120_000_000
+    await deadlines.wait_until_ns(100_000_000, clock=lambda: now)
+    assert len(sleeps) == 3
+
+
 def test_deadline_metadata_requires_one_positive_int64_decimal_value() -> None:
     encoded = deadline_metadata(1_000_000_000)
     assert parse_deadline_metadata((encoded,)) == 1_000_000_000

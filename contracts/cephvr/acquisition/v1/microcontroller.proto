@@ -30,6 +30,7 @@ message PulseCommandEvidence {
   optional string error_code = 11;
   optional int64 stop_issued_monotonic_ns = 12; // Original interruption issuance for OFF.
   PulseCommandOutcome outcome = 13; // Required terminal outcome; UNSPECIFIED never satisfies closure.
+  optional bool eye_tracking_selected = 14;
   // NOT_DISPATCHED has no dispatch/ACK/application evidence; request_id may be empty.
   // A failed outcome never implies outputs off. Missing ACK/application stays unknown.
   // No physical pulse or camera cutoff claim.
@@ -61,6 +62,7 @@ message MicrocontrollerState {
   optional uint32 watchdog_ms = 3;
   PulseOutputState behavioral = 4;
   PulseOutputState tracking = 5;
+  PulseOutputState eye_tracking = 6;
 }
 message MicrocontrollerObservation {
   string port = 1;
@@ -79,6 +81,7 @@ message PulseConfigurationResolution {
   optional bool behavioral_active = 3;
   optional bool tracking_active = 4;
   MicrocontrollerObservation applied = 5;
+  optional bool eye_tracking_active = 6;
   // Active mask derives from enabled external session cameras or requested previews,
   // never from retained disabled-role values. Requested frequency stays unchanged.
 }

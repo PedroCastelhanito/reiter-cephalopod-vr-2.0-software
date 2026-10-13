@@ -1,0 +1,521 @@
+{
+  "method": "authenticated managed controller; real hardware; no firmware upload",
+  "checks": {
+    "before": {
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION",
+        "cleanup_confirmed": true
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "3",
+        "edit_validation": [
+          {
+            "configuration_revision": "3",
+            "completed": true,
+            "valid": true,
+            "component": "experiment",
+            "configuration_module_version": "experiment-v1"
+          },
+          {
+            "configuration_revision": "3",
+            "completed": true,
+            "valid": true,
+            "component": "acquisition",
+            "configuration_module_version": "acquisition-config-v1"
+          },
+          {
+            "configuration_revision": "3",
+            "completed": true,
+            "valid": true,
+            "component": "synchronization",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "3",
+            "completed": true,
+            "valid": true,
+            "component": "tracking",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "3",
+            "completed": true,
+            "valid": true,
+            "component": "visual_stimulus",
+            "configuration_module_version": "visual-stimulus-config-v2"
+          }
+        ]
+      },
+      "acquisition_devices": {},
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88"
+        },
+        "command_id": "b1ec5cf9-8254-4a68-9ad4-49eaaad670c6",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264571833000",
+            "idle_swap_return_ns": "2264572122100",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_left",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264667777000",
+            "idle_swap_return_ns": "2264667816900",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_right",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264705507400",
+            "idle_swap_return_ns": "2264705599400",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_bottom",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264740595600",
+            "idle_swap_return_ns": "2264740675700",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          }
+        ],
+        "observed_monotonic_ns": "2264740734600",
+        "complete": true
+      },
+      "reservation": {},
+      "errors": [],
+      "warnings": [
+        {
+          "warning_id": "d903b120-0507-49a2-9785-66e70157fec7",
+          "component": "startup_recovery",
+          "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+        }
+      ],
+      "prompts": [],
+      "metadata": [],
+      "recoveries": []
+    },
+    "configuration": {
+      "command_id": "48b0e41d-c289-442c-ae63-088d589520a2",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "setup": {
+      "command_id": "9e669f29-b504-4607-be7b-eec83a926a86",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "setup_state": {
+      "session": {
+        "phase": "SESSION_PHASE_READY",
+        "context": {
+          "controller_generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88",
+          "session_id": "b49544c1-06f1-4df5-9787-29a38a79d183"
+        },
+        "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_stimulus\\DUMMY-114724",
+        "trial_count": 1
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "4",
+        "edit_validation": [
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "experiment",
+            "configuration_module_version": "experiment-v1"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "acquisition",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "synchronization",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "tracking",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "visual_stimulus",
+            "configuration_module_version": "visual-stimulus-config-v2"
+          }
+        ]
+      },
+      "acquisition_devices": {},
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88"
+        },
+        "command_id": "b1ec5cf9-8254-4a68-9ad4-49eaaad670c6",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264571833000",
+            "idle_swap_return_ns": "2264572122100",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_left",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264667777000",
+            "idle_swap_return_ns": "2264667816900",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_right",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264705507400",
+            "idle_swap_return_ns": "2264705599400",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_bottom",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264740595600",
+            "idle_swap_return_ns": "2264740675700",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          }
+        ],
+        "observed_monotonic_ns": "2264740734600",
+        "complete": true
+      },
+      "reservation": {
+        "session": {
+          "controller_generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88",
+          "session_id": "b49544c1-06f1-4df5-9787-29a38a79d183"
+        },
+        "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_stimulus\\DUMMY-114724",
+        "lock_held": true,
+        "ready_for_outputs": true
+      },
+      "errors": [],
+      "warnings": [
+        {
+          "warning_id": "d903b120-0507-49a2-9785-66e70157fec7",
+          "component": "startup_recovery",
+          "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+        }
+      ],
+      "prompts": [],
+      "metadata": [],
+      "recoveries": []
+    },
+    "start": {
+      "command_id": "72b68192-5a89-430d-9130-3fddad34199a",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "final": {
+      "session": {
+        "phase": "SESSION_PHASE_ENDED",
+        "context": {
+          "controller_generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88",
+          "session_id": "b49544c1-06f1-4df5-9787-29a38a79d183"
+        },
+        "outcome": "SESSION_OUTCOME_COMPLETED",
+        "directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_stimulus\\DUMMY-114724",
+        "trial_count": 1,
+        "activated": true,
+        "cleanup_confirmed": true
+      },
+      "trial": {
+        "context": {
+          "session": {
+            "controller_generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88",
+            "session_id": "b49544c1-06f1-4df5-9787-29a38a79d183"
+          },
+          "trial_id": "11702d93-1b1d-4f50-9902-abc757432428",
+          "trial_number": 1
+        },
+        "phase": "TRIAL_PHASE_ENDED",
+        "outcome": "TRIAL_OUTCOME_COMPLETED",
+        "start_monotonic_ns": "2317766760800",
+        "scheduled_end_monotonic_ns": "2377766760800",
+        "actual_end_monotonic_ns": "2377766760800"
+      },
+      "configuration": {
+        "revision": "4",
+        "locked": true,
+        "edit_validation": [
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "experiment",
+            "configuration_module_version": "experiment-v1"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "acquisition",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "synchronization",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "tracking",
+            "configuration_module_version": "inactive"
+          },
+          {
+            "configuration_revision": "4",
+            "completed": true,
+            "valid": true,
+            "component": "visual_stimulus",
+            "configuration_module_version": "visual-stimulus-config-v2"
+          }
+        ]
+      },
+      "acquisition_devices": {},
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "57caa616-0d65-4267-bbdd-48db07110ad6"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88"
+        },
+        "command_id": "b1ec5cf9-8254-4a68-9ad4-49eaaad670c6",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264571833000",
+            "idle_swap_return_ns": "2264572122100",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_left",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264667777000",
+            "idle_swap_return_ns": "2264667816900",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_right",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264705507400",
+            "idle_swap_return_ns": "2264705599400",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          },
+          {
+            "output_id": "calibration_bottom",
+            "resources_ready": true,
+            "requested_rgb_bits": 8,
+            "observed_rgb_bits": [
+              8,
+              8,
+              8
+            ],
+            "requested_swap_interval": 1,
+            "idle_swap_entry_ns": "2264740595600",
+            "idle_swap_return_ns": "2264740675700",
+            "idle_submission": "SUBMISSION_OUTCOME_RETURNED"
+          }
+        ],
+        "observed_monotonic_ns": "2264740734600",
+        "complete": true
+      },
+      "reservation": {
+        "session": {
+          "controller_generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88",
+          "session_id": "b49544c1-06f1-4df5-9787-29a38a79d183"
+        },
+        "session_directory": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_stimulus\\DUMMY-114724"
+      },
+      "errors": [],
+      "warnings": [
+        {
+          "warning_id": "d903b120-0507-49a2-9785-66e70157fec7",
+          "component": "startup_recovery",
+          "message": "Recovery preserved an unconfirmed SpikeGLX stop: unknown endpoint, run unknown. Inspect the remote run before another paired session; local recovery does not establish remote stopping or scientific file closure."
+        }
+      ],
+      "prompts": [],
+      "metadata": [
+        {
+          "operation": {
+            "command_id": "ee00de27-5453-43d2-a200-5dfbc733d3e5"
+          },
+          "state": "METADATA_PERSISTENCE_SYNCED",
+          "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_stimulus\\DUMMY-114724\\protocol-data\\SESSION_CONFIG.json"
+        },
+        {
+          "operation": {
+            "command_id": "52219284-71e9-40f5-accd-e951aba7bc5b"
+          },
+          "state": "METADATA_PERSISTENCE_SYNCED",
+          "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_stimulus\\DUMMY-114724\\protocol-data\\SCHEMA.json"
+        },
+        {
+          "operation": {
+            "command_id": "df4fd202-f770-4544-a798-f139456783bf"
+          },
+          "state": "METADATA_PERSISTENCE_SYNCED",
+          "path": "C:\\Dev\\projects\\reiter-cephalopod-vr\\reiter-cephalopod-vr-2.0-software\\reports\\rig-evidence-2026-10-13\\workflow-tests\\recordings\\20261013_workflow_audit_stimulus\\DUMMY-114724\\protocol-data\\SESSION_LOG.jsonl"
+        }
+      ],
+      "recoveries": []
+    },
+    "new_session": {
+      "command_id": "b36050d4-d26f-4b90-882a-77aa83d1c0b2",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "restore": {
+      "command_id": "e2193dda-dd03-4dac-8b77-8a8366fe865f",
+      "complete": true,
+      "succeeded": true,
+      "needs_input": false,
+      "failure": ""
+    },
+    "configuration_restored": true
+  },
+  "controller_generation": "91aa7aca-6a33-4a59-b5a8-fb173255fb88"
+}

@@ -20,6 +20,7 @@ from cephvr.gui.arena_movement import ArenaMovement
 from cephvr.gui.components import Card, button, equal_row_height, field, label
 from cephvr.gui.epoch_motion import EpochMotion
 from cephvr.gui.feedback_mappings import FeedbackMappings
+from cephvr.gui.file_dialogs import file_dialog, open_file_dialog
 from cephvr.gui.image_parameters import ImageParameters
 from cephvr.gui.looming_size import LoomingSize
 from cephvr.gui.notices import FormNotice
@@ -442,7 +443,7 @@ class StimulusParameters(QWidget):
         if self.file_dialog is not None:
             self.file_dialog.raise_()
             return
-        dialog = QFileDialog(self, "Select stimulus media", self.asset_root)
+        dialog = file_dialog(self, "Select stimulus media", self.asset_root)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         dialog.setNameFilter(
             "Stimulus files (*.png *.tif *.tiff *.jpg *.jpeg *.mp4 *.mkv *.glb *.texture.json)"
@@ -451,7 +452,7 @@ class StimulusParameters(QWidget):
         dialog.finished.connect(lambda: setattr(self, "file_dialog", None))
         dialog.finished.connect(dialog.deleteLater)
         self.file_dialog = dialog
-        dialog.open()
+        open_file_dialog(dialog)
 
     def set_media_path(self, asset_id: str, path: str) -> None:
         if not self.isEnabled() or asset_id not in self.asset_forms:

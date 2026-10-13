@@ -1,0 +1,66 @@
+Input #0, rawvideo, from 'fd:':
+  Duration: N/A, start: 0.000000, bitrate: 5529600 kb/s
+  Stream #0:0: Video: rawvideo, 1 reference frame (RGB[24] / 0x18424752), rgb24, 1920x1200, 5529600 kb/s, 100 tbr, 100 tbn
+[out#0/mp4 @ 000001f88b4d39c0] Adding streams from explicit maps...
+[vost#0:0/h264_nvenc @ 000001f88b4f77c0] Created video stream from input stream 0:0
+[Parsed_scale_0 @ 000001f88b5156c0] w:iw h:ih flags:'' interl:0
+Stream mapping:
+  Stream #0:0 -> #0:0 (rawvideo (native) -> h264 (h264_nvenc))
+[vost#0:0/h264_nvenc @ 000001f88b4f77c0] Starting thread...
+[vf#0:0 @ 000001f88b514bc0] Starting thread...
+[vist#0:0/rawvideo @ 000001f88b4f56c0] [dec:rawvideo @ 000001f88b523d00] Starting thread...
+[in#0/rawvideo @ 000001f88b4731c0] Starting thread...
+[Parsed_scale_0 @ 000001f88b532300] w:iw h:ih flags:'' interl:0
+[graph -1 input from stream 0:0 @ 000001f88b541a40] w:1920 h:1200 pixfmt:rgb24 tb:1/100 fr:100/1 sar:0/1 csp:unknown range:unknown alpha:unspecified
+[Parsed_scale_0 @ 000001f88b532300] w:1920 h:1200 fmt:rgb24 csp:gbr range:pc sar:0/1 -> w:1920 h:1200 fmt:yuv444p csp:bt709 range:pc sar:0/1 flags:0x00000004
+[Parsed_scale_0 @ 000001f88b532300] [framesync @ 000001f88b51ead0] Selected 1/100 time base
+[Parsed_scale_0 @ 000001f88b532300] [framesync @ 000001f88b51ead0] Sync level 1
+[graph -1 input from stream 0:0 @ 000001f88b541a40] video frame properties congruent with link at pts_time: 0
+[h264_nvenc @ 000001f88b4f8a00] Loaded Nvenc version 13.1
+[h264_nvenc @ 000001f88b4f8a00] Nvenc initialized successfully
+[h264_nvenc @ 000001f88b4f8a00] 2 CUDA capable devices found
+[h264_nvenc @ 000001f88b4f8a00] [ GPU #0 - < NVIDIA GeForce RTX 5060 Ti > has Compute SM 12.0 ]
+[h264_nvenc @ 000001f88b4f8a00] [ GPU #1 - < NVIDIA GeForce RTX 2080 Ti > has Compute SM 7.5 ]
+[h264_nvenc @ 000001f88b4f8a00] supports NVENC
+[h264_nvenc @ 000001f88b4f8a00] CQ(4608) mode enabled.
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-13\gpu-placement\synthetic-gpu-check-1791863826171646200-eye_tracking.mp4':
+  Metadata:
+    cephvr_identity_version: 1
+    cephvr_session_id: 28f7476b-2606-4603-af33-4fd7eefc0c1d
+    cephvr_trial_id : 447ceb26-c210-4b9e-a754-cd368cfdb310
+    cephvr_camera_role: eye_tracking
+    cephvr_device_id: synthetic-only
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High 4:4:4 Predictive), 1 reference frame (avc1 / 0x31637661), yuv444p(pc, bt709/unknown/unknown, progressive), 1920x1200, q=2-31, 100 fps, 12800 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+[out#0/mp4 @ 000001f88b4d39c0] Starting thread...
+frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:00.50    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:01.01    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:01.53    [in#0/rawvideo @ 000001f88b4731c0] EOF while reading input
+[in#0/rawvideo @ 000001f88b4731c0] Terminating thread with return code 0 (success)
+[vist#0:0/rawvideo @ 000001f88b4f56c0] [dec:rawvideo @ 000001f88b523d00] Decoder thread received EOF packet
+[vist#0:0/rawvideo @ 000001f88b4f56c0] [dec:rawvideo @ 000001f88b523d00] Decoder returned EOF, finishing
+[vist#0:0/rawvideo @ 000001f88b4f56c0] [dec:rawvideo @ 000001f88b523d00] Terminating thread with return code 0 (success)
+[Parsed_scale_0 @ 000001f88b532300] [framesync @ 000001f88b51ead0] Sync level 0
+[vf#0:0 @ 000001f88b514bc0] Filtergraph returned EOF, finishing
+[vf#0:0 @ 000001f88b514bc0] All consumers returned EOF
+[vf#0:0 @ 000001f88b514bc0] Terminating thread with return code 0 (success)
+[vost#0:0/h264_nvenc @ 000001f88b4f77c0] [enc:h264_nvenc @ 000001f88b4da000] Encoder thread received EOF
+[vost#0:0/h264_nvenc @ 000001f88b4f77c0] Terminating thread with return code 0 (success)
+[out#0/mp4 @ 000001f88b4d39c0] All streams finished
+[out#0/mp4 @ 000001f88b4d39c0] Terminating thread with return code 0 (success)
+[AVIOContext @ 000001f88d7c0100] Statistics: 12729 bytes written, 1 seeks, 3 writeouts
+[out#0/mp4 @ 000001f88b4d39c0] Output file #0 (C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-13\gpu-placement\synthetic-gpu-check-1791863826171646200-eye_tracking.mp4):
+[out#0/mp4 @ 000001f88b4d39c0]   Output stream #0:0 (video): 4 frames encoded; 4 packets muxed (10241 bytes); 
+[out#0/mp4 @ 000001f88b4d39c0]   Total: 4 packets (10241 bytes) muxed
+[out#0/mp4 @ 000001f88b4d39c0] video:10KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 24.216385%
+frame=    4 fps=2.0 q=12.0 Lsize=      12KiB time=00:00:00.04 bitrate=2544.2kbits/s speed=0.0197x elapsed=0:00:02.03    
+[AVIOContext @ 000001f88b472fc0] Statistics: 666 bytes written, 0 seeks, 4 writeouts
+[h264_nvenc @ 000001f88b4f8a00] Nvenc unloaded
+[in#0/rawvideo @ 000001f88b4731c0] Input file #0 (fd:):
+[in#0/rawvideo @ 000001f88b4731c0]   Input stream #0:0 (video): 4 packets read (27648000 bytes); 4 frames decoded; 0 decode errors; 
+[in#0/rawvideo @ 000001f88b4731c0]   Total: 4 packets (27648000 bytes) demuxed
+[AVIOContext @ 000001f88b4f51c0] Statistics: 27648000 bytes read, 0 seeks
+
+Exiting with exit code 0

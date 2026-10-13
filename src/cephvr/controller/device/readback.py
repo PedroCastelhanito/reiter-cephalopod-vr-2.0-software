@@ -209,8 +209,11 @@ class CameraReadback:
                     success
                     and status.views.pulses.capabilities.protocol_version
                     == PROTOCOL_VERSION
-                    and not status.views.pulses.state.behavioral.running
-                    and not status.views.pulses.state.tracking.running
+                    and all(
+                        getattr(status.views.pulses.state, role).HasField("running")
+                        and not getattr(status.views.pulses.state, role).running
+                        for role in ("behavioral", "tracking", "eye_tracking")
+                    )
                 )
             else:
                 success = success and diagnostic.HasField("active")

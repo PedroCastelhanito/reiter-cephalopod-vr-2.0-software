@@ -1,0 +1,29 @@
+{"kind": "instrumentation", "host_ns": 16204534801100, "argv": ["-m", "cephvr.acquisition.worker.main", "--bootstrap-handle", "816"]}
+{"kind": "execute_begin", "host_ns": 16204619970000, "detail": "ResolveCameraConfiguration"}
+{"kind": "execute_end", "host_ns": 16206093319100}
+{"kind": "execute_begin", "host_ns": 16206150300400, "detail": "SetupSession"}
+{"kind": "execute_end", "host_ns": 16206702667300}
+{"kind": "execute_begin", "host_ns": 16207601991800, "detail": "PrepareTrial"}
+{"kind": "execute_end", "host_ns": 16207651052100}
+{"kind": "execute_begin", "host_ns": 16207803849100, "detail": "ScheduleTrial"}
+{"kind": "execute_end", "host_ns": 16207864267300}
+{"kind": "execute_begin", "host_ns": 16207866595700, "detail": "ReleaseTrial"}
+{"kind": "execute_end", "host_ns": 16207867501000}
+{"kind": "start_begin", "host_ns": 16208299808600, "detail": ""}
+{"kind": "start_end", "host_ns": 16208300254200}
+{"kind": "execute_begin", "host_ns": 16208355683600, "detail": "RecordPulseEvidence"}
+{"kind": "execute_end", "host_ns": 16208356515600}
+{"kind": "camera_first_frame_begin", "host_ns": 16208394717200, "detail": "FrameRecord(frame_id=0, acquisition_time_ns=16208392683100, camera_frame_counter=0, camera_timestamp_ns=None, valid_image=True, invalid_code=None, diagnostics=(FrameDiagnostic(code='NATIVE_TIMESTAMP_UNAVAILABLE', native_code=None, details='optional native timestamp is unavailable'),))"}
+{"kind": "camera_first_frame_end", "host_ns": 16208395134000}
+{"kind": "recording_first_frame_begin", "host_ns": 16208395941600, "detail": "16208395569900"}
+{"kind": "recording_first_frame_end", "host_ns": 16208397023800}
+{"kind": "execute_begin", "host_ns": 16268338455500, "detail": "RecordPulseEvidence"}
+{"kind": "execute_end", "host_ns": 16268339671600}
+{"kind": "execute_begin", "host_ns": 16268340667200, "detail": "StopTrial"}
+{"kind": "execute_end", "host_ns": 16268534416200}
+{"kind": "execute_begin", "host_ns": 16268698678100, "detail": "Cleanup"}
+{"kind": "execute_end", "host_ns": 16268704707000}
+{"kind": "execute_begin", "host_ns": 16299222749600, "detail": "Cleanup"}
+{"kind": "execute_end", "host_ns": 16299223384600}
+{"kind": "execute_begin", "host_ns": 16299253848400, "detail": "Shutdown"}
+{"kind": "execute_end", "host_ns": 16299254653600}

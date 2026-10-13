@@ -3,11 +3,10 @@
 Derived from [A10/A11](../../docs/architecture/acquisition.md) and
 [E06/E08](../../docs/architecture/system-contracts.md). Typed host evidence is in
 [microcontroller.proto](../cephvr/acquisition/v1/microcontroller.proto).
-This specifies protocol version 3. The matching source is under `firmware/uno`;
-COM8 reported the expected protocol after the owner-authorized 2026-10-05 upload.
-Managed diagnostic transport and pin settings are implemented but have not passed
-a full GUI-to-rig test. Arduino CLI identified COM8 as Uno; timer behavior and
-electrical behavior remain unverified.
+This specifies protocol version 4 with independent Behavioral, Tracking and Eye
+camera outputs. The matching Uno source is under `firmware/uno`; compile and local
+host verification do not establish upload, electrical or camera acceptance. See
+[rig verification](../../reports/rig-verification.md) for remaining checks.
 
 ## Line grammar
 
@@ -37,12 +36,12 @@ There are no per-token length limits beyond the complete-line bound.
 | CAPS | None. |
 | STATUS | None. |
 | PING | None. |
-| CONFIGURE | `watchdog_ms`; both `<role>_enabled`; for each enabled role: `<role>_pin`, `<role>_hz`. Disabled roles omit pin/Hz. |
-| ON / OFF | Both `behavioral_selected` and `tracking_selected`; at least one is 1. |
-| DIAG_START | `kind=trial_state|projector_flip|behavioral|tracking`, `pin=<CAPS pin>`, `duration_ms=2000`; camera kinds also require `hz=<0.1-Hz-grid rate>`. |
+| CONFIGURE | `watchdog_ms`; all three `<role>_enabled`; for each enabled role: `<role>_pin`, `<role>_hz`. Disabled roles omit pin/Hz. |
+| ON / OFF | `behavioral_selected`, `tracking_selected` and `eye_tracking_selected`; at least one is 1. |
+| DIAG_START | `kind=trial_state|projector_flip|behavioral|tracking|eye_tracking`, `pin=<CAPS pin>`, `duration_ms=2000`; camera kinds also require `hz=<0.1-Hz-grid rate>`. |
 | DIAG_STATUS / DIAG_STOP | No additional fields. Operate on the one active diagnostic. |
 
-`role` is exactly `behavioral` or `tracking`. CONFIGURE is one complete application,
+`role` is exactly `behavioral`, `tracking` or `eye_tracking`. CONFIGURE is one complete application,
 not a proposal followed by approval. Group masks select active external session
 outputs at trial boundaries or requested previews in Configuration. Never infer masks
 from disabled roles' retained host settings. Firmware validates every field, pin,
@@ -56,8 +55,8 @@ Replies begin `OK id=...` or `ERR id=... code=...`. Successful payloads are:
 | Request | Required OK payload |
 | --- | --- |
 | CAPS | `protocol`, `firmware`, `pins`, `input_pins`, `min_hz`, `max_hz`, `watchdog_min_ms`, `watchdog_max_ms`. `input_pins` is a unique subset of `pins` capable of interrupt-driven rising-edge capture. |
-| STATUS / CONFIGURE | `valid`, `watchdog_stopped`, `watchdog_ms`, both `<role>_enabled` and `<role>_running`; for each configured enabled output: `<role>_pin`, `<role>_applied_hz`. |
-| PING / ON / OFF | Both `<role>_running` and `watchdog_stopped`. |
+| STATUS / CONFIGURE | `valid`, `watchdog_stopped`, `watchdog_ms`, all three `<role>_enabled` and `<role>_running`; for each configured enabled output: `<role>_pin`, `<role>_applied_hz`. |
+| PING / ON / OFF | All three `<role>_running` and `watchdog_stopped`. |
 | DIAG_START / DIAG_STATUS / DIAG_STOP | `active=0|1`, `kind`, `pin`, `edges=<uint32>`. Input `edges` counts observed rising edges; output `edges` counts generated LOW-to-HIGH transitions. `DIAG_STOP` and elapsed duration return `active=0` with retained final count. |
 
 Only one diagnostic may run, and only when normal outputs are stopped. Firmware
@@ -92,7 +91,7 @@ STATUS and CONFIGURE use the same stored rate and serialization. Reject missing,
 nonfinite, zero or negative applied rates for an enabled output. Disabled outputs omit
 pin/frequency and report running=0.
 
-Boot state is invalid, stopped, with both outputs disabled; `watchdog_ms=0` means no
+Boot state is invalid, stopped, with all three outputs disabled; `watchdog_ms=0` means no
 applied watchdog only in that invalid state. After watchdog stop, last settings may
 remain visible but cannot pass Ready. ON requires successful fresh CONFIGURE first.
 
@@ -126,7 +125,7 @@ Minimum symbolic error inventory:
 | INVALID_WATCHDOG / NOT_CONFIGURED | Unsupported timeout, or ON lacks usable configuration. |
 | APPLY_FAILED / INTERNAL_ERROR | Application/runtime fault; cancel affected pulse generation and leave outputs off. |
 
-ERR may add `role=behavioral|tracking`, `field=<key>` and `reason=<symbolic_token>`.
+ERR may add `role=behavioral|tracking|eye_tracking`, `field=<key>` and `reason=<symbolic_token>`.
 Host renders human-readable explanations. If malformed input has no safely recovered
 complete ID, firmware may emit `ERR code=...` without ID; host cannot count it as the
 outstanding request's acknowledgement. Unknown future error codes still mean failure;

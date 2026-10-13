@@ -717,7 +717,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v19"></a>
 ### V19 — Uniform Idle background
 
-**Status:** Accepted · **Revision:** 5
+**Status:** Accepted · **Revision:** 6
 
 - E05's Idle presentation uses a configurable uniform background color/brightness,
   black included, with V15 blackout zones remaining black, before the first trial, between trials, during finalization and
@@ -739,6 +739,12 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   outputs uninitialized and expose an actionable issue to GUI/headless clients
   without blocking configuration editing. Never guess output assignments, brightness
   or calibration mode.
+- A live OpenGL context on a different adapter from the discovered SYS-002 render
+  board is an unavailable output-placement rejection at sessionless startup. Keep
+  the GUI/controller available only after exact resource cleanup and delivery of
+  the matching rejection within the original deadline; expose the adapter mismatch
+  and executable-specific Windows Graphics remedy. Never render on the wrong GPU.
+  Driver/API failures, GPU operation faults and uncertain cleanup retain E06/E08.
 - Startup display initialization is not Setup or Ready: no trial program, recording
   or stimulus seeds; fresh Setup stays mandatory. The canonical display model is
   independent of trial programs and separates startup Idle checks from full Setup

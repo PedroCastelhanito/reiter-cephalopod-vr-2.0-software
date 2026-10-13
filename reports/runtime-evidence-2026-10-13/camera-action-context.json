@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_status": "dirty shared working tree; affected source hashes retained",
+  "source_sha256": {
+    "src/cephvr/gui/camera_action_submission.py": "b1773499e50ce429f0c15b63726bfe0eba0a64d1872283f33739a8f3700e070e",
+    "src/cephvr/gui/managed_cameras.py": "16db78ad44618a6a2f51b13874be4c5bc2396572833aac6227826f8f8d440de1",
+    "src/cephvr/gui/managed_configuration.py": "5fd9721bcc597643a5a6877a509d261385ce86330f94e940ac1ece027d03292c",
+    "src/cephvr/gui/controller_bridge.py": "e6233acc28fd66a7b87a03675efafdf3efe0a0e4b107a2a6a2e25d90e2af711c",
+    "src/cephvr/gui/main.py": "008d7fd9849d47cb58eb9e1722d22fc1e2dc1033571e519ffce88cc7e6d06ad8",
+    "src/cephvr/gui/managed_device_commands.py": "41c8b53c9916219e038cb8366b04f384f0f8dba5a0896ad1e656b4db149f4d58",
+    "src/cephvr/gui/cameras.py": "1a766d00c8c12b3a7038c3485ac0fbc8540a12a4eb6577a74027cb6a694906ce",
+    "tests/gui/test_dashboard.py": "0376f08287ed888eb18da6258607ac2d5f7c2918d7e27ba55b8348f30b75ae7f"
+  },
+  "governing_decisions": [
+    "G01 revision171",
+    "E03",
+    "E07",
+    "A10",
+    "ARCH-002"
+  ],
+  "method": "Windows offscreen isolated Qt buttons and fake asynchronous controller/SDK outcomes; no live hardware",
+  "commands": [
+    "pytest tests/gui/test_dashboard.py -q -k \"camera or mcu or microcontroller or snapshot or managed_configuration\"",
+    "pytest tests/gui/test_dashboard.py -q -k \"loaded_camera_action or camera_action_submits or camera_acceptance or managed_camera_settings_supply\"",
+    "ruff check src/cephvr/gui tests/gui/test_dashboard.py",
+    "ruff format --check src/cephvr/gui tests/gui/test_dashboard.py",
+    "mypy --platform win32 src/cephvr/gui",
+    "python tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "results": {
+    "affected": "87 passed, 347 deselected,29.17s",
+    "final_focused": "12 passed,422 deselected,1.53s",
+    "ruff": "passed,153 files formatted",
+    "mypy": "152 sources passed",
+    "boundaries": "667 modules,0 violations; existing reviewed cohesion advisories"
+  },
+  "artifacts": [
+    "camera-action-focused.xml",
+    "camera-action-broad.xml"
+  ],
+  "limits": [
+    "No live Test/Connect or restart",
+    "No firmware/pulse/SpikeGLX command",
+    "Physical camera acceptance remains pending"
+  ]
+}

@@ -1,0 +1,360 @@
+F...F...FF...F.........FF....                                            [100%]
+================================== FAILURES ===================================
+_ test_microcontroller_config_load_is_local_and_collects_for_normal_submission _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001E5CB8A83A0>
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.local-gui-pin-numbers/test_microcontroller_config_lo0')
+
+    def test_microcontroller_config_load_is_local_and_collects_for_normal_submission(
+        window: DashboardWindow, tmp_path: Path
+    ) -> None:
+        panel = window.devices.microcontroller
+        data = panel.snapshots.capture()
+        data.update(port="COM91", firmware_path="C:/\u5b9e\u9a8c/firmware.ino")
+        data["trial_state"] = {"pin": "D8", "enabled": False}
+        data["projector_flip"] = {"pin": "D2", "enabled": True}
+        data["camera_pins"] = {
+            key: f"D{9 + index}" for index, key in enumerate(data["camera_pins"])
+        }
+        from cephvr.gui.configuration_files import write_snapshot
+    
+        path = tmp_path / "mcu.json"
+        write_snapshot(str(path), data)
+        requests: list[tuple[object, ...]] = []
+        panel.save_requested.connect(lambda *args: requests.append(args))
+        panel.firmware_requested.connect(lambda *args: requests.append(args))
+        panel.connection_requested.connect(lambda *args: requests.append(args))
+        panel.camera_enable_requested.connect(lambda *args: requests.append(args))
+        panel.managed = True
+        assert panel.config_files.load_path(str(path))
+>       assert panel.snapshots.capture() == data
+E       AssertionError: assert {'format': 'c...are.ino', ...} == {'format': 'c...are.ino', ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {'camera_pins': {'camera-1': '9', 'camera-2': '10'}} != {'camera_pins': {'camera-1': 'D9', 'camera-2': 'D10'}}
+E         {'projector_flip': {'pin': '2', 'enabled': True}} != {'projector_flip': {'pin': 'D2', 'enabled': True}}
+E         {'trial_state': {'pin': '8', 'enabled': False}} != {'trial_state': {'pin': 'D8', 'enabled': False}}
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:242: AssertionError
+______ test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling ______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001E5CB98B1C0>
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.local-gui-pin-numbers/test_full_gui_loaded_drafts_jo0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001E5CB998990>
+
+    def test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling(
+        window: DashboardWindow, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.configuration_files import write_snapshot
+        from cephvr.gui.managed_cameras import ManagedCameras
+        from cephvr.gui.managed_configuration import (
+            ConfigurationPages,
+            ManagedConfiguration,
+        )
+        from cephvr.gui.managed_mcu import ManagedMcu
+    
+        state = pb.Snapshot(controller_generation=str(uuid4()))
+        state.configuration.revision = state.configuration_values.revision = 5
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        base = state.configuration_values.current
+        base.mode = pb.SESSION_MODE_OPEN_LOOP
+        acquisition = base.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        for draft, selected in zip(
+            window.devices.cameras.drafts,
+            (acquisition.behavioral, acquisition.tracking),
+            strict=True,
+        ):
+            selected.device.device_id = draft.serial
+            selected.enabled = False
+        desired = window.snapshots.capture()
+        desired["protocol"]["mode"] = "Open-loop"
+        for camera in desired["experiment"]["cameras"]:
+            camera["enabled"] = False
+            camera["values"] = {
+                "trigger_clock": "Internal clock",
+                "trigger_frequency_hz": "18",
+            }
+        desired["microcontroller"]["port"] = "COM93"
+        desired["microcontroller"]["camera_enabled"] = {
+            key: False for key in desired["microcontroller"]["camera_enabled"]
+        }
+        desired["microcontroller"]["trial_state"]["pin"] = "D7"
+        desired["tracking"]["distance_mm"] = (
+            ""  # Dormant, uncalibrated Tracking is a valid saved draft.
+        )
+        manager = ManagedConfiguration(
+            ConfigurationPages(
+                window.dashboard,
+                window.protocol,
+                window.recordings,
+                window.devices.cameras,
+                window.devices.projectors,
+                window.tracking,
+                window.devices.microcontroller,
+            )
+        )
+        assert manager.install(state)
+        camera_owner = ManagedCameras(
+            window.devices.cameras,
+            SimpleNamespace(request=lambda *_a, **_kw: False),
+            lambda *_: False,
+        )
+        mcu_owner = ManagedMcu(
+            window.devices.microcontroller,
+            SimpleNamespace(request=lambda *_a, **_kw: False),
+            lambda: state,
+        )
+        camera_owner.install(state)
+        mcu_owner.install(state, True)
+        path = tmp_path / "full.json"
+        write_snapshot(str(path), desired)
+        assert window.config_files.load_path(str(path))
+        camera_owner.install(state)
+        mcu_owner.install(state, True)
+>       assert window.snapshots.capture() == desired
+E       AssertionError: assert {'format': 'c...'', ...}, ...} == {'format': 'c...'', ...}, ...}
+E         
+E         Omitting 7 identical items, use -vv to show
+E         Differing items:
+E         {'microcontroller': {'format': 'cephvr-microcontroller-config', 'version': 2, 'port': 'COM93', 'firmware_path': '', ...}} != {'microcontroller': {'format': 'cephvr-microcontroller-config', 'version': 2, 'port': 'COM93', 'firmware_path': '', ...}}
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:560: AssertionError
+_ test_microcontroller_supported_signals_remove_add_and_restore_pins[input-projector-flip-D2] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001E5CB4D79A0>
+direction = 'input', key = 'projector-flip', pin = 'D2'
+
+    @pytest.mark.parametrize(
+        "direction,key,pin",
+        [
+            ("input", "projector-flip", "D2"),
+            ("output", "trial-state", "D8"),
+        ],
+    )
+    def test_microcontroller_supported_signals_remove_add_and_restore_pins(
+        window: DashboardWindow, direction: str, key: str, pin: str
+    ) -> None:
+        panel = window.devices.microcontroller
+        editor = panel.flip_pin if direction == "input" else panel.trial_pin
+        table = panel.input_table if direction == "input" else panel.output_table
+        add = panel.signals.add_input if direction == "input" else panel.signals.add_output
+        editor.setText(pin)
+        panel.enable_controls[key].setChecked(True)
+        assert not add.isEnabled()
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        panel.signals.remove_buttons[key].click()
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+            assert table.height() == 2 * table.frameWidth()
+        assert not panel.enable_controls[key].isChecked()
+>       assert editor.text() == pin
+E       AssertionError: assert '2' == 'D2'
+E         
+E         - D2
+E         + 2
+
+tests\gui\test_dashboard.py:2814: AssertionError
+_ test_microcontroller_supported_signals_remove_add_and_restore_pins[output-trial-state-D8] _
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001E5C9DF7E20>
+direction = 'output', key = 'trial-state', pin = 'D8'
+
+    @pytest.mark.parametrize(
+        "direction,key,pin",
+        [
+            ("input", "projector-flip", "D2"),
+            ("output", "trial-state", "D8"),
+        ],
+    )
+    def test_microcontroller_supported_signals_remove_add_and_restore_pins(
+        window: DashboardWindow, direction: str, key: str, pin: str
+    ) -> None:
+        panel = window.devices.microcontroller
+        editor = panel.flip_pin if direction == "input" else panel.trial_pin
+        table = panel.input_table if direction == "input" else panel.output_table
+        add = panel.signals.add_input if direction == "input" else panel.signals.add_output
+        editor.setText(pin)
+        panel.enable_controls[key].setChecked(True)
+        assert not add.isEnabled()
+        if direction == "input":
+            assert not table.horizontalHeader().isHidden()
+        panel.signals.remove_buttons[key].click()
+        assert table.isRowHidden(0)
+        if direction == "input":
+            assert table.horizontalHeader().isHidden()
+            assert table.height() == 2 * table.frameWidth()
+        assert not panel.enable_controls[key].isChecked()
+>       assert editor.text() == pin
+E       AssertionError: assert '8' == 'D8'
+E         
+E         - D8
+E         + 8
+
+tests\gui\test_dashboard.py:2814: AssertionError
+____________ test_managed_microcontroller_emits_controller_intents ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x000001E5CBB21B40>
+
+    def test_managed_microcontroller_emits_controller_intents(
+        window: DashboardWindow,
+    ) -> None:
+        panel = window.devices.microcontroller
+        panel.managed = True
+        connections: list[bool] = []
+        saves: list[tuple[str, str, bool, str, bool, str | None, str | None]] = []
+        pin_tests: list[tuple[str, bool]] = []
+        panel.connection_requested.connect(lambda: connections.append(True))
+        panel.save_requested.connect(lambda *values: saves.append(values))
+        panel.pin_test_requested.connect(lambda key, start: pin_tests.append((key, start)))
+        window.apply_view(
+            DashboardView(
+                connected=True,
+                has_control=True,
+                configuration_wired=False,
+                phase=Phase.CONFIGURATION,
+            )
+        )
+        panel.set_saved_pins("COM8", "D9", True, "D2", True)
+        panel.pin_editors["camera-1"].setText("D10")
+        panel.pin_editors["camera-2"].setText("D11")
+        assert saves == []  # Controller snapshots and unfinished drafts stay silent.
+        panel.pin_editors["camera-2"].editingFinished.emit()
+        panel.test_connection_button.click()
+        panel.test_buttons["trial-state"].click()
+        panel.set_diagnostic("trial-state", True, 1)
+        panel.test_buttons["trial-state"].click()
+    
+>       assert saves == [("COM8", "D9", True, "D2", True, "D10", "D11")]
+E       AssertionError: assert [('COM8', '9'...e, '10', ...)] == [('COM8', 'D9..., 'D10', ...)]
+E         
+E         At index 0 diff: ('COM8', '9', True, '2', True, '10', '11') != ('COM8', 'D9', True, 'D2', True, 'D10', 'D11')
+E         Use -v to get more diff
+
+tests\gui\test_dashboard.py:2978: AssertionError
+____________ test_review_draft_restores_local_configuration[False] ____________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001E5CB88FA30>
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.local-gui-pin-numbers/test_review_draft_restores_loc0')
+legacy_crop = False
+
+    @pytest.mark.parametrize("legacy_crop", [False, True])
+    def test_review_draft_restores_local_configuration(
+        app: QApplication, tmp_path: Path, legacy_crop: bool
+    ) -> None:
+        from cephvr.gui.review_draft import load_review_draft, save_review_draft
+    
+        path = tmp_path / "review_draft.json"
+        first = DashboardWindow(sample=True)
+        ReviewControls(first)
+        first.dashboard.subject_id.setText("LAST-SUBJECT")
+        first.devices.cameras.drafts[0].values["trigger_frequency_hz"] = "30"
+        first.devices.microcontroller.set_saved_pins("COM8", "D9", True, "D2", True)
+        first.devices.microcontroller.pins[first.devices.cameras.drafts[0].key] = "D10"
+        first.protocol.editor.drafts[0].name = "Last trial"
+        first.devices.projectors.rig_editor.fields["width"].setText("250")
+        first.devices.spikeglx.editors[0].setText("10.0.0.2")  # type: ignore[attr-defined]
+        first.devices.spikeglx.rows[first.devices.cameras.drafts[0].key][4].setText("0")
+        first.devices.spikeglx.add_input.click()
+        save_review_draft(first, path)
+        if legacy_crop:
+            import json
+    
+            saved = json.loads(path.read_text())
+            saved["tracking"]["preprocessing"].pop("region")
+            saved["tracking"].pop("annotation_source")
+            path.write_text(json.dumps(saved))
+        preserved = path.read_bytes()
+    
+        second = DashboardWindow(sample=True)
+        ReviewControls(second)
+        assert load_review_draft(second, path)
+        assert load_review_draft(second, path)  # Opening again must not repeat the warning.
+        assert path.read_bytes() == preserved
+        assert second.tracking.snapshot() == first.tracking.snapshot()
+        assert second.dashboard.subject_id.text() == "LAST-SUBJECT"
+        assert second.devices.cameras.drafts[0].values["trigger_frequency_hz"] == "30"
+        assert second.devices.microcontroller.trial_pin.text() == "9"
+        assert second.devices.microcontroller.flip_pin.text() == "2"
+>       assert (
+            second.devices.microcontroller.pins[second.devices.cameras.drafts[0].key]
+            == "10"
+        )
+E       AssertionError: assert 'D10' == '10'
+E         
+E         - 10
+E         + D10
+E         ? +
+
+tests\gui\test_dashboard.py:5229: AssertionError
+____________ test_review_draft_restores_local_configuration[True] _____________
+
+app = <PyQt6.QtWidgets.QApplication object at 0x000001E5CB88FA30>
+tmp_path = WindowsPath('C:/Dev/projects/reiter-cephalopod-vr/reiter-cephalopod-vr-2.0-software/.local-gui-pin-numbers/test_review_draft_restores_loc1')
+legacy_crop = True
+
+    @pytest.mark.parametrize("legacy_crop", [False, True])
+    def test_review_draft_restores_local_configuration(
+        app: QApplication, tmp_path: Path, legacy_crop: bool
+    ) -> None:
+        from cephvr.gui.review_draft import load_review_draft, save_review_draft
+    
+        path = tmp_path / "review_draft.json"
+        first = DashboardWindow(sample=True)
+        ReviewControls(first)
+        first.dashboard.subject_id.setText("LAST-SUBJECT")
+        first.devices.cameras.drafts[0].values["trigger_frequency_hz"] = "30"
+        first.devices.microcontroller.set_saved_pins("COM8", "D9", True, "D2", True)
+        first.devices.microcontroller.pins[first.devices.cameras.drafts[0].key] = "D10"
+        first.protocol.editor.drafts[0].name = "Last trial"
+        first.devices.projectors.rig_editor.fields["width"].setText("250")
+        first.devices.spikeglx.editors[0].setText("10.0.0.2")  # type: ignore[attr-defined]
+        first.devices.spikeglx.rows[first.devices.cameras.drafts[0].key][4].setText("0")
+        first.devices.spikeglx.add_input.click()
+        save_review_draft(first, path)
+        if legacy_crop:
+            import json
+    
+            saved = json.loads(path.read_text())
+            saved["tracking"]["preprocessing"].pop("region")
+            saved["tracking"].pop("annotation_source")
+            path.write_text(json.dumps(saved))
+        preserved = path.read_bytes()
+    
+        second = DashboardWindow(sample=True)
+        ReviewControls(second)
+        assert load_review_draft(second, path)
+        assert load_review_draft(second, path)  # Opening again must not repeat the warning.
+        assert path.read_bytes() == preserved
+        assert second.tracking.snapshot() == first.tracking.snapshot()
+        assert second.dashboard.subject_id.text() == "LAST-SUBJECT"
+        assert second.devices.cameras.drafts[0].values["trigger_frequency_hz"] == "30"
+        assert second.devices.microcontroller.trial_pin.text() == "9"
+        assert second.devices.microcontroller.flip_pin.text() == "2"
+>       assert (
+            second.devices.microcontroller.pins[second.devices.cameras.drafts[0].key]
+            == "10"
+        )
+E       AssertionError: assert 'D10' == '10'
+E         
+E         - 10
+E         + D10
+E         ? +
+
+tests\gui\test_dashboard.py:5229: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/gui/test_dashboard.py::test_microcontroller_config_load_is_local_and_collects_for_normal_submission
+FAILED tests/gui/test_dashboard.py::test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling
+FAILED tests/gui/test_dashboard.py::test_microcontroller_supported_signals_remove_add_and_restore_pins[input-projector-flip-D2]
+FAILED tests/gui/test_dashboard.py::test_microcontroller_supported_signals_remove_add_and_restore_pins[output-trial-state-D8]
+FAILED tests/gui/test_dashboard.py::test_managed_microcontroller_emits_controller_intents
+FAILED tests/gui/test_dashboard.py::test_review_draft_restores_local_configuration[False]
+FAILED tests/gui/test_dashboard.py::test_review_draft_restores_local_configuration[True]
+7 failed, 22 passed, 373 deselected in 21.69s

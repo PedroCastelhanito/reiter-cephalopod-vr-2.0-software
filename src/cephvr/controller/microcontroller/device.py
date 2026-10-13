@@ -26,6 +26,7 @@ _SAFETY_IO = frozenset(
 _SIGNAL_KINDS: dict[int, str] = {
     pb.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL: "behavioral",
     pb.MICROCONTROLLER_SIGNAL_KIND_TRACKING: "tracking",
+    pb.MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING: "eye_tracking",
     pb.MICROCONTROLLER_SIGNAL_KIND_TRIAL_STATE: "trial_state",
     pb.MICROCONTROLLER_SIGNAL_KIND_PROJECTOR_FLIP: "projector_flip",
 }
@@ -415,6 +416,7 @@ class MicrocontrollerDevice:
                             (
                                 camera.CAMERA_ROLE_BEHAVIORAL,
                                 camera.CAMERA_ROLE_TRACKING,
+                                camera.CAMERA_ROLE_EYE_TRACKING,
                             ),
                             scheduled_boundary_ns=None,
                             stop_issued_ns=self.clock(),
@@ -429,7 +431,7 @@ class MicrocontrollerDevice:
                                     "running"
                                 )
                                 and not getattr(evidence.resulting_state, role).running
-                                for role in ("behavioral", "tracking")
+                                for role in ("behavioral", "tracking", "eye_tracking")
                             )
                         ):
                             raise RuntimeError(

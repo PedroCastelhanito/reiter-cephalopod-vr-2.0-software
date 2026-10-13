@@ -1,0 +1,48 @@
+{
+  "method": "post-install PATH/hash/muxer checks plus native NVENC query; no capture",
+  "tools": {
+    "ffmpeg": {
+      "path": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffmpeg.EXE",
+      "version": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+      "sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec"
+    },
+    "ffprobe": {
+      "path": "C:\\Dev\\software\\ffmpeg-4.3.2-2021\\bin\\ffprobe.EXE",
+      "version": "ffprobe version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers",
+      "sha256": "f0d36ecbbdd3bcfac3efa078c96c7271c2e68b3810595552ac3b7f17e9a65c52"
+    }
+  },
+  "device": {
+    "ordinal": 1,
+    "uuid": "GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc",
+    "name": "NVIDIA GeForce RTX 2080 Ti"
+  },
+  "native_formats": {
+    "h264_nvenc": [
+      "nv12",
+      "yuv420p",
+      "yuv444p"
+    ],
+    "hevc_nvenc": [
+      "nv12",
+      "p010le",
+      "yuv420p",
+      "yuv444p",
+      "yuv444p10le"
+    ]
+  },
+  "native_profiles": {
+    "h264_nvenc": [
+      "baseline",
+      "high",
+      "high444p",
+      "main",
+      "stereo"
+    ],
+    "hevc_nvenc": [
+      "main",
+      "main10",
+      "rext"
+    ]
+  }
+}

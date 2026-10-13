@@ -1,0 +1,311 @@
+diff --git a/src/cephvr/visual_stimulus/rendering/capture.py b/src/cephvr/visual_stimulus/rendering/capture.py
+index a62c6c4..d87f161 100644
+--- a/src/cephvr/visual_stimulus/rendering/capture.py
++++ b/src/cephvr/visual_stimulus/rendering/capture.py
+@@ -37,7 +37,7 @@ class ReviewCapture:
+     def __init__(self) -> None:
+         self._pending: list[_Pending] = []
+         self._context: Any | None = None
+-        self._dimensions: tuple[int, int] | None = None
++        self._dimensions: tuple[int, int, str] | None = None
+         self._shared: tuple[Any, ...] = ()
+ 
+     def capture(
+@@ -59,7 +59,7 @@ class ReviewCapture:
+         if context is None:
+             raise RuntimeError("review output texture has no owning GL context")
+         width, height = encoding.composite_width, encoding.composite_height
+-        self._ensure_compositor(context, width, height)
++        self._ensure_compositor(context, width, height, encoding.native_pixel_format)
+         if self._context is not context:
+             raise RuntimeError("review capture must use one shared GL context")
+         _texture, framebuffer, program, _buffer, array = self._shared
+@@ -107,16 +107,24 @@ class ReviewCapture:
+                 GL.glDeleteBuffers(1, [pbo])
+             raise
+ 
+-    def _ensure_compositor(self, context: Any, width: int, height: int) -> None:
++    def _ensure_compositor(
++        self, context: Any, width: int, height: int, pixel_format: str
++    ) -> None:
++        if pixel_format not in {"rgba8_bottom_up", "r10g10b10a2_le_bottom_up"}:
++            raise ValueError("unsupported review-composite pixel format")
++        dimensions = (width, height, pixel_format)
+         if self._shared:
+-            if self._context is not context or self._dimensions != (width, height):
++            if self._context is not context or self._dimensions != dimensions:
+                 raise RuntimeError(
+                     "review compositor cannot change context or dimensions"
+                 )
+             return
+         created: list[Any] = []
+         try:
+-            texture = context.texture((width, height), 4, dtype="f4")
++            # Match the already selected 8-bit recording representation before
++            # readback; float-to-byte glReadPixels stalls the native driver.
++            dtype = "f1" if pixel_format == "rgba8_bottom_up" else "f4"
++            texture = context.texture((width, height), 4, dtype=dtype)
+             created.append(texture)
+             framebuffer = context.framebuffer(color_attachments=(texture,))
+             created.append(framebuffer)
+@@ -133,10 +141,10 @@ class ReviewCapture:
+                 resource.release()
+             raise
+         self._context = context
+-        self._dimensions = (width, height)
++        self._dimensions = dimensions
+         self._shared = tuple(created)
+ 
+-    def poll(self, pending: object) -> bytes | None:
++    def poll(self, pending: object) -> bytearray | None:
+         if not isinstance(pending, _Pending) or pending not in self._pending:
+             raise TypeError("invalid pending review capture")
+         gl = pending.gl
+@@ -146,12 +154,18 @@ class ReviewCapture:
+                 raise RuntimeError("review-composite readback fence failed")
+             return None
+         gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, pending.pbo)
+-        pixels = gl.glGetBufferSubData(gl.GL_PIXEL_PACK_BUFFER, 0, pending.byte_count)
++        pixels = bytearray(pending.byte_count)
++        destination = (ctypes.c_ubyte * pending.byte_count).from_buffer(pixels)
++        # Fill the final host buffer directly instead of allocating a NumPy
++        # result and then copying it to bytes; the recorder still owns its copy.
++        gl.glGetBufferSubData(
++            gl.GL_PIXEL_PACK_BUFFER, 0, pending.byte_count, destination
++        )
+         gl.glBindBuffer(gl.GL_PIXEL_PACK_BUFFER, 0)
+         gl.glDeleteSync(pending.sync)
+         gl.glDeleteBuffers(1, [pending.pbo])
+         self._pending.remove(pending)
+-        return bytes(pixels)
++        return pixels
+ 
+     def cancel(self, pending: object) -> bool:
+         """Delete GL-owned capture objects on the owner thread.
+diff --git a/src/cephvr/visual_stimulus/rendering/native.py b/src/cephvr/visual_stimulus/rendering/native.py
+index 50655a3..1c32224 100644
+--- a/src/cephvr/visual_stimulus/rendering/native.py
++++ b/src/cephvr/visual_stimulus/rendering/native.py
+@@ -18,6 +18,7 @@ from typing import Any, cast
+ from cephvr.visual_stimulus.config.models.artifact_models import PreparedTrial
+ from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile, Output
+ from cephvr.visual_stimulus.rendering.native_display import (
++    DisplayGpuUnavailableError,
+     DisplayUnavailableError,
+     NativeRenderingError,
+     attach_window_context,
+@@ -101,9 +102,15 @@ class ModernGLPort:
+ 
+     @staticmethod
+     def _verify_render_gpu(renderer: str, vendor: str) -> str:
+-        from cephvr.platform.windows.nvidia_device import verify_opengl_rendering_device
++        from cephvr.platform.windows.nvidia_device import (
++            OpenGLAdapterMismatch,
++            verify_opengl_rendering_device,
++        )
+ 
+-        device = verify_opengl_rendering_device(renderer, vendor)
++        try:
++            device = verify_opengl_rendering_device(renderer, vendor)
++        except OpenGLAdapterMismatch as exc:
++            raise DisplayGpuUnavailableError(str(exc)) from exc
+         return f"nvidia_uuid:{device.uuid}"
+ 
+     def _assert_owner(self) -> None:
+@@ -558,13 +565,15 @@ class ModernGLPort:
+         order_shared_outputs(self._outputs, self._capture_fences)
+         return self.scene_renderer.capture_review_composite(slot, outputs, encoding)
+ 
+-    def poll_review_capture(self, pending: object) -> bytes | None:
++    def poll_review_capture(self, pending: object) -> bytes | bytearray | None:
+         self._assert_owner()
+         first = next(iter(self._outputs.values()))
+         self._glfw.make_context_current(first.window)
+         if self.scene_renderer is None:
+             raise NativeRenderingError("capture pipeline missing")
+-        return cast(bytes | None, self.scene_renderer.poll_review_capture(pending))
++        return cast(
++            bytes | bytearray | None, self.scene_renderer.poll_review_capture(pending)
++        )
+ 
+     def cancel_review_capture(self, pending: object) -> bool:
+         self._assert_owner()
+diff --git a/src/cephvr/visual_stimulus/rendering/scene.py b/src/cephvr/visual_stimulus/rendering/scene.py
+index c720a3c..5f64035 100644
+--- a/src/cephvr/visual_stimulus/rendering/scene.py
++++ b/src/cephvr/visual_stimulus/rendering/scene.py
+@@ -509,7 +509,7 @@ class ModernGLSceneRenderer:
+         del slot
+         return self._review_capture.capture(outputs, encoding)
+ 
+-    def poll_review_capture(self, pending: object) -> bytes | None:
++    def poll_review_capture(self, pending: object) -> bytes | bytearray | None:
+         return self._review_capture.poll(pending)
+ 
+     def cancel_review_capture(self, pending: object) -> bool:
+diff --git a/src/cephvr/visual_stimulus/rendering/types.py b/src/cephvr/visual_stimulus/rendering/types.py
+index 729e6c0..5545b1b 100644
+--- a/src/cephvr/visual_stimulus/rendering/types.py
++++ b/src/cephvr/visual_stimulus/rendering/types.py
+@@ -240,7 +240,7 @@ class RenderPort(Protocol):
+         self, slot: object, outputs: tuple[RenderedOutput, ...], encoding: object
+     ) -> object: ...
+ 
+-    def poll_review_capture(self, pending: object) -> bytes | None: ...
++    def poll_review_capture(self, pending: object) -> bytes | bytearray | None: ...
+ 
+     def cancel_review_capture(self, pending: object) -> bool: ...
+ 
+diff --git a/tests/visual_stimulus/test_rendering.py b/tests/visual_stimulus/test_rendering.py
+index c2b7634..444cccf 100644
+--- a/tests/visual_stimulus/test_rendering.py
++++ b/tests/visual_stimulus/test_rendering.py
+@@ -236,6 +236,55 @@ def test_missing_second_monitor_opens_no_windows_and_releases_glfw(tmp_path):
+     assert port.release() == ResourceReleaseReport(("visual_stimulus:glfw",))
+ 
+ 
++@pytest.mark.parametrize("cleanup_fails", [False, True])
++def test_wrong_adapter_rejection_requires_native_context_and_window_release(
++    monkeypatch, tmp_path, cleanup_fails
++):
++    from cephvr.platform.windows import nvidia_device
++    from cephvr.visual_stimulus.rendering import native
++    from cephvr.visual_stimulus.rendering.native_display import (
++        DisplayGpuUnavailableError,
++        NativeRenderingError,
++    )
++
++    selected = nvidia_device.NvidiaDevice(0, "GPU-board", "NVIDIA GeForce RTX 5060 Ti")
++    monkeypatch.setattr(nvidia_device, "sys", NS(platform="win32"))
++    monkeypatch.setattr(nvidia_device, "_enumerate_cuda_devices", lambda: [selected])
++    released, destroyed, terminated = [], [], []
++
++    def release():
++        released.append(True)
++        if cleanup_fails and len(released) == 1:
++            raise RuntimeError("context release unconfirmed")
++
++    context = NS(
++        info={"GL_VENDOR": "ATI Technologies Inc.", "GL_RENDERER": "AMD Radeon"},
++        screen=object(),
++        release=release,
++    )
++    monkeypatch.setattr(native, "attach_window_context", lambda _: context)
++    monkeypatch.setattr(native, "configure_window", lambda *_: None)
++    port = native.ModernGLPort(
++        tmp_path, announce=lambda *_: None, monitor_resolver=lambda *_: object()
++    )
++    port._glfw = NS(
++        create_window=lambda *_: object(),
++        make_context_current=lambda *_: None,
++        destroy_window=destroyed.append,
++        terminate=lambda: terminated.append(True),
++    )
++    port._moderngl = object()
++    expected = NativeRenderingError if cleanup_fails else DisplayGpuUnavailableError
++    with pytest.raises(expected, match="AMD Radeon") as failure:
++        port.initialize_display(make_prepared_trial().display)
++    assert isinstance(failure.value, DisplayGpuUnavailableError) is not cleanup_fails
++    assert bool(port._outputs) is cleanup_fails
++    if cleanup_fails:
++        assert not destroyed and not terminated
++        assert not port.release().outstanding
++    assert destroyed and terminated and not port._outputs
++
++
+ def test_linear_rate_integral_and_keyframe_evaluation() -> None:
+     ramp = NS(kind="ramp", initial=0.0, slope_per_s=0.5)
+     assert integrate_function(ramp, 0, 2_000_000_000) == pytest.approx(1.0)
+@@ -770,7 +819,13 @@ def test_shared_context_wait_uses_unsigned_64_bit_ignored_timeout(monkeypatch):
+     assert not pending
+ 
+ 
+-def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
++@pytest.mark.parametrize(
++    ("pixel_format", "dtype"),
++    [("rgba8_bottom_up", "f1"), ("r10g10b10a2_le_bottom_up", "f4")],
++)
++def test_review_capture_clears_framebuffer_in_creation_order(
++    monkeypatch, pixel_format, dtype
++):
+     from cephvr.visual_stimulus.rendering.capture import ReviewCapture
+ 
+     gl = ModuleType("OpenGL.GL")
+@@ -793,8 +848,14 @@ def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
+     fbo = NS(
+         use=lambda: events.append("use"), clear=lambda *_args: events.append("clear")
+     )
++    texture_types = []
++
++    def allocate_texture(*_args, **kwargs):
++        texture_types.append(kwargs["dtype"])
++        return texture
++
+     context = NS(
+-        texture=lambda *_args, **_kwargs: texture,
++        texture=allocate_texture,
+         framebuffer=lambda **_kwargs: fbo,
+         program=lambda **_kwargs: {"source_tex": NS(value=None)},
+         buffer=lambda *_args: NS(),
+@@ -804,6 +865,60 @@ def test_review_capture_clears_framebuffer_in_creation_order(monkeypatch):
+     with pytest.raises(RuntimeError, match="reached PBO allocation"):
+         capture.capture(
+             (NS(output_id="one", texture_handle=NS(ctx=context)),),
+-            NS(composite_width=2, composite_height=2, tiles=()),
++            NS(
++                composite_width=2,
++                composite_height=2,
++                tiles=(),
++                native_pixel_format=pixel_format,
++            ),
+         )
+     assert events == ["use", "clear"]
++    assert texture_types == [dtype]
++    capture._ensure_compositor(context, 2, 2, pixel_format)
++    assert texture_types == [dtype]
++    other = (
++        "r10g10b10a2_le_bottom_up"
++        if pixel_format == "rgba8_bottom_up"
++        else "rgba8_bottom_up"
++    )
++    with pytest.raises(RuntimeError, match="cannot change"):
++        capture._ensure_compositor(context, 2, 2, other)
++    with pytest.raises(ValueError, match="unsupported"):
++        capture._ensure_compositor(context, 2, 2, "unknown")
++
++
++def test_review_capture_polls_fence_then_fills_owned_host_buffer():
++    from cephvr.visual_stimulus.rendering.capture import ReviewCapture, _Pending
++
++    events = []
++    signaled = False
++
++    def read(target, offset, size, destination):
++        assert (target, offset, size) == (1, 0, 8)
++        destination[:] = b"\x00\x01\x7f\xff\x02\x03\x80\xfe"
++        events.append("read")
++
++    gl = NS(
++        GL_PIXEL_PACK_BUFFER=1,
++        GL_ALREADY_SIGNALED=2,
++        GL_CONDITION_SATISFIED=3,
++        GL_WAIT_FAILED=4,
++        glClientWaitSync=lambda *_args: 2 if signaled else 0,
++        glBindBuffer=lambda *_args: None,
++        glGetBufferSubData=read,
++        glDeleteSync=lambda *_args: events.append("fence"),
++        glDeleteBuffers=lambda *_args: events.append("buffer"),
++    )
++    capture = ReviewCapture()
++    pending = _Pending(gl, 7, 8, 8)
++    capture._pending.append(pending)
++    assert capture.poll(pending) is None
++    assert not events
++    signaled = True
++    pixels = capture.poll(pending)
++    assert isinstance(pixels, bytearray)
++    assert pixels == b"\x00\x01\x7f\xff\x02\x03\x80\xfe"
++    assert events == ["read", "fence", "buffer"]
++    assert not capture._pending
++    with pytest.raises(TypeError, match="invalid pending"):
++        capture.poll(pending)

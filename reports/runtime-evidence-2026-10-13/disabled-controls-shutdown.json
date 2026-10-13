@@ -1,0 +1,7 @@
+{
+  "generation": "f17215ba-41c0-42e1-baeb-4c30d5ccf2b8",
+  "scope": "owner-requested normal runtime shutdown",
+  "accepted_history_saved": true,
+  "shutdown_succeeded": true,
+  "all_owned_processes_absent": true
+}

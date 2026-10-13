@@ -1,0 +1,12 @@
+{
+  "method": "read-only authenticated snapshot projected into isolated Qt GUI; no hardware commands",
+  "generation": "f17215ba-41c0-42e1-baeb-4c30d5ccf2b8",
+  "revision": 4,
+  "configuration_error": "",
+  "configuration_stale": false,
+  "port_enabled": true,
+  "scan_enabled": true,
+  "test_connection_enabled": true,
+  "mcu_files_available": true,
+  "gui_files_available": true
+}

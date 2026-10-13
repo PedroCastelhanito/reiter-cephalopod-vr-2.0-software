@@ -141,13 +141,21 @@ class ManualPulses:
             self.workers, self.configuration.settings
         )
         if (
-            request.application.HasField("behavioral_active")
-            and request.application.behavioral_active
-            != (camera.CAMERA_ROLE_BEHAVIORAL in active_roles)
-        ) or (
-            request.application.HasField("tracking_active")
-            and request.application.tracking_active
-            != (camera.CAMERA_ROLE_TRACKING in active_roles)
+            (
+                request.application.HasField("behavioral_active")
+                and request.application.behavioral_active
+                != (camera.CAMERA_ROLE_BEHAVIORAL in active_roles)
+            )
+            or (
+                request.application.HasField("tracking_active")
+                and request.application.tracking_active
+                != (camera.CAMERA_ROLE_TRACKING in active_roles)
+            )
+            or (
+                request.application.HasField("eye_tracking_active")
+                and request.application.eye_tracking_active
+                != (camera.CAMERA_ROLE_EYE_TRACKING in active_roles)
+            )
         ):
             return _rejected(
                 command.command_id,
@@ -184,6 +192,7 @@ class ManualPulses:
                 requested=request.application.requested,
                 behavioral_active=(camera.CAMERA_ROLE_BEHAVIORAL in active_roles),
                 tracking_active=(camera.CAMERA_ROLE_TRACKING in active_roles),
+                eye_tracking_active=(camera.CAMERA_ROLE_EYE_TRACKING in active_roles),
                 applied=observation,
             )
             receipt = await self.resolution.set_pulse_resolution(
@@ -259,6 +268,7 @@ def _active_external_previews(
     for role, setting in (
         (camera.CAMERA_ROLE_BEHAVIORAL, settings.behavioral),
         (camera.CAMERA_ROLE_TRACKING, settings.tracking),
+        (camera.CAMERA_ROLE_EYE_TRACKING, settings.eye_tracking),
     ):
         worker = workers.get(role)
         if (

@@ -1,0 +1,7 @@
+{
+  "configuration_exactly_restored": true,
+  "phase": 1,
+  "current_revision": "3",
+  "startup_display_revision": "1",
+  "method_limit": "Configuration update does not rerun startup InitializeDisplay; fault classification not exercised"
+}

@@ -1,0 +1,7 @@
+acquisition_tracking_worker RecordPulseEvidence 32d39437-c6c9-4013-9675-78b099caea21 failed: ValueError: terminal pulse evidence changed after retention
+acquisition_behavioral_worker RecordPulseEvidence 0dd86b4b-b2ea-4f4b-9920-b69ac9306264 failed: ValueError: terminal pulse evidence changed after retention
+CephVR supervisor shutdown: COORDINATOR_HEALTH_LOST: worker report rejected: EVIDENCE: Stopped conditions missing
+InterruptSession aa4d5577-8b6d-4968-bcf7-c87b46fdcb30 failed: SESSION_IDENTITY: no exact live session
+CephVR acquisition shutdown: WORKER_HEARTBEAT_SILENCE: registered acquisition_behavioral_worker stopped reporting before its silence bound
+CephVR launcher controller channel lost: eof
+CephVR launcher supervisor channel lost: eof

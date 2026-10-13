@@ -125,6 +125,12 @@ def test_quiescence_needs_live_off_state_or_bound_closed_claim_proof() -> None:
     roles = {camera.CAMERA_ROLE_BEHAVIORAL, camera.CAMERA_ROLE_TRACKING}
 
     assert recovery.device_work_quiescent(required_pulse_roles=roles)
+    roles.add(camera.CAMERA_ROLE_EYE_TRACKING)
+    assert not recovery.device_work_quiescent(required_pulse_roles=roles)
+    state.eye_tracking.running = True
+    assert not recovery.device_work_quiescent(required_pulse_roles=roles)
+    state.eye_tracking.running = False
+    assert recovery.device_work_quiescent(required_pulse_roles=roles)
 
     invalidate_released_idle_proof(pulse)
     assert not recovery.device_work_quiescent(required_pulse_roles=roles)

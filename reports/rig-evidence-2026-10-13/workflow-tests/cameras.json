@@ -1,0 +1,1731 @@
+{
+  "method": "authenticated managed controller; real hardware; no firmware upload",
+  "checks": {
+    "before": {
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "1"
+      },
+      "acquisition_devices": {},
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7"
+        },
+        "command_id": "87234bfa-12a8-4267-b943-ff2221974831",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front"
+          },
+          {
+            "output_id": "calibration_left"
+          },
+          {
+            "output_id": "calibration_right"
+          },
+          {
+            "output_id": "calibration_bottom"
+          }
+        ],
+        "observed_monotonic_ns": "2122392190900",
+        "complete": true,
+        "calibration": {
+          "diagnostic_id": "4efdebbc-7db7-454a-8a25-7e0fc16ad012",
+          "controller_generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7",
+          "renderer_generation": "002bba58-9d1e-4250-ba7b-b65f954e14ca",
+          "configuration_revision": "1",
+          "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+          "observed_monotonic_ns": "2122392178500",
+          "profile_sha256": "50d49f99b3eb75bed46384dd4a9a41de850d8468b5dccb17d6a2cd33d2e1c621",
+          "arena_sha256": "822218d45bb7333a473b0906ff13e3c86d7ef72a01f16fb53a91a958e3b1f073",
+          "presented": false,
+          "idle": true,
+          "resources_closed": true,
+          "adjustment_sequence": "2",
+          "calibration_view": "frame_grid"
+        }
+      },
+      "reservation": {},
+      "errors": [],
+      "warnings": [],
+      "prompts": [],
+      "metadata": [],
+      "recoveries": []
+    },
+    "enabled_cameras": [
+      [
+        1,
+        "40065509"
+      ],
+      [
+        2,
+        "40747103"
+      ]
+    ],
+    "identity": [
+      true,
+      "40065509: connection and identity verified\n40747103: connection and identity verified"
+    ],
+    "40065509_start": [
+      true,
+      "Completed"
+    ],
+    "40065509_running": {
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "1"
+      },
+      "acquisition_devices": {
+        "source": {
+          "backend_name": "acquisition",
+          "backend_generation": "fc75b715-d73a-4557-bd97-c081bfbbb3c2"
+        },
+        "state_revision": "4",
+        "observed_monotonic_ns": "2134946615100",
+        "behavioral": {
+          "device_open": true,
+          "preview_running": true,
+          "cleanup_pending": false,
+          "preview_run_id": "21fb0d9a-45d0-4135-91b8-c9a43ae3ade9",
+          "applied_configuration_revision": "1",
+          "capabilities": {
+            "exposure_us": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 26.0,
+              "maximum": 10000000.0,
+              "increment": 1.0,
+              "unit": "us"
+            },
+            "gain": {
+              "decimal": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": 0.0,
+                "maximum": 36.0,
+                "unit": "dB"
+              },
+              "selector": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "choices": [
+                  {
+                    "value": "All",
+                    "sdk_symbol": "All"
+                  }
+                ]
+              }
+            },
+            "frame_rate_hz": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 0.0062864274108552845,
+              "maximum": 1000000.0,
+              "unit": "Hz"
+            },
+            "roi": {
+              "width": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "4",
+                "maximum": "3716",
+                "increment": "4",
+                "unit": "pixels"
+              },
+              "height": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "2",
+                "maximum": "3004",
+                "increment": "2",
+                "unit": "pixels"
+              },
+              "offset_x": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "2352",
+                "increment": "4",
+                "unit": "coordinates"
+              },
+              "offset_y": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "8",
+                "increment": "2",
+                "unit": "coordinates"
+              }
+            },
+            "pixel_format": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Mono8",
+                  "sdk_symbol": "Mono8"
+                },
+                {
+                  "value": "BayerRG8",
+                  "sdk_symbol": "BayerRG8"
+                },
+                {
+                  "value": "BayerRG12",
+                  "sdk_symbol": "BayerRG12"
+                },
+                {
+                  "value": "BayerRG12p",
+                  "sdk_symbol": "BayerRG12p"
+                },
+                {
+                  "value": "RGB8",
+                  "sdk_symbol": "RGB8"
+                },
+                {
+                  "value": "BGR8",
+                  "sdk_symbol": "BGR8"
+                }
+              ]
+            },
+            "trigger_selector": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "FrameBurstStart",
+                  "sdk_symbol": "FrameBurstStart"
+                },
+                {
+                  "value": "frame_start",
+                  "sdk_symbol": "FrameStart"
+                }
+              ]
+            },
+            "trigger_source": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Software",
+                  "sdk_symbol": "Software"
+                },
+                {
+                  "value": "Line1",
+                  "sdk_symbol": "Line1"
+                },
+                {
+                  "value": "Line3",
+                  "sdk_symbol": "Line3"
+                },
+                {
+                  "value": "Line4",
+                  "sdk_symbol": "Line4"
+                },
+                {
+                  "value": "SoftwareSignal1",
+                  "sdk_symbol": "SoftwareSignal1"
+                },
+                {
+                  "value": "SoftwareSignal2",
+                  "sdk_symbol": "SoftwareSignal2"
+                },
+                {
+                  "value": "SoftwareSignal3",
+                  "sdk_symbol": "SoftwareSignal3"
+                }
+              ]
+            },
+            "trigger_activation": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "rising_edge",
+                  "sdk_symbol": "RisingEdge"
+                },
+                {
+                  "value": "falling_edge",
+                  "sdk_symbol": "FallingEdge"
+                }
+              ]
+            },
+            "exposure_duration_mode": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "timed",
+                  "sdk_symbol": "Timed"
+                },
+                {
+                  "value": "TriggerWidth",
+                  "sdk_symbol": "TriggerWidth"
+                }
+              ]
+            },
+            "trigger_rate_limit": {
+              "maximum_hz": 33.74502260916515,
+              "evidence": "connected SDK estimate from readable ResultingFrameRate (Hz)"
+            }
+          },
+          "applied_settings": {
+            "exposure_us": 25000.0,
+            "gain": {
+              "decimal_value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          "device": {
+            "configured_id": "40065509",
+            "physical_id": "40065509",
+            "model": "acA4112-30uc",
+            "transport_interface": "usb3"
+          },
+          "preview_prepared": true,
+          "preview_visible": true,
+          "preview_visibility_revision": "1"
+        },
+        "tracking": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "device": {
+            "configured_id": "40747103"
+          },
+          "preview_prepared": false,
+          "preview_visible": false
+        },
+        "pulses": {
+          "port": "COM8",
+          "connection_id": "3a278b72-cfc7-4292-a024-ec460d3d1a04",
+          "request_id": "3a278b72-cfc7-4292-a024-ec460d3d1a04-8",
+          "observed_monotonic_ns": "2134586005800",
+          "state": {
+            "configuration_valid": true,
+            "watchdog_stopped": false,
+            "watchdog_ms": 3000,
+            "behavioral": {
+              "enabled": true,
+              "running": true,
+              "pin": "D11",
+              "applied_frequency_hz": 30.0
+            },
+            "tracking": {
+              "enabled": false,
+              "running": false
+            },
+            "eye_tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 4,
+            "firmware": "cephvr2_uno_3",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "2134508563100"
+        },
+        "eye_tracking": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "preview_prepared": false,
+          "preview_visible": false
+        }
+      },
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7"
+        },
+        "command_id": "87234bfa-12a8-4267-b943-ff2221974831",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front"
+          },
+          {
+            "output_id": "calibration_left"
+          },
+          {
+            "output_id": "calibration_right"
+          },
+          {
+            "output_id": "calibration_bottom"
+          }
+        ],
+        "observed_monotonic_ns": "2122392190900",
+        "complete": true,
+        "calibration": {
+          "diagnostic_id": "4efdebbc-7db7-454a-8a25-7e0fc16ad012",
+          "controller_generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7",
+          "renderer_generation": "002bba58-9d1e-4250-ba7b-b65f954e14ca",
+          "configuration_revision": "1",
+          "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+          "observed_monotonic_ns": "2122392178500",
+          "profile_sha256": "50d49f99b3eb75bed46384dd4a9a41de850d8468b5dccb17d6a2cd33d2e1c621",
+          "arena_sha256": "822218d45bb7333a473b0906ff13e3c86d7ef72a01f16fb53a91a958e3b1f073",
+          "presented": false,
+          "idle": true,
+          "resources_closed": true,
+          "adjustment_sequence": "2",
+          "calibration_view": "frame_grid"
+        }
+      },
+      "reservation": {},
+      "errors": [],
+      "warnings": [
+        {
+          "warning_id": "b48b47cc-41d3-4a73-aefb-f894d0f4181d",
+          "component": "acquisition_camera",
+          "message": "optional native timestamp is unavailable at preparation",
+          "acquisition_occurrence": {
+            "source": {
+              "role": "acquisition_behavioral_worker",
+              "generation": "9ef7caac-dbb6-42ac-a3bf-f0d7fbc58078"
+            },
+            "work": {},
+            "configuration_revision": "1",
+            "preview_run_id": "21fb0d9a-45d0-4135-91b8-c9a43ae3ade9",
+            "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+            "count": "1",
+            "first_observed_monotonic_ns": "2134605507700",
+            "last_observed_monotonic_ns": "2134605507700",
+            "camera": "CAMERA_ROLE_BEHAVIORAL"
+          }
+        }
+      ],
+      "prompts": [],
+      "metadata": [],
+      "recoveries": []
+    },
+    "40065509_stop": [
+      true,
+      "Completed"
+    ],
+    "40747103_start": [
+      true,
+      "Completed"
+    ],
+    "40747103_running": {
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "1"
+      },
+      "acquisition_devices": {
+        "source": {
+          "backend_name": "acquisition",
+          "backend_generation": "fc75b715-d73a-4557-bd97-c081bfbbb3c2"
+        },
+        "state_revision": "7",
+        "observed_monotonic_ns": "2140817086600",
+        "behavioral": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "applied_configuration_revision": "1",
+          "capabilities": {
+            "exposure_us": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 26.0,
+              "maximum": 10000000.0,
+              "increment": 1.0,
+              "unit": "us"
+            },
+            "gain": {
+              "decimal": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": 0.0,
+                "maximum": 36.0,
+                "unit": "dB"
+              },
+              "selector": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "choices": [
+                  {
+                    "value": "All",
+                    "sdk_symbol": "All"
+                  }
+                ]
+              }
+            },
+            "frame_rate_hz": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 0.0062864274108552845,
+              "maximum": 1000000.0,
+              "unit": "Hz"
+            },
+            "roi": {
+              "width": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "4",
+                "maximum": "3716",
+                "increment": "4",
+                "unit": "pixels"
+              },
+              "height": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "2",
+                "maximum": "3004",
+                "increment": "2",
+                "unit": "pixels"
+              },
+              "offset_x": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "2352",
+                "increment": "4",
+                "unit": "coordinates"
+              },
+              "offset_y": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "8",
+                "increment": "2",
+                "unit": "coordinates"
+              }
+            },
+            "pixel_format": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Mono8",
+                  "sdk_symbol": "Mono8"
+                },
+                {
+                  "value": "BayerRG8",
+                  "sdk_symbol": "BayerRG8"
+                },
+                {
+                  "value": "BayerRG12",
+                  "sdk_symbol": "BayerRG12"
+                },
+                {
+                  "value": "BayerRG12p",
+                  "sdk_symbol": "BayerRG12p"
+                },
+                {
+                  "value": "RGB8",
+                  "sdk_symbol": "RGB8"
+                },
+                {
+                  "value": "BGR8",
+                  "sdk_symbol": "BGR8"
+                }
+              ]
+            },
+            "trigger_selector": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "FrameBurstStart",
+                  "sdk_symbol": "FrameBurstStart"
+                },
+                {
+                  "value": "frame_start",
+                  "sdk_symbol": "FrameStart"
+                }
+              ]
+            },
+            "trigger_source": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Software",
+                  "sdk_symbol": "Software"
+                },
+                {
+                  "value": "Line1",
+                  "sdk_symbol": "Line1"
+                },
+                {
+                  "value": "Line3",
+                  "sdk_symbol": "Line3"
+                },
+                {
+                  "value": "Line4",
+                  "sdk_symbol": "Line4"
+                },
+                {
+                  "value": "SoftwareSignal1",
+                  "sdk_symbol": "SoftwareSignal1"
+                },
+                {
+                  "value": "SoftwareSignal2",
+                  "sdk_symbol": "SoftwareSignal2"
+                },
+                {
+                  "value": "SoftwareSignal3",
+                  "sdk_symbol": "SoftwareSignal3"
+                }
+              ]
+            },
+            "trigger_activation": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "rising_edge",
+                  "sdk_symbol": "RisingEdge"
+                },
+                {
+                  "value": "falling_edge",
+                  "sdk_symbol": "FallingEdge"
+                }
+              ]
+            },
+            "exposure_duration_mode": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "timed",
+                  "sdk_symbol": "Timed"
+                },
+                {
+                  "value": "TriggerWidth",
+                  "sdk_symbol": "TriggerWidth"
+                }
+              ]
+            },
+            "trigger_rate_limit": {
+              "maximum_hz": 33.74502260916515,
+              "evidence": "connected SDK estimate from readable ResultingFrameRate (Hz)"
+            }
+          },
+          "applied_settings": {
+            "exposure_us": 25000.0,
+            "gain": {
+              "decimal_value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          "device": {
+            "configured_id": "40065509",
+            "physical_id": "40065509",
+            "model": "acA4112-30uc",
+            "transport_interface": "usb3"
+          },
+          "preview_prepared": false,
+          "preview_visible": false
+        },
+        "tracking": {
+          "device_open": true,
+          "preview_running": true,
+          "cleanup_pending": false,
+          "preview_run_id": "43ff1bdc-fbe0-4453-b49e-d07dfff46a2b",
+          "applied_configuration_revision": "1",
+          "capabilities": {
+            "exposure_us": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 5.0,
+              "maximum": 10000000.0,
+              "increment": 1.0,
+              "unit": "us"
+            },
+            "gain": {
+              "decimal": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": 0.0,
+                "maximum": 48.164799306236986,
+                "unit": "dB"
+              },
+              "selector": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "choices": [
+                  {
+                    "value": "All",
+                    "sdk_symbol": "All"
+                  }
+                ]
+              }
+            },
+            "frame_rate_hz": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 0.1,
+              "maximum": 1000000.0,
+              "unit": "Hz"
+            },
+            "roi": {
+              "width": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "4",
+                "maximum": "2448",
+                "increment": "4",
+                "unit": "pixels"
+              },
+              "height": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "1",
+                "maximum": "2048",
+                "increment": "1",
+                "unit": "pixels"
+              },
+              "offset_x": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "860",
+                "increment": "4",
+                "unit": "coordinates"
+              },
+              "offset_y": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "704",
+                "increment": "1",
+                "unit": "coordinates"
+              }
+            },
+            "pixel_format": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Mono8",
+                  "sdk_symbol": "Mono8"
+                },
+                {
+                  "value": "Mono10",
+                  "sdk_symbol": "Mono10"
+                },
+                {
+                  "value": "Mono10p",
+                  "sdk_symbol": "Mono10p"
+                },
+                {
+                  "value": "Mono12",
+                  "sdk_symbol": "Mono12"
+                },
+                {
+                  "value": "Mono12p",
+                  "sdk_symbol": "Mono12p"
+                }
+              ]
+            },
+            "trigger_selector": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "FrameBurstStart",
+                  "sdk_symbol": "FrameBurstStart"
+                },
+                {
+                  "value": "FrameBurstEnd",
+                  "sdk_symbol": "FrameBurstEnd"
+                },
+                {
+                  "value": "FrameBurstActive",
+                  "sdk_symbol": "FrameBurstActive"
+                },
+                {
+                  "value": "frame_start",
+                  "sdk_symbol": "FrameStart"
+                },
+                {
+                  "value": "FrameEnd",
+                  "sdk_symbol": "FrameEnd"
+                },
+                {
+                  "value": "FrameActive",
+                  "sdk_symbol": "FrameActive"
+                },
+                {
+                  "value": "ExposureStart",
+                  "sdk_symbol": "ExposureStart"
+                },
+                {
+                  "value": "ExposureEnd",
+                  "sdk_symbol": "ExposureEnd"
+                },
+                {
+                  "value": "ExposureActive",
+                  "sdk_symbol": "ExposureActive"
+                }
+              ]
+            },
+            "trigger_source": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Software",
+                  "sdk_symbol": "Software"
+                },
+                {
+                  "value": "Line1",
+                  "sdk_symbol": "Line1"
+                },
+                {
+                  "value": "Line2",
+                  "sdk_symbol": "Line2"
+                },
+                {
+                  "value": "Line3",
+                  "sdk_symbol": "Line3"
+                },
+                {
+                  "value": "SoftwareSignal1",
+                  "sdk_symbol": "SoftwareSignal1"
+                },
+                {
+                  "value": "SoftwareSignal2",
+                  "sdk_symbol": "SoftwareSignal2"
+                },
+                {
+                  "value": "SoftwareSignal3",
+                  "sdk_symbol": "SoftwareSignal3"
+                },
+                {
+                  "value": "Counter1Active",
+                  "sdk_symbol": "Counter1Active"
+                },
+                {
+                  "value": "Counter1End",
+                  "sdk_symbol": "Counter1End"
+                },
+                {
+                  "value": "Counter1Start",
+                  "sdk_symbol": "Counter1Start"
+                },
+                {
+                  "value": "Counter2Active",
+                  "sdk_symbol": "Counter2Active"
+                },
+                {
+                  "value": "Counter2End",
+                  "sdk_symbol": "Counter2End"
+                },
+                {
+                  "value": "Counter2Start",
+                  "sdk_symbol": "Counter2Start"
+                },
+                {
+                  "value": "Timer1Active",
+                  "sdk_symbol": "Timer1Active"
+                },
+                {
+                  "value": "Timer1End",
+                  "sdk_symbol": "Timer1End"
+                },
+                {
+                  "value": "Timer2Active",
+                  "sdk_symbol": "Timer2Active"
+                },
+                {
+                  "value": "Timer2End",
+                  "sdk_symbol": "Timer2End"
+                }
+              ]
+            },
+            "trigger_activation": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "rising_edge",
+                  "sdk_symbol": "RisingEdge"
+                },
+                {
+                  "value": "falling_edge",
+                  "sdk_symbol": "FallingEdge"
+                },
+                {
+                  "value": "AnyEdge",
+                  "sdk_symbol": "AnyEdge"
+                },
+                {
+                  "value": "LevelHigh",
+                  "sdk_symbol": "LevelHigh"
+                },
+                {
+                  "value": "LevelLow",
+                  "sdk_symbol": "LevelLow"
+                }
+              ]
+            },
+            "exposure_duration_mode": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "timed",
+                  "sdk_symbol": "Timed"
+                },
+                {
+                  "value": "TriggerWidth",
+                  "sdk_symbol": "TriggerWidth"
+                },
+                {
+                  "value": "TriggerControlled",
+                  "sdk_symbol": "TriggerControlled"
+                }
+              ]
+            },
+            "trigger_rate_limit": {
+              "maximum_hz": 172.2949689869056,
+              "evidence": "connected SDK estimate from readable BslResultingAcquisitionFrameRate (Hz)"
+            }
+          },
+          "applied_settings": {
+            "exposure_us": 5000.0,
+            "gain": {
+              "decimal_value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          "device": {
+            "configured_id": "40747103",
+            "physical_id": "40747103",
+            "model": "a2A2464-77umPRO",
+            "transport_interface": "usb3"
+          },
+          "preview_prepared": true,
+          "preview_visible": true,
+          "preview_visibility_revision": "4"
+        },
+        "pulses": {
+          "port": "COM8",
+          "connection_id": "9a00410b-2736-48a6-af8c-2d67a9bc63a6",
+          "request_id": "9a00410b-2736-48a6-af8c-2d67a9bc63a6-8",
+          "observed_monotonic_ns": "2140246562700",
+          "state": {
+            "configuration_valid": true,
+            "watchdog_stopped": false,
+            "watchdog_ms": 3000,
+            "behavioral": {
+              "enabled": false,
+              "running": false
+            },
+            "tracking": {
+              "enabled": true,
+              "running": true,
+              "pin": "D10",
+              "applied_frequency_hz": 60.0
+            },
+            "eye_tracking": {
+              "enabled": false,
+              "running": false
+            }
+          },
+          "capabilities": {
+            "protocol_version": 4,
+            "firmware": "cephvr2_uno_3",
+            "pins": [
+              "D2",
+              "D3",
+              "D4",
+              "D5",
+              "D6",
+              "D7",
+              "D8",
+              "D9",
+              "D10",
+              "D11",
+              "D12",
+              "D13"
+            ],
+            "minimum_requested_hz": 0.1,
+            "maximum_requested_hz": 100.0,
+            "minimum_watchdog_ms": 500,
+            "maximum_watchdog_ms": 10000,
+            "rising_edge_input_pins": [
+              "D2",
+              "D3"
+            ]
+          },
+          "capabilities_observed_monotonic_ns": "2140169337200"
+        },
+        "eye_tracking": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "preview_prepared": false,
+          "preview_visible": false
+        }
+      },
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7"
+        },
+        "command_id": "87234bfa-12a8-4267-b943-ff2221974831",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front"
+          },
+          {
+            "output_id": "calibration_left"
+          },
+          {
+            "output_id": "calibration_right"
+          },
+          {
+            "output_id": "calibration_bottom"
+          }
+        ],
+        "observed_monotonic_ns": "2122392190900",
+        "complete": true,
+        "calibration": {
+          "diagnostic_id": "4efdebbc-7db7-454a-8a25-7e0fc16ad012",
+          "controller_generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7",
+          "renderer_generation": "002bba58-9d1e-4250-ba7b-b65f954e14ca",
+          "configuration_revision": "1",
+          "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+          "observed_monotonic_ns": "2122392178500",
+          "profile_sha256": "50d49f99b3eb75bed46384dd4a9a41de850d8468b5dccb17d6a2cd33d2e1c621",
+          "arena_sha256": "822218d45bb7333a473b0906ff13e3c86d7ef72a01f16fb53a91a958e3b1f073",
+          "presented": false,
+          "idle": true,
+          "resources_closed": true,
+          "adjustment_sequence": "2",
+          "calibration_view": "frame_grid"
+        }
+      },
+      "reservation": {},
+      "errors": [],
+      "warnings": [
+        {
+          "warning_id": "b48b47cc-41d3-4a73-aefb-f894d0f4181d",
+          "component": "acquisition_camera",
+          "message": "optional native timestamp is unavailable at preparation",
+          "acquisition_occurrence": {
+            "source": {
+              "role": "acquisition_behavioral_worker",
+              "generation": "9ef7caac-dbb6-42ac-a3bf-f0d7fbc58078"
+            },
+            "work": {},
+            "configuration_revision": "1",
+            "preview_run_id": "21fb0d9a-45d0-4135-91b8-c9a43ae3ade9",
+            "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+            "count": "1",
+            "first_observed_monotonic_ns": "2134605507700",
+            "last_observed_monotonic_ns": "2134605507700",
+            "camera": "CAMERA_ROLE_BEHAVIORAL"
+          }
+        },
+        {
+          "warning_id": "7917d5af-b9ee-4de9-a27a-80455620309b",
+          "component": "acquisition_camera",
+          "message": "optional native timestamp is unavailable at preparation",
+          "acquisition_occurrence": {
+            "source": {
+              "role": "acquisition_tracking_worker",
+              "generation": "a03fb063-c2e0-4998-890b-68430aa709ff"
+            },
+            "work": {},
+            "configuration_revision": "1",
+            "preview_run_id": "43ff1bdc-fbe0-4453-b49e-d07dfff46a2b",
+            "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+            "count": "1",
+            "first_observed_monotonic_ns": "2140266227700",
+            "last_observed_monotonic_ns": "2140266227700",
+            "camera": "CAMERA_ROLE_TRACKING"
+          }
+        }
+      ],
+      "prompts": [],
+      "metadata": [],
+      "recoveries": []
+    },
+    "40747103_stop": [
+      true,
+      "Completed"
+    ],
+    "after": {
+      "session": {
+        "phase": "SESSION_PHASE_CONFIGURATION"
+      },
+      "trial": {
+        "phase": "TRIAL_PHASE_PENDING"
+      },
+      "configuration": {
+        "revision": "1"
+      },
+      "acquisition_devices": {
+        "source": {
+          "backend_name": "acquisition",
+          "backend_generation": "fc75b715-d73a-4557-bd97-c081bfbbb3c2"
+        },
+        "state_revision": "8",
+        "observed_monotonic_ns": "2143914318700",
+        "behavioral": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "applied_configuration_revision": "1",
+          "capabilities": {
+            "exposure_us": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 26.0,
+              "maximum": 10000000.0,
+              "increment": 1.0,
+              "unit": "us"
+            },
+            "gain": {
+              "decimal": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": 0.0,
+                "maximum": 36.0,
+                "unit": "dB"
+              },
+              "selector": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "choices": [
+                  {
+                    "value": "All",
+                    "sdk_symbol": "All"
+                  }
+                ]
+              }
+            },
+            "frame_rate_hz": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 0.0062864274108552845,
+              "maximum": 1000000.0,
+              "unit": "Hz"
+            },
+            "roi": {
+              "width": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "4",
+                "maximum": "3716",
+                "increment": "4",
+                "unit": "pixels"
+              },
+              "height": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "2",
+                "maximum": "3004",
+                "increment": "2",
+                "unit": "pixels"
+              },
+              "offset_x": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "2352",
+                "increment": "4",
+                "unit": "coordinates"
+              },
+              "offset_y": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "8",
+                "increment": "2",
+                "unit": "coordinates"
+              }
+            },
+            "pixel_format": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Mono8",
+                  "sdk_symbol": "Mono8"
+                },
+                {
+                  "value": "BayerRG8",
+                  "sdk_symbol": "BayerRG8"
+                },
+                {
+                  "value": "BayerRG12",
+                  "sdk_symbol": "BayerRG12"
+                },
+                {
+                  "value": "BayerRG12p",
+                  "sdk_symbol": "BayerRG12p"
+                },
+                {
+                  "value": "RGB8",
+                  "sdk_symbol": "RGB8"
+                },
+                {
+                  "value": "BGR8",
+                  "sdk_symbol": "BGR8"
+                }
+              ]
+            },
+            "trigger_selector": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "FrameBurstStart",
+                  "sdk_symbol": "FrameBurstStart"
+                },
+                {
+                  "value": "frame_start",
+                  "sdk_symbol": "FrameStart"
+                }
+              ]
+            },
+            "trigger_source": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Software",
+                  "sdk_symbol": "Software"
+                },
+                {
+                  "value": "Line1",
+                  "sdk_symbol": "Line1"
+                },
+                {
+                  "value": "Line3",
+                  "sdk_symbol": "Line3"
+                },
+                {
+                  "value": "Line4",
+                  "sdk_symbol": "Line4"
+                },
+                {
+                  "value": "SoftwareSignal1",
+                  "sdk_symbol": "SoftwareSignal1"
+                },
+                {
+                  "value": "SoftwareSignal2",
+                  "sdk_symbol": "SoftwareSignal2"
+                },
+                {
+                  "value": "SoftwareSignal3",
+                  "sdk_symbol": "SoftwareSignal3"
+                }
+              ]
+            },
+            "trigger_activation": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "rising_edge",
+                  "sdk_symbol": "RisingEdge"
+                },
+                {
+                  "value": "falling_edge",
+                  "sdk_symbol": "FallingEdge"
+                }
+              ]
+            },
+            "exposure_duration_mode": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "timed",
+                  "sdk_symbol": "Timed"
+                },
+                {
+                  "value": "TriggerWidth",
+                  "sdk_symbol": "TriggerWidth"
+                }
+              ]
+            },
+            "trigger_rate_limit": {
+              "maximum_hz": 33.74502260916515,
+              "evidence": "connected SDK estimate from readable ResultingFrameRate (Hz)"
+            }
+          },
+          "applied_settings": {
+            "exposure_us": 25000.0,
+            "gain": {
+              "decimal_value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 30.00030000300003,
+            "roi": {
+              "width": 1760,
+              "height": 3000,
+              "offset_x": 396,
+              "offset_y": 4
+            },
+            "pixel_format": "BayerRG8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line4",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          "device": {
+            "configured_id": "40065509",
+            "physical_id": "40065509",
+            "model": "acA4112-30uc",
+            "transport_interface": "usb3"
+          },
+          "preview_prepared": false,
+          "preview_visible": false
+        },
+        "tracking": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "applied_configuration_revision": "1",
+          "capabilities": {
+            "exposure_us": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 5.0,
+              "maximum": 10000000.0,
+              "increment": 1.0,
+              "unit": "us"
+            },
+            "gain": {
+              "decimal": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": 0.0,
+                "maximum": 48.164799306236986,
+                "unit": "dB"
+              },
+              "selector": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "choices": [
+                  {
+                    "value": "All",
+                    "sdk_symbol": "All"
+                  }
+                ]
+              }
+            },
+            "frame_rate_hz": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "minimum": 0.1,
+              "maximum": 1000000.0,
+              "unit": "Hz"
+            },
+            "roi": {
+              "width": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "4",
+                "maximum": "2448",
+                "increment": "4",
+                "unit": "pixels"
+              },
+              "height": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "1",
+                "maximum": "2048",
+                "increment": "1",
+                "unit": "pixels"
+              },
+              "offset_x": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "860",
+                "increment": "4",
+                "unit": "coordinates"
+              },
+              "offset_y": {
+                "access": "FEATURE_ACCESS_READ_WRITE",
+                "minimum": "0",
+                "maximum": "704",
+                "increment": "1",
+                "unit": "coordinates"
+              }
+            },
+            "pixel_format": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Mono8",
+                  "sdk_symbol": "Mono8"
+                },
+                {
+                  "value": "Mono10",
+                  "sdk_symbol": "Mono10"
+                },
+                {
+                  "value": "Mono10p",
+                  "sdk_symbol": "Mono10p"
+                },
+                {
+                  "value": "Mono12",
+                  "sdk_symbol": "Mono12"
+                },
+                {
+                  "value": "Mono12p",
+                  "sdk_symbol": "Mono12p"
+                }
+              ]
+            },
+            "trigger_selector": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "FrameBurstStart",
+                  "sdk_symbol": "FrameBurstStart"
+                },
+                {
+                  "value": "FrameBurstEnd",
+                  "sdk_symbol": "FrameBurstEnd"
+                },
+                {
+                  "value": "FrameBurstActive",
+                  "sdk_symbol": "FrameBurstActive"
+                },
+                {
+                  "value": "frame_start",
+                  "sdk_symbol": "FrameStart"
+                },
+                {
+                  "value": "FrameEnd",
+                  "sdk_symbol": "FrameEnd"
+                },
+                {
+                  "value": "FrameActive",
+                  "sdk_symbol": "FrameActive"
+                },
+                {
+                  "value": "ExposureStart",
+                  "sdk_symbol": "ExposureStart"
+                },
+                {
+                  "value": "ExposureEnd",
+                  "sdk_symbol": "ExposureEnd"
+                },
+                {
+                  "value": "ExposureActive",
+                  "sdk_symbol": "ExposureActive"
+                }
+              ]
+            },
+            "trigger_source": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "Software",
+                  "sdk_symbol": "Software"
+                },
+                {
+                  "value": "Line1",
+                  "sdk_symbol": "Line1"
+                },
+                {
+                  "value": "Line2",
+                  "sdk_symbol": "Line2"
+                },
+                {
+                  "value": "Line3",
+                  "sdk_symbol": "Line3"
+                },
+                {
+                  "value": "SoftwareSignal1",
+                  "sdk_symbol": "SoftwareSignal1"
+                },
+                {
+                  "value": "SoftwareSignal2",
+                  "sdk_symbol": "SoftwareSignal2"
+                },
+                {
+                  "value": "SoftwareSignal3",
+                  "sdk_symbol": "SoftwareSignal3"
+                },
+                {
+                  "value": "Counter1Active",
+                  "sdk_symbol": "Counter1Active"
+                },
+                {
+                  "value": "Counter1End",
+                  "sdk_symbol": "Counter1End"
+                },
+                {
+                  "value": "Counter1Start",
+                  "sdk_symbol": "Counter1Start"
+                },
+                {
+                  "value": "Counter2Active",
+                  "sdk_symbol": "Counter2Active"
+                },
+                {
+                  "value": "Counter2End",
+                  "sdk_symbol": "Counter2End"
+                },
+                {
+                  "value": "Counter2Start",
+                  "sdk_symbol": "Counter2Start"
+                },
+                {
+                  "value": "Timer1Active",
+                  "sdk_symbol": "Timer1Active"
+                },
+                {
+                  "value": "Timer1End",
+                  "sdk_symbol": "Timer1End"
+                },
+                {
+                  "value": "Timer2Active",
+                  "sdk_symbol": "Timer2Active"
+                },
+                {
+                  "value": "Timer2End",
+                  "sdk_symbol": "Timer2End"
+                }
+              ]
+            },
+            "trigger_activation": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "rising_edge",
+                  "sdk_symbol": "RisingEdge"
+                },
+                {
+                  "value": "falling_edge",
+                  "sdk_symbol": "FallingEdge"
+                },
+                {
+                  "value": "AnyEdge",
+                  "sdk_symbol": "AnyEdge"
+                },
+                {
+                  "value": "LevelHigh",
+                  "sdk_symbol": "LevelHigh"
+                },
+                {
+                  "value": "LevelLow",
+                  "sdk_symbol": "LevelLow"
+                }
+              ]
+            },
+            "exposure_duration_mode": {
+              "access": "FEATURE_ACCESS_READ_WRITE",
+              "choices": [
+                {
+                  "value": "timed",
+                  "sdk_symbol": "Timed"
+                },
+                {
+                  "value": "TriggerWidth",
+                  "sdk_symbol": "TriggerWidth"
+                },
+                {
+                  "value": "TriggerControlled",
+                  "sdk_symbol": "TriggerControlled"
+                }
+              ]
+            },
+            "trigger_rate_limit": {
+              "maximum_hz": 172.2949689869056,
+              "evidence": "connected SDK estimate from readable BslResultingAcquisitionFrameRate (Hz)"
+            }
+          },
+          "applied_settings": {
+            "exposure_us": 5000.0,
+            "gain": {
+              "decimal_value": 0.0,
+              "unit": "dB",
+              "selector": "All"
+            },
+            "frame_rate_hz": 60.0,
+            "roi": {
+              "width": 1588,
+              "height": 1344,
+              "offset_x": 0,
+              "offset_y": 135
+            },
+            "pixel_format": "Mono8",
+            "trigger_selector": "frame_start",
+            "trigger_source": "Line2",
+            "trigger_activation": "rising_edge",
+            "exposure_duration_mode": "timed"
+          },
+          "device": {
+            "configured_id": "40747103",
+            "physical_id": "40747103",
+            "model": "a2A2464-77umPRO",
+            "transport_interface": "usb3"
+          },
+          "preview_prepared": false,
+          "preview_visible": false
+        },
+        "eye_tracking": {
+          "device_open": false,
+          "preview_running": false,
+          "cleanup_pending": false,
+          "preview_run_id": "",
+          "preview_prepared": false,
+          "preview_visible": false
+        }
+      },
+      "visual_stimulus_display": {
+        "source": {
+          "role": "visual_stimulus",
+          "generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "backend": {
+          "backend_name": "visual_stimulus",
+          "backend_generation": "2e1a6860-7441-4773-a0cf-0250ffdda65c"
+        },
+        "controller": {
+          "role": "controller",
+          "generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7"
+        },
+        "command_id": "87234bfa-12a8-4267-b943-ff2221974831",
+        "requested_revision": "1",
+        "applied_revision": "1",
+        "outputs": [
+          {
+            "output_id": "calibration_front"
+          },
+          {
+            "output_id": "calibration_left"
+          },
+          {
+            "output_id": "calibration_right"
+          },
+          {
+            "output_id": "calibration_bottom"
+          }
+        ],
+        "observed_monotonic_ns": "2122392190900",
+        "complete": true,
+        "calibration": {
+          "diagnostic_id": "4efdebbc-7db7-454a-8a25-7e0fc16ad012",
+          "controller_generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7",
+          "renderer_generation": "002bba58-9d1e-4250-ba7b-b65f954e14ca",
+          "configuration_revision": "1",
+          "state": "DISPLAY_CALIBRATION_STATE_IDLE",
+          "observed_monotonic_ns": "2122392178500",
+          "profile_sha256": "50d49f99b3eb75bed46384dd4a9a41de850d8468b5dccb17d6a2cd33d2e1c621",
+          "arena_sha256": "822218d45bb7333a473b0906ff13e3c86d7ef72a01f16fb53a91a958e3b1f073",
+          "presented": false,
+          "idle": true,
+          "resources_closed": true,
+          "adjustment_sequence": "2",
+          "calibration_view": "frame_grid"
+        }
+      },
+      "reservation": {},
+      "errors": [],
+      "warnings": [
+        {
+          "warning_id": "b48b47cc-41d3-4a73-aefb-f894d0f4181d",
+          "component": "acquisition_camera",
+          "message": "optional native timestamp is unavailable at preparation",
+          "acquisition_occurrence": {
+            "source": {
+              "role": "acquisition_behavioral_worker",
+              "generation": "9ef7caac-dbb6-42ac-a3bf-f0d7fbc58078"
+            },
+            "work": {},
+            "configuration_revision": "1",
+            "preview_run_id": "21fb0d9a-45d0-4135-91b8-c9a43ae3ade9",
+            "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+            "count": "1",
+            "first_observed_monotonic_ns": "2134605507700",
+            "last_observed_monotonic_ns": "2134605507700",
+            "camera": "CAMERA_ROLE_BEHAVIORAL"
+          }
+        },
+        {
+          "warning_id": "7917d5af-b9ee-4de9-a27a-80455620309b",
+          "component": "acquisition_camera",
+          "message": "optional native timestamp is unavailable at preparation",
+          "acquisition_occurrence": {
+            "source": {
+              "role": "acquisition_tracking_worker",
+              "generation": "a03fb063-c2e0-4998-890b-68430aa709ff"
+            },
+            "work": {},
+            "configuration_revision": "1",
+            "preview_run_id": "43ff1bdc-fbe0-4453-b49e-d07dfff46a2b",
+            "code": "NATIVE_TIMESTAMP_UNAVAILABLE",
+            "count": "1",
+            "first_observed_monotonic_ns": "2140266227700",
+            "last_observed_monotonic_ns": "2140266227700",
+            "camera": "CAMERA_ROLE_TRACKING"
+          }
+        }
+      ],
+      "prompts": [],
+      "metadata": [],
+      "recoveries": []
+    },
+    "configuration_unchanged": true
+  },
+  "controller_generation": "3b3d4c5c-ab07-47d4-b753-23568d3997e7"
+}

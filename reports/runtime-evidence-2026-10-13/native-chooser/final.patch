@@ -1,0 +1,320 @@
+diff --git a/architecture.md b/architecture.md
+index 9f3ac52..f7aece6 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -63,7 +63,7 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 24 |
+ | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
+-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 162 |
++| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 164 |
+ | <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 37 |
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+diff --git a/docs/architecture/gui.md b/docs/architecture/gui.md
+index 7f9ec6b..297c168 100644
+--- a/docs/architecture/gui.md
++++ b/docs/architecture/gui.md
+@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ <a id="g01"></a>
+ ### G01 — GUI navigation and settings ownership
+ 
+-**Status:** Accepted · **Revision:** 162
++**Status:** Accepted · **Revision:** 164
+ 
+ - Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
+   Origin Y, Width and Height in pixels. Frame origins use bottom-left output
+@@ -34,7 +34,10 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ - Review and managed runtime use the same DashboardWindow page construction,
+   shared cards, fields, navigation and responsive layout rules. Mode-specific wiring
+   supplies local fixtures or authoritative state and command availability; it never
+-  adds a separate page layout. Review-only inspection menus and runtime authority
++  adds a separate page layout. Dashboard cards have identical geometry in both modes:
++  no Runtime-only control button or hint row. Take control, confirmed Take over and
++  Release remain in Runtime's Control menu; the HUD reports actual authority.
++  Review-only inspection menus and runtime authority
+   actions retain their distinct purpose. Older saved review drafts migrate through
+   the owning validators without discarding valid settings or changing source files
+   during load; genuine invalid drafts remain preserved and explicitly reported.
+@@ -100,7 +103,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+   Dashboard metadata, camera drafts and recording choices. The
+   [snapshot contract](../../contracts/gui-configuration-files.md) owns formats and
+   inventories. Validate all sections before restoring local drafts, save atomically,
+-  preserve unset/dormant settings and close choosers on authority loss. Full files
++  preserve unset/dormant settings and close choosers on authority loss. Asynchronous
++  file/folder pickers use the shared Qt widget dialog before setting filters or paths,
++  avoiding the Windows shell helper's deferred-launch cancellation race. Keep immediate
++  rejection, existing owner/path validation, stale-result fencing and deferred deletion;
++  no delay, nested blocking chooser or global dialog setting. Full files
+   retain explicit rig identities and require matching inventories; projector-only
+   files remain portable under the calibration contract. Loading starts no device,
+   uploads no firmware and restores no runtime status, ownership or credentials.
+diff --git a/src/cephvr/gui/calibration_files.py b/src/cephvr/gui/calibration_files.py
+index 3072a7d..9fe379a 100644
+--- a/src/cephvr/gui/calibration_files.py
++++ b/src/cephvr/gui/calibration_files.py
+@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEvent, QIODevice, QSaveFile, pyqtSignal
+ from PyQt6.QtWidgets import QCheckBox, QFileDialog, QHBoxLayout, QLineEdit, QWidget
+ 
+ from cephvr.gui.components import button
++from cephvr.gui.file_dialogs import file_dialog
+ from cephvr.gui.theme import SIZES
+ from cephvr.visual_stimulus.config.calibration_bars import reference_lengths
+ 
+@@ -220,7 +221,7 @@ class CalibrationFiles(QWidget):
+         if self.dialog is not None:
+             self.dialog.raise_()
+             return
+-        dialog = QFileDialog(
++        dialog = file_dialog(
+             self,
+             "Save projector configuration" if save else "Load projector configuration",
+         )
+diff --git a/src/cephvr/gui/configuration_files.py b/src/cephvr/gui/configuration_files.py
+index bdd5858..2871cf4 100644
+--- a/src/cephvr/gui/configuration_files.py
++++ b/src/cephvr/gui/configuration_files.py
+@@ -11,6 +11,7 @@ from PyQt6.QtCore import QIODevice, QObject, QSaveFile, pyqtSignal
+ from PyQt6.QtWidgets import QFileDialog, QPushButton, QWidget
+ 
+ from cephvr.gui.components import button
++from cephvr.gui.file_dialogs import file_dialog
+ 
+ JSON = dict[str, Any]
+ SNAPSHOT_LIMIT = 32 * 1024 * 1024
+@@ -142,7 +143,7 @@ class ConfigurationFiles(QObject):
+         if self.dialog is not None:
+             self.dialog.raise_()
+             return
+-        dialog = QFileDialog(
++        dialog = file_dialog(
+             self.parent_widget, f"{'Save' if save else 'Load'} {self.title}"
+         )
+         dialog.setNameFilter(f"{self.title} configuration (*.json)")
+diff --git a/src/cephvr/gui/paths.py b/src/cephvr/gui/paths.py
+index 3630737..617afeb 100644
+--- a/src/cephvr/gui/paths.py
++++ b/src/cephvr/gui/paths.py
+@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
+ )
+ 
+ from cephvr.gui.components import button, equal_row_height
++from cephvr.gui.file_dialogs import file_dialog
+ from cephvr.gui.theme import SIZES
+ 
+ 
+@@ -76,7 +77,7 @@ class PathField(QWidget):
+             self.dialog.raise_()
+             return
+         current = Path(self.editor.text()).expanduser()
+-        dialog = QFileDialog(self, self.title)
++        dialog = file_dialog(self, self.title)
+         if self.file_filter:
+             dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+             dialog.setNameFilter(self.file_filter)
+diff --git a/src/cephvr/gui/prepared_file_picker.py b/src/cephvr/gui/prepared_file_picker.py
+index 142e85c..cf7d308 100644
+--- a/src/cephvr/gui/prepared_file_picker.py
++++ b/src/cephvr/gui/prepared_file_picker.py
+@@ -5,6 +5,8 @@ from pathlib import Path
+ from PyQt6.QtCore import QObject, pyqtSignal
+ from PyQt6.QtWidgets import QFileDialog, QWidget
+ 
++from cephvr.gui.file_dialogs import file_dialog
++
+ 
+ class PreparedFilePicker(QObject):
+     selected = pyqtSignal(str, str, bool)
+@@ -21,7 +23,7 @@ class PreparedFilePicker(QObject):
+             return
+         parent = self.parent()
+         assert isinstance(parent, QWidget)
+-        dialog = QFileDialog(
++        dialog = file_dialog(
+             parent,
+             f"Select prepared {preset.lower().replace('looming image', 'looming')}",
+             root,
+diff --git a/src/cephvr/gui/stimulus_parameters.py b/src/cephvr/gui/stimulus_parameters.py
+index 5b331e2..6d0adeb 100644
+--- a/src/cephvr/gui/stimulus_parameters.py
++++ b/src/cephvr/gui/stimulus_parameters.py
+@@ -20,6 +20,7 @@ from cephvr.gui.arena_movement import ArenaMovement
+ from cephvr.gui.components import Card, button, equal_row_height, field, label
+ from cephvr.gui.epoch_motion import EpochMotion
+ from cephvr.gui.feedback_mappings import FeedbackMappings
++from cephvr.gui.file_dialogs import file_dialog
+ from cephvr.gui.image_parameters import ImageParameters
+ from cephvr.gui.looming_size import LoomingSize
+ from cephvr.gui.notices import FormNotice
+@@ -442,7 +443,7 @@ class StimulusParameters(QWidget):
+         if self.file_dialog is not None:
+             self.file_dialog.raise_()
+             return
+-        dialog = QFileDialog(self, "Select stimulus media", self.asset_root)
++        dialog = file_dialog(self, "Select stimulus media", self.asset_root)
+         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+         dialog.setNameFilter(
+             "Stimulus files (*.png *.tif *.tiff *.jpg *.jpeg *.mp4 *.mkv *.glb *.texture.json)"
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index e5ab380..c4fc0f9 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -448,8 +448,9 @@ def test_snapshot_limits_and_failed_save_preserve_existing_file(
+ @pytest.mark.parametrize(
+     "owner", ["protocol", "tracking", "microcontroller", "spikeglx", "gui"]
+ )
++@pytest.mark.parametrize("save", [False, True], ids=["load", "save"])
+ def test_config_chooser_closes_on_authority_loss_and_rechecks_load(
+-    window: DashboardWindow, tmp_path: Path, owner: str
++    window: DashboardWindow, tmp_path: Path, owner: str, save: bool
+ ) -> None:
+     files = (
+         window.config_files
+@@ -460,7 +461,8 @@ def test_config_chooser_closes_on_authority_loss_and_rechecks_load(
+     )
+     path = tmp_path / f"{owner}.json"
+     assert files.save_path(str(path))
+-    files.choose(save=False)
++    saved_bytes = path.read_bytes()
++    files.choose(save=save)
+     assert files.dialog is not None
+     original_dialog = files.dialog
+     window.apply_view(review_view(Phase.CONFIGURATION, observer=True))
+@@ -480,6 +482,7 @@ def test_config_chooser_closes_on_authority_loss_and_rechecks_load(
+     before = window.snapshots.capture()
+     original_dialog.fileSelected.emit(str(path))
+     assert window.snapshots.capture() == before
++    assert path.read_bytes() == saved_bytes
+ 
+ 
+ def test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling(
+@@ -3069,26 +3072,6 @@ def test_managed_camera_enable_accepts_missing_external_input(
+     assert "awaiting controller confirmation" in panel.console.toPlainText()
+ 
+ 
+-def test_managed_dashboard_exposes_explicit_control_acquisition(
+-    window: DashboardWindow,
+-) -> None:
+-    requested: list[bool] = []
+-    window.dashboard.control_requested.connect(lambda: requested.append(True))
+-    window.apply_view(
+-        DashboardView(connected=True, has_control=False, configuration_wired=False)
+-    )
+-    assert window.dashboard.control_button.isVisible()
+-    assert window.dashboard.control_button.isEnabled()
+-    assert "take control" in window.dashboard.control_hint.text().lower()
+-    window.dashboard.control_button.click()
+-    assert requested == [True]
+-    window.apply_view(
+-        DashboardView(connected=True, has_control=True, configuration_wired=False)
+-    )
+-    assert not window.dashboard.control_button.isEnabled()
+-    assert "control held" in window.dashboard.control_hint.text().lower()
+-
+-
+ def test_managed_camera_settings_submit_pfs_source_and_rate(
+     window: DashboardWindow,
+     tmp_path: Path,
+@@ -6403,6 +6386,12 @@ def test_stimulus_parameter_edit_invalid_guard_and_media_root(
+     parameters.asset_root = str(tmp_path)
+     media = tmp_path / "clip.mp4"
+     media.write_bytes(b"authoring-path-fixture")
++    before = editor.program
++    parameters.choose_media(identity)
++    assert parameters.file_dialog is not None
++    parameters.file_dialog.reject()
++    assert parameters.file_dialog is None
++    assert editor.program == before
+     parameters.set_media_path(identity, str(media))
+     assert parameters.apply()
+     assert editor.program.assets[0].logical_path == "clip.mp4"
+@@ -10788,12 +10777,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+     def signature(page: QWidget) -> tuple:
+         return (
+             tuple(card.caption.text() for card in page.findChildren(Card)),
+-            tuple(
+-                control.text()
+-                for control in page.findChildren(QAbstractButton)
+-                if control is not runtime.dashboard.control_button
+-                and control is not review.dashboard.control_button
+-            ),
++            tuple(control.text() for control in page.findChildren(QAbstractButton)),
+             tuple(editor.placeholderText() for editor in page.findChildren(QLineEdit)),
+             tuple(
+                 tuple(editor.itemText(i) for i in range(editor.count()))
+@@ -10817,11 +10801,6 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+         for window in (review, runtime):
+             window.resize(width, 940)
+             window.show()
+-        assert not review.dashboard.control_button.isVisible()
+-        assert runtime.dashboard.control_button.isVisible() == runtime_authority
+-        if runtime_authority:
+-            assert runtime.dashboard.control_button.text() == "Control held"
+-            assert not runtime.dashboard.control_button.isEnabled()
+         assert [b.text() for b in review.page_buttons] == [
+             b.text() for b in runtime.page_buttons
+         ]
+@@ -10836,7 +10815,7 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+                 for left, right in zip(review_items, runtime_items, strict=True)
+                 if left != right
+             ] == []
+-        selections = [(0, None, None)]
++        selections = [(0, None, None), (1, None, None)]
+         selections += [(3, None, i) for i in range(review.tracking.tabs.count())]
+         selections += [(2, i, None) for i in range(4)]
+         selections += [
+@@ -10863,28 +10842,40 @@ def test_review_and_runtime_share_page_elements_and_card_layouts(
+             )
+             assert signature(review_page) == signature(runtime_page)
+ 
+-            def visible_cards(parent: QWidget, page_index: int) -> list:
++            def visible_cards(parent: QWidget) -> list:
+                 return [
+                     (
+                         card.caption.text(),
+-                        # Runtime authority controls add height only to Dashboard's
+-                        # left column; compare the remaining cards in their own frame.
+-                        QRect(card.x(), 0, card.width(), card.height())
+-                        if runtime_authority
+-                        and page_index == 0
+-                        and card in parent.columns[0].findChildren(Card)
+-                        else card.geometry(),
++                        card.geometry(),
+                     )
+                     for card in parent.findChildren(Card)
+                     if card.isVisible()
+-                    and not (
+-                        runtime_authority
+-                        and page_index == 0
+-                        and card.caption.text() == "System controls"
+-                    )
+                 ]
+ 
+-            assert visible_cards(review_page, page) == visible_cards(runtime_page, page)
++            assert visible_cards(review_page) == visible_cards(runtime_page)
++        # Authority stays in the Runtime menu without changing any page geometry.
++        requests = []
++        monkeypatch.setattr(
++            bridge,
++            "request",
++            lambda action, **options: requests.append((action, options)),
++        )
++        for action in (manager.take, manager.release, manager.takeover):
++            action.setEnabled(True)
++        manager.take.trigger()
++        manager.release.trigger()
++        from PyQt6.QtWidgets import QMessageBox
++
++        for answer in (QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes):
++            monkeypatch.setattr(
++                QMessageBox, "question", lambda *args, response=answer: response
++            )
++            manager.takeover.trigger()
++        assert requests == [
++            ("take_control", {}),
++            ("release_control", {}),
++            ("take_control", {"takeover": True}),
++        ]
+     finally:
+         # Avoid persistence/controller shutdown dialogs in this isolated layout check.
+         review.tracking.annotation.close()

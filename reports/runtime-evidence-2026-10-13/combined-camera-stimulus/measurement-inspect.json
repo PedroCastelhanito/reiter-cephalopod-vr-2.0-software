@@ -1,0 +1,25 @@
+[
+  {
+    "label": "generation",
+    "value": "449c9382-c65d-4ed8-ae4e-393490ce9085"
+  },
+  {
+    "label": "configuration_matches_baseline",
+    "value": true
+  },
+  {
+    "label": "phase",
+    "value": "SESSION_PHASE_CONFIGURATION"
+  },
+  {
+    "label": "prompts",
+    "value": 0
+  },
+  {
+    "label": "cameras_released",
+    "value": {
+      "behavioral": true,
+      "tracking": true
+    }
+  }
+]

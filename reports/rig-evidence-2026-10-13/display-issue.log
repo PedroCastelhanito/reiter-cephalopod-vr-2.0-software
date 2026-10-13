@@ -1,0 +1,31 @@
+controller_generation "b548914b-5470-4ad8-8944-a1998b2438cc"
+missing_update {"command_id": "cbafefdb-1bcc-4e47-a14f-11feeec208f2", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+restored_update {"command_id": "988b271b-9d3a-4719-b1ad-48893c55480a", "complete": true, "succeeded": true, "needs_input": false, "failure": ""}
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-evidence-2026-10-13\display_issue_probe.py", line 64, in main
+    current = await update(candidate, "missing")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-evidence-2026-10-13\display_issue_probe.py", line 61, in update
+    raise TimeoutError("display result was not confirmed")
+TimeoutError: display result was not confirmed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-evidence-2026-10-13\display_issue_probe.py", line 73, in <module>
+    asyncio.run(main())
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ReiterU_PC\miniforge3\envs\CephVR\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-evidence-2026-10-13\display_issue_probe.py", line 67, in main
+    current = await update(original, "restored")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\rig-evidence-2026-10-13\display_issue_probe.py", line 61, in update
+    raise TimeoutError("display result was not confirmed")
+TimeoutError: display result was not confirmed

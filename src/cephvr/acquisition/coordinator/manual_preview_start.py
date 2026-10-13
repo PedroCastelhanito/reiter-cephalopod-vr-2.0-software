@@ -244,6 +244,7 @@ class ManualPreviewStart:
                 requested=self.configuration.settings.pulses,
                 behavioral_active=(camera.CAMERA_ROLE_BEHAVIORAL in external_roles),
                 tracking_active=(camera.CAMERA_ROLE_TRACKING in external_roles),
+                eye_tracking_active=(camera.CAMERA_ROLE_EYE_TRACKING in external_roles),
                 applied=observation,
             )
             pulse_receipt = await self.resolution.set_pulse_resolution(

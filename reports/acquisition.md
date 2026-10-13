@@ -1,5 +1,110 @@
 # Acquisition status
 
+Oct13 owner-selected125ms drain margins remain applied to all camera roles
+under [A10](../docs/architecture/acquisition.md#a10); Eye is disabled/unmeasured.
+Two consecutive final normal60s Behavior30Hz/Tracking60Hz plus stimulus recordings
+close with1797/3596 valid received frames each, complete post-cutoff accounting/two
+excluded frames per camera and SDK failed/missed counters0. All four camera videos
+externally count1800/3600 and fully decode. Camera queues drop9/28 in the first run,
+6/19 in the repeat; identified video duplicates remain, so no zero-loss claim.
+Live PID/UUID/NVENC evidence proves camera encoding RTX2080Ti/GPU1 and renderer
+RTX5060Ti/GPU0. Renderer reaches60.0333/60.0167 real groups/s.
+
+[A07](../docs/architecture/acquisition.md#a07) revision61 orders final warning
+acknowledgement before Finished. Exact terminal MCU retries compare the MCU outcome
+after scope/connection checks, independent of fresh forwarding command ID. Worker
+health retains canceled scheduled trial scope until proven session cleanup. Shared
+absolute-clock waits correct early async ON/OFF/end dispatch while preserving E05/
+E08/E11 boundaries and strict evidence validation. Both final NewSession/restore
+operations succeed in the same generation, no shutdown. Original settings and released
+cameras are verified. No camera/PFS/encoder/firmware tuning;125ms is an adopted
+engineering allowance, not a guaranteed worst-case bound.
+
+1123 affected-owner regressions pass/3 skip/6 deselect; native pipe14 pass; Ruff,
+Win32 mypy427 files and boundaries667/zero violations pass. Source/context records
+retain initial fixture/sandbox failures, exact failed-generation administrative recovery
+and all removed experiments. Remaining review/camera recording drops and broader
+Eye/Tracking/paired/optical acceptance stay explicit.
+[Dated raw evidence, verification and limits](runtime-evidence-2026-10-13/combined-camera-stimulus/context.json)
+
+
+Oct13 owner chooses measuring drain timing before approving A10 file allowances.
+Managed sessionless previews retain original camera/trigger settings and recording
+is disabled. Three completed two-second terminal-OFF/AcquisitionStop observations
+per camera across two generations: Behavior25ms exposure/30Hz first receipt within
+67.4401ms of ON dispatch and latest late receipt36.0479ms after OFF acknowledgement;
+Tracking5ms/60Hz first receipt within23.426ms, no post-OFF receipt observed. First
+receipt latency includes serial/phase/exposure/SDK, so it conservatively bounds an
+empirical combined component; adding one period gives100.7734/40.0927ms. Proposed
+125ms/50ms were initial proposals, superseded by the owner's125ms-for-all selection
+above; observations are not guaranteed worst-case bounds. Initial
+diagnostic sealed-ring failure is corrected to direct SDK tail retrieval/release;
+raw tail observations are separate from production accounting. Repeated MCU
+preview-start pending/unavailable and later command-record byte budget exhaustion
+curtail planned sampling; retain the cause/reuse investigation in TODO/runtime
+report. Normal GUI restored with exact original configuration and released devices.
+[Raw measurements, proposal, limits and provenance](runtime-evidence-2026-10-13/combined-camera-stimulus/drain-assessment.json).
+
+Oct13 owner-authorized GPU placement verification confirms the current physical
+RTX2080Ti UUID GPU-4d9915eb-bf04-59a8-8811-e0779366a0dc resolves to CUDA/NVENC
+ordinal1 under [SYS-002](../architecture.md#sys-002)/A08. Fresh native NVENC capability
+resolution and the existing camera command builders inject -gpu1 for Behavior,
+Tracking and Eye using their current saved argument lists and actual configured
+dimensions. Each bounded generated-frame encode has a matching live NVIDIA
+encoder-session PID on that physical GPU, closes normally and externally probes
+four frames. No camera is opened or saved encoding/ROI/rate/PFS setting changed.
+This verifies encoder placement and command execution; camera conversion, actual
+footage, simultaneous load and sustained throughput remain pending.
+[Exact argv, live session samples and media evidence](runtime-evidence-2026-10-13/gpu-placement/context.json).
+
+Oct13 fresh bounded capture is explicitly authorized for the workflow audit.
+Behavior40065509 and Tracking40747103 real identity, usable capture/visible preview,
+Stop and release pass on the current tree; the earlier no-usable-frame failure is
+historical and does not reproduce. Eye remains disabled/untested. Optional native
+timestamp availability warnings persist (A09). Combined recording Setup fails before
+activation because the active cameras' file-only post-cutoff drain margins are unset
+(A10); no camera video is produced. Establish exposure + rig delivery/SDK bound +
+one applied frame period before setting those allowances and repeating recording.
+Do not substitute guessed values. Failed-Setup renderer cleanup also fails, while
+eventual exact full application absence is confirmed. See the current
+[workflow failure/remedy inventory](runtime.md) and
+[raw camera/Setup evidence](rig-evidence-2026-10-13/workflow-tests/).
+Final orderly shutdown confirms exact application absence but acquisition's MCU
+Close RPC after controller exit emits an uncaught UNAVAILABLE traceback. Retain
+this teardown defect separately from the successful device preview releases;
+review shutdown ordering and expected authority-loss handling under E08.
+
+Oct13 Eye MCU integration is now owner-authorized and implemented under
+[A01 revision18/A11 revision44](../docs/architecture/acquisition.md): protocol4
+supplies an independent Eye output through Setup, preview, trial boundaries,
+rate evidence and all-output stop/recovery. Explicit external FrameStart source,
+unique pin/rate and device assignment remain required; defaults stay unset/disabled.
+Firmware compiles and local controller/acquisition regressions pass834, with three
+privilege skips/two native marker deselections. This supersedes the unconditional
+Eye-integration admission block, not the owner's physical capture/electrical deferrals.
+Installed protocol3 evidence below is historical and does not validate protocol4;
+upload remains manual. [Current implementation/evidence](runtime.md),
+[rig acceptance](rig-verification.md).
+
+Oct13 native rig checks: controller-owned COM8 Connect confirms protocol 3 /
+`cephvr2_uno_2` and stopped Behavior/Tracking outputs. An actual GUI Behavior Connect
+attempt receives no usable frame by its original deadline and raises
+WORKER_OWNER_FAILURE; exact application shutdown/guard release is verified.
+The cause is unresolved; earlier preview passes remain historical evidence.
+The owner defers further camera capture, all Eye checks and other electrical measurements.
+Oct13 Trial state pin-12 output testing is now explicitly requested through the GUI
+Test button. Earlier agent-triggered firmware tests have matched start/stopped evidence;
+the owner clarifies manual triggering, and Runtime is reopened with pin 12 ready.
+No SpikeGLX reception pass is inferred. This does not close electrical/timing or camera
+acceptance; see the [current MCU assessment](runtime.md).
+Windows backend/native regression passes 1,520 with five privilege skips across owners;
+the native protected-source and ring/process checks are separate from real camera
+acceptance. The later matched FFmpeg/ffprobe 9.0.2 upgrade resolves the original 4.3.2
+MP4 incompatibility; current camera lists and reference-adapted proposals pass
+build/device validation and short synthetic normal-closure checks on RTX 2080 Ti.
+Saved settings remain unchanged; camera quality/conversion/throughput are unverified. [Current assessment](runtime.md),
+[dated evidence](rig-evidence-2026-10-13/) and [remaining checks](rig-verification.md).
+
 The Oct12 model-hierarchy audit deeply traced capture/source identity, cutoff,
 shared-ring synchronization and terminal recording/flush/close paths, and sampled
 manual devices, sessions and pixel adapters. No additional actionable acquisition

@@ -1,0 +1,20 @@
+Input #0, rawvideo, from 'fd:':
+  Duration: N/A, start: 0.000000, bitrate: 3801638 kb/s
+  Stream #0:0: Video: rawvideo (RGB[24] / 0x18424752), rgb24, 1760x3000, 3801638 kb/s, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (rawvideo (native) -> h264 (h264_nvenc))
+Output #0, mp4, to 'C:\Dev\projects\reiter-cephalopod-vr\reiter-cephalopod-vr-2.0-software\reports\runtime-evidence-2026-10-13\ffmpeg\synthetic-v2-behavioral-reference_adapted_not_applied.mp4':
+  Metadata:
+    cephvr_identity_version: 1
+    cephvr_session_id: 1fbd03fb-0199-40a3-b657-65daca57a187
+    cephvr_trial_id : 058aaee4-3c63-4204-a0bb-bb834d62c6fc
+    cephvr_camera_role: behavioral
+    cephvr_device_id: synthetic-only
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (High 4:4:4 Predictive) (avc1 / 0x31637661), yuv444p(pc, bt709/unknown/unknown, progressive), 1760x3000, q=2-31, 30 fps, 1000k tbn
+    Metadata:
+      encoder         : Lavc63.1.102 h264_nvenc
+    Side data:
+      CPB properties: bitrate max/min/avg: 150000000/0/0 buffer size: 0 vbv_delay: N/A
+[out#0/mp4 @ 000002312974cd80] video:323KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.759176%
+frame=    8 fps=0.0 q=35.0 Lsize=     326KiB time=00:00:00.26 bitrate=10002.0kbits/s speed=0.768x elapsed=0:00:00.34    

@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "source_scope": "Concurrent dirty working tree; hashes after final validation",
+  "source_hashes": [
+    {
+      "path": "src/cephvr/gui/protocol.py",
+      "sha256": "27C5EA93285AF6A9A608FF571220079132B1F871075E3CD17220EB035A8E0411"
+    },
+    {
+      "path": "src/cephvr/gui/protocol_document.py",
+      "sha256": "4D4F3BA33FDB0B16A12613E7ABFC0D7F8D65A914152B5B6CEDB86FCFE387FD7B"
+    },
+    {
+      "path": "src/cephvr/gui/protocol_snapshot.py",
+      "sha256": "73214F9D479D728CEFBD6E65EC3FA7DEF464B1A67D5DEDB96394A27152F441BA"
+    },
+    {
+      "path": "tests/gui/test_dashboard.py",
+      "sha256": "77F0282723F5BCCAC420C2D395C56DC6486C99B8D81DA1E3B17728CAA0EE2B94"
+    }
+  ],
+  "commands": [
+    "QT_QPA_PLATFORM=offscreen .venv/Scripts/python.exe -m pytest tests/gui/test_dashboard.py -q -m 'not windows and not rig' -k 'protocol or subgroup or grouped or managed_configuration or snapshot' --basetemp=.local-protocol-group-controls-final --junitxml=reports/runtime-evidence-2026-10-13/protocol-group-controls.xml -p no:faulthandler",
+    ".venv/Scripts/python.exe -m ruff check src/cephvr/gui tests/gui",
+    ".venv/Scripts/python.exe -m ruff format --check src/cephvr/gui tests/gui",
+    ".venv/Scripts/python.exe -m mypy --platform win32 src/cephvr/gui",
+    ".venv/Scripts/python.exe tools/check_backend_boundaries.py",
+    "git diff --check"
+  ],
+  "outcome": "50 passed, 392 deselected; Ruff check/format pass (154 files); mypy pass (152 source files); boundaries 667 modules/zero violations; whitespace pass",
+  "limitations": "Offscreen only; no active runtime/GUI restart or device action. Existing native hover/overflow findings remain open. Initial pytest default temporary-directory creation failed; repository-local basetemp succeeded."
+}

@@ -11,6 +11,28 @@ from cephvr.platform.windows.jobs import WindowsLaunchError
 GPU_UUID = "GPU-00000000-0000-4000-8000-000000000001"
 
 
+def test_wrong_live_opengl_adapter_is_distinct_from_driver_failure(monkeypatch):
+    monkeypatch.setattr(nvidia_device, "sys", SimpleNamespace(platform="win32"))
+    selected = nvidia_device.NvidiaDevice(0, GPU_UUID, "NVIDIA GeForce RTX 5060 Ti")
+    monkeypatch.setattr(nvidia_device, "_enumerate_cuda_devices", lambda: [selected])
+    with pytest.raises(nvidia_device.OpenGLAdapterMismatch, match="AMD Radeon"):
+        nvidia_device.verify_opengl_rendering_device(
+            "AMD Radeon", "ATI Technologies Inc."
+        )
+    assert (
+        nvidia_device.verify_opengl_rendering_device(selected.name, "NVIDIA")
+        == selected
+    )
+
+    def failed_driver():
+        raise WindowsLaunchError("cuInit failed")
+
+    monkeypatch.setattr(nvidia_device, "_enumerate_cuda_devices", failed_driver)
+    with pytest.raises(WindowsLaunchError, match="cuInit failed") as failure:
+        nvidia_device.verify_opengl_rendering_device(selected.name, "NVIDIA")
+    assert not isinstance(failure.value, nvidia_device.OpenGLAdapterMismatch)
+
+
 def test_malformed_uuid_fails_before_native_discovery(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

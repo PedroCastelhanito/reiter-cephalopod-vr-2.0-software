@@ -18,13 +18,67 @@ from cephvr.controller.microcontroller.protocol import (
     parse_capabilities,
     parse_diagnostic,
     parse_reply,
+    parse_state,
 )
 from cephvr.controller.microcontroller.pulses import PulseExecutor
 
 
-def test_v3_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
+def test_eye_state_requires_its_own_pin_rate_and_stopped_evidence() -> None:
+    fields = (
+        "valid=1 watchdog_stopped=0 watchdog_ms=1000 "
+        "behavioral_enabled=0 behavioral_running=0 "
+        "tracking_enabled=0 tracking_running=0 "
+        "eye_tracking_enabled=1 eye_tracking_running=0 "
+        "eye_tracking_pin=D8 eye_tracking_applied_hz=45.0"
+    )
+    state = parse_state(parse_reply(f"OK id=eye {fields}\n".encode()), configured=True)
+    assert state["outputs"]["eye_tracking"] == {
+        "enabled": True,
+        "running": False,
+        "pin": "D8",
+        "frequency": 45.0,
+    }
+    with pytest.raises(ProtocolError, match="missing"):
+        parse_state(
+            parse_reply(
+                f"OK id=eye {fields.replace('eye_tracking_running=0 ', '')}\n".encode()
+            ),
+            configured=True,
+        )
+    with pytest.raises(ProtocolError, match="pin and applied frequency"):
+        parse_state(
+            parse_reply(
+                f"OK id=eye {fields.replace('eye_tracking_pin=D8 ', '')}\n".encode()
+            ),
+            configured=True,
+        )
+
+
+def test_eye_boundary_cannot_be_replaced_with_tracking_mask() -> None:
+    clock = _StepClock()
+    channel = SerialChannel("fake", 115200, 10, clock=clock, serial_port=_FakePort())
+    executor = PulseExecutor(channel, 10, clock=clock)
+    executor.reserve(
+        100,
+        microcontroller_pb2.PULSE_BOUNDARY_COMMAND_ON,
+        selected_roles=("eye_tracking",),
+    )
+    with pytest.raises(ValueError, match="masks must match"):
+        executor.reserve(
+            200,
+            microcontroller_pb2.PULSE_BOUNDARY_COMMAND_OFF,
+            selected_roles=("tracking",),
+        )
+    executor.reserve(
+        200,
+        microcontroller_pb2.PULSE_BOUNDARY_COMMAND_OFF,
+        selected_roles=("eye_tracking",),
+    )
+
+
+def test_v4_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
     reply = parse_reply(
-        b"OK   id=run-1   protocol=3 firmware=board pins=D2,D3 input_pins=D2,D3 min_hz=0.1 "
+        b"OK   id=run-1   protocol=4 firmware=board pins=D2,D3 input_pins=D2,D3 min_hz=0.1 "
         b"max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
     )
 
@@ -38,7 +92,7 @@ def test_v3_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
         watchdog_min,
         watchdog_max,
     ) = parse_capabilities(reply)
-    assert (version, firmware, pins) == (3, "board", ("D2", "D3"))
+    assert (version, firmware, pins) == (4, "board", ("D2", "D3"))
     assert input_pins == ("D2", "D3")
     assert minimum == 0.1
     assert maximum == 60.0
@@ -47,7 +101,7 @@ def test_v3_reply_accepts_multiple_spaces_and_caps_pin_list() -> None:
 
 def test_caps_rejects_input_pin_outside_advertised_pins() -> None:
     reply = parse_reply(
-        b"OK id=run-1 protocol=3 firmware=board pins=D2,D3 input_pins=D4 "
+        b"OK id=run-1 protocol=4 firmware=board pins=D2,D3 input_pins=D4 "
         b"min_hz=0.1 max_hz=60.0 watchdog_min_ms=100 watchdog_max_ms=10000\n"
     )
     with pytest.raises(ProtocolError, match="input_pins"):
@@ -71,7 +125,7 @@ def test_diagnostic_reply_requires_exact_kind_pin_and_edge_shape() -> None:
         )
 
 
-@pytest.mark.parametrize("kind", ["behavioral", "tracking"])
+@pytest.mark.parametrize("kind", ["behavioral", "tracking", "eye_tracking"])
 @pytest.mark.parametrize("active,edges", [(1, 1), (1, 17), (0, 59), (0, 2**32 - 1)])
 def test_camera_diagnostic_preserves_generated_count(
     kind: str, active: int, edges: int
@@ -100,10 +154,10 @@ def test_channel_ignores_stale_ids_and_drains_fragmented_bounded_replies() -> No
         request_id = payload.decode("ascii").split("id=", 1)[1].split()[0]
         port.feed(b"x" * 520 + b"\n")
         port.feed(
-            b"OK id=stale watchdog_stopped=0 behavioral_running=0 tracking_running=0\n"
+            b"OK id=stale watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0\n"
         )
         port.feed(
-            f"OK id={request_id} watchdog_stopped=0 behavioral_running=0 tracking_running=0\n".encode()
+            f"OK id={request_id} watchdog_stopped=0 behavioral_running=0 tracking_running=0 eye_tracking_running=0\n".encode()
         )
         return len(payload)
 
@@ -185,11 +239,18 @@ def test_malformed_matched_ack_has_no_ack_timestamp_or_fabricated_state() -> Non
     assert resulting is None
 
 
-def test_watchdog_stopped_off_retains_stop_state_and_matched_ack() -> None:
+@pytest.mark.parametrize(
+    "roles",
+    [("behavioral",), ("eye_tracking",), ("behavioral", "tracking", "eye_tracking")],
+)
+def test_watchdog_stopped_off_retains_stop_state_and_matched_ack(
+    roles: tuple[str, ...],
+) -> None:
     evidence, resulting = _pulse_evidence(
-        b"OK id={request_id} watchdog_stopped=1 behavioral_running=0 tracking_running=0\n",
+        b"OK id={request_id} watchdog_stopped=1 behavioral_running=0 tracking_running=0 eye_tracking_running=0\n",
         verb="OFF",
         command=microcontroller_pb2.PULSE_BOUNDARY_COMMAND_OFF,
+        roles=roles,
     )
 
     assert evidence.outcome == microcontroller_pb2.PULSE_COMMAND_OUTCOME_APPLIED
@@ -199,6 +260,8 @@ def test_watchdog_stopped_off_retains_stop_state_and_matched_ack() -> None:
     assert resulting is not None
     assert resulting.watchdog_stopped is True
     assert resulting.behavioral.running is False
+    assert resulting.eye_tracking.running is False
+    assert evidence.eye_tracking_selected == ("eye_tracking" in roles)
 
 
 def _pulse_evidence(
@@ -206,6 +269,7 @@ def _pulse_evidence(
     *,
     verb: str,
     command: microcontroller_pb2.PulseBoundaryCommand,
+    roles: tuple[str, ...] = ("behavioral",),
 ) -> tuple[
     microcontroller_pb2.PulseCommandEvidence,
     microcontroller_pb2.MicrocontrollerState | None,
@@ -236,7 +300,7 @@ def _pulse_evidence(
     return executor.execute(
         verb,
         command,
-        ("behavioral",),
+        roles,
         10000,
         connection_id=channel.connection_id or "",
         boundary_ns=None,
