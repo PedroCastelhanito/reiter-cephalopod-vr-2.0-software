@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-13",
+  "repository": "https://github.com/PedroCastelhanito/reiter-cephalopod-vr-2.0-software",
+  "visibility": "public",
+  "owner": "PedroCastelhanito",
+  "default_branch": "main",
+  "metadata_method": "Read-only GitHub REST repository metadata",
+  "original_remote_commit": "f4e6bc89a612e5f33fe5b5256281bd1650257e32",
+  "original_unpushed_commit": "8bc7349a14c3481f7e10dc4b5ea64d8eb9442fe2",
+  "local_recovery_ref": "refs/codex-backups/pre-sync-8bc7349",
+  "pushed_work_commit": "93803aa60e471c4205cc96a76690e5fd48f76366",
+  "push_method": "git push origin main, normal fast-forward; no force",
+  "verification": "Direct ls-remote matched pushed work commit, ahead/behind0/0, tracked working tree clean before final bookkeeping commit.",
+  "local_video_manifest": "local-video-manifest.json",
+  "local_video_files": 71,
+  "local_video_bytes": 10081381328,
+  "protobuf_snapshot_byte_checks": 166,
+  "protobuf_snapshot_mismatches": 0,
+  "credentials_scan": "No matches for bearer credentials, GitHub/OpenAI key formats, private-key headers or populated token/password/client-secret JSON fields in reports. Pattern scans are not a complete security audit.",
+  "approval_review": "Initial push rejected before execution; destination ownership/visibility and payload credential patterns checked; ordinary retry approved.",
+  "limits": "Large raw videos remain only on this machine and in the local recovery ref; remote checkout contains manifests/logs/metadata. No new runtime/device acceptance performed."
+}

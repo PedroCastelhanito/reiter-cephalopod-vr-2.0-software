@@ -14,7 +14,6 @@ Recheck source findings before implementation; local completion does not close r
 
 ## In progress
 
-- [ ] `git-sync-current-work` [repo] Commit and sync current source/reports/evidence; preserve oversized raw recordings locally with hashes, then verify clean tracked state and remote equality. — Owner chat
 
 ## Next
 
