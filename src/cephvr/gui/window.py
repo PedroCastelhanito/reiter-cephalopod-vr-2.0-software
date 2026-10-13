@@ -119,14 +119,9 @@ class DashboardWindow(QMainWindow):
             )
         )
         self.config_files = self.snapshots.files(self)
-        self.config_files.load_button.setText("Load GUI…")
-        self.config_files.save_button.setText("Save GUI as…")
-        sidebar_layout.insertWidget(
-            sidebar_layout.count() - 1, self.config_files.load_button
-        )
-        sidebar_layout.insertWidget(
-            sidebar_layout.count() - 1, self.config_files.save_button
-        )
+        for control in (self.config_files.load_button, self.config_files.save_button):
+            control.setParent(self)
+            control.hide()
         header.addStretch()
         header.addWidget(self.dashboard.preview_button)
         header_controls = (

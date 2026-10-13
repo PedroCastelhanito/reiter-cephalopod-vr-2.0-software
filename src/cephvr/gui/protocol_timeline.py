@@ -40,6 +40,7 @@ class ProgramTimeline(QWidget):
     batch_selected = pyqtSignal(object)
     screens_changed = pyqtSignal()
     height_changed = pyqtSignal()
+    viewport_changed = pyqtSignal()
 
     def __init__(self, *, details: bool = True) -> None:
         super().__init__()
@@ -63,6 +64,7 @@ class ProgramTimeline(QWidget):
         self.scrollbar = QScrollBar(Qt.Orientation.Horizontal, self)
         self.scrollbar.setObjectName("TimelineScroll")
         self.scrollbar.valueChanged.connect(lambda _value: self.update())
+        self.scrollbar.valueChanged.connect(self.viewport_changed)
         self.batch_runs: tuple[tuple[int, int, str] | None, ...] = ()
         self.batch_hits: list[tuple[QRectF, str]] = []
         self.batch_offset = 0
@@ -115,7 +117,7 @@ class ProgramTimeline(QWidget):
     def block_width(self) -> float:
         return max(
             150.0,
-            (self.width() - 8 - (48 if self.block_actions.enabled else 0))
+            (self.width() - (40 if self.block_actions.enabled else -7))
             / max(1, len(self.nodes)),
         )
 
@@ -128,14 +130,14 @@ class ProgramTimeline(QWidget):
                 ceil(
                     len(self.nodes) * self.block_width()
                     - self.width()
-                    + 8
-                    + (48 if self.block_actions.enabled else 0)
+                    + (40 if self.block_actions.enabled else -7)
                 ),
             ),
         )
         self.scrollbar.setPageStep(self.width())
         self.scrollbar.setSingleStep(150)
         self.scrollbar.setVisible(self.scrollbar.maximum() > 0)
+        self.viewport_changed.emit()
 
     def reveal_selection(self) -> None:
         start = int(self.index * self.block_width())
@@ -299,10 +301,19 @@ class ProgramTimeline(QWidget):
                 60,
             )
             selected = self.paths[i] in self.selection
-            painter.setBrush(stimulus_color(self.type_keys[i]))
+            group = isinstance(node, Group)
+            painter.setBrush(
+                QColor(COLORS.selection if selected else COLORS.input)
+                if group
+                else stimulus_color(self.type_keys[i])
+            )
             painter.setPen(
                 QPen(
-                    QColor(COLORS.text if selected else COLORS.border),
+                    QColor(
+                        (COLORS.accent if group else COLORS.text)
+                        if selected
+                        else COLORS.border
+                    ),
                     2 if selected else 1,
                 )
             )
@@ -311,11 +322,25 @@ class ProgramTimeline(QWidget):
             name = node_name(node).replace("_", " ")
             value = self.durations[i]
             summary = clock_duration(value) if value is not None else "Timing at Setup"
+            lines: tuple[tuple[int, str], ...] = ((5, name), (29, summary))
             if isinstance(node, Group):
-                summary = (
-                    f"×{node.repetitions} · {self.counts[i]:,} epochs · " + summary
+                counts = (
+                    f"{node.repetitions:,} repeat{'s' if node.repetitions != 1 else ''}"
                 )
-            for offset, text in ((5, name), (29, summary)):
+                compact = (
+                    max(
+                        self.fontMetrics().horizontalAdvance(text)
+                        for text in (counts, summary)
+                    )
+                    > rect.width() - 16
+                )
+                lines = (
+                    ((5, name),)
+                    if compact
+                    else ((5, name), (23, counts), (41, summary))
+                )
+                summary = counts + " · " + summary
+            for offset, text in lines:
                 painter.drawText(
                     rect.adjusted(8, offset, -44 if offset == 5 else -8, 0),
                     Qt.AlignmentFlag.AlignTop,

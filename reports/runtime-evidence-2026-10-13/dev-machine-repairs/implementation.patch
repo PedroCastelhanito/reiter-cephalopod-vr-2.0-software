@@ -1,0 +1,799 @@
+diff --git a/src/cephvr/acquisition/main.py b/src/cephvr/acquisition/main.py
+index b5d0182..2b08131 100644
+--- a/src/cephvr/acquisition/main.py
++++ b/src/cephvr/acquisition/main.py
+@@ -185,6 +185,9 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
+             server,
+             runtime_instance,
+             resource_port,
++            native,
++            bootstrap.controller_pid,
++            bootstrap.controller_creation_time_100ns,
+             controller_channel,
+             supervisor_channel,
+             deadline,
+@@ -266,6 +269,9 @@ async def _close(
+     server: AcquisitionServer,
+     runtime: AcquisitionCoordinatorRuntime,
+     resources: WindowsResourcePort,
++    native: WindowsJobs,
++    controller_pid: int,
++    controller_creation_time_100ns: int,
+     controller_channel: grpc.aio.Channel,
+     supervisor_channel: grpc.aio.Channel,
+     deadline_ns: int,
+@@ -274,7 +280,26 @@ async def _close(
+         await server.close(deadline_ns=deadline_ns)
+     finally:
+         try:
+-            await runtime.serial.close(deadline_ns=deadline_ns)
++            try:
++                await runtime.serial.close(deadline_ns=deadline_ns)
++            except grpc.aio.AioRpcError as exc:
++                if exc.code() != grpc.StatusCode.UNAVAILABLE:
++                    raise
++                controller_running = await asyncio.to_thread(
++                    native.process_running,
++                    controller_pid,
++                    controller_creation_time_100ns,
++                )
++                if controller_running:
++                    raise
++                # The concrete serial client keeps its claim unless Close was
++                # acknowledged. Process exit is useful shutdown context, not a
++                # synthetic release receipt.
++                print(
++                    "Acquisition MCU claim release remains unconfirmed: "
++                    "registered controller exited before Close RPC completed.",
++                    file=sys.stderr,
++                )
+         finally:
+             for allocation_id_value, record in tuple(runtime.state.resources.items()):
+                 try:
+diff --git a/src/cephvr/acquisition/worker/state.py b/src/cephvr/acquisition/worker/state.py
+index 149156c..52a00c0 100644
+--- a/src/cephvr/acquisition/worker/state.py
++++ b/src/cephvr/acquisition/worker/state.py
+@@ -269,7 +269,7 @@ class WorkerState:
+                 retained_result.operation.CopyFrom(updated)
+                 retained_result.state_revision = self.state_revision + 1
+             result = retained_result.SerializeToString(deterministic=True)
+-            self.commands.complete(command_id, result, now_ns)
++            self.commands.complete_terminal(command_id, result, now_ns)
+             self.operations[command_id] = updated
+             self.state_revision += 1
+             return _copy_operation(updated)
+diff --git a/src/cephvr/shared/commands.py b/src/cephvr/shared/commands.py
+index d2547d1..37e5773 100644
+--- a/src/cephvr/shared/commands.py
++++ b/src/cephvr/shared/commands.py
+@@ -176,6 +176,34 @@ class CommandLedger:
+             self._records[command_id] = updated
+             return updated
+ 
++    def complete_terminal(
++        self, command_id: str, result: bytes, now_ns: int
++    ) -> CommandRecord:
++        """Retain a terminal result and release capacity for no further result."""
++        require_uuid4(command_id)
++        require_int64_ns(now_ns)
++        if not isinstance(result, bytes):
++            raise ValueError("result must be immutable bytes")
++        with self._lock:
++            old = self._records[command_id]
++            if old.result is not None:
++                if old.result != result:
++                    raise CommandConflict("completed command result changed")
++            elif now_ns < old.accepted_ns:
++                raise ValueError("completion predates admission")
++            retained_size = len(result) + len(old.executor_result or b"")
++            if retained_size > old.result_reservation_bytes:
++                raise CommandCapacityError(
++                    "terminal result exceeds its admission reservation"
++                )
++            completed = self.complete(command_id, result, now_ns)
++            if completed.result_reservation_bytes == retained_size:
++                return completed
++            updated = replace(completed, result_reservation_bytes=retained_size)
++            self._records[command_id] = updated
++            self._bytes -= completed.result_reservation_bytes - retained_size
++            return updated
++
+     def get(self, command_id: str) -> CommandRecord | None:
+         require_uuid4(command_id)
+         with self._lock:
+diff --git a/src/cephvr/visual_stimulus/worker/main.py b/src/cephvr/visual_stimulus/worker/main.py
+index 71060d5..8137050 100644
+--- a/src/cephvr/visual_stimulus/worker/main.py
++++ b/src/cephvr/visual_stimulus/worker/main.py
+@@ -5,7 +5,7 @@ from __future__ import annotations
+ import argparse
+ import asyncio
+ import sys
+-from collections.abc import Callable
++from collections.abc import Awaitable, Callable
+ from uuid import uuid4
+ 
+ import grpc
+@@ -29,6 +29,27 @@ from .reporting import ReportBridge
+ from .runtime import VisualStimulusWorkerRuntime
+ 
+ 
++async def _close_worker_resources(
++    owner_close: Callable[[int], Awaitable[None]],
++    bridge_drain: Callable[[int], Awaitable[None]],
++    listener_close: Callable[[int], Awaitable[None]],
++    channels_close: Callable[[], Awaitable[None]],
++    deadline_ns: int,
++) -> None:
++    failure: BaseException | None = None
++    for close in (owner_close, bridge_drain, listener_close):
++        try:
++            await close(deadline_ns)
++        except BaseException as exc:
++            failure = failure or exc
++    try:
++        await channels_close()
++    except BaseException as exc:
++        failure = failure or exc
++    if failure is not None:
++        raise failure
++
++
+ async def run(bootstrap: WorkerBootstrap) -> None:
+     if sys.platform != "win32":
+         raise RuntimeError("managed renderer requires Windows")
+@@ -94,7 +115,7 @@ async def run(bootstrap: WorkerBootstrap) -> None:
+             async with asyncio.timeout(
+                 remaining_seconds(recovery_deadline, clock=host_time_ns)
+             ):
+-                await owner.submit("Shutdown", command, recovery_deadline)
++                await runtime.local_recovery_shutdown(command, recovery_deadline)
+         finally:
+             shutdown.set()
+             await asyncio.gather(delivery, return_exceptions=True)
+@@ -173,16 +194,25 @@ async def run(bootstrap: WorkerBootstrap) -> None:
+             or runtime.shutdown_deadline_ns
+             or host_time_ns() + bootstrap.policies.recovery_ns
+         )
++
++        async def close_channels() -> None:
++            encoder_channel.close()
++            try:
++                await coordinator.close()
++            finally:
++                await supervisor.close()
++
+         try:
+-            await owner.close(deadline)
+-            await bridge.drain(deadline)
+-            await listener.close(deadline)
++            await _close_worker_resources(
++                owner.close,
++                bridge.drain,
++                listener.close,
++                close_channels,
++                deadline,
++            )
+         finally:
+-            encoder_channel.close()
+-            await coordinator.close()
+-            await supervisor.close()
+-        if recovery is not None:
+-            await asyncio.gather(recovery, return_exceptions=True)
++            if recovery is not None:
++                await asyncio.gather(recovery, return_exceptions=True)
+ 
+ 
+ async def health_loop(
+diff --git a/src/cephvr/visual_stimulus/worker/runtime.py b/src/cephvr/visual_stimulus/worker/runtime.py
+index 1b772b7..8d55e9d 100644
+--- a/src/cephvr/visual_stimulus/worker/runtime.py
++++ b/src/cephvr/visual_stimulus/worker/runtime.py
+@@ -47,6 +47,7 @@ class VisualStimulusWorkerRuntime:
+         self.shutdown_deadline_ns: int | None = None
+         self.command_ids: set[str] = set()
+         self.supervisor_command_ids: set[str] = set()
++        self.local_recovery_command_ids: set[str] = set()
+         self.delivery_failed = delivery_failed
+ 
+     def validate_command(self, method: str, request: Message) -> None:
+@@ -211,6 +212,68 @@ class VisualStimulusWorkerRuntime:
+             result=pb.COMMAND_RESULT_ACCEPTED, command_id=command.command_id
+         )
+ 
++    async def local_recovery_shutdown(
++        self, command: visual_stimulus.WorkerCommand, deadline_ns: int
++    ) -> None:
++        """Retain process-local recovery without claiming coordinator authorization."""
++        require_uuid4(command.command_id)
++        if command.issuer != self.context.worker or command.target != self.context:
++            raise ValueError("local recovery command has the wrong renderer identity")
++        if command.deadline_monotonic_ns != deadline_ns:
++            raise ValueError("local recovery deadline differs from its command")
++        admission = self.ledger.admit(
++            command.command_id,
++            command.SerializeToString(),
++            self.clock(),
++            work_key=command.command_id,
++            deadline_ns=deadline_ns,
++            priority=True,
++        )
++        self.command_ids.add(command.command_id)
++        self.local_recovery_command_ids.add(command.command_id)
++        if admission.replayed:
++            if not admission.record.executor_result:
++                raise RuntimeError("local recovery shutdown is already in progress")
++            previous = pb.OperationState.FromString(admission.record.executor_result)
++            if previous.succeeded:
++                return
++            raise RuntimeError(previous.failure.message)
++        receipt = pb.CommandAdmission(
++            result=pb.COMMAND_RESULT_ACCEPTED, command_id=command.command_id
++        )
++        self.ledger.complete(
++            command.command_id, receipt.SerializeToString(), self.clock()
++        )
++        self.interrupted = True
++        self.shutdown_deadline_ns = min(
++            self.shutdown_deadline_ns or deadline_ns, deadline_ns
++        )
++        failure: pb.Failure | None
++        try:
++            await self.owner.submit("Shutdown", command, deadline_ns)
++        except Exception as exc:
++            succeeded = False
++            failure = pb.Failure(
++                code="LOCAL_RECOVERY_SHUTDOWN", message=str(exc)[:2048]
++            )
++        else:
++            succeeded = True
++            failure = None
++        outcome = pb.OperationState(
++            context=pb.OperationContext(command_id=command.command_id),
++            command="Shutdown",
++            work=command.target.work,
++            complete=True,
++            succeeded=succeeded,
++        )
++        if failure is not None:
++            outcome.failure.CopyFrom(failure)
++        self.ledger.complete_executor(
++            command.command_id, outcome.SerializeToString(), self.clock()
++        )
++        if failure is not None:
++            raise RuntimeError(failure.message)
++
+     async def query(self, method: str, request: Message) -> Message:
+         if (
+             not isinstance(request, visual_stimulus.WorkerQuery)
+@@ -287,7 +350,10 @@ class VisualStimulusWorkerRuntime:
+             }
+             for scope in scopes:
+                 self.ledger.finalize_work(scope, self.clock())
+-        if command in self.supervisor_command_ids:
++        if (
++            command in self.supervisor_command_ids
++            or command in self.local_recovery_command_ids
++        ):
+             return
+         await self.reports.receipt(
+             "ReportWorkerLifecycle", report, deadline_ns=deadline_ns
+@@ -301,6 +367,7 @@ class VisualStimulusWorkerRuntime:
+             if self.ledger.get(command_id) is not None
+         }
+         self.supervisor_command_ids.intersection_update(self.command_ids)
++        self.local_recovery_command_ids.intersection_update(self.command_ids)
+         self.retained = {
+             key: value
+             for key, value in self.retained.items()
+diff --git a/tests/acquisition/test_worker_admission.py b/tests/acquisition/test_worker_admission.py
+index c221be8..4778daf 100644
+--- a/tests/acquisition/test_worker_admission.py
++++ b/tests/acquisition/test_worker_admission.py
+@@ -636,6 +636,77 @@ async def test_repeated_connection_checks_leave_capacity_for_pfs_and_release() -
+         )
+ 
+ 
++@pytest.mark.asyncio
++async def test_completed_configuration_readbacks_release_large_reservations() -> None:
++    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
++    context = acq.WorkerContext(
++        worker=control.ProcessIdentity(
++            role="acquisition_behavioral_worker", generation=str(uuid4())
++        ),
++        owner=owner,
++        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
++    )
++    limits = AcquisitionControlLimits.from_message_limit(16 * 1024 * 1024)
++    commands = CommandLedger(
++        context.worker.generation,
++        300_000_000_000,
++        max_records=limits.max_records,
++        max_bytes=limits.max_bytes,
++        result_reservation_bytes=limits.normal_result_reservation_bytes,
++        safety_reserve_records=limits.safety_reserve_records,
++        safety_reserve_bytes=limits.safety_reserve_bytes,
++    )
++    state = WorkerState(
++        context,
++        control.ProcessIdentity(role="supervisor", generation=str(uuid4())),
++        commands,
++        max_retained_views=limits.max_records,
++        limits=limits,
++        registered=True,
++    )
++    queue = _QueueOwner()
++    service = _AdmissionService(state, queue, {})
++    grpc_context = cast(grpc.aio.ServicerContext, object())
++
++    for _ in range(4):
++        command = _command(context, owner)
++        request = acq.WorkerResolveCamera(command=command)
++        receipt = await service._admit(
++            "ResolveCameraConfiguration", request, command, grpc_context
++        )
++        assert receipt.result == control.COMMAND_RESULT_ACCEPTED
++        retained = commands.get(command.command_id)
++        assert retained is not None
++        assert retained.result_reservation_bytes == limits.max_message_bytes
++
++        state.complete_operation(
++            command.command_id,
++            succeeded=True,
++            progress="complete",
++            now_ns=host_time_ns(),
++        )
++        terminal = commands.get(command.command_id)
++        assert terminal is not None and terminal.result is not None
++        assert terminal.result_reservation_bytes == len(terminal.result)
++
++    # Three unresolved 16 MiB results still exhaust the normal 62 MiB budget.
++    for _ in range(3):
++        command = _command(context, owner)
++        request = acq.WorkerResolveCamera(command=command)
++        receipt = await service._admit(
++            "ResolveCameraConfiguration", request, command, grpc_context
++        )
++        assert receipt.result == control.COMMAND_RESULT_ACCEPTED
++
++    exhausted = _command(context, owner)
++    request = acq.WorkerResolveCamera(command=exhausted)
++    rejected = await service._admit(
++        "ResolveCameraConfiguration", request, exhausted, grpc_context
++    )
++    assert rejected.result == control.COMMAND_RESULT_REJECTED
++    assert queue.tickets[-1].cancelled
++
++
+ class _Ticket(WorkerOperationTicket):
+     def __init__(self) -> None:
+         self.committed = False
+diff --git a/tests/shared/test_commands.py b/tests/shared/test_commands.py
+index 766d009..e3365c9 100644
+--- a/tests/shared/test_commands.py
++++ b/tests/shared/test_commands.py
+@@ -94,6 +94,54 @@ def test_ledger_reserves_result_capacity_at_admission() -> None:
+         ledger.admit(_id(), b"x", 0, work_key=_id())
+ 
+ 
++def test_terminal_completion_compacts_only_after_exact_result_is_retained() -> None:
++    command, work = _id(), _id()
++    ledger = CommandLedger(
++        _id(),
++        300_000_000_000,
++        max_records=4,
++        max_bytes=100,
++        result_reservation_bytes=76,
++        safety_reserve_bytes=20,
++    )
++    ledger.admit(command, b"req", 1, work_key=work)
++    assert ledger.retained_bytes == 79
++    completed = ledger.complete_terminal(command, b"ok", 2)
++    assert completed.result == b"ok"
++    assert completed.result_reservation_bytes == 2
++    assert ledger.retained_bytes == 5
++    assert ledger.admit(command, b"req", 3, work_key=work).record == completed
++    assert ledger.complete_terminal(command, b"ok", 4) == completed
++    with pytest.raises(CommandConflict, match="changed request"):
++        ledger.admit(command, b"changed", 5, work_key=work)
++    with pytest.raises(CommandConflict, match="result changed"):
++        ledger.complete_terminal(command, b"changed", 4)
++
++    ledger.finalize_command(command, 20)
++    assert ledger.prune(300_000_000_020) == 0
++    assert ledger.get(command) is not None
++    assert ledger.prune(300_000_000_021) == 1
++    assert ledger.retained_bytes == 0
++
++
++def test_default_completion_retains_executor_capacity_until_terminal_compaction() -> (
++    None
++):
++    command, work = _id(), _id()
++    ledger = CommandLedger(
++        _id(), 300, max_records=4, max_bytes=100, result_reservation_bytes=20
++    )
++    ledger.admit(command, b"q", 1, work_key=work)
++    ledger.complete(command, b"ack", 2)
++    assert ledger.retained_bytes == 21
++    completed = ledger.complete_executor(command, b"failure", 3)
++    assert completed.executor_result == b"failure"
++    assert completed.result_reservation_bytes == 20
++    compacted = ledger.complete_terminal(command, b"ack", 4)
++    assert compacted.result_reservation_bytes == len(b"ackfailure")
++    assert ledger.retained_bytes == 1 + len(b"ackfailure")
++
++
+ def test_ledger_priority_admission_uses_only_reserved_safety_quota() -> None:
+     ledger = CommandLedger(
+         _id(),
+diff --git a/tests/visual_stimulus/test_transport.py b/tests/visual_stimulus/test_transport.py
+index 91a8320..57a80d1 100644
+--- a/tests/visual_stimulus/test_transport.py
++++ b/tests/visual_stimulus/test_transport.py
+@@ -36,10 +36,10 @@ from cephvr.visual_stimulus.worker.owner import RenderOwner
+ from cephvr.visual_stimulus.worker.runtime import VisualStimulusWorkerRuntime
+ 
+ 
+-def ledger(generation: str) -> CommandLedger:
++def ledger(generation: str, retention_ns: int = 300_000_000_000) -> CommandLedger:
+     return CommandLedger(
+         generation,
+-        300_000_000_000,
++        retention_ns,
+         max_records=64,
+         max_bytes=4_000_000,
+         result_reservation_bytes=65536,
+@@ -97,6 +97,138 @@ class LifecycleReports(Reports):
+         return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+ 
+ 
++@pytest.mark.asyncio
++async def test_local_recovery_cleanup_is_retained_without_coordinator_delivery():
++    from cephvr.visual_stimulus.worker.reporting import ReportBridge
++
++    worker = pb.ProcessIdentity(
++        role="visual_stimulus_renderer", generation=str(uuid4())
++    )
++    owner_id = pb.ProcessIdentity(role="visual_stimulus", generation=str(uuid4()))
++    context = visual_stimulus.WorkerContext(worker=worker, owner=owner_id)
++    context.work.session.CopyFrom(
++        pb.SessionContext(controller_generation=str(uuid4()), session_id=str(uuid4()))
++    )
++    reports = ReportSink()
++    clock = Clock()
++    bridge_failures = []
++    bridge = ReportBridge(
++        asyncio.get_running_loop(),
++        reports,
++        reports,
++        failed=bridge_failures.append,
++        maximum_bytes=1_000_000,
++    )
++    bridge_slot = []
++
++    class ReportingDevice(Device):
++        def execute(self, method, request, deadline_ns):
++            super().execute(method, request, deadline_ns)
++            if method == "Shutdown":
++                cleanup = pb.CleanupReport(
++                    source=worker,
++                    work=request.target.work,
++                    operation=pb.OperationContext(command_id=request.command_id),
++                    trial_activity_stopped=True,
++                )
++                bridge_slot[0].confirm(
++                    "ReportWorkerLifecycle",
++                    visual_stimulus.WorkerLifecycle(
++                        source=worker, report=pb.LifecycleReport(cleanup=cleanup)
++                    ),
++                    deadline_ns,
++                )
++
++    device = ReportingDevice()
++    owner = RenderOwner(lambda _: device)
++    commands = ledger(worker.generation, retention_ns=10)
++    runtime = VisualStimulusWorkerRuntime(
++        context,
++        pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
++        owner,
++        bridge,
++        commands,
++        clock=clock,
++    )
++    bridge.retain_lifecycle = runtime.retain_and_report
++    bridge_slot.append(bridge)
++    deadline = host_time_ns() + 5_000_000_000
++    prior_id = str(uuid4())
++    commands.admit(
++        prior_id,
++        b"prior-session-command",
++        clock(),
++        work_key=context.work.session.session_id,
++    )
++    commands.complete(prior_id, b"accepted", clock())
++    commands.finalize_work(context.work.session.session_id, clock())
++    command = visual_stimulus.WorkerCommand(
++        command_id=str(uuid4()),
++        issuer=worker,
++        target=context,
++        deadline_monotonic_ns=deadline,
++    )
++    try:
++        await runtime.local_recovery_shutdown(command, deadline)
++        await runtime.local_recovery_shutdown(command, deadline)
++        await bridge.drain(deadline)
++        state = await runtime.query(
++            "Query",
++            visual_stimulus.WorkerQuery(target=context, command_id=command.command_id),
++        )
++        assert state.command_known
++        assert state.operation.complete and state.operation.succeeded
++        assert commands.get(command.command_id).work_key == command.command_id
++        assert len(state.retained_lifecycle) == 1
++        assert (
++            state.retained_lifecycle[0].report.cleanup.operation.command_id
++            == command.command_id
++        )
++        assert reports.messages == []
++        assert bridge_failures == []
++        assert device.commands == ["Shutdown"]
++        clock.value += 20
++        runtime.prune_retained()
++        assert command.command_id not in runtime.local_recovery_command_ids
++    finally:
++        await owner.close(deadline)
++
++
++@pytest.mark.asyncio
++async def test_worker_teardown_closes_listener_after_report_drain_failure():
++    from cephvr.visual_stimulus.worker.main import _close_worker_resources
++
++    events = []
++    deadlines = []
++
++    async def close_owner(deadline_ns):
++        events.append("owner")
++        deadlines.append(deadline_ns)
++
++    async def drain_reports(deadline_ns):
++        events.append("reports")
++        deadlines.append(deadline_ns)
++        raise ValueError("retained lifecycle was rejected")
++
++    async def close_listener(deadline_ns):
++        events.append("listener")
++        deadlines.append(deadline_ns)
++
++    async def close_channels():
++        events.append("channels")
++
++    with pytest.raises(ValueError, match="retained lifecycle was rejected"):
++        await _close_worker_resources(
++            close_owner,
++            drain_reports,
++            close_listener,
++            close_channels,
++            1234,
++        )
++    assert events == ["owner", "reports", "listener", "channels"]
++    assert deadlines == [1234, 1234, 1234]
++
++
+ @pytest.mark.asyncio
+ async def test_worker_accepts_first_use_calibration_revision_and_recovers_after_close():
+     identity = Identity(
+diff --git a/tests/acquisition/test_main.py b/tests/acquisition/test_main.py
+new file mode 100644
+index 0000000..59d78f3
+--- /dev/null
++++ b/tests/acquisition/test_main.py
+@@ -0,0 +1,207 @@
++"""Acquisition process teardown preserves exact controller release evidence."""
++
++from __future__ import annotations
++
++from types import SimpleNamespace
++from uuid import uuid4
++
++import grpc
++import pytest
++
++from cephvr.acquisition.main import _close
++from cephvr.acquisition.microcontroller_client import ControllerMicrocontrollerClient
++from cephvr.shared.auth import Principal
++
++
++class _Server:
++    async def close(self, *, deadline_ns: int) -> None:
++        assert deadline_ns == 500
++
++
++class _Channel:
++    def __init__(self) -> None:
++        self.closed = False
++
++    async def close(self) -> None:
++        self.closed = True
++
++
++class _Native:
++    def __init__(self, running: bool) -> None:
++        self.running = running
++        self.checked: tuple[int, int] | None = None
++
++    def process_running(self, pid: int, creation_time_100ns: int) -> bool:
++        self.checked = pid, creation_time_100ns
++        return self.running
++
++
++class _UninspectableNative(_Native):
++    def process_running(self, pid: int, creation_time_100ns: int) -> bool:
++        self.checked = pid, creation_time_100ns
++        raise OSError("process state unavailable")
++
++
++class _Serial:
++    def __init__(self, status: grpc.StatusCode = grpc.StatusCode.UNAVAILABLE) -> None:
++        self.claim_id = "claim-1"
++        self.status = status
++
++    async def close(self, *, deadline_ns: int) -> None:
++        assert deadline_ns == 500
++        raise grpc.aio.AioRpcError(self.status, details="controller RPC failed")
++
++
++async def _close_with_controller_state(
++    running: bool,
++) -> tuple[_Native, _Serial, _Channel, _Channel]:
++    native = _Native(running)
++    controller_channel = _Channel()
++    supervisor_channel = _Channel()
++    serial = _Serial()
++    runtime = SimpleNamespace(
++        serial=serial,
++        state=SimpleNamespace(resources={}),
++        resource_ledger=SimpleNamespace(),
++    )
++    await _close(
++        _Server(),
++        runtime,
++        SimpleNamespace(),
++        native,
++        123,
++        456,
++        controller_channel,
++        supervisor_channel,
++        500,
++    )
++    return native, serial, controller_channel, supervisor_channel
++
++
++@pytest.mark.asyncio
++async def test_unavailable_close_after_exact_controller_exit_keeps_claim_unconfirmed(
++    capsys: pytest.CaptureFixture[str],
++) -> None:
++    (
++        native,
++        serial,
++        controller_channel,
++        supervisor_channel,
++    ) = await _close_with_controller_state(running=False)
++
++    assert native.checked == (123, 456)
++    assert serial.claim_id == "claim-1"
++    assert "release remains unconfirmed" in capsys.readouterr().err
++    assert controller_channel.closed
++    assert supervisor_channel.closed
++
++
++@pytest.mark.asyncio
++async def test_unavailable_close_with_controller_still_running_propagates() -> None:
++    native = _Native(running=True)
++    controller_channel = _Channel()
++    supervisor_channel = _Channel()
++    runtime = SimpleNamespace(
++        serial=_Serial(),
++        state=SimpleNamespace(resources={}),
++        resource_ledger=SimpleNamespace(),
++    )
++
++    with pytest.raises(grpc.aio.AioRpcError):
++        await _close(
++            _Server(),
++            runtime,
++            SimpleNamespace(),
++            native,
++            123,
++            456,
++            controller_channel,
++            supervisor_channel,
++            500,
++        )
++
++    assert native.checked == (123, 456)
++    assert controller_channel.closed
++    assert supervisor_channel.closed
++
++
++@pytest.mark.asyncio
++async def test_non_unavailable_close_error_propagates_and_closes_channels() -> None:
++    native = _Native(running=False)
++    controller_channel = _Channel()
++    supervisor_channel = _Channel()
++    runtime = SimpleNamespace(
++        serial=_Serial(grpc.StatusCode.INTERNAL),
++        state=SimpleNamespace(resources={}),
++        resource_ledger=SimpleNamespace(),
++    )
++
++    with pytest.raises(grpc.aio.AioRpcError) as caught:
++        await _close(
++            _Server(),
++            runtime,
++            SimpleNamespace(),
++            native,
++            123,
++            456,
++            controller_channel,
++            supervisor_channel,
++            500,
++        )
++
++    assert caught.value.code() == grpc.StatusCode.INTERNAL
++    assert native.checked is None
++    assert controller_channel.closed
++    assert supervisor_channel.closed
++
++
++@pytest.mark.asyncio
++async def test_unavailable_close_with_uninspectable_controller_propagates() -> None:
++    native = _UninspectableNative(running=False)
++    controller_channel = _Channel()
++    supervisor_channel = _Channel()
++    runtime = SimpleNamespace(
++        serial=_Serial(),
++        state=SimpleNamespace(resources={}),
++        resource_ledger=SimpleNamespace(),
++    )
++
++    with pytest.raises(OSError, match="process state unavailable"):
++        await _close(
++            _Server(),
++            runtime,
++            SimpleNamespace(),
++            native,
++            123,
++            456,
++            controller_channel,
++            supervisor_channel,
++            500,
++        )
++
++    assert native.checked == (123, 456)
++    assert controller_channel.closed
++    assert supervisor_channel.closed
++
++
++@pytest.mark.asyncio
++async def test_controller_client_keeps_claim_when_close_rpc_is_unavailable() -> None:
++    class _UnavailableStub:
++        async def ExecuteMicrocontrollerIo(self, *_args, **_kwargs):
++            raise grpc.aio.AioRpcError(
++                grpc.StatusCode.UNAVAILABLE, details="controller exited"
++            )
++
++    client = ControllerMicrocontrollerClient(
++        _UnavailableStub(),  # type: ignore[arg-type]
++        Principal("acquisition", str(uuid4()), "token"),
++        "controller-1",
++        requested=lambda: None,  # type: ignore[arg-type]
++        clock=lambda: 0,
++    )
++    client.claim_id = "claim-1"
++
++    with pytest.raises(grpc.aio.AioRpcError):
++        await client.close(deadline_ns=100)
++
++    assert client.claim_id == "claim-1"

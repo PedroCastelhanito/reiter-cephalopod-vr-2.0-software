@@ -273,7 +273,7 @@ class ManagedCameras(QObject):
                     draft.role,
                     visible=visible,
                     available=assigned and bool(device.preview_running),
-                    active=assigned and draft.enabled,
+                    active=assigned,
                     reason="Assign this camera in controller configuration"
                     if not assigned
                     else "",
@@ -363,12 +363,9 @@ class ManagedCameras(QObject):
             return
         if self.queue("prepare_camera", **options):
             self.panel.console.appendPlainText(
-                f"Submitting {draft.role} parameters before "
-                + (
-                    "Connect."
-                    if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
-                    else "Test."
-                )
+                f"Submitting {draft.role} parameters before Connect."
+                if kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                else f"Checking {draft.role} camera identity."
             )
 
     def set_camera_enabled(self, serial: str, enabled: bool) -> None:

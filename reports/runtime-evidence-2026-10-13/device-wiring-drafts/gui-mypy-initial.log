@@ -1,0 +1,4 @@
+src/cephvr/gui/mcu_wiring_editor.py:19: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+src/cephvr/gui/microcontroller.py:212: error: Incompatible types in assignment (expression has type "QWidget", variable has type "QCheckBox")  [assignment]
+src/cephvr/gui/microcontroller.py:544: error: Incompatible types in assignment (expression has type "CameraTrigger | None", variable has type "CameraTrigger")  [assignment]
+Found 3 errors in 2 files (checked 11 source files)

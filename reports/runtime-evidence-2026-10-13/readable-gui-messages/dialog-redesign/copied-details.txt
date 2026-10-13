@@ -1,0 +1,104 @@
+Error 6612a907-7914-4779-987e-d83eacf1ed4b (): <unknown> renderer cleanup remains unconfirmed
+Original failure detail is preserved.
+Error latest-error (): Latest exact failure
+<markup> remains literal
+Prompt 05e1222b-48d9-4a8a-8331-72c3bae13de0: Camera recording requires a decision.; permitted choices: Continue session, Abort session
+Warning 75213c57-3302-449a-a55c-5f2408ec6931: Review output recovery before continuing.
+Warning warning-0: Retained diagnostic warning 0; full message preserved.
+Warning warning-1: Retained diagnostic warning 1; full message preserved.
+Warning warning-2: Retained diagnostic warning 2; full message preserved.
+Warning warning-3: Retained diagnostic warning 3; full message preserved.
+Warning warning-4: Retained diagnostic warning 4; full message preserved.
+Warning warning-5: Retained diagnostic warning 5; full message preserved.
+Warning warning-6: Retained diagnostic warning 6; full message preserved.
+Warning warning-7: Retained diagnostic warning 7; full message preserved.
+Warning warning-8: Retained diagnostic warning 8; full message preserved.
+Warning warning-9: Retained diagnostic warning 9; full message preserved.
+Warning warning-10: Retained diagnostic warning 10; full message preserved.
+Warning warning-11: Retained diagnostic warning 11; full message preserved.
+Warning warning-12: Retained diagnostic warning 12; full message preserved.
+Warning warning-13: Retained diagnostic warning 13; full message preserved.
+Warning warning-14: Retained diagnostic warning 14; full message preserved.
+Warning warning-15: Retained diagnostic warning 15; full message preserved.
+Warning warning-16: Retained diagnostic warning 16; full message preserved.
+Warning warning-17: Retained diagnostic warning 17; full message preserved.
+Warning warning-18: Retained diagnostic warning 18; full message preserved.
+Warning warning-19: Retained diagnostic warning 19; full message preserved.
+Warning warning-20: Retained diagnostic warning 20; full message preserved.
+Warning warning-21: Retained diagnostic warning 21; full message preserved.
+Warning warning-22: Retained diagnostic warning 22; full message preserved.
+Warning warning-23: Retained diagnostic warning 23; full message preserved.
+Warning warning-24: Retained diagnostic warning 24; full message preserved.
+Warning warning-25: Retained diagnostic warning 25; full message preserved.
+Warning warning-26: Retained diagnostic warning 26; full message preserved.
+Warning warning-27: Retained diagnostic warning 27; full message preserved.
+Warning warning-28: Retained diagnostic warning 28; full message preserved.
+Warning warning-29: Retained diagnostic warning 29; full message preserved.
+Warning warning-30: Retained diagnostic warning 30; full message preserved.
+Warning warning-31: Retained diagnostic warning 31; full message preserved.
+Warning warning-32: Retained diagnostic warning 32; full message preserved.
+Warning warning-33: Retained diagnostic warning 33; full message preserved.
+Warning warning-34: Retained diagnostic warning 34; full message preserved.
+Warning warning-35: Retained diagnostic warning 35; full message preserved.
+Warning warning-36: Retained diagnostic warning 36; full message preserved.
+Warning warning-37: Retained diagnostic warning 37; full message preserved.
+Warning warning-38: Retained diagnostic warning 38; full message preserved.
+Warning warning-39: Retained diagnostic warning 39; full message preserved.
+Warning warning-40: Retained diagnostic warning 40; full message preserved.
+Warning warning-41: Retained diagnostic warning 41; full message preserved.
+Warning warning-42: Retained diagnostic warning 42; full message preserved.
+Warning warning-43: Retained diagnostic warning 43; full message preserved.
+Warning warning-44: Retained diagnostic warning 44; full message preserved.
+Command SaveConfigurationHistory [3ae1fee9-91f8-465b-9c2c-10fd07183b86]: succeeded
+Command ExecuteCameraCommand [3893787d-518e-47fa-a110-b94e481baa6b]: succeeded
+Command Setup [routine-0]: succeeded
+Command Setup [routine-1]: succeeded
+Command Setup [routine-2]: succeeded
+Command Setup [routine-3]: succeeded
+Command Setup [routine-4]: succeeded
+Command Setup [routine-5]: succeeded
+Command Setup [routine-6]: succeeded
+Command Setup [routine-7]: succeeded
+Command Setup [routine-8]: succeeded
+Command Setup [routine-9]: succeeded
+Command Setup [routine-10]: succeeded
+Command Setup [routine-11]: succeeded
+Command Setup [routine-12]: succeeded
+Command Setup [routine-13]: succeeded
+Command Setup [routine-14]: succeeded
+Command Setup [routine-15]: succeeded
+Command Setup [routine-16]: succeeded
+Command Setup [routine-17]: succeeded
+Command Setup [routine-18]: succeeded
+Command Setup [routine-19]: succeeded
+Command Setup [routine-20]: succeeded
+Command Setup [routine-21]: succeeded
+Command Setup [routine-22]: succeeded
+Command Setup [routine-23]: succeeded
+Command Setup [routine-24]: succeeded
+Command Setup [routine-25]: succeeded
+Command Setup [routine-26]: succeeded
+Command Setup [routine-27]: succeeded
+Command Setup [routine-28]: succeeded
+Command Setup [routine-29]: succeeded
+Command Setup [routine-30]: succeeded
+Command Setup [routine-31]: succeeded
+Command Setup [routine-32]: succeeded
+Command Setup [routine-33]: succeeded
+Command Setup [routine-34]: succeeded
+Command Setup [routine-35]: succeeded
+Command Setup [routine-36]: succeeded
+Command Setup [routine-37]: succeeded
+Command Setup [routine-38]: succeeded
+Command Setup [routine-39]: succeeded
+Command Setup [routine-40]: succeeded
+Command Setup [routine-41]: succeeded
+Command Setup [routine-42]: succeeded
+Command Setup [routine-43]: succeeded
+Command Setup [routine-44]: succeeded
+Command Setup [routine-45]: succeeded
+Command Setup [routine-46]: succeeded
+Command Setup [routine-47]: succeeded
+Command Setup [routine-48]: succeeded
+Command Setup [routine-49]: succeeded
+Older resolved entries are no longer retained.

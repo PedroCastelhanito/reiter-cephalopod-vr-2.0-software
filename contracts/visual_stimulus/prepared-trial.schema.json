@@ -415,6 +415,7 @@
             "png_uint_v1",
             "tiff_uint_v1",
             "jpeg8_v1",
+            "cephvr1_texture_json_v1",
             "mp4_h264_sdr8_v1",
             "matroska_ffv1_v3_uint_v1",
             "glb2_static_unlit_v1"
@@ -4020,6 +4021,20 @@
           },
           "title": "Feedback",
           "type": "array"
+        },
+        "linked_to": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linked To"
         },
         "kind": {
           "const": "texture",

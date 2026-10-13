@@ -1,0 +1,3 @@
+Tool-observed stdout: PREVIEW_READY window_visible=True automatic_review=False warning_visible=False
+Tool-observed later explicit sample stdout: PREVIEW_READY window_visible=True warning_visible=True
+Process exited normally (0); synthetic fixture, no controller connection.

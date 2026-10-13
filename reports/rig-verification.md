@@ -27,7 +27,7 @@ the complete60s Save-Off presentation; retain that separate reuse check. See the
 [current stimulus assessment](visual_stimulus.md) and
 [throughput evidence](runtime-evidence-2026-10-13/throughput/).
 
-Oct13 later owner-requested workflow audit supersedes the earlier basic camera
+Historical Oct13 workflow audit (before the combined repair above) supersedes the earlier basic camera
 preview failure within its bounded scope: both enabled cameras connect, show usable
 preview and stop/release. Eye remains disabled. Normal calibration bundle pacing
 validation fails, while a separate current-profile grid lifecycle passes. Combined
@@ -44,17 +44,24 @@ retain their historical scopes.
 - [ ] Extend A10 drain/full-load verification to Eye when enabled and remaining
   scientific workloads. Owner125ms values/Behavior and Tracking bounded observations
   plus combined online closure now pass; worst-case/full scientific bound unproven.
-- [ ] Repair/retest failed-Setup renderer cleanup identity/link retention under
-  E06/E08, including prior closed calibration and supervisor cleanup. Confirm
-  no process crash, truthful closure and normal reuse; inspect recovery's missing
-  unstarted-session config/unknown remote warning separately.
-- [ ] Compare identical Save On/Off stimulus runs and measure draw/context/capture/
-  readback/transfer/encoding stages under simultaneous camera/Tracking load. The
-  stimulus-only comparison/readback repair is complete at60.0 real groups/s;
-  combined camera recording currently39.47/s. Diagnose/repair and verify60fps with
-  truthful review/camera omission accounting, original timing and precision.
-- [ ] Repair/retest repeated completed combined session NewSession/restore warning
-  producer/scope/revision rejection and resulting full runtime shutdown.
+- [ ] Repeat failed Setup after prior closed calibration, cancellation and supervisor
+  cleanup using the local recovery/report-routing repair. Confirm no unknown-command
+  renderer failure, exact resource evidence and permitted subsequent reuse under
+  E06/E08. Local threaded regressions are not the historical native workflow.
+  Missing SESSION_CONFIG cannot prove unpaired status; preserve the conservative
+  unknown-SpikeGLX recovery warning unless exact durable evidence becomes available.
+- [ ] Repeat orderly acquisition shutdown after exact controller departure: verify
+  no unhandled UNAVAILABLE traceback, truthful unconfirmed release reporting and
+  exact all-owned absence. Other RPC errors/live or uninspectable controller cases
+  must remain failures; local injected tests now pass.
+- [ ] Repeat real preview start/stop cycles in one generation after terminal result
+  compaction. Capture exact command/lease/MCU claim state if pending/unavailable
+  persists. The local fourth-readback capacity failure is repaired without increasing
+  budgets, shortening retention or weakening pending-cleanup fences.
+- [ ] Reduce combined review/camera recording loss while preserving the verified
+  nominal60fps presentation, exact omission accounting, original timing and precision.
+  Profile capture/transfer/encoding under simultaneous load; final repeated sessions
+  already close and reset successfully. Verify uniform/optical timing separately.
 - [ ] Repair/retest the observed pre-change Save On→Save Off session-cleanup failure
   (`cleanup returned an unregistered resource`) under exact catalogue ownership;
   the60s presentation completed but its session could not finish cleanly.
@@ -380,10 +387,19 @@ rejection, and physical COM/native cleanup on normal shutdown and authority loss
 
 1. Confirm the synchronized GUI automatically acquires unheld control. With a
    headless holder, it must remain observing until explicit confirmed takeover.
-   Manual Release must stay released; reconnect must acknowledge its warning before
-   making a fresh unheld claim. In Devices/Microcontroller, scan and select the actual COM port,
+   Manual Release must stay released; reconnect must acknowledge important retained issues before
+   making a fresh unheld claim. Repeat a quiet reopen with routine validation notices
+   and confirmed completed recovery: no automatic review; full manual history/copy
+   remains available. Failed/uncertain outcomes, pending decisions and unknown warnings
+   must still require review under E03. In Devices/Microcontroller, scan and select the actual COM port,
    set enabled I/O pins, complete edits with Enter, and wait for controller confirmation.
    Test connection must report the actual firmware/protocol with outputs stopped.
+   Verify the G01 contextual Camera/Projector wiring editors at native narrow/DPI
+   sizes. Configure logical camera pins before discovery, then assign devices without
+   changing Use; remove/reload wiring and confirm participation is preserved. Repeat
+   identity/MCU diagnostics with another camera incomplete, checking exact requested
+   inputs, stale-base/control-loss rejection and no implicit pulse/capture start.
+   Incomplete participating settings must still block capture/Setup as applicable.
 2. Test one enabled output at a time, observing its configured SpikeGLX receiver
    under the existing wiring/voltage checks. Verify Test→Stop→Test, explicit Stop,
    firmware's bounded termination and truthful final state. Trial state D9 should
@@ -690,6 +706,28 @@ Managed experiment readiness also depends on the separately implemented particip
 backends and the full workload verification in the rig worklist.
 
 ## Stimulus implementation handoff — execution procedure
+
+- [ ] Oct13 bounded image residency (owner-deferred to rig): run a protocol whose
+  decoded images exceed the cache, with different per-screen images and repeated
+  trials. Measure peak RAM/VRAM, storage/decode load, upload latency and frame timing
+  under simultaneous recording. Force late loads: preserve the prior texture with
+  current motion and unchanged clocks; reconcile requested/actual indices and repeat
+  flags with submission evidence under Save On, and bounded summaries under Save Off.
+  Verify first-use readiness, shared compatible sources, native fences, failed Setup,
+  cancellation, release retry and protected source closure after the loader joins.
+  Local fake-GL tests establish ownership logic only. See [V04](../docs/architecture/visual_stimulus.md#v04)
+  and the [current assessment](visual_stimulus.md#validation-limits).
+
+- [ ] Oct13 texture recipes/reference motion (owner-deferred to rig): load actual
+  CephVR1 JSON-only and exported designs, including the owner's previously rejected
+  files; compare prepared appearance/scale/blur/polar geometry on the physical
+  screens. Use different textures and periods on reference/followers; verify linear
+  movement through Front/Bottom and both side axes, V02 clockwise/reversed flow
+  with unequal subject distances, stopped/relinked/reset phase and disabled outputs.
+  Verify off-center rotation pivot diagnostics, actual prepared memory/deadline
+  behavior and native file protection/cleanup. Local synthetic-source and offscreen
+  tests do not establish optical signs, source-library equivalence on owner files,
+  native protection or frame timing. See the [current report](visual_stimulus.md).
 
 This procedure remains pending Windows execution. Run the automated checks first:
 

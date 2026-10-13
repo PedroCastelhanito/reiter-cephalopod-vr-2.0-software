@@ -1,11 +1,11 @@
 """One reference-composer form for creating and editing selected epoch subgroups."""
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QLabel
+from PyQt6.QtCore import QTimer, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QLabel, QLineEdit, QWidget
 
 from cephvr.gui.batch_create import BatchCreate
-from cephvr.gui.components import button
 from cephvr.gui.epoch_selection import SelectionComposer
+from cephvr.gui.notices import passive_validation
 from cephvr.gui.program_editing import data_node, node_at, validate
 from cephvr.gui.protocol_batches import generated_batch
 from cephvr.gui.subgroup_operations import update_subgroup
@@ -32,23 +32,21 @@ class SubgroupEditor(BatchCreate):
         self._texts: tuple[str, ...] = ()
         self._rules = SubgroupDraft()
         self._previewing = False
+        self.committing = False
         super().__init__(
             append_only=True, composer=SelectionComposer(), show_copies=False
         )
         self.summary.hide()
         self.add_button.clicked.disconnect()
-        self.add_button.setText("Apply")
-        self.add_button.clicked.connect(self.apply)
-        self.reset = button("Discard")
-        self.reset.clicked.connect(self.discard)
-        layout = self.layout()
-        assert layout is not None
-        item = layout.itemAt(layout.count() - 1)
-        assert item is not None
-        actions = item.layout()
-        assert isinstance(actions, QHBoxLayout)
-        actions.insertWidget(actions.count() - 1, self.reset)
-        actions.insertStretch(0, 1)
+        self.add_button.hide()
+        self.update_timer = QTimer(self)
+        self.update_timer.setSingleShot(True)
+        self.update_timer.timeout.connect(self.auto_apply)
+        application = QApplication.instance()
+        assert isinstance(application, QApplication)
+        application.focusChanged.connect(self.finish_edit)
+        self.composer.duration.editingFinished.connect(self.queue_update)
+        self.composer.batch_label.editingFinished.connect(self.queue_update)
         self.parameter_fields[3].findChildren(QLabel)[0].setText("Name")
         self.composer.batch_label.setPlaceholderText("Optional subgroup name")
         self.composer.changed.connect(self.changed.emit)
@@ -58,6 +56,26 @@ class SubgroupEditor(BatchCreate):
         ):
             control.textEdited.connect(self.changed.emit)
         self._binding = False
+
+    def add_variation_from(self, reference: Program) -> None:
+        super().add_variation_from(reference)
+        row = self.rows[-1]
+        for control in (row.values, *row.random_fields.values()):
+            control.editingFinished.connect(self.queue_update)
+
+    def queue_update(self) -> None:
+        if not self._binding and not self._previewing:
+            self.update_timer.start(0)
+
+    def auto_apply(self) -> None:
+        if not self._binding and self.dirty:
+            with passive_validation():
+                self.apply()
+            self.update_timer.stop()
+
+    def finish_edit(self, previous: QWidget | None, current: QWidget | None) -> None:
+        if previous is not None and self.isAncestorOf(previous):
+            self.queue_update()
 
     def text_values(self) -> tuple[str, ...]:
         return (
@@ -93,6 +111,7 @@ class SubgroupEditor(BatchCreate):
         screens: tuple[str, ...],
     ) -> None:
         self._binding = True
+        self.update_timer.stop()
         self.source, self.paths = program, paths
         self.composer.close_file_dialogs()
         for row in tuple(self.rows):
@@ -120,6 +139,8 @@ class SubgroupEditor(BatchCreate):
         if not self._binding and not self._previewing:
             super().queue_preview()
             self.changed.emit()
+            if not isinstance(QApplication.focusWidget(), QLineEdit):
+                self.queue_update()
 
     def refresh_preview(self) -> None:
         if self._binding:
@@ -163,6 +184,7 @@ class SubgroupEditor(BatchCreate):
     def apply(self) -> None:
         if (
             not self.isEnabled()
+            or not self.dirty
             or self.source is None
             or self.baseline is None
             or not self.paths
@@ -206,7 +228,41 @@ class SubgroupEditor(BatchCreate):
         except (ValueError, TypeError, IndexError, OSError) as error:
             self.notice.warn(error)
             return
-        self.committed.emit(program, paths)
+        self.update_timer.stop()
+        self.committing = True
+        try:
+            self.committed.emit(program, paths)
+        finally:
+            self.committing = False
+
+    def accept(self, program: Program, paths: tuple[tuple[int, ...], ...]) -> None:
+        # Rebase the template without rebuilding the field the operator moves to.
+        self.source, self.paths = program, paths
+        reference = self.reference()
+        epoch = node_at(program, paths[0])
+        template = self.composer.program.sequence[0]
+        assert isinstance(epoch, Epoch) and isinstance(template, Epoch)
+        self.composer.program = program.model_copy(
+            update={
+                "sequence": (template.model_copy(update={"scene_id": epoch.scene_id}),)
+            }
+        )
+        for row in self.composer.rows.values():
+            row.parameters.program = self.composer.program
+        self.baseline = self.composer.program.model_copy(
+            update={
+                "sequence": (
+                    reference.sequence[0].model_copy(
+                        update={"scene_id": epoch.scene_id}
+                    ),
+                )
+            }
+        )
+        self._reference = self.composer.program
+        self._texts = self.text_values()
+        self._rules = self.rule_draft(samples=False)
+        self.notice.clear()
+        self.update_timer.stop()
 
     def discard(self) -> None:
         if self.source is not None:

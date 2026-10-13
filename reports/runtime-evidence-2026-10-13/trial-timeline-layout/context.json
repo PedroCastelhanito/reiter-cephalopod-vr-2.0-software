@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-13",
+  "timezone": "Asia/Tokyo",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "working_tree": "Uncommitted changes including concurrent work; hashes reflect checked sources.",
+  "sha256": {
+    "src/cephvr/gui/protocol_controls.py": "229adb19cb332fef4eb21192de8d83144f4c0fd4b331d66aeb4f90ed824081c9",
+    "src/cephvr/gui/protocol_timeline.py": "07eb1b47d4f5325e3f2ffebb14cb0453b6746b6c61e905b979e7457722a400ee",
+    "tests/gui/test_dashboard.py": "f44ee36170da6d69cc66cc35c6e13b7c0609774ec1870ac600f85fbd6006153c"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'trial_row_actions or grouped_timeline_large_repeat or 200_epoch_timeline or inline_timeline or protocol_timeline_edits or timeline_overview or timeline_epoch_shortcuts'",
+      "result": "7 passed,454 deselected"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python preview.py",
+      "result": "One/eight groups at1200px and eight groups at720px: totals above, controls below; last-group right edge within1px. Captures visually reviewed; crowded group blocks omit details, full hover summary retained."
+    },
+    {
+      "command": ".venv/bin/python -m ruff check and format --check (three changed files); .venv/bin/python -m mypy --platform win32 (two changed GUI owners)",
+      "result": "passed; initial optional layout-item typing error fixed with explicit assertion"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py; git diff --check",
+      "result": "676 modules,zero violations; existing cohesion advisories unaffected; whitespace passed"
+    }
+  ],
+  "limits": "macOS offscreen presentation and local interaction only. Font fallback from Segoe UI. No native Windows/DPI/device/rig acceptance."
+}

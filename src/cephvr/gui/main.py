@@ -25,7 +25,12 @@ from cephvr.gui.managed_display import ManagedDisplayOperations
 from cephvr.gui.managed_mcu import ManagedMcu
 from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
 from cephvr.gui.managed_prompts import ManagedPrompts
-from cephvr.gui.managed_status import dashboard_view, retained_ack_required_for
+from cephvr.gui.managed_status import (
+    action_label,
+    dashboard_view,
+    has_retained_history,
+    retained_ack_required_for,
+)
 from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
 from cephvr.gui.managed_window import ManagedDashboardWindow
 from cephvr.gui.preview_placement import preview_window_placement
@@ -76,7 +81,7 @@ class ManagedGui(QObject):
         self.take = QAction("Take control", self)
         self.takeover = QAction("Take over control…", self)
         self.release = QAction("Release control", self)
-        self.review_retained = QAction("Review reconnect status…", self)
+        self.review_retained = QAction("Review controller history…", self)
         self.review_prompt = QAction("Review pending prompt…", self)
         self.reload_configuration = QAction("Reload controller configuration…", self)
         menu.addActions(
@@ -226,7 +231,7 @@ class ManagedGui(QObject):
         self.take.setEnabled(False)
         self.takeover.setEnabled(False)
         self.release.setEnabled(False)
-        self.review_retained.setEnabled(self._retained_ack_required)
+        self.review_retained.setEnabled(False)
         self.review_prompt.setEnabled(False)
         self.preview_viewers.disconnected()
         self.window.apply_view(DashboardView())
@@ -253,11 +258,12 @@ class ManagedGui(QObject):
         identity = (epoch, generation)
         self._connection_epoch = epoch
         self._connection_identity = identity
-        if self._awaiting_reconnect_review or (
+        fresh_identity = self._awaiting_reconnect_review or (
             self._retained_ack_required and self._retained_ack_identity != identity
-        ):
-            self._retained_ack_required = True
-            self._retained_ack_identity = identity
+        )
+        if fresh_identity:
+            self._retained_ack_required = False
+            self._retained_ack_identity = None
             self._awaiting_reconnect_review = False
         if retained_ack_required_for(state, identity, self._acknowledged_identity):
             self._retained_ack_required = True
@@ -265,7 +271,9 @@ class ManagedGui(QObject):
         self.state = state
         held = state.control.holder_client_id == self.bridge.principal.generation
         permitted = not self._retained_ack_required
-        self.review_retained.setEnabled(self._retained_ack_required)
+        self.review_retained.setEnabled(
+            self._retained_ack_required or has_retained_history(state)
+        )
         self.take.setEnabled(
             permitted and not held and not state.control.holder_client_id
         )
@@ -370,7 +378,9 @@ class ManagedGui(QObject):
             self.bridge.request("take_control")
 
     def review_retained_state(self) -> None:
-        if self._retained_ack_required:
+        if self.state is not None and (
+            self._retained_ack_required or has_retained_history(self.state)
+        ):
             self.prompts.review_retained_summary()
 
     def retained_state_acknowledged(self, epoch: int, generation: str) -> None:
@@ -417,15 +427,24 @@ class ManagedGui(QObject):
         )
 
     def command_admitted(self, action: str, command_id: str) -> None:
-        self.window.dashboard.log_console.appendPlainText(
-            f"{action}: admitted as {command_id}; awaiting completion evidence."
+        self.window.dashboard.log_console.append_entry(
+            f"{action_label(action)} accepted; awaiting completion.",
+            f"Action: {action}\nCommand ID: {command_id}\nState: admitted; completion is pending.",
         )
 
     def operation_finished(
         self, action: str, command_id: str, status: str, message: str
     ) -> None:
-        self.window.dashboard.log_console.appendPlainText(
-            f"{action} [{command_id}] {status}: {message}"
+        label = action_label(action)
+        normalized = status.replace("_", " ").capitalize()
+        summary = (
+            f"{label} completed."
+            if status == "completed"
+            else f"{label}: {normalized.lower()}" + (f" — {message}" if message else "")
+        )
+        self.window.dashboard.log_console.append_entry(
+            summary,
+            f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
         )
         self.prompts.operation_finished(action)
         if action == "spikeglx_inventory_update" and status == "completed":
@@ -568,13 +587,24 @@ class ManagedGui(QObject):
         ):
             raise ValueError("Camera configuration changed; reload before retrying.")
         panel = self.window.devices.microcontroller
+        camera = next(
+            (draft for draft in self.window.devices.cameras.drafts if draft.key == key),
+            None,
+        )
+        role = {
+            "Behavior cam": "behavioral",
+            "Tracking cam": "tracking",
+            "Eye tracking": "eye_tracking",
+        }.get(camera.role if camera is not None else "")
         return {
             "generation": state.controller_generation,
             "base_revision": state.configuration.revision,
             "base_configuration": state.configuration_values.current.SerializeToString(
                 deterministic=True
             ),
-            "pin": panel.pin_editors[key].text().strip(),
+            "pin": panel.pin_editors[role].text().strip()
+            if role in panel.pin_editors
+            else "",
             "port": str(panel.port.currentData() or ""),
         }
 
@@ -644,15 +674,21 @@ class ManagedGui(QObject):
             )
 
     def command_finished(self, action: str, success: bool, message: str) -> None:
-        rendered = f"{action}: {message}" if success else f"{action} failed: {message}"
-        self.window.dashboard.log_console.appendPlainText(rendered)
-        if action in {
+        label = action_label(action)
+        rendered = f"{label}: {message}" if success else f"{label} failed: {message}"
+        if action != "tracking_diagnostic_frame" or not success:
+            self.window.dashboard.log_console.append_entry(
+                rendered, f"Action: {action}\nSuccess: {success}\nMessage: {message}"
+            )
+        mcu_actions = {
             "mcu",
             "prepare_mcu_test",
+            "prepare_mcu_connection",
             "mcu_upload",
             "save_mcu_pins",
             "add_mcu_output",
-        }:
+        }
+        if action in mcu_actions:
             self.mcu.finished(action, success, message)
             if action == "save_mcu_pins" and self.state is not None:
                 self.mcu.revision = -1
@@ -661,7 +697,8 @@ class ManagedGui(QObject):
                     self.state.control.holder_client_id
                     == self.bridge.principal.generation,
                 )
-            self.window.devices.microcontroller.console.appendPlainText(rendered)
+            if success:
+                self.window.devices.microcontroller.console.appendPlainText(rendered)
         self.cameras.finished(action, success, message)
         if action in {
             "camera",

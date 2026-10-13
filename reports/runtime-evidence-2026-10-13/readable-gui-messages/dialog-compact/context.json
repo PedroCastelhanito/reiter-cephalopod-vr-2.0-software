@@ -1,0 +1,55 @@
+{
+  "recorded_at": "2026-10-13T12:33:54.266089+00:00",
+  "task": "gui-retained-review-layout",
+  "decision": "E03 revision33",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "source_state": "Uncommitted working tree; preserve concurrent texture and prior runtime implementation.",
+  "source_sha256": {
+    "src/cephvr/gui/retained_review.py": "c9260dea5c0474d6ae5bdfba335c2402e36392ad96ce1928a34fb17a24148692",
+    "tests/gui/test_dashboard.py": "956a0579065ce64a072590b929d74d54866732fee08f6280e2599e79c6752592"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'retained or managed_prompt or prompt_completion'",
+      "outcome": "12 passed,443 deselected in1.50s",
+      "evidence": [
+        "pytest.log",
+        "pytest.xml"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui/retained_review.py tests/gui/test_dashboard.py; .venv/bin/python -m ruff format --check src/cephvr/gui/retained_review.py tests/gui/test_dashboard.py",
+      "outcome": "pass",
+      "evidence": [
+        "ruff.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/retained_review.py",
+      "outcome": "pass",
+      "evidence": [
+        "mypy.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "676 modules,0 violations",
+      "evidence": [
+        "boundaries.log"
+      ]
+    }
+  ],
+  "review": "Luna writing,Sol6.1 integration/two-image QA,Astra main review; no blockers.",
+  "screenshots": [
+    "collapsed.png",
+    "long-report.png"
+  ],
+  "copy_evidence": "copied-details.txt",
+  "reproduction_script": "render_qa.py",
+  "interactive_preview": "QT_QPA_PLATFORM=cocoa .venv/bin/python /private/tmp/cephvr-message-preview.py: PREVIEW_READY window_visible=True warning_visible=True. Previous sample already closed.",
+  "preceding_evidence": [
+    "../dialog-redesign/context.json",
+    "../dialog-two-actions/context.json"
+  ],
+  "limits": "Synthetic events/temporary settings; no backend/device connection. G02 hidden tracks retained; actual vertical overflow verified. Native Windows/DPI/rig checks deferred."
+}

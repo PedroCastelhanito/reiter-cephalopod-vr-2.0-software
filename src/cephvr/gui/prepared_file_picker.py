@@ -30,7 +30,7 @@ class PreparedFilePicker(QObject):
         )
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         filters = {
-            "Texture": "Textures (*.texture.json *.png *.tif *.tiff *.jpg *.jpeg)",
+            "Texture": "Textures (*.json *.png *.tif *.tiff *.jpg *.jpeg)",
             "Image": "Images (*.png *.tif *.tiff *.jpg *.jpeg)",
             "Looming image": "Images (*.png *.tif *.tiff *.jpg *.jpeg)",
             "Video": "Videos (*.mp4 *.mkv)",

@@ -45,6 +45,7 @@ from cephvr.gui.projector_geometry import (
 )
 from cephvr.gui.projector_measured_profiles import measured_profiles
 from cephvr.gui.projector_measurements import ProjectorMeasurements
+from cephvr.gui.projector_prerequisites import CalibrationPrerequisites
 from cephvr.gui.projector_profile import bind_profile, current_outputs, portable_profile
 from cephvr.gui.projector_timing import ProjectorTiming
 from cephvr.gui.tables import DataTable
@@ -166,6 +167,10 @@ class ProjectorsPanel(DevicePanel):
         self.calibration = CalibrationTable(self.screen_editor.drafts)
         self.measurements = ProjectorMeasurements(self.screen_editor.drafts)
         self.measurements.body.insertWidget(1, self.calibration.measurement_button)
+        self.prerequisites = CalibrationPrerequisites()
+        self.measurements.body.insertWidget(2, self.prerequisites.reference)
+        self.calibration.body.insertWidget(1, self.prerequisites.projection)
+        self.prerequisites.refresh(self.enabled_screens, self.screen_editor.drafts)
         self.measurements.changed.connect(self._mark_geometry_dirty)
         self.calibration.launch_requested.connect(self.launch_calibration)
         self.calibration.measurement_requested.connect(
@@ -770,6 +775,7 @@ class ProjectorsPanel(DevicePanel):
         self.outputs_changed.emit()
 
     def update_geometry(self) -> None:
+        self.prerequisites.refresh(self.enabled_screens, self.screen_editor.drafts)
         self.measurements.refresh(
             {
                 self.assignments[key]: dimensions

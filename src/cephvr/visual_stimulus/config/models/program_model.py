@@ -284,6 +284,7 @@ Pattern = Annotated[Grating | Checkerboard | ImageTile, Field(discriminator="kin
 
 
 class TextureSettings(LayerBase):
+    linked_to: Id | None = None
     kind: Literal["texture"]
     pattern: Pattern
     initial_phase_x_cycles: Number
@@ -350,6 +351,7 @@ class Asset(Model):
         "png_uint_v1",
         "tiff_uint_v1",
         "jpeg8_v1",
+        "cephvr1_texture_json_v1",
         "mp4_h264_sdr8_v1",
         "matroska_ffv1_v3_uint_v1",
         "glb2_static_unlit_v1",
@@ -586,7 +588,10 @@ class Program(Model):
                             "Random rules require distinct active instance parameters"
                         )
                 settings_sets = (node.settings, *node.repetition_settings)
+                from cephvr.visual_stimulus.config.texture_links import validate_links
+
                 for settings in settings_sets:
+                    validate_links(settings)
                     ids = [x.instance_id for x in settings]
                     unique(ids)
                     if set(ids) != active:
@@ -609,7 +614,12 @@ class Program(Model):
                         sources.append((block.pattern.asset_id, "image"))
                     for aid, kind in sources:
                         allowed = {
-                            "image": {"png_uint_v1", "tiff_uint_v1", "jpeg8_v1"},
+                            "image": {
+                                "png_uint_v1",
+                                "tiff_uint_v1",
+                                "jpeg8_v1",
+                                "cephvr1_texture_json_v1",
+                            },
                             "video": {"mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"},
                             "arena": {"glb2_static_unlit_v1"},
                         }[kind]

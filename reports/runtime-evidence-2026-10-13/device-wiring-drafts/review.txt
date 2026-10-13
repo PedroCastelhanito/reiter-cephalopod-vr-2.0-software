@@ -1,0 +1,4 @@
+2026-10-13 review hierarchy: Luna source/test writing, Sol6.1 integration review, Astra major decision and final source review.
+Astra final: no blockers. Exact scoped validation preserves Use and strict Setup; contextual save rechecks identity/authority; repeated identical preparation skips unchanged configuration submission; authoritative MCU projection does not create false local drafts; VSync independent of photodiode; legacy migration validates saved roles/identity and ignored legacy Use, normalizes three logical role pins.
+Root integration corrections included selected readback while disabled, logical-role review draft persistence, projector prerequisites, full-GUI migration record ownership. Final screenshots inspected; native sample window visible.
+This is source/UI review and local test evidence, not rig acceptance.

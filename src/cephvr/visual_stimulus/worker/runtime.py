@@ -47,6 +47,7 @@ class VisualStimulusWorkerRuntime:
         self.shutdown_deadline_ns: int | None = None
         self.command_ids: set[str] = set()
         self.supervisor_command_ids: set[str] = set()
+        self.local_recovery_command_ids: set[str] = set()
         self.delivery_failed = delivery_failed
 
     def validate_command(self, method: str, request: Message) -> None:
@@ -211,6 +212,68 @@ class VisualStimulusWorkerRuntime:
             result=pb.COMMAND_RESULT_ACCEPTED, command_id=command.command_id
         )
 
+    async def local_recovery_shutdown(
+        self, command: visual_stimulus.WorkerCommand, deadline_ns: int
+    ) -> None:
+        """Retain process-local recovery without claiming coordinator authorization."""
+        require_uuid4(command.command_id)
+        if command.issuer != self.context.worker or command.target != self.context:
+            raise ValueError("local recovery command has the wrong renderer identity")
+        if command.deadline_monotonic_ns != deadline_ns:
+            raise ValueError("local recovery deadline differs from its command")
+        admission = self.ledger.admit(
+            command.command_id,
+            command.SerializeToString(),
+            self.clock(),
+            work_key=command.command_id,
+            deadline_ns=deadline_ns,
+            priority=True,
+        )
+        self.command_ids.add(command.command_id)
+        self.local_recovery_command_ids.add(command.command_id)
+        if admission.replayed:
+            if not admission.record.executor_result:
+                raise RuntimeError("local recovery shutdown is already in progress")
+            previous = pb.OperationState.FromString(admission.record.executor_result)
+            if previous.succeeded:
+                return
+            raise RuntimeError(previous.failure.message)
+        receipt = pb.CommandAdmission(
+            result=pb.COMMAND_RESULT_ACCEPTED, command_id=command.command_id
+        )
+        self.ledger.complete(
+            command.command_id, receipt.SerializeToString(), self.clock()
+        )
+        self.interrupted = True
+        self.shutdown_deadline_ns = min(
+            self.shutdown_deadline_ns or deadline_ns, deadline_ns
+        )
+        failure: pb.Failure | None
+        try:
+            await self.owner.submit("Shutdown", command, deadline_ns)
+        except Exception as exc:
+            succeeded = False
+            failure = pb.Failure(
+                code="LOCAL_RECOVERY_SHUTDOWN", message=str(exc)[:2048]
+            )
+        else:
+            succeeded = True
+            failure = None
+        outcome = pb.OperationState(
+            context=pb.OperationContext(command_id=command.command_id),
+            command="Shutdown",
+            work=command.target.work,
+            complete=True,
+            succeeded=succeeded,
+        )
+        if failure is not None:
+            outcome.failure.CopyFrom(failure)
+        self.ledger.complete_executor(
+            command.command_id, outcome.SerializeToString(), self.clock()
+        )
+        if failure is not None:
+            raise RuntimeError(failure.message)
+
     async def query(self, method: str, request: Message) -> Message:
         if (
             not isinstance(request, visual_stimulus.WorkerQuery)
@@ -287,7 +350,10 @@ class VisualStimulusWorkerRuntime:
             }
             for scope in scopes:
                 self.ledger.finalize_work(scope, self.clock())
-        if command in self.supervisor_command_ids:
+        if (
+            command in self.supervisor_command_ids
+            or command in self.local_recovery_command_ids
+        ):
             return
         await self.reports.receipt(
             "ReportWorkerLifecycle", report, deadline_ns=deadline_ns
@@ -301,6 +367,7 @@ class VisualStimulusWorkerRuntime:
             if self.ledger.get(command_id) is not None
         }
         self.supervisor_command_ids.intersection_update(self.command_ids)
+        self.local_recovery_command_ids.intersection_update(self.command_ids)
         self.retained = {
             key: value
             for key, value in self.retained.items()

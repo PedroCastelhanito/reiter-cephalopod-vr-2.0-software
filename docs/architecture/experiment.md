@@ -291,7 +291,7 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
 <a id="e07"></a>
 ### E07 — Configuration and protocol preparation
 
-**Status:** Accepted · **Revision:** 60
+**Status:** Accepted · **Revision:** 61
 
 #### Sources and loading
 
@@ -383,8 +383,28 @@ display evidence and remaining timing diagnostics belong to [Visual Stimulus](vi
 - A camera participation-only edit may change acquisition/backend and camera Use
   flags while retaining every other configuration field exactly. The controller
   validates that restricted edit without requiring complete acquisition settings;
-  enabling a camera is not readiness. Other edits retain normal pure validation,
-  and capture/Setup still validate the full enabled-camera configuration.
+  enabling a camera is not readiness. Separately, an exact acquisition connection
+  edit may change only explicit camera device identities and MCU port, pins, fixed
+  signal enable flags and requested pulse rates. Validate supplied identity/token,
+  pin/rate bounds, distinct device identities and active-pin conflicts with focused
+  pure validation; dormant pin reuse remains storable and absent connection values
+  do not imply readiness. Explicit diagnostics also check their selected target for
+  conflicts, independently of experiment participation. All participation, camera timing/PFS, policy and
+  unrelated fields must remain unchanged for this exception. Keep other component
+  validators, authority/revision/ownership locks and atomic commit checks. Other edits
+  retain normal pure validation; capture/Setup still validate the full required
+  configuration. GUI unfinished text remains local and cannot fall back silently to
+  accepted values when an explicit action is requested.
+- A single-camera parameter edit is validated for its exact selected device and
+  optional selected pulse/shared port fields, with every unrelated field and all
+  participation flags unchanged. The acquisition validator checks a temporary view
+  with only that camera participating and without recording-only readiness
+  requirements; no participation or recording changes enter stored state.
+  Preserve shared-option validation and actual cross-role identity/active-pin conflicts,
+  treating the selected external camera as active for this check. A10 manual readback
+  uses the exact operation camera and the same validation scope after evidence checks.
+  This permits selected-camera preparation despite another unfinished camera; it
+  does not relax full session Setup or let an unrelated edit use the exception.
 - If a required pure validator is unavailable, incompatible or timed out, or
   rejects a value, reject the edit and preserve the current configuration,
   revision, saved history and existing Ready state. A confirmed rejection returns

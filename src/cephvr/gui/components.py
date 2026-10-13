@@ -5,16 +5,20 @@ from math import ceil
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
 from PyQt6.QtGui import (
     QColor,
+    QContextMenuEvent,
     QPainter,
     QPaintEvent,
     QPen,
     QRegion,
     QResizeEvent,
+    QTextBlockUserData,
     QTextOption,
 )
 from PyQt6.QtWidgets import (
     QAbstractSpinBox,
+    QApplication,
     QComboBox,
+    QDialog,
     QDoubleSpinBox,
     QFrame,
     QHBoxLayout,
@@ -282,6 +286,68 @@ class LogConsole(Console):
             position += line_offset
         vertical.setValue(vertical.maximum() if following else position)
         horizontal.setValue(x)
+
+    def append_entry(self, summary: str, details: str) -> None:
+        """Append a concise row with diagnostics bound to its document block."""
+        summary = summary.replace("\r\n", "\n").replace("\r", "\n")
+        summary = " · ".join(summary.splitlines())
+        self.appendPlainText(summary)
+        document = self.document()
+        assert document is not None
+        document.lastBlock().setUserData(_LogDetails(details))
+        self.setToolTip(
+            "Right-click or use the context-menu key on an entry for details."
+        )
+
+    def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
+        if event is None:
+            return
+        cursor = (
+            self.textCursor()
+            if event.reason() == QContextMenuEvent.Reason.Keyboard
+            else self.cursorForPosition(event.pos())
+        )
+        data = cursor.block().userData()
+        keyboard = event.reason() == QContextMenuEvent.Reason.Keyboard
+        local_position = (
+            self.cursorRect(cursor).bottomRight() if keyboard else event.pos()
+        )
+        menu = self.createStandardContextMenu(local_position)
+        if menu is None:
+            return
+        if isinstance(data, _LogDetails):
+            menu.addSeparator()
+            view_action = menu.addAction("View details")
+            copy_action = menu.addAction("Copy details")
+        else:
+            view_action = copy_action = None
+        global_position = (
+            self.mapToGlobal(local_position) if keyboard else event.globalPos()
+        )
+        chosen = menu.exec(global_position)
+        if isinstance(data, _LogDetails) and chosen == view_action:
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Log entry details")
+            layout = QVBoxLayout(dialog)
+            detail_view = QPlainTextEdit(dialog)
+            detail_view.setProperty("role", "source")
+            detail_view.setReadOnly(True)
+            detail_view.setPlainText(data.details)
+            layout.addWidget(detail_view)
+            dialog.resize(640, 360)
+            dialog.exec()
+            dialog.deleteLater()
+        elif isinstance(data, _LogDetails) and chosen == copy_action:
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setText(data.details)
+        menu.deleteLater()
+
+
+class _LogDetails(QTextBlockUserData):
+    def __init__(self, details: str) -> None:
+        super().__init__()
+        self.details = details
 
 
 class StatusColumn(QWidget):

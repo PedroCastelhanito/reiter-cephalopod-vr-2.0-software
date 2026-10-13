@@ -59,9 +59,7 @@ class TimelineViews:
                 and next_node.batch_id == node.batch_id
             ):
                 end += 1
-            title = f"Batch {number}" + (
-                f" · {node.batch_label}" if node.batch_label else ""
-            )
+            title = node.batch_label or f"Epoch {number}"
             runs[start:end] = [(start, end, title)] * (end - start)
             start = end
         view = TimelineView(

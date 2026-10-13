@@ -135,6 +135,9 @@ def _truncations(
 
 
 def _validate_writers(settings: tuple[Settings, ...], epoch_index: int) -> None:
+    from cephvr.visual_stimulus.config.texture_links import validate_links
+
+    validate_links(settings, resolved=True)
     for block in settings:
         bindings = [item.binding_id for item in block.feedback]
         if len(bindings) != len(set(bindings)):
@@ -308,6 +311,7 @@ def _check_asset_resources(
         "png_uint_v1": "image",
         "tiff_uint_v1": "image",
         "jpeg8_v1": "image",
+        "cephvr1_texture_json_v1": "image",
         "mp4_h264_sdr8_v1": "video",
         "matroska_ffv1_v3_uint_v1": "video",
         "glb2_static_unlit_v1": "arena",
@@ -429,6 +433,10 @@ def compile_trial(
     if context.saving != (context.review_encoding is not None):
         raise ValueError("review encoding presence must match the saving setting")
     source_bytes = context.source_json.encode("utf-8")
+    from cephvr.visual_stimulus.compiler.texture_links import validate_link_geometry
+
+    boundaries = compile_boundaries(compiled_epochs)
+    validate_link_geometry(compiled_epochs, boundaries, context.display.geometry)
     prepared = PreparedTrial(
         format_version=2,
         identity=context.identity,
@@ -440,7 +448,7 @@ def compile_trial(
         duration_implementation=DURATION_IMPLEMENTATION,
         duration_sampler_id=duration_result.sampler_id or DURATION_SAMPLER_ID,
         epochs=tuple(compiled_epochs),
-        boundaries=compile_boundaries(compiled_epochs),
+        boundaries=boundaries,
         arena_boundaries=context.arena_boundaries,
         manifest=context.manifest,
         uniform_layouts=context.uniform_layouts,

@@ -8,7 +8,7 @@ import time
 import uuid
 from collections.abc import Callable
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.compiler import CompileContext, compile_trial
@@ -51,6 +51,10 @@ from cephvr.visual_stimulus.resources.video import VideoPlayback
 from cephvr.visual_stimulus.resources.video_decoder import DecoderFactory
 from cephvr.visual_stimulus.resources.video_session import VideoSession
 from cephvr.visual_stimulus.v1 import messages_pb2 as visual_stimulus_messages
+
+if TYPE_CHECKING:
+    from cephvr.visual_stimulus.rendering.image_residency import ImageResidency
+    from cephvr.visual_stimulus.resources.image_source import ImageInfo, ImageSource
 
 
 class ReviewEncodingProvider(Protocol):
@@ -118,6 +122,7 @@ class NativePreparation:
         self._display_profile: DisplayProfile | None = None
         self.video_playback: VideoPlayback | None = None
         self.video_session: VideoSession | None = None
+        self.image_residency: ImageResidency | None = None
 
     def _retain_source_factory(
         self, factory: Callable[[Path], ProtectedSource]
@@ -152,6 +157,7 @@ class NativePreparation:
             not self._resource_keys
             and not self._protected_sources
             and self.video_playback is None
+            and self.image_residency is None
         ):
             self._released_resource_keys.clear()
 
@@ -353,6 +359,7 @@ class NativePreparation:
             )
         ffmpeg_args = tuple(request.settings.review_ffmpeg_args)
         artifacts: list[PreparedTrial] = []
+        validated_images: dict[str, tuple[ImageSource, ImageInfo]] = {}
         try:
             for trial in request.session.trials:
                 self._check(deadline_ns)
@@ -394,6 +401,8 @@ class NativePreparation:
                     max_document_bytes=limits.max_document_bytes,
                     source_factory=self.source_factory,
                     codec_threads=limits.codec_threads_per_context,
+                    defer_images=True,
+                    validated_images=validated_images,
                 )
                 trial_id = trial.context.trial_id
                 if trial_id in self._bundles:
@@ -470,6 +479,23 @@ class NativePreparation:
                 assert self.video_session is not None
                 self.video_session.register_trial(artifact, bundle)
                 artifacts.append(artifact)
+            if any(bundle.image_sources for bundle in self._bundles.values()):
+                from cephvr.visual_stimulus.rendering.image_residency import (
+                    ImageResidency,
+                )
+                from cephvr.visual_stimulus.resources.image_schedule import (
+                    ImageSchedule,
+                )
+
+                schedule = ImageSchedule.build(
+                    tuple(artifacts), self._bundles, self._budget
+                )
+                self.image_residency = ImageResidency(
+                    schedule,
+                    self._budget,
+                    announce=self._registered_announce(announce, ""),
+                    clock_ns=self.clock_ns,
+                )
             if self.video_playback is not None:
                 self.video_playback.start(
                     announce=self._registered_announce(announce, ""),
@@ -557,6 +583,11 @@ class NativePreparation:
         # unchanged. Keep old Idle through CPU preparation, then replace outputs
         # and require fresh framebuffer/Idle observations before Ready.
         self.engine.replace_display(display, calibration)
+        if self.image_residency is not None:
+            install_images = getattr(self.port, "install_image_residency", None)
+            if install_images is None:
+                raise RuntimeError("render port lacks bounded image residency")
+            install_images(self.image_residency, self._deadline_ns)
         for artifact in artifacts:
             self._check(self._deadline_ns)
             self.engine.prepare_trial(
@@ -573,11 +604,19 @@ class NativePreparation:
         failed_sources: set[int] = set()
         closed_sources: set[int] = set()
         decoder_closed = True
+        if self.image_residency is not None:
+            deadline = deadline_ns if deadline_ns is not None else self.clock_ns()
+            if self.image_residency.close(deadline):
+                self.image_residency = None
+            else:
+                outstanding.append("image-loader:worker remains active")
+                decoder_closed = False
         if self.video_playback is not None:
             deadline = deadline_ns if deadline_ns is not None else self.clock_ns()
-            for worker in self.video_playback.cleanup(deadline_ns=deadline):
+            video_outstanding = self.video_playback.cleanup(deadline_ns=deadline)
+            for worker in video_outstanding:
                 outstanding.append(f"video-decoder:{worker}")
-            if not outstanding:
+            if not video_outstanding:
                 self.video_playback = None
             else:
                 decoder_closed = False

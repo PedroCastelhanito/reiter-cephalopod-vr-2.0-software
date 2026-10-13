@@ -52,20 +52,23 @@ opening cameras; imported PFS provenance still requires A10's SDK import.
 
 ## Microcontroller
 
-Root: `format: "cephvr-microcontroller-config"`, integer `version: 2`, `port`,
+Root: `format: "cephvr-microcontroller-config"`, integer `version: 3`, `port`,
 `firmware_path` (text), `trial_state` and `projector_flip` (objects with text `pin`
-and boolean `enabled`), `camera_pins` (current camera key → text pin), and
-`camera_enabled` (current camera key → boolean). The complete camera-key inventories
-must match. Camera participation still belongs to Cameras; loading these saved output
-flags restores that owner's local draft without sending enable commands. Version 1
-files omit `camera_enabled` and preserve current camera participation. Loading requires
-stopped/disconnected cameras and no pending camera operation. Restore blocks port/toggle
-command signals and never uploads firmware.
+and boolean `enabled`), and `camera_pins` keyed by exactly `behavioral`, `tracking`
+and `eye_tracking`. Pins are wiring for logical roles, independent of camera
+inventory and participation. No camera Use flags are stored or restored here;
+Cameras/full GUI files own participation. Unset pins and port remain valid local drafts.
+
+Version 1/2 files migrate camera-keyed pins through the current known camera-role
+mapping, or the saved camera roles when embedded in a full GUI file; reject unknown
+or ambiguous assignments without changing current drafts.
+Validate legacy version 2 `camera_enabled` values but do not restore them. Loading
+requires stopped/disconnected cameras and no pending camera operation. Restore blocks
+port/toggle command signals and never uploads firmware.
 Loaded pins enter the normal GUI configuration proposal; no Apply pin settings
-action remains. Supported-signal Add/remove maps to existing enable flags (camera
-participation stays in Cameras and is retained in v2 files), preserving pin values.
-No arbitrary I/O definitions
-or new firmware behavior are encoded.
+action remains. Camera output removal clears that role's pin without changing camera
+participation or timing source. Fixed signal enable flags retain their own meaning.
+No arbitrary I/O definitions or new firmware behavior are encoded.
 
 ## SpikeGLX
 

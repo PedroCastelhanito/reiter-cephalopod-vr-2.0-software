@@ -1,0 +1,46 @@
+{
+  "recorded_at": "2026-10-13T12:30:01.838888+00:00",
+  "task": "gui-retained-review-layout",
+  "decision": "E03 revision32",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "source_state": "Uncommitted working tree including concurrent texture implementation; preserve all unrelated work.",
+  "source_sha256": {
+    "src/cephvr/gui/retained_review.py": "804ce8d48dcfac833354d4b0c15d0b2b579a006614a1483095f64454a929ca6d",
+    "tests/gui/test_dashboard.py": "9b2c1724159e490fe5db97f8cfd25379ee0f3d618c9d97ab332c5b08829b3d9c"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'retained or managed_prompt or prompt_completion'",
+      "outcome": "11 passed,443 deselected",
+      "evidence": [
+        "pytest.log",
+        "pytest.xml"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui/retained_review.py tests/gui/test_dashboard.py; .venv/bin/python -m ruff format --check src/cephvr/gui/retained_review.py tests/gui/test_dashboard.py",
+      "outcome": "pass",
+      "evidence": [
+        "ruff.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/retained_review.py",
+      "outcome": "pass",
+      "evidence": [
+        "mypy.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "676 modules,0 violations",
+      "evidence": [
+        "boundaries.log"
+      ]
+    }
+  ],
+  "review": "Luna writing,Sol6.1 integration/screenshots,Astra main review; no blockers.",
+  "screenshot_evidence": "../dialog-simple/",
+  "interactive_preview": "Exact previous sample process replaced; QT_QPA_PLATFORM=cocoa .venv/bin/python /private/tmp/cephvr-message-preview.py reports PREVIEW_READY window_visible=True warning_visible=True.",
+  "limits": "Synthetic events and temporary settings; no controller/device connection. Native Windows/DPI/rig acceptance remains deferred."
+}

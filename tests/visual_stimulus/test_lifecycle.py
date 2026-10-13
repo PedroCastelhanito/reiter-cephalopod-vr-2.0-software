@@ -1273,3 +1273,228 @@ async def test_idle_wakeup_tracks_native_progress_without_counting_idle_as_stall
     finally:
         unblock.set()
         await owner.close(clock() + 1_000_000_000)
+
+
+def test_image_loader_cleanup_keeps_protected_sources_until_joined() -> None:
+    from cephvr.visual_stimulus.resources.session import NativePreparation
+
+    class Source:
+        closed = False
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    class Cache:
+        joined = False
+        deadlines = []
+
+        def close(self, deadline):
+            self.deadlines.append(deadline)
+            return self.joined
+
+    preparation = NativePreparation(
+        Graphics(Clock(), make_prepared_trial()),
+        renderer_generation="renderer",
+        clock_ns=lambda: 1,
+    )
+    source, cache = Source(), Cache()
+    preparation._protected_sources.append((source, "protected-image"))
+    preparation._resource_keys.extend(
+        ("protected-image", "visual_stimulus:image-loader")
+    )
+    preparation.image_residency = cache
+    first = preparation.cleanup(100)
+    assert first.outstanding == ("image-loader:worker remains active",)
+    assert not first.released
+    assert not source.closed
+    assert preparation.image_residency is cache
+    cache.joined = True
+    second = preparation.cleanup(100)
+    assert not second.outstanding
+    assert set(second.released) == {"protected-image", "visual_stimulus:image-loader"}
+    assert source.closed
+    assert preparation.image_residency is None
+    assert cache.deadlines == [100, 100]
+
+
+def test_native_preparation_compiles_deferred_recipe_and_installs_initial_residency(
+    tmp_path,
+):
+    import json
+    import time
+
+    from cephvr.visual_stimulus.rendering.types import (
+        DisplayInitialization,
+        OutputActivity,
+    )
+    from cephvr.visual_stimulus.resources.session import NativePreparation
+    from cephvr.visual_stimulus.v1 import runtime_pb2 as vp
+
+    from .support import fixture_source
+
+    sources = []
+    announcements = []
+
+    class Source:
+        def __init__(self, path):
+            self.path, self.closed = path, False
+            sources.append(self)
+
+        def independent_reader(self):
+            assert not self.closed
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    class Gpu:
+        def upload(self, source, pixels, textures):
+            assert len(pixels) == source.width * source.height * 16
+            textures.append(object())
+            return True
+
+        def fence(self, fences):
+            fences.append(object())
+
+        def ready(self, fences):
+            return True
+
+        def release(self, textures, fences):
+            textures.clear()
+            fences.clear()
+
+    class Port:
+        cache = None
+
+        def __init__(self):
+            self.resources, self.prepared = {}, []
+
+        def install_display_calibration(self, calibration):
+            self.calibration = calibration
+
+        def initialize_display(self, display):
+            outputs = display.active_outputs
+            return DisplayInitialization(
+                tuple(output.output_id for output in outputs),
+                tuple((output.output_id, 8, 8, 8) for output in outputs),
+                tuple(
+                    (output.output_id, output.width_px, output.height_px)
+                    for output in outputs
+                ),
+                tuple((output.output_id, 1) for output in outputs),
+                tuple(OutputActivity(output.output_id, 1, 1, 1) for output in outputs),
+            )
+
+        def install_image_residency(self, cache, deadline_ns):
+            self.cache = cache
+            cache.attach(
+                Gpu(), self.resources, lambda key, path: announcements.append(key)
+            )
+            cache.prepare(deadline_ns)
+
+        def prepare_trial(self, artifact, bundle):
+            assert "recipe" not in bundle.prepared_content
+            for asset_id in bundle.image_sources:
+                key = f"{artifact.identity.resource_generation}:{asset_id}"
+                assert len(self.resources[key]) == 1
+            self.prepared.append(artifact.identity.trial_id)
+
+        def release(self):
+            if self.cache is None:
+                return ResourceReleaseReport(())
+            outstanding = self.cache.release_gpu()
+            return ResourceReleaseReport(tuple(self.cache.released_keys), outstanding)
+
+    root_recipe = tmp_path / "texture.json"
+    root_recipe.write_text(
+        '{"pattern":"checker","params":{"texture_resolution":8,"tile_width_mm":40}}'
+    )
+    program = json.loads(fixture_source())
+    program["assets"] = [
+        {
+            "asset_id": "recipe",
+            "logical_path": "texture.json",
+            "profile": "cephvr1_texture_json_v1",
+            "color_override": None,
+        }
+    ]
+    for epoch in program["sequence"]:
+        epoch["settings"][0]["pattern"] = {
+            "kind": "image_tile",
+            "asset_id": "recipe",
+            "period_x": {"kind": "constant", "value": 40},
+            "period_y": {"kind": "constant", "value": 40},
+            "sampling": "linear",
+        }
+    request = visual_stimulus.WorkerSetup()
+    request.session.context.session_id = str(uuid4())
+    request.session.configuration.asset_root = str(tmp_path)
+    request.session.configuration_revision = 1
+    trial = request.session.trials.add()
+    trial.context.session.CopyFrom(request.session.context)
+    trial.context.trial_id = str(uuid4())
+    trial.definition.trial_number = 1
+    trial.definition.stimulus.program.program_json = json.dumps(program)
+    trial.definition.stimulus.arena_boundaries.boundaries_json = (
+        '{"format_version":1,"bindings":[]}'
+    )
+    trial.definition.stimulus.stimulus_seed_decimal = "17"
+    request.settings.display.profile_json = valid_display_json()
+    from cephvr.visual_stimulus.config.models.display_profile import parse_display_json
+
+    from .test_display_calibration_rendering import _geometric_profiles
+
+    display = parse_display_json(
+        request.settings.display.profile_json, max_bytes=1_000_000
+    )
+    profiles = _geometric_profiles(display)
+    for mapping in display.active_mappings:
+        path = tmp_path / mapping.geometric_profile.logical_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(profiles[mapping.mapping_id].model_dump_json())
+    request.policies.contract_version = 1
+    request.policies.limits.CopyFrom(
+        vp.ResourceLimits(
+            max_document_bytes=1_000_000,
+            max_asset_cpu_bytes=64_000_000,
+            max_asset_gpu_bytes=64_000_000,
+            max_expanded_epochs=1000,
+            max_prepared_plan_bytes=1_000_000,
+            decoder_threads=1,
+            decoder_contexts=1,
+            codec_threads_per_context=1,
+            codec_threads_total=1,
+            decoded_frames_per_instance=1,
+            decoded_bytes_total=1_000_000,
+            decoder_working_bytes_total=1_000_000,
+        )
+    )
+    port = Port()
+    preparation = NativePreparation(
+        port, renderer_generation=str(uuid4()), source_factory=Source
+    )
+    deadline = time.monotonic_ns() + 5_000_000_000
+    try:
+        artifacts = preparation.prepare_trials(
+            request, lambda key, path: announcements.append(key), deadline
+        )
+        bundle = preparation.resources_for(trial.context.trial_id)
+        assert "recipe" not in bundle.prepared_content
+        assert tuple(bundle.image_sources) == ("recipe",)
+        assert bundle.asset_set.assets[0].data is None
+        assert (
+            artifacts[0].manifest.resources[0].profile_id == "cephvr1_texture_json_v1"
+        )
+        assert preparation.image_residency is not None
+        preparation.prepare_graphics(artifacts)
+        assert port.prepared == [trial.context.trial_id]
+        assert port.cache is preparation.image_residency
+        assert any("gpu:resident-image" in key for key in announcements)
+    finally:
+        graphics = preparation.engine.cleanup()
+        assert not graphics.outstanding
+        closed = preparation.cleanup(time.monotonic_ns() + 5_000_000_000)
+        assert not closed.outstanding
+    assert sources and all(source.closed for source in sources)
+    assert preparation.image_residency is None
+    assert not preparation._bundles

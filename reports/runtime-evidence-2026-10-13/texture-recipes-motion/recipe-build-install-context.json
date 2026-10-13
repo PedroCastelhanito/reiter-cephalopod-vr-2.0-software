@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "working_tree": "Includes uncommitted texture compatibility changes and unrelated concurrent changes; revision alone does not identify tested source.",
+  "evidence_kind": "Reconstructed assessment from executed tool results; raw stdout was not saved. This is not a raw log.",
+  "environment": "macOS ARM64, repository Python 3.11 .venv",
+  "commands": [
+    {
+      "command": ".venv/bin/python -m pip install Pillow==12.2.0",
+      "scope": "Sandbox default",
+      "outcome": "Failed before installation: sandbox DNS lookup for pypi.org failed."
+    },
+    {
+      "command": ".venv/bin/python -m pip install Pillow==12.2.0",
+      "scope": "Permitted network escalation",
+      "outcome": "Passed: cached macOS ARM64 cp311 wheel installed Pillow 12.2.0 into repository .venv."
+    },
+    {
+      "command": ".venv/bin/python -c 'import PIL; print(PIL.__version__)'",
+      "scope": "Readback",
+      "outcome": "Passed; output 12.2.0. pip show Pillow independently confirmed repository .venv installation."
+    },
+    {
+      "command": ".venv/bin/python -m build",
+      "scope": "Sandbox default",
+      "outcome": "Failed while installing isolated build dependencies due to sandbox DNS restriction."
+    },
+    {
+      "command": ".venv/bin/python -m build",
+      "scope": "Permitted isolated-build network escalation",
+      "outcome": "Fetched declared isolated build dependencies, then failed at repository packaging guard: RuntimeError: native CephVR DLLs can only be packaged for AMD64 Windows. No package-build success is claimed."
+    }
+  ],
+  "limits": "Installation/build checks establish dependency installation and the native-platform packaging restriction only. No Windows, device, projector, hardware, throughput or optical acceptance was executed."
+}

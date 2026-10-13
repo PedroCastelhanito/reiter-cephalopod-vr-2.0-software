@@ -1135,3 +1135,52 @@ def test_normal_finish_drains_admitted_gpu_capture_before_sealing(
     else:
         assert "capture_unresolved_at_finalization_deadline" not in events
     assert events[-1] == {"cutoff_ns": 5, "deadline_ns": 20}
+
+
+def test_image_selection_evidence_preserves_repeated_actual_indices():
+    from cephvr.visual_stimulus.config.models.evidence_model import EvidenceRecord
+    from cephvr.visual_stimulus.recording.evidence_records import (
+        build_render_group_record,
+    )
+    from cephvr.visual_stimulus.rendering.types import ImageSnapshot
+
+    for group, requested, actual, repeated in (
+        (0, 0, 0, False),
+        (1, 1, 0, True),
+        (2, 2, 0, True),
+        (3, 2, 2, False),
+    ):
+        state = EvidenceStateSnapshot(
+            group,
+            "scene",
+            group * 1_000_000,
+            ("layer",),
+            (),
+            (),
+            (),
+            (
+                ImageSnapshot(
+                    "layer",
+                    f"image-{requested}",
+                    requested,
+                    f"image-{actual}",
+                    actual,
+                    "current" if requested == actual else "residency_hold",
+                    repeated,
+                ),
+            ),
+        )
+        record = build_render_group_record(group, state, (), (), "rgba", "yuv420p")
+        decoded = EvidenceRecord.model_validate_json(
+            EvidenceRecord(payload=record).model_dump_json()
+        )
+        image = decoded.payload.state.images[0]
+        assert (image.requested_image_index, image.image_index, image.repeated) == (
+            requested,
+            actual,
+            repeated,
+        )
+        assert image.asset_id == f"image-{actual}"
+        assert image.disposition == (
+            "current" if requested == actual else "residency_hold"
+        )

@@ -303,16 +303,20 @@ async def test_exact_duplicate_resolution_after_adoption_is_accepted(
 
 
 async def _manual_readback(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, result: int
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    result: int,
+    *,
+    enabled: bool = True,
 ) -> tuple[Any, _Acquisition, pb.ExperimentConfiguration]:
     runtime = _runtime_with_validators(tmp_path)
     backend = _Acquisition(result)
     runtime.camera_readback.backends = {"acquisition": cast(Any, backend)}
     runtime.camera_readback.validators = runtime.configuration_commands.validators
     setting = runtime.configuration_state.current.backends.add(
-        backend_name="acquisition", enabled=True
+        backend_name="acquisition", enabled=enabled
     )
-    setting.acquisition.behavioral.enabled = True
+    setting.acquisition.behavioral.enabled = enabled
     candidate = pb.ExperimentConfiguration()
     candidate.CopyFrom(runtime.configuration_state.current)
     candidate.experiment = "resolved"
@@ -347,15 +351,23 @@ async def test_manual_readback_rejection_leaves_configuration_untouched(
     assert runtime.device_state.camera_operation is None
 
 
+@pytest.mark.parametrize("enabled", [False, True])
 async def test_manual_readback_acceptance_commits_and_bumps_revision(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, enabled: bool
 ) -> None:
     runtime, _backend, candidate = await _manual_readback(
-        tmp_path, monkeypatch, pb.COMMAND_RESULT_ACCEPTED
+        tmp_path, monkeypatch, pb.COMMAND_RESULT_ACCEPTED, enabled=enabled
     )
     assert runtime.configuration_state.revision == 2
     assert runtime.configuration_state.current == candidate
     assert runtime.projections.configuration_revision == 2
+
+    confirmed = _backend.confirmations[0].confirmed
+    assert confirmed.behavioral.enabled is enabled
+    acquisition = next(
+        item for item in candidate.backends if item.backend_name == "acquisition"
+    )
+    assert acquisition.enabled is enabled
 
 
 def _runtime_with_validators(tmp_path: Path) -> ControllerRuntime:
@@ -438,6 +450,246 @@ async def test_camera_participation_can_precede_settings_validation(
         assert not validate_configuration(runtime.configuration_state.current).valid
         setup = await runtime.setup(operator_command(runtime))
         assert setup.result == pb.COMMAND_RESULT_REJECTED
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wire",
+        "identity",
+        "rate",
+        "bad_pin",
+        "bad_rate",
+        "duplicate_id",
+        "extra_settings",
+        "extra_use",
+    ],
+)
+async def test_connection_edits_preserve_incomplete_camera_and_strict_setup(
+    tmp_path: Path, mutation: str
+) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    runtime.configuration_commands.validators = {
+        "experiment": lambda _c: pb.ValidationResult(completed=True, valid=True),
+        "acquisition": validate_configuration,
+    }
+    runtime.setup_admission.validators = runtime.configuration_commands.validators
+    entry = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    entry.acquisition.behavioral.enabled = True
+    entry.acquisition.behavioral.device.device_id = "behavior"
+    request = _update(runtime)
+    settings = request.proposed.backends[0].acquisition
+    settings.pulses.port = "COM8"
+    settings.pulses.tracking.pin = "D11"
+    if mutation == "identity":
+        settings.tracking.device.device_id = "tracking"
+    elif mutation == "rate":
+        settings.pulses.tracking.requested_frequency_hz = 60.0
+    elif mutation == "bad_pin":
+        settings.pulses.tracking.pin = "invalid pin"
+    elif mutation == "bad_rate":
+        settings.pulses.tracking.requested_frequency_hz = float("nan")
+    elif mutation == "duplicate_id":
+        settings.tracking.device.device_id = "behavior"
+    elif mutation == "extra_settings":
+        settings.behavioral.device.settings.trigger_source = "Line4"
+    elif mutation == "extra_use":
+        settings.tracking.enabled = True
+    admission = await runtime.update_configuration(request)
+    accepted = mutation in {"wire", "identity", "rate"}
+    assert admission.result == (
+        pb.COMMAND_RESULT_ACCEPTED if accepted else pb.COMMAND_RESULT_REJECTED
+    )
+    assert runtime.configuration_state.revision == (2 if accepted else 1)
+    assert runtime.configuration_state.current.backends[
+        0
+    ].acquisition.behavioral.enabled
+    if accepted:
+        assert not validate_configuration(runtime.configuration_state.current).valid
+        assert (
+            await runtime.setup(operator_command(runtime))
+        ).result == pb.COMMAND_RESULT_REJECTED
+
+
+@pytest.mark.parametrize("active", [False, True])
+async def test_connection_edits_only_reject_active_pin_conflicts(
+    tmp_path: Path, active: bool
+) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    runtime.configuration_commands.validators = {
+        "experiment": lambda _c: pb.ValidationResult(completed=True, valid=True),
+        "acquisition": validate_configuration,
+    }
+    entry = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    settings = entry.acquisition
+    settings.behavioral.enabled = active
+    settings.behavioral.device.frame_timing = (
+        acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+    )
+    settings.pulses.behavioral.pin = "D11"
+    request = _update(runtime)
+    request.proposed.backends[0].acquisition.pulses.trial_state_pin = "D11"
+    request.proposed.backends[0].acquisition.pulses.trial_state_enabled = True
+    admission = await runtime.update_configuration(request)
+    assert admission.result == (
+        pb.COMMAND_RESULT_REJECTED if active else pb.COMMAND_RESULT_ACCEPTED
+    )
+
+
+@pytest.mark.parametrize("nested", [False, True])
+async def test_connection_edit_does_not_discard_unknown_configuration_fields(
+    tmp_path: Path, nested: bool
+) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    runtime.configuration_commands.validators = {
+        "experiment": lambda _c: pb.ValidationResult(completed=True, valid=True),
+        "acquisition": validate_configuration,
+    }
+    entry = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    entry.acquisition.behavioral.enabled = True
+    pulse = entry.acquisition.pulses
+    target = pulse.tracking if nested else pulse
+    target.MergeFromString(
+        b"\xa0\x06\x01"
+    )  # Unknown field 100 must not become an allowed edit.
+    request = _update(runtime)
+    request.proposed.backends[0].acquisition.ClearField("pulses")
+    admission = await runtime.update_configuration(request)
+    assert admission.result == pb.COMMAND_RESULT_REJECTED
+    assert runtime.configuration_state.revision == 1
+
+
+@pytest.mark.parametrize("extra", ["", "other_settings", "use", "duplicate_pin"])
+async def test_selected_camera_edit_validates_only_action_inputs_and_preserves_use(
+    tmp_path: Path, extra: str
+) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    runtime.configuration_commands.validators = {
+        "experiment": lambda _c: pb.ValidationResult(completed=True, valid=True),
+        "acquisition": validate_configuration,
+    }
+    runtime.setup_admission.validators = runtime.configuration_commands.validators
+    entry = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    )
+    settings = entry.acquisition
+    settings.behavioral.enabled = False
+    settings.behavioral.save_video = True
+    settings.behavioral.device.device_id = "behavior"
+    settings.tracking.enabled = True
+    settings.tracking.device.device_id = "tracking"
+    if extra == "duplicate_pin":
+        settings.tracking.device.frame_timing = (
+            acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+        )
+        settings.pulses.tracking.pin = "D11"
+    request = _update(runtime)
+    selected = request.proposed.backends[0].acquisition
+    selected.behavioral.device.frame_timing = (
+        acquisition_camera_pb.FRAME_TIMING_FREE_RUNNING
+    )
+    selected.behavioral.device.unaligned_free_running = True
+    if extra == "other_settings":
+        selected.tracking.device.settings.pixel_format = "Mono8"
+    elif extra == "use":
+        selected.behavioral.enabled = True
+    elif extra == "duplicate_pin":
+        selected.behavioral.device.frame_timing = (
+            acquisition_camera_pb.FRAME_TIMING_EXTERNAL_TRIGGER
+        )
+        selected.behavioral.device.settings.trigger_source = "Line4"
+        selected.pulses.port = "COM8"
+        selected.pulses.behavioral.pin = "D11"
+        selected.pulses.behavioral.requested_frequency_hz = 30.0
+    admission = await runtime.update_configuration(request)
+    assert admission.result == (
+        pb.COMMAND_RESULT_ACCEPTED if not extra else pb.COMMAND_RESULT_REJECTED
+    )
+    current = runtime.configuration_state.current.backends[0].acquisition
+    assert not current.behavioral.enabled and current.behavioral.save_video
+    assert current.tracking.enabled
+    assert not current.behavioral.HasField("ffmpeg_args")
+    if not extra:
+        assert runtime.configuration_state.current == request.proposed
+        assert not current.HasField("pulses")
+        assert (
+            await runtime.setup(operator_command(runtime))
+        ).result == pb.COMMAND_RESULT_REJECTED
+
+
+async def test_manual_preview_readback_validates_selected_camera_with_unfinished_other(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = _runtime_with_validators(tmp_path)
+    backend = _Acquisition(pb.COMMAND_RESULT_ACCEPTED)
+    runtime.camera_readback.backends = {"acquisition": cast(Any, backend)}
+    runtime.camera_readback.validators = {"acquisition": validate_configuration}
+    settings = runtime.configuration_state.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    settings.behavioral.enabled = False
+    settings.behavioral.save_video = True
+    settings.behavioral.device.device_id = "behavior"
+    settings.tracking.enabled = True
+    settings.tracking.device.device_id = "tracking"
+    settings.pulses.port = "COM8"
+    candidate = pb.ExperimentConfiguration.FromString(
+        runtime.configuration_state.current.SerializeToString()
+    )
+    selected = candidate.backends[0].acquisition.behavioral
+    selected.device.frame_timing = acquisition_camera_pb.FRAME_TIMING_FREE_RUNNING
+    selected.device.unaligned_free_running = True
+    expected_pulses = []
+
+    def resolve(*_args: Any, **kwargs: Any) -> pb.ExperimentConfiguration:
+        expected_pulses.append(kwargs["expect_pulses"])
+        return candidate
+
+    monkeypatch.setattr(readback_module, "resolved_configuration", resolve)
+    operation = CameraOperation(
+        _id(),
+        _id(),
+        1,
+        1,
+        svc.CAMERA_COMMAND_KIND_START_PREVIEW,
+        pb.WorkContext(),
+        10**12,
+        True,
+    )
+    runtime.device_state.camera_operation = operation
+    # The requested internal mode is already known before its final readback.
+    runtime.configuration_commands.control_operations.operation(
+        operation.operator_id, "ExecuteCameraCommand", progress="pending"
+    )
+    settings.behavioral.device.frame_timing = (
+        acquisition_camera_pb.FRAME_TIMING_FREE_RUNNING
+    )
+    settings.behavioral.device.unaligned_free_running = True
+    await runtime.camera_readback.adopt_camera_resolution(
+        operation, svc.AcquisitionResolutionReport()
+    )
+    assert expected_pulses == [False]
+    assert backend.confirmations
+    assert operation.confirmed
+    actual = runtime.configuration_state.current.backends[0].acquisition
+    assert not actual.behavioral.enabled and actual.behavioral.save_video
+    assert actual.tracking.enabled
+    status = svc.AcquisitionDeviceStatusReport()
+    status.result.complete = True
+    status.result.succeeded = True
+    status.views.behavioral.preview_running = True
+    status.views.behavioral.preview_run_id = _id()
+    operation.final_status = status
+    runtime.camera_readback.finish_camera_operation(operation)
+    assert runtime.control.operations[operation.operator_id].complete
+    assert runtime.control.operations[operation.operator_id].succeeded
+    assert runtime.device_state.camera_operation is None
 
 
 def _update(

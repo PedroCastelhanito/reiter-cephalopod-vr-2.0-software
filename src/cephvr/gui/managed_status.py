@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from time import perf_counter_ns
 
 from cephvr.control.v1 import types_pb2 as pb
@@ -146,14 +147,71 @@ def dashboard_view(
 
 
 def has_retained_review(state: pb.Snapshot) -> bool:
-    """Whether the synchronized view contains entries requiring reconnect review."""
+    """Whether important retained evidence should block the reconnect flow."""
     return bool(
         state.errors
+        or state.runtime_incidents
+        or state.prompts
+        or any(_important_recovery(item) for item in state.recoveries)
+        or any(
+            not _routine_configuration_warning(state, item) for item in state.warnings
+        )
+        or any(
+            operation.HasField("failure")
+            or (
+                operation.complete
+                and (not operation.HasField("succeeded") or not operation.succeeded)
+            )
+            for operation in state.operations
+        )
+    )
+
+
+def has_retained_history(state: pb.Snapshot) -> bool:
+    """Whether any retained event is available for optional history review."""
+    return bool(
+        state.retained_truncated
+        or state.errors
         or state.recoveries
         or state.runtime_incidents
         or state.prompts
         or state.warnings
+        or state.operations
     )
+
+
+def _important_recovery(recovery: pb.RecoveryState) -> bool:
+    """Keep active, failed, unknown, and internally inconsistent recoveries visible."""
+    return not (
+        recovery.outcome == pb.RECOVERY_OUTCOME_COMPLETED
+        and recovery.HasField("completion_monotonic_ns")
+        and recovery.completion_monotonic_ns > 0
+        and not recovery.HasField("failure")
+    )
+
+
+def _routine_configuration_warning(state: pb.Snapshot, warning: pb.Warning) -> bool:
+    """Match only the controller's exact nonfatal completed-validation warning."""
+    for validation in state.configuration.edit_validation:
+        if (
+            not validation.completed
+            or not validation.valid
+            or not validation.issues
+            or validation.configuration_revision != state.configuration.revision
+        ):
+            continue
+        expected = pb.Warning(
+            warning_id=(
+                f"configuration:{state.configuration.revision}:"
+                f"{validation.component}:nonfatal"
+            ),
+            component=validation.component,
+            message="Configuration has nonfatal preparation warnings",
+        )
+        expected.issues.extend(validation.issues)
+        if warning == expected:
+            return True
+    return False
 
 
 def retained_ack_required_for(
@@ -165,35 +223,155 @@ def retained_ack_required_for(
     return has_retained_review(state) and acknowledged_identity != identity
 
 
+def action_label(action: str) -> str:
+    """Give command keys a readable label without losing unknown action names."""
+    known = {
+        "setup": "Setup",
+        "start": "Start",
+        "stop": "Stop",
+        "cancel_setup": "Cancel setup",
+        "calibration": "Calibration",
+        "respond_prompt": "Respond to prompt",
+        "spikeglx_inventory_update": "SpikeGLX inventory update",
+        "spikeglx_connection": "SpikeGLX connection",
+        "get_spikeglx_inventory": "Read SpikeGLX inventory",
+        "mcu": "MCU command",
+        "mcu_upload": "MCU upload",
+        "test_cameras": "Camera test",
+        "save_camera_settings": "Save camera settings",
+        "save_mcu_pins": "Save MCU pins",
+        "save_configuration_history": "Save configuration",
+    }
+    if action in known:
+        return known[action]
+    words = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", action).replace("_", " ")
+    words = words.strip()
+    return words[:1].upper() + words[1:] if words else "Command"
+
+
 def retained_summary(state: pb.Snapshot) -> str:
-    """Show every unresolved item before a bounded operation-history excerpt."""
+    """Show all actionable retained state and collapse routine successes."""
+    groups: list[list[str]] = []
     lines: list[str] = []
     if state.retained_truncated:
-        lines.append("Older resolved entries were evicted while disconnected.")
+        lines.append("Older resolved entries are no longer retained.")
 
     # Keep every current incident, prompt, recovery, and warning visible even when
     # the retained operation list is full of routine completed work.
+    if state.errors:
+        group = ["Retained errors:"]
+        groups.append(group)
+    else:
+        group = []
     for error in state.errors:
-        identity = f" [{error.error_id}]" if error.error_id else ""
         detail = error.failure.message if error.HasField("failure") else "Error"
-        lines.append(f"Error{identity}: {detail}")
+        group.append(f"  • {detail}")
+    if state.recoveries:
+        group = ["Recoveries:"]
+        groups.append(group)
     for recovery in state.recoveries:
-        lines.append(f"Recovery: {recovery.progress or recovery.action}")
+        group.append(f"  • {recovery.progress or action_label(recovery.action)}")
+    if state.runtime_incidents:
+        group = ["Incidents:"]
+        groups.append(group)
     for incident in state.runtime_incidents:
-        lines.append(f"Incident: {incident.consequence}")
+        group.append(f"  • {incident.consequence}")
+    if state.prompts:
+        group = ["Pending choices:"]
+        groups.append(group)
     for prompt in state.prompts:
         choices = ", ".join(prompt.permitted_choices)
+        group.append(f"  • {prompt.explanation} ({choices})")
+    if state.warnings:
+        group = ["Warnings:"]
+        groups.append(group)
+    for warning in state.warnings:
+        group.append(f"  • {warning.message}")
+
+    completed = 0
+    actionable: list[str] = []
+    for operation in state.operations:
+        result = (
+            "in progress"
+            if not operation.complete
+            else "completed"
+            if operation.HasField("succeeded") and operation.succeeded
+            else "failed"
+            if operation.HasField("succeeded")
+            else "completion unknown"
+        )
+        if result == "completed":
+            completed += 1
+            continue
+        description = f"{action_label(operation.command)} — {result}"
+        if operation.progress:
+            description += f"; {operation.progress}"
+        if operation.HasField("failure"):
+            description += f"; {operation.failure.message}"
+        actionable.append(f"  • {description}")
+    if actionable:
+        groups.append(["Operations needing attention:", *actionable])
+    if completed:
+        groups.append([f"Completed operations: {completed}"])
+    lines.extend("\n".join(section) for section in groups)
+    if not lines:
+        lines.append("No controller incidents or warnings are currently retained.")
+    return "\n\n".join(lines)
+
+
+def retained_details(state: pb.Snapshot, *, routine_limit: int = 40) -> str:
+    """Expose exact retained diagnostics, bounding only routine success history."""
+    lines: list[str] = []
+    if state.HasField("retained_since_monotonic_ns"):
         lines.append(
-            f"Pending choice [{prompt.prompt_id}]: {prompt.explanation} [{choices}]"
+            "Retained since controller monotonic ns: "
+            f"{state.retained_since_monotonic_ns}"
+        )
+    for error in state.errors:
+        failure = error.failure.message if error.HasField("failure") else "Error"
+        code = f" ({error.failure.code})" if error.HasField("failure") else ""
+        lines.append(f"Error {error.error_id}{code}: {failure}")
+    for recovery in state.recoveries:
+        lines.append(
+            f"Recovery {recovery.attempt_id} ({recovery.action}): {recovery.progress}; "
+            "outcome: "
+            + pb.RecoveryOutcome.Name(recovery.outcome)
+            .removeprefix("RECOVERY_OUTCOME_")
+            .lower()
+            + (
+                f"; failure: {recovery.failure.message}"
+                if recovery.HasField("failure")
+                else ""
+            )
+        )
+    for incident in state.runtime_incidents:
+        lines.append(f"Incident {incident.incident_id}: {incident.consequence}")
+    for prompt in state.prompts:
+        lines.append(
+            f"Prompt {prompt.prompt_id}: {prompt.explanation}; "
+            f"permitted choices: {', '.join(prompt.permitted_choices)}"
         )
     for warning in state.warnings:
-        lines.append(f"Warning: {warning.message}")
-
-    operation_limit = 40
-    for operation in state.operations[:operation_limit]:
-        command_id = operation.context.command_id
-        result = (
-            "running"
+        lines.append(f"Warning {warning.warning_id}: {warning.message}")
+    routine = [
+        operation
+        for operation in state.operations
+        if operation.complete
+        and operation.HasField("succeeded")
+        and operation.succeeded
+    ]
+    actionable = [
+        operation
+        for operation in state.operations
+        if not (
+            operation.complete
+            and operation.HasField("succeeded")
+            and operation.succeeded
+        )
+    ]
+    for operation in actionable + routine[:routine_limit]:
+        outcome = (
+            "in progress"
             if not operation.complete
             else "succeeded"
             if operation.HasField("succeeded") and operation.succeeded
@@ -201,20 +379,20 @@ def retained_summary(state: pb.Snapshot) -> str:
             if operation.HasField("succeeded")
             else "completion unknown"
         )
-        lines.append(
-            f"Command {operation.command} [{command_id}]: {result}"
-            + (f" · {operation.progress}" if operation.progress else "")
-            + (
-                f" · {operation.failure.message}"
-                if operation.HasField("failure")
-                else ""
+        failure = ""
+        if operation.HasField("failure"):
+            failure = f"; failure: {operation.failure.message}" + (
+                f" (code: {operation.failure.code})" if operation.failure.code else ""
             )
-        )
-    omitted_operations = max(0, len(state.operations) - operation_limit)
-    if omitted_operations:
         lines.append(
-            f"{omitted_operations} additional retained operation entries omitted from this view."
+            f"Command {operation.command} [{operation.context.command_id}]: "
+            + outcome
+            + (f"; progress: {operation.progress}" if operation.progress else "")
+            + failure
         )
-    if not lines:
-        lines.append("No controller incidents or warnings are currently retained.")
-    return "\n".join(lines)
+    omitted = len(routine) - routine_limit
+    if omitted > 0:
+        lines.append(f"{omitted} additional completed operation details omitted.")
+    if state.retained_truncated:
+        lines.append("Older resolved entries are no longer retained.")
+    return "\n".join(lines) or "No additional technical details are retained."

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import struct
+import subprocess
 import sys
 from types import ModuleType
 from types import SimpleNamespace as NS
@@ -356,6 +357,10 @@ def test_projected_layer_vertices_are_retained_as_exact_shader_words() -> None:
 
 @pytest.mark.parametrize("pulse_enabled", [True, False])
 def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> None:
+    from dataclasses import replace
+
+    from cephvr.visual_stimulus.rendering.types import ImageSnapshot
+
     artifact = make_prepared_trial()
     if not pulse_enabled:
         artifact = artifact.model_copy(
@@ -385,6 +390,18 @@ def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> 
         def prepare_trial(self, prepared, resources):
             assert prepared == artifact
             assert resources is not None
+
+        def select_images(self, trial_id, epoch_index, snapshots):
+            image = ImageSnapshot(
+                snapshots[0].instance_id,
+                "next",
+                1,
+                "previous",
+                0,
+                "residency_hold",
+                True,
+            )
+            return (replace(snapshots[0], image_selection=image), *snapshots[1:])
 
         def render(self, scene, state):
             return RenderPassResult(
@@ -416,6 +433,9 @@ def test_engine_freezes_exact_provider_evidence_for_recording(pulse_enabled) -> 
 
     assert update.evidence_state.scene_id == update.group.scene_id
     assert update.evidence_state.evaluation_host_ns == 0
+    assert update.evidence_state.images[0].image_index == 0
+    assert update.evidence_state.images[0].requested_image_index == 1
+    assert update.evidence_state.images[0].repeated
     assert update.evidence_state.active_instance_ids
     assert len(update.evidence_submissions) == 1
     assert update.evidence_submissions[0].phase == "returned"
@@ -785,6 +805,120 @@ def test_native_failed_gpu_release_keeps_context_for_cleanup_retry():
     } <= set(second.released)
 
 
+def test_native_trial_skips_source_only_recipe_image_dependency():
+    from pathlib import Path
+
+    from cephvr.visual_stimulus.config.models.artifact_models import (
+        Fingerprint,
+        Resource,
+        ResourceManifest,
+    )
+    from cephvr.visual_stimulus.rendering.native import ModernGLPort
+    from cephvr.visual_stimulus.resources.assets import (
+        PreparedAssetSet,
+        PreparedResourceBundle,
+    )
+
+    artifact = make_prepared_trial()
+    source = Resource(
+        fingerprint=Fingerprint(
+            resource_id="recipe-source",
+            logical_path="source.png",
+            subresource=None,
+            sha256="0" * 64,
+            bytes=12,
+        ),
+        kind="image",
+        profile_id="Pillow-cephvr1-rgb8-input-v1",
+        dependencies=(),
+        interpretation=None,
+        cpu_bytes=12,
+        gpu_bytes=0,
+        provider_compatibility="Pillow-cephvr1-rgb8-input-v1",
+    )
+    manifest = ResourceManifest(format_version=1, resources=(source,), provenance=())
+    artifact = artifact.model_copy(update={"manifest": manifest})
+    resources = PreparedResourceBundle(
+        asset_set=PreparedAssetSet(assets=(), cpu_bytes=0),
+        manifest=manifest,
+        uniform_layouts=(),
+        prepared_content={},
+    )
+    events = []
+
+    class Scene:
+        def bind_graphics_api(self, api):
+            pass
+
+        def prepare_trial(self, prepared, bundle, outputs, gpu_resources):
+            events.append("scene")
+
+    port = ModernGLPort(
+        Path("."),
+        announce=lambda key, value: events.append(key),
+        scene_renderer=Scene(),
+    )
+    port._display = artifact.display
+    port._moderngl = object()
+    port.prepare_trial(artifact, resources)
+
+    assert events == [
+        f"visual_stimulus:scene:{artifact.identity.resource_generation}",
+        "scene",
+    ]
+    assert not port._resources
+
+
+def test_native_trial_keeps_missing_regular_image_content_as_error():
+    from pathlib import Path
+
+    from cephvr.visual_stimulus.config.models.artifact_models import (
+        Fingerprint,
+        Resource,
+        ResourceManifest,
+    )
+    from cephvr.visual_stimulus.rendering.native import ModernGLPort
+    from cephvr.visual_stimulus.resources.assets import (
+        PreparedAssetSet,
+        PreparedResourceBundle,
+    )
+
+    artifact = make_prepared_trial()
+    resource = Resource(
+        fingerprint=Fingerprint(
+            resource_id="missing-image",
+            logical_path="missing.png",
+            subresource=None,
+            sha256="0" * 64,
+            bytes=12,
+        ),
+        kind="image",
+        profile_id="png_uint_v1",
+        dependencies=(),
+        interpretation=None,
+        cpu_bytes=12,
+        gpu_bytes=12,
+        provider_compatibility="png-rgb-v1",
+    )
+    manifest = ResourceManifest(format_version=1, resources=(resource,), provenance=())
+    artifact = artifact.model_copy(update={"manifest": manifest})
+    resources = PreparedResourceBundle(
+        asset_set=PreparedAssetSet(assets=(), cpu_bytes=0),
+        manifest=manifest,
+        uniform_layouts=(),
+        prepared_content={},
+    )
+    events = []
+    port = ModernGLPort(Path("."), announce=lambda key, value: events.append(key))
+    port._display = artifact.display
+
+    with pytest.raises(KeyError, match="missing-image"):
+        port.prepare_trial(artifact, resources)
+    assert events == [
+        f"visual_stimulus:gpu:{artifact.identity.resource_generation}:missing-image"
+    ]
+
+
 @pytest.mark.parametrize("source,target", [(2.0, 1.0), (1.0, 2.0), (1.0, 1.0)])
 def test_image_fit_uv_spans_preserve_aspect_and_center(source, target):
     from cephvr.visual_stimulus.rendering.image_fit import fitted_uv_scale
@@ -969,3 +1103,665 @@ def test_context_activation_checks_actual_pointer_before_skipping_rebind():
     current = None
     activate_window(glfw, target)
     assert bindings == [target, target]
+
+
+def test_legacy_texture_recipe_parser_bounds_and_normalizes_json():
+    from cephvr.visual_stimulus.resources.texture_recipe import parse_texture_recipe
+
+    recipe = parse_texture_recipe(
+        b'{"cephvr_asset_type":"texture_design","kind":"texture",'
+        b'"pattern":"sine_grating","params":{"size":64,"tile_width_mm":88}}'
+    )
+    assert (recipe.pattern, recipe.resolution, recipe.tile_width_mm) == (
+        "grating",
+        64,
+        88,
+    )
+    resolved = parse_texture_recipe(
+        b'{"pattern":"flat","params":{"size":32,"texture_resolution":48}}'
+    )
+    assert resolved.resolution == 48
+    assert (
+        parse_texture_recipe(
+            b'{"pattern":"flat","params":{"texture_resolution":null}}'
+        ).resolution
+        == 512
+    )
+    assert (
+        parse_texture_recipe(
+            b'{"pattern":"flat","params":{"texture_resolution":""}}'
+        ).resolution
+        == 512
+    )
+    legacy = parse_texture_recipe(
+        b'{"pattern":"vertical_bars","pattern_params":{"texture_resolution":32}}'
+    )
+    assert (legacy.pattern, legacy.resolution) == ("bars_vertical", 32)
+    with pytest.raises(ValueError, match="Unsupported legacy texture pattern"):
+        parse_texture_recipe(b'{"pattern":"future_pattern"}')
+    with pytest.raises(ValueError, match="positive integer"):
+        parse_texture_recipe(b'{"pattern":"flat","params":{"size":0}}')
+    with pytest.raises(ValueError, match="finite"):
+        parse_texture_recipe(b'{"pattern":"grating","params":{"phase_cycles":NaN}}')
+    with pytest.raises(ValueError, match="allocation limit"):
+        parse_texture_recipe(
+            b'{"pattern":"flat","params":{"size":65}}', max_texture_pixels=4096
+        )
+    with pytest.raises(ValueError, match="document limit"):
+        parse_texture_recipe(b'{"pattern":"flat"}', max_document_bytes=4)
+    with pytest.raises(ValueError, match="document limit"):
+        parse_texture_recipe(b'{"pattern":"flat"}', max_document_bytes=0)
+    with pytest.raises(ValueError, match="kind must be 'texture'"):
+        parse_texture_recipe(b'{"kind":"arena","pattern":"checker"}')
+    with pytest.raises(ValueError, match="kind must be 'texture'"):
+        parse_texture_recipe(
+            b'{"cephvr_asset_type":"texture_design","kind":"arena","pattern":"checker"}'
+        )
+    with pytest.raises(ValueError, match="does not contain legacy texture"):
+        parse_texture_recipe(b'{"name":"a program document"}')
+    with pytest.raises(ValueError, match="duplicate JSON key"):
+        parse_texture_recipe(b'{"pattern":"flat","pattern":"checker"}')
+    deeply_nested = (
+        b'{"pattern":"flat","params":' + b'{"x":' * 65 + b"0" + b"}" * 65 + b"}"
+    )
+    with pytest.raises(ValueError, match="nesting budget"):
+        parse_texture_recipe(deeply_nested)
+
+
+def test_legacy_texture_recipe_pixels_match_cephvr1_reference_hashes():
+    import hashlib
+
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        TextureRecipe,
+        generate_texture_recipe,
+    )
+
+    # Hashes were generated from sibling CephVR1's texture_gen.py functions;
+    # they pin representative deterministic preview outputs at 64x64 RGB8.
+    recipes = {
+        "grating": TextureRecipe(
+            "grating",
+            {
+                "orientation_deg": 37,
+                "cycles_per_texture": 5.5,
+                "phase_cycles": 0.125,
+                "contrast": 0.8,
+                "mean_luminance": 0.42,
+                "feature_sharpness": 0.35,
+            },
+            64,
+            None,
+            None,
+        ),
+        "checker": TextureRecipe(
+            "checker",
+            {
+                "color_a": (1, 0.3, 0),
+                "color_b": (0, 0, 1),
+                "tile_width_mm": 104,
+                "cell_size_mm": 20,
+                "blur_mm": 0,
+            },
+            64,
+            None,
+            None,
+        ),
+        "checker_blurred": TextureRecipe(
+            "checker",
+            {
+                "color_a": (1, 0.3, 0),
+                "color_b": (0, 0, 1),
+                "tile_width_mm": 104,
+                "cell_size_mm": 20,
+                "blur_mm": 2,
+            },
+            64,
+            None,
+            None,
+        ),
+        "noise_binary": TextureRecipe(
+            "noise_binary",
+            {"color_a": (0.9, 0.8, 0.7), "color_b": (0.05, 0.1, 0.2), "seed": 123},
+            64,
+            None,
+            None,
+        ),
+        "noise_gray": TextureRecipe(
+            "noise_gray",
+            {"color_a": (0.9, 0.8, 0.7), "color_b": (0.05, 0.1, 0.2), "seed": 123},
+            64,
+            None,
+            None,
+        ),
+        "filtered_noise": TextureRecipe(
+            "filtered_noise",
+            {
+                "color_a": (1, 0.8, 0.6),
+                "color_b": (0, 0.1, 0.3),
+                "seed": 17,
+                "features_per_tile": 12,
+                "bandwidth_octaves": 0.8,
+                "scale_mm": 18,
+                "edge_smooth_mm": 0.25,
+                "black_fraction": 0.4,
+            },
+            64,
+            None,
+            None,
+        ),
+        "bars_vertical": TextureRecipe(
+            "bars_vertical",
+            {
+                "color_a": (1, 0, 0),
+                "color_b": (0, 0, 0),
+                "line_spacing_mm": 12,
+                "tile_width_mm": 120,
+                "line_width_mm": 3,
+            },
+            64,
+            None,
+            None,
+        ),
+        "calibration_grid": TextureRecipe(
+            "calibration_grid",
+            {
+                "color_a": (1, 1, 1),
+                "color_b": (0, 0, 0),
+                "line_spacing_mm": 20,
+                "line_width_mm": 3,
+                "color_count": 6,
+                "style_cycle_count": 2,
+                "dash_length_mm": 8,
+                "dash_gap_mm": 10,
+            },
+            64,
+            None,
+            None,
+        ),
+        "dots_grid": TextureRecipe(
+            "dots_grid",
+            {
+                "color_a": (1, 1, 1),
+                "color_b": (0, 0, 0),
+                "spacing_mm": 30,
+                "tile_width_mm": 100,
+                "dot_diameter_mm": 10,
+                "blur_mm": 0,
+            },
+            64,
+            None,
+            None,
+        ),
+        "dots_rand": TextureRecipe(
+            "dots_rand",
+            {
+                "color_a": (1, 0.4, 0.2),
+                "color_b": (0, 0, 0),
+                "density_per_cm2": 5,
+                "tile_size_mm": 200,
+                "dot_diameter_mm": 8,
+                "seed": 11,
+            },
+            64,
+            None,
+            None,
+        ),
+    }
+    expected = {
+        "grating": "592393cdc8e5057451581ba04589ce0f0fd659b969a4702c1e1044d6d5ab375c",
+        "checker": "ace6603b143015ba7241d400210bc3eabe010c6d54ea96a3e7a4a51b85a5f6a1",
+        "checker_blurred": "8ee0bd2a587d4c9d1bec46c4609b6c2f003171eed7af9d143570d42a079d41b9",
+        "noise_binary": "f5b876df5197c62bbf3b937ef04bb58820079a05c7aceaf20de3cdb4253d7308",
+        "noise_gray": "7815ffdef342bc6f6b7632b9ddee0c00808be43263d22a30ca08ac84aa004767",
+        "filtered_noise": "e9caf46b0f068a5f5fedbc731628fa0f8a243bf2f2632dd6bf4c0fca37b1a8ce",
+        "bars_vertical": "393b9a7ea47df5f5a655e8a846aedc1f44655d35418b8aced8a16e8c5b947b37",
+        "calibration_grid": "d8dd88559c8b84503bc18c492564839ea3088b2a2b7541d67d4ceb1416096c4d",
+        "dots_grid": "e048b51384efea1fcbd13bd38b642bd19d5ac5e794f0f1f72849b757c1eb7ac7",
+        "dots_rand": "1aeadb5877918f235543f11909169add18085a62764832d1345bc2ebef14e807",
+    }
+    for pattern, recipe in recipes.items():
+        pixels = generate_texture_recipe(recipe)
+        assert pixels.dtype == np.uint8 and pixels.shape == (64, 64, 3)
+        assert hashlib.sha256(pixels.tobytes()).hexdigest() == expected[pattern]
+
+
+def test_legacy_polar_texture_requires_complete_geometry_and_matches_reference():
+    import hashlib
+
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        TextureRecipe,
+        generate_texture_recipe,
+    )
+
+    corners = {
+        "front": np.array(
+            [[-50, 0, 0], [50, 0, 0], [50, 0, 80], [-50, 0, 80]], dtype=np.float32
+        ),
+        "left": np.array(
+            [[-50, -100, 0], [-50, 0, 0], [-50, 0, 80], [-50, -100, 80]],
+            dtype=np.float32,
+        ),
+        "right": np.array(
+            [[50, 0, 0], [50, 100, 0], [50, 100, 80], [50, 0, 80]], dtype=np.float32
+        ),
+        "bottom": np.array(
+            [[-50, -100, 0], [50, -100, 0], [50, 0, 0], [-50, 0, 0]], dtype=np.float32
+        ),
+    }
+    recipe = TextureRecipe(
+        "polar_grating",
+        {
+            "origin_screen": "front",
+            "target_screen": "right",
+            "bar_count": 8,
+            "phase_deg": 12,
+            "bar_width_mm": 10,
+            "feature_sharpness": 0.7,
+            "inner_radius_mm": 3,
+            "outer_radius_mm": 200,
+        },
+        64,
+        None,
+        None,
+    )
+    with pytest.raises(ValueError, match="surface corners"):
+        generate_texture_recipe(recipe)
+    with pytest.raises(ValueError, match="corners for bottom"):
+        generate_texture_recipe(
+            recipe,
+            surface_corners={
+                key: value for key, value in corners.items() if key != "bottom"
+            },
+        )
+    pixels = generate_texture_recipe(recipe, surface_corners=corners)
+    assert (
+        hashlib.sha256(pixels.tobytes()).hexdigest()
+        == "bfb631bdbde155bc01cea1a4d81cde8fea509aac0eb7128d5bc57bc84fab4ab3"
+    )
+
+
+def test_legacy_image_recipe_requires_explicit_decoded_rgb_pixels():
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        TextureRecipe,
+        generate_texture_recipe,
+    )
+
+    recipe = TextureRecipe("image", {"texture_path": "ignored.png"}, 4, None, None)
+    with pytest.raises(ValueError, match="explicitly decoded"):
+        generate_texture_recipe(recipe)
+    source = np.arange(24, dtype=np.uint8).reshape(2, 4, 3)
+    assert np.array_equal(generate_texture_recipe(recipe, image_pixels=source), source)
+    gray = np.arange(8, dtype=np.uint8).reshape(2, 4)
+    rgb_gray = generate_texture_recipe(recipe, image_pixels=gray)
+    assert rgb_gray.shape == (2, 4, 3)
+    assert np.array_equal(rgb_gray[:, :, 0], gray)
+    assert np.array_equal(rgb_gray[:, :, 1], gray)
+    rgba = np.concatenate((source, np.full((2, 4, 1), 128, dtype=np.uint8)), axis=2)
+    assert np.array_equal(generate_texture_recipe(recipe, image_pixels=rgba), source)
+    with pytest.raises(ValueError, match="8-bit"):
+        generate_texture_recipe(recipe, image_pixels=source.astype(np.uint16))
+
+
+def test_legacy_texture_generator_rejects_unbounded_dot_and_bar_work():
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        TextureRecipe,
+        generate_texture_recipe,
+    )
+
+    huge_grid = TextureRecipe(
+        "dots_grid",
+        {"spacing_mm": 0.001, "tile_width_mm": 1e300},
+        8,
+        None,
+        None,
+    )
+    with pytest.raises(ValueError, match="dot count exceeds the raster work limit"):
+        generate_texture_recipe(huge_grid)
+    overflowing_radius = TextureRecipe(
+        "dots_grid",
+        {
+            "spacing_mm": 1,
+            "tile_width_mm": 1,
+            "dot_diameter_mm": 1e308,
+        },
+        8,
+        None,
+        None,
+    )
+    with pytest.raises(ValueError, match="finite generation bounds"):
+        generate_texture_recipe(overflowing_radius)
+    huge_bars = TextureRecipe(
+        "bars_vertical",
+        {"line_spacing_mm": 0.001, "tile_width_mm": 1e300},
+        8,
+        None,
+        None,
+    )
+    with pytest.raises(ValueError, match="bar count exceeds the raster work limit"):
+        generate_texture_recipe(huge_bars)
+
+
+def test_legacy_texture_generator_checks_deadline_during_dot_loops():
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        TextureRecipe,
+        generate_texture_recipe,
+    )
+
+    recipe = TextureRecipe(
+        "dots_rand",
+        {"density_per_cm2": 3, "tile_size_mm": 100, "seed": 1},
+        16,
+        None,
+        None,
+    )
+    checks = 0
+
+    def expire_after_three_checks():
+        nonlocal checks
+        checks += 1
+        if checks == 3:
+            raise TimeoutError("preparation deadline expired")
+
+    with pytest.raises(TimeoutError, match="deadline expired"):
+        generate_texture_recipe(recipe, check=expire_after_three_checks)
+    assert checks == 3
+
+
+@pytest.mark.parametrize(
+    "document",
+    [
+        b'{"pattern":"grating","params":{"contrast":"not-a-number"}}',
+        b'{"pattern":"checker","params":{"color_a":"nope"}}',
+        b'{"pattern":"grating","params":{"seamless":"maybe"}}',
+        b'{"pattern":"polar_grating","params":{"origin_screen":12}}',
+        b'{"pattern":"flat","params":{"pattern_params":[]}}',
+    ],
+)
+def test_legacy_texture_parser_rejects_malformed_known_parameters(document):
+    from cephvr.visual_stimulus.resources.texture_recipe import parse_texture_recipe
+
+    with pytest.raises(ValueError):
+        parse_texture_recipe(document)
+
+
+def test_texture_working_byte_estimate_covers_procedural_peak_scratch():
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        TextureRecipe,
+        estimated_working_bytes,
+    )
+
+    recipe = TextureRecipe("polar_grating", {}, 8, None, None)
+    assert estimated_working_bytes(recipe) == 8 * 8 * 192
+
+
+def test_texture_recipe_parser_import_does_not_load_raster_dependencies():
+    subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; "
+            "from cephvr.visual_stimulus.resources.texture_recipe "
+            "import parse_texture_recipe; "
+            'parse_texture_recipe(b\'{"pattern":"flat"}\'); '
+            "assert 'numpy' not in sys.modules; "
+            "assert 'PIL' not in sys.modules",
+        ],
+        check=True,
+    )
+
+
+def test_texture_recipe_numeric_boolean_values_match_boolean_flags() -> None:
+    import json
+
+    import numpy as np
+
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        generate_texture_recipe,
+        parse_texture_recipe,
+    )
+
+    base = {
+        "pattern": "grating",
+        "params": {"texture_resolution": 8, "cycles_per_texture": 2.5},
+    }
+    for numeric, flag in ((0.0, False), (1.0, True)):
+        base["params"]["seamless"] = numeric
+        numeric_pixels = generate_texture_recipe(
+            parse_texture_recipe(json.dumps(base).encode())
+        )
+        base["params"]["seamless"] = flag
+        boolean_pixels = generate_texture_recipe(
+            parse_texture_recipe(json.dumps(base).encode())
+        )
+        np.testing.assert_array_equal(numeric_pixels, boolean_pixels)
+
+
+def _resident_images(*, count=8):
+    import threading
+
+    from cephvr.visual_stimulus.rendering.image_residency import ImageResidency
+    from cephvr.visual_stimulus.resources.budget import BoundedBudget
+    from cephvr.visual_stimulus.resources.image_schedule import ImageSchedule
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+
+    gate = threading.Event()
+    loads = []
+    sources = {}
+    for index in range(count):
+        key = f"image-{index}"
+
+        def load(check, index=index):
+            loads.append((index, threading.get_ident()))
+            if index == 3:
+                while not gate.wait(0.001):
+                    check()
+            check()
+            return bytes([index]) * 16
+
+        sources[key] = ImageSource(key, 1, 1, 192, 16, load)
+    schedule = ImageSchedule(
+        sources,
+        {("trial", key): key for key in sources},
+        {"trial": "generation"},
+        {"trial": tuple((("layer", key),) for key in sources)},
+        {("trial", "layer"): "image-0"},
+        {("trial", key): index for index, key in enumerate(sources)},
+    )
+    budget = BoundedBudget(cpu_limit=192, gpu_limit=48)
+    cache = ImageResidency(schedule, budget, announce=lambda *args: None)
+
+    class GPU:
+        release_allowed = True
+        fail_release = False
+        uploads = []
+
+        def upload(self, source, pixels, textures):
+            self.uploads.append((source.key, pixels))
+            textures.append(source.key)
+            return True
+
+        def fence(self, fences):
+            fences.append(True)
+
+        def ready(self, fences):
+            if not self.release_allowed:
+                return False
+            fences.clear()
+            return True
+
+        def release(self, textures, fences):
+            if self.fail_release:
+                raise RuntimeError("release rejected")
+            textures.clear()
+            fences.clear()
+
+    gpu = GPU()
+    aliases = {}
+    cache.attach(gpu, aliases, lambda *args: None)
+    return cache, budget, gpu, gate, loads, aliases
+
+
+def _resident_snapshot(asset, position=0):
+    from cephvr.visual_stimulus.config.models.program_model import ImageTile
+
+    setting = make_prepared_trial().epochs[0].settings[0]
+    setting = setting.model_copy(
+        update={
+            "instance_id": "layer",
+            "pattern": ImageTile(
+                kind="image_tile",
+                asset_id=asset,
+                period_x={"kind": "constant", "value": 10},
+                period_y={"kind": "constant", "value": 10},
+                sampling="linear",
+            ),
+        }
+    )
+    return InstanceSnapshot(
+        "layer", "texture", True, (("texture_phase_x", position),), setting
+    )
+
+
+def test_image_residency_holds_actual_texture_with_current_motion_and_bounded_reload():
+    import threading
+    import time
+
+    cache, budget, gpu, gate, loads, aliases = _resident_images()
+    try:
+        cache.prepare(time.perf_counter_ns() + 2_000_000_000)
+        assert set(index for index, _ in loads) == {0, 1, 2}
+        assert all(thread != threading.get_ident() for _, thread in loads)
+        first = cache.select("trial", 0, (_resident_snapshot("image-0"),))[0]
+        assert first.image_selection.image_index == 0
+        assert not first.image_selection.repeated
+        deadline = time.monotonic() + 2
+        held = cache.select("trial", 3, (_resident_snapshot("image-3", 75),))[0]
+        assert held.settings.pattern.asset_id == "image-0"
+        assert held.state == (("texture_phase_x", 75),)
+        assert held.image_selection.requested_image_index == 3
+        assert held.image_selection.disposition == "residency_hold"
+        assert held.image_selection.repeated
+        while not any(index == 3 for index, _ in loads) and time.monotonic() < deadline:
+            cache.select("trial", 3, (_resident_snapshot("image-3", 80),))
+            time.sleep(0.001)
+        assert any(index == 3 for index, _ in loads)
+        assert budget.usage.cpu_bytes == 192
+        assert budget.usage.gpu_bytes <= 48
+        gate.set()
+        while time.monotonic() < deadline:
+            shown = cache.select("trial", 3, (_resident_snapshot("image-3", 90),))[0]
+            if shown.image_selection.image_index == 3:
+                break
+            time.sleep(0.001)
+        assert shown.settings.pattern.asset_id == "image-3"
+        assert shown.state == (("texture_phase_x", 90),)
+        assert not shown.image_selection.repeated
+        assert shown.image_selection.disposition == "current"
+        assert aliases["generation:image-3"] == ["image-3"]
+        repeated = cache.select("trial", 3, (_resident_snapshot("image-3", 100),))[0]
+        assert repeated.image_selection.repeated
+        assert budget.usage.cpu_bytes <= 192
+        assert budget.usage.gpu_bytes <= 48
+        cache.finish("trial")
+        cache.begin("trial")
+        restarted = cache.select("trial", 0, (_resident_snapshot("image-0"),))[0]
+        assert restarted.image_selection.image_index == 0
+        assert not restarted.image_selection.repeated
+    finally:
+        gate.set()
+        assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+        assert cache.release_gpu() == ()
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+    assert not aliases
+
+
+def test_image_residency_cleanup_retains_gpu_reservation_until_fence_and_release():
+    import time
+
+    cache, budget, gpu, gate, _, aliases = _resident_images()
+    try:
+        cache.prepare(time.perf_counter_ns() + 2_000_000_000)
+        assert cache.close(time.perf_counter_ns() + 2_000_000_000)
+        gpu.release_allowed = False
+        assert cache.release_gpu()
+        assert budget.usage.gpu_bytes == 48
+        assert not cache.released_keys
+        assert not aliases
+        gpu.release_allowed = True
+        gpu.fail_release = True
+        assert cache.release_gpu()
+        assert budget.usage.gpu_bytes == 48
+        gpu.fail_release = False
+        assert cache.release_gpu() == ()
+        assert budget.usage.gpu_bytes == 0
+        assert len(cache.released_keys) == 3
+    finally:
+        gate.set()
+        cache.close(time.perf_counter_ns() + 2_000_000_000)
+        gpu.fail_release = False
+        gpu.release_allowed = True
+        cache.release_gpu()
+
+
+def test_image_upload_submits_bounded_chunks_without_repeating_color_conversion():
+    from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+
+    calls = []
+
+    class Texture:
+        def write(self, data, *, viewport, alignment):
+            calls.append((len(data), viewport, alignment))
+
+    class Context:
+        def texture(self, size, channels, *, dtype):
+            assert size == (1024, 128) and channels == 4 and dtype == "f4"
+            return Texture()
+
+    gpu = ImageGpu({"output": NS(context=Context(), activate=lambda: None)})
+    source = ImageSource("key", 1024, 128, 4_000_000, 2_097_152, lambda check: b"")
+    textures = []
+    pixels = bytes(2_097_152)
+    assert not gpu.upload(source, pixels, textures)
+    assert gpu.upload(source, pixels, textures)
+    assert len(textures) == 1
+    assert calls == [
+        (1_048_576, (0, 0, 1024, 64), 1),
+        (1_048_576, (0, 64, 1024, 64), 1),
+    ]
+
+
+def test_image_lookahead_skips_long_repeated_history_without_scanning_suffix():
+    from cephvr.visual_stimulus.resources.image_schedule import ImageLookahead
+
+    reads = []
+
+    class Uses(tuple):
+        def __getitem__(self, index):
+            reads.append(index)
+            return super().__getitem__(index)
+
+    cursor = ImageLookahead(
+        {
+            "a": Uses(range(0, 100_000, 3)),
+            "b": Uses(range(1, 100_000, 3)),
+            "c": Uses(range(2, 100_000, 3)),
+            "d": Uses((90_000,)),
+        }
+    )
+    reads.clear()
+    cursor.advance(50_001)
+    assert tuple(cursor) == ("a", "b", "c", "d")
+    assert len(reads) < 80
+    reads.clear()
+    cursor.advance(50_002)
+    assert tuple(cursor) == ("b", "c", "a", "d")
+    assert len(reads) < 25
+    with pytest.raises(ValueError, match="backwards"):
+        cursor.advance(1)

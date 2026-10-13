@@ -24,8 +24,10 @@ from PyQt6.QtWidgets import (
 from cephvr.gui.layouts import tool_window_position
 from cephvr.gui.managed_status import (
     dashboard_view,
+    has_retained_history,
     has_retained_review,
     retained_ack_required_for,
+    retained_details,
     retained_summary,
 )
 from cephvr.gui.review import ReviewControls
@@ -236,7 +238,6 @@ def test_microcontroller_config_load_is_local_and_collects_for_normal_submission
     panel.save_requested.connect(lambda *args: requests.append(args))
     panel.firmware_requested.connect(lambda *args: requests.append(args))
     panel.connection_requested.connect(lambda *args: requests.append(args))
-    panel.camera_enable_requested.connect(lambda *args: requests.append(args))
     panel.managed = True
     assert panel.config_files.load_path(str(path))
     assert panel.snapshots.capture() == data
@@ -389,7 +390,7 @@ def test_tab_config_buttons_roundtrip_into_fresh_gui(
         target.apply_view(review_view(Phase.CONFIGURATION))
         cameras.managed = target.devices.microcontroller.managed = True
     window.devices.microcontroller.set_saved_pins("COM88", "D12", True, "D2", True)
-    for key, pin in (("camera-1", "10"), ("camera-2", "11"), ("camera-3", "8")):
+    for key, pin in (("behavioral", "10"), ("tracking", "11"), ("eye_tracking", "8")):
         window.devices.microcontroller.pin_editors[key].setText(pin)
     window.dashboard.subject_id.setText("saved-subject")
     window.tracking.forms.fields["threshold"].setText("123")
@@ -400,7 +401,6 @@ def test_tab_config_buttons_roundtrip_into_fresh_gui(
             target.devices.cameras.role_requested,
             target.devices.cameras.settings_requested,
             target.devices.microcontroller.save_requested,
-            target.devices.microcontroller.camera_output_requested,
             target.devices.microcontroller.connection_requested,
             target.devices.microcontroller.firmware_requested,
         ):
@@ -439,17 +439,13 @@ def test_tab_config_buttons_roundtrip_into_fresh_gui(
         assert capture(fresh) == original
         assert commands == []
         if owner in ("microcontroller", "gui"):
-            assert fresh.devices.microcontroller.pin_editors["camera-3"].text() == "8"
+            assert (
+                fresh.devices.microcontroller.pin_editors["eye_tracking"].text() == "8"
+            )
             assert fresh.devices.microcontroller.flip_pin.text() == "2"
             assert fresh.devices.microcontroller.enable_controls[
                 "projector-flip"
             ].isChecked()
-            assert (
-                fresh.devices.microcontroller.signals.selectors[
-                    "camera-3"
-                ].currentText()
-                == "Eye camera trigger"
-            )
     finally:
         fresh.close()
         fresh.deleteLater()
@@ -723,9 +719,6 @@ def test_full_gui_loaded_drafts_join_one_proposal_and_survive_polling(
             "trigger_frequency_hz": "18",
         }
     desired["microcontroller"]["port"] = "COM93"
-    desired["microcontroller"]["camera_enabled"] = {
-        key: False for key in desired["microcontroller"]["camera_enabled"]
-    }
     desired["microcontroller"]["trial_state"]["pin"] = "D7"
     desired["tracking"]["distance_mm"] = (
         ""  # Dormant, uncalibrated Tracking is a valid saved draft.
@@ -1291,15 +1284,245 @@ def test_retained_summary_keeps_incidents_ahead_of_completed_operation_history()
     )
     state.warnings.add(message="output recovery needs review")
     rendered = retained_summary(state)
-    assert "retained-error" in rendered
+    assert "retained-error" not in rendered
     assert "camera cleanup failed" in rendered
     assert "output recovery needs review" in rendered
-    assert "5 additional retained operation entries omitted" in rendered
+    assert "Completed operations: 45" in rendered
+    assert "id-0" not in rendered
+    assert "retained-error" in retained_details(state)
     assert has_retained_review(state)
     assert retained_ack_required_for(state, (3, "controller-1"), None)
     assert not retained_ack_required_for(
         state, (3, "controller-1"), (3, "controller-1")
     )
+
+
+def test_auto_retained_review_filters_only_exact_routine_warnings() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+
+    state = pb.Snapshot()
+    state.configuration.revision = 8
+    validation = state.configuration.edit_validation.add(
+        configuration_revision=8,
+        completed=True,
+        valid=True,
+        component="visual_stimulus",
+    )
+    validation.issues.add(
+        component="visual_stimulus",
+        field_path="stimulus.program",
+        failure=pb.Failure(message="Optional preview unavailable"),
+    )
+    routine = state.warnings.add(
+        warning_id="configuration:8:visual_stimulus:nonfatal",
+        component="visual_stimulus",
+        message="Configuration has nonfatal preparation warnings",
+    )
+    routine.issues.extend(validation.issues)
+    assert not has_retained_review(state)
+    assert has_retained_history(state)
+
+    # A warning has no severity field; unknown evidence stays important.
+    state.warnings.add(message="Optional preview unavailable")
+    assert has_retained_review(state)
+
+    state.ClearField("warnings")
+    stale = state.warnings.add(
+        warning_id="configuration:7:visual_stimulus:nonfatal",
+        component="visual_stimulus",
+        message="Configuration has nonfatal preparation warnings",
+    )
+    stale.issues.extend(validation.issues)
+    assert has_retained_review(state)
+
+    # Any differing field or issue prevents suppression of a familiar warning.
+    for mutation in ("message", "issues", "reverted_fields", "acquisition_occurrence"):
+        candidate = pb.Snapshot()
+        candidate.configuration.CopyFrom(state.configuration)
+        item = candidate.warnings.add()
+        item.CopyFrom(routine)
+        if mutation == "message":
+            item.message = "Configuration may need review"
+        elif mutation == "issues":
+            item.issues[0].failure.message = "Different issue"
+        elif mutation == "reverted_fields":
+            item.reverted_fields.append("camera.exposure")
+        else:
+            item.acquisition_occurrence.SetInParent()
+        assert has_retained_review(candidate)
+
+    for completed, valid in ((False, True), (True, False)):
+        candidate = pb.Snapshot()
+        candidate.configuration.revision = 8
+        validation = candidate.configuration.edit_validation.add(
+            configuration_revision=8,
+            completed=completed,
+            valid=valid,
+            component="visual_stimulus",
+        )
+        validation.issues.add().CopyFrom(
+            state.configuration.edit_validation[0].issues[0]
+        )
+        item = candidate.warnings.add()
+        item.CopyFrom(routine)
+        assert has_retained_review(candidate)
+
+
+def test_auto_retained_review_operation_and_recovery_truth_table() -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+
+    pending = pb.Snapshot()
+    pending.operations.add(command="Setup", complete=False, progress="Preparing")
+    assert not has_retained_review(pending)
+    assert has_retained_history(pending)
+
+    unknown_operation = pb.Snapshot()
+    unknown_operation.operations.add(command="Setup", complete=True)
+    assert has_retained_review(unknown_operation)
+
+    failed_operation = pb.Snapshot()
+    failed_operation.operations.add(command="Setup", complete=True, succeeded=False)
+    assert has_retained_review(failed_operation)
+
+    successful_recovery = pb.Snapshot()
+    successful_recovery.recoveries.add(
+        attempt_id="done",
+        outcome=pb.RECOVERY_OUTCOME_COMPLETED,
+        completion_monotonic_ns=123,
+    )
+    assert not has_retained_review(successful_recovery)
+
+    missing_completion = pb.Snapshot()
+    missing_completion.recoveries.add(
+        attempt_id="missing-completion",
+        outcome=pb.RECOVERY_OUTCOME_COMPLETED,
+    )
+    assert has_retained_review(missing_completion)
+
+    for outcome, failure in (
+        (pb.RECOVERY_OUTCOME_UNSPECIFIED, False),
+        (pb.RECOVERY_OUTCOME_FAILED, True),
+        (pb.RECOVERY_OUTCOME_COMPLETED, True),
+    ):
+        state = pb.Snapshot()
+        recovery = state.recoveries.add(
+            attempt_id="needs-review",
+            outcome=outcome,
+            completion_monotonic_ns=123,
+        )
+        if failure:
+            recovery.failure.message = "Cleanup status is inconsistent"
+        assert has_retained_review(state)
+
+
+def test_retained_ack_guard_reassesses_fresh_snapshot_but_preserves_same_identity() -> (
+    None
+):
+    from cephvr.control.v1 import types_pb2 as pb
+
+    important = pb.Snapshot()
+    important.errors.add(error_id="startup-cleanup")
+    identity = (1, "controller-1")
+    assert retained_ack_required_for(important, identity, None)
+    assert not retained_ack_required_for(pb.Snapshot(), (2, "controller-1"), None)
+    assert not retained_ack_required_for(important, identity, identity)
+
+
+def test_manual_history_review_opens_without_ack_guard(app: QApplication) -> None:
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    state = pb.Snapshot(controller_generation="controller-1")
+    state.operations.add(command="Setup", complete=True, succeeded=True)
+    manager = SimpleNamespace(
+        state=state,
+        _retained_ack_required=False,
+        _retained_ack_identity=None,
+        _connection_identity=(7, "controller-1"),
+        _acknowledged_identity=None,
+    )
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, _choice: False,
+        acknowledged=lambda epoch, generation: ManagedGui.retained_state_acknowledged(
+            manager, epoch, generation
+        ),
+        log=lambda _message: None,
+    )
+    prompts.update(
+        state,
+        require_acknowledgement=False,
+        can_respond=False,
+        connection_epoch=7,
+    )
+    manager.prompts = prompts
+    ManagedGui.review_retained_state(manager)
+    app.processEvents()
+    dialog = prompts.retained_dialog
+    assert dialog is not None and dialog.isVisible()
+
+    latest = pb.Snapshot(controller_generation="controller-1")
+    operation = latest.operations.add(command="Setup", complete=True, succeeded=True)
+    operation.context.command_id = "latest-command"
+    manager.state = latest
+    prompts.update(
+        latest,
+        require_acknowledgement=False,
+        can_respond=False,
+        connection_epoch=7,
+    )
+    assert prompts.retained_dialog is dialog
+    dialog.copy_button.click()
+    assert "latest-command" in QApplication.clipboard().text()
+    dialog.continue_button.click()
+    app.processEvents()
+    assert not manager._retained_ack_required
+    assert manager._acknowledged_identity is None
+    parent.close()
+    parent.deleteLater()
+
+
+def test_mandatory_review_can_be_reopened_after_same_identity_history_empties(
+    app: QApplication,
+) -> None:
+    from PyQt6.QtWidgets import QWidget
+
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.main import ManagedGui
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    state = pb.Snapshot(controller_generation="controller-1")
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, _choice: False,
+        acknowledged=lambda _epoch, _generation: None,
+        log=lambda _message: None,
+    )
+    prompts.update(
+        state,
+        require_acknowledgement=True,
+        can_respond=False,
+        connection_epoch=2,
+    )
+    assert prompts.retained_dialog is not None
+    prompts.retained_dialog.reject()
+    manager = SimpleNamespace(
+        state=state,
+        _retained_ack_required=True,
+        prompts=prompts,
+    )
+    ManagedGui.review_retained_state(manager)
+    app.processEvents()
+    assert prompts.retained_dialog is not None
+    assert prompts.retained_dialog.isVisible()
+    prompts.retained_dialog.reject()
+    parent.close()
+    parent.deleteLater()
 
 
 def test_managed_prompt_window_is_single_and_responds_with_displayed_snapshot(
@@ -1402,10 +1625,11 @@ def test_prompt_completion_preserves_current_lease_authority(app: QApplication) 
 def test_managed_retained_summary_uses_one_acknowledgement_window(
     app: QApplication,
 ) -> None:
-    from PyQt6.QtWidgets import QMessageBox
+    from PyQt6.QtWidgets import QPushButton
 
     from cephvr.control.v1 import types_pb2 as pb
     from cephvr.gui.managed_prompts import ManagedPrompts
+    from cephvr.gui.retained_review import RetainedReviewDialog
 
     parent = QWidget()
     acknowledgements: list[tuple[int, str]] = []
@@ -1420,6 +1644,13 @@ def test_managed_retained_summary_uses_one_acknowledgement_window(
         log=lambda _message: None,
     )
     state = pb.Snapshot(retained_truncated=True, controller_generation="controller-1")
+    state.errors.add(
+        error_id="renderer-error",
+        failure=pb.Failure(message="<unknown> cleanup <b>failed</b> & confirm"),
+    )
+    for index in range(45):
+        item = state.operations.add(command="Setup", complete=True, succeeded=True)
+        item.context.command_id = f"routine-{index}"
     prompts.update(
         state,
         require_acknowledgement=True,
@@ -1428,17 +1659,42 @@ def test_managed_retained_summary_uses_one_acknowledgement_window(
     )
     app.processEvents()
     dialog = prompts.retained_dialog
-    assert dialog is not None and dialog.isVisible()
+    assert isinstance(dialog, RetainedReviewDialog) and dialog.isVisible()
+    assert dialog.windowTitle() == "Controller events to review"
+    assert "Retained errors:" in dialog.summary.text()
+    assert (
+        "&lt;unknown&gt; cleanup &lt;b&gt;failed&lt;/b&gt; &amp; confirm"
+        in dialog.summary.text()
+    )
+    assert [button.text() for button in dialog.findChildren(QPushButton)] == [
+        "Copy details",
+        "Continue",
+    ]
+    latest = pb.Snapshot(controller_generation="controller-1")
+    latest.errors.add(
+        error_id="new-error",
+        failure=pb.Failure(message="multiline\n<unknown> latest & <b>failure</b>"),
+    )
+    for index in range(45):
+        item = latest.operations.add(command="Setup", complete=True, succeeded=True)
+        item.context.command_id = f"routine-{index}"
     prompts.update(
-        state,
+        latest,
         require_acknowledgement=True,
         can_respond=False,
         connection_epoch=1,
     )
     assert prompts.retained_dialog is dialog
-    button = dialog.button(QMessageBox.StandardButton.Ok)
-    assert button is not None
-    button.click()
+    assert "latest &amp; &lt;b&gt;failure&lt;/b&gt;" in dialog.summary.text()
+    assert "cleanup failed" not in dialog.summary.text()
+    dialog.copy_button.click()
+    copied = QApplication.clipboard().text()
+    assert "new-error" in copied
+    assert "multiline\n<unknown> latest & <b>failure</b>" in copied
+    assert "routine-44" in copied
+    assert "cleanup failed" not in copied
+    assert acknowledgements == []
+    dialog.continue_button.click()
     app.processEvents()
     assert acknowledgements == [(1, "controller-1")]
     parent.close()
@@ -1449,8 +1705,6 @@ def test_managed_retained_summary_uses_one_acknowledgement_window(
 def test_old_retained_dialog_cannot_acknowledge_a_new_connection(
     app: QApplication,
 ) -> None:
-    from PyQt6.QtWidgets import QMessageBox
-
     from cephvr.control.v1 import types_pb2 as pb
     from cephvr.gui.managed_prompts import ManagedPrompts
 
@@ -1485,14 +1739,10 @@ def test_old_retained_dialog_cannot_acknowledge_a_new_connection(
     app.processEvents()
     new_dialog = prompts.retained_dialog
     assert new_dialog is not None and new_dialog is not old_dialog
-    old_button = old_dialog.button(QMessageBox.StandardButton.Ok)
-    assert old_button is not None
-    old_button.click()
+    old_dialog.continue_button.click()
     app.processEvents()
     assert acknowledgements == []
-    new_button = new_dialog.button(QMessageBox.StandardButton.Ok)
-    assert new_button is not None
-    new_button.click()
+    new_dialog.continue_button.click()
     app.processEvents()
     assert acknowledgements == [(5, "controller-1")]
     parent.close()
@@ -1500,19 +1750,99 @@ def test_old_retained_dialog_cannot_acknowledge_a_new_connection(
     app.processEvents()
 
 
-def test_retained_summary_includes_exact_command_and_prompt_ids() -> None:
+def test_closing_retained_review_does_not_acknowledge(
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    acknowledgements: list[tuple[int, str]] = []
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, _choice: False,
+        acknowledged=lambda epoch, generation: acknowledgements.append(
+            (epoch, generation)
+        ),
+        log=lambda _message: None,
+    )
+    prompts.update(
+        pb.Snapshot(controller_generation="controller-1"),
+        require_acknowledgement=True,
+        can_respond=False,
+        connection_epoch=9,
+    )
+    app.processEvents()
+    assert prompts.retained_dialog is not None
+    prompts.retained_dialog.reject()
+    app.processEvents()
+    assert acknowledgements == []
+    parent.close()
+    parent.deleteLater()
+
+
+def test_long_retained_review_scrolls_without_hiding_actions(
+    app: QApplication,
+) -> None:
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.managed_prompts import ManagedPrompts
+
+    parent = QWidget()
+    prompts = ManagedPrompts(
+        parent,
+        queue_response=lambda _encoded, _choice: False,
+        acknowledged=lambda _epoch, _generation: None,
+        log=lambda _message: None,
+    )
+    state = pb.Snapshot(controller_generation="controller-1")
+    for index in range(55):
+        state.warnings.add(
+            warning_id=f"warning-{index}",
+            message=f"Warning {index}: " + "operator review required " * 4,
+        )
+    prompts.update(
+        state,
+        require_acknowledgement=True,
+        can_respond=False,
+        connection_epoch=10,
+    )
+    app.processEvents()
+    dialog = prompts.retained_dialog
+    assert dialog is not None
+    assert dialog.width() <= 540
+    assert dialog.height() <= 400
+    scrollbar = dialog.summary_scroll.verticalScrollBar()
+    assert scrollbar is not None and scrollbar.maximum() > 0
+    assert dialog.copy_button.isVisible()
+    assert dialog.continue_button.isVisible()
+    dialog.reject()
+    parent.close()
+    parent.deleteLater()
+
+
+def test_retained_summary_keeps_ids_in_details_and_all_actionable_operations_visible() -> (
+    None
+):
     from cephvr.control.v1 import types_pb2 as pb
 
     state = pb.Snapshot()
     operation = state.operations.add(command="Setup")
     operation.context.command_id = "cmd-123"
     operation.progress = "waiting for device readiness"
+    for index in range(45):
+        failed = state.operations.add(command="Setup", complete=True, succeeded=False)
+        failed.context.command_id = f"failed-{index}"
+        failed.failure.message = "<unknown> renderer cleanup failed"
     prompt = state.prompts.add(prompt_id="prompt-456", explanation="Continue?")
     prompt.permitted_choices.append("cancel")
     rendered = retained_summary(state)
-    assert "cmd-123" in rendered
+    assert "cmd-123" not in rendered
     assert "waiting for device readiness" in rendered
-    assert "prompt-456" in rendered
+    assert "prompt-456" not in rendered
+    assert "failed-44" not in rendered
+    assert "failed-44" in retained_details(state)
+    assert "<unknown> renderer cleanup failed" in retained_summary(state)
+    assert "<unknown> renderer cleanup failed" in retained_details(state)
 
 
 def test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch() -> None:
@@ -1918,6 +2248,95 @@ def test_log_keeps_reading_position_during_append_and_retention(
     console.clear()
     console.appendPlainText("Fresh")
     assert console.toPlainText() == "Fresh"
+
+
+def test_log_entry_details_follow_their_own_bounded_document_block(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.components import LogConsole, _LogDetails
+
+    console = LogConsole(lines=3)
+    console.setMaximumBlockCount(2)
+    console.append_entry("First accepted", "command_id=first")
+    console.append_entry("Second\nfailed", "command_id=second\n<unknown>")
+    app.processEvents()
+    document = console.document()
+    assert document is not None
+    first, second = document.begin(), document.begin().next()
+    assert first.text() == "First accepted"
+    assert isinstance(first.userData(), _LogDetails)
+    assert first.userData().details == "command_id=first"
+    assert second.text() == "Second · failed"
+    assert isinstance(second.userData(), _LogDetails)
+    assert second.userData().details == "command_id=second\n<unknown>"
+    console.appendPlainText("Third")
+    app.processEvents()
+    assert document.blockCount() == 2
+    assert document.begin().text() == "Second · failed"
+    assert document.begin().userData().details == "command_id=second\n<unknown>"
+    console.deleteLater()
+
+
+def test_managed_operation_log_distinguishes_admission_completion_and_failure(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.components import LogConsole
+    from cephvr.gui.main import ManagedGui
+
+    console = LogConsole()
+    manager = SimpleNamespace(
+        window=SimpleNamespace(dashboard=SimpleNamespace(log_console=console)),
+        prompts=SimpleNamespace(operation_finished=lambda _action: None),
+    )
+    ManagedGui.command_admitted(manager, "Setup", "command-1")
+    ManagedGui.operation_finished(
+        manager, "Setup", "command-1", "completed", "Completed."
+    )
+    ManagedGui.command_admitted(manager, "Setup", "command-2")
+    ManagedGui.operation_finished(
+        manager, "Setup", "command-2", "failed", "<unknown> renderer failure"
+    )
+    rows = console.toPlainText().splitlines()
+    assert rows == [
+        "Setup accepted; awaiting completion.",
+        "Setup completed.",
+        "Setup accepted; awaiting completion.",
+        "Setup: failed — <unknown> renderer failure",
+    ]
+    document = console.document()
+    assert document is not None
+    details = []
+    block = document.begin()
+    while block.isValid():
+        user_data = block.userData()
+        if user_data is not None:
+            details.append(user_data.details)
+        block = block.next()
+    assert "Command ID: command-1" in details[0]
+    assert "<unknown> renderer failure" in details[-1]
+    console.deleteLater()
+
+
+def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
+    app: QApplication,
+) -> None:
+    from cephvr.gui.components import LogConsole
+    from cephvr.gui.main import ManagedGui
+
+    console = LogConsole()
+    manager = SimpleNamespace(
+        window=SimpleNamespace(dashboard=SimpleNamespace(log_console=console)),
+        cameras=SimpleNamespace(finished=lambda *_: None),
+    )
+    ManagedGui.command_finished(
+        manager, "tracking_diagnostic_frame", True, "Frame ready"
+    )
+    assert console.toPlainText() == ""
+    ManagedGui.command_finished(
+        manager, "tracking_diagnostic_frame", False, "Frame failed"
+    )
+    assert console.toPlainText() == "Tracking diagnostic frame failed: Frame failed"
+    console.deleteLater()
 
 
 def test_preview_geometry_survives_recreation(
@@ -2397,10 +2816,11 @@ def test_preview_participation_gates_and_camera_draft_selection(
     assert not cameras.preset_field.browse.isEnabled()
     assert not cameras.role.isEnabled()
     assert not any(c.isEnabled() for c in cameras.enable_controls)
-    cameras.set_participation(0, True)
+    cameras.drafts[0].enabled = True
+    cameras.populate_inventory()
     cameras.toggle_connection()
     cameras.edit("trigger_frequency_hz", "9999")
-    assert not cameras.drafts[0].enabled
+    assert cameras.drafts[0].enabled
     assert cameras.drafts[0].values["trigger_frequency_hz"] == "1200"
 
 
@@ -2574,12 +2994,16 @@ def test_device_tabs_sit_above_controls_without_moving_hud(
                 assert panel.input_table.columnWidth(
                     1
                 ) == panel.output_table.columnWidth(1)
-                for selector in panel.signals.selectors.values():
-                    if selector.isVisible():
-                        assert selector.width() >= selector.sizeHint().width()
-                for control in panel.signals.remove_buttons.values():
-                    if control.isVisible():
-                        assert control.width() >= control.sizeHint().width()
+                assert set(panel.pin_editors) == {
+                    "behavioral",
+                    "tracking",
+                    "eye_tracking",
+                }
+                assert all(
+                    pin.parentWidget()
+                    is panel.output_table.cellWidget(panel.role_rows[key], 2)
+                    for key, pin in panel.pin_editors.items()
+                )
             assert card.y() >= window.devices.navigation.height() + SIZES.card_gap
             assert (
                 window.devices.panels[index]
@@ -2752,19 +3176,19 @@ def test_microcontroller_camera_rows_and_discovery(
     camera = window.devices.cameras
     camera.trigger_source.setCurrentText("External controller")
     camera.fields["trigger_frequency_hz"].setText("120")
-    panel.pin_editors["camera-1"].setText("5")
+    panel.pin_editors["behavioral"].setText("5")
     camera.enable_controls[1].setChecked(False)
-    assert list(panel.pin_editors) == ["camera-1", "camera-2"]
-    assert not panel.enable_controls["camera-2"].isChecked()
-    assert not panel.pin_editors["camera-2"].isEnabled()
-    assert panel.pins["camera-1"] == "5"
-    panel.test_pin("camera-1")
+    assert list(panel.pin_editors) == ["behavioral", "tracking", "eye_tracking"]
+    assert not camera.enable_controls[1].isChecked()
+    assert panel.pin_editors["tracking"].isEnabled()
+    assert panel.pins["behavioral"] == "5"
+    panel.test_pin("behavioral")
     assert (
         "pin 5, requested 120 Hz output test; not tested" in panel.console.toPlainText()
     )
-    panel.test_pin("camera-1")  # Stop the review before changing wiring.
+    panel.test_pin("behavioral")  # Stop the review before changing wiring.
     panel.flip_pin.setText("5")
-    panel.test_pin("camera-1")
+    panel.test_pin("behavioral")
     assert "duplicate" in panel.console.toPlainText().splitlines()[-1]
     panel.request("Scan ports")
     assert panel.port.currentData() == "COM7"
@@ -3040,92 +3464,23 @@ def test_microcontroller_fixed_signal_tests_and_layout(window: DashboardWindow) 
     assert panel.console.toPlainText() == before
 
 
-@pytest.mark.parametrize(
-    "direction,key,pin",
-    [
-        ("input", "projector-flip", "D2"),
-        ("output", "trial-state", "D8"),
-        ("output", "camera-2", "D8"),
-    ],
-)
-def test_microcontroller_supported_signals_remove_add_and_restore_pins(
-    window: DashboardWindow, direction: str, key: str, pin: str
+def test_microcontroller_role_outputs_clear_without_changing_camera_use(
+    window: DashboardWindow,
 ) -> None:
     panel = window.devices.microcontroller
-    row = 0
-    if key == "camera-2":
-        window.devices.cameras.drafts[1].role = "Eye tracking"
-        window.devices.sync_cameras()
-        editor = panel.pin_editors[key]
-        row = 2
-    else:
-        editor = panel.flip_pin if direction == "input" else panel.trial_pin
-    table = panel.input_table if direction == "input" else panel.output_table
-    add = panel.signals.add_input if direction == "input" else panel.signals.add_output
-    editor.setText(pin)
-    panel.enable_controls[key].setChecked(True)
-    assert not add.isEnabled()
-    if direction == "input":
-        assert not table.horizontalHeader().isHidden()
-    panel.signals.remove_buttons[key].click()
-    assert table.isRowHidden(row)
-    if direction == "input":
-        assert table.horizontalHeader().isHidden()
-        assert table.height() == 2 * table.frameWidth()
-    assert not panel.enable_controls[key].isChecked()
-    assert editor.text() == pin.removeprefix("D")
-    removed = panel.snapshots.capture()
-    add.click()
-    assert not table.isRowHidden(row)
-    if direction == "input":
-        assert not table.horizontalHeader().isHidden()
-    assert panel.enable_controls[key].isChecked()
-    assert editor.text() == pin.removeprefix("D")
-    panel.snapshots.restore(panel.snapshots.validate(removed))
-    assert table.isRowHidden(row)
-    if direction == "input":
-        assert table.horizontalHeader().isHidden()
-    assert editor.text() == pin.removeprefix("D")
-    if key == "camera-2":
-        from cephvr.control.v1 import types_pb2 as pb
-
-        collected = pb.AcquisitionSettings()
-        panel.snapshots.collect(collected)
-        assert collected.pulses.eye_tracking.pin == "D8"
-        assert not collected.pulses.tracking.HasField("pin")
-    window.apply_view(review_view(Phase.CONFIGURATION, observer=True))
-    panel.signals.add(direction)
-    assert not panel.enable_controls[key].isChecked()
-    assert not add.isEnabled()
-
-
-def test_microcontroller_signal_dropdown_moves_between_supported_outputs(window):
-    from PyQt6.QtCore import QCoreApplication, QEvent
-
-    panel = window.devices.microcontroller
-    panel.signals.remove("camera-1")
-    assert not window.devices.cameras.drafts[0].enabled
-    selector = panel.signals.selectors["trial-state"]
-    assert {selector.itemText(i) for i in range(selector.count())} == {
-        "Trial state",
-        "Behavior cam",
-        "Tracking cam",
-    }
-    selector.setCurrentIndex(selector.findData("camera-1"))
-    assert not panel.enable_controls["trial-state"].isChecked()
-    assert panel.enable_controls["camera-1"].isChecked()
-    assert window.devices.cameras.drafts[0].enabled
-    assert panel.output_table.isRowHidden(0)
-    assert not panel.output_table.isRowHidden(1)
-    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
-    selector = panel.signals.selectors["camera-1"]
-    assert selector.parentWidget() is panel.output_table.cellWidget(1, 1)
-    assert selector.currentData() == "camera-1"
-    panel.review_tests.add("camera-1")
-    panel.refresh_tests()
-    panel.signals.remove("camera-1")
-    assert panel.enable_controls["camera-1"].isChecked()
-    assert not panel.signals.remove_buttons["camera-1"].isEnabled()
+    cameras = window.devices.cameras
+    cameras.enable_controls[0].setChecked(False)
+    panel.can_review = True
+    panel.set_role_pin("behavioral", "8")
+    assert panel.pin_editors["behavioral"].text() == "8"
+    assert not cameras.drafts[0].enabled
+    panel.signals.remove("behavioral")
+    assert panel.pin_editors["behavioral"].text() == ""
+    assert not cameras.drafts[0].enabled
+    assert set(panel.pin_editors) == {"behavioral", "tracking", "eye_tracking"}
+    assert all(
+        not panel.output_table.isRowHidden(row) for row in panel.role_rows.values()
+    )
 
 
 def test_microcontroller_file_restores_camera_output_rows_without_commands(
@@ -3135,31 +3490,58 @@ def test_microcontroller_file_restores_camera_output_rows_without_commands(
 
     panel = window.devices.microcontroller
     cameras = window.devices.cameras
-    panel.signals.remove("camera-1")
+    panel.can_review = True
+    cameras.set_participation(0, False)
+    panel.set_role_pin("behavioral", "8")
     data = panel.snapshots.capture()
-    assert not data["camera_enabled"]["camera-1"]
+    assert data["version"] == 3
+    assert "camera_enabled" not in data
+    assert data["camera_pins"]["behavioral"] == "D8"
     path = tmp_path / "signals.json"
     write_snapshot(str(path), data)
-    panel.signals.add("output")
-    assert cameras.drafts[0].enabled
     requests = []
     cameras.managed = panel.managed = True
     cameras.enable_requested.connect(lambda *args: requests.append(args))
     panel.save_requested.connect(lambda *args: requests.append(args))
+    cameras.drafts[0].enabled = True
+    cameras.populate_inventory()
     assert panel.config_files.load_path(str(path))
-    assert not cameras.drafts[0].enabled
-    assert panel.output_table.isRowHidden(1)
+    assert cameras.drafts[0].enabled
+    assert panel.pin_editors["behavioral"].text() == "8"
     assert requests == []
     assert panel.snapshots.capture() == data
-    older = dict(data, version=1)
-    older.pop("camera_enabled")
-    panel.snapshots.restore(panel.snapshots.validate(older))
-    assert not cameras.drafts[0].enabled
+    legacy = dict(data, version=2)
+    legacy["camera_pins"] = {"camera-1": "D7", "camera-2": ""}
+    legacy["camera_enabled"] = {"camera-1": False, "camera-2": True}
+    migrated = panel.snapshots.validate(legacy)
+    assert migrated["camera_pins"] == {
+        "behavioral": "D7",
+        "tracking": "",
+        "eye_tracking": "",
+    }
+    assert panel.snapshots.validate(legacy) == migrated
+    assert legacy["version"] == 2 and legacy["camera_enabled"]["camera-1"] is False
+    panel.snapshots.restore(migrated)
+    assert cameras.drafts[0].enabled
+    assert panel.pin_editors["behavioral"].text() == "7"
     assert requests == []
+    unknown = dict(legacy)
+    unknown["camera_pins"] = {"missing-camera": "D4"}
+    with pytest.raises(ValueError, match="invalid field inventory"):
+        panel.snapshots.validate(unknown)
     full = window.snapshots.capture()
-    full["microcontroller"]["camera_enabled"]["camera-1"] = True
-    with pytest.raises(ValueError, match="participation differs"):
-        window.snapshots.validate(full)
+    full["microcontroller"]["version"] = 2
+    full["microcontroller"]["camera_pins"] = {"camera-1": "D4", "camera-2": ""}
+    full["microcontroller"]["camera_enabled"] = {
+        "camera-1": not cameras.drafts[0].enabled,
+        "camera-2": not cameras.drafts[1].enabled,
+    }
+    full["experiment"]["cameras"][0]["role"] = "Eye tracking"
+    full["experiment"]["cameras"][1]["role"] = "Behavior cam"
+    normalized = window.snapshots.validate(full)
+    assert normalized["microcontroller"]["camera_pins"]["eye_tracking"] == "D4"
+    assert normalized["microcontroller"]["camera_pins"]["behavioral"] == ""
+    assert cameras.drafts[0].enabled
 
 
 def test_local_review_microcontroller_does_not_open_serial(window, monkeypatch):
@@ -3239,10 +3621,10 @@ def test_managed_microcontroller_emits_controller_intents(
     panel.set_saved_pins("COM8", "D9", True, "D2", True)
     assert panel.port.isEnabled()
     assert panel.scan_button.isEnabled()
-    panel.pin_editors["camera-1"].setText("D10")
-    panel.pin_editors["camera-2"].setText("D11")
+    panel.pin_editors["behavioral"].setText("D10")
+    panel.pin_editors["tracking"].setText("D11")
     assert saves == []  # Controller snapshots and unfinished drafts stay silent.
-    panel.pin_editors["camera-2"].editingFinished.emit()
+    panel.pin_editors["tracking"].editingFinished.emit()
     panel.test_connection_button.click()
     panel.test_buttons["trial-state"].click()
     panel.set_diagnostic("trial-state", True, 1)
@@ -3250,7 +3632,7 @@ def test_managed_microcontroller_emits_controller_intents(
     assert not panel.scan_button.isEnabled()
     panel.test_buttons["trial-state"].click()
 
-    assert saves == [("COM8", "9", True, "2", True, "10", "11", None)]
+    assert saves == []  # Incomplete/local edits are adopted by the next action.
     assert connections == [True]
     assert pin_tests == [("trial-state", True), ("trial-state", False)]
     assert "no command sent" not in panel.console.toPlainText().splitlines()[-1]
@@ -3263,17 +3645,17 @@ def test_managed_microcontroller_emits_controller_intents(
         "output LOW, 1 rising transitions generated by MCU"
         in panel.console.toPlainText()
     )
-    panel.set_diagnostic("camera-1", False, 59)
+    panel.set_diagnostic("behavioral", False, 59)
     assert (
         "59 rising transitions generated by MCU"
         in panel.status_column.hud.toPlainText()
     )
     assert "rising edges reported" not in panel.console.toPlainText()
     panel.enable_controls["projector-flip"].setChecked(False)
-    assert saves[-1] == ("COM8", "9", True, "2", False, "10", "11", None)
+    assert saves == []
     panel.port.addItem("COM9", "COM9")
     panel.port.setCurrentIndex(panel.port.findData("COM9"))
-    assert saves[-1][0] == "COM9"
+    assert saves == []
     saved_count = len(saves)
     panel.set_saved_pins("COM9", "D9", True, "D2", False)
     assert len(saves) == saved_count
@@ -3390,8 +3772,10 @@ def test_managed_camera_settings_submit_pfs_source_and_rate(
     assert "Save camera settings" not in [
         b.text() for b in panel.findChildren(QPushButton)
     ]
+    submitted_count = len(submissions)
     panel.trigger_source.setCurrentText("Internal clock")
-    assert submissions[-1][1] == "Internal clock"
+    assert panel.snapshot_draft
+    assert len(submissions) == submitted_count
     preset = tmp_path / "external.pfs"
     preset.write_text(
         "# GenApi persistence file\nTriggerSelector\tFrameStart\n"
@@ -3399,8 +3783,8 @@ def test_managed_camera_settings_submit_pfs_source_and_rate(
     )
     submitted_count = len(submissions)
     panel.preset_field.select_path(str(preset))
-    assert len(submissions) == submitted_count + 1
-    assert submissions[-1][1:4] == ("External controller", "Line3", str(preset))
+    assert panel.snapshot_draft
+    assert len(submissions) == submitted_count
     submitted_count = len(submissions)
     panel.fields["trigger_frequency_hz"].setText("0.01")
     panel.fields["trigger_frequency_hz"].editingFinished.emit()
@@ -3966,7 +4350,10 @@ def test_projector_first_run_profile_import_is_reachable_and_collectable(
 
 
 @pytest.mark.asyncio
-async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() -> None:
+@pytest.mark.parametrize("succeeded", [True, False])
+async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly(
+    succeeded: bool,
+) -> None:
     import asyncio
 
     from cephvr.client.session import CommandOutcome
@@ -4024,7 +4411,12 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() -> 
             return CommandOutcome(command_id, False, None)
 
         async def wait_result(self, _command_id: str) -> CommandOutcome:
-            return CommandOutcome(command_id, True, True)
+            return CommandOutcome(
+                command_id,
+                True,
+                succeeded,
+                failure="<unknown> write failed" if not succeeded else "",
+            )
 
     bridge = ControllerBridge(Client.principal, 50051, 1024, (0,))
     bridge._connection_epoch = 3
@@ -4048,8 +4440,10 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() -> 
     channel.source_id = "custom-trigger"
     admitted: list[tuple[str, str]] = []
     finished: list[tuple[str, str, str, str]] = []
+    generic_finished: list[tuple[str, bool, str]] = []
     bridge.command_admitted.connect(lambda *args: admitted.append(args))
     bridge.operation_finished.connect(lambda *args: finished.append(args))
+    bridge.command_finished.connect(lambda *args: generic_finished.append(args))
     await bridge._dispatch(
         Client(),
         "spikeglx_inventory_update",
@@ -4063,7 +4457,10 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() -> 
     assert update_requests[0].expected_configuration_revision == 6
     assert update_requests[0].pulse_channels[0].source_id == "custom-trigger"
     assert admitted == [("spikeglx_inventory_update", command_id)]
-    assert finished[-1][2] == "completed"
+    assert finished[-1][2] == ("completed" if succeeded else "failed")
+    if not succeeded:
+        assert "<unknown> write failed" in finished[-1][3]
+    assert generic_finished == []
 
 
 def test_managed_spikeglx_inventory_installs_read_only_host_settings(
@@ -5105,7 +5502,7 @@ async def test_camera_action_submits_before_test_and_stops_on_failure(
     client = SimpleNamespace(
         snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
     )
-    if failure == "none":
+    if failure == "none" or (not connect and failure in {"settings", "import"}):
         await bridge._dispatch(client, "prepare_camera", options)
         assert calls[-1][0] == "ExecuteCameraCommand"
         assert calls[-1][1].kind == (
@@ -5113,16 +5510,28 @@ async def test_camera_action_submits_before_test_and_stops_on_failure(
             if connect
             else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
         )
-        assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+        assert calls[-1][1].expected_configuration_revision == (8 if connect else 5)
         changed = state.configuration_values.current.backends[0].acquisition
         assert changed.eye_tracking.device.device_id == "eye"
-        assert changed.eye_tracking.enabled and changed.pulses.eye_tracking.pin == "D8"
+        assert not changed.eye_tracking.enabled
         assert changed.behavioral.device.device_id == "behavior"
         assert state.configuration_values.current.subject == "Preserved"
-        assert not changed.eye_tracking.device.settings.HasField("trigger_activation")
-        assert [base for base, _ in accepted] == (
-            [4, 5, 6, 7] if connect else [4, 5, 6]
-        )
+        if connect:
+            assert changed.pulses.eye_tracking.pin == "D8"
+            assert not changed.eye_tracking.device.settings.HasField(
+                "trigger_activation"
+            )
+            assert [base for base, _ in accepted] == [4, 5, 6, 7]
+        else:
+            assert (
+                changed.eye_tracking.device.settings.trigger_activation == "rising_edge"
+            )
+            assert not changed.pulses.HasField("eye_tracking")
+            assert [method for method, _ in calls] == [
+                "UpdateConfiguration",
+                "ExecuteCameraCommand",
+            ]
+            assert [base for base, _ in accepted] == [4]
     else:
         with pytest.raises(ClientError):
             await bridge._dispatch(client, "prepare_camera", options)
@@ -5139,6 +5548,83 @@ async def test_camera_action_submits_before_test_and_stops_on_failure(
             assert calls == [] and accepted == []
         if failure == "import":
             assert calls[-1][1].kind == rpc.CAMERA_COMMAND_KIND_FINISH_EDITING
+
+
+@pytest.mark.asyncio
+async def test_repeated_camera_connect_skips_noop_configuration_update() -> None:
+    """A no-op camera preparation must not validate unrelated incomplete drafts."""
+    from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+    from cephvr.control.v1 import services_pb2 as rpc
+    from cephvr.control.v1 import types_pb2 as pb
+    from cephvr.gui.controller_bridge import ControllerBridge
+    from cephvr.shared.auth import Principal
+
+    state = pb.Snapshot(controller_generation="generation")
+    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+    state.configuration.revision = state.configuration_values.revision = 4
+    acquisition = state.configuration_values.current.backends.add(
+        backend_name="acquisition", enabled=True
+    ).acquisition
+    selected = acquisition.eye_tracking.device
+    selected.device_id = "eye"
+    selected.frame_timing = camera_pb.FRAME_TIMING_FREE_RUNNING
+    selected.unaligned_free_running = True
+    acquisition.pulses.eye_tracking.pin = "D8"
+    acquisition.pulses.eye_tracking.requested_frequency_hz = 30.0
+    calls = []
+
+    async def execute(method, request):
+        calls.append(method)
+        if method == "UpdateConfiguration":
+            if state.configuration.revision > 4:
+                assert request.proposed == state.configuration_values.current, (
+                    f"proposed={request.proposed!s}\ncurrent="
+                    f"{state.configuration_values.current!s}"
+                )
+            state.configuration_values.current.CopyFrom(request.proposed)
+            state.configuration.revision += 1
+            state.configuration_values.revision = state.configuration.revision
+        if method == "ExecuteCameraCommand":
+            state.acquisition_devices.eye_tracking.preview_running = True
+            state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+        return SimpleNamespace(succeeded=True)
+
+    bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+    client = SimpleNamespace(
+        snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+    )
+
+    def options(kind):
+        return {
+            "generation": "generation",
+            "base_revision": state.configuration.revision,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "enabled": False,
+            "pin": "8",
+            "port": "",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "",
+            "rate": "30",
+            "kind": kind,
+            "show_preview": True,
+        }
+
+    await bridge._dispatch(
+        client, "prepare_camera", options(rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION)
+    )
+    state.configuration_values.current.backends[0].acquisition.behavioral.enabled = True
+    await bridge._dispatch(
+        client, "prepare_camera", options(rpc.CAMERA_COMMAND_KIND_START_PREVIEW)
+    )
+    assert calls.count("UpdateConfiguration") == 1
+    assert calls[-1] == "ExecuteCameraCommand"
+    assert state.acquisition_devices.eye_tracking.preview_running
 
 
 def test_camera_acceptance_preserves_other_local_configuration_drafts(
@@ -5307,7 +5793,11 @@ async def test_managed_mcu_save_includes_camera_output_pins(prefix: str) -> None
         client, "add_mcu_output", {"role": "eye_tracking", "pin": "8"}
     )
     added = requests[-1][1].proposed.backends[0].acquisition
-    assert added.eye_tracking.enabled and added.pulses.eye_tracking.pin == "D8"
+    assert not added.eye_tracking.enabled and added.pulses.eye_tracking.pin == "D8"
+    assert (
+        requests[-1][1].proposed.backends[0].enabled
+        == state.configuration_values.current.backends[0].enabled
+    )
     assert not acquisition.eye_tracking.enabled
 
 
@@ -5477,9 +5967,9 @@ def test_managed_camera_pin_test_uses_saved_role_signal(
     panel = window.devices.microcontroller
     panel.managed = True
     panel.set_cameras(
-        (CameraTrigger("camera-1", "Behavior cam", "External controller", "30", True),)
+        (CameraTrigger("camera-1", "Behavior cam", "Internal clock", "30", False),)
     )
-    panel.pin_editors["camera-1"].setText("D10")
+    panel.pin_editors["behavioral"].setText("D10")
     state = pb.Snapshot()
     acquisition = state.configuration_values.current.backends.add(
         backend_name="acquisition"
@@ -5494,7 +5984,7 @@ def test_managed_camera_pin_test_uses_saved_role_signal(
     )
     monkeypatch.setattr(managed_mcu.QTimer, "singleShot", lambda *_: None)
     binding = managed_mcu.ManagedMcu(panel, bridge, lambda: state)
-    binding.test_pin("camera-1", True)
+    binding.test_pin("behavioral", True)
     assert requests == [
         (
             "mcu",
@@ -5504,9 +5994,9 @@ def test_managed_camera_pin_test_uses_saved_role_signal(
             },
         )
     ]
-    panel.pin_editors["camera-1"].setText("D12")
+    panel.pin_editors["behavioral"].setText("D12")
     binding.finished("mcu", True, "Completed")
-    binding.test_pin("camera-1", True)
+    binding.test_pin("behavioral", True)
     assert len(requests) == 2
     assert requests[1][0] == "prepare_mcu_test"
     assert requests[1][1]["pin"] == "12"
@@ -5545,77 +6035,148 @@ def test_managed_mcu_preserves_camera_role_identity(
     )
     binding.install(state, True)
     if role == "Eye tracking":
-        assert panel.signals.selectors["third"].currentText() == "Eye camera trigger"
-        assert panel.pin_editors["third"].text() == "8"
-        assert panel.pin_editors["third"].isEnabled()
-        assert panel.test_buttons["third"].isEnabled()
-        panel.test_buttons["third"].click()
+        assert panel.pin_editors["eye_tracking"].text() == "8"
+        assert panel.pin_editors["eye_tracking"].isEnabled()
+        assert panel.test_buttons["eye_tracking"].isEnabled()
+        panel.test_buttons["eye_tracking"].click()
         assert requests[0][0] == "mcu"
         assert requests[0][1]["signal"] == pb.MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING
     else:
-        assert panel.pin_editors["third"].text() == ""
-        assert not panel.pin_editors["third"].isEnabled()
-        assert not panel.test_buttons["third"].isEnabled()
-        binding.test_pin("third", True)
-        assert requests == []
+        assert panel.pin_editors["eye_tracking"].text() == "8"
+        assert panel.pin_editors["eye_tracking"].isEnabled()
+        assert not panel.test_buttons["eye_tracking"].isEnabled()
+        binding.test_pin("eye_tracking", True)
+        assert requests[0][1]["signal"] == pb.MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING
 
 
-@pytest.mark.parametrize("change", ["none", "authority", "role", "invalid_pin"])
-def test_managed_eye_add_collects_pin_before_enabling(
+def test_managed_role_wiring_is_local_before_camera_discovery(
     window: DashboardWindow,
-    change: str,
 ) -> None:
-    from cephvr.control.v1 import types_pb2 as pb
-    from cephvr.gui.managed_mcu import ManagedMcu
-    from cephvr.gui.microcontroller import CameraTrigger
-
     panel = window.devices.microcontroller
+    cameras = window.devices.cameras
     panel.managed = True
-    panel.set_cameras(
-        (CameraTrigger("eye", "Eye tracking", "External controller", "60", False),)
-    )
+    panel.can_review = True
+    cameras.enable_controls[0].setChecked(False)
     requests = []
-    bridge = SimpleNamespace(
-        request=lambda action, **options: requests.append((action, options)) or True
-    )
-    state = pb.Snapshot()
-    acquisition = state.configuration_values.current.backends.add(
-        backend_name="acquisition"
-    ).acquisition
-    acquisition.pulses.port = "COM8"
-    state.session.phase = pb.SESSION_PHASE_CONFIGURATION
-    binding = ManagedMcu(panel, bridge, lambda: state)
-    acquisition.pulses.trial_state_enabled = True
-    acquisition.pulses.trial_state_pin = "D12"
-    window.apply_view(
-        DashboardView(connected=True, has_control=True, phase=Phase.CONFIGURATION)
-    )
-    binding.install(state, True)
-    panel.signals.add_output.click()
-    dialog = panel.signals.add_dialog
-    assert dialog is not None
-    assert requests == [] and not panel.enable_controls["eye"].isChecked()
-    dialog.setTextValue("8")
-    if change == "authority":
-        window.apply_view(
-            DashboardView(connected=True, has_control=False, phase=Phase.CONFIGURATION)
-        )
-        assert panel.signals.add_dialog is None and requests == []
-    elif change == "role":
-        panel.set_cameras(
-            (CameraTrigger("eye", "Unassigned", "External controller", "60", False),)
-        )
-        assert panel.signals.add_dialog is None and requests == []
-    elif change == "invalid_pin":
-        dialog.setTextValue("9" * 5000)
-        dialog.accept()
-        assert requests == [] and "2 to 13" in panel.console.toPlainText()
-    else:
-        dialog.accept()
-        assert requests == [("add_mcu_output", {"role": "eye_tracking", "pin": "8"})]
-        assert panel.connection_pending
-        assert not panel.enable_controls["eye"].isChecked()
-    binding.settle.stop()
+    panel.save_requested.connect(lambda *args: requests.append(args))
+    assert set(panel.pin_editors) == {"behavioral", "tracking", "eye_tracking"}
+    panel.pin_editors["eye_tracking"].setText("D8")
+    assert panel.snapshots.draft_loaded
+    assert panel.pin_editors["eye_tracking"].text() == "8"
+    assert not cameras.drafts[0].enabled
+    assert requests == []
+
+
+def test_contextual_wiring_editors_update_only_the_shared_draft(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    from PyQt6.QtCore import QTimer
+
+    devices = window.devices
+    mcu = devices.microcontroller
+    cameras = devices.cameras
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    mcu.port.addItem("COM8", "COM8")
+    mcu.port.setCurrentIndex(mcu.port.findData("COM8"))
+    mcu.pin_editors["tracking"].setText("11")
+    mcu.flip_pin.setText("2")
+    cameras.drafts[0].enabled = False
+    cameras.populate_inventory()
+    saved: list[tuple[object, ...]] = []
+    mcu.save_requested.connect(lambda *values: saved.append(values))
+
+    def camera_save() -> None:
+        editor = devices.wiring_dialog
+        assert editor is not None
+        editor.port.setEditText("COM9")
+        editor.pin.setText("7")
+        editor.accept()
+
+    QTimer.singleShot(0, camera_save)
+    cameras.wiring_button.click()
+    app.processEvents()
+    assert mcu.port.currentData() == "COM9"
+    assert mcu.pin_editors["behavioral"].text() == "7"
+    assert mcu.pin_editors["tracking"].text() == "11"
+    assert mcu.flip_pin.text() == "2"
+    assert not cameras.drafts[0].enabled
+    assert mcu.snapshots.draft_loaded and saved == []
+
+    def projector_save() -> None:
+        editor = devices.wiring_dialog
+        assert editor is not None
+        editor.port.setEditText("COM10")
+        editor.pin.setText("3")
+        assert editor.enabled is not None
+        editor.enabled.setChecked(False)
+        editor.accept()
+
+    QTimer.singleShot(0, projector_save)
+    devices.projectors.timing.wiring_button.click()
+    app.processEvents()
+    assert mcu.port.currentData() == "COM10"
+    assert mcu.flip_pin.text() == "3"
+    assert not mcu.enable_controls["projector-flip"].isChecked()
+    assert mcu.pin_editors["behavioral"].text() == "7"
+    assert mcu.pin_editors["tracking"].text() == "11"
+    assert saved == []
+
+
+@pytest.mark.parametrize("change", ["role", "authority", "pending"])
+def test_contextual_wiring_save_is_discarded_after_identity_or_authority_change(
+    window: DashboardWindow, app: QApplication, change: str
+) -> None:
+    from PyQt6.QtCore import QTimer
+
+    devices = window.devices
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    panel = devices.microcontroller
+    panel.set_role_pin("behavioral", "5")
+
+    def stale_save() -> None:
+        editor = devices.wiring_dialog
+        assert editor is not None
+        if change == "role":
+            devices.cameras.drafts[0].role = "Tracking cam"
+        elif change == "authority":
+            panel.can_review = False
+        else:
+            panel.pending_test_key = "behavioral"
+        editor.pin.setText("9")
+        editor.accept()
+
+    QTimer.singleShot(0, stale_save)
+    devices.edit_camera_wiring()
+    app.processEvents()
+    assert panel.pin_editors["behavioral"].text() == "5"
+    assert panel.pin_editors["tracking"].text() == ""
+
+
+def test_cancelled_projector_wiring_keeps_flip_enable_and_pin(
+    window: DashboardWindow, app: QApplication
+) -> None:
+    from PyQt6.QtCore import QTimer
+
+    devices = window.devices
+    window.apply_view(review_view(Phase.CONFIGURATION))
+    panel = devices.microcontroller
+    panel.flip_pin.setText("2")
+    panel.enable_controls["projector-flip"].setChecked(True)
+
+    def cancel() -> None:
+        editor = devices.wiring_dialog
+        assert editor is not None and editor.enabled is not None
+        editor.port.setEditText("COM99")
+        editor.pin.setText("3")
+        editor.enabled.setChecked(False)
+        editor.reject()
+
+    QTimer.singleShot(0, cancel)
+    devices.edit_projector_wiring()
+    app.processEvents()
+    assert panel.port.currentData() is None
+    assert panel.flip_pin.text() == "2"
+    assert panel.enable_controls["projector-flip"].isChecked()
 
 
 def test_restored_managed_draft_assigns_eye_and_adds_output_locally(
@@ -5671,17 +6232,10 @@ def test_restored_managed_draft_assigns_eye_and_adds_output_locally(
     assert not configuration.stale
     assert configuration._tracking_serial() == cameras.drafts[1].serial
     assert cameras.table.item(2, 2).text() == "Eye tracking"
-    assert panel.signals.add_output.isEnabled()
     assert panel.snapshots.draft_loaded
-    panel.signals.add_output.click()
-    dialog = panel.signals.add_dialog
-    assert dialog is not None
-    dialog.setTextValue("8")
-    dialog.accept()
-    assert cameras.selected.enabled
-    assert panel.pin_editors["eye"].text() == "8"
-    assert panel.signals.selectors["eye"].currentText() == "Eye camera trigger"
-    assert not panel.output_table.isRowHidden(3)
+    panel.pin_editors["eye_tracking"].setText("8")
+    assert not cameras.selected.enabled
+    assert panel.pin_editors["eye_tracking"].text() == "8"
     camera_binding.install(state)
     assert cameras.selected.role == "Eye tracking"
     assert cameras.drafts[0].role == "Behavior cam"
@@ -5940,7 +6494,8 @@ def test_review_draft_restores_local_configuration(
     first.dashboard.subject_id.setText("LAST-SUBJECT")
     first.devices.cameras.drafts[0].values["trigger_frequency_hz"] = "30"
     first.devices.microcontroller.set_saved_pins("COM8", "D9", True, "D2", True)
-    first.devices.microcontroller.pins[first.devices.cameras.drafts[0].key] = "D10"
+    first.devices.microcontroller.pin_editors["behavioral"].setText("D10")
+    first.devices.microcontroller.pin_editors["eye_tracking"].setText("D12")
     first.protocol.editor.drafts[0].name = "Last trial"
     first.devices.projectors.rig_editor.fields["width"].setText("250")
     first.devices.spikeglx.editors[0].setText("10.0.0.2")  # type: ignore[attr-defined]
@@ -5966,10 +6521,8 @@ def test_review_draft_restores_local_configuration(
     assert second.devices.cameras.drafts[0].values["trigger_frequency_hz"] == "30"
     assert second.devices.microcontroller.trial_pin.text() == "9"
     assert second.devices.microcontroller.flip_pin.text() == "2"
-    assert (
-        second.devices.microcontroller.pins[second.devices.cameras.drafts[0].key]
-        == "10"
-    )
+    assert second.devices.microcontroller.pin_editors["behavioral"].text() == "10"
+    assert second.devices.microcontroller.pin_editors["eye_tracking"].text() == "12"
     assert second.protocol.editor.drafts[0].name == "Last trial"
     assert second.devices.projectors.rig_editor.fields["width"].text() == "250"
     assert second.devices.spikeglx.editors[0].text() == "10.0.0.2"  # type: ignore[attr-defined]
@@ -5983,6 +6536,33 @@ def test_review_draft_restores_local_configuration(
     for item in (first, second):
         item.close()
         item.deleteLater()
+    app.processEvents()
+
+
+def test_legacy_review_draft_camera_pin_migrates_to_logical_role(
+    app: QApplication, tmp_path: Path
+) -> None:
+    import json
+
+    from cephvr.gui.review_draft import load_review_draft, save_review_draft
+
+    path = tmp_path / "legacy-review.json"
+    first = DashboardWindow(sample=True)
+    ReviewControls(first)
+    save_review_draft(first, path)
+    legacy = json.loads(path.read_text())
+    legacy["format_version"] = 1
+    legacy["microcontroller"].pop("camera_pins")
+    legacy["cameras"][0]["pin"] = "D8"
+    legacy["cameras"][0]["role"] = "Eye tracking"
+    path.write_text(json.dumps(legacy))
+    second = DashboardWindow(sample=True)
+    ReviewControls(second)
+    assert load_review_draft(second, path)
+    assert second.devices.microcontroller.pin_editors["eye_tracking"].text() == "8"
+    assert second.devices.microcontroller.pin_editors["behavioral"].text() == ""
+    first.close()
+    second.close()
     app.processEvents()
 
 
@@ -6084,21 +6664,21 @@ def test_microcontroller_enablement_preserves_pins_and_syncs_cameras(
 
     cameras.trigger_source.setCurrentText("External controller")
     cameras.fields["trigger_frequency_hz"].setText("120")
-    panel.pin_editors["camera-1"].setText("5")
-    panel.test_pin("camera-1")
-    assert "camera-1" in panel.review_tests
-    panel.enable_controls["camera-1"].click()
+    panel.pin_editors["behavioral"].setText("5")
+    panel.test_pin("behavioral")
+    assert "behavioral" in panel.review_tests
+    cameras.enable_controls[0].click()
     assert not cameras.drafts[0].enabled
     assert not cameras.enable_controls[0].isChecked()
     assert not panel.review_tests
-    assert not panel.pin_editors["camera-1"].isEnabled()
-    panel.test_pin("camera-1")
+    assert panel.pin_editors["behavioral"].isEnabled()
+    panel.test_pin("behavioral")
+    assert "behavioral" in panel.review_tests
+    panel.test_pin("behavioral")
+    panel.signals.remove("behavioral")
+    assert not cameras.drafts[0].enabled
+    assert panel.pin_editors["behavioral"].text() == ""
     assert not panel.review_tests
-    panel.enable_controls["camera-1"].click()
-    assert cameras.drafts[0].enabled
-    assert panel.pin_editors["camera-1"].text() == "5"
-    cameras.enable_controls[0].click()
-    assert not panel.enable_controls["camera-1"].isChecked()
     window.apply_view(review_view(Phase.RUNNING))
     assert not any(c.isEnabled() for c in panel.enable_controls.values())
 
@@ -6188,7 +6768,7 @@ def test_projector_geometry_and_pulse_drafts_are_independent(window: DashboardWi
     timing.pulse.click()
     assert timing.target.currentData() == "off"
     assert timing.fields["Width"].text() == "40"
-    assert not timing.target.isEnabled() and not timing.mode.isEnabled()
+    assert not timing.target.isEnabled() and timing.mode.isEnabled()
     rig = panel.rig_editor
     for key, value in zip(rig.fields, (200, 300, 150, 100, 100, 75), strict=True):
         rig.fields[key].setText(str(value))
@@ -7116,7 +7696,7 @@ def test_protocol_cards_reflow_and_keep_properties_reachable(
             caption.text() in {"Selected trial", "Random seed", "Gap after trial (s)"}
             for caption in editor.trial_card.findChildren(QLabel)
         )
-        assert editor.sequence_summary.alignment() == Qt.AlignmentFlag.AlignCenter
+        assert editor.sequence_summary.alignment() == Qt.AlignmentFlag.AlignLeft
         assert editor.settings_card.y() > editor.timeline_card.geometry().bottom()
         viewport = panel.config_scroll.viewport()
         assert panel.config_scroll.widget().width() <= viewport.width()
@@ -7333,7 +7913,8 @@ def test_prepared_texture_bundle_and_epoch_motion(
     )
     identity = editor.program.sequence[0].settings[0].pattern.asset_id
     parameters.set_media_path(identity, str(design))
-    assert editor.program.assets[0].logical_path == "pattern.png"
+    assert editor.program.assets[0].logical_path == "pattern.texture.json"
+    assert editor.program.assets[0].profile == "cephvr1_texture_json_v1"
     assert not parameters.message.text()
     assert editor.program.sequence[0].settings[0].pattern.period_x.value == 104
     assert parameters.file_rows
@@ -7357,16 +7938,15 @@ def test_prepared_texture_bundle_and_epoch_motion(
         json.dumps(
             {
                 "cephvr_asset_type": "texture_design",
-                "kind": "texture",
+                "kind": "arena",
                 "params": {"tile_width_mm": 104},
-                "preview_file": "missing.png",
             }
         )
     )
     identity = setting.pattern.asset_id
     parameters.set_media_path(identity, str(design))
     assert editor.program == before
-    assert "missing" in parameters.message.toolTip()
+    assert "texture" in parameters.message.toolTip().lower()
 
 
 def test_prepared_file_change_is_epoch_local(
@@ -7675,8 +8255,6 @@ def test_motion_auto_commit_and_invalid_edit_undo(
     QTest.keyClicks(motion.speed, "30")
     editor.subgroup.composer.duration.setFocus()
     app.processEvents()
-    assert editor.program == original
-    editor.subgroup.apply()
     assert editor.program != original
     assert editor.program.sequence[0].body[0].settings[0].phase_x.function.value == -1.5
     editor.undo()
@@ -8142,13 +8720,13 @@ def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mod
         path = tmp_path / "tile.png"
         assert image.save(str(path))
         composer.add_file("Texture", str(path), "Front")
-        submit, notice = owner.add_button, owner.notice
+        notice = owner.notice
     else:
         editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
         editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
         owner = editor.subgroup
         composer = owner.composer
-        submit, notice = owner.add_button, owner.notice
+        notice = owner.notice
     app.processEvents()
     row = next(row for row in composer.rows.values() if row.indices)
     parameters = row.parameters
@@ -8172,7 +8750,7 @@ def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mod
     assert parameters.dirty and fade.text() == "-1"
     assert editor.program == original and composer.program == reference
     assert all(n.dialog is None for n in editor.findChildren(FormNotice))
-    submit.click()
+    editor.flush_parameters()
     app.processEvents()
     assert notice.dialog is not None
     assert "fade" in notice.text().lower()
@@ -8181,7 +8759,8 @@ def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mod
     notice.clear()
     fade.setText("1")
     parameters.fades.mark_changed()
-    submit.click()
+    parameters.apply()
+    owner.queue_update()
     app.processEvents()
     assert editor.program != original
     assert all(n.dialog is None for n in editor.findChildren(FormNotice))
@@ -8348,7 +8927,11 @@ def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
     QTest.keyClicks(destination, source.text())
     composer.duration.setFocus()
     app.processEvents()
-    assert [asset.logical_path for asset in composer.program.assets] == [
+    assets = {asset.asset_id: asset.logical_path for asset in composer.program.assets}
+    assert [
+        assets[setting.pattern.asset_id]
+        for setting in composer.program.sequence[0].settings
+    ] == [
         "second.png",
         "second.png",
     ]
@@ -10967,7 +11550,10 @@ async def test_managed_camera_batch_checks_continue_after_failure_without_captur
 
 
 @pytest.mark.asyncio
-async def test_managed_role_assignment_is_atomic_and_leaves_camera_disabled() -> None:
+@pytest.mark.parametrize("enabled", [False, True])
+async def test_managed_role_assignment_is_atomic_and_preserves_participation(
+    enabled: bool,
+) -> None:
     from cephvr.control.v1 import services_pb2 as rpc
     from cephvr.control.v1 import types_pb2 as pb
     from cephvr.gui.device_requests import assign_camera_role
@@ -10980,6 +11566,7 @@ async def test_managed_role_assignment_is_atomic_and_leaves_camera_disabled() ->
     acquisition.behavioral.enabled = True
     acquisition.behavioral.device.device_id = "A"
     acquisition.tracking.device.device_id = "old"
+    acquisition.tracking.enabled = enabled
     requests = []
 
     async def execute(method, request):
@@ -10997,8 +11584,10 @@ async def test_managed_role_assignment_is_atomic_and_leaves_camera_disabled() ->
     request = requests[0]
     assert request.expected_revision == 7
     updated = request.proposed.backends[0].acquisition
-    assert updated.behavioral.device.device_id == "" and not updated.behavioral.enabled
-    assert updated.tracking.device.device_id == "A" and not updated.tracking.enabled
+    assert updated.behavioral.device.device_id == "" and updated.behavioral.enabled
+    assert (
+        updated.tracking.device.device_id == "A" and updated.tracking.enabled is enabled
+    )
     assert acquisition.behavioral.device.device_id == "A"
 
 
@@ -11224,7 +11813,19 @@ def test_initial_and_reopened_retained_warnings_gate_auto_claim() -> None:
     initial.warnings.add(message="retained device warning")
     ManagedGui.install_snapshot(manager, 1, "controller-1", initial.SerializeToString())
     assert manager._retained_ack_required
+    assert manager.review_retained.enabled
     assert prompt_updates[-1] == (True, 1)
+    assert not requests
+
+    # An authoritative update in the same connection cannot clear an open guard.
+    same_identity = pb.Snapshot(controller_generation="controller-1")
+    ManagedGui.install_snapshot(
+        manager, 1, "controller-1", same_identity.SerializeToString()
+    )
+    assert manager._retained_ack_required
+    assert manager._retained_ack_identity == (1, "controller-1")
+    assert prompt_updates[-1] == (True, 1)
+    assert manager.review_retained.enabled
     assert not requests
 
     manager.state = None
@@ -11232,14 +11833,18 @@ def test_initial_and_reopened_retained_warnings_gate_auto_claim() -> None:
     manager._retained_ack_identity = (1, "controller-1")
     manager.auto_control_attempted = False
     reopened = pb.Snapshot(controller_generation="controller-1")
+    reopened.operations.add(command="Setup", complete=True, succeeded=True)
     ManagedGui.install_snapshot(
         manager, 2, "controller-1", reopened.SerializeToString()
     )
-    assert manager._retained_ack_required
-    assert manager._retained_ack_identity == (2, "controller-1")
-    assert prompt_updates[-1] == (True, 2)
-    assert not requests
+    assert not manager._retained_ack_required
+    assert manager._retained_ack_identity is None
+    assert prompt_updates[-1] == (False, 2)
+    assert manager.review_retained.enabled
+    assert requests == ["take_control"]
 
+    manager._retained_ack_required = True
+    manager._retained_ack_identity = (5, "controller-1")
     manager.state = SimpleNamespace(controller_generation="controller-1")
     manager._connection_identity = (5, "controller-1")
     ManagedGui.retained_state_acknowledged(manager, 4, "controller-1")
@@ -13090,7 +13695,8 @@ def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_
     assert form.parameter_fields[2].isHidden()
     form.composer.duration.setText("00:00:12")
     form.composer.batch_label.setText("Flow copies")
-    form.add_button.click()
+    form.composer.duration.editingFinished.emit()
+    app.processEvents()
     assert not form.notice.text()
     assert editor.selected_paths == ((0, 3),)
     assert editor.program.sequence[0].body[:3] == original.sequence[0].body
@@ -13104,10 +13710,11 @@ def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_
     editor.undo(True)
     assert editor.program == applied
     form.composer.duration.setText("invalid")
-    form.add_button.click()
+    form.composer.duration.editingFinished.emit()
+    app.processEvents()
     assert editor.program == applied
     form.notice.clear()
-    form.reset.click()
+    editor.undo()
     path = tmp_path / "unified.json"
     window.protocol.save_program(str(path))
     loaded = parse_program_json(path.read_text(), max_bytes=1_048_576)
@@ -13122,7 +13729,8 @@ def test_unified_subgroup_template_add_apply_history_and_files(window, app, tmp_
         window.resize(width, 1100)
         app.processEvents()
         assert form.isVisible()
-        assert form.add_button.text() == "Apply"
+        assert form.add_button.isHidden()
+        assert not hasattr(form, "reset")
         contents = editor.hierarchy.contents
         assert not contents.show_details
         assert contents.scrollbar.geometry().bottom() < contents.height()
@@ -13410,7 +14018,13 @@ def test_demo_assets_can_be_selected_and_review_path_restores(window):
     for path in manifest["textures"]:
         selected = resolve_stimulus_file(str(root), str(root / path), texture=True)
         assert selected.tile_width_mm == selected.tile_height_mm == 40
-        assert not QImage(str(root / selected.path)).isNull()
+        assert selected.path == path
+        assert selected.profile == "cephvr1_texture_json_v1"
+        recipe = json.loads((root / selected.path).read_text())
+        assert recipe["pattern"] == "image"
+        assert not QImage(
+            str((root / path).parent / recipe["params"]["texture_path"])
+        ).isNull()
     editor = window.protocol.editor
     editor.set_program(grouped_program(blank_program()))
     editor.timeline.set_screens(("Left",))
@@ -13419,10 +14033,10 @@ def test_demo_assets_can_be_selected_and_review_path_restores(window):
     form.composer.add_file("Texture", str(root / manifest["textures"][0]), "Left")
     form.apply()
     assert not form.notice.text()
-    assert editor.program.assets[0].logical_path == "textures/checkerboard.png"
+    assert editor.program.assets[0].logical_path == "textures/checkerboard.texture.json"
 
 
-def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
+def test_subgroup_rules_persist_and_random_projectors_are_independent(window, app):
     from cephvr.gui.projector_layers import layers_for
     from cephvr.gui.protocol_batches import grouped_program
     from cephvr.gui.protocol_document import blank_program
@@ -13445,7 +14059,8 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
     row.target.setCurrentIndex(row.target.findText("All projectors"))
     row.parameter.setCurrentIndex(row.parameter.findData("Speed"))
     row.values.setText("10,20,30")
-    form.apply()
+    row.values.editingFinished.emit()
+    app.processEvents()
     assert not form.notice.text()
     assert len(form.paths) == 3
     assert not form.dirty
@@ -13545,6 +14160,15 @@ def test_subgroup_rules_persist_and_random_projectors_are_independent(window):
         e.duration.duration.ns() == 20_000_000_000
         for e in editor.program.sequence[0].body
     )
+
+    editor.select_epochs(((0, 0),))
+    saved = editor.program
+    form.rows[0].random_fields["minimum"].setText("not a number")
+    form.rows[0].random_fields["minimum"].editingFinished.emit()
+    app.processEvents()
+    assert editor.program == saved and form.dirty
+    assert not form.update_timer.isActive()
+    assert form.notice.dialog is None
 
 
 def test_large_random_group_stays_compact_and_layer_controls_are_indices(window, app):
@@ -13699,9 +14323,17 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app):
     trials = editor.trials
     window.resize(1280, 1100)
     app.processEvents()
-    assert editor.trial_card.height() >= 320
+    assert editor.trial_card.height() < 320
+    assert editor.selected_group_label.text() == "Group"
     assert editor.group_editor.parentWidget() is editor.timeline_card
-    assert editor.group_editor.geometry().bottom() < editor.timeline.y()
+    assert editor.sequence_summary.geometry().bottom() < editor.timeline.y()
+    assert editor.group_editor.y() > editor.timeline.geometry().bottom()
+    last_right = (
+        editor.timeline.x()
+        + len(editor.timeline.nodes) * editor.timeline.block_width()
+        - 7
+    )
+    assert abs(editor.group_editor.geometry().right() + 1 - last_right) <= 1
     QTest.mouseMove(editor.group_editor.name)
     app.processEvents()
     assert not any(c.isVisible() for c in trials.removers)
@@ -13754,3 +14386,109 @@ def test_trial_row_actions_scroll_target_and_align_cards(window, app):
     trials.add.click()
     editor.delete_trial(0)
     assert len(editor.drafts) == previous + 1 and editor.delete_dialog is None
+
+
+def test_texture_recipe_file_selection_preserves_original_json(tmp_path: Path) -> None:
+    import json
+
+    from cephvr.gui.stimulus_files import resolve_stimulus_file
+
+    design = tmp_path / "legacy.JSON"
+    design.write_text(
+        json.dumps(
+            {
+                "pattern": "substrate",
+                "pattern_params": {"seed": 5},
+                "preview_file": "absent.png",
+            }
+        )
+    )
+    selected = resolve_stimulus_file(str(tmp_path), str(design), texture=True)
+    assert selected.path == "legacy.JSON"
+    assert selected.profile == "cephvr1_texture_json_v1"
+    assert selected.tile_width_mm is None
+    with pytest.raises(ValueError, match="only"):
+        resolve_stimulus_file(str(tmp_path), str(design), texture=False)
+    design.write_text('{"kind":"arena","pattern":"checker"}')
+    with pytest.raises(ValueError, match="texture"):
+        resolve_stimulus_file(str(tmp_path), str(design), texture=True)
+    outside = tmp_path.parent / "outside.JSON"
+    with pytest.raises(ValueError):
+        resolve_stimulus_file(str(tmp_path), str(outside), texture=True)
+
+
+def test_texture_reference_link_keeps_appearance_and_disables_reparented_motion(
+    window: DashboardWindow,
+) -> None:
+    from cephvr.gui.epoch_motion import EpochMotion
+    from cephvr.gui.protocol_document import blank_program
+    from cephvr.gui.reference_fields import reference_fields
+    from cephvr.gui.stimulus_parameters import StimulusParameters
+    from cephvr.gui.stimulus_presets import add_stimulus
+
+    program = add_stimulus(blank_program(), 0, "Texture", ("Bottom",))
+    program = add_stimulus(program, 0, "Texture", ("Left",))
+    source, target = program.sequence[0].settings
+    panel = StimulusParameters(compact=True)
+    panel.setParent(window)
+    panel.bind(program, 0, 1, "Left")
+    assert panel.linked_to.isEnabled()
+    panel.linked_to.setCurrentIndex(panel.linked_to.findData(source.instance_id))
+    reference_fields(panel)
+    motion = next(f for f in panel.forms if isinstance(f, EpochMotion))
+    assert not motion.speed.isEnabled() and not motion.angular.isEnabled()
+    assert panel.apply(), panel.message.text()
+    linked = panel.program.sequence[0].settings[1]
+    assert linked.linked_to == source.instance_id
+    assert linked.pattern == target.pattern and linked.initial == target.initial
+    assert linked.phase_x.kind == linked.phase_y.kind == "hold"
+    assert linked.reset == target.reset
+    panel.bind(panel.program, 0, 1, "Left")
+    assert panel.linked_to.currentData() == source.instance_id
+    panel.linked_to.setCurrentIndex(0)
+    reference_fields(panel)
+    motion = next(f for f in panel.forms if isinstance(f, EpochMotion))
+    assert motion.speed.isEnabled() and motion.angular.isEnabled()
+    assert panel.apply(), panel.message.text()
+    assert panel.program.sequence[0].settings[1].linked_to is None
+
+
+def test_epoch_automatic_updates_preserve_focus_validation_and_history(window, app):
+    from PyQt6.QtWidgets import QLineEdit
+
+    from cephvr.gui.protocol_batches import grouped_program
+    from cephvr.gui.protocol_document import blank_program
+
+    window.page_buttons[1].click()
+    editor = window.protocol.editor
+    editor.set_program(grouped_program(blank_program()))
+    form = editor.subgroup
+    original = editor.program
+    form.composer.duration.setText("00:01:05")
+    form.composer.duration.editingFinished.emit()
+    app.processEvents()
+    changed = editor.program
+    assert changed != original
+    assert not form.dirty
+    assert changed.sequence[0].body[0].duration.duration.seconds == "65"
+    form.composer.batch_label.setFocus()
+    form.composer.batch_label.setText("Updated epoch")
+    form.composer.batch_label.editingFinished.emit()
+    app.processEvents()
+    assert app.focusWidget() is form.composer.batch_label
+    assert isinstance(app.focusWidget(), QLineEdit)
+    assert editor.program.sequence[0].body[0].batch_label == "Updated epoch"
+    editor.undo()
+    assert editor.program == changed
+    editor.undo(True)
+    saved = editor.program
+    form.composer.duration.setText("invalid")
+    form.composer.duration.editingFinished.emit()
+    app.processEvents()
+    assert editor.program == saved and form.dirty
+    assert form.notice.text() and form.notice.dialog is None
+    form.composer.duration.setText("00:01:10")
+    form.composer.duration.editingFinished.emit()
+    app.processEvents()
+    assert not form.dirty and not form.notice.text()
+    assert editor.program.sequence[0].body[0].duration.duration.seconds == "70"

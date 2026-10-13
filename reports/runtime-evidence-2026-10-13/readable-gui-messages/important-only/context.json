@@ -1,0 +1,78 @@
+{
+  "recorded_at": "2026-10-13T12:52:18.868523+00:00",
+  "task": "gui-retained-review-filter",
+  "decision": "E03 revision34",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "source_state": "Uncommitted working tree; cumulative patch includes earlier GUI work and shared dashboard tests. Concurrent epoch and texture implementation overlaps the broad GUI run. Final hashes describe current files, not an immutable initial broad-suite snapshot.",
+  "source_sha256": {
+    "src/cephvr/gui/managed_status.py": "27a36af2a74cc634a5584e0b612579be3a079c888b535c503f35c8e917c6f788",
+    "src/cephvr/gui/managed_prompts.py": "5e674f888991e903e0a5da3992b0c3297ba9874c1dca66b38e8d248a1a9d01ed",
+    "src/cephvr/gui/main.py": "604809ed5d59330bd35c38448ca3062294f559dd654304425e051c8f210c06fb",
+    "tests/gui/test_dashboard.py": "f44ee36170da6d69cc66cc35c6e13b7c0609774ec1870ac600f85fbd6006153c"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig'",
+      "outcome": "461 passed,1 failed in305.94s; demo asset case overlaps concurrent texture/fixture updates",
+      "evidence": [
+        "pytest.log",
+        "pytest.xml"
+      ]
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'retained or manual_history or auto_claim or synchronization_and_warning or managed_prompt'",
+      "outcome": "18 passed,443 deselected in3.30s",
+      "evidence": [
+        "focused.log",
+        "focused.xml"
+      ]
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k demo_assets_can_be_selected_and_review_path_restores",
+      "outcome": "Current-source rerun1 passed,460 deselected in2.25s; no fresh full-suite pass claimed",
+      "evidence": [
+        "demo-rerun.log",
+        "demo-rerun.xml"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui/managed_status.py src/cephvr/gui/managed_prompts.py src/cephvr/gui/main.py tests/gui/test_dashboard.py; .venv/bin/python -m ruff format --check [same paths]",
+      "outcome": "pass;4 files formatted",
+      "evidence": [
+        "ruff.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/managed_status.py src/cephvr/gui/managed_prompts.py src/cephvr/gui/main.py",
+      "outcome": "3 source files pass; initial leftover manual keyword corrected",
+      "evidence": [
+        "mypy.log",
+        "mypy-final.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "676 modules,0 violations; existing cohesion advisories",
+      "evidence": [
+        "boundaries.log"
+      ]
+    }
+  ],
+  "review": "Luna writes; Sol6.1 integration and Astra final source review find no blockers.",
+  "initial_attempts": "Writer reports initial Qt abort without offscreen; replacement owning offscreen tests pass. Root/Sol initial checks find stale manual keyword and old unconditional reconnect expectations, corrected. Guarded-empty-history menu trap fixed before final checks.",
+  "preview": {
+    "command": "QT_QPA_PLATFORM=cocoa .venv/bin/python /private/tmp/cephvr-message-preview.py",
+    "evidence": [
+      "preview-launch.log",
+      "preview_launcher.py"
+    ],
+    "outcome": "Routine history confirmed quiet; important sample explicitly reviewable."
+  },
+  "limits": [
+    "No persistent suppression across launches; important retained evidence still reviewed once per synchronized connection.",
+    "Unknown warnings remain important because the Warning contract has no severity field.",
+    "Manual review retains full history and exact copied diagnostics.",
+    "Local macOS/offscreen tests only; native Windows/DPI/rig checks deferred.",
+    "No controller/device/configuration mutation."
+  ]
+}

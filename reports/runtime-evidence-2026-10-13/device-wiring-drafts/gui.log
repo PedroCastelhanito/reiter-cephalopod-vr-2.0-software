@@ -1,0 +1,37 @@
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 46%]
+........................................................................ [ 62%]
+........................................................................ [ 77%]
+........................................................................ [ 93%]
+...........................F....                                         [100%]
+=================================== FAILURES ===================================
+_____________ test_trial_row_actions_scroll_target_and_align_cards _____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x16e452560>
+app = <PyQt6.QtWidgets.QApplication object at 0x10c3c4670>
+
+    def test_trial_row_actions_scroll_target_and_align_cards(window, app):
+        from PyQt6.QtWidgets import QMessageBox
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        open_protocol_group(editor)
+        trials = editor.trials
+        window.resize(1280, 1100)
+        app.processEvents()
+        assert editor.trial_card.height() < 320
+>       assert editor.selected_group_label.text() == "Selected group"
+E       AssertionError: assert 'Group' == 'Selected group'
+E         
+E         - Selected group
+E         + Group
+
+tests/gui/test_dashboard.py:14327: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_trial_row_actions_scroll_target_and_align_cards
+1 failed, 463 passed in 276.02s (0:04:36)

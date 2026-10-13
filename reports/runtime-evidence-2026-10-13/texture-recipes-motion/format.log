@@ -1,0 +1,21 @@
+unformatted: File would be reformatted
+   --> src/cephvr/gui/managed_status.py:156:16
+    |
+155 |         or any(_important_recovery(item) for item in state.recoveries)
+    -         or any(not _routine_configuration_warning(state, item) for item in state.warnings)
+156 |         or any(
+157 +             not _routine_configuration_warning(state, item) for item in state.warnings
+158 +         )
+159 +         or any(
+160 |             operation.HasField("failure")
+161 |             or (
+162 |                 operation.complete
+    -                 and (
+    -                     not operation.HasField("succeeded")
+    -                     or not operation.succeeded
+    -                 )
+163 +                 and (not operation.HasField("succeeded") or not operation.succeeded)
+164 |             )
+    |
+
+1 file would be reformatted, 315 files already formatted

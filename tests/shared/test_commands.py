@@ -94,6 +94,54 @@ def test_ledger_reserves_result_capacity_at_admission() -> None:
         ledger.admit(_id(), b"x", 0, work_key=_id())
 
 
+def test_terminal_completion_compacts_only_after_exact_result_is_retained() -> None:
+    command, work = _id(), _id()
+    ledger = CommandLedger(
+        _id(),
+        300_000_000_000,
+        max_records=4,
+        max_bytes=100,
+        result_reservation_bytes=76,
+        safety_reserve_bytes=20,
+    )
+    ledger.admit(command, b"req", 1, work_key=work)
+    assert ledger.retained_bytes == 79
+    completed = ledger.complete_terminal(command, b"ok", 2)
+    assert completed.result == b"ok"
+    assert completed.result_reservation_bytes == 2
+    assert ledger.retained_bytes == 5
+    assert ledger.admit(command, b"req", 3, work_key=work).record == completed
+    assert ledger.complete_terminal(command, b"ok", 4) == completed
+    with pytest.raises(CommandConflict, match="changed request"):
+        ledger.admit(command, b"changed", 5, work_key=work)
+    with pytest.raises(CommandConflict, match="result changed"):
+        ledger.complete_terminal(command, b"changed", 4)
+
+    ledger.finalize_command(command, 20)
+    assert ledger.prune(300_000_000_020) == 0
+    assert ledger.get(command) is not None
+    assert ledger.prune(300_000_000_021) == 1
+    assert ledger.retained_bytes == 0
+
+
+def test_default_completion_retains_executor_capacity_until_terminal_compaction() -> (
+    None
+):
+    command, work = _id(), _id()
+    ledger = CommandLedger(
+        _id(), 300, max_records=4, max_bytes=100, result_reservation_bytes=20
+    )
+    ledger.admit(command, b"q", 1, work_key=work)
+    ledger.complete(command, b"ack", 2)
+    assert ledger.retained_bytes == 21
+    completed = ledger.complete_executor(command, b"failure", 3)
+    assert completed.executor_result == b"failure"
+    assert completed.result_reservation_bytes == 20
+    compacted = ledger.complete_terminal(command, b"ack", 4)
+    assert compacted.result_reservation_bytes == len(b"ackfailure")
+    assert ledger.retained_bytes == 1 + len(b"ackfailure")
+
+
 def test_ledger_priority_admission_uses_only_reserved_safety_quota() -> None:
     ledger = CommandLedger(
         _id(),

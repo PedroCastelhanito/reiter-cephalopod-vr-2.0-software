@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-13",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "working_tree": "Uncommitted with concurrent work",
+  "source_sha256": "e4f42e4f015a8a312332a26450b46d14336b36e7d38828118e3ce1576cc01473",
+  "checks": {
+    "pytest": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'trial_row_actions or grouped_timeline_large_repeat or 200_epoch_timeline or inline_timeline or protocol_timeline_edits or timeline_overview or timeline_epoch_shortcuts': 7 passed,454 deselected",
+    "static": "Scoped Ruff check/format, Win32 mypy1 source, boundaries682/zero violations and whitespace passed",
+    "geometry": "Offscreen and Cocoa: both trailing add buttons end at timeline width within1px; sequence timeline and composer widths match. Full dashboard image reviewed.",
+    "launch": "Authorized Cocoa preview.py --live: GEOMETRY_OK; PREVIEW_READY visible=True card_height=281. Session11648 left open; older preview preserved."
+  },
+  "limits": "Sample GUI, temporary settings and synthetic projector inventory only; no controller/device actions or Windows/rig acceptance."
+}

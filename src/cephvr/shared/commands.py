@@ -176,6 +176,34 @@ class CommandLedger:
             self._records[command_id] = updated
             return updated
 
+    def complete_terminal(
+        self, command_id: str, result: bytes, now_ns: int
+    ) -> CommandRecord:
+        """Retain a terminal result and release capacity for no further result."""
+        require_uuid4(command_id)
+        require_int64_ns(now_ns)
+        if not isinstance(result, bytes):
+            raise ValueError("result must be immutable bytes")
+        with self._lock:
+            old = self._records[command_id]
+            if old.result is not None:
+                if old.result != result:
+                    raise CommandConflict("completed command result changed")
+            elif now_ns < old.accepted_ns:
+                raise ValueError("completion predates admission")
+            retained_size = len(result) + len(old.executor_result or b"")
+            if retained_size > old.result_reservation_bytes:
+                raise CommandCapacityError(
+                    "terminal result exceeds its admission reservation"
+                )
+            completed = self.complete(command_id, result, now_ns)
+            if completed.result_reservation_bytes == retained_size:
+                return completed
+            updated = replace(completed, result_reservation_bytes=retained_size)
+            self._records[command_id] = updated
+            self._bytes -= completed.result_reservation_bytes - retained_size
+            return updated
+
     def get(self, command_id: str) -> CommandRecord | None:
         require_uuid4(command_id)
         with self._lock:

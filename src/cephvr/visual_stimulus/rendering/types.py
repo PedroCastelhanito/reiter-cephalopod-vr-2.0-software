@@ -43,6 +43,17 @@ class OutputActivity:
 
 
 @dataclass(frozen=True, slots=True)
+class ImageSnapshot:
+    instance_id: str
+    requested_asset_id: str
+    requested_image_index: int
+    asset_id: str
+    image_index: int
+    disposition: str
+    repeated: bool
+
+
+@dataclass(frozen=True, slots=True)
 class InstanceSnapshot:
     instance_id: str
     family: str
@@ -55,6 +66,7 @@ class InstanceSnapshot:
     # excluded from evidence and released immediately after the render call.
     decoded_frame: ImagePixels | None = None
     media_selection: MediaSnapshot | None = None
+    image_selection: ImageSnapshot | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,6 +150,7 @@ class EvidenceStateSnapshot:
     uniforms: tuple[UniformSnapshot, ...]
     media: tuple[MediaSnapshot, ...]
     effective_poses: tuple[PoseSnapshot, ...]
+    images: tuple[ImageSnapshot, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

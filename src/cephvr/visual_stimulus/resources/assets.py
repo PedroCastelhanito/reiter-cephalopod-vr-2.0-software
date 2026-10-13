@@ -5,15 +5,22 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import BinaryIO, Protocol
+from typing import TYPE_CHECKING, BinaryIO, Protocol
 
 from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.config.models.artifact_models import ResourceManifest
 from cephvr.visual_stimulus.config.models.evidence_model import UniformLayout
 from cephvr.visual_stimulus.config.models.program_model import Asset
 from cephvr.visual_stimulus.resources.budget import PreparationBudget
+
+if TYPE_CHECKING:
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+
+RELOADABLE_IMAGE_PROFILES = frozenset(
+    ("png_uint_v1", "tiff_uint_v1", "jpeg8_v1", "cephvr1_texture_json_v1")
+)
 
 
 class ProtectedSource(Protocol):
@@ -64,6 +71,7 @@ class PreparedResourceBundle:
     manifest: ResourceManifest
     uniform_layouts: tuple[UniformLayout, ...]
     prepared_content: dict[str, object]
+    image_sources: dict[str, ImageSource] = field(default_factory=dict)
 
 
 def _resolve_asset_path(
@@ -98,6 +106,8 @@ def prepare_assets(
     snapshot_limit_bytes: int,
     owner_prefix: str = "visual_stimulus",
     path_overrides: Mapping[str, Path] | None = None,
+    max_document_bytes: int | None = None,
+    defer_images: bool = False,
 ) -> PreparedAssetSet:
     """Protect and fingerprint every declared asset before any consuming provider opens it.
 
@@ -107,6 +117,8 @@ def prepare_assets(
     """
     if snapshot_limit_bytes <= 0:
         raise ValueError("positive asset snapshot limit is required")
+    if max_document_bytes is not None and max_document_bytes <= 0:
+        raise ValueError("positive recipe document limit is required")
     prepared: list[PreparedAsset] = []
     total_bytes = 0
     seen: set[str] = set()
@@ -122,28 +134,48 @@ def prepare_assets(
                 None if path_overrides is None else path_overrides.get(asset.asset_id),
             )
             key = f"asset:{asset.asset_id}"
+            asset_limit = (
+                min(snapshot_limit_bytes, max_document_bytes)
+                if asset.profile == "cephvr1_texture_json_v1"
+                and max_document_bytes is not None
+                else snapshot_limit_bytes
+            )
             announce(key, str(path))
             source = source_factory(path)
             try:
                 streaming = asset.profile in {
                     "mp4_h264_sdr8_v1",
                     "matroska_ffv1_v3_uint_v1",
-                }
+                } or (defer_images and asset.profile in RELOADABLE_IMAGE_PROFILES)
                 with source.independent_reader() as reader:
+                    stream_chunk_bytes = 1024 * 1024
+                    deferred_image = (
+                        defer_images and asset.profile in RELOADABLE_IMAGE_PROFILES
+                    )
+                    if deferred_image:
+                        # Size comes from the protected handle, never a path stat.
+                        reader.seek(0, 2)
+                        stream_chunk_bytes = min(
+                            stream_chunk_bytes, max(1, reader.tell())
+                        )
+                        reader.seek(0)
+                    stream_buffer_bytes = stream_chunk_bytes * (
+                        2 if deferred_image else 1
+                    )
                     digest = hashlib.sha256()
                     chunks: list[bytes] = []
                     count = 0
                     while True:
                         budget.check_cancelled_or_expired()
                         request_bytes = (
-                            1024 * 1024
+                            stream_chunk_bytes
                             if streaming
-                            else min(1024 * 1024, snapshot_limit_bytes + 1 - count)
+                            else min(1024 * 1024, asset_limit + 1 - count)
                         )
                         if streaming:
                             budget.reserve(
                                 owner=f"{owner_prefix}:asset-read-buffer",
-                                cpu_bytes=request_bytes,
+                                cpu_bytes=stream_buffer_bytes,
                                 gpu_bytes=0,
                             )
                         else:
@@ -166,7 +198,15 @@ def prepare_assets(
                                 )
                             break
                         count += len(chunk)
-                        if count > snapshot_limit_bytes or streaming:
+                        if (
+                            asset.profile == "cephvr1_texture_json_v1"
+                            and max_document_bytes is not None
+                            and count > max_document_bytes
+                        ):
+                            raise ValueError(
+                                "texture recipe exceeds its document byte limit"
+                            )
+                        if count > asset_limit or streaming:
                             if not streaming:
                                 budget.release(owner=f"{owner_prefix}:asset-snapshots")
                                 raise MemoryError(
@@ -180,10 +220,10 @@ def prepare_assets(
                                 budget.check_cancelled_or_expired()
                                 budget.reserve(
                                     owner=f"{owner_prefix}:asset-read-buffer",
-                                    cpu_bytes=1024 * 1024,
+                                    cpu_bytes=stream_buffer_bytes,
                                     gpu_bytes=0,
                                 )
-                                chunk = reader.read(1024 * 1024)
+                                chunk = reader.read(stream_chunk_bytes)
                                 if not chunk:
                                     budget.release(
                                         owner=f"{owner_prefix}:asset-read-buffer"
@@ -191,6 +231,14 @@ def prepare_assets(
                                     break
                                 digest.update(chunk)
                                 count += len(chunk)
+                                if (
+                                    asset.profile == "cephvr1_texture_json_v1"
+                                    and max_document_bytes is not None
+                                    and count > max_document_bytes
+                                ):
+                                    raise ValueError(
+                                        "texture recipe exceeds its document byte limit"
+                                    )
                                 budget.release(
                                     owner=f"{owner_prefix}:asset-read-buffer"
                                 )
@@ -237,4 +285,5 @@ def prepare_assets(
         partial = PreparedAssetSet(tuple(prepared), total_bytes)
         partial.close()
         budget.release(owner=f"{owner_prefix}:asset-snapshots")
+        budget.release(owner=f"{owner_prefix}:asset-read-buffer")
         raise

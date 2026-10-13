@@ -12,6 +12,8 @@ from typing import Any
 from cephvr.acquisition.identity import CAMERA_NAMES
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.control.camera_edit_validation import validate_configuration_edit
+from cephvr.controller.control.connection_edits import connection_edit_validation
 from cephvr.controller.control.operations import ControlOperations
 from cephvr.controller.control.owned_camera_edits import OwnedCameraEdits
 from cephvr.controller.control.snapshots import SnapshotPublisher
@@ -172,12 +174,19 @@ class ConfigurationCommands:
             participation_only = camera_participation_only(
                 self.configuration_state.current, request.proposed
             )
-            validators = tuple(
-                validator
-                for name, validator in self.validators.items()
-                if not (participation_only and name == "acquisition")
+            connection_validation = connection_edit_validation(
+                self.configuration_state.current, request.proposed
             )
-            if not validators and not participation_only:
+            restricted_edit = participation_only or connection_validation is not None
+            validation_base = pb.ExperimentConfiguration.FromString(
+                self.configuration_state.current.SerializeToString()
+            )
+            validators = tuple(
+                (name, validator)
+                for name, validator in self.validators.items()
+                if not (restricted_edit and name == "acquisition")
+            )
+            if not validators and not restricted_edit:
                 return self.control_operations.admission(
                     command_id, error="configuration validator unavailable"
                 )
@@ -185,8 +194,15 @@ class ConfigurationCommands:
             results = await asyncio.wait_for(
                 asyncio.gather(
                     *(
-                        asyncio.to_thread(validator, request.proposed)
-                        for validator in validators
+                        asyncio.to_thread(
+                            validate_configuration_edit,
+                            validation_base,
+                            request.proposed,
+                            validator,
+                        )
+                        if name == "acquisition"
+                        else asyncio.to_thread(validator, request.proposed)
+                        for name, validator in validators
                     )
                 ),
                 self.limit_state.current.validation_ns / 1e9,
@@ -200,6 +216,8 @@ class ConfigurationCommands:
                         configuration_module_version="camera-participation-v1",
                     )
                 )
+            elif connection_validation is not None:
+                results.append(connection_validation)
         except Exception as exc:
             return self.control_operations.admission(
                 command_id, error=f"configuration validation unavailable: {exc}"

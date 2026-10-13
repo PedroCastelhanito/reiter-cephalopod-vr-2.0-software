@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-13",
+  "timezone": "Asia/Tokyo",
+  "revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "working_tree": "Uncommitted with concurrent work",
+  "sha256": {
+    "src/cephvr/gui/protocol_controls.py": "3c03a015ef252fabc1ba0f5986a38eb8005b185e32bcf68332d58b08cbe08517",
+    "src/cephvr/gui/protocol_timeline.py": "41fed1dfc84f852ab4bcea634dc706df7a847156f8b9d441ff2fc0a22ff2cf53"
+  },
+  "checks": {
+    "focused_pytest": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'trial_row_actions or grouped_timeline_large_repeat or 200_epoch_timeline or inline_timeline or protocol_timeline_edits or timeline_overview or timeline_epoch_shortcuts': 7 passed,454 deselected; before final divider color and pluralization polish",
+    "static": "Final scoped Ruff/format pass; Win32 mypy2 sources passes; boundary check zero violations; whitespace passes",
+    "cohesion": "ProgramTimeline502 lines: existing widget owns painting, hit geometry, scroll and selection. Added styling stays within its paint method; summaries/cache/details already have focused collaborators. No new ownership/dependency.",
+    "visual": "Offscreen280px and native Cocoa281px card inspected. Final timeline.png is native capture with selected Adaptation, Stimulus and Rest.",
+    "launch": "Initial sandbox native launch exits134/no screens. Authorized escalated native command succeeds: QT_QPA_PLATFORM=cocoa PYTHONDONTWRITEBYTECODE=1 .venv/bin/python reports/runtime-evidence-2026-10-13/trial-timeline-polish/preview.py --live; PREVIEW_READY visible=True card_height=281; session72536 remains open."
+  },
+  "limits": "Sample-only GUI with temporary isolated QSettings and synthetic projector inventory. No device/controller connection; Windows/DPI/rig acceptance remains pending."
+}

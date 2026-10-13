@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-13",
+  "captured_utc": "2026-10-13T13:27:10.387481+00:00",
+  "base_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "source_state": "Dirty shared working tree; hashes capture Visual Stimulus source/test/contracts after final local tests. Includes preceding texture feature changes. Concurrent GUI/runtime edits preserved; no commit or complete-repository snapshot claim.",
+  "host": "macOS ARM64 development machine; Python 3.11 .venv",
+  "commands": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/visual_stimulus -q -m 'not windows and not rig' --junitxml=reports/runtime-evidence-2026-10-13/image-residency/owner-tests.xml",
+      "outcome": "296 passed, 1 deselected",
+      "output": "owner-tests.log",
+      "scope": "Authenticated loopback permitted; hardware/native GPU injected."
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/visual_stimulus/test_rendering.py tests/visual_stimulus/test_recording.py tests/visual_stimulus/test_resources.py tests/visual_stimulus/test_evidence_contract.py -q",
+      "outcome": "150 passed (subset of full suite)",
+      "output": "owning-tests.log",
+      "scope": "Subset run before final conservative192B/chunk metadata adjustment; final full owner suite covers that change."
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "outcome": "42 passed, 79 subtests passed",
+      "output": "contracts.log"
+    },
+    {
+      "command": ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+      "outcome": "11 schemas checked, 0 drift",
+      "output": "schema.log"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "outcome": "pass",
+      "output": "ruff.log"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/visual_stimulus tests/visual_stimulus",
+      "outcome": "166 files formatted",
+      "output": "format.log"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/visual_stimulus",
+      "outcome": "150 source files pass; static analysis only",
+      "output": "mypy.log"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "686 modules, 0 violations; cohesion advisories reviewed in report",
+      "output": "boundaries.log"
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass",
+      "output": "whitespace.log"
+    }
+  ],
+  "prior_attempts": [
+    {
+      "output": "owner-tests-initial-fixture-failure.log",
+      "outcome": "295 passed, 1 failed, 1 deselected; newly written integration fixture omitted max_expanded_epochs; corrected before final run"
+    },
+    {
+      "output": "owning-tests-intermediate-reservation-expectations.log",
+      "outcome": "148 passed, 2 failed; run overlapped immutable-chunk reservation change, exact expected byte formulas updated to require sufficient workspace"
+    },
+    {
+      "output": null,
+      "provenance": "Reconstructed from tool results/agent report; raw log not retained",
+      "outcome": "Earlier sandbox run 279 passed, 5 loopback permission failures, 1 deselected; no assertions weakened. Initial integration fixture also lacked calibration files; corrected."
+    }
+  ],
+  "reviews": {
+    "writing": "Luna source/worker tests under Sol 6.1 supervision; root residency/integration",
+    "integration": "Sol 6.1: real NativePreparation integration, source reservations, ownership and cohesion",
+    "main_review": "Astra: CPU handoff references, cancellation, GPU ownership, indexed schedule scaling and Setup-time cursor construction; fixes reviewed, no remaining blocker. Final source review measured join scratch and increased per-chunk metadata reserve to192 bytes; final suite296 passes after correction."
+  },
+  "limitations": [
+    "No native Windows, GPU, optical timing, workload or rig acceptance; owner-deferred checklist retained.",
+    "Still-image and recipe decoded residency only; metadata, protected handles, scene targets and other media remain bounded separately.",
+    "First-use anchor/held/next working sets must fit; conservative admission can reject large protocols.",
+    "Save On records image history; Save Off has bounded summary only. Image selection/render attempt is separate from confirmed submission and optical presentation.",
+    "Chunked upload does not guarantee bounded graphics-driver allocation latency."
+  ]
+}

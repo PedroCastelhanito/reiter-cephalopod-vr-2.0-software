@@ -22,7 +22,6 @@ from .schema_common import (
     SwapInterval,
     UnitQuaternion,
     Version1,
-    Version3,
     parse_json,
     portable_path,
 )
@@ -81,6 +80,16 @@ class MediaSelection(Model):
     disposition: Literal["current", "starvation_hold", "clip_end_hold"]
 
 
+class ImageSelection(Model):
+    instance_id: Id
+    requested_asset_id: Id
+    requested_image_index: U32
+    asset_id: Id
+    image_index: U32
+    disposition: Literal["current", "residency_hold"]
+    repeated: bool
+
+
 class Pose(Model):
     instance_id: Id
     frame_id: FrameId
@@ -90,7 +99,7 @@ class Pose(Model):
 
 class Header(Model):
     kind: Literal["header"]
-    format_version: Version3
+    format_version: Literal[3, 4]
     identity: Identity
     writer_generation: Id
     recipe: (
@@ -114,6 +123,7 @@ class State(Model):
     active_instance_ids: tuple[Id, ...]
     uniforms: tuple[UniformValue, ...]
     media: tuple[MediaSelection, ...]
+    images: tuple[ImageSelection, ...] = ()
     effective_poses: tuple[Pose, ...]
 
 

@@ -1,13 +1,15 @@
-"""Resolve prepared media and CephVR1 texture export bundles inside one asset root."""
+"""Resolve media and CephVR1 texture recipes inside one asset root."""
 
-import json
-import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from cephvr.gui.program_editing import NodePath, data_node
-from cephvr.visual_stimulus.config.models.schema_common import portable_path
+from cephvr.visual_stimulus.config.models.schema_common import (
+    DEFAULT_DOCUMENT_BYTES,
+    portable_path,
+)
+from cephvr.visual_stimulus.resources.texture_recipe import parse_texture_recipe
 
 PROFILES = {
     ".png": "png_uint_v1",
@@ -36,40 +38,24 @@ def resolve_stimulus_file(root: str, path: str, *, texture: bool) -> StimulusFil
     selected = Path(path).resolve()
     selected.relative_to(base)
     width = height = None
-    if selected.name.endswith(".texture.json"):
+    if selected.suffix.lower() == ".json":
         if not texture:
             raise ValueError("Texture designs can only be selected for a texture")
         with selected.open("rb") as stream:
-            raw = stream.read(1_048_577)
-        if len(raw) > 1_048_576:
-            raise ValueError("Texture design exceeds 1 MiB")
-        design = json.loads(raw)
-        if (
-            not isinstance(design, dict)
-            or design.get("cephvr_asset_type") != "texture_design"
-            or design.get("kind") != "texture"
-        ):
-            raise ValueError("Expected a CephVR1.0 texture design export")
-        preview = portable_path(design.get("preview_file", ""))
-        if not preview:
-            raise ValueError("Export the texture with its companion PNG first")
-        parameters = design.get("params", {})
-        if not isinstance(parameters, dict):
-            raise ValueError("Invalid texture design parameters")
-        width = float(parameters.get("tile_width_mm", 0))
-        height = float(parameters.get("tile_height_mm", width))
-        if not all(math.isfinite(value) and value > 0 for value in (width, height)):
-            raise ValueError("Texture export must declare a positive tile_width_mm")
-        selected = (selected.parent / preview).resolve()
-        selected.relative_to(base)
-        if selected.suffix.lower() != ".png":
-            raise ValueError("Texture design companion must be its exported PNG")
+            raw = stream.read(DEFAULT_DOCUMENT_BYTES + 1)
+        recipe = parse_texture_recipe(raw, max_document_bytes=DEFAULT_DOCUMENT_BYTES)
+        return StimulusFile(
+            portable_path(selected.relative_to(base).as_posix()),
+            "cephvr1_texture_json_v1",
+            recipe.tile_width_mm,
+            recipe.tile_height_mm,
+        )
     if not selected.is_file():
-        raise ValueError("Selected media or texture companion file is missing")
+        raise ValueError("Selected media file is missing")
     suffix = selected.suffix.lower()
     if suffix not in PROFILES:
         raise ValueError(
-            "Select a supported image, video, GLB arena or .texture.json export"
+            "Select a supported image, video, GLB arena or texture JSON recipe"
         )
     return StimulusFile(
         portable_path(selected.relative_to(base).as_posix()),

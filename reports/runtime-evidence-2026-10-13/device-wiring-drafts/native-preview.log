@@ -1,0 +1,6 @@
+2026-10-13 native macOS Cocoa launch, tool session4873.
+Command: QT_QPA_PLATFORM=cocoa PYTHONDONTWRITEBYTECODE=1 .venv/bin/python reports/runtime-evidence-2026-10-13/device-wiring-drafts/preview.py --live
+Observed tool output: PREVIEW_READY visible=True page=Devices devices=sample
+Qt reported missing Segoe UI font alias fallback (186ms). No hardware/controller actions; temporary QSettings. Window left open.
+
+Earlier session4873 exited normally. Final source relaunched using the same command in session71109; observed PREVIEW_READY visible=True page=Devices devices=sample. Qt font fallback184ms.

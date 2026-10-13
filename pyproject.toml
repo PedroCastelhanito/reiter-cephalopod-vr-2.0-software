@@ -39,6 +39,7 @@ visual_stimulus = [
     "av==16.1.0",
     "imagecodecs==2025.3.30",
     "tifffile==2025.5.10",
+    "Pillow==12.2.0",
 ]
 acquisition = [
     "opencv-python==4.13.0.92",

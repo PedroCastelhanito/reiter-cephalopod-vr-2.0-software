@@ -580,7 +580,10 @@
           "type": "string"
         },
         "format_version": {
-          "const": 3,
+          "enum": [
+            3,
+            4
+          ],
           "title": "Format Version",
           "type": "integer"
         },
@@ -681,6 +684,64 @@
         "resource_generation"
       ],
       "title": "Identity",
+      "type": "object"
+    },
+    "ImageSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "requested_asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Requested Asset Id",
+          "type": "string"
+        },
+        "requested_image_index": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Requested Image Index",
+          "type": "integer"
+        },
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "image_index": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Image Index",
+          "type": "integer"
+        },
+        "disposition": {
+          "enum": [
+            "current",
+            "residency_hold"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "repeated": {
+          "title": "Repeated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "instance_id",
+        "requested_asset_id",
+        "requested_image_index",
+        "asset_id",
+        "image_index",
+        "disposition",
+        "repeated"
+      ],
+      "title": "ImageSelection",
       "type": "object"
     },
     "Interval": {
@@ -1015,6 +1076,14 @@
             "$ref": "#/$defs/MediaSelection"
           },
           "title": "Media",
+          "type": "array"
+        },
+        "images": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ImageSelection"
+          },
+          "title": "Images",
           "type": "array"
         },
         "effective_poses": {

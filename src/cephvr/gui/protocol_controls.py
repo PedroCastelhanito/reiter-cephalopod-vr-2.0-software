@@ -3,6 +3,7 @@
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
+    QFrame,
     QGridLayout,
     QHBoxLayout,
     QMenu,
@@ -14,6 +15,7 @@ from cephvr.gui.notices import FormNotice
 from cephvr.gui.protocol_hierarchy import ProtocolHierarchy
 from cephvr.gui.protocol_timeline import ProgramTimeline
 from cephvr.gui.subgroup_editor import SubgroupEditor
+from cephvr.gui.theme import COLORS
 from cephvr.gui.trial_list import TrialList
 
 
@@ -48,16 +50,29 @@ class PlannerControls(QWidget):
         self.group_editor = self.hierarchy.group
         self.timeline = ProgramTimeline(details=False)
         self.timeline_card.body.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.timeline_card.body.addWidget(self.group_editor)
-        self.timeline_card.body.addWidget(self.timeline)
         self.timeline.height_changed.connect(self.fit_timeline_card)
         self.group_editor.more.toggled.connect(self.fit_timeline_card)
         self.group_editor.changed.connect(self.fit_timeline_card)
         self.sequence_summary = label("")
-        self.sequence_summary.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.sequence_summary.setAlignment(Qt.AlignmentFlag.AlignLeft)
         actions = QHBoxLayout()
         actions.addWidget(self.sequence_summary, 1)
         self.timeline_card.body.addLayout(actions)
+        self.timeline_card.body.addWidget(self.timeline)
+        self.group_divider = QFrame()
+        self.group_divider.setStyleSheet(f"background: {COLORS.border}; border: none;")
+        self.group_divider.setFixedHeight(1)
+        self.timeline_card.body.addWidget(self.group_divider)
+        self.group_controls = QHBoxLayout()
+        self.group_controls.setSpacing(0)
+        self.selected_group_label = label("Group", "label")
+        self.group_controls.addWidget(self.selected_group_label)
+        self.group_controls.addSpacing(16)
+        self.group_controls.addStretch(1)
+        self.group_controls.addWidget(self.group_editor)
+        self.group_controls.addSpacing(0)
+        self.timeline_card.body.addLayout(self.group_controls)
+        self.timeline.viewport_changed.connect(self.align_group_controls)
         self.settings_card = Card("Sequence editor")
         self.settings_card.body.addWidget(self.hierarchy)
         self.subgroup = SubgroupEditor()
@@ -94,6 +109,27 @@ class PlannerControls(QWidget):
         size.setWidth(0)
         return size
 
+    def align_group_controls(self) -> None:
+        right = min(
+            self.timeline.width(),
+            len(self.timeline.nodes) * self.timeline.block_width()
+            - self.timeline.scrollbar.value()
+            - 7,
+        )
+        available = max(0, round(right))
+        self.group_editor.setFixedWidth(
+            min(
+                420,
+                max(0, available - self.selected_group_label.sizeHint().width() - 16),
+            )
+        )
+        item = self.group_controls.itemAt(4)
+        assert item is not None
+        spacer = item.spacerItem()
+        assert spacer is not None
+        spacer.changeSize(max(0, self.timeline.width() - available), 0)
+        self.group_controls.invalidate()
+
     def fit_timeline_card(self) -> None:
         """Keep aligned cards tall enough for all trial projector/layer details."""
         self.timeline_card.ensurePolished()
@@ -105,7 +141,6 @@ class PlannerControls(QWidget):
         self.trial_card.caption.setFixedHeight(header_height)
         self.timeline_card.caption.setFixedHeight(header_height)
         height = max(
-            320,
             self.timeline_card.body.sizeHint().height(),
             self.trial_card.body.minimumSize().height(),
         )

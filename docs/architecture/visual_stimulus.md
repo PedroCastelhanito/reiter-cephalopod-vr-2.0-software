@@ -96,7 +96,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v02"></a>
 ### V02 — Structured trial stimulus programs
 
-**Status:** Accepted · **Revision:** 12
+**Status:** Accepted · **Revision:** 13
 
 - Author each trial as reusable scenes arranged in timed epochs, with groups for
   repetitions and condition-table parameter sweeps. A scene combines simultaneous
@@ -111,8 +111,8 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   scene/parameter controls and condition editors (add, reorder, duplicate, group).
   Stimulus appearances are prepared externally as texture/image/video/arena assets;
   the planner selects files and edits protocol structure and epoch parameters such
-  as speed/direction, without texture-design controls. Legacy texture export imports
-  normalize the exported image and tile dimensions into the existing model.
+  as speed/direction, without texture-design controls. Legacy texture JSON remains an external recipe asset; V04 prepares its pixels
+  before playback and imports explicit tile dimensions into the existing model.
   Timeline edits modify the canonical nodes; expanded timing remains derived rather
   than a second editable schedule. GUI and headless authoring share
   one model and validation.
@@ -124,15 +124,25 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   frameworks or feature-parity requirements. Define units, coordinate frames and
   conversions explicitly; angular frequency, physical texture period and
   texture-coordinate motion are not interchangeable aliases.
-- Accepted linked-motion geometry convention: when both side stimuli follow Bottom,
-  clockwise Bottom rotation about the subject drives Right front→back and Left
-  back→front; reversing rotation reverses both. Linear speeds use the respective
-  perpendicular subject-to-screen distances (angular rate in rad/s × distance),
-  not half the source texture/screen width. Common longitudinal translation has
-  the same physical front/back direction on both sides despite opposite local
-  screen axes. Target appearances remain independent. Source/target feedback
-  writer ownership is still Open; this convention alone does not define a complete
-  link schema/preparation/runtime contract or imply implementation.
+- Each physical screen may retain its own image-tile texture and phase while one
+  independent reference texture owns programmed motion for directly linked followers.
+  Resolve linear direction through a common unfolded Bottom plane using calibrated
+  surface axes, preserving physical speed around corners. Output corrections and
+  enablement never change that geometry. Links do not promise seamless imagery.
+- Linked motion supports constant drift or constant rotation in separate epochs,
+  single-screen instances, constant independent tile dimensions and uniform-scale,
+  orientation-preserving surface maps. Reject chains/cycles, inactive references,
+  competing motion/period feedback or assignments, custom/combined drift-and-spin
+  and unsupported geometry before Ready. Appearance feedback remains independent.
+  At each epoch boundary derive rates using retained orientations; ordinary V07
+  state fields integrate them without copying the reference phase or resetting followers.
+- Linked angular flow uses each target's perpendicular subject distance: clockwise
+  Bottom rotation about the subject drives Right front→back and Left back→front;
+  reversal reverses both. Require the reference's known retained center to coincide
+  with the subject projection; uncertain or mismatched pivots block preparation with
+  the required coordinates. Parallel targets receive projected spin; perpendicular
+  targets receive translation. The [motion contract](../../contracts/visual_stimulus/stimulus-schema.md#reference-linked-texture-motion)
+  specifies this convention and its bounds; it is not a rigid sheet simulation.
 - Prepare the resolved program under E07 and execute it locally under V01. Closed-loop
   input may change declared stimulus parameters; adaptive trial progression remains
   deferred under E01. V24 owns feedback bindings/application-time attribution, V25
@@ -199,7 +209,7 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v04"></a>
 ### V04 — Rendering stack and required stimulus scope
 
-**Status:** Accepted · **Revision:** 12
+**Status:** Accepted · **Revision:** 14
 
 - A focused Python renderer uses ModernGL (GPU rendering) and GLFW (windows/contexts)
   inside V01's rendering worker. Reuse graphics/decoding libraries for mechanisms;
@@ -214,6 +224,16 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   Validate actual content/features, preserve supported source precision and reject
   unsupported profiles explicitly; no silent conversion or discarded required
   appearance.
+- Accept CephVR1 texture-design JSON by content, including plain `.json`, optional
+  legacy tags and `params`/`pattern_params`. Protect/hash the original recipe and
+  referenced images; deterministically generate its pixels during bounded
+  preparation using explicit seeds and configured geometry for polar patterns.
+  Preview PNGs are optional, nonauthoritative outputs. Preserve legacy RGB8 pattern
+  semantics with explicit linear interpretation unless a supported color override
+  is supplied. Reject unsupported pattern/parameters, missing dependencies or
+  insufficient resources; never silently use flat/preview/unblurred substitutes.
+  Reuse NumPy and pinned Pillow for legacy pixel/blur parity; no frame-time generator,
+  second renderer or runtime recipe editor is introduced.
 - One linear RGB working space, 32-bit floating-point composition and premultiplied
   alpha. Interpret source encodings explicitly, compose before output correction and
   quantize only at the declared presentation boundary. V23 supplies measured
@@ -248,8 +268,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
   sources ahead of the resolved schedule and evict only resources no active consumer
   needs. Include source snapshots, decode/conversion/upload working memory and
   resident pixels in admission. Validation/protection/budget failure blocks Ready
-  under existing Setup deadlines. Image-miss response and detailed readiness/
-  lookahead contracts remain Open; V11's video-specific fallback is not adopted.
+  under existing Setup deadlines. One background loader prepares linear pixels;
+  the GL owner submits bounded upload chunks and polls completion without waiting.
+  Pin each prepared image instance's first-use texture before Ready, its last selected
+  texture during execution, and all GPU work until completion. Prefetch in resolved
+  next-use order; validate first/held/replacement capacity before Ready. A late image
+  holds that instance's previous texture while current motion/appearance and the
+  original trial/epoch clocks continue; first use falls back to its prepared anchor.
+  When saving, every presentation record identifies requested/actual image IDs and
+  stable indices, with explicit holds and repeated identities. Source/decode/GL errors
+  remain failures, not readiness misses. E13 controls detailed-history retention;
+  Save Off retains bounded diagnostic counts, not per-frame history.
 - **Contracts:** [media profiles](../../contracts/visual_stimulus/media-profiles.md);
   [color pipeline](../../contracts/visual_stimulus/color-pipeline.md);
   [asset lifetime contract](../../contracts/visual_stimulus/asset-lifetime.md);

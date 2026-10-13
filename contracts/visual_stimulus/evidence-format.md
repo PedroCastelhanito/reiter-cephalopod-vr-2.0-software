@@ -27,7 +27,8 @@ reference to `_stimulus_LOG.json` (including its manifest and uniform layouts). 
 referenced log must be published before the Header is written. Paths are relative to
 the session's `protocol-data/` directory (no `protocol-data/` prefix) and cannot escape
 it after normalization/symlink resolution.
-The cadence-mapped evidence uses Header `format_version = 3`; earlier one-admitted-group
+The image-selection evidence uses Header `format_version = 4`; readers also accept
+version 3 records without image selections. The earlier one-admitted-group
 mapping is not compatible with this encoded-slot correspondence.
 Artifact names still use E04's reservation mechanism.
 
@@ -190,3 +191,22 @@ Replay reports always keep original_pixel_equality and optical_presentation
 writer validation is tracked in the [Visual Stimulus report](../../reports/visual_stimulus.md); analysis reader
 and offline rendering validation belong to the analysis software. Schema generation
 and declaration checks alone do not validate either implementation.
+
+
+## Still-image selections
+
+Each render group's State.images records one selection per image-backed instance:
+requested_asset_id/requested_image_index, actual asset_id/image_index, disposition
+(current or residency_hold), and repeated. Indices are zero-based positions in the
+sorted renderable still-image asset IDs of that trial's retained manifest (PNG/TIFF/JPEG
+or CephVR1 recipe profiles with a non-null interpretation); dependency-only resources
+are excluded. IDs bind indices to protected source fingerprints and interpretation.
+
+Repeated means the actual image identity equals this instance's preceding selection/render attempt;
+the first selection is false. It does not mean identical final pixels: current motion,
+pose and appearance continue. A residency_hold marks a readiness miss even when several
+scheduled images are skipped while the original clocks advance. First-use anchors are
+prepared before Ready; selection before any earlier selection identifies the anchor
+without falsely marking a repetition. Existing per-output submission records distinguish
+selection/rendering from confirmed submission; video padding duplicates remain separate.
+E13's Save switch governs detailed history; Save Off creates no per-frame image log.

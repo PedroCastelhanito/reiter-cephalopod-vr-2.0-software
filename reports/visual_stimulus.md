@@ -1,5 +1,83 @@
 # Visual Stimulus status
 
+Device workflow refinement under [G01](../docs/architecture/gui.md#g01) keeps
+projector assignment/participation separate from MCU input wiring. Projectors opens
+a contextual editor for the canonical MCU draft, shows calibration prerequisites,
+and keeps VSync editable independently of the photodiode pulse. Existing runtime
+validation and ownership remain unchanged. The [runtime assessment](runtime.md)
+owns local GUI evidence; native synchronization/optical acceptance remains in the
+[rig checklist](rig-verification.md).
+
+Oct13 texture implementation under [V02](../docs/architecture/visual_stimulus.md#v02)
+and [V04](../docs/architecture/visual_stimulus.md#v04): the previous importer required a
+tagged `.texture.json` plus preview PNG. CephVR1 instead treats JSON as a procedural
+recipe. The new image-producing recipe profile retains/hashes the original JSON and
+protected image dependencies, prepares deterministic RGB8 pixels under existing
+source/workspace/CPU/GPU/deadline limits, and uses configured geometry for polar
+patterns. Preview PNGs are not authoritative. Plain JSON and legacy parameter aliases
+are accepted by content; GUI and headless programs use the same prepared resource
+path. Explicit tile dimensions update authored periods; missing dimensions preserve
+the existing authored size. Source-derived fixtures substitute for the owner's files,
+which are unavailable here. Source-derived pixel/provider checks pass; no actual-user-file or native acceptance
+claim is made.
+
+Independent image-tile appearances now support direct reference motion links.
+Bottom-centered unfolding preserves linear speed across perpendicular screens and
+opposite local axes. Angular flow follows V02's subject-distance convention. Each
+follower retains its own asset, periods, phase and reset choice. Standard state fields
+bind at epoch boundaries using retained orientations; no frame-time coordination or
+second phase state is added. Custom/Tracking motion, chains/cycles, competing motion
+writers, combined drift plus spin, nonuniform/reflected stimulus maps and skew-plane
+spin are explicitly rejected. Output calibration reflections are separate. Spin
+requires a known subject-centered reference pivot; Setup reports the necessary
+coordinates and runtime rechecks the retained center. GUI linking disables follower
+movement controls, including controls reparented into the reference table.
+
+Astra review found an existing coordinate discrepancy: stimulus-schema declares a
+bottom-left physical origin, while rendering/layer_projection.py's physical_corners
+emits `2*local/extent`, making zero the screen center. The new spin guard follows
+actual rendered coordinates; it neither fixes nor silently changes existing placement.
+`physical-surface-coordinate-origin` remains open in [TODO](../TODO.md) pending an
+explicit compatible contract/migration decision. Normal drift is independent of this
+pivot limitation. [Rig acceptance](rig-verification.md) remains deferred.
+
+Final local texture validation:277 Visual Stimulus tests pass (one rig/platform
+case deselected),42 contract tests/79 subtests pass,11 schemas are current, and14
+focused GUI cases pass. The earlier broad GUI run had450 passes/seven failures while
+another chat changed epoch editing; the final14-case run includes every previously
+failing case, after the layout, demo recipe expectations and concurrent epoch changes.
+This is not a fresh full-GUI-suite pass. Demo JSONs now explicitly declare their
+existing PNG as an image input; three exact pixel comparisons preserve their original
+checker/noise/sine appearance. Procedural recipes require no preview PNG.
+
+Scoped Ruff/format checks pass23 feature files; Windows-target mypy passes19 sources,
+boundaries pass676 modules/zero violations, and dependency consistency passes. Initial
+sandbox transport retries failed on prohibited loopback binding; the permitted rerun
+passes without weakening assertions. Packaging reaches the existing AMD64-Windows
+native-DLL guard on this macOS host; no package/native acceptance is claimed. Luna
+writing, Sol6.1 integration and Astra main review are complete. Dated commands,
+source provenance and limitations are in the [texture evidence](runtime-evidence-2026-10-13/texture-recipes-motion/context.json).
+
+Oct13 local recovery repair under [V01](../docs/architecture/visual_stimulus.md#v01)
+and [E06/E08](../docs/architecture/system-contracts.md#e08): worker-local failure
+recovery previously bypassed command registration and forwarded its cleanup under a
+UUID the coordinator never issued. It now registers a command-local retained
+admission/outcome before dispatch, keeps cleanup on the worker query route, preserves
+exact context/deadline/replay and prunes local routing with the ledger. Coordinator
+unknown-ID validation and supervisor-issued cleanup proof remain strict. Teardown
+attempts owner/report/listener/channel closure with the original deadline even after
+report-drain failure, then propagates the first failure.
+
+The threaded RenderOwner/ReportBridge regression covers cleanup emitted while local
+shutdown executes, prior finalized session scope, replay and pruning. Failure injection
+verifies listener/channel attempts after drain rejection. Final authenticated transport
+passes9; the [cross-owner validation](runtime.md#unresolved-findings-and-limitations)
+records1316 passes/five platform skips/four deselections plus static checks and Luna/
+Sol6.1/Astra review. [Raw provenance](runtime-evidence-2026-10-13/dev-machine-repairs/context.json)
+retains the final-helper rerun boundary. This repairs a concrete local recovery defect,
+not a reproduction of the complete historical failed-Setup/prior-calibration workflow.
+Native failed-Setup/reuse and Save On-to-Off remain [rig-deferred](rig-verification.md).
+
 Oct13 owner-authorized combined rendering/reset repair verifies two consecutive
 normal60s Behavior/Tracking recordings at3602/3601 actual render groups
 (60.0333/60.0167 groups/s), improving the combined baseline39.47/s. Renderer GPU0
@@ -796,6 +874,16 @@ admission is not treated as cleanup success.
 
 ## ARCH-002 implementation review
 
+The Oct13 texture increment separates recipe parsing, formula rasterization, geometry,
+protected dependencies and preparation admission. Linked-motion validation, compiler
+pivot preflight and renderer binding are focused helpers over existing state fields.
+No whole-runtime references, alternate renderer or per-frame recipe generation are
+introduced. The 635-line pattern module remains one cohesive legacy formula catalogue;
+its size warning was reviewed rather than split into generic dispatch scaffolding.
+Tests extend existing compilation, rendering, resources and dashboard behavior owners.
+Pillow is pinned for the legacy blur/image conversion semantics; GUI recipe inspection
+keeps numerical/image dependencies lazy.
+
 The 2026-10-07 V01 review keeps GL-thread output/Idle restoration in the native port
 and engine, and one protected-source promotion/release registry in NativePreparation.
 Calibration drawing and asset preparation now have focused helpers. Sol accepts these
@@ -902,43 +990,45 @@ new overload policy, original-pixel equality claim or measured speedup is introd
 
 ## Validation limits
 
-Oct12 `long-protocol-resource-scaling` source assessment (dirty working tree based
-on `f96286e`): [session preparation](../src/cephvr/visual_stimulus/resources/session.py)
-calls resource preparation for every trial and retains its bundle;
-[asset acquisition](../src/cephvr/visual_stimulus/resources/assets.py) reads/hashes
-declared files and snapshots static sources, while
-[resource preparation](../src/cephvr/visual_stimulus/resources/prepare.py) decodes
-and retains each declared image with aggregate CPU/GPU reservations. These bounds
-prevent unbounded admission but do not provide bounded moving image residency.
-Review reuse of compatible resources under [V07](../docs/architecture/visual_stimulus.md#v07)
-and digest caching under [V13](../docs/architecture/visual_stimulus.md#v13).
-The owner accepts bounded image residency under
-[V04 revision 12](../docs/architecture/visual_stimulus.md#v04), preserving
-[E07](../docs/architecture/experiment.md#e07) whole-session validation and immutable
-source protection. The asset-lifetime contract distinguishes decoded-pixel eviction
-from protected-source release. Image-miss behavior and readiness contracts need explicit design;
-[V11](../docs/architecture/visual_stimulus.md#v11) currently specifies video only.
-The residency design is accepted but unimplemented. The grouped GUI is implemented
-under [G01 revision 153](../docs/architecture/gui.md#g01), with flat group authoring
-and distinct editable generated batches. [V03 revision 10](../docs/architecture/visual_stimulus.md#v03)
-adds optional parent-scoped epoch batch identity; Program/PreparedTrial schemas are
-regenerated. The source model remains the cohesive grammar owner under ARCH-002;
-its size advisory does not require a separate runtime batch abstraction. Omitted
-identity defaults to null; this metadata changes no expansion or presentation semantics.
-Local configuration/compiler and contract checks pass 58 tests/79 subtests, and
-11 generated schemas have zero drift. GUI validation is recorded in
-[the runtime report](runtime.md#current-scope-and-review). No image-preparation timing,
-memory benchmark, native presentation or rig test ran for this assessment.
-For the owner's threading/ring-buffer question, recommend a bounded renderer-owned
-read/decode worker pool feeding a byte-budgeted reusable image cache keyed by
-compatible content/interpretation, with active resources pinned and upcoming work
-prioritized by resolved presentation deadlines. A strict FIFO ring is sufficient
-for single-use sequential content but does not itself handle unequal image sizes,
-repeated assets, simultaneous consumers or GPU completion. Keep GL work with its
-context owner and release slots only after consumers finish. Pool size, detailed
-scheduler bindings and image-miss handling remain undecided; no throughput gain is
-measured. Existing imagecodecs native calls support threaded work, but disk/CPU/GPU
-contention still requires the existing full-workload rig checks.
+Oct13 `long-protocol-resource-scaling` implements owner-authorized bounded residency
+and advance loading for ordinary still images and image-producing CephVR1 recipes
+under [V04 revision14](../docs/architecture/visual_stimulus.md#v04), while retaining
+[E07](../docs/architecture/experiment.md#e07) whole-session validation and protected
+sources. One CPU loader produces a bounded handoff; the GL owner uploads in bounded
+chunks, polls completion without waiting, and evicts only unpinned completed resources.
+Compatible image content/interpretation shares residency across trials. Setup retains
+source descriptors and schedule metadata, validates every image sequentially, and
+pins each instance's first-use image. Indexed next-use lookahead avoids scanning the
+remaining protocol at every epoch; a 100,000-epoch regression covers this boundary.
+
+If an image misses its scheduled onset, the previous texture remains selected while
+current motion and original clocks continue. Save On evidence version4 records requested
+and actual asset IDs/zero-based indices, readiness holds and repeated image identity;
+version3 input remains accepted. Repetition means the preceding selection/render attempt,
+not identical moving pixels or optical proof. Submission outcomes remain separate.
+Save Off retains E13's absence of per-frame output and emits a bounded miss summary.
+Reload/decode errors remain failures; readiness misses alone use the accepted hold.
+
+ARCH-002 separates source interpretation, scheduling, CPU handoff, GL uploads and
+residency from existing lifecycle owners, without new dependencies or processes.
+The existing large preparation/session, renderer and recorder modules remain cohesive
+orchestrators; new responsibilities are focused modules with explicit interfaces and
+no runtime back-references. Worker joins protect source lifetime, and unresolved GPU
+completion/release retains resources, reservations and cleanup obligations for retry.
+
+This bounds decoded-image residency, not all protocol memory. Protected handles,
+descriptors, schedule metadata, per-trial scene targets and eager video/arena/calibration
+resources still consume existing budgets. The union of first-use anchors plus held/next
+working sets must fit; Setup rejects insufficient capacity. Chunking does not bound a
+native driver's allocation latency. Real storage/decode contention, native fence behavior,
+peak RAM/VRAM, onset timing and simultaneous recording require the owner-deferred
+[rig checks](rig-verification.md). Final local validation passes 296 owner tests (one platform/rig case deselected),
+42 contract tests/79 subtests, 11 schemas, scoped Ruff/format (166 files), Win32 mypy
+(150 sources) and boundaries (686 modules, zero violations). Luna writing, Sol6.1
+integration and Astra main review are complete. Intermediate fixture/reservation
+expectation failures and loopback restrictions remain identified separately.
+Validation and review provenance are retained
+in [image residency evidence](runtime-evidence-2026-10-13/image-residency/context.json).
 
 The current checks exercise application behavior and authenticated transport on this
 host. They do not establish native runtime or rig equivalence. Keep pending native/rendering/encoding, optical,

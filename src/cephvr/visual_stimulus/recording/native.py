@@ -510,7 +510,7 @@ class NativeRecording:
             )
             header = Header(
                 kind="header",
-                format_version=3,
+                format_version=4,
                 identity=artifact.identity,
                 writer_generation=self._writer_generation,
                 recipe=receipt,

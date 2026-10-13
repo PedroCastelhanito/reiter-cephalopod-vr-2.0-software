@@ -5,6 +5,7 @@ from typing import Any
 
 from cephvr.acquisition.identity import camera_role_name
 from cephvr.client.session import ClientError, HeadlessClient
+from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
 from cephvr.gui.device_requests import assign_camera_role
 from cephvr.gui.managed_device_commands import _save_camera_settings
@@ -46,6 +47,8 @@ async def prepare_camera(
     if assignment_changed:
         await assign_camera_role(client, options)
         accepted(client.snapshot)
+    if options["kind"] == rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION:
+        return
     await _save_camera_settings(
         client,
         dict(options, prepare_action=True, import_preset=assignment_changed),

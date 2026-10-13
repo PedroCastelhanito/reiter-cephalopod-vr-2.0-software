@@ -1,0 +1,48 @@
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 46%]
+........................................................................ [ 62%]
+........................................................................ [ 77%]
+........................................................................ [ 93%]
+.....................F........                                           [100%]
+=================================== FAILURES ===================================
+__________ test_demo_assets_can_be_selected_and_review_path_restores ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x303de83a0>
+
+    def test_demo_assets_can_be_selected_and_review_path_restores(window):
+        import json
+    
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.protocol_batches import grouped_program
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.stimulus_files import resolve_stimulus_file
+    
+        root = Path(__file__).resolve().parents[2] / "demo_assets"
+        manifest = json.loads((root / "manifest.json").read_text())
+        for path in manifest["images"]:
+            assert not QImage(str(root / path)).isNull()
+            assert (
+                resolve_stimulus_file(str(root), str(root / path), texture=False).path
+                == path
+            )
+        for path in manifest["textures"]:
+            selected = resolve_stimulus_file(str(root), str(root / path), texture=True)
+            assert selected.tile_width_mm == selected.tile_height_mm == 40
+>           assert selected.path == path
+E           AssertionError: assert not True
+E            +  where True = <built-in method isNull of QImage object at 0x3316a4970>()
+E            +    where <built-in method isNull of QImage object at 0x3316a4970> = <PyQt6.QtGui.QImage object at 0x3316a4970>.isNull
+E            +      where <PyQt6.QtGui.QImage object at 0x3316a4970> = <class 'PyQt6.QtGui.QImage'>('/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/demo_assets/textures/checkerboard.texture.json')
+E            +        where '/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/demo_assets/textures/checkerboard.texture.json' = str((PosixPath('/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-2.0-software/demo_assets') / 'textures/checkerboard.texture.json'))
+E            +          where 'textures/checkerboard.texture.json' = StimulusFile(path='textures/checkerboard.texture.json', profile='cephvr1_texture_json_v1', tile_width_mm=40.0, tile_height_mm=40.0).path
+
+tests/gui/test_dashboard.py:13876: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_demo_assets_can_be_selected_and_review_path_restores
+1 failed, 461 passed in 305.94s (0:05:05)

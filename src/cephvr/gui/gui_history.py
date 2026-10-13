@@ -37,7 +37,7 @@ class GuiHistory:
         if self.restore_failed or (not self.restore_attempted and self.path.exists()):
             raise ValueError(
                 f"Previous GUI configuration could not be restored; preserved at {self.path}. "
-                "Use Save GUI as to retain the current draft separately."
+                "Resolve the restore error before saving this draft."
             )
         data = self.snapshots.validate(self.snapshots.capture())
         write_snapshot(str(self.path), data)

@@ -1,0 +1,781 @@
+diff --git a/architecture.md b/architecture.md
+index d0ee1c2..384d0e8 100644
+--- a/architecture.md
++++ b/architecture.md
+@@ -64,10 +64,10 @@ Accepted design does not imply implemented or rig-validated behavior.
+ | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 24 |
+ | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
+ | <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 174 |
+-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 37 |
++| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 38 |
+ | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
+ | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
+-| <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 29 |
++| <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 30 |
+ | <a id="e04"></a>[E04](docs/architecture/supervisor.md#e04) | Recording layout, identity, and metadata | Accepted | 88 |
+ | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
+ | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 77 |
+diff --git a/docs/architecture/gui.md b/docs/architecture/gui.md
+index de31842..113f947 100644
+--- a/docs/architecture/gui.md
++++ b/docs/architecture/gui.md
+@@ -798,7 +798,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ <a id="g02"></a>
+ ### G02 — Shared frontend formatting
+ 
+-**Status:** Accepted · **Revision:** 37
++**Status:** Accepted · **Revision:** 38
+ 
+ - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
+   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
+@@ -879,9 +879,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+   place. Hide vertical and horizontal scrollbar tracks throughout the Qt GUI,
+   retaining wheel/trackpad and keyboard scrolling. Their zero-size gutter is stable
+   across tabs regardless of overflow. Protocol scrolls its authoring region while navigation and the page heading stay fixed. Other pages have no outer whole-page scroll. Narrow windows stack the columns.
+-  Activity logs wrap at word boundaries without forced splitting of long tokens;
+-  an over-width indivisible token remains horizontally scrollable. Preserve the
+-  visible message and wrapped-line offset when appending or evicting old entries.
++  Activity logs use readable action names and concise admission/outcome lines;
++  admission never claims execution or completion. Keep exact command identities and
++  diagnostic messages in accessible per-entry details, bounded with their retained
++  entries. Wrap at word boundaries without forced splitting of long tokens;
++  over-width indivisible tokens remain horizontally scrollable. Preserve the visible
++  message and wrapped-line offset when appending or evicting old entries.
+ - Implement the native frontend with PyQt6, matching the reference. Initial local
+   design review uses explicitly labeled presentation fixtures, no device/runtime
+   calls and no admitted experiment commands. Managed bootstrap, E03 transport/leases
+@@ -890,7 +893,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+ <a id="e03"></a>
+ ### E03 — GUI disconnection and control lease
+ 
+-**Status:** Accepted · **Revision:** 29
++**Status:** Accepted · **Revision:** 30
+ 
+ - **Closure and loss:** intentional GUI closure is allowed. GUI connection loss or
+   crash never pauses, stops, restarts, or resumes the experiment. Unexpected
+@@ -943,6 +946,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
+   first, active incidents never). The Snapshot reports the retained coverage start and
+   truncation; do not imply a complete history of a longer absence. There is no
+   separate history RPC. Exclude scientific data, raw RPCs and unchanged heartbeats.
++  Present plain-text groups of retained issues and pending choices before routine
++  successful-operation counts. Keep all actionable operation outcomes visible;
++  expandable technical details retain exact identities/messages and explicitly mark
++  bounded history omissions. Do not imply every retained event occurred during the
++  latest disconnection or that retained history is complete.
+ - **Warning modal:** after synchronization following an unexpected disconnect or
+   crash, show a modal warning. Keep state-changing GUI controls disabled until the
+   operator acknowledges it. Acknowledgement changes only GUI state: it does not pause
+diff --git a/src/cephvr/gui/components.py b/src/cephvr/gui/components.py
+index c0fbce6..03f9275 100644
+--- a/src/cephvr/gui/components.py
++++ b/src/cephvr/gui/components.py
+@@ -5,16 +5,20 @@ from math import ceil
+ from PyQt6.QtCore import QPointF, QRectF, QSize, Qt
+ from PyQt6.QtGui import (
+     QColor,
++    QContextMenuEvent,
+     QPainter,
+     QPaintEvent,
+     QPen,
+     QRegion,
+     QResizeEvent,
++    QTextBlockUserData,
+     QTextOption,
+ )
+ from PyQt6.QtWidgets import (
+     QAbstractSpinBox,
++    QApplication,
+     QComboBox,
++    QDialog,
+     QDoubleSpinBox,
+     QFrame,
+     QHBoxLayout,
+@@ -283,6 +287,68 @@ class LogConsole(Console):
+         vertical.setValue(vertical.maximum() if following else position)
+         horizontal.setValue(x)
+ 
++    def append_entry(self, summary: str, details: str) -> None:
++        """Append a concise row with diagnostics bound to its document block."""
++        summary = summary.replace("\r\n", "\n").replace("\r", "\n")
++        summary = " · ".join(summary.splitlines())
++        self.appendPlainText(summary)
++        document = self.document()
++        assert document is not None
++        document.lastBlock().setUserData(_LogDetails(details))
++        self.setToolTip(
++            "Right-click or use the context-menu key on an entry for details."
++        )
++
++    def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
++        if event is None:
++            return
++        cursor = (
++            self.textCursor()
++            if event.reason() == QContextMenuEvent.Reason.Keyboard
++            else self.cursorForPosition(event.pos())
++        )
++        data = cursor.block().userData()
++        keyboard = event.reason() == QContextMenuEvent.Reason.Keyboard
++        local_position = (
++            self.cursorRect(cursor).bottomRight() if keyboard else event.pos()
++        )
++        menu = self.createStandardContextMenu(local_position)
++        if menu is None:
++            return
++        if isinstance(data, _LogDetails):
++            menu.addSeparator()
++            view_action = menu.addAction("View details")
++            copy_action = menu.addAction("Copy details")
++        else:
++            view_action = copy_action = None
++        global_position = (
++            self.mapToGlobal(local_position) if keyboard else event.globalPos()
++        )
++        chosen = menu.exec(global_position)
++        if isinstance(data, _LogDetails) and chosen == view_action:
++            dialog = QDialog(self)
++            dialog.setWindowTitle("Log entry details")
++            layout = QVBoxLayout(dialog)
++            detail_view = QPlainTextEdit(dialog)
++            detail_view.setProperty("role", "source")
++            detail_view.setReadOnly(True)
++            detail_view.setPlainText(data.details)
++            layout.addWidget(detail_view)
++            dialog.resize(640, 360)
++            dialog.exec()
++            dialog.deleteLater()
++        elif isinstance(data, _LogDetails) and chosen == copy_action:
++            clipboard = QApplication.clipboard()
++            if clipboard is not None:
++                clipboard.setText(data.details)
++        menu.deleteLater()
++
++
++class _LogDetails(QTextBlockUserData):
++    def __init__(self, details: str) -> None:
++        super().__init__()
++        self.details = details
++
+ 
+ class StatusColumn(QWidget):
+     """Shared fitted HUD above a log that consumes the remaining column height."""
+diff --git a/src/cephvr/gui/controller_bridge.py b/src/cephvr/gui/controller_bridge.py
+index aab7692..ad45e04 100644
+--- a/src/cephvr/gui/controller_bridge.py
++++ b/src/cephvr/gui/controller_bridge.py
+@@ -492,6 +492,7 @@ class ControllerBridge(QThread):
+             await self._track_request(
+                 client, action, "UpdateSpikeGLXInventory", update_request
+             )
++            return
+         elif action == "open_display_calibration":
+             open_request = open_display_calibration_request(
+                 client,
+@@ -503,6 +504,7 @@ class ControllerBridge(QThread):
+             await self._track_request(
+                 client, action, "OpenDisplayCalibration", open_request
+             )
++            return
+         elif action == "update_display_calibration":
+             calibration_update_request = update_display_calibration_request(
+                 client,
+@@ -514,6 +516,7 @@ class ControllerBridge(QThread):
+             await self._track_request(
+                 client, action, "UpdateDisplayCalibration", calibration_update_request
+             )
++            return
+         elif action == "close_display_calibration":
+             close_request = close_display_calibration_request(
+                 client,
+@@ -523,6 +526,7 @@ class ControllerBridge(QThread):
+             await self._track_request(
+                 client, action, "CloseDisplayCalibration", close_request
+             )
++            return
+         elif action == "begin_tracking_diagnostic":
+             request: Any = rpc.BeginTrackingDiagnosticRequest(
+                 command=client.operator_command(),
+@@ -538,6 +542,7 @@ class ControllerBridge(QThread):
+             await self._track_request(
+                 client, action, "BeginTrackingDiagnostic", request
+             )
++            return
+         elif action == "close_tracking_diagnostic":
+             request = rpc.CloseTrackingDiagnosticRequest(
+                 command=client.operator_command(),
+@@ -548,11 +553,13 @@ class ControllerBridge(QThread):
+             await self._track_request(
+                 client, action, "CloseTrackingDiagnostic", request
+             )
++            return
+         elif action == "tracking_diagnostic_frame":
+             await self._tracking_diagnostic_frame(client, options)
+         elif action == "release_control":
+             if client.snapshot.control.holder_client_id == self.principal.generation:
+                 await self._track_operation(client, action, "ReleaseControl")
++                return
+         elif action == "save_configuration_history":
+             holder = client.snapshot.control.holder_client_id
+             if not holder:
+diff --git a/src/cephvr/gui/main.py b/src/cephvr/gui/main.py
+index b5e6495..9382187 100644
+--- a/src/cephvr/gui/main.py
++++ b/src/cephvr/gui/main.py
+@@ -25,7 +25,11 @@ from cephvr.gui.managed_display import ManagedDisplayOperations
+ from cephvr.gui.managed_mcu import ManagedMcu
+ from cephvr.gui.managed_preview_viewers import ManagedPreviewViewers
+ from cephvr.gui.managed_prompts import ManagedPrompts
+-from cephvr.gui.managed_status import dashboard_view, retained_ack_required_for
++from cephvr.gui.managed_status import (
++    action_label,
++    dashboard_view,
++    retained_ack_required_for,
++)
+ from cephvr.gui.managed_tracking_diagnostics import ManagedTrackingDiagnostics
+ from cephvr.gui.managed_window import ManagedDashboardWindow
+ from cephvr.gui.preview_placement import preview_window_placement
+@@ -417,15 +421,24 @@ class ManagedGui(QObject):
+         )
+ 
+     def command_admitted(self, action: str, command_id: str) -> None:
+-        self.window.dashboard.log_console.appendPlainText(
+-            f"{action}: admitted as {command_id}; awaiting completion evidence."
++        self.window.dashboard.log_console.append_entry(
++            f"{action_label(action)} accepted; awaiting completion.",
++            f"Action: {action}\nCommand ID: {command_id}\nState: admitted; completion is pending.",
+         )
+ 
+     def operation_finished(
+         self, action: str, command_id: str, status: str, message: str
+     ) -> None:
+-        self.window.dashboard.log_console.appendPlainText(
+-            f"{action} [{command_id}] {status}: {message}"
++        label = action_label(action)
++        normalized = status.replace("_", " ").capitalize()
++        summary = (
++            f"{label} completed."
++            if status == "completed"
++            else f"{label}: {normalized.lower()}" + (f" — {message}" if message else "")
++        )
++        self.window.dashboard.log_console.append_entry(
++            summary,
++            f"Action: {action}\nCommand ID: {command_id}\nStatus: {status}\nMessage: {message}",
+         )
+         self.prompts.operation_finished(action)
+         if action == "spikeglx_inventory_update" and status == "completed":
+@@ -644,15 +657,20 @@ class ManagedGui(QObject):
+             )
+ 
+     def command_finished(self, action: str, success: bool, message: str) -> None:
+-        rendered = f"{action}: {message}" if success else f"{action} failed: {message}"
+-        self.window.dashboard.log_console.appendPlainText(rendered)
+-        if action in {
++        label = action_label(action)
++        rendered = f"{label}: {message}" if success else f"{label} failed: {message}"
++        if action != "tracking_diagnostic_frame" or not success:
++            self.window.dashboard.log_console.append_entry(
++                rendered, f"Action: {action}\nSuccess: {success}\nMessage: {message}"
++            )
++        mcu_actions = {
+             "mcu",
+             "prepare_mcu_test",
+             "mcu_upload",
+             "save_mcu_pins",
+             "add_mcu_output",
+-        }:
++        }
++        if action in mcu_actions:
+             self.mcu.finished(action, success, message)
+             if action == "save_mcu_pins" and self.state is not None:
+                 self.mcu.revision = -1
+@@ -661,7 +679,8 @@ class ManagedGui(QObject):
+                     self.state.control.holder_client_id
+                     == self.bridge.principal.generation,
+                 )
+-            self.window.devices.microcontroller.console.appendPlainText(rendered)
++            if success:
++                self.window.devices.microcontroller.console.appendPlainText(rendered)
+         self.cameras.finished(action, success, message)
+         if action in {
+             "camera",
+diff --git a/src/cephvr/gui/managed_prompts.py b/src/cephvr/gui/managed_prompts.py
+index b38f700..6660d93 100644
+--- a/src/cephvr/gui/managed_prompts.py
++++ b/src/cephvr/gui/managed_prompts.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ from collections.abc import Callable
+ 
++from PyQt6.QtCore import Qt
+ from PyQt6.QtWidgets import (
+     QDialog,
+     QHBoxLayout,
+@@ -15,7 +16,7 @@ from PyQt6.QtWidgets import (
+ )
+ 
+ from cephvr.control.v1 import types_pb2 as pb
+-from cephvr.gui.managed_status import retained_summary
++from cephvr.gui.managed_status import retained_details, retained_summary
+ 
+ 
+ class ManagedPrompts:
+@@ -112,15 +113,18 @@ class ManagedPrompts:
+             and self._retained_dialog_identity == identity
+         ):
+             self.retained_dialog.setInformativeText(retained_summary(self.snapshot))
++            self.retained_dialog.setDetailedText(retained_details(self.snapshot))
+             self.retained_dialog.raise_()
+             self.retained_dialog.activateWindow()
+             return
+         self.invalidate_retained_summary()
+         dialog = QMessageBox(self.parent)
+         dialog.setIcon(QMessageBox.Icon.Warning)
+-        dialog.setWindowTitle("Controller state while disconnected")
++        dialog.setWindowTitle("Controller events to review")
++        dialog.setTextFormat(Qt.TextFormat.PlainText)
+         dialog.setText("Review retained controller events before continuing.")
+         dialog.setInformativeText(retained_summary(self.snapshot))
++        dialog.setDetailedText(retained_details(self.snapshot))
+         dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+         dialog.setDefaultButton(QMessageBox.StandardButton.Ok)
+         dialog.setModal(True)
+diff --git a/src/cephvr/gui/managed_status.py b/src/cephvr/gui/managed_status.py
+index 725b664..9e348eb 100644
+--- a/src/cephvr/gui/managed_status.py
++++ b/src/cephvr/gui/managed_status.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import re
+ from time import perf_counter_ns
+ 
+ from cephvr.control.v1 import types_pb2 as pb
+@@ -165,56 +166,176 @@ def retained_ack_required_for(
+     return has_retained_review(state) and acknowledged_identity != identity
+ 
+ 
++def action_label(action: str) -> str:
++    """Give command keys a readable label without losing unknown action names."""
++    known = {
++        "setup": "Setup",
++        "start": "Start",
++        "stop": "Stop",
++        "cancel_setup": "Cancel setup",
++        "calibration": "Calibration",
++        "respond_prompt": "Respond to prompt",
++        "spikeglx_inventory_update": "SpikeGLX inventory update",
++        "spikeglx_connection": "SpikeGLX connection",
++        "get_spikeglx_inventory": "Read SpikeGLX inventory",
++        "mcu": "MCU command",
++        "mcu_upload": "MCU upload",
++        "test_cameras": "Camera test",
++        "save_camera_settings": "Save camera settings",
++        "save_mcu_pins": "Save MCU pins",
++        "save_configuration_history": "Save configuration",
++    }
++    if action in known:
++        return known[action]
++    words = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", action).replace("_", " ")
++    words = words.strip()
++    return words[:1].upper() + words[1:] if words else "Command"
++
++
+ def retained_summary(state: pb.Snapshot) -> str:
+-    """Show every unresolved item before a bounded operation-history excerpt."""
++    """Show all actionable retained state and collapse routine successes."""
++    groups: list[list[str]] = []
+     lines: list[str] = []
+     if state.retained_truncated:
+-        lines.append("Older resolved entries were evicted while disconnected.")
++        lines.append("Older resolved entries are no longer retained.")
+ 
+     # Keep every current incident, prompt, recovery, and warning visible even when
+     # the retained operation list is full of routine completed work.
++    if state.errors:
++        group = ["Retained errors:"]
++        groups.append(group)
++    else:
++        group = []
+     for error in state.errors:
+-        identity = f" [{error.error_id}]" if error.error_id else ""
+         detail = error.failure.message if error.HasField("failure") else "Error"
+-        lines.append(f"Error{identity}: {detail}")
++        group.append(f"  • {detail}")
++    if state.recoveries:
++        group = ["Recoveries:"]
++        groups.append(group)
+     for recovery in state.recoveries:
+-        lines.append(f"Recovery: {recovery.progress or recovery.action}")
++        group.append(f"  • {recovery.progress or action_label(recovery.action)}")
++    if state.runtime_incidents:
++        group = ["Incidents:"]
++        groups.append(group)
+     for incident in state.runtime_incidents:
+-        lines.append(f"Incident: {incident.consequence}")
++        group.append(f"  • {incident.consequence}")
++    if state.prompts:
++        group = ["Pending choices:"]
++        groups.append(group)
+     for prompt in state.prompts:
+         choices = ", ".join(prompt.permitted_choices)
+-        lines.append(
+-            f"Pending choice [{prompt.prompt_id}]: {prompt.explanation} [{choices}]"
+-        )
++        group.append(f"  • {prompt.explanation} ({choices})")
++    if state.warnings:
++        group = ["Warnings:"]
++        groups.append(group)
+     for warning in state.warnings:
+-        lines.append(f"Warning: {warning.message}")
++        group.append(f"  • {warning.message}")
+ 
+-    operation_limit = 40
+-    for operation in state.operations[:operation_limit]:
+-        command_id = operation.context.command_id
++    completed = 0
++    actionable: list[str] = []
++    for operation in state.operations:
+         result = (
+-            "running"
++            "in progress"
+             if not operation.complete
+-            else "succeeded"
++            else "completed"
+             if operation.HasField("succeeded") and operation.succeeded
+             else "failed"
+             if operation.HasField("succeeded")
+             else "completion unknown"
+         )
++        if result == "completed":
++            completed += 1
++            continue
++        description = f"{action_label(operation.command)} — {result}"
++        if operation.progress:
++            description += f"; {operation.progress}"
++        if operation.HasField("failure"):
++            description += f"; {operation.failure.message}"
++        actionable.append(f"  • {description}")
++    if actionable:
++        groups.append(["Operations needing attention:", *actionable])
++    if completed:
++        groups.append([f"Completed operations: {completed}"])
++    lines.extend("\n".join(section) for section in groups)
++    if not lines:
++        lines.append("No controller incidents or warnings are currently retained.")
++    return "\n\n".join(lines)
++
++
++def retained_details(state: pb.Snapshot, *, routine_limit: int = 40) -> str:
++    """Expose exact retained diagnostics, bounding only routine success history."""
++    lines: list[str] = []
++    if state.HasField("retained_since_monotonic_ns"):
++        lines.append(
++            "Retained since controller monotonic ns: "
++            f"{state.retained_since_monotonic_ns}"
++        )
++    for error in state.errors:
++        failure = error.failure.message if error.HasField("failure") else "Error"
++        code = f" ({error.failure.code})" if error.HasField("failure") else ""
++        lines.append(f"Error {error.error_id}{code}: {failure}")
++    for recovery in state.recoveries:
+         lines.append(
+-            f"Command {operation.command} [{command_id}]: {result}"
+-            + (f" · {operation.progress}" if operation.progress else "")
++            f"Recovery {recovery.attempt_id} ({recovery.action}): {recovery.progress}; "
++            "outcome: "
++            + pb.RecoveryOutcome.Name(recovery.outcome)
++            .removeprefix("RECOVERY_OUTCOME_")
++            .lower()
+             + (
+-                f" · {operation.failure.message}"
+-                if operation.HasField("failure")
++                f"; failure: {recovery.failure.message}"
++                if recovery.HasField("failure")
+                 else ""
+             )
+         )
+-    omitted_operations = max(0, len(state.operations) - operation_limit)
+-    if omitted_operations:
++    for incident in state.runtime_incidents:
++        lines.append(f"Incident {incident.incident_id}: {incident.consequence}")
++    for prompt in state.prompts:
+         lines.append(
+-            f"{omitted_operations} additional retained operation entries omitted from this view."
++            f"Prompt {prompt.prompt_id}: {prompt.explanation}; "
++            f"permitted choices: {', '.join(prompt.permitted_choices)}"
+         )
+-    if not lines:
+-        lines.append("No controller incidents or warnings are currently retained.")
+-    return "\n".join(lines)
++    for warning in state.warnings:
++        lines.append(f"Warning {warning.warning_id}: {warning.message}")
++    routine = [
++        operation
++        for operation in state.operations
++        if operation.complete
++        and operation.HasField("succeeded")
++        and operation.succeeded
++    ]
++    actionable = [
++        operation
++        for operation in state.operations
++        if not (
++            operation.complete
++            and operation.HasField("succeeded")
++            and operation.succeeded
++        )
++    ]
++    for operation in actionable + routine[:routine_limit]:
++        outcome = (
++            "in progress"
++            if not operation.complete
++            else "succeeded"
++            if operation.HasField("succeeded") and operation.succeeded
++            else "failed"
++            if operation.HasField("succeeded")
++            else "completion unknown"
++        )
++        failure = ""
++        if operation.HasField("failure"):
++            failure = f"; failure: {operation.failure.message}" + (
++                f" (code: {operation.failure.code})" if operation.failure.code else ""
++            )
++        lines.append(
++            f"Command {operation.command} [{operation.context.command_id}]: "
++            + outcome
++            + (f"; progress: {operation.progress}" if operation.progress else "")
++            + failure
++        )
++    omitted = len(routine) - routine_limit
++    if omitted > 0:
++        lines.append(f"{omitted} additional completed operation details omitted.")
++    if state.retained_truncated:
++        lines.append("Older resolved entries are no longer retained.")
++    return "\n".join(lines) or "No additional technical details are retained."
+diff --git a/src/cephvr/gui/theme.py b/src/cephvr/gui/theme.py
+index ae72f8d..4a5e064 100644
+--- a/src/cephvr/gui/theme.py
++++ b/src/cephvr/gui/theme.py
+@@ -177,6 +177,8 @@ def stylesheet() -> str:
+         border: 1px solid {c.input_border}; border-radius: {s.button_radius}px;
+         font-family: 'Consolas', 'Courier New', monospace;
+         font-size: {s.console_font}px; padding: 8px; }}
++    QTextEdit {{ background: {c.console}; color: {c.console_text};
++        selection-background-color: {c.selection}; selection-color: {c.text}; }}
+     QListWidget[role='trials'] {{ background: transparent; border: none; outline: none; }}
+     QListWidget[role='trials']::item {{ color: {c.text}; padding: 12px 40px 12px 8px; border-radius: 6px; }}
+     QListWidget[role='trials']::item:selected {{ background: {c.selection}; }}
+diff --git a/tests/gui/test_dashboard.py b/tests/gui/test_dashboard.py
+index 4048666..20abbe7 100644
+--- a/tests/gui/test_dashboard.py
++++ b/tests/gui/test_dashboard.py
+@@ -26,6 +26,7 @@ from cephvr.gui.managed_status import (
+     dashboard_view,
+     has_retained_review,
+     retained_ack_required_for,
++    retained_details,
+     retained_summary,
+ )
+ from cephvr.gui.review import ReviewControls
+@@ -1291,10 +1292,12 @@ def test_retained_summary_keeps_incidents_ahead_of_completed_operation_history()
+     )
+     state.warnings.add(message="output recovery needs review")
+     rendered = retained_summary(state)
+-    assert "retained-error" in rendered
++    assert "retained-error" not in rendered
+     assert "camera cleanup failed" in rendered
+     assert "output recovery needs review" in rendered
+-    assert "5 additional retained operation entries omitted" in rendered
++    assert "Completed operations: 45" in rendered
++    assert "id-0" not in rendered
++    assert "retained-error" in retained_details(state)
+     assert has_retained_review(state)
+     assert retained_ack_required_for(state, (3, "controller-1"), None)
+     assert not retained_ack_required_for(
+@@ -1429,6 +1432,7 @@ def test_managed_retained_summary_uses_one_acknowledgement_window(
+     app.processEvents()
+     dialog = prompts.retained_dialog
+     assert dialog is not None and dialog.isVisible()
++    assert dialog.textFormat() == Qt.TextFormat.PlainText
+     prompts.update(
+         state,
+         require_acknowledgement=True,
+@@ -1500,19 +1504,29 @@ def test_old_retained_dialog_cannot_acknowledge_a_new_connection(
+     app.processEvents()
+ 
+ 
+-def test_retained_summary_includes_exact_command_and_prompt_ids() -> None:
++def test_retained_summary_keeps_ids_in_details_and_all_actionable_operations_visible() -> (
++    None
++):
+     from cephvr.control.v1 import types_pb2 as pb
+ 
+     state = pb.Snapshot()
+     operation = state.operations.add(command="Setup")
+     operation.context.command_id = "cmd-123"
+     operation.progress = "waiting for device readiness"
++    for index in range(45):
++        failed = state.operations.add(command="Setup", complete=True, succeeded=False)
++        failed.context.command_id = f"failed-{index}"
++        failed.failure.message = "<unknown> renderer cleanup failed"
+     prompt = state.prompts.add(prompt_id="prompt-456", explanation="Continue?")
+     prompt.permitted_choices.append("cancel")
+     rendered = retained_summary(state)
+-    assert "cmd-123" in rendered
++    assert "cmd-123" not in rendered
+     assert "waiting for device readiness" in rendered
+-    assert "prompt-456" in rendered
++    assert "prompt-456" not in rendered
++    assert "failed-44" not in rendered
++    assert "failed-44" in retained_details(state)
++    assert "<unknown> renderer cleanup failed" in retained_summary(state)
++    assert "<unknown> renderer cleanup failed" in retained_details(state)
+ 
+ 
+ def test_managed_bridge_reserves_safety_queue_capacity_and_drops_stale_epoch() -> None:
+@@ -1920,6 +1934,95 @@ def test_log_keeps_reading_position_during_append_and_retention(
+     assert console.toPlainText() == "Fresh"
+ 
+ 
++def test_log_entry_details_follow_their_own_bounded_document_block(
++    app: QApplication,
++) -> None:
++    from cephvr.gui.components import LogConsole, _LogDetails
++
++    console = LogConsole(lines=3)
++    console.setMaximumBlockCount(2)
++    console.append_entry("First accepted", "command_id=first")
++    console.append_entry("Second\nfailed", "command_id=second\n<unknown>")
++    app.processEvents()
++    document = console.document()
++    assert document is not None
++    first, second = document.begin(), document.begin().next()
++    assert first.text() == "First accepted"
++    assert isinstance(first.userData(), _LogDetails)
++    assert first.userData().details == "command_id=first"
++    assert second.text() == "Second · failed"
++    assert isinstance(second.userData(), _LogDetails)
++    assert second.userData().details == "command_id=second\n<unknown>"
++    console.appendPlainText("Third")
++    app.processEvents()
++    assert document.blockCount() == 2
++    assert document.begin().text() == "Second · failed"
++    assert document.begin().userData().details == "command_id=second\n<unknown>"
++    console.deleteLater()
++
++
++def test_managed_operation_log_distinguishes_admission_completion_and_failure(
++    app: QApplication,
++) -> None:
++    from cephvr.gui.components import LogConsole
++    from cephvr.gui.main import ManagedGui
++
++    console = LogConsole()
++    manager = SimpleNamespace(
++        window=SimpleNamespace(dashboard=SimpleNamespace(log_console=console)),
++        prompts=SimpleNamespace(operation_finished=lambda _action: None),
++    )
++    ManagedGui.command_admitted(manager, "Setup", "command-1")
++    ManagedGui.operation_finished(
++        manager, "Setup", "command-1", "completed", "Completed."
++    )
++    ManagedGui.command_admitted(manager, "Setup", "command-2")
++    ManagedGui.operation_finished(
++        manager, "Setup", "command-2", "failed", "<unknown> renderer failure"
++    )
++    rows = console.toPlainText().splitlines()
++    assert rows == [
++        "Setup accepted; awaiting completion.",
++        "Setup completed.",
++        "Setup accepted; awaiting completion.",
++        "Setup: failed — <unknown> renderer failure",
++    ]
++    document = console.document()
++    assert document is not None
++    details = []
++    block = document.begin()
++    while block.isValid():
++        user_data = block.userData()
++        if user_data is not None:
++            details.append(user_data.details)
++        block = block.next()
++    assert "Command ID: command-1" in details[0]
++    assert "<unknown> renderer failure" in details[-1]
++    console.deleteLater()
++
++
++def test_successful_tracking_frame_poll_does_not_add_routine_log_row(
++    app: QApplication,
++) -> None:
++    from cephvr.gui.components import LogConsole
++    from cephvr.gui.main import ManagedGui
++
++    console = LogConsole()
++    manager = SimpleNamespace(
++        window=SimpleNamespace(dashboard=SimpleNamespace(log_console=console)),
++        cameras=SimpleNamespace(finished=lambda *_: None),
++    )
++    ManagedGui.command_finished(
++        manager, "tracking_diagnostic_frame", True, "Frame ready"
++    )
++    assert console.toPlainText() == ""
++    ManagedGui.command_finished(
++        manager, "tracking_diagnostic_frame", False, "Frame failed"
++    )
++    assert console.toPlainText() == "Tracking diagnostic frame failed: Frame failed"
++    console.deleteLater()
++
++
+ def test_preview_geometry_survives_recreation(
+     app: QApplication, tmp_path: Path
+ ) -> None:
+@@ -3966,7 +4069,10 @@ def test_projector_first_run_profile_import_is_reachable_and_collectable(
+ 
+ 
+ @pytest.mark.asyncio
+-async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() -> None:
++@pytest.mark.parametrize("succeeded", [True, False])
++async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly(
++    succeeded: bool,
++) -> None:
+     import asyncio
+ 
+     from cephvr.client.session import CommandOutcome
+@@ -4024,7 +4130,12 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() ->
+             return CommandOutcome(command_id, False, None)
+ 
+         async def wait_result(self, _command_id: str) -> CommandOutcome:
+-            return CommandOutcome(command_id, True, True)
++            return CommandOutcome(
++                command_id,
++                True,
++                succeeded,
++                failure="<unknown> write failed" if not succeeded else "",
++            )
+ 
+     bridge = ControllerBridge(Client.principal, 50051, 1024, (0,))
+     bridge._connection_epoch = 3
+@@ -4048,8 +4159,10 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() ->
+     channel.source_id = "custom-trigger"
+     admitted: list[tuple[str, str]] = []
+     finished: list[tuple[str, str, str, str]] = []
++    generic_finished: list[tuple[str, bool, str]] = []
+     bridge.command_admitted.connect(lambda *args: admitted.append(args))
+     bridge.operation_finished.connect(lambda *args: finished.append(args))
++    bridge.command_finished.connect(lambda *args: generic_finished.append(args))
+     await bridge._dispatch(
+         Client(),
+         "spikeglx_inventory_update",
+@@ -4063,7 +4176,10 @@ async def test_managed_bridge_reads_and_updates_spikeglx_inventory_exactly() ->
+     assert update_requests[0].expected_configuration_revision == 6
+     assert update_requests[0].pulse_channels[0].source_id == "custom-trigger"
+     assert admitted == [("spikeglx_inventory_update", command_id)]
+-    assert finished[-1][2] == "completed"
++    assert finished[-1][2] == ("completed" if succeeded else "failed")
++    if not succeeded:
++        assert "<unknown> write failed" in finished[-1][3]
++    assert generic_finished == []
+ 
+ 
+ def test_managed_spikeglx_inventory_installs_read_only_host_settings(

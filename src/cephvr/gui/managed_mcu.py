@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
 
-from PyQt6.QtCore import QObject, QTimer
+from PyQt6.QtCore import QObject, QSignalBlocker, QTimer
 
 from cephvr.control.v1 import services_pb2 as rpc
 from cephvr.control.v1 import types_pb2 as pb
@@ -19,6 +19,11 @@ _SIGNALS = {
     "behavioral": pb.MICROCONTROLLER_SIGNAL_KIND_BEHAVIORAL,
     "tracking": pb.MICROCONTROLLER_SIGNAL_KIND_TRACKING,
     "eye_tracking": pb.MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING,
+}
+_CAMERA_ROLES = {
+    "Behavior cam": "behavioral",
+    "Tracking cam": "tracking",
+    "Eye tracking": "eye_tracking",
 }
 
 
@@ -43,7 +48,6 @@ class ManagedMcu(QObject):
         self.settle.setInterval(2300)
         self.settle.timeout.connect(self.read_status)
         panel.connection_requested.connect(self.test_connection)
-        panel.camera_output_requested.connect(self.add_output)
         panel.save_requested.connect(self.save_pins)
         panel.pin_test_requested.connect(self.test_pin)
         panel.firmware_requested.connect(self.upload_firmware)
@@ -88,34 +92,44 @@ class ManagedMcu(QObject):
             None,
         )
         selected = self.panel.port.currentData()
-        if (
-            settings is None
-            or not settings.pulses.HasField("port")
-            or selected != settings.pulses.port
-        ):
+        if settings is None or not selected:
             self.panel.console.appendPlainText(
                 "Await controller confirmation of the selected COM port before testing the connection."
             )
             return
+        if selected != settings.pulses.port:
+            if self.bridge.request(
+                "prepare_mcu_connection",
+                generation=state.controller_generation,
+                base_revision=state.configuration.revision,
+                base_configuration=state.configuration_values.current.SerializeToString(
+                    deterministic=True
+                ),
+                port=str(selected),
+                kind=rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT,
+            ):
+                self.pending = True
+                self.panel.connection_pending = True
+                self.panel.refresh_tests()
+            return
         self.send(rpc.MICROCONTROLLER_COMMAND_KIND_CONNECT)
 
     def add_output(self, key: str, pin: str) -> None:
-        if self.pending or not self.panel.signals.editable():
+        if self.pending or not self.panel.can_review:
             return
         camera = next((row for row in self.panel.camera_rows if row.key == key), None)
-        roles = {
-            "Behavior cam": "behavioral",
-            "Tracking cam": "tracking",
-            "Eye tracking": "eye_tracking",
-        }
-        if camera is None or camera.role not in roles:
+        role = (
+            key
+            if key in _CAMERA_ROLES.values()
+            else _CAMERA_ROLES.get(camera.role if camera else "")
+        )
+        if role is None:
             return
         if self.panel.snapshots.draft_loaded:
-            self.panel.pin_editors[key].setText(pin)
-            self.panel.enable_controls[key].setChecked(True)
+            self.panel.pin_editors[role].setText(pin)
             self.panel.draft_changed.emit()
             return
-        if self.bridge.request("add_mcu_output", role=roles[camera.role], pin=pin):
+        if self.bridge.request("add_mcu_output", role=role, pin=pin):
             self.pending = True
             self.panel.connection_pending = True
             self.panel.refresh_tests()
@@ -157,26 +171,15 @@ class ManagedMcu(QObject):
         if state is None:
             return
         camera = next(
-            (item for item in self.panel.camera_rows if item.key == key), None
+            (
+                item
+                for item in self.panel.camera_rows
+                if item.key == key or _CAMERA_ROLES.get(item.role) == key
+            ),
+            None,
         )
-        if (
-            start
-            and camera is not None
-            and (not camera.enabled or camera.source != "External controller")
-        ):
-            self.panel.console.appendPlainText(
-                "Enable this camera with External controller before testing its output."
-            )
-            return
-        role = (
-            "behavioral"
-            if camera is not None and camera.role == "Behavior cam"
-            else "tracking"
-            if camera is not None and camera.role == "Tracking cam"
-            else "eye_tracking"
-            if camera is not None and camera.role == "Eye tracking"
-            else key
-        )
+        role = _CAMERA_ROLES.get(camera.role, key) if camera is not None else key
+        key = role
         signal = _SIGNALS.get(role)
         if signal is None:
             self.panel.console.appendPlainText(
@@ -216,10 +219,20 @@ class ManagedMcu(QObject):
             firmware_pin(edited) != firmware_pin(saved)
             or self.panel.port.currentData() != pulses.port
         )
-        if start and camera is not None:
+        frequency = (
+            camera.frequency
+            if camera is not None
+            else (
+                str(getattr(pulses, role).requested_frequency_hz)
+                if role in _CAMERA_ROLES.values()
+                and getattr(pulses, role).HasField("requested_frequency_hz")
+                else ""
+            )
+        )
+        if start and role in _CAMERA_ROLES.values():
             pulse = getattr(pulses, role)
             try:
-                confirmed = Decimal(camera.frequency) == Decimal(
+                confirmed = Decimal(frequency) == Decimal(
                     str(pulse.requested_frequency_hz)
                 )
             except InvalidOperation:
@@ -238,7 +251,7 @@ class ManagedMcu(QObject):
                     ),
                     "port": str(self.panel.port.currentData() or ""),
                     "pin": edited,
-                    "frequency": camera.frequency if camera is not None else "",
+                    "frequency": frequency,
                 },
             )
             return
@@ -294,6 +307,7 @@ class ManagedMcu(QObject):
         if action not in {
             "mcu",
             "prepare_mcu_test",
+            "prepare_mcu_connection",
             "mcu_upload",
             "save_mcu_pins",
             "add_mcu_output",
@@ -336,29 +350,21 @@ class ManagedMcu(QObject):
         )
         if settings is not None and state.configuration.revision != self.revision:
             if not panel.snapshots.draft_loaded or panel.snapshots.matches(settings):
-                panel.snapshots.draft_loaded = False
                 pulses = settings.pulses
-                panel.set_saved_pins(
-                    pulses.port,
-                    pulses.trial_state_pin,
-                    pulses.trial_state_enabled,
-                    pulses.projector_flip_pin,
-                    pulses.projector_flip_enabled,
-                )
-                for row in panel.camera_rows:
-                    pulse = (
-                        pulses.behavioral
-                        if row.role == "Behavior cam"
-                        else pulses.tracking
-                        if row.role == "Tracking cam"
-                        else pulses.eye_tracking
-                        if row.role == "Eye tracking"
-                        else None
+                with QSignalBlocker(panel):
+                    panel.set_saved_pins(
+                        pulses.port,
+                        pulses.trial_state_pin,
+                        pulses.trial_state_enabled,
+                        pulses.projector_flip_pin,
+                        pulses.projector_flip_enabled,
                     )
-                    pin = pulse.pin if pulse is not None else ""
-                    panel.pins[row.key] = pin
-                    if row.key in panel.pin_editors:
-                        panel.pin_editors[row.key].setText(pin)
+                    for role in _CAMERA_ROLES.values():
+                        pin = getattr(pulses, role).pin
+                        panel.pins[role] = pin
+                        if role in panel.pin_editors:
+                            panel.pin_editors[role].setText(pin)
+                panel.snapshots.draft_loaded = False
             self.revision = state.configuration.revision
         panel.upload_available = (
             held
@@ -400,15 +406,6 @@ class ManagedMcu(QObject):
         ):
             self.observed_ns = diagnostic.observed_monotonic_ns
             key = signal_name(diagnostic.signal)
-            if key in {"behavioral", "tracking", "eye_tracking"}:
-                role = {
-                    "behavioral": "Behavior cam",
-                    "tracking": "Tracking cam",
-                    "eye_tracking": "Eye tracking",
-                }[key]
-                key = next(
-                    (row.key for row in panel.camera_rows if row.role == role), ""
-                )
             panel.set_diagnostic(key, diagnostic.active, diagnostic.rising_edges)
             if diagnostic.active and held and not state.microcontroller.cleanup_pending:
                 self.settle.start()

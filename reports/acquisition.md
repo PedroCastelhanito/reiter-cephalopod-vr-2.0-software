@@ -1,5 +1,34 @@
 # Acquisition status
 
+Device workflow refinement under [G01](../docs/architecture/gui.md#g01) and
+[E07](../docs/architecture/experiment.md#e07) separates camera participation from
+logical MCU wiring. Identity tests and selected-camera preparation can proceed while
+unrelated drafts are incomplete; exact scoped validation preserves Use/recording
+choices, ownership and strict Setup. The [runtime assessment](runtime.md) owns
+review and local evidence; electrical/native acceptance remains in the
+[rig checklist](rig-verification.md).
+
+Oct13 development-machine repairs under [A02](../docs/architecture/acquisition.md#a02),
+[A11](../docs/architecture/acquisition.md#a11) and
+[E08](../docs/architecture/system-contracts.md#e08): completed camera-worker results
+now release unused result-reservation bytes through explicit terminal completion.
+Every preview's ResolveCameraConfiguration formerly retained16MiB even for a tiny
+result; production limits reproduce rejection at the fourth request. Pending results
+still reserve the full allowance; exact bytes, replay retention, deadlines, safety
+quota and record count remain unchanged. Four completed readbacks now pass while
+three unresolved large results still exhaust the normal allowance. MCU pending/
+unavailable remains a separate unproven observation; no ownership fence is relaxed.
+
+Orderly host teardown tolerates MCU Close UNAVAILABLE only after exact registered
+controller PID/creation-time absence is confirmed. The claim remains unconfirmed
+and is reported; live/unknown controller state and other RPC failures propagate.
+Existing resource/channel cleanup still runs. Owning tests include actual client
+claim preservation. [Cross-owner validation and review](runtime.md#unresolved-findings-and-limitations)
+record1316 local passes/five platform skips/four deselections and final transport9,
+plus static checks. [Raw provenance](runtime-evidence-2026-10-13/dev-machine-repairs/context.json)
+retains commands and scope. No hardware/operator/firmware settings change; repeated
+native preview and orderly teardown acceptance are [rig-deferred](rig-verification.md).
+
 Oct13 owner-selected125ms drain margins remain applied to all camera roles
 under [A10](../docs/architecture/acquisition.md#a10); Eye is disabled/unmeasured.
 Two consecutive final normal60s Behavior30Hz/Tracking60Hz plus stimulus recordings

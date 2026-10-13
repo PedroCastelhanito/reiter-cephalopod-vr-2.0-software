@@ -177,6 +177,8 @@ def stylesheet() -> str:
         border: 1px solid {c.input_border}; border-radius: {s.button_radius}px;
         font-family: 'Consolas', 'Courier New', monospace;
         font-size: {s.console_font}px; padding: 8px; }}
+    QTextEdit {{ background: {c.console}; color: {c.console_text};
+        selection-background-color: {c.selection}; selection-color: {c.text}; }}
     QListWidget[role='trials'] {{ background: transparent; border: none; outline: none; }}
     QListWidget[role='trials']::item {{ color: {c.text}; padding: 12px 40px 12px 8px; border-radius: 6px; }}
     QListWidget[role='trials']::item:selected {{ background: {c.selection}; }}

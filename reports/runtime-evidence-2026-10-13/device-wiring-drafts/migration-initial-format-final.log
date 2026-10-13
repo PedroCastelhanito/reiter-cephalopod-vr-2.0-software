@@ -1,0 +1,25 @@
+unformatted: File would be reformatted
+   --> src/cephvr/gui/gui_snapshot.py:110:35
+    |
+109 |         }
+    -         data["microcontroller"] = (
+    -             self.pages.devices.microcontroller.snapshots.validate(
+    -                 data["microcontroller"], legacy_roles=legacy_roles
+    -             )
+110 +         data["microcontroller"] = self.pages.devices.microcontroller.snapshots.validate(
+111 +             data["microcontroller"], legacy_roles=legacy_roles
+112 |         )
+    |
+
+unformatted: File would be reformatted
+   --> src/cephvr/gui/microcontroller.py:559:27
+    |
+558 |                 return
+    -             description = (
+    -                 f"{trigger.role}: pin {pin}, requested {trigger.frequency} Hz output test"
+    -             )
+559 +             description = f"{trigger.role}: pin {pin}, requested {trigger.frequency} Hz output test"
+560 |         elif key == "trial-state":
+    |
+
+2 files would be reformatted, 155 files already formatted

@@ -6,8 +6,11 @@ import asyncio
 import uuid
 from collections.abc import Callable, Mapping
 
+from cephvr.acquisition.identity import CAMERA_NAMES, camera_role_name
+from cephvr.acquisition.v1 import camera_pb2
 from cephvr.control.v1 import services_pb2 as svc
 from cephvr.control.v1 import types_pb2 as pb
+from cephvr.controller.control.camera_edit_validation import validate_selected_camera
 from cephvr.controller.device.ports import DeviceHooks
 from cephvr.controller.device.release_evidence import (
     camera_view,
@@ -85,11 +88,20 @@ class CameraReadback:
             setting = next(
                 item.acquisition
                 for item in self.configuration.current.backends
-                if item.backend_name == "acquisition" and item.enabled
+                if item.backend_name == "acquisition"
             )
             expected_pulses = (
                 operation.kind == svc.CAMERA_COMMAND_KIND_START_PREVIEW
-                and bool(setting.pulses.port)
+                and any(
+                    getattr(setting, role).device.frame_timing
+                    == camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+                    and (
+                        role == camera_role_name(operation.camera)
+                        or self.projections.devices is not None
+                        and getattr(self.projections.devices, role).preview_running
+                    )
+                    for role in CAMERA_NAMES
+                )
             )
             backend = self.backends["acquisition"]
             candidate = resolved_configuration(
@@ -105,8 +117,15 @@ class CameraReadback:
             results = await asyncio.wait_for(
                 asyncio.gather(
                     *(
-                        asyncio.to_thread(validator, candidate)
-                        for validator in self.validators.values()
+                        asyncio.to_thread(
+                            validate_selected_camera,
+                            candidate,
+                            camera_role_name(operation.camera),
+                            validator,
+                        )
+                        if name == "acquisition"
+                        else asyncio.to_thread(validator, candidate)
+                        for name, validator in self.validators.items()
                     )
                 ),
                 remaining_seconds(operation.deadline_ns, clock=self.clock),
@@ -132,7 +151,7 @@ class CameraReadback:
                 confirmed = next(
                     item.acquisition
                     for item in candidate.backends
-                    if item.backend_name == "acquisition" and item.enabled
+                    if item.backend_name == "acquisition"
                 )
                 confirmation = svc.AcquisitionConfigurationConfirmation(
                     resolution_operation=report.operation,

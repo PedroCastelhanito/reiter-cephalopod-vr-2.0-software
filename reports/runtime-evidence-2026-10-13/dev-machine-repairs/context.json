@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-13",
+  "base_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "platform": "macOS",
+  "python": "3.11.15",
+  "implementation_files": {
+    "src/cephvr/acquisition/main.py": "85c7262dc31bed0100c44219fe59edb138b10b114ae11629ef8173b74a457895",
+    "src/cephvr/acquisition/worker/state.py": "aaa0b7b60935c206eadac6e2e5e572b08ef2691b6fa07b9d2139d8044b22dd7a",
+    "src/cephvr/shared/commands.py": "01967442d97f9e1e4949bb0feea06cc8a8a469e4af79becab84385db025978f3",
+    "src/cephvr/visual_stimulus/worker/main.py": "2720595eefc18dd51238994b1bb1f7ade48ef740d06456c9089bd1024e0369c8",
+    "src/cephvr/visual_stimulus/worker/runtime.py": "a59da6df4502a7c0630d99b824fb265dff940362984627c55085b4ba59dd65c7",
+    "tests/acquisition/test_worker_admission.py": "526cabb3cc6bde7908634546fe37479d2c281c0c23caab9488582bc55f107a30",
+    "tests/shared/test_commands.py": "bb4115dc9ac338acf5c9e1efd764fa0230ccf551b203940103c2befbd628081e",
+    "tests/visual_stimulus/test_transport.py": "63501a4eae3e916e3b92ae71741143795ec29debdf8b3c0cd6a8c37acf0ba6b3",
+    "tests/acquisition/test_main.py": "cff0e47625734248b1005e7179ce34ae33b4b696886df74404420a8e571f7ca0"
+  },
+  "model_roles": {
+    "writing": "gpt-6-luna",
+    "analysis_integration": "gpt-6.1-sol",
+    "major_decisions_main_review": "gpt-6-astra"
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition tests/controller tests/supervisor tests/shared tests/visual_stimulus -q -m 'not windows and not rig' --junitxml=reports/runtime-evidence-2026-10-13/dev-machine-repairs/pytest.xml",
+      "result": "1316 passed, 5 skipped (Win32 atomics), 4 deselected in 15.66s",
+      "log": "pytest.log",
+      "scope": "Loopback allowed. Final renderer teardown helper/test extraction overlapped this run; final-transport rerun validates that delta."
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/visual_stimulus/test_transport.py -q -m 'not windows and not rig' --junitxml=reports/runtime-evidence-2026-10-13/dev-machine-repairs/final-transport.xml",
+      "result": "9 passed in 0.66s",
+      "log": "final-transport.log",
+      "scope": "Final source, authenticated loopback allowed."
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/acquisition src/cephvr/controller src/cephvr/supervisor src/cephvr/shared src/cephvr/visual_stimulus tests/acquisition tests/controller tests/supervisor tests/shared tests/visual_stimulus",
+      "result": "pass",
+      "log": "ruff.log"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/acquisition src/cephvr/controller src/cephvr/supervisor src/cephvr/shared src/cephvr/visual_stimulus tests/acquisition tests/controller tests/supervisor tests/shared tests/visual_stimulus",
+      "result": "573 files already formatted",
+      "log": "format.log"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/acquisition src/cephvr/controller src/cephvr/supervisor src/cephvr/shared src/cephvr/visual_stimulus",
+      "result": "Success: no issues found in 486 source files",
+      "log": "mypy.log"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "667 modules; 0 boundary violations; existing cohesion advisories",
+      "log": "boundaries.log"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "prior_attempts": "Luna/Sol focused tests passed39. Sandboxed transport attempts rejected loopback binding; unchanged permitted runs passed. Astra requested deterministic-clock, actual-client claim-retention and threaded report-chain coverage before final acceptance.",
+  "limitations": [
+    "No native Windows/device/rig execution.",
+    "Historical failed-Setup whole workflow and normal reuse still require rig repetition.",
+    "MCU pending/unavailable is separately unproven; lease turnover can correctly fence requests.",
+    "No operator settings, policies, contracts or firmware changed.",
+    "Missing SESSION_CONFIG cannot prove unpaired status; conservative recovery warning remains."
+  ],
+  "cleanup": {
+    "removed_task_generated_bytecode_files": [
+      "src/cephvr/acquisition/__pycache__/main.cpython-311.pyc",
+      "src/cephvr/acquisition/__pycache__/worker_launcher.cpython-311.pyc",
+      "src/cephvr/acquisition/__pycache__/startup.cpython-311.pyc",
+      "src/cephvr/acquisition/__pycache__/configuration.cpython-311.pyc",
+      "src/cephvr/acquisition/__pycache__/microcontroller_client.cpython-311.pyc",
+      "src/cephvr/acquisition/__pycache__/executables.cpython-311.pyc",
+      "src/cephvr/acquisition/buffers/__pycache__/end_marker.cpython-311.pyc",
+      "src/cephvr/acquisition/buffers/__pycache__/resource_port.cpython-311.pyc",
+      "src/cephvr/acquisition/buffers/__pycache__/queue.cpython-311.pyc",
+      "src/cephvr/acquisition/buffers/__pycache__/ring_attachment.cpython-311.pyc",
+      "src/cephvr/acquisition/buffers/__pycache__/pixel_pool.cpython-311.pyc",
+      "src/cephvr/acquisition/transport/__pycache__/server.cpython-311.pyc",
+      "src/cephvr/acquisition/transport/__pycache__/grpc_ports.cpython-311.pyc",
+      "src/cephvr/acquisition/config/__pycache__/policy.cpython-311.pyc",
+      "src/cephvr/acquisition/config/__pycache__/file_policies.cpython-311.pyc",
+      "src/cephvr/acquisition/config/__pycache__/values.cpython-311.pyc",
+      "src/cephvr/acquisition/config/__pycache__/defaults.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_pump.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_storage.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/encoder_probe.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_contracts.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/encoding.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/encoder.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/frame_log.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/encoding_validation.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/negotiation.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/encoding_types.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_completion.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_cleanup.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_prepare.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/encoder_process.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_outputs.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/progress_watchdog.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/paths.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_schedule.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/capabilities.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_diagnostics.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/encoding_rules.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/identity.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/session_finalizer.cpython-311.pyc",
+      "src/cephvr/acquisition/recording/__pycache__/__init__.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/trial_state.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/pulse_evidence.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/service.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/preview_lifecycle.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/terminal_scope.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/trial_recording_terminal.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/trial_lifecycle.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/session_preparation.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/recording_handoff.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/capture.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/recording_preparation.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/limits.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/health_snapshot.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/cleanup_lifecycle.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/ports.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/recording_fault.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/transport_summary.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/frame_diagnostics.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/execution.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/trial_stop.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/warnings.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/report_dispatch.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/blocking_wait.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/state.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/trial_activity.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/capture_runtime.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/reports.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/health.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/camera_configuration.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/recording_thread.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/recording_ports.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/recording_runtime.cpython-311.pyc",
+      "src/cephvr/acquisition/worker/__pycache__/camera_resolution.cpython-311.pyc",
+      "src/cephvr/visual_stimulus/worker/__pycache__/main.cpython-311.pyc",
+      "src/cephvr/visual_stimulus/worker/__pycache__/registration.cpython-311.pyc",
+      "src/cephvr/visual_stimulus/worker/__pycache__/bootstrap.cpython-311.pyc",
+      "src/cephvr/controller/microcontroller/__pycache__/config.cpython-311.pyc",
+      "tests/acquisition/__pycache__/test_main.cpython-311-pytest-9.1.1.pyc",
+      "tests/acquisition/__pycache__/test_worker_admission.cpython-311-pytest-9.1.1.pyc",
+      "tests/shared/__pycache__/test_commands.cpython-311-pytest-9.1.1.pyc"
+    ],
+    "preserved": "All pre-existing bytecode, virtualenv, operator settings, raw evidence/media, final logs/XML/patch and dependency toolchains."
+  },
+  "documentation_links": {
+    "checked": 680,
+    "issues": []
+  }
+}

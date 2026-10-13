@@ -185,6 +185,9 @@ async def run_acquisition(bootstrap: AcquisitionBootstrap) -> None:
             server,
             runtime_instance,
             resource_port,
+            native,
+            bootstrap.controller_pid,
+            bootstrap.controller_creation_time_100ns,
             controller_channel,
             supervisor_channel,
             deadline,
@@ -266,6 +269,9 @@ async def _close(
     server: AcquisitionServer,
     runtime: AcquisitionCoordinatorRuntime,
     resources: WindowsResourcePort,
+    native: WindowsJobs,
+    controller_pid: int,
+    controller_creation_time_100ns: int,
     controller_channel: grpc.aio.Channel,
     supervisor_channel: grpc.aio.Channel,
     deadline_ns: int,
@@ -274,7 +280,26 @@ async def _close(
         await server.close(deadline_ns=deadline_ns)
     finally:
         try:
-            await runtime.serial.close(deadline_ns=deadline_ns)
+            try:
+                await runtime.serial.close(deadline_ns=deadline_ns)
+            except grpc.aio.AioRpcError as exc:
+                if exc.code() != grpc.StatusCode.UNAVAILABLE:
+                    raise
+                controller_running = await asyncio.to_thread(
+                    native.process_running,
+                    controller_pid,
+                    controller_creation_time_100ns,
+                )
+                if controller_running:
+                    raise
+                # The concrete serial client keeps its claim unless Close was
+                # acknowledged. Process exit is useful shutdown context, not a
+                # synthetic release receipt.
+                print(
+                    "Acquisition MCU claim release remains unconfirmed: "
+                    "registered controller exited before Close RPC completed.",
+                    file=sys.stderr,
+                )
         finally:
             for allocation_id_value, record in tuple(runtime.state.resources.items()):
                 try:

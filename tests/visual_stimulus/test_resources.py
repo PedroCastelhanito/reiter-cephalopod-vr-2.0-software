@@ -46,6 +46,89 @@ from cephvr.visual_stimulus.resources.video_selection import PlaybackCursor
 from cephvr.visual_stimulus.resources.video_session import VideoSession
 
 
+def test_json_texture_preparation_retains_recipe_identity_and_budget(
+    tmp_path, monkeypatch
+):
+    import hashlib
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    raw = b'{"pattern":"checker","params":{"texture_resolution":8,"tile_width_mm":104}}'
+    path = tmp_path / "texture.json"
+    path.write_bytes(raw)
+    sources = []
+
+    class Source:
+        def __init__(self, path):
+            self.path, self.closed = path, False
+            sources.append(self)
+
+        def independent_reader(self):
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    program = SimpleNamespace(
+        assets=(
+            Asset(
+                asset_id="recipe",
+                logical_path="texture.json",
+                profile="cephvr1_texture_json_v1",
+                color_override=None,
+            ),
+        ),
+        instances=(),
+        sequence=(),
+    )
+    budget = BoundedBudget(cpu_limit=100_000, gpu_limit=100_000)
+    bundle = prepare_resources(
+        program,
+        tmp_path,
+        budget,
+        announce=lambda *_: None,
+        snapshot_limit_bytes=100_000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        max_document_bytes=1000,
+        source_factory=Source,
+    )
+    resource = bundle.manifest.resources[0]
+    assert resource.fingerprint.sha256 == hashlib.sha256(raw).hexdigest()
+    assert resource.fingerprint.logical_path == "texture.json"
+    assert resource.profile_id == "cephvr1_texture_json_v1"
+    assert resource.provider_compatibility == "cephvr1-texture-raster-v1"
+    assert bundle.prepared_content["recipe"].pixels.shape == (8, 8, 3)
+    assert bundle.prepared_content["recipe"].transfer == "linear"
+    assert budget.usage.cpu_bytes == len(raw) + 8 * 8 * 64
+    bundle.asset_set.close()
+    assert all(source.closed for source in sources)
+
+    def forbidden_generation(*args, **kwargs):
+        pytest.fail("rasterization must not start before its full scratch reservation")
+
+    monkeypatch.setattr(
+        "cephvr.visual_stimulus.resources.recipe_preparation.generate_texture_recipe",
+        forbidden_generation,
+    )
+    budget = BoundedBudget(cpu_limit=9000, gpu_limit=100_000)
+    with pytest.raises(MemoryError):
+        prepare_resources(
+            program,
+            tmp_path,
+            budget,
+            announce=lambda *_: None,
+            snapshot_limit_bytes=1000,
+            video_index_limit_bytes=1000,
+            glb_element_limit=1000,
+            max_document_bytes=1000,
+            source_factory=Source,
+        )
+    assert all(source.closed for source in sources)
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+
+
 def test_tiff_uint_decoder_accepts_supported_pixels_and_rejects_float() -> None:
     tifffile = pytest.importorskip("tifffile")
     np = pytest.importorskip("numpy")
@@ -91,6 +174,320 @@ def test_resource_budget_replacement_is_atomic() -> None:
     assert (budget.usage.cpu_bytes, budget.usage.gpu_bytes) == (60, 40)
     budget.release(owner="texture")
     assert (budget.usage.cpu_bytes, budget.usage.gpu_bytes) == (0, 0)
+
+
+def test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing():
+    import hashlib
+
+    import numpy as np
+    import tifffile
+
+    from cephvr.visual_stimulus.rendering.upload import linear_rgba_bytes
+    from cephvr.visual_stimulus.resources.assets import PreparedAsset
+    from cephvr.visual_stimulus.resources.image_source import (
+        read_source_bytes,
+        validate_image_source,
+    )
+
+    pixels = np.arange(36, dtype=np.uint16).reshape(3, 4, 3) * 1000
+    stream = io.BytesIO()
+    tifffile.imwrite(stream, pixels, photometric="rgb")
+    raw = stream.getvalue()
+    asset = Asset(
+        asset_id="still",
+        logical_path="still.tif",
+        profile="tiff_uint_v1",
+        color_override=ColorOverride(
+            transfer="linear",
+            primaries="rec709_d65",
+            range="full",
+            matrix="rgb",
+            chroma_location="none",
+            reason="residency test",
+        ),
+    )
+
+    class Source:
+        closed = False
+
+        def __init__(self):
+            self.readers = 0
+
+        def independent_reader(self):
+            self.readers += 1
+            return io.BytesIO(raw)
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    protected = Source()
+    prepared = PreparedAsset(
+        asset.asset_id,
+        asset.logical_path,
+        asset.profile,
+        hashlib.sha256(raw).hexdigest(),
+        len(raw),
+        protected,
+        None,
+    )
+    budget = BoundedBudget(cpu_limit=100_000, gpu_limit=100_000)
+    source, info = validate_image_source(
+        asset,
+        prepared,
+        budget=budget,
+        owner="test:still",
+        output_count=3,
+        max_document_bytes=1000,
+    )
+
+    expected = linear_rgba_bytes(decode_image(asset, raw))
+    first_read = read_source_bytes(prepared, lambda: None)
+    second_read = read_source_bytes(prepared, lambda: None)
+    assert first_read == second_read == raw
+    assert hashlib.sha256(first_read).hexdigest() == prepared.sha256
+    assert (info.width, info.height, info.dtype, info.transfer, info.alpha) == (
+        4,
+        3,
+        "uint16",
+        "linear",
+        "none",
+    )
+    assert source.load(lambda: None) == expected
+    assert source.load(lambda: None) == expected
+    assert source.cpu_bytes >= 2 * len(raw) + 4 * 3 * 192
+    assert source.gpu_bytes == 4 * 3 * 16 * 3
+    assert protected.readers == 5  # Validation, two source reads and two cache misses.
+    assert not protected.closed
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+
+
+def test_image_source_budget_failure_precedes_opening_protected_source():
+    import hashlib
+
+    from cephvr.visual_stimulus.resources.assets import PreparedAsset
+    from cephvr.visual_stimulus.resources.image_source import validate_image_source
+
+    raw = b"x" * 64
+    asset = Asset(
+        asset_id="still",
+        logical_path="still.tif",
+        profile="tiff_uint_v1",
+        color_override=ColorOverride(
+            transfer="linear",
+            primaries="rec709_d65",
+            range="full",
+            matrix="rgb",
+            chroma_location="none",
+            reason="budget test",
+        ),
+    )
+
+    class Source:
+        readers = 0
+
+        def independent_reader(self):
+            self.readers += 1
+            return io.BytesIO(raw)
+
+        def close_after_consumers(self):
+            pass
+
+    protected = Source()
+    prepared = PreparedAsset(
+        asset.asset_id,
+        asset.logical_path,
+        asset.profile,
+        hashlib.sha256(raw).hexdigest(),
+        len(raw),
+        protected,
+        None,
+    )
+    budget = BoundedBudget(cpu_limit=10, gpu_limit=100)
+    with pytest.raises(MemoryError, match="budget exceeded"):
+        validate_image_source(
+            asset,
+            prepared,
+            budget=budget,
+            owner="test:still",
+            output_count=1,
+            max_document_bytes=1000,
+        )
+    assert protected.readers == 0
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+
+
+def test_recipe_image_source_is_deterministic_and_preserves_dependency_dimensions():
+    import hashlib
+
+    from PIL import Image
+
+    from cephvr.visual_stimulus.resources.assets import PreparedAsset
+    from cephvr.visual_stimulus.resources.image_source import validate_image_source
+
+    recipe_raw = b'{"pattern":"image","params":{"texture_path":"source.png"}}'
+    recipe_asset = Asset(
+        asset_id="recipe",
+        logical_path="recipe.json",
+        profile="cephvr1_texture_json_v1",
+        color_override=None,
+    )
+    dependency_asset = Asset(
+        asset_id="recipe-source",
+        logical_path="source.png",
+        profile="png_uint_v1",
+        color_override=ColorOverride(
+            transfer="linear",
+            primaries="rec709_d65",
+            range="full",
+            matrix="rgb",
+            chroma_location="none",
+            reason="legacy recipe samples authored RGB values directly",
+        ),
+    )
+    encoded = io.BytesIO()
+    with Image.frombytes(
+        "RGB",
+        (3, 2),
+        bytes(
+            (255, 0, 0, 0, 255, 0, 0, 0, 255, 20, 40, 60, 80, 100, 120, 140, 160, 180)
+        ),
+    ) as image:
+        image.save(encoded, format="PNG")
+    dependency_raw = encoded.getvalue()
+
+    class Source:
+        def __init__(self, data):
+            self.data = data
+            self.closed = False
+
+        def independent_reader(self):
+            return io.BytesIO(self.data)
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    recipe_source = PreparedAsset(
+        recipe_asset.asset_id,
+        recipe_asset.logical_path,
+        recipe_asset.profile,
+        hashlib.sha256(recipe_raw).hexdigest(),
+        len(recipe_raw),
+        Source(recipe_raw),
+        None,
+    )
+    dependency_source = PreparedAsset(
+        dependency_asset.asset_id,
+        dependency_asset.logical_path,
+        dependency_asset.profile,
+        hashlib.sha256(dependency_raw).hexdigest(),
+        len(dependency_raw),
+        Source(dependency_raw),
+        None,
+    )
+    budget = BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000)
+    image_source, info = validate_image_source(
+        recipe_asset,
+        recipe_source,
+        budget=budget,
+        owner="test:recipe",
+        output_count=2,
+        max_document_bytes=1000,
+        dependency_asset=dependency_asset,
+        dependency_source=dependency_source,
+    )
+
+    first = image_source.load(lambda: None)
+    second = image_source.load(lambda: None)
+    assert first == second
+    assert hashlib.sha256(first).digest() == hashlib.sha256(second).digest()
+    assert (image_source.width, image_source.height, info.width, info.height) == (
+        3,
+        2,
+        3,
+        2,
+    )
+    assert (info.dtype, info.channel_order, info.transfer, info.alpha) == (
+        "uint8",
+        ("red", "green", "blue"),
+        "linear",
+        "none",
+    )
+    assert image_source.gpu_bytes == 3 * 2 * 16 * 2
+    assert image_source.cpu_bytes >= (
+        2 * (len(recipe_raw) + len(dependency_raw)) + 32 * len(recipe_raw) + 3 * 2 * 192
+    )
+    checks = 0
+
+    def cancel_during_read():
+        nonlocal checks
+        checks += 1
+        if checks == 2:
+            raise InterruptedError("image loading cancelled")
+
+    with pytest.raises(InterruptedError, match="cancelled"):
+        image_source.load(cancel_during_read)
+    assert checks == 2
+    assert not recipe_source.source.closed and not dependency_source.source.closed
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+
+
+def test_polar_recipe_image_source_key_includes_explicit_surface_geometry():
+    import hashlib
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.resources.assets import PreparedAsset
+    from cephvr.visual_stimulus.resources.image_source import validate_image_source
+
+    raw = b'{"pattern":"polar_grating","params":{"size":8,"bar_count":6}}'
+    asset = Asset(
+        asset_id="polar",
+        logical_path="polar.json",
+        profile="cephvr1_texture_json_v1",
+        color_override=None,
+    )
+    prepared = PreparedAsset(
+        asset.asset_id,
+        asset.logical_path,
+        asset.profile,
+        hashlib.sha256(raw).hexdigest(),
+        len(raw),
+        SimpleNamespace(),
+        raw,
+    )
+    display = make_prepared_trial().display
+    first_surface = display.geometry.surfaces[0]
+    shifted = first_surface.model_copy(
+        update={
+            "bottom_left_mm": tuple(
+                value + 0.25 for value in first_surface.bottom_left_mm
+            )
+        }
+    )
+    changed_geometry = display.geometry.model_copy(
+        update={"surfaces": (shifted, *display.geometry.surfaces[1:])}
+    )
+    changed_display = display.model_copy(update={"geometry": changed_geometry})
+    budget = BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000)
+    first, _ = validate_image_source(
+        asset,
+        prepared,
+        budget=budget,
+        owner="test:polar:first",
+        output_count=1,
+        max_document_bytes=1000,
+        display=display,
+    )
+    second, _ = validate_image_source(
+        asset,
+        prepared,
+        budget=budget,
+        owner="test:polar:second",
+        output_count=1,
+        max_document_bytes=1000,
+        display=changed_display,
+    )
+    assert first.key != second.key
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
 
 
 def test_review_capture_cpu_budget_includes_fixed_copy_and_row_scratch() -> None:
@@ -749,3 +1146,375 @@ def test_video_registration_sums_mixed_frame_sizes_atomically(
                 with pytest.raises(MemoryError, match="aggregate decode memory"):
                     register()
     assert len(playback._instances) == accepted
+
+
+@pytest.mark.parametrize("source_dtype", ["uint8", "uint16"])
+def test_image_recipe_protects_and_fingerprints_its_relative_input(
+    tmp_path, source_dtype
+):
+    import hashlib
+    from types import SimpleNamespace
+
+    import numpy as np
+    import tifffile
+    from PIL import Image
+
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    pixels = np.arange(45, dtype=source_dtype).reshape(3, 5, 3)
+    stream = io.BytesIO()
+    tifffile.imwrite(stream, pixels, photometric="rgb")
+    encoded = stream.getvalue()
+    with Image.open(io.BytesIO(encoded)) as original:
+        expected = np.asarray(original.convert("RGB"))
+    (tmp_path / "source.tif").write_bytes(encoded)
+    raw = b'{"pattern":"image","params":{"texture_path":"source.tif"}}'
+    (tmp_path / "recipe.json").write_bytes(raw)
+    sources = []
+
+    class Source:
+        def __init__(self, path):
+            self.path, self.closed = path, False
+            sources.append(self)
+
+        def independent_reader(self):
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    program = SimpleNamespace(
+        assets=(
+            Asset(
+                asset_id="recipe",
+                logical_path="recipe.json",
+                profile="cephvr1_texture_json_v1",
+                color_override=None,
+            ),
+        ),
+        sequence=(),
+        instances=(),
+    )
+    budget = BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000)
+    bundle = prepare_resources(
+        program,
+        tmp_path,
+        budget,
+        announce=lambda *_: None,
+        snapshot_limit_bytes=1000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        max_document_bytes=1000,
+        source_factory=Source,
+    )
+    np.testing.assert_array_equal(bundle.prepared_content["recipe"].pixels, expected)
+    recipe_resource, image_resource = bundle.manifest.resources
+    assert recipe_resource.dependencies == (image_resource.fingerprint.resource_id,)
+    assert image_resource.fingerprint.logical_path == "source.tif"
+    assert image_resource.fingerprint.sha256 == hashlib.sha256(encoded).hexdigest()
+    assert image_resource.interpretation is None
+    assert image_resource.provider_compatibility == "Pillow-cephvr1-rgb8-input-v1"
+    assert image_resource.fingerprint.resource_id not in bundle.prepared_content
+    assert len(bundle.asset_set.assets) == 2
+    bundle.asset_set.close()
+    assert all(source.closed for source in sources)
+    (tmp_path / "recipe.json").write_text(
+        '{"pattern":"image","params":{"texture_path":"../outside.png"}}'
+    )
+    budget = BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000)
+    with pytest.raises(ValueError, match="relative"):
+        prepare_resources(
+            program,
+            tmp_path,
+            budget,
+            announce=lambda *_: None,
+            snapshot_limit_bytes=1000,
+            video_index_limit_bytes=1000,
+            glb_element_limit=1000,
+            max_document_bytes=1000,
+            source_factory=Source,
+        )
+    assert all(source.closed for source in sources)
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+
+
+@pytest.mark.parametrize("name", ["checkerboard", "noise", "sine_grating"])
+def test_demo_image_recipes_preserve_authored_png_pixels(name):
+    from pathlib import Path
+
+    import numpy as np
+    from PIL import Image
+
+    from cephvr.visual_stimulus.resources.recipe_dependencies import (
+        decode_recipe_image,
+        image_dependency,
+    )
+    from cephvr.visual_stimulus.resources.texture_recipe import (
+        generate_texture_recipe,
+        parse_texture_recipe,
+    )
+
+    root = Path(__file__).resolve().parents[2] / "demo_assets"
+    logical_path = f"textures/{name}.texture.json"
+    asset = Asset(
+        asset_id="demo",
+        logical_path=logical_path,
+        profile="cephvr1_texture_json_v1",
+        color_override=None,
+    )
+    recipe = parse_texture_recipe((root / logical_path).read_bytes())
+    dependency = image_dependency(root, asset, recipe)
+    assert dependency is not None
+    source = (root / dependency.logical_path).read_bytes()
+    reservations = []
+    pixels = decode_recipe_image(
+        dependency, source, lambda *shape: reservations.append(shape)
+    ).pixels
+    generated = generate_texture_recipe(recipe, image_pixels=pixels)
+    with Image.open(io.BytesIO(source)) as original:
+        expected = np.asarray(original.convert("RGB"))
+    np.testing.assert_array_equal(generated, expected)
+    assert reservations == [(expected.shape[1], expected.shape[0], 3, 8)]
+    assert recipe.tile_width_mm == recipe.tile_height_mm == 40
+
+
+def test_deferred_recipes_validate_sequentially_without_retaining_all_pixels(tmp_path):
+    from types import SimpleNamespace
+
+    from cephvr.visual_stimulus.resources.prepare import prepare_resources
+
+    assets = []
+    sources = []
+
+    class Source:
+        def __init__(self, path):
+            self.path, self.closed = path, False
+            sources.append(self)
+
+        def independent_reader(self):
+            assert not self.closed
+            return self.path.open("rb")
+
+        def close_after_consumers(self):
+            self.closed = True
+
+    for index in range(5):
+        path = tmp_path / f"recipe{index}.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "pattern": "noise_binary",
+                    "params": {"texture_resolution": 32, "seed": index},
+                }
+            )
+        )
+        assets.append(
+            Asset(
+                asset_id=f"recipe{index}",
+                logical_path=path.name,
+                profile="cephvr1_texture_json_v1",
+                color_override=None,
+            )
+        )
+    program = SimpleNamespace(assets=tuple(assets), sequence=(), instances=())
+    budget = BoundedBudget(cpu_limit=300_000, gpu_limit=100_000)
+    bundle = prepare_resources(
+        program,
+        tmp_path,
+        budget,
+        announce=lambda *_: None,
+        snapshot_limit_bytes=300_000,
+        video_index_limit_bytes=1000,
+        glb_element_limit=1000,
+        max_document_bytes=1000,
+        source_factory=Source,
+        defer_images=True,
+    )
+    assert len(bundle.image_sources) == 5
+    assert not bundle.prepared_content
+    assert all(asset.data is None for asset in bundle.asset_set.assets)
+    assert bundle.asset_set.cpu_bytes == 0
+    metadata_bytes = sum(
+        4096 + 4 * len(asset.model_dump_json().encode("utf-8")) for asset in assets
+    )
+    assert budget.usage.cpu_bytes == metadata_bytes
+    assert budget.usage.gpu_bytes == 0
+    assert len({source.key for source in bundle.image_sources.values()}) == 5
+    for source in bundle.image_sources.values():
+        budget.reserve(
+            owner="test-loader", cpu_bytes=source.cpu_bytes, gpu_bytes=source.gpu_bytes
+        )
+        first = source.load(budget.check_cancelled_or_expired)
+        assert len(first) == 32 * 32 * 16
+        assert first == source.load(budget.check_cancelled_or_expired)
+        del first
+        budget.release(owner="test-loader")
+    assert not any(source.closed for source in sources)
+    bundle.asset_set.close()
+    assert all(source.closed for source in sources)
+
+
+def test_image_worker_loads_off_thread_and_holds_reservation_until_handoff():
+    import time
+
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+    from cephvr.visual_stimulus.resources.image_worker import ImageWorker
+
+    budget = BoundedBudget(cpu_limit=100, gpu_limit=100)
+    worker = ImageWorker(budget)
+    started = threading.Event()
+    proceed = threading.Event()
+    main_thread = threading.get_ident()
+    load_threads = []
+
+    def load(check):
+        load_threads.append(threading.get_ident())
+        started.set()
+        while not proceed.wait(0.001):
+            check()
+        check()
+        return b"linear-rgba"
+
+    source = ImageSource("image-key", 1, 1, 40, 16, load)
+    try:
+        assert worker.request(source)
+        assert started.wait(1)
+        assert not worker.request(source)
+        assert budget.usage.cpu_bytes == 40
+        assert worker.result() is None
+        proceed.set()
+        deadline = time.monotonic() + 1
+        result = worker.result()
+        while result is None and time.monotonic() < deadline:
+            time.sleep(0.001)
+            result = worker.result()
+        assert result is not None and result.error is None
+        assert result.pixels == b"linear-rgba"
+        assert load_threads and load_threads[0] != main_thread
+        assert worker.busy
+        assert budget.usage.cpu_bytes == 40
+        worker.release_result()
+        assert worker.result() is None
+        assert not worker.busy
+        assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+    finally:
+        proceed.set()
+        assert worker.close(time.monotonic_ns() + 1_000_000_000)
+
+
+def test_image_worker_releases_pixel_payload_after_owner_release():
+    import gc
+    import time
+    import weakref
+
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+    from cephvr.visual_stimulus.resources.image_worker import ImageWorker
+
+    class Payload:
+        pass
+
+    payload_ref = None
+
+    def load(check):
+        nonlocal payload_ref
+        check()
+        payload = Payload()
+        payload_ref = weakref.ref(payload)
+        return payload  # type: ignore[return-value]
+
+    budget = BoundedBudget(cpu_limit=100, gpu_limit=100)
+    worker = ImageWorker(budget)
+    source = ImageSource("weak-pixels", 1, 1, 32, 16, load)
+    try:
+        assert worker.request(source)
+        deadline = time.monotonic() + 1
+        result = worker.result()
+        while result is None and time.monotonic() < deadline:
+            time.sleep(0.001)
+            result = worker.result()
+        assert result is not None and result.pixels is not None
+        assert payload_ref is not None and payload_ref() is not None
+        assert budget.usage.cpu_bytes == 32
+        worker.release_result()
+        del result
+        gc.collect()
+        assert payload_ref() is None
+        assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+    finally:
+        if worker.result() is not None:
+            worker.release_result()
+        assert worker.close(time.monotonic_ns() + 1_000_000_000)
+
+
+@pytest.mark.parametrize("cancel_during_load", [False, True])
+def test_image_worker_cancellation_is_shared_and_retains_result_reservation(
+    cancel_during_load,
+):
+    import time
+
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+    from cephvr.visual_stimulus.resources.image_worker import ImageWorker
+
+    cancelled = threading.Event()
+    started = threading.Event()
+    budget = BoundedBudget(cpu_limit=100, gpu_limit=100, cancelled=cancelled)
+    calls = []
+
+    def load(check):
+        calls.append(True)
+        started.set()
+        while True:
+            check()
+            time.sleep(0.001)
+
+    source = ImageSource("cancelled", 1, 1, 28, 16, load)
+    if not cancel_during_load:
+        cancelled.set()
+    worker = ImageWorker(budget)
+    try:
+        assert worker.request(source)
+        if cancel_during_load:
+            assert started.wait(1)
+            cancelled.set()
+        deadline = time.monotonic() + 1
+        result = worker.result()
+        while result is None and time.monotonic() < deadline:
+            time.sleep(0.001)
+            result = worker.result()
+        assert result is not None and result.pixels is None
+        assert isinstance(result.error, RuntimeError)
+        assert "image loading cancelled" in str(result.error)
+        assert bool(calls) is cancel_during_load
+        assert budget.usage.cpu_bytes == 28
+        worker.release_result()
+        assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0
+    finally:
+        if worker.result() is not None:
+            worker.release_result()
+        assert worker.close(time.monotonic_ns() + 1_000_000_000)
+
+
+def test_image_worker_close_timeout_retains_reservation_until_thread_join():
+    import time
+
+    from cephvr.visual_stimulus.resources.image_source import ImageSource
+    from cephvr.visual_stimulus.resources.image_worker import ImageWorker
+
+    budget = BoundedBudget(cpu_limit=100, gpu_limit=100)
+    worker = ImageWorker(budget)
+    started = threading.Event()
+    proceed = threading.Event()
+
+    def load(check):
+        started.set()
+        assert proceed.wait(2)
+        return b"decoded"
+
+    source = ImageSource("slow", 1, 1, 52, 16, load)
+    assert worker.request(source)
+    assert started.wait(1)
+    assert not worker.close(time.monotonic_ns() + 1_000_000)
+    assert budget.usage.cpu_bytes == 52
+    proceed.set()
+    assert worker.close(time.monotonic_ns() + 1_000_000_000)
+    assert budget.usage.cpu_bytes == budget.usage.gpu_bytes == 0

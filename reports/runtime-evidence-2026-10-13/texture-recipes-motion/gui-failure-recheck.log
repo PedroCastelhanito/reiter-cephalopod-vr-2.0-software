@@ -1,0 +1,281 @@
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+________________ test_motion_auto_commit_and_invalid_edit_undo _________________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106a65480>
+app = <PyQt6.QtWidgets.QApplication object at 0x1069a9b40>
+
+    def test_motion_auto_commit_and_invalid_edit_undo(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from cephvr.gui.protocol_document import blank_program
+    
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        editor.add_stimulus("Texture")
+        editor.timeline.set_screens(("Front",))
+        open_protocol_group(editor)
+        window.page_buttons[1].click()
+        app.processEvents()
+        motion = editor.subgroup.composer.rows["Front"].parameters.forms[0]
+        original = editor.program
+        motion.speed.setFocus()
+        motion.speed.selectAll()
+        QTest.keyClicks(motion.speed, "30")
+        editor.subgroup.composer.duration.setFocus()
+        app.processEvents()
+>       assert editor.program == original
+E       assert Program(forma...ings=()),)),)) == Program(forma...ings=()),)),))
+E         
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:7981: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 233 ms. Replace uses of missing font family "Segoe UI" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________ test_epoch_parameter_warnings_wait_for_submission[generate] __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106ade0e0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1069a9b40>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1759/test_epoch_parameter_warnings_0')
+mode = 'generate'
+
+    @pytest.mark.parametrize("mode", ["generate", "selection"])
+    def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mode):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.notices import FormNotice
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(review_program())
+        open_protocol_group(editor)
+        if mode == "generate":
+            owner = editor.subgroup
+            composer = owner.composer
+            composer.set_screens(("Front", "Left", "Right", "Bottom"))
+            composer.set_asset_root(str(tmp_path))
+            image = QImage(8, 8, QImage.Format.Format_RGB32)
+            image.fill(0)
+            path = tmp_path / "tile.png"
+            assert image.save(str(path))
+            composer.add_file("Texture", str(path), "Front")
+            submit, notice = owner.add_button, owner.notice
+        else:
+            editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+            editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+            owner = editor.subgroup
+            composer = owner.composer
+            submit, notice = owner.add_button, owner.notice
+        app.processEvents()
+        row = next(row for row in composer.rows.values() if row.indices)
+        parameters = row.parameters
+        assert parameters.fades is not None
+        parameters.more.setChecked(True)
+        original, reference = editor.program, composer.program
+        fade = parameters.fades.fade_in
+        fade.setFocus()
+        fade.selectAll()
+        QTest.keyClicks(fade, "-1")
+        composer.duration.setFocus()
+        app.processEvents()
+        parameters.auto_apply()
+        parameters.finish_edit(fade, composer.duration)
+        composer.change_mode(1 - composer.active_mode)
+        composer.change_type(row.face, "Image")
+        composer.add_empty_layer(row.face)
+        if mode == "generate":
+            owner.add_variation()
+            owner.refresh_preview()
+        assert parameters.dirty and fade.text() == "-1"
+        assert editor.program == original and composer.program == reference
+        assert all(n.dialog is None for n in editor.findChildren(FormNotice))
+        submit.click()
+        app.processEvents()
+>       assert notice.dialog is not None
+E       assert None is not None
+E        +  where None = <cephvr.gui.notices.FormNotice object at 0x10733f1c0>.dialog
+
+tests/gui/test_dashboard.py:8480: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_________ test_epoch_parameter_warnings_wait_for_submission[selection] _________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10d4700d0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1069a9b40>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1759/test_epoch_parameter_warnings_1')
+mode = 'selection'
+
+    @pytest.mark.parametrize("mode", ["generate", "selection"])
+    def test_epoch_parameter_warnings_wait_for_submission(window, app, tmp_path, mode):
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.notices import FormNotice
+        from cephvr.gui.protocol_document import review_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(review_program())
+        open_protocol_group(editor)
+        if mode == "generate":
+            owner = editor.subgroup
+            composer = owner.composer
+            composer.set_screens(("Front", "Left", "Right", "Bottom"))
+            composer.set_asset_root(str(tmp_path))
+            image = QImage(8, 8, QImage.Format.Format_RGB32)
+            image.fill(0)
+            path = tmp_path / "tile.png"
+            assert image.save(str(path))
+            composer.add_file("Texture", str(path), "Front")
+            submit, notice = owner.add_button, owner.notice
+        else:
+            editor.timeline.set_screens(("Front", "Left", "Right", "Bottom"))
+            editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+            owner = editor.subgroup
+            composer = owner.composer
+            submit, notice = owner.add_button, owner.notice
+        app.processEvents()
+        row = next(row for row in composer.rows.values() if row.indices)
+        parameters = row.parameters
+        assert parameters.fades is not None
+        parameters.more.setChecked(True)
+        original, reference = editor.program, composer.program
+        fade = parameters.fades.fade_in
+        fade.setFocus()
+        fade.selectAll()
+        QTest.keyClicks(fade, "-1")
+        composer.duration.setFocus()
+        app.processEvents()
+        parameters.auto_apply()
+        parameters.finish_edit(fade, composer.duration)
+        composer.change_mode(1 - composer.active_mode)
+        composer.change_type(row.face, "Image")
+        composer.add_empty_layer(row.face)
+        if mode == "generate":
+            owner.add_variation()
+            owner.refresh_preview()
+        assert parameters.dirty and fade.text() == "-1"
+        assert editor.program == original and composer.program == reference
+        assert all(n.dialog is None for n in editor.findChildren(FormNotice))
+        submit.click()
+        app.processEvents()
+>       assert notice.dialog is not None
+E       assert None is not None
+E        +  where None = <cephvr.gui.notices.FormNotice object at 0x10d77f0a0>.dialog
+
+tests/gui/test_dashboard.py:8480: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____ test_compact_reference_rows_share_headers_and_commit_relocated_fields _____
+
+window = <cephvr.gui.window.DashboardWindow object at 0x10737edd0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1069a9b40>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1759/test_compact_reference_rows_sh0')
+
+    def test_compact_reference_rows_share_headers_and_commit_relocated_fields(
+        window: DashboardWindow, app: QApplication, tmp_path: Path
+    ) -> None:
+        from PyQt6.QtGui import QImage
+    
+        from cephvr.gui.epoch_motion import EpochMotion
+        from cephvr.gui.protocol_groups import motion_numbers
+    
+        window.resize(1350, 900)
+        window.page_buttons[1].click()
+        open_protocol_group(window.protocol.editor, generate=True)
+        composer = window.protocol.editor.subgroup.composer
+        composer.set_screens(("Left", "Right"))
+        composer.set_asset_root(str(tmp_path))
+        path = tmp_path / "tile.png"
+        image = QImage(8, 8, QImage.Format.Format_RGB32)
+        image.fill(0)
+        assert image.save(str(path))
+        composer.add_file("Texture", str(path), "Left")
+        composer.add_file("Texture", str(path), "Right")
+        app.processEvents()
+        left, right = composer.rows["Left"], composer.rows["Right"]
+        assert not left.narrow
+        assert left.show_header and not right.show_header
+        assert not right.identity_header
+        assert right.height() < 80
+        assert left.height() == right.height()
+        assert left.parameters.more.isHidden()
+        assert not left.parameters.advanced.isVisible()
+        second = tmp_path / "second.png"
+        assert image.save(str(second))
+        left.parameters.set_media_path(next(iter(left.parameters.asset_forms)), str(second))
+        source = next(iter(left.parameters.asset_forms.values()))
+        destination = next(iter(right.parameters.asset_forms.values()))
+        assert not destination.isReadOnly()
+        destination.setFocus()
+        destination.selectAll()
+        QTest.keyClicks(destination, source.text())
+        composer.duration.setFocus()
+        app.processEvents()
+>       assert [asset.logical_path for asset in composer.program.assets] == [
+            "second.png",
+            "second.png",
+        ]
+E       AssertionError: assert ['tile.png', ... 'second.png'] == ['second.png', 'second.png']
+E         
+E         At index 0 diff: 'tile.png' != 'second.png'
+E         Left contains 2 more items, first extra item: 'second.png'
+E         Use -v to get more diff
+
+tests/gui/test_dashboard.py:8654: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+_______ test_reference_advanced_controls_align_to_layer_and_retain_first _______
+
+window = <cephvr.gui.window.DashboardWindow object at 0x106ade0e0>
+app = <PyQt6.QtWidgets.QApplication object at 0x1069a9b40>
+
+    def test_reference_advanced_controls_align_to_layer_and_retain_first(window, app):
+        from cephvr.gui.protocol_document import blank_program
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        editor.set_program(blank_program())
+        open_protocol_group(editor, generate=True)
+        composer = editor.subgroup.composer
+        composer.set_screens(("Front", "Bottom"))
+        composer.change_type("Front", "Texture")
+        row = composer.rows["Front"]
+        row.advanced.setChecked(True)
+        for width in (1350, 720):
+            window.resize(width, 900)
+            app.processEvents()
+            row.align_advanced()
+            QTest.qWait(10)
+            app.processEvents()
+            params = row.parameters
+>           assert params.extra_body.itemAt(1).widget() is params.retain
+E           assert <PyQt6.QtWidgets.QWidget object at 0x10739f370> is <PyQt6.QtWidgets.QCheckBox object at 0x10739f520>
+E            +  where <PyQt6.QtWidgets.QWidget object at 0x10739f370> = <built-in method widget of QWidgetItem object at 0x10d5f80d0>()
+E            +    where <built-in method widget of QWidgetItem object at 0x10d5f80d0> = <PyQt6.QtWidgets.QWidgetItem object at 0x10d5f80d0>.widget
+E            +      where <PyQt6.QtWidgets.QWidgetItem object at 0x10d5f80d0> = <built-in method itemAt of QVBoxLayout object at 0x10d5ed480>(1)
+E            +        where <built-in method itemAt of QVBoxLayout object at 0x10d5ed480> = <PyQt6.QtWidgets.QVBoxLayout object at 0x10d5ed480>.itemAt
+E            +          where <PyQt6.QtWidgets.QVBoxLayout object at 0x10d5ed480> = <cephvr.gui.stimulus_parameters.StimulusParameters object at 0x10d5ee5f0>.extra_body
+E            +  and   <PyQt6.QtWidgets.QCheckBox object at 0x10739f520> = <cephvr.gui.stimulus_parameters.StimulusParameters object at 0x10d5ee5f0>.retain
+
+tests/gui/test_dashboard.py:9935: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_motion_auto_commit_and_invalid_edit_undo
+FAILED tests/gui/test_dashboard.py::test_epoch_parameter_warnings_wait_for_submission[generate]
+FAILED tests/gui/test_dashboard.py::test_epoch_parameter_warnings_wait_for_submission[selection]
+FAILED tests/gui/test_dashboard.py::test_compact_reference_rows_share_headers_and_commit_relocated_fields
+FAILED tests/gui/test_dashboard.py::test_reference_advanced_controls_align_to_layer_and_retain_first
+5 failed, 454 deselected in 13.16s

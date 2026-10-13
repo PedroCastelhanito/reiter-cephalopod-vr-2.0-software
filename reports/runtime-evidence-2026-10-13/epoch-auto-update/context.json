@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-13",
+  "timezone": "Asia/Tokyo",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "working_tree": "Uncommitted; concurrent GUI and texture changes present. Full-suite collection preceded final test expectation updates and passive timer guard.",
+  "source_sha256": {
+    "src/cephvr/gui/subgroup_editor.py": "6d496734fff85165a249df784eca71b53ce294367232785190d9dfd6c401dd3c",
+    "src/cephvr/gui/protocol_editor.py": "de43a574eeb9b148d79657c8a88363237e435e3cf57f96c8113fa87abf7521eb",
+    "tests/gui/test_dashboard.py": "fc857f3057dbd9777344f8c040ab6e663bdb2c645d1f68e8dee01f0f09ba79eb"
+  },
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig'",
+      "result": "451 passed, 6 failed; four obsolete expectations updated, concurrent advanced layout subsequently passes; texture JSON image-decoding assertion remains."
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'subgroup or epoch_automatic or motion_auto_commit or epoch_parameter_warnings or compact_reference_rows or reference_advanced_controls_align or demo_assets_can'",
+      "result": "12 passed, 1 failed, 447 deselected. Remaining failure: test_demo_assets_can_be_selected_and_review_path_restores attempts QImage decode of a JSON recipe before editor use."
+    },
+    {
+      "command": ".venv/bin/python -m ruff check / format --check (two changed GUI owners and owning dashboard test)",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/subgroup_editor.py src/cephvr/gui/protocol_editor.py",
+      "result": "passed, 2 sources"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "676 modules, zero violations; existing cohesion advisories; affected owners remain focused at 270/478 lines"
+    },
+    {
+      "command": "Local Markdown path/anchor check of architecture.md, docs/architecture/gui.md, reports/runtime.md, TODO.md; git diff --check",
+      "result": "526 references and whitespace passed"
+    }
+  ],
+  "visual": "editor.png: themed standalone ProtocolEditor, grouped review_program, selected Flow subgroup, Left/Right screens; 1200x1100 offscreen render. Reviewed final image: no Apply/Discard footer. Initial 1100x800 render clipped controls; replaced by padded adequate-height capture. Segoe UI falls back locally.",
+  "limits": "macOS offscreen only; no native Windows, DPI, device, backend or rig acceptance. Separate existing mixed-subgroup random-rule issue tracked in TODO."
+}

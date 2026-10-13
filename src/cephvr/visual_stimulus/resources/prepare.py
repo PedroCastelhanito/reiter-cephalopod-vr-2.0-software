@@ -5,13 +5,15 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Literal
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Literal
 
 from cephvr.platform.windows.protected_source import ProtectedWindowsSource
 from cephvr.visual_stimulus.config.models.display_profile import DisplayProfile
 from cephvr.visual_stimulus.config.models.program_model import Program
 from cephvr.visual_stimulus.resources.arena import prepare_arena
 from cephvr.visual_stimulus.resources.assets import (
+    RELOADABLE_IMAGE_PROFILES,
     PreparedAssetSet,
     PreparedResourceBundle,
     ProtectedSource,
@@ -19,9 +21,22 @@ from cephvr.visual_stimulus.resources.assets import (
 )
 from cephvr.visual_stimulus.resources.budget import PreparationBudget, arena_mesh_bytes
 from cephvr.visual_stimulus.resources.calibration import prepare_calibration
+from cephvr.visual_stimulus.resources.image_interpretation import (
+    image_interpretation,
+    image_validation_key,
+)
 from cephvr.visual_stimulus.resources.media import decode_image
+from cephvr.visual_stimulus.resources.recipe_dependencies import (
+    decode_recipe_image,
+    image_dependency,
+)
+from cephvr.visual_stimulus.resources.recipe_preparation import prepare_recipe_image
+from cephvr.visual_stimulus.resources.texture_recipe import parse_texture_recipe
 from cephvr.visual_stimulus.resources.uniforms import build_uniform_layouts
 from cephvr.visual_stimulus.resources.video_index import index_video
+
+if TYPE_CHECKING:
+    from cephvr.visual_stimulus.resources.image_source import ImageInfo, ImageSource
 
 
 def _version(distribution: str) -> str:
@@ -47,6 +62,8 @@ def prepare_resources(
     source_factory: Callable[[Path], ProtectedSource] | None = None,
     codec_threads: int = 1,
     path_overrides: Mapping[str, Path] | None = None,
+    defer_images: bool = False,
+    validated_images: dict[str, tuple[ImageSource, ImageInfo]] | None = None,
 ) -> PreparedResourceBundle:
     """Protect all source assets and return canonical manifest facts.
 
@@ -56,6 +73,8 @@ def prepare_resources(
     if video_index_limit_bytes <= 0 or glb_element_limit <= 0 or output_count <= 0:
         raise ValueError("video and GLB preparation limits must be positive")
     factory = source_factory or ProtectedWindowsSource
+    validation_cache = {} if validated_images is None else validated_images
+    new_validation_keys: list[str] = []
     source_set = prepare_assets(
         program,
         assets_root,
@@ -65,6 +84,8 @@ def prepare_resources(
         source_factory=factory,
         owner_prefix=owner_prefix,
         path_overrides=path_overrides,
+        max_document_bytes=max_document_bytes,
+        defer_images=defer_images,
     )
     try:
         from cephvr.visual_stimulus.config.models.artifact_models import (
@@ -75,15 +96,128 @@ def prepare_resources(
             ResourceManifest,
         )
 
+        recipes = {}
+        authored_by_id = {item.asset_id: item for item in program.assets}
+        metadata_bytes = {
+            item.asset_id: 4096 + 4 * len(item.model_dump_json().encode("utf-8"))
+            for item in program.assets
+            if defer_images and item.profile in RELOADABLE_IMAGE_PROFILES
+        }
+        if defer_images:
+            budget.reserve(
+                owner=f"{owner_prefix}:image-metadata",
+                cpu_bytes=sum(metadata_bytes.values()),
+                gpu_bytes=0,
+            )
+        recipe_images = {}
+        dependencies_to_prepare = []
+        for source_asset in source_set.assets:
+            authored = authored_by_id[source_asset.asset_id]
+            if authored.profile != "cephvr1_texture_json_v1":
+                continue
+            if defer_images:
+                from cephvr.visual_stimulus.resources.image_source import (
+                    read_source_bytes,
+                )
+
+                parse_owner = f"{owner_prefix}:recipe-parse"
+                budget.reserve(
+                    owner=parse_owner,
+                    cpu_bytes=source_asset.byte_count * 32,
+                    gpu_bytes=0,
+                )
+                try:
+                    raw = read_source_bytes(
+                        source_asset, budget.check_cancelled_or_expired
+                    )
+                    recipe = parse_texture_recipe(
+                        raw,
+                        max_document_bytes=max_document_bytes or snapshot_limit_bytes,
+                    )
+                    dependency = image_dependency(assets_root, authored, recipe)
+                    del raw, recipe
+                finally:
+                    budget.release(owner=parse_owner)
+            else:
+                assert source_asset.data is not None
+                recipe = parse_texture_recipe(
+                    source_asset.data,
+                    max_document_bytes=max_document_bytes or snapshot_limit_bytes,
+                )
+                recipes[authored.asset_id] = recipe
+                dependency = image_dependency(assets_root, authored, recipe)
+            if dependency is not None:
+                if dependency.asset_id in authored_by_id:
+                    raise ValueError(
+                        "recipe image dependency identity collides with an authored asset"
+                    )
+                authored_by_id[dependency.asset_id] = dependency
+                if defer_images:
+                    metadata_bytes[dependency.asset_id] = 4096 + 4 * len(
+                        dependency.model_dump_json().encode("utf-8")
+                    )
+                    budget.reserve(
+                        owner=f"{owner_prefix}:image-metadata",
+                        cpu_bytes=sum(metadata_bytes.values()),
+                        gpu_bytes=0,
+                    )
+                recipe_images[authored.asset_id] = dependency.asset_id
+                dependencies_to_prepare.append(dependency)
+        if dependencies_to_prepare:
+            dependency_set = prepare_assets(
+                SimpleNamespace(assets=tuple(dependencies_to_prepare)),
+                assets_root,
+                budget,
+                announce=announce,
+                snapshot_limit_bytes=snapshot_limit_bytes,
+                source_factory=factory,
+                owner_prefix=f"{owner_prefix}:recipe-dependencies",
+                defer_images=defer_images,
+            )
+            source_set = PreparedAssetSet(
+                (*source_set.assets, *dependency_set.assets),
+                source_set.cpu_bytes + dependency_set.cpu_bytes,
+            )
+            budget.release(owner=f"{owner_prefix}:recipe-dependencies:asset-snapshots")
+            budget.reserve(
+                owner=f"{owner_prefix}:asset-snapshots",
+                cpu_bytes=source_set.cpu_bytes,
+                gpu_bytes=0,
+            )
         entries: list[Resource] = []
         prepared_content: dict[str, object] = {}
+        image_sources = {}
+        dependency_ids = frozenset(item.asset_id for item in dependencies_to_prepare)
+        sources_by_id = source_set.by_id()
+        recipe_dependency_content = {}
+        for dependency in dependencies_to_prepare:
+            if defer_images:
+                continue
+            source = sources_by_id[dependency.asset_id]
+            assert source.data is not None
+
+            def reserve_dependency_image(
+                width: int,
+                height: int,
+                channels: int,
+                bits: int,
+                *,
+                identity: str = dependency.asset_id,
+            ) -> None:
+                budget.reserve(
+                    owner=f"{owner_prefix}:asset:{identity}",
+                    cpu_bytes=width * height * 64,
+                    gpu_bytes=0,
+                )
+
+            recipe_dependency_content[dependency.asset_id] = decode_recipe_image(
+                dependency,
+                source.data,
+                reserve_dependency_image,
+            )
         for source_asset in source_set.assets:
             budget.check_cancelled_or_expired()
-            authored = next(
-                item
-                for item in program.assets
-                if item.asset_id == source_asset.asset_id
-            )
+            authored = authored_by_id[source_asset.asset_id]
             interpretation = None
             cpu_bytes = source_asset.byte_count
             prepared_cpu_bytes = 0
@@ -105,50 +239,103 @@ def prepare_resources(
                     gpu_bytes=width * height * 16 * output_count,
                 )
 
-            if authored.profile in ("png_uint_v1", "tiff_uint_v1", "jpeg8_v1"):
+            if authored.asset_id in dependency_ids:
+                # Dependency bytes are replay inputs; only the generated recipe
+                # has a renderer interpretation and resident image allocation.
+                kind = "image"
+                provider = "Pillow-cephvr1-rgb8-input-v1"
+                recipe_dependency_content.pop(authored.asset_id, None)
+                if defer_images:
+                    cpu_bytes = metadata_bytes[authored.asset_id]
+            elif defer_images and authored.profile in RELOADABLE_IMAGE_PROFILES:
+                from cephvr.visual_stimulus.resources.image_source import (
+                    validate_image_source,
+                )
+
+                dependency_id = recipe_images.get(authored.asset_id)
+                if dependency_id is not None:
+                    dependencies = (dependency_id,)
+                dependency_asset = (
+                    authored_by_id[dependency_id] if dependency_id is not None else None
+                )
+                dependency_source = (
+                    sources_by_id[dependency_id] if dependency_id is not None else None
+                )
+                validation_key = image_validation_key(
+                    authored,
+                    source_asset,
+                    display=display,
+                    output_count=output_count,
+                    dependency_asset=dependency_asset,
+                    dependency_source=dependency_source,
+                )
+                if validation_key not in validation_cache:
+                    validation_cache[validation_key] = validate_image_source(
+                        authored,
+                        source_asset,
+                        budget=budget,
+                        owner=f"{owner_prefix}:image-validation",
+                        output_count=output_count,
+                        max_document_bytes=max_document_bytes or snapshot_limit_bytes,
+                        display=display,
+                        dependency_asset=dependency_asset,
+                        dependency_source=dependency_source,
+                    )
+                    new_validation_keys.append(validation_key)
+                image_source, info = validation_cache[validation_key]
+                image_sources[authored.asset_id] = image_source
+                interpretation = image_interpretation(authored, info)
+                kind = "image"
+                provider = (
+                    "cephvr1-texture-raster-v1"
+                    if authored.profile == "cephvr1_texture_json_v1"
+                    else "imagecodecs+tifffile-linear-premultiplied-v1"
+                )
+                cpu_bytes = metadata_bytes[authored.asset_id]
+                # Residency admits this peak separately when a protected source
+                # is decoded/uploaded, rather than retaining every validated image.
+                gpu_bytes = 0
+            elif authored.profile in (
+                "png_uint_v1",
+                "tiff_uint_v1",
+                "jpeg8_v1",
+                "cephvr1_texture_json_v1",
+            ):
                 if source_asset.data is None:
                     raise MemoryError(
                         f"static asset {authored.asset_id} has no bounded source snapshot"
                     )
-                image = decode_image(authored, source_asset.data, reserve=reserve_image)
+                if authored.profile == "cephvr1_texture_json_v1":
+                    recipe = recipes[authored.asset_id]
+                    image_input = None
+                    if authored.asset_id in recipe_images:
+                        dependency_id = recipe_images[authored.asset_id]
+                        dependencies = (dependency_id,)
+                        image_input = recipe_dependency_content[dependency_id].pixels
+                    image = prepare_recipe_image(
+                        authored,
+                        recipe,
+                        budget,
+                        owner=f"{owner_prefix}:asset:{authored.asset_id}",
+                        output_count=output_count,
+                        display=display,
+                        image_pixels=image_input,
+                    )
+                    del image_input
+                else:
+                    image = decode_image(
+                        authored, source_asset.data, reserve=reserve_image
+                    )
                 prepared_content[authored.asset_id] = image
                 prepared_cpu_bytes = image.width * image.height * 64
-                bits = image.pixels.dtype.itemsize * 8
-                channel_bits = tuple(bits for _ in image.channel_order)
-                interpretation = Interpretation(
-                    interpretation_id=f"{authored.asset_id}-source-v1",
-                    width=image.width,
-                    height=image.height,
-                    source_component_bits=channel_bits,
-                    pixel_format=str(image.dtype),
-                    channel_order=image.channel_order,
-                    row_origin="top_left",
-                    source_alpha=image.alpha,
-                    transfer=image.transfer,
-                    primaries="rec709_d65",
-                    range=authored.color_override.range
-                    if authored.color_override
-                    else "full",
-                    matrix=authored.color_override.matrix
-                    if authored.color_override
-                    else "rgb",
-                    chroma_location=authored.color_override.chroma_location
-                    if authored.color_override
-                    else "none",
-                    orientation_degrees=0,
-                    mirror_x=False,
-                    sample_aspect_numerator=1,
-                    sample_aspect_denominator=1,
-                    resolution_origin="explicit_override"
-                    if authored.color_override
-                    else "source_metadata",
-                    effective_override_reason=authored.color_override.reason
-                    if authored.color_override
-                    else None,
-                )
+                interpretation = image_interpretation(authored, image)
                 gpu_bytes = image.width * image.height * 16 * output_count
                 kind = "image"
-                provider = "imagecodecs+tifffile-linear-premultiplied-v1"
+                provider = (
+                    "cephvr1-texture-raster-v1"
+                    if authored.profile == "cephvr1_texture_json_v1"
+                    else "imagecodecs+tifffile-linear-premultiplied-v1"
+                )
             elif authored.profile in ("mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"):
                 video = index_video(
                     authored,
@@ -314,6 +501,18 @@ def prepare_resources(
                     content_sha256=None,
                 ),
                 ComponentProvenance(
+                    role="image_decoder",
+                    implementation="cephvr1-compatible-raster",
+                    version="1",
+                    content_sha256=None,
+                ),
+                ComponentProvenance(
+                    role="image_decoder",
+                    implementation="Pillow",
+                    version=_version("Pillow"),
+                    content_sha256=None,
+                ),
+                ComponentProvenance(
                     role="video_decoder",
                     implementation="PyAV",
                     version=_version("av"),
@@ -332,10 +531,15 @@ def prepare_resources(
             manifest,
             build_uniform_layouts(program, display),
             prepared_content,
+            image_sources,
         )
     except BaseException:
+        for key in new_validation_keys:
+            validation_cache.pop(key, None)
         source_set.close()
         budget.release(owner=f"{owner_prefix}:asset-snapshots")
+        budget.release(owner=f"{owner_prefix}:recipe-dependencies:asset-snapshots")
+        budget.release(owner=f"{owner_prefix}:image-metadata")
         for source_asset in source_set.assets:
             budget.release(owner=f"{owner_prefix}:asset:{source_asset.asset_id}")
             budget.release(owner=f"{owner_prefix}:calibration:{source_asset.asset_id}")

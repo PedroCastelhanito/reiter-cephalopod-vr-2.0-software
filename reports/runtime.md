@@ -1,5 +1,109 @@
 # Controller and supervisor status
 
+Oct13 sidebar cleanup under [G01 revision181](../docs/architecture/gui.md#g01)
+removes the full-GUI Load/Save buttons. Snapshot/history ownership and per-page
+file controls remain; restore errors no longer recommend the removed button.
+ARCH-002 review keeps the change in window composition and its existing history
+message. Offscreen visibility probe passes after selecting Protocol; initial probe
+incorrectly checked a control on a hidden page. Scoped Ruff/format, Win32 mypy2
+sources, boundaries683/zero violations and whitespace pass. Existing native preview
+processes have not been restarted; no device or rig actions.
+
+Device workflow refinement (`device-wiring-drafts`) under
+[G01](../docs/architecture/gui.md#g01) and
+[E07](../docs/architecture/experiment.md#e07) separates wiring from camera/display
+participation. MCU owns logical Behavior/Tracking/Eye pin drafts independently of
+inventory; contextual Camera/Projector editors update that same owner. MCU v3 files
+and review v2 drafts preserve role wiring without changing Use, with explicit legacy
+migration. Unfinished GUI settings survive polling; selected identity tests omit
+PFS/import/capture, MCU connection checks submit only their port, and manual camera
+preparation preserves participation and recording choices. Focused exact-diff
+connection/selected-camera validators retain unrelated state, active conflict checks,
+authority/revision/ownership guards and full Setup validation. Selected-camera
+validation uses an action-only copy; actual stored Use/recording flags never change.
+ARCH-002 keeps these validators, contextual editor and projector prerequisite hints
+in focused helpers with existing owner interfaces and no new dependencies. Existing
+large main/bridge, MCU panel and projector panel remain their respective composition,
+command-routing and presentation owners; new validation/editor/hint logic is separate.
+Aggregate review also corrected the compact group footer label so repetition fields
+remain readable at narrow widths, without weakening the existing width assertion.
+Root controller regression passes251 cases; acquisition manual-device/preview
+regression passes101 with one platform/rig deselection. Scoped controller Ruff/format
+and Win32 mypy5 sources pass. Final GUI aggregate passes463 with one obsolete
+caption assertion; correcting that assertion gives four related layout passes,
+covering the remaining case without further production changes. All464 GUI cases
+are accounted for across those runs; an all-green aggregate rerun is not claimed.
+GUI Ruff/format157 files and Win32 mypy156 sources pass; boundaries686/zero violations,
+document links and whitespace pass. Luna implementation, Sol6.1 integration and
+Astra main/final review find no remaining blocker. Initial migration/type failures,
+stale assertions and their corrections remain with the [raw evidence and provenance](runtime-evidence-2026-10-13/device-wiring-drafts/context.json).
+Offscreen production-widget layouts were inspected and the native Cocoa sample GUI
+launched with isolated temporary settings (session71109, visible confirmation).
+Native device/electrical/full-load checks remain in the [rig checklist](rig-verification.md).
+
+Oct13 readable GUI messages (`gui-readable-runtime-messages`) under
+[G02](../docs/architecture/gui.md#g02) and [E03](../docs/architecture/gui.md#e03):
+automatic reconnect/launch review now excludes exact current completed/valid
+nonfatal configuration notices and explicitly completed recoveries with completion
+evidence and no failure. Errors, runtime incidents, pending choices, failed or
+unknown terminal operations, unresolved recoveries and all other warnings still
+require review. Ordinary pending commands, routine success history and truncation
+alone do not trigger it; empty reconnects no longer force a review. Warning has no
+severity field, so classification uses exact source evidence rather than keywords.
+Full history remains available through Review controller history, with no added
+control gate. An already-open important review remains fenced to its connection
+until acknowledged, including when a later same-connection snapshot is empty.
+Luna implementation, Sol integration and Astra final source review pass. Final18
+focused review/history/control tests pass; scoped lint/format, Win32 types and
+boundaries676/zero violations pass. The broader GUI run records461 passes and one
+concurrent demo-texture failure: its already-loaded test tried decoding JSON as an
+image while the texture chat changed the fixture/manifest. That case passes its
+current-source rerun; no fresh complete-suite pass is claimed.
+[Filter evidence](runtime-evidence-2026-10-13/readable-gui-messages/important-only/context.json)
+retains both runs and their scope. The local sample preview confirms routine
+history starts without an automatic dialog, with explicit buttons for history/important examples.
+
+The themed, icon-free reconnect review groups retained errors, recoveries, incidents, pending
+choices, warnings and operations needing attention. Routine successful operations
+appear as a count; the 540×400 dialog uses bold accented category headings and a
+vertically scrollable summary with only Copy details
+and Continue. Copied plain-text details preserve exact command identities,
+diagnostics and bounded-history omissions. Copy details
+copies every currently retained error and operation, including entries beyond the
+former routine-history display limit, from the latest snapshot.
+Only Continue acknowledges the exact connection; copy and dismissal
+do not acknowledge or send a controller command. Activity entries use readable action
+names and concise outcomes, with exact diagnostics available through View details
+and Copy details in the entry context menu. Admission remains explicitly pending
+completion; acknowledgement identity, control authority and log retention/scroll
+ownership stay unchanged. ARCH-002 review keeps formatting in the existing focused
+snapshot/console owners without new dependencies or runtime back-references.
+The larger main/bridge modules only route existing signals and outcomes; no new
+state ownership is added. Tracked calibration, inventory, Tracking and control-release
+operations no longer fall through to a contradictory generic success message;
+successful Tracking frame polls stay quiet while completion handlers still run.
+Duplicate MCU failure rows are removed. Luna implementation, Sol integration and
+Astra source/screenshot review found no remaining blocker. Four themed offscreen
+screenshots verify grouping, literal text and readable detail panes. A direct Qt
+popup-interaction test crashed; the replacement render exercises the actual detail
+constructor with popup selection substituted, so native mouse/keyboard input is
+not claimed verified. The original log/grouping repair's offscreen GUI regression
+passes452 tests; Ruff check
+and format pass155 files, Win32-target mypy passes153 sources, and the boundary
+check reports667 modules/zero violations with existing cohesion advisories.
+Local links and whitespace pass. [Commands, provenance and screenshots](runtime-evidence-2026-10-13/readable-gui-messages/context.json)
+retain the development-machine evidence. Native Windows/DPI appearance remains
+part of the existing [rig checklist](rig-verification.md).
+Final compact-dialog checks pass12 focused prompt, clipboard, markup-escaping,
+vertical-overflow and acknowledgement cases; scoped lint/format, Win32 types and
+the current boundary check676/zero violations pass. Sol/Astra review normal and
+long-report screenshots, confirming the two-action footer remains reachable.
+Snapshot-derived text is escaped before trusted heading styling; full copied
+diagnostics remain literal. The refreshed macOS sample preview reports both dashboard and compact
+dialog visible, with isolated settings and synthetic events.
+[Compact-dialog evidence](runtime-evidence-2026-10-13/readable-gui-messages/dialog-compact/context.json)
+records commands and scope; this is local presentation evidence, not rig acceptance.
+
 Oct13 Git synchronization packaging: raw evidence videos remain at their original
 local paths and are excluded from Git. The
 [local video manifest](runtime-evidence-2026-10-13/local-video-manifest.json)
@@ -1059,11 +1163,82 @@ task-owned test directories and generated temporary bindings are removed; existi
 caches, raw evidence and user work are preserved. The temporary inventory is removed
 last after the lightweight status/reference check; no task background process remains.
 
-Oct13 subgroup editing follows [G01 revision162](../docs/architecture/gui.md#g01),
+Oct13 right-edge refinement (`timeline-edge-alignment`) follows
+[G01 revision179](../docs/architecture/gui.md#g01): group blocks omit epoch counts,
+retaining repetitions and duration; overall trial totals retain epoch counts.
+Both timeline rows remove the extra16px right gutter so trailing add buttons align
+with editing-content edges. Seven focused timeline tests, scoped Ruff/format,
+Win32 mypy and boundaries682/zero violations pass. Offscreen/native geometry checks
+confirm matching sequence/composer widths and flush right add buttons; full dashboard
+render reviewed. [Evidence and preview](runtime-evidence-2026-10-13/timeline-edge-alignment/context.json).
+Updated Cocoa sample GUI remains open; prior preview preserved. No device/controller
+mutation or Windows/rig acceptance.
+
+Oct13 compact timeline refinement (`trial-timeline-polish`) under
+[G01 revision178](../docs/architecture/gui.md#g01): left-aligned totals, dark unselected
+group blocks, accent selection, separate count/duration lines, subtle footer divider
+and Selected group label. Content-based height replaces the320px floor; current sample
+is281px on Cocoa. Seven focused timeline tests pass; final scoped lint/format, Win32
+mypy and boundary checks pass. ProgramTimeline's502-line cohesion review retains its
+existing painting/hit/scroll owner and focused external details/cache helpers.
+[Evidence and interactive preview](runtime-evidence-2026-10-13/trial-timeline-polish/context.json)
+record native/offscreen visual review. Sandbox launch lacked a screen; authorized native
+launch reports PREVIEW_READY and remains open with isolated settings/sample data for
+owner inspection. No controller/device connection or Windows/rig acceptance.
+
+Oct13 trial timeline layout (`trial-timeline-layout`) follows
+[G01 revision177](../docs/architecture/gui.md#g01): totals above the blocks, compact
+selected-group controls below, aligned to the last group's visible right edge during
+resize and horizontal scroll. Hide the secondary repetition/count/duration line when
+it cannot fit a group block; retain the name and complete hover details. ARCH-002
+keeps control layout and painting in their existing focused owners, with one viewport
+notification and no dependencies. Seven focused timeline/history/scrolling tests pass;
+three offscreen geometry checks and reviewed renders cover one/eight groups at1200px
+and eight groups at720px. Scoped lint/format, Win32 mypy, boundaries676/zero violations
+and whitespace pass. [Evidence and preview script](runtime-evidence-2026-10-13/trial-timeline-layout/context.json).
+Native Windows/DPI and rig acceptance remain unverified.
+
+Oct13 epoch title labels (`epoch-title-labels`) follow
+[G01 revision176](../docs/architecture/gui.md#g01): named subgroup headers display
+only their name; unnamed headers display Epoch N using existing sequence numbering.
+ARCH-002 review keeps this presentation-only change in TimelineViews without new
+state or dependencies. A direct model/view probe verifies unnamed numbering,
+name-only headers and shared run boundaries. Scoped Ruff/format and Win32 mypy,
+boundaries676/zero violations and whitespace pass; no native or rig check is claimed.
+
+Oct13 epoch automatic updates (`epoch-auto-update`) implement
+[G01 revision175](../docs/architecture/gui.md#g01): completed text edits and control
+changes commit through the existing whole-trial subgroup transaction, without
+Apply/Discard footer buttons. Navigation/save flush valid pending changes; invalid
+input remains a draft and Undo can discard it. Passive validation never opens a
+modal or continuously retries invalid variation inputs. Rebase the reference and
+canonical declarations without rebuilding focused controls. Preserve source identities,
+projector-local changes, variation seeds, and existing Undo/Redo history. ARCH-002
+review retains the focused subgroup owner and existing Qt timers, with no new
+dependencies or whole-runtime references. Final focused checks pass12 cases, including motion/fade edits, invalid drafts,
+focus, atomic projector-local updates, history, variation persistence and file reload.
+The broader run passed451 with six failures: four obsolete explicit-Apply/draft-asset
+expectations are updated and pass; the concurrent advanced-control layout now passes.
+The remaining texture-import test attempts QImage decoding of JSON before using the
+editor. This prevents a clean whole-GUI claim and belongs to the active texture work.
+Scoped Ruff/format, Win32-target mypy (two owners), boundaries (676 modules, zero
+violations),526 local links/anchors and whitespace pass. Existing boundary size
+advisories concern unchanged owners; the affected focused files remain below500 lines.
+[Commands, source hashes, logs and offscreen render](runtime-evidence-2026-10-13/epoch-auto-update/context.json)
+retain evidence. Native Windows/DPI remains unverified.
+
+An investigation while testing invalid random edits also observed a pre-existing
+mixed-subgroup limitation: changing random rules while multiple batch identities
+are selected can leave stored rules unchanged and clear the local draft. The same
+`apply` path excludes metadata updates for mixed identities. This is separate from
+the automatic-update wiring; follow up with an explicit rejection or supported
+mixed-rule semantics before claiming bulk random-rule editing.
+
+Oct13 subgroup editing follows [G01 revision175](../docs/architecture/gui.md#g01),
 [V03 revision12](../docs/architecture/visual_stimulus.md#v03) and
 [V08 revision5](../docs/architecture/visual_stimulus.md#v08). Clicking any member selects
 its complete subgroup; parameter edits affect all members/repetitions. One composer
-retains variation controls through Apply, selection, Undo and file reload. The trailing
+retains variation controls through automatic updates, selection, Undo and file reload. The trailing
 subgroup + copies one template without inheriting rules. Order is removed; imported ordering
 is preserved. Layer selectors show only indices at 64 px; timeline durations use
 hh:mm:ss with fractional precision retained.
@@ -1080,7 +1255,7 @@ records 45 passing focused GUI checks, Ruff/format150 files, Win32 mypy148 sourc
 and662 modules with zero boundary violations. Inspect1280/720 protocol captures and
 1280 calibration cards; local rendering does not establish native Windows/DPI acceptance.
 
-The selected group's name/repetitions now sit above the blocks inside Trial timeline;
+The selected group's name/repetitions sit below the blocks inside Trial timeline;
 Sequence editor begins with subgroup blocks. Reparent the existing GroupEditor and
 retain its binding/history, including resizing for imported condition controls.
 Removal controls in the protocol use the same `button("×", "compact")` role as the
@@ -1991,6 +2166,68 @@ test), the authority-loss/evidence/recovery-inspection state machines and the Op
 fail-closed dependencies were intentionally left alone.
 
 ## Unresolved findings and limitations
+
+Current dev-machine triage (2026-10-13, source `4a62844`, macOS/Python3.11.15):
+latest combined evidence verifies nominal60fps and repeated reset; the old39.47fps/
+warning-shutdown statements in TODO and the outstanding rig checklist are corrected.
+Historical workflow observations below retain their original scope.
+
+| Standing issue | Work possible on the development machine | Remaining acceptance |
+| --- | --- | --- |
+| Failed-Setup renderer cleanup rejects an unknown command | Local worker recovery formerly submitted an unregistered worker-issued shutdown and forwarded its cleanup as coordinator-issued evidence. The repair retains this local command/result on the worker query route; the coordinator still rejects unknown IDs (E06/E08). Local regressions pass; see validation below. | Repeat the native failed-Setup/prior-calibration workflow; the full historical failure is not reproduced here. |
+| Acquisition finalizer calls a departed controller | Teardown tolerates MCU Close UNAVAILABLE only after exact PID/creation-time exit confirmation, retaining the unconfirmed claim and reporting it (A11/E08). Live/unknown process and other RPC failures propagate. Local regressions pass; see validation below. | Native orderly shutdown and exact release. |
+| Repeated manual preview hits MCU pending/unavailable and retention capacity | Reproduced fourth-readback capacity failure: each completed result retained a16MiB reservation. Explicit terminal completion now charges actual result bytes while preserving in-flight capacity, exact replay and300s retention (E08/A02). MCU pending is separately unproven; lease-turnover cleanup fences remain. Local regressions pass; see validation below. | Repeated real preview reuse in one generation with lease/claim state captured. |
+| Review/camera recording loss | Profile bounded drain/padding/copy behavior, test backpressure and prepare measured changes (V12/V28/A07). The recording owner still waits up to5ms between unresolved writes. This is a cost, not proven NVENC saturation. | Combined Windows/GPU/camera throughput, zero-loss and optical timing. |
+| Calibration loss and stale ordinary diagnostic bundle | Trace actual save/restore paths and validate regenerated all-VSync assets (G01/V01). Current normal-close tests pass; reported loss has no established root cause. | Actual closure-path reproduction and physical calibration. |
+| Windows projector overflow, hover lookup and native picker exception-hook failures | Improve portable layout/lifetime coverage and inspect source (G01/G02). Local layout passes do not resolve Windows failures. | Windows native/DPI/pytest compatibility. |
+| Long image protocols | Complete image readiness/lookahead/miss contracts; accepted bounded residency remains unimplemented (V04/V11). Critical miss behavior still requires an owner choice. | Native memory/performance and full-load acceptance after implementation. |
+
+Local generated bindings were stale: controller and ManagedGui imports failed on
+`MICROCONTROLLER_SIGNAL_KIND_EYE_TRACKING`, already present in authoritative contracts.
+`python tools/generate_contracts.py` regenerates19 ignored Protobuf sources and clears
+that blocker without editing contracts or handwritten runtime code. Focused tests then
+pass222 (two deselected); nine offscreen GUI checks pass, including normal calibration
+close/reopen and projector layout. Authenticated communication/startup recovery/shutdown
+checks pass29 after granting loopback access; the sandbox attempt had five bind failures
+and24 passes. Boundaries inspect667 modules with zero violations and existing cohesion
+advisories. Exact commands and limits are recorded in LOG under
+`runtime-dev-machine-triage`; this is sampled review, not a full runtime audit or rig pass.
+That initial triage performed no runtime repair or operator/device mutation; the later
+owner-authorized repairs above are separately validated below.
+
+Oct13 local repair validation (source4a62844 plus retained patch): Luna implements,
+Sol6.1 independently analyzes/integrates, and Astra approves the final source with no
+actionable blockers. The affected acquisition/controller/supervisor/shared/Visual
+Stimulus suite passes1316, skips five Win32-atomic ring cases and deselects four
+Windows/rig cases. The final renderer teardown-helper extraction overlaps this run;
+a final authenticated transport rerun passes9. Ruff check/format573 files, Win32
+mypy486 sources, boundary check667 modules/zero violations and whitespace pass.
+Sandbox transport attempts fail at loopback binding; unchanged permitted runs pass.
+[Commands, source hashes and evidence](runtime-evidence-2026-10-13/dev-machine-repairs/context.json)
+retain that scope. These are local implementation checks, not Windows/rig acceptance.
+
+ARCH-002 review retains existing ownership and dependencies. Terminal reservation
+compaction is explicit and atomic under the existing ledger lock; ordinary admission/
+executor completion retains its original reservation. Native process identity uses
+the existing exact PID/creation-time helper. Renderer local recovery uses its own
+command-local ledger scope, retained admission/outcome and pruned routing marker;
+worker/owner identity, original deadline and same-ID replay are checked before dispatch.
+Its cleanup is queryable locally and never treated as a coordinator-issued command
+or supervisor cleanup receipt. Endpoint teardown attempts continue after report-drain
+failure while propagating the original failure. The new acquisition test_main module
+owns host-entrypoint finalization, distinct from existing worker/bootstrap/coordinator
+behavior tests; all other regressions extend their owning modules. Existing oversized
+module advisories remain cohesive; no source split, dependency or policy change is needed.
+
+The missing-SESSION_CONFIG recovery warning remains conservative: the durable
+reservation identifies the session but cannot prove that it was unpaired. Removing
+that warning would invent evidence. Likewise, MCU pending/unavailable is not proven
+to share the readback-capacity cause; the historical probe repeatedly released its
+control lease, which can legitimately fence new work while cleanup completes.
+Capture exact lease/claim state during the deferred rig repeat. The local renderer
+regression exercises RenderOwner/ReportBridge recovery delivery and finalized prior
+scope; it does not reproduce the entire historical failed-Setup/calibration workflow.
+Native acceptance procedures remain solely in [the rig checklist](rig-verification.md).
 
 Oct12 `long-protocol-resource-scaling`: the authorized GUI portion now uses compact
 source groups, scoped editing and viewport-only block painting under

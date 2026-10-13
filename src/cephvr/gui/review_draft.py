@@ -9,6 +9,7 @@ from typing import Any
 from PyQt6.QtCore import QIODevice, QSaveFile
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QLineEdit
 
+from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS
 from cephvr.gui.pin_numbers import firmware_pin, pin_number
 from cephvr.gui.protocol_document import TrialDraft
 from cephvr.gui.protocol_history import EditHistory
@@ -43,7 +44,7 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
     projectors = window.devices.projectors
     spike = window.devices.spikeglx
     data = {
-        "format_version": 1,
+        "format_version": 2,
         "dashboard": {key: getattr(dashboard, key).text() for key in _DASHBOARD}
         | {"sex": dashboard.sex.currentText()},
         "cameras": [
@@ -53,12 +54,15 @@ def save_review_draft(window: DashboardWindow, path: Path) -> None:
                 "enabled": camera.enabled,
                 "values": dict(camera.values),
                 "record": window.recordings.record[camera.key].isChecked(),
-                "pin": firmware_pin(mcu.pins.get(camera.key, "")),
             }
             for camera in cameras.drafts
         ],
         "tracking": window.tracking.snapshot(),
         "microcontroller": {
+            "camera_pins": {
+                role: firmware_pin(mcu.pin_editors[role].text())
+                for role, _ in ROLE_OUTPUTS
+            },
             "port": mcu.port.currentData() or "",
             "trial_pin": mcu.trial_pin.text(),
             "trial_enabled": mcu.enable_controls["trial-state"].isChecked(),
@@ -164,7 +168,7 @@ def load_review_draft(window: DashboardWindow, path: Path) -> bool:
     if (
         not isinstance(data, dict)
         or type(data.get("format_version")) is not int
-        or data["format_version"] != 1
+        or data["format_version"] not in (1, 2)
     ):
         raise ValueError("Review draft format is unsupported")
     protocol = data["protocol"]
@@ -178,8 +182,38 @@ def load_review_draft(window: DashboardWindow, path: Path) -> bool:
     ]
     if not trials:
         raise ValueError("Review draft has no trial")
+    data["microcontroller"]["camera_pins"] = _role_pins(data)
     _restore(window, data, trials)
     return True
+
+
+def _role_pins(data: dict[str, Any]) -> dict[str, str]:
+    """Keep role wiring even when its physical camera is absent on this machine."""
+    roles = dict(ROLE_OUTPUTS)
+    if data["format_version"] == 2:
+        pins = data["microcontroller"].get("camera_pins")
+        if (
+            not isinstance(pins, dict)
+            or set(pins) != set(roles)
+            or any(not isinstance(value, str) for value in pins.values())
+        ):
+            raise ValueError("Review draft MCU pins require the three logical roles")
+        return dict(pins)
+    result = dict.fromkeys(roles, "")
+    role_keys = {name: key for key, name in ROLE_OUTPUTS}
+    seen: set[str] = set()
+    for camera in data["cameras"]:
+        pin = camera.get("pin", "")
+        if not isinstance(pin, str):
+            raise ValueError("Legacy review pin must be text")
+        if not pin:
+            continue
+        role = role_keys.get(camera["role"])
+        if role is None or role in seen:
+            raise ValueError("Legacy review pin has an unknown or duplicate role")
+        seen.add(role)
+        result[role] = pin
+    return result
 
 
 def _restore(
@@ -200,7 +234,6 @@ def _restore(
         draft.role = item["role"]
         draft.enabled = item["enabled"]
         draft.values = dict(item["values"])
-        mcu.pins[draft.key] = pin_number(item["pin"])
     cameras.populate_inventory()
     if cameras.drafts:
         cameras.table.selectRow(0)
@@ -212,6 +245,8 @@ def _restore(
             window.recordings.record[draft.key].setChecked(item["record"])
     window.recordings.record["stimulus"].setChecked(data["recordings"]["stimulus"])
     window.recordings.velocities.setChecked(data["recordings"]["velocities"])
+    for role, pin in data["microcontroller"]["camera_pins"].items():
+        mcu.pin_editors[role].setText(pin_number(pin))
     selected_port = data["microcontroller"]["port"]
     mcu.set_saved_pins(
         selected_port,

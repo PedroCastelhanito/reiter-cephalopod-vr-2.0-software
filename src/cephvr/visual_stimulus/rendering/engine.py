@@ -341,6 +341,9 @@ class RendererEngine:
         self._last_time_ns = None
         self._stopped = False
         self._state.start()
+        begin_images = getattr(self._port, "begin_images", None)
+        if begin_images is not None:
+            begin_images(trial_id)
 
     def _apply_due_boundaries(self, now_ns: int) -> None:
         assert self._prepared is not None and self._start_ns is not None
@@ -404,6 +407,16 @@ class RendererEngine:
                         if next_epoch
                         else boundary_host_ns
                     ),
+                    now_ns=boundary_host_ns,
+                )
+            if next_epoch is not None:
+                from cephvr.visual_stimulus.rendering.texture_links import (
+                    bind_texture_links,
+                )
+
+                bind_texture_links(
+                    self._state.instances,
+                    self._prepared.artifact.display.geometry,
                     now_ns=boundary_host_ns,
                 )
             self._state.epoch_index = boundary.after or 0
@@ -524,6 +537,11 @@ class RendererEngine:
             feedback_evidence = applied_feedback
         try:
             scene, snapshots = self._scene_state(epoch, now_ns)
+            select_images = getattr(self._port, "select_images", None)
+            if select_images is not None:
+                snapshots = select_images(
+                    self._trial_id, epoch.occurrence_index, snapshots
+                )
         except BaseException:
             self._release_video_leases()
             raise
@@ -572,6 +590,11 @@ class RendererEngine:
             active_instance_ids=tuple(snapshot.instance_id for snapshot in snapshots),
             uniforms=rendered.uniforms,
             media=rendered.media,
+            images=tuple(
+                item.image_selection
+                for item in snapshots
+                if item.image_selection is not None
+            ),
             effective_poses=rendered.effective_poses,
         )
         submissions = []
@@ -646,7 +669,11 @@ class RendererEngine:
             live.advance(evaluation_ns)
             live.active = False
         self._stopped = True
-        return self._show_idle()
+        idle = self._show_idle()
+        finish_images = getattr(self._port, "finish_images", None)
+        if finish_images is not None:
+            finish_images(self._trial_id)
+        return idle
 
     def _show_idle(self) -> tuple[Any, ...]:
         if self._display is None:

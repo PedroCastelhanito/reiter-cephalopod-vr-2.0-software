@@ -1,0 +1,2 @@
+src/cephvr/gui/managed_prompts.py:66: error: Unexpected keyword argument "manual" for "_show_retained_summary" of "ManagedPrompts"  [call-arg]
+Found 1 error in 1 file (checked 3 source files)

@@ -121,9 +121,20 @@ class ProtocolEditor(PlannerControls):
         self, program: Program, paths: tuple[tuple[int, ...], ...]
     ) -> None:
         if self.isEnabled():
-            self.commit(
-                program, scope=paths[0][:-1], selected=paths[0][-1], paths=paths
-            )
+            if self.subgroup.committing:
+                if program != self.program:
+                    self.histories[self.index].push(self.snapshot())
+                    self.drafts[self.index].program = program
+                self.scope, self.node_index = paths[0][:-1], paths[0][-1]
+                self.selected_paths = paths
+                self.subgroup.accept(program, paths)
+                self.update_timelines()
+                self.refresh_history()
+                self.changed.emit()
+            else:
+                self.commit(
+                    program, scope=paths[0][:-1], selected=paths[0][-1], paths=paths
+                )
 
     def render_selection(self) -> None:
         if not self.scope:
@@ -197,8 +208,9 @@ class ProtocolEditor(PlannerControls):
 
     def flush_parameters(self) -> bool:
         if self.subgroup.dirty:
-            self.error("Apply or discard the subgroup changes first")
-            return False
+            self.subgroup.apply()
+            if self.subgroup.dirty:
+                return False
         return not self.group_editor.dirty or self.group_editor.apply()
 
     def refresh_history(self) -> None:

@@ -636,6 +636,77 @@ async def test_repeated_connection_checks_leave_capacity_for_pfs_and_release() -
         )
 
 
+@pytest.mark.asyncio
+async def test_completed_configuration_readbacks_release_large_reservations() -> None:
+    owner = control.ProcessIdentity(role="acquisition", generation=str(uuid4()))
+    context = acq.WorkerContext(
+        worker=control.ProcessIdentity(
+            role="acquisition_behavioral_worker", generation=str(uuid4())
+        ),
+        owner=owner,
+        camera=camera_pb2.CAMERA_ROLE_BEHAVIORAL,
+    )
+    limits = AcquisitionControlLimits.from_message_limit(16 * 1024 * 1024)
+    commands = CommandLedger(
+        context.worker.generation,
+        300_000_000_000,
+        max_records=limits.max_records,
+        max_bytes=limits.max_bytes,
+        result_reservation_bytes=limits.normal_result_reservation_bytes,
+        safety_reserve_records=limits.safety_reserve_records,
+        safety_reserve_bytes=limits.safety_reserve_bytes,
+    )
+    state = WorkerState(
+        context,
+        control.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        commands,
+        max_retained_views=limits.max_records,
+        limits=limits,
+        registered=True,
+    )
+    queue = _QueueOwner()
+    service = _AdmissionService(state, queue, {})
+    grpc_context = cast(grpc.aio.ServicerContext, object())
+
+    for _ in range(4):
+        command = _command(context, owner)
+        request = acq.WorkerResolveCamera(command=command)
+        receipt = await service._admit(
+            "ResolveCameraConfiguration", request, command, grpc_context
+        )
+        assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+        retained = commands.get(command.command_id)
+        assert retained is not None
+        assert retained.result_reservation_bytes == limits.max_message_bytes
+
+        state.complete_operation(
+            command.command_id,
+            succeeded=True,
+            progress="complete",
+            now_ns=host_time_ns(),
+        )
+        terminal = commands.get(command.command_id)
+        assert terminal is not None and terminal.result is not None
+        assert terminal.result_reservation_bytes == len(terminal.result)
+
+    # Three unresolved 16 MiB results still exhaust the normal 62 MiB budget.
+    for _ in range(3):
+        command = _command(context, owner)
+        request = acq.WorkerResolveCamera(command=command)
+        receipt = await service._admit(
+            "ResolveCameraConfiguration", request, command, grpc_context
+        )
+        assert receipt.result == control.COMMAND_RESULT_ACCEPTED
+
+    exhausted = _command(context, owner)
+    request = acq.WorkerResolveCamera(command=exhausted)
+    rejected = await service._admit(
+        "ResolveCameraConfiguration", request, exhausted, grpc_context
+    )
+    assert rejected.result == control.COMMAND_RESULT_REJECTED
+    assert queue.tickets[-1].cancelled
+
+
 class _Ticket(WorkerOperationTicket):
     def __init__(self) -> None:
         self.committed = False

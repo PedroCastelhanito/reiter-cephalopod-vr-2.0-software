@@ -48,8 +48,55 @@ even for a small individual image. Evicting decoded pixels or GPU textures never
 releases protection needed by later consumers. Compatible immutable content can be
 shared across trials; active consumer ownership prevents premature eviction.
 Initial residency and subsequent prefetch include transient decode/conversion/upload
-memory in admission. Image-miss response and detailed lookahead/readiness bindings
-remain Open; this declaration does not implement an image scheduler.
+memory in admission. Resolved next-use order drives advance loading through one CPU worker and the existing
+GL owner. Retain first-use anchors for every image-backed instance across prepared
+trials, so selecting any prepared trial or skipping early render ticks cannot expose an
+uninitialized texture. Bound the anchors, retained instance selections, next epoch and
+one decode/conversion workspace before Ready; a budget too small for these sets fails
+Setup. Per-trial scene targets, videos and arenas retain their existing separate bounds.
+
+Share compatible image content/interpretation/recipe geometry and dependency identities.
+Read and decode protected sources; eviction never reopens a logical path. Keep at most
+one decoded upload handoff. GL uploads submit at most 1 MiB (or one wider scanline) per
+owner service turn, then use zero-wait completion polling. Pin the active/previous image
+and pending GPU work; keep reservations until confirmed release. Driver allocation and
+submission latency are not a real-time guarantee and require rig measurements.
+
+If a requested texture is late, retain the instance's last selected texture while the
+current authored motion, period, size, opacity and epoch clock continue. First use has
+its preloaded anchor. Select the requested image as soon as complete; do not replay
+expired epochs. Read/decode/graphics failures remain failures. Save-On evidence records
+requested and actual identities/indices on every group; Save Off preserves only bounded
+diagnostic counters. Cleanup joins the loader before closing protected sources and
+retains unconfirmed GPU releases for retry.
+
+## Legacy texture recipe preparation
+
+The image-producing profile `cephvr1_texture_json_v1` retains the original UTF-8 JSON
+as its protected, fingerprinted source. Both `.json` and `.texture.json` filenames
+are supported; content selects the recipe. Optional tags must be consistent with a
+texture design. Normalize the legacy `params`/`pattern_params` spelling and supported
+pattern aliases. Ignore preview filenames as rendering inputs: missing/stale previews
+do not replace or invalidate an otherwise valid recipe.
+
+Prepare static RGB8 pixels before Ready with provider compatibility
+`cephvr1-texture-raster-v1`. Preserve legacy pattern formulas, explicit/default seeds,
+frequency units and runtime resolution defaults. Supported pattern families are flat,
+grating, polar grating, checker, vertical/horizontal bars, calibration grid, filtered
+noise/substrate, binary/gray noise, regular/random dots and referenced images. Polar
+patterns consume the prepared display's actual four-surface geometry; no old nominal
+rig dimensions are assumed. Image recipes resolve and protect their transitive image
+under the same asset root and retain its separate fingerprint/dependency relationship.
+
+Generated values have the legacy normalized linear RGB interpretation by default;
+supported explicit transfer overrides are retained. Budget source snapshots,
+generation/decode scratch, retained pixels and GPU upload through existing resource
+limits; reject over-budget work before allocating it. Missing blur dependencies or
+unsupported source features fail preparation explicitly. Recipe generation never
+runs during rendering and does not add an image-residency scheduler or archive copy.
+GUI import applies explicit physical tile dimensions when supplied; absent dimensions
+preserve the authored tile size. JSON recipe motion fields are not playback authority:
+program epoch motion and V02 links own drift and rotation.
 
 ## Windows handle binding
 

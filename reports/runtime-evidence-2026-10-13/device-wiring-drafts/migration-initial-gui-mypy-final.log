@@ -1,0 +1,3 @@
+src/cephvr/gui/gui_snapshot.py:105: error: "CameraTrigger" has no attribute "serial"  [attr-defined]
+src/cephvr/gui/gui_snapshot.py:108: error: "CameraTrigger" has no attribute "serial"  [attr-defined]
+Found 2 errors in 1 file (checked 156 source files)

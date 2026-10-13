@@ -272,8 +272,25 @@ class StimulusParameters(QWidget):
                 allow_link=not looming and values["kind"] != "video",
             )
             self.linked_to, self.fades = appearance.linked_to, appearance.fades
+            self.linked_to.currentIndexChanged.connect(self.update_link_controls)
+            self.linked_to.currentIndexChanged.connect(self.mark_changed)
+            self.update_link_controls()
             self.fades.changed.connect(self.mark_changed)
             self.extra_body.addWidget(appearance)
+        if values["kind"] == "texture":
+            center = ValueEditor(
+                {
+                    "type": "object",
+                    "properties": {"initial": schema["properties"]["initial"]},
+                },
+                {"initial": values["initial"]},
+                definitions,
+            )
+            center.changed.connect(self.mark_changed)
+            self.forms.append(center)
+            self.extra_body.addWidget(
+                field("Initial texture center / orientation", center)
+            )
         if values["kind"] == "image" and not looming:
             image = ImageParameters(values, schema, definitions)
             image.changed.connect(self.mark_changed)
@@ -331,6 +348,17 @@ class StimulusParameters(QWidget):
         self.units.setText(" · ".join(parts))
         self.advanced.setToolTip(self.units.text())
 
+    def update_link_controls(self) -> None:
+        linked = self.linked_to.currentData() is not None
+        for form in self.forms:
+            if isinstance(form, EpochMotion):
+                form.setEnabled(not linked)
+                for control in (form.speed, form.direction, form.angular):
+                    control.setEnabled(not linked and not form.custom.isChecked())
+                form.setToolTip(
+                    "Movement follows the selected reference screen" if linked else ""
+                )
+
     def candidate(self) -> dict[str, Any]:
         assert self.program is not None
         candidate = self.program.model_dump(mode="json")
@@ -372,6 +400,14 @@ class StimulusParameters(QWidget):
                 )
         if self.fades is not None:
             setting["opacity"] = self.fades.read()
+            if setting["kind"] == "texture":
+                setting["linked_to"] = self.linked_to.currentData()
+                if setting["linked_to"] is not None:
+                    setting["phase_x"] = {"kind": "hold"}
+                    setting["phase_y"] = {"kind": "hold"}
+                    setting["motion"] = {
+                        key: {"kind": "hold"} for key in ("x", "y", "rotation")
+                    }
         if setting["kind"] not in ("video", "arena"):
             setting["reset"] = not self.retain.isChecked()
         for form in self.forms:
@@ -446,7 +482,7 @@ class StimulusParameters(QWidget):
         dialog = file_dialog(self, "Select stimulus media", self.asset_root)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         dialog.setNameFilter(
-            "Stimulus files (*.png *.tif *.tiff *.jpg *.jpeg *.mp4 *.mkv *.glb *.texture.json)"
+            "Stimulus files (*.png *.tif *.tiff *.jpg *.jpeg *.mp4 *.mkv *.glb *.json)"
         )
         dialog.fileSelected.connect(lambda path: self.set_media_path(asset_id, path))
         dialog.finished.connect(lambda: setattr(self, "file_dialog", None))

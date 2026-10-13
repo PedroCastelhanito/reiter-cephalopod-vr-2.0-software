@@ -7,7 +7,12 @@ from cephvr.gui.components import combo, field
 from cephvr.gui.projector_layers import layer_title
 from cephvr.gui.stimulus_fades import StimulusFades
 from cephvr.gui.stimulus_scope import surfaces
-from cephvr.visual_stimulus.config.models.program_model import Epoch, Program, Settings
+from cephvr.visual_stimulus.config.models.program_model import (
+    Epoch,
+    Program,
+    Settings,
+    TextureSettings,
+)
 
 
 class AdvancedAppearance(QWidget):
@@ -27,7 +32,17 @@ class AdvancedAppearance(QWidget):
             QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed
         )
         for source in epoch.settings:
-            if source.instance_id != setting.instance_id:
+            if (
+                isinstance(setting, TextureSettings)
+                and isinstance(source, TextureSettings)
+                and source.instance_id != setting.instance_id
+                and source.linked_to is None
+                and source.space.kind == "physical_surface"
+                and len(source.space.mappings) == 1
+                and source.pattern.kind == "image_tile"
+                and source.space.mappings[0].surface_id
+                not in surfaces(setting.model_dump(mode="json"))
+            ):
                 faces = "/".join(
                     f.title() for f in surfaces(source.model_dump(mode="json"))
                 )
@@ -35,9 +50,17 @@ class AdvancedAppearance(QWidget):
                     f"{faces or 'Rig-wide'} · {layer_title(program, source)}",
                     source.instance_id,
                 )
-        self.linked_to.setEnabled(False)
+        supported = (
+            isinstance(setting, TextureSettings)
+            and setting.space.kind == "physical_surface"
+            and len(setting.space.mappings) == 1
+            and setting.pattern.kind == "image_tile"
+        )
+        if isinstance(setting, TextureSettings) and setting.linked_to is not None:
+            self.linked_to.setCurrentIndex(self.linked_to.findData(setting.linked_to))
+        self.linked_to.setEnabled(supported)
         self.linked_to.setToolTip(
-            "Linked movement awaits the source/target Tracking control ownership choice; no link is applied yet."
+            "Follow another screen’s texture motion using calibrated geometry. Your texture, scale and phase remain independent. Use drift or rotation in separate epochs; custom/Tracking motion cannot own a link."
         )
         self.link_field = field("Linked to", self.linked_to)
         self.link_field.setParent(self)

@@ -1,0 +1,14 @@
+{
+  "files": [
+    "TODO.md",
+    "LOG.md",
+    "architecture.md",
+    "docs/architecture/visual_stimulus.md",
+    "contracts/visual_stimulus/stimulus-schema.md",
+    "contracts/visual_stimulus/asset-lifetime.md",
+    "reports/visual_stimulus.md",
+    "reports/rig-verification.md"
+  ],
+  "local_references": 558,
+  "errors": []
+}

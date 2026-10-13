@@ -81,11 +81,9 @@ async def assign_camera_role(client: HeadlessClient, options: dict[str, Any]) ->
         raise ClientError("Select a supported camera role.")
     for selected in roles.values():
         if selected.device.device_id == serial:
-            selected.enabled = False
             selected.device.device_id = ""
     if role in roles:
         roles[role].device.device_id = serial
-        roles[role].enabled = False
     outcome = await client.execute(
         "UpdateConfiguration",
         rpc.UpdateConfigurationRequest(

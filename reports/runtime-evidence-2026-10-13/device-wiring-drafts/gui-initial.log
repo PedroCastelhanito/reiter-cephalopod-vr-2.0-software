@@ -1,0 +1,951 @@
+........................................................................ [ 15%]
+............................................................F...F....... [ 31%]
+........................................................F.FFF......FF... [ 46%]
+.......................................................F................ [ 62%]
+........................................................................ [ 77%]
+..................F..................................................... [ 93%]
+......F........................                                          [100%]
+=================================== FAILURES ===================================
+_________ test_preview_participation_gates_and_camera_draft_selection __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x127d52b90>
+
+    def test_preview_participation_gates_and_camera_draft_selection(
+        window: DashboardWindow,
+    ) -> None:
+        cameras = window.devices.cameras
+        dashboard = window.dashboard
+        dialog = dashboard.preview_dialog
+        assert [item.name for item in dashboard.view.previews] == [
+            "Behavior cam",
+            "Tracking cam",
+            "Tracking",
+            "Visual stimulus",
+        ]
+        cameras.connect_button.click()
+        assert cameras.selected.connected
+        cameras.fields["trigger_frequency_hz"].setText("1200")
+        cameras.edit("trigger_frequency_hz", "1200")
+        cameras.table.selectRow(1)
+        assert cameras.fields["trigger_frequency_hz"].text() == ""
+        cameras.edit("trigger_frequency_hz", "2400")
+        cameras.table.selectRow(0)
+        assert cameras.fields["trigger_frequency_hz"].text() == "1200"
+        assert not hasattr(cameras, "preview_button")
+        assert dialog.controls["camera-1"].isChecked()
+        cameras.enable_controls[0].click()
+        assert not dialog.controls["camera-1"].isEnabled()
+        assert not dialog.names["camera-1"].isEnabled()
+        requests = []
+        dashboard.preview_requested.connect(lambda *args: requests.append(args))
+        dialog.request("camera-1", True)
+        assert requests == []
+        assert not dialog.controls["camera-1"].isChecked()
+        controls = window.findChild(ReviewControls)
+        controls.backend_actions["tracking"].setChecked(False)
+        assert not dialog.controls["tracking"].isEnabled()
+        assert dialog.controls["camera-2"].isEnabled()
+        controls.backend_actions["stimulus"].setChecked(False)
+        assert not dialog.controls["stimulus"].isEnabled()
+        controls.set_phase(Phase.RUNNING)
+        assert not cameras.connect_button.isEnabled()
+        assert not cameras.preset_field.browse.isEnabled()
+        assert not cameras.role.isEnabled()
+        assert not any(c.isEnabled() for c in cameras.enable_controls)
+        cameras.drafts[0].enabled = True
+        cameras.populate_inventory()
+        cameras.toggle_connection()
+        cameras.edit("trigger_frequency_hz", "9999")
+>       assert not cameras.drafts[0].enabled
+E       AssertionError: assert not True
+E        +  where True = CameraDraft(key='camera-1', role='Behavior cam', serial='REVIEW-001', model='Basler · sample', enabled=True, connected=True, capture_running=True, values={'trigger_frequency_hz': '1200'}).enabled
+
+tests/gui/test_dashboard.py:2823: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+____________ test_device_tabs_sit_above_controls_without_moving_hud ____________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x143de31c0>
+app = <PyQt6.QtWidgets.QApplication object at 0x116ad8820>
+
+    def test_device_tabs_sit_above_controls_without_moving_hud(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        assert window.tracking.load_button.text() == "Load…"
+        assert window.tracking.save_button.text() == "Save as…"
+        window.resize(1175, 940)
+        app.processEvents()
+        hud_top = window.dashboard.hud_card.mapTo(window, QPoint()).y()
+        window.page_buttons[2].click()
+        from cephvr.gui.theme import SIZES
+    
+        bar = window.devices.tab_bar
+        for width in (1175, 720, 1175):
+            window.resize(width, 940)
+            for index in (2, 0, 3, 1):
+                app.processEvents()
+                QTest.mouseClick(
+                    bar, Qt.MouseButton.LeftButton, pos=bar.tabRect(index).center()
+                )
+                app.processEvents()
+                assert window.devices.tabs.currentIndex() == index
+                panel = window.devices.panels[index]
+                left = panel.columns[0]
+                assert window.devices.navigation.parentWidget() is left
+                assert bar.isVisible()
+                assert bar.width() == left.width()
+                assert bar.tabRect(3).right() == bar.width() - 1
+                if width == 1175:
+                    hud = panel.layout_card if index == 2 else panel.columns[1].hud_card
+                    border_top = (
+                        hud.mapTo(window, QPoint()).y()
+                        + hud.caption.geometry().center().y()
+                    )
+                    assert abs(bar.mapTo(window, QPoint()).y() - border_top) <= 1
+                card = left.layout().itemAt(1).widget()
+                assert card is window.devices.config_cards[index]
+                assert card.caption.text() == "Configuration file"
+                files = panel.calibration_files if index == 2 else panel.config_files
+                assert card.isAncestorOf(files.load_button)
+                assert card.isAncestorOf(files.save_button)
+                assert files.load_button.text() == "Load…"
+                assert files.save_button.text() == "Save as…"
+                assert abs(files.load_button.width() - files.save_button.width()) <= 1
+                assert files.load_button.height() == files.save_button.height()
+                load_pos = files.load_button.mapTo(card, QPoint())
+                save_pos = files.save_button.mapTo(card, QPoint())
+                assert load_pos.y() == save_pos.y()
+                assert save_pos.x() - load_pos.x() - files.load_button.width() == (
+                    SIZES.field_x_gap
+                )
+                if index in (0, 2):
+                    if index == 2:
+                        measurements = panel.measurements
+                        assert measurements.caption.text() == "Pixel-to-mm calibration"
+                        widths = [measurements.table.columnWidth(i) for i in range(3)]
+                        assert max(widths) - min(widths) <= 1
+                    header = panel.table.horizontalHeader()
+                    refresh = panel.refresh_button
+                    assert refresh.parentWidget() is header.viewport()
+                    assert refresh.text() == "" and not refresh.icon().isNull()
+                    assert refresh.size() == QSize(26, 26)
+                    assert refresh.iconSize() == QSize(16, 16)
+                    assert header.viewport().rect().contains(refresh.geometry())
+                    assert panel.table.horizontalHeaderItem(0).text() == "Use"
+                if index == 1:
+                    assert panel.scan_button.parentWidget() is panel.port.parentWidget()
+                    assert panel.scan_button.size() == QSize(26, 26)
+                if index == 1:
+                    assert panel.input_table.columnWidth(
+                        1
+                    ) == panel.output_table.columnWidth(1)
+>                   for selector in panel.signals.selectors.values():
+                                    ^^^^^^^^^^^^^^^^^^^^^^^
+E                   AttributeError: 'MicrocontrollerSignals' object has no attribute 'selectors'
+
+tests/gui/test_dashboard.py:2997: AttributeError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+___ test_camera_action_submits_before_test_and_stops_on_failure[False-none] ____
+
+failure = 'none', connect = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+>           assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+E           assert 5 == 7
+E            +  where 5 = command {\n}\nexpected_configuration_revision: 5\ncamera: CAMERA_ROLE_EYE_TRACKING\nkind: CAMERA_COMMAND_KIND_TEST_CONNECTION\n.expected_configuration_revision
+
+tests/gui/test_dashboard.py:5509: AssertionError
+_ test_camera_action_submits_before_test_and_stops_on_failure[False-settings] __
+
+failure = 'settings', connect = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+            assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+            changed = state.configuration_values.current.backends[0].acquisition
+            assert changed.eye_tracking.device.device_id == "eye"
+            assert changed.eye_tracking.enabled and changed.pulses.eye_tracking.pin == "D8"
+            assert changed.behavioral.device.device_id == "behavior"
+            assert state.configuration_values.current.subject == "Preserved"
+            assert not changed.eye_tracking.device.settings.HasField("trigger_activation")
+            assert [base for base, _ in accepted] == (
+                [4, 5, 6, 7] if connect else [4, 5, 6]
+            )
+        else:
+>           with pytest.raises(ClientError):
+E           Failed: DID NOT RAISE ClientError
+
+tests/gui/test_dashboard.py:5520: Failed
+__ test_camera_action_submits_before_test_and_stops_on_failure[False-import] ___
+
+failure = 'import', connect = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+            assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+            changed = state.configuration_values.current.backends[0].acquisition
+            assert changed.eye_tracking.device.device_id == "eye"
+            assert changed.eye_tracking.enabled and changed.pulses.eye_tracking.pin == "D8"
+            assert changed.behavioral.device.device_id == "behavior"
+            assert state.configuration_values.current.subject == "Preserved"
+            assert not changed.eye_tracking.device.settings.HasField("trigger_activation")
+            assert [base for base, _ in accepted] == (
+                [4, 5, 6, 7] if connect else [4, 5, 6]
+            )
+        else:
+>           with pytest.raises(ClientError):
+E           Failed: DID NOT RAISE ClientError
+
+tests/gui/test_dashboard.py:5520: Failed
+____ test_camera_action_submits_before_test_and_stops_on_failure[True-none] ____
+
+failure = 'none', connect = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+            assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+            changed = state.configuration_values.current.backends[0].acquisition
+            assert changed.eye_tracking.device.device_id == "eye"
+>           assert changed.eye_tracking.enabled and changed.pulses.eye_tracking.pin == "D8"
+E           assert (False)
+E            +  where False = device {\n  device_id: "eye"\n  frame_timing: FRAME_TIMING_FREE_RUNNING\n  settings {\n  }\n  pfs_baseline {\n  }\n  pfs_source_filename: "new.pfs"\n  unaligned_free_running: true\n}\n.enabled
+E            +    where device {\n  device_id: "eye"\n  frame_timing: FRAME_TIMING_FREE_RUNNING\n  settings {\n  }\n  pfs_baseline {\n  }\n  pfs_source_filename: "new.pfs"\n  unaligned_free_running: true\n}\n = behavioral {\n  device {\n    device_id: "behavior"\n  }\n}\npulses {\n  eye_tracking {\n    pin: "D8"\n    requested_frequenc...   settings {\n    }\n    pfs_baseline {\n    }\n    pfs_source_filename: "new.pfs"\n    unaligned_free_running: true\n  }\n}\n.eye_tracking
+
+tests/gui/test_dashboard.py:5512: AssertionError
+_____________ test_managed_mcu_save_includes_camera_output_pins[D] _____________
+
+prefix = 'D'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("prefix", ["D", ""])
+    async def test_managed_mcu_save_includes_camera_output_pins(prefix: str) -> None:
+        from cephvr.acquisition.v1 import camera_pb2
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot()
+        state.configuration.revision = 3
+        acquisition = state.configuration_values.current.backends.add(
+            backend_name="acquisition"
+        ).acquisition
+        acquisition.pulses.tracking.pin = "D11"
+        requests = []
+    
+        async def execute(method: str, request: object) -> SimpleNamespace:
+            requests.append((method, request))
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(
+            Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+        )
+        client = SimpleNamespace(
+            snapshot=state,
+            operator_command=lambda: rpc.OperatorCommand(),
+            execute=execute,
+        )
+        await bridge._dispatch(
+            client,
+            "save_mcu_pins",
+            {
+                "port": "COM8",
+                "trial_pin": f"{prefix}9",
+                "trial_enabled": True,
+                "flip_pin": f"{prefix}2",
+                "flip_enabled": True,
+                "behavioral_pin": f"{prefix}10",
+                "tracking_pin": None,
+                "eye_tracking_pin": f"{prefix}8",
+            },
+        )
+        method, request = requests[0]
+        assert method == "UpdateConfiguration"
+        pulses = request.proposed.backends[0].acquisition.pulses
+        assert pulses.behavioral.pin == "D10"
+        assert pulses.tracking.pin == "D11"
+        assert pulses.eye_tracking.pin == "D8"
+        assert (
+            state.configuration_values.current.backends[0].acquisition.pulses.behavioral.pin
+            == ""
+        )
+        acquisition.eye_tracking.device.device_id = "eye-serial"
+        acquisition.eye_tracking.device.frame_timing = (
+            camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+        )
+        await bridge._dispatch(
+            client, "add_mcu_output", {"role": "eye_tracking", "pin": "8"}
+        )
+        added = requests[-1][1].proposed.backends[0].acquisition
+>       assert not added.eye_tracking.enabled and added.pulses.eye_tracking.pin == "D8"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert (False)
+E        +  where False = device {\n  device_id: "eye-serial"\n  frame_timing: FRAME_TIMING_EXTERNAL_TRIGGER\n}\n.enabled
+E        +    where device {\n  device_id: "eye-serial"\n  frame_timing: FRAME_TIMING_EXTERNAL_TRIGGER\n}\n = pulses {\n  tracking {\n    pin: "D11"\n  }\n  eye_tracking {\n    pin: "D8"\n  }\n}\neye_tracking {\n  device {\n    device_id: "eye-serial"\n    frame_timing: FRAME_TIMING_EXTERNAL_TRIGGER\n  }\n}\n.eye_tracking
+
+tests/gui/test_dashboard.py:5780: AssertionError
+_____________ test_managed_mcu_save_includes_camera_output_pins[] ______________
+
+prefix = ''
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("prefix", ["D", ""])
+    async def test_managed_mcu_save_includes_camera_output_pins(prefix: str) -> None:
+        from cephvr.acquisition.v1 import camera_pb2
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot()
+        state.configuration.revision = 3
+        acquisition = state.configuration_values.current.backends.add(
+            backend_name="acquisition"
+        ).acquisition
+        acquisition.pulses.tracking.pin = "D11"
+        requests = []
+    
+        async def execute(method: str, request: object) -> SimpleNamespace:
+            requests.append((method, request))
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(
+            Principal("gui", "gui-generation", "token"), 50051, 1024, (0,)
+        )
+        client = SimpleNamespace(
+            snapshot=state,
+            operator_command=lambda: rpc.OperatorCommand(),
+            execute=execute,
+        )
+        await bridge._dispatch(
+            client,
+            "save_mcu_pins",
+            {
+                "port": "COM8",
+                "trial_pin": f"{prefix}9",
+                "trial_enabled": True,
+                "flip_pin": f"{prefix}2",
+                "flip_enabled": True,
+                "behavioral_pin": f"{prefix}10",
+                "tracking_pin": None,
+                "eye_tracking_pin": f"{prefix}8",
+            },
+        )
+        method, request = requests[0]
+        assert method == "UpdateConfiguration"
+        pulses = request.proposed.backends[0].acquisition.pulses
+        assert pulses.behavioral.pin == "D10"
+        assert pulses.tracking.pin == "D11"
+        assert pulses.eye_tracking.pin == "D8"
+        assert (
+            state.configuration_values.current.backends[0].acquisition.pulses.behavioral.pin
+            == ""
+        )
+        acquisition.eye_tracking.device.device_id = "eye-serial"
+        acquisition.eye_tracking.device.frame_timing = (
+            camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER
+        )
+        await bridge._dispatch(
+            client, "add_mcu_output", {"role": "eye_tracking", "pin": "8"}
+        )
+        added = requests[-1][1].proposed.backends[0].acquisition
+>       assert not added.eye_tracking.enabled and added.pulses.eye_tracking.pin == "D8"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert (False)
+E        +  where False = device {\n  device_id: "eye-serial"\n  frame_timing: FRAME_TIMING_EXTERNAL_TRIGGER\n}\n.enabled
+E        +    where device {\n  device_id: "eye-serial"\n  frame_timing: FRAME_TIMING_EXTERNAL_TRIGGER\n}\n = pulses {\n  tracking {\n    pin: "D11"\n  }\n  eye_tracking {\n    pin: "D8"\n  }\n}\neye_tracking {\n  device {\n    device_id: "eye-serial"\n    frame_timing: FRAME_TIMING_EXTERNAL_TRIGGER\n  }\n}\n.eye_tracking
+
+tests/gui/test_dashboard.py:5780: AssertionError
+___________ test_protocol_cards_reflow_and_keep_properties_reachable ___________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x166dc91b0>
+app = <PyQt6.QtWidgets.QApplication object at 0x116ad8820>
+
+        assert len(editor.drafts) == count
+        app.processEvents()
+    
+    
+    def test_protocol_cards_reflow_and_keep_properties_reachable(
+        window: DashboardWindow, app: QApplication
+    ) -> None:
+        from PyQt6.QtWidgets import QPlainTextEdit, QTableWidget
+    
+        from cephvr.gui.components import StatusColumn
+    
+        panel = window.protocol
+        window.page_buttons[1].click()
+        assert not panel.findChildren(StatusColumn)
+        assert not panel.findChildren(QPlainTextEdit)
+        assert panel.findChildren(QTableWidget) == [panel.editor.subgroup.variation_table]
+        open_protocol_group(panel.editor)
+        for width in (1175, 720, 1175):
+            window.resize(width, 883)
+            for _ in range(3):
+                app.processEvents()
+            editor = panel.editor
+            for action in (editor.output_preview_button,):
+                assert action.width() >= action.minimumSizeHint().width()
+                assert action.width() <= action.sizeHint().width()
+            assert editor.settings_card.width() == editor.width()
+            assert editor.trial_card.y() == editor.timeline_card.y()
+            assert editor.trial_card.geometry().right() < editor.timeline_card.x()
+            assert editor.timeline_card.geometry().right() == editor.width() - 1
+            assert editor.timeline_card.height() == editor.trial_card.height()
+            assert not hasattr(panel, "selected_trial_section")
+>           assert not any(
+                caption.text() in {"Selected trial", "Random seed", "Gap after trial (s)"}
+                for caption in editor.trial_card.findChildren(QLabel)
+            )
+E           assert <AlignmentFlag.AlignLeft: 1> == <AlignmentFla...gnCenter: 132>
+E             
+E             Use -v to get more diff
+
+tests/gui/test_dashboard.py:7679: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+______ test_managed_role_assignment_is_atomic_and_leaves_camera_disabled _______
+
+                snapshot=state,
+                execute=execute,
+                operator_command=lambda: rpc.OperatorCommand(),
+            ),
+            [(1, "A")],
+        )
+        assert not requests
+    
+    
+    @pytest.mark.asyncio
+    async def test_managed_role_assignment_is_atomic_and_leaves_camera_disabled() -> None:
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.device_requests import assign_camera_role
+    
+        state = pb.Snapshot()
+        state.configuration.revision = 7
+        acquisition = state.configuration_values.current.backends.add(
+            backend_name="acquisition"
+        ).acquisition
+        acquisition.behavioral.enabled = True
+        acquisition.behavioral.device.device_id = "A"
+        acquisition.tracking.device.device_id = "old"
+        requests = []
+    
+        async def execute(method, request):
+            requests.append(request)
+            return SimpleNamespace(succeeded=True)
+    
+        await assign_camera_role(
+            SimpleNamespace(
+>               snapshot=state,
+                execute=execute,
+                operator_command=lambda: rpc.OperatorCommand(),
+            ),
+            {"serial": "A", "role": "Tracking cam"},
+        )
+E       assert ('' == '' and not True)
+E        +  where '' = .device_id
+E        +    where  = enabled: true\ndevice {\n}\n.device
+E        +      where enabled: true\ndevice {\n}\n = behavioral {\n  enabled: true\n  device {\n  }\n}\ntracking {\n  device {\n    device_id: "A"\n  }\n}\n.behavioral
+E        +  and   True = enabled: true\ndevice {\n}\n.enabled
+E        +    where enabled: true\ndevice {\n}\n = behavioral {\n  enabled: true\n  device {\n  }\n}\ntracking {\n  device {\n    device_id: "A"\n  }\n}\n.behavioral
+
+tests/gui/test_dashboard.py:11563: AssertionError
+__________ test_grouped_editor_pair_creation_repeat_scope_and_history __________
+
+window = <cephvr.gui.window.DashboardWindow object at 0x15d899b40>
+tmp_path = PosixPath('/private/var/folders/5w/jr64m9212g7dbn9rrhxg9mpc0000gp/T/pytest-of-pedrocastelhanito/pytest-1814/test_grouped_editor_pair_creat0')
+app = <PyQt6.QtWidgets.QApplication object at 0x116ad8820>
+
+    
+        # Unknown presentation remains closable, with all tuning disabled.
+        from cephvr.gui.managed_display import ManagedDisplayOperations
+    
+        panel.apply_view(review_view(Phase.CONFIGURATION))
+        evidence.state = vp.DISPLAY_CALIBRATION_STATE_UNKNOWN
+        operations = ManagedDisplayOperations(
+            panel,
+            window.devices.spikeglx,
+            snapshot=lambda: state,
+            connection_identity=lambda: (1, state.controller_generation),
+            send=lambda *_args, **_kwargs: True,
+        )
+        operations.install_calibration_state(state, launch_eligible=True)
+        assert panel.calibration.presentation_button.text() == "Close"
+        assert panel.calibration.presentation_button.isEnabled()
+        assert not offset.isEnabled()
+        operations.live.reset()
+    
+    
+    def test_grouped_editor_pair_creation_repeat_scope_and_history(window, tmp_path, app):
+        from cephvr.gui.protocol_document import blank_program
+        from cephvr.gui.protocol_nodes import edit_epoch
+        from cephvr.visual_stimulus.config.models.program_model import (
+            Group,
+            parse_program_json,
+        )
+    
+        window.page_buttons[1].click()
+        editor = window.protocol.editor
+        pair, _ = edit_epoch(blank_program(), 0, "duplicate")
+        from cephvr.gui.protocol_batches import grouped_program
+    
+        editor.set_program(grouped_program(pair))
+        editor.timeline.choose(0, Qt.KeyboardModifier.NoModifier)
+        assert editor.scope == (0,) and len(editor.timeline.nodes) == 1
+        assert len(editor.hierarchy.contents.nodes) == 2
+        group = editor.program.sequence[0]
+        assert isinstance(group, Group) and group.body == pair.sequence
+        fields = editor.group_editor
+        fields.name.setText("Image Grey")
+        fields.repetitions.setText("300")
+        fields.mark_changed()
+        assert fields.apply()
+        assert editor.program.sequence[0].group_id == "Image_Grey"
+        assert editor.program.sequence[0].repetitions == 300
+        assert "600 epochs" in editor.sequence_summary.text()
+        assert len(editor.hierarchy.contents.nodes) == 2
+        fields.mark_changed()  # A pending field commit must preserve the clicked selection.
+        editor.hierarchy.contents.choose(1, Qt.KeyboardModifier.NoModifier)
+        assert editor.path == (0, 1)
+        assert editor.hierarchy.contents.index == editor.hierarchy.contents.anchor == 1
+        editor.subgroup.composer.duration.setText("00:00:02")
+        editor.subgroup.apply()
+        assert editor.program.sequence[0].body[1].duration.duration.seconds == "2"
+        assert editor.program.sequence[0].repetitions == 300
+        path = tmp_path / "grouped.json"
+        window.protocol.save_program(str(path))
+        saved = parse_program_json(path.read_text(), max_bytes=1_048_576)
+        assert saved == editor.program
+>       editor.undo()
+            ^^^^^^^^^^
+E       assert 33 >= 40
+E        +  where 33 = <built-in method width of QLineEdit object at 0x15d8bea70>()
+E        +    where <built-in method width of QLineEdit object at 0x15d8bea70> = <PyQt6.QtWidgets.QLineEdit object at 0x15d8bea70>.width
+E        +      where <PyQt6.QtWidgets.QLineEdit object at 0x15d8bea70> = <cephvr.gui.group_editor.GroupEditor object at 0x15d8bee60>.repetitions
+
+tests/gui/test_dashboard.py:13531: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_preview_participation_gates_and_camera_draft_selection
+FAILED tests/gui/test_dashboard.py::test_device_tabs_sit_above_controls_without_moving_hud
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-none]
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-settings]
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-import]
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[True-none]
+FAILED tests/gui/test_dashboard.py::test_managed_mcu_save_includes_camera_output_pins[D]
+FAILED tests/gui/test_dashboard.py::test_managed_mcu_save_includes_camera_output_pins[]
+FAILED tests/gui/test_dashboard.py::test_protocol_cards_reflow_and_keep_properties_reachable
+FAILED tests/gui/test_dashboard.py::test_managed_role_assignment_is_atomic_and_leaves_camera_disabled
+FAILED tests/gui/test_dashboard.py::test_grouped_editor_pair_creation_repeat_scope_and_history
+11 failed, 452 passed in 282.01s (0:04:42)

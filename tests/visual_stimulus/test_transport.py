@@ -36,10 +36,10 @@ from cephvr.visual_stimulus.worker.owner import RenderOwner
 from cephvr.visual_stimulus.worker.runtime import VisualStimulusWorkerRuntime
 
 
-def ledger(generation: str) -> CommandLedger:
+def ledger(generation: str, retention_ns: int = 300_000_000_000) -> CommandLedger:
     return CommandLedger(
         generation,
-        300_000_000_000,
+        retention_ns,
         max_records=64,
         max_bytes=4_000_000,
         result_reservation_bytes=65536,
@@ -95,6 +95,138 @@ class LifecycleReports(Reports):
     async def receipt(self, method, request, *, deadline_ns):
         self.send(method, request, deadline_ns)
         return pb.ReportReceipt(result=pb.COMMAND_RESULT_ACCEPTED)
+
+
+@pytest.mark.asyncio
+async def test_local_recovery_cleanup_is_retained_without_coordinator_delivery():
+    from cephvr.visual_stimulus.worker.reporting import ReportBridge
+
+    worker = pb.ProcessIdentity(
+        role="visual_stimulus_renderer", generation=str(uuid4())
+    )
+    owner_id = pb.ProcessIdentity(role="visual_stimulus", generation=str(uuid4()))
+    context = visual_stimulus.WorkerContext(worker=worker, owner=owner_id)
+    context.work.session.CopyFrom(
+        pb.SessionContext(controller_generation=str(uuid4()), session_id=str(uuid4()))
+    )
+    reports = ReportSink()
+    clock = Clock()
+    bridge_failures = []
+    bridge = ReportBridge(
+        asyncio.get_running_loop(),
+        reports,
+        reports,
+        failed=bridge_failures.append,
+        maximum_bytes=1_000_000,
+    )
+    bridge_slot = []
+
+    class ReportingDevice(Device):
+        def execute(self, method, request, deadline_ns):
+            super().execute(method, request, deadline_ns)
+            if method == "Shutdown":
+                cleanup = pb.CleanupReport(
+                    source=worker,
+                    work=request.target.work,
+                    operation=pb.OperationContext(command_id=request.command_id),
+                    trial_activity_stopped=True,
+                )
+                bridge_slot[0].confirm(
+                    "ReportWorkerLifecycle",
+                    visual_stimulus.WorkerLifecycle(
+                        source=worker, report=pb.LifecycleReport(cleanup=cleanup)
+                    ),
+                    deadline_ns,
+                )
+
+    device = ReportingDevice()
+    owner = RenderOwner(lambda _: device)
+    commands = ledger(worker.generation, retention_ns=10)
+    runtime = VisualStimulusWorkerRuntime(
+        context,
+        pb.ProcessIdentity(role="supervisor", generation=str(uuid4())),
+        owner,
+        bridge,
+        commands,
+        clock=clock,
+    )
+    bridge.retain_lifecycle = runtime.retain_and_report
+    bridge_slot.append(bridge)
+    deadline = host_time_ns() + 5_000_000_000
+    prior_id = str(uuid4())
+    commands.admit(
+        prior_id,
+        b"prior-session-command",
+        clock(),
+        work_key=context.work.session.session_id,
+    )
+    commands.complete(prior_id, b"accepted", clock())
+    commands.finalize_work(context.work.session.session_id, clock())
+    command = visual_stimulus.WorkerCommand(
+        command_id=str(uuid4()),
+        issuer=worker,
+        target=context,
+        deadline_monotonic_ns=deadline,
+    )
+    try:
+        await runtime.local_recovery_shutdown(command, deadline)
+        await runtime.local_recovery_shutdown(command, deadline)
+        await bridge.drain(deadline)
+        state = await runtime.query(
+            "Query",
+            visual_stimulus.WorkerQuery(target=context, command_id=command.command_id),
+        )
+        assert state.command_known
+        assert state.operation.complete and state.operation.succeeded
+        assert commands.get(command.command_id).work_key == command.command_id
+        assert len(state.retained_lifecycle) == 1
+        assert (
+            state.retained_lifecycle[0].report.cleanup.operation.command_id
+            == command.command_id
+        )
+        assert reports.messages == []
+        assert bridge_failures == []
+        assert device.commands == ["Shutdown"]
+        clock.value += 20
+        runtime.prune_retained()
+        assert command.command_id not in runtime.local_recovery_command_ids
+    finally:
+        await owner.close(deadline)
+
+
+@pytest.mark.asyncio
+async def test_worker_teardown_closes_listener_after_report_drain_failure():
+    from cephvr.visual_stimulus.worker.main import _close_worker_resources
+
+    events = []
+    deadlines = []
+
+    async def close_owner(deadline_ns):
+        events.append("owner")
+        deadlines.append(deadline_ns)
+
+    async def drain_reports(deadline_ns):
+        events.append("reports")
+        deadlines.append(deadline_ns)
+        raise ValueError("retained lifecycle was rejected")
+
+    async def close_listener(deadline_ns):
+        events.append("listener")
+        deadlines.append(deadline_ns)
+
+    async def close_channels():
+        events.append("channels")
+
+    with pytest.raises(ValueError, match="retained lifecycle was rejected"):
+        await _close_worker_resources(
+            close_owner,
+            drain_reports,
+            close_listener,
+            close_channels,
+            1234,
+        )
+    assert events == ["owner", "reports", "listener", "channels"]
+    assert deadlines == [1234, 1234, 1234]
 
 
 @pytest.mark.asyncio

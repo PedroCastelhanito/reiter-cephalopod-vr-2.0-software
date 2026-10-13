@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-13",
+  "recorded_utc": "2026-10-13T13:49:40.996975+00:00",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "provenance": "Shared dirty working tree includes prior and concurrent work. Final source-hashes.json identifies the checked GUI/controller scope; this is not a clean-commit validation or attribution of every dirty file.",
+  "platform": {
+    "system": "Darwin",
+    "python": "3.11.15"
+  },
+  "decisions": [
+    "G01 revision182",
+    "E07 revision61",
+    "ARCH-002",
+    "E15"
+  ],
+  "validation": [
+    {
+      "command": ".venv/bin/python -m pytest tests/controller/test_camera_configuration.py tests/controller/test_camera_evidence.py tests/controller/test_configuration_transactions.py tests/controller/test_microcontroller_owner.py tests/controller/test_microcontroller_protocol.py tests/controller/test_configuration.py -q -m \"not windows and not rig\"",
+      "result": "251 passed",
+      "evidence": "controller-final.log"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/acquisition/test_manual_devices.py tests/acquisition/test_manual_preview.py -q -m \"not windows and not rig\"",
+      "result": "101 passed, 1 deselected",
+      "evidence": "acquisition.log"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui -q -m \"not windows and not rig\"",
+      "result": "463 passed, 1 stale literal-caption assertion failed (Selected group versus Group). Only that test expectation changed afterward; production source unchanged.",
+      "evidence": "gui.log"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -m \"not windows and not rig\" -k \"trial_row_actions_scroll_target_and_align_cards or grouped_editor_pair_creation_repeat_scope_and_history or protocol_cards_reflow_and_keep_properties_reachable or device_tabs_sit_above_controls_without_moving_hud\"",
+      "result": "4 passed, 459 deselected; covers the sole remaining failed case and related layout regressions. All 464 GUI cases are accounted for across final aggregate and focused rerun; no all-green aggregate rerun claimed.",
+      "evidence": "gui-layout-final.log"
+    },
+    {
+      "method": "Ruff check/format for GUI source and owning dashboard tests plus focused controller modules/tests",
+      "result": "Passed; GUI format157 files, controller format6 files",
+      "evidence": [
+        "ruff-final.log",
+        "format-final.log",
+        "controller-ruff.log",
+        "controller-format.log"
+      ]
+    },
+    {
+      "method": "Win32-target mypy GUI and controller changed source scope",
+      "result": "GUI156 and controller5 sources pass",
+      "evidence": [
+        "gui-mypy-final.log",
+        "controller-mypy.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "686 modules, zero boundary violations; existing large composition/route/presentation owners reviewed",
+      "evidence": "boundaries.log"
+    },
+    {
+      "method": "Final local Markdown target/anchor scan and git diff --check",
+      "result": "983 links/anchors, zero issues; whitespace passed",
+      "evidence": "document-links.log"
+    }
+  ],
+  "initial_attempts": [
+    "Initial source type errors corrected; gui-mypy-initial.log retained.",
+    "Legacy full-GUI migration used CameraTrigger.serial rather than CameraDraft.serial; initial Qt slot abort134 and type-check evidence retained under migration-initial*. Corrected owning roundtrip passes.",
+    "Initial aggregate452 passed/11 failed: ten stale workflow/layout assertions and one narrow repetition-field defect. Retained gui-initial.log/xml. Corrected field layout keeps the original40px readability assertion.",
+    "An unrelated process-list probe was sandbox denied; no escalation or process cleanup was performed."
+  ],
+  "review": "Luna implementation, Sol6.1 integration, Astra major/final source review: no remaining blockers. See review.txt and camera-actions-context.json.",
+  "preview": {
+    "method": "Production DashboardWindow(sample=True), ReviewControls(simulate_projectors=True), temporary QSettings; offscreen screenshots and native Cocoa launch",
+    "final_session": 71109,
+    "observed": "PREVIEW_READY visible=True page=Devices devices=sample",
+    "earlier_session": 4873,
+    "earlier_outcome": "Visible launch confirmed, subsequently exited normally; final source relaunched in71109.",
+    "hardware_actions": false
+  },
+  "limits": "No native Windows, physical MCU/camera/projector, electrical, optical, GPU/full-load or rig acceptance. Existing reports/rig-verification.md remains the single deferred rig checklist."
+}

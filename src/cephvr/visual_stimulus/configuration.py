@@ -36,10 +36,10 @@ from cephvr.visual_stimulus.config.pacing import (
 from cephvr.visual_stimulus.identity import CONTRACT_VERSION
 from cephvr.visual_stimulus.v1 import runtime_pb2
 
-_POLICY_VERSION = 9
+_POLICY_VERSION = 11
 _MAX_DOCUMENT_BYTES = DEFAULT_DOCUMENT_BYTES
 _MAX_EXPANDED_EPOCHS = 100_000
-_POLICY_SHA256 = "b0d5c7d7493420b9fb74b9f869c8345e5e43053f28af06193363a26af357f278"
+_POLICY_SHA256 = "6fb2cba514ebda8c91fcdc7ca6ee7ea49b5b23d0790df76f2dea163e4949b315"
 _CONFIG_KEYS = frozenset(
     """
     rpc.port
@@ -73,6 +73,8 @@ _POLICY_KEYS = frozenset(
     programs.trial_state programs.group_order_modes programs.group_order_default
     assets.source_stability assets.protection_failure assets.image_profiles
     assets.video_profiles assets.arena_profile
+    image_residency.loader_threads image_residency.upload_chunk_bytes
+    image_residency.readiness image_residency.late_image image_residency.evidence
     arena.source_policy arena.boundary_source arena.movement_modes
     arena.boundary_response arena.shading
     idle.content idle.startup idle.invalid_startup_configuration

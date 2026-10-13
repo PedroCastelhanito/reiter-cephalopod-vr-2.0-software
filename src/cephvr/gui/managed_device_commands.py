@@ -127,17 +127,8 @@ async def dispatch_device_action(
         if backend is None or role not in {"behavioral", "tracking", "eye_tracking"}:
             raise ClientError("Select an assigned camera output.")
         settings = backend.acquisition
-        selected = getattr(settings, role)
-        if selected.device.frame_timing != camera_pb2.FRAME_TIMING_EXTERNAL_TRIGGER:
-            raise ClientError(
-                "Select External controller in Cameras before adding a trigger output."
-            )
         getattr(settings.pulses, role).pin = firmware_pin(str(options["pin"]))
-        selected.enabled = True
-        backend.enabled = True
-        await _update_configuration(
-            client, state, proposed, "Camera output pin and enablement"
-        )
+        await _update_configuration(client, state, proposed, "Camera output pin")
         return True, "Completed"
     if action == "assign_camera_role":
         await assign_camera_role(client, options)
@@ -231,8 +222,6 @@ async def _save_camera_settings(
     proposed.CopyFrom(state.configuration_values.current)
     acquisition, selected, pulse = _assigned_camera(proposed, str(options["serial"]))
     if options.get("prepare_action"):
-        selected.enabled = bool(options["enabled"])
-        acquisition.enabled = True
         if options.get("pin"):
             pulse.pin = firmware_pin(str(options["pin"]))
         else:
@@ -270,11 +259,6 @@ async def _save_camera_settings(
     )
     if preset:
         if import_preset:
-            if not acquisition.enabled:
-                acquisition.acquisition.behavioral.enabled = False
-                acquisition.acquisition.tracking.enabled = False
-                acquisition.acquisition.eye_tracking.enabled = False
-            acquisition.enabled = True
             selected.device.ClearField("pfs_baseline")
         selected.device.pfs_source_filename = preset
     else:
@@ -292,7 +276,8 @@ async def _save_camera_settings(
         pulse.requested_frequency_hz = float(frequency)
     elif options.get("prepare_action"):
         pulse.ClearField("requested_frequency_hz")
-    await _update_configuration(client, state, proposed, "Camera settings")
+    if proposed != state.configuration_values.current:
+        await _update_configuration(client, state, proposed, "Camera settings")
     if accepted is not None:
         accepted(client.snapshot)
     if import_preset:

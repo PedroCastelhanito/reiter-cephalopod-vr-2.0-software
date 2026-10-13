@@ -2,7 +2,7 @@
 # Source rules: Visual Stimulus defaults. See architecture.md: V01–V28, E10, E13, E14, A06.
 # Change only with the governing architecture decision, then bump policy_version
 # here and in config/backends/visual_stimulus_config.toml. The loader rejects a version mismatch.
-policy_version = 9
+policy_version = 11
 
 [runtime]
 process_layout = "coordinator_and_render_worker_with_recording_thread_when_saving"
@@ -41,9 +41,16 @@ group_order_default = "as_listed"
 [assets]
 source_stability = "prepared_memory_or_protected_read_handles"
 protection_failure = "fail_preparation"
-image_profiles = ["png_uint_v1", "tiff_uint_v1", "jpeg8_v1"]
+image_profiles = ["png_uint_v1", "tiff_uint_v1", "jpeg8_v1", "cephvr1_texture_json_v1"]
 video_profiles = ["mp4_h264_sdr8_v1", "matroska_ffv1_v3_uint_v1"]
 arena_profile = "glb2_static_unlit_v1"
+
+[image_residency]
+loader_threads = 1
+upload_chunk_bytes = 1048576
+readiness = "pin_first_use_per_instance"
+late_image = "previous_texture_current_motion"
+evidence = "requested_actual_indices_and_identity_repetition"
 
 [arena]
 source_policy = "externally_prepared_assets"

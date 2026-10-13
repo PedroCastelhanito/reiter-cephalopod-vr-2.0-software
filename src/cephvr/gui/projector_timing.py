@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from typing import Any
 
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGridLayout,
@@ -12,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from cephvr.gui.components import Card, combo, field
+from cephvr.gui.components import Card, button, combo, field, label
 from cephvr.gui.device_panel import entry
 from cephvr.gui.projector_blackouts import BlackoutZones
 from cephvr.gui.projector_geometry import FACES
@@ -21,6 +22,8 @@ from cephvr.gui.theme import SIZES
 
 
 class ProjectorTiming(Card):
+    wiring_requested = pyqtSignal()
+
     def __init__(self) -> None:
         super().__init__("Photodiode & synchronization")
         self.pulse = QCheckBox("Enable photodiode pulse")
@@ -32,8 +35,8 @@ class ProjectorTiming(Card):
         self.options = QWidget()
         grid = QGridLayout(self.options)
         grid.setContentsMargins(0, SIZES.section_toggle_gap, 0, 0)
-        grid.addWidget(field("PULSE DISPLAY", self.target), 0, 0)
-        grid.addWidget(field("VSYNC MODE", self.mode), 0, 1)
+        grid.addWidget(field("PULSE DISPLAY", self.target), 0, 0, 1, 2)
+        self.body.insertWidget(0, field("VSYNC MODE", self.mode))
         self.pulse_fields: dict[str, QLineEdit] = {}
         self.definition = DataTable(2, 5)
         self.definition.setAccessibleName("Photodiode pulse definition")
@@ -63,6 +66,12 @@ class ProjectorTiming(Card):
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
         self.body.addWidget(self.options)
+        self.wiring_summary = label("MCU flip input: not assigned", "muted")
+        self.wiring_summary.setWordWrap(True)
+        self.body.insertWidget(1, self.wiring_summary)
+        self.wiring_button = button("Edit MCU input…", "secondary")
+        self.wiring_button.clicked.connect(self.wiring_requested.emit)
+        self.body.insertWidget(2, self.wiring_button)
         self.blackouts = BlackoutZones()
         self.pulse.toggled.connect(self.refresh_controls)
         self.can_edit = False
@@ -84,7 +93,9 @@ class ProjectorTiming(Card):
         self.target.blockSignals(False)
 
     def refresh_controls(self) -> None:
+        self.mode.setEnabled(self.can_edit)
         self.pulse.setEnabled(self.can_edit)
+        self.wiring_button.setEnabled(self.can_edit)
         self.options.setEnabled(self.can_edit and self.pulse.isChecked())
         self.blackouts.setEnabled(self.can_edit)
 

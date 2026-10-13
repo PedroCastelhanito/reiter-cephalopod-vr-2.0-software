@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-13",
+  "revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "working_tree": "Dirty shared implementation; source hashes identify checked files.",
+  "commands": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -m 'not windows and not rig' -k camera_action_submits_before_test_and_stops_on_failure",
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -m 'not windows and not rig' -k managed_role_assignment_is_atomic_and_leaves_camera_disabled",
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -m 'not windows and not rig' -k 'camera_action_submits_before_test_and_stops_on_failure or managed_role_assignment_is_atomic_and_preserves_participation or managed_mcu_save_includes_camera_output_pins'"
+  ],
+  "outcomes": [
+    "Initial camera variants: 4 passed, 4 stale expectation failures.",
+    "Initial role assignment: one stale participation expectation failure.",
+    "Corrected camera variants: 8 passed.",
+    "Final corrected combined selection: 12 passed, 451 deselected."
+  ],
+  "assessment": "Expectations updated for explicitly authorized identity-only Test and participation-preserving assignment/Connect. No production source changed in this repair. Native Windows/device/rig acceptance is not established.",
+  "sha256": {
+    "tests/gui/test_dashboard.py": "83d5e7a9be47798fd95c3a0927056515e4773d21972b4e947cc246372a6e1453",
+    "src/cephvr/gui/camera_action_submission.py": "ccf076cd81b2a29f65a420b03d17787774fb917de59e7cd962d5138eb761d0e8",
+    "src/cephvr/gui/managed_device_commands.py": "d8bc1a3297aa96066ca22ee4fd70e3d34265000ba9eed9d4917eeaf4d22f6a51",
+    "src/cephvr/gui/device_requests.py": "791e4cad813afb8f0d60e73b7d3bd60a88723f15825100855a3a320e0c43624d"
+  }
+}

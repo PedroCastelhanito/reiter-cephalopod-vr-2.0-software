@@ -22,7 +22,7 @@ from cephvr.gui.managed_display_operations import (
     update_display_calibration_request,
     validate_inventory_snapshot,
 )
-from cephvr.gui.mcu_action_submission import prepare_mcu_test
+from cephvr.gui.mcu_action_submission import prepare_mcu_connection, prepare_mcu_test
 from cephvr.gui.tracking_frame_transport import fetch_tracking_diagnostic_frame
 from cephvr.shared.auth import Principal
 from cephvr.synchronization.v1 import spikeglx_pb2
@@ -296,6 +296,7 @@ class ControllerBridge(QThread):
                 "save_camera_settings",
                 "prepare_camera",
                 "prepare_mcu_test",
+                "prepare_mcu_connection",
                 "save_mcu_pins",
                 "add_mcu_output",
                 "set_camera_enabled",
@@ -408,9 +409,12 @@ class ControllerBridge(QThread):
     async def _dispatch(
         self, client: HeadlessClient, action: str, options: dict[str, Any]
     ) -> None:
-        if action == "prepare_mcu_test":
+        if action in {"prepare_mcu_test", "prepare_mcu_connection"}:
             base_revision = int(options["base_revision"])
-            await prepare_mcu_test(client, options)
+            if action == "prepare_mcu_connection":
+                await prepare_mcu_connection(client, options)
+            else:
+                await prepare_mcu_test(client, options)
             confirmed_revision = client.snapshot.configuration.revision
             self.camera_configuration_accepted.emit(
                 base_revision, client.snapshot.SerializeToString()
@@ -492,6 +496,7 @@ class ControllerBridge(QThread):
             await self._track_request(
                 client, action, "UpdateSpikeGLXInventory", update_request
             )
+            return
         elif action == "open_display_calibration":
             open_request = open_display_calibration_request(
                 client,
@@ -503,6 +508,7 @@ class ControllerBridge(QThread):
             await self._track_request(
                 client, action, "OpenDisplayCalibration", open_request
             )
+            return
         elif action == "update_display_calibration":
             calibration_update_request = update_display_calibration_request(
                 client,
@@ -514,6 +520,7 @@ class ControllerBridge(QThread):
             await self._track_request(
                 client, action, "UpdateDisplayCalibration", calibration_update_request
             )
+            return
         elif action == "close_display_calibration":
             close_request = close_display_calibration_request(
                 client,
@@ -523,6 +530,7 @@ class ControllerBridge(QThread):
             await self._track_request(
                 client, action, "CloseDisplayCalibration", close_request
             )
+            return
         elif action == "begin_tracking_diagnostic":
             request: Any = rpc.BeginTrackingDiagnosticRequest(
                 command=client.operator_command(),
@@ -538,6 +546,7 @@ class ControllerBridge(QThread):
             await self._track_request(
                 client, action, "BeginTrackingDiagnostic", request
             )
+            return
         elif action == "close_tracking_diagnostic":
             request = rpc.CloseTrackingDiagnosticRequest(
                 command=client.operator_command(),
@@ -548,11 +557,13 @@ class ControllerBridge(QThread):
             await self._track_request(
                 client, action, "CloseTrackingDiagnostic", request
             )
+            return
         elif action == "tracking_diagnostic_frame":
             await self._tracking_diagnostic_frame(client, options)
         elif action == "release_control":
             if client.snapshot.control.holder_client_id == self.principal.generation:
                 await self._track_operation(client, action, "ReleaseControl")
+                return
         elif action == "save_configuration_history":
             holder = client.snapshot.control.holder_client_id
             if not holder:

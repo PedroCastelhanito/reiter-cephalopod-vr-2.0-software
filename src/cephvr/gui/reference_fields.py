@@ -106,8 +106,10 @@ def reference_fields(editor: StimulusParameters) -> list[tuple[str, QWidget]]:
             )
         )
         for _, control in result[1:]:
-            control.setEnabled(not motion.custom.isChecked())
-            motion.custom.toggled.connect(control.setDisabled)
+            control.setEnabled(
+                not motion.custom.isChecked() and editor.linked_to.currentData() is None
+            )
+        motion.custom.toggled.connect(editor.update_link_controls)
     else:
         result.extend(("", label("—")) for _ in range(3))
     program = editor.program

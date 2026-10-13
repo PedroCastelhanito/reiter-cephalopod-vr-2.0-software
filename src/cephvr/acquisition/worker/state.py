@@ -269,7 +269,7 @@ class WorkerState:
                 retained_result.operation.CopyFrom(updated)
                 retained_result.state_revision = self.state_revision + 1
             result = retained_result.SerializeToString(deterministic=True)
-            self.commands.complete(command_id, result, now_ns)
+            self.commands.complete_terminal(command_id, result, now_ns)
             self.operations[command_id] = updated
             self.state_revision += 1
             return _copy_operation(updated)

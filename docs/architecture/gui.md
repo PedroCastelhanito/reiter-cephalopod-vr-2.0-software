@@ -16,7 +16,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g01"></a>
 ### G01 — GUI navigation and settings ownership
 
-**Status:** Accepted · **Revision:** 174
+**Status:** Accepted · **Revision:** 182
 
 - Projectors/Synchronization uses a two-row Frame/Pulse table with Origin X,
   Origin Y, Width and Height in pixels. Frame origins use bottom-left output
@@ -99,8 +99,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   E10 without a Protocol status indicator; required acquisition/rendering is independent
   of optional video recording. Device controls stay in Devices.
 - Cameras, Protocol, Microcontroller, Projectors, SpikeGLX and Tracking own reusable JSON
-  Load/Save as controls; sidebar controls compose a full GUI snapshot including
-  Dashboard metadata, camera drafts and recording choices. The
+  Load/Save as controls. Omit full-GUI Load/Save buttons from the sidebar; automatic
+  GUI draft history retains Dashboard metadata, camera drafts and recording choices. The
   [snapshot contract](../../contracts/gui-configuration-files.md) owns formats and
   inventories. Validate all sections before restoring local drafts, save atomically,
   preserve unset/dormant settings and close choosers on authority loss. Asynchronous
@@ -116,9 +116,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   polling and enter the normal configuration proposal. SDK PFS import remains A10-owned.
   Role, participation and pin edits to loaded camera/MCU drafts remain local until
   submission; update camera rows and supported outputs together. Selected-camera
-  Test and Connect submit that camera's current assignment, timing, PFS and pulse
-  parameters first, then continue only after controller acceptance and required SDK
-  import/cleanup; no Setup is required. Serialize the chain with configuration edits,
+  Connect submits that camera's current assignment, timing, PFS and pulse
+  parameters, then continues only after controller acceptance and required SDK
+  import/cleanup; no Setup is required. Test selected submits only its
+  device identity when needed and performs A10's identity-only check without PFS
+  import, trigger configuration or capture. Serialize the chain with configuration edits,
   reject changed bases, and preserve unrelated local drafts while adopting confirmed
   camera revisions. Failure or lost authority prevents the subsequent camera action.
   Microcontroller Test submits the selected diagnostic pin/rate and COM port when
@@ -164,12 +166,22 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Existing imported programs are preserved verbatim; unsupported legacy structure
   is inspectable with creation controls unavailable, never flattened with an invented
   shuffle seed. Canonical/headless V08 nesting remains supported.
-  Place the selected group name and repetitions inside the timeline card above its
-  blocks, keeping the Sequence editor for subgroup controls. Balance card spacing
-  without duplicating these fields. Omit Order and preserve imported ordering.
+  Left-align trial totals beneath the card heading; keep Preview at the right.
+  Size the card to its contents. Use dark unselected group blocks and an accent
+  border/fill for selection. Show repetitions and duration on separate lines on roomy blocks; omit
+  per-group epoch counts. Trial totals retain the overall epoch count.
+  Add a subtle divider and compact Group label before the editing footer,
+  retaining readable repetition fields at narrow widths.
+  Put selected group name and repetitions
+  below the blocks in a compact row aligned with the last group's visible right edge,
+  keeping the Sequence editor for subgroup controls. Crowded group blocks show only
+  their name when repetition/epoch-count/duration text does not fit; retain complete
+  details on hover. Balance card spacing without duplicating these fields. Omit Order and preserve imported ordering.
   Protocol removal buttons (trials, groups, subgroups and variation rows) appear
   only while hovering their item, use the same compact × button role as MCU signal
   tables, and reserve enough space for centered glyphs and consistent insets.
+  Trial and epoch timeline rows use the full editing-content width, with the trailing
+  add button flush to the content right edge and no extra reserved right gutter.
   Timeline duration labels use hh:mm:ss, retaining fractional seconds when present.
   Layer selectors use a narrow index-only column with descriptive tooltips. Subgroups are
   separately identified batches of flat source epochs, using V03 authoring metadata;
@@ -204,6 +216,9 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   save offers Retry or Close without saving; an unreadable previous draft is warned
   and preserved unless the operator explicitly replaces it. This local review draft
   never becomes the controller's E07 accepted configuration or authorizes Setup.
+  Review draft version 2 stores MCU pins by logical camera role independently of
+  discovered devices; version 1 migrates saved role/pin associations without
+  changing camera participation or guessing unknown/ambiguous assignments.
 - Runtime saves its complete editable GUI configuration to `config/runtime_gui.json`
   atomically, with read-back verification, before normal closure. Reuse the full GUI
   snapshot validators and inventory identities; controller connectivity, lease and
@@ -220,18 +235,20 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 - Sequence editor has one subgroup form, reusing the reference composer and numeric
   variation controls with per-projector layers and parameters. No Generate/Edit tabs,
   target filters, duplicate epoch inspector or batch selector. Stimulus mode, Duration,
-  and Name share a responsive row; Apply/Discard follow the form. Group repetitions
+  and Name share a responsive row; completed valid edits update automatically, without
+  Apply/Discard buttons. Group repetitions
   alone repeat the full sequence, equally for all epochs; no subgroup Copies control.
   Omit epochs-per-repetition, one-repetition, edits-apply and footer count helper text.
   Selecting a subgroup populates its first source template; unchanged parameters
   retain each member's existing values. Explicit variation rules replace the selected
-  subgroup's pattern; retain active rule controls after Apply, selection
+  subgroup's pattern; retain active rule controls after automatic updates, selection
   changes, Undo and file reload. Save rules as V03 authoring metadata alongside concrete
-  settings; unchanged rules do not resample on unrelated edits or Apply.
+  settings; unchanged rules do not resample on unrelated edits.
   The trailing subgroup + copies one current template, independent of variation rules; valid
   pending edits are applied first. Invalid input stays visible and prevents mutation.
-  Changing selection or saving requires Apply/Discard; Undo first discards a draft.
-  Apply atomically validates the whole trial, preserving source identities and
+  Changing selection or saving first commits valid pending edits; invalid input blocks
+  the action. Undo first discards an invalid draft, otherwise undoes the last update.
+  Each update atomically validates the whole trial, preserving source identities and
   unrelated epochs, projector settings and shared declarations. Incompatible layer
   layouts reject a bulk composition edit without changing the subgroup.
   Validation follows G02 action-time warnings. Focus changes and reference preparation
@@ -242,7 +259,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   stimulus-specific parameters in one compact row; full paths remain on hover.
   Omit the Projector heading and display Looming as the short family name. The
   stimulus dropdown resets the selected layer's asset when changing family;
-  incomplete choices remain drafts and block Apply and + Epoch.
+  incomplete choices remain drafts and block navigation, saving and + Epoch.
   Share column headings, repeating parameter headings only when meanings or units
   change; reserve equal heading space to keep projector rows evenly spaced. A Layer
   dropdown per projector selects the visible asset/parameters; its ordinal follows
@@ -331,11 +348,11 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Angular speed in the UI, without changing its canonical key. Exclude Width, Height
   and Opacity. Mixed targets offer only compatible common columns; unsupported
   targets reject generation. Video At end accepts ordered categorical values, without
-  a numeric sweep. Validate the resulting sequence on Apply. Materialize variants as
+  a numeric sweep. Validate the resulting sequence on each automatic update. Materialize variants as
   flat canonical source epochs edited together through their subgroup.
   No Shuffle trial action is exposed; group-order and Setup seed ownership remain unchanged.
   Store optional batch labels and distinct generated-batch identities under V03.
-  The trailing + appends a new subgroup; Apply changes the selected subgroup in place.
+  The trailing + appends a new subgroup; edits update the selected subgroup in place.
   Hide the older insertion/replacement controls in this workflow. Bound each generation to 2000 epochs without charging
   existing group repetitions against that source-list allowance. Validate the assembled trial
   atomically; cancellation, invalid settings or failed insertion leave it unchanged.
@@ -382,7 +399,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   each projector has its own layer selector and value field or prepared-file picker;
   the rig-wide arena has one row. The parameter dropdown lists supported values in
   the selected epochs. Common values are shown directly and differing values as Mixed;
-  only edited projector rows change on Apply. Shared duration, prepared file, applicable
+  only edited projector rows change on automatic update. Shared duration, prepared file, applicable
   motion/playback, opacity and simple looming size controls support batching. Missing
   targets or invalid values reject the entire operation; no silent partial application.
   Pending batch changes block target/selection changes and saving until applied or
@@ -408,6 +425,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   these actions sit below the title to avoid clipping. Ctrl+D and Backspace shortcuts
   respect the same selection/authority guards and preserve Backspace text editing;
   group actions target the overview, while epoch actions target group contents.
+  Epoch subgroup titles show only the supplied name; unnamed subgroups use
+  Epoch 1, Epoch 2, and so on in sequence order, without a Batch prefix.
   The subgroup form omits the selected-epoch count line. Undo/Redo use
   Ctrl+Z/Ctrl+Y (with native macOS equivalents), without menu or toolbar entries.
   Protocol Load/Save as validates complete schedules with canonical trial programs,
@@ -447,7 +466,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   Inventory actions are ordered Test selected, Connect/Disconnect. Test selected
   checks only the selected assigned camera, including a disabled camera, without
   changing experiment participation, capture or existing ownership. Managed
-  role assignments commit through E07 and leave the newly assigned camera disabled.
+  role assignments commit through E07 without changing the role's participation
+  flag; Use remains an explicit Cameras choice.
   Connect starts A10 manual capture and then Shows its acquisition-owned OpenCV
   window for the confirmed run; Disconnect stops capture and releases preview. Native X closure leaves capture running; backend
   visibility evidence updates the GUI selector. Show snaps the visible preview frame
@@ -461,6 +481,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   locked while a camera is owned until E07 live-edit adoption is implemented.
   Pending commands lock repeated submission; failures remain visible and queued
   intents are discarded on controller disconnection. No Setup readiness is claimed.
+  Manual Connect/Disconnect operates independently of experiment Use and never
+  enables participation; A10 retains capture, ownership and complete-input checks.
   Camera config exposes role, an Internal clock / External controller dropdown, requested
   external trigger frequency and a PFS parameter-file path with Browse. Preserve
   per-camera drafts and unique roles; selection/connection never enables a camera.
@@ -475,46 +497,59 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   controller. Retain the exact source separately; missing, ambiguous or unsupported
   values leave the choice unset with an explanation. This offline hint does not
   apply or validate camera settings: A10's SDK import/readback remains authoritative.
-  Changing the path clears stale hints. Omit Save camera settings: managed clients
-  submit completed rate edits, explicit trigger selections and successful PFS hints
-  through the controller configuration request. An explicitly selected PFS with a
-  usable hint additionally performs A10 SDK import/readback and signals editing
-  completion; retain the resulting baseline without reimporting on later rate edits.
-  A filename without an imported baseline cannot start capture from this GUI.
+  Changing the path clears stale hints. Omit Save camera settings: edits and PFS
+  hints remain local drafts until an explicit selected-camera action or normal
+  configuration submission. Connect submits the selected complete draft and performs
+  required A10 SDK import/readback before capture; Test selected checks identity only.
+  Retain an unchanged imported baseline without reimporting on later rate edits.
+  A filename alone cannot establish the imported baseline required for capture.
   Import does not enable a camera for experiment. Snapshot loading is silent;
   incomplete hints remain drafts. Require Configuration/control and controller
   confirmation before treating any change as applied.
+- Camera, MCU and Projector settings can be drafted in any order. Incomplete local
+  values survive snapshot polling and do not become accepted controller state or
+  silently reuse earlier values for an explicit action. Keep participation independent
+  of wiring and retain device settings when Use is disabled. Show concise missing
+  prerequisites beside the affected action and contextual wiring access in Cameras
+  and Projector synchronization. Identity checks require only their actual inputs;
+  capture, pulse tests and calibration require their own complete selected inputs.
+  E07 still validates submissions and all participating Setup dependencies; local
+  readiness hints never establish hardware or experiment readiness. Projector patch
+  placement, presentation pacing and the MCU flip-input connection remain distinct
+  settings with their existing V20/V22/A11 owners. VSync mode and the contextual
+  MCU input editor stay editable when the photodiode patch is disabled.
 - Managed MCU connection/pin tests use controller-confirmed COM/pin/rate values.
   Pending commands lock edits and repeat tests. A11 diagnostic observations drive
   Test/Stop state; a bounded follow-up status query begins after confirmed execution,
   and control/connection loss cancels local timers. Firmware/edge reports do not prove
   physical receiver wiring.
-- Microcontroller owns one selected COM port for all camera triggers; Cameras has
-  no controller/port selector. COM discovery uses the shared compact Refresh icon
+- Microcontroller owns one selected COM port for all camera triggers. Cameras and
+  Projectors expose contextual editors for that same port and the relevant output/
+  input pin; edits update the MCU draft rather than creating another controller or mapping. COM discovery uses the shared compact Refresh icon
   beside the port selector, distinct from Test connection. Scan ports lists discovered COM-number names with
   the available device description, preserving the port identity separately and
   a still-present selection without opening devices. Do not expose
   macOS/Linux serial device names or invent a second controller in the draft.
-  Inputs precedes Outputs. Add input/output and row removal select only supported
-  signals. Hide empty signal-table headers (MCU Inputs/Outputs and SpikeGLX channels),
-  releasing their height; restore them when rows are added or loaded. Inventory
-  headers retain Refresh when empty. Supported choices are Projector flip input;
-  Trial state and uniquely assigned Behavior/Tracking/Eye
-  camera outputs. Each row has a supported-signal dropdown, pin, Test/Stop and remove
-  action; no free-form signal, behavior selector or duplicated camera rate. Prevent
-  duplicate active signals. Removing disables the signal and hides its row, retaining
-  its pin for Add and file round-trips. Camera enablement shares Cameras' experiment
-  participation; adding/removing a camera output enables/disables that camera. Eye
-  has an independent A11 output; its pin/rate remain explicit and rig acceptance
-  does not follow from adding the GUI row. Managed Add collects an unset camera
-  pin before submitting pin and participation together under the existing revision
-  and configuration-dispatch lock; role/inventory or authority loss closes the
-  dialog. Cameras still owns source/rate. Fixed input/output enablement is
-  retained draft configuration in isolated review. Disabled signals cannot start tests
-  or participate in pin conflicts. Add/remove/reassignment obey editing and diagnostic
-  locks. Omit Save pins and Apply pin settings: managed clients submit completed pin
+  Inputs precedes Outputs. Show the supported Projector flip input, Trial state
+  output and logical Behavior/Tracking/Eye camera outputs with explicit pin editors
+  and Test/Stop. Logical camera output rows remain available before physical camera
+  discovery or assignment; clearing a pin removes its assignment. Fixed signal
+  toggles retain their own enablement. Omit redundant Add and signal-selection
+  controls for these fixed roles; no free-form signal or duplicated camera rate.
+  SpikeGLX retains its own Add/remove table and hidden empty header. Inventory
+  headers retain Refresh when empty. Camera output assignment/removal changes wiring only;
+  clearing a camera pin never changes Cameras' Use flag or timing source. Fixed input/
+  output enable flags retain their signal meaning, independently of camera/projector
+  participation. Eye has an independent A11 output; its pin/rate remain explicit and
+  rig acceptance does not follow from adding the GUI row. Contextual editors close
+  on role/inventory or authority loss and obey the same editing/diagnostic locks.
+  Cameras owns participation, source and rate; Microcontroller owns port and pins.
+  Fixed input/output enablement is retained draft configuration in isolated review. Disabled signals cannot start tests
+  or participate in experiment pin conflicts. Explicit diagnostics also check their
+  target against active signals. Wiring edits obey editing and diagnostic locks. Omit Save pins and Apply pin settings: managed clients submit completed pin
   edits, selected COM ports and
-  fixed I/O enable changes through the existing controller configuration request.
+  fixed I/O enable changes through the existing controller configuration request
+  only when the applicable proposal is complete; otherwise retain them as local drafts.
   Inventory refresh and saved-state loading are silent. Lock managed edits during
   diagnostics; connection/pin tests still require confirmed configuration.
   Pin editors display decimal numbers without a D prefix and accept numeric entry.
@@ -535,7 +570,8 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   target one pin for observation in SpikeGLX; the input test observes rising edges,
   never drives the input pin. Test requests require Configuration/control, a COM port,
   a nonempty pin and no target-pin conflict; camera requests additionally require an
-  enabled external-trigger role and valid retained rate. Managed diagnostics retain
+  supported logical role and valid requested rate, independently of camera Use or
+  timing source; this explicit pin diagnostic never starts camera capture. Managed diagnostics retain
   controller ownership; report requests without matched results as unconfirmed.
 - Projectors uses a compact table of Display ID, Projector assignment, Resolution
   in pixels, plus a scaled Displays layout diagram. Its indices are GUI-owned,
@@ -798,7 +834,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="g02"></a>
 ### G02 — Shared frontend formatting
 
-**Status:** Accepted · **Revision:** 37
+**Status:** Accepted · **Revision:** 38
 
 - Device subtabs preserve their text color on hover. Tracking places Load/Save beside
   Pipeline and diagnostic/annotation actions in a separate, evenly sized row.
@@ -879,9 +915,12 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   place. Hide vertical and horizontal scrollbar tracks throughout the Qt GUI,
   retaining wheel/trackpad and keyboard scrolling. Their zero-size gutter is stable
   across tabs regardless of overflow. Protocol scrolls its authoring region while navigation and the page heading stay fixed. Other pages have no outer whole-page scroll. Narrow windows stack the columns.
-  Activity logs wrap at word boundaries without forced splitting of long tokens;
-  an over-width indivisible token remains horizontally scrollable. Preserve the
-  visible message and wrapped-line offset when appending or evicting old entries.
+  Activity logs use readable action names and concise admission/outcome lines;
+  admission never claims execution or completion. Keep exact command identities and
+  diagnostic messages in accessible per-entry details, bounded with their retained
+  entries. Wrap at word boundaries without forced splitting of long tokens;
+  over-width indivisible tokens remain horizontally scrollable. Preserve the visible
+  message and wrapped-line offset when appending or evicting old entries.
 - Implement the native frontend with PyQt6, matching the reference. Initial local
   design review uses explicitly labeled presentation fixtures, no device/runtime
   calls and no admitted experiment commands. Managed bootstrap, E03 transport/leases
@@ -890,7 +929,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
 <a id="e03"></a>
 ### E03 — GUI disconnection and control lease
 
-**Status:** Accepted · **Revision:** 29
+**Status:** Accepted · **Revision:** 34
 
 - **Closure and loss:** intentional GUI closure is allowed. GUI connection loss or
   crash never pauses, stops, restarts, or resumes the experiment. Unexpected
@@ -918,7 +957,7 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   connections follow A10's [control-loss cleanup rules](acquisition.md#a10).
 - **Take control:** every new/reconnected/reopened GUI subscription starts as an
   observer. After installing current state/configuration and acknowledging existing
-  reconnect warnings, try once to acquire an unheld lease automatically through
+  important reconnect warnings, try once to acquire an unheld lease automatically through
   AcquireControl. A concurrent holder or rejected claim leaves the GUI observing;
   replacing another holder requires explicit confirmed Take over control. Manual
   release does not trigger reacquisition within the same subscription. Reconnection
@@ -943,8 +982,25 @@ Configuration: [gui_config.toml](../../config/backends/gui_config.toml).
   first, active incidents never). The Snapshot reports the retained coverage start and
   truncation; do not imply a complete history of a longer absence. There is no
   separate history RPC. Exclude scientific data, raw RPCs and unchanged heartbeats.
+  Present groups with distinct category headings in a compact vertically scrolling
+  body; treat diagnostic content as literal text. Show retained issues and pending choices before routine
+  successful-operation counts. Keep all actionable operation outcomes visible;
+  copied technical details retain exact identities/messages and explicitly mark
+  bounded history omissions. Use a themed review dialog without a warning icon or
+  technical-detail pane; its only actions are Copy details and Continue.
+  Copy details copies the current retained diagnostics, including all errors,
+  without acknowledging or changing controller state. Do not imply every retained event occurred during the
+  latest disconnection or that retained history is complete.
 - **Warning modal:** after synchronization following an unexpected disconnect or
-  crash, show a modal warning. Keep state-changing GUI controls disabled until the
+  crash or GUI launch, show a modal review only for retained errors/incidents,
+  pending choices, failed or unconfirmed terminal operations, active/failed/unknown
+  recoveries, or important warnings. Exclude explicitly completed recoveries with
+  completion evidence and no terminal failure, and exact nonfatal configuration
+  notices tied to current completed/valid validation. Unclassified warnings remain
+  important; never classify by message keywords. Successful operation history,
+  ordinary in-flight operations, history truncation and connection loss alone do
+  not require this review. Full retained history remains manually available and
+  copying it does not require or grant control. Keep state-changing GUI controls disabled until the
   operator acknowledges it. Acknowledgement changes only GUI state: it does not pause
   execution, clear errors, recover or claim a lease, or alter controller state.
 - **Reconnect schedule:** after unexpected controller-connection loss, the GUI retries

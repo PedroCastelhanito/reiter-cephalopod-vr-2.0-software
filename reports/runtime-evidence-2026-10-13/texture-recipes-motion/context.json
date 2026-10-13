@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-13",
+  "environment": "macOS ARM64; repository Python 3.11 .venv",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "source_hashes": "final-source.json",
+  "legacy_source": {
+    "root": "/Users/pedrocastelhanito/Dev/reiter-software/reiter-cephalopod-vr-software",
+    "revision": "914ecbc12566e31d130d79066e635a3255bb276a",
+    "sha256": {
+      "protocol/src/vr_backend/rendering/texture_gen.py": "33e91716d79f895570939613212f4e18752e6316b8ee696fe590fd0f6d18f40a",
+      "protocol/src/vr_backend/builder/texture_designer.py": "e544a17a40ff85750c87c9db20b21e3301fef7a7139554f7b1c4a58ff2aeda9b",
+      "protocol/src/vr_backend/runtime/manager/_stimuli.py": "c167d95a757b3d918a8935c142bd142e9f1a08860bd8d148e68b26a76d243ed9",
+      "protocol/src/protocol/gui/experiment_window.py": "8f8e76cc9db64ddcb5422b6204603134106ff76090bc237da208446829aa4fea",
+      "protocol/src/vr_backend/arenas/patterns.py": "c2bfb84e525f02f3ff7645db201ee0ab26809d5ba54760d160c11937010215f7"
+    },
+    "method": "Source inspection and source-derived pixel/parameter fixtures. Actual user files unavailable."
+  },
+  "checks": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/visual_stimulus -q -m 'not windows and not rig' --junitxml=reports/runtime-evidence-2026-10-13/texture-recipes-motion/visual-stimulus.xml",
+      "result": "277 passed, 1 deselected; permitted local loopback",
+      "log": "visual-stimulus.log"
+    },
+    {
+      "command": ".venv/bin/python -m pytest contracts/visual_stimulus/tests -q",
+      "result": "42 passed, 79 subtests passed",
+      "log": "contracts.log"
+    },
+    {
+      "command": ".venv/bin/python contracts/visual_stimulus/generate_schemas.py --check",
+      "result": "11 schemas current",
+      "log": "schema.log"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'texture or reference_advanced_controls_align or projector_local or independent_screen or demo_assets_can_be_selected or motion_auto_commit_and_invalid_edit_undo or epoch_parameter_warnings_wait_for_submission or compact_reference_rows_share_headers_and_commit_relocated_fields or epoch_automatic_updates_preserve_focus_validation_and_history' --junitxml=reports/runtime-evidence-2026-10-13/texture-recipes-motion/gui-textures-final.xml",
+      "result": "14 passed, 447 deselected",
+      "log": "gui-textures-final.log"
+    },
+    {
+      "command": "See final-static-commands.json",
+      "result": "Ruff and format23 files pass; Windows-target mypy19 sources pass"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "676 modules, zero violations; cohesive formula-catalogue size warning reviewed in report",
+      "log": "boundaries-final.log"
+    },
+    {
+      "command": ".venv/bin/python -m pip check",
+      "result": "No broken requirements found",
+      "log": "dependencies.log"
+    }
+  ],
+  "earlier_attempts": {
+    "gui.log": "450 passed, seven failed during concurrent GUI editing. All failed cases included in final14-case pass; not a fresh full-suite result.",
+    "visual-stimulus-sandbox.log": "268 passed, nine failed because loopback bind prohibited. Permitted rerun277 pass.",
+    "visual-stimulus-before-final-review.log": "273 passed before final numeric-boolean and demo regression additions.",
+    "recipe-build-install-context.json": "Reconstructed dependency/build command assessment. Native Windows-only packaging guard prevents macOS package success."
+  },
+  "review": "Luna formula writing, Sol6.1 integration/compatibility review, Astra geometry/major decisions/main review approved. Root integration and validation.",
+  "limits": [
+    "Actual rejected owner JSON files unavailable.",
+    "No native Windows, rig, optical, frame timing or GPU throughput acceptance.",
+    "Combined drift plus spin/custom competing motion are rejected rather than approximated.",
+    "Existing physical-coordinate origin contract mismatch remains TODO; spin validation follows actual renderer coordinates.",
+    "Concurrent unrelated GUI edits preserved; source hashes and historical broad-suite output are not a final full-GUI pass."
+  ],
+  "cleanup": "Only task-owned /tmp inspection/check files removed; no broad clean/reset, no deletion of raw evidence or unrelated edits."
+}

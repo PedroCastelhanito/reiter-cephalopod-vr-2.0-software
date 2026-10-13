@@ -67,6 +67,52 @@ the latter distinguishes GUI generation actions within a parent group even when
 labels match. Neither field changes compilation order, timing or rendering. Preserve
 both in source/prepared-source JSON; individual epoch edits retain batch membership.
 
+## Reference-linked texture motion
+
+`TextureSettings.linked_to` is an optional active reference instance ID in the same
+resolved epoch. The reference is independent and both endpoints are physical,
+single-surface image tiles. Each follower retains its own image, tile periods,
+appearance, initial/retained phase and reset choice. Its authored phase and layer
+motion are holds; the reference supplies constant phase drift or constant rotation.
+Chains, cycles, self/same-screen links, animated tile periods, simultaneous drift and
+spin, motion/period assignments and motion/period feedback on either endpoint are
+invalid. Constant values may be condition-selected; validate each expanded occurrence.
+Appearance feedback follows the existing writer rules. Missing/disabled output
+presentation never renormalizes geometry or moves a reference to another screen.
+
+Construct calibrated unit surface right/up/inward-normal bases. Let `F_i` be the
+shortest rotation from surface normal `n_i` to Bottom's inward normal. For linear
+motion convert source phase cycles/s to local texture mm/s using its own periods and
+retained orientation, invert its physical map, then transport `F_target^-1 F_source v`.
+Convert into the target's map, retained orientation and periods to obtain its phase
+rates. Antiparallel-to-Bottom normals and nonuniform/sheared/reflected stimulus maps
+are unsupported; output warp/reflection is separate and remains supported.
+
+For source angular rate `a` in rad/s and target perpendicular subject distance `d`,
+add physical velocity `a*d*(n_source cross n_target)`; target spin is
+`a*(n_source dot n_target)`. Rotation linking requires parallel/perpendicular planes,
+with accepted near-zero/unit dot products clamped to exactly zero/signed one.
+This preserves V02's Bottom/side convention. It is a coordinated-flow definition,
+not a rigid-body rotation or seamless texture wrap.
+
+The source pivot for spin must equal the subject projection in the existing
+renderer’s centered local face coordinates, transformed into its stimulus plane.
+Carry known center positions through compiled transition actions; uncertain prior
+position writers require an explicit reset before spin linking. Fail Setup with the
+required coordinates if unknown/mismatched. Recheck actual retained centers during
+boundary binding. The separate existing bottom-left-versus-centered coordinate
+contract discrepancy remains tracked in the current report; this feature does not
+change projection or move authored textures implicitly.
+
+Bind followers after all epoch state transitions, using actual retained rotations.
+The existing state fields integrate the derived constant rates analytically; no new
+per-frame synchronization, phase owner or frame-delta integration is introduced.
+Drift→hold, source changes and unlinking preserve target state unless V07 requires
+an explicit reset or incompatible-resource restart. GUI **Linked to** selects the
+reference and disables target movement controls; **Independent** releases the link
+with zero drift, ready for explicit editing. Advanced initial-center controls allow
+the required spin pivot to be authored.
+
 ## Functions, clocks and checks
 
 The four supported function variants are constant, ramp `initial+slope*u`, sine

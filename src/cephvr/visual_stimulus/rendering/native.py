@@ -288,6 +288,13 @@ class ModernGLPort:
         for resource in artifact.manifest.resources:
             resource_id = resource.fingerprint.resource_id
             key = f"{artifact.identity.resource_generation}:{resource_id}"
+            if (
+                resource.kind == "image"
+                and resource.provider_compatibility == "Pillow-cephvr1-rgb8-input-v1"
+                and resource.interpretation is None
+            ):
+                # Protected recipe inputs are fingerprinted dependencies, not GPU pixels.
+                continue
             if key in self._resources:
                 continue
             if resource.kind == "video":
@@ -343,6 +350,36 @@ class ModernGLPort:
         if prepare is None:
             raise NativeRenderingError("scene pipeline lacks prepare_trial")
         prepare(artifact, resources, self._outputs, self._resources)
+
+    def install_image_residency(self, residency: Any, deadline_ns: int) -> None:
+        """Install prepared source scheduling on this existing GL owner."""
+        from cephvr.visual_stimulus.rendering.image_gpu import ImageGpu
+
+        self._assert_owner()
+        self._image_residency = residency
+        residency.attach(ImageGpu(self._outputs), self._resources, self.announce)
+        residency.prepare(deadline_ns)
+
+    def begin_images(self, trial_id: str) -> None:
+        residency = getattr(self, "_image_residency", None)
+        if residency is not None:
+            residency.begin(trial_id)
+
+    def finish_images(self, trial_id: str) -> None:
+        residency = getattr(self, "_image_residency", None)
+        if residency is not None:
+            residency.finish(trial_id)
+
+    def select_images(
+        self, trial_id: str, epoch_index: int, snapshots: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        self._assert_owner()
+        residency = getattr(self, "_image_residency", None)
+        return (
+            snapshots
+            if residency is None
+            else residency.select(trial_id, epoch_index, snapshots)
+        )
 
     def _upload_linear_image(
         self, prepared_image: ImagePixels, *, retained: list[Any] | None = None
@@ -655,6 +692,13 @@ class ModernGLPort:
             else:
                 self._calibration_owner = None
                 self._released.append("visual_stimulus:gpu:display-calibration:arena")
+        residency = getattr(self, "_image_residency", None)
+        if residency is not None:
+            image_errors = residency.release_gpu()
+            self._released.extend(sorted(residency.released_keys))
+            outstanding.extend(image_errors)
+            if not image_errors:
+                self._image_residency = None
         for key, resource in tuple(self._resources.items()):
             try:
                 self._release_resource(resource)

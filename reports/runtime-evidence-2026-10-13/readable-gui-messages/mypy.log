@@ -1,0 +1,7 @@
+src/cephvr/gui/components.py:311: error: Item "None" of "QMenu | None" has no attribute "addSeparator"  [union-attr]
+src/cephvr/gui/components.py:312: error: Item "None" of "QMenu | None" has no attribute "addAction"  [union-attr]
+src/cephvr/gui/components.py:313: error: Item "None" of "QMenu | None" has no attribute "addAction"  [union-attr]
+src/cephvr/gui/components.py:316: error: Item "None" of "QMenu | None" has no attribute "exec"  [union-attr]
+src/cephvr/gui/components.py:329: error: Item "None" of "QClipboard | None" has no attribute "setText"  [union-attr]
+src/cephvr/gui/components.py:330: error: Item "None" of "QMenu | None" has no attribute "deleteLater"  [union-attr]
+Found 6 errors in 1 file (checked 153 source files)

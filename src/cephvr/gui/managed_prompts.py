@@ -8,14 +8,13 @@ from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from cephvr.control.v1 import types_pb2 as pb
-from cephvr.gui.managed_status import retained_summary
+from cephvr.gui.retained_review import RetainedReviewDialog
 
 
 class ManagedPrompts:
@@ -34,7 +33,7 @@ class ManagedPrompts:
         self.acknowledged = acknowledged
         self.log = log
         self.snapshot: pb.Snapshot | None = None
-        self.retained_dialog: QMessageBox | None = None
+        self.retained_dialog: RetainedReviewDialog | None = None
         self.prompt_dialog: QDialog | None = None
         self.prompt_label: QLabel | None = None
         self.prompt_choices: QHBoxLayout | None = None
@@ -69,7 +68,10 @@ class ManagedPrompts:
                 self.prompt_dialog.hide()
             return
         if self.retained_dialog is not None:
-            self.retained_dialog.hide()
+            if self._retained_dialog_identity == identity:
+                self.retained_dialog.update_snapshot(snapshot)
+            else:
+                self.retained_dialog.hide()
         self._update_prompt(snapshot, can_respond=can_respond)
 
     def review_retained_summary(self) -> None:
@@ -111,19 +113,13 @@ class ManagedPrompts:
             self.retained_dialog is not None
             and self._retained_dialog_identity == identity
         ):
-            self.retained_dialog.setInformativeText(retained_summary(self.snapshot))
+            self.retained_dialog.update_snapshot(self.snapshot)
             self.retained_dialog.raise_()
             self.retained_dialog.activateWindow()
             return
         self.invalidate_retained_summary()
-        dialog = QMessageBox(self.parent)
-        dialog.setIcon(QMessageBox.Icon.Warning)
-        dialog.setWindowTitle("Controller state while disconnected")
-        dialog.setText("Review retained controller events before continuing.")
-        dialog.setInformativeText(retained_summary(self.snapshot))
-        dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
-        dialog.setDefaultButton(QMessageBox.StandardButton.Ok)
-        dialog.setModal(True)
+        dialog = RetainedReviewDialog(self.parent)
+        dialog.update_snapshot(self.snapshot)
         self._retained_dialog_serial += 1
         serial = self._retained_dialog_serial
         dialog.finished.connect(
@@ -143,7 +139,7 @@ class ManagedPrompts:
             return
         self.retained_dialog = None
         self._retained_dialog_identity = None
-        if result == int(QMessageBox.StandardButton.Ok):
+        if result == int(QDialog.DialogCode.Accepted):
             self.acknowledged(*identity)
 
     def _update_prompt(

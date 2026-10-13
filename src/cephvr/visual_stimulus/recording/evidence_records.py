@@ -10,6 +10,7 @@ from cephvr.visual_stimulus.config.models.evidence_model import (
     Clipping,
     FeedbackEvidence,
     GroupUpdate,
+    ImageSelection,
     Interval,
     MediaSelection,
     Pose,
@@ -57,6 +58,7 @@ def build_render_group_record(
             UniformValue(binding_id=x.binding_id, words=x.words) for x in state.uniforms
         ),
         media=tuple(MediaSelection(**asdict(x)) for x in state.media),
+        images=tuple(ImageSelection(**asdict(x)) for x in state.images),
         effective_poses=tuple(Pose(**asdict(x)) for x in state.effective_poses),
     )
     canonical_submissions = tuple(Submission(**asdict(x)) for x in submissions)

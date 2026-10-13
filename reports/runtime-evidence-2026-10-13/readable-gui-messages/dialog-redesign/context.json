@@ -1,0 +1,77 @@
+{
+  "recorded_at": "2026-10-13T12:26:59.734707+00:00",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "task": "gui-retained-review-layout",
+  "decision": "E03 revision31",
+  "source_state": "Uncommitted working tree; dashboard tests also contain concurrent authorized texture work. New dialog source remains in retained_review.py; patch captures cumulative managed_prompts changes.",
+  "source_sha256": {
+    "src/cephvr/gui/retained_review.py": "354318fd5ffbaa05501967e5ebf2674a91c27192f04fb66095b52a2ccd0cfe0c",
+    "src/cephvr/gui/managed_prompts.py": "de8332823784a75b1c4b8bbe9571ad26a0047fdaf021ca6d64bd5018c33c243e",
+    "tests/gui/test_dashboard.py": "353ff5aff4feca38e2a693a3116f0b2657a7d173bc7a2e4cf76a6005015ad7c5"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -k 'retained or managed_prompt or prompt_completion or log_entry_details or managed_operation_log or successful_tracking_frame_poll or wrapped_log_preserves' --junitxml=reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-redesign/pytest.xml",
+      "outcome": "15 passed,438 deselected in2.21s",
+      "evidence": [
+        "pytest.log",
+        "pytest.xml"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui/retained_review.py src/cephvr/gui/managed_prompts.py tests/gui/test_dashboard.py",
+      "outcome": "pass",
+      "evidence": [
+        "ruff-check.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui/retained_review.py src/cephvr/gui/managed_prompts.py tests/gui/test_dashboard.py",
+      "outcome": "pass",
+      "evidence": [
+        "ruff-format.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui/retained_review.py src/cephvr/gui/managed_prompts.py",
+      "outcome": "2 sources pass",
+      "evidence": [
+        "mypy.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "676 modules,0 violations; existing cohesion advisories",
+      "evidence": [
+        "boundaries.log"
+      ]
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass"
+    }
+  ],
+  "review": {
+    "implementation": "Luna",
+    "integration_and_visual_qa": "Sol6.1",
+    "main_review": "Astra",
+    "outcome": "No remaining blockers."
+  },
+  "screenshots": [
+    "collapsed.png",
+    "expanded.png",
+    "long-report.png"
+  ],
+  "copy_evidence": "copied-details.txt",
+  "render_method": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-13/readable-gui-messages/dialog-redesign/render_qa.py; real RetainedReviewDialog with synthetic state, latest snapshot update, clipboard copy and reject.",
+  "interactive_preview": {
+    "command": "QT_QPA_PLATFORM=cocoa PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /private/tmp/cephvr-message-preview.py",
+    "outcome": "PREVIEW_READY window_visible=True warning_visible=True",
+    "method": "Replaced exact prior sample process after command identity check; isolated temporary QSettings; no backend connection."
+  },
+  "limits": [
+    "Offscreen layout and clipboard proof; macOS preview visible. Windows/DPI/rig acceptance remains deferred.",
+    "Prior452-test suite covers previous log/grouping increment, not this final dialog redesign.",
+    "Retained diagnostics cover only current controller retention; discarded history cannot be copied."
+  ]
+}

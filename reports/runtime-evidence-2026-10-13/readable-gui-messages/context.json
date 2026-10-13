@@ -1,0 +1,85 @@
+{
+  "recorded_at": "2026-10-13T12:13:50.252331+00:00",
+  "source_revision": "4a628442dca3d7617e2fc0d3efeb63a72c01bac4",
+  "source_state": "Uncommitted working-tree GUI changes; preserve unrelated runtime repairs and concurrent documentation work.",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.11.15",
+  "task": "gui-readable-runtime-messages",
+  "decisions": [
+    "G02 revision38",
+    "E03 revision30",
+    "ARCH-002",
+    "E15"
+  ],
+  "source_sha256": {
+    "src/cephvr/gui/components.py": "a21e16d3a1ec5c86e6ec17f23538fba28efbc5b6699c637cacd7a8e93838f508",
+    "src/cephvr/gui/controller_bridge.py": "dcdfa5e0e7a0b7a3674eddf6bfba83964cc82bdb2224113d9d25879ff683ea6a",
+    "src/cephvr/gui/main.py": "302156e4ccf1ddd35006e99356227d34fbc16d3035d42b620ac3629df97578be",
+    "src/cephvr/gui/managed_prompts.py": "a2a077ba0f422da556e0d95ccc573dd2948d0c15193aa32be025bb238f0b5177",
+    "src/cephvr/gui/managed_status.py": "d619518cbfe133070d38a128130c21dc4fd9b2c3c6ad85b59d4ac49c8012ea46",
+    "src/cephvr/gui/theme.py": "e5f8d4858c4d8220f5910cbd6b1d50400d6e708d7459fe3566c8ed232ec75220",
+    "tests/gui/test_dashboard.py": "f49cd06643bedc0c4e349a399a6290fae6188f5a9ca0406cb0e7770dd49440f8"
+  },
+  "validation": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/gui -q -m 'not windows and not rig' --junitxml=reports/runtime-evidence-2026-10-13/readable-gui-messages/pytest.xml",
+      "outcome": "452 passed in285.11s; permitted authenticated loopback",
+      "evidence": [
+        "pytest.log",
+        "pytest.xml"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "outcome": "pass",
+      "evidence": [
+        "ruff-check.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui",
+      "outcome": "155 files already formatted",
+      "evidence": [
+        "ruff-format.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "outcome": "153 source files pass after correcting optional Qt handles",
+      "evidence": [
+        "mypy.log",
+        "mypy-final.log"
+      ]
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "outcome": "667 modules;0 violations; existing cohesion advisories reviewed",
+      "evidence": [
+        "boundaries.log"
+      ]
+    },
+    {
+      "command": "git diff --check",
+      "outcome": "pass"
+    }
+  ],
+  "review": {
+    "writer": "Luna",
+    "integration": "Sol6.1",
+    "main_review": "Astra",
+    "outcome": "No remaining actionable blockers; four final screenshots reviewed."
+  },
+  "screenshots": [
+    "retained-collapsed.png",
+    "retained-expanded.png",
+    "activity-log.png",
+    "activity-log-details.png"
+  ],
+  "screenshot_method": "QT_QPA_PLATFORM=offscreen PYTHONDONTWRITEBYTECODE=1 .venv/bin/python reports/runtime-evidence-2026-10-13/readable-gui-messages/render_qa.py; real widgets with synthetic retained state, no controller/device connection. Context menu selection and dialog exec substituted to capture actual detail constructor.",
+  "limitations": [
+    "Offscreen Qt font fallback; not native Windows/DPI or rig acceptance.",
+    "Direct popup interaction test crashed during writer validation and was removed; source review and replacement render do not establish native keyboard/mouse input.",
+    "No runtime restart, hardware commands, firmware or operator configuration changes."
+  ],
+  "initial_failures": "Writer corrected detail block association and scoped test edits; root mypy initially found6 optional-handle errors, final check passes. Visual review corrected unreadable detail-pane contrast."
+}

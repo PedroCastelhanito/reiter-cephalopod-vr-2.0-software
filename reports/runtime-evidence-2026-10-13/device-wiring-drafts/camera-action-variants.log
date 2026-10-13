@@ -1,0 +1,476 @@
+F.FFF...                                                                 [100%]
+=================================== FAILURES ===================================
+___ test_camera_action_submits_before_test_and_stops_on_failure[False-none] ____
+
+failure = 'none', connect = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+>           assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+E           assert 5 == 7
+E            +  where 5 = command {\n}\nexpected_configuration_revision: 5\ncamera: CAMERA_ROLE_EYE_TRACKING\nkind: CAMERA_COMMAND_KIND_TEST_CONNECTION\n.expected_configuration_revision
+
+tests/gui/test_dashboard.py:5509: AssertionError
+_ test_camera_action_submits_before_test_and_stops_on_failure[False-settings] __
+
+failure = 'settings', connect = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+            assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+            changed = state.configuration_values.current.backends[0].acquisition
+            assert changed.eye_tracking.device.device_id == "eye"
+            assert changed.eye_tracking.enabled and changed.pulses.eye_tracking.pin == "D8"
+            assert changed.behavioral.device.device_id == "behavior"
+            assert state.configuration_values.current.subject == "Preserved"
+            assert not changed.eye_tracking.device.settings.HasField("trigger_activation")
+            assert [base for base, _ in accepted] == (
+                [4, 5, 6, 7] if connect else [4, 5, 6]
+            )
+        else:
+>           with pytest.raises(ClientError):
+E           Failed: DID NOT RAISE ClientError
+
+tests/gui/test_dashboard.py:5520: Failed
+__ test_camera_action_submits_before_test_and_stops_on_failure[False-import] ___
+
+failure = 'import', connect = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+            assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+            changed = state.configuration_values.current.backends[0].acquisition
+            assert changed.eye_tracking.device.device_id == "eye"
+            assert changed.eye_tracking.enabled and changed.pulses.eye_tracking.pin == "D8"
+            assert changed.behavioral.device.device_id == "behavior"
+            assert state.configuration_values.current.subject == "Preserved"
+            assert not changed.eye_tracking.device.settings.HasField("trigger_activation")
+            assert [base for base, _ in accepted] == (
+                [4, 5, 6, 7] if connect else [4, 5, 6]
+            )
+        else:
+>           with pytest.raises(ClientError):
+E           Failed: DID NOT RAISE ClientError
+
+tests/gui/test_dashboard.py:5520: Failed
+____ test_camera_action_submits_before_test_and_stops_on_failure[True-none] ____
+
+failure = 'none', connect = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", ["none", "base", "settings", "import"])
+    @pytest.mark.parametrize("connect", [False, True])
+    async def test_camera_action_submits_before_test_and_stops_on_failure(
+        failure: str,
+        connect: bool,
+    ) -> None:
+        from cephvr.acquisition.v1 import camera_pb2 as camera_pb
+        from cephvr.client.session import ClientError
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.controller_bridge import ControllerBridge
+        from cephvr.shared.auth import Principal
+    
+        state = pb.Snapshot(controller_generation="generation")
+        state.session.phase = pb.SESSION_PHASE_CONFIGURATION
+        state.configuration.revision = state.configuration_values.revision = 4
+        state.configuration_values.current.subject = "Preserved"
+        settings = state.configuration_values.current.backends.add(
+            backend_name="acquisition", enabled=True
+        ).acquisition
+        settings.behavioral.device.device_id = "behavior"
+        settings.eye_tracking.device.settings.trigger_activation = "rising_edge"
+        calls = []
+    
+        async def execute(method, request):
+            calls.append((method, request))
+            if method == "UpdateConfiguration":
+                candidate = request.proposed.backends[0].acquisition.eye_tracking.device
+                if (
+                    candidate.frame_timing == camera_pb.FRAME_TIMING_FREE_RUNNING
+                    and candidate.settings.HasField("trigger_activation")
+                ):
+                    raise ClientError(
+                        "value 'rising_edge' is not an advertised TriggerActivation choice"
+                    )
+                if failure == "settings" and len(calls) == 2:
+                    return SimpleNamespace(succeeded=False, failure="invalid settings")
+                state.configuration_values.current.CopyFrom(request.proposed)
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_IMPORT_PFS
+            ):
+                if failure == "import":
+                    return SimpleNamespace(succeeded=False, failure="invalid PFS")
+                current = state.configuration_values.current.backends[0].acquisition
+                current.eye_tracking.device.pfs_baseline.SetInParent()
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            if (
+                method == "ExecuteCameraCommand"
+                and request.kind == rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+            ):
+                state.acquisition_devices.eye_tracking.preview_running = True
+                state.acquisition_devices.eye_tracking.preview_run_id = "preview"
+                state.configuration.revision += 1
+                state.configuration_values.revision = state.configuration.revision
+            return SimpleNamespace(succeeded=True)
+    
+        bridge = ControllerBridge(Principal("gui", "gui", "token"), 50051, 1024, (0,))
+        accepted = []
+        bridge.camera_configuration_accepted.connect(
+            lambda revision, payload: accepted.append(
+                (revision, pb.Snapshot.FromString(payload))
+            )
+        )
+        options = {
+            "generation": "generation",
+            "base_revision": 3 if failure == "base" else 4,
+            "base_configuration": state.configuration_values.current.SerializeToString(
+                deterministic=True
+            ),
+            "camera_role": 3,
+            "role": "Eye tracking",
+            "serial": "eye",
+            "clock": "Internal clock",
+            "source": "",
+            "preset": "new.pfs",
+            "rate": "60",
+            "enabled": True,
+            "pin": "8",
+            "port": "COM8",
+            "kind": (
+                rpc.CAMERA_COMMAND_KIND_START_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            ),
+            "show_preview": connect,
+        }
+        client = SimpleNamespace(
+            snapshot=state, execute=execute, operator_command=rpc.OperatorCommand
+        )
+        if failure == "none":
+            await bridge._dispatch(client, "prepare_camera", options)
+            assert calls[-1][0] == "ExecuteCameraCommand"
+            assert calls[-1][1].kind == (
+                rpc.CAMERA_COMMAND_KIND_SHOW_PREVIEW
+                if connect
+                else rpc.CAMERA_COMMAND_KIND_TEST_CONNECTION
+            )
+            assert calls[-1][1].expected_configuration_revision == (8 if connect else 7)
+            changed = state.configuration_values.current.backends[0].acquisition
+            assert changed.eye_tracking.device.device_id == "eye"
+>           assert changed.eye_tracking.enabled and changed.pulses.eye_tracking.pin == "D8"
+E           assert (False)
+E            +  where False = device {\n  device_id: "eye"\n  frame_timing: FRAME_TIMING_FREE_RUNNING\n  settings {\n  }\n  pfs_baseline {\n  }\n  pfs_source_filename: "new.pfs"\n  unaligned_free_running: true\n}\n.enabled
+E            +    where device {\n  device_id: "eye"\n  frame_timing: FRAME_TIMING_FREE_RUNNING\n  settings {\n  }\n  pfs_baseline {\n  }\n  pfs_source_filename: "new.pfs"\n  unaligned_free_running: true\n}\n = behavioral {\n  device {\n    device_id: "behavior"\n  }\n}\npulses {\n  eye_tracking {\n    pin: "D8"\n    requested_frequenc...   settings {\n    }\n    pfs_baseline {\n    }\n    pfs_source_filename: "new.pfs"\n    unaligned_free_running: true\n  }\n}\n.eye_tracking
+
+tests/gui/test_dashboard.py:5512: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-none]
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-settings]
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[False-import]
+FAILED tests/gui/test_dashboard.py::test_camera_action_submits_before_test_and_stops_on_failure[True-none]
+4 failed, 4 passed, 454 deselected in 2.12s

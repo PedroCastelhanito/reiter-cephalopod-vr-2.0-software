@@ -1,0 +1,203 @@
+........................................................................ [ 48%]
+.......................F.F.............................................. [ 96%]
+......                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing _
+
+    def test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing():
+        import hashlib
+    
+        import numpy as np
+        import tifffile
+    
+        from cephvr.visual_stimulus.rendering.upload import linear_rgba_bytes
+        from cephvr.visual_stimulus.resources.assets import PreparedAsset
+        from cephvr.visual_stimulus.resources.image_source import (
+            read_source_bytes,
+            validate_image_source,
+        )
+    
+        pixels = np.arange(36, dtype=np.uint16).reshape(3, 4, 3) * 1000
+        stream = io.BytesIO()
+        tifffile.imwrite(stream, pixels, photometric="rgb")
+        raw = stream.getvalue()
+        asset = Asset(
+            asset_id="still",
+            logical_path="still.tif",
+            profile="tiff_uint_v1",
+            color_override=ColorOverride(
+                transfer="linear",
+                primaries="rec709_d65",
+                range="full",
+                matrix="rgb",
+                chroma_location="none",
+                reason="residency test",
+            ),
+        )
+    
+        class Source:
+            closed = False
+    
+            def __init__(self):
+                self.readers = 0
+    
+            def independent_reader(self):
+                self.readers += 1
+                return io.BytesIO(raw)
+    
+            def close_after_consumers(self):
+                self.closed = True
+    
+        protected = Source()
+        prepared = PreparedAsset(
+            asset.asset_id,
+            asset.logical_path,
+            asset.profile,
+            hashlib.sha256(raw).hexdigest(),
+            len(raw),
+            protected,
+            None,
+        )
+        budget = BoundedBudget(cpu_limit=100_000, gpu_limit=100_000)
+        source, info = validate_image_source(
+            asset,
+            prepared,
+            budget=budget,
+            owner="test:still",
+            output_count=3,
+            max_document_bytes=1000,
+        )
+    
+        expected = linear_rgba_bytes(decode_image(asset, raw))
+        first_read = read_source_bytes(prepared, lambda: None)
+        second_read = read_source_bytes(prepared, lambda: None)
+        assert first_read == second_read == raw
+        assert hashlib.sha256(first_read).hexdigest() == prepared.sha256
+        assert (info.width, info.height, info.dtype, info.transfer, info.alpha) == (
+            4,
+            3,
+            "uint16",
+            "linear",
+            "none",
+        )
+        assert source.load(lambda: None) == expected
+        assert source.load(lambda: None) == expected
+>       assert source.cpu_bytes == 2 * len(raw) + 4 * 3 * 192
+E       AssertionError: assert 3184 == ((2 * 344) + ((4 * 3) * 192))
+E        +  where 3184 = ImageSource(key='7b805452c086781a9c25f79e29b319db363ef96f9cd3aaf323ed2269b9719896', width=4, height=3, cpu_bytes=3184, gpu_bytes=576, load=<function validate_image_source.<locals>.load at 0x1089f05e0>).cpu_bytes
+E        +  and   344 = len(b'II*\x00\x08\x00\x00\x00\x0f\x00\x00\x01\x04\x00\x01\x00\x00\x00\x04\x00\x00\x00\x01\x01\x04\x00\x01\x00\x00\x00\x03\...(#\x10\'\xf8*\xe0.\xc82\xb06\x98:\x80>hBPF8J N\x08R\xf0U\xd8Y\xc0]\xa8a\x90exi`mHq0u\x18y\x00}\xe8\x80\xd0\x84\xb8\x88')
+
+tests/visual_stimulus/test_resources.py:257: AssertionError
+_ test_recipe_image_source_is_deterministic_and_preserves_dependency_dimensions _
+
+    def test_recipe_image_source_is_deterministic_and_preserves_dependency_dimensions():
+        import hashlib
+    
+        from PIL import Image
+    
+        from cephvr.visual_stimulus.resources.assets import PreparedAsset
+        from cephvr.visual_stimulus.resources.image_source import validate_image_source
+    
+        recipe_raw = b'{"pattern":"image","params":{"texture_path":"source.png"}}'
+        recipe_asset = Asset(
+            asset_id="recipe",
+            logical_path="recipe.json",
+            profile="cephvr1_texture_json_v1",
+            color_override=None,
+        )
+        dependency_asset = Asset(
+            asset_id="recipe-source",
+            logical_path="source.png",
+            profile="png_uint_v1",
+            color_override=ColorOverride(
+                transfer="linear",
+                primaries="rec709_d65",
+                range="full",
+                matrix="rgb",
+                chroma_location="none",
+                reason="legacy recipe samples authored RGB values directly",
+            ),
+        )
+        encoded = io.BytesIO()
+        with Image.frombytes(
+            "RGB",
+            (3, 2),
+            bytes(
+                (255, 0, 0, 0, 255, 0, 0, 0, 255, 20, 40, 60, 80, 100, 120, 140, 160, 180)
+            ),
+        ) as image:
+            image.save(encoded, format="PNG")
+        dependency_raw = encoded.getvalue()
+    
+        class Source:
+            def __init__(self, data):
+                self.data = data
+                self.closed = False
+    
+            def independent_reader(self):
+                return io.BytesIO(self.data)
+    
+            def close_after_consumers(self):
+                self.closed = True
+    
+        recipe_source = PreparedAsset(
+            recipe_asset.asset_id,
+            recipe_asset.logical_path,
+            recipe_asset.profile,
+            hashlib.sha256(recipe_raw).hexdigest(),
+            len(recipe_raw),
+            Source(recipe_raw),
+            None,
+        )
+        dependency_source = PreparedAsset(
+            dependency_asset.asset_id,
+            dependency_asset.logical_path,
+            dependency_asset.profile,
+            hashlib.sha256(dependency_raw).hexdigest(),
+            len(dependency_raw),
+            Source(dependency_raw),
+            None,
+        )
+        budget = BoundedBudget(cpu_limit=1_000_000, gpu_limit=1_000_000)
+        image_source, info = validate_image_source(
+            recipe_asset,
+            recipe_source,
+            budget=budget,
+            owner="test:recipe",
+            output_count=2,
+            max_document_bytes=1000,
+            dependency_asset=dependency_asset,
+            dependency_source=dependency_source,
+        )
+    
+        first = image_source.load(lambda: None)
+        second = image_source.load(lambda: None)
+        assert first == second
+        assert hashlib.sha256(first).digest() == hashlib.sha256(second).digest()
+        assert (image_source.width, image_source.height, info.width, info.height) == (
+            3,
+            2,
+            3,
+            2,
+        )
+        assert (info.dtype, info.channel_order, info.transfer, info.alpha) == (
+            "uint8",
+            ("red", "green", "blue"),
+            "linear",
+            "none",
+        )
+        assert image_source.gpu_bytes == 3 * 2 * 16 * 2
+>       assert image_source.cpu_bytes == (
+            2 * (len(recipe_raw) + len(dependency_raw)) + 32 * len(recipe_raw) + 3 * 2 * 192
+        )
+E       assert 3470 == (((2 * (58 + 77)) + (32 * 58)) + ((3 * 2) * 192))
+E        +  where 3470 = ImageSource(key='1364e535dfa4a838aac9faba1437b7f4305520afac3031a7f6da08ebba8ffbac', width=3, height=2, cpu_bytes=3470, gpu_bytes=192, load=<function validate_image_source.<locals>.load at 0x104128fe0>).cpu_bytes
+E        +  and   58 = len(b'{"pattern":"image","params":{"texture_path":"source.png"}}')
+E        +  and   77 = len(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x03\x00\x00\x00\x02\x08\x02\x00\x00\x00\x12\x16\xf1M\x00\x00\x00\x14IDATx\x9cc\xf8\xcf\xc0\xc0\x00\xc6\x8c"\x1a6\x10\x00\x005u\x04\xdfd\x97\xac\x98\x00\x00\x00\x00IEND\xaeB`\x82')
+E        +  and   58 = len(b'{"pattern":"image","params":{"texture_path":"source.png"}}')
+
+tests/visual_stimulus/test_resources.py:416: AssertionError
+=========================== short test summary info ============================
+FAILED tests/visual_stimulus/test_resources.py::test_protected_image_source_reloads_linear_pixels_without_rehashing_or_closing
+FAILED tests/visual_stimulus/test_resources.py::test_recipe_image_source_is_deterministic_and_preserves_dependency_dimensions
+2 failed, 148 passed in 1.78s

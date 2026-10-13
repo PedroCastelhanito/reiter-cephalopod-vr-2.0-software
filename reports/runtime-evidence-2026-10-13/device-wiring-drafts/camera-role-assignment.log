@@ -1,0 +1,47 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_managed_role_assignment_is_atomic_and_leaves_camera_disabled _______
+
+    @pytest.mark.asyncio
+    async def test_managed_role_assignment_is_atomic_and_leaves_camera_disabled() -> None:
+        from cephvr.control.v1 import services_pb2 as rpc
+        from cephvr.control.v1 import types_pb2 as pb
+        from cephvr.gui.device_requests import assign_camera_role
+    
+        state = pb.Snapshot()
+        state.configuration.revision = 7
+        acquisition = state.configuration_values.current.backends.add(
+            backend_name="acquisition"
+        ).acquisition
+        acquisition.behavioral.enabled = True
+        acquisition.behavioral.device.device_id = "A"
+        acquisition.tracking.device.device_id = "old"
+        requests = []
+    
+        async def execute(method, request):
+            requests.append(request)
+            return SimpleNamespace(succeeded=True)
+    
+        await assign_camera_role(
+            SimpleNamespace(
+                snapshot=state,
+                execute=execute,
+                operator_command=lambda: rpc.OperatorCommand(),
+            ),
+            {"serial": "A", "role": "Tracking cam"},
+        )
+        request = requests[0]
+        assert request.expected_revision == 7
+        updated = request.proposed.backends[0].acquisition
+>       assert updated.behavioral.device.device_id == "" and not updated.behavioral.enabled
+E       assert ('' == '' and not True)
+E        +  where '' = .device_id
+E        +    where  = enabled: true\ndevice {\n}\n.device
+E        +      where enabled: true\ndevice {\n}\n = behavioral {\n  enabled: true\n  device {\n  }\n}\ntracking {\n  device {\n    device_id: "A"\n  }\n}\n.behavioral
+E        +  and   True = enabled: true\ndevice {\n}\n.enabled
+E        +    where enabled: true\ndevice {\n}\n = behavioral {\n  enabled: true\n  device {\n  }\n}\ntracking {\n  device {\n    device_id: "A"\n  }\n}\n.behavioral
+
+tests/gui/test_dashboard.py:11583: AssertionError
+=========================== short test summary info ============================
+FAILED tests/gui/test_dashboard.py::test_managed_role_assignment_is_atomic_and_leaves_camera_disabled
+1 failed, 461 deselected in 1.06s

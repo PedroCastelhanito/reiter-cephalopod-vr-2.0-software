@@ -413,3 +413,492 @@ class ExpansionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _linked_texture_fixture():
+    """Unequal observer distances and inward-facing rectangular screen axes."""
+    from cephvr.visual_stimulus.config.models.display_profile import Geometry
+    from cephvr.visual_stimulus.config.models.program_model import TextureSettings
+
+    geometry = Geometry.model_validate_json(
+        json.dumps(
+            {
+                "frame_id": "rig-mm",
+                "observer_mm": [0, 0, 0],
+                "near_mm": 1,
+                "far_mm": 1000,
+                "positional_tolerance_mm": 0.01,
+                "orthogonality_tolerance": 0.001,
+                "surfaces": [
+                    {
+                        "surface_id": face,
+                        "bottom_left_mm": bl,
+                        "bottom_right_mm": br,
+                        "top_right_mm": tr,
+                        "top_left_mm": tl,
+                    }
+                    for face, bl, br, tr, tl in (
+                        (
+                            "bottom",
+                            [-100, -100, -30],
+                            [100, -100, -30],
+                            [100, 100, -30],
+                            [-100, 100, -30],
+                        ),
+                        (
+                            "front",
+                            [100, -100, -30],
+                            [-100, -100, -30],
+                            [-100, -100, 100],
+                            [100, -100, 100],
+                        ),
+                        (
+                            "left",
+                            [-40, -100, -30],
+                            [-40, 100, -30],
+                            [-40, 100, 100],
+                            [-40, -100, 100],
+                        ),
+                        (
+                            "right",
+                            [60, 100, -30],
+                            [60, -100, -30],
+                            [60, -100, 100],
+                            [60, 100, 100],
+                        ),
+                    )
+                ],
+            }
+        )
+    )
+    base = make_program().sequence[0].settings[0].model_dump(mode="json")
+    settings = []
+    for face, period in (("bottom", 100), ("front", 50), ("left", 80), ("right", 120)):
+        data = deepcopy(base)
+        data.update(
+            instance_id=face,
+            linked_to=None if face == "bottom" else "bottom",
+            pattern={
+                "kind": "image_tile",
+                "asset_id": face,
+                "period_x": {"kind": "constant", "value": period},
+                "period_y": {"kind": "constant", "value": period},
+                "sampling": "nearest",
+            },
+            space={
+                "kind": "physical_surface",
+                "frame_id": "rig-mm",
+                "mappings": [{"surface_id": face, "matrix": [[1, 0, 0], [0, 1, 0]]}],
+            },
+            motion={k: {"kind": "hold"} for k in ("x", "y", "rotation")},
+            phase_x={"kind": "hold"},
+            phase_y={"kind": "hold"},
+            reset=False,
+        )
+        settings.append(TextureSettings.model_validate_json(json.dumps(data)))
+    return geometry, settings
+
+
+def _texture_rate(value):
+    from cephvr.visual_stimulus.config.models.program_model import Constant, Rate
+
+    return Rate(kind="rate", function=Constant(kind="constant", value=float(value)))
+
+
+def test_linked_translation_unfolds_without_losing_speed_and_keeps_independent_tiles():
+    import math
+
+    import pytest
+
+    from cephvr.visual_stimulus.config.texture_links import linked_rates, validate_links
+
+    geometry, settings = _linked_texture_fixture()
+    source = settings[0].model_copy(update={"phase_y": _texture_rate(-0.5)})
+    validate_links([source, *settings[1:]], resolved=True)
+    results = [
+        linked_rates(source, t, geometry, source_rotation=0, target_rotation=0)
+        for t in settings[1:]
+    ]
+    # Bottom +Y = rearward: Front flows down; side local X axes oppose.
+    assert results[0] == pytest.approx((0, 1, 0))
+    assert results[1] == pytest.approx((-50 / 80, 0, 0))
+    assert results[2] == pytest.approx((50 / 120, 0, 0))
+    for target, result in zip(settings[1:], results, strict=True):
+        reverse_source = target.model_copy(
+            update={
+                "linked_to": None,
+                "phase_x": _texture_rate(result[0]),
+                "phase_y": _texture_rate(result[1]),
+            }
+        )
+        back = linked_rates(
+            reverse_source, settings[0], geometry, source_rotation=0, target_rotation=0
+        )
+        assert back == pytest.approx((0, -0.5, 0))
+        assert math.hypot(
+            result[0] * target.pattern.period_x.value,
+            result[1] * target.pattern.period_y.value,
+        ) == pytest.approx(50)
+    assert [s.pattern.asset_id for s in settings] == [
+        "bottom",
+        "front",
+        "left",
+        "right",
+    ]
+
+
+def test_linked_clockwise_rotation_uses_each_subject_distance_and_reverses():
+    import math
+
+    import pytest
+
+    from cephvr.visual_stimulus.config.texture_links import linked_rates
+
+    geometry, settings = _linked_texture_fixture()
+    for angle in (-90, 90):
+        source = settings[0].model_copy(
+            update={
+                "motion": settings[0].motion.model_copy(
+                    update={"rotation": _texture_rate(angle)}
+                )
+            }
+        )
+        left, right = [
+            linked_rates(source, t, geometry, source_rotation=37, target_rotation=0)
+            for t in settings[2:]
+        ]
+        assert left == pytest.approx((-math.radians(angle) * 40 / 80, 0, 0))
+        assert right == pytest.approx((-math.radians(angle) * 60 / 120, 0, 0))
+        # For clockwise Bottom, both local X phase rates are positive: Left -Y,
+        # Right +Y because their physical local X axes point opposite ways.
+        assert (left[0] > 0) == (angle < 0)
+
+
+def test_link_validation_rejects_competing_or_ambiguous_writers():
+    import pytest
+
+    from cephvr.visual_stimulus.config.models.program_model import Hold
+    from cephvr.visual_stimulus.config.texture_links import linked_rates, validate_links
+
+    geometry, settings = _linked_texture_fixture()
+    source, target = settings[:2]
+    for changes, match in (
+        ({"linked_to": "missing"}, "active"),
+        ({"linked_to": "front"}, "another"),
+        ({"phase_x": _texture_rate(1)}, "cannot also own"),
+    ):
+        with pytest.raises(ValueError, match=match):
+            validate_links([source, target.model_copy(update=changes)], resolved=True)
+    with pytest.raises(ValueError, match="chains/cycles"):
+        validate_links([source.model_copy(update={"linked_to": "front"}), target])
+    spin = source.model_copy(
+        update={
+            "phase_x": _texture_rate(1),
+            "motion": source.motion.model_copy(update={"rotation": _texture_rate(1)}),
+        }
+    )
+    with pytest.raises(ValueError, match="separately"):
+        validate_links([spin, target], resolved=True)
+    singular = source.space.mappings[0].model_copy(
+        update={"matrix": ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))}
+    )
+    with pytest.raises(ValueError, match="uniform-scale"):
+        linked_rates(
+            source.model_copy(
+                update={
+                    "space": source.space.model_copy(update={"mappings": (singular,)})
+                }
+            ),
+            target,
+            geometry,
+            source_rotation=0,
+            target_rotation=0,
+        )
+    assert isinstance(target.phase_x, Hold)
+
+
+def test_link_binding_retains_each_phase_and_orientation_across_stop_and_relink():
+    import pytest
+
+    from cephvr.visual_stimulus.config.models.program_model import Hold
+    from cephvr.visual_stimulus.rendering.state import InstanceState
+    from cephvr.visual_stimulus.rendering.texture_links import bind_texture_links
+
+    geometry, settings = _linked_texture_fixture()
+    source = settings[0].model_copy(update={"phase_y": _texture_rate(-0.5)})
+    target = settings[2]
+    states = {
+        s.instance_id: InstanceState.initialize(s, now_ns=0, epoch_start_ns=0)
+        for s in (source, target)
+    }
+    states["left"].values["phase_x"].value = 7
+    states["left"].values["rotation"].value = 90
+    bind_texture_links(states, geometry, now_ns=0)
+    states["left"].advance(2_000_000_000)
+    assert states["left"].values["phase_x"].value == pytest.approx(7)
+    assert states["left"].values["phase_y"].value == pytest.approx(1.25)
+    stopped = source.model_copy(update={"phase_y": Hold(kind="hold")})
+    for setting in (stopped, target):
+        states[setting.instance_id].transition(
+            setting,
+            action="continue",
+            epoch_start_ns=2_000_000_000,
+            now_ns=2_000_000_000,
+        )
+    bind_texture_links(states, geometry, now_ns=2_000_000_000)
+    states["left"].advance(8_000_000_000)
+    assert states["left"].values["phase_y"].value == pytest.approx(1.25)
+    # Selecting an independent reference does not copy its phase or reset the target.
+    independent = target.model_copy(
+        update={"linked_to": None, "phase_x": _texture_rate(0.25)}
+    )
+    states["left"].transition(
+        independent,
+        action="continue",
+        epoch_start_ns=8_000_000_000,
+        now_ns=8_000_000_000,
+    )
+    bind_texture_links(states, geometry, now_ns=8_000_000_000)
+    states["left"].advance(10_000_000_000)
+    assert states["left"].values["phase_x"].value == pytest.approx(7.5)
+
+
+def test_compiled_links_execute_real_boundaries_with_retained_orientation():
+    from dataclasses import replace
+
+    import pytest
+    from tests.visual_stimulus.support import make_compile_context
+
+    from cephvr.visual_stimulus.compiler import compile_trial
+    from cephvr.visual_stimulus.config.models.artifact_models import (
+        Fingerprint,
+        Resource,
+        ResourceManifest,
+    )
+    from cephvr.visual_stimulus.config.models.program_model import Hold
+    from cephvr.visual_stimulus.rendering.engine import RendererEngine
+    from cephvr.visual_stimulus.rendering.types import (
+        DisplayInitialization,
+        OutputActivity,
+        RenderedOutput,
+        RenderPassResult,
+    )
+
+    geometry, settings = _linked_texture_fixture()
+    source = settings[0].model_copy(update={"phase_y": _texture_rate(-0.5)})
+    target = settings[2].model_copy(
+        update={
+            "initial_phase_x_cycles": 7.0,
+            "initial": settings[2].initial.model_copy(update={"rotation_deg": 90.0}),
+        }
+    )
+    data = json.loads(fixture_source())
+    data["assets"] = [
+        {
+            "asset_id": s.instance_id,
+            "logical_path": s.instance_id + ".png",
+            "profile": "png_uint_v1",
+            "color_override": None,
+        }
+        for s in (source, target)
+    ]
+    data["instances"] = [
+        {"instance_id": s.instance_id, "family": "texture"} for s in (source, target)
+    ]
+    scene = data["scenes"][0]
+    scene["layer_instance_ids"] = [s.instance_id for s in (source, target)]
+    data["scenes"] = [scene]
+    template = data["sequence"][0]
+    data["sequence"] = []
+    for index in range(3):
+        epoch = deepcopy(template)
+        epoch.update(
+            epoch_id=f"epoch-{index}",
+            scene_id=scene["scene_id"],
+            duration={"kind": "fixed", "duration": {"seconds": "20"}},
+            settings=[
+                (
+                    source
+                    if index != 1
+                    else source.model_copy(update={"phase_y": Hold(kind="hold")})
+                ).model_dump(mode="json"),
+                target.model_dump(mode="json"),
+            ],
+        )
+        data["sequence"].append(epoch)
+    authored = json.dumps(data)
+    program = make_program(authored)
+    context = make_compile_context(authored)
+    # A disabled extra output does not remove geometry or change linked speeds.
+    disabled = context.display.outputs[0].model_copy(
+        update={"output_id": "off", "device_identity": "edid:off", "enabled": False}
+    )
+    display = context.display.model_copy(
+        update={
+            "geometry": geometry,
+            "outputs": (*context.display.outputs, disabled),
+            "mappings": (
+                *context.display.mappings,
+                context.display.mappings[0].model_copy(
+                    update={"mapping_id": "off-map", "output_id": "off"}
+                ),
+            ),
+        }
+    )
+    manifest = ResourceManifest(
+        format_version=1,
+        resources=tuple(
+            Resource(
+                fingerprint=Fingerprint(
+                    resource_id=s.instance_id,
+                    logical_path=s.instance_id + ".png",
+                    subresource=None,
+                    sha256="0" * 64,
+                    bytes=1,
+                ),
+                kind="image",
+                profile_id="png_uint_v1",
+                dependencies=(),
+                interpretation=None,
+                cpu_bytes=1,
+                gpu_bytes=1,
+                provider_compatibility="test-pixels",
+            )
+            for s in (source, target)
+        ),
+        provenance=(),
+    )
+    plan = compile_trial(
+        program,
+        replace(context, display=display, manifest=manifest),
+        max_expanded_epochs=8,
+    )
+    activity = (OutputActivity("projector/main", 0, 1, 1),)
+
+    class Port:
+        def initialize_display(self, selected):
+            return DisplayInitialization(
+                ("projector/main",),
+                (("projector/main", 8, 8, 8),),
+                (("projector/main", 100, 100),),
+                (("projector/main", 1),),
+                activity,
+            )
+
+        def prepare_trial(self, artifact, resources):
+            pass
+
+        def render(self, scene, states):
+            return RenderPassResult(
+                (RenderedOutput("projector/main", 100, 100, 8, object()),), (), (), ()
+            )
+
+        def present(self, frames):
+            return activity
+
+        def show_idle(self, display):
+            return activity
+
+    engine = RendererEngine(
+        Port(), clock_ns=lambda: 0, resource_provider=lambda _: object()
+    )
+    engine.initialize_display(display)
+    engine.prepare_trial(plan)
+    engine.begin_trial(plan.identity.trial_id, 0)
+    for seconds, phase_y in (
+        (0, 0),
+        (10, 6.25),
+        (20, 12.5),
+        (30, 12.5),
+        (40, 12.5),
+        (50, 18.75),
+    ):
+        update = engine.render_tick(seconds * 1_000_000_000)
+        values = dict(
+            next(s.state for s in update.group.instances if s.instance_id == "left")
+        )
+        assert values["phase_x"] == pytest.approx(7)
+        assert values["phase_y"] == pytest.approx(phase_y)
+        assert values["rotation"] == pytest.approx(90)
+    engine.stop_trial(60_000_000_000)
+
+
+def test_linked_spin_pivot_preflight_rejects_unknown_history_until_reset():
+    import pytest
+
+    from cephvr.visual_stimulus.compiler.texture_links import validate_link_geometry
+    from cephvr.visual_stimulus.config.texture_links import validate_spin_pivot
+
+    geometry, settings = _linked_texture_fixture()
+    source, target = settings[0], settings[2]
+    spin = source.model_copy(
+        update={
+            "motion": source.motion.model_copy(update={"rotation": _texture_rate(90)})
+        }
+    )
+    validate_spin_pivot(spin, geometry, (0.0, 0.0))
+    for point in (None, (1.0, 0.0)):
+        with pytest.raises(ValueError, match="subject projection"):
+            validate_spin_pivot(spin, geometry, point)
+    off_center = geometry.model_copy(update={"observer_mm": (10.0, 0.0, 0.0)})
+    with pytest.raises(ValueError, match=r"\(10, 0\)"):
+        validate_spin_pivot(spin, off_center, (0.0, 0.0))
+    validate_spin_pivot(spin, off_center, (10.0, 0.0))
+    moved = source.model_copy(
+        update={"motion": source.motion.model_copy(update={"x": _texture_rate(1)})}
+    )
+    epochs = [
+        CompiledEpoch(
+            occurrence_index=i,
+            source_epoch_id=f"epoch-{i}",
+            duration_origin="fixed",
+            lineage=(),
+            scene_id="scene",
+            start_ns=i * 10,
+            end_ns=(i + 1) * 10,
+            truncated_curves=(),
+            settings=values,
+        )
+        for i, values in enumerate(((moved,), (spin, target)))
+    ]
+    with pytest.raises(ValueError, match="subject projection"):
+        validate_link_geometry(epochs, compile_boundaries(epochs), geometry)
+    epochs[1] = epochs[1].model_copy(
+        update={"settings": (spin.model_copy(update={"reset": True}), target)}
+    )
+    validate_link_geometry(epochs, compile_boundaries(epochs), geometry)
+
+
+def test_nearly_parallel_linked_spin_has_no_residual_drift():
+    import math
+
+    import pytest
+
+    from cephvr.visual_stimulus.config.texture_links import linked_rates
+
+    geometry, settings = _linked_texture_fixture()
+    source = settings[0].model_copy(
+        update={
+            "motion": settings[0].motion.model_copy(
+                update={"rotation": _texture_rate(45)}
+            )
+        }
+    )
+    epsilon = 1e-6
+    c, s = math.cos(epsilon), math.sin(epsilon)
+    near_parallel = geometry.surfaces[1].model_copy(
+        update={
+            "bottom_left_mm": (-100 * c, -100.0, -40 + 100 * s),
+            "bottom_right_mm": (100 * c, -100.0, -40 - 100 * s),
+            "top_right_mm": (100 * c, 100.0, -40 - 100 * s),
+            "top_left_mm": (-100 * c, 100.0, -40 + 100 * s),
+        }
+    )
+    geometry = geometry.model_copy(
+        update={
+            "surfaces": (geometry.surfaces[0], near_parallel, *geometry.surfaces[2:])
+        }
+    )
+    assert linked_rates(
+        source, settings[1], geometry, source_rotation=0, target_rotation=33
+    ) == pytest.approx((0, 0, 45), abs=1e-15)

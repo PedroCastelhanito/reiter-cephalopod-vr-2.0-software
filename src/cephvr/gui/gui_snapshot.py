@@ -95,22 +95,21 @@ class GuiSnapshot:
                 "tracking",
             },
         )
-        self.experiment.validate(data["experiment"])
+        experiment = self.experiment.validate(data["experiment"])
         validate_protocol(data["protocol"])
-        self.pages.devices.microcontroller.snapshots.validate(data["microcontroller"])
-        if data["microcontroller"]["version"] == 2:
-            enabled_by_serial = {
-                item["serial"]: item["enabled"]
-                for item in data["experiment"]["cameras"]
-            }
-            if any(
-                data["microcontroller"]["camera_enabled"][camera.key]
-                != enabled_by_serial[camera.serial]
-                for camera in self.pages.devices.cameras.drafts
-            ):
-                raise ValueError(
-                    "Camera participation differs between Cameras and Microcontroller"
-                )
+        cameras_by_serial = {
+            camera["serial"]: camera for camera in experiment["cameras"]
+        }
+        legacy_roles = {
+            camera.key: self.pages.devices.microcontroller.role_key(
+                cameras_by_serial[camera.serial]["role"]
+            )
+            for camera in self.pages.devices.cameras.drafts
+            if camera.serial in cameras_by_serial
+        }
+        data["microcontroller"] = self.pages.devices.microcontroller.snapshots.validate(
+            data["microcontroller"], legacy_roles=legacy_roles
+        )
         self.pages.devices.spikeglx.snapshots.validate(data["spikeglx"])
         projectors = fields(
             data["projectors"],

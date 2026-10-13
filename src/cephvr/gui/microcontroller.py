@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 
 from cephvr.gui.components import Card, button, combo, equal_row_height, field
 from cephvr.gui.device_panel import DevicePanel
-from cephvr.gui.microcontroller_signals import MicrocontrollerSignals
+from cephvr.gui.microcontroller_signals import ROLE_OUTPUTS, MicrocontrollerSignals
 from cephvr.gui.microcontroller_snapshot import MicrocontrollerSnapshot
 from cephvr.gui.paths import PathField
 from cephvr.gui.pin_numbers import PinNumber
@@ -40,9 +40,6 @@ class CameraTrigger:
 
 class MicrocontrollerPanel(DevicePanel):
     draft_changed = pyqtSignal()
-    camera_enable_requested = pyqtSignal(str, bool)
-    camera_output_requested = pyqtSignal(str, str)
-    camera_draft_loaded = pyqtSignal(object)
     connection_requested = pyqtSignal()
     firmware_requested = pyqtSignal(str)
     save_requested = pyqtSignal(str, str, bool, str, bool, object, object, object)
@@ -102,6 +99,8 @@ class MicrocontrollerPanel(DevicePanel):
         self.camera_rows: tuple[CameraTrigger, ...] = ()
         self.pins: dict[str, str] = {}
         self.pin_editors: dict[str, QLineEdit] = {}
+        self.role_rows: dict[str, int] = {}
+        self.output_remove: dict[str, QPushButton] = {}
         self.can_test = False
         self.managed = False
         self.simulated_inventory = False
@@ -119,6 +118,29 @@ class MicrocontrollerPanel(DevicePanel):
         )
         self.trial_pin.setToolTip("Trial state output is always active-high")
         self.trial_pin.setPlaceholderText("2–13")
+        for row, (key, name) in enumerate(ROLE_OUTPUTS, 1):
+            editor = self.add_pin_row(
+                self.output_table, row, key, name, use_control=False
+            )
+            self.role_rows[key] = row
+            self.pin_editors[key] = editor
+            self.pins[key] = ""
+            editor.textChanged.connect(
+                lambda value, role_key=key: self.pins.__setitem__(role_key, value)
+            )
+            editor.textChanged.connect(self.mark_draft_changed)
+            self.output_remove[key] = button(
+                "×", "compact", hint="Clear this MCU role pin"
+            )
+            self.output_remove[key].setAccessibleName(f"Clear {name} output pin")
+            self.output_remove[key].clicked.connect(
+                lambda _checked=False, role_key=key: (
+                    self.signals.remove(role_key)
+                    if hasattr(self, "signals")
+                    else self.set_role_pin(role_key, "")
+                )
+            )
+            self.output_table.set_control(row, 4, self.output_remove[key])
         self.io = Card("Inputs", compact=True)
         self.input_table = self.pin_table("Input")
         self.flip_pin = self.add_pin_row(
@@ -134,6 +156,8 @@ class MicrocontrollerPanel(DevicePanel):
         self.port.currentIndexChanged.connect(self.port_changed)
         self.snapshots = MicrocontrollerSnapshot(self)
         self.config_files = self.snapshots.files
+        for editor in (self.trial_pin, self.flip_pin):
+            editor.textChanged.connect(self.mark_draft_changed)
         self.signals = MicrocontrollerSignals(self)
         self.refresh_tests()
 
@@ -143,15 +167,23 @@ class MicrocontrollerPanel(DevicePanel):
 
     @staticmethod
     def pin_table(direction: str) -> DataTable:
-        table = DataTable(0, 4)
-        table.setHorizontalHeaderLabels(["Use", direction, "Pin", ""])
+        table = DataTable(0, 5)
+        table.setHorizontalHeaderLabels(["Enable", direction, "Pin", "Test", ""])
         header = table.horizontalHeader()
         assert header is not None
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
-        header.resizeSection(0, 52)
+        header.resizeSection(0, 72)
         return table
 
-    def add_pin_row(self, table: DataTable, row: int, key: str, name: str) -> QLineEdit:
+    def add_pin_row(
+        self,
+        table: DataTable,
+        row: int,
+        key: str,
+        name: str,
+        *,
+        use_control: bool = True,
+    ) -> QLineEdit:
         pin = PinNumber()
         pin.setAccessibleName(f"{name} pin")
         pin.setMinimumWidth(70)
@@ -169,12 +201,17 @@ class MicrocontrollerPanel(DevicePanel):
         pin.textChanged.connect(self.refresh_tests)
         pin.editingFinished.connect(self.save_pins)
         self.test_buttons[key] = test
-        enabled = QCheckBox()
-        enabled.setChecked(True)
-        enabled.setAccessibleName(f"Enable {name}")
-        enabled.setToolTip("Include this signal in the experiment")
-        self.enable_controls[key] = enabled
-        enabled.toggled.connect(lambda checked: self.set_enabled(key, checked))
+        enabled: QWidget
+        if use_control:
+            enabled = QCheckBox()
+            enabled.setChecked(True)
+            enabled.setAccessibleName(f"Enable {name}")
+            enabled.setToolTip("Include this signal in the experiment")
+            self.enable_controls[key] = enabled
+            enabled.toggled.connect(lambda checked: self.set_enabled(key, checked))
+        else:
+            enabled = QWidget()
+            enabled.setFixedWidth(52)
         table.setRowCount(max(table.rowCount(), row + 1))
         table.set_control(row, 0, enabled)
         table.setItem(row, 1, QTableWidgetItem(name))
@@ -189,10 +226,7 @@ class MicrocontrollerPanel(DevicePanel):
             return
         if not enabled:
             self.stop_review_tests({key})
-        if any(camera.key == key for camera in self.camera_rows):
-            self.camera_enable_requested.emit(key, enabled)
-        else:
-            self.save_pins()
+        self.save_pins()
         self.refresh_tests()
 
     def request(self, name: str) -> None:
@@ -252,36 +286,19 @@ class MicrocontrollerPanel(DevicePanel):
         self.refresh_tests()
 
     def save_pins(self) -> None:
-        if (
-            not self.managed
-            or not self.can_review
-            or self.managed_test_key
-            or self.pending_test_key
-            or self.connection_pending
-            or self.upload_pending
-        ):
+        self.mark_draft_changed()
+
+    def mark_draft_changed(self) -> None:
+        if hasattr(self, "snapshots"):
+            self.snapshots.draft_loaded = True
+        self.draft_changed.emit()
+
+    def set_role_pin(self, key: str, pin: str) -> None:
+        if key not in self.pin_editors or not self.can_review:
             return
-        if self.snapshots.draft_loaded:
-            self.draft_changed.emit()
-            return
-        port = str(self.port.currentData() or "")
-        if not port:
-            return
-        camera_pins = {
-            camera.role: self.pin_editors[camera.key].text().strip()
-            for camera in self.camera_rows
-            if camera.key in self.pin_editors
-        }
-        self.save_requested.emit(
-            port,
-            self.trial_pin.text().strip(),
-            self.enable_controls["trial-state"].isChecked(),
-            self.flip_pin.text().strip(),
-            self.enable_controls["projector-flip"].isChecked(),
-            camera_pins.get("Behavior cam"),
-            camera_pins.get("Tracking cam"),
-            camera_pins.get("Eye tracking"),
-        )
+        self.pin_editors[key].setText(pin)
+        self.pins[key] = pin
+        self.mark_draft_changed()
 
     def set_saved_pins(
         self,
@@ -350,27 +367,8 @@ class MicrocontrollerPanel(DevicePanel):
         if cameras == self.camera_rows:
             return
         self.signals.invalidate()
-        self.stop_review_tests({c.key for c in self.camera_rows})
-        for camera in self.camera_rows:
-            self.test_buttons.pop(camera.key, None)
-            self.enable_controls.pop(camera.key, None)
+        self.stop_review_tests()
         self.camera_rows = cameras
-        self.output_table.setRowCount(1)
-        self.pin_editors = {}
-        for row, camera in enumerate(cameras, 1):
-            pin = self.add_pin_row(self.output_table, row, camera.key, camera.role)
-            self.pin_editors[camera.key] = pin
-            control = self.enable_controls[camera.key]
-            control.blockSignals(True)
-            control.setChecked(camera.enabled)
-            control.blockSignals(False)
-            pin.setText(self.pins.get(camera.key, ""))
-            self.pins[camera.key] = pin.text()
-            pin.setToolTip("Set External controller in Cameras to use a trigger pin")
-            pin.textChanged.connect(
-                lambda value, key=camera.key: self.pins.__setitem__(key, value)
-            )
-        self.output_table.fit_rows()
         self.refresh_tests()
 
     def refresh_tests(self) -> None:
@@ -427,23 +425,30 @@ class MicrocontrollerPanel(DevicePanel):
                 and bool(self.port.currentData())
                 and bool(editor.text().strip())
             )
-        for camera in self.camera_rows:
-            if camera.key not in self.pin_editors:
-                continue
-            editor = self.pin_editors[camera.key]
-            external = (
-                camera.enabled
-                and camera.source == "External controller"
-                and camera.role in ("Behavior cam", "Tracking cam", "Eye tracking")
+        for key, editor in self.pin_editors.items():
+            camera = next(
+                (c for c in self.camera_rows if c.role == self.role_name(key)), None
             )
-            editor.setEnabled(self.can_review and external and not active)
-            self.test_buttons[camera.key].setEnabled(
+            editor.setEnabled(self.can_review and not active)
+            if camera is None:
+                self.test_buttons[key].setEnabled(False)
+                self.test_buttons[key].setToolTip(
+                    f"Assign {self.role_name(key)} and set a positive trigger rate before testing."
+                )
+                continue
+            rate_ready = self.valid_trigger_rate(camera.frequency)
+            self.test_buttons[key].setEnabled(
                 self.can_test
-                and external
+                and rate_ready
                 and not self.connection_pending
-                and (not exclusive_active or camera.key == self.managed_test_key)
+                and (not exclusive_active or key == self.managed_test_key)
                 and bool(self.port.currentData())
                 and bool(editor.text().strip())
+            )
+            self.test_buttons[key].setToolTip(
+                "MCU pulse test is ready"
+                if rate_ready
+                else f"Set a positive 0.1 Hz-grid trigger rate for {camera.role} in Cameras."
             )
 
         if hasattr(self, "signals"):
@@ -454,7 +459,23 @@ class MicrocontrollerPanel(DevicePanel):
     def port_changed(self) -> None:
         self.stop_review_tests()
         self.refresh_tests()
-        self.save_pins()
+        self.mark_draft_changed()
+
+    @staticmethod
+    def role_name(key: str) -> str:
+        return dict(ROLE_OUTPUTS).get(key, "")
+
+    @staticmethod
+    def role_key(role: str) -> str:
+        return {name: key for key, name in ROLE_OUTPUTS}.get(role, "")
+
+    @staticmethod
+    def valid_trigger_rate(value: str) -> bool:
+        try:
+            rate = Decimal(value)
+            return rate.is_finite() and rate > 0 and rate % Decimal("0.1") == 0
+        except (InvalidOperation, ValueError):
+            return False
 
     def stop_review_tests(self, keys: set[str] | None = None) -> None:
         for key in tuple(
@@ -489,9 +510,7 @@ class MicrocontrollerPanel(DevicePanel):
         if not self.can_test or not self.port.currentData():
             return
         cameras = {
-            c.key: c
-            for c in self.camera_rows
-            if c.enabled and c.source == "External controller"
+            self.role_key(c.role): c for c in self.camera_rows if self.role_key(c.role)
         }
         configured = {
             "trial-state": self.trial_pin.text().strip(),
@@ -502,12 +521,14 @@ class MicrocontrollerPanel(DevicePanel):
             for identity, pin in configured.items()
             if self.enable_controls[identity].isChecked()
         }
-        configured.update(
-            {
-                identity: self.pin_editors[identity].text().strip()
-                for identity in cameras
-            }
-        )
+        for camera in self.camera_rows:
+            role_key = self.role_key(camera.role)
+            if role_key and (
+                role_key == key
+                or camera.enabled
+                and camera.source == "External controller"
+            ):
+                configured[role_key] = self.pin_editors[role_key].text().strip()
         pin = configured.get(key, "")
         if not pin:
             return
@@ -520,21 +541,22 @@ class MicrocontrollerPanel(DevicePanel):
                 "Pin test: resolve duplicate camera / I/O pins."
             )
             return
-        if key in cameras:
-            camera = cameras[key]
-            try:
-                rate = Decimal(camera.frequency)
-                valid = rate.is_finite() and rate > 0 and rate % Decimal("0.1") == 0
-            except (InvalidOperation, ValueError):
-                valid = False
-            if not valid:
+        if key in self.pin_editors:
+            trigger = cameras.get(key)
+            if trigger is None:
+                self.test_buttons[key].setToolTip(
+                    f"Assign {self.role_name(key)} and set a positive trigger rate before testing."
+                )
                 self.console.appendPlainText(
-                    f"Pin test: set a positive frequency on a 0.1 Hz grid for {camera.role} in Cameras."
+                    f"Pin test: assign {self.role_name(key)} to a camera and set its trigger frequency in Cameras first."
                 )
                 return
-            description = (
-                f"{camera.role}: pin {pin}, requested {camera.frequency} Hz output test"
-            )
+            if not self.valid_trigger_rate(trigger.frequency):
+                self.console.appendPlainText(
+                    f"Pin test: set a positive frequency on a 0.1 Hz grid for {trigger.role} in Cameras."
+                )
+                return
+            description = f"{trigger.role}: pin {pin}, requested {trigger.frequency} Hz output test"
         elif key == "trial-state":
             description = f"Trial state: pin {pin}, active-high output test"
         else:

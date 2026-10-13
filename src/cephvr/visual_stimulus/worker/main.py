@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from uuid import uuid4
 
 import grpc
@@ -27,6 +27,27 @@ from .owner import RenderOwner
 from .registration import register
 from .reporting import ReportBridge
 from .runtime import VisualStimulusWorkerRuntime
+
+
+async def _close_worker_resources(
+    owner_close: Callable[[int], Awaitable[None]],
+    bridge_drain: Callable[[int], Awaitable[None]],
+    listener_close: Callable[[int], Awaitable[None]],
+    channels_close: Callable[[], Awaitable[None]],
+    deadline_ns: int,
+) -> None:
+    failure: BaseException | None = None
+    for close in (owner_close, bridge_drain, listener_close):
+        try:
+            await close(deadline_ns)
+        except BaseException as exc:
+            failure = failure or exc
+    try:
+        await channels_close()
+    except BaseException as exc:
+        failure = failure or exc
+    if failure is not None:
+        raise failure
 
 
 async def run(bootstrap: WorkerBootstrap) -> None:
@@ -94,7 +115,7 @@ async def run(bootstrap: WorkerBootstrap) -> None:
             async with asyncio.timeout(
                 remaining_seconds(recovery_deadline, clock=host_time_ns)
             ):
-                await owner.submit("Shutdown", command, recovery_deadline)
+                await runtime.local_recovery_shutdown(command, recovery_deadline)
         finally:
             shutdown.set()
             await asyncio.gather(delivery, return_exceptions=True)
@@ -173,16 +194,25 @@ async def run(bootstrap: WorkerBootstrap) -> None:
             or runtime.shutdown_deadline_ns
             or host_time_ns() + bootstrap.policies.recovery_ns
         )
-        try:
-            await owner.close(deadline)
-            await bridge.drain(deadline)
-            await listener.close(deadline)
-        finally:
+
+        async def close_channels() -> None:
             encoder_channel.close()
-            await coordinator.close()
-            await supervisor.close()
-        if recovery is not None:
-            await asyncio.gather(recovery, return_exceptions=True)
+            try:
+                await coordinator.close()
+            finally:
+                await supervisor.close()
+
+        try:
+            await _close_worker_resources(
+                owner.close,
+                bridge.drain,
+                listener.close,
+                close_channels,
+                deadline,
+            )
+        finally:
+            if recovery is not None:
+                await asyncio.gather(recovery, return_exceptions=True)
 
 
 async def health_loop(

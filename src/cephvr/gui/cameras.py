@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 from cephvr.acquisition.camera.basler import BaslerCameraAdapter
 from cephvr.gui.camera_inventory import CAMERA_ROLES, CameraDraft, discover_drafts
 from cephvr.gui.camera_snapshot import CameraSnapshot
-from cephvr.gui.components import Card, StatusColumn, button, combo, field
+from cephvr.gui.components import Card, StatusColumn, button, combo, field, label
 from cephvr.gui.formatting import metrics_text
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import PresetField
@@ -38,6 +38,7 @@ class CamerasPanel(ResponsiveColumns):
     enable_requested = pyqtSignal(str, bool)
     settings_requested = pyqtSignal(str, str, str, str, str)
     preset_import_requested = pyqtSignal(str, str, str, str, str)
+    wiring_requested = pyqtSignal()
 
     def __init__(self, *, sample: bool = False) -> None:
         left, left_layout = column()
@@ -95,11 +96,26 @@ class CamerasPanel(ResponsiveColumns):
         self.connect_button = button(
             "Connect", "primary", hint="Start capture and open the external preview"
         )
+        self.wiring_button = button(
+            "MCU wiring…",
+            "secondary",
+            hint="Edit this camera role's MCU COM port and output pin",
+        )
+        self.wiring_button.clicked.connect(self.wiring_requested.emit)
         self.refresh_button.clicked.connect(self.refresh_inventory)
         self.connect_button.clicked.connect(self.toggle_connection)
-        for control in (self.selected_test_button, self.connect_button):
+        for control in (
+            self.selected_test_button,
+            self.wiring_button,
+            self.connect_button,
+        ):
             actions.addWidget(control)
         inventory.body.addLayout(actions)
+        self.wiring_summary = label(
+            "Assign a camera role to edit its MCU output wiring.", "muted"
+        )
+        self.wiring_summary.setWordWrap(True)
+        inventory.body.addWidget(self.wiring_summary)
         left_layout.addWidget(inventory)
         self.configuration = Card("Camera config")
         self.role = combo((*CAMERA_ROLES, "Unassigned"))
@@ -291,6 +307,7 @@ class CamerasPanel(ResponsiveColumns):
             and self.can_edit_camera_settings
             and (draft := self.selected)
         ):
+            self.snapshot_draft = True
             draft.values[key] = value
             if key == "preset":
                 draft.values["pfs_imported"] = "no"
@@ -483,6 +500,12 @@ class CamerasPanel(ResponsiveColumns):
         self.refresh_button.setEnabled(
             not self.operation_pending and (self.can_operate or self.managed)
         )
+        self.wiring_button.setEnabled(
+            self.can_edit_camera_settings
+            and draft is not None
+            and draft.role in CAMERA_ROLES
+            and not draft.connected
+        )
         preview = next(
             (p for p in self.view.previews if draft and p.key == draft.key), None
         )
@@ -493,7 +516,6 @@ class CamerasPanel(ResponsiveColumns):
                 not self.managed
                 or bool(preview and preview.active)
                 or self.snapshot_draft
-                and draft.enabled
                 and draft.role in CAMERA_ROLES
             )
         )

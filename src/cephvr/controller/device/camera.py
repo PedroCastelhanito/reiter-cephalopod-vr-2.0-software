@@ -327,7 +327,7 @@ class CameraCommands:
             (
                 item.acquisition
                 for item in self.configuration.current.backends
-                if item.backend_name == "acquisition" and item.enabled
+                if item.backend_name == "acquisition"
             ),
             None,
         )
