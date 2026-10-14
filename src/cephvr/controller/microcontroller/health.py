@@ -38,8 +38,28 @@ class MicrocontrollerHealth:
         self.changed = changed
 
     async def run(self, shutdown: asyncio.Event) -> None:
+        failed_connection: str | None = None
         while not shutdown.is_set():
-            await self._keepalive_loop(shutdown)
+            current = self.observation()
+            if (
+                failed_connection is not None
+                and current is not None
+                and current.connection_id == failed_connection
+            ):
+                # Its failure handler raised and owns the fence; do not retry it.
+                await _wait(shutdown, 100_000_000)
+                continue
+            failed_connection = None
+            try:
+                await self._keepalive_loop(shutdown)
+            except Exception:
+                # A failure-handler error (for example an unconfirmed close) is
+                # surfaced by that handler; keepalive must outlive it so a later
+                # connection keeps its firmware watchdog fed.
+                current = self.observation()
+                failed_connection = (
+                    current.connection_id if current is not None else None
+                ) or None
             await _wait(shutdown, 100_000_000)
 
     async def _keepalive_loop(self, shutdown: asyncio.Event) -> None:

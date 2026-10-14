@@ -65,7 +65,7 @@ class PlannerControls(QWidget):
         self.timeline_card.body.addWidget(self.group_divider)
         self.group_controls = QHBoxLayout()
         self.group_controls.setSpacing(0)
-        self.selected_group_label = label("Group", "label")
+        self.selected_group_label = label("Selected group", "label")
         self.group_controls.addWidget(self.selected_group_label)
         self.group_controls.addSpacing(16)
         self.group_controls.addStretch(1)

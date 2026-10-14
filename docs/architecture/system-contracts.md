@@ -218,7 +218,7 @@ design; runtime monitoring remains unimplemented.
 <a id="e08"></a>
 ### E08 — Processes and control transport
 
-**Status:** Accepted · **Revision:** 170
+**Status:** Accepted · **Revision:** 171
 
 **Processes and startup**
 
@@ -481,7 +481,8 @@ design; runtime monitoring remains unimplemented.
   every descendant and sees any exit directly. Workers still send errors directly to
   the supervisor, but only the controller or a top-level coordinator may report
   controller or supervisor loss. Validate context and measure silence at recipient ingress:
-  **5 s** interval, **15 s** silence, no recovery window.
+  **5 s** interval, **15 s** silence, no recovery window. A required backend whose
+  exit was already classified continuable (isolated) is exempt from silence checks.
   Registered controller/coordinator Configuration heartbeats without work remain
   valid process health while session scope changes; they cannot carry session
   cleanup catalogues or continuing-function evidence. Work-scoped reports retain

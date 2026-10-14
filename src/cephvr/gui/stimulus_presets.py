@@ -28,7 +28,12 @@ PRESETS = (
 
 
 def add_stimulus(
-    program: Program, index: NodePath, preset: str, screens: tuple[str, ...]
+    program: Program,
+    index: NodePath,
+    preset: str,
+    screens: tuple[str, ...],
+    *,
+    subject_height_mm: float = 0.0,
 ) -> Program:
     if preset not in PRESETS:
         raise ValueError("Unknown stimulus type")
@@ -103,7 +108,7 @@ def add_stimulus(
                 [0.0, 0.0, 0.0, 1.0],
             ],
             initial={"position_mm": [0.0, 0.0], "yaw_deg": 0.0},
-            fixed_height_mm=0.0,
+            fixed_height_mm=subject_height_mm,
             fixed_pitch_deg=0.0,
             fixed_roll_deg=0.0,
             motion={key: {"kind": "hold"} for key in ("x", "y", "yaw")},
@@ -203,11 +208,15 @@ def add_file_stimulus(
     screens: tuple[str, ...],
     root: str,
     path: str,
+    *,
+    subject_height_mm: float = 0.0,
 ) -> Program:
     from cephvr.gui.stimulus_files import resolve_stimulus_file
 
     selected = resolve_stimulus_file(root, path, texture=preset == "Texture")
-    candidate = add_stimulus(program, index, preset, screens).model_dump(mode="json")
+    candidate = add_stimulus(
+        program, index, preset, screens, subject_height_mm=subject_height_mm
+    ).model_dump(mode="json")
     target = data_node(candidate, index)["settings"][-1]
     identity = (
         target["pattern"]["asset_id"]

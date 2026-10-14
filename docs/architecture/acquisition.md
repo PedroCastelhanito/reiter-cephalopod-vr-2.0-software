@@ -916,7 +916,7 @@ hardware information and later implementation; no new deferral is implied.
 <a id="a11"></a>
 ### A11 — Microcontroller command protocol
 
-**Status:** Accepted · **Revision:** 44
+**Status:** Accepted · **Revision:** 45
 
 **Board and firmware**
 
@@ -976,7 +976,8 @@ hardware information and later implementation; no new deferral is implied.
 
 - One serial owner opens only the configured port. Boot/reset leaves outputs off and
   volatile configuration invalid. Reopen requires outputs-off verification, fresh
-  capabilities and full configuration; no automatic pulse/session resumption.
+  capabilities and full configuration; no automatic pulse/session resumption. A failed
+  manual Connect discards its owner and port so a retry opens a fresh one.
 - Never deliberately request an extra board reset on connection or assume opening
   preserves state; unavoidable port-open resets go through startup verification.
   Exact DTR/RTS behavior depends on the rig board/driver and is unverified.
@@ -1094,7 +1095,9 @@ hardware information and later implementation; no new deferral is implied.
   Configuration with control authority; it rejects session/preview activity and
   conflicting or unsupported pins. Firmware ends every diagnostic within two
   seconds and leaves tested outputs LOW; explicit Stop, control loss, transport
-  failure and shutdown request earlier stop. Return matched state and rising-edge
+  failure and shutdown request earlier stop. A firmware ERR proves nothing started;
+  an unanswered start is bounded by that limit, so cleanup attempts Stop and the
+  verified OFF decides whether outputs are stopped. Return matched state and rising-edge
   counts: observed edges for Projector flip, generated LOW-to-HIGH transitions at
   the output write for camera/Trial state tests, including the first HIGH. Trial
   state holds HIGH and therefore counts one rise; camera tests count actual timer

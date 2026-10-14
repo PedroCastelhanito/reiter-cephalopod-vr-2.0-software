@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-15",
+  "task": "gui-retro-console-style",
+  "source_revision": "0d70295898bcb9f058ef4bf26df4680df62d595d",
+  "source_scope": "Dirty working tree with concurrent Protocol, camera and backend changes retained; hashes captured after validation.",
+  "sha256": {
+    "src/cephvr/gui/appearance.py": "9ecf3991c17fb5f8c8726c333b0de835615c163690cae53d0eee0140b62ba6ab",
+    "src/cephvr/gui/theme.py": "39bd54446119c9ef3cdd8336a29045ed294804057d699a79a58f4d06572c1d48",
+    "src/cephvr/gui/components.py": "012d1c5aeebfc4545135f3fa2d2c89d39dde5622c975b7c51e645ea239fe29ae",
+    "src/cephvr/gui/review.py": "1a306cc0383df79e199c1c12f1b0f8363dd9866ce824c5011cc842be6f03db31",
+    "tests/gui/test_dashboard.py": "49f3d47940ebcf7b524c891d8f911850a92579b3e1ab042334cac98a0c1fc8d1"
+  },
+  "request": "Review-only Style menu with Standard and Retro console; charcoal/amber/cyan Dashboard inspired by the fourth user reference.",
+  "checks": [
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k 'review_appearance or shared_theme or review_and_runtime_share_page_elements_and_card_layouts'",
+      "result": "7 passed, 479 deselected"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k 'log_keeps_reading or log_entry_details or wrapped_log or hud_fits or responsive_navigation or dashboard_has_only_requested_cards or dashboard_control_status or review_window_saves'",
+      "result": "8 passed, 478 deselected"
+    },
+    {
+      "command": ".venv/bin/python -m ruff check src/cephvr/gui tests/gui",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/bin/python -m ruff format --check src/cephvr/gui tests/gui",
+      "result": "163 files already formatted"
+    },
+    {
+      "command": ".venv/bin/python -m mypy --platform win32 src/cephvr/gui",
+      "result": "161 sources, no issues"
+    },
+    {
+      "command": ".venv/bin/python tools/check_backend_boundaries.py",
+      "result": "695 modules, zero violations; existing cohesion advisories"
+    },
+    {
+      "command": "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-15/retro-console/capture.py",
+      "result": "exit 0; Standard round-trip pixels equal; 1440x940 and 720x940 captures inspected"
+    }
+  ],
+  "screenshots": "Local-only ignored PNGs beside capture.py. No device opened or real GUI draft saved by captures.",
+  "limits": "macOS offscreen composition/behavior checks. No native Windows or rig acceptance; runtime styling and runtime launcher were not changed."
+}

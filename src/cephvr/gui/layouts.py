@@ -15,6 +15,17 @@ def column() -> tuple[QWidget, QVBoxLayout]:
     return widget, layout
 
 
+def advanced_grid() -> QGridLayout:
+    """Use the same two input column stops throughout an advanced arena form."""
+    grid = QGridLayout()
+    grid.setContentsMargins(0, 0, 0, 0)
+    grid.setHorizontalSpacing(18)
+    grid.setVerticalSpacing(10)
+    grid.setColumnStretch(0, 1)
+    grid.setColumnStretch(1, 1)
+    return grid
+
+
 def fit_window_to_screen(window: QWidget) -> None:
     screen = window.screen()
     if screen is not None:

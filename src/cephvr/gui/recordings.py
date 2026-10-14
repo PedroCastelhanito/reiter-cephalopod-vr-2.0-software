@@ -19,12 +19,6 @@ class RecordingsCard(Card):
         self.source_grid.setHorizontalSpacing(14)
         self.source_grid.setVerticalSpacing(12)
         self.body.addLayout(self.source_grid)
-        self.body.addWidget(
-            label(
-                "Camera metadata and stimulus scientific data are always saved during trials.",
-                wrap=True,
-            )
-        )
         self.record: dict[str, QCheckBox] = {}
         self.source_labels: dict[str, QLabel] = {}
         self.touched: set[str] = set()

@@ -63,8 +63,8 @@ Accepted design does not imply implemented or rig-validated behavior.
 | [GOV-001](#gov-001) | Decision workflow and document format | Accepted | 26 |
 | [ARCH-001](#arch-001) | Backend process boundaries and build order | Undecided | 25 |
 | [ARCH-002](#arch-002) | Repository packaging and code ownership | Accepted | 5 |
-| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 184 |
-| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 38 |
+| <a id="g01"></a>[G01](docs/architecture/gui.md#g01) | GUI navigation and settings ownership | Accepted | 191 |
+| <a id="g02"></a>[G02](docs/architecture/gui.md#g02) | Shared frontend formatting | Accepted | 47 |
 | <a id="e01"></a>[E01](docs/architecture/experiment.md#e01) | Protocol progression | Accepted | 13 |
 | <a id="e02"></a>[E02](docs/architecture/experiment.md#e02) | Experiment authority and GUI role | Accepted | 11 |
 | <a id="e03"></a>[E03](docs/architecture/gui.md#e03) | GUI disconnection and control lease | Accepted | 34 |
@@ -72,7 +72,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="e05"></a>[E05](docs/architecture/experiment.md#e05) | Lifecycle and trial timing | Accepted | 95 |
 | <a id="e06"></a>[E06](docs/architecture/system-contracts.md#e06) | Stop, interruption, timeout, and recovery | Accepted | 77 |
 | <a id="e07"></a>[E07](docs/architecture/experiment.md#e07) | Configuration and protocol preparation | Accepted | 61 |
-| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 170 |
+| <a id="e08"></a>[E08](docs/architecture/system-contracts.md#e08) | Processes and control transport | Accepted | 171 |
 | <a id="e09"></a>[E09](docs/architecture/synchronization.md#e09) | Current SpikeGLX operation | Accepted | 4 |
 | <a id="e10"></a>[E10](docs/architecture/experiment.md#e10) | Modes and required participants | Accepted | 22 |
 | <a id="e11"></a>[E11](docs/architecture/experiment.md#e11) | Trial recording interval | Accepted | 17 |
@@ -90,7 +90,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="a08"></a>[A08](docs/architecture/acquisition.md#a08) | Video encoding and container | Accepted | 50 |
 | <a id="a09"></a>[A09](docs/architecture/acquisition.md#a09) | Source-frame identity | Accepted | 15 |
 | <a id="a10"></a>[A10](docs/architecture/acquisition.md#a10) | Camera capture lifetime and Basler settings | Accepted | 60 |
-| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 44 |
+| <a id="a11"></a>[A11](docs/architecture/acquisition.md#a11) | Microcontroller command protocol | Accepted | 45 |
 | <a id="v01"></a>[V01](docs/architecture/visual_stimulus.md#v01) | Visual Stimulus coordinator and rendering worker | Accepted | 21 |
 | <a id="v02"></a>[V02](docs/architecture/visual_stimulus.md#v02) | Structured trial stimulus programs | Accepted | 13 |
 | <a id="v03"></a>[V03](docs/architecture/visual_stimulus.md#v03) | Versioned JSON stimulus-program files | Accepted | 12 |
@@ -106,7 +106,7 @@ Accepted design does not imply implemented or rig-validated behavior.
 | <a id="v13"></a>[V13](docs/architecture/visual_stimulus.md#v13) | Trial replay from program and actual render evidence | Accepted | 11 |
 | <a id="v14"></a>[V14](docs/architecture/visual_stimulus.md#v14) | Explicit stimulus coordinate spaces | Accepted | 4 |
 | <a id="v15"></a>[V15](docs/architecture/visual_stimulus.md#v15) | Four calibrated off-axis surface views | Accepted | 13 |
-| <a id="v16"></a>[V16](docs/architecture/visual_stimulus.md#v16) | Explicit simple arena movement boundaries | Accepted | 4 |
+| <a id="v16"></a>[V16](docs/architecture/visual_stimulus.md#v16) | Explicit simple arena movement boundaries | Accepted | 5 |
 | <a id="v17"></a>[V17](docs/architecture/visual_stimulus.md#v17) | Unlit arena appearance | Accepted | 4 |
 | <a id="v18"></a>[V18](docs/architecture/visual_stimulus.md#v18) | Externally prepared arena assets | Accepted | 2 |
 | <a id="v19"></a>[V19](docs/architecture/visual_stimulus.md#v19) | Uniform Idle background | Accepted | 6 |

@@ -93,7 +93,12 @@ class ProgramTimeline(QWidget):
         self.nodes, self.paths, self.type_keys = view.nodes, view.paths, view.keys
         self.counts, self.durations = view.counts, view.durations
         self.batch_runs = view.batch_runs
-        self.batch_offset = 40 if scope and any(view.batch_runs) else 0
+        self.batch_offset = (
+            40
+            if any(isinstance(node, Group) for node in self.nodes)
+            or (scope and any(view.batch_runs))
+            else 0
+        )
         self.index = max(0, min(index, len(self.nodes) - 1))
         self.selection = (self.paths[self.index],) if self.paths else ()
         self.anchor = self.index
@@ -334,11 +339,18 @@ class ProgramTimeline(QWidget):
                     )
                     > rect.width() - 16
                 )
-                lines = (
-                    ((5, name),)
-                    if compact
-                    else ((5, name), (23, counts), (41, summary))
+                group_heading = QRectF(rect.left(), 0, rect.width(), 36)
+                painter.drawText(
+                    group_heading.adjusted(8, 0, -8, 0),
+                    Qt.AlignmentFlag.AlignVCenter,
+                    self.fontMetrics().elidedText(
+                        name,
+                        Qt.TextElideMode.ElideRight,
+                        max(1, int(group_heading.width()) - 16),
+                    ),
                 )
+                self.hover_text.append((group_heading, name))
+                lines = ((5, counts),) if compact else ((5, counts), (29, summary))
                 summary = counts + " · " + summary
             for offset, text in lines:
                 painter.drawText(

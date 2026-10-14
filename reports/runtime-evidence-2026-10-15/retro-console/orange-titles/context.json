@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-15",
+  "task": "gui-retro-orange-titles",
+  "decision": "G02 revision42",
+  "scope": "Review Retro console page/panel titles and branding use #f0aa63; field captions use #c9a578. Blue frames/cyan navigation/green terminals retained.",
+  "theme_sha256": "8e3859a261905995689fe44bf3bd43923164aba75ab5903fbc4a54745338b871",
+  "checks": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"review_appearance or shared_theme\": 3 passed, 484 deselected",
+    "Scoped Ruff check/format and Win32 mypy theme.py pass; boundaries695 modules/zero violations",
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-15/retro-console/capture.py --output-dir reports/runtime-evidence-2026-10-15/retro-console/orange-titles: exit0, Standard round-trip pixels equal; wide capture inspected"
+  ],
+  "launch": "Fresh native Review launcher, exec session12164. Existing Retro preference; no prior windows force-closed.",
+  "limits": "macOS offscreen visual validation; native accessibility unavailable for this Python app. No runtime or rig acceptance. PNGs ignored local-only evidence."
+}

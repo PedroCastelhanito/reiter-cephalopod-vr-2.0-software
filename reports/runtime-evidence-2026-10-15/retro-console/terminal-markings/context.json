@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-15",
+  "task": "gui-retro-terminal-markings",
+  "decision": "G02 revision46",
+  "scope": "Review Retro Dashboard: card/terminal ticks, dashed section rules, focused editor brackets, bracketed actual status tags and current trial position. Runtime/Standard remain unchanged.",
+  "source": "Dirty checkout; unrelated edits preserved.",
+  "sha256": {
+    "src/cephvr/gui/appearance.py": "f8f2485390b52ef048b5d8571dac759bffe76e2b11a2d67dc88df8a0c338ce09",
+    "src/cephvr/gui/dashboard.py": "f6233c4c2e9b8eb974c4c1d1b051f8f9d8014abb132a906a6a051e55f59af503",
+    "src/cephvr/gui/components.py": "e05644733120d0d34d6d986874c3ec7cbc31eb14dc4eede4436397d0386572d4",
+    "src/cephvr/gui/retro_instruments.py": "9976a5cbd826f24310387a4489a30e0ead2b912af7ce9fe30f9f44675c4651a3"
+  },
+  "checks": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"review_appearance or shared_theme or review_and_runtime_share_page_elements_and_card_layouts or hud or log_console\": 10 passed, 477 deselected",
+    "Scoped Ruff check/format5 files and Win32 mypy4 source files pass; tools/check_backend_boundaries.py:696 modules, zero violations; existing unrelated cohesion advisories",
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-15/retro-console/capture.py --output-dir reports/runtime-evidence-2026-10-15/retro-console/terminal-markings: exit0, Standard round-trip pixels equal. Wide/narrow, focused editor and active-trial fixture images visually inspected.",
+    "git diff --check: pass"
+  ],
+  "launch": "scripts/start_gui.py, native Review exec session10674; earlier windows retained.",
+  "limits": "macOS offscreen visual checks, sample Review states only. No native Windows/rig or independent native accessibility verification; no saved draft mutation during captures. PNGs ignored local-only evidence."
+}

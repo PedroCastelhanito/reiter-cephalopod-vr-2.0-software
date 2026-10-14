@@ -49,6 +49,7 @@ class GroupEditor(QWidget):
             widget = field(caption, control)
             widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
             row.addWidget(widget, stretch)
+        self.repetitions.setMinimumWidth(40)
         self.body.addLayout(row)
         self.summary = label("", wrap=True)
         self.body.addWidget(self.summary)

@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-15",
+  "task": "gui-retro-card-title-accent",
+  "decision": "G02 revision43",
+  "scope": "Review only: muted red-orange #df7960 card titles; cyan page heading and field labels restored; restrained amber brand retained.",
+  "source": "Current dirty checkout; unrelated concurrent changes preserved.",
+  "theme_sha256": "18ef4963246fd000b713a43d60923a1019959d714b8a21da754f2ff0a621df32",
+  "checks": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"review_appearance or shared_theme\": 3 passed, 484 deselected",
+    "Scoped Ruff check/format and Win32 mypy theme.py pass; boundaries695 modules/zero violations, existing cohesion advisories",
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-15/retro-console/capture.py --output-dir reports/runtime-evidence-2026-10-15/retro-console/card-title-accent: exit0, Standard round-trip pixels equal; wide capture visually inspected"
+  ],
+  "launch": "Fresh native Review launcher, exec session17879, existing Retro preference. Earlier windows not force-closed.",
+  "limits": "macOS offscreen visual validation; native accessibility unavailable for this Python app. No Windows/rig acceptance. PNGs ignored local-only evidence."
+}

@@ -289,6 +289,8 @@ class PreparedTrial(Model):
             for x in e.settings:
                 if isinstance(x, ArenaSettings):
                     arenas.setdefault(x.instance_id, set()).add(x.world_frame_id)
+        if any(b.region.kind == "arena_file" for b in self.arena_boundaries.bindings):
+            raise ValueError("prepared arena boundaries must contain resolved geometry")
         bound = {
             b.instance_id: b.world_frame_id for b in self.arena_boundaries.bindings
         }

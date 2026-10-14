@@ -18,6 +18,7 @@
         "region": {
           "discriminator": {
             "mapping": {
+              "arena_file": "#/$defs/ArenaFileRegion",
               "convex_polygon_xy": "#/$defs/ConvexPolygon",
               "unrestricted": "#/$defs/UnrestrictedRegion"
             },
@@ -29,6 +30,9 @@
             },
             {
               "$ref": "#/$defs/ConvexPolygon"
+            },
+            {
+              "$ref": "#/$defs/ArenaFileRegion"
             }
           ],
           "title": "Region"
@@ -40,6 +44,27 @@
         "region"
       ],
       "title": "ArenaBoundary",
+      "type": "object"
+    },
+    "ArenaFileRegion": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "arena_file",
+          "title": "Kind",
+          "type": "string"
+        },
+        "margin_mm": {
+          "default": 30.0,
+          "minimum": 0,
+          "title": "Margin Mm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "ArenaFileRegion",
       "type": "object"
     },
     "ConvexPolygon": {

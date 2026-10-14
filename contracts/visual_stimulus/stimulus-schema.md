@@ -167,9 +167,18 @@ All four projected views use the same resulting virtual pose and fixed physical 
 
 [TrialArenaBoundaries](arena-boundaries.schema.json) is a separate protocol binding:
 exactly one entry for every used arena instance, with matching world frame, explicit
-unrestricted movement or a strictly convex CCW XY polygon plus nonnegative wall margin.
+unrestricted movement, a strictly convex CCW XY polygon plus nonnegative wall margin,
+or `arena_file` plus finite nonnegative `margin_mm` (GUI default 30 mm).
 Rectangles are four-vertex polygons, with no second equivalent box representation.
-GLB metadata cannot set boundaries. Convert polygon edges once into outward unit
+Arena-file mode reads `extras.cephvr.metadata.geometry` from the protected GLB:
+`shape: rectangular` with `width` and `depth` (legacy `height` when depth is absent),
+or `shape: convex_polygon` with 3–1024 strictly convex CCW `vertices_mm`. Dimensions
+are millimetres; omitted shape means rectangular, but dimensions have no fallback.
+Unsupported shapes/missing geometry reject Setup. Apply the declared planar affine
+asset-to-world transform, reverse reflected winding, and require the same resolved
+region for every use of the trial instance. Prepared artifacts contain the resolved
+polygon, never `arena_file`; asset fingerprints retain source provenance. Preserve
+explicit protocol regions without consulting metadata. Convert polygon edges once into outward unit
 halfplanes, inset offsets by margin, intersect and reject an empty allowed region.
 Keep the supplied vertices/margin in the prepared recipe. Reject initial/reset/boundary
 assignments outside the inset region; no snapping. Height/pitch/roll do not change XY

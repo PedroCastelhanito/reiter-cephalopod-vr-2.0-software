@@ -414,11 +414,20 @@ class MicrocontrollerDevice:
                             deadline_ns=deadline_ns
                         )
                         active = False
-                        if self.view.diagnostic.active or self._diagnostic_uncertain:
+                        if self.view.diagnostic.active:
                             active, _, _, _ = await self.serial.diagnostic_stop(
                                 deadline_ns=deadline_ns
                             )
-                            self._diagnostic_uncertain = False
+                        elif self._diagnostic_uncertain:
+                            # An unanswered start is bounded by the firmware's
+                            # two-second limit; the verified OFF below decides.
+                            try:
+                                await self.serial.diagnostic_stop(
+                                    deadline_ns=deadline_ns
+                                )
+                            except Exception:
+                                pass
+                        self._diagnostic_uncertain = False
                         evidence = await self.serial.off(
                             (
                                 camera.CAMERA_ROLE_BEHAVIORAL,

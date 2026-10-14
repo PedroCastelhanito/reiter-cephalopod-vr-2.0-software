@@ -693,13 +693,17 @@ Configuration: [visual_stimulus_config.toml](../../config/backends/visual_stimul
 <a id="v16"></a>
 ### V16 — Explicit simple arena movement boundaries
 
-**Status:** Accepted · **Revision:** 4
+**Status:** Accepted · **Revision:** 5
 
 - The trial protocol, not the arena asset, authors explicit simple allowed regions
   for virtual-observer movement, with optional nonnegative wall margins, or
-  explicitly selects unrestricted movement. Embedded asset metadata never sets or
-  overrides boundaries. No collision inference from visible triangles and no general
-  physics engine.
+  explicitly selects unrestricted movement or arena-file geometry. Arena-file mode
+  reads declared rectangular/convex geometry from protected GLB metadata, transforms
+  it into the instance world frame and applies the protocol wall margin. Preserve
+  saved explicit regions; no collision inference from visible triangles or mesh bounds.
+  Missing/invalid geometry, unsupported shapes or geometry changes within a trial instance
+  block Setup. Circular, cross/T and torus import/wrapping are outside this increment.
+  No general physics engine.
 - The rendering worker owns the constraint calculation and effective virtual pose,
   shared by all four views. Boundary contact is normal behavior, not a device
   failure. Slide at contact: remove movement into the wall, keep allowed tangential

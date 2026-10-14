@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-15",
+  "source_revision": "0d70295898bcb9f058ef4bf26df4680df62d595d",
+  "dirty_tree": true,
+  "method": "macOS QT_QPA_PLATFORM=offscreen; ProtocolEditor in 900x1400 QScrollArea; grouped arena preset with subject_height_mm=67.5; Advanced settings enabled; QWidget.grab and explicit deferred-delete cleanup",
+  "outcome": "Capture/cleanup exits0; wall limits precede two aligned columns XYZ/Euler. Visual inspection confirms X/Y=0, Z=67.5 and yaw/pitch/roll=0.",
+  "scope": "Offscreen authoring layout only; no native Windows, live process reload, renderer/hardware or rig acceptance.",
+  "source_sha256": {
+    "src/cephvr/gui/initial_pose.py": "35aa2e42efdcb0555c85f1e005038643d1cc2b241a50ba824ae8b43697bbb8d1",
+    "src/cephvr/gui/stimulus_parameters.py": "c027aaa58d061dce80d0e129907de653069c04fa318f03baa330c489a4c826a5",
+    "src/cephvr/gui/stimulus_presets.py": "c6612fb471b204f82578afd2aafebe18a7fb9c55c03bb739bcb4862562cc3eff",
+    "src/cephvr/gui/reference_draft.py": "a32919515e7405004c2ccb23fdbef4d180a98da2fe5720508eeeec79d908e249",
+    "src/cephvr/gui/epoch_composer.py": "3c39eee209d635d005577f1dec7881aa7ddde683b532cc1a4b6a665183ee6a95",
+    "src/cephvr/gui/window.py": "c58fb1a93fd4454cb41f6af4eb8cd0b06b512bdfdf915442dd332e996f983f83"
+  }
+}

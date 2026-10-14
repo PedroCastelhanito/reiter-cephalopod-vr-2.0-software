@@ -1,5 +1,30 @@
 # Visual Stimulus status
 
+## Arena-file movement regions
+
+[V16](../docs/architecture/visual_stimulus.md#v16) revision5 and the
+[schema binding](../contracts/visual_stimulus/stimulus-schema.md) now allow explicitly selected
+arena-file regions. The protected GLB provider retains the declared legacy geometry; the
+compiler converts each unique asset/transform once, checks cancellation/deadline budgets,
+transforms it into the existing convex sliding input and rejects inconsistent instance
+geometry/invalid starts/empty insets, and retains the resolved polygon and resource fingerprint.
+Prepared artifacts reject unresolved source selectors. Existing explicit regions remain
+independent of metadata. Rectangular/convex imports are implemented; circular/cross/T/torus
+imports and wrapping are outside this owner-selected increment. GUI evidence lives in the
+[Runtime report](runtime.md#protocol-group-headings-and-arena-advanced-settings).
+
+ARCH-002 review uses focused geometry-declaration and region-resolution helpers, existing
+Pydantic models/GLB preparation ownership and owning tests; no dependencies or runtime
+back-references. Source/prepared boundary schemas regenerated. Local Visual Stimulus suite
+passes318/one deselected with loopback permission; the initial sandbox run passed309 and
+failed nine socket binds, and a15-case authenticated rerun passes before the full pass.
+Final protected-source-adapter→GLB metadata→compiled artifact/closure regression passes;
+native protection is mocked, not established. Ruff/format, Win32 mypy313 sources, boundary
+check694/zero violations and schema/document checks pass. Initial type/fixture issues were
+corrected. Native arena limits/sliding/four-view agreement remain in the single
+[rig checklist](rig-verification.md), with existing physical/hardware deferrals preserved.
+
+
 Oct14 encoding rig test plan: [commands, matrix and collection](rig-verification.md#encoding-test-plan)
 cover CQ16/CQ23 isolated/concurrent synthetic probes and separate live-app runs.
 `tools/encoding_probe.py` collects external decode/frame counts, sizes, source/drop/

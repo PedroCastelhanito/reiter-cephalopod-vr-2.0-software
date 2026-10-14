@@ -1,6 +1,7 @@
 """One reference epoch with independent, visible per-projector editors."""
 
 import json
+from math import isfinite
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QLineEdit, QVBoxLayout, QWidget
@@ -29,6 +30,7 @@ class EpochComposer(QWidget):
         self.rows: dict[str, ProjectorReference] = {}
         self.asset_root = ""
         self.closed_loop = False
+        self.subject_height_mm: float | None = 0.0
         self.pending_assets: set[str] = set()
         self.active_mode = 0
         self.reference_duration_ns = 60_000_000_000
@@ -79,6 +81,22 @@ class EpochComposer(QWidget):
         reference.layout_changed.connect(self.update_headers)
         self.references.addWidget(reference)
         reference.bind(self.program)
+
+    def set_subject_height(self, text: str) -> None:
+        try:
+            height = float(text)
+            self.subject_height_mm = (
+                height if isfinite(height) and height >= 0 else None
+            )
+        except ValueError:
+            self.subject_height_mm = None
+
+    def arena_start_height(self, kind: str) -> float:
+        if kind == "3D arena" and self.subject_height_mm is None:
+            raise ValueError(
+                "Set subject height in Devices → Projectors → Rig geometry before creating an arena"
+            )
+        return self.subject_height_mm or 0.0
 
     def set_closed_loop(self, closed: bool) -> None:
         self.closed_loop = closed
@@ -242,7 +260,13 @@ class EpochComposer(QWidget):
             assert isinstance(epoch, Epoch)
             old = row.parameters.layer_index
             old_id = epoch.settings[old].instance_id if old >= 0 else ""
-            self.program, selected = replace_reference(original, old, kind, face)
+            self.program, selected = replace_reference(
+                original,
+                old,
+                kind,
+                face,
+                subject_height_mm=self.arena_start_height(kind),
+            )
             if selected >= 0:
                 epoch = self.program.sequence[0]
                 assert isinstance(epoch, Epoch)
@@ -289,11 +313,13 @@ class EpochComposer(QWidget):
     def change_mode(self, index: int) -> None:
         try:
             self.reference_value()
+            if index and not self.rows[""].indices:
+                self.arena_start_height("3D arena")
         except ValueError as error:
             self.mode.blockSignals(True)
             self.mode.setCurrentIndex(self.active_mode)
             self.mode.blockSignals(False)
-            self.message.setText(str(error))
+            self.message.warn(error)
             return
         self.close_file_dialogs()
         self.active_mode = index
@@ -341,6 +367,7 @@ class EpochComposer(QWidget):
                 (face,) if face else self.screens,
                 self.asset_root,
                 path,
+                subject_height_mm=self.arena_start_height(kind),
             )
             epoch = self.program.sequence[0]
             assert isinstance(epoch, Epoch)

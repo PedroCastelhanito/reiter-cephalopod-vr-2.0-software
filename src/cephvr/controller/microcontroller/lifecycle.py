@@ -125,10 +125,20 @@ class MicrocontrollerLifecycle:
         if attempt is not None:
             await self.interrupt(attempt, failure.message, self.clock())
         else:
-            await self.owner.close(
-                deadline_ns=self.clock() + self.limits.current.recovery_ns,
-                permanent=False,
-            )
+            try:
+                await self.owner.close(
+                    deadline_ns=self.clock() + self.limits.current.recovery_ns,
+                    permanent=False,
+                )
+            except Exception as exc:
+                await self.warning(
+                    pb.Warning(
+                        warning_id=str(uuid4()),
+                        component="microcontroller",
+                        message=f"close unconfirmed after failure: {exc}"[:2048],
+                    )
+                )
+                raise
 
     async def execute(
         self, request: wire.MicrocontrollerIoRequest

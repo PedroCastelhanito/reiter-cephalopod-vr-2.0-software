@@ -1641,7 +1641,7 @@ async def test_failed_controller_close_stays_fenced_until_exact_release(
     owner.ensure_idle()
 
 
-async def test_uncertain_diagnostic_start_remains_fenced_for_cleanup():
+async def test_unanswered_diagnostic_start_is_cleaned_by_stop_attempt_and_verified_off():
     from unittest.mock import AsyncMock
 
     from cephvr.controller.microcontroller.device import MicrocontrollerDevice
@@ -1672,11 +1672,20 @@ async def test_uncertain_diagnostic_start_remains_fenced_for_cleanup():
         await owner.execute(request, pulses, deadline)
     with pytest.raises(RuntimeError, match="pending"):
         owner.ensure_idle()
-    with pytest.raises(RuntimeError, match="no pin diagnostic"):
-        await owner.close(deadline_ns=deadline, permanent=False)
-    assert not owner.cleanup_complete and owner.snapshot_view().cleanup_pending
-    serial.close.assert_not_awaited()
-    serial.off.assert_not_awaited()
+    # The unanswered start is firmware-bounded: cleanup tries Stop, then lets the
+    # verified OFF decide whether outputs are stopped (A11).
+    stopped = mcu.MicrocontrollerState()
+    stopped.behavioral.running = False
+    stopped.tracking.running = False
+    stopped.eye_tracking.running = False
+    serial.off.return_value = mcu.PulseCommandEvidence(
+        outcome=mcu.PULSE_COMMAND_OUTCOME_APPLIED, resulting_state=stopped
+    )
+    await owner.close(deadline_ns=deadline, permanent=False)
+    serial.diagnostic_stop.assert_awaited_once()
+    serial.off.assert_awaited_once()
+    serial.close.assert_awaited_once()
+    assert owner.cleanup_complete
 
 
 async def test_rejected_diagnostic_start_is_not_an_uncertain_start():
@@ -1708,6 +1717,138 @@ async def test_rejected_diagnostic_start_is_not_an_uncertain_start():
         await owner.execute(request, pulses, deadline)
     owner.ensure_idle()  # the refusal leaves no uncertain diagnostic behind
     assert not owner._diagnostic_uncertain
+
+
+async def test_failed_manual_connect_discards_the_owner_so_retry_opens_a_fresh_port():
+    from cephvr.controller.microcontroller import lazy_owner
+    from cephvr.shared.clock import host_time_ns
+
+    class SilentPort(_ScriptedPort):
+        def write(self, payload: bytes) -> int:
+            return len(payload)
+
+    ports: deque[_ScriptedPort] = deque(
+        [SilentPort(statuses=[]), _ScriptedPort(statuses=[_status()] * 4)]
+    )
+    opened: list[_ScriptedPort] = []
+
+    def open_port(_name: str, _baud: int) -> _ScriptedPort:
+        opened.append(ports.popleft())
+        return opened[-1]
+
+    settings = control.AcquisitionSettings()
+    settings.pulses.port = "COM8"
+    lazy = lazy_owner.LazySerialOwner(
+        settings, _policies(ack_ns=50_000_000), lambda _bridge: None
+    )
+    original = lazy_owner.PySerialPort
+    lazy_owner.PySerialPort = open_port  # type: ignore[misc,assignment]
+    try:
+        with pytest.raises(TimeoutError):
+            await lazy.connect(deadline_ns=host_time_ns() + 100_000_000)
+        observation = await lazy.connect(deadline_ns=host_time_ns() + 2_000_000_000)
+        assert observation.connection_id
+        assert len(opened) == 2 and opened[0] is not opened[1]
+    finally:
+        lazy_owner.PySerialPort = original  # type: ignore[misc]
+        await lazy.close(deadline_ns=host_time_ns() + 1_000_000_000)
+
+
+async def test_keepalive_survives_a_failure_handler_error_for_later_connections():
+    from cephvr.controller.microcontroller.health import MicrocontrollerHealth
+    from cephvr.shared.clock import host_time_ns
+
+    def observation(
+        connection_id: str,
+    ) -> microcontroller_pb2.MicrocontrollerObservation:
+        item = microcontroller_pb2.MicrocontrollerObservation(
+            connection_id=connection_id, observed_monotonic_ns=host_time_ns()
+        )
+        item.state.configuration_valid = True
+        item.state.watchdog_stopped = False
+        item.state.watchdog_ms = 1000
+        return item
+
+    current = observation("first")
+    handled: list[str] = []
+    kept_alive: list[str] = []
+
+    class Serial:
+        async def keepalive(self, *, deadline_ns: int):
+            if current.connection_id == "first":
+                raise RuntimeError("link lost")
+            kept_alive.append(current.connection_id)
+            return current.state
+
+    async def failure_handler(failure: control.Failure) -> None:
+        handled.append(failure.code)
+        raise RuntimeError("close unconfirmed")
+
+    health = MicrocontrollerHealth(
+        observation=lambda: current,
+        serial=Serial(),  # type: ignore[arg-type]
+        serial_keepalive_interval_ns=1_000_000,
+        serial_communication_timeout_ns=100_000_000,
+        serial_ack_timeout_ns=1_000_000,
+        serial_handoff_active=lambda: False,
+        next_boundary=lambda _now: None,
+        failure_handler=failure_handler,
+        clock=host_time_ns,
+    )
+    shutdown = asyncio.Event()
+    task = asyncio.create_task(health.run(shutdown))
+    try:
+        for _ in range(300):
+            if handled:
+                break
+            await asyncio.sleep(0.01)
+        assert handled == ["MICROCONTROLLER_KEEPALIVE_FAILED"]
+        assert not task.done()  # the handler's own error must not end keepalive
+        current = observation("second")
+        for _ in range(300):
+            if kept_alive:
+                break
+            await asyncio.sleep(0.01)
+        assert kept_alive and kept_alive[0] == "second"
+        assert handled == ["MICROCONTROLLER_KEEPALIVE_FAILED"]
+    finally:
+        shutdown.set()
+        await asyncio.wait_for(task, 2)
+
+
+async def test_failed_keepalive_with_unconfirmed_close_warns_for_both_causes():
+    from cephvr.controller.microcontroller.lifecycle import MicrocontrollerLifecycle
+
+    warnings: list[str] = []
+
+    async def warn(item: control.Warning) -> None:
+        warnings.append(item.message)
+
+    async def close(**_kwargs: object) -> None:
+        raise RuntimeError("port close is unconfirmed")
+
+    async def interrupt(*_args: object) -> None:
+        raise AssertionError("no attempt is active")
+
+    lifecycle = MicrocontrollerLifecycle(
+        SimpleNamespace(failure="", close=close),  # type: ignore[arg-type]
+        generation="controller-gen",
+        lifecycle=SimpleNamespace(attempt=None),  # type: ignore[arg-type]
+        configuration=None,  # type: ignore[arg-type]
+        device=None,  # type: ignore[arg-type]
+        limits=SimpleNamespace(current=SimpleNamespace(recovery_ns=1)),  # type: ignore[arg-type]
+        clock=lambda: 0,
+        publish=lambda: None,
+        warning=warn,
+        interrupt=interrupt,
+        spawn=lambda coroutine: asyncio.create_task(coroutine),
+    )
+    with pytest.raises(RuntimeError, match="unconfirmed"):
+        await lifecycle.failed(control.Failure(code="X", message="keepalive failed"))
+    assert warnings == [
+        "keepalive failed",
+        "close unconfirmed after failure: port close is unconfirmed",
+    ]
 
 
 async def test_cancel_on_retains_off_boundary_for_watchdog_arbitration():

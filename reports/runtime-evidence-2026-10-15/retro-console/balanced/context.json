@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-15",
+  "task": "gui-retro-balanced-palette",
+  "scope": "Review only, G02 revision41. New user reference: green-black, blue frames, cyan headings, pale green terminals, restrained amber/warm accents.",
+  "theme_sha256": "cbadf022b3635d1b100e3d8dc1ed69e4aea13f7cac22845edb43126b3610dd43",
+  "checks": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"review_appearance or shared_theme\": 3 passed, 484 deselected",
+    "Scoped Ruff check/format and Win32 mypy theme.py: pass",
+    "check_backend_boundaries.py: 695 modules, zero violations; existing advisories",
+    "capture.py --output-dir reports/runtime-evidence-2026-10-15/retro-console/balanced: exit0; Standard round-trip pixels equal; wide1440 visually inspected, narrow720 generated"
+  ],
+  "launch": "Standard Review launcher remains running in exec session14201. Existing Retro preference retained; older windows not force-closed.",
+  "limits": "macOS offscreen visual checks; native accessibility unavailable for virtual-environment Python; no Windows/rig acceptance. PNGs local-only ignored artifacts."
+}

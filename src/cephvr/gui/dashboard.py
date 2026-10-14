@@ -21,7 +21,8 @@ from cephvr.gui.formatting import duration, metrics_text
 from cephvr.gui.layouts import ResponsiveColumns, column
 from cephvr.gui.paths import DirectoryField
 from cephvr.gui.previews import PreviewDialog
-from cephvr.gui.theme import SIZES
+from cephvr.gui.retro_instruments import TrialPosition
+from cephvr.gui.theme import SIZES, retro_console
 from cephvr.gui.view import DashboardView, Phase
 
 ACTION_PHASES = {
@@ -59,6 +60,8 @@ class Dashboard(ResponsiveColumns):
         self.log_card = right.log_card
         self.runtime_console = right.hud
         self.log_console = right.console
+        self.trial_position = TrialPosition()
+        self.hud_card.body.addWidget(self.trial_position)
         self.apply_view(self.view)
 
     def build_controls(self) -> Card:
@@ -225,6 +228,18 @@ class Dashboard(ResponsiveColumns):
             self.stop_dialog.update_actions(self.stop_choices())
         for editor in self.subject_editors:
             editor.setEnabled(view.can_edit)
+        self.render_hud()
+        for name, status in (
+            ("Cameras", view.camera_status),
+            ("Visual stimulus", view.stimulus_status),
+            ("Tracking", view.tracking_status),
+        ):
+            self.backend_indicators[name].set_status(status)
+
+    def render_hud(self) -> None:
+        """Refresh presentation from the current view without touching controls."""
+        view = self.view
+        self.trial_position.set_position(view.trial_index, view.trial_count)
         rows = (
             ("PHASE", view.phase.value),
             (
@@ -251,12 +266,13 @@ class Dashboard(ResponsiveColumns):
             ("RESERVATION", view.reservation_status),
             ("METADATA", view.metadata_status),
         )
-        self.runtime_console.setPlainText(
-            metrics_text(rows) + "\n\n" + metrics_text(output_rows)
-        )
-        for name, status in (
-            ("Cameras", view.camera_status),
-            ("Visual stimulus", view.stimulus_status),
-            ("Tracking", view.tracking_status),
-        ):
-            self.backend_indicators[name].set_status(status)
+        if retro_console(self):
+            width = max(len(key) for key, _ in rows + output_rows)
+            groups = (
+                "\n".join(f"{key:<{width}} : {value}" for key, value in group)
+                for group in (rows, output_rows)
+            )
+            text = "\n\n".join(groups)
+        else:
+            text = metrics_text(rows) + "\n\n" + metrics_text(output_rows)
+        self.runtime_console.setPlainText(text)

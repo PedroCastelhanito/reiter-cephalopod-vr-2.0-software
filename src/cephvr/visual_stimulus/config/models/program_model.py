@@ -738,7 +738,14 @@ class ConvexPolygon(Model):
         return self
 
 
-Region = Annotated[UnrestrictedRegion | ConvexPolygon, Field(discriminator="kind")]
+class ArenaFileRegion(Model):
+    kind: Literal["arena_file"]
+    margin_mm: Annotated[Finite, Field(ge=0)] = 30.0
+
+
+Region = Annotated[
+    UnrestrictedRegion | ConvexPolygon | ArenaFileRegion, Field(discriminator="kind")
+]
 
 
 class ArenaBoundary(Model):

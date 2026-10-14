@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-15",
+  "source_revision": "0d70295898bcb9f058ef4bf26df4680df62d595d",
+  "dirty_tree": true,
+  "method": "macOS offscreen ProtocolEditor in 900x1400 QScrollArea; arena preset height67.5; advanced action enabled; QWidget.grab and explicit widget cleanup",
+  "outcome": "Capture/cleanup exit0; visually inspected common left/right column starts and widths for Movement limits, wall clearance and XYZ/Euler fields.",
+  "scope": "Authoring layout only; no native Windows/rig acceptance.",
+  "source_sha256": {
+    "src/cephvr/gui/arena_limits.py": "3198b023816434cee202624d6ff801db86984b2fc8205d024be7068439a59dfb",
+    "src/cephvr/gui/initial_pose.py": "53f45c8b962d9d58f8d71d3d60cd56ae0558f798275b813162a426c514f7c9bb",
+    "src/cephvr/gui/layouts.py": "7a39c975b60fcd65d8620c2c8b228579481551eafd27bbad430252821bdbbd6d"
+  }
+}

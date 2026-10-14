@@ -89,6 +89,10 @@ class DashboardWindow(QMainWindow):
         assert isinstance(dashboard_controls, QVBoxLayout)
         dashboard_controls.insertWidget(2, self.recordings)
         self.protocol = ProtocolPage(self.recordings, sample=sample)
+        subject_height = self.devices.projectors.rig_editor.fields["subject_z"]
+        composer = self.protocol.editor.subgroup.composer
+        subject_height.textChanged.connect(composer.set_subject_height)
+        composer.set_subject_height(subject_height.text())
         self.trial_preview: TrialPreview | None = None
         self.protocol.editor.output_preview_requested.connect(self.open_trial_preview)
         self.protocol.assets.folders["root"].editor.textChanged.connect(

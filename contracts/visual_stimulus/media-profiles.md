@@ -88,7 +88,8 @@ lit/PBR terms. Ordinary glTF PBR defaults do not introduce lighting; the importe
 reports its explicit base-color-only interpretation. Nontrivial normal/occlusion/
 emissive/metallic-roughness textures or extensions requiring a different appearance
 must be baked externally or rejected, never silently approximated. Unused descriptive
-metadata may be ignored; it cannot set protocol movement boundaries or observer pose.
+metadata may be ignored except for V16's explicitly selected arena-file rectangular/convex
+movement geometry. Metadata never overrides explicit protocol boundaries or observer pose.
 No full glTF feature-parity claim is made.
 
 ## Remaining implementation and verification

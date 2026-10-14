@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-15",
+  "task": "gui-retro-instrument-details",
+  "decision": "G02 revision44",
+  "scope": "Review Retro Dashboard only: numbered headers, aligned HUD columns, square controls, labelled current-view lamps with subtle halos, terminal edge graduations. No embedded plots added.",
+  "source": "Current dirty checkout; concurrent Protocol/backend changes preserved.",
+  "sha256": {
+    "src/cephvr/gui/appearance.py": "d3a1ebe8b8b30ce6cbd08a4b925ae5056dcbaa8572eac380c4226419a5ff8a47",
+    "src/cephvr/gui/dashboard.py": "613284d5187108b3b62c583829e545c4353e6e43080c06fbccfea82da0430725",
+    "src/cephvr/gui/components.py": "b9ff610388d8befc295507ea9ae76a8649231e7cbce66d12bf5204bfdde9b499",
+    "src/cephvr/gui/theme.py": "c4574c2eaf5ad85f27667cbcb53fc8e68af16775244e04342742da023bf4a4b6"
+  },
+  "checks": [
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/gui/test_dashboard.py -q -p no:faulthandler -k \"review_appearance or shared_theme or review_and_runtime_share_page_elements_and_card_layouts or hud or log_console\": 10 passed, 477 deselected",
+    "Scoped Ruff check/format5 files and Win32 mypy4 sources pass; boundaries695 modules/zero violations with existing cohesion advisories",
+    "QT_QPA_PLATFORM=offscreen .venv/bin/python reports/runtime-evidence-2026-10-15/retro-console/capture.py --output-dir reports/runtime-evidence-2026-10-15/retro-console/instrument-details: exit0, Standard round-trip pixels equal; wide/narrow renders visually inspected",
+    "git diff --check: pass"
+  ],
+  "launch": "Fresh native Review via scripts/start_gui.py, exec session28790 remains running; earlier windows retained.",
+  "limits": "macOS offscreen rendering validation; native accessibility unavailable for this Python app. No native Windows/rig acceptance. PNGs ignored local-only evidence."
+}

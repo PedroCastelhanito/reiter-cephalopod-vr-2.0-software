@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-15",
+  "source_revision": "0d70295898bcb9f058ef4bf26df4680df62d595d",
+  "dirty_tree": true,
+  "method": "macOS QT_QPA_PLATFORM=offscreen; ProtocolEditor in 900x1400 QScrollArea; arena preset height67.5; Advanced settings enabled; QWidget.grab and explicit widget cleanup",
+  "outcome": "Capture/cleanup exit0; visually inspected all six numeric inputs without selectors, retaining aligned rows and limits at top.",
+  "scope": "Offscreen authoring layout only; no native Windows, live process reload, renderer/hardware or rig acceptance.",
+  "source_sha256": {
+    "src/cephvr/gui/initial_pose.py": "5d6379041f4ed706f674d4a1c98751829d04e2d1aff69c01a51ae3a287cdcbcc"
+  }
+}
